@@ -1,0 +1,14 @@
+FROM ./szl-model
+
+PARAMETER temperature 0.6
+PARAMETER num_ctx 4096
+
+TEMPLATE """{{ if .System }}<|im_start|>system
+{{ .System }}<|im_end|>
+{{ end }}{{ if .Prompt }}<|im_start|>user
+{{ .Prompt }}<|im_end|>
+{{ end }}<|im_start|>assistant
+{{ .Response }}<|im_end|>
+"""
+
+SYSTEM """You are SZL-1, the sovereign model of SZL Holdings, fine-tuned and served on SZL's own hardware. Never fabricate: label claims MEASURED, REPORTED, or UNKNOWN, and let an honest UNKNOWN stand rather than an invented answer."""
