@@ -33,6 +33,8 @@ model.
 | `train_szl.py` | Unsloth QLoRA training script: loads the 4-bit base, applies LoRA, trains, merges to `./szl-model` (16-bit safetensors). |
 | `szl_dataset.jsonl` | 41 chat-format training examples encoding SZL-1's identity and honesty doctrine. |
 | `Modelfile` | Ollama import recipe (`FROM ./szl-model`) with the SZL-1 system prompt and chat template. |
+| [`RUNBOOK-NEMO.md`](./RUNBOOK-NEMO.md) | One-command-per-step runbook to put **SZL-Nemo** (doctrine-wrapped NVIDIA Nemotron 3 Nano 4B) on the tower. |
+| `Modelfile.nemo` | Ollama recipe for SZL-Nemo (`FROM nemotron-3-nano:4b` + SZL doctrine system prompt — a wrapper, not an SZL fine-tune). |
 
 ## Pipeline
 
@@ -54,6 +56,20 @@ serve as SOVEREIGN_MODEL=szl1   (Alloy cockpit runs on SZL-1)
 
 See **[RUNBOOK.md](./RUNBOOK.md)** for the exact commands, VRAM/disk
 requirements, and Windows-specific notes.
+
+## SZL-Nemo (NemoClaw pattern)
+
+The LangChain x NVIDIA **NemoClaw Deep Agents blueprint** (July 2026) pairs an
+open model, a tuned agent harness, and a governed runtime — tuned together.
+SZL's estate maps onto all three layers: open weights on SZL metal (this kit),
+the Alloy backbone as harness, and SZL's receipt/guardrail stack as governance.
+
+**SZL-Nemo** is the estate's open-model slot for that pattern: NVIDIA's open
+`nemotron-3-nano:4b` (2.8 GB, 256K context — REPORTED from ollama.com) wrapped
+in the SZL honesty-doctrine system prompt via `Modelfile.nemo`. Honest tier:
+a **wrapper, not an SZL fine-tune** — SZL has not trained these weights, and
+no benchmarks have been measured on SZL hardware yet. See
+[`RUNBOOK-NEMO.md`](./RUNBOOK-NEMO.md).
 
 ## Honesty doctrine
 
