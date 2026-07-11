@@ -35,6 +35,9 @@ model.
 | `Modelfile` | Ollama import recipe (`FROM ./szl-model`) with the SZL-1 system prompt and chat template. |
 | [`RUNBOOK-NEMO.md`](./RUNBOOK-NEMO.md) | One-command-per-step runbook to put **SZL-Nemo** (doctrine-wrapped NVIDIA Nemotron 3 Nano 4B) on the tower. |
 | `Modelfile.nemo` | Ollama recipe for SZL-Nemo (`FROM nemotron-3-nano:4b` + SZL doctrine system prompt — a wrapper, not an SZL fine-tune). |
+| `conjecture_machine.py` | **Conjecture Machine** — points the sovereign model at the formula corpus, asking each formula for an *advisory* proof sketch / lemma decomposition / counterexample search. Stdlib-only. NEVER claims proven. |
+| [`RUNBOOK-CONJECTURE.md`](./RUNBOOK-CONJECTURE.md) | One-command-per-step runbook to run the Conjecture Machine against the sovereign endpoint. |
+| `thesis_formula_index.json` | Local snapshot of the estate's `thesis-formula-index` (80 entries) so the Conjecture Machine runs offline. |
 
 ## Pipeline
 
@@ -70,6 +73,32 @@ in the SZL honesty-doctrine system prompt via `Modelfile.nemo`. Honest tier:
 a **wrapper, not an SZL fine-tune** — SZL has not trained these weights, and
 no benchmarks have been measured on SZL hardware yet. See
 [`RUNBOOK-NEMO.md`](./RUNBOOK-NEMO.md).
+
+## Conjecture Machine
+
+`conjecture_machine.py` points the sovereign stack at SZL's own formula corpus:
+it loads a formula index (a local snapshot of the estate's `thesis-formula-index`
+ships in this repo — **80 entries**), iterates each formula, and asks the
+sovereign OpenAI-compatible endpoint (default `https://gpu.a-11-oy.com/v1`,
+model env-selectable — `llama3-szl-finetuned-q4:latest` or `szl-nemo`) for an
+**advisory** proof sketch, lemma decomposition, and counterexample search. Every
+attempt is written to `conjecture_runs/<timestamp>/<formula_id>.json`.
+
+Honest tier, hard-coded:
+
+- It **NEVER claims proven.** Model output is an advisory *sketch* only; a
+  formula stays a **CONJECTURE** unless a real Lean check passes (done in
+  `szl-holdings/lutar-lean`, not here — the built-in `lean_check` is an honest
+  stub that never passes). The corpus's own status labels are staged-advisory
+  tags, not live proofs, and are not laundered into "proven".
+- **Λ uniqueness stays Conjecture-1.** The Λ-uniqueness formula
+  (`TH10 — Uniqueness of Lutar Invariant`) is doctrine-locked and can never be
+  upgraded by this tool.
+- **Endpoint down ⇒ honest UNAVAILABLE**, no fabricated output. Stdlib-only
+  (Python 3.8+, no `pip install`).
+
+See **[RUNBOOK-CONJECTURE.md](./RUNBOOK-CONJECTURE.md)** for the one-command-per-step
+walk-through.
 
 ## Honesty doctrine
 
