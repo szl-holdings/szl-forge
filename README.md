@@ -31,6 +31,21 @@ It prints each step honestly and stops on the real error if one appears.
 Prefer step-by-step? [`RUNBOOK.md`](./RUNBOOK.md) is the same pipeline as
 one command per step.
 
+## If first words are garbage (`@@@@…`)
+
+MEASURED 2026-07-12: Ollama's **direct safetensors import** of the Unsloth
+16-bit merge produced corrupted weights — szl1 answered `@` spam at
+temperature 0, even in raw mode, and re-quantizing the imported model did not
+fix it. Most likely the import path is at fault; the fix re-imports the
+already-trained merge at `.\szl-model` properly (no retraining):
+
+```powershell
+iwr https://raw.githubusercontent.com/szl-holdings/szl-forge/main/rebirth.ps1 -OutFile "$env:TEMP\rebirth.ps1"; powershell -ExecutionPolicy Bypass -File "$env:TEMP\rebirth.ps1"
+```
+
+If rebirth STILL produces `@` spam, the merge itself is corrupt — re-run
+`forge.ps1` end-to-end (step 6 now births via this GGUF path automatically).
+
 ## What SZL Forge is NOT
 
 - It is **not from-scratch pretraining**. Training a frontier model from raw
@@ -47,7 +62,9 @@ one command per step.
 | [`RUNBOOK.md`](./RUNBOOK.md) | Step-by-step, one-command-per-step runbook for running the whole pipeline on the laptop. |
 | `train_szl.py` | Unsloth QLoRA training script: loads the 4-bit base, applies LoRA, trains, merges to `./szl-model` (16-bit safetensors). |
 | `szl_dataset.jsonl` | 41 chat-format training examples encoding SZL-1's identity and honesty doctrine. |
-| `Modelfile` | Ollama import recipe (`FROM ./szl-model`) with the SZL-1 system prompt and chat template. |
+| `rebirth.ps1` | **Birth/rebirth into Ollama via GGUF** — converts `./szl-model` to F16 GGUF with llama.cpp's pure-Python converter, then `ollama create --quantize q4_K_M`. Fixes the corrupted-voice import without retraining. |
+| `Modelfile.gguf` | Ollama recipe used by `rebirth.ps1` (`FROM ./szl1-f16.gguf`) with the SZL-1 system prompt and chat template. |
+| `Modelfile` | Legacy direct-import recipe (`FROM ./szl-model`). **Superseded** — direct safetensors import corrupted SZL-1's voice (MEASURED 2026-07-12: `@` spam at temperature 0). Kept for provenance. |
 | [`RUNBOOK-NEMO.md`](./RUNBOOK-NEMO.md) | One-command-per-step runbook to put **SZL-Nemo** (doctrine-wrapped NVIDIA Nemotron 3 Nano 4B) on the tower. |
 | `Modelfile.nemo` | Ollama recipe for SZL-Nemo (`FROM nemotron-3-nano:4b` + SZL doctrine system prompt — a wrapper, not an SZL fine-tune). |
 | `conjecture_machine.py` | **Conjecture Machine** — points the sovereign model at the formula corpus, asking each formula for an *advisory* proof sketch / lemma decomposition / counterexample search. Stdlib-only. NEVER claims proven. |
@@ -66,7 +83,10 @@ Unsloth QLoRA fine-tune  ──  train_szl.py  (base: unsloth/Qwen2.5-3B-Instruc
 merged 16-bit safetensors  ──  ./szl-model
       │
       ▼
-ollama create szl1 -f Modelfile
+llama.cpp convert_hf_to_gguf  ──  szl1-f16.gguf   (rebirth.ps1)
+      │
+      ▼
+ollama create szl1 --quantize q4_K_M -f Modelfile.gguf
       │
       ▼
 serve as SOVEREIGN_MODEL=szl1   (Alloy cockpit runs on SZL-1)
