@@ -128,3 +128,5 @@ serving time.
 time of writing, so there are **no measured quality, speed, or accuracy numbers
 to report**. Any such figures will be added only once they are genuinely
 measured on real hardware — until then, treat performance as UNKNOWN.
+
+`eval_szl.py` now ships in this kit; run it to produce MEASURED numbers (see `RUNBOOK-EVAL.md`). It scores SZL's own K-Verify Benchmark v1 against the sovereign endpoint and writes `eval_results.json` where every number is labeled MEASURED. Until you run it on metal, this section stays **None yet / UNKNOWN** — no figure is written here before a real run produces it.
