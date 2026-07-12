@@ -17,6 +17,20 @@ model.
 - The result is owned end-to-end: owned weights, owned hardware, owned doctrine —
   no rented cloud inference, no vendor lock-in.
 
+## One command (laptop)
+
+The whole pipeline — folder, kit files, Unsloth, the CUDA-build torch the
+RTX 5050 needs, training, and the Ollama import — in a single PowerShell
+command (run from ANY folder; it puts itself in `%USERPROFILE%\szl-forge`):
+
+```powershell
+iwr https://raw.githubusercontent.com/szl-holdings/szl-forge/main/forge.ps1 -OutFile "$env:TEMP\forge.ps1"; powershell -ExecutionPolicy Bypass -File "$env:TEMP\forge.ps1"
+```
+
+It prints each step honestly and stops on the real error if one appears.
+Prefer step-by-step? [`RUNBOOK.md`](./RUNBOOK.md) is the same pipeline as
+one command per step.
+
 ## What SZL Forge is NOT
 
 - It is **not from-scratch pretraining**. Training a frontier model from raw
@@ -29,6 +43,7 @@ model.
 
 | File | What it is |
 | --- | --- |
+| `forge.ps1` | **One-command bootstrap** — runs the entire pipeline below (downloads kit, fixes CUDA torch, trains, imports into Ollama), stopping honestly on any real failure. |
 | [`RUNBOOK.md`](./RUNBOOK.md) | Step-by-step, one-command-per-step runbook for running the whole pipeline on the laptop. |
 | `train_szl.py` | Unsloth QLoRA training script: loads the 4-bit base, applies LoRA, trains, merges to `./szl-model` (16-bit safetensors). |
 | `szl_dataset.jsonl` | 41 chat-format training examples encoding SZL-1's identity and honesty doctrine. |
