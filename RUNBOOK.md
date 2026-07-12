@@ -1,5 +1,9 @@
 # SZL Forge Runbook — train SZL-1 on the laptop (RTX 5050)
 
+> **Shortcut:** all steps below run as ONE command now — see "One command"
+> in [README.md](./README.md) (`forge.ps1`). This runbook remains the
+> step-by-step version of the same pipeline.
+
 Goal: fine-tune an open base model into **SZL-1** — SZL Holdings' own model —
 entirely on SZL's own hardware, then serve it through Ollama like any other
 estate model.
