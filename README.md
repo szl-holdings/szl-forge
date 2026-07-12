@@ -43,8 +43,10 @@ already-trained merge at `.\szl-model` properly (no retraining):
 iwr https://raw.githubusercontent.com/szl-holdings/szl-forge/main/rebirth.ps1 -OutFile "$env:TEMP\rebirth.ps1"; powershell -ExecutionPolicy Bypass -File "$env:TEMP\rebirth.ps1"
 ```
 
-If rebirth STILL produces `@` spam, the merge itself is corrupt — re-run
-`forge.ps1` end-to-end (step 6 now births via this GGUF path automatically).
+If rebirth STILL produces `@` spam, the merge itself is suspect — report back
+for diagnosis rather than retraining (training is seeded, so an identical re-run
+would likely reproduce the same merge; isolating merge vs converter comes first).
+Future full `forge.ps1` runs birth via this GGUF path automatically (step 6).
 
 ## What SZL Forge is NOT
 
