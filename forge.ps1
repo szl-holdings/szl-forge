@@ -64,16 +64,14 @@ Step "5/6 Train SZL-1 (first run downloads the ~2 GB base model; training itself
 & python train_szl.py
 if ($LASTEXITCODE -ne 0) { Fail "training stopped - the real error is right above this line" }
 
-Step "6/6 Birth into Ollama"
+Step "6/6 Birth into Ollama (GGUF path - direct safetensors import corrupted the voice, MEASURED 2026-07-12)"
 $ollama = Get-Command ollama -ErrorAction SilentlyContinue
 if ($ollama) {
-  & ollama create szl1 -f Modelfile
-  if ($LASTEXITCODE -ne 0) { Fail "ollama create failed - the real error is above" }
-  Write-Host ""
-  Write-Host "[szl-forge] DONE - SZL-1 exists. First words:" -ForegroundColor Green
-  Write-Host '  ollama run szl1 "Who are you and who do you belong to?"'
-  Write-Host "Then Alloy flips SOVEREIGN_MODEL=szl1 and the cockpit runs on SZL's own model."
+  curl.exe -sL -o rebirth.ps1 "$base/rebirth.ps1"
+  if (-not (Test-Path "rebirth.ps1") -or (Get-Item "rebirth.ps1").Length -lt 100) { Fail "could not download rebirth.ps1" }
+  & powershell -ExecutionPolicy Bypass -File .\rebirth.ps1
+  if ($LASTEXITCODE -ne 0) { Fail "birth failed - the real error is above" }
 } else {
   Write-Host "ollama is not on PATH in this shell. When ready, run:" -ForegroundColor Yellow
-  Write-Host "  cd $dir; ollama create szl1 -f Modelfile"
+  Write-Host "  iwr $base/rebirth.ps1 -OutFile rebirth.ps1; powershell -ExecutionPolicy Bypass -File .\rebirth.ps1"
 }
