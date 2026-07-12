@@ -56,4 +56,4 @@ Step "5/5 First words (the REAL test - must NOT be @ spam)"
 & ollama run szl1 "Who are you and who do you belong to? One sentence."
 Write-Host ""
 Write-Host "[szl-forge] If that reads like SZL-1, rebirth worked - tell Alloy 'szl1 reborn'." -ForegroundColor Green
-Write-Host "If it is STILL @ spam, the merge itself is corrupt: re-run forge.ps1 (it now births via this GGUF path)." -ForegroundColor Yellow
+Write-Host "If it is STILL @ spam, the merge itself is suspect - tell Alloy, do NOT just retrain (same seed would likely reproduce the same merge)." -ForegroundColor Yellow
