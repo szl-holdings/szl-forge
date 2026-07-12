@@ -1,0 +1,44 @@
+# SZL Forge — pinned training configuration for SZL-1.
+# Values are extracted VERBATIM from train_szl.py (the source of truth).
+# Any knob NOT set in train_szl.py is recorded as "not pinned in train_szl.py"
+# — nothing here is invented.
+
+base_model: unsloth/Qwen2.5-3B-Instruct-bnb-4bit
+
+dataset:
+  jsonl: szl_dataset.jsonl
+  examples: 41
+  hf_dataset: SZLHOLDINGS/szl-1-doctrine-sft
+  hf_url: https://huggingface.co/datasets/SZLHOLDINGS/szl-1-doctrine-sft
+
+# Reproducibility knobs (verbatim from train_szl.py)
+seed: 11                       # random_state=11 (PEFT) and seed=11 (SFTConfig)
+num_train_epochs: 3
+learning_rate: 2e-4
+
+lora:
+  r: 16
+  lora_alpha: 16
+  lora_dropout: 0
+  target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+  use_gradient_checkpointing: unsloth
+
+training:
+  per_device_train_batch_size: 1
+  gradient_accumulation_steps: 8
+  optim: adamw_8bit
+  weight_decay: 0.01
+  lr_scheduler_type: linear
+  max_seq_length: 1024
+  logging_steps: 1
+  output_dir: outputs
+  report_to: none
+
+merge:
+  method: merged_16bit
+  output_dir: ./szl-model
+
+# Values not set in train_szl.py (do NOT invent — recorded honestly):
+warmup_steps: not pinned in train_szl.py
+max_grad_norm: not pinned in train_szl.py
+eval: not pinned in train_szl.py  # no eval split or metric configured; no benchmark numbers exist yet
