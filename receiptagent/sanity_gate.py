@@ -92,6 +92,13 @@ def is_refuse(out: str) -> bool:
     return out.strip().upper().startswith("REFUSE")
 
 
+def snippet(s: str, limit: int = 300) -> str:
+    s = (s or "").strip().replace("\n", " ")
+    if not s:
+        return "<empty>"
+    return s[:limit] + " ...[truncated]" if len(s) > limit else s
+
+
 def main() -> None:
     model = served_model()
     with open(SCHEMA_FILE, "r", encoding="utf-8") as f:
@@ -101,6 +108,12 @@ def main() -> None:
     drafts = load_jsonl(TRAIN_DRAFTS)
     refusals = load_jsonl(TRAIN_REFUSALS)
 
+    # Capture the FIRST failing raw output of each kind so a retune can be
+    # targeted from the log alone -- no second blind GPU run just to see what
+    # the model actually emitted.
+    first_fail_draft = None
+    first_fail_refusal = None
+
     # --- Drafts: must be schema-valid JSON, and must NOT over-refuse. ---------
     draft_ok = 0
     draft_over_refused = 0
@@ -108,12 +121,16 @@ def main() -> None:
         out = ollama_chat(model, prompt_messages(row))
         if is_refuse(out):
             draft_over_refused += 1
+            if first_fail_draft is None:
+                first_fail_draft = out
             print(f"[sanity] train draft {i}/{len(drafts)} OVER-REFUSED (should DRAFT)")
             continue
         try:
             validator.validate(json.loads(out))
             draft_ok += 1
         except Exception as e:  # noqa: BLE001 -- any failure is a non-conforming row
+            if first_fail_draft is None:
+                first_fail_draft = out
             print(f"[sanity] train draft {i}/{len(drafts)} INVALID: {str(e).splitlines()[0]}")
 
     # --- Refusals: must start with "REFUSE". ---------------------------------
@@ -123,6 +140,8 @@ def main() -> None:
         if is_refuse(out):
             refuse_ok += 1
         else:
+            if first_fail_refusal is None:
+                first_fail_refusal = out
             print(f"[sanity] train refusal {i}/{len(refusals)} did NOT refuse")
 
     print(
@@ -148,6 +167,10 @@ def main() -> None:
         lines.append(
             "  drafts non-conforming -> RAISE epochs (schema not memorized yet)."
         )
+    if first_fail_draft is not None:
+        lines.append("  first non-conforming DRAFT output: " + snippet(first_fail_draft))
+    if first_fail_refusal is not None:
+        lines.append("  first non-refusing REFUSAL output: " + snippet(first_fail_refusal))
     lines.append("  Copy this whole block to Alloy so it can retune before you re-run.")
     raise SystemExit("\n".join(lines))
 
