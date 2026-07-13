@@ -52,6 +52,13 @@ CURRICULUM_FILES = [
 # Only these two are used for TRAINING (drafts + refusals). eval.jsonl and
 # adversarial.jsonl are held out for eval_receiptagent.py.
 TRAIN_FILES = ["train.jsonl", "train.refusals.jsonl"]
+# Refusal parity (IN-MEMORY oversample). The committed refusal set (8) is smaller
+# than the draft set (15), which biased the model into ALWAYS drafting (0/6
+# held-out refusals). We repeat the refusal rows in memory to reach ~1:1 with
+# drafts. This NEVER edits a committed file, so the backbone verifier -- which
+# hashes the files ON DISK, not the training multiset -- still sees the exact
+# pinned curriculum. Do NOT push past parity: over-refusal tanks draft conformance.
+REFUSAL_OVERSAMPLE = 2
 
 
 def sha256_file(path: str) -> str:
@@ -105,12 +112,20 @@ def sha256_safetensors_dir(directory: str) -> str:
 def load_train_rows(tokenizer):
     rows = []
     for name in TRAIN_FILES:
+        reps = REFUSAL_OVERSAMPLE if name == "train.refusals.jsonl" else 1
+        file_rows = []
         with open(os.path.join(HERE, name), "r", encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if line:
-                    rows.append(json.loads(line))
-    print(f"[train] {len(rows)} training rows ({' + '.join(TRAIN_FILES)})")
+                    file_rows.append(json.loads(line))
+        for _ in range(reps):
+            rows.extend(file_rows)
+        print(f"[train]   {name}: {len(file_rows)} rows x{reps}")
+    print(
+        f"[train] {len(rows)} training rows total "
+        f"(refusals oversampled x{REFUSAL_OVERSAMPLE} to ~1:1 with drafts)"
+    )
     return [
         tokenizer.apply_chat_template(
             r["messages"], tokenize=False, add_generation_prompt=False
@@ -136,7 +151,7 @@ def main() -> None:
     model = FastLanguageModel.get_peft_model(
         model,
         r=16,
-        lora_alpha=16,
+        lora_alpha=32,
         lora_dropout=0,
         target_modules=[
             "q_proj", "k_proj", "v_proj", "o_proj",
@@ -159,17 +174,36 @@ def main() -> None:
         max_seq_length=MAX_SEQ_LEN,
         args=SFTConfig(
             per_device_train_batch_size=1,
-            gradient_accumulation_steps=8,
-            num_train_epochs=5,
+            # Smaller accumulation + many epochs: a ~30-row curriculum at ga=8
+            # gave only ~15 optimizer steps total (undertrained -> 0/5, 0/6).
+            # ga=2 x 30 epochs is ~450 steps -- the dominant fix. Drafts are
+            # memorizable (secondary score); held-out refusals are the real test.
+            gradient_accumulation_steps=2,
+            num_train_epochs=30,
             learning_rate=2e-4,
+            warmup_steps=10,
             logging_steps=1,
             optim="adamw_8bit",
             weight_decay=0.01,
-            lr_scheduler_type="linear",
+            lr_scheduler_type="cosine",
             seed=11,
             output_dir=os.path.join(HERE, "outputs"),
             report_to="none",
         ),
+    )
+
+    # Response-only loss. Every row shares the SAME ~1.1k-char system prompt, so
+    # training on the full conversation spends most of the gradient re-memorizing
+    # the prompt while the short target (a DRAFT json or a "REFUSE:" line) barely
+    # moves -- this is why receiptBinding.algorithm/note (late, low-frequency
+    # tokens) got dropped and refusals never fired. Mask everything up to the
+    # assistant turn so loss lands ONLY on the answer.
+    from unsloth.chat_templates import train_on_responses_only
+
+    trainer = train_on_responses_only(
+        trainer,
+        instruction_part="<|im_start|>user\n",
+        response_part="<|im_start|>assistant\n",
     )
 
     print("[train] training...")
