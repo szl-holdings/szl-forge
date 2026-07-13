@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "proposalId": {
+      "description": "Opaque draft id. In this example it is obviously synthetic.",
+      "type": "string"
+    },
+    "capabilityProfile": {
+      "description": "The governed capability profile contracted to emit this draft.",
+      "type": "string",
+      "const": "SZL-Forge-1.5B-ReceiptAgent"
+    },
+    "provenance": {
+      "description": "Honest origin of the draft: SYNTHETIC = an illustrative example not produced by any model (as in RECEIPT_AGENT_EXAMPLE below); MODEL_PROPOSED = a real draft proposed by the ReceiptAgent model. Both are honest; a draft can never claim any other origin (e.g. HUMAN or MEASURED).",
+      "type": "string",
+      "enum": [
+        "SYNTHETIC",
+        "MODEL_PROPOSED"
+      ]
+    },
+    "claim": {
+      "description": "The proposed decision, stated as a DRAFT for human review.",
+      "type": "string"
+    },
+    "decision": {
+      "description": "Always a draft — the model proposes; it never decides or finalizes.",
+      "type": "string",
+      "const": "DRAFT"
+    },
+    "evidence": {
+      "description": "Evidence-bound: at least one cited source backs the claim.",
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "sourceEndpoint": {
+            "description": "A real Alloy endpoint the controller would consult for this evidence (or a plainly-marked placeholder) — no live value is embedded here.",
+            "type": "string"
+          },
+          "label": {
+            "description": "The source endpoint's OWN honesty tier — denotes what kind of evidence it provides, not a measurement captured in this synthetic example.",
+            "type": "string",
+            "enum": [
+              "MEASURED",
+              "REPORTED",
+              "DECLARED",
+              "SIMULATED",
+              "UNKNOWN",
+              "UNAVAILABLE"
+            ]
+          },
+          "note": {
+            "description": "Plain-language description of the evidence role.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sourceEndpoint",
+          "label",
+          "note"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "approvalRequired": {
+      "description": "Approval-gated: the draft can never proceed without human approval.",
+      "type": "boolean",
+      "const": true
+    },
+    "controllerBoundary": {
+      "description": "States the A11oy runtime boundary — the controller decides, validates, gates on approval, and executes OUTSIDE the weights.",
+      "type": "string"
+    },
+    "receiptBinding": {
+      "description": "How an approved, executed action would bind to a signed receipt.",
+      "type": "object",
+      "properties": {
+        "algorithm": {
+          "description": "The estate's real receipt scheme this draft would bind to on execution.",
+          "type": "string",
+          "const": "ed25519-over-sha256"
+        },
+        "status": {
+          "description": "A synthetic, unexecuted draft is NOT receipt-bound; a real receipt is minted only when an approved action actually executes.",
+          "type": "string",
+          "const": "NOT_BOUND"
+        },
+        "note": {
+          "description": "Why no receipt exists for this example.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "algorithm",
+        "status",
+        "note"
+      ],
+      "additionalProperties": false
+    },
+    "executed": {
+      "description": "A draft never self-executes; execution happens outside the model.",
+      "type": "boolean",
+      "const": false
+    }
+  },
+  "required": [
+    "proposalId",
+    "capabilityProfile",
+    "provenance",
+    "claim",
+    "decision",
+    "evidence",
+    "approvalRequired",
+    "controllerBoundary",
+    "receiptBinding",
+    "executed"
+  ],
+  "additionalProperties": false
+}

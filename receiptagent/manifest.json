@@ -1,0 +1,47 @@
+{
+  "dataset": "SZL-Forge-1.5B-ReceiptAgent curriculum",
+  "doctrine": "SYNTHETIC/schema-generated training DATA — NOT a trained adapter, NOT an eval; nothing here changes trainingStatus/evalStatus or upgrades Λ. Every draft row was safeParse'd against ReceiptAgentDraftSchema at generation; every refusal row carries the REFUSE marker. Generation is deterministic, so these sha256s reproduce exactly on re-run.",
+  "contract": {
+    "capabilityProfile": "SZL-Forge-1.5B-ReceiptAgent",
+    "provenanceValues": [
+      "SYNTHETIC",
+      "MODEL_PROPOSED"
+    ],
+    "schemaFingerprintSha256": "68b41b9f198bef4238e561f66456a849afe8095a43df19299a434915b54361d5",
+    "outputSchemaFile": "receiptagent.schema.json",
+    "outputSchemaSha256": "1db07ef9e1581cc8cc471dd42e79a21b728c4e3bf1222fd0f06f2b7257bb288e"
+  },
+  "files": {
+    "train.jsonl": {
+      "kind": "draft",
+      "rows": 15,
+      "sha256": "775e25b526a96d1486e80aae048f731bdad02a0d94ea76144593e115802fa24f"
+    },
+    "eval.jsonl": {
+      "kind": "draft",
+      "rows": 5,
+      "sha256": "1a92bea9b163882ae7c7aa00be6c1fda3e9c98683f0214af985bfb184e27ff65"
+    },
+    "train.refusals.jsonl": {
+      "kind": "refusal",
+      "rows": 8,
+      "sha256": "c5136b612951c209d1041839d1ac19a8fa378c31015d61dd7565994b4f3e2b47"
+    },
+    "adversarial.jsonl": {
+      "kind": "refusal",
+      "rows": 6,
+      "sha256": "81d2a494ee41256c7909a54435c4e7971fea65de81fffbf3f2b8a008aab5a572"
+    },
+    "receiptagent.schema.json": {
+      "kind": "schema",
+      "rows": 0,
+      "sha256": "1db07ef9e1581cc8cc471dd42e79a21b728c4e3bf1222fd0f06f2b7257bb288e"
+    }
+  },
+  "totals": {
+    "draftRows": 20,
+    "refusalRows": 14,
+    "trainRows": 23,
+    "evalRows": 11
+  }
+}

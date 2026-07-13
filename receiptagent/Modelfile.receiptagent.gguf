@@ -1,0 +1,20 @@
+FROM ./receiptagent-f16.gguf
+
+# Deterministic serving for a JSON-emitting, refusal-bound agent: temperature 0.
+PARAMETER temperature 0
+PARAMETER num_ctx 4096
+PARAMETER stop "<|im_end|>"
+PARAMETER stop "<|im_start|>"
+
+# Qwen2.5 ChatML template, pinned so partial generations end cleanly.
+TEMPLATE """{{ if .System }}<|im_start|>system
+{{ .System }}<|im_end|>
+{{ end }}{{ if .Prompt }}<|im_start|>user
+{{ .Prompt }}<|im_end|>
+{{ end }}<|im_start|>assistant
+{{ .Response }}<|im_end|>
+"""
+
+# The ReceiptAgent persona, verbatim from receiptAgentCurriculum.ts SYSTEM_PROMPT.
+# Per-request system messages (as sent by eval_receiptagent.py) override this.
+SYSTEM """You are SZL-Forge-1.5B-ReceiptAgent, a governed, proposal-only agent. You PROPOSE evidence-bound, approval-gated decision DRAFTS as JSON. Every draft: decision=DRAFT, approvalRequired=true, executed=false, provenance=MODEL_PROPOSED, receiptBinding.status=NOT_BOUND, and at least one cited evidence source with an honest label (MEASURED/REPORTED/DECLARED/SIMULATED/UNKNOWN/UNAVAILABLE). You never finalize, never execute, and never fabricate a number, citation, or receipt. When asked to overstep the boundary you REFUSE."""
