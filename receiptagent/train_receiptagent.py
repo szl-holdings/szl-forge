@@ -150,8 +150,8 @@ def main() -> None:
     )
     model = FastLanguageModel.get_peft_model(
         model,
-        r=16,
-        lora_alpha=32,
+        r=32,
+        lora_alpha=64,
         lora_dropout=0,
         target_modules=[
             "q_proj", "k_proj", "v_proj", "o_proj",
@@ -174,18 +174,24 @@ def main() -> None:
         max_seq_length=MAX_SEQ_LEN,
         args=SFTConfig(
             per_device_train_batch_size=1,
-            # Smaller accumulation + many epochs: a ~30-row curriculum at ga=8
-            # gave only ~15 optimizer steps total (undertrained -> 0/5, 0/6).
-            # ga=2 x 30 epochs is ~450 steps -- the dominant fix. Drafts are
-            # memorizable (secondary score); held-out refusals are the real test.
+            # Small curriculum -> pure memorization objective. ga=8 gave only
+            # ~15 optimizer steps (undertrained -> 0/5, 0/6). ga=2 x 45 epochs is
+            # ~700 steps. Scheduler is constant_with_warmup, NOT cosine: cosine
+            # decays LR to ~0 by the end, starving the late consolidation the
+            # hardest token needs -- the prior run locked structure (drafts
+            # 15/15) + refusals (8/8) but left the capabilityProfile const
+            # ("SZL-Forge-1.5B-ReceiptAgent") on a knife edge, and q4_K_M rebirth
+            # then flipped "1.5B" -> "15B" (a common model-size string in the
+            # base prior). Sustained LR + more steps + more LoRA capacity
+            # (r32/alpha64) buy the margin to survive 4-bit quantization.
             gradient_accumulation_steps=2,
-            num_train_epochs=30,
+            num_train_epochs=45,
             learning_rate=2e-4,
             warmup_steps=10,
             logging_steps=1,
             optim="adamw_8bit",
             weight_decay=0.01,
-            lr_scheduler_type="cosine",
+            lr_scheduler_type="constant_with_warmup",
             seed=11,
             output_dir=os.path.join(HERE, "outputs"),
             report_to="none",
