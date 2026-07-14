@@ -1,0 +1,13 @@
+# NEVER commit the owner's private key or any training artifact bytes.
+# The committed trust root is owner_pubkey.json (public) + the *.signed.json
+# receipts (signatures over public canonical payloads). Everything below is
+# either secret or a large owner-metal build product.
+*.pem
+khipu_owner_ed25519*
+khipu-model/
+khipu-adapter/
+outputs/
+llama.cpp/
+llama-cpp.tar.gz
+*.gguf
+__pycache__/
