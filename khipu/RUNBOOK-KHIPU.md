@@ -195,6 +195,19 @@ Pushing the repo to the SZLHOLDINGS Hub flips `publishStatus` to `PUBLISHED`
 and it never upgrades `trainingStatus`. Training/eval status comes solely from
 the signed receipts above.
 
+After a PASS eval, one paste from this folder publishes everything — receipts
+to the szl-forge trust root, receipts + weights + adapter to the Hub repo
+(`SZLHOLDINGS/SZL-Khipu-1.5B-BrainNavigator`, ReceiptAgent layout):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File publish-khipu.ps1
+```
+
+The script refuses to run if `owner_pubkey.json`'s `keyId` differs from the
+pinned owner keyId (`89540347a69b789e` — rotate deliberately or not at all),
+and it never reads or uploads the private key. It is a *courier*, not a judge:
+receipt verification stays server-side.
+
 ---
 
 ## Honesty invariants (binding)
