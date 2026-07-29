@@ -55,9 +55,15 @@ jobs:
             spaces/szl-model-inference-lab/app.py \
             spaces/szl-model-inference-lab/verify_execution_record.py \
             spaces/szl-forge-lab/forge_lab.py \
-            spaces/szl-forge-lab/forge_runtime_contract.py
+            spaces/szl-forge-lab/forge_runtime_contract.py \
+            frontier/qwen35-receiptagent-v2/qualify_runtime.py \
+            frontier/qwen35-receiptagent-v2/train_candidate.py \
+            frontier/qwen35-receiptagent-v2/evaluate_candidate.py \
+            frontier/qwen35-receiptagent-v2/evidence_chain.py
           python tools/test_verify_model_portfolio.py
           PYTHONPATH=tools python tools/test_publish_hf_space.py
+          PYTHONPATH=frontier/qwen35-receiptagent-v2 \
+            python frontier/qwen35-receiptagent-v2/test_qualify_runtime.py
           PYTHONPATH=spaces/szl-model-inference-lab \
             python -m unittest discover \
               -s spaces/szl-model-inference-lab/tests -v

@@ -1,0 +1,59 @@
+{
+  "schema": "szl.frontier-model-candidate/v1",
+  "candidate_id": "SZL-ReceiptAgent-Qwen3.5-0.8B-v2",
+  "state": "MEASURED_EVALUATION_PASSED_RECEIPTS_PENDING",
+  "canonical_base": {
+    "repo_id": "Qwen/Qwen3.5-0.8B",
+    "revision": "2fc06364715b967f1860aea9cf38778875588b17",
+    "license": "apache-2.0"
+  },
+  "training_implementation": {
+    "repo_id": "unsloth/Qwen3.5-0.8B",
+    "revision": "23c69c53358a07516b5827588b3fdb12ae78fd65",
+    "license": "apache-2.0",
+    "runtime": "Unsloth FastVisionModel"
+  },
+  "training_data": {
+    "source": "receiptagent committed curriculum",
+    "train_files": [
+      "receiptagent/train.jsonl",
+      "receiptagent/train.refusals.jsonl"
+    ],
+    "held_out_files": [
+      "receiptagent/eval.jsonl",
+      "receiptagent/adversarial.jsonl"
+    ],
+    "rights_boundary": "Only the repository-owned ReceiptAgent curriculum is admitted. Brain nodes are excluded."
+  },
+  "acceptance": {
+    "runtime_cuda_generation": true,
+    "draft_contract_valid": {
+      "required": 5,
+      "total": 5
+    },
+    "adversarial_refusal": {
+      "required": 6,
+      "total": 6
+    },
+    "signed_training_receipt": true,
+    "signed_eval_receipt": true,
+    "receipt_chain_valid": true,
+    "publication_before_all_gates": false
+  },
+  "measured_evidence": {
+    "training_report_sha256": "b05157269dd2788c9b2c57764b99b83f396c8478749ae6d164756d7a5b9ba544",
+    "evaluation_report_sha256": "e48cf2c8a2e65b78d59197ff8adfe34de1e672d3c79e55377659c1a647e01e7b",
+    "adapter_aggregate_sha256": "286336b01858f598c62e47ee6b71902863aa739ddb42b1036f326b8867370ee4",
+    "adapter_model_sha256": "f839d83a982c9768cd519604e92bd2be81fcaaa89d4375727e2d81dbf3c70bbb",
+    "optimizer_steps": 64,
+    "training_rows": 31,
+    "eval_contract_valid": 5,
+    "eval_total": 5,
+    "adversarial_refused": 6,
+    "adversarial_total": 6,
+    "host_gpu": "NVIDIA GeForce RTX 5050 Laptop GPU",
+    "claim": "MEASURED"
+  },
+  "autonomy_eligible": false,
+  "publication_eligible": false
+}
