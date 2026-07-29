@@ -64,6 +64,7 @@ jobs:
           PYTHONPATH=tools python tools/test_publish_hf_space.py
           PYTHONPATH=frontier/qwen35-receiptagent-v2 \
             python frontier/qwen35-receiptagent-v2/test_qualify_runtime.py
+          python frontier/qwen35-receiptagent-v2/evidence_chain.py verify
           PYTHONPATH=spaces/szl-model-inference-lab \
             python -m unittest discover \
               -s spaces/szl-model-inference-lab/tests -v

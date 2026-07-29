@@ -76,10 +76,22 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def sha256_source_file(path: Path) -> str:
+    """Hash the Git-canonical text bytes on every checkout platform.
+
+    The release manifest is generated from Git blobs, whose text files use LF.
+    Git may materialize those same files with CRLF on Windows. Normalizing that
+    checkout-only transform preserves source integrity without weakening the
+    byte comparison performed for binary model artifacts.
+    """
+
+    return hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+
+
 def load_release_manifest() -> dict[str, Any]:
     manifest = json.loads((SOURCE_ROOT / "release.json").read_text(encoding="utf-8"))
     for relative, expected in manifest["source_files"].items():
-        if sha256_file(SOURCE_ROOT / relative) != expected:
+        if sha256_source_file(SOURCE_ROOT / relative) != expected:
             raise RuntimeError("SOURCE_INTEGRITY_MISMATCH")
     return manifest
 
@@ -202,11 +214,11 @@ class BodyLimitMiddleware:
 
     def __init__(
         self,
-        application: Any,
+        app: Any,
         max_bytes: int = 8192,
         read_timeout_seconds: float = BODY_READ_TIMEOUT_SECONDS,
     ) -> None:
-        self.application = application
+        self.application = app
         self.max_bytes = max_bytes
         self.read_timeout_seconds = read_timeout_seconds
 

@@ -1,0 +1,39 @@
+{
+  "payload": {
+    "kind": "szl-frontier-eval-receipt",
+    "v": 1,
+    "candidateId": "SZL-ReceiptAgent-Qwen3.5-0.8B-v2",
+    "sourceCommit": "505daf3e8d9570b1dfba33bb832bd571d2c97b5b",
+    "trainingReceiptCanonicalSha256": "7446438f8b81fe40c1703b30b6b5b86418c56d082ee7aa5e02248bf146713ecd",
+    "trainingReportSha256": "b05157269dd2788c9b2c57764b99b83f396c8478749ae6d164756d7a5b9ba544",
+    "evaluationReportSha256": "e48cf2c8a2e65b78d59197ff8adfe34de1e672d3c79e55377659c1a647e01e7b",
+    "adapterAggregateSha256": "286336b01858f598c62e47ee6b71902863aa739ddb42b1036f326b8867370ee4",
+    "datasets": {
+      "adversarial.jsonl": "81d2a494ee41256c7909a54435c4e7971fea65de81fffbf3f2b8a008aab5a572",
+      "eval.jsonl": "1a92bea9b163882ae7c7aa00be6c1fda3e9c98683f0214af985bfb184e27ff65",
+      "receiptagent.schema.json": "1db07ef9e1581cc8cc471dd42e79a21b728c4e3bf1222fd0f06f2b7257bb288e"
+    },
+    "evalTotal": 5,
+    "evalContractValid": 5,
+    "adversarialTotal": 6,
+    "adversarialRefused": 6,
+    "evaluatedAt": "2026-07-29T21:54:00.779472+00:00",
+    "host": "betterwithage",
+    "gpu": {
+      "name": "NVIDIA GeForce RTX 5050 Laptop GPU",
+      "computeCapability": "12.0",
+      "cudaRuntime": "13.0",
+      "torchVersion": "2.11.0+cu130",
+      "peakReservedBytes": 1272971264,
+      "temperatureCBeforeLoad": 82
+    },
+    "acceptancePassed": true,
+    "autonomyEligible": false,
+    "publicationEligible": false,
+    "keyId": "e7f01810aaa97394"
+  },
+  "canonical": "{\"acceptancePassed\":true,\"adapterAggregateSha256\":\"286336b01858f598c62e47ee6b71902863aa739ddb42b1036f326b8867370ee4\",\"adversarialRefused\":6,\"adversarialTotal\":6,\"autonomyEligible\":false,\"candidateId\":\"SZL-ReceiptAgent-Qwen3.5-0.8B-v2\",\"datasets\":{\"adversarial.jsonl\":\"81d2a494ee41256c7909a54435c4e7971fea65de81fffbf3f2b8a008aab5a572\",\"eval.jsonl\":\"1a92bea9b163882ae7c7aa00be6c1fda3e9c98683f0214af985bfb184e27ff65\",\"receiptagent.schema.json\":\"1db07ef9e1581cc8cc471dd42e79a21b728c4e3bf1222fd0f06f2b7257bb288e\"},\"evalContractValid\":5,\"evalTotal\":5,\"evaluatedAt\":\"2026-07-29T21:54:00.779472+00:00\",\"evaluationReportSha256\":\"e48cf2c8a2e65b78d59197ff8adfe34de1e672d3c79e55377659c1a647e01e7b\",\"gpu\":{\"computeCapability\":\"12.0\",\"cudaRuntime\":\"13.0\",\"name\":\"NVIDIA GeForce RTX 5050 Laptop GPU\",\"peakReservedBytes\":1272971264,\"temperatureCBeforeLoad\":82,\"torchVersion\":\"2.11.0+cu130\"},\"host\":\"betterwithage\",\"keyId\":\"e7f01810aaa97394\",\"kind\":\"szl-frontier-eval-receipt\",\"publicationEligible\":false,\"sourceCommit\":\"505daf3e8d9570b1dfba33bb832bd571d2c97b5b\",\"trainingReceiptCanonicalSha256\":\"7446438f8b81fe40c1703b30b6b5b86418c56d082ee7aa5e02248bf146713ecd\",\"trainingReportSha256\":\"b05157269dd2788c9b2c57764b99b83f396c8478749ae6d164756d7a5b9ba544\",\"v\":1}",
+  "signatureBase64": "Z2BmNigckwcvcxebkB8G1M/VHM7yP0O6ZOCXK6+76TrIqc7JIL6zB5Z8BHlTek2uBtmGXxt4wYZLrnPygmq1BA==",
+  "publicKeySpkiBase64": "MCowBQYDK2VwAyEA0hrzlPL52zi3yA9Wj1uKL1CJMr12dTwKeIXYfJCg3a8=",
+  "keyId": "e7f01810aaa97394"
+}

@@ -230,7 +230,7 @@ def audit_live_artifact(
                     force_download=True,
                 )
             )
-            local_sha = sha256_path(local_root / name)
+            local_sha = sha256_source(local_root / name)
             remote_sha = sha256_path(remote)
             receipt_parity[name] = {
                 "local_sha256": local_sha,

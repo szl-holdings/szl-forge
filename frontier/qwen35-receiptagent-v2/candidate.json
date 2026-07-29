@@ -1,7 +1,7 @@
 {
   "schema": "szl.frontier-model-candidate/v1",
   "candidate_id": "SZL-ReceiptAgent-Qwen3.5-0.8B-v2",
-  "state": "MEASURED_EVALUATION_PASSED_RECEIPTS_PENDING",
+  "state": "SIGNED_EVIDENCE_READY_PUBLICATION_PENDING",
   "canonical_base": {
     "repo_id": "Qwen/Qwen3.5-0.8B",
     "revision": "2fc06364715b967f1860aea9cf38778875588b17",
@@ -41,6 +41,7 @@
     "publication_before_all_gates": false
   },
   "measured_evidence": {
+    "source_commit": "505daf3e8d9570b1dfba33bb832bd571d2c97b5b",
     "training_report_sha256": "b05157269dd2788c9b2c57764b99b83f396c8478749ae6d164756d7a5b9ba544",
     "evaluation_report_sha256": "e48cf2c8a2e65b78d59197ff8adfe34de1e672d3c79e55377659c1a647e01e7b",
     "adapter_aggregate_sha256": "286336b01858f598c62e47ee6b71902863aa739ddb42b1036f326b8867370ee4",
@@ -53,6 +54,12 @@
     "adversarial_total": 6,
     "host_gpu": "NVIDIA GeForce RTX 5050 Laptop GPU",
     "claim": "MEASURED"
+  },
+  "signed_evidence": {
+    "key_id": "e7f01810aaa97394",
+    "training_receipt_canonical_sha256": "7446438f8b81fe40c1703b30b6b5b86418c56d082ee7aa5e02248bf146713ecd",
+    "evaluation_receipt_canonical_sha256": "59a1d27fdba0bb9b805319b0b93ea4f2cfdcdf42ce46efdbd18473177eee3ff4",
+    "chain_valid": true
   },
   "autonomy_eligible": false,
   "publication_eligible": false

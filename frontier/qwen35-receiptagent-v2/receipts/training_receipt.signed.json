@@ -1,0 +1,49 @@
+{
+  "payload": {
+    "kind": "szl-frontier-training-receipt",
+    "v": 1,
+    "candidateId": "SZL-ReceiptAgent-Qwen3.5-0.8B-v2",
+    "sourceCommit": "505daf3e8d9570b1dfba33bb832bd571d2c97b5b",
+    "canonicalBase": {
+      "repo_id": "Qwen/Qwen3.5-0.8B",
+      "revision": "2fc06364715b967f1860aea9cf38778875588b17",
+      "license": "apache-2.0"
+    },
+    "trainingImplementation": {
+      "repo_id": "unsloth/Qwen3.5-0.8B",
+      "revision": "23c69c53358a07516b5827588b3fdb12ae78fd65",
+      "license": "apache-2.0",
+      "runtime": "Unsloth FastVisionModel"
+    },
+    "datasets": {
+      "adversarial.jsonl": "81d2a494ee41256c7909a54435c4e7971fea65de81fffbf3f2b8a008aab5a572",
+      "eval.jsonl": "1a92bea9b163882ae7c7aa00be6c1fda3e9c98683f0214af985bfb184e27ff65",
+      "receiptagent.schema.json": "1db07ef9e1581cc8cc471dd42e79a21b728c4e3bf1222fd0f06f2b7257bb288e",
+      "train.jsonl": "775e25b526a96d1486e80aae048f731bdad02a0d94ea76144593e115802fa24f",
+      "train.refusals.jsonl": "c5136b612951c209d1041839d1ac19a8fa378c31015d61dd7565994b4f3e2b47"
+    },
+    "trainingReportSha256": "b05157269dd2788c9b2c57764b99b83f396c8478749ae6d164756d7a5b9ba544",
+    "adapterAggregateSha256": "286336b01858f598c62e47ee6b71902863aa739ddb42b1036f326b8867370ee4",
+    "adapterModelSha256": "f839d83a982c9768cd519604e92bd2be81fcaaa89d4375727e2d81dbf3c70bbb",
+    "optimizerSteps": 64,
+    "trainingRows": 31,
+    "finalTrainLoss": "0.841950323927",
+    "trainedAt": "2026-07-29T21:38:41.144625+00:00",
+    "host": "betterwithage",
+    "gpu": {
+      "name": "NVIDIA GeForce RTX 5050 Laptop GPU",
+      "computeCapability": "12.0",
+      "cudaRuntime": "13.0",
+      "torchVersion": "2.11.0+cu130",
+      "peakReservedBytes": 2204106752,
+      "temperatureCBeforeLoad": 78
+    },
+    "autonomyEligible": false,
+    "publicationEligible": false,
+    "keyId": "e7f01810aaa97394"
+  },
+  "canonical": "{\"adapterAggregateSha256\":\"286336b01858f598c62e47ee6b71902863aa739ddb42b1036f326b8867370ee4\",\"adapterModelSha256\":\"f839d83a982c9768cd519604e92bd2be81fcaaa89d4375727e2d81dbf3c70bbb\",\"autonomyEligible\":false,\"candidateId\":\"SZL-ReceiptAgent-Qwen3.5-0.8B-v2\",\"canonicalBase\":{\"license\":\"apache-2.0\",\"repo_id\":\"Qwen/Qwen3.5-0.8B\",\"revision\":\"2fc06364715b967f1860aea9cf38778875588b17\"},\"datasets\":{\"adversarial.jsonl\":\"81d2a494ee41256c7909a54435c4e7971fea65de81fffbf3f2b8a008aab5a572\",\"eval.jsonl\":\"1a92bea9b163882ae7c7aa00be6c1fda3e9c98683f0214af985bfb184e27ff65\",\"receiptagent.schema.json\":\"1db07ef9e1581cc8cc471dd42e79a21b728c4e3bf1222fd0f06f2b7257bb288e\",\"train.jsonl\":\"775e25b526a96d1486e80aae048f731bdad02a0d94ea76144593e115802fa24f\",\"train.refusals.jsonl\":\"c5136b612951c209d1041839d1ac19a8fa378c31015d61dd7565994b4f3e2b47\"},\"finalTrainLoss\":\"0.841950323927\",\"gpu\":{\"computeCapability\":\"12.0\",\"cudaRuntime\":\"13.0\",\"name\":\"NVIDIA GeForce RTX 5050 Laptop GPU\",\"peakReservedBytes\":2204106752,\"temperatureCBeforeLoad\":78,\"torchVersion\":\"2.11.0+cu130\"},\"host\":\"betterwithage\",\"keyId\":\"e7f01810aaa97394\",\"kind\":\"szl-frontier-training-receipt\",\"optimizerSteps\":64,\"publicationEligible\":false,\"sourceCommit\":\"505daf3e8d9570b1dfba33bb832bd571d2c97b5b\",\"trainedAt\":\"2026-07-29T21:38:41.144625+00:00\",\"trainingImplementation\":{\"license\":\"apache-2.0\",\"repo_id\":\"unsloth/Qwen3.5-0.8B\",\"revision\":\"23c69c53358a07516b5827588b3fdb12ae78fd65\",\"runtime\":\"Unsloth FastVisionModel\"},\"trainingReportSha256\":\"b05157269dd2788c9b2c57764b99b83f396c8478749ae6d164756d7a5b9ba544\",\"trainingRows\":31,\"v\":1}",
+  "signatureBase64": "w8GVCQFeXQJ3ypoDCQMiug2wbgztqDFi9zW8KkXvscomi1XVP5wanIGsurkv+3UjXLG0xH2aNKgyKN+UKrc+BQ==",
+  "publicKeySpkiBase64": "MCowBQYDK2VwAyEA0hrzlPL52zi3yA9Wj1uKL1CJMr12dTwKeIXYfJCg3a8=",
+  "keyId": "e7f01810aaa97394"
+}

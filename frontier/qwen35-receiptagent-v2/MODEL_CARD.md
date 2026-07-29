@@ -83,6 +83,19 @@ The release includes:
 
 Publication is fail-closed until all of those artifacts verify.
 
+The owner-signed evidence chain binds source commit
+`505daf3e8d9570b1dfba33bb832bd571d2c97b5b` to:
+
+- training receipt canonical SHA-256:
+  `7446438f8b81fe40c1703b30b6b5b86418c56d082ee7aa5e02248bf146713ecd`
+- evaluation receipt canonical SHA-256:
+  `59a1d27fdba0bb9b805319b0b93ea4f2cfdcdf42ce46efdbd18473177eee3ff4`
+- Ed25519 key ID: `e7f01810aaa97394`
+
+The evidence chain is valid. Public release eligibility remains false until
+the protected source change merges and the Hugging Face adapter is fetched
+back and independently rehashed.
+
 ## Limitations
 
 - Narrow synthetic curriculum.

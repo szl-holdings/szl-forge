@@ -4,8 +4,12 @@ from __future__ import annotations
 
 import copy
 import json
+import subprocess
+import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
+from unittest import mock
 
 import verify_model_portfolio as verifier
 
@@ -85,6 +89,51 @@ class PortfolioContractTests(unittest.TestCase):
         self.assertEqual(
             "775e25b526a96d1486e80aae048f731bdad02a0d94ea76144593e115802fa24f",
             verifier.sha256_source(path),
+        )
+
+    def test_live_receipt_parity_uses_committed_bytes(self) -> None:
+        artifact = {
+            "repo_id": "SZLHOLDINGS/test-software-kernel",
+            "kind": "software_kernel",
+            "maturity": "SOFTWARE_ARTIFACT",
+            "local_receipt_dir": "receiptagent",
+            "required_files": [],
+            "github_source": "https://github.com/szl-holdings/szl-forge",
+        }
+        info = SimpleNamespace(
+            sha="a" * 40,
+            card_data=SimpleNamespace(license="apache-2.0"),
+            downloads=0,
+            siblings=[],
+        )
+        api = mock.Mock()
+        api.model_info.return_value = info
+        with tempfile.TemporaryDirectory() as directory:
+            remote_files = {}
+            for name in verifier.RECEIPT_FILES:
+                data = subprocess.check_output(
+                    ["git", "show", f"HEAD:receiptagent/{name}"],
+                    cwd=verifier.ROOT,
+                )
+                path = Path(directory) / name
+                path.write_bytes(data)
+                remote_files[name] = str(path)
+
+            def download(*, filename, **_):
+                return remote_files[filename]
+
+            with mock.patch(
+                "huggingface_hub.hf_hub_download",
+                side_effect=download,
+            ):
+                result = verifier.audit_live_artifact(
+                    artifact,
+                    api=api,
+                    weight_extensions=(".safetensors",),
+                )
+        self.assertTrue(result["ok"])
+        self.assertTrue(
+            all(item["matched"] for item in result["receipt_parity"].values())
         )
 
     def test_khipu_limit_is_encoded_from_signed_counts(self) -> None:
