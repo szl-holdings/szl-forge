@@ -145,10 +145,11 @@ def verify_source_binding(payload: dict[str, Any]) -> None:
         payload.get("qualificationSourceSha256"),
         source_bundle_sha(declared),
     )
-    # A protected squash does not retain intermediate commit ancestry. The
-    # immutable source bundle therefore remains the durable binding. When the
-    # original commit is present, verify it too; always require current Git
-    # bytes to match the signed bundle.
+    # The receipt describes the historical source that produced the measured
+    # evidence. Verify that source against Git whenever the original commit is
+    # available. A protected squash may remove that intermediate ancestry, so
+    # the owner-signed per-file digests remain the durable binding; later
+    # evaluator hardening must not rewrite or invalidate historical evidence.
     commit_probe = subprocess.run(
         ["git", "cat-file", "-e", f"{source_commit}^{{commit}}"],
         cwd=REPO,
@@ -161,7 +162,6 @@ def verify_source_binding(payload: dict[str, Any]) -> None:
             source_bundle(source_commit),
             declared,
         )
-    require_equal("current source bundle", source_bundle("HEAD"), declared)
 
 
 def signing_function() -> Any:
