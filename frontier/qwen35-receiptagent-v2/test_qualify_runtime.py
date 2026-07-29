@@ -50,7 +50,7 @@ class QualificationContractTests(unittest.TestCase):
 
     def test_committed_curriculum_matches_manifest(self) -> None:
         digests, rows = training.curriculum_evidence()
-        self.assertEqual(5, len(digests))
+        self.assertEqual(6, len(digests))
         self.assertEqual(37, len(rows))
 
     def test_vlm_conversion_preserves_roles_and_text(self) -> None:

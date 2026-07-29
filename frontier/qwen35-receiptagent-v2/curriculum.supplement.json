@@ -1,0 +1,11 @@
+{
+  "schema": "szl.frontier-curriculum-supplement/v1",
+  "candidate_id": "SZL-ReceiptAgent-Qwen3.5-0.8B-v2",
+  "files": {
+    "train.status-refusals.jsonl": {
+      "kind": "refusal",
+      "rows": 3,
+      "sha256": "96a5518400293913620f0c9bb9aa9a4fa180202b3d5c1bd1ab66a38eb272067d"
+    }
+  }
+}

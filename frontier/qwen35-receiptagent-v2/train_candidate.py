@@ -25,9 +25,13 @@ from qualify_runtime import (
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 MANIFEST_PATH = "receiptagent/manifest.json"
+SUPPLEMENT_MANIFEST_PATH = (
+    "frontier/qwen35-receiptagent-v2/curriculum.supplement.json"
+)
 TRAIN_FILES = (
     "receiptagent/train.jsonl",
     "receiptagent/train.refusals.jsonl",
+    "frontier/qwen35-receiptagent-v2/train.status-refusals.jsonl",
 )
 ALL_CURRICULUM_FILES = (
     "receiptagent/train.jsonl",
@@ -35,6 +39,7 @@ ALL_CURRICULUM_FILES = (
     "receiptagent/train.refusals.jsonl",
     "receiptagent/adversarial.jsonl",
     "receiptagent/receiptagent.schema.json",
+    "frontier/qwen35-receiptagent-v2/train.status-refusals.jsonl",
 )
 REFUSAL_OVERSAMPLE = 2
 
@@ -51,16 +56,30 @@ def committed_bytes(path: str) -> bytes:
 
 def curriculum_evidence() -> tuple[dict[str, str], list[dict[str, Any]]]:
     manifest = json.loads(committed_bytes(MANIFEST_PATH))
+    supplement = json.loads(committed_bytes(SUPPLEMENT_MANIFEST_PATH))
     digests: dict[str, str] = {}
     for path in ALL_CURRICULUM_FILES:
         data = committed_bytes(path)
         digest = hashlib.sha256(data).hexdigest()
         name = Path(path).name
-        declared = manifest.get("files", {}).get(name, {}).get("sha256")
+        declarations = (
+            supplement.get("files", {})
+            if path.startswith("frontier/")
+            else manifest.get("files", {})
+        )
+        entry = declarations.get(name, {})
+        declared = entry.get("sha256")
         if digest != declared:
             raise QualificationError(
                 f"committed {name} digest {digest} != manifest {declared}"
             )
+        if path.endswith(".jsonl"):
+            rows = sum(1 for line in data.splitlines() if line.strip())
+            if rows != entry.get("rows"):
+                raise QualificationError(
+                    f"committed {name} rows {rows} != manifest "
+                    f"{entry.get('rows')}"
+                )
         digests[name] = digest
 
     rows: list[dict[str, Any]] = []
@@ -70,7 +89,7 @@ def curriculum_evidence() -> tuple[dict[str, str], list[dict[str, Any]]]:
             for line in committed_bytes(path).decode("utf-8").splitlines()
             if line.strip()
         ]
-        repeats = REFUSAL_OVERSAMPLE if path.endswith("train.refusals.jsonl") else 1
+        repeats = REFUSAL_OVERSAMPLE if path.endswith("refusals.jsonl") else 1
         for _ in range(repeats):
             rows.extend(parsed)
     if not rows:
