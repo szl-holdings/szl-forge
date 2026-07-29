@@ -3,17 +3,17 @@
     "kind": "szl-frontier-eval-receipt",
     "v": 1,
     "candidateId": "SZL-ReceiptAgent-Qwen3.5-0.8B-v2",
-    "sourceCommit": "505daf3e8d9570b1dfba33bb832bd571d2c97b5b",
+    "sourceCommit": "2a5f9cd98503923a49c34e4ef3d3f92e40ca1386",
     "qualificationSource": {
       "frontier/qwen35-receiptagent-v2/qualify_runtime.py": "b367603958ce361a1fdc621b4defea6fbe47df73fc28b348f391333e1beba35c",
-      "frontier/qwen35-receiptagent-v2/train_candidate.py": "f67891a3feac1da03a5470ffbb711266d97c255da9b9a3fd3016237efd0259f0",
-      "frontier/qwen35-receiptagent-v2/evaluate_candidate.py": "c8a272cf5b4c749c3af8754eb4872f0c6e7f3d0aacea3bd9b662ca392c068807"
+      "frontier/qwen35-receiptagent-v2/train_candidate.py": "f44ce47882d2f0f9d859e903e67773defa1b31dce738c2aa2ceda5a580dd34c5",
+      "frontier/qwen35-receiptagent-v2/evaluate_candidate.py": "cd91c84b549696d7afb6918bca4a3a52e15121afb59c1d398698ef74e6ac66e2"
     },
-    "qualificationSourceSha256": "ea4f5717edc1abbe16fe622fb8a9f34fc931784fae7fd9e9b3b81ceeef7e5998",
-    "trainingReceiptCanonicalSha256": "b158cff6d81401b991f20d9f1226747c62a4e75526f88d484cd6800f102fd67f",
-    "trainingReportSha256": "b05157269dd2788c9b2c57764b99b83f396c8478749ae6d164756d7a5b9ba544",
-    "evaluationReportSha256": "e48cf2c8a2e65b78d59197ff8adfe34de1e672d3c79e55377659c1a647e01e7b",
-    "adapterAggregateSha256": "286336b01858f598c62e47ee6b71902863aa739ddb42b1036f326b8867370ee4",
+    "qualificationSourceSha256": "b7b0eb703062981636d7cca41ed9ecaa8ca87a0ba51bd515cca721a6df0f5f8a",
+    "trainingReceiptCanonicalSha256": "8c5e74892b8a9933ffea074f92b7081f360634a1e8397a249f07a3efd06ca433",
+    "trainingReportSha256": "1d1ce062e76aeccabe75fabb2c74d8bdddfc6f9a86f13c5cfd9960e9e5821f38",
+    "evaluationReportSha256": "0852fe55716da7b5fddf2340a00dd632c34d551096c685bd84923eb164f2a420",
+    "adapterAggregateSha256": "dde649ca3166881b675a3db093ee273c6186e3d8e801c8491fac0a2da03e58f7",
     "datasets": {
       "adversarial.jsonl": "81d2a494ee41256c7909a54435c4e7971fea65de81fffbf3f2b8a008aab5a572",
       "eval.jsonl": "1a92bea9b163882ae7c7aa00be6c1fda3e9c98683f0214af985bfb184e27ff65",
@@ -23,23 +23,23 @@
     "evalContractValid": 5,
     "adversarialTotal": 6,
     "adversarialRefused": 6,
-    "evaluatedAt": "2026-07-29T21:54:00.779472+00:00",
+    "evaluatedAt": "2026-07-29T23:27:45.189496+00:00",
     "host": "betterwithage",
     "gpu": {
       "name": "NVIDIA GeForce RTX 5050 Laptop GPU",
       "computeCapability": "12.0",
       "cudaRuntime": "13.0",
       "torchVersion": "2.11.0+cu130",
-      "peakReservedBytes": 1272971264,
-      "temperatureCBeforeLoad": 82
+      "peakReservedBytes": 1004535808,
+      "temperatureCBeforeLoad": 74
     },
     "acceptancePassed": true,
     "autonomyEligible": false,
     "publicationEligible": false,
     "keyId": "e7f01810aaa97394"
   },
-  "canonical": "{\"acceptancePassed\":true,\"adapterAggregateSha256\":\"286336b01858f598c62e47ee6b71902863aa739ddb42b1036f326b8867370ee4\",\"adversarialRefused\":6,\"adversarialTotal\":6,\"autonomyEligible\":false,\"candidateId\":\"SZL-ReceiptAgent-Qwen3.5-0.8B-v2\",\"datasets\":{\"adversarial.jsonl\":\"81d2a494ee41256c7909a54435c4e7971fea65de81fffbf3f2b8a008aab5a572\",\"eval.jsonl\":\"1a92bea9b163882ae7c7aa00be6c1fda3e9c98683f0214af985bfb184e27ff65\",\"receiptagent.schema.json\":\"1db07ef9e1581cc8cc471dd42e79a21b728c4e3bf1222fd0f06f2b7257bb288e\"},\"evalContractValid\":5,\"evalTotal\":5,\"evaluatedAt\":\"2026-07-29T21:54:00.779472+00:00\",\"evaluationReportSha256\":\"e48cf2c8a2e65b78d59197ff8adfe34de1e672d3c79e55377659c1a647e01e7b\",\"gpu\":{\"computeCapability\":\"12.0\",\"cudaRuntime\":\"13.0\",\"name\":\"NVIDIA GeForce RTX 5050 Laptop GPU\",\"peakReservedBytes\":1272971264,\"temperatureCBeforeLoad\":82,\"torchVersion\":\"2.11.0+cu130\"},\"host\":\"betterwithage\",\"keyId\":\"e7f01810aaa97394\",\"kind\":\"szl-frontier-eval-receipt\",\"publicationEligible\":false,\"qualificationSource\":{\"frontier/qwen35-receiptagent-v2/evaluate_candidate.py\":\"c8a272cf5b4c749c3af8754eb4872f0c6e7f3d0aacea3bd9b662ca392c068807\",\"frontier/qwen35-receiptagent-v2/qualify_runtime.py\":\"b367603958ce361a1fdc621b4defea6fbe47df73fc28b348f391333e1beba35c\",\"frontier/qwen35-receiptagent-v2/train_candidate.py\":\"f67891a3feac1da03a5470ffbb711266d97c255da9b9a3fd3016237efd0259f0\"},\"qualificationSourceSha256\":\"ea4f5717edc1abbe16fe622fb8a9f34fc931784fae7fd9e9b3b81ceeef7e5998\",\"sourceCommit\":\"505daf3e8d9570b1dfba33bb832bd571d2c97b5b\",\"trainingReceiptCanonicalSha256\":\"b158cff6d81401b991f20d9f1226747c62a4e75526f88d484cd6800f102fd67f\",\"trainingReportSha256\":\"b05157269dd2788c9b2c57764b99b83f396c8478749ae6d164756d7a5b9ba544\",\"v\":1}",
-  "signatureBase64": "k+Q9TnRM4FkvMQLa6akq2j9toZPd6+9y2uIhlZuMHVdm5QrA4Xi3RvFsnckeNv27dXWLCC0a/eDM/RimvCU9CA==",
+  "canonical": "{\"acceptancePassed\":true,\"adapterAggregateSha256\":\"dde649ca3166881b675a3db093ee273c6186e3d8e801c8491fac0a2da03e58f7\",\"adversarialRefused\":6,\"adversarialTotal\":6,\"autonomyEligible\":false,\"candidateId\":\"SZL-ReceiptAgent-Qwen3.5-0.8B-v2\",\"datasets\":{\"adversarial.jsonl\":\"81d2a494ee41256c7909a54435c4e7971fea65de81fffbf3f2b8a008aab5a572\",\"eval.jsonl\":\"1a92bea9b163882ae7c7aa00be6c1fda3e9c98683f0214af985bfb184e27ff65\",\"receiptagent.schema.json\":\"1db07ef9e1581cc8cc471dd42e79a21b728c4e3bf1222fd0f06f2b7257bb288e\"},\"evalContractValid\":5,\"evalTotal\":5,\"evaluatedAt\":\"2026-07-29T23:27:45.189496+00:00\",\"evaluationReportSha256\":\"0852fe55716da7b5fddf2340a00dd632c34d551096c685bd84923eb164f2a420\",\"gpu\":{\"computeCapability\":\"12.0\",\"cudaRuntime\":\"13.0\",\"name\":\"NVIDIA GeForce RTX 5050 Laptop GPU\",\"peakReservedBytes\":1004535808,\"temperatureCBeforeLoad\":74,\"torchVersion\":\"2.11.0+cu130\"},\"host\":\"betterwithage\",\"keyId\":\"e7f01810aaa97394\",\"kind\":\"szl-frontier-eval-receipt\",\"publicationEligible\":false,\"qualificationSource\":{\"frontier/qwen35-receiptagent-v2/evaluate_candidate.py\":\"cd91c84b549696d7afb6918bca4a3a52e15121afb59c1d398698ef74e6ac66e2\",\"frontier/qwen35-receiptagent-v2/qualify_runtime.py\":\"b367603958ce361a1fdc621b4defea6fbe47df73fc28b348f391333e1beba35c\",\"frontier/qwen35-receiptagent-v2/train_candidate.py\":\"f44ce47882d2f0f9d859e903e67773defa1b31dce738c2aa2ceda5a580dd34c5\"},\"qualificationSourceSha256\":\"b7b0eb703062981636d7cca41ed9ecaa8ca87a0ba51bd515cca721a6df0f5f8a\",\"sourceCommit\":\"2a5f9cd98503923a49c34e4ef3d3f92e40ca1386\",\"trainingReceiptCanonicalSha256\":\"8c5e74892b8a9933ffea074f92b7081f360634a1e8397a249f07a3efd06ca433\",\"trainingReportSha256\":\"1d1ce062e76aeccabe75fabb2c74d8bdddfc6f9a86f13c5cfd9960e9e5821f38\",\"v\":1}",
+  "signatureBase64": "0pEDEqVWzny00W/+DD9TuRaUnjIezgormXkWa8+1G5CzNPz2OnepATppuDL5OUgkKhesQ3WKxPJh8qezzR4GBA==",
   "publicKeySpkiBase64": "MCowBQYDK2VwAyEA0hrzlPL52zi3yA9Wj1uKL1CJMr12dTwKeIXYfJCg3a8=",
   "keyId": "e7f01810aaa97394"
 }
