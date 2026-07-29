@@ -1,7 +1,7 @@
 {
   "schema": "szl.frontier-model-candidate/v1",
   "candidate_id": "SZL-ReceiptAgent-Qwen3.5-0.8B-v2",
-  "state": "SIGNED_EVIDENCE_READY_PUBLICATION_PENDING",
+  "state": "PUBLISHED_AND_REVERIFIED",
   "canonical_base": {
     "repo_id": "Qwen/Qwen3.5-0.8B",
     "revision": "2fc06364715b967f1860aea9cf38778875588b17",
@@ -63,6 +63,13 @@
     "evaluation_receipt_canonical_sha256": "f3b79e4b3aed7359c56ad33b72c7c4f6a4a517166d097a220fa8f3d3fa5402ff",
     "chain_valid": true
   },
+  "publication_evidence": {
+    "repo_id": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2",
+    "url": "https://huggingface.co/SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2",
+    "release_revision": "7a0d9efdebe92ea3b5b26b97cc722c6b5afde621",
+    "github_merged_source": "1973b86c3db066fd065ec974594aabfe0ac32099",
+    "publication_receipt_canonical_sha256": "51444e7a8d6a6556ec848641620fbbea6b47e8363254aaf50d4ccdd38d6210cc"
+  },
   "autonomy_eligible": false,
-  "publication_eligible": false
+  "publication_eligible": true
 }

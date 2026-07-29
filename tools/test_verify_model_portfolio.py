@@ -23,8 +23,8 @@ class PortfolioContractTests(unittest.TestCase):
 
     def test_portfolio_names_every_public_model_repository_once(self) -> None:
         repo_ids = verifier.validate_portfolio(self.document)
-        self.assertEqual(15, len(repo_ids))
-        self.assertEqual(15, len(set(repo_ids)))
+        self.assertEqual(16, len(repo_ids))
+        self.assertEqual(16, len(set(repo_ids)))
 
     def test_forge_lab_renders_the_exact_canonical_portfolio(self) -> None:
         self.assertEqual(
@@ -51,11 +51,30 @@ class PortfolioContractTests(unittest.TestCase):
         self.assertEqual(
             {
                 "SZLHOLDINGS/SZL-Forge-1.5B-ReceiptAgent",
+                "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2",
                 "SZLHOLDINGS/SZL-Khipu-1.5B",
                 "SZLHOLDINGS/SZL-Khipu-1.5B-GGUF",
                 "SZLHOLDINGS/szl-lambda-gate",
             },
             weighted,
+        )
+
+    def test_qwen35_release_pins_hub_revision_and_weight_digest(self) -> None:
+        item = next(
+            entry
+            for entry in self.document["artifacts"]
+            if entry["repo_id"]
+            == "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2"
+        )
+        self.assertEqual(40, len(item["hub_revision"]))
+        self.assertEqual(
+            {
+                "adapter_model.safetensors": (
+                    "885fc29fcb4cf55c280dc085fdb0a40f40d6b946"
+                    "fee400dd5e4ed3459fe6334f"
+                )
+            },
+            item["expected_weight_sha256"],
         )
 
     def test_no_artifact_is_marked_autonomy_eligible(self) -> None:
@@ -74,6 +93,48 @@ class PortfolioContractTests(unittest.TestCase):
         changed["artifacts"][0]["autonomy_eligible"] = True
         with self.assertRaises(verifier.PortfolioError):
             verifier.validate_portfolio(changed)
+
+    def test_live_audit_fails_closed_on_revision_or_weight_drift(self) -> None:
+        artifact = {
+            "repo_id": "SZLHOLDINGS/pinned-test",
+            "kind": "trained_model",
+            "maturity": "MEASURED_PUBLISHED_LIMITED",
+            "autonomy_eligible": False,
+            "hub_revision": "a" * 40,
+            "expected_weight_sha256": {
+                "adapter_model.safetensors": "b" * 64,
+            },
+            "required_files": ["adapter_model.safetensors"],
+            "github_source": "https://github.com/szl-holdings/szl-forge",
+        }
+        info = SimpleNamespace(
+            sha="c" * 40,
+            card_data=SimpleNamespace(license="apache-2.0"),
+            downloads=0,
+            siblings=[
+                SimpleNamespace(
+                    rfilename="adapter_model.safetensors",
+                    size=100,
+                    lfs={"sha256": "d" * 64},
+                )
+            ],
+        )
+        api = mock.Mock()
+        api.model_info.return_value = info
+        result = verifier.audit_live_artifact(
+            artifact,
+            api=api,
+            weight_extensions=(".safetensors",),
+        )
+        self.assertFalse(result["ok"])
+        self.assertTrue(
+            any("differs from pin" in error for error in result["errors"])
+        )
+        api.model_info.assert_called_once_with(
+            artifact["repo_id"],
+            files_metadata=True,
+            revision=artifact["hub_revision"],
+        )
 
     def test_local_signed_receipts_and_dataset_hashes_verify(self) -> None:
         for relative in ("receiptagent", "khipu"):

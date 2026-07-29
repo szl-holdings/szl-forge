@@ -16,29 +16,40 @@ HERE = Path(__file__).resolve().parent
 
 
 class QualificationContractTests(unittest.TestCase):
-    def test_candidate_is_pinned_and_fail_closed(self) -> None:
+    def test_candidate_is_pinned_published_and_still_non_autonomous(self) -> None:
         candidate = qualification.load_candidate(HERE / "candidate.json")
         self.assertEqual(40, len(candidate["canonical_base"]["revision"]))
         self.assertEqual(
             40,
             len(candidate["training_implementation"]["revision"]),
         )
-        self.assertIs(candidate["publication_eligible"], False)
+        self.assertIs(candidate["publication_eligible"], True)
+        self.assertEqual("PUBLISHED_AND_REVERIFIED", candidate["state"])
         self.assertIs(candidate["autonomy_eligible"], False)
 
     def test_candidate_rejects_premature_publication(self) -> None:
         candidate = json.loads(
             (HERE / "candidate.json").read_text(encoding="utf-8")
         )
-        candidate["publication_eligible"] = True
+        candidate["state"] = "SIGNED_EVIDENCE_READY_PUBLICATION_PENDING"
+        candidate.pop("publication_evidence", None)
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "candidate.json"
             path.write_text(json.dumps(candidate), encoding="utf-8")
             with self.assertRaisesRegex(
                 qualification.QualificationError,
-                "cannot be publishable",
+                "lacks complete immutable publication evidence",
             ):
                 qualification.load_candidate(path)
+
+    def test_publication_receipt_is_in_the_verified_chain(self) -> None:
+        result = evidence.verify_chain()
+        self.assertTrue(result["publication_eligible"])
+        self.assertFalse(result["autonomy_eligible"])
+        self.assertEqual(
+            "51444e7a8d6a6556ec848641620fbbea6b47e8363254aaf50d4ccdd38d6210cc",
+            result["publication_receipt_canonical_sha256"],
+        )
 
     def test_report_digest_is_stable(self) -> None:
         first = {"b": 2, "a": [1, True]}

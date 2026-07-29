@@ -42,7 +42,7 @@ class StaticForgeContractTests(unittest.TestCase):
             (ROOT / "model_portfolio.json").read_text(encoding="utf-8")
         )
         kinds = [item["kind"] for item in portfolio["artifacts"]]
-        self.assertEqual(2, kinds.count("trained_model"))
+        self.assertEqual(3, kinds.count("trained_model"))
         self.assertEqual(1, kinds.count("quantized_model"))
         self.assertEqual(1, kinds.count("learned_kernel"))
         self.assertEqual(11, kinds.count("software_kernel"))

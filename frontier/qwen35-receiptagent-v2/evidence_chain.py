@@ -27,6 +27,8 @@ OWNER_PUBLIC_KEY = REPO / "receiptagent" / "owner_pubkey.json"
 SIGNER_DIR = REPO / "receiptagent"
 TRAINING_RECEIPT = RECEIPTS / "training_receipt.signed.json"
 EVALUATION_RECEIPT = RECEIPTS / "eval_receipt.signed.json"
+PUBLICATION_RECEIPT = RECEIPTS / "publication_receipt.signed.json"
+PUBLICATION_EVIDENCE = HERE / "publication.json"
 SOURCE_COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 QUALIFICATION_SOURCE_FILES = (
     "frontier/qwen35-receiptagent-v2/qualify_runtime.py",
@@ -423,13 +425,135 @@ def verify_chain() -> dict[str, Any]:
         eval_payload.get("adversarialTotal"),
         counts["adversarial_total"],
     )
+    publication_eligible = candidate.get("publication_eligible")
+    publication_receipt_sha = None
+    if publication_eligible is True:
+        require_equal(
+            "published candidate state",
+            candidate.get("state"),
+            "PUBLISHED_AND_REVERIFIED",
+        )
+        publication = load_json(PUBLICATION_EVIDENCE)
+        publication_receipt = load_json(PUBLICATION_RECEIPT)
+        publication_receipt_sha = verify_wrapper(
+            publication_receipt,
+            owner_key,
+            "publication receipt",
+        )
+        require_equal(
+            "publication signed payload",
+            publication_receipt.get("payload"),
+            publication,
+        )
+        require_equal(
+            "publication schema",
+            publication.get("schema"),
+            "szl.frontier-hf-publication/v1",
+        )
+        require_equal(
+            "publication candidate id",
+            publication.get("candidateId"),
+            candidate["candidate_id"],
+        )
+        require_equal(
+            "publication evidence state",
+            publication.get("state"),
+            "MEASURED_HF_READBACK_VERIFIED",
+        )
+        require_equal(
+            "publication signature chain",
+            publication.get("evidence", {}).get("signatureChainValid"),
+            True,
+        )
+        require_equal(
+            "publication dataset binding",
+            publication.get("evidence", {}).get("datasetBindingValid"),
+            True,
+        )
+        require_equal(
+            "publication byte readback",
+            publication.get("evidence", {}).get("immutableByteReadbackValid"),
+            True,
+        )
+        require_equal(
+            "publication adapter hash",
+            publication.get("evidence", {}).get("adapterModelSha256"),
+            candidate["measured_evidence"]["adapter_model_sha256"],
+        )
+        require_equal(
+            "publication training receipt",
+            publication.get("evidence", {}).get(
+                "trainingReceiptCanonicalSha256"
+            ),
+            training_sha,
+        )
+        require_equal(
+            "publication evaluation receipt",
+            publication.get("evidence", {}).get(
+                "evaluationReceiptCanonicalSha256"
+            ),
+            evaluation_sha,
+        )
+        candidate_publication = candidate.get("publication_evidence", {})
+        require_equal(
+            "publication repo",
+            publication.get("repository", {}).get("repoId"),
+            candidate_publication.get("repo_id"),
+        )
+        require_equal(
+            "publication revision",
+            publication.get("repository", {}).get("releaseRevision"),
+            candidate_publication.get("release_revision"),
+        )
+        require_equal(
+            "publication merged source",
+            publication.get("source", {}).get("mergedCommit"),
+            candidate_publication.get("github_merged_source"),
+        )
+        require_equal(
+            "publication receipt identity",
+            candidate_publication.get(
+                "publication_receipt_canonical_sha256"
+            ),
+            publication_receipt_sha,
+        )
+        require_equal(
+            "publication inference repo",
+            publication.get("immutableGpuInference", {}).get("repoId"),
+            candidate_publication.get("repo_id"),
+        )
+        require_equal(
+            "publication inference revision",
+            publication.get("immutableGpuInference", {}).get("revision"),
+            candidate_publication.get("release_revision"),
+        )
+        require_equal(
+            "publication refusal observation",
+            publication.get("immutableGpuInference", {}).get(
+                "refusalPrefixObserved"
+            ),
+            True,
+        )
+        require_equal(
+            "publication eligibility",
+            publication.get("publicationEligible"),
+            True,
+        )
+        require_equal(
+            "publication autonomy",
+            publication.get("autonomyEligible"),
+            False,
+        )
+    elif publication_eligible is not False:
+        raise EvidenceError("candidate publication flag must be boolean")
     return {
         "candidate_id": candidate["candidate_id"],
         "key_id": owner_key["keyId"],
         "training_receipt_canonical_sha256": training_sha,
         "evaluation_receipt_canonical_sha256": evaluation_sha,
         "chain_valid": True,
-        "publication_eligible": False,
+        "publication_receipt_canonical_sha256": publication_receipt_sha,
+        "publication_eligible": publication_eligible,
         "autonomy_eligible": False,
     }
 
