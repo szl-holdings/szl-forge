@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%23070f20'/%3E%3Cpath d='M14 16h36v32H14z' fill='none' stroke='%232cf5c4' stroke-width='4'/%3E%3Ctext x='32' y='39' text-anchor='middle' font-family='monospace' font-size='18' font-weight='700' fill='%232cf5c4'%3ESZL%3C/text%3E%3C/svg%3E">
+<meta name="description" content="SZL Forge Lab — a provenance-first evidence console. Every packaged artifact is re-hashed and every receipt re-verified in your browser.">
+<title>SZL Forge Lab — evidence kernel</title>
+<style>
+:root{--bg:#060D1F;--panel:#0B1F3A;--panel2:#0A1830;--teal:#3AF4C8;--gold:#C9B787;--ink:#E8D9AE;--txt:#DCE7F5;--muted:#8FA3BF;--red:#F46A6A;--line:rgba(58,244,200,.18)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+a{color:var(--teal)}
+main{max-width:1160px;margin:0 auto;padding:0 20px 60px}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;max-width:1160px;margin:0 auto;padding:18px 20px;border-bottom:1px solid var(--line)}
+.wordmark{color:var(--ink);text-decoration:none;font-weight:700;letter-spacing:.12em}
+.wordmark .mark{color:var(--teal);border:1px solid var(--teal);padding:2px 7px;border-radius:4px;margin-right:8px}
+.toplinks a{color:var(--muted);text-decoration:none;margin-left:16px;font-size:13px}
+.toplinks a:hover{color:var(--teal)}
+.eyebrow{color:var(--gold);letter-spacing:.22em;font-size:11px;margin:42px 0 10px;text-transform:uppercase}
+.eyebrow .pulse{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--teal);box-shadow:0 0 12px var(--teal);margin-right:8px;animation:p 2s infinite}
+@keyframes p{50%{opacity:.35}}
+h1{font-size:clamp(1.9rem,4.5vw,3rem);line-height:1.08;letter-spacing:-.03em;color:#F3FFFC;margin:0 0 12px}
+h1 span{color:var(--teal)}
+.lede{color:var(--muted);max-width:800px;margin:0 0 22px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin:0 0 20px}
+.stats div{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:14px}
+.stats strong{display:block;font-size:19px;color:var(--teal);overflow-wrap:anywhere}
+.stats span{font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+section{margin:36px 0}
+.kicker{color:var(--gold);font-size:11px;letter-spacing:.2em;text-transform:uppercase;margin:0 0 6px}
+h2{color:#F3FFFC;font-size:1.25rem;margin:0 0 14px}
+.panel{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:18px}
+pre{background:#050B18;border:1px solid var(--line);border-radius:8px;padding:14px;overflow:auto;font-size:12px;color:#BFE8DC;max-height:420px}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+td,th{border-bottom:1px solid rgba(143,163,191,.15);padding:7px 8px;text-align:left;vertical-align:top}
+th{color:var(--gold);font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+.st{font-weight:700;letter-spacing:.08em;font-size:12px}
+.st.pass{color:var(--teal)} .st.fail{color:var(--red)} .st.warn{color:var(--gold)} .st.wait{color:var(--muted)}
+.note{border-left:3px solid var(--gold);background:rgba(201,183,135,.06);color:var(--ink);padding:10px 14px;font-size:13px;margin:14px 0}
+input,select{background:#050B18;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:9px 12px;font:inherit;margin:0 8px 8px 0}
+input:focus,select:focus{outline:1px solid var(--teal)}
+.vband{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:6px}
+.vcheck{border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--panel2);font-size:13px}
+.portfolio{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:10px}
+.asset{border:1px solid var(--line);border-radius:10px;padding:14px;background:var(--panel2);min-width:0}
+.asset h3{font-size:13px;margin:0 0 6px;color:#F3FFFC;overflow-wrap:anywhere}
+.asset p{font-size:12px;color:var(--muted);margin:4px 0}
+.badge{display:inline-block;border:1px solid currentColor;border-radius:999px;padding:2px 7px;font-size:10px;letter-spacing:.08em;text-transform:uppercase}
+.badge.model{color:var(--teal)}.badge.kernel{color:var(--gold)}.badge.bound{color:#8fb8ff}
+code{overflow-wrap:anywhere}
+footer{border-top:1px solid var(--line);color:var(--muted);font-size:12.5px;padding:22px 20px;max-width:1160px;margin:40px auto 0}
+.scroll{overflow-x:auto}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a class="wordmark" href="./"><span class="mark">SZL</span>FORGE LAB</a>
+  <nav class="toplinks">
+    <a href="https://github.com/szl-holdings/szl-forge" target="_blank" rel="noopener">Forge program</a>
+    <a href="https://huggingface.co/spaces/SZLHOLDINGS/szl-forge-lab/tree/main" target="_blank" rel="noopener">Evidence files</a>
+    <a href="https://huggingface.co/SZLHOLDINGS" target="_blank" rel="noopener">SZLHOLDINGS</a>
+  </nav>
+</header>
+<main>
+<section>
+  <p class="eyebrow"><span class="pulse"></span> EVIDENCE KERNEL · READ-ONLY SNAPSHOT</p>
+  <h1>Don&rsquo;t read the claims.<br><span>Re-hash the evidence.</span></h1>
+  <p class="lede">A provenance-first console over the SZL Forge snapshot: run manifest, deterministic evaluation receipts, formula registry, governed source ledger, and curriculum. Your browser fetches the packaged artifacts, <b>recomputes their SHA-256 against the manifest declarations</b>, and re-verifies each receipt&rsquo;s canonical hash — live, on every load.</p>
+  <div class="stats" id="metrics"></div>
+  <p class="note"><b>Evidence boundary.</b> Two published fine-tunes, one GGUF derivative, and one learned kernel contain weight bytes. Eleven additional Hub entries are software kernels, recipes, or cards—not trained models. Signed receipts prove declared-key integrity; they do not establish independent quality, safety, or authorship.</p>
+</section>
+
+<section>
+  <p class="kicker">01 · MODEL / KERNEL PORTFOLIO</p>
+  <h2>What is weighted, what is software, and what is still bounded</h2>
+  <div class="stats" id="portfolio-metrics"></div>
+  <div class="portfolio" id="portfolio"></div>
+</section>
+
+<section>
+  <p class="kicker">02 · INTEGRITY — RECOMPUTED HERE</p>
+  <h2>Manifest-to-Space byte checks</h2>
+  <div class="vband" id="rband">
+    <div class="vcheck"><span class="st wait" id="r-man">WAITING</span> — <code>run_manifest.json</code> receipt hash (SHA-256 over canonical JSON minus <code>receipt_sha256</code>)</div>
+    <div class="vcheck"><span class="st wait" id="r-eval">WAITING</span> — <code>eval_receipt.json</code> receipt hash, same rule</div>
+    <div class="vcheck"><span class="st wait" id="r-files">WAITING</span> — packaged artifacts re-hashed vs manifest declarations</div>
+  </div>
+  <div class="panel scroll" style="margin-top:12px"><table id="integrity"><tr><th>Declared input</th><th>Packaged here as</th><th>State</th><th>Expected SHA-256</th><th>Recomputed in this browser</th></tr></table>
+  <p style="font-size:12.5px;color:var(--muted);margin:10px 0 0">A matching hash proves byte identity only. Inputs marked NOT&nbsp;PACKAGED live on the owner&rsquo;s training host and are intentionally not shipped (e.g. training data) — their absence is stated, not hidden.</p></div>
+</section>
+
+<section>
+  <p class="kicker">03 · EVALUATION</p>
+  <h2>Deterministic fixture checks — scoped, not a benchmark</h2>
+  <div class="panel scroll">
+    <p style="font-size:13px;color:var(--muted);margin:0 0 10px" id="eval-summary">loading…</p>
+    <table id="eval"><tr><th>Case</th><th>Category</th><th>Result</th><th>Response SHA-256</th></tr></table>
+  </div>
+</section>
+
+<section>
+  <p class="kicker">04 · FORMULA REGISTRY</p>
+  <h2>Search the packaged formula index</h2>
+  <div class="panel">
+    <input id="fq" placeholder="search id / title / theorem…" style="min-width:260px">
+    <select id="fs"><option value="ALL">ALL statuses</option></select>
+    <div class="scroll" style="margin-top:8px"><table id="formulas"></table></div>
+    <p style="font-size:12.5px;color:var(--muted);margin:10px 0 0">Statuses are declarations from the packaged registry. This page does not execute Lean and never elevates a formula to proven.</p>
+  </div>
+</section>
+
+<section>
+  <p class="kicker">05 · SOURCE LEDGER</p>
+  <h2>Default-deny scientific source governance</h2>
+  <div class="panel">
+    <select id="sd"><option value="ALL">ALL domains</option></select>
+    <select id="sdec"><option value="ALL">ALL decisions</option></select>
+    <div class="scroll" style="margin-top:8px"><table id="sources"></table></div>
+  </div>
+</section>
+
+<section>
+  <p class="kicker">06 · CURRICULUM</p>
+  <h2>Governed curriculum blueprint — not a training claim</h2>
+  <div class="panel scroll"><table id="curr"></table></div>
+</section>
+
+<section>
+  <p class="kicker">07 · RAW EVIDENCE</p>
+  <h2>Verify from outside this page</h2>
+  <pre># every artifact this page rendered, hash it yourself:
+for f in run_manifest.json eval_receipt.json training_summary.json thesis_formula_index.json science_source_ledger.json curriculum.json; do
+  curl -sL https://huggingface.co/spaces/SZLHOLDINGS/szl-forge-lab/resolve/main/$f | sha256sum
+done</pre>
+</section>
+</main>
+<footer>
+  <p><b>Doctrine:</b> configuration is not evidence of completed training. Formula analysis is advisory unless an independent formal checker passes. Λ = Conjecture 1 — never a theorem. A hash match proves byte identity, not truth.</p>
+  <p><a href="https://github.com/szl-holdings/szl-forge">szl-forge</a> · <a href="https://a-11-oy.com">a-11-oy.com</a> · <a href="https://huggingface.co/SZLHOLDINGS">SZLHOLDINGS</a> · Apache-2.0</p>
+</footer>
+
+<!-- SZL-FOURTH-WALL:v1:START — this page proves itself to the visitor. Integrity & origin only. -->
+<section id="fourth-wall" style="background:#060D1F;border-top:1px solid #C9B787;padding:14px 20px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:#8FA3BF;line-height:1.7">
+  <div style="max-width:960px;margin:0 auto">
+    <span style="color:#C9B787;letter-spacing:2px">⟨ 4TH WALL ⟩</span>
+    <span> You are reading rendered bytes. Don&rsquo;t trust them — hash them:</span>
+    <button id="fw-hash-btn" style="margin-left:8px;background:transparent;border:1px solid #3AF4C8;color:#3AF4C8;padding:2px 10px;border-radius:3px;font:inherit;cursor:pointer">hash this page</button>
+    <span id="fw-hash-out" style="color:#3AF4C8;word-break:break-all"></span>
+    <div style="margin-top:6px">canonical source: <a href="https://huggingface.co/spaces/SZLHOLDINGS/szl-forge-lab/tree/main" style="color:#C9B787">SZLHOLDINGS/szl-forge-lab</a><span id="fw-rev"></span> · verify from outside:
+      <code style="color:#E8D9AE;background:#0B1F3A;padding:1px 6px;border-radius:3px">curl -sL https://huggingface.co/spaces/SZLHOLDINGS/szl-forge-lab/resolve/main/index.html | sha256sum</code>
+    </div>
+    <div style="margin-top:4px;color:#5c6f8a">Integrity &amp; origin of this page only — never the accuracy of anything on it. Hugging Face may inject one <code>window.huggingface</code> <code>&lt;script&gt;</code> into <code>&lt;head&gt;</code>, so the in-browser hash can differ from the source hash by exactly that banner. Doctrine v11.</div>
+  </div>
+</section>
+<!-- SZL-FOURTH-WALL:v1:END -->
+
+<script>
+"use strict";
+const te=new TextEncoder();
+const hex=b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,"0")).join("");
+const sha256hex=async b=>hex(await crypto.subtle.digest("SHA-256",b));
+const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
+const setSt=(id,ok,txt)=>{const e=document.getElementById(id);e.className="st "+(ok===true?"pass":ok==="warn"?"warn":"fail");e.textContent=txt||(ok===true?"PASS":"FAIL");};
+
+/* Canonical JSON matching Python json.dumps(sort_keys=True,separators=(",",":"),ensure_ascii=False),
+   preserving the file's own number literals via a raw-token parser (JS floats would reformat 1.0 -> 1). */
+function canonicalFromText(text){
+ let i=0;
+ function ws(){while(i<text.length&&" \t\n\r".includes(text[i]))i++;}
+ function parse(){ws();const c=text[i];
+  if(c==="{"){i++;const kv=[];ws();
+   if(text[i]==="}"){i++;return{t:"obj",kv};}
+   for(;;){ws();const k=parse();ws();i++/*:*/;const v=parse();kv.push([JSON.parse(k.raw),v]);ws();
+    if(text[i]===","){i++;continue;}i++/*}*/;break;}
+   return{t:"obj",kv};}
+  if(c==="["){i++;const it=[];ws();
+   if(text[i]==="]"){i++;return{t:"arr",it};}
+   for(;;){it.push(parse());ws();if(text[i]===","){i++;continue;}i++/*]*/;break;}
+   return{t:"arr",it};}
+  if(c==='"'){let j=i+1;for(;;){if(text[j]==="\\")j+=2;else if(text[j]==='"')break;else j++;}
+   const raw=text.slice(i,j+1);i=j+1;return{t:"lit",raw};}
+  let j=i;while(j<text.length&&!",}] \t\n\r".includes(text[j]))j++;
+  const raw=text.slice(i,j);i=j;return{t:"lit",raw};}
+ function ser(n){
+  if(n.t==="lit")return n.raw;
+  if(n.t==="arr")return"["+n.it.map(ser).join(",")+"]";
+  const kv=n.kv.slice().sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0);
+  return"{"+kv.map(([k,v])=>JSON.stringify(k)+":"+ser(v)).join(",")+"}";}
+ return{node:parse(),ser};
+}
+function canonicalMinusKey(text,dropKey){
+ const{node,ser}=canonicalFromText(text);
+ if(node.t==="obj")node.kv=node.kv.filter(([k])=>k!==dropKey);
+ return ser(node);
+}
+
+const FILES=["run_manifest.json","eval_receipt.json","training_summary.json","thesis_formula_index.json","science_source_ledger.json","curriculum.json","model_portfolio.json"];
+const PACKAGED={"thesis_formula_index.json":"thesis_formula_index.json","science\\source_ledger.json":"science_source_ledger.json","science\\curriculum.json":"curriculum.json"};
+
+(async()=>{
+ let raw={};
+ try{
+  const rs=await Promise.all(FILES.map(f=>fetch(f).then(r=>{if(!r.ok)throw new Error(f+" HTTP "+r.status);return r.text();})));
+  FILES.forEach((f,ix)=>raw[f]=rs[ix]);
+ }catch(e){
+  ["r-man","r-eval","r-files"].forEach(id=>setSt(id,false,"BLOCKED"));
+  document.getElementById("metrics").innerHTML="<div><strong>BLOCKED</strong><span>evidence fetch failed — "+esc(e.message)+"</span></div>";
+  return;
+ }
+ const man=JSON.parse(raw["run_manifest.json"]),evalR=JSON.parse(raw["eval_receipt.json"]),
+  train=JSON.parse(raw["training_summary.json"]),formulas=JSON.parse(raw["thesis_formula_index.json"]),
+  ledger=JSON.parse(raw["science_source_ledger.json"]),curr=JSON.parse(raw["curriculum.json"]),
+  portfolio=JSON.parse(raw["model_portfolio.json"]);
+
+ /* model/kernel reality */
+ const assets=portfolio.artifacts||[];
+ const counts={
+  trained:assets.filter(a=>a.kind==="trained_model").length,
+  quantized:assets.filter(a=>a.kind==="quantized_model").length,
+  learned:assets.filter(a=>a.kind==="learned_kernel").length,
+  software:assets.filter(a=>a.kind==="software_kernel").length
+ };
+ document.getElementById("portfolio-metrics").innerHTML=[
+  ["Trained models",counts.trained],
+  ["Quantized runtime",counts.quantized],
+  ["Learned kernel",counts.learned],
+  ["Software artifacts",counts.software]
+ ].map(([k,v])=>`<div><strong>${v}</strong><span>${k}</span></div>`).join("");
+ document.getElementById("portfolio").innerHTML=assets.map(a=>{
+  const type=a.kind.includes("model")?"model":a.kind==="learned_kernel"?"bound":"kernel";
+  const label=a.kind.replaceAll("_"," ");
+  const href=`https://huggingface.co/${encodeURI(a.repo_id)}`;
+  const limit=(a.limitations||[])[0]||"Autonomy is disabled; use inside a validating controller.";
+  return `<article class="asset"><span class="badge ${type}">${esc(label)}</span><h3><a href="${href}" target="_blank" rel="noopener">${esc(a.repo_id.split("/")[1])}</a></h3><p>${esc(a.role.replaceAll("_"," "))}</p><p><b>${esc(a.maturity)}</b></p><p>${esc(limit)}</p></article>`;
+ }).join("");
+
+ /* receipt hashes */
+ for(const[f,id]of[["run_manifest.json","r-man"],["eval_receipt.json","r-eval"]]){
+  const j=JSON.parse(raw[f]);
+  const act=await sha256hex(te.encode(canonicalMinusKey(raw[f],"receipt_sha256")));
+  setSt(id,act===j.receipt_sha256,act===j.receipt_sha256?"HASH VERIFIED":"MISMATCH");
+ }
+
+ /* integrity table */
+ const tbl=document.getElementById("integrity");let allOk=true,checked=0;
+ for(const a of man.payload.artifacts){
+  const local=PACKAGED[a.path];let state,actual="—";
+  if(!local){state='<span class="st warn">NOT PACKAGED</span>';}
+  else{const act=await sha256hex(await (await fetch(local)).arrayBuffer());
+   actual=act;checked++;
+   const ok=act===a.sha256;if(!ok)allOk=false;
+   state=ok?'<span class="st pass">MATCH</span>':'<span class="st fail">MISMATCH</span>';}
+  tbl.insertAdjacentHTML("beforeend",`<tr><td><code>${esc(a.path)}</code></td><td><code>${local?esc(local):"—"}</code></td><td>${state}</td><td><code>${a.sha256.slice(0,20)}…</code></td><td><code>${actual==="—"?"—":actual.slice(0,20)+"…"}</code></td></tr>`);
+ }
+ setSt("r-files",allOk,allOk?checked+" RE-HASHED · ALL MATCH":"MISMATCH");
+
+ /* metrics */
+ const claims=man.payload.claims||{};
+ document.getElementById("metrics").innerHTML=[
+  ["Training state",train.status||man.payload.status],
+  ["Manifest receipt",document.getElementById("r-man").textContent],
+  ["Formula records",(formulas.entries||[]).length],
+  ["Governed sources",(ledger.sources||[]).length],
+  ["Fixture checks",(evalR.payload.summary.passed)+"/"+(evalR.payload.summary.total)],
+  ["Claims (from manifest)",Object.entries(claims).filter(([k,v])=>!v).length+" honestly FALSE"]
+ ].map(([k,v])=>`<div><strong>${esc(v)}</strong><span>${esc(k)}</span></div>`).join("");
+
+ /* eval table */
+ document.getElementById("eval-summary").textContent=
+  `Packaged receipt scores ${evalR.payload.summary.total} recorded example responses — pass rate ${evalR.payload.summary.pass_rate} against threshold ${evalR.payload.thresholds.overall_pass_rate}. Evidence about those fixtures only — not a model benchmark or generalization claim.`;
+ const et=document.getElementById("eval");
+ for(const r of evalR.payload.results)
+  et.insertAdjacentHTML("beforeend",`<tr><td>${esc(r.id)}</td><td>${esc(r.category)}</td><td><span class="st ${r.passed?"pass":"fail"}">${r.passed?"PASS":"FAIL"}</span></td><td><code>${esc(r.response_sha256.slice(0,20))}…</code></td></tr>`);
+
+ /* formulas */
+ const entries=formulas.entries||[];
+ const statuses=[...new Set(entries.map(e=>e.status||e.proof_status||"—"))];
+ const fsSel=document.getElementById("fs");
+ statuses.forEach(s=>fsSel.insertAdjacentHTML("beforeend",`<option>${esc(s)}</option>`));
+ function renderF(){
+  const q=document.getElementById("fq").value.toLowerCase(),st=fsSel.value;
+  const rows=entries.filter(e=>{
+   const s=e.status||e.proof_status||"—";
+   if(st!=="ALL"&&s!==st)return false;
+   return !q||JSON.stringify(e).toLowerCase().includes(q);}).slice(0,60);
+  document.getElementById("formulas").innerHTML="<tr><th>ID</th><th>Title</th><th>Declared status</th><th>Lean theorem</th></tr>"+
+   rows.map(e=>`<tr><td>${esc(e.id)}</td><td>${esc(e.title||"")}</td><td>${esc(e.status||e.proof_status||"—")}</td><td><code>${esc(e.lean_theorem||e.lean||"—")}</code></td></tr>`).join("");
+ }
+ document.getElementById("fq").oninput=renderF;fsSel.onchange=renderF;renderF();
+
+ /* sources */
+ const srcs=ledger.sources||[];
+ const doms=[...new Set(srcs.map(s=>s.domain))],decs=[...new Set(srcs.map(s=>s.decision))];
+ const sdSel=document.getElementById("sd"),sdecSel=document.getElementById("sdec");
+ doms.forEach(d=>sdSel.insertAdjacentHTML("beforeend",`<option>${esc(d)}</option>`));
+ decs.forEach(d=>sdecSel.insertAdjacentHTML("beforeend",`<option>${esc(d)}</option>`));
+ function renderS(){
+  const d=sdSel.value,dc=sdecSel.value;
+  const rows=srcs.filter(s=>(d==="ALL"||s.domain===d)&&(dc==="ALL"||s.decision===dc)).slice(0,80);
+  document.getElementById("sources").innerHTML="<tr><th>Source</th><th>Domain</th><th>Decision</th><th>License</th></tr>"+
+   rows.map(s=>`<tr><td><a href="${esc(s.canonical_url)}" target="_blank" rel="noopener">${esc(s.name)}</a></td><td>${esc(s.domain)}</td><td>${esc(s.decision)}</td><td>${esc(s.license_expression||"—")}</td></tr>`).join("");
+ }
+ sdSel.onchange=renderS;sdecSel.onchange=renderS;renderS();
+
+ /* curriculum */
+ const stages=curr.stages||[];
+ document.getElementById("curr").innerHTML="<tr><th>Stage</th><th>Domains</th><th>Goal</th><th>Tasks</th><th>Evaluations</th></tr>"+
+  stages.map(s=>`<tr><td>${esc(s.stage_id||"")}</td><td>${esc((s.domains||[]).join(", "))}</td><td>${esc(s.goal||"")}</td><td>${(s.tasks||[]).length}</td><td>${(s.evaluations||[]).length}</td></tr>`).join("");
+})();
+
+/* fourth wall */
+(function(){var btn=document.getElementById("fw-hash-btn"),out=document.getElementById("fw-hash-out");
+ if(btn)btn.addEventListener("click",function(){out.textContent=" hashing…";
+  fetch(window.location.href,{cache:"reload"}).then(r=>r.arrayBuffer()).then(b=>crypto.subtle.digest("SHA-256",b))
+  .then(d=>{out.textContent=" sha256:"+hex(d);}).catch(()=>{out.textContent=" hash failed — use the curl line";});});
+ fetch("https://huggingface.co/api/spaces/SZLHOLDINGS/szl-forge-lab").then(r=>r.ok?r.json():null)
+ .then(j=>{if(j&&j.sha)document.getElementById("fw-rev").textContent=" (live revision = "+j.sha.slice(0,12)+")";}).catch(()=>{});})();
+</script>
+</body>
+</html>

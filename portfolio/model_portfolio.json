@@ -1,0 +1,176 @@
+{
+  "schema": "szl.model-kernel-portfolio/v1",
+  "organization": "SZLHOLDINGS",
+  "policy": {
+    "license": "apache-2.0",
+    "model_weight_extensions": [
+      ".safetensors",
+      ".gguf",
+      ".bin",
+      ".pt",
+      ".pth"
+    ],
+    "claims": [
+      "A Hub repository is not a trained model unless qualifying weight bytes exist.",
+      "A valid owner signature proves declared-key integrity, not independent model quality.",
+      "A quantized derivative requires its own post-quantization evaluation before inheriting capability metrics.",
+      "Software kernels remain software artifacts even when published through the Hub model API."
+    ]
+  },
+  "artifacts": [
+    {
+      "repo_id": "SZLHOLDINGS/SZL-Forge-1.5B-ReceiptAgent",
+      "kind": "trained_model",
+      "role": "governed_receipt_draft_proposer",
+      "github_source": "https://github.com/szl-holdings/szl-forge/tree/main/receiptagent",
+      "required_files": [
+        "model.safetensors",
+        "adapter/adapter_model.safetensors",
+        "owner_pubkey.json",
+        "training_receipt.signed.json",
+        "eval_receipt.signed.json"
+      ],
+      "local_receipt_dir": "receiptagent",
+      "autonomy_eligible": false,
+      "maturity": "MEASURED_LIMITED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/SZL-Khipu-1.5B",
+      "kind": "trained_model",
+      "role": "governed_retrieval_plan_proposer",
+      "github_source": "https://github.com/szl-holdings/szl-forge/tree/main/khipu",
+      "required_files": [
+        "model.safetensors",
+        "adapter/adapter_model.safetensors",
+        "owner_pubkey.json",
+        "training_receipt.signed.json",
+        "eval_receipt.signed.json"
+      ],
+      "local_receipt_dir": "khipu",
+      "autonomy_eligible": false,
+      "maturity": "MEASURED_RESEARCH_ONLY",
+      "limitations": [
+        "The signed held-out abstention result is 2/6.",
+        "The curriculum measures synthetic routing-policy conformance, not real Brain navigation."
+      ]
+    },
+    {
+      "repo_id": "SZLHOLDINGS/SZL-Khipu-1.5B-GGUF",
+      "kind": "quantized_model",
+      "role": "bounded_local_cpu_inference",
+      "github_source": "https://github.com/szl-holdings/szl-forge/tree/main/spaces/szl-model-inference-lab",
+      "required_files": [
+        "SZL-Khipu-1.5B-Q4_K_M.gguf",
+        "SZL-Khipu-1.5B-Q5_K_M.gguf",
+        "SZL-Khipu-1.5B-Q8_0.gguf"
+      ],
+      "live_runtime": "https://szlholdings-szl-model-inference-lab.hf.space",
+      "autonomy_eligible": false,
+      "maturity": "MEASURED_BOUNDED_RUNTIME",
+      "limitations": [
+        "The upstream signed evaluation does not cover GGUF quantization.",
+        "The public runtime emits unsigned content-addressed execution records."
+      ]
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-lambda-gate",
+      "kind": "learned_kernel",
+      "role": "bounded_formula_gate_tensor",
+      "github_source": "https://github.com/szl-holdings/szl-lambda-gate",
+      "required_files": [
+        "model.safetensors"
+      ],
+      "max_total_weight_bytes": 1048576,
+      "autonomy_eligible": false,
+      "maturity": "MEASURED_KERNEL"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/a11oy-v19-substrate",
+      "kind": "software_kernel",
+      "role": "substrate_contract",
+      "github_source": "https://github.com/szl-holdings/a11oy",
+      "autonomy_eligible": false,
+      "maturity": "SOFTWARE_ARTIFACT"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/governed-inference-meter",
+      "kind": "software_kernel",
+      "role": "inference_energy_accounting",
+      "github_source": "https://github.com/szl-holdings/szl-energy-attest",
+      "autonomy_eligible": false,
+      "maturity": "MEASURED_KERNEL"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-blocked",
+      "kind": "software_kernel",
+      "role": "blocked_state_contract",
+      "github_source": null,
+      "autonomy_eligible": false,
+      "maturity": "SOURCE_UNBOUND"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-formulas",
+      "kind": "software_kernel",
+      "role": "formula_registry",
+      "github_source": "https://github.com/szl-holdings/lutar-lean",
+      "autonomy_eligible": false,
+      "maturity": "SOFTWARE_ARTIFACT"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-governed-norm",
+      "kind": "software_kernel",
+      "role": "governed_normalization",
+      "github_source": "https://github.com/szl-holdings/szl-governed-norm",
+      "autonomy_eligible": false,
+      "maturity": "MEASURED_KERNEL"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-govsign",
+      "kind": "software_kernel",
+      "role": "signature_profile",
+      "github_source": null,
+      "autonomy_eligible": false,
+      "maturity": "SOURCE_UNBOUND"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-invariants",
+      "kind": "software_kernel",
+      "role": "formal_invariant_registry",
+      "github_source": "https://github.com/szl-holdings/lutar-lean",
+      "autonomy_eligible": false,
+      "maturity": "SOFTWARE_ARTIFACT"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-kernels",
+      "kind": "software_kernel",
+      "role": "kernel_portfolio_card",
+      "github_source": "https://github.com/szl-holdings/governed-receipt-spec",
+      "autonomy_eligible": false,
+      "maturity": "SOFTWARE_ARTIFACT"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-nemo",
+      "kind": "software_kernel",
+      "role": "nemotron_recipe_and_contract",
+      "github_source": "https://github.com/szl-holdings/szl-forge",
+      "autonomy_eligible": false,
+      "maturity": "RECIPE_NOT_FINE_TUNED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-ouroboros",
+      "kind": "software_kernel",
+      "role": "governed_loop_contract",
+      "github_source": "https://github.com/szl-holdings/lutar-lean",
+      "autonomy_eligible": false,
+      "maturity": "SOFTWARE_ARTIFACT"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-provctl",
+      "kind": "software_kernel",
+      "role": "provenance_control_profile",
+      "github_source": null,
+      "autonomy_eligible": false,
+      "maturity": "SOURCE_UNBOUND"
+    }
+  ]
+}

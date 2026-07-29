@@ -1,0 +1,7 @@
+.git
+.gitattributes
+__pycache__
+*.pyc
+.pytest_cache
+local-evidence
+*.gguf

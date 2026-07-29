@@ -1,0 +1,93 @@
+{
+  "schema": "szl.forge.receipt/v1",
+  "kind": "RUN_MANIFEST",
+  "created_at": "2026-07-11T15:33:44.533032+00:00",
+  "transport_state": "LOCAL",
+  "evidence_state": "MEASURED",
+  "payload": {
+    "status": "CONFIGURED_NOT_TRAINED",
+    "base_model": "unsloth/Qwen2.5-1.5B-Instruct-bnb-4bit",
+    "base_revision": "d2f2dd02b071701d5100a04a7a49d6fb0bd305b7",
+    "seed": 11,
+    "runtime": {
+      "python": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+      "platform": "Windows-11-10.0.26200-SP0"
+    },
+    "artifacts": [
+      {
+        "path": "training_config.json",
+        "exists": true,
+        "kind": "file",
+        "sha256": "35b6038281d0eed2ab036c6360d560df385feb86c946fdc0be9d13f78f781773",
+        "bytes": 1537
+      },
+      {
+        "path": "szl_dataset.jsonl",
+        "exists": true,
+        "kind": "file",
+        "sha256": "38b234b2ddb187e9dd54e8142552a7e8934c5fbdf71185d84366db31e8a2f529",
+        "bytes": 26521
+      },
+      {
+        "path": "thesis_formula_index.json",
+        "exists": true,
+        "kind": "file",
+        "sha256": "5dbe4405b50672d150437fdcfa941213c6ed88f07979370f91fd60d3f65a13c2",
+        "bytes": 51318
+      },
+      {
+        "path": "science\\source_ledger.json",
+        "exists": true,
+        "kind": "file",
+        "sha256": "ea99bb72e6a9c44821481d7f535a103d05e8ce9acb842fff4952be1c8ef9eaf9",
+        "bytes": 25415
+      },
+      {
+        "path": "science\\curriculum.json",
+        "exists": true,
+        "kind": "file",
+        "sha256": "802726c5616427aa8f82330f25f41ffa20b05ce749ba78582a8991fef8ba3332",
+        "bytes": 17376
+      },
+      {
+        "path": "evals\\frontier_eval.json",
+        "exists": true,
+        "kind": "file",
+        "sha256": "12db6cd4a7cc61dc4c40246269acaf560a138c133e47e6420ef2c07e8ce71e50",
+        "bytes": 4241
+      },
+      {
+        "path": "train_szl.py",
+        "exists": true,
+        "kind": "file",
+        "sha256": "b9d80de43999cee675b6d742dc6e6d208744c8f9531f234110a67c3a761040e4",
+        "bytes": 21574
+      },
+      {
+        "path": "serve_szl.py",
+        "exists": true,
+        "kind": "file",
+        "sha256": "82c4bee7695e82f053cd15b9af29f78fceb29a3e65970d5a1385c3afaf88b480",
+        "bytes": 9451
+      },
+      {
+        "path": "Modelfile",
+        "exists": true,
+        "kind": "file",
+        "sha256": "4578bb56d1a4edc080174ae15080fdea5b1459ca467c1fce5153e67f7d674b7f",
+        "bytes": 503
+      }
+    ],
+    "claims": {
+      "training_completed": false,
+      "weights_measured": false,
+      "benchmarks_measured": false,
+      "proofs_generated": false
+    },
+    "limits": [
+      "Configuration is not evidence of completed training.",
+      "Formula analysis is advisory unless an independent formal checker passes."
+    ]
+  },
+  "receipt_sha256": "0c0a23e292d09ced43830c8de80a387a40c988a4b62c53f52fda0e78809fa3c4"
+}

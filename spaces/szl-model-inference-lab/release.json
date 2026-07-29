@@ -1,0 +1,15 @@
+{
+  "schema": "szl.space-source-release/v1",
+  "release_id": "3b857956-5a25-4252-904d-654101b7995e",
+  "source_files": {
+    ".dockerignore": "18c9ff1a479589bd4bdf19b868b1051756676ac33ff799f50212cef90fb9fa3c",
+    "Dockerfile": "7cbe86c5e0937bf57f7dedd7c470c95300354e8376eaa228bcfaddb49fde1340",
+    "LICENSE": "0a41cda63c0751e5cdb240864525fc8bf29b2d3f2cb5c6406b9bae97f1e1407b",
+    "README.md": "1d12ad2aafcaf038c4f44b0a712185a504adffbae03bb5955aff7b2ba88cae0c",
+    "app.py": "e3738c72f824e29442c3a6000f1fdb208ddee89db11a015b12065a0855165ae1",
+    "download_artifacts.py": "c15353dbd77d1b353f79192a92e7148a5f889e17c553e13f4b39f2e5861d3c0a",
+    "requirements.txt": "9f690793b7b9c6e1adce88244de01d77898d117779c3428b80190eabaf4658f9",
+    "tests/test_app.py": "cbd1e263b653db3961e9ffe7e603770f6ce34402ea9ad6da62e7659c27554395",
+    "verify_execution_record.py": "f3fd6da50984a5671accfb04b96f852b6c02ff8084b831246f0ba776e45b60d2"
+  }
+}
