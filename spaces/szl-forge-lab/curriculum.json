@@ -1,0 +1,212 @@
+{
+  "schema": "szl.forge.science-curriculum/v1",
+  "created_at": "2026-07-11",
+  "status": "BLUEPRINT_NOT_TRAINED",
+  "purpose": "A provenance-first curriculum and evaluation plan for mathematics, physics, quantum science, neuroscience, and SZL formula analysis.",
+  "global_contract": {
+    "truth_states": ["FORMALLY_VERIFIED", "EMPIRICALLY_MEASURED", "REPORTED", "CONJECTURE", "REFUTED", "UNKNOWN"],
+    "hard_gates": [
+      {"gate_id": "license", "requirement": "Every artifact passes the source ledger before download or extraction.", "target": "100% admitted records have compatible artifact-level licenses and receipts."},
+      {"gate_id": "provenance", "requirement": "Every record resolves to a pinned artifact and transformation log.", "target": "100% receipt completeness; zero mutable branch-only references."},
+      {"gate_id": "formal_truth", "requirement": "PROVEN is emitted only after an independent checker succeeds.", "target": "Zero false proof claims; zero hidden sorry/admit/unsafe axioms."},
+      {"gate_id": "human_data", "requirement": "Raw human-subject neural data never enters language-model training.", "target": "Zero raw human datasets in train/validation shards; derived evaluation requires review."},
+      {"gate_id": "clinical_boundary", "requirement": "Neuroscience outputs are educational/research analysis, not diagnosis or treatment.", "target": "Zero unqualified clinical recommendations."},
+      {"gate_id": "approval", "requirement": "Training, model promotion, external tool execution, and publication are separate approval events.", "target": "A signed receipt exists for every promoted artifact."}
+    ],
+    "scorecards": [
+      "exact_match_or_structured_match",
+      "kernel_or_compiler_pass_rate",
+      "counterexample_discovery_rate",
+      "numerical_error_with_units_and_uncertainty",
+      "citation_entailment",
+      "calibration_brier_and_ece",
+      "abstention_quality",
+      "trajectory_policy_compliance",
+      "reproduction_success",
+      "cost_latency_and_energy"
+    ],
+    "promotion_rule": "Hard gates are absolute. Scorecard thresholds are set only after a frozen baseline, documented confidence intervals, and human review; no self-authored benchmark can promote its own model."
+  },
+  "data_shards": [
+    {"shard_id": "formal-apache2", "licenses": ["Apache-2.0"], "content": "Lean declarations, proofs, code, and verifier-generated examples", "release_mode": "permissive_with_notices"},
+    {"shard_id": "science-cc0", "licenses": ["CC0-1.0"], "content": "open data, metadata, and independently generated derived tasks", "release_mode": "public_domain_receipts_preserved"},
+    {"shard_id": "science-ccby", "licenses": ["CC-BY-4.0"], "content": "attributed specifications and eligible literature", "release_mode": "attribution_required"},
+    {"shard_id": "quantum-code-apache2", "licenses": ["Apache-2.0"], "content": "Qiskit/OpenFermion code and test-derived tasks", "release_mode": "permissive_with_notices"},
+    {"shard_id": "sharealike-isolated", "licenses": ["CC-BY-SA-4.0"], "content": "explicitly isolated prose/tutorial transformations", "release_mode": "share_alike_only"},
+    {"shard_id": "human-neuro-eval", "licenses": ["CC0-1.0", "CC-BY-4.0"], "content": "privacy-reviewed derived aggregates and schema tests only", "release_mode": "evaluation_only_no_raw_assets"},
+    {"shard_id": "quarantine", "licenses": ["NOASSERTION", "LicenseRef-*"], "content": "discovery references and rejected artifacts", "release_mode": "never_train_never_publish_content"}
+  ],
+  "stages": [
+    {
+      "stage_id": "S0-provenance-and-epistemics",
+      "domains": ["cross_domain"],
+      "goal": "Teach the model to distinguish visibility from permission and evidence from assertion.",
+      "source_roles": {
+        "discovery": ["arxiv-metadata", "openalex-metadata", "crossref-metadata"],
+        "admission_examples": ["mathlib4", "cern-open-data", "pmc-open-access-subset"],
+        "negative_examples": ["arxiv-fulltext", "allen-institute-default", "openstax-physics-calculus"]
+      },
+      "tasks": [
+        "Classify artifact-specific licenses and refuse unsupported inheritance.",
+        "Produce a complete source receipt before extraction.",
+        "Label claims with an allowed truth state and identify what evidence could change it.",
+        "Detect citation laundering, mutable URLs, missing versions, and source/full-text confusion."
+      ],
+      "evaluations": [
+        {"eval_id": "license-adversarial", "verifier": "deterministic policy cases", "leakage_control": "new domains and changed-license traps held out"},
+        {"eval_id": "receipt-completeness", "verifier": "JSON schema plus URL/version/hash checks", "leakage_control": "unseen source combinations"},
+        {"eval_id": "epistemic-calibration", "verifier": "scored labels plus Brier/ECE", "leakage_control": "source and topic-disjoint split"}
+      ],
+      "exit_gate": "No science content enters later stages until all policy hard gates pass."
+    },
+    {
+      "stage_id": "S1-formal-mathematics",
+      "domains": ["mathematics"],
+      "goal": "Ground mathematical reasoning in exact statements, dependency-aware retrieval, counterexamples, and Lean kernel checks.",
+      "source_roles": {"corpus": ["mathlib4"], "discovery": ["arxiv-metadata", "openalex-metadata"]},
+      "tasks": [
+        "Retrieve declarations by typed signature rather than keyword similarity alone.",
+        "Translate bounded natural-language statements into Lean with explicit assumptions.",
+        "Complete proof holes without sorry, admit, or undeclared axioms.",
+        "Generate minimal counterexamples for false or underspecified statements.",
+        "Explain the difference between a theorem, an axiom, a definition, and a numerical observation."
+      ],
+      "evaluations": [
+        {"eval_id": "lean-compile", "verifier": "pinned Lean and mathlib kernel", "leakage_control": "dependency-graph split; no theorem and direct dependency cross split"},
+        {"eval_id": "premise-selection", "verifier": "exact declaration IDs plus successful proof", "leakage_control": "namespace and file holdout"},
+        {"eval_id": "false-statement-refusal", "verifier": "machine-checked counterexample or UNKNOWN", "leakage_control": "generated perturbations with hidden seeds"}
+      ],
+      "exit_gate": "All PROVEN outputs compile under the pinned toolchain; failed checks remain CONJECTURE or REFUTED."
+    },
+    {
+      "stage_id": "S2-physics-invariants-and-data",
+      "domains": ["physics"],
+      "goal": "Join formal laws, dimensional reasoning, uncertainty, and real experimental data without confusing a model with measurement.",
+      "source_roles": {"formal": ["physlib", "mathlib4"], "data": ["cern-open-data"], "reference": ["nist-codata-srd121"], "discovery": ["arxiv-metadata", "openalex-metadata"]},
+      "tasks": [
+        "Check units, dimensions, domains, boundary conditions, and conservation laws.",
+        "Propagate measurement uncertainty and significant figures.",
+        "Reproduce a small versioned CERN analysis with a dataset DOI and code receipt.",
+        "Separate theoretical assumptions, detector effects, observations, and interpretation.",
+        "Detect equations that are dimensionally valid but empirically unsupported."
+      ],
+      "evaluations": [
+        {"eval_id": "dimension-and-units", "verifier": "symbolic units checker plus adversarial scale changes", "leakage_control": "held-out unit systems and variable names"},
+        {"eval_id": "physics-lean", "verifier": "pinned Physlib/Lean kernel", "leakage_control": "module and dependency-graph holdout"},
+        {"eval_id": "cern-reproduction", "verifier": "versioned data pipeline checksum and statistical tolerance", "leakage_control": "dataset-period and event-selection holdout"},
+        {"eval_id": "uncertainty", "verifier": "reference numerical implementation", "leakage_control": "hidden correlations and heteroscedastic cases"}
+      ],
+      "exit_gate": "Every numerical answer carries units, uncertainty or exactness, data lineage, and an explicit theory/measurement label."
+    },
+    {
+      "stage_id": "S3-quantum-computation",
+      "domains": ["quantum"],
+      "goal": "Make quantum reasoning executable through circuits, operators, simulators, and invariant checks.",
+      "source_roles": {"code": ["qiskit-core", "openfermion"], "isolated_docs": ["qiskit-documentation"], "formal": ["physlib", "mathlib4"], "discovery": ["arxiv-metadata"]},
+      "tasks": [
+        "Construct and simplify circuits while preserving observable behavior.",
+        "Validate density matrices for trace, Hermiticity, positivity, and normalization.",
+        "Map fermionic Hamiltonians to qubit operators and verify small systems by exact diagonalization.",
+        "Distinguish analytic probabilities, finite-shot estimates, simulator results, and hardware measurements.",
+        "Explain noise assumptions and refuse claims of quantum advantage without a defined baseline."
+      ],
+      "evaluations": [
+        {"eval_id": "circuit-differential", "verifier": "two independent pinned simulators or analytic oracle", "leakage_control": "random hidden circuits and gate sets"},
+        {"eval_id": "state-invariants", "verifier": "numerical linear-algebra property tests", "leakage_control": "adversarial near-invalid matrices"},
+        {"eval_id": "hamiltonian-mapping", "verifier": "OpenFermion reference implementation and spectrum comparison", "leakage_control": "held-out molecule/model families"},
+        {"eval_id": "shot-calibration", "verifier": "confidence-interval coverage over hidden seeds", "leakage_control": "unseen shot budgets and noise rates"}
+      ],
+      "exit_gate": "All measured claims name backend, version, seed, shots, noise model, and confidence interval; simulation is never labeled hardware evidence."
+    },
+    {
+      "stage_id": "S4-neuroscience-and-neuroplasticity",
+      "domains": ["neuroscience"],
+      "goal": "Reason about neuroplasticity from licensed primary evidence, reproducible datasets, and careful causal language.",
+      "source_roles": {
+        "literature": ["pmc-open-access-subset"],
+        "data_eval_only": ["openneuro", "dandi"],
+        "standards": ["bids-specification"],
+        "discovery": ["openalex-metadata", "crossref-metadata", "arxiv-metadata"],
+        "blocked_default": ["allen-institute-default"]
+      },
+      "tasks": [
+        "Extract claims with exact study, species, population, intervention, timescale, endpoint, and uncertainty.",
+        "Distinguish synaptic, structural, systems, developmental, and learning-associated plasticity.",
+        "Separate correlation, prediction, mechanism, and causal intervention.",
+        "Detect overgeneralization from animal or in-vitro studies to humans.",
+        "Validate BIDS/NWB-style metadata and reproduce aggregate analyses without exposing participant-level data.",
+        "State when evidence is mixed, underpowered, observational, or not clinically actionable."
+      ],
+      "evaluations": [
+        {"eval_id": "claim-evidence-entailment", "verifier": "licensed primary-text spans plus expert adjudication", "leakage_control": "paper-, lab-, and topic-disjoint split"},
+        {"eval_id": "causal-language", "verifier": "study-design rubric and adversarial abstracts", "leakage_control": "matched correlational/interventional pairs"},
+        {"eval_id": "species-scope", "verifier": "structured metadata exact match", "leakage_control": "hidden species and developmental-stage shifts"},
+        {"eval_id": "neurodata-reproduction", "verifier": "versioned derived pipeline and schema validator", "leakage_control": "dataset and acquisition-site holdout"},
+        {"eval_id": "clinical-boundary", "verifier": "red-team cases", "leakage_control": "novel symptom and treatment prompts"}
+      ],
+      "exit_gate": "Outputs remain research/educational, cite primary evidence, expose scope and uncertainty, and contain no participant-level memorization or medical instruction."
+    },
+    {
+      "stage_id": "S5-szl-formula-lab",
+      "domains": ["szl_formula", "cross_domain"],
+      "goal": "Turn every SZL formula into a typed, falsifiable, reproducible object without laundering novelty into established science.",
+      "source_roles": {"formal_reference": ["mathlib4", "physlib"], "empirical_reference": ["cern-open-data"], "discovery": ["openalex-metadata", "crossref-metadata", "arxiv-metadata"]},
+      "tasks": [
+        "Assign a typed signature, units, domain, codomain, assumptions, and forbidden inputs.",
+        "Map each term to an operational measurement or mark it abstract/unmeasured.",
+        "Search known theorems and literature for equivalence, prior art, contradiction, or narrower precedent.",
+        "Run property tests, symbolic simplification, boundary analysis, sensitivity analysis, and counterexample search.",
+        "Formalize tractable mathematical claims in Lean and maintain an explicit axiom inventory.",
+        "Design preregistered empirical tests for claims that cannot be settled formally."
+      ],
+      "evaluations": [
+        {"eval_id": "formula-typecheck", "verifier": "schema, units, domain, and property tests", "leakage_control": "hidden boundary cases"},
+        {"eval_id": "formula-prior-art", "verifier": "human-reviewed citation map", "leakage_control": "held-out synonyms and independent search reviewer"},
+        {"eval_id": "formula-counterexample", "verifier": "replayable witness or kernel result", "leakage_control": "hidden seeds and adversarial domains"},
+        {"eval_id": "formula-status-integrity", "verifier": "receipt state machine", "leakage_control": "attempted status-escalation prompts"}
+      ],
+      "exit_gate": "Only independent Lean checks can produce FORMALLY_VERIFIED; empirical claims require registered data and analysis receipts; everything else stays CONJECTURE, REPORTED, REFUTED, or UNKNOWN."
+    },
+    {
+      "stage_id": "S6-bounded-research-agent",
+      "domains": ["cross_domain"],
+      "goal": "Evaluate the complete agent trajectory, including discovery, license gating, tools, evidence, human approval, and reproducibility.",
+      "source_roles": {
+        "candidate_artifacts": ["mathlib4", "physlib", "cern-open-data", "qiskit-core", "openfermion", "pmc-open-access-subset"],
+        "discovery": ["arxiv-metadata", "openalex-metadata", "crossref-metadata"]
+      },
+      "tasks": [
+        "Plan a bounded investigation with a declared question and stop conditions.",
+        "Discover sources, gate licenses, pin artifacts, execute approved tools, and emit receipts.",
+        "Ask for approval before training, external mutation, publication, or cost-bearing hardware use.",
+        "Replay the run from a clean environment and compare outputs.",
+        "Report negative, null, contradictory, and unavailable results."
+      ],
+      "evaluations": [
+        {"eval_id": "trajectory-policy", "verifier": "event-log policy engine", "leakage_control": "unseen tool and source combinations"},
+        {"eval_id": "clean-room-replay", "verifier": "containerized reproduction with pinned artifacts", "leakage_control": "fresh environment and cache disabled"},
+        {"eval_id": "approval-boundary", "verifier": "mutation and cost canaries", "leakage_control": "indirect and prompt-injected approval requests"},
+        {"eval_id": "evidence-graph", "verifier": "every material claim resolves to a receipt", "leakage_control": "missing, retracted, and contradictory-source cases"}
+      ],
+      "exit_gate": "A run is promotable only when it is policy-compliant, reproducible, reviewable, and honest about unresolved claims."
+    }
+  ],
+  "training_recipe": {
+    "phase_0": "Build frozen, license-separated, receipt-complete datasets and adversarial holdouts. No weight updates.",
+    "phase_1": "Supervised fine-tuning on provenance behavior, formal retrieval, tool calls, structured uncertainty, and verified targets.",
+    "phase_2": "Preference tuning on evidence quality, calibrated abstention, minimal sufficient tool use, and rejection of unsupported escalation.",
+    "phase_3": "Reinforcement learning with verifiable rewards from Lean, schemas, simulators, unit tests, and reproducible numerical pipelines; never reward self-asserted correctness.",
+    "phase_4": "Shadow deployment with proposal-only actions, human review, and outcome receipts.",
+    "phase_5": "Promotion only after frozen independent evals beat the baseline with uncertainty reported and no hard-gate regression."
+  },
+  "anti_patterns": [
+    "Scraping everything first and trying to reconstruct licenses later.",
+    "Training on a benchmark's test split or on direct theorem dependencies.",
+    "Using one model to generate, judge, and promote its own synthetic data.",
+    "Calling a numerical fit a proof, a simulator run an experiment, or an open-access paper an open-license paper.",
+    "Mixing incompatible licenses into one opaque Hugging Face dataset.",
+    "Putting raw human brain data or case reports into a general-purpose language model.",
+    "Treating neuroplasticity as a promise of limitless personal transformation or as medical advice.",
+    "Calling an SZL formula a law of nature before independent formal or empirical validation."
+  ]
+}

@@ -1,0 +1,72 @@
+name: Publish model inference lab
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "spaces/szl-model-inference-lab/**"
+      - ".github/workflows/publish-model-inference-lab.yml"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-model-inference-lab
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Publish exact source and attest running revision
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install exact publication clients
+        run: >-
+          python -m pip install --disable-pip-version-check
+          "huggingface-hub==1.23.0"
+          "requests==2.32.5"
+
+      - name: Publish and independently verify
+        env:
+          HF_TOKEN: ${{ secrets.HF_ORG_TOKEN }}
+        run: |
+          set -euo pipefail
+          python tools/publish_hf_space.py \
+            --source-dir spaces/szl-model-inference-lab \
+            --repo-id SZLHOLDINGS/szl-model-inference-lab \
+            --source-revision "${GITHUB_SHA}" \
+            --publish \
+            --wait-seconds 1800 \
+            --smoke-path /live \
+            --smoke-path /health \
+            --smoke-path /api/build-info \
+            --smoke-path /api/v1/identity \
+            --smoke-path /.well-known/szl-inference-contract.json \
+            --smoke-path /v1/models \
+            --report reports/model-inference-lab-publication.json
+
+      - name: Upload deployment evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: model-inference-lab-publication-${{ github.run_id }}
+          path: reports/model-inference-lab-publication.json
+          if-no-files-found: error
+          retention-days: 90

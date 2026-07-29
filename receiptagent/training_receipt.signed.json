@@ -1,0 +1,28 @@
+{
+  "payload": {
+    "kind": "szl-forge-training-receipt",
+    "v": 1,
+    "capabilityProfile": "SZL-Forge-1.5B-ReceiptAgent",
+    "baseModel": "Qwen/Qwen2.5-1.5B-Instruct",
+    "datasets": {
+      "train.jsonl": "775e25b526a96d1486e80aae048f731bdad02a0d94ea76144593e115802fa24f",
+      "eval.jsonl": "1a92bea9b163882ae7c7aa00be6c1fda3e9c98683f0214af985bfb184e27ff65",
+      "train.refusals.jsonl": "c5136b612951c209d1041839d1ac19a8fa378c31015d61dd7565994b4f3e2b47",
+      "adversarial.jsonl": "81d2a494ee41256c7909a54435c4e7971fea65de81fffbf3f2b8a008aab5a572",
+      "receiptagent.schema.json": "1db07ef9e1581cc8cc471dd42e79a21b728c4e3bf1222fd0f06f2b7257bb288e"
+    },
+    "schemaFingerprintSha256": "68b41b9f198bef4238e561f66456a849afe8095a43df19299a434915b54361d5",
+    "outputSchemaSha256": "1db07ef9e1581cc8cc471dd42e79a21b728c4e3bf1222fd0f06f2b7257bb288e",
+    "adapterSha256": "5eb426c1a4cd17faa4c46590d3aff22671023f64a179e7b47b5bcab4c59e47cd",
+    "weightsArtifactSha256": "851af12990cc2077bb610ebe3e4511a077f1fc59f8e7ebe21d40c73a7da64c69",
+    "servedModel": "receiptagent",
+    "trainedAt": "2026-07-13T21:33:44.531784+00:00",
+    "host": "betterwithage",
+    "finalTrainLoss": "0.1038",
+    "keyId": "e7f01810aaa97394"
+  },
+  "canonical": "{\"adapterSha256\":\"5eb426c1a4cd17faa4c46590d3aff22671023f64a179e7b47b5bcab4c59e47cd\",\"baseModel\":\"Qwen/Qwen2.5-1.5B-Instruct\",\"capabilityProfile\":\"SZL-Forge-1.5B-ReceiptAgent\",\"datasets\":{\"adversarial.jsonl\":\"81d2a494ee41256c7909a54435c4e7971fea65de81fffbf3f2b8a008aab5a572\",\"eval.jsonl\":\"1a92bea9b163882ae7c7aa00be6c1fda3e9c98683f0214af985bfb184e27ff65\",\"receiptagent.schema.json\":\"1db07ef9e1581cc8cc471dd42e79a21b728c4e3bf1222fd0f06f2b7257bb288e\",\"train.jsonl\":\"775e25b526a96d1486e80aae048f731bdad02a0d94ea76144593e115802fa24f\",\"train.refusals.jsonl\":\"c5136b612951c209d1041839d1ac19a8fa378c31015d61dd7565994b4f3e2b47\"},\"finalTrainLoss\":\"0.1038\",\"host\":\"betterwithage\",\"keyId\":\"e7f01810aaa97394\",\"kind\":\"szl-forge-training-receipt\",\"outputSchemaSha256\":\"1db07ef9e1581cc8cc471dd42e79a21b728c4e3bf1222fd0f06f2b7257bb288e\",\"schemaFingerprintSha256\":\"68b41b9f198bef4238e561f66456a849afe8095a43df19299a434915b54361d5\",\"servedModel\":\"receiptagent\",\"trainedAt\":\"2026-07-13T21:33:44.531784+00:00\",\"v\":1,\"weightsArtifactSha256\":\"851af12990cc2077bb610ebe3e4511a077f1fc59f8e7ebe21d40c73a7da64c69\"}",
+  "signatureBase64": "MkbmTtHiS1Arpax2EmADMRii9FHVse2Nihp3ouZSkMKnkuRJVFhMkp7W9ReWaViCRoFIJ96noXG0Y27ZpUXHAg==",
+  "publicKeySpkiBase64": "MCowBQYDK2VwAyEA0hrzlPL52zi3yA9Wj1uKL1CJMr12dTwKeIXYfJCg3a8=",
+  "keyId": "e7f01810aaa97394"
+}

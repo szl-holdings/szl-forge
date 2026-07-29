@@ -1,0 +1,47 @@
+{
+  "schema": "szl.forge.public-training-summary/v1",
+  "status": "COMPLETED_LOCAL_NOT_PUBLISHED",
+  "base_model": "unsloth/Qwen2.5-1.5B-Instruct-bnb-4bit",
+  "base_revision": "d2f2dd02b071701d5100a04a7a49d6fb0bd305b7",
+  "base_license": "Apache-2.0",
+  "training_receipt_sha256": "2708d979950e81771824978ad60a9cd57b159a3dc28f691350915be23c3d0bb0",
+  "dataset": {
+    "records": 61,
+    "unique_records": 61,
+    "sha256": "38b234b2ddb187e9dd54e8142552a7e8934c5fbdf71185d84366db31e8a2f529"
+  },
+  "run": {
+    "epochs": 3.0,
+    "steps": 24,
+    "duration_seconds": 140.594,
+    "train_loss": 3.062847912311554,
+    "seed": 11,
+    "hardware": "NVIDIA GeForce RTX 5050 Laptop GPU",
+    "torch": "2.10.0+cu130"
+  },
+  "adapter": {
+    "sha256": "b66b97e1b7d652c7f54f99be512ffda03a8299f94e4ff4fa072c84ccfba8bed1",
+    "bytes": 85347070,
+    "published": false
+  },
+  "merged_model": {
+    "sha256": "c2a9f1341c3c3e6d4daddfae64a1d75dcb69c9cb1405610e1114ee62d66b12c2",
+    "bytes": 3098901090,
+    "published": false
+  },
+  "evaluation": {
+    "raw_model_contract": {"passed": 1, "total": 12, "gate_passed": false},
+    "governed_stack_contract": {"passed": 12, "total": 12, "gate_passed": true, "model_invoked_for_policy_cases": false},
+    "governed_stack_receipt_sha256": "d16c736186135749f40cc963c46f663857fb5ae48922dc6b42d266d33f18cf1e"
+  },
+  "promotion": {
+    "candidate_receipt_sha256": "8383a959f9ed6ae8d24da85edc741f08236faac9e547bc5e21f3ec3f90ea23c0",
+    "release_decision": "BLOCK",
+    "missing_human_roles": ["independent_evaluator", "model_owner", "security_reviewer"]
+  },
+  "limits": [
+    "Training completion and loss do not establish model quality or safety.",
+    "The 12/12 governed-stack result measures deterministic policy boundaries, not raw model intelligence.",
+    "Weights remain local and unpublished until release approvals and independent evaluation are complete."
+  ]
+}

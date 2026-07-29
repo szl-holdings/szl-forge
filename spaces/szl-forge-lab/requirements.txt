@@ -1,0 +1,1 @@
+# The HF Gradio Space runtime supplies gradio==6.20.0.

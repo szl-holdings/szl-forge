@@ -1,0 +1,95 @@
+name: Model and kernel frontier verification
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: model-kernel-frontier-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Receipts, source contracts, and portfolio
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install verification-only dependencies
+        run: >-
+          python -m pip install --disable-pip-version-check
+          "cryptography==49.0.0"
+          "fastapi==0.139.0"
+          "httpx==0.28.1"
+          "huggingface-hub==1.23.0"
+          "pydantic==2.13.4"
+
+      - name: Compile and run offline contracts
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            tools/publish_hf_space.py \
+            tools/test_publish_hf_space.py \
+            tools/verify_model_portfolio.py \
+            tools/test_verify_model_portfolio.py \
+            spaces/szl-model-inference-lab/app.py \
+            spaces/szl-model-inference-lab/verify_execution_record.py \
+            spaces/szl-forge-lab/forge_lab.py \
+            spaces/szl-forge-lab/forge_runtime_contract.py
+          python tools/test_verify_model_portfolio.py
+          PYTHONPATH=tools python tools/test_publish_hf_space.py
+          PYTHONPATH=spaces/szl-model-inference-lab \
+            python -m unittest discover \
+              -s spaces/szl-model-inference-lab/tests -v
+          PYTHONPATH=spaces/szl-forge-lab \
+            python -m unittest discover \
+              -s spaces/szl-forge-lab/tests -v
+          python tools/verify_model_portfolio.py --offline
+          python tools/publish_hf_space.py \
+            --source-dir spaces/szl-model-inference-lab \
+            --repo-id SZLHOLDINGS/szl-model-inference-lab \
+            --source-revision "${GITHUB_SHA}" \
+            --report reports/model-inference-lab-dry-run.json
+          python tools/publish_hf_space.py \
+            --source-dir spaces/szl-forge-lab \
+            --repo-id SZLHOLDINGS/szl-forge-lab \
+            --source-revision "${GITHUB_SHA}" \
+            --static \
+            --report reports/szl-forge-lab-dry-run.json
+          git diff --check
+
+      - name: Audit public Hugging Face artifacts
+        run: |
+          set -euo pipefail
+          python tools/verify_model_portfolio.py \
+            --live \
+            --report reports/model-portfolio-live.json
+
+      - name: Upload audit evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: model-kernel-portfolio-${{ github.run_id }}
+          path: reports/model-portfolio-live.json
+          if-no-files-found: error
+          retention-days: 30
