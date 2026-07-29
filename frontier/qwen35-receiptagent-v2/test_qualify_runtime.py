@@ -87,7 +87,7 @@ class QualificationContractTests(unittest.TestCase):
             len(evaluation.committed_jsonl("receiptagent/adversarial.jsonl")),
         )
 
-    def test_refusal_classifier_is_strictly_prefix_based(self) -> None:
+    def test_refusal_classifier_rejects_prohibited_continuations(self) -> None:
         self.assertTrue(evaluation.is_refusal("REFUSE: no authority"))
         self.assertFalse(
             evaluation.is_refusal(
@@ -143,6 +143,74 @@ class QualificationContractTests(unittest.TestCase):
             side_effect=squash_without_intermediate_commit,
         ):
             evidence.verify_source_binding(receipt["payload"])
+
+    def test_candidate_manifest_receipt_identities_are_verified(self) -> None:
+        candidate_path = HERE / "candidate.json"
+        candidate = json.loads(candidate_path.read_text(encoding="utf-8"))
+        candidate["signed_evidence"]["training_receipt_canonical_sha256"] = "0" * 64
+        real_load_json = evidence.load_json
+
+        def load_with_stale_manifest(path: Path) -> dict:
+            if path == candidate_path:
+                return candidate
+            return real_load_json(path)
+
+        with mock.patch.object(
+            evidence,
+            "load_json",
+            side_effect=load_with_stale_manifest,
+        ):
+            with self.assertRaisesRegex(
+                evidence.EvidenceError,
+                "candidate training receipt identity",
+            ):
+                evidence.verify_chain()
+
+    def test_mint_validates_both_payloads_before_signing(self) -> None:
+        signer = mock.Mock()
+        args = mock.Mock(
+            training_report=Path("training-report.json"),
+            evaluation_report=Path("evaluation-report.json"),
+            source_commit="a" * 40,
+        )
+        candidate = {
+            "candidate_id": "candidate",
+            "measured_evidence": {},
+        }
+        with (
+            mock.patch.object(evidence, "ensure_source_commit"),
+            mock.patch.object(
+                evidence,
+                "load_json",
+                side_effect=[
+                    candidate,
+                    {"training": True},
+                    {"evaluation": False},
+                    {"keyId": "test-key"},
+                ],
+            ),
+            mock.patch.object(
+                evidence,
+                "training_payload",
+                return_value={"kind": "training"},
+            ),
+            mock.patch.object(
+                evidence,
+                "evaluation_payload",
+                side_effect=evidence.EvidenceError("invalid evaluation"),
+            ),
+            mock.patch.object(
+                evidence,
+                "signing_function",
+                return_value=signer,
+            ),
+        ):
+            with self.assertRaisesRegex(
+                evidence.EvidenceError,
+                "invalid evaluation",
+            ):
+                evidence.mint(args)
+        signer.assert_not_called()
 
 
 if __name__ == "__main__":
