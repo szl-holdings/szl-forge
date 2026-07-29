@@ -25,6 +25,11 @@ SIGNER_DIR = REPO / "receiptagent"
 TRAINING_RECEIPT = RECEIPTS / "training_receipt.signed.json"
 EVALUATION_RECEIPT = RECEIPTS / "eval_receipt.signed.json"
 SOURCE_COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
+QUALIFICATION_SOURCE_FILES = (
+    "frontier/qwen35-receiptagent-v2/qualify_runtime.py",
+    "frontier/qwen35-receiptagent-v2/train_candidate.py",
+    "frontier/qwen35-receiptagent-v2/evaluate_candidate.py",
+)
 
 
 class EvidenceError(RuntimeError):
@@ -101,6 +106,61 @@ def ensure_source_commit(source_commit: str) -> None:
         raise EvidenceError(f"source commit {source_commit} is not in this repository")
 
 
+def source_bundle(revision: str) -> dict[str, str]:
+    result: dict[str, str] = {}
+    for path in QUALIFICATION_SOURCE_FILES:
+        completed = subprocess.run(
+            ["git", "show", f"{revision}:{path}"],
+            cwd=REPO,
+            check=False,
+            capture_output=True,
+        )
+        if completed.returncode:
+            raise EvidenceError(f"cannot read {path} from Git revision {revision}")
+        result[path] = hashlib.sha256(completed.stdout).hexdigest()
+    return result
+
+
+def source_bundle_sha(bundle: dict[str, str]) -> str:
+    return sha256_json(bundle)
+
+
+def verify_source_binding(payload: dict[str, Any]) -> None:
+    source_commit = payload.get("sourceCommit", "")
+    if not SOURCE_COMMIT_RE.fullmatch(source_commit):
+        raise EvidenceError("receipt source commit must be a lowercase 40-hex SHA")
+    declared = payload.get("qualificationSource")
+    if not isinstance(declared, dict):
+        raise EvidenceError("receipt qualification source bundle is missing")
+    require_equal(
+        "qualification source paths",
+        tuple(sorted(declared)),
+        tuple(sorted(QUALIFICATION_SOURCE_FILES)),
+    )
+    require_equal(
+        "qualification source bundle SHA",
+        payload.get("qualificationSourceSha256"),
+        source_bundle_sha(declared),
+    )
+    # A protected squash does not retain intermediate commit ancestry. The
+    # immutable source bundle therefore remains the durable binding. When the
+    # original commit is present, verify it too; always require current Git
+    # bytes to match the signed bundle.
+    commit_probe = subprocess.run(
+        ["git", "cat-file", "-e", f"{source_commit}^{{commit}}"],
+        cwd=REPO,
+        check=False,
+        capture_output=True,
+    )
+    if commit_probe.returncode == 0:
+        require_equal(
+            "source commit bundle",
+            source_bundle(source_commit),
+            declared,
+        )
+    require_equal("current source bundle", source_bundle("HEAD"), declared)
+
+
 def signing_function() -> Any:
     sys.path.insert(0, str(SIGNER_DIR))
     try:
@@ -151,11 +211,14 @@ def training_payload(
         candidate["training_implementation"]["revision"],
     )
     metrics = report.get("training", {}).get("metrics", {})
+    source = source_bundle(source_commit)
     return {
         "kind": "szl-frontier-training-receipt",
         "v": 1,
         "candidateId": candidate["candidate_id"],
         "sourceCommit": source_commit,
+        "qualificationSource": source,
+        "qualificationSourceSha256": source_bundle_sha(source),
         "canonicalBase": candidate["canonical_base"],
         "trainingImplementation": candidate["training_implementation"],
         "datasets": report["dataset_hashes"],
@@ -219,11 +282,14 @@ def evaluation_payload(
     ):
         require_equal(key, counts.get(key), measured[key])
     training_canonical_sha = sha256_text(training_receipt["canonical"])
+    source = source_bundle(source_commit)
     return {
         "kind": "szl-frontier-eval-receipt",
         "v": 1,
         "candidateId": candidate["candidate_id"],
         "sourceCommit": source_commit,
+        "qualificationSource": source,
+        "qualificationSourceSha256": source_bundle_sha(source),
         "trainingReceiptCanonicalSha256": training_canonical_sha,
         "trainingReportSha256": measured["training_report_sha256"],
         "evaluationReportSha256": report_sha,
@@ -302,7 +368,7 @@ def verify_chain() -> dict[str, Any]:
             payload.get("candidateId"),
             candidate["candidate_id"],
         )
-        ensure_source_commit(payload.get("sourceCommit", ""))
+        verify_source_binding(payload)
         require_equal(
             f"{label} adapter hash",
             payload.get("adapterAggregateSha256"),

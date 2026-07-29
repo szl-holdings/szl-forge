@@ -4,7 +4,9 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
+import evidence_chain as evidence
 import qualify_runtime as qualification
 import train_candidate as training
 import evaluate_candidate as evaluation
@@ -106,6 +108,28 @@ class QualificationContractTests(unittest.TestCase):
         invalid, invalid_error = evaluation.validate_draft("{}", validator)
         self.assertFalse(invalid)
         self.assertIn("ValidationError", invalid_error)
+
+    def test_receipt_source_bundle_survives_protected_squash(self) -> None:
+        receipt = json.loads(
+            (
+                HERE
+                / "receipts"
+                / "training_receipt.signed.json"
+            ).read_text(encoding="utf-8")
+        )
+        real_run = evidence.subprocess.run
+
+        def squash_without_intermediate_commit(args, **kwargs):
+            if len(args) > 1 and args[1] == "cat-file":
+                return evidence.subprocess.CompletedProcess(args, 1, b"", b"missing")
+            return real_run(args, **kwargs)
+
+        with mock.patch.object(
+            evidence.subprocess,
+            "run",
+            side_effect=squash_without_intermediate_commit,
+        ):
+            evidence.verify_source_binding(receipt["payload"])
 
 
 if __name__ == "__main__":
