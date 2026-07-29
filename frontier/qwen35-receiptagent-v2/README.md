@@ -1,7 +1,10 @@
-# SZL ReceiptAgent Qwen3.5 0.8B v2 candidate
+# SZL ReceiptAgent Qwen3.5 0.8B v2
 
-This directory is a **qualification and evidence lane**, not by itself a model
-release.
+This directory is the canonical qualification, evaluation, and publication
+evidence lane for the public, proposal-only adapter at
+[`SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2`](https://huggingface.co/SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2).
+The immutable release revision is
+`7a0d9efdebe92ea3b5b26b97cc722c6b5afde621`.
 
 It pins the Apache-2.0 Qwen/Qwen3.5-0.8B lineage and the exact Unsloth
 implementation revision used on the RTX 5050 laptop. The first gate performs a
@@ -16,11 +19,12 @@ python qualify_runtime.py \
   --report /path/outside/repository/qwen35-runtime-qualification.json
 ```
 
-Passing this gate proves only that the pinned model loaded and generated on the
-observed GPU. It does not prove that an SZL fine-tune exists. No repository,
-model card, adapter, or public portfolio entry may be created until training,
-5/5 held-out schema conformance, 6/6 adversarial refusal, and the signed
-training/evaluation receipt chain all pass.
+Passing this gate proved only that the pinned base model loaded and generated
+on the observed GPU. Publication additionally required training, 5/5 held-out
+schema conformance, 6/6 adversarial refusal, the signed training/evaluation
+receipt chain, exact Hub-byte readback, and immutable-revision adapter
+inference. Those bounded gates have now passed; autonomy eligibility remains
+false.
 
 After the runtime gate passes, run a single real optimizer step as the training
 smoke:
@@ -32,9 +36,9 @@ python train_candidate.py \
 ```
 
 Only after that succeeds may the bounded full run use the declared 64-step
-configuration (four curriculum passes at effective batch size two). The older
-700-step proposal is rejected because it would overfit this 31-row admitted
-curriculum. Both runs save the adapter and a content-addressed training report
+configuration. The older 700-step proposal is rejected because it would
+overfit this 37-row admitted curriculum. Both runs save the adapter and a
+content-addressed training report
 outside Git; neither creates a public model automatically.
 
 Evaluate the exact saved adapter against the committed 5-case contract set and
@@ -52,7 +56,7 @@ training-report digests, and records raw integer counts plus per-case output
 hashes. A passing evaluation is still not publication approval: owner-signed
 training/eval receipts and a post-publication Hub readback remain mandatory.
 
-The bounded run completed 64 optimizer steps over 31 admitted training rows on
+The bounded run completed 64 optimizer steps over 37 admitted training rows on
 an NVIDIA RTX 5050 Laptop GPU. The exact adapter then passed 5/5 held-out JSON
 contract cases and 6/6 adversarial refusal cases. These are **MEASURED** raw
 counts, not a general capability benchmark and not evidence of autonomy.
@@ -72,3 +76,8 @@ python evidence_chain.py verify
 acceptance counts, candidate identity, or source commits. It signs the
 training evidence first and binds the evaluation receipt to the training
 receipt's canonical SHA-256. The private Ed25519 key remains outside Git.
+
+`publication.json` records the exact public revision, byte/readback counts,
+adapter digest, source merge, and immutable-revision GPU inference. The
+owner-signed `receipts/publication_receipt.signed.json` binds that evidence
+without upgrading the model to an authorizer, executor, or autonomous agent.

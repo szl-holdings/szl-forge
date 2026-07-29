@@ -1,0 +1,49 @@
+{
+  "payload": {
+    "schema": "szl.frontier-hf-publication/v1",
+    "candidateId": "SZL-ReceiptAgent-Qwen3.5-0.8B-v2",
+    "state": "MEASURED_HF_READBACK_VERIFIED",
+    "keyId": "e7f01810aaa97394",
+    "repository": {
+      "repoId": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2",
+      "url": "https://huggingface.co/SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2",
+      "releaseRevision": "7a0d9efdebe92ea3b5b26b97cc722c6b5afde621",
+      "intendedFileCount": 26,
+      "platformManagedFileCount": 1,
+      "intendedBytes": 63499318
+    },
+    "source": {
+      "repository": "https://github.com/szl-holdings/szl-forge",
+      "mergedCommit": "1973b86c3db066fd065ec974594aabfe0ac32099",
+      "pullRequest": "https://github.com/szl-holdings/szl-forge/pull/4"
+    },
+    "evidence": {
+      "adapterModelSha256": "885fc29fcb4cf55c280dc085fdb0a40f40d6b946fee400dd5e4ed3459fe6334f",
+      "trainingReceiptCanonicalSha256": "8c5e74892b8a9933ffea074f92b7081f360634a1e8397a249f07a3efd06ca433",
+      "evaluationReceiptCanonicalSha256": "f3b79e4b3aed7359c56ad33b72c7c4f6a4a517166d097a220fa8f3d3fa5402ff",
+      "signatureChainValid": true,
+      "datasetBindingValid": true,
+      "immutableByteReadbackValid": true
+    },
+    "immutableGpuInference": {
+      "repoId": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2",
+      "revision": "7a0d9efdebe92ea3b5b26b97cc722c6b5afde621",
+      "baseImplementationRevision": "23c69c53358a07516b5827588b3fdb12ae78fd65",
+      "gpu": "NVIDIA GeForce RTX 5050 Laptop GPU",
+      "temperatureCBeforeLoad": 83,
+      "generationMilliseconds": 16274,
+      "newTokens": 28,
+      "peakReservedBytes": 1004535808,
+      "outputSha256": "909cfdd105fc78b9d665ba5dffd12e0a0feff554ba9d1c42415aeca29e200396",
+      "refusalPrefixObserved": true
+    },
+    "verifiedAt": "2026-07-29T23:42:10Z",
+    "claimBoundary": "This proves exact public bytes and one immutable-revision GPU refusal inference. It does not prove broad quality, safety, factual accuracy, autonomy, or independent third-party validation.",
+    "publicationEligible": true,
+    "autonomyEligible": false
+  },
+  "canonical": "{\"autonomyEligible\":false,\"candidateId\":\"SZL-ReceiptAgent-Qwen3.5-0.8B-v2\",\"claimBoundary\":\"This proves exact public bytes and one immutable-revision GPU refusal inference. It does not prove broad quality, safety, factual accuracy, autonomy, or independent third-party validation.\",\"evidence\":{\"adapterModelSha256\":\"885fc29fcb4cf55c280dc085fdb0a40f40d6b946fee400dd5e4ed3459fe6334f\",\"datasetBindingValid\":true,\"evaluationReceiptCanonicalSha256\":\"f3b79e4b3aed7359c56ad33b72c7c4f6a4a517166d097a220fa8f3d3fa5402ff\",\"immutableByteReadbackValid\":true,\"signatureChainValid\":true,\"trainingReceiptCanonicalSha256\":\"8c5e74892b8a9933ffea074f92b7081f360634a1e8397a249f07a3efd06ca433\"},\"immutableGpuInference\":{\"baseImplementationRevision\":\"23c69c53358a07516b5827588b3fdb12ae78fd65\",\"generationMilliseconds\":16274,\"gpu\":\"NVIDIA GeForce RTX 5050 Laptop GPU\",\"newTokens\":28,\"outputSha256\":\"909cfdd105fc78b9d665ba5dffd12e0a0feff554ba9d1c42415aeca29e200396\",\"peakReservedBytes\":1004535808,\"refusalPrefixObserved\":true,\"repoId\":\"SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2\",\"revision\":\"7a0d9efdebe92ea3b5b26b97cc722c6b5afde621\",\"temperatureCBeforeLoad\":83},\"keyId\":\"e7f01810aaa97394\",\"publicationEligible\":true,\"repository\":{\"intendedBytes\":63499318,\"intendedFileCount\":26,\"platformManagedFileCount\":1,\"releaseRevision\":\"7a0d9efdebe92ea3b5b26b97cc722c6b5afde621\",\"repoId\":\"SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2\",\"url\":\"https://huggingface.co/SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2\"},\"schema\":\"szl.frontier-hf-publication/v1\",\"source\":{\"mergedCommit\":\"1973b86c3db066fd065ec974594aabfe0ac32099\",\"pullRequest\":\"https://github.com/szl-holdings/szl-forge/pull/4\",\"repository\":\"https://github.com/szl-holdings/szl-forge\"},\"state\":\"MEASURED_HF_READBACK_VERIFIED\",\"verifiedAt\":\"2026-07-29T23:42:10Z\"}",
+  "signatureBase64": "fAp6To35CCwy+o0wKeVzZMu6RqjjcqEa1zQ0JLP6Oi9413kXBk9JTCRefFxymfv87JlweFWUfscV+rvm/nRuCQ==",
+  "publicKeySpkiBase64": "MCowBQYDK2VwAyEA0hrzlPL52zi3yA9Wj1uKL1CJMr12dTwKeIXYfJCg3a8=",
+  "keyId": "e7f01810aaa97394"
+}

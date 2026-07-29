@@ -35,6 +35,31 @@
       "maturity": "MEASURED_LIMITED"
     },
     {
+      "repo_id": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2",
+      "kind": "trained_model",
+      "role": "governed_receipt_draft_proposer_v2",
+      "github_source": "https://github.com/szl-holdings/szl-forge/tree/main/frontier/qwen35-receiptagent-v2",
+      "hub_revision": "7a0d9efdebe92ea3b5b26b97cc722c6b5afde621",
+      "expected_weight_sha256": {
+        "adapter_model.safetensors": "885fc29fcb4cf55c280dc085fdb0a40f40d6b946fee400dd5e4ed3459fe6334f"
+      },
+      "required_files": [
+        "adapter_model.safetensors",
+        "adapter_config.json",
+        "candidate.json",
+        "owner_pubkey.json",
+        "receipts/training_receipt.signed.json",
+        "receipts/eval_receipt.signed.json"
+      ],
+      "max_total_weight_bytes": 50000000,
+      "autonomy_eligible": false,
+      "maturity": "MEASURED_PUBLISHED_LIMITED",
+      "limitations": [
+        "The held-out gate contains 5 structured-draft and 6 adversarial-refusal cases.",
+        "The model proposes drafts only; approval, execution, and receipt minting remain outside the weights."
+      ]
+    },
+    {
       "repo_id": "SZLHOLDINGS/SZL-Khipu-1.5B",
       "kind": "trained_model",
       "role": "governed_retrieval_plan_proposer",

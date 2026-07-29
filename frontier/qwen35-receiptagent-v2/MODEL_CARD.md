@@ -78,16 +78,25 @@ Evaluation report SHA-256:
 
 ## Evidence boundary
 
+The public, proposal-only release is available at
+[`SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2`](https://huggingface.co/SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2).
+Its immutable evidence revision is
+`7a0d9efdebe92ea3b5b26b97cc722c6b5afde621`.
+
 The release includes:
 
 - an owner-signed training receipt;
 - an owner-signed evaluation receipt chained to the training receipt;
 - the public Ed25519 verification key;
 - source, dataset, adapter, and report digests; and
-- a post-publication readback receipt after the Hub bytes are independently
-  fetched and hashed.
+- an owner-signed post-publication receipt after the Hub bytes were
+  independently fetched and hashed.
 
-Publication is fail-closed until all of those artifacts verify.
+All 26 intended files (63,499,318 bytes) were fetched from the immutable Hub
+revision and matched their source or generated-artifact digest. The Hub-managed
+`.gitattributes` file is accounted for separately. The adapter weights matched
+SHA-256
+`885fc29fcb4cf55c280dc085fdb0a40f40d6b946fee400dd5e4ed3459fe6334f`.
 
 The owner-signed evidence chain binds source commit
 `2a5f9cd98503923a49c34e4ef3d3f92e40ca1386` and the durable qualification
@@ -101,9 +110,24 @@ to:
   `f3b79e4b3aed7359c56ad33b72c7c4f6a4a517166d097a220fa8f3d3fa5402ff`
 - Ed25519 key ID: `e7f01810aaa97394`
 
-The evidence chain is valid. Public release eligibility remains false until
-the protected source change merges and the Hugging Face adapter is fetched
-back and independently rehashed.
+The publication receipt canonical SHA-256 is
+`51444e7a8d6a6556ec848641620fbbea6b47e8363254aaf50d4ccdd38d6210cc`.
+The evidence chain is valid and the bounded publication gate has passed.
+Autonomy eligibility remains false.
+
+## Immutable Hub runtime readback
+
+The adapter was loaded from the exact Hub revision above and executed on an
+NVIDIA GeForce RTX 5050 Laptop GPU:
+
+- 28 generated tokens in 16.274 seconds;
+- peak reserved GPU memory: 1,004,535,808 bytes;
+- generated-output SHA-256:
+  `909cfdd105fc78b9d665ba5dffd12e0a0feff554ba9d1c42415aeca29e200396`;
+- required refusal prefix observed: yes.
+
+This is one immutable-revision GPU inference receipt. It is not a broad
+quality, safety, factual-accuracy, autonomy, or third-party benchmark claim.
 
 ## Limitations
 

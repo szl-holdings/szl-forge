@@ -46,9 +46,35 @@ def load_candidate(path: Path) -> dict[str, Any]:
         raise QualificationError("candidate does not pin its implementation")
     if candidate.get("autonomy_eligible") is not False:
         raise QualificationError("unqualified candidate cannot be autonomous")
-    if candidate.get("publication_eligible") is not False:
-        raise QualificationError("unqualified candidate cannot be publishable")
+    publication_eligible = candidate.get("publication_eligible")
+    if publication_eligible is True:
+        evidence = candidate.get("publication_evidence")
+        if (
+            candidate.get("state") != "PUBLISHED_AND_REVERIFIED"
+            or not isinstance(evidence, dict)
+            or not isinstance(evidence.get("repo_id"), str)
+            or not evidence["repo_id"].startswith("SZLHOLDINGS/")
+            or not _lower_hex(evidence.get("release_revision"), 40)
+            or not _lower_hex(evidence.get("github_merged_source"), 40)
+            or not _lower_hex(
+                evidence.get("publication_receipt_canonical_sha256"),
+                64,
+            )
+        ):
+            raise QualificationError(
+                "published candidate lacks complete immutable publication evidence"
+            )
+    elif publication_eligible is not False:
+        raise QualificationError("candidate publication flag must be boolean")
     return candidate
+
+
+def _lower_hex(value: Any, length: int) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == length
+        and all(character in "0123456789abcdef" for character in value)
+    )
 
 
 def gpu_gate(torch: Any, *, min_free_gib: float, max_temp_c: int) -> dict[str, Any]:

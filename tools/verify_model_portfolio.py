@@ -157,6 +157,29 @@ def validate_portfolio(document: dict[str, Any]) -> list[str]:
             raise PortfolioError(
                 f"{artifact['repo_id']}: autonomy requires a separate reviewed policy"
             )
+        revision = artifact.get("hub_revision")
+        if revision is not None and not (
+            isinstance(revision, str)
+            and len(revision) == 40
+            and all(character in "0123456789abcdef" for character in revision)
+        ):
+            raise PortfolioError(
+                f"{artifact['repo_id']}: hub_revision must be lowercase 40-hex"
+            )
+        expected_weights = artifact.get("expected_weight_sha256", {})
+        if not isinstance(expected_weights, dict):
+            raise PortfolioError(
+                f"{artifact['repo_id']}: expected_weight_sha256 must be an object"
+            )
+        for filename, digest in expected_weights.items():
+            if not isinstance(filename, str) or not (
+                isinstance(digest, str)
+                and len(digest) == 64
+                and all(character in "0123456789abcdef" for character in digest)
+            ):
+                raise PortfolioError(
+                    f"{artifact['repo_id']}: invalid expected weight digest"
+                )
     return repo_ids
 
 
@@ -183,7 +206,11 @@ def audit_live_artifact(
 ) -> dict[str, Any]:
     from huggingface_hub import hf_hub_download
 
-    info = api.model_info(artifact["repo_id"], files_metadata=True)
+    pinned_revision = artifact.get("hub_revision")
+    model_info_args: dict[str, Any] = {"files_metadata": True}
+    if pinned_revision:
+        model_info_args["revision"] = pinned_revision
+    info = api.model_info(artifact["repo_id"], **model_info_args)
     files = [sibling_record(item) for item in info.siblings]
     paths = {item["path"] for item in files}
     missing = sorted(set(artifact.get("required_files", [])) - paths)
@@ -196,6 +223,10 @@ def audit_live_artifact(
     warnings: list[str] = []
     if missing:
         errors.append(f"required files absent: {missing}")
+    if pinned_revision and info.sha != pinned_revision:
+        errors.append(
+            f"resolved revision {info.sha} differs from pin {pinned_revision}"
+        )
     license_name = getattr(getattr(info, "card_data", None), "license", None)
     if str(license_name).lower() != "apache-2.0":
         errors.append(f"license is {license_name!r}, expected 'apache-2.0'")
@@ -213,6 +244,19 @@ def audit_live_artifact(
         errors.append(
             f"weight bytes {total_weight_bytes} exceed declared maximum {maximum}"
         )
+    file_records = {item["path"]: item for item in files}
+    for filename, expected_sha in artifact.get(
+        "expected_weight_sha256",
+        {},
+    ).items():
+        record = file_records.get(filename)
+        if record is None:
+            errors.append(f"expected weight absent: {filename}")
+        elif record.get("lfs_sha256") != expected_sha:
+            errors.append(
+                f"{filename}: LFS SHA-256 {record.get('lfs_sha256')!r} "
+                f"differs from pin {expected_sha}"
+            )
     if artifact.get("github_source") is None:
         warnings.append("canonical GitHub source is unbound")
 
