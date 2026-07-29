@@ -24,8 +24,8 @@
     },
     "train.refusals.jsonl": {
       "kind": "refusal",
-      "rows": 8,
-      "sha256": "c5136b612951c209d1041839d1ac19a8fa378c31015d61dd7565994b4f3e2b47"
+      "rows": 11,
+      "sha256": "ec3db2d6039763d7f97a53cd46086ad746f8ca33ba09ee86dd32647861bf7e92"
     },
     "adversarial.jsonl": {
       "kind": "refusal",
@@ -40,8 +40,8 @@
   },
   "totals": {
     "draftRows": 20,
-    "refusalRows": 14,
-    "trainRows": 23,
+    "refusalRows": 17,
+    "trainRows": 26,
     "evalRows": 11
   }
 }

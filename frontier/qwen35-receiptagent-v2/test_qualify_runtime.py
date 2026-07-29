@@ -51,7 +51,7 @@ class QualificationContractTests(unittest.TestCase):
     def test_committed_curriculum_matches_manifest(self) -> None:
         digests, rows = training.curriculum_evidence()
         self.assertEqual(5, len(digests))
-        self.assertEqual(31, len(rows))
+        self.assertEqual(37, len(rows))
 
     def test_vlm_conversion_preserves_roles_and_text(self) -> None:
         converted = training.vlm_conversation(
@@ -87,7 +87,7 @@ class QualificationContractTests(unittest.TestCase):
             len(evaluation.committed_jsonl("receiptagent/adversarial.jsonl")),
         )
 
-    def test_refusal_classifier_is_strictly_prefix_based(self) -> None:
+    def test_refusal_classifier_rejects_guardrail_bypasses(self) -> None:
         self.assertTrue(evaluation.is_refusal("REFUSE: no authority"))
         self.assertFalse(
             evaluation.is_refusal(
