@@ -7,9 +7,12 @@ import argparse
 import base64
 import hashlib
 import json
+import os
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -355,7 +358,7 @@ def verify_chain() -> dict[str, Any]:
     training = load_json(TRAINING_RECEIPT)
     evaluation = load_json(EVALUATION_RECEIPT)
     training_sha = verify_wrapper(training, owner_key, "training receipt")
-    verify_wrapper(evaluation, owner_key, "evaluation receipt")
+    evaluation_sha = verify_wrapper(evaluation, owner_key, "evaluation receipt")
     require_equal(
         "receipt chain",
         evaluation["payload"].get("trainingReceiptCanonicalSha256"),
@@ -370,12 +373,42 @@ def verify_chain() -> dict[str, Any]:
         )
         verify_source_binding(payload)
         require_equal(
+            f"{label} source commit",
+            payload.get("sourceCommit"),
+            candidate["measured_evidence"]["source_commit"],
+        )
+        require_equal(
+            f"{label} qualification source",
+            payload.get("qualificationSourceSha256"),
+            candidate["signed_evidence"]["qualification_source_sha256"],
+        )
+        require_equal(
             f"{label} adapter hash",
             payload.get("adapterAggregateSha256"),
             candidate["measured_evidence"]["adapter_aggregate_sha256"],
         )
         require_equal(f"{label} publication flag", payload.get("publicationEligible"), False)
         require_equal(f"{label} autonomy flag", payload.get("autonomyEligible"), False)
+    require_equal(
+        "candidate key id",
+        candidate["signed_evidence"].get("key_id"),
+        owner_key["keyId"],
+    )
+    require_equal(
+        "candidate training receipt identity",
+        candidate["signed_evidence"].get("training_receipt_canonical_sha256"),
+        training_sha,
+    )
+    require_equal(
+        "candidate evaluation receipt identity",
+        candidate["signed_evidence"].get("evaluation_receipt_canonical_sha256"),
+        evaluation_sha,
+    )
+    require_equal(
+        "candidate chain declaration",
+        candidate["signed_evidence"].get("chain_valid"),
+        True,
+    )
     counts = candidate["measured_evidence"]
     eval_payload = evaluation["payload"]
     require_equal("eval count", eval_payload.get("evalContractValid"), counts["eval_contract_valid"])
@@ -394,7 +427,7 @@ def verify_chain() -> dict[str, Any]:
         "candidate_id": candidate["candidate_id"],
         "key_id": owner_key["keyId"],
         "training_receipt_canonical_sha256": training_sha,
-        "evaluation_receipt_canonical_sha256": sha256_text(evaluation["canonical"]),
+        "evaluation_receipt_canonical_sha256": evaluation_sha,
         "chain_valid": True,
         "publication_eligible": False,
         "autonomy_eligible": False,
@@ -406,22 +439,68 @@ def mint(args: argparse.Namespace) -> dict[str, Any]:
     candidate = load_json(HERE / "candidate.json")
     training_report = load_json(args.training_report)
     evaluation_report = load_json(args.evaluation_report)
-    RECEIPTS.mkdir(parents=True, exist_ok=True)
+    owner_key = load_json(OWNER_PUBLIC_KEY)
     sign_payload = signing_function()
-    training = sign_payload(
-        training_payload(candidate, training_report, args.source_commit),
-        str(TRAINING_RECEIPT),
+    training_data = training_payload(
+        candidate,
+        training_report,
+        args.source_commit,
     )
-    sign_payload(
-        evaluation_payload(
-            candidate,
-            evaluation_report,
-            args.source_commit,
-            training,
-        ),
-        str(EVALUATION_RECEIPT),
+    training_preview = {
+        "canonical": canonical_json(
+            {**training_data, "keyId": owner_key["keyId"]}
+        )
+    }
+    # Validate both reports and construct both payloads before writing either
+    # receipt. A bad evaluation can never overwrite a valid training receipt.
+    evaluation_data = evaluation_payload(
+        candidate,
+        evaluation_report,
+        args.source_commit,
+        training_preview,
     )
-    return verify_chain()
+    stage = Path(tempfile.mkdtemp(prefix=".receipts-stage-", dir=HERE))
+    backup = HERE / ".receipts-backup"
+    try:
+        stage_training = stage / TRAINING_RECEIPT.name
+        stage_evaluation = stage / EVALUATION_RECEIPT.name
+        training = sign_payload(training_data, str(stage_training))
+        evaluation = sign_payload(evaluation_data, str(stage_evaluation))
+        training_sha = verify_wrapper(training, owner_key, "training receipt")
+        evaluation_sha = verify_wrapper(evaluation, owner_key, "evaluation receipt")
+        require_equal(
+            "staged receipt chain",
+            evaluation["payload"].get("trainingReceiptCanonicalSha256"),
+            training_sha,
+        )
+        if backup.exists():
+            shutil.rmtree(backup)
+        if RECEIPTS.exists():
+            os.replace(RECEIPTS, backup)
+        try:
+            os.replace(stage, RECEIPTS)
+        except Exception:
+            if backup.exists() and not RECEIPTS.exists():
+                os.replace(backup, RECEIPTS)
+            raise
+        if backup.exists():
+            shutil.rmtree(backup)
+        return {
+            "candidate_id": candidate["candidate_id"],
+            "key_id": owner_key["keyId"],
+            "qualification_source_sha256": training["payload"][
+                "qualificationSourceSha256"
+            ],
+            "training_receipt_canonical_sha256": training_sha,
+            "evaluation_receipt_canonical_sha256": evaluation_sha,
+            "chain_valid": True,
+            "candidate_manifest_update_required": True,
+            "publication_eligible": False,
+            "autonomy_eligible": False,
+        }
+    finally:
+        if stage.exists():
+            shutil.rmtree(stage)
 
 
 def main() -> int:
