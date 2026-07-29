@@ -28,6 +28,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Set up Python
@@ -42,6 +43,7 @@ jobs:
           "fastapi==0.139.0"
           "httpx==0.28.1"
           "huggingface-hub==1.23.0"
+          "jsonschema==4.26.0"
           "pydantic==2.13.4"
 
       - name: Compile and run offline contracts
@@ -55,9 +57,16 @@ jobs:
             spaces/szl-model-inference-lab/app.py \
             spaces/szl-model-inference-lab/verify_execution_record.py \
             spaces/szl-forge-lab/forge_lab.py \
-            spaces/szl-forge-lab/forge_runtime_contract.py
+            spaces/szl-forge-lab/forge_runtime_contract.py \
+            frontier/qwen35-receiptagent-v2/qualify_runtime.py \
+            frontier/qwen35-receiptagent-v2/train_candidate.py \
+            frontier/qwen35-receiptagent-v2/evaluate_candidate.py \
+            frontier/qwen35-receiptagent-v2/evidence_chain.py
           python tools/test_verify_model_portfolio.py
           PYTHONPATH=tools python tools/test_publish_hf_space.py
+          PYTHONPATH=frontier/qwen35-receiptagent-v2 \
+            python frontier/qwen35-receiptagent-v2/test_qualify_runtime.py
+          python frontier/qwen35-receiptagent-v2/evidence_chain.py verify
           PYTHONPATH=spaces/szl-model-inference-lab \
             python -m unittest discover \
               -s spaces/szl-model-inference-lab/tests -v

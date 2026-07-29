@@ -1,0 +1,56 @@
+{
+  "payload": {
+    "kind": "szl-frontier-training-receipt",
+    "v": 1,
+    "candidateId": "SZL-ReceiptAgent-Qwen3.5-0.8B-v2",
+    "sourceCommit": "2a5f9cd98503923a49c34e4ef3d3f92e40ca1386",
+    "qualificationSource": {
+      "frontier/qwen35-receiptagent-v2/qualify_runtime.py": "b367603958ce361a1fdc621b4defea6fbe47df73fc28b348f391333e1beba35c",
+      "frontier/qwen35-receiptagent-v2/train_candidate.py": "f44ce47882d2f0f9d859e903e67773defa1b31dce738c2aa2ceda5a580dd34c5",
+      "frontier/qwen35-receiptagent-v2/evaluate_candidate.py": "cd91c84b549696d7afb6918bca4a3a52e15121afb59c1d398698ef74e6ac66e2"
+    },
+    "qualificationSourceSha256": "b7b0eb703062981636d7cca41ed9ecaa8ca87a0ba51bd515cca721a6df0f5f8a",
+    "canonicalBase": {
+      "repo_id": "Qwen/Qwen3.5-0.8B",
+      "revision": "2fc06364715b967f1860aea9cf38778875588b17",
+      "license": "apache-2.0"
+    },
+    "trainingImplementation": {
+      "repo_id": "unsloth/Qwen3.5-0.8B",
+      "revision": "23c69c53358a07516b5827588b3fdb12ae78fd65",
+      "license": "apache-2.0",
+      "runtime": "Unsloth FastVisionModel"
+    },
+    "datasets": {
+      "adversarial.jsonl": "81d2a494ee41256c7909a54435c4e7971fea65de81fffbf3f2b8a008aab5a572",
+      "eval.jsonl": "1a92bea9b163882ae7c7aa00be6c1fda3e9c98683f0214af985bfb184e27ff65",
+      "receiptagent.schema.json": "1db07ef9e1581cc8cc471dd42e79a21b728c4e3bf1222fd0f06f2b7257bb288e",
+      "train.jsonl": "775e25b526a96d1486e80aae048f731bdad02a0d94ea76144593e115802fa24f",
+      "train.refusals.jsonl": "c5136b612951c209d1041839d1ac19a8fa378c31015d61dd7565994b4f3e2b47",
+      "train.status-refusals.jsonl": "96a5518400293913620f0c9bb9aa9a4fa180202b3d5c1bd1ab66a38eb272067d"
+    },
+    "trainingReportSha256": "1d1ce062e76aeccabe75fabb2c74d8bdddfc6f9a86f13c5cfd9960e9e5821f38",
+    "adapterAggregateSha256": "dde649ca3166881b675a3db093ee273c6186e3d8e801c8491fac0a2da03e58f7",
+    "adapterModelSha256": "885fc29fcb4cf55c280dc085fdb0a40f40d6b946fee400dd5e4ed3459fe6334f",
+    "optimizerSteps": 64,
+    "trainingRows": 37,
+    "finalTrainLoss": "0.914294287184",
+    "trainedAt": "2026-07-29T23:16:26.381995+00:00",
+    "host": "betterwithage",
+    "gpu": {
+      "name": "NVIDIA GeForce RTX 5050 Laptop GPU",
+      "computeCapability": "12.0",
+      "cudaRuntime": "13.0",
+      "torchVersion": "2.11.0+cu130",
+      "peakReservedBytes": 1671430144,
+      "temperatureCBeforeLoad": 74
+    },
+    "autonomyEligible": false,
+    "publicationEligible": false,
+    "keyId": "e7f01810aaa97394"
+  },
+  "canonical": "{\"adapterAggregateSha256\":\"dde649ca3166881b675a3db093ee273c6186e3d8e801c8491fac0a2da03e58f7\",\"adapterModelSha256\":\"885fc29fcb4cf55c280dc085fdb0a40f40d6b946fee400dd5e4ed3459fe6334f\",\"autonomyEligible\":false,\"candidateId\":\"SZL-ReceiptAgent-Qwen3.5-0.8B-v2\",\"canonicalBase\":{\"license\":\"apache-2.0\",\"repo_id\":\"Qwen/Qwen3.5-0.8B\",\"revision\":\"2fc06364715b967f1860aea9cf38778875588b17\"},\"datasets\":{\"adversarial.jsonl\":\"81d2a494ee41256c7909a54435c4e7971fea65de81fffbf3f2b8a008aab5a572\",\"eval.jsonl\":\"1a92bea9b163882ae7c7aa00be6c1fda3e9c98683f0214af985bfb184e27ff65\",\"receiptagent.schema.json\":\"1db07ef9e1581cc8cc471dd42e79a21b728c4e3bf1222fd0f06f2b7257bb288e\",\"train.jsonl\":\"775e25b526a96d1486e80aae048f731bdad02a0d94ea76144593e115802fa24f\",\"train.refusals.jsonl\":\"c5136b612951c209d1041839d1ac19a8fa378c31015d61dd7565994b4f3e2b47\",\"train.status-refusals.jsonl\":\"96a5518400293913620f0c9bb9aa9a4fa180202b3d5c1bd1ab66a38eb272067d\"},\"finalTrainLoss\":\"0.914294287184\",\"gpu\":{\"computeCapability\":\"12.0\",\"cudaRuntime\":\"13.0\",\"name\":\"NVIDIA GeForce RTX 5050 Laptop GPU\",\"peakReservedBytes\":1671430144,\"temperatureCBeforeLoad\":74,\"torchVersion\":\"2.11.0+cu130\"},\"host\":\"betterwithage\",\"keyId\":\"e7f01810aaa97394\",\"kind\":\"szl-frontier-training-receipt\",\"optimizerSteps\":64,\"publicationEligible\":false,\"qualificationSource\":{\"frontier/qwen35-receiptagent-v2/evaluate_candidate.py\":\"cd91c84b549696d7afb6918bca4a3a52e15121afb59c1d398698ef74e6ac66e2\",\"frontier/qwen35-receiptagent-v2/qualify_runtime.py\":\"b367603958ce361a1fdc621b4defea6fbe47df73fc28b348f391333e1beba35c\",\"frontier/qwen35-receiptagent-v2/train_candidate.py\":\"f44ce47882d2f0f9d859e903e67773defa1b31dce738c2aa2ceda5a580dd34c5\"},\"qualificationSourceSha256\":\"b7b0eb703062981636d7cca41ed9ecaa8ca87a0ba51bd515cca721a6df0f5f8a\",\"sourceCommit\":\"2a5f9cd98503923a49c34e4ef3d3f92e40ca1386\",\"trainedAt\":\"2026-07-29T23:16:26.381995+00:00\",\"trainingImplementation\":{\"license\":\"apache-2.0\",\"repo_id\":\"unsloth/Qwen3.5-0.8B\",\"revision\":\"23c69c53358a07516b5827588b3fdb12ae78fd65\",\"runtime\":\"Unsloth FastVisionModel\"},\"trainingReportSha256\":\"1d1ce062e76aeccabe75fabb2c74d8bdddfc6f9a86f13c5cfd9960e9e5821f38\",\"trainingRows\":37,\"v\":1}",
+  "signatureBase64": "8GJe39a3CTqSvtbeEqQs72TF3PYhHk0cnOQogcvU8LHY3MFGP8taqNFBTLKxwWH+6tyu0DSZ4XgaO66kHiw3DA==",
+  "publicKeySpkiBase64": "MCowBQYDK2VwAyEA0hrzlPL52zi3yA9Wj1uKL1CJMr12dTwKeIXYfJCg3a8=",
+  "keyId": "e7f01810aaa97394"
+}
