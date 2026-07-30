@@ -7,6 +7,7 @@ from pathlib import Path
 from unittest import mock
 
 import app
+import download_artifacts
 import verify_execution_record
 from fastapi.testclient import TestClient
 
@@ -63,39 +64,141 @@ class AppContractTests(unittest.TestCase):
         self.assertEqual(app.MODEL_SIZE, 986_047_904)
         self.assertEqual(app.MAX_NEW_TOKENS, 32)
 
-    def test_default_artifact_path_is_pinned_and_offline_only(self):
-        with (
-            mock.patch.dict(os.environ, {}, clear=False),
-            mock.patch.object(
-                app,
-                "hf_hub_download",
-                return_value="/cache/pinned-model",
-            ) as download,
-        ):
-            os.environ.pop("MODEL_DIR_OVERRIDE", None)
-            path = app.artifact_path(app.MODEL_FILE)
-        self.assertEqual(Path("/cache/pinned-model"), path)
+    def test_runtime_artifact_path_is_fixed_regular_and_allowlisted(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            model = root / app.MODEL_FILE
+            model.write_bytes(b"model")
+            with mock.patch.object(app, "ARTIFACT_ROOT", root):
+                self.assertEqual(model, app.artifact_path(app.MODEL_FILE))
+                with self.assertRaisesRegex(RuntimeError, "ARTIFACT_NOT_ALLOWLISTED"):
+                    app.artifact_path("other.gguf")
+                model.unlink()
+                with self.assertRaisesRegex(RuntimeError, "ARTIFACT_NOT_REGULAR"):
+                    app.artifact_path(app.MODEL_FILE)
+
+    def test_image_fetches_only_pinned_artifacts_before_runtime_goes_offline(self):
+        dockerfile = (app.SOURCE_ROOT / "Dockerfile").read_text(encoding="utf-8")
+        self.assertNotIn("MODEL_DIR_OVERRIDE", dockerfile)
+        fetch = dockerfile.index(
+            "RUN python download_artifacts.py --fetch "
+            "--output-dir /home/user/model-artifacts"
+        )
+        offline = dockerfile.index("HF_HUB_OFFLINE=1")
+        self.assertLess(fetch, offline)
+        self.assertIn("HF_HUB_DISABLE_XET=1", dockerfile)
+        self.assertIn(
+            "COPY --from=artifact-builder --chown=root:root "
+            "/home/user/model-artifacts/ /opt/szl/model-artifacts/",
+            dockerfile,
+        )
+
+    def test_build_fetch_is_exact_revision_tokenless_and_network_enabled(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "sample.bin"
+            path.write_bytes(b"abc")
+            digest = app.sha256_file(path)
+            with (
+                mock.patch.object(
+                    download_artifacts,
+                    "ARTIFACTS",
+                    {"sample.bin": (3, digest)},
+                ),
+                mock.patch.object(
+                    download_artifacts,
+                    "hf_hub_download",
+                    return_value=str(path),
+                ) as download,
+                mock.patch.dict(os.environ, {}, clear=False),
+            ):
+                os.environ.pop("MODEL_DIR_OVERRIDE", None)
+                output = Path(directory) / "output"
+                verified = download_artifacts.verify_artifacts(
+                    fetch=True, output_dir=output
+                )
+        self.assertEqual(verified, (output / "sample.bin",))
         download.assert_called_once_with(
-            repo_id=app.MODEL_REPO,
-            filename=app.MODEL_FILE,
-            revision=app.MODEL_REVISION,
+            repo_id=download_artifacts.REPO,
+            filename="sample.bin",
+            revision=download_artifacts.REVISION,
+            local_files_only=False,
+            token=False,
+        )
+
+    def test_runtime_artifact_verification_stays_offline(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "sample.bin"
+            path.write_bytes(b"abc")
+            digest = app.sha256_file(path)
+            with (
+                mock.patch.object(
+                    download_artifacts,
+                    "ARTIFACTS",
+                    {"sample.bin": (3, digest)},
+                ),
+                mock.patch.object(
+                    download_artifacts,
+                    "hf_hub_download",
+                    return_value=str(path),
+                ) as download,
+                mock.patch.dict(os.environ, {}, clear=False),
+            ):
+                os.environ.pop("MODEL_DIR_OVERRIDE", None)
+                download_artifacts.verify_artifacts()
+        download.assert_called_once_with(
+            repo_id=download_artifacts.REPO,
+            filename="sample.bin",
+            revision=download_artifacts.REVISION,
             local_files_only=True,
             token=False,
         )
 
-    def test_space_preloads_only_the_pinned_runtime_artifacts(self):
-        readme = (app.SOURCE_ROOT / "README.md").read_text(encoding="utf-8")
-        dockerfile = (app.SOURCE_ROOT / "Dockerfile").read_text(encoding="utf-8")
-        preload = (
-            f"{app.MODEL_REPO} "
-            f"{app.MODEL_FILE},training_receipt.signed.json,"
-            "eval_receipt.signed.json,owner_pubkey.json "
-            f"{app.MODEL_REVISION}"
+    def test_build_fetch_rejects_local_override(self):
+        with mock.patch.dict(os.environ, {"MODEL_DIR_OVERRIDE": "/models"}):
+            with self.assertRaisesRegex(
+                RuntimeError, "MODEL_DIR_OVERRIDE is not permitted"
+            ):
+                download_artifacts.artifact_path(app.MODEL_FILE, fetch=True)
+
+    def test_downloader_and_runtime_artifact_locks_match(self):
+        self.assertEqual(download_artifacts.REPO, app.MODEL_REPO)
+        self.assertEqual(download_artifacts.REVISION, app.MODEL_REVISION)
+        self.assertEqual(
+            set(download_artifacts.ARTIFACTS),
+            {app.MODEL_FILE, *app.RECEIPT_FILES},
         )
-        self.assertIn("preload_from_hub:", readme)
-        self.assertIn(preload, readme)
-        self.assertNotIn("MODEL_DIR_OVERRIDE=/models", dockerfile)
-        self.assertIn("HF_HUB_OFFLINE=1", dockerfile)
+        self.assertEqual(
+            download_artifacts.ARTIFACTS[app.MODEL_FILE],
+            (app.MODEL_SIZE, app.MODEL_SHA256),
+        )
+        for filename in app.RECEIPT_FILES:
+            self.assertEqual(
+                download_artifacts.ARTIFACTS[filename][1],
+                app.RECEIPT_SHA256[filename],
+            )
+
+    def test_failed_output_verification_does_not_publish_final_file(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "source.bin"
+            source.write_bytes(b"abc")
+            output = Path(directory) / "output"
+            with (
+                mock.patch.object(
+                    download_artifacts,
+                    "ARTIFACTS",
+                    {"sample.bin": (3, "0" * 64)},
+                ),
+                mock.patch.object(
+                    download_artifacts,
+                    "hf_hub_download",
+                    return_value=str(source),
+                ),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "sha256 mismatch"):
+                    download_artifacts.verify_artifacts(
+                        fetch=True, output_dir=output
+                    )
+            self.assertFalse((output / "sample.bin").exists())
 
     def test_prompt_contract(self):
         self.assertEqual(app.InferenceRequest(prompt="  hello  ").prompt, "hello")
@@ -343,6 +446,7 @@ class AppContractTests(unittest.TestCase):
         self.assertTrue(verification["hash_matches"])
         self.assertTrue(verification["output_hash_matches"])
         self.assertTrue(verification["request_hash_matches"])
+        self.assertTrue(verification["semantic_checks_pass"])
         self.assertEqual(
             response.headers["x-szl-execution-record-sha256"],
             record["record_sha256"],

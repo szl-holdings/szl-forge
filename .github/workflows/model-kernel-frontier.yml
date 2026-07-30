@@ -55,6 +55,7 @@ jobs:
             tools/verify_model_portfolio.py \
             tools/test_verify_model_portfolio.py \
             spaces/szl-model-inference-lab/app.py \
+            spaces/szl-model-inference-lab/download_artifacts.py \
             spaces/szl-model-inference-lab/verify_execution_record.py \
             spaces/szl-forge-lab/forge_lab.py \
             spaces/szl-forge-lab/forge_runtime_contract.py \

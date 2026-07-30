@@ -77,6 +77,59 @@ class SpacePublicationPlanTests(unittest.TestCase):
         self.assertEqual(0, result["after_count"])
         api.delete_space_volumes.assert_called_once_with(repo_id="owner/space")
 
+    def test_exact_runtime_wait_can_require_final_zero_volumes(self) -> None:
+        api = Mock()
+        info = SimpleNamespace(
+            sha="b" * 40,
+            runtime=SimpleNamespace(stage="RUNNING"),
+        )
+        api.space_info.return_value = info
+        api.get_space_runtime.return_value = SimpleNamespace(volumes=[])
+        with patch("publish_hf_space.time.sleep") as sleep:
+            observed = publisher.wait_for_exact_running_space(
+                api,
+                "owner/space",
+                "b" * 40,
+                wait_seconds=1,
+                require_zero_volumes=True,
+            )
+        self.assertIs(info, observed)
+        self.assertEqual(2, api.get_space_runtime.call_count)
+        sleep.assert_called_once_with(10)
+
+    def test_final_volume_reconciliation_restarts_changed_runtime(self) -> None:
+        api = Mock()
+        info = SimpleNamespace(
+            sha="b" * 40,
+            runtime=SimpleNamespace(stage="RUNNING"),
+        )
+        api.space_info.return_value = info
+        api.get_space_runtime.side_effect = [
+            SimpleNamespace(volumes=[SimpleNamespace(source="owner/model")]),
+            SimpleNamespace(volumes=[]),
+            SimpleNamespace(
+                stage="BUILDING",
+                raw={"domains": [{"stage": "BUILDING"}]},
+                volumes=[],
+            ),
+            SimpleNamespace(volumes=[]),
+            SimpleNamespace(volumes=[]),
+        ]
+        with patch("publish_hf_space.time.sleep"):
+            evidence, observed = publisher.reconcile_final_space_volumes(
+                api,
+                "owner/space",
+                "b" * 40,
+                wait_seconds=1,
+            )
+        self.assertIs(info, observed)
+        self.assertTrue(evidence["restart_requested"])
+        self.assertTrue(evidence["restart_transition"]["observed"])
+        self.assertEqual("BUILDING", evidence["restart_transition"]["runtime_stage"])
+        self.assertEqual(0, evidence["final_count"])
+        api.delete_space_volumes.assert_called_once_with(repo_id="owner/space")
+        api.restart_space.assert_called_once_with(repo_id="owner/space")
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
