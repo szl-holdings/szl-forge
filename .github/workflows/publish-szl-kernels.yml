@@ -45,6 +45,11 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Install trusted gateway test dependency
+        run: >-
+          python -m pip install --disable-pip-version-check
+          "huggingface-hub==1.26.0"
+
       - name: Test trusted gateway contracts
         run: |
           set -euo pipefail

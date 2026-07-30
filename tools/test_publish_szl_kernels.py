@@ -28,6 +28,19 @@ class FakeApi:
 
 
 class PublishSzlKernelsTests(unittest.TestCase):
+    def test_gateway_installs_hub_client_before_authorization_tests(self) -> None:
+        workflow = (
+            Path(__file__).parents[1]
+            / ".github"
+            / "workflows"
+            / "publish-szl-kernels.yml"
+        ).read_text(encoding="utf-8")
+        install = workflow.index("Install trusted gateway test dependency")
+        tests = workflow.index("Test trusted gateway contracts")
+        dependency = workflow.index('"huggingface-hub==1.26.0"', install)
+        self.assertLess(install, dependency)
+        self.assertLess(dependency, tests)
+
     source_revision = "a" * 40
     publisher_revision = "b" * 40
 
