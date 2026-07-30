@@ -9,6 +9,8 @@ license: apache-2.0
 short_description: Bounded GGUF API with unsigned execution provenance.
 models:
   - SZLHOLDINGS/SZL-Khipu-1.5B-GGUF
+preload_from_hub:
+  - SZLHOLDINGS/SZL-Khipu-1.5B-GGUF SZL-Khipu-1.5B-Q4_K_M.gguf,training_receipt.signed.json,eval_receipt.signed.json,owner_pubkey.json 67d60ec577730747055491640cfb91fc4a4b5d25
 tags:
   - gguf
   - llama.cpp
@@ -56,10 +58,12 @@ the binding is absent or malformed.
 
 The runtime verifies the 986,047,904-byte file against SHA-256
 `13c1a1993063e1dff92f7413ccf48eaca6d48efc8801ae9af35961ae3396623a`
-before loading it. Hugging Face mounts the exact model revision read-only at
-`/models`; the image contains no duplicate GGUF layer. At startup the app reads
-only that mounted directory, verifies the declared sizes, SHA-256 digests, and
-receipt signatures, and keeps runtime Hub access offline.
+before loading it. Hugging Face preloads only the exact GGUF and three receipt
+files from the pinned model revision into its standard build cache; no mutable
+or full-repository runtime mount is required. At startup the app resolves only
+those already-cached immutable files with `local_files_only=True`, verifies
+their declared sizes, SHA-256 digests, and receipt signatures, and keeps
+runtime Hub access offline.
 It requires no provider token or Space secret and is intended for the Hub's free
 `cpu-basic` hardware only.
 

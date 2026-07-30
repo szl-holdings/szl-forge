@@ -1,4 +1,4 @@
-"""Verify immutable artifacts from the mounted model revision or local cache."""
+"""Verify immutable artifacts from an override or the preloaded offline cache."""
 
 from __future__ import annotations
 

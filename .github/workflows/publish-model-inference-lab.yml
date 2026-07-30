@@ -53,6 +53,7 @@ jobs:
             --repo-id SZLHOLDINGS/szl-model-inference-lab \
             --source-revision "${GITHUB_SHA}" \
             --publish \
+            --clear-space-volumes \
             --wait-seconds 1800 \
             --smoke-path /live \
             --smoke-path /health \
