@@ -107,6 +107,36 @@ def live_origin(repo_id: str, *, static: bool = False) -> str:
     return f"https://{host}{suffix}"
 
 
+def clear_legacy_space_volumes(
+    api: Any,
+    repo_id: str,
+    *,
+    wait_seconds: int = 60,
+) -> dict[str, Any]:
+    """Remove externally configured volumes and verify the control-plane state."""
+
+    runtime = api.get_space_runtime(repo_id=repo_id)
+    before = list(getattr(runtime, "volumes", None) or [])
+    if before:
+        api.delete_space_volumes(repo_id=repo_id)
+        deadline = time.monotonic() + wait_seconds
+        while time.monotonic() < deadline:
+            runtime = api.get_space_runtime(repo_id=repo_id)
+            if not list(getattr(runtime, "volumes", None) or []):
+                break
+            time.sleep(2)
+        else:
+            raise PublishError("Space volumes remained configured after removal")
+    return {
+        "requested": True,
+        "before_count": len(before),
+        "after_count": len(
+            list(getattr(runtime, "volumes", None) or [])
+        ),
+        "state": "CLEARED_AND_OBSERVED",
+    }
+
+
 def publish_and_verify(
     plan: dict[str, Any],
     *,
@@ -115,12 +145,18 @@ def publish_and_verify(
     smoke_paths: list[str],
     wait_seconds: int,
     static: bool,
+    clear_space_volumes: bool,
 ) -> dict[str, Any]:
     import requests
     from huggingface_hub import CommitOperationAdd, CommitOperationDelete, HfApi
 
     api = HfApi(token=token)
     repo_id = plan["repo_id"]
+    if clear_space_volumes:
+        plan["volume_reconciliation"] = clear_legacy_space_volumes(
+            api,
+            repo_id,
+        )
     live_files = set(api.list_repo_files(repo_id=repo_id, repo_type="space"))
     expected_files = set(plan["files"])
     operations: list[Any] = [
@@ -253,6 +289,14 @@ def main() -> int:
     parser.add_argument("--report", required=True)
     parser.add_argument("--publish", action="store_true")
     parser.add_argument(
+        "--clear-space-volumes",
+        action="store_true",
+        help=(
+            "remove externally configured Space volumes and verify they are "
+            "absent before publishing"
+        ),
+    )
+    parser.add_argument(
         "--static",
         action="store_true",
         help="use the static Space host and exact byte parity instead of runtime variable readback",
@@ -286,6 +330,7 @@ def main() -> int:
                 or ["/live", "/health", "/api/build-info", "/api/v1/identity"],
                 wait_seconds=args.wait_seconds,
                 static=args.static,
+                clear_space_volumes=args.clear_space_volumes,
             )
     except Exception as exc:  # noqa: BLE001 - always emit terminal evidence
         plan = {

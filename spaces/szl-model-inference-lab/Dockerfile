@@ -6,7 +6,6 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     HF_HUB_DISABLE_TELEMETRY=1 \
     DO_NOT_TRACK=1 \
     HF_HUB_DISABLE_IMPLICIT_TOKEN=1 \
-    MODEL_DIR_OVERRIDE=/models \
     HOME=/home/user \
     PATH=/home/user/.local/bin:${PATH}
 

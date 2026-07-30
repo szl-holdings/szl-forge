@@ -4,6 +4,7 @@ import os
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import app
 import verify_execution_record
@@ -61,6 +62,40 @@ class AppContractTests(unittest.TestCase):
         self.assertEqual(len(app.MODEL_SHA256), 64)
         self.assertEqual(app.MODEL_SIZE, 986_047_904)
         self.assertEqual(app.MAX_NEW_TOKENS, 32)
+
+    def test_default_artifact_path_is_pinned_and_offline_only(self):
+        with (
+            mock.patch.dict(os.environ, {}, clear=False),
+            mock.patch.object(
+                app,
+                "hf_hub_download",
+                return_value="/cache/pinned-model",
+            ) as download,
+        ):
+            os.environ.pop("MODEL_DIR_OVERRIDE", None)
+            path = app.artifact_path(app.MODEL_FILE)
+        self.assertEqual(Path("/cache/pinned-model"), path)
+        download.assert_called_once_with(
+            repo_id=app.MODEL_REPO,
+            filename=app.MODEL_FILE,
+            revision=app.MODEL_REVISION,
+            local_files_only=True,
+            token=False,
+        )
+
+    def test_space_preloads_only_the_pinned_runtime_artifacts(self):
+        readme = (app.SOURCE_ROOT / "README.md").read_text(encoding="utf-8")
+        dockerfile = (app.SOURCE_ROOT / "Dockerfile").read_text(encoding="utf-8")
+        preload = (
+            f"{app.MODEL_REPO} "
+            f"{app.MODEL_FILE},training_receipt.signed.json,"
+            "eval_receipt.signed.json,owner_pubkey.json "
+            f"{app.MODEL_REVISION}"
+        )
+        self.assertIn("preload_from_hub:", readme)
+        self.assertIn(preload, readme)
+        self.assertNotIn("MODEL_DIR_OVERRIDE=/models", dockerfile)
+        self.assertIn("HF_HUB_OFFLINE=1", dockerfile)
 
     def test_prompt_contract(self):
         self.assertEqual(app.InferenceRequest(prompt="  hello  ").prompt, "hello")
