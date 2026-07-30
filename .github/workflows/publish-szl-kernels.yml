@@ -1,0 +1,79 @@
+name: Publish SZL kernels source binding
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_revision:
+        description: Exact 40-character szl-kernels Git revision
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-szl-kernels
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish exact source and verify Hub readback
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Validate requested revision
+        shell: bash
+        env:
+          SOURCE_REVISION: ${{ inputs.source_revision }}
+        run: |
+          if [[ ! "$SOURCE_REVISION" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "source_revision must be an exact lowercase 40-character Git SHA" >&2
+            exit 2
+          fi
+
+      - name: Harden runner
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout exact SZL kernels source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: szl-holdings/szl-kernels
+          ref: ${{ inputs.source_revision }}
+          persist-credentials: false
+          lfs: true
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install exact publication client
+        run: >-
+          python -m pip install --disable-pip-version-check
+          "huggingface-hub==1.23.0"
+
+      - name: Run offline publication contract
+        env:
+          PYTHONPATH: tools
+        run: python -m unittest -v tools/test_publish_source_binding.py
+
+      - name: Publish declared artifact set and verify exact readback
+        env:
+          HF_TOKEN: ${{ secrets.HF_ORG_TOKEN }}
+          SOURCE_REVISION: ${{ inputs.source_revision }}
+        run: >-
+          python tools/publish_source_binding.py
+          --source-revision "${SOURCE_REVISION}"
+          --publish
+          --report reports/source-binding-published.json
+
+      - name: Upload publication evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: source-binding-published-${{ github.run_id }}
+          path: reports/source-binding-published.json
+          if-no-files-found: error
+          retention-days: 90
