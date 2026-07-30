@@ -63,9 +63,13 @@ class SpacePublicationPlanTests(unittest.TestCase):
 
     def test_legacy_volume_removal_is_observed(self) -> None:
         api = Mock()
-        api.get_space_runtime.side_effect = [
-            SimpleNamespace(volumes=[SimpleNamespace(source="owner/model")]),
-            SimpleNamespace(volumes=[]),
+        api.space_info.side_effect = [
+            SimpleNamespace(
+                runtime=SimpleNamespace(
+                    volumes=[SimpleNamespace(source="owner/model")]
+                )
+            ),
+            SimpleNamespace(runtime=SimpleNamespace(volumes=[])),
         ]
         result = publisher.clear_legacy_space_volumes(
             api,
@@ -76,15 +80,15 @@ class SpacePublicationPlanTests(unittest.TestCase):
         self.assertEqual(1, result["before_count"])
         self.assertEqual(0, result["after_count"])
         api.delete_space_volumes.assert_called_once_with(repo_id="owner/space")
+        api.get_space_runtime.assert_not_called()
 
     def test_exact_runtime_wait_can_require_final_zero_volumes(self) -> None:
         api = Mock()
         info = SimpleNamespace(
             sha="b" * 40,
-            runtime=SimpleNamespace(stage="RUNNING"),
+            runtime=SimpleNamespace(stage="RUNNING", volumes=[]),
         )
         api.space_info.return_value = info
-        api.get_space_runtime.return_value = SimpleNamespace(volumes=[])
         with patch("publish_hf_space.time.sleep") as sleep:
             observed = publisher.wait_for_exact_running_space(
                 api,
@@ -94,26 +98,30 @@ class SpacePublicationPlanTests(unittest.TestCase):
                 require_zero_volumes=True,
             )
         self.assertIs(info, observed)
-        self.assertEqual(2, api.get_space_runtime.call_count)
+        self.assertEqual(2, api.space_info.call_count)
         sleep.assert_called_once_with(10)
 
     def test_final_volume_reconciliation_restarts_changed_runtime(self) -> None:
         api = Mock()
         info = SimpleNamespace(
             sha="b" * 40,
-            runtime=SimpleNamespace(stage="RUNNING"),
+            runtime=SimpleNamespace(stage="RUNNING", volumes=[]),
         )
-        api.space_info.return_value = info
+        api.space_info.side_effect = [
+            SimpleNamespace(
+                runtime=SimpleNamespace(
+                    volumes=[SimpleNamespace(source="owner/model")]
+                )
+            ),
+            SimpleNamespace(runtime=SimpleNamespace(volumes=[])),
+            info,
+            info,
+        ]
         api.get_space_runtime.side_effect = [
-            SimpleNamespace(volumes=[SimpleNamespace(source="owner/model")]),
-            SimpleNamespace(volumes=[]),
             SimpleNamespace(
                 stage="BUILDING",
                 raw={"domains": [{"stage": "BUILDING"}]},
-                volumes=[],
-            ),
-            SimpleNamespace(volumes=[]),
-            SimpleNamespace(volumes=[]),
+            )
         ]
         with patch("publish_hf_space.time.sleep"):
             evidence, observed = publisher.reconcile_final_space_volumes(

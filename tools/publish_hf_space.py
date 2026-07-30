@@ -115,13 +115,15 @@ def clear_legacy_space_volumes(
 ) -> dict[str, Any]:
     """Remove externally configured volumes and verify the control-plane state."""
 
-    runtime = api.get_space_runtime(repo_id=repo_id)
+    info = api.space_info(repo_id, files_metadata=False)
+    runtime = getattr(info, "runtime", None)
     before = list(getattr(runtime, "volumes", None) or [])
     if before:
         api.delete_space_volumes(repo_id=repo_id)
         deadline = time.monotonic() + wait_seconds
         while time.monotonic() < deadline:
-            runtime = api.get_space_runtime(repo_id=repo_id)
+            info = api.space_info(repo_id, files_metadata=False)
+            runtime = getattr(info, "runtime", None)
             if not list(getattr(runtime, "volumes", None) or []):
                 break
             time.sleep(2)
@@ -153,7 +155,7 @@ def wait_for_exact_running_space(
         if info.sha == expected_sha and stage == "RUNNING":
             if not require_zero_volumes:
                 return info
-            runtime = api.get_space_runtime(repo_id=repo_id)
+            runtime = getattr(info, "runtime", None)
             if not list(getattr(runtime, "volumes", None) or []):
                 stable_zero_volume_observations += 1
                 if stable_zero_volume_observations >= 2:
