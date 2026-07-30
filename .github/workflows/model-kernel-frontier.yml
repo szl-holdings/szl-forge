@@ -50,6 +50,10 @@ jobs:
         run: |
           set -euo pipefail
           python -m py_compile \
+            tools/authorize_kernels_release.py \
+            tools/test_authorize_kernels_release.py \
+            tools/publish_szl_kernels.py \
+            tools/test_publish_szl_kernels.py \
             tools/publish_model_source_bindings.py \
             tools/test_publish_model_source_bindings.py \
             tools/publish_hf_space.py \
@@ -66,6 +70,9 @@ jobs:
             frontier/qwen35-receiptagent-v2/evaluate_candidate.py \
             frontier/qwen35-receiptagent-v2/evidence_chain.py
           python tools/test_verify_model_portfolio.py
+          PYTHONPATH=tools python -m unittest -v \
+            tools/test_authorize_kernels_release.py \
+            tools/test_publish_szl_kernels.py
           PYTHONPATH=tools python tools/test_publish_model_source_bindings.py
           PYTHONPATH=tools python tools/test_publish_hf_space.py
           PYTHONPATH=frontier/qwen35-receiptagent-v2 \
