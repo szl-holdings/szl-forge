@@ -107,6 +107,20 @@ def live_origin(repo_id: str, *, static: bool = False) -> str:
     return f"https://{host}{suffix}"
 
 
+def mount_recovery_reason(info: Any, expected_sha: str) -> str | None:
+    """Return the exact mount failure eligible for one factory reboot."""
+
+    if getattr(info, "sha", None) != expected_sha:
+        return None
+    runtime = getattr(info, "runtime", None)
+    stage = str(getattr(runtime, "stage", "")).upper()
+    raw = getattr(runtime, "raw", {})
+    error = str(raw.get("errorMessage", "")) if isinstance(raw, dict) else ""
+    if stage == "RUNTIME_ERROR" and "hf-mount" in error.lower():
+        return error
+    return None
+
+
 def publish_and_verify(
     plan: dict[str, Any],
     *,
@@ -172,11 +186,22 @@ def publish_and_verify(
 
     deadline = time.monotonic() + wait_seconds
     info = None
+    mount_recovery_attempted = False
     while time.monotonic() < deadline:
         info = api.space_info(repo_id, files_metadata=False)
         stage = str(getattr(getattr(info, "runtime", None), "stage", "")).upper()
         if info.sha == commit.oid and stage == "RUNNING":
             break
+        recovery_reason = mount_recovery_reason(info, commit.oid)
+        if recovery_reason is not None and not mount_recovery_attempted:
+            api.restart_space(repo_id, factory_reboot=True)
+            mount_recovery_attempted = True
+            plan["mount_recovery"] = {
+                "attempted": True,
+                "mode": "FACTORY_REBOOT",
+                "hf_commit": commit.oid,
+                "reason": recovery_reason,
+            }
         time.sleep(10)
     else:
         raise PublishError(

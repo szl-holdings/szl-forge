@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import subprocess
 import unittest
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import publish_hf_space as publisher
@@ -59,6 +60,38 @@ class SpacePublicationPlanTests(unittest.TestCase):
                     REVISION,
                     static=True,
                 )
+
+    def test_mount_recovery_requires_exact_published_commit(self) -> None:
+        info = SimpleNamespace(
+            sha=REVISION,
+            runtime=SimpleNamespace(
+                stage="RUNTIME_ERROR",
+                raw={
+                    "errorMessage": (
+                        "Initialization step 'hf-mount' failed with exit code: 1."
+                    )
+                },
+            ),
+        )
+        self.assertIn(
+            "hf-mount",
+            publisher.mount_recovery_reason(info, REVISION) or "",
+        )
+        self.assertIsNone(
+            publisher.mount_recovery_reason(info, "b" * 40)
+        )
+
+    def test_mount_recovery_rejects_application_runtime_errors(self) -> None:
+        info = SimpleNamespace(
+            sha=REVISION,
+            runtime=SimpleNamespace(
+                stage="RUNTIME_ERROR",
+                raw={"errorMessage": "Application startup failed"},
+            ),
+        )
+        self.assertIsNone(
+            publisher.mount_recovery_reason(info, REVISION)
+        )
 
 
 if __name__ == "__main__":

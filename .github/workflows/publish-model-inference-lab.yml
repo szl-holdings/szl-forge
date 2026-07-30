@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - "spaces/szl-model-inference-lab/**"
+      - "tools/publish_hf_space.py"
+      - "tools/test_publish_hf_space.py"
       - ".github/workflows/publish-model-inference-lab.yml"
   workflow_dispatch: {}
 
