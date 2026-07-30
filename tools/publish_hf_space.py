@@ -137,6 +137,92 @@ def clear_legacy_space_volumes(
     }
 
 
+def wait_for_exact_running_space(
+    api: Any,
+    repo_id: str,
+    expected_sha: str,
+    *,
+    wait_seconds: int,
+    require_zero_volumes: bool = False,
+) -> Any:
+    deadline = time.monotonic() + wait_seconds
+    stable_zero_volume_observations = 0
+    while time.monotonic() < deadline:
+        info = api.space_info(repo_id, files_metadata=False)
+        stage = str(getattr(getattr(info, "runtime", None), "stage", "")).upper()
+        if info.sha == expected_sha and stage == "RUNNING":
+            if not require_zero_volumes:
+                return info
+            runtime = api.get_space_runtime(repo_id=repo_id)
+            if not list(getattr(runtime, "volumes", None) or []):
+                stable_zero_volume_observations += 1
+                if stable_zero_volume_observations >= 2:
+                    return info
+            else:
+                stable_zero_volume_observations = 0
+        else:
+            stable_zero_volume_observations = 0
+        time.sleep(10)
+    requirement = " and zero volumes" if require_zero_volumes else ""
+    raise PublishError(
+        "Space did not reach RUNNING at the exact published Hugging Face commit"
+        f"{requirement}"
+    )
+
+
+def wait_for_space_restart_transition(
+    api: Any,
+    repo_id: str,
+    *,
+    wait_seconds: int = 120,
+) -> dict[str, Any]:
+    deadline = time.monotonic() + wait_seconds
+    while time.monotonic() < deadline:
+        runtime = api.get_space_runtime(repo_id=repo_id)
+        stage = str(getattr(runtime, "stage", "")).upper()
+        domains = (getattr(runtime, "raw", None) or {}).get("domains", [])
+        domain_stages = [
+            str(domain.get("stage", "")).upper()
+            for domain in domains
+            if isinstance(domain, dict)
+        ]
+        if stage != "RUNNING" or any(value != "READY" for value in domain_stages):
+            return {
+                "observed": True,
+                "runtime_stage": stage or None,
+                "domain_stages": domain_stages,
+            }
+        time.sleep(2)
+    raise PublishError("Space restart was requested but no transition was observed")
+
+
+def reconcile_final_space_volumes(
+    api: Any,
+    repo_id: str,
+    expected_sha: str,
+    *,
+    wait_seconds: int,
+) -> tuple[dict[str, Any], Any]:
+    evidence = clear_legacy_space_volumes(api, repo_id)
+    restart_requested = evidence["before_count"] > 0
+    if restart_requested:
+        api.restart_space(repo_id=repo_id)
+        evidence["restart_transition"] = wait_for_space_restart_transition(
+            api,
+            repo_id,
+        )
+    info = wait_for_exact_running_space(
+        api,
+        repo_id,
+        expected_sha,
+        wait_seconds=wait_seconds,
+        require_zero_volumes=True,
+    )
+    evidence["restart_requested"] = restart_requested
+    evidence["final_count"] = 0
+    return evidence, info
+
+
 def publish_and_verify(
     plan: dict[str, Any],
     *,
@@ -153,10 +239,9 @@ def publish_and_verify(
     api = HfApi(token=token)
     repo_id = plan["repo_id"]
     if clear_space_volumes:
-        plan["volume_reconciliation"] = clear_legacy_space_volumes(
-            api,
-            repo_id,
-        )
+        plan["volume_reconciliation"] = {
+            "pre_publish": clear_legacy_space_volumes(api, repo_id)
+        }
     live_files = set(api.list_repo_files(repo_id=repo_id, repo_type="space"))
     expected_files = set(plan["files"])
     operations: list[Any] = [
@@ -206,18 +291,22 @@ def publish_and_verify(
                 f"Space source variable mismatch: {observed_variable!r}"
             )
 
-    deadline = time.monotonic() + wait_seconds
-    info = None
-    while time.monotonic() < deadline:
-        info = api.space_info(repo_id, files_metadata=False)
-        stage = str(getattr(getattr(info, "runtime", None), "stage", "")).upper()
-        if info.sha == commit.oid and stage == "RUNNING":
-            break
-        time.sleep(10)
-    else:
-        raise PublishError(
-            "Space did not reach RUNNING at the exact published Hugging Face commit"
+    info = wait_for_exact_running_space(
+        api,
+        repo_id,
+        commit.oid,
+        wait_seconds=wait_seconds,
+    )
+
+    if clear_space_volumes:
+        post_publish, info = reconcile_final_space_volumes(
+            api,
+            repo_id,
+            commit.oid,
+            wait_seconds=wait_seconds,
         )
+        plan["volume_reconciliation"]["post_publish"] = post_publish
+        plan["volume_reconciliation"]["final_count"] = 0
 
     from huggingface_hub import hf_hub_download
 
@@ -292,8 +381,8 @@ def main() -> int:
         "--clear-space-volumes",
         action="store_true",
         help=(
-            "remove externally configured Space volumes and verify they are "
-            "absent before publishing"
+            "remove externally configured Space volumes before publication and "
+            "reconcile the final exact runtime to zero volumes"
         ),
     )
     parser.add_argument(

@@ -9,8 +9,6 @@ license: apache-2.0
 short_description: Bounded GGUF API with unsigned execution provenance.
 models:
   - SZLHOLDINGS/SZL-Khipu-1.5B-GGUF
-preload_from_hub:
-  - SZLHOLDINGS/SZL-Khipu-1.5B-GGUF SZL-Khipu-1.5B-Q4_K_M.gguf,training_receipt.signed.json,eval_receipt.signed.json,owner_pubkey.json 67d60ec577730747055491640cfb91fc4a4b5d25
 tags:
   - gguf
   - llama.cpp
@@ -56,12 +54,18 @@ non-secret `SZL_GITHUB_SOURCE_REVISION` Space variable and verifies it at
 That endpoint reports `UNKNOWN` rather than inferring a source revision when
 the binding is absent or malformed.
 
-The runtime verifies the 986,047,904-byte file against SHA-256
+An isolated image-build stage fetches only the exact GGUF and three receipt
+files from the immutable model revision, without a token, and verifies them
+before the image can finish. It copies only verified regular bytes into the
+final image's fixed, root-owned `/opt/szl/model-artifacts` directory; the build
+cache does not cross that stage boundary. This avoids depending on a platform
+preload cache whose path may differ from the non-root Docker runtime's cache.
+The runtime verifies the
+986,047,904-byte file against SHA-256
 `13c1a1993063e1dff92f7413ccf48eaca6d48efc8801ae9af35961ae3396623a`
-before loading it. Hugging Face preloads only the exact GGUF and three receipt
-files from the pinned model revision into its standard build cache; no mutable
-or full-repository runtime mount is required. At startup the app resolves only
-those already-cached immutable files with `local_files_only=True`, verifies
+before loading it. No mutable or full-repository runtime mount is required. At
+startup the app resolves only those bundled immutable regular files from that
+fixed directory, with no Hub/cache/network fallback, and verifies
 their declared sizes, SHA-256 digests, and receipt signatures, and keeps
 runtime Hub access offline.
 It requires no provider token or Space secret and is intended for the Hub's free

@@ -1,4 +1,4 @@
-FROM python:3.11-slim-bookworm@sha256:b18992999dbe963a45a8a4da40ac2b1975be1a776d939d098c647482bcad5cba
+FROM python:3.11-slim-bookworm@sha256:b18992999dbe963a45a8a4da40ac2b1975be1a776d939d098c647482bcad5cba AS runtime-base
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -17,7 +17,17 @@ WORKDIR /home/user/app
 
 COPY --chown=user:user requirements.txt ./requirements.txt
 RUN python -m pip install --no-cache-dir --user -r requirements.txt
-ENV HF_HUB_OFFLINE=1
+
+FROM runtime-base AS artifact-builder
+COPY --chown=user:user download_artifacts.py ./download_artifacts.py
+# Build only: fetch four public files from one immutable model revision, then
+# fail the image build unless their declared sizes and SHA-256 digests match.
+RUN python download_artifacts.py --fetch --output-dir /home/user/model-artifacts
+
+FROM runtime-base AS runtime
+ENV HF_HUB_OFFLINE=1 \
+    HF_HUB_DISABLE_XET=1
+COPY --from=artifact-builder --chown=root:root /home/user/model-artifacts/ /opt/szl/model-artifacts/
 COPY --chown=user:user . .
 
 EXPOSE 7860

@@ -21,7 +21,6 @@ from fastapi.exception_handlers import (
 )
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse
-from huggingface_hub import hf_hub_download
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
@@ -40,6 +39,17 @@ RECEIPT_FILES = (
     "eval_receipt.signed.json",
     "owner_pubkey.json",
 )
+RECEIPT_SHA256 = {
+    "training_receipt.signed.json": (
+        "7af76dd4f26dcd122012bfd1e47a0f55481a952b86aee28956cf7cfaaf59bd04"
+    ),
+    "eval_receipt.signed.json": (
+        "32edd2d862fd5abac390bee3d30950f4718afedc41f4da4e24f3d0dfe67f8450"
+    ),
+    "owner_pubkey.json": (
+        "843d0958392b4ee11ad8e36519261bebf841ee20caec479cbbc4bb9e8c991031"
+    ),
+}
 MAX_INPUT_CHARS = 1_200
 MAX_CHAT_MESSAGES = 12
 MAX_PROMPT_TOKENS = 800
@@ -53,6 +63,7 @@ SYSTEM_PROMPT = (
 )
 SOURCE_ROOT = Path(__file__).resolve().parent
 SOURCE_REVISION_ENV = "SZL_GITHUB_SOURCE_REVISION"
+ARTIFACT_ROOT = Path("/opt/szl/model-artifacts")
 
 
 state: dict[str, Any] = {
@@ -97,27 +108,27 @@ def load_release_manifest() -> dict[str, Any]:
 
 
 def artifact_path(filename: str) -> Path:
-    override = os.getenv("MODEL_DIR_OVERRIDE")
-    if override:
-        return Path(override) / filename
-    return Path(
-        hf_hub_download(
-            repo_id=MODEL_REPO,
-            filename=filename,
-            revision=MODEL_REVISION,
-            local_files_only=True,
-            token=False,
-        )
-    )
+    if filename not in {MODEL_FILE, *RECEIPT_FILES}:
+        raise RuntimeError("ARTIFACT_NOT_ALLOWLISTED")
+    path = ARTIFACT_ROOT / filename
+    if path.is_symlink():
+        raise RuntimeError("ARTIFACT_SYMLINK_REJECTED")
+    if not path.is_file():
+        raise RuntimeError("ARTIFACT_NOT_REGULAR")
+    return path
 
 
 def verify_receipts() -> dict[str, Any]:
     from cryptography.hazmat.primitives.serialization import load_der_public_key
 
-    declared_key = json.loads(artifact_path("owner_pubkey.json").read_text(encoding="utf-8"))
+    paths = {filename: artifact_path(filename) for filename in RECEIPT_FILES}
+    for filename, path in paths.items():
+        if sha256_file(path) != RECEIPT_SHA256[filename]:
+            raise RuntimeError("RECEIPT_FILE_SHA256_MISMATCH")
+    declared_key = json.loads(paths["owner_pubkey.json"].read_text(encoding="utf-8"))
     receipts: dict[str, dict[str, Any]] = {}
     for filename in RECEIPT_FILES[:2]:
-        receipt = json.loads(artifact_path(filename).read_text(encoding="utf-8"))
+        receipt = json.loads(paths[filename].read_text(encoding="utf-8"))
         canonical = json.dumps(
             receipt["payload"], ensure_ascii=False, separators=(",", ":"), sort_keys=True
         )
