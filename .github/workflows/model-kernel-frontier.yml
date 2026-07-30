@@ -50,6 +50,8 @@ jobs:
         run: |
           set -euo pipefail
           python -m py_compile \
+            tools/publish_model_source_bindings.py \
+            tools/test_publish_model_source_bindings.py \
             tools/publish_hf_space.py \
             tools/test_publish_hf_space.py \
             tools/verify_model_portfolio.py \
@@ -64,6 +66,7 @@ jobs:
             frontier/qwen35-receiptagent-v2/evaluate_candidate.py \
             frontier/qwen35-receiptagent-v2/evidence_chain.py
           python tools/test_verify_model_portfolio.py
+          PYTHONPATH=tools python tools/test_publish_model_source_bindings.py
           PYTHONPATH=tools python tools/test_publish_hf_space.py
           PYTHONPATH=frontier/qwen35-receiptagent-v2 \
             python frontier/qwen35-receiptagent-v2/test_qualify_runtime.py
@@ -75,6 +78,9 @@ jobs:
             python -m unittest discover \
               -s spaces/szl-forge-lab/tests -v
           python tools/verify_model_portfolio.py --offline
+          python tools/publish_model_source_bindings.py \
+            --source-revision "${GITHUB_SHA}" \
+            --report reports/model-source-bindings-dry-run.json
           python tools/publish_hf_space.py \
             --source-dir spaces/szl-model-inference-lab \
             --repo-id SZLHOLDINGS/szl-model-inference-lab \

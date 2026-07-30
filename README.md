@@ -73,6 +73,28 @@ Future full `forge.ps1` runs birth via this GGUF path automatically (step 6).
 | [`RUNBOOK-CONJECTURE.md`](./RUNBOOK-CONJECTURE.md) | One-command-per-step runbook to run the Conjecture Machine against the sovereign endpoint. |
 | `thesis_formula_index.json` | Local snapshot of the estate's `thesis-formula-index` (80 entries) so the Conjecture Machine runs offline. |
 
+## Exact-source model publication
+
+`publishing/model-source-bindings.json` is the fail-closed release contract for
+the qualified ReceiptAgent and Khipu Hub models. The publisher verifies the
+expected public weight hashes, required signed receipts, and every canonical
+source file before it writes `publication.json` to either model repository.
+It then reads the exact Hub commit back and compares the published bytes.
+
+The binding identifies the current GitHub source snapshot; it deliberately does
+not claim that the weight bytes can be reproduced from source alone or that an
+independent party certified model quality. Run the same gate locally without
+publishing:
+
+```bash
+python tools/publish_model_source_bindings.py \
+  --source-revision "$(git rev-parse HEAD)"
+```
+
+Publication is performed only from protected `main` by
+`.github/workflows/publish-model-source-bindings.yml`, using the repository's
+encrypted Hugging Face organization credential.
+
 ## Pipeline
 
 ```

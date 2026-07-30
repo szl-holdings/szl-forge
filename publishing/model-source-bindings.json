@@ -1,0 +1,80 @@
+{
+  "schema": "szl.model-source-bindings/v1",
+  "source_repository": "szl-holdings/szl-forge",
+  "policy": {
+    "artifact_equivalence": "NOT_CLAIMED",
+    "reproducible_build": "NOT_CLAIMED",
+    "statement": "The binding identifies the current canonical source, curriculum, schemas, and signed receipts. It does not claim that the published weight bytes can be reproduced from the source snapshot alone."
+  },
+  "artifacts": [
+    {
+      "repo_id": "SZLHOLDINGS/SZL-Forge-1.5B-ReceiptAgent",
+      "source_path": "receiptagent",
+      "maturity": "MEASURED_LIMITED",
+      "role": "governed_receipt_draft_proposer",
+      "required_hub_files": [
+        "model.safetensors",
+        "adapter/adapter_model.safetensors",
+        "owner_pubkey.json",
+        "training_receipt.signed.json",
+        "eval_receipt.signed.json"
+      ],
+      "expected_weight_sha256": {
+        "adapter/adapter_model.safetensors": "706aff139489d62cb1ac221c0f92a1a8595cd6a42032c542efe8028684e57cf2",
+        "model.safetensors": "a797592fb35c32cc6ebf5739c0a1d9312123300acaf09987d207d86196bc6e7d"
+      },
+      "source_files": [
+        "receiptagent/adversarial.jsonl",
+        "receiptagent/eval.jsonl",
+        "receiptagent/eval_receipt.signed.json",
+        "receiptagent/manifest.json",
+        "receiptagent/owner_pubkey.json",
+        "receiptagent/receiptagent.schema.json",
+        "receiptagent/train.jsonl",
+        "receiptagent/train.refusals.jsonl",
+        "receiptagent/train_receiptagent.py",
+        "receiptagent/training_receipt.signed.json"
+      ],
+      "limitations": [
+        "The model proposes receipt drafts; it does not approve actions or mint authoritative receipts.",
+        "The public weight files are observed and hashed separately from the signed training receipt.",
+        "No independent quality certification is claimed."
+      ]
+    },
+    {
+      "repo_id": "SZLHOLDINGS/SZL-Khipu-1.5B",
+      "source_path": "khipu",
+      "maturity": "MEASURED_RESEARCH_ONLY",
+      "role": "governed_retrieval_plan_proposer",
+      "required_hub_files": [
+        "model.safetensors",
+        "adapter/adapter_model.safetensors",
+        "owner_pubkey.json",
+        "training_receipt.signed.json",
+        "eval_receipt.signed.json"
+      ],
+      "expected_weight_sha256": {
+        "adapter/adapter_model.safetensors": "0a71b3a28b9f77ca3651f38c8caa1e34121934f5584dae24454d4c6eea823a66",
+        "model.safetensors": "6f9f5b9df2a877c999e33faf542dc6e62ce63f4a2bf6b358fc48a4b6b113c3c9"
+      },
+      "source_files": [
+        "khipu/adversarial.jsonl",
+        "khipu/eval.jsonl",
+        "khipu/eval_khipu.py",
+        "khipu/eval_receipt.signed.json",
+        "khipu/khipu.schema.json",
+        "khipu/manifest.json",
+        "khipu/owner_pubkey.json",
+        "khipu/train.abstain.jsonl",
+        "khipu/train.jsonl",
+        "khipu/train_khipu.py",
+        "khipu/training_receipt.signed.json"
+      ],
+      "limitations": [
+        "The signed held-out abstention result is 2/6.",
+        "The curriculum measures synthetic routing-policy conformance, not autonomous navigation of the live Brain.",
+        "The public weight files are observed and hashed separately from the signed training receipt."
+      ]
+    }
+  ]
+}
