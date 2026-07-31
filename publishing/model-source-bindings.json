@@ -111,7 +111,7 @@
     {
       "repo_id": "SZLHOLDINGS/SZL-Khipu-1.5B-GGUF",
       "artifact_class": "quantized_model",
-      "promotion_state": "OPERATIONAL_RESEARCH_DEMO_NOT_AUTONOMOUS",
+      "promotion_state": "NOT_PROMOTED_OPERATIONAL_RESEARCH_DEMO",
       "source_path": "khipu",
       "maturity": "MEASURED_OPERATIONAL_LIMITED",
       "role": "bounded_governed_retrieval_plan_proposer",
@@ -189,6 +189,7 @@
         "The signed held-out abstention result is 2/6, so autonomous or high-stakes use is prohibited.",
         "The live service is a bounded best-effort CPU demo with no SLA.",
         "Runtime outputs are explicitly unsigned; the signed receipts cover training and evaluation only.",
+        "Production promotion is blocked until controlled restart reproducibility and instrumented energy evidence pass.",
         "Energy and process-peak memory remain UNAVAILABLE until instrumented measurements are captured.",
         "The published GGUF bytes are observed and hashed; reproducible quantization from the fine-tuned weights is not claimed."
       ]
