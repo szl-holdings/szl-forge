@@ -48,6 +48,9 @@ class CompatibilityKernelTests(unittest.TestCase):
             result = publisher.run(manifest_path=manifest, report_path=root / "report.json", publish=False, token=None, api=api, download_fn=download)
             self.assertEqual(result["records"][0]["status"], "VERIFIED_DRY_RUN")
             self.assertTrue(result["records"][0]["runtime_receipt"]["selfcheck"]["ok"])
+            api.model_info.assert_called_once_with(
+                "SZLHOLDINGS/example", revision="c" * 40, token=None
+            )
 
     def test_hash_drift_fails_closed(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

@@ -169,7 +169,11 @@ def run(
     api = api or HfApi(token=token)
     records: list[dict[str, Any]] = []
     for item in manifest["artifacts"]:
-        info = api.model_info(item["repo_id"], token=token)
+        info = api.model_info(
+            item["repo_id"],
+            revision=item["expected_hub_revision"],
+            token=token,
+        )
         if info.sha != item["expected_hub_revision"]:
             raise QualificationError(f"Hub revision drifted for {item['repo_id']}: {info.sha}")
         blobs, file_evidence = verify_files(item, token=token, download_fn=download_fn)
