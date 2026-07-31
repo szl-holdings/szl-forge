@@ -211,7 +211,19 @@ def main(argv: Iterable[str] | None = None) -> int:
     parser.add_argument("--report", type=Path, default=DEFAULT_REPORT)
     parser.add_argument("--publish", action="store_true")
     args = parser.parse_args(argv)
-    result = run(manifest_path=args.manifest, report_path=args.report, publish=args.publish, token=os.getenv("HF_TOKEN"))
+    try:
+        result = run(manifest_path=args.manifest, report_path=args.report, publish=args.publish, token=os.getenv("HF_TOKEN"))
+    except QualificationError as error:
+        result = {
+            "schema": "szl.compatibility-kernel-binding-report/v1",
+            "mode": "PUBLISH" if args.publish else "DRY_RUN",
+            "status": "REFUSED",
+            "error": str(error),
+        }
+        args.report.parent.mkdir(parents=True, exist_ok=True)
+        args.report.write_bytes(canonical_json(result))
+        print(canonical_json(result).decode(), end="")
+        return 1
     print(canonical_json(result).decode(), end="")
     return 0
 

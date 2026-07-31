@@ -69,6 +69,20 @@ class CompatibilityKernelTests(unittest.TestCase):
             loaded = publisher.load_manifest(manifest)
             self.assertEqual(loaded["artifacts"][0]["artifact_class"], "RETAINED_COMPATIBILITY_KERNEL")
 
+    def test_cli_writes_a_refusal_report(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            report = Path(temporary) / "refusal.json"
+            with mock.patch.object(
+                publisher,
+                "run",
+                side_effect=publisher.QualificationError("measured runtime failed"),
+            ):
+                code = publisher.main(["--report", str(report)])
+            self.assertEqual(code, 1)
+            payload = json.loads(report.read_text(encoding="utf-8"))
+            self.assertEqual(payload["status"], "REFUSED")
+            self.assertIn("measured runtime failed", payload["error"])
+
 
 if __name__ == "__main__":
     unittest.main()

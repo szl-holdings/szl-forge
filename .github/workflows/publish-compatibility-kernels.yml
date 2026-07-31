@@ -39,7 +39,7 @@ jobs:
           python-version: "3.12"
       - name: Install pinned runtime
         run: |
-          python -m pip install --disable-pip-version-check "huggingface-hub==1.23.0"
+          python -m pip install --disable-pip-version-check "huggingface-hub==1.23.0" "numpy==2.3.5"
           python -m pip install --disable-pip-version-check --index-url https://download.pytorch.org/whl/cpu "torch==2.10.0"
       - name: Run offline regression tests
         env:
