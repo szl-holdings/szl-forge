@@ -42,7 +42,7 @@ jobs:
       - name: Install exact publication client
         run: >-
           python -m pip install --disable-pip-version-check
-          "huggingface-hub==1.23.0"
+          "huggingface-hub==1.23.0" "cryptography==49.0.0"
 
       - name: Run offline contract tests
         env:
