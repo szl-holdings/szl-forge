@@ -115,7 +115,10 @@ def run_selfcheck(item: dict[str, Any], blobs: dict[str, bytes]) -> dict[str, An
         line = proc.stdout.strip().splitlines()[-1]
         measured = json.loads(line)
         if measured.get("result", {}).get("ok") is not True:
-            raise QualificationError("kernel self-check did not return ok=true")
+            raise QualificationError(
+                "kernel self-check did not return ok=true: "
+                + json.dumps(measured.get("result"), sort_keys=True)
+            )
         return measured
 
 
