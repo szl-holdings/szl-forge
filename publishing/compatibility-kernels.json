@@ -1,0 +1,40 @@
+{
+  "schema": "szl.compatibility-kernel-binding/v1",
+  "artifacts": [
+    {
+      "repo_id": "SZLHOLDINGS/szl-governed-norm",
+      "artifact_class": "RETAINED_COMPATIBILITY_KERNEL",
+      "promotion_state": "OPERATIONAL_REFERENCE_NOT_PERFORMANCE_PROMOTED",
+      "source_repository": "szl-holdings/szl-governed-norm",
+      "source_revision": "3ef27eb7ebf491b0a6ce69be170ecef4c37885a2",
+      "replacement_repository": "szl-holdings/szl-lambda-gate",
+      "replacement_revision": "d0c2a7f5ec93d97d8ddb8b1f14c6c0ba7095597d",
+      "license": {
+        "spdx": "Apache-2.0",
+        "evidence_path": "LICENSE",
+        "evidence_sha256": "9589109b10f273b246999e87435e92140ec68dfe8fd4db623a64ab70a81c9871"
+      },
+      "expected_hub_revision": "b12b557d4c2803988a02255e4737841da81e90ed",
+      "expected_files": {
+        "README.md": "50cd643e525b359e63817d1dca945122fcc7bf92297048d3060c6d37272a6d23",
+        "LICENSE": "9589109b10f273b246999e87435e92140ec68dfe8fd4db623a64ab70a81c9871",
+        "build.toml": "15b8a5d0fba9ca4e56125b0a790fcae1e56639aa438ab6106adfbe7ad59d01f6",
+        "build/torch-universal/szl_governed_norm/__init__.py": "8313c7b2654be0d1640bcb022518328ff30a422f674baaf8b1f7dabb4d886c4a",
+        "build/torch-universal/szl_governed_norm/_receipt.py": "48d8150c86ec311cd1bfeb65f588764ae90b6f5a1c9f0eafaaed660a423864c9",
+        "build/torch-universal/szl_governed_norm/_ops.py": "616dac2e24d18966b4bca90acab7fec975980794643b7f72ac2a482dd13c28e3",
+        "build/torch-universal/szl_governed_norm/_norm.py": "cf72ace281ec86c504426f75e23eebdb661a1e3a12e4dfcc6c8b9fa634b03942",
+        "build/torch-universal/szl_governed_norm/layers.py": "d79c83355cb2332b9d0e9d98584b86434e486532e27d30652df10158b30fc37b",
+        "MODEL_PROVENANCE.json": "0f2b0c44180a3a5d38ed67e3e858d5acf2569baa8a8c00f86fc92546638f577b",
+        "TRAINING_RECEIPT.json": "a6f94949ce500057418db25f0208dd406324f923a9a18a354af77ac2d757a485",
+        "model.joblib": "1bd8756f120d338dfe9d962fa5c1e8c54b31dec37c9a71f3286c33b8906062f5"
+      },
+      "runtime": {
+        "module_path": "build/torch-universal",
+        "module": "szl_governed_norm",
+        "selfcheck": "selfcheck",
+        "autonomy_boundary": "Numeric reference kernel only. It cannot retrieve, decide, authorize, execute external actions, or establish truth.",
+        "performance_boundary": "No speedup or production-CUDA performance claim. CPU self-check proves bounded functional compatibility only."
+      }
+    }
+  ]
+}

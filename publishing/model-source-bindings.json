@@ -1,5 +1,5 @@
 {
-  "schema": "szl.model-source-bindings/v1",
+  "schema": "szl.model-source-bindings/v2",
   "source_repository": "szl-holdings/szl-forge",
   "policy": {
     "artifact_equivalence": "NOT_CLAIMED",
@@ -9,6 +9,8 @@
   "artifacts": [
     {
       "repo_id": "SZLHOLDINGS/SZL-Forge-1.5B-ReceiptAgent",
+      "artifact_class": "fine_tuned_model",
+      "promotion_state": "NOT_PROMOTED_LIMITED_EVIDENCE",
       "source_path": "receiptagent",
       "maturity": "MEASURED_LIMITED",
       "role": "governed_receipt_draft_proposer",
@@ -22,6 +24,20 @@
       "expected_weight_sha256": {
         "adapter/adapter_model.safetensors": "706aff139489d62cb1ac221c0f92a1a8595cd6a42032c542efe8028684e57cf2",
         "model.safetensors": "a797592fb35c32cc6ebf5739c0a1d9312123300acaf09987d207d86196bc6e7d"
+      },
+      "lineage": [
+        {
+          "relation": "finetune",
+          "repo_id": "Qwen/Qwen2.5-1.5B-Instruct",
+          "revision": "989aa7980e4cf806f80c7fef2b1adb7bc71aa306",
+          "license": "apache-2.0"
+        }
+      ],
+      "signed_receipts": {
+        "public_key": "owner_pubkey.json",
+        "training": "training_receipt.signed.json",
+        "evaluation": "eval_receipt.signed.json",
+        "claim_scope": "REPOSITORY_DECLARED_KEY_CONTINUITY_ONLY"
       },
       "source_files": [
         "receiptagent/adversarial.jsonl",
@@ -43,6 +59,8 @@
     },
     {
       "repo_id": "SZLHOLDINGS/SZL-Khipu-1.5B",
+      "artifact_class": "fine_tuned_model",
+      "promotion_state": "NOT_PROMOTED_RESEARCH_ONLY",
       "source_path": "khipu",
       "maturity": "MEASURED_RESEARCH_ONLY",
       "role": "governed_retrieval_plan_proposer",
@@ -56,6 +74,20 @@
       "expected_weight_sha256": {
         "adapter/adapter_model.safetensors": "0a71b3a28b9f77ca3651f38c8caa1e34121934f5584dae24454d4c6eea823a66",
         "model.safetensors": "6f9f5b9df2a877c999e33faf542dc6e62ce63f4a2bf6b358fc48a4b6b113c3c9"
+      },
+      "lineage": [
+        {
+          "relation": "finetune",
+          "repo_id": "Qwen/Qwen2.5-1.5B-Instruct",
+          "revision": "989aa7980e4cf806f80c7fef2b1adb7bc71aa306",
+          "license": "apache-2.0"
+        }
+      ],
+      "signed_receipts": {
+        "public_key": "owner_pubkey.json",
+        "training": "training_receipt.signed.json",
+        "evaluation": "eval_receipt.signed.json",
+        "claim_scope": "REPOSITORY_DECLARED_KEY_CONTINUITY_ONLY"
       },
       "source_files": [
         "khipu/adversarial.jsonl",
@@ -74,6 +106,91 @@
         "The signed held-out abstention result is 2/6.",
         "The curriculum measures synthetic routing-policy conformance, not autonomous navigation of the live Brain.",
         "The public weight files are observed and hashed separately from the signed training receipt."
+      ]
+    },
+    {
+      "repo_id": "SZLHOLDINGS/SZL-Khipu-1.5B-GGUF",
+      "artifact_class": "quantized_model",
+      "promotion_state": "OPERATIONAL_RESEARCH_DEMO_NOT_AUTONOMOUS",
+      "source_path": "khipu",
+      "maturity": "MEASURED_OPERATIONAL_LIMITED",
+      "role": "bounded_governed_retrieval_plan_proposer",
+      "required_hub_files": [
+        "SZL-Khipu-1.5B-F16.gguf",
+        "SZL-Khipu-1.5B-Q4_K_M.gguf",
+        "SZL-Khipu-1.5B-Q5_K_M.gguf",
+        "SZL-Khipu-1.5B-Q8_0.gguf",
+        "owner_pubkey.json",
+        "training_receipt.signed.json",
+        "eval_receipt.signed.json"
+      ],
+      "expected_weight_sha256": {
+        "SZL-Khipu-1.5B-F16.gguf": "2348ee342efe639e100f3fb31a3dc11b8c12d8c43ecfe45e18041b9f94c71a12",
+        "SZL-Khipu-1.5B-Q4_K_M.gguf": "13c1a1993063e1dff92f7413ccf48eaca6d48efc8801ae9af35961ae3396623a",
+        "SZL-Khipu-1.5B-Q5_K_M.gguf": "3bf460ac163c5dc952c273999c38a41349e3e6d666e4b713aed22c996860fd4c",
+        "SZL-Khipu-1.5B-Q8_0.gguf": "6aff1087f64631679f4cdf032613aee6911dbde38cd3bac6b81bf63741a56f0d"
+      },
+      "lineage": [
+        {
+          "relation": "finetune",
+          "repo_id": "Qwen/Qwen2.5-1.5B-Instruct",
+          "revision": "989aa7980e4cf806f80c7fef2b1adb7bc71aa306",
+          "license": "apache-2.0"
+        },
+        {
+          "relation": "quantized_from",
+          "repo_id": "SZLHOLDINGS/SZL-Khipu-1.5B",
+          "revision": "759c6112b1acae67f30351ef4e652e07671a42fb",
+          "license": "apache-2.0"
+        }
+      ],
+      "signed_receipts": {
+        "public_key": "owner_pubkey.json",
+        "training": "training_receipt.signed.json",
+        "evaluation": "eval_receipt.signed.json",
+        "claim_scope": "REPOSITORY_DECLARED_KEY_CONTINUITY_ONLY"
+      },
+      "runtime_probe": {
+        "base_url": "https://szlholdings-szl-model-inference-lab.hf.space",
+        "model_revision": "67d60ec577730747055491640cfb91fc4a4b5d25",
+        "model_file": "SZL-Khipu-1.5B-Q4_K_M.gguf",
+        "model_sha256": "13c1a1993063e1dff92f7413ccf48eaca6d48efc8801ae9af35961ae3396623a",
+        "release_id": "145e9425-ff95-444d-825e-b644530bf520",
+        "prompt": "Given no evidence, state that you must abstain.",
+        "max_new_tokens": 24,
+        "repeat_count": 2,
+        "required_output_substring": "abstain"
+      },
+      "autonomy_boundary": {
+        "autonomous_execution": false,
+        "controller_validation_required": true,
+        "node_content_inside_weights": false,
+        "reason": "The model proposes routes over handles. A validating controller resolves evidence and retains execution authority."
+      },
+      "source_files": [
+        "khipu/adversarial.jsonl",
+        "khipu/eval.jsonl",
+        "khipu/eval_khipu.py",
+        "khipu/eval_receipt.signed.json",
+        "khipu/khipu.schema.json",
+        "khipu/manifest.json",
+        "khipu/owner_pubkey.json",
+        "khipu/train.abstain.jsonl",
+        "khipu/train.jsonl",
+        "khipu/train_khipu.py",
+        "khipu/training_receipt.signed.json",
+        "spaces/szl-model-inference-lab/app.py",
+        "spaces/szl-model-inference-lab/download_artifacts.py",
+        "spaces/szl-model-inference-lab/release.json",
+        "spaces/szl-model-inference-lab/requirements.txt",
+        "spaces/szl-model-inference-lab/verify_execution_record.py"
+      ],
+      "limitations": [
+        "The signed held-out abstention result is 2/6, so autonomous or high-stakes use is prohibited.",
+        "The live service is a bounded best-effort CPU demo with no SLA.",
+        "Runtime outputs are explicitly unsigned; the signed receipts cover training and evaluation only.",
+        "Energy and process-peak memory remain UNAVAILABLE until instrumented measurements are captured.",
+        "The published GGUF bytes are observed and hashed; reproducible quantization from the fine-tuned weights is not claimed."
       ]
     }
   ]
