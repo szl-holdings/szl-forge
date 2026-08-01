@@ -32,6 +32,10 @@ or substitute for source retrieval.
 
 ## Exact lineage
 
+- Canonical source snapshot:
+  [`szl-holdings/szl-forge@1973b86`](https://github.com/szl-holdings/szl-forge/tree/1973b86c3db066fd065ec974594aabfe0ac32099/frontier/qwen35-receiptagent-v2)
+- Protected source merge:
+  [`szl-holdings/szl-forge#4`](https://github.com/szl-holdings/szl-forge/pull/4)
 - Canonical base: `Qwen/Qwen3.5-0.8B`
 - Base revision: `2fc06364715b967f1860aea9cf38778875588b17`
 - Training implementation: `unsloth/Qwen3.5-0.8B`

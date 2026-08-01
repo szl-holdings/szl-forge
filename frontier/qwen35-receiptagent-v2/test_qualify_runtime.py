@@ -16,6 +16,19 @@ HERE = Path(__file__).resolve().parent
 
 
 class QualificationContractTests(unittest.TestCase):
+    def test_model_card_binds_the_exact_canonical_source(self) -> None:
+        publication = json.loads(
+            (HERE / "publication.json").read_text(encoding="utf-8")
+        )
+        model_card = (HERE / "MODEL_CARD.md").read_text(encoding="utf-8")
+        source = publication["source"]
+        source_tree = (
+            f'{source["repository"]}/tree/{source["mergedCommit"]}'
+            "/frontier/qwen35-receiptagent-v2"
+        )
+        self.assertIn(f"({source_tree})", model_card)
+        self.assertIn(f'({source["pullRequest"]})', model_card)
+
     def test_candidate_is_pinned_published_and_still_non_autonomous(self) -> None:
         candidate = qualification.load_candidate(HERE / "candidate.json")
         self.assertEqual(40, len(candidate["canonical_base"]["revision"]))
