@@ -713,7 +713,7 @@ def verify_stable_kernel_runtime_isolated(*, revision: str) -> dict[str, Any]:
     create_command = [
         "docker",
         "create",
-        "--log-driver=local",
+        "--log-driver=json-file",
         "--log-opt=max-size=64k",
         "--log-opt=max-file=1",
         # Docker's default PID namespace is private. Do not pass
