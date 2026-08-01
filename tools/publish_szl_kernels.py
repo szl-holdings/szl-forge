@@ -388,14 +388,19 @@ def kernel_file_evidence(
     evidence = []
     for source_path, kernel_path in FIRST_CLASS_KERNEL_FILES.items():
         path = safe_file(source_root, source_path)
-        evidence.append(
-            {
-                "source_path": source_path,
-                "kernel_path": kernel_path,
-                "bytes": path.stat().st_size,
-                "sha256": file_sha256(path),
-            }
+        destinations = (
+            kernel_path,
+            f"build/{KERNEL_VARIANT}/szl_kernels/{Path(kernel_path).name}",
         )
+        for destination in destinations:
+            evidence.append(
+                {
+                    "source_path": source_path,
+                    "kernel_path": destination,
+                    "bytes": path.stat().st_size,
+                    "sha256": file_sha256(path),
+                }
+            )
     return evidence
 
 
@@ -601,6 +606,7 @@ def verify_stable_kernel_runtime(
 
     boundaries: dict[str, dict[str, Any]] = {}
     for threshold in (0.0, 1.0):
+        expected_passed = threshold == 0.0
         chain = module.UnifiedReceiptChain()
         gate = module.governed_lambda_gate(
             chain,
@@ -613,6 +619,7 @@ def verify_stable_kernel_runtime(
             or depth != 1
             or first_break != -1
             or gate.get("threshold") != threshold
+            or gate.get("passed") is not expected_passed
         ):
             raise PublicationError("inclusive threshold boundary contract failed")
         boundaries[str(int(threshold))] = {

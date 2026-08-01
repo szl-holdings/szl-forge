@@ -285,6 +285,50 @@ class PublishSzlKernelsTests(unittest.TestCase):
         )
         self.assertEqual(evidence["inclusive_boundaries"]["0"]["receipt_depth"], 1)
         self.assertEqual(evidence["inclusive_boundaries"]["1"]["receipt_depth"], 1)
+        self.assertIs(evidence["inclusive_boundaries"]["0"]["passed"], True)
+        self.assertIs(evidence["inclusive_boundaries"]["1"]["passed"], False)
+
+    def test_stable_runtime_rejects_inverted_boundary_decision(self) -> None:
+        class Chain:
+            def __init__(self) -> None:
+                self.depth = 0
+
+            def verify(self) -> tuple[bool, int, int]:
+                return True, self.depth, -1
+
+        class Module:
+            UnifiedReceiptChain = Chain
+
+            @staticmethod
+            def selfcheck() -> dict[str, object]:
+                return {"ok": True, "version": "0.1.1"}
+
+            @staticmethod
+            def governed_lambda_gate(
+                chain: Chain,
+                axes: list[float],
+                *,
+                threshold: float,
+            ) -> dict[str, object]:
+                del axes
+                if not 0.0 <= threshold <= 1.0:
+                    raise ValueError("invalid threshold")
+                chain.depth += 1
+                return {
+                    "threshold": threshold,
+                    "passed": threshold == 1.0,
+                }
+
+        with self.assertRaisesRegex(
+            publisher.PublicationError,
+            "inclusive threshold boundary contract failed",
+        ):
+            publisher.verify_stable_kernel_runtime(
+                revision="2" * 40,
+                get_kernel_fn=lambda *_args, **_kwargs: Module(),
+                tensor_fn=lambda values: values,
+                client_version="0.16.0",
+            )
 
     def test_supported_builder_uses_official_package_version_identity(self) -> None:
         version = SimpleNamespace(
@@ -471,9 +515,13 @@ class PublishSzlKernelsTests(unittest.TestCase):
             self.assertEqual(result["status"], "VERIFIED_DRY_RUN")
             self.assertEqual(
                 result["targets"]["first_class_kernel"]["mapped_file_count"],
-                len(publisher.FIRST_CLASS_KERNEL_FILES),
+                2 * len(publisher.FIRST_CLASS_KERNEL_FILES),
             )
             binding = result["targets"]["first_class_kernel"]["binding"]
+            self.assertEqual(
+                len(binding["source"]["kernel_files"]),
+                2 * len(publisher.FIRST_CLASS_KERNEL_FILES),
+            )
             self.assertEqual(
                 binding["schema"],
                 "szl.hf-first-class-kernel-binding/v1",
