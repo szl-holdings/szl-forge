@@ -285,6 +285,77 @@ class AppContractTests(unittest.TestCase):
             else:
                 os.environ[app.SOURCE_REVISION_ENV] = original
 
+    def test_operational_aliases_preserve_liveness_and_readiness(self):
+        original = app.state["status"]
+        try:
+            app.state["status"] = "STARTING"
+            self.assertEqual(200, app.healthz().status_code)
+            self.assertEqual(503, app.readyz().status_code)
+            app.state["status"] = "READY"
+            self.assertEqual(200, app.healthz().status_code)
+            self.assertEqual(200, app.readyz().status_code)
+            app.state["status"] = "FAILED"
+            self.assertEqual(503, app.healthz().status_code)
+            self.assertEqual(503, app.readyz().status_code)
+        finally:
+            app.state["status"] = original
+
+    def test_version_fails_closed_without_exact_deploy_revision(self):
+        original = os.environ.pop(app.SOURCE_REVISION_ENV, None)
+        try:
+            response = app.version()
+            payload = json.loads(response.body)
+            self.assertEqual(503, response.status_code)
+            self.assertIsNone(payload["gitSha"])
+            self.assertEqual("UNAVAILABLE", payload["evidenceState"])
+
+            os.environ[app.SOURCE_REVISION_ENV] = "b" * 40
+            response = app.version()
+            payload = json.loads(response.body)
+            self.assertEqual(200, response.status_code)
+            self.assertEqual("b" * 40, payload["gitSha"])
+            self.assertEqual("model-inference", payload["surface"])
+        finally:
+            if original is None:
+                os.environ.pop(app.SOURCE_REVISION_ENV, None)
+            else:
+                os.environ[app.SOURCE_REVISION_ENV] = original
+
+    def test_evidence_requires_source_and_verified_receipts(self):
+        original_revision = os.environ.get(app.SOURCE_REVISION_ENV)
+        original_state = dict(app.state)
+        try:
+            os.environ[app.SOURCE_REVISION_ENV] = "c" * 40
+            app.state.update(
+                {
+                    "status": "READY",
+                    "source_integrity": True,
+                    "model_sha256": app.MODEL_SHA256,
+                    "receipt_status": "DECLARED_KEY_SIGNATURES_VALID",
+                    "receipt_evidence": {
+                        "training_canonical_sha256": "d" * 64,
+                        "eval_canonical_sha256": "e" * 64,
+                    },
+                }
+            )
+            response = app.evidence()
+            payload = json.loads(response.body)
+            self.assertEqual(200, response.status_code)
+            self.assertEqual("MEASURED", payload["evidenceState"])
+            self.assertEqual(2, len(payload["receipts"]))
+            self.assertEqual("UNSIGNED", payload["outputProvenance"]["signatureStatus"])
+
+            app.state["receipt_status"] = "NOT_CHECKED"
+            response = app.evidence()
+            self.assertEqual(503, response.status_code)
+        finally:
+            app.state.clear()
+            app.state.update(original_state)
+            if original_revision is None:
+                os.environ.pop(app.SOURCE_REVISION_ENV, None)
+            else:
+                os.environ[app.SOURCE_REVISION_ENV] = original_revision
+
     def test_openai_model_catalog_is_immutable_and_unsigned(self):
         response = app.openai_models()
         payload = json.loads(response.body)
@@ -736,11 +807,19 @@ class AppContractTests(unittest.TestCase):
     def test_root_waits_for_readiness_before_enabling_inference(self):
         html = app.index()
         self.assertIn('id="run" disabled aria-disabled="true"', html)
-        self.assertIn("Checking runtime…", html)
-        self.assertIn("fetch('/health'", html)
+        self.assertIn("Checking the runtime and evidence threads", html)
+        self.assertIn("getJson('/health')", html)
+        self.assertIn("getJson('/version')", html)
+        self.assertIn("getJson('/evidence')", html)
         self.assertIn("status==='READY'", html)
         self.assertIn("status==='STARTING'", html)
         self.assertIn("status==='FAILED'", html)
+        self.assertIn('data-screenshot-ready="false"', html)
+        self.assertIn("prefers-reduced-motion:reduce", html)
+        self.assertIn("Every token leaves a", html)
+        self.assertIn('name="description"', html)
+        self.assertIn('property="og:title"', html)
+        self.assertIn('rel="canonical"', html)
 
     def test_body_limiter_rejects_chunked_overflow(self):
         downstream_called = False
