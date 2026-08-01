@@ -12,6 +12,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 from typing import Any, Callable, Iterable
@@ -39,6 +40,17 @@ KERNEL_BUILDER_SOURCE_REVISION = (
     "633246310320d85def0c67d62c7912fd444a842f"
 )
 KERNEL_BINDING_FILENAME = "source-binding.json"
+SENSITIVE_ENV_MARKERS = (
+    "TOKEN",
+    "SECRET",
+    "PASSWORD",
+    "CREDENTIAL",
+    "AUTH",
+    "API_KEY",
+    "ACCESS_KEY",
+    "PRIVATE_KEY",
+    "SIGNING_KEY",
+)
 FIRST_CLASS_KERNEL_FILES = {
     "build/torch-universal/szl_kernels/__init__.py": (
         f"build/{KERNEL_VARIANT}/__init__.py"
@@ -638,6 +650,52 @@ def verify_stable_kernel_runtime(
     }
 
 
+def verify_stable_kernel_runtime_isolated(*, revision: str) -> dict[str, Any]:
+    """Run untrusted Hub code without inheriting publisher credentials."""
+    environment = {
+        key: value
+        for key, value in os.environ.items()
+        if not any(marker in key.upper() for marker in SENSITIVE_ENV_MARKERS)
+    }
+    environment["HF_HUB_DISABLE_IMPLICIT_TOKEN"] = "1"
+    verifier = Path(__file__).with_name("verify_szl_kernel_runtime.py")
+    outcome = subprocess.run(
+        [sys.executable, str(verifier), "--revision", revision],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=environment,
+    )
+    if outcome.returncode != 0:
+        detail = (outcome.stderr or outcome.stdout or "unknown runtime error").strip()
+        raise PublicationError(
+            f"isolated stable Kernel runtime failed: {detail[-2000:]}"
+        )
+    try:
+        evidence = json.loads(outcome.stdout)
+    except json.JSONDecodeError as exc:
+        raise PublicationError(
+            "isolated stable Kernel runtime returned invalid evidence"
+        ) from exc
+    boundaries = evidence.get("inclusive_boundaries", {})
+    if (
+        evidence.get("status") != "STABLE_GET_KERNEL_VERIFIED"
+        or evidence.get("client_version") != KERNEL_RUNTIME_CLIENT_VERSION
+        or evidence.get("revision") != revision
+        or evidence.get("package_version") != EXPECTED_KERNEL_PACKAGE_VERSION
+        or evidence.get("selfcheck_ok") is not True
+        or evidence.get("invalid_thresholds_rejected_before_receipt") != 4
+        or boundaries.get("0", {}).get("passed") is not True
+        or boundaries.get("0", {}).get("receipt_depth") != 1
+        or boundaries.get("1", {}).get("passed") is not False
+        or boundaries.get("1", {}).get("receipt_depth") != 1
+    ):
+        raise PublicationError(
+            "isolated stable Kernel runtime evidence failed validation"
+        )
+    return evidence
+
+
 def verify_kernel_readback(
     expected_files: dict[str, bytes],
     *,
@@ -674,7 +732,9 @@ def run(
     api: HfApi | None = None,
     download_fn: Callable[..., str] = hf_hub_download,
     kernel_upload_fn: Callable[[Path, str], None] = upload_first_class_kernel,
-    kernel_runtime_fn: Callable[..., dict[str, Any]] = verify_stable_kernel_runtime,
+    kernel_runtime_fn: Callable[..., dict[str, Any]] = (
+        verify_stable_kernel_runtime_isolated
+    ),
 ) -> dict[str, Any]:
     source_revision = source_revision.strip().lower()
     if FULL_SHA_RE.fullmatch(source_revision) is None:

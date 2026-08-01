@@ -190,6 +190,53 @@ class FakeApi:
 
 
 class PublishSzlKernelsTests(unittest.TestCase):
+    def test_isolated_runtime_scrubs_credentials_and_validates_evidence(self) -> None:
+        revision = "2" * 40
+        evidence = {
+            "status": "STABLE_GET_KERNEL_VERIFIED",
+            "client_version": "0.16.0",
+            "revision": revision,
+            "package_version": "0.1.1",
+            "selfcheck_ok": True,
+            "invalid_thresholds_rejected_before_receipt": 4,
+            "inclusive_boundaries": {
+                "0": {"passed": True, "receipt_depth": 1},
+                "1": {"passed": False, "receipt_depth": 1},
+            },
+        }
+        outcome = SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps(evidence),
+            stderr="",
+        )
+        inherited = {
+            "PATH": "trusted-path",
+            "HF_TOKEN": "publisher-secret",
+            "GITHUB_TOKEN": "github-secret",
+            "ACTIONS_ID_TOKEN_REQUEST_TOKEN": "oidc-secret",
+            "SERVICE_API_KEY": "api-secret",
+        }
+        with patch.dict(publisher.os.environ, inherited, clear=True), patch.object(
+            publisher.subprocess,
+            "run",
+            return_value=outcome,
+        ) as run:
+            observed = publisher.verify_stable_kernel_runtime_isolated(
+                revision=revision
+            )
+
+        self.assertEqual(observed, evidence)
+        command = run.call_args.args[0]
+        environment = run.call_args.kwargs["env"]
+        self.assertEqual(command[-2:], ["--revision", revision])
+        self.assertEqual(Path(command[1]).name, "verify_szl_kernel_runtime.py")
+        self.assertEqual(environment["PATH"], "trusted-path")
+        self.assertEqual(environment["HF_HUB_DISABLE_IMPLICIT_TOKEN"], "1")
+        self.assertNotIn("HF_TOKEN", environment)
+        self.assertNotIn("GITHUB_TOKEN", environment)
+        self.assertNotIn("ACTIONS_ID_TOKEN_REQUEST_TOKEN", environment)
+        self.assertNotIn("SERVICE_API_KEY", environment)
+
     def test_first_class_before_accepts_split_builder_layout(self) -> None:
         api = FakeApi({})
         api.kernel_revisions = {
