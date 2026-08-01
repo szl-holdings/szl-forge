@@ -10,6 +10,7 @@ import io
 import json
 import os
 import re
+import shutil
 import subprocess
 import tempfile
 from pathlib import Path
@@ -27,7 +28,11 @@ KERNEL_REPO_TYPE = "kernel"
 KERNEL_BRANCHES = ("main", "v1")
 KERNEL_VARIANT = "torch-cpu"
 KERNEL_VERSION = 1
+KERNEL_BUILDER_PACKAGE = "hf-kernel-builder"
 KERNEL_BUILDER_VERSION = "0.17.0-dev0"
+KERNEL_BUILDER_VERSION_OUTPUT = (
+    f"{KERNEL_BUILDER_PACKAGE} {KERNEL_BUILDER_VERSION}"
+)
 KERNEL_BUILDER_SOURCE_REVISION = (
     "633246310320d85def0c67d62c7912fd444a842f"
 )
@@ -435,29 +440,33 @@ def stage_first_class_kernel(
     return expected
 
 
+def require_kernel_builder_executable() -> str:
+    executable = shutil.which("kernel-builder")
+    if executable is None:
+        raise PublicationError("pinned kernel-builder is not installed")
+    version = subprocess.run(
+        [executable, "--version"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    observed_version = (version.stdout or version.stderr).strip()
+    if version.returncode != 0 or observed_version != KERNEL_BUILDER_VERSION_OUTPUT:
+        raise PublicationError(
+            "kernel-builder version drifted "
+            f"(expected {KERNEL_BUILDER_VERSION_OUTPUT!r}, "
+            f"observed {observed_version!r})"
+        )
+    return executable
+
+
 def upload_first_class_kernel(staging_root: Path, token: str) -> None:
     output_path = staging_root / "kernel-upload.json"
     environment = os.environ.copy()
     environment["HF_TOKEN"] = token
-    try:
-        version = subprocess.run(
-            ["kernel-builder", "--version"],
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-    except FileNotFoundError as exc:
-        raise PublicationError("pinned kernel-builder is not installed") from exc
-    except subprocess.CalledProcessError as exc:
-        raise PublicationError("cannot identify the installed kernel-builder") from exc
-    observed_version = (version.stdout or version.stderr).strip()
-    if observed_version != f"kernel-builder {KERNEL_BUILDER_VERSION}":
-        raise PublicationError(
-            "kernel-builder version drifted "
-            f"(expected {KERNEL_BUILDER_VERSION}, observed {observed_version!r})"
-        )
+    executable = require_kernel_builder_executable()
     command = [
-        "kernel-builder",
+        executable,
         "upload",
         str(staging_root),
         "--repo-id",

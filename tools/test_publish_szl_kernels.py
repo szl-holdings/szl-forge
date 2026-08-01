@@ -7,6 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
 import publish_szl_kernels as publisher
 
@@ -175,6 +176,44 @@ class FakeApi:
 
 
 class PublishSzlKernelsTests(unittest.TestCase):
+    def test_supported_builder_uses_official_package_version_identity(self) -> None:
+        version = SimpleNamespace(
+            returncode=0,
+            stdout="hf-kernel-builder 0.17.0-dev0\n",
+            stderr="",
+        )
+        with patch.object(
+            publisher.shutil,
+            "which",
+            return_value="/trusted/kernel-builder",
+        ), patch.object(publisher.subprocess, "run", return_value=version) as run:
+            executable = publisher.require_kernel_builder_executable()
+
+        self.assertEqual(executable, "/trusted/kernel-builder")
+        run.assert_called_once_with(
+            ["/trusted/kernel-builder", "--version"],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
+    def test_supported_builder_rejects_executable_name_as_identity(self) -> None:
+        version = SimpleNamespace(
+            returncode=0,
+            stdout="kernel-builder 0.17.0-dev0\n",
+            stderr="",
+        )
+        with patch.object(
+            publisher.shutil,
+            "which",
+            return_value="/trusted/kernel-builder",
+        ), patch.object(publisher.subprocess, "run", return_value=version):
+            with self.assertRaisesRegex(
+                publisher.PublicationError,
+                "hf-kernel-builder 0.17.0-dev0",
+            ):
+                publisher.require_kernel_builder_executable()
+
     def test_gateway_installs_hub_client_before_authorization_tests(self) -> None:
         workflow = (
             Path(__file__).parents[1]
@@ -199,6 +238,11 @@ class PublishSzlKernelsTests(unittest.TestCase):
         self.assertLess(dependency, tests)
         self.assertLess(uploader, upstream_pin)
         self.assertLess(upstream_pin, publish)
+        self.assertIn(
+            'test "$(kernel-builder --version)" = '
+            f'"{publisher.KERNEL_BUILDER_VERSION_OUTPUT}"',
+            workflow[uploader:publish],
+        )
 
     source_revision = "a" * 40
     publisher_revision = "b" * 40
