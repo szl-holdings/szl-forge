@@ -109,6 +109,30 @@ def _receipt_downloader(root: Path):
 
 
 class PublishModelSourceBindingsTests(unittest.TestCase):
+    def test_runtime_probe_matches_packaged_model_lab_release(self) -> None:
+        repository_root = Path(__file__).parents[1]
+        contract = json.loads(
+            (repository_root / "publishing/model-source-bindings.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        release = json.loads(
+            (
+                repository_root
+                / "spaces/szl-model-inference-lab/release.json"
+            ).read_text(encoding="utf-8")
+        )
+        runtime_artifacts = [
+            artifact
+            for artifact in contract["artifacts"]
+            if artifact.get("runtime_probe") is not None
+        ]
+        self.assertEqual(len(runtime_artifacts), 1)
+        self.assertEqual(
+            runtime_artifacts[0]["runtime_probe"]["release_id"],
+            release["release_id"],
+        )
+
     def test_dry_run_verifies_source_and_weight_hash(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
