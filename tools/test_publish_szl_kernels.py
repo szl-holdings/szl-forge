@@ -593,12 +593,21 @@ class PublishSzlKernelsTests(unittest.TestCase):
             self.assertEqual(result["status"], "VERIFIED_DRY_RUN")
             self.assertEqual(
                 result["targets"]["first_class_kernel"]["mapped_file_count"],
-                2 * len(publisher.FIRST_CLASS_KERNEL_FILES),
+                1 + 2 * len(publisher.FIRST_CLASS_KERNEL_FILES),
             )
             binding = result["targets"]["first_class_kernel"]["binding"]
             self.assertEqual(
                 len(binding["source"]["kernel_files"]),
-                2 * len(publisher.FIRST_CLASS_KERNEL_FILES),
+                1 + 2 * len(publisher.FIRST_CLASS_KERNEL_FILES),
+            )
+            self.assertIn(
+                {
+                    "source_path": "README.md",
+                    "kernel_path": "README.md",
+                    "bytes": artifacts["README.md"].stat().st_size,
+                    "sha256": publisher.file_sha256(artifacts["README.md"]),
+                },
+                binding["source"]["kernel_files"],
             )
             self.assertEqual(
                 binding["schema"],

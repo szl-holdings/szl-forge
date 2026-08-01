@@ -397,7 +397,15 @@ def verify_legacy_readback(
 def kernel_file_evidence(
     source_root: Path,
 ) -> list[dict[str, Any]]:
-    evidence = []
+    readme = safe_file(source_root, "README.md")
+    evidence = [
+        {
+            "source_path": "README.md",
+            "kernel_path": "README.md",
+            "bytes": readme.stat().st_size,
+            "sha256": file_sha256(readme),
+        }
+    ]
     for source_path, kernel_path in FIRST_CLASS_KERNEL_FILES.items():
         path = safe_file(source_root, source_path)
         destinations = (
