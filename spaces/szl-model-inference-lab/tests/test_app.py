@@ -814,6 +814,8 @@ class AppContractTests(unittest.TestCase):
         self.assertIn("status==='READY'", html)
         self.assertIn("status==='STARTING'", html)
         self.assertIn("status==='FAILED'", html)
+        self.assertIn("if(running)return;if(!hasResult)requestState", html)
+        self.assertIn("if(!hasResult)o.textContent", html)
         self.assertIn('data-screenshot-ready="false"', html)
         self.assertIn("prefers-reduced-motion:reduce", html)
         self.assertIn("Every token leaves a", html)
