@@ -228,10 +228,27 @@ class PublishSzlKernelsTests(unittest.TestCase):
         self.assertEqual(observed, evidence)
         command = run.call_args.args[0]
         environment = run.call_args.kwargs["env"]
-        self.assertEqual(command[-2:], ["--revision", revision])
-        self.assertEqual(Path(command[1]).name, "verify_szl_kernel_runtime.py")
+        self.assertEqual(command[0:2], ["docker", "run"])
+        self.assertEqual(
+            command[-3:],
+            [publisher.KERNEL_RUNTIME_IMAGE, "--revision", revision],
+        )
+        self.assertIn("--pid=private", command)
+        self.assertIn("--read-only", command)
+        self.assertIn("--cap-drop=ALL", command)
+        self.assertIn("--security-opt=no-new-privileges", command)
+        self.assertFalse(
+            any(
+                argument == "--mount"
+                or argument == "--volume"
+                or argument.startswith("--mount=")
+                or argument.startswith("--volume=")
+                or argument.startswith("-v")
+                for argument in command
+            )
+        )
         self.assertEqual(environment["PATH"], "trusted-path")
-        self.assertEqual(environment["HF_HUB_DISABLE_IMPLICIT_TOKEN"], "1")
+        self.assertIn("--env=HF_HUB_DISABLE_IMPLICIT_TOKEN=1", command)
         self.assertNotIn("HF_TOKEN", environment)
         self.assertNotIn("GITHUB_TOKEN", environment)
         self.assertNotIn("ACTIONS_ID_TOKEN_REQUEST_TOKEN", environment)
@@ -422,6 +439,9 @@ class PublishSzlKernelsTests(unittest.TestCase):
             / "workflows"
             / "publish-szl-kernels.yml"
         ).read_text(encoding="utf-8")
+        dockerfile = (
+            Path(__file__).parent / "kernel-runtime.Dockerfile"
+        ).read_text(encoding="utf-8")
         install = workflow.index("Install trusted gateway test dependency")
         tests = workflow.index("Test trusted gateway contracts")
         dependency = workflow.index('"huggingface-hub==1.26.0"', install)
@@ -435,14 +455,25 @@ class PublishSzlKernelsTests(unittest.TestCase):
         publish = workflow.index(
             "Publish declared data with trusted code and verify exact readback"
         )
-        torch_runtime = workflow.index('"torch==2.9.1"', uploader)
-        kernels_runtime = workflow.index('"kernels==0.16.0"', uploader)
+        sandbox = workflow.index(
+            "Build credentialless stable runtime sandbox",
+            uploader,
+        )
         self.assertLess(install, dependency)
         self.assertLess(dependency, tests)
         self.assertLess(uploader, upstream_pin)
         self.assertLess(upstream_pin, publish)
-        self.assertLess(torch_runtime, publish)
-        self.assertLess(kernels_runtime, publish)
+        self.assertLess(sandbox, publish)
+        self.assertIn('"torch==2.9.1"', dockerfile)
+        self.assertIn('"kernels==0.16.0"', dockerfile)
+        self.assertIn(
+            "sha256:519591d6871b7bc437060736b9f7456b8731f1499a57e22e6c285135ae657bf7",
+            dockerfile,
+        )
+        self.assertIn(
+            "--file tools/kernel-runtime.Dockerfile",
+            workflow[sandbox:publish],
+        )
         self.assertIn(
             'test "$(kernel-builder --version)" = '
             f'"{publisher.KERNEL_BUILDER_VERSION_OUTPUT}"',

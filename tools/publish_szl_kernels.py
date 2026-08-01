@@ -12,7 +12,6 @@ import os
 import re
 import shutil
 import subprocess
-import sys
 import tempfile
 from pathlib import Path
 from typing import Any, Callable, Iterable
@@ -24,6 +23,7 @@ EXPECTED_SOURCE_REPOSITORY = "szl-holdings/szl-kernels"
 EXPECTED_PUBLISHER_REPOSITORY = "szl-holdings/szl-forge"
 EXPECTED_KERNEL_PACKAGE_VERSION = "0.1.1"
 KERNEL_RUNTIME_CLIENT_VERSION = "0.16.0"
+KERNEL_RUNTIME_IMAGE = f"szl-kernel-runtime:{KERNEL_RUNTIME_CLIENT_VERSION}"
 CONTRACT_RELATIVE = Path("publishing/source-binding.json")
 FULL_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 LEGACY_REPO_TYPE = "model"
@@ -651,16 +651,38 @@ def verify_stable_kernel_runtime(
 
 
 def verify_stable_kernel_runtime_isolated(*, revision: str) -> dict[str, Any]:
-    """Run untrusted Hub code without inheriting publisher credentials."""
+    """Run untrusted Hub code in a credentialless, workspace-free OCI sandbox."""
     environment = {
         key: value
         for key, value in os.environ.items()
         if not any(marker in key.upper() for marker in SENSITIVE_ENV_MARKERS)
     }
-    environment["HF_HUB_DISABLE_IMPLICIT_TOKEN"] = "1"
-    verifier = Path(__file__).with_name("verify_szl_kernel_runtime.py")
+    command = [
+        "docker",
+        "run",
+        "--rm",
+        "--pid=private",
+        "--network=bridge",
+        "--read-only",
+        "--tmpfs",
+        "/tmp:rw,nosuid,nodev,noexec,size=64m",
+        "--tmpfs",
+        "/cache:rw,nosuid,nodev,noexec,size=2g",
+        "--cap-drop=ALL",
+        "--security-opt=no-new-privileges",
+        "--pids-limit=256",
+        "--memory=4g",
+        "--cpus=2",
+        "--user=65532:65532",
+        "--env=HF_HUB_DISABLE_IMPLICIT_TOKEN=1",
+        "--env=HF_HOME=/cache/huggingface",
+        "--env=XDG_CACHE_HOME=/cache",
+        KERNEL_RUNTIME_IMAGE,
+        "--revision",
+        revision,
+    ]
     outcome = subprocess.run(
-        [sys.executable, str(verifier), "--revision", revision],
+        command,
         check=False,
         capture_output=True,
         text=True,
