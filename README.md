@@ -42,7 +42,9 @@ Hub revision under evaluation.
 - A way to produce locally controlled model derivatives on supported hardware;
   hardware fit, run completion, and artifact quality must be observed per run.
 - A release source that keeps trained weights, quantized derivatives, recipes,
-  snapshots, and Spaces in separate evidence lanes.## One command (laptop)
+  snapshots, and Spaces in separate evidence lanes.
+
+## One command (laptop)
 
 The whole pipeline — folder, kit files, Unsloth, the CUDA-build torch the
 RTX 5050 needs, training, and the Ollama import — in a single PowerShell

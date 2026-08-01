@@ -38,7 +38,9 @@ python -m unittest discover \
 
 Then compare the signed receipt digests and adapter hash below with the exact
 immutable Hub revision. A passing local check does not independently certify
-the owner key, model quality, or deployment.## Intended use
+the owner key, model quality, or deployment.
+
+## Intended use
 
 Use this adapter behind a validating controller that:
 
