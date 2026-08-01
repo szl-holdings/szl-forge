@@ -4,11 +4,14 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import hashlib
 import io
 import json
 import os
 import re
+import subprocess
+import tempfile
 from pathlib import Path
 from typing import Any, Callable, Iterable
 
@@ -22,22 +25,18 @@ FULL_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 LEGACY_REPO_TYPE = "model"
 KERNEL_REPO_TYPE = "kernel"
 KERNEL_BRANCHES = ("main", "v1")
-KERNEL_BINDING_PATH = "source-binding.json"
+KERNEL_VARIANT = "torch-cpu"
+KERNEL_VERSION = 1
+KERNEL_BINDING_FILENAME = "source-binding.json"
 FIRST_CLASS_KERNEL_FILES = {
-    ".gitattributes": ".gitattributes",
-    "LICENSE": "LICENSE",
-    "README.md": "README.md",
     "build/torch-universal/szl_kernels/__init__.py": (
-        "build/torch-cpu/szl_kernels/__init__.py"
+        f"build/{KERNEL_VARIANT}/__init__.py"
     ),
     "build/torch-universal/szl_kernels/_chain.py": (
-        "build/torch-cpu/szl_kernels/_chain.py"
+        f"build/{KERNEL_VARIANT}/_chain.py"
     ),
     "build/torch-universal/szl_kernels/_ops.py": (
-        "build/torch-cpu/szl_kernels/_ops.py"
-    ),
-    "build/torch-universal/szl_kernels/metadata.json": (
-        "build/torch-cpu/metadata.json"
+        f"build/{KERNEL_VARIANT}/_ops.py"
     ),
 }
 
@@ -361,16 +360,140 @@ def kernel_file_evidence(
     return evidence
 
 
-def verify_kernel_readback(
+def digest_base64(payload: bytes) -> str:
+    return base64.b64encode(hashlib.sha256(payload).digest()).decode("ascii")
+
+
+def stage_first_class_kernel(
     source_root: Path,
     binding_bytes: bytes,
+    staging_root: Path,
+) -> dict[str, dict[str, bytes]]:
+    """Create a standards-compliant tree for the pinned kernel-builder."""
+    build_root = staging_root / "build"
+    variant_root = build_root / KERNEL_VARIANT
+    compatibility_root = variant_root / "szl_kernels"
+    compatibility_root.mkdir(parents=True, exist_ok=True)
+
+    expected: dict[str, dict[str, bytes]] = {
+        "main": {
+            "README.md": safe_file(source_root, "README.md").read_bytes(),
+        },
+        "v1": {},
+    }
+    digest_files: dict[str, str] = {}
+    for source_path, kernel_path in FIRST_CLASS_KERNEL_FILES.items():
+        payload = safe_file(source_root, source_path).read_bytes()
+        filename = Path(kernel_path).name
+        for relative in (filename, f"szl_kernels/{filename}"):
+            destination = variant_root / relative
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_bytes(payload)
+            repository_path = f"build/{KERNEL_VARIANT}/{relative}"
+            expected["v1"][repository_path] = payload
+            digest_files[relative] = digest_base64(payload)
+
+    binding_path = variant_root / KERNEL_BINDING_FILENAME
+    binding_path.write_bytes(binding_bytes)
+    expected["v1"][
+        f"build/{KERNEL_VARIANT}/{KERNEL_BINDING_FILENAME}"
+    ] = binding_bytes
+    digest_files[KERNEL_BINDING_FILENAME] = digest_base64(binding_bytes)
+
+    binding_sha = hashlib.sha256(binding_bytes).hexdigest()
+    metadata = {
+        "name": "szl-kernels",
+        "id": f"_szl_kernels_cpu_{binding_sha[:8]}",
+        "version": KERNEL_VERSION,
+        "license": "Apache-2.0",
+        "python-depends": [],
+        "backend": {"type": "cpu"},
+        "digest": {
+            "algorithm": "sha256",
+            "files": digest_files,
+        },
+    }
+    metadata_bytes = canonical_json(metadata).encode("utf-8")
+    metadata_path = variant_root / "metadata.json"
+    metadata_path.write_bytes(metadata_bytes)
+    expected["v1"][f"build/{KERNEL_VARIANT}/metadata.json"] = metadata_bytes
+
+    (build_root / "CARD.md").write_bytes(expected["main"]["README.md"])
+    return expected
+
+
+def upload_first_class_kernel(staging_root: Path, token: str) -> None:
+    output_path = staging_root / "kernel-upload.json"
+    environment = os.environ.copy()
+    environment["HF_TOKEN"] = token
+    command = [
+        "kernel-builder",
+        "upload",
+        str(staging_root),
+        "--repo-id",
+        EXPECTED_REPO_ID,
+        "--branch",
+        f"v{KERNEL_VERSION}",
+        "--repo-type",
+        KERNEL_REPO_TYPE,
+        "--output-json",
+        str(output_path),
+        "--quiet",
+    ]
+    try:
+        subprocess.run(
+            command,
+            check=True,
+            capture_output=True,
+            text=True,
+            env=environment,
+        )
+    except FileNotFoundError as exc:
+        raise PublicationError("pinned kernel-builder is not installed") from exc
+    except subprocess.CalledProcessError as exc:
+        detail = (exc.stderr or exc.stdout or "unknown uploader error").strip()
+        raise PublicationError(f"kernel-builder upload failed: {detail[-2000:]}") from exc
+
+    try:
+        outcome = json.loads(output_path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError) as exc:
+        raise PublicationError("kernel-builder did not write a valid outcome") from exc
+    if outcome.get("repo_id") != EXPECTED_REPO_ID or outcome.get("branch") != "v1":
+        raise PublicationError("kernel-builder outcome names an unexpected target")
+    if outcome.get("status") not in {"uploaded", "no_changes"}:
+        raise PublicationError("kernel-builder did not complete a direct upload")
+
+
+def kernel_branch_targets(api: HfApi, *, token: str) -> dict[str, str]:
+    refs = api.list_repo_refs(
+        EXPECTED_REPO_ID,
+        repo_type=KERNEL_REPO_TYPE,
+        token=token,
+    )
+    targets = {
+        branch.name: branch.target_commit
+        for branch in refs.branches
+        if branch.name in KERNEL_BRANCHES
+    }
+    if set(targets) != set(KERNEL_BRANCHES):
+        raise PublicationError("first-class Kernel branches are incomplete")
+    if any(
+        FULL_SHA_RE.fullmatch(revision or "") is None
+        for revision in targets.values()
+    ):
+        raise PublicationError("first-class Kernel branch target is not an exact SHA")
+    return targets
+
+
+def verify_kernel_readback(
+    expected_files: dict[str, bytes],
     *,
     branch: str,
     revision: str,
     token: str,
     download_fn: Callable[..., str],
 ) -> None:
-    for source_path, kernel_path in FIRST_CLASS_KERNEL_FILES.items():
+    for kernel_path, expected in expected_files.items():
         downloaded = Path(
             download_fn(
                 EXPECTED_REPO_ID,
@@ -380,23 +503,10 @@ def verify_kernel_readback(
                 token=token,
             )
         )
-        if downloaded.read_bytes() != safe_file(source_root, source_path).read_bytes():
+        if downloaded.read_bytes() != expected:
             raise PublicationError(
                 f"first-class Kernel {branch} readback mismatch at {kernel_path}"
             )
-    binding = Path(
-        download_fn(
-            EXPECTED_REPO_ID,
-            KERNEL_BINDING_PATH,
-            repo_type=KERNEL_REPO_TYPE,
-            revision=revision,
-            token=token,
-        )
-    )
-    if binding.read_bytes() != binding_bytes:
-        raise PublicationError(
-            f"first-class Kernel {branch} readback mismatch at {KERNEL_BINDING_PATH}"
-        )
 
 
 def run(
@@ -410,6 +520,7 @@ def run(
     token: str | None,
     api: HfApi | None = None,
     download_fn: Callable[..., str] = hf_hub_download,
+    kernel_upload_fn: Callable[[Path, str], None] = upload_first_class_kernel,
 ) -> dict[str, Any]:
     source_revision = source_revision.strip().lower()
     if FULL_SHA_RE.fullmatch(source_revision) is None:
@@ -459,12 +570,7 @@ def run(
             "repo_type": KERNEL_REPO_TYPE,
             "backend": "torch-cpu",
             "package": "szl_kernels",
-            "version": json.loads(
-                safe_file(
-                    source_root,
-                    "build/torch-universal/szl_kernels/metadata.json",
-                ).read_text(encoding="utf-8")
-            )["version"],
+            "version": KERNEL_VERSION,
         },
         "source_repository": EXPECTED_SOURCE_REPOSITORY,
         "source_revision": source_revision,
@@ -516,60 +622,40 @@ def run(
         result["targets"]["first_class_kernel"]["readback"] = {}
         report_path.write_text(canonical_json(result), encoding="utf-8")
 
-        for branch in KERNEL_BRANCHES:
-            kernel_operations = [
-                CommitOperationAdd(
-                    path_in_repo=kernel_path,
-                    path_or_fileobj=str(safe_file(source_root, source_path)),
-                )
-                for source_path, kernel_path in FIRST_CLASS_KERNEL_FILES.items()
-            ]
-            kernel_operations.append(
-                CommitOperationAdd(
-                    path_in_repo=KERNEL_BINDING_PATH,
-                    path_or_fileobj=io.BytesIO(kernel_binding_bytes),
-                )
-            )
-            kernel_commit = api.create_commit(
-                repo_id=EXPECTED_REPO_ID,
-                repo_type=KERNEL_REPO_TYPE,
-                revision=branch,
-                parent_commit=observed_before["first_class_kernel"]["branches"][
-                    branch
-                ]["revision"],
-                operations=kernel_operations,
-                commit_message=(
-                    f"Publish authorized Kernel source {source_revision[:12]}"
-                ),
-                token=token,
-            )
-            kernel_revision = getattr(kernel_commit, "oid", None)
-            if not kernel_revision:
-                kernel_revision = api.repo_info(
-                    EXPECTED_REPO_ID,
-                    repo_type=KERNEL_REPO_TYPE,
-                    revision=branch,
-                    token=token,
-                ).sha
-            result["targets"]["first_class_kernel"]["branches_after"][
-                branch
-            ] = kernel_revision
-            result["targets"]["first_class_kernel"]["readback"][branch] = (
-                "PENDING"
-            )
-            report_path.write_text(canonical_json(result), encoding="utf-8")
-            verify_kernel_readback(
+        with tempfile.TemporaryDirectory(prefix="szl-kernel-upload-") as temporary:
+            staging_root = Path(temporary)
+            expected_kernel_files = stage_first_class_kernel(
                 source_root,
                 kernel_binding_bytes,
-                branch=branch,
-                revision=kernel_revision,
-                token=token,
-                download_fn=download_fn,
+                staging_root,
             )
-            result["targets"]["first_class_kernel"]["readback"][branch] = (
-                "EXACT_BYTES_VERIFIED"
+            upload_error: Exception | None = None
+            try:
+                kernel_upload_fn(staging_root, token)
+            except Exception as exc:  # preserve branch state after partial upload
+                upload_error = exc
+            branch_targets = kernel_branch_targets(api, token=token)
+            result["targets"]["first_class_kernel"]["branches_after"] = (
+                branch_targets
             )
+            result["targets"]["first_class_kernel"]["readback"] = {
+                branch: "PENDING" for branch in KERNEL_BRANCHES
+            }
             report_path.write_text(canonical_json(result), encoding="utf-8")
+            if upload_error is not None:
+                raise upload_error
+            for branch in KERNEL_BRANCHES:
+                verify_kernel_readback(
+                    expected_kernel_files[branch],
+                    branch=branch,
+                    revision=branch_targets[branch],
+                    token=token,
+                    download_fn=download_fn,
+                )
+                result["targets"]["first_class_kernel"]["readback"][branch] = (
+                    "EXACT_BYTES_VERIFIED"
+                )
+                report_path.write_text(canonical_json(result), encoding="utf-8")
 
         legacy_operations = [
             CommitOperationAdd(

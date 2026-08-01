@@ -18,6 +18,9 @@ class FakeApi:
     def __init__(self, artifacts: dict[str, Path]) -> None:
         self.files = list(artifacts)
         self.commits: list[dict[str, object]] = []
+        self.kernel_revisions = {
+            branch: self.kernel_revision for branch in publisher.KERNEL_BRANCHES
+        }
         self.remote: dict[tuple[str, str], dict[str, bytes]] = {
             (publisher.LEGACY_REPO_TYPE, self.model_revision): {
                 relative: path.read_bytes() for relative, path in artifacts.items()
@@ -48,9 +51,11 @@ class FakeApi:
         revision: str | None = None,
         **_: object,
     ) -> SimpleNamespace:
-        del repo_id, revision
+        del repo_id
         self._assert_kernel(repo_type)
-        return SimpleNamespace(sha=self.kernel_revision)
+        return SimpleNamespace(
+            sha=self.kernel_revisions[revision or publisher.KERNEL_BRANCHES[0]]
+        )
 
     def list_repo_refs(
         self,
@@ -63,7 +68,10 @@ class FakeApi:
         self._assert_kernel(repo_type)
         return SimpleNamespace(
             branches=[
-                SimpleNamespace(name=branch, target_commit=self.kernel_revision)
+                SimpleNamespace(
+                    name=branch,
+                    target_commit=self.kernel_revisions[branch],
+                )
                 for branch in publisher.KERNEL_BRANCHES
             ]
         )
@@ -109,6 +117,31 @@ class FakeApi:
         self.remote[(repo_type, oid)] = remote
         return SimpleNamespace(oid=oid)
 
+    def upload_kernel(self, staging_root: Path, token: str) -> None:
+        if token != "test-token":
+            raise AssertionError(token)
+        main_revision = "1" * 40
+        version_revision = "2" * 40
+        self.remote[(publisher.KERNEL_REPO_TYPE, main_revision)] = {
+            "README.md": (staging_root / "build/CARD.md").read_bytes(),
+        }
+        version_remote = {}
+        for path in (staging_root / "build" / publisher.KERNEL_VARIANT).rglob("*"):
+            if path.is_file():
+                relative = path.relative_to(staging_root).as_posix()
+                version_remote[relative] = path.read_bytes()
+        self.remote[(publisher.KERNEL_REPO_TYPE, version_revision)] = version_remote
+        self.kernel_revisions = {
+            "main": main_revision,
+            "v1": version_revision,
+        }
+        self.commits.extend(
+            [
+                {"repo_type": "kernel", "revision": "main"},
+                {"repo_type": "kernel", "revision": "v1"},
+            ]
+        )
+
     def download(
         self,
         repo_id: str,
@@ -152,8 +185,15 @@ class PublishSzlKernelsTests(unittest.TestCase):
         install = workflow.index("Install trusted gateway test dependency")
         tests = workflow.index("Test trusted gateway contracts")
         dependency = workflow.index('"huggingface-hub==1.26.0"', install)
+        uploader = workflow.index("Install pinned first-class Kernel uploader")
+        upstream_pin = workflow.index(
+            "633246310320d85def0c67d62c7912fd444a842f",
+            uploader,
+        )
         self.assertLess(install, dependency)
         self.assertLess(dependency, tests)
+        self.assertLess(uploader, upstream_pin)
+        self.assertLess(upstream_pin, tests)
 
     source_revision = "a" * 40
     publisher_revision = "b" * 40
@@ -298,6 +338,7 @@ class PublishSzlKernelsTests(unittest.TestCase):
                 token="test-token",
                 api=api,
                 download_fn=api.download,
+                kernel_upload_fn=api.upload_kernel,
             )
             self.assertEqual(
                 result["status"], "PUBLISHED_AND_EXACT_READBACK_VERIFIED"
@@ -367,16 +408,17 @@ class PublishSzlKernelsTests(unittest.TestCase):
                     token="test-token",
                     api=api,
                     download_fn=fail_main_readback,
+                    kernel_upload_fn=api.upload_kernel,
                 )
             partial = json.loads(report.read_text(encoding="utf-8"))
             self.assertEqual(partial["status"], "PUBLICATION_IN_PROGRESS")
             self.assertEqual(
                 partial["targets"]["first_class_kernel"]["branches_after"],
-                {"main": "1" * 40},
+                {"main": "1" * 40, "v1": "2" * 40},
             )
             self.assertEqual(
                 partial["targets"]["first_class_kernel"]["readback"],
-                {"main": "PENDING"},
+                {"main": "PENDING", "v1": "PENDING"},
             )
 
     def test_contract_cannot_redirect_publisher_to_another_repo(self) -> None:
