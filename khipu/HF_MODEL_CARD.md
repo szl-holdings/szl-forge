@@ -102,4 +102,5 @@ output directly.
 ## Citation
 
 Part of the **SZL Forge** family by **SZL Holdings**. Canonical source and
-release policy: [`publishing/model-source-bindings.json`](../publishing/model-source-bindings.json).
+release policy:
+[`publishing/model-source-bindings.json`](https://github.com/szl-holdings/szl-forge/blob/main/publishing/model-source-bindings.json).
