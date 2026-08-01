@@ -21,9 +21,13 @@ def _write_evidence(output: Path | None, evidence: dict[str, object]) -> None:
 
 
 def _bounded_printable(value: object, *, limit: int) -> str:
+    try:
+        rendered = str(value)
+    except BaseException:
+        rendered = "<unprintable>"
     return "".join(
         character if 32 <= ord(character) <= 126 else "?"
-        for character in str(value)
+        for character in rendered
     )[:limit]
 
 

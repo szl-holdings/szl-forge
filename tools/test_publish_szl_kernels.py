@@ -396,6 +396,35 @@ class PublishSzlKernelsTests(unittest.TestCase):
         self.assertEqual(len(evidence["error"]), 2000)
         self.assertTrue(all(32 <= ord(character) <= 126 for character in evidence["error"]))
 
+    def test_runtime_verifier_writes_failure_when_error_stringification_escapes(
+        self,
+    ) -> None:
+        class HostileStringError(RuntimeError):
+            def __str__(self) -> str:
+                raise SystemExit("hostile string conversion")
+
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "evidence.json"
+            with patch.object(
+                runtime_verifier,
+                "verify_stable_kernel_runtime",
+                side_effect=HostileStringError(),
+            ):
+                result = runtime_verifier.main(
+                    ["--revision", "2" * 40, "--output", str(output)]
+                )
+
+            evidence = json.loads(output.read_text(encoding="utf-8"))
+        self.assertEqual(result, 1)
+        self.assertEqual(
+            evidence,
+            {
+                "status": "FAILED",
+                "error_type": "HostileStringError",
+                "error": "<unprintable>",
+            },
+        )
+
     def test_kernel_runtime_image_pins_canonical_numpy(self) -> None:
         dockerfile = Path(__file__).with_name("kernel-runtime.Dockerfile").read_text(
             encoding="utf-8"
