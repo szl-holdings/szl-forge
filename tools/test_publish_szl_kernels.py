@@ -102,9 +102,7 @@ class FakeApi:
             {"repo_type": publisher.KERNEL_REPO_TYPE, "revision": branch}
         )
         oid = f"{len(self.commits)}" * 40
-        remote = dict(
-            self.remote[(publisher.KERNEL_REPO_TYPE, parent_revision)]
-        )
+        remote = dict(self.remote[(publisher.KERNEL_REPO_TYPE, parent_revision)])
         for source_path, kernel_path in publisher.FIRST_CLASS_KERNEL_FILES.items():
             if kernel_path == "README.md" and branch != "main":
                 continue
@@ -191,6 +189,11 @@ class PublishSzlKernelsTests(unittest.TestCase):
         self.assertLess(dependency, tests)
         publisher_install = workflow.index(
             "Install exact publication client without publisher secret"
+        )
+        self.assertIn(
+            "python -m pip install --disable-pip-version-check \\\n"
+            '          "huggingface-hub==1.26.0"',
+            workflow[publisher_install:],
         )
         builder = workflow.index(
             "cargo install --locked --version '=0.16.0' hf-kernel-builder",
@@ -347,9 +350,7 @@ class PublishSzlKernelsTests(unittest.TestCase):
                 download_fn=api.download,
                 kernel_publish_fn=api.publish_kernel,
             )
-            self.assertEqual(
-                result["status"], "PUBLISHED_AND_EXACT_READBACK_VERIFIED"
-            )
+            self.assertEqual(result["status"], "PUBLISHED_AND_EXACT_READBACK_VERIFIED")
             self.assertEqual(
                 api.commits,
                 [
@@ -358,23 +359,19 @@ class PublishSzlKernelsTests(unittest.TestCase):
                     {"repo_type": "model", "revision": None},
                 ],
             )
-            branches_after = result["targets"]["first_class_kernel"][
-                "branches_after"
-            ]
+            branches_after = result["targets"]["first_class_kernel"]["branches_after"]
             self.assertEqual(set(branches_after), set(publisher.KERNEL_BRANCHES))
             self.assertEqual(
-                set(
-                    result["targets"]["first_class_kernel"]["readback"].values()
-                ),
+                set(result["targets"]["first_class_kernel"]["readback"].values()),
                 {"EXACT_BYTES_VERIFIED"},
             )
             self.assertEqual(
                 result["targets"]["legacy_model"]["readback"],
                 "EXACT_BYTES_VERIFIED",
             )
-            mapped = result["targets"]["first_class_kernel"]["binding"][
-                "source"
-            ]["kernel_files"]
+            mapped = result["targets"]["first_class_kernel"]["binding"]["source"][
+                "kernel_files"
+            ]
             readme = next(item for item in mapped if item["kernel_path"] == "README.md")
             self.assertEqual(readme["branches"], ["main"])
             main_revision = branches_after["main"]

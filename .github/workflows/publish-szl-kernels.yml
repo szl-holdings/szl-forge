@@ -116,7 +116,7 @@ jobs:
       - name: Install exact publication client without publisher secret
         run: |
           set -euo pipefail
-          python -m pip install --disable-pip-version-check
+          python -m pip install --disable-pip-version-check \
           "huggingface-hub==1.26.0"
           cargo install --locked --version '=0.16.0' hf-kernel-builder
           test "$(kernel-builder --version)" = "kernel-builder 0.16.0"
