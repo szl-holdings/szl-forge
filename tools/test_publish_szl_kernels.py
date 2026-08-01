@@ -311,7 +311,7 @@ class PublishSzlKernelsTests(unittest.TestCase):
                 publisher.KERNEL_RUNTIME_EVIDENCE_PATH,
             ],
         )
-        self.assertIn("--log-driver=local", command)
+        self.assertIn("--log-driver=json-file", command)
         self.assertIn("--log-opt=max-size=64k", command)
         self.assertIn("--log-opt=max-file=1", command)
         self.assertFalse(
