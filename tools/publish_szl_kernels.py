@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import hashlib
 import io
 import json
@@ -20,36 +21,71 @@ from huggingface_hub import CommitOperationAdd, HfApi, hf_hub_download
 EXPECTED_REPO_ID = "SZLHOLDINGS/szl-kernels"
 EXPECTED_SOURCE_REPOSITORY = "szl-holdings/szl-kernels"
 EXPECTED_PUBLISHER_REPOSITORY = "szl-holdings/szl-forge"
+EXPECTED_KERNEL_PACKAGE_VERSION = "0.1.1"
+KERNEL_RUNTIME_CLIENT_VERSION = "0.16.0"
+KERNEL_RUNTIME_IMAGE = f"szl-kernel-runtime:{KERNEL_RUNTIME_CLIENT_VERSION}"
+KERNEL_RUNTIME_TIMEOUT_SECONDS = 300
 CONTRACT_RELATIVE = Path("publishing/source-binding.json")
 FULL_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
+DOCKER_CONTAINER_ID_RE = re.compile(r"^[0-9a-f]{64}$")
 LEGACY_REPO_TYPE = "model"
 KERNEL_REPO_TYPE = "kernel"
 KERNEL_BRANCHES = ("main", "v1")
+KERNEL_VARIANT = "torch-cpu"
+KERNEL_VERSION = 1
 KERNEL_BUILDER_PACKAGE = "hf-kernel-builder"
-KERNEL_BUILDER_VERSION = "0.16.0"
+KERNEL_BUILDER_VERSION = "0.17.0-dev0"
 KERNEL_BUILDER_VERSION_OUTPUT = (
     f"{KERNEL_BUILDER_PACKAGE} {KERNEL_BUILDER_VERSION}"
 )
-KERNEL_BUILDER_SOURCE_REVISION = "272cd12b8e40116489eabe811571e28a3cbcea2b"
-KERNEL_BUILDER_CRATE_SHA256 = (
-    "ff3ec9456aae64ddf108710ebbba9938b4ac407601e68bc4a34009b4baec2cda"
+KERNEL_BUILDER_SOURCE_REVISION = (
+    "633246310320d85def0c67d62c7912fd444a842f"
+)
+KERNEL_BINDING_FILENAME = "source-binding.json"
+SENSITIVE_ENV_MARKERS = (
+    "TOKEN",
+    "SECRET",
+    "PASSWORD",
+    "CREDENTIAL",
+    "AUTH",
+    "API_KEY",
+    "ACCESS_KEY",
+    "PRIVATE_KEY",
+    "SIGNING_KEY",
 )
 FIRST_CLASS_KERNEL_FILES = {
-    "README.md": "README.md",
     "build/torch-universal/szl_kernels/__init__.py": (
-        "build/torch-cpu/szl_kernels/__init__.py"
+        f"build/{KERNEL_VARIANT}/__init__.py"
     ),
     "build/torch-universal/szl_kernels/_chain.py": (
-        "build/torch-cpu/szl_kernels/_chain.py"
+        f"build/{KERNEL_VARIANT}/_chain.py"
     ),
     "build/torch-universal/szl_kernels/_ops.py": (
-        "build/torch-cpu/szl_kernels/_ops.py"
-    ),
-    "build/torch-universal/szl_kernels/metadata.json": (
-        "build/torch-cpu/metadata.json"
+        f"build/{KERNEL_VARIANT}/_ops.py"
     ),
 }
-KERNEL_RETAINED_FILES = {".gitattributes", "LICENSE"}
+KERNEL_EXISTING_REQUIRED_FILES = {
+    ".gitattributes",
+    "LICENSE",
+    "README.md",
+    f"build/{KERNEL_VARIANT}/szl_kernels/__init__.py",
+    f"build/{KERNEL_VARIANT}/szl_kernels/_chain.py",
+    f"build/{KERNEL_VARIANT}/szl_kernels/_ops.py",
+    f"build/{KERNEL_VARIANT}/metadata.json",
+}
+KERNEL_REQUIRED_FILES_BY_BRANCH = {
+    "main": {"README.md"},
+    "v1": {
+        f"build/{KERNEL_VARIANT}/szl_kernels/__init__.py",
+        f"build/{KERNEL_VARIANT}/szl_kernels/_chain.py",
+        f"build/{KERNEL_VARIANT}/szl_kernels/_ops.py",
+        f"build/{KERNEL_VARIANT}/metadata.json",
+    },
+}
+FIRST_CLASS_REQUIRED_SOURCE_FILES = {
+    "README.md",
+    *FIRST_CLASS_KERNEL_FILES.keys(),
+}
 
 
 class PublicationError(RuntimeError):
@@ -95,6 +131,12 @@ def load_contract(source_root: Path) -> dict[str, Any]:
         or len(artifact_files) != len(set(artifact_files))
     ):
         raise PublicationError("artifact_files must be a unique non-empty string list")
+    missing_kernel_sources = FIRST_CLASS_REQUIRED_SOURCE_FILES - set(artifact_files)
+    if missing_kernel_sources:
+        raise PublicationError(
+            "artifact_files must declare first-class Kernel source inputs: "
+            f"{sorted(missing_kernel_sources)}"
+        )
     expected = payload.get("expected_artifact_sha256")
     if not isinstance(expected, dict) or not expected:
         raise PublicationError("expected_artifact_sha256 must be a non-empty object")
@@ -241,9 +283,9 @@ def first_class_kernel_before(
             f"first-class Kernel is missing release branches: {missing_branches}"
         )
 
-    expected_paths = set(FIRST_CLASS_KERNEL_FILES.values()) | KERNEL_RETAINED_FILES
     branch_evidence: dict[str, Any] = {}
     for branch in KERNEL_BRANCHES:
+        expected_paths = KERNEL_REQUIRED_FILES_BY_BRANCH[branch]
         target = branches[branch]
         observed_files = {
             entry.path
@@ -357,31 +399,99 @@ def verify_legacy_readback(
 def kernel_file_evidence(
     source_root: Path,
 ) -> list[dict[str, Any]]:
-    evidence = []
+    readme = safe_file(source_root, "README.md")
+    evidence = [
+        {
+            "source_path": "README.md",
+            "kernel_path": "README.md",
+            "bytes": readme.stat().st_size,
+            "sha256": file_sha256(readme),
+        }
+    ]
     for source_path, kernel_path in FIRST_CLASS_KERNEL_FILES.items():
         path = safe_file(source_root, source_path)
-        evidence.append(
-            {
-                "source_path": source_path,
-                "kernel_path": kernel_path,
-                "branches": (
-                    ["main"]
-                    if kernel_path == "README.md"
-                    else list(KERNEL_BRANCHES)
-                ),
-                "bytes": path.stat().st_size,
-                "sha256": file_sha256(path),
-            }
+        destinations = (
+            kernel_path,
+            f"build/{KERNEL_VARIANT}/szl_kernels/{Path(kernel_path).name}",
         )
+        for destination in destinations:
+            evidence.append(
+                {
+                    "source_path": source_path,
+                    "kernel_path": destination,
+                    "bytes": path.stat().st_size,
+                    "sha256": file_sha256(path),
+                }
+            )
     return evidence
 
 
+def digest_base64(payload: bytes) -> str:
+    return base64.b64encode(hashlib.sha256(payload).digest()).decode("ascii")
+
+
+def stage_first_class_kernel(
+    source_root: Path,
+    binding_bytes: bytes,
+    staging_root: Path,
+) -> dict[str, dict[str, bytes]]:
+    """Create a standards-compliant tree for the pinned kernel-builder."""
+    build_root = staging_root / "build"
+    variant_root = build_root / KERNEL_VARIANT
+    compatibility_root = variant_root / "szl_kernels"
+    compatibility_root.mkdir(parents=True, exist_ok=True)
+
+    expected: dict[str, dict[str, bytes]] = {
+        "main": {
+            "README.md": safe_file(source_root, "README.md").read_bytes(),
+        },
+        "v1": {},
+    }
+    digest_files: dict[str, str] = {}
+    for source_path, kernel_path in FIRST_CLASS_KERNEL_FILES.items():
+        payload = safe_file(source_root, source_path).read_bytes()
+        filename = Path(kernel_path).name
+        for relative in (filename, f"szl_kernels/{filename}"):
+            destination = variant_root / relative
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_bytes(payload)
+            repository_path = f"build/{KERNEL_VARIANT}/{relative}"
+            expected["v1"][repository_path] = payload
+            digest_files[relative] = digest_base64(payload)
+
+    binding_path = variant_root / KERNEL_BINDING_FILENAME
+    binding_path.write_bytes(binding_bytes)
+    expected["v1"][
+        f"build/{KERNEL_VARIANT}/{KERNEL_BINDING_FILENAME}"
+    ] = binding_bytes
+    digest_files[KERNEL_BINDING_FILENAME] = digest_base64(binding_bytes)
+
+    binding_sha = hashlib.sha256(binding_bytes).hexdigest()
+    metadata = {
+        "name": "szl-kernels",
+        "id": f"_szl_kernels_cpu_{binding_sha[:8]}",
+        "version": KERNEL_VERSION,
+        "license": "Apache-2.0",
+        "python-depends": [],
+        "backend": {"type": "cpu"},
+        "digest": {
+            "algorithm": "sha256",
+            "files": digest_files,
+        },
+    }
+    metadata_bytes = canonical_json(metadata).encode("utf-8")
+    metadata_path = variant_root / "metadata.json"
+    metadata_path.write_bytes(metadata_bytes)
+    expected["v1"][f"build/{KERNEL_VARIANT}/metadata.json"] = metadata_bytes
+
+    (build_root / "CARD.md").write_bytes(expected["main"]["README.md"])
+    return expected
+
+
 def require_kernel_builder_executable() -> str:
-    """Return the supported builder only when its exact package version matches."""
     executable = shutil.which("kernel-builder")
     if executable is None:
-        raise PublicationError("kernel-builder is required for first-class publication")
-
+        raise PublicationError("pinned kernel-builder is not installed")
     version = subprocess.run(
         [executable, "--version"],
         check=False,
@@ -398,17 +508,322 @@ def require_kernel_builder_executable() -> str:
     return executable
 
 
+def upload_first_class_kernel(staging_root: Path, token: str) -> None:
+    output_path = staging_root / "kernel-upload.json"
+    environment = os.environ.copy()
+    environment["HF_TOKEN"] = token
+    executable = require_kernel_builder_executable()
+    command = [
+        executable,
+        "upload",
+        str(staging_root),
+        "--repo-id",
+        EXPECTED_REPO_ID,
+        "--branch",
+        f"v{KERNEL_VERSION}",
+        "--repo-type",
+        KERNEL_REPO_TYPE,
+        "--output-json",
+        str(output_path),
+        "--quiet",
+    ]
+    try:
+        subprocess.run(
+            command,
+            check=True,
+            capture_output=True,
+            text=True,
+            env=environment,
+        )
+    except FileNotFoundError as exc:
+        raise PublicationError("pinned kernel-builder is not installed") from exc
+    except subprocess.CalledProcessError as exc:
+        detail = (exc.stderr or exc.stdout or "unknown uploader error").strip()
+        raise PublicationError(f"kernel-builder upload failed: {detail[-2000:]}") from exc
+
+    try:
+        outcome = json.loads(output_path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError) as exc:
+        raise PublicationError("kernel-builder did not write a valid outcome") from exc
+    if outcome.get("repo_id") != EXPECTED_REPO_ID or outcome.get("branch") != "v1":
+        raise PublicationError("kernel-builder outcome names an unexpected target")
+    if outcome.get("status") not in {"uploaded", "no_changes"}:
+        raise PublicationError("kernel-builder did not complete a direct upload")
+
+
+def kernel_branch_targets(api: HfApi, *, token: str) -> dict[str, str]:
+    refs = api.list_repo_refs(
+        EXPECTED_REPO_ID,
+        repo_type=KERNEL_REPO_TYPE,
+        token=token,
+    )
+    targets = {
+        branch.name: branch.target_commit
+        for branch in refs.branches
+        if branch.name in KERNEL_BRANCHES
+    }
+    if set(targets) != set(KERNEL_BRANCHES):
+        raise PublicationError("first-class Kernel branches are incomplete")
+    if any(
+        FULL_SHA_RE.fullmatch(revision or "") is None
+        for revision in targets.values()
+    ):
+        raise PublicationError("first-class Kernel branch target is not an exact SHA")
+    return targets
+
+
+def revalidate_kernel_branch_parents(
+    api: HfApi,
+    observed_branches: dict[str, dict[str, Any]],
+    *,
+    token: str,
+) -> dict[str, str]:
+    expected = {
+        branch: observed_branches[branch]["revision"]
+        for branch in KERNEL_BRANCHES
+    }
+    current = kernel_branch_targets(api, token=token)
+    if current != expected:
+        raise PublicationError(
+            "first-class Kernel branch parents changed before upload"
+        )
+    return current
+
+
+def verify_stable_kernel_runtime(
+    *,
+    revision: str,
+    get_kernel_fn: Callable[..., Any] | None = None,
+    tensor_fn: Callable[[list[float]], Any] | None = None,
+    client_version: str | None = None,
+) -> dict[str, Any]:
+    if get_kernel_fn is None:
+        from kernels import get_kernel
+
+        get_kernel_fn = get_kernel
+    if tensor_fn is None:
+        import torch
+
+        tensor_fn = torch.tensor
+    if client_version is None:
+        from importlib.metadata import version
+
+        client_version = version("kernels")
+    if client_version != KERNEL_RUNTIME_CLIENT_VERSION:
+        raise PublicationError(
+            "stable Kernel runtime client drifted "
+            f"(expected {KERNEL_RUNTIME_CLIENT_VERSION}, observed {client_version})"
+        )
+
+    module = get_kernel_fn(
+        EXPECTED_REPO_ID,
+        revision=revision,
+        backend="cpu",
+        trust_remote_code=True,
+    )
+    selfcheck = module.selfcheck()
+    if selfcheck.get("ok") is not True:
+        raise PublicationError("stable get_kernel selfcheck did not pass")
+    if selfcheck.get("version") != EXPECTED_KERNEL_PACKAGE_VERSION:
+        raise PublicationError("stable get_kernel returned an unexpected package version")
+
+    invalid_thresholds = (-0.01, 1.01, float("nan"), float("inf"))
+    for threshold in invalid_thresholds:
+        chain = module.UnifiedReceiptChain()
+        try:
+            module.governed_lambda_gate(
+                chain,
+                tensor_fn([0.5]),
+                threshold=threshold,
+            )
+        except ValueError:
+            pass
+        else:
+            raise PublicationError("invalid threshold did not fail closed")
+        ok, depth, _ = chain.verify()
+        if ok is not True or depth != 0:
+            raise PublicationError("invalid threshold emitted a receipt")
+
+    boundaries: dict[str, dict[str, Any]] = {}
+    for threshold in (0.0, 1.0):
+        expected_passed = threshold == 0.0
+        chain = module.UnifiedReceiptChain()
+        gate = module.governed_lambda_gate(
+            chain,
+            tensor_fn([0.5]),
+            threshold=threshold,
+        )
+        ok, depth, first_break = chain.verify()
+        if (
+            ok is not True
+            or depth != 1
+            or first_break != -1
+            or gate.get("threshold") != threshold
+            or gate.get("passed") is not expected_passed
+        ):
+            raise PublicationError("inclusive threshold boundary contract failed")
+        boundaries[str(int(threshold))] = {
+            "passed": gate.get("passed"),
+            "receipt_depth": depth,
+        }
+
+    return {
+        "status": "STABLE_GET_KERNEL_VERIFIED",
+        "client_version": client_version,
+        "revision": revision,
+        "package_version": selfcheck["version"],
+        "selfcheck_ok": True,
+        "invalid_thresholds_rejected_before_receipt": len(invalid_thresholds),
+        "inclusive_boundaries": boundaries,
+    }
+
+
+def verify_stable_kernel_runtime_isolated(*, revision: str) -> dict[str, Any]:
+    """Run untrusted Hub code in a credentialless, workspace-free OCI sandbox."""
+    environment = {
+        key: value
+        for key, value in os.environ.items()
+        if not any(marker in key.upper() for marker in SENSITIVE_ENV_MARKERS)
+    }
+    create_command = [
+        "docker",
+        "create",
+        "--log-driver=none",
+        "--pid=private",
+        "--network=bridge",
+        "--read-only",
+        "--tmpfs",
+        "/tmp:rw,nosuid,nodev,noexec,size=64m",
+        "--tmpfs",
+        "/cache:rw,nosuid,nodev,noexec,size=2g",
+        "--tmpfs",
+        "/output:rw,nosuid,nodev,noexec,size=1m",
+        "--cap-drop=ALL",
+        "--security-opt=no-new-privileges",
+        "--pids-limit=256",
+        "--memory=4g",
+        "--cpus=2",
+        "--user=65532:65532",
+        "--env=HF_HUB_DISABLE_IMPLICIT_TOKEN=1",
+        "--env=HF_HOME=/cache/huggingface",
+        "--env=XDG_CACHE_HOME=/cache",
+        KERNEL_RUNTIME_IMAGE,
+        "--revision",
+        revision,
+        "--output",
+        "/output/evidence.json",
+    ]
+    created = subprocess.run(
+        create_command,
+        check=False,
+        capture_output=True,
+        text=True,
+        env=environment,
+    )
+    container_id = created.stdout.strip()
+    if (
+        created.returncode != 0
+        or DOCKER_CONTAINER_ID_RE.fullmatch(container_id) is None
+    ):
+        detail = (created.stderr or created.stdout or "unknown create error").strip()
+        raise PublicationError(
+            f"isolated stable Kernel runtime create failed: {detail[-2000:]}"
+        )
+    try:
+        started = subprocess.run(
+            ["docker", "start", container_id],
+            check=False,
+            capture_output=True,
+            text=True,
+            env=environment,
+        )
+        if started.returncode != 0:
+            detail = (started.stderr or started.stdout or "unknown start error").strip()
+            raise PublicationError(
+                f"isolated stable Kernel runtime start failed: {detail[-2000:]}"
+            )
+        try:
+            waited = subprocess.run(
+                ["docker", "wait", container_id],
+                check=False,
+                capture_output=True,
+                text=True,
+                env=environment,
+                timeout=KERNEL_RUNTIME_TIMEOUT_SECONDS,
+            )
+        except subprocess.TimeoutExpired as exc:
+            raise PublicationError(
+                "isolated stable Kernel runtime timed out after "
+                f"{KERNEL_RUNTIME_TIMEOUT_SECONDS} seconds"
+            ) from exc
+        if waited.returncode != 0 or waited.stdout.strip() != "0":
+            raise PublicationError(
+                "isolated stable Kernel runtime exited without verified evidence"
+            )
+        with tempfile.TemporaryDirectory(prefix="szl-kernel-runtime-") as temporary:
+            evidence_path = Path(temporary) / "evidence.json"
+            copied = subprocess.run(
+                [
+                    "docker",
+                    "cp",
+                    f"{container_id}:/output/evidence.json",
+                    str(evidence_path),
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+                env=environment,
+            )
+            if copied.returncode != 0:
+                detail = (
+                    copied.stderr or copied.stdout or "unknown evidence copy error"
+                ).strip()
+                raise PublicationError(
+                    "isolated stable Kernel runtime evidence copy failed: "
+                    f"{detail[-2000:]}"
+                )
+            try:
+                evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+            except (FileNotFoundError, json.JSONDecodeError) as exc:
+                raise PublicationError(
+                    "isolated stable Kernel runtime returned invalid evidence"
+                ) from exc
+    finally:
+        subprocess.run(
+            ["docker", "rm", "--force", container_id],
+            check=False,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            env=environment,
+        )
+    boundaries = evidence.get("inclusive_boundaries", {})
+    if (
+        evidence.get("status") != "STABLE_GET_KERNEL_VERIFIED"
+        or evidence.get("client_version") != KERNEL_RUNTIME_CLIENT_VERSION
+        or evidence.get("revision") != revision
+        or evidence.get("package_version") != EXPECTED_KERNEL_PACKAGE_VERSION
+        or evidence.get("selfcheck_ok") is not True
+        or evidence.get("invalid_thresholds_rejected_before_receipt") != 4
+        or boundaries.get("0", {}).get("passed") is not True
+        or boundaries.get("0", {}).get("receipt_depth") != 1
+        or boundaries.get("1", {}).get("passed") is not False
+        or boundaries.get("1", {}).get("receipt_depth") != 1
+    ):
+        raise PublicationError(
+            "isolated stable Kernel runtime evidence failed validation"
+        )
+    return evidence
+
+
 def verify_kernel_readback(
-    source_root: Path,
+    expected_files: dict[str, bytes],
     *,
     branch: str,
     revision: str,
     token: str,
     download_fn: Callable[..., str],
 ) -> None:
-    for source_path, kernel_path in FIRST_CLASS_KERNEL_FILES.items():
-        if kernel_path == "README.md" and branch != "main":
-            continue
+    for kernel_path, expected in expected_files.items():
         downloaded = Path(
             download_fn(
                 EXPECTED_REPO_ID,
@@ -418,85 +833,10 @@ def verify_kernel_readback(
                 token=token,
             )
         )
-        if downloaded.read_bytes() != safe_file(source_root, source_path).read_bytes():
+        if downloaded.read_bytes() != expected:
             raise PublicationError(
                 f"first-class Kernel {branch} readback mismatch at {kernel_path}"
             )
-
-
-def publish_kernel_with_builder(
-    *,
-    api: HfApi,
-    source_root: Path,
-    branch: str,
-    parent_revision: str,
-    token: str,
-) -> str:
-    """Publish a built Kernel through Hugging Face's supported kernel-builder."""
-    executable = require_kernel_builder_executable()
-
-    refs = api.list_repo_refs(
-        EXPECTED_REPO_ID,
-        repo_type=KERNEL_REPO_TYPE,
-        token=token,
-    )
-    branches = {item.name: item.target_commit for item in refs.branches}
-    if branches.get(branch) != parent_revision:
-        raise PublicationError(
-            f"first-class Kernel {branch} moved before supported publication"
-        )
-
-    with tempfile.TemporaryDirectory(prefix="szl-kernel-builder-") as temporary:
-        staging = Path(temporary)
-        if branch == "main":
-            card = staging / "build" / "CARD.md"
-            card.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(safe_file(source_root, "README.md"), card)
-        for source_path, kernel_path in FIRST_CLASS_KERNEL_FILES.items():
-            if kernel_path == "README.md":
-                continue
-            destination = staging / kernel_path
-            destination.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(safe_file(source_root, source_path), destination)
-
-        environment = os.environ.copy()
-        environment["HF_TOKEN"] = token
-        command = [
-            executable,
-            "upload",
-            str(staging),
-            "--repo-id",
-            EXPECTED_REPO_ID,
-            "--branch",
-            branch,
-            "--repo-type",
-            KERNEL_REPO_TYPE,
-            "--quiet",
-        ]
-        upload = subprocess.run(
-            command,
-            check=False,
-            capture_output=True,
-            text=True,
-            env=environment,
-        )
-        if upload.returncode != 0:
-            detail = (upload.stderr or upload.stdout).strip().replace(token, "***")
-            raise PublicationError(
-                f"kernel-builder failed for {branch}: {detail[-2000:]}"
-            )
-
-    refs_after = api.list_repo_refs(
-        EXPECTED_REPO_ID,
-        repo_type=KERNEL_REPO_TYPE,
-        token=token,
-    )
-    after = {item.name: item.target_commit for item in refs_after.branches}.get(branch)
-    if FULL_SHA_RE.fullmatch(str(after)) is None:
-        raise PublicationError(
-            f"kernel-builder did not leave an immutable {branch} revision"
-        )
-    return str(after)
 
 
 def run(
@@ -510,7 +850,10 @@ def run(
     token: str | None,
     api: HfApi | None = None,
     download_fn: Callable[..., str] = hf_hub_download,
-    kernel_publish_fn: Callable[..., str] = publish_kernel_with_builder,
+    kernel_upload_fn: Callable[[Path, str], None] = upload_first_class_kernel,
+    kernel_runtime_fn: Callable[..., dict[str, Any]] = (
+        verify_stable_kernel_runtime_isolated
+    ),
 ) -> dict[str, Any]:
     source_revision = source_revision.strip().lower()
     if FULL_SHA_RE.fullmatch(source_revision) is None:
@@ -560,21 +903,12 @@ def run(
             "repo_type": KERNEL_REPO_TYPE,
             "backend": "torch-cpu",
             "package": "szl_kernels",
+            "version": KERNEL_VERSION,
             "publication_interface": "kernel-builder",
             "publication_interface_version": KERNEL_BUILDER_VERSION,
             "publication_interface_source_revision": (
                 KERNEL_BUILDER_SOURCE_REVISION
             ),
-            "publication_interface_crate_sha256": KERNEL_BUILDER_CRATE_SHA256,
-            "binding_location": "IMMUTABLE_GITHUB_ACTIONS_ARTIFACT",
-            "layout_state": "LEGACY_TORCH_CPU_COMPATIBILITY_VARIANT",
-            "full_v0_16_build_matrix": False,
-            "version": json.loads(
-                safe_file(
-                    source_root,
-                    "build/torch-universal/szl_kernels/metadata.json",
-                ).read_text(encoding="utf-8")
-            )["version"],
         },
         "source_repository": EXPECTED_SOURCE_REPOSITORY,
         "source_revision": source_revision,
@@ -613,6 +947,10 @@ def run(
                 "binding_sha256": hashlib.sha256(kernel_binding_bytes).hexdigest(),
                 "binding": kernel_binding,
                 "mapped_file_count": len(kernel_files),
+                "runtime": {
+                    "status": "NOT_RUN",
+                    "client_version": KERNEL_RUNTIME_CLIENT_VERSION,
+                },
             },
         },
         "status": "VERIFIED_DRY_RUN",
@@ -625,35 +963,70 @@ def run(
         result["status"] = "PUBLICATION_IN_PROGRESS"
         result["targets"]["first_class_kernel"]["branches_after"] = {}
         result["targets"]["first_class_kernel"]["readback"] = {}
+        result["targets"]["first_class_kernel"][
+            "parents_revalidated_before_upload"
+        ] = {}
+        result["targets"]["first_class_kernel"]["runtime"] = {
+            "status": "PENDING",
+            "client_version": KERNEL_RUNTIME_CLIENT_VERSION,
+        }
         report_path.write_text(canonical_json(result), encoding="utf-8")
 
-        for branch in KERNEL_BRANCHES:
-            kernel_revision = kernel_publish_fn(
-                api=api,
-                source_root=source_root,
-                branch=branch,
-                parent_revision=observed_before["first_class_kernel"]["branches"][
-                    branch
-                ]["revision"],
-                token=token,
-            )
-            result["targets"]["first_class_kernel"]["branches_after"][
-                branch
-            ] = kernel_revision
-            result["targets"]["first_class_kernel"]["readback"][branch] = (
-                "PENDING"
-            )
-            report_path.write_text(canonical_json(result), encoding="utf-8")
-            verify_kernel_readback(
+        with tempfile.TemporaryDirectory(prefix="szl-kernel-upload-") as temporary:
+            staging_root = Path(temporary)
+            expected_kernel_files = stage_first_class_kernel(
                 source_root,
-                branch=branch,
-                revision=kernel_revision,
+                kernel_binding_bytes,
+                staging_root,
+            )
+            revalidated_parents = revalidate_kernel_branch_parents(
+                api,
+                observed_before["first_class_kernel"]["branches"],
                 token=token,
-                download_fn=download_fn,
             )
-            result["targets"]["first_class_kernel"]["readback"][branch] = (
-                "EXACT_BYTES_VERIFIED"
+            result["targets"]["first_class_kernel"][
+                "parents_revalidated_before_upload"
+            ] = revalidated_parents
+            report_path.write_text(canonical_json(result), encoding="utf-8")
+            upload_error: Exception | None = None
+            try:
+                kernel_upload_fn(staging_root, token)
+            except Exception as exc:  # preserve branch state after partial upload
+                upload_error = exc
+            branch_targets = kernel_branch_targets(api, token=token)
+            result["targets"]["first_class_kernel"]["branches_after"] = (
+                branch_targets
             )
+            result["targets"]["first_class_kernel"]["readback"] = {
+                branch: "PENDING" for branch in KERNEL_BRANCHES
+            }
+            report_path.write_text(canonical_json(result), encoding="utf-8")
+            if upload_error is not None:
+                raise upload_error
+            for branch in KERNEL_BRANCHES:
+                verify_kernel_readback(
+                    expected_kernel_files[branch],
+                    branch=branch,
+                    revision=branch_targets[branch],
+                    token=token,
+                    download_fn=download_fn,
+                )
+                result["targets"]["first_class_kernel"]["readback"][branch] = (
+                    "EXACT_BYTES_VERIFIED"
+                )
+                report_path.write_text(canonical_json(result), encoding="utf-8")
+
+            try:
+                runtime = kernel_runtime_fn(revision=branch_targets["v1"])
+            except Exception as exc:
+                result["targets"]["first_class_kernel"]["runtime"] = {
+                    "status": "FAILED",
+                    "client_version": KERNEL_RUNTIME_CLIENT_VERSION,
+                    "error": f"{type(exc).__name__}: {exc}"[:2000],
+                }
+                report_path.write_text(canonical_json(result), encoding="utf-8")
+                raise
+            result["targets"]["first_class_kernel"]["runtime"] = runtime
             report_path.write_text(canonical_json(result), encoding="utf-8")
 
         legacy_operations = [
