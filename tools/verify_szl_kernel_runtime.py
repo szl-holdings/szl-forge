@@ -4,20 +4,31 @@
 from __future__ import annotations
 
 import argparse
+import json
 from collections.abc import Sequence
 from pathlib import Path
-
-from publish_szl_kernels import canonical_json, verify_stable_kernel_runtime
 
 FAILURE_DETAIL_LIMIT = 2000
 
 
 def _write_evidence(output: Path | None, evidence: dict[str, object]) -> None:
-    serialized = canonical_json(evidence)
+    serialized = json.dumps(
+        evidence,
+        indent=2,
+        sort_keys=True,
+        ensure_ascii=False,
+    ) + "\n"
     if output is None:
         print(serialized, end="")
     else:
         output.write_text(serialized, encoding="utf-8")
+
+
+def verify_stable_kernel_runtime(*, revision: str) -> dict[str, object]:
+    """Import the trusted verifier lazily so bootstrap errors become evidence."""
+    from publish_szl_kernels import verify_stable_kernel_runtime as verify
+
+    return verify(revision=revision)
 
 
 def _bounded_printable(value: object, *, limit: int) -> str:
