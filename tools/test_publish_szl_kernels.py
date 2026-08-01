@@ -22,6 +22,10 @@ class FakeApi:
         self.kernel_revisions = {
             branch: self.kernel_revision for branch in publisher.KERNEL_BRANCHES
         }
+        self.kernel_branch_files = {
+            branch: set(publisher.KERNEL_EXISTING_REQUIRED_FILES)
+            for branch in publisher.KERNEL_BRANCHES
+        }
         self.remote: dict[tuple[str, str], dict[str, bytes]] = {
             (publisher.LEGACY_REPO_TYPE, self.model_revision): {
                 relative: path.read_bytes() for relative, path in artifacts.items()
@@ -82,13 +86,19 @@ class FakeApi:
         repo_id: str,
         *,
         repo_type: str,
+        revision: str,
         **_: object,
     ) -> list[SimpleNamespace]:
         del repo_id
         self._assert_kernel(repo_type)
+        branch = next(
+            branch
+            for branch, target in self.kernel_revisions.items()
+            if target == revision
+        )
         return [
             SimpleNamespace(path=path)
-            for path in publisher.KERNEL_EXISTING_REQUIRED_FILES
+            for path in self.kernel_branch_files[branch]
         ]
 
     def create_commit(
@@ -136,6 +146,10 @@ class FakeApi:
             "main": main_revision,
             "v1": version_revision,
         }
+        self.kernel_branch_files = {
+            "main": set(self.remote[(publisher.KERNEL_REPO_TYPE, main_revision)]),
+            "v1": set(self.remote[(publisher.KERNEL_REPO_TYPE, version_revision)]),
+        }
         self.commits.extend(
             [
                 {"repo_type": "kernel", "revision": "main"},
@@ -176,6 +190,50 @@ class FakeApi:
 
 
 class PublishSzlKernelsTests(unittest.TestCase):
+    def test_first_class_before_accepts_split_builder_layout(self) -> None:
+        api = FakeApi({})
+        api.kernel_revisions = {
+            "main": "1" * 40,
+            "v1": "2" * 40,
+        }
+        api.kernel_branch_files = {
+            branch: set(paths)
+            for branch, paths in publisher.KERNEL_REQUIRED_FILES_BY_BRANCH.items()
+        }
+
+        evidence = publisher.first_class_kernel_before(
+            api,
+            {"artifact_files": sorted(publisher.FIRST_CLASS_KERNEL_FILES)},
+            token=None,
+        )
+
+        self.assertEqual(evidence["branches"]["main"]["revision"], "1" * 40)
+        self.assertEqual(evidence["branches"]["v1"]["revision"], "2" * 40)
+
+    def test_first_class_before_rejects_incomplete_split_branch(self) -> None:
+        api = FakeApi({})
+        api.kernel_revisions = {
+            "main": "1" * 40,
+            "v1": "2" * 40,
+        }
+        api.kernel_branch_files = {
+            branch: set(paths)
+            for branch, paths in publisher.KERNEL_REQUIRED_FILES_BY_BRANCH.items()
+        }
+        api.kernel_branch_files["v1"].remove(
+            f"build/{publisher.KERNEL_VARIANT}/metadata.json"
+        )
+
+        with self.assertRaisesRegex(
+            publisher.PublicationError,
+            "first-class Kernel v1 is missing package files",
+        ):
+            publisher.first_class_kernel_before(
+                api,
+                {"artifact_files": sorted(publisher.FIRST_CLASS_KERNEL_FILES)},
+                token=None,
+            )
+
     def test_stable_runtime_verifies_exact_load_and_threshold_contract(self) -> None:
         class Chain:
             def __init__(self) -> None:

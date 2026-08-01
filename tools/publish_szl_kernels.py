@@ -59,6 +59,15 @@ KERNEL_EXISTING_REQUIRED_FILES = {
     f"build/{KERNEL_VARIANT}/szl_kernels/_ops.py",
     f"build/{KERNEL_VARIANT}/metadata.json",
 }
+KERNEL_REQUIRED_FILES_BY_BRANCH = {
+    "main": {"README.md"},
+    "v1": {
+        f"build/{KERNEL_VARIANT}/szl_kernels/__init__.py",
+        f"build/{KERNEL_VARIANT}/szl_kernels/_chain.py",
+        f"build/{KERNEL_VARIANT}/szl_kernels/_ops.py",
+        f"build/{KERNEL_VARIANT}/metadata.json",
+    },
+}
 FIRST_CLASS_REQUIRED_SOURCE_FILES = {
     "README.md",
     *FIRST_CLASS_KERNEL_FILES.keys(),
@@ -260,9 +269,9 @@ def first_class_kernel_before(
             f"first-class Kernel is missing release branches: {missing_branches}"
         )
 
-    expected_paths = KERNEL_EXISTING_REQUIRED_FILES
     branch_evidence: dict[str, Any] = {}
     for branch in KERNEL_BRANCHES:
+        expected_paths = KERNEL_REQUIRED_FILES_BY_BRANCH[branch]
         target = branches[branch]
         observed_files = {
             entry.path
