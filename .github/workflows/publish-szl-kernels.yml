@@ -114,9 +114,12 @@ jobs:
           python-version: "3.12"
 
       - name: Install exact publication client without publisher secret
-        run: >-
+        run: |
+          set -euo pipefail
           python -m pip install --disable-pip-version-check
           "huggingface-hub==1.26.0"
+          cargo install --locked --version '=0.16.0' hf-kernel-builder
+          test "$(kernel-builder --version)" = "kernel-builder 0.16.0"
 
       - name: Re-authorize exact source immediately before publication
         env:
