@@ -54,6 +54,13 @@ non-secret `SZL_GITHUB_SOURCE_REVISION` Space variable and verifies it at
 That endpoint reports `UNKNOWN` rather than inferring a source revision when
 the binding is absent or malformed.
 
+The human-facing surface is the **Khipu Loom**: a responsive Formula Genome
+instrument that keeps the source thread, immutable model pin, receipt boundary,
+runtime state, and unsigned-output limitation visible beside the bounded
+inference controls. It uses no external scripts, fonts, trackers, or UI assets,
+and exposes a deterministic `data-screenshot-ready` signal only after the
+runtime reaches `READY`.
+
 An isolated image-build stage fetches only the exact GGUF and three receipt
 files from the immutable model revision, without a token, and verifies them
 before the image can finish. It copies only verified regular bytes into the
@@ -80,8 +87,13 @@ It requires no provider token or Space secret and is intended for the Hub's free
   tokens, and a 45-second best-effort cutoff checked between streamed chunks
   (not a hard wall-clock deadline).
 - Greedy decoding (`temperature=0`); outputs are model-generated and may be wrong.
-- `/live` is liveness (`STARTING`/`READY` = 200; `FAILED` = 503); `/health` is
-  readiness and returns 503 until `READY`.
+- `/live` and `/healthz` are liveness (`STARTING`/`READY` = 200; `FAILED` =
+  503); `/health` and `/readyz` are readiness and return 503 until `READY`.
+- `/version` fails closed unless the governed deployment provides one exact
+  40-character source revision. `/evidence` fails closed unless that exact
+  source identity, source-bundle integrity, and both declared-key receipts are
+  simultaneously available. Neither endpoint upgrades unsigned runtime output
+  into an attestation.
 - `/api/v1/identity` exposes the immutable artifact, runtime limits, source release
   marker, and receipt boundary. Source checksums establish internal bundle
   consistency only; they are not external authorship evidence.
