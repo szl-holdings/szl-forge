@@ -9,18 +9,42 @@ from pathlib import Path
 
 from publish_szl_kernels import canonical_json, verify_stable_kernel_runtime
 
+FAILURE_DETAIL_LIMIT = 2000
+
+
+def _write_evidence(output: Path | None, evidence: dict[str, object]) -> None:
+    serialized = canonical_json(evidence)
+    if output is None:
+        print(serialized, end="")
+    else:
+        output.write_text(serialized, encoding="utf-8")
+
+
+def _bounded_printable(value: object, *, limit: int) -> str:
+    return "".join(
+        character if 32 <= ord(character) <= 126 else "?"
+        for character in str(value)
+    )[:limit]
+
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--revision", required=True)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args(argv)
-    evidence = verify_stable_kernel_runtime(revision=args.revision)
-    serialized = canonical_json(evidence)
-    if args.output is None:
-        print(serialized, end="")
-    else:
-        args.output.write_text(serialized, encoding="utf-8")
+    try:
+        evidence = verify_stable_kernel_runtime(revision=args.revision)
+    except Exception as exc:
+        _write_evidence(
+            args.output,
+            {
+                "status": "FAILED",
+                "error_type": _bounded_printable(type(exc).__name__, limit=128),
+                "error": _bounded_printable(exc, limit=FAILURE_DETAIL_LIMIT),
+            },
+        )
+        return 1
+    _write_evidence(args.output, evidence)
     return 0
 
 

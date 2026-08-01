@@ -699,7 +699,7 @@ def verify_stable_kernel_runtime_isolated(*, revision: str) -> dict[str, Any]:
         "--tmpfs",
         "/cache:rw,nosuid,nodev,noexec,size=2g",
         "--tmpfs",
-        "/output:rw,nosuid,nodev,noexec,size=1m",
+            "/output:rw,nosuid,nodev,noexec,size=1m,mode=0700,uid=65532,gid=65532",
         "--cap-drop=ALL",
         "--security-opt=no-new-privileges",
         "--pids-limit=256",
@@ -758,10 +758,12 @@ def verify_stable_kernel_runtime_isolated(*, revision: str) -> dict[str, Any]:
                 "isolated stable Kernel runtime timed out after "
                 f"{KERNEL_RUNTIME_TIMEOUT_SECONDS} seconds"
             ) from exc
-        if waited.returncode != 0 or waited.stdout.strip() != "0":
+        if waited.returncode != 0:
+            detail = (waited.stderr or waited.stdout or "unknown wait error").strip()
             raise PublicationError(
-                "isolated stable Kernel runtime exited without verified evidence"
+                f"isolated stable Kernel runtime wait failed: {detail[-2000:]}"
             )
+        container_exit_code = waited.stdout.strip()
         with tempfile.TemporaryDirectory(prefix="szl-kernel-runtime-") as temporary:
             evidence_path = Path(temporary) / "evidence.json"
             copied = subprocess.run(
@@ -790,6 +792,25 @@ def verify_stable_kernel_runtime_isolated(*, revision: str) -> dict[str, Any]:
                 raise PublicationError(
                     "isolated stable Kernel runtime returned invalid evidence"
                 ) from exc
+            if container_exit_code != "0":
+                error_type = evidence.get("error_type")
+                error = evidence.get("error")
+                if (
+                    evidence.get("status") != "FAILED"
+                    or not isinstance(error_type, str)
+                    or re.fullmatch(r"[A-Za-z_][A-Za-z0-9_.]{0,127}", error_type)
+                    is None
+                    or not isinstance(error, str)
+                    or len(error) > 2000
+                    or any(ord(character) < 32 or ord(character) > 126 for character in error)
+                ):
+                    raise PublicationError(
+                        "isolated stable Kernel runtime exited without valid bounded failure evidence"
+                    )
+                raise PublicationError(
+                    "isolated stable Kernel runtime failed: "
+                    f"{error_type}: {error}"
+                )
     finally:
         subprocess.run(
             ["docker", "rm", "--force", container_id],

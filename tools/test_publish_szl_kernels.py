@@ -10,6 +10,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 import publish_szl_kernels as publisher
+import verify_szl_kernel_runtime as runtime_verifier
 
 
 class FakeApi:
@@ -338,6 +339,68 @@ class PublishSzlKernelsTests(unittest.TestCase):
         self.assertEqual(operations, ["create", "start", "wait", "cp", "rm"])
         start_command = run.call_args_list[1].args[0]
         self.assertNotIn("--attach", start_command)
+
+    def test_isolated_runtime_preserves_bounded_failure_evidence(self) -> None:
+        container_id = "c" * 64
+        failure = {
+            "status": "FAILED",
+            "error_type": "RuntimeError",
+            "error": "stable load failed",
+        }
+
+        def run_docker(command: list[str], **_: object) -> SimpleNamespace:
+            operation = command[1]
+            if operation in {"create", "start"}:
+                return SimpleNamespace(returncode=0, stdout=container_id, stderr="")
+            if operation == "wait":
+                return SimpleNamespace(returncode=0, stdout="1\n", stderr="")
+            if operation == "cp":
+                Path(command[-1]).write_text(json.dumps(failure), encoding="utf-8")
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+            if operation == "rm":
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+            raise AssertionError(command)
+
+        with patch.object(publisher.subprocess, "run", side_effect=run_docker) as run:
+            with self.assertRaisesRegex(
+                publisher.PublicationError,
+                "isolated stable Kernel runtime failed: RuntimeError: stable load failed",
+            ):
+                publisher.verify_stable_kernel_runtime_isolated(revision="2" * 40)
+
+        operations = [call.args[0][1] for call in run.call_args_list]
+        self.assertEqual(operations, ["create", "start", "wait", "cp", "rm"])
+        create_command = run.call_args_list[0].args[0]
+        self.assertIn(
+            "/output:rw,nosuid,nodev,noexec,size=1m,mode=0700,uid=65532,gid=65532",
+            create_command,
+        )
+
+    def test_runtime_verifier_writes_sanitized_bounded_failure(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "evidence.json"
+            detail = "unsafe\n\x1b[31m" + ("x" * 2500)
+            with patch.object(
+                runtime_verifier,
+                "verify_stable_kernel_runtime",
+                side_effect=ValueError(detail),
+            ):
+                result = runtime_verifier.main(
+                    ["--revision", "2" * 40, "--output", str(output)]
+                )
+
+            evidence = json.loads(output.read_text(encoding="utf-8"))
+        self.assertEqual(result, 1)
+        self.assertEqual(evidence["status"], "FAILED")
+        self.assertEqual(evidence["error_type"], "ValueError")
+        self.assertEqual(len(evidence["error"]), 2000)
+        self.assertTrue(all(32 <= ord(character) <= 126 for character in evidence["error"]))
+
+    def test_kernel_runtime_image_pins_canonical_numpy(self) -> None:
+        dockerfile = Path(__file__).with_name("kernel-runtime.Dockerfile").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn('"numpy==2.3.5"', dockerfile)
 
     def test_first_class_before_accepts_split_builder_layout(self) -> None:
         api = FakeApi({})
