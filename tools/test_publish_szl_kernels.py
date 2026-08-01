@@ -359,6 +359,12 @@ class PublishSzlKernelsTests(unittest.TestCase):
                 result["targets"]["first_class_kernel"]["mapped_file_count"],
                 len(publisher.FIRST_CLASS_KERNEL_FILES),
             )
+            binding = result["targets"]["first_class_kernel"]["binding"]
+            self.assertEqual(
+                binding["schema"],
+                "szl.hf-first-class-kernel-binding/v1",
+            )
+            self.assertEqual(binding["source_revision"], self.source_revision)
             self.assertIn(self.publisher_revision, identity["workflow_url"])
 
     def test_publish_updates_kernel_main_and_v1_then_legacy_model(self) -> None:
@@ -493,6 +499,20 @@ class PublishSzlKernelsTests(unittest.TestCase):
             with self.assertRaisesRegex(
                 publisher.PublicationError,
                 "another Hub repository",
+            ):
+                publisher.load_contract(root)
+
+    def test_contract_must_declare_kernel_readme_source(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self._fixture(root)
+            contract_path = root / publisher.CONTRACT_RELATIVE
+            contract = json.loads(contract_path.read_text(encoding="utf-8"))
+            contract["artifact_files"].remove("README.md")
+            contract_path.write_text(json.dumps(contract), encoding="utf-8")
+            with self.assertRaisesRegex(
+                publisher.PublicationError,
+                "first-class Kernel source inputs",
             ):
                 publisher.load_contract(root)
 

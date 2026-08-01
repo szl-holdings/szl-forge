@@ -57,6 +57,10 @@ KERNEL_EXISTING_REQUIRED_FILES = {
     f"build/{KERNEL_VARIANT}/szl_kernels/_ops.py",
     f"build/{KERNEL_VARIANT}/metadata.json",
 }
+FIRST_CLASS_REQUIRED_SOURCE_FILES = {
+    "README.md",
+    *FIRST_CLASS_KERNEL_FILES.keys(),
+}
 
 
 class PublicationError(RuntimeError):
@@ -102,6 +106,12 @@ def load_contract(source_root: Path) -> dict[str, Any]:
         or len(artifact_files) != len(set(artifact_files))
     ):
         raise PublicationError("artifact_files must be a unique non-empty string list")
+    missing_kernel_sources = FIRST_CLASS_REQUIRED_SOURCE_FILES - set(artifact_files)
+    if missing_kernel_sources:
+        raise PublicationError(
+            "artifact_files must declare first-class Kernel source inputs: "
+            f"{sorted(missing_kernel_sources)}"
+        )
     expected = payload.get("expected_artifact_sha256")
     if not isinstance(expected, dict) or not expected:
         raise PublicationError("expected_artifact_sha256 must be a non-empty object")
@@ -651,6 +661,7 @@ def run(
                 "repo_type": KERNEL_REPO_TYPE,
                 "branches_before": observed_before["first_class_kernel"]["branches"],
                 "binding_sha256": hashlib.sha256(kernel_binding_bytes).hexdigest(),
+                "binding": kernel_binding,
                 "mapped_file_count": len(kernel_files),
             },
         },
