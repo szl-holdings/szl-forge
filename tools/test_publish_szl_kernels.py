@@ -190,6 +190,45 @@ class FakeApi:
 
 
 class PublishSzlKernelsTests(unittest.TestCase):
+    def test_isolated_runtime_timeout_forces_container_cleanup(self) -> None:
+        container_id = "d" * 64
+        operations: list[str] = []
+
+        def run_docker(command: list[str], **kwargs: object) -> SimpleNamespace:
+            operation = command[1]
+            operations.append(operation)
+            if operation == "create":
+                return SimpleNamespace(returncode=0, stdout=container_id, stderr="")
+            if operation == "start":
+                return SimpleNamespace(returncode=0, stdout=container_id, stderr="")
+            if operation == "wait":
+                self.assertEqual(
+                    kwargs["timeout"],
+                    publisher.KERNEL_RUNTIME_TIMEOUT_SECONDS,
+                )
+                raise publisher.subprocess.TimeoutExpired(
+                    command,
+                    publisher.KERNEL_RUNTIME_TIMEOUT_SECONDS,
+                )
+            if operation == "rm":
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+            raise AssertionError(command)
+
+        with patch.object(
+            publisher.subprocess,
+            "run",
+            side_effect=run_docker,
+        ):
+            with self.assertRaisesRegex(
+                publisher.PublicationError,
+                "timed out after 300 seconds",
+            ):
+                publisher.verify_stable_kernel_runtime_isolated(
+                    revision="2" * 40
+                )
+
+        self.assertEqual(operations, ["create", "start", "wait", "rm"])
+
     def test_isolated_runtime_scrubs_credentials_and_validates_evidence(self) -> None:
         revision = "2" * 40
         evidence = {

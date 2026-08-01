@@ -24,6 +24,7 @@ EXPECTED_PUBLISHER_REPOSITORY = "szl-holdings/szl-forge"
 EXPECTED_KERNEL_PACKAGE_VERSION = "0.1.1"
 KERNEL_RUNTIME_CLIENT_VERSION = "0.16.0"
 KERNEL_RUNTIME_IMAGE = f"szl-kernel-runtime:{KERNEL_RUNTIME_CLIENT_VERSION}"
+KERNEL_RUNTIME_TIMEOUT_SECONDS = 300
 CONTRACT_RELATIVE = Path("publishing/source-binding.json")
 FULL_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 DOCKER_CONTAINER_ID_RE = re.compile(r"^[0-9a-f]{64}$")
@@ -723,13 +724,20 @@ def verify_stable_kernel_runtime_isolated(*, revision: str) -> dict[str, Any]:
             raise PublicationError(
                 f"isolated stable Kernel runtime start failed: {detail[-2000:]}"
             )
-        waited = subprocess.run(
-            ["docker", "wait", container_id],
-            check=False,
-            capture_output=True,
-            text=True,
-            env=environment,
-        )
+        try:
+            waited = subprocess.run(
+                ["docker", "wait", container_id],
+                check=False,
+                capture_output=True,
+                text=True,
+                env=environment,
+                timeout=KERNEL_RUNTIME_TIMEOUT_SECONDS,
+            )
+        except subprocess.TimeoutExpired as exc:
+            raise PublicationError(
+                "isolated stable Kernel runtime timed out after "
+                f"{KERNEL_RUNTIME_TIMEOUT_SECONDS} seconds"
+            ) from exc
         if waited.returncode != 0 or waited.stdout.strip() != "0":
             raise PublicationError(
                 "isolated stable Kernel runtime exited without verified evidence"
