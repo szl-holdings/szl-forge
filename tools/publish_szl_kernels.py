@@ -26,6 +26,8 @@ KERNEL_RUNTIME_CLIENT_VERSION = "0.16.0"
 KERNEL_RUNTIME_IMAGE = f"szl-kernel-runtime:{KERNEL_RUNTIME_CLIENT_VERSION}"
 KERNEL_RUNTIME_TIMEOUT_SECONDS = 300
 KERNEL_RUNTIME_EVIDENCE_PATH = "/tmp/szl-kernel-runtime-evidence.json"
+KERNEL_RUNTIME_LOG_PREFIX = "SZL_KERNEL_RUNTIME_EVIDENCE="
+KERNEL_RUNTIME_LOG_LIMIT = 64 * 1024
 CONTRACT_RELATIVE = Path("publishing/source-binding.json")
 FULL_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 DOCKER_CONTAINER_ID_RE = re.compile(r"^[0-9a-f]{64}$")
@@ -95,6 +97,28 @@ class PublicationError(RuntimeError):
 
 def canonical_json(payload: Any) -> str:
     return json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+
+
+def runtime_evidence_from_logs(output: str) -> dict[str, Any] | None:
+    if len(output) > KERNEL_RUNTIME_LOG_LIMIT:
+        output = output[-KERNEL_RUNTIME_LOG_LIMIT:]
+    for line in reversed(output.splitlines()):
+        if not line.startswith(KERNEL_RUNTIME_LOG_PREFIX):
+            continue
+        try:
+            evidence = json.loads(line.removeprefix(KERNEL_RUNTIME_LOG_PREFIX))
+        except json.JSONDecodeError:
+            continue
+        if isinstance(evidence, dict):
+            return evidence
+    return None
+
+
+def bounded_runtime_log_detail(output: str) -> str:
+    return "".join(
+        character if 32 <= ord(character) <= 126 else "?"
+        for character in output[-2000:]
+    )
 
 
 def file_sha256(path: Path) -> str:
@@ -689,7 +713,9 @@ def verify_stable_kernel_runtime_isolated(*, revision: str) -> dict[str, Any]:
     create_command = [
         "docker",
         "create",
-        "--log-driver=none",
+        "--log-driver=local",
+        "--log-opt=max-size=64k",
+        "--log-opt=max-file=1",
         # Docker's default PID namespace is private. Do not pass
         # ``--pid=private``: Docker rejects "private" as an explicit
         # selector, while omitting --pid preserves process isolation.
@@ -778,19 +804,31 @@ def verify_stable_kernel_runtime_isolated(*, revision: str) -> dict[str, Any]:
                 env=environment,
             )
             if copied.returncode != 0:
-                detail = (
-                    copied.stderr or copied.stdout or "unknown evidence copy error"
-                ).strip()
-                raise PublicationError(
-                    "isolated stable Kernel runtime evidence copy failed: "
-                    f"{detail[-2000:]}"
+                logged = subprocess.run(
+                    ["docker", "logs", "--tail", "100", container_id],
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                    env=environment,
                 )
-            try:
-                evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
-            except (FileNotFoundError, json.JSONDecodeError) as exc:
-                raise PublicationError(
-                    "isolated stable Kernel runtime returned invalid evidence"
-                ) from exc
+                log_output = f"{logged.stdout}\n{logged.stderr}"
+                evidence = runtime_evidence_from_logs(log_output)
+                if evidence is None:
+                    copy_detail = (
+                        copied.stderr or copied.stdout or "unknown evidence copy error"
+                    ).strip()
+                    log_detail = bounded_runtime_log_detail(log_output)
+                    raise PublicationError(
+                        "isolated stable Kernel runtime evidence copy failed: "
+                        f"{copy_detail[-2000:]}; bounded logs: {log_detail}"
+                    )
+            else:
+                try:
+                    evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+                except (FileNotFoundError, json.JSONDecodeError) as exc:
+                    raise PublicationError(
+                        "isolated stable Kernel runtime returned invalid evidence"
+                    ) from exc
             if container_exit_code != "0":
                 error_type = evidence.get("error_type")
                 error = evidence.get("error")
