@@ -741,6 +741,7 @@ def verify_stable_kernel_runtime_isolated(*, revision: str) -> dict[str, Any]:
         "--output",
         KERNEL_RUNTIME_EVIDENCE_PATH,
     ]
+    cleanup_timed_out = False
     try:
         created = subprocess.run(
             create_command,
@@ -952,7 +953,7 @@ def verify_stable_kernel_runtime_isolated(*, revision: str) -> dict[str, Any]:
                 timeout=KERNEL_RUNTIME_CONTROL_TIMEOUT_SECONDS,
             )
         except subprocess.TimeoutExpired:
-            pass
+            cleanup_timed_out = True
     boundaries = evidence.get("inclusive_boundaries", {})
     if (
         evidence.get("status") != "STABLE_GET_KERNEL_VERIFIED"
@@ -968,6 +969,10 @@ def verify_stable_kernel_runtime_isolated(*, revision: str) -> dict[str, Any]:
     ):
         raise PublicationError(
             "isolated stable Kernel runtime evidence failed validation"
+        )
+    if cleanup_timed_out:
+        raise PublicationError(
+            "isolated stable Kernel runtime cleanup timed out"
         )
     return evidence
 

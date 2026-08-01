@@ -248,6 +248,51 @@ class PublishSzlKernelsTests(unittest.TestCase):
 
         self.assertEqual(operations, ["create", "start", "wait", "rm"])
 
+    def test_isolated_runtime_cleanup_timeout_fails_after_valid_evidence(self) -> None:
+        revision = "2" * 40
+        container_id = "c" * 64
+        evidence = {
+            "status": "STABLE_GET_KERNEL_VERIFIED",
+            "client_version": publisher.KERNEL_RUNTIME_CLIENT_VERSION,
+            "revision": revision,
+            "package_version": publisher.EXPECTED_KERNEL_PACKAGE_VERSION,
+            "selfcheck_ok": True,
+            "invalid_thresholds_rejected_before_receipt": 4,
+            "inclusive_boundaries": {
+                "0": {"passed": True, "receipt_depth": 1},
+                "1": {"passed": False, "receipt_depth": 1},
+            },
+        }
+
+        def run_docker(command: list[str], **kwargs: object) -> SimpleNamespace:
+            operation = command[1]
+            if operation in {"create", "start"}:
+                return SimpleNamespace(returncode=0, stdout=container_id, stderr="")
+            if operation == "wait":
+                return SimpleNamespace(returncode=0, stdout="0\n", stderr="")
+            if operation == "inspect":
+                return SimpleNamespace(
+                    returncode=0,
+                    stdout=json.dumps({"ExitCode": 0, "OOMKilled": False}),
+                    stderr="",
+                )
+            if operation == "cp":
+                Path(command[-1]).write_text(json.dumps(evidence), encoding="utf-8")
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+            if operation == "rm":
+                raise publisher.subprocess.TimeoutExpired(
+                    command,
+                    kwargs["timeout"],
+                )
+            raise AssertionError(command)
+
+        with patch.object(publisher.subprocess, "run", side_effect=run_docker):
+            with self.assertRaisesRegex(
+                publisher.PublicationError,
+                "isolated stable Kernel runtime cleanup timed out",
+            ):
+                publisher.verify_stable_kernel_runtime_isolated(revision=revision)
+
     def test_isolated_runtime_scrubs_credentials_and_validates_evidence(self) -> None:
         revision = "2" * 40
         evidence = {
@@ -510,7 +555,10 @@ class PublishSzlKernelsTests(unittest.TestCase):
                     kwargs["timeout"],
                 )
             if operation == "rm":
-                return SimpleNamespace(returncode=0, stdout="", stderr="")
+                raise publisher.subprocess.TimeoutExpired(
+                    command,
+                    kwargs["timeout"],
+                )
             raise AssertionError(command)
 
         with patch.object(publisher.subprocess, "run", side_effect=run_docker) as run:
