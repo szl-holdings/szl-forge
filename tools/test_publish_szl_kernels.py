@@ -196,6 +196,12 @@ class PublishSzlKernelsTests(unittest.TestCase):
             "cargo install --locked --version '=0.16.0' hf-kernel-builder",
             publisher_install,
         )
+        publisher_install_script = workflow[publisher_install:builder]
+        self.assertIn(
+            'python -m pip install --disable-pip-version-check '
+            '"huggingface-hub==1.26.0"',
+            publisher_install_script,
+        )
         publish = workflow.index(
             "Publish declared data with trusted code and verify exact readback"
         )
