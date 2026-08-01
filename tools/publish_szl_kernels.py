@@ -25,7 +25,11 @@ FULL_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 LEGACY_REPO_TYPE = "model"
 KERNEL_REPO_TYPE = "kernel"
 KERNEL_BRANCHES = ("main", "v1")
+KERNEL_BUILDER_PACKAGE = "hf-kernel-builder"
 KERNEL_BUILDER_VERSION = "0.16.0"
+KERNEL_BUILDER_VERSION_OUTPUT = (
+    f"{KERNEL_BUILDER_PACKAGE} {KERNEL_BUILDER_VERSION}"
+)
 KERNEL_BUILDER_SOURCE_REVISION = "272cd12b8e40116489eabe811571e28a3cbcea2b"
 KERNEL_BUILDER_CRATE_SHA256 = (
     "ff3ec9456aae64ddf108710ebbba9938b4ac407601e68bc4a34009b4baec2cda"
@@ -372,6 +376,28 @@ def kernel_file_evidence(
     return evidence
 
 
+def require_kernel_builder_executable() -> str:
+    """Return the supported builder only when its exact package version matches."""
+    executable = shutil.which("kernel-builder")
+    if executable is None:
+        raise PublicationError("kernel-builder is required for first-class publication")
+
+    version = subprocess.run(
+        [executable, "--version"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    observed_version = (version.stdout or version.stderr).strip()
+    if version.returncode != 0 or observed_version != KERNEL_BUILDER_VERSION_OUTPUT:
+        raise PublicationError(
+            "kernel-builder version drifted "
+            f"(expected {KERNEL_BUILDER_VERSION_OUTPUT!r}, "
+            f"observed {observed_version!r})"
+        )
+    return executable
+
+
 def verify_kernel_readback(
     source_root: Path,
     *,
@@ -407,24 +433,7 @@ def publish_kernel_with_builder(
     token: str,
 ) -> str:
     """Publish a built Kernel through Hugging Face's supported kernel-builder."""
-    executable = shutil.which("kernel-builder")
-    if executable is None:
-        raise PublicationError("kernel-builder is required for first-class publication")
-
-    version = subprocess.run(
-        [executable, "--version"],
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-    observed_version = (version.stdout or version.stderr).strip()
-    if version.returncode != 0 or observed_version != (
-        f"kernel-builder {KERNEL_BUILDER_VERSION}"
-    ):
-        raise PublicationError(
-            "kernel-builder version drifted "
-            f"(expected {KERNEL_BUILDER_VERSION}, observed {observed_version!r})"
-        )
+    executable = require_kernel_builder_executable()
 
     refs = api.list_repo_refs(
         EXPECTED_REPO_ID,

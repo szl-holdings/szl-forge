@@ -119,7 +119,9 @@ jobs:
           python -m pip install --disable-pip-version-check \
           "huggingface-hub==1.26.0"
           cargo install --locked --version '=0.16.0' hf-kernel-builder
-          test "$(kernel-builder --version)" = "kernel-builder 0.16.0"
+          builder_version="$(kernel-builder --version)"
+          printf 'Installed publication client: %s\n' "${builder_version}"
+          test "${builder_version}" = "hf-kernel-builder 0.16.0"
 
       - name: Re-authorize exact source immediately before publication
         env:
