@@ -46,7 +46,10 @@ A public, zero-secret, bounded CPU demonstration for the exact
 `SZLHOLDINGS/SZL-Khipu-1.5B-Q4_K_M.gguf` bytes at immutable model commit
 `67d60ec577730747055491640cfb91fc4a4b5d25`.
 
-The canonical application source is
+> **Presentation class: BOUNDED RUNTIME DEMO.** This Space executes one pinned
+> quantized derivative under strict limits. It does not train, promote,
+> authorize, or certify the model. Runtime outputs and execution records are
+> explicitly unsigned; transport availability is not readiness evidence.The canonical application source is
 [`szl-holdings/szl-forge/spaces/szl-model-inference-lab`](https://github.com/szl-holdings/szl-forge/tree/main/spaces/szl-model-inference-lab).
 The governed deployment binds the exact protected Git revision into the
 non-secret `SZL_GITHUB_SOURCE_REVISION` Space variable and verifies it at
@@ -183,10 +186,10 @@ No independent benchmark, post-quantization evaluation, or safety certification 
 
 <div align="center">
 
-**[🛡️ SZLHOLDINGS on Hugging Face →](https://huggingface.co/SZLHOLDINGS)**   ·   **[a-11-oy.com →](https://a-11-oy.com)**   ·   **[Estate hub — live →](https://szlholdings-szl-estate-live.static.hf.space)**
+**[SZLHOLDINGS on Hugging Face](https://huggingface.co/SZLHOLDINGS)**   |   **[a-11-oy.com](https://a-11-oy.com)**   |   **[Estate hub](https://szlholdings-szl-estate-live.static.hf.space)**
 
-### Governed AI you can prove.
+### Governed AI with inspectable evidence.
 
-<sub>SLSA: L1 honest · L2 attested · L3 roadmap. Λ = Conjecture 1 (advisory, never a theorem). Trust ceiling 0.97 — never 100%. Labels honest by default: MEASURED / REPORTED / MODELED / HEURISTIC / UNKNOWN / UNAVAILABLE. locked-proven = exactly 8 {F1,F4,F7,F11,F12,F18,F19,F22}.</sub>
+<sub>Labels remain explicit: MEASURED / REPORTED / MODELED / SAMPLE / UNKNOWN / UNAVAILABLE. Integrity and origin evidence do not establish model quality, safety, or runtime readiness.</sub>
 
 </div>
