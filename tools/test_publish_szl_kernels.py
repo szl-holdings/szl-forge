@@ -272,6 +272,12 @@ class PublishSzlKernelsTests(unittest.TestCase):
                 return SimpleNamespace(returncode=0, stdout=container_id, stderr="")
             if operation == "wait":
                 return SimpleNamespace(returncode=0, stdout="0\n", stderr="")
+            if operation == "inspect":
+                return SimpleNamespace(
+                    returncode=0,
+                    stdout=json.dumps({"ExitCode": 0, "OOMKilled": False}),
+                    stderr="",
+                )
             if operation == "cp":
                 Path(command[-1]).write_text(json.dumps(evidence), encoding="utf-8")
                 return SimpleNamespace(returncode=0, stdout="", stderr="")
@@ -338,7 +344,10 @@ class PublishSzlKernelsTests(unittest.TestCase):
         self.assertNotIn("ACTIONS_ID_TOKEN_REQUEST_TOKEN", environment)
         self.assertNotIn("SERVICE_API_KEY", environment)
         operations = [call.args[0][1] for call in run.call_args_list]
-        self.assertEqual(operations, ["create", "start", "wait", "cp", "rm"])
+        self.assertEqual(
+            operations,
+            ["create", "start", "wait", "inspect", "cp", "rm"],
+        )
         start_command = run.call_args_list[1].args[0]
         self.assertNotIn("--attach", start_command)
 
@@ -356,6 +365,12 @@ class PublishSzlKernelsTests(unittest.TestCase):
                 return SimpleNamespace(returncode=0, stdout=container_id, stderr="")
             if operation == "wait":
                 return SimpleNamespace(returncode=0, stdout="1\n", stderr="")
+            if operation == "inspect":
+                return SimpleNamespace(
+                    returncode=0,
+                    stdout=json.dumps({"ExitCode": 1, "OOMKilled": False}),
+                    stderr="",
+                )
             if operation == "cp":
                 Path(command[-1]).write_text(json.dumps(failure), encoding="utf-8")
                 return SimpleNamespace(returncode=0, stdout="", stderr="")
@@ -371,11 +386,150 @@ class PublishSzlKernelsTests(unittest.TestCase):
                 publisher.verify_stable_kernel_runtime_isolated(revision="2" * 40)
 
         operations = [call.args[0][1] for call in run.call_args_list]
-        self.assertEqual(operations, ["create", "start", "wait", "cp", "rm"])
+        self.assertEqual(
+            operations,
+            ["create", "start", "wait", "inspect", "cp", "rm"],
+        )
         create_command = run.call_args_list[0].args[0]
         self.assertNotIn("/output", create_command)
         self.assertIn("/tmp:rw,nosuid,nodev,noexec,size=64m", create_command)
         self.assertIn(publisher.KERNEL_RUNTIME_EVIDENCE_PATH, create_command)
+
+    def test_isolated_runtime_recovers_success_evidence_from_bounded_logs(self) -> None:
+        revision = "2" * 40
+        container_id = "c" * 64
+        evidence = {
+            "status": "STABLE_GET_KERNEL_VERIFIED",
+            "client_version": publisher.KERNEL_RUNTIME_CLIENT_VERSION,
+            "revision": revision,
+            "package_version": publisher.EXPECTED_KERNEL_PACKAGE_VERSION,
+            "selfcheck_ok": True,
+            "invalid_thresholds_rejected_before_receipt": 4,
+            "inclusive_boundaries": {
+                "0": {"passed": True, "receipt_depth": 1},
+                "1": {"passed": False, "receipt_depth": 1},
+            },
+        }
+
+        def run_docker(command: list[str], **_: object) -> SimpleNamespace:
+            operation = command[1]
+            if operation in {"create", "start"}:
+                return SimpleNamespace(returncode=0, stdout=container_id, stderr="")
+            if operation == "wait":
+                return SimpleNamespace(returncode=0, stdout="0\n", stderr="")
+            if operation == "inspect":
+                return SimpleNamespace(
+                    returncode=0,
+                    stdout=json.dumps({"ExitCode": 0, "OOMKilled": False}),
+                    stderr="",
+                )
+            if operation == "cp":
+                return SimpleNamespace(returncode=1, stdout="", stderr="missing")
+            if operation == "logs":
+                payload = json.dumps(evidence, separators=(",", ":"), sort_keys=True)
+                return SimpleNamespace(
+                    returncode=0,
+                    stdout=f"{publisher.KERNEL_RUNTIME_LOG_PREFIX}{payload}\n",
+                    stderr="",
+                )
+            if operation == "rm":
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+            raise AssertionError(command)
+
+        with patch.object(publisher.subprocess, "run", side_effect=run_docker):
+            observed = publisher.verify_stable_kernel_runtime_isolated(
+                revision=revision
+            )
+
+        self.assertEqual(observed, evidence)
+
+    def test_isolated_runtime_reports_missing_evidence_with_exit_state(self) -> None:
+        container_id = "c" * 64
+
+        def run_docker(command: list[str], **_: object) -> SimpleNamespace:
+            operation = command[1]
+            if operation in {"create", "start"}:
+                return SimpleNamespace(returncode=0, stdout=container_id, stderr="")
+            if operation == "wait":
+                return SimpleNamespace(returncode=0, stdout="137\n", stderr="")
+            if operation == "inspect":
+                return SimpleNamespace(
+                    returncode=0,
+                    stdout=json.dumps({"ExitCode": 137, "OOMKilled": False}),
+                    stderr="",
+                )
+            if operation == "cp":
+                return SimpleNamespace(returncode=1, stdout="", stderr="missing")
+            if operation == "logs":
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+            if operation == "rm":
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+            raise AssertionError(command)
+
+        with patch.object(publisher.subprocess, "run", side_effect=run_docker):
+            with self.assertRaisesRegex(
+                publisher.PublicationError,
+                r"exited without evidence \(exit_code=137, oom_killed=false\)",
+            ):
+                publisher.verify_stable_kernel_runtime_isolated(revision="2" * 40)
+
+    def test_isolated_runtime_rejects_oom_even_with_zero_exit(self) -> None:
+        container_id = "c" * 64
+
+        def run_docker(command: list[str], **_: object) -> SimpleNamespace:
+            operation = command[1]
+            if operation in {"create", "start"}:
+                return SimpleNamespace(returncode=0, stdout=container_id, stderr="")
+            if operation == "wait":
+                return SimpleNamespace(returncode=0, stdout="0\n", stderr="")
+            if operation == "inspect":
+                return SimpleNamespace(
+                    returncode=0,
+                    stdout=json.dumps({"ExitCode": 0, "OOMKilled": True}),
+                    stderr="",
+                )
+            if operation == "rm":
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+            raise AssertionError(command)
+
+        with patch.object(publisher.subprocess, "run", side_effect=run_docker) as run:
+            with self.assertRaisesRegex(
+                publisher.PublicationError,
+                r"was OOM-killed \(exit_code=0, oom_killed=true\)",
+            ):
+                publisher.verify_stable_kernel_runtime_isolated(revision="2" * 40)
+
+        operations = [call.args[0][1] for call in run.call_args_list]
+        self.assertEqual(operations, ["create", "start", "wait", "inspect", "rm"])
+
+    def test_isolated_runtime_rejects_malformed_evidence_with_exit_state(self) -> None:
+        container_id = "c" * 64
+
+        def run_docker(command: list[str], **_: object) -> SimpleNamespace:
+            operation = command[1]
+            if operation in {"create", "start"}:
+                return SimpleNamespace(returncode=0, stdout=container_id, stderr="")
+            if operation == "wait":
+                return SimpleNamespace(returncode=0, stdout="1\n", stderr="")
+            if operation == "inspect":
+                return SimpleNamespace(
+                    returncode=0,
+                    stdout=json.dumps({"ExitCode": 1, "OOMKilled": False}),
+                    stderr="",
+                )
+            if operation == "cp":
+                Path(command[-1]).write_text("{", encoding="utf-8")
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+            if operation == "rm":
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+            raise AssertionError(command)
+
+        with patch.object(publisher.subprocess, "run", side_effect=run_docker):
+            with self.assertRaisesRegex(
+                publisher.PublicationError,
+                r"returned malformed evidence \(exit_code=1, oom_killed=false\)",
+            ):
+                publisher.verify_stable_kernel_runtime_isolated(revision="2" * 40)
 
     def test_runtime_verifier_writes_sanitized_bounded_failure(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

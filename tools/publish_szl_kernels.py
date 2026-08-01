@@ -789,6 +789,54 @@ def verify_stable_kernel_runtime_isolated(*, revision: str) -> dict[str, Any]:
                 f"isolated stable Kernel runtime wait failed: {detail[-2000:]}"
             )
         container_exit_code = waited.stdout.strip()
+        if (
+            re.fullmatch(r"(?:0|[1-9][0-9]{0,2})", container_exit_code) is None
+            or int(container_exit_code) > 255
+        ):
+            raise PublicationError(
+                "isolated stable Kernel runtime returned an invalid exit code"
+            )
+        inspected = subprocess.run(
+            ["docker", "inspect", "--format", "{{json .State}}", container_id],
+            check=False,
+            capture_output=True,
+            text=True,
+            env=environment,
+        )
+        if inspected.returncode != 0:
+            detail = (
+                inspected.stderr or inspected.stdout or "unknown inspect error"
+            ).strip()
+            raise PublicationError(
+                "isolated stable Kernel runtime state inspection failed: "
+                f"{detail[-2000:]}"
+            )
+        try:
+            state = json.loads(inspected.stdout)
+        except json.JSONDecodeError as exc:
+            raise PublicationError(
+                "isolated stable Kernel runtime returned invalid state evidence"
+            ) from exc
+        observed_exit_code = state.get("ExitCode") if isinstance(state, dict) else None
+        oom_killed = state.get("OOMKilled") if isinstance(state, dict) else None
+        if (
+            not isinstance(observed_exit_code, int)
+            or isinstance(observed_exit_code, bool)
+            or not isinstance(oom_killed, bool)
+            or observed_exit_code != int(container_exit_code)
+        ):
+            raise PublicationError(
+                "isolated stable Kernel runtime state evidence did not match docker wait"
+            )
+        state_summary = (
+            f"exit_code={observed_exit_code}, "
+            f"oom_killed={'true' if oom_killed else 'false'}"
+        )
+        if oom_killed:
+            raise PublicationError(
+                "isolated stable Kernel runtime was OOM-killed "
+                f"({state_summary})"
+            )
         with tempfile.TemporaryDirectory(prefix="szl-kernel-runtime-") as temporary:
             evidence_path = Path(temporary) / "evidence.json"
             copied = subprocess.run(
@@ -819,15 +867,21 @@ def verify_stable_kernel_runtime_isolated(*, revision: str) -> dict[str, Any]:
                     ).strip()
                     log_detail = bounded_runtime_log_detail(log_output)
                     raise PublicationError(
-                        "isolated stable Kernel runtime evidence copy failed: "
+                        "isolated stable Kernel runtime exited without evidence "
+                        f"({state_summary}): "
                         f"{copy_detail[-2000:]}; bounded logs: {log_detail}"
                     )
             else:
                 try:
                     evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
-                except (FileNotFoundError, json.JSONDecodeError) as exc:
+                except (
+                    FileNotFoundError,
+                    UnicodeDecodeError,
+                    json.JSONDecodeError,
+                ) as exc:
                     raise PublicationError(
-                        "isolated stable Kernel runtime returned invalid evidence"
+                        "isolated stable Kernel runtime returned malformed evidence "
+                        f"({state_summary})"
                     ) from exc
             if container_exit_code != "0":
                 error_type = evidence.get("error_type")
