@@ -25,6 +25,7 @@ EXPECTED_KERNEL_PACKAGE_VERSION = "0.1.1"
 KERNEL_RUNTIME_CLIENT_VERSION = "0.16.0"
 KERNEL_RUNTIME_IMAGE = f"szl-kernel-runtime:{KERNEL_RUNTIME_CLIENT_VERSION}"
 KERNEL_RUNTIME_TIMEOUT_SECONDS = 300
+KERNEL_RUNTIME_CONTROL_TIMEOUT_SECONDS = 30
 KERNEL_RUNTIME_EVIDENCE_PATH = "/tmp/szl-kernel-runtime-evidence.json"
 KERNEL_RUNTIME_LOG_PREFIX = "SZL_KERNEL_RUNTIME_EVIDENCE="
 KERNEL_RUNTIME_LOG_LIMIT = 64 * 1024
@@ -740,13 +741,19 @@ def verify_stable_kernel_runtime_isolated(*, revision: str) -> dict[str, Any]:
         "--output",
         KERNEL_RUNTIME_EVIDENCE_PATH,
     ]
-    created = subprocess.run(
-        create_command,
-        check=False,
-        capture_output=True,
-        text=True,
-        env=environment,
-    )
+    try:
+        created = subprocess.run(
+            create_command,
+            check=False,
+            capture_output=True,
+            text=True,
+            env=environment,
+            timeout=KERNEL_RUNTIME_CONTROL_TIMEOUT_SECONDS,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise PublicationError(
+            "isolated stable Kernel runtime create timed out"
+        ) from exc
     container_id = created.stdout.strip()
     if (
         created.returncode != 0
@@ -757,13 +764,19 @@ def verify_stable_kernel_runtime_isolated(*, revision: str) -> dict[str, Any]:
             f"isolated stable Kernel runtime create failed: {detail[-2000:]}"
         )
     try:
-        started = subprocess.run(
-            ["docker", "start", container_id],
-            check=False,
-            capture_output=True,
-            text=True,
-            env=environment,
-        )
+        try:
+            started = subprocess.run(
+                ["docker", "start", container_id],
+                check=False,
+                capture_output=True,
+                text=True,
+                env=environment,
+                timeout=KERNEL_RUNTIME_CONTROL_TIMEOUT_SECONDS,
+            )
+        except subprocess.TimeoutExpired as exc:
+            raise PublicationError(
+                "isolated stable Kernel runtime start timed out"
+            ) from exc
         if started.returncode != 0:
             detail = (started.stderr or started.stdout or "unknown start error").strip()
             raise PublicationError(
@@ -796,13 +809,19 @@ def verify_stable_kernel_runtime_isolated(*, revision: str) -> dict[str, Any]:
             raise PublicationError(
                 "isolated stable Kernel runtime returned an invalid exit code"
             )
-        inspected = subprocess.run(
-            ["docker", "inspect", "--format", "{{json .State}}", container_id],
-            check=False,
-            capture_output=True,
-            text=True,
-            env=environment,
-        )
+        try:
+            inspected = subprocess.run(
+                ["docker", "inspect", "--format", "{{json .State}}", container_id],
+                check=False,
+                capture_output=True,
+                text=True,
+                env=environment,
+                timeout=KERNEL_RUNTIME_CONTROL_TIMEOUT_SECONDS,
+            )
+        except subprocess.TimeoutExpired as exc:
+            raise PublicationError(
+                "isolated stable Kernel runtime state inspection timed out"
+            ) from exc
         if inspected.returncode != 0:
             detail = (
                 inspected.stderr or inspected.stdout or "unknown inspect error"
@@ -839,33 +858,53 @@ def verify_stable_kernel_runtime_isolated(*, revision: str) -> dict[str, Any]:
             )
         with tempfile.TemporaryDirectory(prefix="szl-kernel-runtime-") as temporary:
             evidence_path = Path(temporary) / "evidence.json"
-            copied = subprocess.run(
-                [
-                    "docker",
-                    "cp",
-                    f"{container_id}:{KERNEL_RUNTIME_EVIDENCE_PATH}",
-                    str(evidence_path),
-                ],
-                check=False,
-                capture_output=True,
-                text=True,
-                env=environment,
-            )
-            if copied.returncode != 0:
-                logged = subprocess.run(
-                    ["docker", "logs", "--tail", "100", container_id],
+            try:
+                copied = subprocess.run(
+                    [
+                        "docker",
+                        "cp",
+                        f"{container_id}:{KERNEL_RUNTIME_EVIDENCE_PATH}",
+                        str(evidence_path),
+                    ],
                     check=False,
                     capture_output=True,
                     text=True,
                     env=environment,
+                    timeout=KERNEL_RUNTIME_CONTROL_TIMEOUT_SECONDS,
                 )
-                log_output = f"{logged.stdout}\n{logged.stderr}"
+            except subprocess.TimeoutExpired:
+                copied = None
+            if copied is None or copied.returncode != 0:
+                try:
+                    logged = subprocess.run(
+                        ["docker", "logs", "--tail", "100", container_id],
+                        check=False,
+                        capture_output=True,
+                        text=True,
+                        env=environment,
+                        timeout=KERNEL_RUNTIME_CONTROL_TIMEOUT_SECONDS,
+                    )
+                except subprocess.TimeoutExpired:
+                    logged = None
+                log_output = (
+                    ""
+                    if logged is None
+                    else f"{logged.stdout}\n{logged.stderr}"
+                )
                 evidence = runtime_evidence_from_logs(log_output)
                 if evidence is None:
-                    copy_detail = (
-                        copied.stderr or copied.stdout or "unknown evidence copy error"
-                    ).strip()
-                    log_detail = bounded_runtime_log_detail(log_output)
+                    copy_detail = "evidence copy timed out"
+                    if copied is not None:
+                        copy_detail = (
+                            copied.stderr
+                            or copied.stdout
+                            or "unknown evidence copy error"
+                        ).strip()
+                    log_detail = (
+                        "logs timed out"
+                        if logged is None
+                        else bounded_runtime_log_detail(log_output)
+                    )
                     raise PublicationError(
                         "isolated stable Kernel runtime exited without evidence "
                         f"({state_summary}): "
@@ -903,13 +942,17 @@ def verify_stable_kernel_runtime_isolated(*, revision: str) -> dict[str, Any]:
                     f"{error_type}: {error}"
                 )
     finally:
-        subprocess.run(
-            ["docker", "rm", "--force", container_id],
-            check=False,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            env=environment,
-        )
+        try:
+            subprocess.run(
+                ["docker", "rm", "--force", container_id],
+                check=False,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                env=environment,
+                timeout=KERNEL_RUNTIME_CONTROL_TIMEOUT_SECONDS,
+            )
+        except subprocess.TimeoutExpired:
+            pass
     boundaries = evidence.get("inclusive_boundaries", {})
     if (
         evidence.get("status") != "STABLE_GET_KERNEL_VERIFIED"

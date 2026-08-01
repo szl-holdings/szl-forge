@@ -348,6 +348,14 @@ class PublishSzlKernelsTests(unittest.TestCase):
             operations,
             ["create", "start", "wait", "inspect", "cp", "rm"],
         )
+        for call in run.call_args_list:
+            operation = call.args[0][1]
+            expected_timeout = (
+                publisher.KERNEL_RUNTIME_TIMEOUT_SECONDS
+                if operation == "wait"
+                else publisher.KERNEL_RUNTIME_CONTROL_TIMEOUT_SECONDS
+            )
+            self.assertEqual(call.kwargs.get("timeout"), expected_timeout)
         start_command = run.call_args_list[1].args[0]
         self.assertNotIn("--attach", start_command)
 
@@ -436,12 +444,20 @@ class PublishSzlKernelsTests(unittest.TestCase):
                 return SimpleNamespace(returncode=0, stdout="", stderr="")
             raise AssertionError(command)
 
-        with patch.object(publisher.subprocess, "run", side_effect=run_docker):
+        with patch.object(publisher.subprocess, "run", side_effect=run_docker) as run:
             observed = publisher.verify_stable_kernel_runtime_isolated(
                 revision=revision
             )
 
         self.assertEqual(observed, evidence)
+        for call in run.call_args_list:
+            operation = call.args[0][1]
+            expected_timeout = (
+                publisher.KERNEL_RUNTIME_TIMEOUT_SECONDS
+                if operation == "wait"
+                else publisher.KERNEL_RUNTIME_CONTROL_TIMEOUT_SECONDS
+            )
+            self.assertEqual(call.kwargs.get("timeout"), expected_timeout)
 
     def test_isolated_runtime_reports_missing_evidence_with_exit_state(self) -> None:
         container_id = "c" * 64
@@ -472,6 +488,43 @@ class PublishSzlKernelsTests(unittest.TestCase):
                 r"exited without evidence \(exit_code=137, oom_killed=false\)",
             ):
                 publisher.verify_stable_kernel_runtime_isolated(revision="2" * 40)
+
+    def test_isolated_runtime_bounds_copy_and_log_timeouts(self) -> None:
+        container_id = "c" * 64
+
+        def run_docker(command: list[str], **kwargs: object) -> SimpleNamespace:
+            operation = command[1]
+            if operation in {"create", "start"}:
+                return SimpleNamespace(returncode=0, stdout=container_id, stderr="")
+            if operation == "wait":
+                return SimpleNamespace(returncode=0, stdout="137\n", stderr="")
+            if operation == "inspect":
+                return SimpleNamespace(
+                    returncode=0,
+                    stdout=json.dumps({"ExitCode": 137, "OOMKilled": False}),
+                    stderr="",
+                )
+            if operation in {"cp", "logs"}:
+                raise publisher.subprocess.TimeoutExpired(
+                    command,
+                    kwargs["timeout"],
+                )
+            if operation == "rm":
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+            raise AssertionError(command)
+
+        with patch.object(publisher.subprocess, "run", side_effect=run_docker) as run:
+            with self.assertRaisesRegex(
+                publisher.PublicationError,
+                "evidence copy timed out; bounded logs: logs timed out",
+            ):
+                publisher.verify_stable_kernel_runtime_isolated(revision="2" * 40)
+
+        operations = [call.args[0][1] for call in run.call_args_list]
+        self.assertEqual(
+            operations,
+            ["create", "start", "wait", "inspect", "cp", "logs", "rm"],
+        )
 
     def test_isolated_runtime_rejects_oom_even_with_zero_exit(self) -> None:
         container_id = "c" * 64
@@ -550,6 +603,27 @@ class PublishSzlKernelsTests(unittest.TestCase):
         self.assertEqual(evidence["error_type"], "ValueError")
         self.assertEqual(len(evidence["error"]), 2000)
         self.assertTrue(all(32 <= ord(character) <= 126 for character in evidence["error"]))
+
+    def test_runtime_verifier_records_publisher_bootstrap_base_exception(self) -> None:
+        class BootstrapAbort(BaseException):
+            pass
+
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "evidence.json"
+            with patch.object(
+                runtime_verifier,
+                "verify_stable_kernel_runtime",
+                side_effect=BootstrapAbort("publisher bootstrap aborted"),
+            ):
+                result = runtime_verifier.main(
+                    ["--revision", "2" * 40, "--output", str(output)]
+                )
+
+            evidence = json.loads(output.read_text(encoding="utf-8"))
+        self.assertEqual(result, 1)
+        self.assertEqual(evidence["status"], "FAILED")
+        self.assertEqual(evidence["error_type"], "BootstrapAbort")
+        self.assertEqual(evidence["error"], "publisher bootstrap aborted")
 
     def test_runtime_verifier_survives_unprintable_exception(self) -> None:
         class UnprintableError(Exception):
