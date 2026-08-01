@@ -76,7 +76,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         evidence = verify_stable_kernel_runtime(revision=args.revision)
-    except (Exception, SystemExit) as exc:
+    except BaseException as exc:
         _write_evidence(
             args.output,
             {
