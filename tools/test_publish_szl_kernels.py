@@ -396,6 +396,92 @@ class PublishSzlKernelsTests(unittest.TestCase):
         self.assertEqual(len(evidence["error"]), 2000)
         self.assertTrue(all(32 <= ord(character) <= 126 for character in evidence["error"]))
 
+    def test_runtime_verifier_survives_unprintable_exception(self) -> None:
+        class UnprintableError(Exception):
+            def __str__(self) -> str:
+                raise RuntimeError("formatter failed")
+
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "evidence.json"
+            with patch.object(
+                runtime_verifier,
+                "verify_stable_kernel_runtime",
+                side_effect=UnprintableError(),
+            ):
+                result = runtime_verifier.main(
+                    ["--revision", "2" * 40, "--output", str(output)]
+                )
+
+            evidence = json.loads(output.read_text(encoding="utf-8"))
+        self.assertEqual(result, 1)
+        self.assertEqual(evidence["error_type"], "UnprintableError")
+        self.assertEqual(evidence["error"], "<unprintable>")
+
+    def test_runtime_verifier_survives_hostile_string_iteration(self) -> None:
+        class HostileString(str):
+            def __iter__(self):
+                raise SystemExit(9)
+
+        class HostileError(Exception):
+            def __str__(self) -> str:
+                return HostileString("unsafe")
+
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "evidence.json"
+            with patch.object(
+                runtime_verifier,
+                "verify_stable_kernel_runtime",
+                side_effect=HostileError(),
+            ):
+                result = runtime_verifier.main(
+                    ["--revision", "2" * 40, "--output", str(output)]
+                )
+
+            evidence = json.loads(output.read_text(encoding="utf-8"))
+        self.assertEqual(result, 1)
+        self.assertEqual(evidence["error_type"], "HostileError")
+        self.assertEqual(evidence["error"], "<unprintable>")
+
+    def test_runtime_verifier_records_unprintable_system_exit(self) -> None:
+        class UnprintableExitCode:
+            def __str__(self) -> str:
+                raise RuntimeError("formatter failed")
+
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "evidence.json"
+            with patch.object(
+                runtime_verifier,
+                "verify_stable_kernel_runtime",
+                side_effect=SystemExit(UnprintableExitCode()),
+            ):
+                result = runtime_verifier.main(
+                    ["--revision", "2" * 40, "--output", str(output)]
+                )
+
+            evidence = json.loads(output.read_text(encoding="utf-8"))
+        self.assertEqual(result, 1)
+        self.assertEqual(evidence["error_type"], "SystemExit")
+        self.assertEqual(evidence["error"], "<unprintable>")
+
+    def test_runtime_verifier_sanitizes_error_type_grammar(self) -> None:
+        OddError = type("9Odd-Name", (Exception,), {})
+
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "evidence.json"
+            with patch.object(
+                runtime_verifier,
+                "verify_stable_kernel_runtime",
+                side_effect=OddError("boom"),
+            ):
+                result = runtime_verifier.main(
+                    ["--revision", "2" * 40, "--output", str(output)]
+                )
+
+            evidence = json.loads(output.read_text(encoding="utf-8"))
+        self.assertEqual(result, 1)
+        self.assertEqual(evidence["error_type"], "_9Odd_Name")
+        self.assertTrue(all(32 <= ord(character) <= 126 for character in evidence["error_type"]))
+
     def test_kernel_runtime_image_pins_canonical_numpy(self) -> None:
         dockerfile = Path(__file__).with_name("kernel-runtime.Dockerfile").read_text(
             encoding="utf-8"
