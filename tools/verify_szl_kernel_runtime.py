@@ -9,6 +9,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 FAILURE_DETAIL_LIMIT = 2000
+KERNEL_RUNTIME_LOG_PREFIX = "SZL_KERNEL_RUNTIME_EVIDENCE="
 
 
 def _write_evidence(output: Path | None, evidence: dict[str, object]) -> None:
@@ -21,6 +22,13 @@ def _write_evidence(output: Path | None, evidence: dict[str, object]) -> None:
     if output is None:
         print(serialized, end="")
     else:
+        compact = json.dumps(
+            evidence,
+            sort_keys=True,
+            ensure_ascii=True,
+            separators=(",", ":"),
+        )
+        print(f"{KERNEL_RUNTIME_LOG_PREFIX}{compact}", flush=True)
         output.write_text(serialized, encoding="utf-8")
 
 
