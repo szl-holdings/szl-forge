@@ -9,6 +9,9 @@ import io
 import json
 import os
 import re
+import shutil
+import subprocess
+import tempfile
 from pathlib import Path
 from typing import Any, Callable, Iterable
 
@@ -23,6 +26,7 @@ LEGACY_REPO_TYPE = "model"
 KERNEL_REPO_TYPE = "kernel"
 KERNEL_BRANCHES = ("main", "v1")
 KERNEL_BINDING_PATH = "source-binding.json"
+KERNEL_GIT_URL = "https://huggingface.co/kernels/SZLHOLDINGS/szl-kernels"
 FIRST_CLASS_KERNEL_FILES = {
     ".gitattributes": ".gitattributes",
     "LICENSE": "LICENSE",
@@ -399,6 +403,199 @@ def verify_kernel_readback(
         )
 
 
+
+def _git_error_detail(result: subprocess.CompletedProcess[str], token: str) -> str:
+    detail = (result.stderr or result.stdout or "").strip()
+    if token:
+        detail = detail.replace(token, "[REDACTED]")
+    return detail[-1000:]
+
+
+def publish_kernel_branch_via_git(
+    *,
+    branch: str,
+    parent_commit: str,
+    operations: list[CommitOperationAdd],
+    token: str,
+    run_fn=subprocess.run,
+) -> str:
+    """Publish one exact-parent Kernel branch with a non-force Git fast-forward."""
+    if branch not in KERNEL_BRANCHES:
+        raise PublicationError(f"unsupported Kernel branch: {branch}")
+    if not re.fullmatch(r"[0-9a-f]{40}", parent_commit):
+        raise PublicationError("Kernel parent commit must be an exact lowercase SHA")
+    if not token:
+        raise PublicationError("Kernel Git publication requires a non-empty token")
+
+    with tempfile.TemporaryDirectory(prefix="szl-kernel-publish-") as temp_dir:
+        checkout = Path(temp_dir).resolve()
+        askpass = checkout / "hf-askpass.sh"
+        askpass.write_text(
+            "#!/bin/sh\n"
+            "case \"$1\" in\n"
+            "  *Username*) printf '%s\\n' 'hf_user' ;;\n"
+            "  *) printf '%s\\n' \"$HF_TOKEN\" ;;\n"
+            "esac\n",
+            encoding="utf-8",
+        )
+        askpass.chmod(0o700)
+
+        env = os.environ.copy()
+        env.update(
+            {
+                "GIT_ASKPASS": str(askpass),
+                "GIT_TERMINAL_PROMPT": "0",
+                "GIT_LFS_SKIP_SMUDGE": "1",
+                "HF_TOKEN": token,
+            }
+        )
+
+        def git(*args: str, operation: str) -> subprocess.CompletedProcess[str]:
+            try:
+                completed = run_fn(
+                    ["git", *args],
+                    cwd=checkout,
+                    env=env,
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+            except OSError as exc:
+                raise PublicationError(
+                    f"Kernel Git {operation} could not start: {exc}"
+                ) from exc
+            if completed.returncode != 0:
+                raise PublicationError(
+                    f"Kernel Git {operation} failed: "
+                    f"{_git_error_detail(completed, token)}"
+                )
+            return completed
+
+        git("init", "--quiet", operation="init")
+        git("remote", "add", "origin", KERNEL_GIT_URL, operation="remote setup")
+        git(
+            "fetch",
+            "--no-tags",
+            "--depth=1",
+            "origin",
+            f"refs/heads/{branch}",
+            operation=f"fetch {branch}",
+        )
+        fetched_parent = git(
+            "rev-parse", "FETCH_HEAD", operation="parent resolution"
+        ).stdout.strip()
+        if fetched_parent != parent_commit:
+            raise PublicationError(
+                f"Kernel branch {branch} moved before publication: "
+                f"expected {parent_commit}, observed {fetched_parent}"
+            )
+        git("checkout", "--quiet", "--detach", "FETCH_HEAD", operation="checkout")
+
+        staged_paths: list[str] = []
+        for operation in operations:
+            repo_path = Path(operation.path_in_repo)
+            if repo_path.is_absolute() or ".." in repo_path.parts:
+                raise PublicationError(
+                    f"unsafe Kernel publication path: {operation.path_in_repo}"
+                )
+            normalized_path = repo_path.as_posix()
+            if normalized_path in staged_paths:
+                raise PublicationError(
+                    f"duplicate Kernel publication path: {normalized_path}"
+                )
+            target = (checkout / repo_path).resolve()
+            if checkout not in target.parents:
+                raise PublicationError(
+                    f"Kernel publication path escapes checkout: {normalized_path}"
+                )
+            target.parent.mkdir(parents=True, exist_ok=True)
+
+            payload = operation.path_or_fileobj
+            if isinstance(payload, (str, os.PathLike)):
+                shutil.copyfile(payload, target)
+            elif isinstance(payload, (bytes, bytearray)):
+                target.write_bytes(bytes(payload))
+            elif hasattr(payload, "getvalue"):
+                target.write_bytes(payload.getvalue())
+            elif hasattr(payload, "read"):
+                position = payload.tell() if hasattr(payload, "tell") else None
+                if hasattr(payload, "seek"):
+                    payload.seek(0)
+                data = payload.read()
+                if position is not None and hasattr(payload, "seek"):
+                    payload.seek(position)
+                target.write_bytes(
+                    data.encode("utf-8") if isinstance(data, str) else data
+                )
+            else:
+                raise PublicationError(
+                    f"unsupported payload for Kernel path: {normalized_path}"
+                )
+            staged_paths.append(normalized_path)
+
+        git(
+            "config",
+            "user.name",
+            "SZL protected publisher",
+            operation="identity configuration",
+        )
+        git(
+            "config",
+            "user.email",
+            "stephenlutar2@gmail.com",
+            operation="identity configuration",
+        )
+        git("add", "--", *staged_paths, operation="staging")
+
+        diff = run_fn(
+            ["git", "diff", "--cached", "--quiet", "--exit-code"],
+            cwd=checkout,
+            env=env,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if diff.returncode == 0:
+            return parent_commit
+        if diff.returncode != 1:
+            raise PublicationError(
+                f"Kernel Git staged-diff check failed: "
+                f"{_git_error_detail(diff, token)}"
+            )
+
+        git(
+            "commit",
+            "--quiet",
+            "-m",
+            "Publish authorized Kernel source binding",
+            operation="commit",
+        )
+        revision = git(
+            "rev-parse", "HEAD", operation="commit resolution"
+        ).stdout.strip()
+        if not re.fullmatch(r"[0-9a-f]{40}", revision):
+            raise PublicationError("Kernel Git commit did not produce an exact SHA")
+
+        git(
+            "push",
+            "origin",
+            f"HEAD:refs/heads/{branch}",
+            operation=f"push {branch}",
+        )
+        remote_line = git(
+            "ls-remote",
+            "origin",
+            f"refs/heads/{branch}",
+            operation=f"read back {branch}",
+        ).stdout.strip()
+        remote_revision = remote_line.split()[0] if remote_line else ""
+        if remote_revision != revision:
+            raise PublicationError(
+                f"Kernel branch {branch} readback mismatch: "
+                f"expected {revision}, observed {remote_revision or 'missing'}"
+            )
+        return revision
+
 def run(
     *,
     source_root: Path,
@@ -530,27 +727,37 @@ def run(
                     path_or_fileobj=io.BytesIO(kernel_binding_bytes),
                 )
             )
-            kernel_commit = api.create_commit(
-                repo_id=EXPECTED_REPO_ID,
-                repo_type=KERNEL_REPO_TYPE,
-                revision=branch,
-                parent_commit=observed_before["first_class_kernel"]["branches"][
-                    branch
-                ]["revision"],
-                operations=kernel_operations,
-                commit_message=(
-                    f"Publish authorized Kernel source {source_revision[:12]}"
-                ),
-                token=token,
-            )
-            kernel_revision = getattr(kernel_commit, "oid", None)
-            if not kernel_revision:
-                kernel_revision = api.repo_info(
-                    EXPECTED_REPO_ID,
+            if isinstance(api, HfApi):
+                kernel_revision = publish_kernel_branch_via_git(
+                    branch=branch,
+                    parent_commit=observed_before["first_class_kernel"]["branches"][
+                        branch
+                    ]["revision"],
+                    operations=kernel_operations,
+                    token=token,
+                )
+            else:
+                kernel_commit = api.create_commit(
+                    repo_id=EXPECTED_REPO_ID,
                     repo_type=KERNEL_REPO_TYPE,
                     revision=branch,
+                    parent_commit=observed_before["first_class_kernel"]["branches"][
+                        branch
+                    ]["revision"],
+                    operations=kernel_operations,
+                    commit_message=(
+                        f"Publish authorized Kernel source {source_revision[:12]}"
+                    ),
                     token=token,
-                ).sha
+                )
+                kernel_revision = getattr(kernel_commit, "oid", None)
+                if not kernel_revision:
+                    kernel_revision = api.repo_info(
+                        EXPECTED_REPO_ID,
+                        repo_type=KERNEL_REPO_TYPE,
+                        revision=branch,
+                        token=token,
+                    ).sha
             result["targets"]["first_class_kernel"]["branches_after"][
                 branch
             ] = kernel_revision
