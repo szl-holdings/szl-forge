@@ -118,6 +118,11 @@ jobs:
           set -euo pipefail
           python -m pip install --disable-pip-version-check \
             "huggingface-hub==1.26.0"
+          python -m pip install --disable-pip-version-check \
+            --index-url https://download.pytorch.org/whl/cpu \
+            "torch==2.9.1"
+          python -m pip install --disable-pip-version-check \
+            "kernels==0.16.0"
           cargo install --locked \
             --git https://github.com/huggingface/kernels \
             --rev 633246310320d85def0c67d62c7912fd444a842f \

@@ -21,6 +21,8 @@ from huggingface_hub import CommitOperationAdd, HfApi, hf_hub_download
 EXPECTED_REPO_ID = "SZLHOLDINGS/szl-kernels"
 EXPECTED_SOURCE_REPOSITORY = "szl-holdings/szl-kernels"
 EXPECTED_PUBLISHER_REPOSITORY = "szl-holdings/szl-forge"
+EXPECTED_KERNEL_PACKAGE_VERSION = "0.1.1"
+KERNEL_RUNTIME_CLIENT_VERSION = "0.16.0"
 CONTRACT_RELATIVE = Path("publishing/source-binding.json")
 FULL_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 LEGACY_REPO_TYPE = "model"
@@ -534,6 +536,92 @@ def kernel_branch_targets(api: HfApi, *, token: str) -> dict[str, str]:
     return targets
 
 
+def verify_stable_kernel_runtime(
+    *,
+    revision: str,
+    get_kernel_fn: Callable[..., Any] | None = None,
+    tensor_fn: Callable[[list[float]], Any] | None = None,
+    client_version: str | None = None,
+) -> dict[str, Any]:
+    if get_kernel_fn is None:
+        from kernels import get_kernel
+
+        get_kernel_fn = get_kernel
+    if tensor_fn is None:
+        import torch
+
+        tensor_fn = torch.tensor
+    if client_version is None:
+        from importlib.metadata import version
+
+        client_version = version("kernels")
+    if client_version != KERNEL_RUNTIME_CLIENT_VERSION:
+        raise PublicationError(
+            "stable Kernel runtime client drifted "
+            f"(expected {KERNEL_RUNTIME_CLIENT_VERSION}, observed {client_version})"
+        )
+
+    module = get_kernel_fn(
+        EXPECTED_REPO_ID,
+        revision=revision,
+        backend="cpu",
+        trust_remote_code=True,
+    )
+    selfcheck = module.selfcheck()
+    if selfcheck.get("ok") is not True:
+        raise PublicationError("stable get_kernel selfcheck did not pass")
+    if selfcheck.get("version") != EXPECTED_KERNEL_PACKAGE_VERSION:
+        raise PublicationError("stable get_kernel returned an unexpected package version")
+
+    invalid_thresholds = (-0.01, 1.01, float("nan"), float("inf"))
+    for threshold in invalid_thresholds:
+        chain = module.UnifiedReceiptChain()
+        try:
+            module.governed_lambda_gate(
+                chain,
+                tensor_fn([0.5]),
+                threshold=threshold,
+            )
+        except ValueError:
+            pass
+        else:
+            raise PublicationError("invalid threshold did not fail closed")
+        ok, depth, _ = chain.verify()
+        if ok is not True or depth != 0:
+            raise PublicationError("invalid threshold emitted a receipt")
+
+    boundaries: dict[str, dict[str, Any]] = {}
+    for threshold in (0.0, 1.0):
+        chain = module.UnifiedReceiptChain()
+        gate = module.governed_lambda_gate(
+            chain,
+            tensor_fn([0.5]),
+            threshold=threshold,
+        )
+        ok, depth, first_break = chain.verify()
+        if (
+            ok is not True
+            or depth != 1
+            or first_break != -1
+            or gate.get("threshold") != threshold
+        ):
+            raise PublicationError("inclusive threshold boundary contract failed")
+        boundaries[str(int(threshold))] = {
+            "passed": gate.get("passed"),
+            "receipt_depth": depth,
+        }
+
+    return {
+        "status": "STABLE_GET_KERNEL_VERIFIED",
+        "client_version": client_version,
+        "revision": revision,
+        "package_version": selfcheck["version"],
+        "selfcheck_ok": True,
+        "invalid_thresholds_rejected_before_receipt": len(invalid_thresholds),
+        "inclusive_boundaries": boundaries,
+    }
+
+
 def verify_kernel_readback(
     expected_files: dict[str, bytes],
     *,
@@ -570,6 +658,7 @@ def run(
     api: HfApi | None = None,
     download_fn: Callable[..., str] = hf_hub_download,
     kernel_upload_fn: Callable[[Path, str], None] = upload_first_class_kernel,
+    kernel_runtime_fn: Callable[..., dict[str, Any]] = verify_stable_kernel_runtime,
 ) -> dict[str, Any]:
     source_revision = source_revision.strip().lower()
     if FULL_SHA_RE.fullmatch(source_revision) is None:
@@ -663,6 +752,10 @@ def run(
                 "binding_sha256": hashlib.sha256(kernel_binding_bytes).hexdigest(),
                 "binding": kernel_binding,
                 "mapped_file_count": len(kernel_files),
+                "runtime": {
+                    "status": "NOT_RUN",
+                    "client_version": KERNEL_RUNTIME_CLIENT_VERSION,
+                },
             },
         },
         "status": "VERIFIED_DRY_RUN",
@@ -675,6 +768,10 @@ def run(
         result["status"] = "PUBLICATION_IN_PROGRESS"
         result["targets"]["first_class_kernel"]["branches_after"] = {}
         result["targets"]["first_class_kernel"]["readback"] = {}
+        result["targets"]["first_class_kernel"]["runtime"] = {
+            "status": "PENDING",
+            "client_version": KERNEL_RUNTIME_CLIENT_VERSION,
+        }
         report_path.write_text(canonical_json(result), encoding="utf-8")
 
         with tempfile.TemporaryDirectory(prefix="szl-kernel-upload-") as temporary:
@@ -711,6 +808,19 @@ def run(
                     "EXACT_BYTES_VERIFIED"
                 )
                 report_path.write_text(canonical_json(result), encoding="utf-8")
+
+            try:
+                runtime = kernel_runtime_fn(revision=branch_targets["v1"])
+            except Exception as exc:
+                result["targets"]["first_class_kernel"]["runtime"] = {
+                    "status": "FAILED",
+                    "client_version": KERNEL_RUNTIME_CLIENT_VERSION,
+                    "error": f"{type(exc).__name__}: {exc}"[:2000],
+                }
+                report_path.write_text(canonical_json(result), encoding="utf-8")
+                raise
+            result["targets"]["first_class_kernel"]["runtime"] = runtime
+            report_path.write_text(canonical_json(result), encoding="utf-8")
 
         legacy_operations = [
             CommitOperationAdd(

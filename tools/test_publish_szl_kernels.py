@@ -176,6 +176,58 @@ class FakeApi:
 
 
 class PublishSzlKernelsTests(unittest.TestCase):
+    def test_stable_runtime_verifies_exact_load_and_threshold_contract(self) -> None:
+        class Chain:
+            def __init__(self) -> None:
+                self.depth = 0
+
+            def verify(self) -> tuple[bool, int, int]:
+                return True, self.depth, -1
+
+        class Module:
+            UnifiedReceiptChain = Chain
+
+            @staticmethod
+            def selfcheck() -> dict[str, object]:
+                return {"ok": True, "version": "0.1.1"}
+
+            @staticmethod
+            def governed_lambda_gate(
+                chain: Chain,
+                axes: list[float],
+                *,
+                threshold: float,
+            ) -> dict[str, object]:
+                del axes
+                if not 0.0 <= threshold <= 1.0:
+                    raise ValueError("invalid threshold")
+                chain.depth += 1
+                return {
+                    "threshold": threshold,
+                    "passed": 0.5 >= threshold,
+                }
+
+        def get_kernel(repo_id: str, **kwargs: object) -> Module:
+            self.assertEqual(repo_id, publisher.EXPECTED_REPO_ID)
+            self.assertEqual(kwargs["revision"], "2" * 40)
+            self.assertEqual(kwargs["backend"], "cpu")
+            self.assertIs(kwargs["trust_remote_code"], True)
+            return Module()
+
+        evidence = publisher.verify_stable_kernel_runtime(
+            revision="2" * 40,
+            get_kernel_fn=get_kernel,
+            tensor_fn=lambda values: values,
+            client_version="0.16.0",
+        )
+        self.assertEqual(evidence["status"], "STABLE_GET_KERNEL_VERIFIED")
+        self.assertEqual(
+            evidence["invalid_thresholds_rejected_before_receipt"],
+            4,
+        )
+        self.assertEqual(evidence["inclusive_boundaries"]["0"]["receipt_depth"], 1)
+        self.assertEqual(evidence["inclusive_boundaries"]["1"]["receipt_depth"], 1)
+
     def test_supported_builder_uses_official_package_version_identity(self) -> None:
         version = SimpleNamespace(
             returncode=0,
@@ -234,10 +286,14 @@ class PublishSzlKernelsTests(unittest.TestCase):
         publish = workflow.index(
             "Publish declared data with trusted code and verify exact readback"
         )
+        torch_runtime = workflow.index('"torch==2.9.1"', uploader)
+        kernels_runtime = workflow.index('"kernels==0.16.0"', uploader)
         self.assertLess(install, dependency)
         self.assertLess(dependency, tests)
         self.assertLess(uploader, upstream_pin)
         self.assertLess(upstream_pin, publish)
+        self.assertLess(torch_runtime, publish)
+        self.assertLess(kernels_runtime, publish)
         self.assertIn(
             'test "$(kernel-builder --version)" = '
             f'"{publisher.KERNEL_BUILDER_VERSION_OUTPUT}"',
@@ -383,6 +439,16 @@ class PublishSzlKernelsTests(unittest.TestCase):
                 run_id="123",
                 run_attempt="1",
             )
+
+            def verify_runtime(*, revision: str) -> dict[str, object]:
+                self.assertEqual(revision, "2" * 40)
+                return {
+                    "status": "STABLE_GET_KERNEL_VERIFIED",
+                    "client_version": "0.16.0",
+                    "revision": revision,
+                    "package_version": "0.1.1",
+                }
+
             result = publisher.run(
                 source_root=root,
                 report_path=root / "report.json",
@@ -394,6 +460,7 @@ class PublishSzlKernelsTests(unittest.TestCase):
                 api=api,
                 download_fn=api.download,
                 kernel_upload_fn=api.upload_kernel,
+                kernel_runtime_fn=verify_runtime,
             )
             self.assertEqual(
                 result["status"], "PUBLISHED_AND_EXACT_READBACK_VERIFIED"
@@ -419,6 +486,10 @@ class PublishSzlKernelsTests(unittest.TestCase):
             self.assertEqual(
                 result["targets"]["legacy_model"]["readback"],
                 "EXACT_BYTES_VERIFIED",
+            )
+            self.assertEqual(
+                result["targets"]["first_class_kernel"]["runtime"]["status"],
+                "STABLE_GET_KERNEL_VERIFIED",
             )
             metadata = json.loads(
                 api.remote[
