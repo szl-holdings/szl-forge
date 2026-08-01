@@ -7,6 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
 import publish_szl_kernels as publisher
 
@@ -175,6 +176,44 @@ class FakeApi:
 
 
 class PublishSzlKernelsTests(unittest.TestCase):
+    def test_supported_builder_uses_official_package_version_identity(self) -> None:
+        version = SimpleNamespace(
+            returncode=0,
+            stdout="hf-kernel-builder 0.16.0\n",
+            stderr="",
+        )
+        with patch.object(
+            publisher.shutil,
+            "which",
+            return_value="/trusted/kernel-builder",
+        ), patch.object(publisher.subprocess, "run", return_value=version) as run:
+            executable = publisher.require_kernel_builder_executable()
+
+        self.assertEqual(executable, "/trusted/kernel-builder")
+        run.assert_called_once_with(
+            ["/trusted/kernel-builder", "--version"],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
+    def test_supported_builder_rejects_binary_name_as_version_identity(self) -> None:
+        version = SimpleNamespace(
+            returncode=0,
+            stdout="kernel-builder 0.16.0\n",
+            stderr="",
+        )
+        with patch.object(
+            publisher.shutil,
+            "which",
+            return_value="/trusted/kernel-builder",
+        ), patch.object(publisher.subprocess, "run", return_value=version):
+            with self.assertRaisesRegex(
+                publisher.PublicationError,
+                "hf-kernel-builder 0.16.0",
+            ):
+                publisher.require_kernel_builder_executable()
+
     def test_gateway_installs_hub_client_before_authorization_tests(self) -> None:
         workflow = (
             Path(__file__).parents[1]
@@ -198,6 +237,15 @@ class PublishSzlKernelsTests(unittest.TestCase):
         builder = workflow.index(
             "cargo install --locked --version '=0.16.0' hf-kernel-builder",
             publisher_install,
+        )
+        self.assertEqual(
+            publisher.KERNEL_BUILDER_VERSION_OUTPUT,
+            "hf-kernel-builder 0.16.0",
+        )
+        self.assertIn(
+            'test "${builder_version}" = '
+            f'"{publisher.KERNEL_BUILDER_VERSION_OUTPUT}"',
+            workflow[publisher_install:],
         )
         publish = workflow.index(
             "Publish declared data with trusted code and verify exact readback"
