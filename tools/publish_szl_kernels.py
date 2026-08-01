@@ -513,6 +513,7 @@ def run(
         report_path.parent.mkdir(parents=True, exist_ok=True)
         result["status"] = "PUBLICATION_IN_PROGRESS"
         result["targets"]["first_class_kernel"]["branches_after"] = {}
+        result["targets"]["first_class_kernel"]["readback"] = {}
         report_path.write_text(canonical_json(result), encoding="utf-8")
 
         for branch in KERNEL_BRANCHES:
@@ -550,6 +551,13 @@ def run(
                     revision=branch,
                     token=token,
                 ).sha
+            result["targets"]["first_class_kernel"]["branches_after"][
+                branch
+            ] = kernel_revision
+            result["targets"]["first_class_kernel"]["readback"][branch] = (
+                "PENDING"
+            )
+            report_path.write_text(canonical_json(result), encoding="utf-8")
             verify_kernel_readback(
                 source_root,
                 kernel_binding_bytes,
@@ -558,9 +566,9 @@ def run(
                 token=token,
                 download_fn=download_fn,
             )
-            result["targets"]["first_class_kernel"]["branches_after"][
-                branch
-            ] = kernel_revision
+            result["targets"]["first_class_kernel"]["readback"][branch] = (
+                "EXACT_BYTES_VERIFIED"
+            )
             report_path.write_text(canonical_json(result), encoding="utf-8")
 
         legacy_operations = [
@@ -587,6 +595,9 @@ def run(
         legacy_revision = getattr(legacy_commit, "oid", None)
         if not legacy_revision:
             legacy_revision = api.model_info(EXPECTED_REPO_ID, token=token).sha
+        result["targets"]["legacy_model"]["revision_after"] = legacy_revision
+        result["targets"]["legacy_model"]["readback"] = "PENDING"
+        report_path.write_text(canonical_json(result), encoding="utf-8")
         verify_legacy_readback(
             source_root,
             contract,
@@ -595,7 +606,7 @@ def run(
             token=token,
             download_fn=download_fn,
         )
-        result["targets"]["legacy_model"]["revision_after"] = legacy_revision
+        result["targets"]["legacy_model"]["readback"] = "EXACT_BYTES_VERIFIED"
         result["status"] = "PUBLISHED_AND_EXACT_READBACK_VERIFIED"
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(canonical_json(result), encoding="utf-8")

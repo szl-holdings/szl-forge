@@ -314,6 +314,70 @@ class PublishSzlKernelsTests(unittest.TestCase):
                 "branches_after"
             ]
             self.assertEqual(set(branches_after), set(publisher.KERNEL_BRANCHES))
+            self.assertEqual(
+                set(
+                    result["targets"]["first_class_kernel"]["readback"].values()
+                ),
+                {"EXACT_BYTES_VERIFIED"},
+            )
+            self.assertEqual(
+                result["targets"]["legacy_model"]["readback"],
+                "EXACT_BYTES_VERIFIED",
+            )
+
+    def test_failed_readback_preserves_the_created_kernel_revision(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            authorization, artifacts = self._fixture(root)
+            api = FakeApi(artifacts)
+            api.download_root = root / "downloads"
+            corrupt = root / "corrupt"
+            corrupt.write_bytes(b"corrupt")
+
+            def fail_main_readback(*args: object, **kwargs: object) -> str:
+                if (
+                    kwargs.get("repo_type") == publisher.KERNEL_REPO_TYPE
+                    and kwargs.get("revision") == "1" * 40
+                ):
+                    return str(corrupt)
+                return api.download(*args, **kwargs)
+
+            identity = publisher.publisher_identity(
+                repository=publisher.EXPECTED_PUBLISHER_REPOSITORY,
+                revision=self.publisher_revision,
+                workflow_ref=(
+                    f"{publisher.EXPECTED_PUBLISHER_REPOSITORY}/"
+                    ".github/workflows/publish-szl-kernels.yml@refs/heads/main"
+                ),
+                run_id="123",
+                run_attempt="1",
+            )
+            report = root / "report.json"
+            with self.assertRaisesRegex(
+                publisher.PublicationError,
+                "main readback mismatch",
+            ):
+                publisher.run(
+                    source_root=root,
+                    report_path=report,
+                    authorization_path=authorization,
+                    source_revision=self.source_revision,
+                    publisher=identity,
+                    publish=True,
+                    token="test-token",
+                    api=api,
+                    download_fn=fail_main_readback,
+                )
+            partial = json.loads(report.read_text(encoding="utf-8"))
+            self.assertEqual(partial["status"], "PUBLICATION_IN_PROGRESS")
+            self.assertEqual(
+                partial["targets"]["first_class_kernel"]["branches_after"],
+                {"main": "1" * 40},
+            )
+            self.assertEqual(
+                partial["targets"]["first_class_kernel"]["readback"],
+                {"main": "PENDING"},
+            )
 
     def test_contract_cannot_redirect_publisher_to_another_repo(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
