@@ -311,7 +311,10 @@ class PublishSzlKernelsTests(unittest.TestCase):
             ],
         )
         self.assertIn("--log-driver=none", command)
-        self.assertIn("--pid=private", command)
+        self.assertFalse(
+            any(argument == "--pid" or argument.startswith("--pid=") for argument in command),
+            "Docker's omitted PID option must preserve the default private namespace",
+        )
         self.assertIn("--read-only", command)
         self.assertIn("--cap-drop=ALL", command)
         self.assertIn("--security-opt=no-new-privileges", command)

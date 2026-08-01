@@ -689,7 +689,9 @@ def verify_stable_kernel_runtime_isolated(*, revision: str) -> dict[str, Any]:
         "docker",
         "create",
         "--log-driver=none",
-        "--pid=private",
+        # Docker's default PID namespace is private. Do not pass
+        # ``--pid=private``: Docker rejects "private" as an explicit
+        # selector, while omitting --pid preserves process isolation.
         "--network=bridge",
         "--read-only",
         "--tmpfs",
