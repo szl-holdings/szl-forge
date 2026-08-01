@@ -28,6 +28,12 @@ class QualificationContractTests(unittest.TestCase):
         )
         self.assertIn(f"({source_tree})", model_card)
         self.assertIn(f'({source["pullRequest"]})', model_card)
+        self.assertIn("requirements-eval.txt", model_card)
+        requirements = (HERE / "requirements-eval.txt").read_text(encoding="utf-8")
+        self.assertEqual(
+            requirements.splitlines(),
+            ["cryptography==49.0.0", "jsonschema==4.26.0"],
+        )
 
     def test_candidate_is_pinned_published_and_still_non_autonomous(self) -> None:
         candidate = qualification.load_candidate(HERE / "candidate.json")

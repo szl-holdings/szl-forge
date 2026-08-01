@@ -31,6 +31,8 @@ evidence, approval, execution, or measured values.
 ## Evaluator quickstart
 
 ```bash
+python -m pip install --requirement \
+  frontier/qwen35-receiptagent-v2/requirements-eval.txt
 python -m unittest discover \
   -s frontier/qwen35-receiptagent-v2 \
   -p "test_*.py" -v
