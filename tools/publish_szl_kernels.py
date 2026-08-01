@@ -25,6 +25,7 @@ EXPECTED_KERNEL_PACKAGE_VERSION = "0.1.1"
 KERNEL_RUNTIME_CLIENT_VERSION = "0.16.0"
 KERNEL_RUNTIME_IMAGE = f"szl-kernel-runtime:{KERNEL_RUNTIME_CLIENT_VERSION}"
 KERNEL_RUNTIME_TIMEOUT_SECONDS = 300
+KERNEL_RUNTIME_EVIDENCE_PATH = "/tmp/szl-kernel-runtime-evidence.json"
 CONTRACT_RELATIVE = Path("publishing/source-binding.json")
 FULL_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 DOCKER_CONTAINER_ID_RE = re.compile(r"^[0-9a-f]{64}$")
@@ -698,8 +699,6 @@ def verify_stable_kernel_runtime_isolated(*, revision: str) -> dict[str, Any]:
         "/tmp:rw,nosuid,nodev,noexec,size=64m",
         "--tmpfs",
         "/cache:rw,nosuid,nodev,noexec,size=2g",
-        "--tmpfs",
-            "/output:rw,nosuid,nodev,noexec,size=1m,mode=0700,uid=65532,gid=65532",
         "--cap-drop=ALL",
         "--security-opt=no-new-privileges",
         "--pids-limit=256",
@@ -713,7 +712,7 @@ def verify_stable_kernel_runtime_isolated(*, revision: str) -> dict[str, Any]:
         "--revision",
         revision,
         "--output",
-        "/output/evidence.json",
+        KERNEL_RUNTIME_EVIDENCE_PATH,
     ]
     created = subprocess.run(
         create_command,
@@ -770,7 +769,7 @@ def verify_stable_kernel_runtime_isolated(*, revision: str) -> dict[str, Any]:
                 [
                     "docker",
                     "cp",
-                    f"{container_id}:/output/evidence.json",
+                    f"{container_id}:{KERNEL_RUNTIME_EVIDENCE_PATH}",
                     str(evidence_path),
                 ],
                 check=False,

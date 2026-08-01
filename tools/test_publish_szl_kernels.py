@@ -308,7 +308,7 @@ class PublishSzlKernelsTests(unittest.TestCase):
                 "--revision",
                 revision,
                 "--output",
-                "/output/evidence.json",
+                publisher.KERNEL_RUNTIME_EVIDENCE_PATH,
             ],
         )
         self.assertIn("--log-driver=none", command)
@@ -371,10 +371,9 @@ class PublishSzlKernelsTests(unittest.TestCase):
         operations = [call.args[0][1] for call in run.call_args_list]
         self.assertEqual(operations, ["create", "start", "wait", "cp", "rm"])
         create_command = run.call_args_list[0].args[0]
-        self.assertIn(
-            "/output:rw,nosuid,nodev,noexec,size=1m,mode=0700,uid=65532,gid=65532",
-            create_command,
-        )
+        self.assertNotIn("/output", create_command)
+        self.assertIn("/tmp:rw,nosuid,nodev,noexec,size=64m", create_command)
+        self.assertIn(publisher.KERNEL_RUNTIME_EVIDENCE_PATH, create_command)
 
     def test_runtime_verifier_writes_sanitized_bounded_failure(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
