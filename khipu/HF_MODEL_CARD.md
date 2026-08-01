@@ -50,21 +50,23 @@ with citations limited to offered handles, or `ABSTAIN` with no citations.
 A validating controller must reject malformed or unsupported output and must
 resolve any content outside the weights.
 
-## Evaluator quickstart
+## Read-only evidence verification
 
 From the canonical [`szl-forge`](https://github.com/szl-holdings/szl-forge)
 source checkout:
 
 ```bash
-python khipu/sanity_gate.py
-python khipu/eval_khipu.py --help
-python tools/publish_model_source_bindings.py \
-  --source-revision "$(git rev-parse HEAD)"
+python -m pip install --requirement khipu/requirements-verify.txt
+python tools/verify_model_portfolio.py --offline
 ```
 
-The binding plan is read-only unless an authorized protected publication flow
-is explicitly invoked. Compare the expected weight hashes, receipt files, key
-scope, and exact Hub revision before loading remote artifacts.
+This command verifies committed receipt signatures, curriculum hashes, and the
+portfolio truth contract without contacting Ollama or writing a receipt. The
+owner-side `sanity_gate.py` requires a configured Khipu Ollama model, while
+`eval_khipu.py` consumes the held-out evaluation and signs/overwrites
+`eval_receipt.signed.json`; neither is a read-only help command. Compare the
+expected weight hashes, receipt files, key scope, and exact Hub revision before
+loading remote artifacts.
 
 ## Model use after verification
 

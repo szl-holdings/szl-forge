@@ -209,6 +209,18 @@ class PortfolioContractTests(unittest.TestCase):
         self.assertFalse(item["autonomy_eligible"])
         self.assertIn("2/6", " ".join(item["limitations"]))
 
+    def test_khipu_quickstart_is_pinned_and_read_only(self) -> None:
+        card = (verifier.ROOT / "khipu" / "HF_MODEL_CARD.md").read_text(
+            encoding="utf-8"
+        )
+        requirements = (
+            verifier.ROOT / "khipu" / "requirements-verify.txt"
+        ).read_text(encoding="utf-8")
+        self.assertEqual(requirements.splitlines(), ["cryptography==49.0.0"])
+        self.assertIn("python tools/verify_model_portfolio.py --offline", card)
+        self.assertNotIn("python khipu/eval_khipu.py --help", card)
+        self.assertNotIn("python khipu/sanity_gate.py", card)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
