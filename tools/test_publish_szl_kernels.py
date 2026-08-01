@@ -18,6 +18,9 @@ class FakeApi:
     def __init__(self, artifacts: dict[str, Path]) -> None:
         self.files = list(artifacts)
         self.commits: list[dict[str, object]] = []
+        self.branch_revisions = {
+            branch: self.kernel_revision for branch in publisher.KERNEL_BRANCHES
+        }
         self.remote: dict[tuple[str, str], dict[str, bytes]] = {
             (publisher.LEGACY_REPO_TYPE, self.model_revision): {
                 relative: path.read_bytes() for relative, path in artifacts.items()
@@ -63,8 +66,8 @@ class FakeApi:
         self._assert_kernel(repo_type)
         return SimpleNamespace(
             branches=[
-                SimpleNamespace(name=branch, target_commit=self.kernel_revision)
-                for branch in publisher.KERNEL_BRANCHES
+                SimpleNamespace(name=branch, target_commit=revision)
+                for branch, revision in self.branch_revisions.items()
             ]
         )
 
@@ -79,8 +82,38 @@ class FakeApi:
         self._assert_kernel(repo_type)
         return [
             SimpleNamespace(path=path)
-            for path in publisher.FIRST_CLASS_KERNEL_FILES.values()
+            for path in (
+                set(publisher.FIRST_CLASS_KERNEL_FILES.values())
+                | publisher.KERNEL_RETAINED_FILES
+            )
         ]
+
+    def publish_kernel(
+        self,
+        *,
+        source_root: Path,
+        branch: str,
+        parent_revision: str,
+        **_: object,
+    ) -> str:
+        if self.branch_revisions[branch] != parent_revision:
+            raise AssertionError((branch, parent_revision))
+        self.commits.append(
+            {"repo_type": publisher.KERNEL_REPO_TYPE, "revision": branch}
+        )
+        oid = f"{len(self.commits)}" * 40
+        remote = dict(
+            self.remote[(publisher.KERNEL_REPO_TYPE, parent_revision)]
+        )
+        for source_path, kernel_path in publisher.FIRST_CLASS_KERNEL_FILES.items():
+            if kernel_path == "README.md" and branch != "main":
+                continue
+            remote[kernel_path] = publisher.safe_file(
+                source_root, source_path
+            ).read_bytes()
+        self.remote[(publisher.KERNEL_REPO_TYPE, oid)] = remote
+        self.branch_revisions[branch] = oid
+        return oid
 
     def create_commit(
         self,
@@ -93,6 +126,8 @@ class FakeApi:
         **_: object,
     ) -> SimpleNamespace:
         del repo_id
+        if repo_type != publisher.LEGACY_REPO_TYPE or revision is not None:
+            raise AssertionError((repo_type, revision))
         self.assert_parent(repo_type, parent_commit)
         self.commits.append({"repo_type": repo_type, "revision": revision})
         oid = f"{len(self.commits)}" * 40
@@ -154,6 +189,18 @@ class PublishSzlKernelsTests(unittest.TestCase):
         dependency = workflow.index('"huggingface-hub==1.26.0"', install)
         self.assertLess(install, dependency)
         self.assertLess(dependency, tests)
+        publisher_install = workflow.index(
+            "Install exact publication client without publisher secret"
+        )
+        builder = workflow.index(
+            "cargo install --locked --version '=0.16.0' hf-kernel-builder",
+            publisher_install,
+        )
+        publish = workflow.index(
+            "Publish declared data with trusted code and verify exact readback"
+        )
+        self.assertLess(publisher_install, builder)
+        self.assertLess(builder, publish)
 
     source_revision = "a" * 40
     publisher_revision = "b" * 40
@@ -298,6 +345,7 @@ class PublishSzlKernelsTests(unittest.TestCase):
                 token="test-token",
                 api=api,
                 download_fn=api.download,
+                kernel_publish_fn=api.publish_kernel,
             )
             self.assertEqual(
                 result["status"], "PUBLISHED_AND_EXACT_READBACK_VERIFIED"
@@ -323,6 +371,21 @@ class PublishSzlKernelsTests(unittest.TestCase):
             self.assertEqual(
                 result["targets"]["legacy_model"]["readback"],
                 "EXACT_BYTES_VERIFIED",
+            )
+            mapped = result["targets"]["first_class_kernel"]["binding"][
+                "source"
+            ]["kernel_files"]
+            readme = next(item for item in mapped if item["kernel_path"] == "README.md")
+            self.assertEqual(readme["branches"], ["main"])
+            main_revision = branches_after["main"]
+            v1_revision = branches_after["v1"]
+            self.assertEqual(
+                api.remote[(publisher.KERNEL_REPO_TYPE, main_revision)]["README.md"],
+                artifacts["README.md"].read_bytes(),
+            )
+            self.assertEqual(
+                api.remote[(publisher.KERNEL_REPO_TYPE, v1_revision)]["README.md"],
+                b"previous",
             )
 
     def test_failed_readback_preserves_the_created_kernel_revision(self) -> None:
@@ -367,6 +430,7 @@ class PublishSzlKernelsTests(unittest.TestCase):
                     token="test-token",
                     api=api,
                     download_fn=fail_main_readback,
+                    kernel_publish_fn=api.publish_kernel,
                 )
             partial = json.loads(report.read_text(encoding="utf-8"))
             self.assertEqual(partial["status"], "PUBLICATION_IN_PROGRESS")
