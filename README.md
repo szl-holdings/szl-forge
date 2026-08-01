@@ -1,21 +1,48 @@
 # SZL Forge
 
-**Train SZL-1 — SZL Holdings' own model — on SZL's own metal.**
+**Train, qualify, and publish bounded SZL model artifacts from explicit source and evidence.**
 
-SZL Forge is a small, self-contained fine-tuning kit. It turns an open base
-model into **SZL-1**: a sovereign model whose identity, doctrine, and weights
-live on SZL's own hardware and are served through Ollama like any other estate
-model.
+SZL Forge is the canonical training-recipe, qualification, and publication
+control repository for several SZL model artifacts. This GitHub repository is
+software, curriculum, schemas, and evidence; it is not itself a weight repo.
+
+## Portfolio truth card
+
+| Surface | Classification | Evidence state | Boundary |
+|---|---|---|---|
+| Forge bootstrap and runbooks | **Executable software + training recipe** | Source-controlled and locally runnable | A recipe does not prove a run completed or that its output matches a published model. |
+| [`SZL-Forge-1.5B-ReceiptAgent`](https://huggingface.co/SZLHOLDINGS/SZL-Forge-1.5B-ReceiptAgent) | **Trained fine-tuned weights** | `MEASURED_LIMITED`; expected public weight hashes and owner-signed training/evaluation receipts are bound in `publishing/model-source-bindings.json` | Proposal-only, not promoted, and not independently certified. |
+| [`SZL-Khipu-1.5B`](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B) | **Trained fine-tuned weights** | `MEASURED_RESEARCH_ONLY`; repository-declared key continuity | Held-out abstention is 2/6; autonomous and high-stakes use is prohibited. |
+| [`SZL-Khipu-1.5B-GGUF`](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B-GGUF) | **Quantized derivative** | Exact GGUF bytes are hash-bound | Reproducible quantization and signed runtime outputs are not claimed. |
+| [`szl-receiptagent-qwen35-0.8b-v2`](https://huggingface.co/SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2) | **Trained LoRA adapter** | Bounded owner-measured acceptance: 5/5 contract drafts and 6/6 adversarial refusals | Small synthetic gate, proposal-only, no broad quality or safety benchmark. |
+| `SZL-Khipu-1.5B-BrainNavigator` card source | **Historical/planned card name** | Superseded by the measured `SZL-Khipu-1.5B` binding | Do not treat the old name or model-card template as a separate trained release. |
+| Forge Lab / Model Inference Lab | **Presentation and bounded runtime Spaces** | Snapshot verification or constrained inference, depending on the Space | Reachability is transport only; neither Space trains, promotes, or authorizes a model. |
+
+**Investor value.** Forge makes model maturity, public bytes, source lineage,
+and promotion boundaries navigable without presenting recipes, derivatives, or
+Spaces as equivalent to trained weights.
+
+**Developer/evaluator quickstart.** Inspect the fail-closed portfolio binding
+before running or publishing anything:
+
+```bash
+python tools/publish_model_source_bindings.py \
+  --source-revision "$(git rev-parse HEAD)"
+```
+
+This local plan does not publish. Compare its model ID, source files, expected
+weight hashes, receipt scope, promotion state, and limitations with the exact
+Hub revision under evaluation.
 
 ## What SZL Forge is
 
 - A **QLoRA fine-tuning kit** built on [Unsloth](https://github.com/unslothai/unsloth).
-- It fine-tunes the open base model **`unsloth/Qwen2.5-3B-Instruct`** (4-bit)
-  into SZL-1, then merges to a 16-bit safetensors folder Ollama can import.
-- Designed to run on **one laptop GPU** — an RTX 5050 (8 GB VRAM). A 3B QLoRA
-  run fits in roughly 5–8 GB of VRAM.
-- The result is owned end-to-end: owned weights, owned hardware, owned doctrine —
-  no rented cloud inference, no vendor lock-in.
+- A set of model-specific curricula, schemas, qualification tools, signed
+  evidence, and protected publication contracts.
+- A way to produce locally controlled model derivatives on supported hardware;
+  hardware fit, run completion, and artifact quality must be observed per run.
+- A release source that keeps trained weights, quantized derivatives, recipes,
+  snapshots, and Spaces in separate evidence lanes.
 
 ## One command (laptop)
 
@@ -91,9 +118,10 @@ python tools/publish_model_source_bindings.py \
   --source-revision "$(git rev-parse HEAD)"
 ```
 
-Publication is performed only from protected `main` by
-`.github/workflows/publish-model-source-bindings.yml`, using the repository's
-encrypted Hugging Face organization credential.
+Publication is performed only from protected `main` by the dependent
+`publish-bindings` job in `.github/workflows/publish-model-inference-lab.yml`,
+after that same workflow verifies the exact live Space revision and using the
+repository's encrypted Hugging Face organization credential.
 
 ## Pipeline
 
@@ -166,11 +194,13 @@ SZL-1 is trained to hold to SZL's honesty doctrine: label claims **MEASURED**,
 invent an answer. The system prompt baked into `Modelfile` reinforces this at
 serving time.
 
-## Benchmarks
+## Evaluation status
 
-**None yet.** No training run has been executed end-to-end on the laptop at the
-time of writing, so there are **no measured quality, speed, or accuracy numbers
-to report**. Any such figures will be added only once they are genuinely
-measured on real hardware — until then, treat performance as UNKNOWN.
-
-`eval_szl.py` now ships in this kit; run it to produce MEASURED numbers (see `RUNBOOK-EVAL.md`). It scores SZL's own K-Verify Benchmark v1 against the sovereign endpoint and writes `eval_results.json` where every number is labeled MEASURED. Until you run it on metal, this section stays **None yet / UNKNOWN** — no figure is written here before a real run produces it.
+- ReceiptAgent Qwen2.5 and Khipu have repository-bound owner measurements, but
+  remain limited or research-only according to `publishing/model-source-bindings.json`.
+- ReceiptAgent Qwen3.5 v2 has a small preregistered acceptance gate. Its raw
+  counts are evidence for that contract only, not a broad benchmark.
+- Any recipe without a qualifying receipt remains **UNAVAILABLE / NOT RUN** for
+  performance claims.
+- `eval_szl.py` can produce a local result. Label that result **MEASURED** only
+  for the exact model, hardware, inputs, and revision actually exercised.

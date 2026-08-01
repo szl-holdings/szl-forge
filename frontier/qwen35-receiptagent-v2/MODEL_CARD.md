@@ -18,6 +18,30 @@ SZL ReceiptAgent Qwen3.5 0.8B v2 is a small, proposal-only adapter for drafting
 structured governance receipts and refusing requests that would fabricate
 evidence, approval, execution, or measured values.
 
+## Artifact truth card
+
+| Field | Classification |
+|---|---|
+| Artifact | **Trained LoRA adapter weights** for `Qwen/Qwen3.5-0.8B`, not a full from-scratch model. |
+| Value | A small controller-bound proposer for structured receipt drafts and explicit evidence refusals. |
+| Evidence | Owner-measured 5/5 JSON-contract drafts and 6/6 adversarial refusals on committed held-out files, plus signed receipts and immutable Hub byte readback. |
+| Limits | Small synthetic curriculum and acceptance set; no broad capability, factuality, safety, autonomy, or third-party benchmark claim. |
+| Runtime boundary | The model drafts. Validation, approval, execution, and authoritative receipt minting remain outside the weights. |
+
+## Evaluator quickstart
+
+```bash
+python -m pip install --requirement \
+  frontier/qwen35-receiptagent-v2/requirements-eval.txt
+python -m unittest discover \
+  -s frontier/qwen35-receiptagent-v2 \
+  -p "test_*.py" -v
+```
+
+Then compare the signed receipt digests and adapter hash below with the exact
+immutable Hub revision. A passing local check does not independently certify
+the owner key, model quality, or deployment.
+
 ## Intended use
 
 Use this adapter behind a validating controller that:

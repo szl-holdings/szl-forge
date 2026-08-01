@@ -318,6 +318,102 @@ class PublishModelSourceBindingsTests(unittest.TestCase):
         self.assertTrue(evidence["inference"]["deterministic_outputs_equal"])
         self.assertEqual(evidence["energy"]["state"], "UNAVAILABLE")
 
+        matching = bindings.runtime_evidence(
+            artifact,
+            request,
+            expected_source_revision="3" * 40,
+        )
+        self.assertEqual(matching["runtime_source_revision"], "3" * 40)
+        with self.assertRaisesRegex(bindings.BindingError, "does not match expected"):
+            bindings.runtime_evidence(
+                artifact,
+                request,
+                expected_source_revision="4" * 40,
+            )
+
+    def test_publish_preflights_every_artifact_before_the_first_upload(self) -> None:
+        contract = {
+            "source_repository": "szl-holdings/szl-forge",
+            "artifacts": [
+                {"repo_id": "SZLHOLDINGS/first"},
+                {"repo_id": "SZLHOLDINGS/runtime", "runtime_probe": {}},
+            ],
+        }
+
+        def prepare(_api, _contract, artifact, **_kwargs):
+            if artifact.get("runtime_probe") is not None:
+                raise bindings.BindingError("live runtime source revision mismatch")
+            return ({"repo_id": artifact["repo_id"]}, b"{}\n")
+
+        with tempfile.TemporaryDirectory() as temporary:
+            report = Path(temporary) / "report.json"
+            with (
+                mock.patch.object(bindings, "load_contract", return_value=contract),
+                mock.patch.object(bindings, "prepare_one", side_effect=prepare),
+                mock.patch.object(bindings, "publish_prepared") as publish_prepared,
+            ):
+                with self.assertRaisesRegex(bindings.BindingError, "revision mismatch"):
+                    bindings.run(
+                        contract_path=Path("contract.json"),
+                        report_path=report,
+                        source_revision="3" * 40,
+                        expected_runtime_source_revision="3" * 40,
+                        publish=True,
+                        token="test-token",
+                        api=FakeApi(),
+                    )
+                publish_prepared.assert_not_called()
+                self.assertFalse(report.exists())
+
+    def test_upload_is_bound_to_the_verified_hub_parent(self) -> None:
+        artifact = {"repo_id": "SZLHOLDINGS/example"}
+        source_revision = "3" * 40
+        hub_revision = "a" * 40
+        body = b'{"schema":"test"}\n'
+
+        with tempfile.TemporaryDirectory() as temporary:
+            readback = Path(temporary) / "publication.json"
+            readback.write_bytes(body)
+            api = mock.Mock()
+            api.upload_file.return_value = SimpleNamespace(oid="d" * 40)
+            result = {
+                "status": "VERIFIED_DRY_RUN",
+                "hub_revision_before": hub_revision,
+            }
+            with mock.patch.object(
+                bindings,
+                "hf_hub_download",
+                return_value=str(readback),
+            ):
+                published = bindings.publish_prepared(
+                    api,
+                    artifact,
+                    result,
+                    body,
+                    source_revision=source_revision,
+                    token="test-token",
+                )
+
+            upload = api.upload_file.call_args.kwargs
+            self.assertEqual(upload["revision"], "main")
+            self.assertEqual(upload["parent_commit"], hub_revision)
+            self.assertEqual(published["status"], "PUBLISHED_AND_READBACK_VERIFIED")
+
+            conflicting_api = mock.Mock()
+            conflicting_api.upload_file.side_effect = RuntimeError("parent conflict")
+            with self.assertRaisesRegex(RuntimeError, "parent conflict"):
+                bindings.publish_prepared(
+                    conflicting_api,
+                    artifact,
+                    {
+                        "status": "VERIFIED_DRY_RUN",
+                        "hub_revision_before": hub_revision,
+                    },
+                    body,
+                    source_revision=source_revision,
+                    token="test-token",
+                )
+
 
 if __name__ == "__main__":
     unittest.main()

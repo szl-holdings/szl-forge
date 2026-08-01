@@ -38,17 +38,22 @@ formula Forge. It exposes independently named views for system state, artifact
 integrity, fixture evaluation, receipts, formula metadata, scientific-source
 policy, and the governed curriculum blueprint.
 
-The static console also renders the canonical
-`szl.model-kernel-portfolio/v1` registry. It separates two trained fine-tunes,
-one quantized derivative, one learned kernel, and eleven software
-kernels/recipes/cards. No Hub card is promoted to a trained-model claim merely
-because it is published under the model API.
+> **Presentation class: SNAPSHOT / READ-ONLY.** This Space presents packaged
+> evidence and performs browser-side integrity checks. It is not a model, model
+> trainer, publisher, promoter, deployment control plane, or independent
+> evaluator. `REACHABLE` describes transport only.
+
+The static console also renders the packaged
+`szl.model-kernel-portfolio/v1` registry. Each entry retains its declared class
+and evidence state; a model-API listing, registry count, or reachable page does
+not upgrade software, a recipe, a surrogate, or a derivative into trained
+weights.
 
 ## Evidence boundary
 
 - `REACHABLE` describes transport availability only.
 - `SNAPSHOT` identifies packaged evidence, not live training or provider state.
-- A measured local QLoRA run completed on 61 owned doctrine records; the weights remain local and unpublished.
+- Model-specific training and publication state comes from the packaged binding and receipts; the Space does not infer it from reachability.
 - The raw-model contract result is 1/12. The deterministic governed runtime result is 12/12. Neither is a broad capability benchmark.
 - Formula statuses are registry metadata and are not independently re-proven by this Space.
 - The curriculum is `BLUEPRINT_NOT_TRAINED`.
@@ -80,10 +85,10 @@ python -m py_compile forge_lab.py forge_runtime_contract.py app.py  # legacy Gra
 
 <div align="center">
 
-**[🛡️ SZLHOLDINGS on Hugging Face →](https://huggingface.co/SZLHOLDINGS)**   ·   **[a-11-oy.com →](https://a-11-oy.com)**   ·   **[Estate hub — live →](https://szlholdings-szl-estate-live.static.hf.space)**
+**[SZLHOLDINGS on Hugging Face](https://huggingface.co/SZLHOLDINGS)**   |   **[a-11-oy.com](https://a-11-oy.com)**   |   **[Estate hub](https://szlholdings-szl-estate-live.static.hf.space)**
 
-### Governed AI you can prove.
+### Governed AI with inspectable evidence.
 
-<sub>SLSA: L1 honest · L2 attested · L3 roadmap. Λ = Conjecture 1 (advisory, never a theorem). Trust ceiling 0.97 — never 100%. Labels honest by default: MEASURED / REPORTED / MODELED / HEURISTIC / UNKNOWN / UNAVAILABLE. locked-proven = exactly 8 {F1,F4,F7,F11,F12,F18,F19,F22}.</sub>
+<sub>Labels remain explicit: MEASURED / REPORTED / MODELED / SAMPLE / UNKNOWN / UNAVAILABLE. Integrity and origin evidence do not establish model quality, safety, or runtime readiness.</sub>
 
 </div>
