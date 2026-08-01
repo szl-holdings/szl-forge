@@ -109,30 +109,6 @@ def _receipt_downloader(root: Path):
 
 
 class PublishModelSourceBindingsTests(unittest.TestCase):
-    def test_binding_publication_follows_verified_space_publication(self) -> None:
-        repository_root = Path(__file__).parents[1]
-        workflow = (
-            repository_root
-            / ".github/workflows/publish-model-source-bindings.yml"
-        ).read_text(encoding="utf-8")
-
-        self.assertIn('workflows: ["Publish model inference lab"]', workflow)
-        self.assertIn("types: [completed]", workflow)
-        self.assertIn("branches: [main]", workflow)
-        self.assertIn("workflow_run.conclusion == 'success'", workflow)
-        self.assertIn("workflow_run.head_branch == 'main'", workflow)
-        self.assertIn(
-            "workflow_run.head_repository.full_name == github.repository",
-            workflow,
-        )
-        self.assertIn("workflow_run.head_sha || github.sha", workflow)
-        self.assertIn("ref: ${{ env.SOURCE_REVISION }}", workflow)
-        self.assertIn('--source-revision "${SOURCE_REVISION}"', workflow)
-        self.assertNotIn(
-            '- ".github/workflows/publish-model-source-bindings.yml"',
-            workflow,
-        )
-
     def test_runtime_probe_matches_packaged_model_lab_release(self) -> None:
         repository_root = Path(__file__).parents[1]
         contract = json.loads(

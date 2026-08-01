@@ -56,6 +56,7 @@ jobs:
             tools/test_publish_szl_kernels.py \
             tools/publish_model_source_bindings.py \
             tools/test_publish_model_source_bindings.py \
+            tools/test_model_binding_workflow.py \
             tools/publish_hf_space.py \
             tools/test_publish_hf_space.py \
             tools/verify_model_portfolio.py \
@@ -74,6 +75,7 @@ jobs:
             tools/test_authorize_kernels_release.py \
             tools/test_publish_szl_kernels.py
           PYTHONPATH=tools python tools/test_publish_model_source_bindings.py
+          python tools/test_model_binding_workflow.py
           PYTHONPATH=tools python tools/test_publish_hf_space.py
           PYTHONPATH=frontier/qwen35-receiptagent-v2 \
             python frontier/qwen35-receiptagent-v2/test_qualify_runtime.py
