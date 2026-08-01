@@ -308,7 +308,7 @@ class PublishSzlKernelsTests(unittest.TestCase):
                 "--revision",
                 revision,
                 "--output",
-                "/output/evidence.json",
+                publisher.KERNEL_RUNTIME_EVIDENCE_PATH,
             ],
         )
         self.assertIn("--log-driver=none", command)
