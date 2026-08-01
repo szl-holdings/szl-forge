@@ -572,6 +572,24 @@ def kernel_branch_targets(api: HfApi, *, token: str) -> dict[str, str]:
     return targets
 
 
+def revalidate_kernel_branch_parents(
+    api: HfApi,
+    observed_branches: dict[str, dict[str, Any]],
+    *,
+    token: str,
+) -> dict[str, str]:
+    expected = {
+        branch: observed_branches[branch]["revision"]
+        for branch in KERNEL_BRANCHES
+    }
+    current = kernel_branch_targets(api, token=token)
+    if current != expected:
+        raise PublicationError(
+            "first-class Kernel branch parents changed before upload"
+        )
+    return current
+
+
 def verify_stable_kernel_runtime(
     *,
     revision: str,
@@ -945,6 +963,9 @@ def run(
         result["status"] = "PUBLICATION_IN_PROGRESS"
         result["targets"]["first_class_kernel"]["branches_after"] = {}
         result["targets"]["first_class_kernel"]["readback"] = {}
+        result["targets"]["first_class_kernel"][
+            "parents_revalidated_before_upload"
+        ] = {}
         result["targets"]["first_class_kernel"]["runtime"] = {
             "status": "PENDING",
             "client_version": KERNEL_RUNTIME_CLIENT_VERSION,
@@ -958,6 +979,15 @@ def run(
                 kernel_binding_bytes,
                 staging_root,
             )
+            revalidated_parents = revalidate_kernel_branch_parents(
+                api,
+                observed_before["first_class_kernel"]["branches"],
+                token=token,
+            )
+            result["targets"]["first_class_kernel"][
+                "parents_revalidated_before_upload"
+            ] = revalidated_parents
+            report_path.write_text(canonical_json(result), encoding="utf-8")
             upload_error: Exception | None = None
             try:
                 kernel_upload_fn(staging_root, token)

@@ -190,6 +190,24 @@ class FakeApi:
 
 
 class PublishSzlKernelsTests(unittest.TestCase):
+    def test_kernel_parent_revalidation_rejects_branch_drift(self) -> None:
+        api = FakeApi({})
+        observed = {
+            branch: {"revision": api.kernel_revision}
+            for branch in publisher.KERNEL_BRANCHES
+        }
+        api.kernel_revisions["v1"] = "f" * 40
+
+        with self.assertRaisesRegex(
+            publisher.PublicationError,
+            "branch parents changed before upload",
+        ):
+            publisher.revalidate_kernel_branch_parents(
+                api,
+                observed,
+                token="test-token",
+            )
+
     def test_isolated_runtime_timeout_forces_container_cleanup(self) -> None:
         container_id = "d" * 64
         operations: list[str] = []
