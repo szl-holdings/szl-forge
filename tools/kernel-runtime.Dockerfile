@@ -5,6 +5,7 @@ RUN python -m pip install --disable-pip-version-check --no-cache-dir \
       "torch==2.9.1" \
     && python -m pip install --disable-pip-version-check --no-cache-dir \
       "huggingface-hub==1.26.0" \
+      "numpy==2.3.5" \
       "kernels==0.16.0"
 
 WORKDIR /runtime

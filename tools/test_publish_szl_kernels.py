@@ -370,6 +370,11 @@ class PublishSzlKernelsTests(unittest.TestCase):
 
         operations = [call.args[0][1] for call in run.call_args_list]
         self.assertEqual(operations, ["create", "start", "wait", "cp", "rm"])
+        create_command = run.call_args_list[0].args[0]
+        self.assertIn(
+            "/output:rw,nosuid,nodev,noexec,size=1m,mode=0700,uid=65532,gid=65532",
+            create_command,
+        )
 
     def test_runtime_verifier_writes_sanitized_bounded_failure(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -390,6 +395,12 @@ class PublishSzlKernelsTests(unittest.TestCase):
         self.assertEqual(evidence["error_type"], "ValueError")
         self.assertEqual(len(evidence["error"]), 2000)
         self.assertTrue(all(32 <= ord(character) <= 126 for character in evidence["error"]))
+
+    def test_kernel_runtime_image_pins_canonical_numpy(self) -> None:
+        dockerfile = Path(__file__).with_name("kernel-runtime.Dockerfile").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn('"numpy==2.3.5"', dockerfile)
 
     def test_first_class_before_accepts_split_builder_layout(self) -> None:
         api = FakeApi({})
