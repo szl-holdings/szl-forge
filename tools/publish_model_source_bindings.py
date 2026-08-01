@@ -500,6 +500,8 @@ def publish_prepared(
         path_in_repo="publication.json",
         repo_id=artifact["repo_id"],
         repo_type="model",
+        revision="main",
+        parent_commit=result["hub_revision_before"],
         token=token,
         commit_message=f"Bind canonical source {source_revision[:12]}",
     )

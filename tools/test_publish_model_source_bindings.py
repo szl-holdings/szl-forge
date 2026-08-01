@@ -365,6 +365,55 @@ class PublishModelSourceBindingsTests(unittest.TestCase):
                 publish_prepared.assert_not_called()
                 self.assertFalse(report.exists())
 
+    def test_upload_is_bound_to_the_verified_hub_parent(self) -> None:
+        artifact = {"repo_id": "SZLHOLDINGS/example"}
+        source_revision = "3" * 40
+        hub_revision = "a" * 40
+        body = b'{"schema":"test"}\n'
+
+        with tempfile.TemporaryDirectory() as temporary:
+            readback = Path(temporary) / "publication.json"
+            readback.write_bytes(body)
+            api = mock.Mock()
+            api.upload_file.return_value = SimpleNamespace(oid="d" * 40)
+            result = {
+                "status": "VERIFIED_DRY_RUN",
+                "hub_revision_before": hub_revision,
+            }
+            with mock.patch.object(
+                bindings,
+                "hf_hub_download",
+                return_value=str(readback),
+            ):
+                published = bindings.publish_prepared(
+                    api,
+                    artifact,
+                    result,
+                    body,
+                    source_revision=source_revision,
+                    token="test-token",
+                )
+
+            upload = api.upload_file.call_args.kwargs
+            self.assertEqual(upload["revision"], "main")
+            self.assertEqual(upload["parent_commit"], hub_revision)
+            self.assertEqual(published["status"], "PUBLISHED_AND_READBACK_VERIFIED")
+
+            conflicting_api = mock.Mock()
+            conflicting_api.upload_file.side_effect = RuntimeError("parent conflict")
+            with self.assertRaisesRegex(RuntimeError, "parent conflict"):
+                bindings.publish_prepared(
+                    conflicting_api,
+                    artifact,
+                    {
+                        "status": "VERIFIED_DRY_RUN",
+                        "hub_revision_before": hub_revision,
+                    },
+                    body,
+                    source_revision=source_revision,
+                    token="test-token",
+                )
+
 
 if __name__ == "__main__":
     unittest.main()
