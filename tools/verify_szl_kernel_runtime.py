@@ -21,9 +21,13 @@ def _write_evidence(output: Path | None, evidence: dict[str, object]) -> None:
 
 
 def _bounded_printable(value: object, *, limit: int) -> str:
+    try:
+        rendered = str(value)
+    except BaseException:
+        rendered = "<unprintable>"
     return "".join(
         character if 32 <= ord(character) <= 126 else "?"
-        for character in str(value)
+        for character in rendered
     )[:limit]
 
 
@@ -34,7 +38,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         evidence = verify_stable_kernel_runtime(revision=args.revision)
-    except Exception as exc:
+    except (Exception, SystemExit) as exc:
         _write_evidence(
             args.output,
             {
