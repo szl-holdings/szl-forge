@@ -118,9 +118,10 @@ python tools/publish_model_source_bindings.py \
   --source-revision "$(git rev-parse HEAD)"
 ```
 
-Publication is performed only from protected `main` by
-`.github/workflows/publish-model-source-bindings.yml`, using the repository's
-encrypted Hugging Face organization credential.
+Publication is performed only from protected `main` by the dependent
+`publish-bindings` job in `.github/workflows/publish-model-inference-lab.yml`,
+after that same workflow verifies the exact live Space revision and using the
+repository's encrypted Hugging Face organization credential.
 
 ## Pipeline
 
