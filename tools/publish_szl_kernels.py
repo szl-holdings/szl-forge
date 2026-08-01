@@ -699,7 +699,7 @@ def verify_stable_kernel_runtime_isolated(*, revision: str) -> dict[str, Any]:
         "--tmpfs",
         "/cache:rw,nosuid,nodev,noexec,size=2g",
         "--tmpfs",
-        "/output:rw,nosuid,nodev,noexec,size=1m",
+            "/output:rw,nosuid,nodev,noexec,size=1m,mode=0700,uid=65532,gid=65532",
         "--cap-drop=ALL",
         "--security-opt=no-new-privileges",
         "--pids-limit=256",
