@@ -9,6 +9,9 @@ import io
 import json
 import os
 import re
+import shutil
+import subprocess
+import tempfile
 from pathlib import Path
 from typing import Any, Callable, Iterable
 
@@ -22,10 +25,10 @@ FULL_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 LEGACY_REPO_TYPE = "model"
 KERNEL_REPO_TYPE = "kernel"
 KERNEL_BRANCHES = ("main", "v1")
-KERNEL_BINDING_PATH = "source-binding.json"
+KERNEL_VERSION_BRANCH = "v1"
+KERNEL_BINDING_PATH = "build/torch-cpu/source-binding.json"
+KERNEL_BUILDER_BINARY = "kernel-builder"
 FIRST_CLASS_KERNEL_FILES = {
-    ".gitattributes": ".gitattributes",
-    "LICENSE": "LICENSE",
     "README.md": "README.md",
     "build/torch-universal/szl_kernels/__init__.py": (
         "build/torch-cpu/szl_kernels/__init__.py"
@@ -39,6 +42,16 @@ FIRST_CLASS_KERNEL_FILES = {
     "build/torch-universal/szl_kernels/metadata.json": (
         "build/torch-cpu/metadata.json"
     ),
+}
+
+KERNEL_BRANCH_FILES = {
+    "main": {"README.md"},
+    KERNEL_VERSION_BRANCH: set(FIRST_CLASS_KERNEL_FILES.values()) - {"README.md"}
+    | {KERNEL_BINDING_PATH},
+}
+KERNEL_PREFLIGHT_BRANCH_FILES = {
+    branch: paths - {KERNEL_BINDING_PATH}
+    for branch, paths in KERNEL_BRANCH_FILES.items()
 }
 
 
@@ -112,13 +125,17 @@ def load_authorization(
         or source.get("protected_main") != source_revision
         or source.get("signature_verified") is not True
     ):
-        raise PublicationError("source authorization does not bind the requested revision")
+        raise PublicationError(
+            "source authorization does not bind the requested revision"
+        )
     if (
         publisher.get("repository") != EXPECTED_PUBLISHER_REPOSITORY
         or publisher.get("revision") != publisher_revision
         or publisher.get("protected_main") != publisher_revision
     ):
-        raise PublicationError("publisher authorization does not bind this Forge revision")
+        raise PublicationError(
+            "publisher authorization does not bind this Forge revision"
+        )
     return payload
 
 
@@ -192,9 +209,7 @@ def legacy_model_before(
         critical.append({"path": relative, "sha256": observed})
     return {
         "revision": info.sha,
-        "declared_files_present": len(
-            set(contract["artifact_files"]) & observed_files
-        ),
+        "declared_files_present": len(set(contract["artifact_files"]) & observed_files),
         "critical_artifacts": critical,
     }
 
@@ -209,8 +224,7 @@ def first_class_kernel_before(
     missing_sources = sorted(set(FIRST_CLASS_KERNEL_FILES) - declared)
     if missing_sources:
         raise PublicationError(
-            "source contract is missing first-class Kernel files: "
-            f"{missing_sources}"
+            f"source contract is missing first-class Kernel files: {missing_sources}"
         )
 
     info = api.repo_info(
@@ -231,7 +245,6 @@ def first_class_kernel_before(
             f"first-class Kernel is missing release branches: {missing_branches}"
         )
 
-    expected_paths = set(FIRST_CLASS_KERNEL_FILES.values())
     branch_evidence: dict[str, Any] = {}
     for branch in KERNEL_BRANCHES:
         target = branches[branch]
@@ -246,6 +259,7 @@ def first_class_kernel_before(
             )
             if getattr(entry, "path", None)
         }
+        expected_paths = KERNEL_PREFLIGHT_BRANCH_FILES[branch]
         missing = sorted(expected_paths - observed_files)
         if missing:
             raise PublicationError(
@@ -298,9 +312,7 @@ def publisher_identity(
     if not run_id.isdigit() or not run_attempt.isdigit():
         raise PublicationError("publisher run identity is malformed")
     workflow_path = ".github/workflows/publish-szl-kernels.yml"
-    if not workflow_ref.startswith(
-        f"{EXPECTED_PUBLISHER_REPOSITORY}/{workflow_path}@"
-    ):
+    if not workflow_ref.startswith(f"{EXPECTED_PUBLISHER_REPOSITORY}/{workflow_path}@"):
         raise PublicationError("publisher workflow reference is malformed")
     return {
         "repository": repository,
@@ -371,6 +383,8 @@ def verify_kernel_readback(
     download_fn: Callable[..., str],
 ) -> None:
     for source_path, kernel_path in FIRST_CLASS_KERNEL_FILES.items():
+        if kernel_path not in KERNEL_BRANCH_FILES[branch]:
+            continue
         downloaded = Path(
             download_fn(
                 EXPECTED_REPO_ID,
@@ -384,19 +398,97 @@ def verify_kernel_readback(
             raise PublicationError(
                 f"first-class Kernel {branch} readback mismatch at {kernel_path}"
             )
-    binding = Path(
-        download_fn(
-            EXPECTED_REPO_ID,
-            KERNEL_BINDING_PATH,
-            repo_type=KERNEL_REPO_TYPE,
-            revision=revision,
-            token=token,
+    if KERNEL_BINDING_PATH in KERNEL_BRANCH_FILES[branch]:
+        binding = Path(
+            download_fn(
+                EXPECTED_REPO_ID,
+                KERNEL_BINDING_PATH,
+                repo_type=KERNEL_REPO_TYPE,
+                revision=revision,
+                token=token,
+            )
         )
-    )
-    if binding.read_bytes() != binding_bytes:
-        raise PublicationError(
-            f"first-class Kernel {branch} readback mismatch at {KERNEL_BINDING_PATH}"
+        if binding.read_bytes() != binding_bytes:
+            raise PublicationError(
+                f"first-class Kernel {branch} readback mismatch at {KERNEL_BINDING_PATH}"
+            )
+
+
+def stage_kernel_builder_upload(
+    source_root: Path,
+    binding_bytes: bytes,
+    destination: Path,
+) -> Path:
+    """Create the exact official kernel-builder upload layout."""
+
+    for source_path, kernel_path in FIRST_CLASS_KERNEL_FILES.items():
+        target = destination / kernel_path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(safe_file(source_root, source_path), target)
+    binding = destination / KERNEL_BINDING_PATH
+    binding.parent.mkdir(parents=True, exist_ok=True)
+    binding.write_bytes(binding_bytes)
+    return destination
+
+
+def run_kernel_builder_upload(
+    source_root: Path,
+    binding_bytes: bytes,
+    *,
+    token: str,
+) -> dict[str, Any]:
+    """Publish through Hugging Face's supported first-class Kernel client."""
+
+    with tempfile.TemporaryDirectory(prefix="szl-kernel-upload-") as temporary:
+        stage = stage_kernel_builder_upload(
+            source_root,
+            binding_bytes,
+            Path(temporary) / "kernel",
         )
+        output = Path(temporary) / "kernel-builder-output.json"
+        environment = dict(os.environ)
+        environment["HF_TOKEN"] = token
+        completed = subprocess.run(
+            [
+                KERNEL_BUILDER_BINARY,
+                "upload",
+                str(stage),
+                "--repo-id",
+                EXPECTED_REPO_ID,
+                "--branch",
+                KERNEL_VERSION_BRANCH,
+                "--repo-type",
+                KERNEL_REPO_TYPE,
+                "--output-json",
+                str(output),
+                "--quiet",
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            env=environment,
+        )
+        if completed.returncode != 0:
+            detail = completed.stderr.strip() or completed.stdout.strip()
+            raise PublicationError(
+                "official kernel-builder upload failed"
+                + (f": {detail[-2000:]}" if detail else "")
+            )
+        if not output.is_file():
+            raise PublicationError("kernel-builder did not write its output receipt")
+        receipt = json.loads(output.read_text(encoding="utf-8"))
+        if (
+            receipt.get("status") not in {"uploaded", "no_changes"}
+            or receipt.get("repo_id") != EXPECTED_REPO_ID
+            or receipt.get("branch") != KERNEL_VERSION_BRANCH
+            or receipt.get("pull_requests") != []
+        ):
+            raise PublicationError(
+                "kernel-builder returned an unexpected upload receipt"
+            )
+        return receipt
 
 
 def run(
@@ -410,6 +502,7 @@ def run(
     token: str | None,
     api: HfApi | None = None,
     download_fn: Callable[..., str] = hf_hub_download,
+    kernel_upload_fn: Callable[..., dict[str, Any]] = run_kernel_builder_upload,
 ) -> dict[str, Any]:
     source_revision = source_revision.strip().lower()
     if FULL_SHA_RE.fullmatch(source_revision) is None:
@@ -516,47 +609,55 @@ def run(
         result["targets"]["first_class_kernel"]["readback"] = {}
         report_path.write_text(canonical_json(result), encoding="utf-8")
 
-        for branch in KERNEL_BRANCHES:
-            kernel_operations = [
-                CommitOperationAdd(
-                    path_in_repo=kernel_path,
-                    path_or_fileobj=str(safe_file(source_root, source_path)),
-                )
-                for source_path, kernel_path in FIRST_CLASS_KERNEL_FILES.items()
-            ]
-            kernel_operations.append(
-                CommitOperationAdd(
-                    path_in_repo=KERNEL_BINDING_PATH,
-                    path_or_fileobj=io.BytesIO(kernel_binding_bytes),
-                )
-            )
-            kernel_commit = api.create_commit(
-                repo_id=EXPECTED_REPO_ID,
+        before_refs = {
+            branch.name: branch.target_commit
+            for branch in api.list_repo_refs(
+                EXPECTED_REPO_ID,
                 repo_type=KERNEL_REPO_TYPE,
-                revision=branch,
-                parent_commit=observed_before["first_class_kernel"]["branches"][
-                    branch
-                ]["revision"],
-                operations=kernel_operations,
-                commit_message=(
-                    f"Publish authorized Kernel source {source_revision[:12]}"
-                ),
                 token=token,
+            ).branches
+        }
+        expected_refs = {
+            branch: observed_before["first_class_kernel"]["branches"][branch][
+                "revision"
+            ]
+            for branch in KERNEL_BRANCHES
+        }
+        if {
+            branch: before_refs.get(branch) for branch in KERNEL_BRANCHES
+        } != expected_refs:
+            raise PublicationError(
+                "first-class Kernel branches moved after authorization preflight"
             )
-            kernel_revision = getattr(kernel_commit, "oid", None)
+
+        kernel_receipt = kernel_upload_fn(
+            source_root,
+            kernel_binding_bytes,
+            token=token,
+        )
+        result["targets"]["first_class_kernel"]["publisher"] = {
+            "client": "kernel-builder",
+            "receipt": kernel_receipt,
+        }
+
+        after_refs = {
+            branch.name: branch.target_commit
+            for branch in api.list_repo_refs(
+                EXPECTED_REPO_ID,
+                repo_type=KERNEL_REPO_TYPE,
+                token=token,
+            ).branches
+        }
+        for branch in KERNEL_BRANCHES:
+            kernel_revision = after_refs.get(branch)
             if not kernel_revision:
-                kernel_revision = api.repo_info(
-                    EXPECTED_REPO_ID,
-                    repo_type=KERNEL_REPO_TYPE,
-                    revision=branch,
-                    token=token,
-                ).sha
-            result["targets"]["first_class_kernel"]["branches_after"][
-                branch
-            ] = kernel_revision
-            result["targets"]["first_class_kernel"]["readback"][branch] = (
-                "PENDING"
+                raise PublicationError(
+                    f"kernel-builder upload did not leave branch {branch} readable"
+                )
+            result["targets"]["first_class_kernel"]["branches_after"][branch] = (
+                kernel_revision
             )
+            result["targets"]["first_class_kernel"]["readback"][branch] = "PENDING"
             report_path.write_text(canonical_json(result), encoding="utf-8")
             verify_kernel_readback(
                 source_root,

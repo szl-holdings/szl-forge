@@ -18,6 +18,10 @@ class FakeApi:
     def __init__(self, artifacts: dict[str, Path]) -> None:
         self.files = list(artifacts)
         self.commits: list[dict[str, object]] = []
+        self.kernel_uploads: list[dict[str, object]] = []
+        self.kernel_branches = {
+            branch: self.kernel_revision for branch in publisher.KERNEL_BRANCHES
+        }
         self.remote: dict[tuple[str, str], dict[str, bytes]] = {
             (publisher.LEGACY_REPO_TYPE, self.model_revision): {
                 relative: path.read_bytes() for relative, path in artifacts.items()
@@ -48,9 +52,11 @@ class FakeApi:
         revision: str | None = None,
         **_: object,
     ) -> SimpleNamespace:
-        del repo_id, revision
+        del repo_id
         self._assert_kernel(repo_type)
-        return SimpleNamespace(sha=self.kernel_revision)
+        return SimpleNamespace(
+            sha=self.kernel_branches.get(revision or "main", self.kernel_revision)
+        )
 
     def list_repo_refs(
         self,
@@ -63,7 +69,10 @@ class FakeApi:
         self._assert_kernel(repo_type)
         return SimpleNamespace(
             branches=[
-                SimpleNamespace(name=branch, target_commit=self.kernel_revision)
+                SimpleNamespace(
+                    name=branch,
+                    target_commit=self.kernel_branches[branch],
+                )
                 for branch in publisher.KERNEL_BRANCHES
             ]
         )
@@ -73,14 +82,56 @@ class FakeApi:
         repo_id: str,
         *,
         repo_type: str,
-        **_: object,
+        **kwargs: object,
     ) -> list[SimpleNamespace]:
         del repo_id
         self._assert_kernel(repo_type)
         return [
             SimpleNamespace(path=path)
-            for path in publisher.FIRST_CLASS_KERNEL_FILES.values()
+            for path in self.remote[
+                (publisher.KERNEL_REPO_TYPE, str(kwargs["revision"]))
+            ]
         ]
+
+    def upload_kernel_builder(
+        self,
+        source_root: Path,
+        binding_bytes: bytes,
+        *,
+        token: str,
+    ) -> dict[str, object]:
+        self.assertEqualToken(token)
+        revisions = {"main": "1" * 40, "v1": "2" * 40}
+        for branch, revision in revisions.items():
+            remote = dict(
+                self.remote[
+                    (
+                        publisher.KERNEL_REPO_TYPE,
+                        self.kernel_branches[branch],
+                    )
+                ]
+            )
+            for source_path, kernel_path in publisher.FIRST_CLASS_KERNEL_FILES.items():
+                if kernel_path in publisher.KERNEL_BRANCH_FILES[branch]:
+                    remote[kernel_path] = (source_root / source_path).read_bytes()
+            if publisher.KERNEL_BINDING_PATH in publisher.KERNEL_BRANCH_FILES[branch]:
+                remote[publisher.KERNEL_BINDING_PATH] = binding_bytes
+            self.remote[(publisher.KERNEL_REPO_TYPE, revision)] = remote
+            self.kernel_branches[branch] = revision
+        receipt: dict[str, object] = {
+            "status": "uploaded",
+            "repo_id": publisher.EXPECTED_REPO_ID,
+            "branch": publisher.KERNEL_VERSION_BRANCH,
+            "url": "https://hf.co/kernels/SZLHOLDINGS/szl-kernels/tree/v1",
+            "pull_requests": [],
+        }
+        self.kernel_uploads.append(receipt)
+        return receipt
+
+    @staticmethod
+    def assertEqualToken(token: str) -> None:
+        if token != "test-token":
+            raise AssertionError("unexpected token")
 
     def create_commit(
         self,
@@ -154,6 +205,26 @@ class PublishSzlKernelsTests(unittest.TestCase):
         dependency = workflow.index('"huggingface-hub==1.26.0"', install)
         self.assertLess(install, dependency)
         self.assertLess(dependency, tests)
+
+    def test_publication_uses_pinned_official_kernel_builder(self) -> None:
+        workflow = (
+            Path(__file__).parents[1]
+            / ".github"
+            / "workflows"
+            / "publish-szl-kernels.yml"
+        ).read_text(encoding="utf-8")
+        install = workflow.index(
+            "Install exact official Kernel publisher without publisher secret"
+        )
+        pinned = workflow.index(
+            "--rev 633246310320d85def0c67d62c7912fd444a842f",
+            install,
+        )
+        publish = workflow.index(
+            "Publish declared data with trusted code and verify exact readback"
+        )
+        self.assertLess(install, pinned)
+        self.assertLess(pinned, publish)
 
     source_revision = "a" * 40
     publisher_revision = "b" * 40
@@ -272,6 +343,33 @@ class PublishSzlKernelsTests(unittest.TestCase):
             )
             self.assertIn(self.publisher_revision, identity["workflow_url"])
 
+    def test_kernel_builder_stage_matches_official_main_and_v1_layout(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            _, artifacts = self._fixture(root)
+            destination = root / "stage"
+            binding = b'{"schema":"binding"}\n'
+            publisher.stage_kernel_builder_upload(root, binding, destination)
+
+            observed = {
+                path.relative_to(destination).as_posix()
+                for path in destination.rglob("*")
+                if path.is_file()
+            }
+            self.assertEqual(
+                observed,
+                set(publisher.FIRST_CLASS_KERNEL_FILES.values())
+                | {publisher.KERNEL_BINDING_PATH},
+            )
+            self.assertEqual(
+                (destination / publisher.KERNEL_BINDING_PATH).read_bytes(),
+                binding,
+            )
+            self.assertEqual(
+                (destination / "README.md").read_bytes(),
+                artifacts["README.md"].read_bytes(),
+            )
+
     def test_publish_updates_kernel_main_and_v1_then_legacy_model(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -298,26 +396,20 @@ class PublishSzlKernelsTests(unittest.TestCase):
                 token="test-token",
                 api=api,
                 download_fn=api.download,
+                kernel_upload_fn=api.upload_kernel_builder,
             )
-            self.assertEqual(
-                result["status"], "PUBLISHED_AND_EXACT_READBACK_VERIFIED"
-            )
+            self.assertEqual(result["status"], "PUBLISHED_AND_EXACT_READBACK_VERIFIED")
             self.assertEqual(
                 api.commits,
                 [
-                    {"repo_type": "kernel", "revision": "main"},
-                    {"repo_type": "kernel", "revision": "v1"},
                     {"repo_type": "model", "revision": None},
                 ],
             )
-            branches_after = result["targets"]["first_class_kernel"][
-                "branches_after"
-            ]
+            self.assertEqual(len(api.kernel_uploads), 1)
+            branches_after = result["targets"]["first_class_kernel"]["branches_after"]
             self.assertEqual(set(branches_after), set(publisher.KERNEL_BRANCHES))
             self.assertEqual(
-                set(
-                    result["targets"]["first_class_kernel"]["readback"].values()
-                ),
+                set(result["targets"]["first_class_kernel"]["readback"].values()),
                 {"EXACT_BYTES_VERIFIED"},
             )
             self.assertEqual(
@@ -334,10 +426,10 @@ class PublishSzlKernelsTests(unittest.TestCase):
             corrupt = root / "corrupt"
             corrupt.write_bytes(b"corrupt")
 
-            def fail_main_readback(*args: object, **kwargs: object) -> str:
+            def fail_v1_readback(*args: object, **kwargs: object) -> str:
                 if (
                     kwargs.get("repo_type") == publisher.KERNEL_REPO_TYPE
-                    and kwargs.get("revision") == "1" * 40
+                    and kwargs.get("revision") == "2" * 40
                 ):
                     return str(corrupt)
                 return api.download(*args, **kwargs)
@@ -355,7 +447,7 @@ class PublishSzlKernelsTests(unittest.TestCase):
             report = root / "report.json"
             with self.assertRaisesRegex(
                 publisher.PublicationError,
-                "main readback mismatch",
+                "v1 readback mismatch",
             ):
                 publisher.run(
                     source_root=root,
@@ -366,17 +458,18 @@ class PublishSzlKernelsTests(unittest.TestCase):
                     publish=True,
                     token="test-token",
                     api=api,
-                    download_fn=fail_main_readback,
+                    download_fn=fail_v1_readback,
+                    kernel_upload_fn=api.upload_kernel_builder,
                 )
             partial = json.loads(report.read_text(encoding="utf-8"))
             self.assertEqual(partial["status"], "PUBLICATION_IN_PROGRESS")
             self.assertEqual(
                 partial["targets"]["first_class_kernel"]["branches_after"],
-                {"main": "1" * 40},
+                {"main": "1" * 40, "v1": "2" * 40},
             )
             self.assertEqual(
                 partial["targets"]["first_class_kernel"]["readback"],
-                {"main": "PENDING"},
+                {"main": "EXACT_BYTES_VERIFIED", "v1": "PENDING"},
             )
 
     def test_contract_cannot_redirect_publisher_to_another_repo(self) -> None:
