@@ -832,6 +832,11 @@ def verify_stable_kernel_runtime_isolated(*, revision: str) -> dict[str, Any]:
             f"exit_code={observed_exit_code}, "
             f"oom_killed={'true' if oom_killed else 'false'}"
         )
+        if oom_killed:
+            raise PublicationError(
+                "isolated stable Kernel runtime was OOM-killed "
+                f"({state_summary})"
+            )
         with tempfile.TemporaryDirectory(prefix="szl-kernel-runtime-") as temporary:
             evidence_path = Path(temporary) / "evidence.json"
             copied = subprocess.run(

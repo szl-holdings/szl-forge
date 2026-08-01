@@ -455,7 +455,7 @@ class PublishSzlKernelsTests(unittest.TestCase):
             if operation == "inspect":
                 return SimpleNamespace(
                     returncode=0,
-                    stdout=json.dumps({"ExitCode": 137, "OOMKilled": True}),
+                    stdout=json.dumps({"ExitCode": 137, "OOMKilled": False}),
                     stderr="",
                 )
             if operation == "cp":
@@ -469,9 +469,38 @@ class PublishSzlKernelsTests(unittest.TestCase):
         with patch.object(publisher.subprocess, "run", side_effect=run_docker):
             with self.assertRaisesRegex(
                 publisher.PublicationError,
-                r"exited without evidence \(exit_code=137, oom_killed=true\)",
+                r"exited without evidence \(exit_code=137, oom_killed=false\)",
             ):
                 publisher.verify_stable_kernel_runtime_isolated(revision="2" * 40)
+
+    def test_isolated_runtime_rejects_oom_even_with_zero_exit(self) -> None:
+        container_id = "c" * 64
+
+        def run_docker(command: list[str], **_: object) -> SimpleNamespace:
+            operation = command[1]
+            if operation in {"create", "start"}:
+                return SimpleNamespace(returncode=0, stdout=container_id, stderr="")
+            if operation == "wait":
+                return SimpleNamespace(returncode=0, stdout="0\n", stderr="")
+            if operation == "inspect":
+                return SimpleNamespace(
+                    returncode=0,
+                    stdout=json.dumps({"ExitCode": 0, "OOMKilled": True}),
+                    stderr="",
+                )
+            if operation == "rm":
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+            raise AssertionError(command)
+
+        with patch.object(publisher.subprocess, "run", side_effect=run_docker) as run:
+            with self.assertRaisesRegex(
+                publisher.PublicationError,
+                r"was OOM-killed \(exit_code=0, oom_killed=true\)",
+            ):
+                publisher.verify_stable_kernel_runtime_isolated(revision="2" * 40)
+
+        operations = [call.args[0][1] for call in run.call_args_list]
+        self.assertEqual(operations, ["create", "start", "wait", "inspect", "rm"])
 
     def test_isolated_runtime_rejects_malformed_evidence_with_exit_state(self) -> None:
         container_id = "c" * 64
