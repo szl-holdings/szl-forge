@@ -101,6 +101,28 @@ jobs:
             --report reports/szl-forge-lab-dry-run.json
           git diff --check
 
+      - name: Build the stable Kernel runtime image
+        run: docker build --pull -t szl-kernel-runtime:0.16.0 -f tools/kernel-runtime.Dockerfile .
+
+      - name: Verify isolated failure evidence round trip
+        env:
+          PYTHONPATH: tools
+        run: |
+          python - <<'PY'
+          from publish_szl_kernels import PublicationError, verify_stable_kernel_runtime_isolated
+
+          try:
+              verify_stable_kernel_runtime_isolated(revision="0" * 40)
+          except PublicationError as exc:
+              detail = str(exc)
+              if "exited without evidence" in detail:
+                  raise SystemExit(detail)
+              if not detail.startswith("isolated stable Kernel runtime failed:"):
+                  raise SystemExit(detail)
+          else:
+              raise SystemExit("invalid revision unexpectedly passed isolated runtime verification")
+          PY
+
       - name: Audit public Hugging Face artifacts
         run: |
           set -euo pipefail
