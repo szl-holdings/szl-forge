@@ -318,6 +318,53 @@ class PublishModelSourceBindingsTests(unittest.TestCase):
         self.assertTrue(evidence["inference"]["deterministic_outputs_equal"])
         self.assertEqual(evidence["energy"]["state"], "UNAVAILABLE")
 
+        matching = bindings.runtime_evidence(
+            artifact,
+            request,
+            expected_source_revision="3" * 40,
+        )
+        self.assertEqual(matching["runtime_source_revision"], "3" * 40)
+        with self.assertRaisesRegex(bindings.BindingError, "does not match expected"):
+            bindings.runtime_evidence(
+                artifact,
+                request,
+                expected_source_revision="4" * 40,
+            )
+
+    def test_publish_preflights_every_artifact_before_the_first_upload(self) -> None:
+        contract = {
+            "source_repository": "szl-holdings/szl-forge",
+            "artifacts": [
+                {"repo_id": "SZLHOLDINGS/first"},
+                {"repo_id": "SZLHOLDINGS/runtime", "runtime_probe": {}},
+            ],
+        }
+
+        def prepare(_api, _contract, artifact, **_kwargs):
+            if artifact.get("runtime_probe") is not None:
+                raise bindings.BindingError("live runtime source revision mismatch")
+            return ({"repo_id": artifact["repo_id"]}, b"{}\n")
+
+        with tempfile.TemporaryDirectory() as temporary:
+            report = Path(temporary) / "report.json"
+            with (
+                mock.patch.object(bindings, "load_contract", return_value=contract),
+                mock.patch.object(bindings, "prepare_one", side_effect=prepare),
+                mock.patch.object(bindings, "publish_prepared") as publish_prepared,
+            ):
+                with self.assertRaisesRegex(bindings.BindingError, "revision mismatch"):
+                    bindings.run(
+                        contract_path=Path("contract.json"),
+                        report_path=report,
+                        source_revision="3" * 40,
+                        expected_runtime_source_revision="3" * 40,
+                        publish=True,
+                        token="test-token",
+                        api=FakeApi(),
+                    )
+                publish_prepared.assert_not_called()
+                self.assertFalse(report.exists())
+
 
 if __name__ == "__main__":
     unittest.main()

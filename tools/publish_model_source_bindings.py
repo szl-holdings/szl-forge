@@ -271,6 +271,8 @@ def _json_request(
 def runtime_evidence(
     artifact: dict[str, Any],
     requester: Callable[..., dict[str, Any]] = _json_request,
+    *,
+    expected_source_revision: str | None = None,
 ) -> dict[str, Any] | None:
     probe = artifact.get("runtime_probe")
     if probe is None:
@@ -293,6 +295,17 @@ def runtime_evidence(
     build_revision = (build.get("build") or {}).get("revision")
     if FULL_SHA_RE.fullmatch(str(build_revision)) is None:
         raise BindingError(f"{artifact['repo_id']}: runtime source revision is not immutable")
+    if expected_source_revision is not None:
+        expected_source_revision = expected_source_revision.strip().lower()
+        if FULL_SHA_RE.fullmatch(expected_source_revision) is None:
+            raise BindingError(
+                "expected runtime source revision must be an exact 40-character Git SHA"
+            )
+        if build_revision != expected_source_revision:
+            raise BindingError(
+                f"{artifact['repo_id']}: live runtime source revision {build_revision} "
+                f"does not match expected {expected_source_revision}"
+            )
     model = identity.get("model") or {}
     space = identity.get("space") or {}
     if (
@@ -418,26 +431,28 @@ def publication_payload(
     }
 
 
-def publish_one(
+def prepare_one(
     api: HfApi,
     contract: dict[str, Any],
     artifact: dict[str, Any],
     *,
     source_revision: str,
-    publish: bool,
     token: str | None,
     downloader: Callable[..., str] = hf_hub_download,
     requester: Callable[..., dict[str, Any]] = _json_request,
-) -> dict[str, Any]:
-    if publish and not token:
-        raise BindingError("HF_TOKEN is required when --publish is used")
+    expected_runtime_source_revision: str | None = None,
+) -> tuple[dict[str, Any], bytes]:
     source_files = source_evidence(artifact)
     hub_revision_before, hub_files = hub_evidence(api, artifact)
     lineage = lineage_evidence(api, artifact)
     receipts = signed_receipt_evidence(
         artifact, hub_revision_before, token, downloader
     )
-    runtime = runtime_evidence(artifact, requester)
+    runtime = runtime_evidence(
+        artifact,
+        requester,
+        expected_source_revision=expected_runtime_source_revision,
+    )
     publication = publication_payload(
         contract,
         artifact,
@@ -467,10 +482,19 @@ def publish_one(
             canonical_json(publication).encode("utf-8")
         ).hexdigest(),
     }
-    if not publish:
-        return result
-
     body = canonical_json(publication).encode("utf-8")
+    return result, body
+
+
+def publish_prepared(
+    api: HfApi,
+    artifact: dict[str, Any],
+    result: dict[str, Any],
+    body: bytes,
+    *,
+    source_revision: str,
+    token: str,
+) -> dict[str, Any]:
     commit = api.upload_file(
         path_or_fileobj=io.BytesIO(body),
         path_in_repo="publication.json",
@@ -502,6 +526,42 @@ def publish_one(
     return result
 
 
+def publish_one(
+    api: HfApi,
+    contract: dict[str, Any],
+    artifact: dict[str, Any],
+    *,
+    source_revision: str,
+    publish: bool,
+    token: str | None,
+    downloader: Callable[..., str] = hf_hub_download,
+    requester: Callable[..., dict[str, Any]] = _json_request,
+    expected_runtime_source_revision: str | None = None,
+) -> dict[str, Any]:
+    if publish and not token:
+        raise BindingError("HF_TOKEN is required when --publish is used")
+    result, body = prepare_one(
+        api,
+        contract,
+        artifact,
+        source_revision=source_revision,
+        token=token,
+        downloader=downloader,
+        requester=requester,
+        expected_runtime_source_revision=expected_runtime_source_revision,
+    )
+    if not publish:
+        return result
+    return publish_prepared(
+        api,
+        artifact,
+        result,
+        body,
+        source_revision=source_revision,
+        token=token,
+    )
+
+
 def run(
     *,
     contract_path: Path,
@@ -512,25 +572,58 @@ def run(
     api: HfApi | None = None,
     downloader: Callable[..., str] = hf_hub_download,
     requester: Callable[..., dict[str, Any]] = _json_request,
+    expected_runtime_source_revision: str | None = None,
 ) -> dict[str, Any]:
     source_revision = source_revision.strip().lower()
     if FULL_SHA_RE.fullmatch(source_revision) is None:
         raise BindingError("source revision must be an exact 40-character Git SHA")
+    if expected_runtime_source_revision is not None:
+        expected_runtime_source_revision = (
+            expected_runtime_source_revision.strip().lower()
+        )
+        if not expected_runtime_source_revision:
+            expected_runtime_source_revision = None
+        elif FULL_SHA_RE.fullmatch(expected_runtime_source_revision) is None:
+            raise BindingError(
+                "expected runtime source revision must be an exact 40-character Git SHA"
+            )
     contract = load_contract(contract_path)
     api = api or HfApi(token=token)
-    results = [
-        publish_one(
+    if publish and not token:
+        raise BindingError("HF_TOKEN is required when --publish is used")
+
+    prepared = [
+        prepare_one(
             api,
             contract,
             artifact,
             source_revision=source_revision,
-            publish=publish,
             token=token,
             downloader=downloader,
             requester=requester,
+            expected_runtime_source_revision=expected_runtime_source_revision,
         )
         for artifact in contract["artifacts"]
     ]
+    results = [result for result, _ in prepared]
+    if publish:
+        runtime_first = sorted(
+            range(len(contract["artifacts"])),
+            key=lambda index: (
+                contract["artifacts"][index].get("runtime_probe") is None
+            ),
+        )
+        for index in runtime_first:
+            artifact = contract["artifacts"][index]
+            result, body = prepared[index]
+            results[index] = publish_prepared(
+                api,
+                artifact,
+                result,
+                body,
+                source_revision=source_revision,
+                token=token,
+            )
     report = {
         "schema": "szl.model-source-binding-report/v2",
         "mode": "PUBLISH" if publish else "DRY_RUN",
@@ -557,6 +650,10 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
         default=os.getenv("GITHUB_SHA", ""),
         help="Exact canonical Git revision. Defaults to GITHUB_SHA.",
     )
+    parser.add_argument(
+        "--expected-runtime-source-revision",
+        help="Optional exact live runtime revision required before publication.",
+    )
     parser.add_argument("--publish", action="store_true")
     return parser.parse_args(argv)
 
@@ -569,6 +666,7 @@ def main(argv: Iterable[str] | None = None) -> int:
         source_revision=args.source_revision,
         publish=args.publish,
         token=os.getenv("HF_TOKEN"),
+        expected_runtime_source_revision=args.expected_runtime_source_revision,
     )
     print(canonical_json(report), end="")
     return 0

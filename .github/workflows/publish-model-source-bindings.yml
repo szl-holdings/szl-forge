@@ -1,13 +1,6 @@
 name: Publish model source bindings
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "publishing/model-source-bindings.json"
-      - "tools/publish_model_source_bindings.py"
-      - "tools/test_publish_model_source_bindings.py"
-  workflow_dispatch: {}
   workflow_run:
     workflows: ["Publish model inference lab"]
     types: [completed]
@@ -17,21 +10,20 @@ permissions:
   contents: read
 
 concurrency:
-  group: publish-model-source-bindings
+  group: publish-model-inference-lab-and-source-bindings
   cancel-in-progress: false
 
 jobs:
   publish:
     name: Verify weights, publish bindings, and read back
     if: >-
-      github.event_name != 'workflow_run' ||
-      (github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.head_branch == 'main' &&
-      github.event.workflow_run.head_repository.full_name == github.repository)
+      github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      SOURCE_REVISION: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+      SOURCE_REVISION: ${{ github.event.workflow_run.head_sha }}
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
@@ -66,6 +58,7 @@ jobs:
         run: >-
           python tools/publish_model_source_bindings.py
           --source-revision "${SOURCE_REVISION}"
+          --expected-runtime-source-revision "${SOURCE_REVISION}"
           --publish
           --report reports/model-source-bindings.json
 

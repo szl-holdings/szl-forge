@@ -5,14 +5,17 @@ on:
     branches: [main]
     paths:
       - "spaces/szl-model-inference-lab/**"
+      - "publishing/model-source-bindings.json"
+      - "tools/publish_model_source_bindings.py"
+      - "tools/test_publish_model_source_bindings.py"
+      - ".github/workflows/publish-model-source-bindings.yml"
       - ".github/workflows/publish-model-inference-lab.yml"
-  workflow_dispatch: {}
 
 permissions:
   contents: read
 
 concurrency:
-  group: publish-model-inference-lab
+  group: publish-model-inference-lab-and-source-bindings
   cancel-in-progress: false
 
 jobs:

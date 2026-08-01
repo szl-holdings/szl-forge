@@ -21,22 +21,50 @@ class ModelBindingWorkflowTests(unittest.TestCase):
             "workflow_run.head_repository.full_name == github.repository",
             workflow,
         )
-        self.assertIn("workflow_run.head_sha || github.sha", workflow)
+        self.assertIn(
+            "SOURCE_REVISION: ${{ github.event.workflow_run.head_sha }}",
+            workflow,
+        )
         self.assertIn("ref: ${{ env.SOURCE_REVISION }}", workflow)
         self.assertIn('--source-revision "${SOURCE_REVISION}"', workflow)
+        self.assertIn(
+            '--expected-runtime-source-revision "${SOURCE_REVISION}"',
+            workflow,
+        )
 
-    def test_sequence_contract_does_not_directly_trigger_the_publisher(self) -> None:
+    def test_publishers_share_one_protected_sequence(self) -> None:
         repository_root = Path(__file__).parents[1]
-        workflow = (
+        binding_workflow = (
             repository_root
             / ".github/workflows/publish-model-source-bindings.yml"
         ).read_text(encoding="utf-8")
+        space_workflow = (
+            repository_root
+            / ".github/workflows/publish-model-inference-lab.yml"
+        ).read_text(encoding="utf-8")
 
-        self.assertNotIn(
-            '- ".github/workflows/publish-model-source-bindings.yml"',
-            workflow,
+        self.assertNotIn("workflow_dispatch", binding_workflow)
+        self.assertNotIn("\n  push:", binding_workflow)
+        self.assertNotIn("workflow_dispatch", space_workflow)
+        self.assertEqual(
+            binding_workflow.count(
+                "group: publish-model-inference-lab-and-source-bindings"
+            ),
+            1,
         )
-        self.assertNotIn('- "tools/test_model_binding_workflow.py"', workflow)
+        self.assertEqual(
+            space_workflow.count(
+                "group: publish-model-inference-lab-and-source-bindings"
+            ),
+            1,
+        )
+        for path in (
+            "publishing/model-source-bindings.json",
+            "tools/publish_model_source_bindings.py",
+            "tools/test_publish_model_source_bindings.py",
+            ".github/workflows/publish-model-source-bindings.yml",
+        ):
+            self.assertIn(f'- "{path}"', space_workflow)
 
 
 if __name__ == "__main__":
