@@ -19,6 +19,27 @@ EXPECTED_SOURCE_REPOSITORY = "szl-holdings/szl-kernels"
 EXPECTED_PUBLISHER_REPOSITORY = "szl-holdings/szl-forge"
 CONTRACT_RELATIVE = Path("publishing/source-binding.json")
 FULL_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
+LEGACY_REPO_TYPE = "model"
+KERNEL_REPO_TYPE = "kernel"
+KERNEL_BRANCHES = ("main", "v1")
+KERNEL_BINDING_PATH = "source-binding.json"
+FIRST_CLASS_KERNEL_FILES = {
+    ".gitattributes": ".gitattributes",
+    "LICENSE": "LICENSE",
+    "README.md": "README.md",
+    "build/torch-universal/szl_kernels/__init__.py": (
+        "build/torch-cpu/szl_kernels/__init__.py"
+    ),
+    "build/torch-universal/szl_kernels/_chain.py": (
+        "build/torch-cpu/szl_kernels/_chain.py"
+    ),
+    "build/torch-universal/szl_kernels/_ops.py": (
+        "build/torch-cpu/szl_kernels/_ops.py"
+    ),
+    "build/torch-universal/szl_kernels/metadata.json": (
+        "build/torch-cpu/metadata.json"
+    ),
+}
 
 
 class PublicationError(RuntimeError):
@@ -135,7 +156,7 @@ def tree_sha256(evidence: list[dict[str, Any]]) -> str:
     return digest.hexdigest()
 
 
-def hub_before(
+def legacy_model_before(
     api: HfApi,
     contract: dict[str, Any],
     *,
@@ -157,7 +178,7 @@ def hub_before(
             download_fn(
                 EXPECTED_REPO_ID,
                 relative,
-                repo_type="model",
+                repo_type=LEGACY_REPO_TYPE,
                 revision=info.sha,
                 token=token,
             )
@@ -175,6 +196,90 @@ def hub_before(
             set(contract["artifact_files"]) & observed_files
         ),
         "critical_artifacts": critical,
+    }
+
+
+def first_class_kernel_before(
+    api: HfApi,
+    contract: dict[str, Any],
+    *,
+    token: str | None,
+) -> dict[str, Any]:
+    declared = set(contract["artifact_files"])
+    missing_sources = sorted(set(FIRST_CLASS_KERNEL_FILES) - declared)
+    if missing_sources:
+        raise PublicationError(
+            "source contract is missing first-class Kernel files: "
+            f"{missing_sources}"
+        )
+
+    info = api.repo_info(
+        EXPECTED_REPO_ID,
+        repo_type=KERNEL_REPO_TYPE,
+        files_metadata=True,
+        token=token,
+    )
+    refs = api.list_repo_refs(
+        EXPECTED_REPO_ID,
+        repo_type=KERNEL_REPO_TYPE,
+        token=token,
+    )
+    branches = {branch.name: branch.target_commit for branch in refs.branches}
+    missing_branches = sorted(set(KERNEL_BRANCHES) - set(branches))
+    if missing_branches:
+        raise PublicationError(
+            f"first-class Kernel is missing release branches: {missing_branches}"
+        )
+
+    expected_paths = set(FIRST_CLASS_KERNEL_FILES.values())
+    branch_evidence: dict[str, Any] = {}
+    for branch in KERNEL_BRANCHES:
+        target = branches[branch]
+        observed_files = {
+            entry.path
+            for entry in api.list_repo_tree(
+                EXPECTED_REPO_ID,
+                repo_type=KERNEL_REPO_TYPE,
+                revision=target,
+                recursive=True,
+                token=token,
+            )
+            if getattr(entry, "path", None)
+        }
+        missing = sorted(expected_paths - observed_files)
+        if missing:
+            raise PublicationError(
+                f"first-class Kernel {branch} is missing package files: {missing}"
+            )
+        branch_evidence[branch] = {
+            "revision": target,
+            "package_files_present": len(expected_paths & observed_files),
+        }
+    return {
+        "repo_revision": info.sha,
+        "branches": branch_evidence,
+    }
+
+
+def hub_before(
+    api: HfApi,
+    contract: dict[str, Any],
+    *,
+    token: str | None,
+    download_fn: Callable[..., str],
+) -> dict[str, Any]:
+    return {
+        "legacy_model": legacy_model_before(
+            api,
+            contract,
+            token=token,
+            download_fn=download_fn,
+        ),
+        "first_class_kernel": first_class_kernel_before(
+            api,
+            contract,
+            token=token,
+        ),
     }
 
 
@@ -211,7 +316,7 @@ def publisher_identity(
     }
 
 
-def verify_readback(
+def verify_legacy_readback(
     source_root: Path,
     contract: dict[str, Any],
     publication_bytes: bytes,
@@ -225,7 +330,7 @@ def verify_readback(
             download_fn(
                 EXPECTED_REPO_ID,
                 relative,
-                repo_type="model",
+                repo_type=LEGACY_REPO_TYPE,
                 revision=revision,
                 token=token,
             )
@@ -237,6 +342,61 @@ def verify_readback(
         )
         if downloaded.read_bytes() != expected:
             raise PublicationError(f"readback mismatch at {relative}")
+
+
+def kernel_file_evidence(
+    source_root: Path,
+) -> list[dict[str, Any]]:
+    evidence = []
+    for source_path, kernel_path in FIRST_CLASS_KERNEL_FILES.items():
+        path = safe_file(source_root, source_path)
+        evidence.append(
+            {
+                "source_path": source_path,
+                "kernel_path": kernel_path,
+                "bytes": path.stat().st_size,
+                "sha256": file_sha256(path),
+            }
+        )
+    return evidence
+
+
+def verify_kernel_readback(
+    source_root: Path,
+    binding_bytes: bytes,
+    *,
+    branch: str,
+    revision: str,
+    token: str,
+    download_fn: Callable[..., str],
+) -> None:
+    for source_path, kernel_path in FIRST_CLASS_KERNEL_FILES.items():
+        downloaded = Path(
+            download_fn(
+                EXPECTED_REPO_ID,
+                kernel_path,
+                repo_type=KERNEL_REPO_TYPE,
+                revision=revision,
+                token=token,
+            )
+        )
+        if downloaded.read_bytes() != safe_file(source_root, source_path).read_bytes():
+            raise PublicationError(
+                f"first-class Kernel {branch} readback mismatch at {kernel_path}"
+            )
+    binding = Path(
+        download_fn(
+            EXPECTED_REPO_ID,
+            KERNEL_BINDING_PATH,
+            repo_type=KERNEL_REPO_TYPE,
+            revision=revision,
+            token=token,
+        )
+    )
+    if binding.read_bytes() != binding_bytes:
+        raise PublicationError(
+            f"first-class Kernel {branch} readback mismatch at {KERNEL_BINDING_PATH}"
+        )
 
 
 def run(
@@ -268,11 +428,11 @@ def run(
         token=token,
         download_fn=download_fn,
     )
-    publication = {
+    legacy_publication = {
         "schema": "szl.hf-kernel-source-binding/v2",
         "artifact": {
             "repo_id": EXPECTED_REPO_ID,
-            "repo_type": "model",
+            "repo_type": LEGACY_REPO_TYPE,
             "kind": "governed_kernel_suite_with_receipted_word_embeddings",
         },
         "source_repository": EXPECTED_SOURCE_REPOSITORY,
@@ -286,63 +446,157 @@ def run(
         },
         "publisher": publisher,
         "authorization": authorization,
-        "observed_hub_before_publication": observed_before,
+        "observed_hub_before_publication": observed_before["legacy_model"],
         "claims": contract["claims"],
         "limitations": contract["limitations"],
     }
-    publication_bytes = canonical_json(publication).encode("utf-8")
+    legacy_publication_bytes = canonical_json(legacy_publication).encode("utf-8")
+    kernel_files = kernel_file_evidence(source_root)
+    kernel_binding = {
+        "schema": "szl.hf-first-class-kernel-binding/v1",
+        "artifact": {
+            "repo_id": EXPECTED_REPO_ID,
+            "repo_type": KERNEL_REPO_TYPE,
+            "backend": "torch-cpu",
+            "package": "szl_kernels",
+            "version": json.loads(
+                safe_file(
+                    source_root,
+                    "build/torch-universal/szl_kernels/metadata.json",
+                ).read_text(encoding="utf-8")
+            )["version"],
+        },
+        "source_repository": EXPECTED_SOURCE_REPOSITORY,
+        "source_revision": source_revision,
+        "source": {
+            "url": f"https://github.com/{EXPECTED_SOURCE_REPOSITORY}",
+            "revision": source_revision,
+            "artifact_tree_sha256": tree_sha256(files),
+            "kernel_files": kernel_files,
+        },
+        "publisher": publisher,
+        "authorization": authorization,
+        "observed_hub_before_publication": observed_before["first_class_kernel"],
+        "claims": contract["claims"],
+        "limitations": contract["limitations"],
+    }
+    kernel_binding_bytes = canonical_json(kernel_binding).encode("utf-8")
     result: dict[str, Any] = {
-        "schema": "szl.kernel-source-binding-report/v2",
+        "schema": "szl.kernel-source-binding-report/v3",
         "mode": "PUBLISH" if publish else "DRY_RUN",
         "repo_id": EXPECTED_REPO_ID,
         "source_revision": source_revision,
         "publisher": publisher,
         "artifact_tree_sha256": tree_sha256(files),
         "declared_file_count": len(files),
-        "hub_revision_before": observed_before["revision"],
-        "publication_sha256": hashlib.sha256(publication_bytes).hexdigest(),
+        "targets": {
+            "legacy_model": {
+                "repo_type": LEGACY_REPO_TYPE,
+                "revision_before": observed_before["legacy_model"]["revision"],
+                "publication_sha256": hashlib.sha256(
+                    legacy_publication_bytes
+                ).hexdigest(),
+            },
+            "first_class_kernel": {
+                "repo_type": KERNEL_REPO_TYPE,
+                "branches_before": observed_before["first_class_kernel"]["branches"],
+                "binding_sha256": hashlib.sha256(kernel_binding_bytes).hexdigest(),
+                "mapped_file_count": len(kernel_files),
+            },
+        },
         "status": "VERIFIED_DRY_RUN",
     }
     if publish:
         if not token:
             raise PublicationError("HF_TOKEN is required when --publish is used")
-        operations = [
+
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        result["status"] = "PUBLICATION_IN_PROGRESS"
+        result["targets"]["first_class_kernel"]["branches_after"] = {}
+        report_path.write_text(canonical_json(result), encoding="utf-8")
+
+        for branch in KERNEL_BRANCHES:
+            kernel_operations = [
+                CommitOperationAdd(
+                    path_in_repo=kernel_path,
+                    path_or_fileobj=str(safe_file(source_root, source_path)),
+                )
+                for source_path, kernel_path in FIRST_CLASS_KERNEL_FILES.items()
+            ]
+            kernel_operations.append(
+                CommitOperationAdd(
+                    path_in_repo=KERNEL_BINDING_PATH,
+                    path_or_fileobj=io.BytesIO(kernel_binding_bytes),
+                )
+            )
+            kernel_commit = api.create_commit(
+                repo_id=EXPECTED_REPO_ID,
+                repo_type=KERNEL_REPO_TYPE,
+                revision=branch,
+                parent_commit=observed_before["first_class_kernel"]["branches"][
+                    branch
+                ]["revision"],
+                operations=kernel_operations,
+                commit_message=(
+                    f"Publish authorized Kernel source {source_revision[:12]}"
+                ),
+                token=token,
+            )
+            kernel_revision = getattr(kernel_commit, "oid", None)
+            if not kernel_revision:
+                kernel_revision = api.repo_info(
+                    EXPECTED_REPO_ID,
+                    repo_type=KERNEL_REPO_TYPE,
+                    revision=branch,
+                    token=token,
+                ).sha
+            verify_kernel_readback(
+                source_root,
+                kernel_binding_bytes,
+                branch=branch,
+                revision=kernel_revision,
+                token=token,
+                download_fn=download_fn,
+            )
+            result["targets"]["first_class_kernel"]["branches_after"][
+                branch
+            ] = kernel_revision
+            report_path.write_text(canonical_json(result), encoding="utf-8")
+
+        legacy_operations = [
             CommitOperationAdd(
                 path_in_repo=relative,
                 path_or_fileobj=str(safe_file(source_root, relative)),
             )
             for relative in contract["artifact_files"]
         ]
-        operations.append(
+        legacy_operations.append(
             CommitOperationAdd(
                 path_in_repo="publication.json",
-                path_or_fileobj=io.BytesIO(publication_bytes),
+                path_or_fileobj=io.BytesIO(legacy_publication_bytes),
             )
         )
-        commit = api.create_commit(
+        legacy_commit = api.create_commit(
             repo_id=EXPECTED_REPO_ID,
-            repo_type="model",
-            operations=operations,
+            repo_type=LEGACY_REPO_TYPE,
+            parent_commit=observed_before["legacy_model"]["revision"],
+            operations=legacy_operations,
             commit_message=f"Publish authorized source {source_revision[:12]}",
             token=token,
         )
-        revision = getattr(commit, "oid", None)
-        if not revision:
-            revision = api.model_info(EXPECTED_REPO_ID, token=token).sha
-        verify_readback(
+        legacy_revision = getattr(legacy_commit, "oid", None)
+        if not legacy_revision:
+            legacy_revision = api.model_info(EXPECTED_REPO_ID, token=token).sha
+        verify_legacy_readback(
             source_root,
             contract,
-            publication_bytes,
-            revision=revision,
+            legacy_publication_bytes,
+            revision=legacy_revision,
             token=token,
             download_fn=download_fn,
         )
-        result.update(
-            {
-                "hub_revision_after": revision,
-                "status": "PUBLISHED_AND_EXACT_READBACK_VERIFIED",
-            }
-        )
+        result["targets"]["legacy_model"]["revision_after"] = legacy_revision
+        result["status"] = "PUBLISHED_AND_EXACT_READBACK_VERIFIED"
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(canonical_json(result), encoding="utf-8")
     return result
