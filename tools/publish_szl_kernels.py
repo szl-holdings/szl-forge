@@ -27,6 +27,10 @@ KERNEL_REPO_TYPE = "kernel"
 KERNEL_BRANCHES = ("main", "v1")
 KERNEL_VARIANT = "torch-cpu"
 KERNEL_VERSION = 1
+KERNEL_BUILDER_VERSION = "0.17.0-dev0"
+KERNEL_BUILDER_SOURCE_REVISION = (
+    "633246310320d85def0c67d62c7912fd444a842f"
+)
 KERNEL_BINDING_FILENAME = "source-binding.json"
 FIRST_CLASS_KERNEL_FILES = {
     "build/torch-universal/szl_kernels/__init__.py": (
@@ -38,6 +42,15 @@ FIRST_CLASS_KERNEL_FILES = {
     "build/torch-universal/szl_kernels/_ops.py": (
         f"build/{KERNEL_VARIANT}/_ops.py"
     ),
+}
+KERNEL_EXISTING_REQUIRED_FILES = {
+    ".gitattributes",
+    "LICENSE",
+    "README.md",
+    f"build/{KERNEL_VARIANT}/szl_kernels/__init__.py",
+    f"build/{KERNEL_VARIANT}/szl_kernels/_chain.py",
+    f"build/{KERNEL_VARIANT}/szl_kernels/_ops.py",
+    f"build/{KERNEL_VARIANT}/metadata.json",
 }
 
 
@@ -230,7 +243,7 @@ def first_class_kernel_before(
             f"first-class Kernel is missing release branches: {missing_branches}"
         )
 
-    expected_paths = set(FIRST_CLASS_KERNEL_FILES.values())
+    expected_paths = KERNEL_EXISTING_REQUIRED_FILES
     branch_evidence: dict[str, Any] = {}
     for branch in KERNEL_BRANCHES:
         target = branches[branch]
@@ -426,6 +439,23 @@ def upload_first_class_kernel(staging_root: Path, token: str) -> None:
     output_path = staging_root / "kernel-upload.json"
     environment = os.environ.copy()
     environment["HF_TOKEN"] = token
+    try:
+        version = subprocess.run(
+            ["kernel-builder", "--version"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except FileNotFoundError as exc:
+        raise PublicationError("pinned kernel-builder is not installed") from exc
+    except subprocess.CalledProcessError as exc:
+        raise PublicationError("cannot identify the installed kernel-builder") from exc
+    observed_version = (version.stdout or version.stderr).strip()
+    if observed_version != f"kernel-builder {KERNEL_BUILDER_VERSION}":
+        raise PublicationError(
+            "kernel-builder version drifted "
+            f"(expected {KERNEL_BUILDER_VERSION}, observed {observed_version!r})"
+        )
     command = [
         "kernel-builder",
         "upload",
@@ -571,6 +601,11 @@ def run(
             "backend": "torch-cpu",
             "package": "szl_kernels",
             "version": KERNEL_VERSION,
+            "publication_interface": "kernel-builder",
+            "publication_interface_version": KERNEL_BUILDER_VERSION,
+            "publication_interface_source_revision": (
+                KERNEL_BUILDER_SOURCE_REVISION
+            ),
         },
         "source_repository": EXPECTED_SOURCE_REPOSITORY,
         "source_revision": source_revision,

@@ -50,13 +50,6 @@ jobs:
           python -m pip install --disable-pip-version-check
           "huggingface-hub==1.26.0"
 
-      - name: Install pinned first-class Kernel uploader
-        run: |
-          cargo install --locked \
-            --git https://github.com/huggingface/kernels \
-            --rev 633246310320d85def0c67d62c7912fd444a842f \
-            hf-kernel-builder
-
       - name: Test trusted gateway contracts
         run: |
           set -euo pipefail
@@ -121,9 +114,15 @@ jobs:
           python-version: "3.12"
 
       - name: Install exact publication client without publisher secret
-        run: >-
-          python -m pip install --disable-pip-version-check
-          "huggingface-hub==1.26.0"
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check \
+            "huggingface-hub==1.26.0"
+          cargo install --locked \
+            --git https://github.com/huggingface/kernels \
+            --rev 633246310320d85def0c67d62c7912fd444a842f \
+            hf-kernel-builder
+          test "$(kernel-builder --version)" = "kernel-builder 0.17.0-dev0"
 
       - name: Re-authorize exact source immediately before publication
         env:

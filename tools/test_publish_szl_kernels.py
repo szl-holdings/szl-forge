@@ -87,7 +87,7 @@ class FakeApi:
         self._assert_kernel(repo_type)
         return [
             SimpleNamespace(path=path)
-            for path in publisher.FIRST_CLASS_KERNEL_FILES.values()
+            for path in publisher.KERNEL_EXISTING_REQUIRED_FILES
         ]
 
     def create_commit(
@@ -185,15 +185,20 @@ class PublishSzlKernelsTests(unittest.TestCase):
         install = workflow.index("Install trusted gateway test dependency")
         tests = workflow.index("Test trusted gateway contracts")
         dependency = workflow.index('"huggingface-hub==1.26.0"', install)
-        uploader = workflow.index("Install pinned first-class Kernel uploader")
+        uploader = workflow.index(
+            "Install exact publication client without publisher secret"
+        )
         upstream_pin = workflow.index(
             "633246310320d85def0c67d62c7912fd444a842f",
             uploader,
         )
+        publish = workflow.index(
+            "Publish declared data with trusted code and verify exact readback"
+        )
         self.assertLess(install, dependency)
         self.assertLess(dependency, tests)
         self.assertLess(uploader, upstream_pin)
-        self.assertLess(upstream_pin, tests)
+        self.assertLess(upstream_pin, publish)
 
     source_revision = "a" * 40
     publisher_revision = "b" * 40
@@ -364,6 +369,18 @@ class PublishSzlKernelsTests(unittest.TestCase):
             self.assertEqual(
                 result["targets"]["legacy_model"]["readback"],
                 "EXACT_BYTES_VERIFIED",
+            )
+            metadata = json.loads(
+                api.remote[
+                    (publisher.KERNEL_REPO_TYPE, branches_after["v1"])
+                ][f"build/{publisher.KERNEL_VARIANT}/metadata.json"]
+            )
+            self.assertEqual(metadata["version"], 1)
+            self.assertEqual(metadata["digest"]["algorithm"], "sha256")
+            self.assertIn("__init__.py", metadata["digest"]["files"])
+            self.assertIn(
+                "szl_kernels/__init__.py",
+                metadata["digest"]["files"],
             )
 
     def test_failed_readback_preserves_the_created_kernel_revision(self) -> None:
