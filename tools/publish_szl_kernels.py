@@ -26,6 +26,7 @@ KERNEL_RUNTIME_CLIENT_VERSION = "0.16.0"
 KERNEL_RUNTIME_IMAGE = f"szl-kernel-runtime:{KERNEL_RUNTIME_CLIENT_VERSION}"
 CONTRACT_RELATIVE = Path("publishing/source-binding.json")
 FULL_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
+DOCKER_CONTAINER_ID_RE = re.compile(r"^[0-9a-f]{64}$")
 LEGACY_REPO_TYPE = "model"
 KERNEL_REPO_TYPE = "kernel"
 KERNEL_BRANCHES = ("main", "v1")
@@ -665,10 +666,10 @@ def verify_stable_kernel_runtime_isolated(*, revision: str) -> dict[str, Any]:
         for key, value in os.environ.items()
         if not any(marker in key.upper() for marker in SENSITIVE_ENV_MARKERS)
     }
-    command = [
+    create_command = [
         "docker",
-        "run",
-        "--rm",
+        "create",
+        "--log-driver=none",
         "--pid=private",
         "--network=bridge",
         "--read-only",
@@ -676,6 +677,8 @@ def verify_stable_kernel_runtime_isolated(*, revision: str) -> dict[str, Any]:
         "/tmp:rw,nosuid,nodev,noexec,size=64m",
         "--tmpfs",
         "/cache:rw,nosuid,nodev,noexec,size=2g",
+        "--tmpfs",
+        "/output:rw,nosuid,nodev,noexec,size=1m",
         "--cap-drop=ALL",
         "--security-opt=no-new-privileges",
         "--pids-limit=256",
@@ -688,25 +691,85 @@ def verify_stable_kernel_runtime_isolated(*, revision: str) -> dict[str, Any]:
         KERNEL_RUNTIME_IMAGE,
         "--revision",
         revision,
+        "--output",
+        "/output/evidence.json",
     ]
-    outcome = subprocess.run(
-        command,
+    created = subprocess.run(
+        create_command,
         check=False,
         capture_output=True,
         text=True,
         env=environment,
     )
-    if outcome.returncode != 0:
-        detail = (outcome.stderr or outcome.stdout or "unknown runtime error").strip()
+    container_id = created.stdout.strip()
+    if (
+        created.returncode != 0
+        or DOCKER_CONTAINER_ID_RE.fullmatch(container_id) is None
+    ):
+        detail = (created.stderr or created.stdout or "unknown create error").strip()
         raise PublicationError(
-            f"isolated stable Kernel runtime failed: {detail[-2000:]}"
+            f"isolated stable Kernel runtime create failed: {detail[-2000:]}"
         )
     try:
-        evidence = json.loads(outcome.stdout)
-    except json.JSONDecodeError as exc:
-        raise PublicationError(
-            "isolated stable Kernel runtime returned invalid evidence"
-        ) from exc
+        started = subprocess.run(
+            ["docker", "start", container_id],
+            check=False,
+            capture_output=True,
+            text=True,
+            env=environment,
+        )
+        if started.returncode != 0:
+            detail = (started.stderr or started.stdout or "unknown start error").strip()
+            raise PublicationError(
+                f"isolated stable Kernel runtime start failed: {detail[-2000:]}"
+            )
+        waited = subprocess.run(
+            ["docker", "wait", container_id],
+            check=False,
+            capture_output=True,
+            text=True,
+            env=environment,
+        )
+        if waited.returncode != 0 or waited.stdout.strip() != "0":
+            raise PublicationError(
+                "isolated stable Kernel runtime exited without verified evidence"
+            )
+        with tempfile.TemporaryDirectory(prefix="szl-kernel-runtime-") as temporary:
+            evidence_path = Path(temporary) / "evidence.json"
+            copied = subprocess.run(
+                [
+                    "docker",
+                    "cp",
+                    f"{container_id}:/output/evidence.json",
+                    str(evidence_path),
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+                env=environment,
+            )
+            if copied.returncode != 0:
+                detail = (
+                    copied.stderr or copied.stdout or "unknown evidence copy error"
+                ).strip()
+                raise PublicationError(
+                    "isolated stable Kernel runtime evidence copy failed: "
+                    f"{detail[-2000:]}"
+                )
+            try:
+                evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+            except (FileNotFoundError, json.JSONDecodeError) as exc:
+                raise PublicationError(
+                    "isolated stable Kernel runtime returned invalid evidence"
+                ) from exc
+    finally:
+        subprocess.run(
+            ["docker", "rm", "--force", container_id],
+            check=False,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            env=environment,
+        )
     boundaries = evidence.get("inclusive_boundaries", {})
     if (
         evidence.get("status") != "STABLE_GET_KERNEL_VERIFIED"

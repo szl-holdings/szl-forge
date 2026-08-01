@@ -204,11 +204,22 @@ class PublishSzlKernelsTests(unittest.TestCase):
                 "1": {"passed": False, "receipt_depth": 1},
             },
         }
-        outcome = SimpleNamespace(
-            returncode=0,
-            stdout=json.dumps(evidence),
-            stderr="",
-        )
+        container_id = "c" * 64
+
+        def run_docker(command: list[str], **_: object) -> SimpleNamespace:
+            operation = command[1]
+            if operation == "create":
+                return SimpleNamespace(returncode=0, stdout=container_id, stderr="")
+            if operation == "start":
+                return SimpleNamespace(returncode=0, stdout=container_id, stderr="")
+            if operation == "wait":
+                return SimpleNamespace(returncode=0, stdout="0\n", stderr="")
+            if operation == "cp":
+                Path(command[-1]).write_text(json.dumps(evidence), encoding="utf-8")
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+            if operation == "rm":
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+            raise AssertionError(command)
         inherited = {
             "PATH": "trusted-path",
             "HF_TOKEN": "publisher-secret",
@@ -219,20 +230,30 @@ class PublishSzlKernelsTests(unittest.TestCase):
         with patch.dict(publisher.os.environ, inherited, clear=True), patch.object(
             publisher.subprocess,
             "run",
-            return_value=outcome,
+            side_effect=run_docker,
         ) as run:
             observed = publisher.verify_stable_kernel_runtime_isolated(
                 revision=revision
             )
 
         self.assertEqual(observed, evidence)
-        command = run.call_args.args[0]
-        environment = run.call_args.kwargs["env"]
-        self.assertEqual(command[0:2], ["docker", "run"])
-        self.assertEqual(
-            command[-3:],
-            [publisher.KERNEL_RUNTIME_IMAGE, "--revision", revision],
+        create_call = next(
+            call for call in run.call_args_list if call.args[0][1] == "create"
         )
+        command = create_call.args[0]
+        environment = create_call.kwargs["env"]
+        self.assertEqual(command[0:2], ["docker", "create"])
+        self.assertEqual(
+            command[-5:],
+            [
+                publisher.KERNEL_RUNTIME_IMAGE,
+                "--revision",
+                revision,
+                "--output",
+                "/output/evidence.json",
+            ],
+        )
+        self.assertIn("--log-driver=none", command)
         self.assertIn("--pid=private", command)
         self.assertIn("--read-only", command)
         self.assertIn("--cap-drop=ALL", command)
@@ -253,6 +274,10 @@ class PublishSzlKernelsTests(unittest.TestCase):
         self.assertNotIn("GITHUB_TOKEN", environment)
         self.assertNotIn("ACTIONS_ID_TOKEN_REQUEST_TOKEN", environment)
         self.assertNotIn("SERVICE_API_KEY", environment)
+        operations = [call.args[0][1] for call in run.call_args_list]
+        self.assertEqual(operations, ["create", "start", "wait", "cp", "rm"])
+        start_command = run.call_args_list[1].args[0]
+        self.assertNotIn("--attach", start_command)
 
     def test_first_class_before_accepts_split_builder_layout(self) -> None:
         api = FakeApi({})
