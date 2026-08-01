@@ -1,11 +1,11 @@
 {
   "schema": "szl.space-source-release/v1",
-  "release_id": "c893e93c-9bd8-47e9-941e-f8613a608992",
+  "release_id": "c8b5c7d4-79ac-462b-a5ff-61a96a52957f",
   "source_files": {
     ".dockerignore": "dba1fb4c6538a44cd8d7e77f133af90a8e7927d3dee23f8694fe6d867238333c",
     "Dockerfile": "6d982909b8678c6ab3bfc21766f3356c1dedfff1c2efea5ba0fbc64ed7cff4b8",
     "LICENSE": "0a41cda63c0751e5cdb240864525fc8bf29b2d3f2cb5c6406b9bae97f1e1407b",
-    "README.md": "c2edfc0957ccd9f2719ca3c8e71baefd23a9e88d61cfc5d3445009ae470618cb",
+    "README.md": "d15b5fff3a5ac9c282c034f04600ad128e692f55854ddce0f89cf63b1981343a",
     "app.py": "992badf3f02189d7f44bb4cbb5881dce837ecc72f183a7dd40952cf0106a8e37",
     "download_artifacts.py": "aa9f98b3d19753953864beae167b5e74872270c880e78430bb345a5f06b4ef36",
     "requirements.txt": "9f690793b7b9c6e1adce88244de01d77898d117779c3428b80190eabaf4658f9",

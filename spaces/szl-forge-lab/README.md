@@ -41,7 +41,9 @@ policy, and the governed curriculum blueprint.
 > **Presentation class: SNAPSHOT / READ-ONLY.** This Space presents packaged
 > evidence and performs browser-side integrity checks. It is not a model, model
 > trainer, publisher, promoter, deployment control plane, or independent
-> evaluator. `REACHABLE` describes transport only.The static console also renders the packaged
+> evaluator. `REACHABLE` describes transport only.
+
+The static console also renders the packaged
 `szl.model-kernel-portfolio/v1` registry. Each entry retains its declared class
 and evidence state; a model-API listing, registry count, or reachable page does
 not upgrade software, a recipe, a surrogate, or a derivative into trained

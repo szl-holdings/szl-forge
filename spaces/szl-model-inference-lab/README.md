@@ -49,7 +49,9 @@ A public, zero-secret, bounded CPU demonstration for the exact
 > **Presentation class: BOUNDED RUNTIME DEMO.** This Space executes one pinned
 > quantized derivative under strict limits. It does not train, promote,
 > authorize, or certify the model. Runtime outputs and execution records are
-> explicitly unsigned; transport availability is not readiness evidence.The canonical application source is
+> explicitly unsigned; transport availability is not readiness evidence.
+
+The canonical application source is
 [`szl-holdings/szl-forge/spaces/szl-model-inference-lab`](https://github.com/szl-holdings/szl-forge/tree/main/spaces/szl-model-inference-lab).
 The governed deployment binds the exact protected Git revision into the
 non-secret `SZL_GITHUB_SOURCE_REVISION` Space variable and verifies it at
