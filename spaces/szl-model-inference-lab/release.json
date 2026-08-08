@@ -8,7 +8,7 @@
     "README.md": "d15b5fff3a5ac9c282c034f04600ad128e692f55854ddce0f89cf63b1981343a",
     "app.py": "992badf3f02189d7f44bb4cbb5881dce837ecc72f183a7dd40952cf0106a8e37",
     "download_artifacts.py": "aa9f98b3d19753953864beae167b5e74872270c880e78430bb345a5f06b4ef36",
-    "requirements.txt": "9f690793b7b9c6e1adce88244de01d77898d117779c3428b80190eabaf4658f9",
+    "requirements.txt": "0b8895f7ce97591bbda7955e44031719eca24cbd2c645aae5775a03b3e1ff0bd",
     "tests/test_app.py": "6538ee45b40e5d0dc12b1849b29c4dcb6b3184542199b0e6669c6239a73888e0",
     "verify_execution_record.py": "1a64e3c8097409c19d971f711d63fbeb2066e3bfe804da31f684d0b795a529a6"
   }

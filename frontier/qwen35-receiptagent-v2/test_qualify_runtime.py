@@ -32,7 +32,7 @@ class QualificationContractTests(unittest.TestCase):
         requirements = (HERE / "requirements-eval.txt").read_text(encoding="utf-8")
         self.assertEqual(
             requirements.splitlines(),
-            ["cryptography==49.0.0", "jsonschema==4.26.0"],
+            ["cryptography==50.0.0", "jsonschema==4.26.0"],
         )
 
     def test_candidate_is_pinned_published_and_still_non_autonomous(self) -> None:
