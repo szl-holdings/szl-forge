@@ -328,7 +328,7 @@ def runtime_evidence(
     probe_bundle = _runtime_probe_or_unavailable(requester, base)
     if probe_bundle is None:
         return None
-    if probe_bundle["status"] == "NOT_QUALIFIED_NO_RUNTIME_PROBE":
+    if probe_bundle.get("status") == "NOT_QUALIFIED_NO_RUNTIME_PROBE":
         return probe_bundle
     health = probe_bundle["health"]
     build = probe_bundle["build"]
