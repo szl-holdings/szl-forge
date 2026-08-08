@@ -320,6 +320,7 @@ def runtime_evidence(
     requester: Callable[..., dict[str, Any]] = _json_request,
     *,
     expected_source_revision: str | None = None,
+    require_available: bool = False,
 ) -> dict[str, Any] | None:
     probe = artifact.get("runtime_probe")
     if probe is None:
@@ -329,6 +330,14 @@ def runtime_evidence(
     if probe_bundle is None:
         return None
     if probe_bundle.get("status") == "NOT_QUALIFIED_NO_RUNTIME_PROBE":
+        if expected_source_revision is not None or require_available:
+            reason = probe_bundle.get(
+                "failure_reason", "runtime probe is unavailable"
+            )
+            raise BindingError(
+                f"{artifact['repo_id']}: exact runtime evidence is required "
+                f"but unavailable: {reason}"
+            )
         return probe_bundle
     health = probe_bundle["health"]
     build = probe_bundle["build"]
@@ -493,6 +502,7 @@ def prepare_one(
     downloader: Callable[..., str] = hf_hub_download,
     requester: Callable[..., dict[str, Any]] = _json_request,
     expected_runtime_source_revision: str | None = None,
+    require_runtime_evidence: bool = False,
 ) -> tuple[dict[str, Any], bytes]:
     source_files = source_evidence(artifact)
     hub_revision_before, hub_files = hub_evidence(api, artifact)
@@ -504,6 +514,7 @@ def prepare_one(
         artifact,
         requester,
         expected_source_revision=expected_runtime_source_revision,
+        require_available=require_runtime_evidence,
     )
     publication = publication_payload(
         contract,
@@ -603,6 +614,7 @@ def publish_one(
         downloader=downloader,
         requester=requester,
         expected_runtime_source_revision=expected_runtime_source_revision,
+        require_runtime_evidence=publish,
     )
     if not publish:
         return result
@@ -656,6 +668,7 @@ def run(
             downloader=downloader,
             requester=requester,
             expected_runtime_source_revision=expected_runtime_source_revision,
+            require_runtime_evidence=publish,
         )
         for artifact in contract["artifacts"]
     ]
