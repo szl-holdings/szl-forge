@@ -11,7 +11,9 @@ import json
 import os
 import re
 import statistics
+import time
 import urllib.request
+import urllib.error
 from pathlib import Path
 from typing import Any, Callable, Iterable
 
@@ -255,17 +257,40 @@ def _json_request(
     *,
     payload: dict[str, Any] | None = None,
     timeout: float = 65.0,
+    attempts: int = 3,
+    base_delay_seconds: float = 0.8,
 ) -> dict[str, Any]:
     body = None
     headers = {"Accept": "application/json"}
     if payload is not None:
         body = json.dumps(payload, separators=(",", ":")).encode("utf-8")
         headers["Content-Type"] = "application/json"
-    request = urllib.request.Request(url, data=body, headers=headers, method="POST" if body else "GET")
-    with urllib.request.urlopen(request, timeout=timeout) as response:
-        if response.status != 200:
-            raise BindingError(f"runtime probe failed: {url} returned {response.status}")
-        return json.loads(response.read())
+    request = urllib.request.Request(
+        url,
+        data=body,
+        headers=headers,
+        method="POST" if body else "GET",
+    )
+    transient_statuses = {429, 500, 502, 503, 504}
+    for attempt in range(1, attempts + 1):
+        try:
+            with urllib.request.urlopen(request, timeout=timeout) as response:
+                if response.status != 200:
+                    raise BindingError(f"runtime probe failed: {url} returned {response.status}")
+                return json.loads(response.read())
+        except urllib.error.HTTPError as error:
+            status = error.code
+            if status in transient_statuses and attempt < attempts:
+                time.sleep(base_delay_seconds * attempt)
+                continue
+            raise BindingError(
+                f"runtime probe failed: {url} returned {status}: {error.reason}"
+            ) from error
+        except OSError as error:
+            if attempt < attempts:
+                time.sleep(base_delay_seconds * attempt)
+                continue
+            raise BindingError(f"runtime probe request failed: {url}: {error}") from error
 
 
 def runtime_evidence(
