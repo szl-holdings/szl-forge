@@ -216,7 +216,7 @@ class PortfolioContractTests(unittest.TestCase):
         requirements = (
             verifier.ROOT / "khipu" / "requirements-verify.txt"
         ).read_text(encoding="utf-8")
-        self.assertEqual(requirements.splitlines(), ["cryptography==49.0.0"])
+        self.assertEqual(requirements.splitlines(), ["cryptography==50.0.0"])
         self.assertIn("python tools/verify_model_portfolio.py --offline", card)
         self.assertNotIn("python khipu/eval_khipu.py --help", card)
         self.assertNotIn("python khipu/sanity_gate.py", card)
