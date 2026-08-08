@@ -29,6 +29,10 @@ class BindingError(RuntimeError):
     """Raised when a model cannot be bound without weakening evidence."""
 
 
+class TransientBindingError(BindingError):
+    """Raised when runtime probe failures are transient and can degrade to no-op runtime evidence."""
+
+
 def canonical_json(payload: Any) -> str:
     return json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
 
@@ -283,6 +287,10 @@ def _json_request(
             if status in transient_statuses and attempt < attempts:
                 time.sleep(base_delay_seconds * attempt)
                 continue
+            if status in transient_statuses:
+                raise TransientBindingError(
+                    f"runtime probe failed: {url} returned {status}: {error.reason}"
+                ) from error
             raise BindingError(
                 f"runtime probe failed: {url} returned {status}: {error.reason}"
             ) from error
@@ -290,7 +298,21 @@ def _json_request(
             if attempt < attempts:
                 time.sleep(base_delay_seconds * attempt)
                 continue
-            raise BindingError(f"runtime probe request failed: {url}: {error}") from error
+            raise TransientBindingError(f"runtime probe request failed: {url}: {error}") from error
+
+
+def _runtime_probe_or_unavailable(requester: Callable[..., dict[str, Any]], base: str) -> dict[str, Any] | None:
+    try:
+        health = requester(f"{base}/health")
+        build = requester(f"{base}/api/build-info")
+        identity = requester(f"{base}/api/v1/identity")
+    except TransientBindingError as error:
+        return {
+            "status": "NOT_QUALIFIED_NO_RUNTIME_PROBE",
+            "failure_reason": str(error),
+            "failure_code": "RUNTIME_SERVICE_UNAVAILABLE",
+        }
+    return {"health": health, "build": build, "identity": identity}
 
 
 def runtime_evidence(
@@ -303,9 +325,14 @@ def runtime_evidence(
     if probe is None:
         return None
     base = probe["base_url"].rstrip("/")
-    health = requester(f"{base}/health")
-    build = requester(f"{base}/api/build-info")
-    identity = requester(f"{base}/api/v1/identity")
+    probe_bundle = _runtime_probe_or_unavailable(requester, base)
+    if probe_bundle is None:
+        return None
+    if probe_bundle["status"] == "NOT_QUALIFIED_NO_RUNTIME_PROBE":
+        return probe_bundle
+    health = probe_bundle["health"]
+    build = probe_bundle["build"]
+    identity = probe_bundle["identity"]
     if health != {
         "status": "READY",
         "model_sha256_verified": True,
