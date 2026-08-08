@@ -11,7 +11,9 @@ import json
 import os
 import re
 import statistics
+import time
 import urllib.request
+import urllib.error
 from pathlib import Path
 from typing import Any, Callable, Iterable
 
@@ -25,6 +27,10 @@ FULL_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 
 class BindingError(RuntimeError):
     """Raised when a model cannot be bound without weakening evidence."""
+
+
+class TransientBindingError(BindingError):
+    """Raised when runtime probe failures are transient and can degrade to no-op runtime evidence."""
 
 
 def canonical_json(payload: Any) -> str:
@@ -255,17 +261,58 @@ def _json_request(
     *,
     payload: dict[str, Any] | None = None,
     timeout: float = 65.0,
+    attempts: int = 3,
+    base_delay_seconds: float = 0.8,
 ) -> dict[str, Any]:
     body = None
     headers = {"Accept": "application/json"}
     if payload is not None:
         body = json.dumps(payload, separators=(",", ":")).encode("utf-8")
         headers["Content-Type"] = "application/json"
-    request = urllib.request.Request(url, data=body, headers=headers, method="POST" if body else "GET")
-    with urllib.request.urlopen(request, timeout=timeout) as response:
-        if response.status != 200:
-            raise BindingError(f"runtime probe failed: {url} returned {response.status}")
-        return json.loads(response.read())
+    request = urllib.request.Request(
+        url,
+        data=body,
+        headers=headers,
+        method="POST" if body else "GET",
+    )
+    transient_statuses = {429, 500, 502, 503, 504}
+    for attempt in range(1, attempts + 1):
+        try:
+            with urllib.request.urlopen(request, timeout=timeout) as response:
+                if response.status != 200:
+                    raise BindingError(f"runtime probe failed: {url} returned {response.status}")
+                return json.loads(response.read())
+        except urllib.error.HTTPError as error:
+            status = error.code
+            if status in transient_statuses and attempt < attempts:
+                time.sleep(base_delay_seconds * attempt)
+                continue
+            if status in transient_statuses:
+                raise TransientBindingError(
+                    f"runtime probe failed: {url} returned {status}: {error.reason}"
+                ) from error
+            raise BindingError(
+                f"runtime probe failed: {url} returned {status}: {error.reason}"
+            ) from error
+        except OSError as error:
+            if attempt < attempts:
+                time.sleep(base_delay_seconds * attempt)
+                continue
+            raise TransientBindingError(f"runtime probe request failed: {url}: {error}") from error
+
+
+def _runtime_probe_or_unavailable(requester: Callable[..., dict[str, Any]], base: str) -> dict[str, Any] | None:
+    try:
+        health = requester(f"{base}/health")
+        build = requester(f"{base}/api/build-info")
+        identity = requester(f"{base}/api/v1/identity")
+    except TransientBindingError as error:
+        return {
+            "status": "NOT_QUALIFIED_NO_RUNTIME_PROBE",
+            "failure_reason": str(error),
+            "failure_code": "RUNTIME_SERVICE_UNAVAILABLE",
+        }
+    return {"health": health, "build": build, "identity": identity}
 
 
 def runtime_evidence(
@@ -278,9 +325,14 @@ def runtime_evidence(
     if probe is None:
         return None
     base = probe["base_url"].rstrip("/")
-    health = requester(f"{base}/health")
-    build = requester(f"{base}/api/build-info")
-    identity = requester(f"{base}/api/v1/identity")
+    probe_bundle = _runtime_probe_or_unavailable(requester, base)
+    if probe_bundle is None:
+        return None
+    if probe_bundle.get("status") == "NOT_QUALIFIED_NO_RUNTIME_PROBE":
+        return probe_bundle
+    health = probe_bundle["health"]
+    build = probe_bundle["build"]
+    identity = probe_bundle["identity"]
     if health != {
         "status": "READY",
         "model_sha256_verified": True,
