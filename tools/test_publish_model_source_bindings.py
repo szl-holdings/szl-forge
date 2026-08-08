@@ -405,6 +405,67 @@ class PublishModelSourceBindingsTests(unittest.TestCase):
 
         self.assertTrue(prepare.call_args.kwargs["require_runtime_evidence"])
 
+    def test_publish_rejects_transient_runtime_probe_before_upload(self) -> None:
+        artifact = {
+            "repo_id": "SZLHOLDINGS/example",
+            "artifact_class": "fine_tuned_model",
+            "promotion_state": "NOT_PROMOTED_LIMITED_EVIDENCE",
+            "source_path": ".",
+            "maturity": "MEASURED_LIMITED",
+            "role": "test",
+            "limitations": ["test only"],
+            "runtime_probe": {"base_url": "https://example.invalid"},
+        }
+        contract = {
+            "source_repository": "szl-holdings/szl-forge",
+            "policy": {
+                "artifact_equivalence": "NOT_CLAIMED",
+                "reproducible_build": "NOT_CLAIMED",
+                "statement": "bounded source claim",
+            },
+        }
+        api = mock.Mock()
+
+        def unavailable(_url: str, payload=None):
+            del payload
+            raise bindings.TransientBindingError("runtime probe returned 503")
+
+        receipts = {
+            "status": "DECLARED_KEY_SIGNATURES_VALID",
+            "held_out_evaluation": {},
+        }
+        with (
+            mock.patch.object(bindings, "source_evidence", return_value=[]),
+            mock.patch.object(
+                bindings,
+                "hub_evidence",
+                return_value=("a" * 40, []),
+            ),
+            mock.patch.object(bindings, "lineage_evidence", return_value=[]),
+            mock.patch.object(
+                bindings,
+                "signed_receipt_evidence",
+                return_value=receipts,
+            ),
+            mock.patch.object(bindings, "publish_prepared") as publish_prepared,
+        ):
+            with self.assertRaisesRegex(
+                bindings.BindingError,
+                "exact runtime evidence is required but unavailable",
+            ):
+                bindings.publish_one(
+                    api,
+                    contract,
+                    artifact,
+                    source_revision="3" * 40,
+                    publish=True,
+                    token="test-token",
+                    requester=unavailable,
+                )
+
+        publish_prepared.assert_not_called()
+        api.upload_file.assert_not_called()
+
     def test_run_wires_publish_mode_to_runtime_evidence_requirement(self) -> None:
         artifact = {"repo_id": "SZLHOLDINGS/example"}
         contract = {
