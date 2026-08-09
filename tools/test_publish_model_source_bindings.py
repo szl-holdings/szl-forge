@@ -331,6 +331,176 @@ class PublishModelSourceBindingsTests(unittest.TestCase):
                 expected_source_revision="4" * 40,
             )
 
+    def test_transient_runtime_probe_is_explicitly_not_qualified_in_dry_run(
+        self,
+    ) -> None:
+        artifact = {
+            "repo_id": "SZLHOLDINGS/example",
+            "runtime_probe": {"base_url": "https://example.invalid"},
+        }
+        requested: list[str] = []
+
+        def unavailable(url: str, payload=None):
+            del payload
+            requested.append(url)
+            raise bindings.TransientBindingError("runtime probe returned 503")
+
+        evidence = bindings.runtime_evidence(artifact, unavailable)
+
+        self.assertEqual(
+            evidence,
+            {
+                "status": "NOT_QUALIFIED_NO_RUNTIME_PROBE",
+                "failure_reason": "runtime probe returned 503",
+                "failure_code": "RUNTIME_SERVICE_UNAVAILABLE",
+            },
+        )
+        self.assertEqual(requested, ["https://example.invalid/health"])
+
+    def test_expected_source_rejects_transient_runtime_probe(self) -> None:
+        artifact = {
+            "repo_id": "SZLHOLDINGS/example",
+            "runtime_probe": {"base_url": "https://example.invalid"},
+        }
+
+        def unavailable(_url: str, payload=None):
+            del payload
+            raise bindings.TransientBindingError("runtime probe returned 503")
+
+        with self.assertRaisesRegex(
+            bindings.BindingError,
+            "exact runtime evidence is required but unavailable",
+        ):
+            bindings.runtime_evidence(
+                artifact,
+                unavailable,
+                expected_source_revision="3" * 40,
+            )
+
+    def test_publish_paths_require_runtime_evidence(self) -> None:
+        artifact = {"repo_id": "SZLHOLDINGS/example"}
+        prepared = (
+            {"repo_id": artifact["repo_id"], "hub_revision_before": "a" * 40},
+            b"{}\n",
+        )
+
+        with (
+            mock.patch.object(
+                bindings, "prepare_one", return_value=prepared
+            ) as prepare,
+            mock.patch.object(
+                bindings,
+                "publish_prepared",
+                return_value={"status": "PUBLISHED_AND_READBACK_VERIFIED"},
+            ),
+        ):
+            bindings.publish_one(
+                FakeApi(),
+                {"source_repository": "szl-holdings/szl-forge"},
+                artifact,
+                source_revision="3" * 40,
+                publish=True,
+                token="test-token",
+            )
+
+        self.assertTrue(prepare.call_args.kwargs["require_runtime_evidence"])
+
+    def test_publish_rejects_transient_runtime_probe_before_upload(self) -> None:
+        artifact = {
+            "repo_id": "SZLHOLDINGS/example",
+            "artifact_class": "fine_tuned_model",
+            "promotion_state": "NOT_PROMOTED_LIMITED_EVIDENCE",
+            "source_path": ".",
+            "maturity": "MEASURED_LIMITED",
+            "role": "test",
+            "limitations": ["test only"],
+            "runtime_probe": {"base_url": "https://example.invalid"},
+        }
+        contract = {
+            "source_repository": "szl-holdings/szl-forge",
+            "policy": {
+                "artifact_equivalence": "NOT_CLAIMED",
+                "reproducible_build": "NOT_CLAIMED",
+                "statement": "bounded source claim",
+            },
+        }
+        api = mock.Mock()
+
+        def unavailable(_url: str, payload=None):
+            del payload
+            raise bindings.TransientBindingError("runtime probe returned 503")
+
+        receipts = {
+            "status": "DECLARED_KEY_SIGNATURES_VALID",
+            "held_out_evaluation": {},
+        }
+        with (
+            mock.patch.object(bindings, "source_evidence", return_value=[]),
+            mock.patch.object(
+                bindings,
+                "hub_evidence",
+                return_value=("a" * 40, []),
+            ),
+            mock.patch.object(bindings, "lineage_evidence", return_value=[]),
+            mock.patch.object(
+                bindings,
+                "signed_receipt_evidence",
+                return_value=receipts,
+            ),
+            mock.patch.object(bindings, "publish_prepared") as publish_prepared,
+        ):
+            with self.assertRaisesRegex(
+                bindings.BindingError,
+                "exact runtime evidence is required but unavailable",
+            ):
+                bindings.publish_one(
+                    api,
+                    contract,
+                    artifact,
+                    source_revision="3" * 40,
+                    publish=True,
+                    token="test-token",
+                    requester=unavailable,
+                )
+
+        publish_prepared.assert_not_called()
+        api.upload_file.assert_not_called()
+
+    def test_run_wires_publish_mode_to_runtime_evidence_requirement(self) -> None:
+        artifact = {"repo_id": "SZLHOLDINGS/example"}
+        contract = {
+            "source_repository": "szl-holdings/szl-forge",
+            "artifacts": [artifact],
+        }
+        prepared = (
+            {"repo_id": artifact["repo_id"], "hub_revision_before": "a" * 40},
+            b"{}\n",
+        )
+
+        with tempfile.TemporaryDirectory() as temporary:
+            report = Path(temporary) / "report.json"
+            with (
+                mock.patch.object(bindings, "load_contract", return_value=contract),
+                mock.patch.object(
+                    bindings, "prepare_one", return_value=prepared
+                ) as prepare,
+                mock.patch.object(
+                    bindings,
+                    "publish_prepared",
+                    return_value={"status": "PUBLISHED_AND_READBACK_VERIFIED"},
+                ),
+            ):
+                bindings.run(
+                    contract_path=Path("contract.json"),
+                    report_path=report,
+                    source_revision="3" * 40,
+                    publish=True,
+                    token="test-token",
+                    api=FakeApi(),
+                )
+
+        self.assertTrue(prepare.call_args.kwargs["require_runtime_evidence"])
+
     def test_publish_preflights_every_artifact_before_the_first_upload(self) -> None:
         contract = {
             "source_repository": "szl-holdings/szl-forge",
