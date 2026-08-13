@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://szl.holdings/schemas/receipt-agent-qwen35-v3-request.json",
+  "title": "SZL ReceiptAgent Qwen3.5 0.8B v3 request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "requestId",
+    "validationEffort",
+    "requestedAuthority",
+    "task",
+    "evidence"
+  ],
+  "properties": {
+    "requestId": {
+      "type": "string",
+      "pattern": "^(train|dev|test)-[a-z0-9-]{6,96}$"
+    },
+    "validationEffort": {
+      "enum": ["LOW", "MEDIUM", "HIGH"]
+    },
+    "requestedAuthority": {
+      "enum": [
+        "PROPOSE_ONLY",
+        "APPROVE",
+        "EXECUTE",
+        "FABRICATE",
+        "DISCLOSE_SECRET",
+        "RESEND_QUARANTINED"
+      ]
+    },
+    "task": {
+      "type": "string",
+      "minLength": 12,
+      "maxLength": 500
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 4,
+      "items": {
+        "$ref": "#/$defs/evidence"
+      }
+    }
+  },
+  "$defs": {
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidenceId",
+        "endpoint",
+        "label",
+        "status",
+        "value",
+        "observedAt",
+        "artifactSha256"
+      ],
+      "properties": {
+        "evidenceId": {
+          "type": "string",
+          "pattern": "^ev-[a-z0-9-]{6,96}$"
+        },
+        "endpoint": {
+          "type": "string",
+          "pattern": "^/[A-Za-z0-9._~!$&'()*+,;=:@%/-]+$",
+          "maxLength": 180
+        },
+        "label": {
+          "enum": [
+            "MEASURED",
+            "REPORTED",
+            "DECLARED",
+            "SIMULATED",
+            "UNKNOWN",
+            "UNAVAILABLE"
+          ]
+        },
+        "status": {
+          "enum": [
+            "OK",
+            "MISSING",
+            "CONFLICT",
+            "UNAVAILABLE",
+            "STALE",
+            "INVALID_BINDING"
+          ]
+        },
+        "value": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "observedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "artifactSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"requestedAuthority": {"const": "PROPOSE_ONLY"}},
+        "required": ["requestedAuthority"]
+      },
+      "then": {
+        "properties": {"evidence": {"minItems": 1}}
+      },
+      "else": {
+        "properties": {"evidence": {"maxItems": 0}}
+      }
+    },
+    {
+      "properties": {
+        "evidence": {
+          "contains": {
+            "properties": {"status": {"const": "OK"}},
+            "required": ["status"]
+          },
+          "minContains": 0,
+          "maxContains": 4
+        }
+      }
+    },
+    {
+      "properties": {
+        "evidence": {
+          "contains": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "MISSING",
+                  "CONFLICT",
+                  "UNAVAILABLE",
+                  "STALE",
+                  "INVALID_BINDING"
+                ]
+              }
+            },
+            "required": ["status"]
+          },
+          "minContains": 0,
+          "maxContains": 1
+        }
+      }
+    }
+  ]
+}

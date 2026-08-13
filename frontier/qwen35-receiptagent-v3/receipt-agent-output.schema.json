@@ -1,0 +1,252 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://szl.holdings/schemas/receipt-agent-qwen35-v3-output.json",
+  "title": "SZL ReceiptAgent Qwen3.5 0.8B v3 observable response",
+  "description": "Proposal-or-withhold output. External code remains authoritative for validation, approval, execution, and receipt binding.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "requestId",
+    "capabilityProfile",
+    "provenance",
+    "validationEffort",
+    "responseType",
+    "decision",
+    "claim",
+    "evidence",
+    "selfCheck",
+    "recovery",
+    "approvalRequired",
+    "controllerBoundary",
+    "receiptBinding",
+    "executed",
+    "autonomyEligible"
+  ],
+  "properties": {
+    "requestId": {
+      "type": "string",
+      "pattern": "^(train|dev|test)-[a-z0-9-]{6,96}$"
+    },
+    "capabilityProfile": {
+      "const": "SZL-ReceiptAgent-Qwen3.5-0.8B-v3"
+    },
+    "provenance": {
+      "const": "MODEL_PROPOSED"
+    },
+    "validationEffort": {
+      "enum": ["LOW", "MEDIUM", "HIGH"]
+    },
+    "responseType": {
+      "enum": ["DRAFT", "RECOVERY"]
+    },
+    "decision": {
+      "enum": ["DRAFT", "WITHHELD"]
+    },
+    "claim": {
+      "type": "string",
+      "minLength": 20,
+      "maxLength": 700
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/evidence"
+      }
+    },
+    "selfCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "checksPerformed", "failedChecks"],
+      "properties": {
+        "status": {
+          "enum": ["PASS", "FAIL"]
+        },
+        "checksPerformed": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 7,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/check"
+          }
+        },
+        "failedChecks": {
+          "type": "array",
+          "maxItems": 7,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/check"
+          }
+        }
+      }
+    },
+    "recovery": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["code", "requiredEvidenceIds"],
+          "properties": {
+            "code": {
+              "enum": [
+                "MISSING_EVIDENCE",
+                "CONFLICTING_EVIDENCE",
+                "UNAVAILABLE_EVIDENCE",
+                "STALE_EVIDENCE",
+                "INVALID_RECEIPT_BINDING"
+              ]
+            },
+            "requiredEvidenceIds": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 4,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "pattern": "^ev-[a-z0-9-]{6,96}$"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "approvalRequired": {
+      "const": true
+    },
+    "controllerBoundary": {
+      "const": "VALIDATE_APPROVE_EXECUTE_OUTSIDE_MODEL"
+    },
+    "receiptBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "status"],
+      "properties": {
+        "algorithm": {
+          "const": "ed25519-over-sha256"
+        },
+        "status": {
+          "const": "NOT_BOUND"
+        }
+      }
+    },
+    "executed": {
+      "const": false
+    },
+    "autonomyEligible": {
+      "const": false
+    }
+  },
+  "$defs": {
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidenceId",
+        "endpoint",
+        "label",
+        "status",
+        "value",
+        "observedAt",
+        "artifactSha256"
+      ],
+      "properties": {
+        "evidenceId": {
+          "type": "string",
+          "pattern": "^ev-[a-z0-9-]{6,96}$"
+        },
+        "endpoint": {
+          "type": "string",
+          "pattern": "^/[A-Za-z0-9._~!$&'()*+,;=:@%/-]+$",
+          "maxLength": 180
+        },
+        "label": {
+          "enum": [
+            "MEASURED",
+            "REPORTED",
+            "DECLARED",
+            "SIMULATED",
+            "UNKNOWN",
+            "UNAVAILABLE"
+          ]
+        },
+        "status": {
+          "enum": [
+            "OK",
+            "MISSING",
+            "CONFLICT",
+            "UNAVAILABLE",
+            "STALE",
+            "INVALID_BINDING"
+          ]
+        },
+        "value": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "observedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "artifactSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "check": {
+      "enum": [
+        "SCHEMA",
+        "AUTHORITY",
+        "EVIDENCE_PRESENT",
+        "PROVENANCE",
+        "STATUS",
+        "CROSS_SOURCE_CONSISTENCY",
+        "RECEIPT_BINDING"
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"responseType": {"const": "DRAFT"}},
+        "required": ["responseType"]
+      },
+      "then": {
+        "properties": {
+          "decision": {"const": "DRAFT"},
+          "claim": {"pattern": "^PROPOSE \\(draft\\):"},
+          "recovery": {"type": "null"},
+          "selfCheck": {
+            "properties": {
+              "status": {"const": "PASS"},
+              "failedChecks": {"maxItems": 0}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"responseType": {"const": "RECOVERY"}},
+        "required": ["responseType"]
+      },
+      "then": {
+        "properties": {
+          "decision": {"const": "WITHHELD"},
+          "claim": {"pattern": "^WITHHOLD \\(recovery\\):"},
+          "recovery": {"type": "object"},
+          "selfCheck": {
+            "properties": {
+              "status": {"const": "FAIL"},
+              "failedChecks": {"minItems": 1}
+            }
+          }
+        }
+      }
+    }
+  ]
+}
