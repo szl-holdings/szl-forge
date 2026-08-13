@@ -45,6 +45,7 @@ jobs:
           "huggingface-hub==1.23.0"
           "jsonschema==4.26.0"
           "pydantic==2.13.4"
+          "safetensors==0.8.0"
 
       - name: Compile and run offline contracts
         run: |
@@ -69,7 +70,13 @@ jobs:
             frontier/qwen35-receiptagent-v2/qualify_runtime.py \
             frontier/qwen35-receiptagent-v2/train_candidate.py \
             frontier/qwen35-receiptagent-v2/evaluate_candidate.py \
-            frontier/qwen35-receiptagent-v2/evidence_chain.py
+            frontier/qwen35-receiptagent-v2/evidence_chain.py \
+            frontier/qwen35-receiptagent-v3/generate_curriculum.py \
+            frontier/qwen35-receiptagent-v3/qualify_runtime.py \
+            frontier/qwen35-receiptagent-v3/train_candidate.py \
+            frontier/qwen35-receiptagent-v3/evaluate_candidate.py \
+            frontier/qwen35-receiptagent-v3/compare_reports.py \
+            frontier/qwen35-receiptagent-v3/test_contract.py
           python tools/test_verify_model_portfolio.py
           PYTHONPATH=tools python -m unittest -v \
             tools/test_authorize_kernels_release.py \
@@ -80,6 +87,10 @@ jobs:
           PYTHONPATH=frontier/qwen35-receiptagent-v2 \
             python frontier/qwen35-receiptagent-v2/test_qualify_runtime.py
           python frontier/qwen35-receiptagent-v2/evidence_chain.py verify
+          python frontier/qwen35-receiptagent-v3/generate_curriculum.py --check
+          PYTHONPATH=frontier/qwen35-receiptagent-v3 \
+            python -m unittest -v \
+              frontier/qwen35-receiptagent-v3/test_contract.py
           PYTHONPATH=spaces/szl-model-inference-lab \
             python -m unittest discover \
               -s spaces/szl-model-inference-lab/tests -v

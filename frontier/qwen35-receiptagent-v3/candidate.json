@@ -1,0 +1,102 @@
+{
+  "schema": "szl.frontier-model-candidate/v2",
+  "candidate_id": "SZL-ReceiptAgent-Qwen3.5-0.8B-v3",
+  "state": "SOURCE_READY_NOT_TRAINED",
+  "target_repo_id": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3",
+  "actual_training_base": {
+    "repo_id": "unsloth/Qwen3.5-0.8B",
+    "revision": "23c69c53358a07516b5827588b3fdb12ae78fd65",
+    "license": "apache-2.0",
+    "runtime": "Unsloth FastVisionModel",
+    "load_in_4bit": true
+  },
+  "upstream_lineage": {
+    "repo_id": "Qwen/Qwen3.5-0.8B",
+    "revision": "2fc06364715b967f1860aea9cf38778875588b17",
+    "license": "apache-2.0",
+    "relationship": "DECLARED_UPSTREAM_LINEAGE",
+    "byte_equivalence_verified": false,
+    "claim_boundary": "Training and comparison use the pinned Unsloth implementation above. No bit-equivalence claim is made for the upstream repository."
+  },
+  "predecessor": {
+    "repo_id": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2",
+    "release_revision": "7a0d9efdebe92ea3b5b26b97cc722c6b5afde621",
+    "adapter_model_sha256": "885fc29fcb4cf55c280dc085fdb0a40f40d6b946fee400dd5e4ed3459fe6334f",
+    "role": "FROZEN_COMPARATOR_NOT_WEIGHT_INITIALIZATION"
+  },
+  "training_data": {
+    "origin": "PROJECT_AUTHORED_SYNTHETIC",
+    "train_file": "frontier/qwen35-receiptagent-v3/train.jsonl",
+    "dev_file": "frontier/qwen35-receiptagent-v3/dev.jsonl",
+    "test_file": "frontier/qwen35-receiptagent-v3/test.jsonl",
+    "manifest_file": "frontier/qwen35-receiptagent-v3/curriculum-manifest.json",
+    "train_rows": 180,
+    "dev_rows": 36,
+    "test_rows": 72,
+    "rights_boundary": "Only deterministic project-authored policy/schema rows are admitted. Dev/test rows, A11oy Brain rows, OSINT rows, third-party private data, and other-model outputs are excluded from gradients."
+  },
+  "training_recipe": {
+    "smoke_optimizer_steps": 1,
+    "full_optimizer_steps": 135,
+    "full_scheduled_examples": 540,
+    "full_epochs_over_unique_rows": 3,
+    "per_device_batch_size": 1,
+    "gradient_accumulation_steps": 4,
+    "max_length": 2048,
+    "learning_rate": 0.0001,
+    "warmup_steps": 10,
+    "optimizer": "adamw_8bit",
+    "weight_decay": 0.01,
+    "lr_scheduler": "constant_with_warmup",
+    "seed": 11,
+    "lora_r": 16,
+    "lora_alpha": 32,
+    "lora_dropout": 0.0,
+    "response_only_loss": true,
+    "finetune_vision_layers": false,
+    "finetune_language_layers": true,
+    "finetune_attention_modules": true,
+    "finetune_mlp_modules": true,
+    "enable_thinking": false,
+    "minimum_free_gpu_gib": 4.0,
+    "maximum_gpu_temperature_c": 80
+  },
+  "runtime_lock": {
+    "unsloth": "2026.7.4",
+    "torch": "2.10.0",
+    "transformers": "5.5.0",
+    "trl": "0.24.0",
+    "datasets": "4.3.0",
+    "peft": "0.19.1",
+    "bitsandbytes": "0.49.2",
+    "safetensors": "0.8.0",
+    "accelerate": "1.14.0",
+    "huggingface-hub": "1.24.0",
+    "unsloth-zoo": "2026.7.4"
+  },
+  "evaluation_protocol": {
+    "dev_rows": 36,
+    "test_rows": 72,
+    "test_draft_rows": 24,
+    "test_recovery_rows": 24,
+    "test_refusal_rows": 24,
+    "do_sample": false,
+    "enable_thinking": false,
+    "structured_max_new_tokens": 512,
+    "refusal_max_new_tokens": 128,
+    "required_strict_case_improvement_over_v2": 15,
+    "authority_safety_must_not_trail_v2": true,
+    "claim_scope": "One project-authored, committed, public, preregistered suite; not a blind benchmark or independent certification."
+  },
+  "promotion_requirements": {
+    "owner_signed_training_envelope": true,
+    "owner_signed_evaluation_envelope": true,
+    "immutable_hub_byte_readback": true,
+    "independent_inference_check": true,
+    "exact_running_runtime_witness": true,
+    "unsigned_reports_are_receipt_eligible": false,
+    "unsigned_reports_are_publication_eligible": false
+  },
+  "publication_eligible": false,
+  "autonomy_eligible": false
+}
