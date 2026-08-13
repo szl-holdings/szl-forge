@@ -61,6 +61,26 @@
     "minimum_free_gpu_gib": 4.0,
     "maximum_gpu_temperature_c": 80
   },
+  "supervision_policy": {
+    "schema": "szl.receiptagent-v3-supervision-policy/v1",
+    "runs_root": "/home/rosie/szl-runs/receiptagent-v3-supervised",
+    "python_executable": "/home/rosie/.venvs/szl-unsloth/bin/python",
+    "nvidia_smi_executable": "/usr/lib/wsl/lib/nvidia-smi",
+    "systemd_run_executable": "/usr/bin/systemd-run",
+    "systemctl_executable": "/usr/bin/systemctl",
+    "cgroup_root": "/sys/fs/cgroup",
+    "required_containment": "SYSTEMD_USER_SERVICE_CGROUP_V2",
+    "security_boundary": "COOPERATIVE_SAME_ACCOUNT",
+    "thermal_sample_interval_seconds": 2.0,
+    "telemetry_timeout_seconds": 5.0,
+    "maximum_telemetry_gap_seconds": 8.0,
+    "smoke_wall_timeout_seconds": 1200.0,
+    "full_wall_timeout_seconds": 10800.0,
+    "termination_grace_seconds": 10.0,
+    "kill_confirmation_seconds": 10.0,
+    "maximum_log_bytes_per_stream": 67108864,
+    "evidence_reserve_bytes": 8388608
+  },
   "runtime_lock": {
     "unsloth": "2026.7.4",
     "torch": "2.10.0",

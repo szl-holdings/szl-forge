@@ -73,10 +73,16 @@ jobs:
             frontier/qwen35-receiptagent-v2/evidence_chain.py \
             frontier/qwen35-receiptagent-v3/generate_curriculum.py \
             frontier/qwen35-receiptagent-v3/qualify_runtime.py \
+            frontier/qwen35-receiptagent-v3/launch_supervised_training.py \
+            frontier/qwen35-receiptagent-v3/supervise_training.py \
+            frontier/qwen35-receiptagent-v3/supervisor_validation.py \
             frontier/qwen35-receiptagent-v3/train_candidate.py \
             frontier/qwen35-receiptagent-v3/evaluate_candidate.py \
             frontier/qwen35-receiptagent-v3/compare_reports.py \
-            frontier/qwen35-receiptagent-v3/test_contract.py
+            frontier/qwen35-receiptagent-v3/test_contract.py \
+            frontier/qwen35-receiptagent-v3/test_launch_supervised_training.py \
+            frontier/qwen35-receiptagent-v3/test_supervise_training.py \
+            frontier/qwen35-receiptagent-v3/test_supervisor_validation.py
           python tools/test_verify_model_portfolio.py
           PYTHONPATH=tools python -m unittest -v \
             tools/test_authorize_kernels_release.py \
@@ -90,7 +96,10 @@ jobs:
           python frontier/qwen35-receiptagent-v3/generate_curriculum.py --check
           PYTHONPATH=frontier/qwen35-receiptagent-v3 \
             python -m unittest -v \
-              frontier/qwen35-receiptagent-v3/test_contract.py
+              frontier/qwen35-receiptagent-v3/test_contract.py \
+              frontier/qwen35-receiptagent-v3/test_launch_supervised_training.py \
+              frontier/qwen35-receiptagent-v3/test_supervise_training.py \
+              frontier/qwen35-receiptagent-v3/test_supervisor_validation.py
           PYTHONPATH=spaces/szl-model-inference-lab \
             python -m unittest discover \
               -s spaces/szl-model-inference-lab/tests -v
