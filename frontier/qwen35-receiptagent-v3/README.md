@@ -80,10 +80,14 @@ not import the full GPU stack or claim training success.
 
 GPU commands are allowed only after this source merges to protected `main`, the
 local checkout is clean, and a fresh `git ls-remote` observation proves that the
-exact source commit is still current remote main. Outputs must be new or empty
-directories outside the repository. Hardware limits are fixed in
-`candidate.json`; callers cannot raise the 80 C thermal ceiling or lower the
-free-memory floor.
+exact source commit is still current remote main. Hardware limits and the
+process-supervision policy are fixed in `candidate.json`; callers cannot raise
+the 80 C thermal ceiling, lower the free-memory floor, select a different
+executable, or extend a deadline. Training runs inside a dedicated systemd
+user-service cgroup. The supervisor independently samples the exact GPU UUID
+every two seconds, fails closed on telemetry loss, and requires the worker
+cgroup to become empty. The worker receives no inherited credentials, no
+network namespace, and only run-local writable staging/cache paths.
 
 ```bash
 PY=/home/rosie/.venvs/szl-unsloth/bin/python
@@ -93,34 +97,49 @@ $PY qualify_runtime.py \
   --source-commit "$SRC" \
   --report /home/rosie/szl-runs/receiptagent-v3/runtime-preflight.json
 
-$PY train_candidate.py \
+$PY launch_supervised_training.py \
   --source-commit "$SRC" \
-  --run-kind smoke \
-  --output-dir /home/rosie/szl-runs/receiptagent-v3-smoke
+  --run-kind smoke
 
-$PY train_candidate.py \
+$PY launch_supervised_training.py \
   --source-commit "$SRC" \
-  --run-kind full \
-  --output-dir /home/rosie/szl-runs/receiptagent-v3-full
+  --run-kind full
 ```
 
 The smoke run is one optimizer step and can never enter evaluation as a
 qualified adapter. The full run is fixed at 135 optimizer steps: 540 scheduled
 examples, or three passes over 180 unique rows, with batch size 1 and gradient
-accumulation 4. Temperature is sampled before, after, and at every optimizer
-step. Final adapter weights must parse as SafeTensors; metadata is allowlisted.
+accumulation 4. Temperature is sampled independently before launch, throughout
+the entire worker lifetime, after worker exit, and inside the trainer at
+optimizer boundaries. A sample of 80 C may pass; 81 C terminates the one-shot
+run with no completion claim. Final adapter weights must parse as SafeTensors;
+metadata is allowlisted.
 
-The short bounded run currently has no crash-resume claim. An interrupted run is
-discarded and restarted in a new empty directory rather than loading an unsafe
-optimizer pickle.
+Each launch generates a random exclusive attempt under the committed WSL-native
+runs root. An existing attempt is never reused, even if empty. Admission and
+terminal reports are published without replacement; interrupted output is
+retained as untrusted and never resumed.
+
+The supervisor is a process observer and artifact binder. A successful smoke
+state means only that the fixed stack completed one step and saved internally
+consistent, parseable bytes. A successful fixed-full state permits only local
+evaluation of those exact unauthenticated bytes. It does not prove useful
+learning, model quality, evaluation success, receipt eligibility, publication,
+deployment, live runtime health, or autonomy. The systemd boundary is
+cooperative same-account containment, not a hostile-code sandbox.
 
 ## Evaluation and comparison
 
-Run dev first. Freeze source and adapter before opening the frozen-final result.
-Base means the pinned Unsloth 4-bit implementation base—not an unverified claim
-of byte equivalence with the separately recorded upstream Qwen repository.
+Evaluation remains blocked until `evaluate_candidate.py` is upgraded to require
+and revalidate the exact supervisor report, child training report, and adapter
+bytes together. Do not invoke the example below against a v3 adapter yet. Once
+that linkage gate exists, run dev first and freeze source and adapter before
+opening the frozen-final result. Base means the pinned Unsloth 4-bit
+implementation base—not an unverified claim of byte equivalence with the
+separately recorded upstream Qwen repository.
 
 ```bash
+# FUTURE ONLY AFTER THE SUPERVISOR-REPORT LINKAGE GATE IS IMPLEMENTED.
 $PY evaluate_candidate.py --model-kind v3 --split dev \
   --source-commit "$SRC" \
   --adapter-dir /home/rosie/szl-runs/receiptagent-v3-full/adapter \

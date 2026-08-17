@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import importlib.metadata
 import json
+import os
 import re
 import subprocess
 import sys
@@ -115,6 +116,38 @@ def fresh_exact_source(source_commit: str) -> dict[str, Any]:
     }
 
 
+def supervised_local_source(source_commit: str) -> dict[str, Any]:
+    """Recheck local exact-main state without giving the worker network credentials."""
+    if len(source_commit) != 40 or any(c not in "0123456789abcdef" for c in source_commit):
+        raise QualificationError("source commit must be an exact lowercase Git SHA")
+    origin = git("remote", "get-url", "origin").stdout.decode().strip()
+    if origin not in CANONICAL_ORIGINS:
+        raise QualificationError("origin does not identify the canonical szl-forge repository")
+    head = git("rev-parse", "HEAD").stdout.decode().strip()
+    branch = git("branch", "--show-current").stdout.decode().strip()
+    cached_main = git("rev-parse", "refs/remotes/origin/main").stdout.decode().strip()
+    dirty = git("status", "--porcelain", "--untracked-files=all").stdout.decode().strip()
+    if head != source_commit:
+        raise QualificationError(f"HEAD {head} does not match source {source_commit}")
+    if cached_main != source_commit:
+        raise QualificationError("cached origin/main differs from the supervised source")
+    if branch != "main":
+        raise QualificationError(f"training requires local main, observed {branch!r}")
+    if dirty:
+        raise QualificationError("training checkout is dirty")
+    return {
+        "repository": "szl-holdings/szl-forge",
+        "revision": source_commit,
+        "branch": "main",
+        "originIdentityVerified": True,
+        "freshRemoteMainObserved": False,
+        "freshRemoteMainObservationDelegatedToSupervisor": True,
+        "cachedRemoteTrackingMatches": True,
+        "workingTreeClean": True,
+        "commitSignatureVerifiedByThisTool": False,
+    }
+
+
 def committed_bytes(source_commit: str, path: str) -> bytes:
     return git("show", f"{source_commit}:{path}").stdout
 
@@ -209,10 +242,10 @@ def enforce_runtime_lock(candidate: dict[str, Any]) -> dict[str, str]:
     return observed
 
 
-def gpu_temperature_c() -> int:
+def gpu_temperature_c(executable: str = "nvidia-smi") -> int:
     measured = subprocess.run(
         [
-            "nvidia-smi",
+            executable,
             "--query-gpu=temperature.gpu",
             "--format=csv,noheader,nounits",
         ],
@@ -227,11 +260,13 @@ def gpu_temperature_c() -> int:
     return int(values[0])
 
 
-def raw_gpu_preflight(policy: dict[str, Any]) -> dict[str, Any]:
+def raw_gpu_preflight(
+    policy: dict[str, Any], executable: str = "nvidia-smi"
+) -> dict[str, Any]:
     measured = subprocess.run(
         [
-            "nvidia-smi",
-            "--query-gpu=name,temperature.gpu,memory.free,memory.total",
+            executable,
+            "--query-gpu=uuid,name,temperature.gpu,memory.free,memory.total",
             "--format=csv,noheader,nounits",
         ],
         check=True,
@@ -243,9 +278,9 @@ def raw_gpu_preflight(policy: dict[str, Any]) -> dict[str, Any]:
     if len(lines) != 1:
         raise QualificationError("raw GPU preflight requires exactly one visible GPU")
     fields = [field.strip() for field in lines[0].split(",")]
-    if len(fields) != 4:
+    if len(fields) != 5:
         raise QualificationError("raw GPU preflight returned an unexpected result")
-    name, temperature_text, free_mib_text, total_mib_text = fields
+    gpu_uuid, name, temperature_text, free_mib_text, total_mib_text = fields
     try:
         temperature = int(temperature_text)
         free_mib = int(free_mib_text)
@@ -263,6 +298,7 @@ def raw_gpu_preflight(policy: dict[str, Any]) -> dict[str, Any]:
             f"GPU free memory {free_mib / 1024:.2f} GiB is below {min_free_gib:.2f} GiB"
         )
     return {
+        "uuid": gpu_uuid,
         "name": name,
         "temperatureCBeforeRuntimeImport": temperature,
         "freeMiBBeforeRuntimeImport": free_mib,
@@ -270,12 +306,14 @@ def raw_gpu_preflight(policy: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def gpu_gate(torch: Any, policy: dict[str, Any]) -> dict[str, Any]:
+def gpu_gate(
+    torch: Any, policy: dict[str, Any], telemetry_executable: str = "nvidia-smi"
+) -> dict[str, Any]:
     if not torch.cuda.is_available():
         raise QualificationError("CUDA is unavailable")
     free_bytes, total_bytes = torch.cuda.mem_get_info()
     device = torch.cuda.get_device_properties(0)
-    temperature = gpu_temperature_c()
+    temperature = gpu_temperature_c(telemetry_executable)
     min_free_gib = float(policy["minimum_free_gpu_gib"])
     max_temp_c = int(policy["maximum_gpu_temperature_c"])
     if free_bytes < int(min_free_gib * GIB):
@@ -402,9 +440,8 @@ def sanitized_error(exc: Exception) -> str:
     return f"{type(exc).__name__}: {message[:500]}"
 
 
-def train(args: argparse.Namespace) -> dict[str, Any]:
-    output_dir = validate_output_dir(args.output_dir)
-    source = fresh_exact_source(args.source_commit)
+def train(args: argparse.Namespace, output_dir: Path) -> dict[str, Any]:
+    source = supervised_local_source(args.source_commit)
     candidate = load_committed_json(args.source_commit, "candidate.json")
     if candidate.get("candidate_id") != "SZL-ReceiptAgent-Qwen3.5-0.8B-v3":
         raise QualificationError("unexpected candidate identity")
@@ -415,13 +452,19 @@ def train(args: argparse.Namespace) -> dict[str, Any]:
     if candidate.get("autonomy_eligible") is not False:
         raise QualificationError("candidate cannot be autonomy eligible")
     recipe = candidate["training_recipe"]
+    telemetry_executable = candidate["supervision_policy"]["nvidia_smi_executable"]
+    supervision_policy_sha = sha256_json(candidate["supervision_policy"])
+    training_recipe_sha = sha256_json(recipe)
+    worker_source_sha = sha256_bytes(
+        committed_bytes(args.source_commit, f"{RELATIVE}/train_candidate.py")
+    )
     expected_steps = (
         recipe["smoke_optimizer_steps"]
         if args.run_kind == "smoke"
         else recipe["full_optimizer_steps"]
     )
     source_bundle, rows = curriculum(args.source_commit)
-    raw_gpu = raw_gpu_preflight(recipe)
+    raw_gpu = raw_gpu_preflight(recipe, telemetry_executable)
 
     import unsloth  # noqa: F401 - patch before Transformers/PEFT imports
     import torch
@@ -433,7 +476,7 @@ def train(args: argparse.Namespace) -> dict[str, Any]:
     from unsloth.trainer import UnslothVisionDataCollator
 
     versions = enforce_runtime_lock(candidate)
-    gpu = gpu_gate(torch, recipe)
+    gpu = gpu_gate(torch, recipe, telemetry_executable)
     gpu["preRuntimeImport"] = raw_gpu
 
     thermal_samples = [gpu["temperatureCBeforeLoad"]]
@@ -441,7 +484,7 @@ def train(args: argparse.Namespace) -> dict[str, Any]:
 
     class ThermalGuard(TrainerCallback):
         def on_step_end(self, _args: Any, state: Any, control: Any, **_kwargs: Any) -> Any:
-            temperature = gpu_temperature_c()
+            temperature = gpu_temperature_c(telemetry_executable)
             thermal_samples.append(temperature)
             if temperature > max_temp_c:
                 raise QualificationError(
@@ -519,7 +562,7 @@ def train(args: argparse.Namespace) -> dict[str, Any]:
         raise QualificationError(
             f"trainer completed {stats.global_step} steps, expected {expected_steps}"
         )
-    terminal_temperature = gpu_temperature_c()
+    terminal_temperature = gpu_temperature_c(telemetry_executable)
     thermal_samples.append(terminal_temperature)
     if terminal_temperature > max_temp_c:
         raise QualificationError("GPU exceeded the fixed thermal policy at run completion")
@@ -541,6 +584,10 @@ def train(args: argparse.Namespace) -> dict[str, Any]:
     report = {
         "schema": "szl.frontier-training-run/v3",
         "candidateId": candidate["candidate_id"],
+        "supervisorRunId": args.supervisor_run_id,
+        "supervisionPolicySha256": supervision_policy_sha,
+        "workerSourceSha256": worker_source_sha,
+        "trainingRecipeSha256": training_recipe_sha,
         "state": state,
         "runKind": args.run_kind.upper(),
         "measuredAt": datetime.now(timezone.utc).isoformat(),
@@ -595,16 +642,22 @@ def main() -> int:
     parser.add_argument("--source-commit", required=True)
     parser.add_argument("--run-kind", choices=("smoke", "full"), required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--supervisor-run-id", required=True)
     args = parser.parse_args()
+    if not re.fullmatch(r"[0-9a-f]{32}", args.supervisor_run_id):
+        parser.error("--supervisor-run-id must be exactly 32 lowercase hex characters")
     output_admitted = False
+    report_published = False
     try:
-        report = train(args)
+        output_dir = validate_output_dir(args.output_dir)
         output_admitted = True
+        report = train(args, output_dir)
         code = 0
     except Exception as exc:  # noqa: BLE001 - fail closed with bounded evidence
         report = {
             "schema": "szl.frontier-training-run/v3",
             "state": "UNAVAILABLE",
+            "supervisorRunId": args.supervisor_run_id,
             "runKind": args.run_kind.upper(),
             "measuredAt": datetime.now(timezone.utc).isoformat(),
             "fatal": sanitized_error(exc),
@@ -617,19 +670,40 @@ def main() -> int:
         code = 1
     rendered = json.dumps(report, indent=2, sort_keys=True) + "\n"
     try:
-        resolved = args.output_dir.resolve()
-        report_path = resolved / "training-report.json"
-        if resolved != ROOT and ROOT not in resolved.parents:
-            if output_admitted:
-                report_path.write_text(rendered, encoding="utf-8")
-            elif not resolved.exists():
-                resolved.mkdir(parents=True)
-                report_path.write_text(rendered, encoding="utf-8")
-            elif resolved.is_dir() and not any(resolved.iterdir()):
-                report_path.write_text(rendered, encoding="utf-8")
+        if output_admitted:
+            report_path = output_dir / "training-report.json"
+            flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+            if hasattr(os, "O_NOFOLLOW"):
+                flags |= os.O_NOFOLLOW
+            descriptor = os.open(report_path, flags, 0o600)
+            try:
+                data = rendered.encode("utf-8")
+                while data:
+                    written = os.write(descriptor, data)
+                    data = data[written:]
+                os.fsync(descriptor)
+            finally:
+                os.close(descriptor)
+            report_published = True
     except OSError:
-        pass
-    print(rendered, end="")
+        code = 1
+    if report_published:
+        print(rendered, end="")
+    else:
+        print(
+            json.dumps(
+                {
+                    "schema": "szl.frontier-training-run/v3",
+                    "state": "UNAVAILABLE_REPORT_NOT_PUBLISHED",
+                    "runKind": args.run_kind.upper(),
+                    "supervisorRunId": args.supervisor_run_id,
+                    "receiptEligible": False,
+                    "publicationEligible": False,
+                    "autonomyEligible": False,
+                },
+                sort_keys=True,
+            )
+        )
     return code
 
 
