@@ -1,0 +1,4 @@
+# Version-pinned runtime closure; this is not artifact-hash locked.
+cffi==2.1.1
+cryptography==50.0.0
+pycparser==2.23
