@@ -270,6 +270,19 @@ class ContextAlgorithmTests(unittest.TestCase):
         self.assertEqual(first["convergence"], "Stabilized")
         self.assertEqual(len(first["evidence_sha256"]), 64)
 
+    def test_generator_rejects_invalid_created_at_before_hashing(self) -> None:
+        with self.assertRaises(ContextGenerationError) as caught:
+            EnrichedContextGenerator(target_row()).generate(
+                stable_context_input(), created_at="not-a-timestamp", trace_id=FIXED_TRACE_ID
+            )
+        self.assertEqual(caught.exception.code, "INVALID_CONTEXT_TIMESTAMP")
+
+    def test_generator_canonicalizes_valid_created_at_before_hashing(self) -> None:
+        evidence = EnrichedContextGenerator(target_row()).generate(
+            stable_context_input(), created_at="2026-08-20T12:00:00Z", trace_id=FIXED_TRACE_ID
+        )
+        self.assertEqual(evidence["created_at"], FIXED_TIME)
+
     def test_generator_flags_conflicting_invariants(self) -> None:
         context_input = stable_context_input()
         context_input["steps"][1]["invariants"]["a11oy_authority"] = "process_control"
