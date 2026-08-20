@@ -2351,6 +2351,17 @@ class EnrichedContextGenerator:
             raise ContextGenerationError(
                 "INVALID_TRACE_ID", "trace_id must be a canonical UUIDv4", EXIT_INPUT
             )
+        if created_at is None:
+            created_at_value = format_time(utc_now())
+        else:
+            try:
+                created_at_value = format_time(parse_time(created_at, "created_at"))
+            except ControlError as exc:
+                raise ContextGenerationError(
+                    "INVALID_CONTEXT_TIMESTAMP",
+                    "created_at must be a valid RFC3339 UTC timestamp ending in Z",
+                    EXIT_INPUT,
+                ) from exc
         evidence: dict[str, Any] = {
             "binding": {
                 **target_binding_from_row(self.target_row),
@@ -2360,7 +2371,7 @@ class EnrichedContextGenerator:
             "challenge_question": normalized["challenge_question"],
             "consistency": consistency,
             "convergence": effective_state,
-            "created_at": created_at or format_time(utc_now()),
+            "created_at": created_at_value,
             "entropy": {
                 "allocator": ENTROPY_DEPTH_ALLOCATOR,
                 "budget": self.allocator.budget,
