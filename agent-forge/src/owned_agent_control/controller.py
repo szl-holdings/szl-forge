@@ -258,6 +258,15 @@ def _reject_constant(value: str) -> Any:
     raise ControlError("INVALID_JSON", f"non-finite JSON number is forbidden: {value}", EXIT_INPUT)
 
 
+def _integral_json_float_serializes_exactly(value: float) -> bool:
+    if not math.isfinite(value) or not value.is_integer():
+        return False
+    exact_value = Decimal.from_float(value)
+    if not Decimal(-(2**63)) <= exact_value < Decimal(2**63):
+        return False
+    return Decimal(json.dumps(value, allow_nan=False)) == exact_value
+
+
 def _parse_integral_json_float(value: str) -> float:
     try:
         exact_value = Decimal(value)
@@ -274,10 +283,13 @@ def _parse_integral_json_float(value: str) -> float:
             EXIT_INPUT,
         )
     parsed_value = float(exact_value)
-    if Decimal.from_float(parsed_value) != exact_value:
+    if (
+        Decimal.from_float(parsed_value) != exact_value
+        or not _integral_json_float_serializes_exactly(parsed_value)
+    ):
         raise ControlError(
             "INVALID_JSON_TYPE",
-            "integral JSON number cannot be represented exactly",
+            "integral JSON number cannot be represented and serialized exactly",
             EXIT_INPUT,
         )
     return parsed_value
@@ -2112,12 +2124,7 @@ def _validate_context_scalar(value: Any, label: str) -> None:
         return
     if type(value) is int and -(2**63) <= value < 2**63:
         return
-    if (
-        type(value) is float
-        and math.isfinite(value)
-        and value.is_integer()
-        and -(2**63) <= value < 2**63
-    ):
+    if type(value) is float and _integral_json_float_serializes_exactly(value):
         return
     if isinstance(value, str) and len(value) <= 4096 and "\x00" not in value:
         return

@@ -212,8 +212,13 @@ class PackageContractTests(unittest.TestCase):
         )
         self.assertIs(type(parsed["value"]), float)
         self.assertEqual(parsed["value"], 9007199254740992.0)
+        reparsed = controller.parse_json_bytes(
+            canonical_json(parsed), allow_integral_floats=True
+        )
+        self.assertEqual(reparsed, parsed)
 
         for literal in (
+            "-9223372036854775808.0",
             "9007199254740993.0",
             "9223372036854775807.0",
             "9223372036854775808.0",
@@ -1020,11 +1025,13 @@ class PersistentEvidenceTests(unittest.TestCase):
     def test_fractional_context_is_rejected_without_poisoning_evidence(
         self,
     ) -> None:
-        context_input = stable_context_input()
-        context_input["steps"][0]["invariants"]["confidence"] = 0.5
-        with self.assertRaises(ContextGenerationError) as caught:
-            generate_context(self.paths, TARGET, context_input)
-        self.assertEqual(caught.exception.code, "INVALID_CONTEXT_INPUT")
+        for invalid_value in (0.5, -9223372036854775808.0):
+            with self.subTest(invalid_value=invalid_value):
+                context_input = stable_context_input()
+                context_input["steps"][0]["invariants"]["confidence"] = invalid_value
+                with self.assertRaises(ContextGenerationError) as caught:
+                    generate_context(self.paths, TARGET, context_input)
+                self.assertEqual(caught.exception.code, "INVALID_CONTEXT_INPUT")
         with connect(self.paths) as connection:
             self.assertEqual(
                 connection.execute("SELECT COUNT(*) FROM context_traces").fetchone()[0],
