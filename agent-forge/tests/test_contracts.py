@@ -186,6 +186,25 @@ class PackageContractTests(unittest.TestCase):
             },
             scalar_types,
         )
+        self.assertIn(
+            "integral number forms",
+            repository_schema["$defs"]["jsonScalar"]["$comment"],
+        )
+
+    def test_context_json_parsing_accepts_only_integral_float_forms(self) -> None:
+        with self.assertRaises(ControlError) as strict:
+            controller.parse_json_bytes(b'{"value":1.0}')
+        self.assertEqual(strict.exception.code, "INVALID_JSON_TYPE")
+        parsed = controller.parse_json_bytes(
+            b'{"value":1.0}', allow_integral_floats=True
+        )
+        self.assertIs(type(parsed["value"]), float)
+        self.assertEqual(parsed["value"], 1.0)
+        with self.assertRaises(ControlError) as fractional:
+            controller.parse_json_bytes(
+                b'{"value":0.5}', allow_integral_floats=True
+            )
+        self.assertEqual(fractional.exception.code, "INVALID_JSON_TYPE")
 
     def test_cli_surface_contains_operator_and_context_commands(self) -> None:
         parser = build_parser()
@@ -234,8 +253,29 @@ class PackageContractTests(unittest.TestCase):
                 [str(Path(sys.executable).resolve()), "-c", "pass"],
                 temporary_path,
             )
-            generate_context(paths, TARGET, stable_context_input())
+            context_input = stable_context_input()
+            steps = context_input["steps"]
+            assert isinstance(steps, list)
+            steps[0]["invariants"]["confidence"] = 1.0
+            for step in steps[1:]:
+                step["invariants"]["confidence"] = 1
+            generated = generate_context(paths, TARGET, context_input)
+            self.assertIs(
+                type(generated["execution_trace"][0]["invariants"]["confidence"]),
+                float,
+            )
+            self.assertNotIn(
+                "confidence", generated["consistency"]["conflicting_invariants"]
+            )
             projection = export_a11oy_context_evidence(paths, TARGET)
+            self.assertIs(
+                type(
+                    projection["context"]["execution_trace"][0]["invariants"][
+                        "confidence"
+                    ]
+                ),
+                float,
+            )
             schema = json.loads(
                 (
                     PACKAGE_ROOT
@@ -957,7 +997,7 @@ class PersistentEvidenceTests(unittest.TestCase):
         self.assertEqual(loaded, generated)
         self.assertEqual(require_stabilized_context(self.paths, TARGET), generated)
 
-    def test_floating_point_context_is_rejected_without_poisoning_evidence(
+    def test_fractional_context_is_rejected_without_poisoning_evidence(
         self,
     ) -> None:
         context_input = stable_context_input()

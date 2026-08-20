@@ -23,6 +23,7 @@
     "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
     "target": { "type": "string", "pattern": "^owned-agent:[a-z0-9][a-z0-9._-]{1,127}$" },
     "jsonScalar": {
+      "$comment": "Draft 2020-12 integer semantics include integral number forms such as 1.0; context generation accepts those forms while rejecting fractional values.",
       "anyOf": [
         { "type": "null" },
         { "type": "boolean" },
