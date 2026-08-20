@@ -1,0 +1,49 @@
+{
+  "challenge_question": 20260820,
+  "steps": [
+    {
+      "context_reweighted": false,
+      "from_state": "Observe",
+      "invariants": {
+        "a11oy_authority": "read_only_projection",
+        "enforcement_boundary": "local_windows_supervised_processes_only"
+      },
+      "output_filter_triggered": false,
+      "safety_gate_passed": true,
+      "to_state": "Analyze"
+    },
+    {
+      "context_reweighted": false,
+      "from_state": "Analyze",
+      "invariants": {
+        "a11oy_authority": "read_only_projection",
+        "enforcement_boundary": "local_windows_supervised_processes_only"
+      },
+      "output_filter_triggered": false,
+      "safety_gate_passed": true,
+      "to_state": "Decide"
+    },
+    {
+      "context_reweighted": false,
+      "from_state": "Decide",
+      "invariants": {
+        "a11oy_authority": "read_only_projection",
+        "enforcement_boundary": "local_windows_supervised_processes_only"
+      },
+      "output_filter_triggered": false,
+      "safety_gate_passed": true,
+      "to_state": "Verify"
+    },
+    {
+      "context_reweighted": false,
+      "from_state": "Verify",
+      "invariants": {
+        "a11oy_authority": "read_only_projection",
+        "enforcement_boundary": "local_windows_supervised_processes_only"
+      },
+      "output_filter_triggered": false,
+      "safety_gate_passed": true,
+      "to_state": "Stabilized"
+    }
+  ]
+}

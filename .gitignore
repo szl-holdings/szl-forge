@@ -5,3 +5,6 @@ reports/
 **/.cache/
 frontier/**/reports/
 unsloth_compiled_cache/
+agent-forge/build/
+agent-forge/dist/
+agent-forge/src/*.egg-info/

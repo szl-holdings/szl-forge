@@ -1,0 +1,200 @@
+name: Owned Agent Control v2
+
+on:
+  pull_request:
+    paths:
+      - "agent-forge/**"
+      - ".github/workflows/owned-agent-control.yml"
+      - ".gitignore"
+      - "README.md"
+  push:
+    branches: [main]
+    paths:
+      - "agent-forge/**"
+      - ".github/workflows/owned-agent-control.yml"
+      - ".gitignore"
+      - "README.md"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: owned-agent-control-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  portable-contracts:
+    name: Portable contracts (Python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12", "3.13"]
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install pinned runtime and test dependencies
+        run: |
+          python -m pip install --disable-pip-version-check --requirement agent-forge/requirements.lock
+          python -m pip install --disable-pip-version-check --no-deps --requirement agent-forge/requirements-test.txt
+
+      - name: Compile and run portable contracts
+        run: |
+          python -m compileall -q agent-forge/src agent-forge/tests
+          python -m unittest discover -s agent-forge/tests -v
+
+  wheel:
+    name: Build and install wheel
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install pinned build tools
+        run: python -m pip install --disable-pip-version-check build==1.5.0 setuptools==83.0.0 wheel==0.47.0
+
+      - name: Build wheel
+        run: python -m build --wheel agent-forge
+
+      - name: Install and verify wheel
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m venv /tmp/oac-wheel-test
+          /tmp/oac-wheel-test/bin/python -m pip install --disable-pip-version-check \
+            --requirement agent-forge/requirements.lock
+          wheel_path="$(find agent-forge/dist -maxdepth 1 -type f -name '*.whl' -print -quit)"
+          test -n "${wheel_path}"
+          /tmp/oac-wheel-test/bin/python -m pip install --disable-pip-version-check \
+            --no-deps "${wheel_path}"
+          /tmp/oac-wheel-test/bin/python -m pip check
+          /tmp/oac-wheel-test/bin/owned-agent-control --version
+          WHEEL_PATH="${wheel_path}" /tmp/oac-wheel-test/bin/python - <<'PY'
+          from importlib.metadata import version
+          from importlib.resources import files
+          from pathlib import Path
+          from zipfile import ZipFile
+          import json
+          import os
+          assert version("szl-owned-agent-control") == "2.0.0"
+          schema = files("owned_agent_control").joinpath(
+              "schemas/a11oy-owned-agent-control-projection.schema.json"
+          )
+          assert json.loads(schema.read_text(encoding="utf-8"))["properties"]["schema"]["const"] == "a11oy/owned-agent-control-projection/v1"
+          with ZipFile(Path(os.environ["WHEEL_PATH"])) as archive:
+              assert any(name.endswith(".dist-info/licenses/LICENSE") for name in archive.namelist())
+          PY
+
+      - name: Upload wheel
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: owned-agent-control-wheel-${{ github.run_id }}
+          path: agent-forge/dist/*.whl
+          if-no-files-found: error
+          retention-days: 30
+
+  windows-enforcement:
+    name: Windows Server behavioral enforcement
+    runs-on: windows-2022
+    timeout-minutes: 20
+    needs: [portable-contracts, wheel]
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Download exact Linux-built wheel
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: owned-agent-control-wheel-${{ github.run_id }}
+          path: wheelhouse
+
+      - name: Install exact runtime and downloaded wheel
+        shell: pwsh
+        run: |
+          python -m venv .venv-oac-ci
+          .\.venv-oac-ci\Scripts\python.exe -m pip install --disable-pip-version-check --requirement agent-forge/requirements.lock
+          .\.venv-oac-ci\Scripts\python.exe -m pip install --disable-pip-version-check --no-deps --requirement agent-forge/requirements-test.txt
+          $wheel = Get-ChildItem wheelhouse\szl_owned_agent_control-2.0.0-py3-none-any.whl -ErrorAction Stop
+          .\.venv-oac-ci\Scripts\python.exe -m pip install --disable-pip-version-check --no-deps $wheel.FullName
+          .\.venv-oac-ci\Scripts\python.exe -m pip check
+          New-Item -ItemType Directory -Force reports | Out-Null
+          Get-FileHash -Algorithm SHA256 $wheel.FullName | ConvertTo-Json | Out-File -Encoding utf8 reports/oac-wheel-sha256.json
+
+      - name: Run portable contracts on Windows
+        shell: pwsh
+        run: |
+          $env:OAC_TEST_INSTALLED_PACKAGE = '1'
+          .\.venv-oac-ci\Scripts\python.exe -m unittest discover -s agent-forge/tests -v
+
+      - name: Require ready doctor result
+        shell: pwsh
+        run: |
+          $result = & .\.venv-oac-ci\Scripts\owned-agent-control.exe doctor 2>&1
+          $exitCode = $LASTEXITCODE
+          $result | Out-File -Encoding utf8 reports/oac-doctor.json
+          $result | Write-Output
+          if ($exitCode -ne 0) { exit $exitCode }
+
+      - name: Require real parent-child isolation self-test
+        shell: pwsh
+        run: |
+          $result = & .\.venv-oac-ci\Scripts\owned-agent-control.exe self-test 2>&1
+          $exitCode = $LASTEXITCODE
+          $result | Out-File -Encoding utf8 reports/oac-self-test.json
+          $result | Write-Output
+          if ($exitCode -ne 0) { exit $exitCode }
+          if (($result -join "`n") -notmatch 'VERIFIED_LOCAL_WINDOWS_ENFORCEMENT') {
+            throw 'self-test did not report VERIFIED_LOCAL_WINDOWS_ENFORCEMENT'
+          }
+
+      - name: Upload Windows evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: owned-agent-control-windows-evidence-${{ github.run_id }}
+          path: reports/oac-*.json
+          if-no-files-found: error
+          retention-days: 90

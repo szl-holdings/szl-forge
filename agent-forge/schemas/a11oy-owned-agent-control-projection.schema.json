@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://a-11-oy.com/schemas/a11oy-owned-agent-control-projection.schema.json",
+  "title": "A11oy Owned Agent Control Read-Only Projection",
+  "description": "A schema-bound, read-only projection of one local OAC context trace and audit tip. It grants A11oy no process-control authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["audit", "capabilities", "context", "generated_at", "program", "projection_sha256", "schema", "target", "truth_boundary"],
+  "properties": {
+    "audit": { "$ref": "#/$defs/audit" },
+    "capabilities": { "$ref": "#/$defs/capabilities" },
+    "context": { "$ref": "#/$defs/contextEvidence" },
+    "generated_at": { "$ref": "#/$defs/timestamp" },
+    "program": { "$ref": "#/$defs/program" },
+    "projection_sha256": { "$ref": "#/$defs/sha256" },
+    "schema": { "const": "a11oy/owned-agent-control-projection/v1" },
+    "target": { "$ref": "#/$defs/target" },
+    "truth_boundary": { "$ref": "#/$defs/truthBoundary" }
+  },
+  "$defs": {
+    "timestamp": { "type": "string", "format": "date-time", "pattern": "Z$" },
+    "uuid4": { "type": "string", "format": "uuid", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$" },
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "target": { "type": "string", "pattern": "^owned-agent:[a-z0-9][a-z0-9._-]{1,127}$" },
+    "jsonScalar": {
+      "anyOf": [
+        { "type": "null" },
+        { "type": "boolean" },
+        { "type": "integer" },
+        { "type": "number" },
+        { "type": "string", "maxLength": 4096 }
+      ]
+    },
+    "audit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["audit_tip", "events_verified", "integrity", "immutability", "ok", "tail_truncation_without_external_anchor_detectable", "trust_store_sealed"],
+      "properties": {
+        "audit_tip": { "$ref": "#/$defs/sha256" },
+        "events_verified": { "type": "integer", "minimum": 1 },
+        "integrity": { "const": "VERIFIED_LOCAL_HASH_CHAIN" },
+        "immutability": { "const": false },
+        "ok": { "const": true },
+        "tail_truncation_without_external_anchor_detectable": { "const": false },
+        "trust_store_sealed": { "type": "boolean" }
+      }
+    },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["a11oy_process_control", "a11oy_read_only_projection", "local_windows_supervisor_control"],
+      "properties": {
+        "a11oy_process_control": { "const": false },
+        "a11oy_read_only_projection": { "const": true },
+        "local_windows_supervisor_control": { "type": "boolean" }
+      }
+    },
+    "program": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version"],
+      "properties": { "name": { "const": "owned-agent-control" }, "version": { "const": "2.0.0" } }
+    },
+    "truthBoundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authority", "enforcement", "persistence", "remote_effects", "semantic_safety_evaluation"],
+      "properties": {
+        "authority": { "const": "local_operator_only" },
+        "enforcement": { "const": "windows_job_object_for_registered_processes_launched_by_this_controller" },
+        "persistence": { "const": "local_tamper_evident_not_immutable" },
+        "remote_effects": { "const": false },
+        "semantic_safety_evaluation": { "const": false }
+      }
+    },
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["argv_sha256", "control_state", "executable_sha256", "target"],
+      "properties": {
+        "argv_sha256": { "$ref": "#/$defs/sha256" },
+        "control_state": { "enum": ["READY", "ISOLATED"] },
+        "executable_sha256": { "$ref": "#/$defs/sha256" },
+        "target": { "$ref": "#/$defs/target" }
+      }
+    },
+    "consistency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["comparisons", "conflicting_invariants", "engine", "matches", "score_ppm", "threshold_met", "threshold_ppm"],
+      "properties": {
+        "comparisons": { "type": "integer", "minimum": 0 },
+        "conflicting_invariants": { "type": "array", "uniqueItems": true, "items": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_.:-]{0,127}$" } },
+        "engine": { "const": "CrossStepConsistency" },
+        "matches": { "type": "integer", "minimum": 0 },
+        "score_ppm": { "type": "integer", "minimum": 0, "maximum": 1000000 },
+        "threshold_met": { "type": "boolean" },
+        "threshold_ppm": { "type": "integer", "minimum": 950000, "maximum": 1000000 }
+      }
+    },
+    "entropy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allocator", "budget", "used"],
+      "properties": {
+        "allocator": { "const": "EntropyDepthAllocator" },
+        "budget": { "type": "integer", "minimum": 1, "maximum": 16 },
+        "used": { "type": "integer", "minimum": 0, "maximum": 16 }
+      }
+    },
+    "executionStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["context_reweighted", "from_state", "invariants", "output_filter_triggered", "safety_gate_passed", "to_state"],
+      "properties": {
+        "context_reweighted": { "type": "boolean" },
+        "from_state": { "enum": ["Observe", "Analyze", "Decide", "Verify", "Stabilized", "Flagged_For_Review"] },
+        "invariants": { "type": "object", "maxProperties": 64, "propertyNames": { "pattern": "^[A-Za-z][A-Za-z0-9_.:-]{0,127}$" }, "additionalProperties": { "$ref": "#/$defs/jsonScalar" } },
+        "output_filter_triggered": { "type": "boolean" },
+        "safety_gate_passed": { "type": "boolean" },
+        "to_state": { "enum": ["Observe", "Analyze", "Decide", "Verify", "Stabilized", "Flagged_For_Review"] }
+      }
+    },
+    "finalState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["effective", "requested"],
+      "properties": {
+        "effective": { "enum": ["Stabilized", "Flagged_For_Review"] },
+        "requested": { "enum": ["Stabilized", "Flagged_For_Review"] }
+      }
+    },
+    "policyCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["check_type", "details", "status"],
+      "properties": {
+        "check_type": { "enum": ["Safety_Gate_Evaluated", "Context_Reweight_Flagged", "Output_Filter_Triggered"] },
+        "details": { "type": "object", "minProperties": 1, "maxProperties": 1, "additionalProperties": { "type": "array", "items": { "type": "integer", "minimum": 0 }, "uniqueItems": true } },
+        "status": { "enum": ["Pass", "Flagged", "Triggered"] }
+      }
+    },
+    "contextEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["binding", "challenge_question", "consistency", "convergence", "created_at", "entropy", "evidence_sha256", "execution_trace", "final_state", "policy_checks", "schema", "target", "trace_id"],
+      "properties": {
+        "binding": { "$ref": "#/$defs/binding" },
+        "challenge_question": { "type": "integer", "minimum": 0, "maximum": 9223372036854775807 },
+        "consistency": { "$ref": "#/$defs/consistency" },
+        "convergence": { "enum": ["Stabilized", "Flagged_For_Review"] },
+        "created_at": { "$ref": "#/$defs/timestamp" },
+        "entropy": { "$ref": "#/$defs/entropy" },
+        "evidence_sha256": { "$ref": "#/$defs/sha256" },
+        "execution_trace": { "type": "array", "minItems": 1, "maxItems": 16, "items": { "$ref": "#/$defs/executionStep" } },
+        "final_state": { "$ref": "#/$defs/finalState" },
+        "policy_checks": { "type": "array", "minItems": 3, "maxItems": 3, "items": { "$ref": "#/$defs/policyCheck" } },
+        "schema": { "const": "a11oy/owned-agent-context-evidence/v1" },
+        "target": { "$ref": "#/$defs/target" },
+        "trace_id": { "$ref": "#/$defs/uuid4" }
+      }
+    }
+  }
+}

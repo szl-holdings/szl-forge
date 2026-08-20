@@ -11,6 +11,7 @@ software, curriculum, schemas, and evidence; it is not itself a weight repo.
 | Surface | Classification | Evidence state | Boundary |
 |---|---|---|---|
 | Forge bootstrap and runbooks | **Executable software + training recipe** | Source-controlled and locally runnable | A recipe does not prove a run completed or that its output matches a published model. |
+| [`agent-forge/`](./agent-forge/) | **Beta local Windows control software** | Portable contracts are source-controlled; Windows enforcement is qualified only by its behavioral self-test | Controls only registered process trees it launches under the same Windows identity. A11oy receives a read-only projection and no process-control authority. |
 | [`SZL-Forge-1.5B-ReceiptAgent`](https://huggingface.co/SZLHOLDINGS/SZL-Forge-1.5B-ReceiptAgent) | **Trained fine-tuned weights** | `MEASURED_LIMITED`; expected public weight hashes and owner-signed training/evaluation receipts are bound in `publishing/model-source-bindings.json` | Proposal-only, not promoted, and not independently certified. |
 | [`SZL-Khipu-1.5B`](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B) | **Trained fine-tuned weights** | `MEASURED_RESEARCH_ONLY`; repository-declared key continuity | Held-out abstention is 2/6; autonomous and high-stakes use is prohibited. |
 | [`SZL-Khipu-1.5B-GGUF`](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B-GGUF) | **Quantized derivative** | Exact GGUF bytes are hash-bound | Reproducible quantization and signed runtime outputs are not claimed. |
@@ -43,6 +44,21 @@ Hub revision under evaluation.
   hardware fit, run completion, and artifact quality must be observed per run.
 - A release source that keeps trained weights, quantized derivatives, recipes,
   snapshots, and Spaces in separate evidence lanes.
+- The source home for [Owned Agent Control v2](./agent-forge/), a separately
+  packaged, fail-closed Windows process-tree supervisor with signed one-shot
+  isolation requests and schema-bound context evidence.
+
+## Owned Agent Control v2
+
+`agent-forge/` turns the supplied Owned Agent Control design into an installable
+Python package with an operator runbook, explicit threat model, portable contract
+tests, a real Windows Server behavioral gate, and a read-only A11oy evidence
+projection. It does not grant A11oy process authority, modify remote providers,
+or claim to sandbox hostile code running as the same Windows user.
+
+Start with [`agent-forge/README.md`](./agent-forge/README.md). Operational status
+must remain `NOT_READY` until the exact Windows runtime passes `doctor` and
+`self-test`; a Linux or packaging pass establishes portable contracts only.
 
 ## One command (laptop)
 
