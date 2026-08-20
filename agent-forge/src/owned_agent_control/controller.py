@@ -31,6 +31,7 @@ import ctypes
 from ctypes import wintypes
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
+from decimal import Decimal, InvalidOperation
 import getpass
 import hashlib
 from importlib.metadata import PackageNotFoundError, version as package_version
@@ -257,6 +258,43 @@ def _reject_constant(value: str) -> Any:
     raise ControlError("INVALID_JSON", f"non-finite JSON number is forbidden: {value}", EXIT_INPUT)
 
 
+def _integral_json_float_serializes_exactly(value: float) -> bool:
+    if not math.isfinite(value) or not value.is_integer():
+        return False
+    exact_value = Decimal.from_float(value)
+    if not Decimal(-(2**63)) <= exact_value < Decimal(2**63):
+        return False
+    return Decimal(json.dumps(value, allow_nan=False)) == exact_value
+
+
+def _parse_integral_json_float(value: str) -> float:
+    try:
+        exact_value = Decimal(value)
+    except InvalidOperation as exc:
+        raise ControlError("INVALID_JSON", "invalid JSON number", EXIT_INPUT) from exc
+    if (
+        not exact_value.is_finite()
+        or not Decimal(-(2**63)) <= exact_value < Decimal(2**63)
+        or exact_value != exact_value.to_integral_value()
+    ):
+        raise ControlError(
+            "INVALID_JSON_TYPE",
+            "floating-point values must be bounded integral numbers",
+            EXIT_INPUT,
+        )
+    parsed_value = float(exact_value)
+    if (
+        Decimal.from_float(parsed_value) != exact_value
+        or not _integral_json_float_serializes_exactly(parsed_value)
+    ):
+        raise ControlError(
+            "INVALID_JSON_TYPE",
+            "integral JSON number cannot be represented and serialized exactly",
+            EXIT_INPUT,
+        )
+    return parsed_value
+
+
 def _strict_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     result: dict[str, Any] = {}
     for key, value in pairs:
@@ -266,27 +304,35 @@ def _strict_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     return result
 
 
-def _validate_json_tree(value: Any, depth: int = 0) -> None:
+def _validate_json_tree(
+    value: Any, depth: int = 0, *, allow_integral_floats: bool = False
+) -> None:
     if depth > MAX_JSON_DEPTH:
         raise ControlError("JSON_TOO_DEEP", "JSON nesting exceeds the limit", EXIT_INPUT)
     if value is None or isinstance(value, (str, bool, int)):
         return
     if isinstance(value, float):
+        if allow_integral_floats and math.isfinite(value) and value.is_integer():
+            return
         raise ControlError("INVALID_JSON_TYPE", "floating-point values are forbidden", EXIT_INPUT)
     if isinstance(value, list):
         for child in value:
-            _validate_json_tree(child, depth + 1)
+            _validate_json_tree(
+                child, depth + 1, allow_integral_floats=allow_integral_floats
+            )
         return
     if isinstance(value, dict):
         for key, child in value.items():
             if not isinstance(key, str):
                 raise ControlError("INVALID_JSON_TYPE", "JSON object keys must be strings", EXIT_INPUT)
-            _validate_json_tree(child, depth + 1)
+            _validate_json_tree(
+                child, depth + 1, allow_integral_floats=allow_integral_floats
+            )
         return
     raise ControlError("INVALID_JSON_TYPE", f"unsupported JSON type: {type(value).__name__}", EXIT_INPUT)
 
 
-def parse_json_bytes(raw: bytes) -> Any:
+def parse_json_bytes(raw: bytes, *, allow_integral_floats: bool = False) -> Any:
     if len(raw) > MAX_JSON_BYTES:
         raise ControlError("JSON_TOO_LARGE", "JSON input exceeds 64 KiB", EXIT_INPUT)
     try:
@@ -298,21 +344,24 @@ def parse_json_bytes(raw: bytes) -> Any:
             text,
             object_pairs_hook=_strict_object,
             parse_constant=_reject_constant,
+            parse_float=(
+                _parse_integral_json_float if allow_integral_floats else float
+            ),
         )
     except ControlError:
         raise
     except (json.JSONDecodeError, RecursionError, ValueError) as exc:
         raise ControlError("INVALID_JSON", f"unable to parse JSON: {exc}", EXIT_INPUT) from exc
-    _validate_json_tree(value)
+    _validate_json_tree(value, allow_integral_floats=allow_integral_floats)
     return value
 
 
-def load_json_file(path: Path) -> Any:
+def load_json_file(path: Path, *, allow_integral_floats: bool = False) -> Any:
     try:
         raw = path.read_bytes()
     except OSError as exc:
         raise ControlError("FILE_READ_FAILED", f"unable to read {path}: {exc}", EXIT_INPUT) from exc
-    return parse_json_bytes(raw)
+    return parse_json_bytes(raw, allow_integral_floats=allow_integral_floats)
 
 
 def atomic_write(path: Path, data: bytes, mode: int = 0o600) -> None:
@@ -2075,6 +2124,8 @@ def _validate_context_scalar(value: Any, label: str) -> None:
         return
     if type(value) is int and -(2**63) <= value < 2**63:
         return
+    if type(value) is float and _integral_json_float_serializes_exactly(value):
+        return
     if isinstance(value, str) and len(value) <= 4096 and "\x00" not in value:
         return
     raise ContextGenerationError(
@@ -2210,7 +2261,7 @@ class EntropyDepthAllocator:
 
 
 class CrossStepConsistency:
-    """Compare repeated invariant assertions using canonical JSON equality."""
+    """Compare repeated invariant assertions using JSON Schema scalar equality."""
 
     def __init__(self, threshold_ppm: int = DEFAULT_CONSISTENCY_THRESHOLD_PPM):
         if type(threshold_ppm) is not int or not 950_000 <= threshold_ppm <= 1_000_000:
@@ -2228,7 +2279,12 @@ class CrossStepConsistency:
         conflicts: set[str] = set()
         for step in steps:
             for key, value in dict(step["invariants"]).items():
-                encoded = canonical_json(value)
+                comparison_value = (
+                    int(value)
+                    if type(value) is float and math.isfinite(value) and value.is_integer()
+                    else value
+                )
+                encoded = canonical_json(comparison_value)
                 if key not in first_values:
                     first_values[key] = encoded
                     continue
@@ -2419,7 +2475,8 @@ def _context_evidence_from_rows(
             "used": int(trace_row["entropy_used"]),
         },
         "execution_trace": parse_json_bytes(
-            str(trace_row["execution_trace_json"]).encode("utf-8")
+            str(trace_row["execution_trace_json"]).encode("utf-8"),
+            allow_integral_floats=True,
         ),
         "final_state": parse_json_bytes(str(trace_row["final_state_json"]).encode("utf-8")),
         "policy_checks": [policy_by_type[name] for name in CONTEXT_POLICY_ORDER],
@@ -5882,7 +5939,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             emit(register_demo(require_state(args), args.target))
             return EXIT_OK
         if args.command == "context-generate":
-            context_input = load_json_file(args.input)
+            context_input = load_json_file(
+                args.input, allow_integral_floats=True
+            )
             emit(
                 generate_context(
                     require_state(args),

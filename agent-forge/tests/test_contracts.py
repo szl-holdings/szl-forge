@@ -8,6 +8,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import sqlite3
 import sys
 import tempfile
@@ -110,20 +111,31 @@ class PackageContractTests(unittest.TestCase):
         requirements = (PACKAGE_ROOT / "requirements-test.txt").read_text(
             encoding="utf-8"
         )
-        expected = {
-            "attrs==26.1.0",
-            "jsonschema==4.26.0",
-            "jsonschema-specifications==2025.9.1",
-            "referencing==0.37.0",
-            "rpds-py==2026.6.3",
-            'typing-extensions==4.16.0; python_version < "3.13"',
-        }
-        observed = {
-            line.strip()
-            for line in requirements.splitlines()
-            if line.strip() and not line.lstrip().startswith("#")
-        }
-        self.assertEqual(observed, expected)
+        self.assertIn("--only-binary=:all:", requirements)
+        self.assertIn("--require-hashes", requirements)
+        pins = dict(
+            re.findall(
+                r"^([A-Za-z0-9-]+)==([^\\;\s]+)",
+                requirements,
+                flags=re.MULTILINE,
+            )
+        )
+        self.assertEqual(
+            pins,
+            {
+                "attrs": "26.1.0",
+                "jsonschema": "4.26.0",
+                "jsonschema-specifications": "2025.9.1",
+                "referencing": "0.37.0",
+                "rpds-py": "2026.6.3",
+                "typing-extensions": "4.16.0",
+            },
+        )
+        self.assertIn('python_version < "3.13"', requirements)
+        self.assertEqual(
+            len(re.findall(r"--hash=sha256:[0-9a-f]{64}", requirements)),
+            11,
+        )
         workflow = (
             PACKAGE_ROOT.parent / ".github" / "workflows" / "owned-agent-control.yml"
         ).read_text(encoding="utf-8")
@@ -164,6 +176,60 @@ class PackageContractTests(unittest.TestCase):
         capabilities = repository_schema["$defs"]["capabilities"]["properties"]
         self.assertIs(capabilities["a11oy_process_control"]["const"], False)
         self.assertIs(capabilities["a11oy_read_only_projection"]["const"], True)
+        scalar_types = repository_schema["$defs"]["jsonScalar"]["anyOf"]
+        self.assertNotIn({"type": "number"}, scalar_types)
+        self.assertIn(
+            {
+                "type": "integer",
+                "minimum": -(2**63),
+                "maximum": 2**63 - 1,
+            },
+            scalar_types,
+        )
+        self.assertIn(
+            "integral number forms",
+            repository_schema["$defs"]["jsonScalar"]["$comment"],
+        )
+
+    def test_context_json_parsing_accepts_only_integral_float_forms(self) -> None:
+        with self.assertRaises(ControlError) as strict:
+            controller.parse_json_bytes(b'{"value":1.0}')
+        self.assertEqual(strict.exception.code, "INVALID_JSON_TYPE")
+        parsed = controller.parse_json_bytes(
+            b'{"value":1.0}', allow_integral_floats=True
+        )
+        self.assertIs(type(parsed["value"]), float)
+        self.assertEqual(parsed["value"], 1.0)
+        with self.assertRaises(ControlError) as fractional:
+            controller.parse_json_bytes(
+                b'{"value":0.5}', allow_integral_floats=True
+            )
+        self.assertEqual(fractional.exception.code, "INVALID_JSON_TYPE")
+
+    def test_context_json_parsing_rejects_lossy_integral_float_forms(self) -> None:
+        parsed = controller.parse_json_bytes(
+            b'{"value":9007199254740992.0}', allow_integral_floats=True
+        )
+        self.assertIs(type(parsed["value"]), float)
+        self.assertEqual(parsed["value"], 9007199254740992.0)
+        reparsed = controller.parse_json_bytes(
+            canonical_json(parsed), allow_integral_floats=True
+        )
+        self.assertEqual(reparsed, parsed)
+
+        for literal in (
+            "-9223372036854775808.0",
+            "9007199254740993.0",
+            "9223372036854775807.0",
+            "9223372036854775808.0",
+        ):
+            with self.subTest(literal=literal):
+                with self.assertRaises(ControlError) as lossy:
+                    controller.parse_json_bytes(
+                        f'{{"value":{literal}}}'.encode("ascii"),
+                        allow_integral_floats=True,
+                    )
+                self.assertEqual(lossy.exception.code, "INVALID_JSON_TYPE")
 
     def test_cli_surface_contains_operator_and_context_commands(self) -> None:
         parser = build_parser()
@@ -212,8 +278,29 @@ class PackageContractTests(unittest.TestCase):
                 [str(Path(sys.executable).resolve()), "-c", "pass"],
                 temporary_path,
             )
-            generate_context(paths, TARGET, stable_context_input())
+            context_input = stable_context_input()
+            steps = context_input["steps"]
+            assert isinstance(steps, list)
+            steps[0]["invariants"]["confidence"] = 1.0
+            for step in steps[1:]:
+                step["invariants"]["confidence"] = 1
+            generated = generate_context(paths, TARGET, context_input)
+            self.assertIs(
+                type(generated["execution_trace"][0]["invariants"]["confidence"]),
+                float,
+            )
+            self.assertNotIn(
+                "confidence", generated["consistency"]["conflicting_invariants"]
+            )
             projection = export_a11oy_context_evidence(paths, TARGET)
+            self.assertIs(
+                type(
+                    projection["context"]["execution_trace"][0]["invariants"][
+                        "confidence"
+                    ]
+                ),
+                float,
+            )
             schema = json.loads(
                 (
                     PACKAGE_ROOT
@@ -935,14 +1022,16 @@ class PersistentEvidenceTests(unittest.TestCase):
         self.assertEqual(loaded, generated)
         self.assertEqual(require_stabilized_context(self.paths, TARGET), generated)
 
-    def test_floating_point_context_is_rejected_without_poisoning_evidence(
+    def test_fractional_context_is_rejected_without_poisoning_evidence(
         self,
     ) -> None:
-        context_input = stable_context_input()
-        context_input["challenge_question"] = 1.5
-        with self.assertRaises(ContextGenerationError) as caught:
-            generate_context(self.paths, TARGET, context_input)
-        self.assertEqual(caught.exception.code, "INVALID_CONTEXT_INPUT")
+        for invalid_value in (0.5, -9223372036854775808.0):
+            with self.subTest(invalid_value=invalid_value):
+                context_input = stable_context_input()
+                context_input["steps"][0]["invariants"]["confidence"] = invalid_value
+                with self.assertRaises(ContextGenerationError) as caught:
+                    generate_context(self.paths, TARGET, context_input)
+                self.assertEqual(caught.exception.code, "INVALID_CONTEXT_INPUT")
         with connect(self.paths) as connection:
             self.assertEqual(
                 connection.execute("SELECT COUNT(*) FROM context_traces").fetchone()[0],
@@ -953,6 +1042,37 @@ class PersistentEvidenceTests(unittest.TestCase):
             )
         generated = generate_context(self.paths, TARGET, stable_context_input())
         self.assertEqual(read_context_trace(self.paths, target=TARGET), generated)
+
+    def test_invalid_context_timestamp_is_rejected_before_trace_append(self) -> None:
+        with connect(self.paths) as connection:
+            target = connection.execute(
+                "SELECT * FROM targets WHERE target=?", (TARGET,)
+            ).fetchone()
+            before = verify_audit(connection)
+        evidence = EnrichedContextGenerator(target).generate(
+            stable_context_input(),
+            created_at=FIXED_TIME,
+            trace_id=FIXED_TRACE_ID,
+        )
+        evidence["created_at"] = "not-rfc3339"
+        evidence["evidence_sha256"] = hashlib.sha256(
+            canonical_json(
+                {
+                    key: value
+                    for key, value in evidence.items()
+                    if key != "evidence_sha256"
+                }
+            )
+        ).hexdigest()
+        with self.assertRaises(ContextGenerationError) as caught:
+            record_context_trace(self.paths, evidence)
+        self.assertEqual(caught.exception.code, "INVALID_CONTEXT_EVIDENCE")
+        with connect(self.paths) as connection:
+            self.assertEqual(
+                connection.execute("SELECT COUNT(*) FROM context_traces").fetchone()[0],
+                0,
+            )
+            self.assertEqual(verify_audit(connection), before)
 
     def test_register_rejects_relative_working_directory_before_normalization(
         self,
