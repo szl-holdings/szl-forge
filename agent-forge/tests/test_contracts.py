@@ -206,6 +206,26 @@ class PackageContractTests(unittest.TestCase):
             )
         self.assertEqual(fractional.exception.code, "INVALID_JSON_TYPE")
 
+    def test_context_json_parsing_rejects_lossy_integral_float_forms(self) -> None:
+        parsed = controller.parse_json_bytes(
+            b'{"value":9007199254740992.0}', allow_integral_floats=True
+        )
+        self.assertIs(type(parsed["value"]), float)
+        self.assertEqual(parsed["value"], 9007199254740992.0)
+
+        for literal in (
+            "9007199254740993.0",
+            "9223372036854775807.0",
+            "9223372036854775808.0",
+        ):
+            with self.subTest(literal=literal):
+                with self.assertRaises(ControlError) as lossy:
+                    controller.parse_json_bytes(
+                        f'{{"value":{literal}}}'.encode("ascii"),
+                        allow_integral_floats=True,
+                    )
+                self.assertEqual(lossy.exception.code, "INVALID_JSON_TYPE")
+
     def test_cli_surface_contains_operator_and_context_commands(self) -> None:
         parser = build_parser()
         choices: set[str] = set()

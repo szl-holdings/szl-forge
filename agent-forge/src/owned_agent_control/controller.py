@@ -31,6 +31,7 @@ import ctypes
 from ctypes import wintypes
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
+from decimal import Decimal, InvalidOperation
 import getpass
 import hashlib
 from importlib.metadata import PackageNotFoundError, version as package_version
@@ -257,6 +258,31 @@ def _reject_constant(value: str) -> Any:
     raise ControlError("INVALID_JSON", f"non-finite JSON number is forbidden: {value}", EXIT_INPUT)
 
 
+def _parse_integral_json_float(value: str) -> float:
+    try:
+        exact_value = Decimal(value)
+    except InvalidOperation as exc:
+        raise ControlError("INVALID_JSON", "invalid JSON number", EXIT_INPUT) from exc
+    if (
+        not exact_value.is_finite()
+        or not Decimal(-(2**63)) <= exact_value < Decimal(2**63)
+        or exact_value != exact_value.to_integral_value()
+    ):
+        raise ControlError(
+            "INVALID_JSON_TYPE",
+            "floating-point values must be bounded integral numbers",
+            EXIT_INPUT,
+        )
+    parsed_value = float(exact_value)
+    if Decimal.from_float(parsed_value) != exact_value:
+        raise ControlError(
+            "INVALID_JSON_TYPE",
+            "integral JSON number cannot be represented exactly",
+            EXIT_INPUT,
+        )
+    return parsed_value
+
+
 def _strict_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     result: dict[str, Any] = {}
     for key, value in pairs:
@@ -306,6 +332,9 @@ def parse_json_bytes(raw: bytes, *, allow_integral_floats: bool = False) -> Any:
             text,
             object_pairs_hook=_strict_object,
             parse_constant=_reject_constant,
+            parse_float=(
+                _parse_integral_json_float if allow_integral_floats else float
+            ),
         )
     except ControlError:
         raise
