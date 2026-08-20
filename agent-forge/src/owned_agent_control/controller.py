@@ -683,7 +683,17 @@ class ConfigurationLock:
             self.stream = None
 
 
-def connect(paths: StatePaths) -> sqlite3.Connection:
+class ClosingConnection(sqlite3.Connection):
+    """Commit or roll back like sqlite3.Connection, then always close the handle."""
+
+    def __exit__(self, exc_type: Any, exc: Any, tb: Any) -> bool:
+        try:
+            return bool(super().__exit__(exc_type, exc, tb))
+        finally:
+            self.close()
+
+
+def connect(paths: StatePaths) -> ClosingConnection:
     ensure_state_root(paths)
     if not paths.database.is_file():
         raise ControlError("STATE_NOT_INITIALIZED", "control database does not exist", EXIT_CONFLICT)
@@ -693,7 +703,12 @@ def connect(paths: StatePaths) -> sqlite3.Connection:
             "control database may not be a reparse point",
             EXIT_DENIED,
         )
-    connection = sqlite3.connect(paths.database, timeout=10.0, isolation_level=None)
+    connection = sqlite3.connect(
+        paths.database,
+        timeout=10.0,
+        isolation_level=None,
+        factory=ClosingConnection,
+    )
     connection.row_factory = sqlite3.Row
     connection.execute("PRAGMA foreign_keys = ON")
     connection.execute("PRAGMA busy_timeout = 10000")

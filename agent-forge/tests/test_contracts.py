@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from contextlib import closing
 import copy
 from datetime import datetime, timezone
 import hashlib
@@ -249,7 +250,7 @@ class AtomicStateTests(unittest.TestCase):
             self.assertFalse(database.exists())
             self.assertFalse(Path(f"{database}-journal").exists())
             created = create_state_database(database, initialized_at=INITIAL_TIME)
-            with sqlite3.connect(database) as connection:
+            with closing(sqlite3.connect(database)) as connection:
                 connection.row_factory = sqlite3.Row
                 with self.assertRaises(sqlite3.IntegrityError):
                     connection.execute(
@@ -551,6 +552,14 @@ class PersistentEvidenceTests(unittest.TestCase):
                     "UPDATE targets SET executable_sha256=? WHERE target=?",
                     ("f" * 64, TARGET),
                 )
+
+    def test_connection_context_closes_database_handle(self) -> None:
+        connection = connect(self.paths)
+        with connection as entered:
+            self.assertIs(entered, connection)
+            entered.execute("SELECT 1").fetchone()
+        with self.assertRaises(sqlite3.ProgrammingError):
+            connection.execute("SELECT 1")
 
     def test_run_context_constraints_enforce_single_use_and_target_binding(self) -> None:
         generated = generate_context(self.paths, TARGET, stable_context_input())
