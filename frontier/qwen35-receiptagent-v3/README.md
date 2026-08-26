@@ -68,12 +68,13 @@ The following are explicitly excluded:
 
 ```bash
 python frontier/qwen35-receiptagent-v3/generate_curriculum.py --check
-PYTHONPATH=frontier/qwen35-receiptagent-v3 \
-  python -m unittest -v frontier/qwen35-receiptagent-v3/test_contract.py
+PYTHONDONTWRITEBYTECODE=1 python -I -B -m unittest discover \
+  -s frontier/qwen35-receiptagent-v3 -p 'test_*.py' -v
 ```
 
 Source CI checks deterministic bytes, schemas, split access, exact observable
-oracles, anti-tamper comparison behavior, and serialization boundaries. It does
+oracles, anti-tamper comparison behavior, bootstrap and containment enforcement,
+supervisor/evaluator provenance linkage, and serialization boundaries. It does
 not import the full GPU stack or claim training success.
 
 ## Fixed GPU sequence
@@ -130,21 +131,25 @@ cooperative same-account containment, not a hostile-code sandbox.
 
 ## Evaluation and comparison
 
-Evaluation remains blocked until `evaluate_candidate.py` is upgraded to require
-and revalidate the exact supervisor report, child training report, and adapter
-bytes together. Do not invoke the example below against a v3 adapter yet. Once
-that linkage gate exists, run dev first and freeze source and adapter before
-opening the frozen-final result. Base means the pinned Unsloth 4-bit
-implementation base—not an unverified claim of byte equivalence with the
-separately recorded upstream Qwen repository.
+V3 evaluation requires the exact supervisor report, child training report, and
+adapter directory from one successful fixed-full attempt. The evaluator
+recomputes their source, run, component, report-byte, canonical-report, and
+adapter-file bindings before loading the model. This is local unauthenticated
+provenance evidence, not a signature, runtime witness, receipt, or promotion
+authorization. Run dev first and freeze source and adapter before opening the
+frozen-final result. Base means the pinned Unsloth 4-bit implementation base,
+not an unverified claim of byte equivalence with the separately recorded
+upstream Qwen repository.
 
 ```bash
-# FUTURE ONLY AFTER THE SUPERVISOR-REPORT LINKAGE GATE IS IMPLEMENTED.
+RUN_ID=replace-with-the-32-hex-supervisor-run-id
+ATTEMPT=/home/rosie/szl-runs/receiptagent-v3-supervised/$RUN_ID
 $PY evaluate_candidate.py --model-kind v3 --split dev \
   --source-commit "$SRC" \
-  --adapter-dir /home/rosie/szl-runs/receiptagent-v3-full/adapter \
-  --training-report /home/rosie/szl-runs/receiptagent-v3-full/training-report.json \
-  --report /home/rosie/szl-runs/receiptagent-v3-full/dev-report.json
+  --adapter-dir "$ATTEMPT/payload/adapter" \
+  --training-report "$ATTEMPT/payload/training-report.json" \
+  --supervisor-report "$ATTEMPT/reports/supervisor-report.json" \
+  --report "/home/rosie/szl-runs/receiptagent-v3-evaluations/$RUN_ID-dev.json"
 
 # Evaluate base, v2, and v3 separately on --split test, then:
 $PY compare_reports.py --source-commit "$SRC" \

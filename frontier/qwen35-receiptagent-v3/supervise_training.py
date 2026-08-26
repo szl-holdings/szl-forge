@@ -29,6 +29,20 @@ from typing import Any, Sequence
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 RELATIVE = "frontier/qwen35-receiptagent-v3"
+WORKER_MOUNT_ROOT = Path("/opt/szl-ra3")
+WORKER_INPUT = WORKER_MOUNT_ROOT / "input"
+WORKER_OUTPUT = WORKER_MOUNT_ROOT / "output"
+WORKER_CACHE = WORKER_MOUNT_ROOT / "cache"
+WORKER_MODEL_REPOSITORY = (
+    WORKER_CACHE / "hf" / "hub" / "models--unsloth--Qwen3.5-0.8B"
+)
+BUNDLE_SOURCE_FILES = (
+    "candidate.json",
+    "containment_probe.py",
+    "curriculum-manifest.json",
+    "train.jsonl",
+    "train_candidate.py",
+)
 GPU_UUID_PATTERN = re.compile(r"GPU-[A-Za-z0-9-]{16,96}")
 MAX_GPU_NAME_CHARACTERS = 128
 MAX_GPU_MEMORY_MIB = 10_000_000
@@ -37,7 +51,7 @@ MAX_TELEMETRY_SAMPLE_JSON_BYTES = 512
 MAX_NON_TELEMETRY_REPORT_BYTES = 2 * 1024 * 1024
 
 
-def load_sibling(filename: str, module_name: str) -> Any:
+def load_bootstrap(filename: str, module_name: str) -> Any:
     spec = importlib.util.spec_from_file_location(module_name, HERE / filename)
     if spec is None or spec.loader is None:
         raise RuntimeError(f"cannot load required sibling module {filename}")
@@ -47,10 +61,11 @@ def load_sibling(filename: str, module_name: str) -> Any:
     return module
 
 
-trainer = load_sibling("train_candidate.py", "szl_ra3_train_candidate")
-supervisor_validation = load_sibling(
-    "supervisor_validation.py", "szl_ra3_supervisor_validation"
+bootstrap = load_bootstrap(
+    "supervisor_bootstrap.py", "szl_ra3_supervisor_bootstrap"
 )
+trainer: Any | None = None
+supervisor_validation: Any | None = None
 
 
 RUN_ID_PATTERN = re.compile(r"[0-9a-f]{32}")
@@ -65,9 +80,13 @@ EXPECTED_POLICY = {
     "cgroup_root": "/sys/fs/cgroup",
     "required_containment": "SYSTEMD_USER_SERVICE_CGROUP_V2",
     "security_boundary": "COOPERATIVE_SAME_ACCOUNT",
+    "filesystem_isolation": "TRAINING_ONLY_BIND_MOUNTS",
+    "worker_mount_root": "/opt/szl-ra3",
+    "model_cache_repository": "/home/rosie/.cache/huggingface/hub/models--unsloth--Qwen3.5-0.8B",
     "thermal_sample_interval_seconds": 2.0,
     "telemetry_timeout_seconds": 5.0,
     "maximum_telemetry_gap_seconds": 8.0,
+    "control_plane_timeout_seconds": 2.0,
     "smoke_wall_timeout_seconds": 1200.0,
     "full_wall_timeout_seconds": 10800.0,
     "termination_grace_seconds": 10.0,
@@ -81,7 +100,8 @@ WORKER_ENVIRONMENT = {
     "LANG": "C.UTF-8",
     "LC_ALL": "C.UTF-8",
     "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/lib/wsl/lib",
-    "HF_HOME": "/home/rosie/.cache/huggingface",
+    "HF_HOME": str(WORKER_CACHE / "hf"),
+    "HF_HUB_CACHE": str(WORKER_CACHE / "hf" / "hub"),
     "HF_HUB_OFFLINE": "1",
     "TRANSFORMERS_OFFLINE": "1",
     "HF_DATASETS_OFFLINE": "1",
@@ -129,6 +149,7 @@ class Attempt:
     reports: Path
     runtime_cache: Path
     reserve: Path
+    input_bundle: Path | None = None
 
 
 @dataclass(frozen=True)
@@ -150,6 +171,15 @@ class TelemetrySample:
             "freeMiB": self.free_mib,
             "totalMiB": self.total_mib,
         }
+
+
+@dataclass(frozen=True)
+class CgroupDrainResult:
+    samples: tuple[TelemetrySample, ...]
+    last_valid_monotonic_ns: int
+    cgroup_empty_confirmed: bool
+    stop_required: bool
+    trigger: tuple[str, str] | None
 
 
 def utc_now() -> str:
@@ -340,77 +370,197 @@ def create_exclusive_file(path: Path, mode: int = 0o600) -> int:
     )
 
 
-def write_all(descriptor: int, data: bytes) -> None:
-    view = memoryview(data)
-    while view:
-        written = os.write(descriptor, view)
-        if written <= 0:
-            raise OSError("write returned no progress")
-        view = view[written:]
+def publish_evidence_write_once(
+    directory: Path, name: str, data: bytes
+) -> dict[str, Any]:
+    """Delegate publication to the verified bootstrap's atomic primitive."""
+
+    artifact = bootstrap.publish_write_once(directory, name, data)
+    if artifact.committed is not True:
+        raise SupervisionError("write-once evidence publication was not committed")
+    return {
+        "path": str(artifact.path),
+        "bytes": artifact.size,
+        "sha256": artifact.sha256,
+        "publicationState": "COMMITTED",
+        "commitPoint": artifact.commit_point,
+        "cleanupComplete": artifact.cleanup_complete,
+        "cleanupError": artifact.cleanup_error,
+        "temporaryPath": str(artifact.temporary_path)
+        if artifact.temporary_path is not None
+        else None,
+    }
 
 
-def publish_once(directory: Path, name: str, data: bytes) -> dict[str, Any]:
-    if not re.fullmatch(r"[a-z0-9][a-z0-9.-]{0,127}", name):
-        raise SupervisionError("unsafe evidence filename")
-    temp = directory / f".{name}.{secrets.token_hex(16)}.tmp"
-    final = directory / name
-    descriptor = create_exclusive_file(temp)
-    try:
-        write_all(descriptor, data)
-        os.fsync(descriptor)
-        os.fchmod(descriptor, 0o400)
-    finally:
-        os.close(descriptor)
-    try:
-        os.link(temp, final, follow_symlinks=False)
-        fsync_directory(directory)
-    finally:
-        try:
-            temp.unlink()
-            fsync_directory(directory)
-        except FileNotFoundError:
-            pass
-    return {"path": str(final), "bytes": len(data), "sha256": sha256_bytes(data)}
+def publication_failure_evidence(exc: BaseException) -> dict[str, Any] | None:
+    """Return bounded, fail-closed evidence for bootstrap publication failures."""
+
+    if isinstance(exc, bootstrap.PublicationIndeterminate):
+        return {
+            "state": "INDETERMINATE",
+            "failureType": type(exc).__name__,
+            "finalPath": str(exc.final_path),
+            "temporaryPath": str(exc.temporary_path),
+            "sha256": exc.sha256,
+            "bytes": exc.size,
+            "finalLinkExists": True,
+            "directoryCommitConfirmed": False,
+            "committed": None,
+        }
+    if isinstance(exc, bootstrap.PublicationNotCommitted):
+        return {
+            "state": "NOT_COMMITTED",
+            "failureType": type(exc).__name__,
+            "finalLinkExists": False,
+            "directoryCommitConfirmed": False,
+            "committed": False,
+        }
+    return None
 
 
-def admit_attempt(runs_root: Path, run_id: str, reserve_bytes: int) -> Attempt:
-    if not RUN_ID_PATTERN.fullmatch(run_id):
-        raise SupervisionError("run ID must be exactly 32 lowercase hex characters")
-    root_fd = os.open(
-        runs_root, os.O_RDONLY | os.O_DIRECTORY | getattr(os, "O_NOFOLLOW", 0)
-    )
-    try:
-        os.mkdir(run_id, mode=0o700, dir_fd=root_fd)
-        os.fsync(root_fd)
-    finally:
-        os.close(root_fd)
-    root = runs_root / run_id
-    for name in ("payload", "logs", "reports", "runtime-cache"):
-        os.mkdir(root / name, mode=0o700)
-    reserve = root / ".evidence-reserve"
-    descriptor = create_exclusive_file(reserve)
-    try:
-        if hasattr(os, "posix_fallocate"):
-            os.posix_fallocate(descriptor, 0, reserve_bytes)
-        else:
-            os.ftruncate(descriptor, reserve_bytes)
-        os.fsync(descriptor)
-    finally:
-        os.close(descriptor)
-    runtime_cache = root / "runtime-cache"
-    for name in ("home", "xdg", "torch", "unsloth", "triton", "numba", "cuda"):
-        os.mkdir(runtime_cache / name, mode=0o700)
-    fsync_directory(runtime_cache)
-    fsync_directory(root)
+def attempt_from_atomic_admission(
+    result: Any, expected_run_id: str
+) -> Attempt:
+    """Map one fully prepared bootstrap admission into the worker path model."""
+
+    if result.prepared is not True:
+        raise SupervisionError("partial admission cannot become a worker attempt")
+    if (
+        result.failed_stage is not None
+        or result.failure_type is not None
+        or result.tombstone is not None
+        or result.reserve_allocated is not True
+    ):
+        raise SupervisionError("prepared admission semantics are inconsistent")
+    paths = result.paths
+    if paths.run_id != expected_run_id:
+        raise SupervisionError("atomic admission run ID differs from the request")
+    if (
+        paths.payload != paths.root / "payload"
+        or paths.logs != paths.root / "logs"
+        or paths.reports != paths.root / "reports"
+        or paths.runtime_cache != paths.root / "runtime-cache"
+        or paths.reserve != paths.root / ".evidence-reserve"
+    ):
+        raise SupervisionError("atomic admission paths are inconsistent")
     return Attempt(
-        run_id,
-        root,
-        root / "payload",
-        root / "logs",
-        root / "reports",
-        runtime_cache,
-        reserve,
+        run_id=paths.run_id,
+        root=paths.root,
+        payload=paths.payload,
+        logs=paths.logs,
+        reports=paths.reports,
+        runtime_cache=paths.runtime_cache,
+        reserve=paths.reserve,
+        input_bundle=paths.root / "input",
     )
+
+
+def prepare_training_input_directory(attempt: Attempt) -> None:
+    if attempt.input_bundle is None:
+        raise SupervisionError("attempt has no training-input path")
+    os.mkdir(attempt.input_bundle, mode=0o700)
+    fsync_directory(attempt.root)
+
+
+def partial_admission_outcome(
+    result: Any, run_kind: str
+) -> tuple[dict[str, Any], int]:
+    """Preserve a partial admission's tombstone and uncertainty semantics."""
+
+    tombstone = result.tombstone
+    artifact = tombstone.artifact if tombstone is not None else None
+    if artifact is not None and artifact.committed is True:
+        tombstone_state = "COMMITTED"
+    elif tombstone is not None and tombstone.indeterminate is True:
+        tombstone_state = "INDETERMINATE"
+    else:
+        tombstone_state = "NOT_COMMITTED"
+    durability_failed = tombstone_state != "COMMITTED"
+    tombstone_evidence: dict[str, Any] = {
+        "state": tombstone_state,
+        "reserveReleased": tombstone.reserve_released
+        if tombstone is not None
+        else False,
+        "error": tombstone.error if tombstone is not None else "MISSING",
+    }
+    if artifact is not None:
+        tombstone_evidence.update(
+            {
+                "path": str(artifact.path),
+                "bytes": artifact.size,
+                "sha256": artifact.sha256,
+                "commitPoint": artifact.commit_point,
+                "cleanupComplete": artifact.cleanup_complete,
+            }
+        )
+    payload = {
+        "schema": "szl.frontier-training-supervisor-admission-outcome/v1",
+        "state": "ADMISSION_FAILED_PARTIAL_LEAF",
+        "primaryCause": "EVIDENCE_DURABILITY_FAILED"
+        if durability_failed
+        else "PRECONDITION_DENIED",
+        "runId": result.paths.run_id,
+        "runKind": run_kind.upper(),
+        "failedStage": result.failed_stage,
+        "failureType": result.failure_type,
+        "createdEntries": list(result.created_entries),
+        "reserveAllocated": result.reserve_allocated,
+        "admissionTombstone": tombstone_evidence,
+        "workerLaunched": False,
+        "supervisorReportPublished": False,
+        "qualificationEligible": False,
+        "receiptEligible": False,
+        "publicationEligible": False,
+        "runtimeWitnessPresent": False,
+        "autonomyEligible": False,
+    }
+    exit_code = TERMINAL_EXIT_CODES[
+        "EVIDENCE_DURABILITY_FAILED" if durability_failed else "PRECONDITION_DENIED"
+    ]
+    return payload, exit_code
+
+
+def stage_training_bundle(
+    attempt: Attempt, source_commit: str, source: dict[str, Any]
+) -> dict[str, Any]:
+    """Materialize only training-eligible committed bytes for the worker."""
+
+    if attempt.input_bundle is None:
+        raise SupervisionError("attempt has no admitted training-input directory")
+    files: dict[str, dict[str, Any]] = {}
+    source_publication: dict[str, dict[str, Any]] = {}
+    for filename in BUNDLE_SOURCE_FILES:
+        data = trainer.committed_bytes(source_commit, f"{RELATIVE}/{filename}")
+        artifact = publish_evidence_write_once(attempt.input_bundle, filename, data)
+        files[filename] = {
+            "bytes": artifact["bytes"],
+            "sha256": artifact["sha256"],
+        }
+        source_publication[filename] = {
+            "publicationState": artifact["publicationState"],
+            "commitPoint": artifact["commitPoint"],
+            "cleanupComplete": artifact["cleanupComplete"],
+        }
+    manifest = {
+        "schema": "szl.receiptagent-v3-training-bundle/v1",
+        "sourceRevision": source_commit,
+        "source": source,
+        "files": files,
+        "bundlePublication": {
+            "protocol": "SUPERVISOR_BOOTSTRAP_WRITE_ONCE",
+            "scope": "SOURCE_ARTIFACTS_BEFORE_MANIFEST_RENDER",
+            "sourceArtifacts": source_publication,
+        },
+        "heldOutContentPresent": False,
+        "allowedFiles": [*BUNDLE_SOURCE_FILES, "training-bundle.json"],
+    }
+    manifest["bundleSha256"] = sha256_json(manifest)
+    rendered = (canonical_json(manifest) + "\n").encode("utf-8")
+    publish_evidence_write_once(attempt.input_bundle, "training-bundle.json", rendered)
+    os.chmod(attempt.input_bundle, 0o500)
+    fsync_directory(attempt.input_bundle)
+    fsync_directory(attempt.root)
+    return manifest
 
 
 def release_evidence_reserve(attempt: Attempt) -> None:
@@ -422,14 +572,17 @@ def release_evidence_reserve(attempt: Attempt) -> None:
 
 
 def systemctl(
-    policy: dict[str, Any], *args: str, timeout: float = 20.0
+    policy: dict[str, Any], *args: str, timeout: float | None = None
 ) -> subprocess.CompletedProcess[str]:
+    effective_timeout = (
+        policy["control_plane_timeout_seconds"] if timeout is None else timeout
+    )
     return subprocess.run(
         [policy["systemctl_executable"], "--user", *args],
         check=True,
         capture_output=True,
         text=True,
-        timeout=timeout,
+        timeout=effective_timeout,
     )
 
 
@@ -450,10 +603,14 @@ def unit_properties(policy: dict[str, Any], unit: str) -> dict[str, str]:
         "ProtectControlGroups",
         "ProtectSystem",
         "ProtectHome",
+        "ProtectProc",
+        "ProcSubset",
         "PrivateTmp",
         "PrivateNetwork",
         "RestrictSUIDSGID",
         "RestrictNamespaces",
+        "InaccessiblePaths",
+        "LimitFSIZE",
     )
     command = ["show", unit, "--no-pager"]
     for name in names:
@@ -558,7 +715,9 @@ def sample_gpu(policy: dict[str, Any]) -> TelemetrySample:
 
 
 def worker_environment(attempt: Attempt) -> dict[str, str]:
-    cache = attempt.runtime_cache
+    if attempt.input_bundle is None:
+        raise SupervisionError("attempt has no training-only source bundle")
+    cache = WORKER_CACHE
     return {
         **WORKER_ENVIRONMENT,
         "HOME": str(cache / "home"),
@@ -583,9 +742,22 @@ def create_log(path: Path) -> None:
         os.close(descriptor)
 
 
+def worker_inaccessible_paths(supervisor_pid: int) -> str:
+    if (
+        isinstance(supervisor_pid, bool)
+        or not isinstance(supervisor_pid, int)
+        or supervisor_pid <= 0
+    ):
+        raise SupervisionError("supervisor PID is invalid for path isolation")
+    return (
+        f"/mnt -/media -/srv /run /root -/var/lib/docker /proc/{supervisor_pid}"
+    )
+
+
 def launch_worker_unit(
     policy: dict[str, Any],
     *,
+    attempt: Attempt,
     outer_unit: str,
     worker_unit: str,
     worker_argv: Sequence[str],
@@ -593,16 +765,23 @@ def launch_worker_unit(
     stdout_path: Path,
     stderr_path: Path,
 ) -> dict[str, str]:
+    if attempt.input_bundle is None:
+        raise SupervisionError("attempt has no training-only source bundle")
+    venv_root = Path(policy["python_executable"]).parent.parent
+    model_repository = Path(policy["model_cache_repository"])
+    if not venv_root.is_dir() or not model_repository.is_dir():
+        raise SupervisionError("fixed worker runtime inputs are unavailable")
     env_command = ["/usr/bin/env", "-i"]
     env_command.extend(
         f"{key}={value}" for key, value in sorted(worker_environment_values.items())
     )
+    inaccessible_paths = worker_inaccessible_paths(os.getpid())
     command = [
         policy["systemd_run_executable"],
         "--user",
         f"--unit={worker_unit}",
         "--service-type=exec",
-        f"--working-directory={ROOT}",
+        f"--working-directory={WORKER_INPUT}",
         "--property=KillMode=control-group",
         "--property=SendSIGKILL=yes",
         "--property=RemainAfterExit=yes",
@@ -612,7 +791,9 @@ def launch_worker_unit(
         "--property=NoNewPrivileges=yes",
         "--property=ProtectControlGroups=yes",
         "--property=ProtectSystem=strict",
-        "--property=ProtectHome=read-only",
+        "--property=ProtectHome=tmpfs",
+        "--property=ProtectProc=invisible",
+        "--property=ProcSubset=pid",
         "--property=PrivateTmp=yes",
         "--property=PrivateNetwork=yes",
         "--property=RestrictSUIDSGID=yes",
@@ -625,11 +806,13 @@ def launch_worker_unit(
         "--property=RestrictAddressFamilies=AF_UNIX",
         "--property=CapabilityBoundingSet=",
         "--property=AmbientCapabilities=",
-        f"--property=ReadOnlyPaths={ROOT} /home/rosie/.cache/huggingface",
-        f"--property=ReadWritePaths={stdout_path.parent.parent / 'payload'} {stdout_path.parent.parent / 'runtime-cache'}",
-        f"--property=InaccessiblePaths={stdout_path.parent} {stdout_path.parent.parent / 'reports'} /run/user/1000/bus",
+        f"--property=BindReadOnlyPaths={venv_root}:{venv_root} {attempt.input_bundle}:{WORKER_INPUT} {model_repository}:{WORKER_MODEL_REPOSITORY}",
+        f"--property=BindPaths={attempt.payload}:{WORKER_OUTPUT} {attempt.runtime_cache}:{WORKER_CACHE}",
+        f"--property=ReadWritePaths={WORKER_OUTPUT} {WORKER_CACHE}",
+        f"--property=InaccessiblePaths={inaccessible_paths}",
         "--property=UMask=0077",
         "--property=LimitCORE=0",
+        f"--property=LimitFSIZE={policy['maximum_log_bytes_per_stream']}",
         "--property=KeyringMode=private",
         "--property=LockPersonality=yes",
         "--property=RestrictRealtime=yes",
@@ -642,7 +825,12 @@ def launch_worker_unit(
         *env_command,
         *worker_argv,
     ]
-    subprocess.run(command, check=True, capture_output=True, timeout=30)
+    subprocess.run(
+        command,
+        check=True,
+        capture_output=True,
+        timeout=policy["control_plane_timeout_seconds"],
+    )
     properties = unit_properties(policy, f"{worker_unit}.service")
     required = {
         "KillMode": "control-group",
@@ -651,11 +839,15 @@ def launch_worker_unit(
         "NoNewPrivileges": "yes",
         "ProtectControlGroups": "yes",
         "ProtectSystem": "strict",
-        "ProtectHome": "read-only",
+        "ProtectHome": "tmpfs",
+        "ProtectProc": "invisible",
+        "ProcSubset": "pid",
         "PrivateTmp": "yes",
         "PrivateNetwork": "yes",
         "RestrictSUIDSGID": "yes",
         "RestrictNamespaces": "yes",
+        "InaccessiblePaths": inaccessible_paths,
+        "LimitFSIZE": str(policy["maximum_log_bytes_per_stream"]),
     }
     for key, expected in required.items():
         if properties.get(key) != expected:
@@ -803,22 +995,107 @@ def fsync_payload(root: Path) -> None:
 
 
 def expected_worker_argv(
-    policy: dict[str, Any], source_commit: str, run_kind: str, attempt: Attempt
+    policy: dict[str, Any],
+    source_commit: str,
+    run_kind: str,
+    attempt: Attempt,
+    *,
+    model_revision: str,
+    forbidden_reads: Sequence[Path],
 ) -> list[str]:
-    return [
+    argv = [
         policy["python_executable"],
         "-I",
         "-B",
-        str(HERE / "train_candidate.py"),
+        str(WORKER_INPUT / "containment_probe.py"),
+        "--input-dir",
+        str(WORKER_INPUT),
+        "--cache-dir",
+        str(WORKER_CACHE),
+        "--venv-dir",
+        str(Path(policy["python_executable"]).parent.parent),
+        "--model-repository",
+        str(WORKER_MODEL_REPOSITORY),
+        "--model-revision",
+        model_revision,
+        "--report",
+        str(WORKER_CACHE / "containment-probe.json"),
         "--source-commit",
         source_commit,
         "--run-kind",
         run_kind,
-        "--output-dir",
-        str(attempt.payload),
         "--supervisor-run-id",
         attempt.run_id,
     ]
+    for path in forbidden_reads:
+        argv.extend(("--forbidden-read", str(path)))
+    return argv
+
+
+def verify_containment_report(path: Path) -> dict[str, Any]:
+    report = strict_json_file(path, 64 * 1024)
+    declared_digest = report.get("reportSha256")
+    unsigned = dict(report)
+    unsigned.pop("reportSha256", None)
+    expected = {
+        "schema": "szl.receiptagent-v3-containment-probe/v1",
+        "state": "PASS",
+        "trainingOnlyInputSetExact": True,
+        "heldOutContentAbsent": True,
+        "forbiddenHostReadsFailed": True,
+        "nonOutputWritesFailed": True,
+        "runtimeAndModelInputsReadable": True,
+        "secretContentRead": False,
+        "trainerExecBound": True,
+    }
+    if unsigned != expected:
+        raise SupervisionError("worker containment report semantics are invalid")
+    if not isinstance(declared_digest, str) or declared_digest != sha256_json(unsigned):
+        raise SupervisionError("worker containment report digest is invalid")
+    metadata = hash_file(path, 64 * 1024)
+    return {
+        "relativePath": "runtime-cache/containment-probe.json",
+        "state": "PASS",
+        "fileSha256": metadata["sha256"],
+        "bytes": metadata["bytes"],
+        "canonicalReportSha256": declared_digest,
+        "sameUnitPreExecGate": True,
+    }
+
+
+def maximum_observed_telemetry_gap_seconds(
+    samples: Sequence[TelemetrySample],
+) -> float:
+    if len(samples) < 2:
+        return 0.0
+    return round(
+        max(
+            (current.observed_monotonic_ns - previous.observed_monotonic_ns) / 1e9
+            for previous, current in zip(samples, samples[1:])
+        ),
+        6,
+    )
+
+
+def successful_telemetry_gap_trigger(
+    previous_observed_monotonic_ns: int,
+    sample: TelemetrySample,
+    maximum_gap_seconds: float,
+) -> tuple[str, str] | None:
+    """Fail closed when a successful telemetry command itself completes too late."""
+
+    gap_ns = sample.observed_monotonic_ns - previous_observed_monotonic_ns
+    if gap_ns < 0:
+        return (
+            "TELEMETRY_UNAVAILABLE",
+            "GPU telemetry completion time moved backwards",
+        )
+    if gap_ns > int(maximum_gap_seconds * 1e9):
+        return (
+            "TELEMETRY_UNAVAILABLE",
+            "GPU telemetry exceeded the maximum allowed gap after a successful sample",
+        )
+    return None
 
 
 def initial_temperature_gate(sample: TelemetrySample, recipe: dict[str, Any]) -> None:
@@ -848,6 +1125,99 @@ def sample_trigger(
             f"{maximum_temperature_c} C",
         )
     return None
+
+
+def sampled_cgroup_drain(
+    policy: dict[str, Any],
+    cgroup: str,
+    *,
+    expected_gpu_uuid: str,
+    maximum_temperature_c: int,
+    last_valid_monotonic_ns: int,
+) -> CgroupDrainResult:
+    """Observe a post-main child cgroup without opening a telemetry blind spot."""
+
+    observed: list[TelemetrySample] = []
+    interval_ns = int(policy["thermal_sample_interval_seconds"] * 1e9)
+    maximum_gap_ns = int(policy["maximum_telemetry_gap_seconds"] * 1e9)
+    deadline_ns = time.monotonic_ns() + int(
+        policy["kill_confirmation_seconds"] * 1e9
+    )
+    next_sample_ns = last_valid_monotonic_ns + interval_ns
+
+    def terminal(trigger: tuple[str, str]) -> CgroupDrainResult:
+        return CgroupDrainResult(
+            samples=tuple(observed),
+            last_valid_monotonic_ns=last_valid_monotonic_ns,
+            cgroup_empty_confirmed=False,
+            stop_required=True,
+            trigger=trigger,
+        )
+
+    while True:
+        try:
+            empty = cgroup_empty(policy, cgroup)
+        except Exception as exc:  # noqa: BLE001 - containment uncertainty is terminal
+            return terminal(
+                ("CONTAINMENT_UNAVAILABLE", trainer.sanitized_error(exc))
+            )
+        if empty:
+            return CgroupDrainResult(
+                samples=tuple(observed),
+                last_valid_monotonic_ns=last_valid_monotonic_ns,
+                cgroup_empty_confirmed=True,
+                stop_required=False,
+                trigger=None,
+            )
+
+        now_ns = time.monotonic_ns()
+        if now_ns - last_valid_monotonic_ns > maximum_gap_ns:
+            return terminal(
+                (
+                    "TELEMETRY_UNAVAILABLE",
+                    "GPU telemetry exceeded the maximum allowed gap during cgroup drain",
+                )
+            )
+        if now_ns >= deadline_ns:
+            return terminal(
+                (
+                    "TERMINATION_UNCONFIRMED",
+                    "worker cgroup remained populated after main-process exit",
+                )
+            )
+        if now_ns >= next_sample_ns:
+            try:
+                sample = sample_gpu(policy)
+            except Exception as exc:  # noqa: BLE001 - a live child cannot go unobserved
+                return terminal(
+                    ("TELEMETRY_UNAVAILABLE", trainer.sanitized_error(exc))
+                )
+            observed.append(sample)
+            gap_violation = successful_telemetry_gap_trigger(
+                last_valid_monotonic_ns,
+                sample,
+                policy["maximum_telemetry_gap_seconds"],
+            )
+            if gap_violation is not None:
+                return terminal(gap_violation)
+            last_valid_monotonic_ns = sample.observed_monotonic_ns
+            sample_violation = sample_trigger(
+                sample,
+                expected_gpu_uuid=expected_gpu_uuid,
+                maximum_temperature_c=maximum_temperature_c,
+            )
+            if sample_violation is not None:
+                return terminal(sample_violation)
+            while next_sample_ns <= sample.observed_monotonic_ns:
+                next_sample_ns += interval_ns
+            continue
+
+        wake_ns = min(
+            next_sample_ns,
+            deadline_ns,
+            last_valid_monotonic_ns + maximum_gap_ns,
+        )
+        time.sleep(min(0.1, max(0.001, (wake_ns - now_ns) / 1e9)))
 
 
 def verify_worker_report(
@@ -910,6 +1280,8 @@ def terminal_report_base(
     worker_environment_sha: str,
     outer_containment: dict[str, Any],
     admission_sha: str,
+    training_bundle_sha: str,
+    credential_canary_sha: str,
 ) -> dict[str, Any]:
     return {
         "schema": "szl.frontier-training-supervisor/v1",
@@ -927,6 +1299,10 @@ def terminal_report_base(
             "pythonExecutable": interpreter,
             "workerEnvironmentSha256": worker_environment_sha,
             "admissionRecordSha256": admission_sha,
+        },
+        "provenance": {
+            "trainingBundleSha256": training_bundle_sha,
+            "credentialCanarySha256": credential_canary_sha,
         },
         "containment": outer_containment,
         "securityBoundary": "COOPERATIVE_SAME_ACCOUNT",
@@ -972,15 +1348,24 @@ def strict_args(argv: Sequence[str]) -> argparse.Namespace:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    global trainer, supervisor_validation
+
     args = strict_args(sys.argv[1:] if argv is None else argv)
     attempt: Attempt | None = None
     worker_launched = False
     worker_unit = f"szl-ra3-worker-{args.run_id}"
     terminal_cause = "PRECONDITION_DENIED"
     report: dict[str, Any] | None = None
+    publication_failure: dict[str, Any] | None = None
     exit_code = TERMINAL_EXIT_CODES[terminal_cause]
     try:
-        source = trainer.fresh_exact_source(args.source_commit)
+        verified_source, loaded_siblings = bootstrap.verify_and_load_siblings(
+            args.source_commit
+        )
+        trainer = loaded_siblings["train_candidate.py"]
+        supervisor_validation = loaded_siblings["supervisor_validation.py"]
+        source = verified_source.public_evidence()
+        source["commitSignatureVerifiedByThisTool"] = False
         candidate_bytes = trainer.committed_bytes(
             args.source_commit, f"{RELATIVE}/candidate.json"
         )
@@ -1007,8 +1392,37 @@ def main(argv: Sequence[str] | None = None) -> int:
         }
         outer_containment = verify_supervisor_unit(policy, args.unit_name)
         runs_root = validate_runs_root(Path(policy["runs_root"]))
-        attempt = admit_attempt(
+        admission_result = bootstrap.admit_attempt_atomic(
             runs_root, args.run_id, policy["evidence_reserve_bytes"]
+        )
+        if admission_result.prepared is not True:
+            outcome, outcome_exit = partial_admission_outcome(
+                admission_result, args.run_kind
+            )
+            print(json.dumps(outcome, sort_keys=True))
+            return outcome_exit
+        attempt = attempt_from_atomic_admission(admission_result, args.run_id)
+        prepare_training_input_directory(attempt)
+        credential_canary = publish_evidence_write_once(
+            attempt.root, "credential-canary", secrets.token_bytes(32)
+        )
+        heldout_paths = (HERE / "dev.jsonl", HERE / "test.jsonl")
+        for heldout_path in heldout_paths:
+            if heldout_path.is_symlink() or not heldout_path.is_file():
+                raise SupervisionError("required held-out source sentinel is unavailable")
+        worker_source = {
+            "repository": "szl-holdings/szl-forge",
+            "revision": args.source_commit,
+            "branch": "main",
+            "originIdentityVerified": True,
+            "freshRemoteMainObserved": False,
+            "freshRemoteMainObservationDelegatedToSupervisor": True,
+            "cachedRemoteTrackingMatches": True,
+            "workingTreeClean": True,
+            "commitSignatureVerifiedByThisTool": False,
+        }
+        training_bundle = stage_training_bundle(
+            attempt, args.source_commit, worker_source
         )
         exact_worker_environment = worker_environment(attempt)
         worker_environment_sha = worker_environment_digest(exact_worker_environment)
@@ -1024,7 +1438,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         except Exception as exc:  # noqa: BLE001 - terminal evidence records bounded failure
             initial_error = trainer.sanitized_error(exc)
         worker_argv = expected_worker_argv(
-            policy, args.source_commit, args.run_kind, attempt
+            policy,
+            args.source_commit,
+            args.run_kind,
+            attempt,
+            model_revision=candidate["actual_training_base"]["revision"],
+            forbidden_reads=(Path(credential_canary["path"]), *heldout_paths),
         )
         admission = {
             "schema": "szl.frontier-training-supervisor-admission/v1",
@@ -1044,6 +1463,15 @@ def main(argv: Sequence[str] | None = None) -> int:
             "pythonExecutable": interpreter,
             "workerArgvSha256": sha256_json(worker_argv),
             "workerEnvironmentSha256": worker_environment_sha,
+            "trainingBundleSha256": training_bundle["bundleSha256"],
+            "credentialCanary": {
+                "bytes": credential_canary["bytes"],
+                "sha256": credential_canary["sha256"],
+                "publicationState": credential_canary["publicationState"],
+                "commitPoint": credential_canary["commitPoint"],
+                "cleanupComplete": credential_canary["cleanupComplete"],
+            },
+            "forbiddenReadTargetCount": 3,
             "initialGpuTelemetry": initial_sample.public(started_ns)
             if initial_sample
             else None,
@@ -1059,7 +1487,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         admission_bytes = (
             json.dumps(admission, indent=2, sort_keys=True) + "\n"
         ).encode("utf-8")
-        admission_artifact = publish_once(
+        admission_artifact = publish_evidence_write_once(
             attempt.reports, "admission.json", admission_bytes
         )
         report = terminal_report_base(
@@ -1075,6 +1503,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             worker_environment_sha=worker_environment_sha,
             outer_containment=outer_containment,
             admission_sha=admission_artifact["sha256"],
+            training_bundle_sha=training_bundle["bundleSha256"],
+            credential_canary_sha=credential_canary["sha256"],
         )
         samples: list[TelemetrySample] = []
         if initial_sample is not None:
@@ -1099,6 +1529,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         worker_launched = True
         worker_properties = launch_worker_unit(
             policy,
+            attempt=attempt,
             outer_unit=args.unit_name,
             worker_unit=worker_unit,
             worker_argv=worker_argv,
@@ -1134,6 +1565,14 @@ def main(argv: Sequence[str] | None = None) -> int:
                     trigger_error = trainer.sanitized_error(exc)
                     break
                 samples.append(sample)
+                gap_violation = successful_telemetry_gap_trigger(
+                    last_valid_ns,
+                    sample,
+                    policy["maximum_telemetry_gap_seconds"],
+                )
+                if gap_violation is not None:
+                    terminal_cause, trigger_error = gap_violation
+                    break
                 last_valid_ns = sample.observed_monotonic_ns
                 violation = sample_trigger(
                     sample,
@@ -1177,18 +1616,24 @@ def main(argv: Sequence[str] | None = None) -> int:
             if not termination["cgroupEmptyConfirmed"]:
                 terminal_cause = "TERMINATION_UNCONFIRMED"
         else:
-            confirmation_deadline = (
-                time.monotonic() + policy["kill_confirmation_seconds"]
+            drain = sampled_cgroup_drain(
+                policy,
+                worker_cgroup,
+                expected_gpu_uuid=initial_sample.gpu_uuid,
+                maximum_temperature_c=recipe["maximum_gpu_temperature_c"],
+                last_valid_monotonic_ns=last_valid_ns,
             )
-            while time.monotonic() < confirmation_deadline and not cgroup_empty(
-                policy, worker_cgroup
-            ):
-                time.sleep(0.1)
-            if not cgroup_empty(policy, worker_cgroup):
+            samples.extend(drain.samples)
+            last_valid_ns = drain.last_valid_monotonic_ns
+            if drain.trigger is not None:
+                terminal_cause, trigger_error = drain.trigger
+            if drain.stop_required:
+                termination = stop_worker_unit(policy, worker_unit, worker_cgroup)
+                if not termination["cgroupEmptyConfirmed"]:
+                    terminal_cause = "TERMINATION_UNCONFIRMED"
+            elif not drain.cgroup_empty_confirmed:
                 terminal_cause = "TERMINATION_UNCONFIRMED"
-                trigger_error = (
-                    "worker cgroup remained populated after main-process exit"
-                )
+                trigger_error = "post-main cgroup drain returned inconsistent evidence"
                 termination = stop_worker_unit(policy, worker_unit, worker_cgroup)
 
         try:
@@ -1210,6 +1655,17 @@ def main(argv: Sequence[str] | None = None) -> int:
         try:
             terminal_sample = sample_gpu(policy)
             samples.append(terminal_sample)
+            terminal_gap_violation = successful_telemetry_gap_trigger(
+                last_valid_ns,
+                terminal_sample,
+                policy["maximum_telemetry_gap_seconds"],
+            )
+            if terminal_gap_violation is not None:
+                terminal_cause, trigger_error = merge_terminal_observation(
+                    terminal_cause, trigger_error, terminal_gap_violation
+                )
+            else:
+                last_valid_ns = terminal_sample.observed_monotonic_ns
             terminal_violation = sample_trigger(
                 terminal_sample,
                 expected_gpu_uuid=initial_sample.gpu_uuid,
@@ -1250,6 +1706,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             "maximumTemperaturePolicyC": recipe["maximum_gpu_temperature_c"],
             "sampleIntervalSeconds": policy["thermal_sample_interval_seconds"],
             "maximumTelemetryGapSeconds": policy["maximum_telemetry_gap_seconds"],
+            "maximumObservedSampleGapSeconds": maximum_observed_telemetry_gap_seconds(
+                samples
+            ),
             "samples": [sample.public(launch_ns) for sample in samples],
             "maximumObservedTemperatureC": max(
                 sample.temperature_c for sample in samples
@@ -1284,6 +1743,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             report["workerPayloadDisposition"] = "UNTRUSTED_PARTIAL_NOT_REUSABLE"
             exit_code = TERMINAL_EXIT_CODES[terminal_cause]
         else:
+            terminal_cause = "CONTAINMENT_UNAVAILABLE"
+            containment_evidence = verify_containment_report(
+                attempt.runtime_cache / "containment-probe.json"
+            )
+            report["containment"]["workerNamespaceProbe"] = containment_evidence
+            report["containment"]["credentialCanarySha256"] = credential_canary[
+                "sha256"
+            ]
             terminal_cause = "WORKER_REPORT_INVALID"
             fsync_payload(attempt.payload)
             worker_report_path = attempt.payload / "training-report.json"
@@ -1336,6 +1803,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "receipt eligibility, publication, deployment, runtime health, or autonomy."
         )
     except Exception as exc:  # noqa: BLE001 - one fail-closed terminal path
+        publication_failure = publication_failure_evidence(exc)
         if worker_launched and attempt is not None:
             try:
                 policy = validate_policy(candidate)
@@ -1358,6 +1826,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             report["fatal"] = trainer.sanitized_error(exc)
             report["workerPayloadDisposition"] = "UNTRUSTED_PARTIAL_NOT_REUSABLE"
             report["localEvaluationInputBindingSatisfied"] = False
+            if publication_failure is not None:
+                report["evidencePublicationFailure"] = publication_failure
 
     if attempt is not None and report is None:
         emergency_report = {
@@ -1375,18 +1845,25 @@ def main(argv: Sequence[str] | None = None) -> int:
             "publicationEligible": False,
             "autonomyEligible": False,
         }
+        if publication_failure is not None:
+            emergency_report["evidencePublicationFailure"] = publication_failure
         try:
             release_evidence_reserve(attempt)
             rendered = render_report(emergency_report)
-            artifact = publish_once(attempt.reports, "supervisor-report.json", rendered)
+            artifact = publish_evidence_write_once(
+                attempt.reports, "supervisor-report.json", rendered
+            )
             print(rendered.decode("utf-8"), end="")
             print(f"supervisorReportPath={artifact['path']}")
         except Exception as exc:  # noqa: BLE001 - last-resort bounded console evidence
+            report_publication_failure = publication_failure_evidence(exc)
             print(
                 json.dumps(
                     {
                         **emergency_report,
                         "fatal": trainer.sanitized_error(exc),
+                        "supervisorReportPublished": False,
+                        "supervisorReportPublication": report_publication_failure,
                     },
                     sort_keys=True,
                 )
@@ -1410,16 +1887,21 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         release_evidence_reserve(attempt)
         rendered = render_report(report)
-        artifact = publish_once(attempt.reports, "supervisor-report.json", rendered)
+        artifact = publish_evidence_write_once(
+            attempt.reports, "supervisor-report.json", rendered
+        )
         print(rendered.decode("utf-8"), end="")
         print(f"supervisorReportPath={artifact['path']}")
     except Exception as exc:  # noqa: BLE001 - success is withheld if evidence is not durable
+        report_publication_failure = publication_failure_evidence(exc)
         print(
             json.dumps(
                 {
                     "schema": "szl.frontier-training-supervisor/v1",
                     "state": "EVIDENCE_DURABILITY_FAILED",
                     "fatal": trainer.sanitized_error(exc),
+                    "supervisorReportPublished": False,
+                    "supervisorReportPublication": report_publication_failure,
                     "receiptEligible": False,
                     "publicationEligible": False,
                     "autonomyEligible": False,

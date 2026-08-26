@@ -10,6 +10,7 @@ import posixpath
 import re
 import secrets
 import signal
+import stat
 import subprocess
 import sys
 from pathlib import Path
@@ -18,7 +19,8 @@ from typing import Any, Sequence
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
-RELATIVE_CANDIDATE = "frontier/qwen35-receiptagent-v3/candidate.json"
+RELATIVE = "frontier/qwen35-receiptagent-v3"
+RELATIVE_CANDIDATE = f"{RELATIVE}/candidate.json"
 SUPERVISOR = HERE / "supervise_training.py"
 GIT = "/usr/bin/git"
 SYSTEMD_RUN = "/usr/bin/systemd-run"
@@ -26,6 +28,15 @@ SYSTEMCTL = "/usr/bin/systemctl"
 CLEANUP_TIMEOUT_SECONDS = 30
 SOURCE_COMMIT = re.compile(r"[0-9a-f]{40}")
 SERVICE_NAME = re.compile(r"szl-ra3-supervisor-[0-9a-f]{32}")
+SUPERVISED_EXECUTABLE_COMPONENTS = (
+    "launch_supervised_training.py",
+    "supervisor_bootstrap.py",
+    "supervise_training.py",
+    "containment_probe.py",
+    "train_candidate.py",
+    "supervisor_validation.py",
+)
+MAX_COMPONENT_BYTES = 2 * 1024 * 1024
 SYSTEMD_PROPERTIES = (
     "KillMode=control-group",
     "SendSIGKILL=yes",
@@ -118,6 +129,7 @@ def load_committed_candidate(source_commit: str) -> dict[str, Any]:
             cwd=ROOT,
             check=False,
             capture_output=True,
+            shell=False,
             timeout=30,
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
@@ -133,6 +145,123 @@ def load_committed_candidate(source_commit: str) -> dict[str, Any]:
     if not isinstance(candidate, dict):
         raise LauncherError("committed candidate.json must contain one JSON object")
     return candidate
+
+
+def _read_regular_file_once(path: Path, maximum_bytes: int) -> bytes:
+    """Return stable bytes from one non-symlink, single-link regular file."""
+
+    flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        descriptor = os.open(path, flags)
+    except OSError as exc:
+        raise LauncherError(
+            f"could not open supervised component {path.name}: {type(exc).__name__}"
+        ) from exc
+    try:
+        before = os.fstat(descriptor)
+        if not stat.S_ISREG(before.st_mode) or before.st_nlink != 1:
+            raise LauncherError(
+                f"supervised component must be a single-link regular file: {path.name}"
+            )
+        if before.st_size > maximum_bytes:
+            raise LauncherError(f"supervised component is too large: {path.name}")
+        chunks: list[bytes] = []
+        total = 0
+        while True:
+            block = os.read(
+                descriptor,
+                min(1024 * 1024, maximum_bytes + 1 - total),
+            )
+            if not block:
+                break
+            chunks.append(block)
+            total += len(block)
+            if total > maximum_bytes:
+                raise LauncherError(
+                    f"supervised component grew past its byte ceiling: {path.name}"
+                )
+        after = os.fstat(descriptor)
+        identity_before = (
+            before.st_dev,
+            before.st_ino,
+            before.st_mode,
+            before.st_nlink,
+            before.st_size,
+            before.st_mtime_ns,
+            before.st_ctime_ns,
+        )
+        identity_after = (
+            after.st_dev,
+            after.st_ino,
+            after.st_mode,
+            after.st_nlink,
+            after.st_size,
+            after.st_mtime_ns,
+            after.st_ctime_ns,
+        )
+        if identity_before != identity_after or total != before.st_size:
+            raise LauncherError(
+                f"supervised component changed during its single-open read: {path.name}"
+            )
+        return b"".join(chunks)
+    except OSError as exc:
+        raise LauncherError(
+            f"could not read supervised component {path.name}: {type(exc).__name__}"
+        ) from exc
+    finally:
+        os.close(descriptor)
+
+
+def _committed_component_bytes(
+    source_commit: str,
+    filename: str,
+    *,
+    repo_root: Path,
+) -> bytes:
+    try:
+        observed = subprocess.run(
+            [GIT, "show", f"{source_commit}:{RELATIVE}/{filename}"],
+            cwd=repo_root,
+            check=False,
+            capture_output=True,
+            shell=False,
+            timeout=30,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise LauncherError(
+            f"could not read committed supervised component {filename}: "
+            f"{type(exc).__name__}"
+        ) from exc
+    if observed.returncode != 0:
+        raise LauncherError(
+            f"supervised component is unavailable at the requested commit: {filename}"
+        )
+    if len(observed.stdout) > MAX_COMPONENT_BYTES:
+        raise LauncherError(f"committed supervised component is too large: {filename}")
+    return observed.stdout
+
+
+def verify_local_components(
+    source_commit: str,
+    *,
+    component_dir: Path = HERE,
+    repo_root: Path = ROOT,
+) -> None:
+    """Bind every pre-service executable component to the requested commit."""
+
+    if SOURCE_COMMIT.fullmatch(source_commit) is None:
+        raise LauncherError("source commit is not exact lowercase hexadecimal")
+    for filename in SUPERVISED_EXECUTABLE_COMPONENTS:
+        local = _read_regular_file_once(component_dir / filename, MAX_COMPONENT_BYTES)
+        committed = _committed_component_bytes(
+            source_commit,
+            filename,
+            repo_root=repo_root,
+        )
+        if not secrets.compare_digest(local, committed):
+            raise LauncherError(
+                f"local supervised component differs from requested commit: {filename}"
+            )
 
 
 def committed_python_path(
@@ -168,10 +297,6 @@ def require_local_executables(python_executable: str) -> None:
     ):
         if not path.is_file() or not os.access(path, os.X_OK):
             raise LauncherError(f"{label} executable is unavailable at {path}")
-    if not SUPERVISOR.is_file():
-        raise LauncherError(f"supervisor source is unavailable at {SUPERVISOR}")
-
-
 def generate_service_name(run_kind: str) -> str:
     if run_kind not in {"smoke", "full"}:
         raise LauncherError("run kind is unsupported")
@@ -338,6 +463,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             observed_executable=sys.executable,
         )
         require_local_executables(python_executable)
+        verify_local_components(args.source_commit)
         service_name = generate_service_name(args.run_kind)
         run_id, attempt_path = attempt_identity(candidate, service_name)
         command = systemd_command(

@@ -53,6 +53,14 @@ RUNTIME_PACKAGES = (
     "huggingface-hub",
     "unsloth-zoo",
 )
+BUNDLE_SOURCE_FILES = (
+    "candidate.json",
+    "containment_probe.py",
+    "curriculum-manifest.json",
+    "train.jsonl",
+    "train_candidate.py",
+)
+BUNDLE_ALLOWED_FILES = {*BUNDLE_SOURCE_FILES, "training-bundle.json"}
 
 
 class QualificationError(RuntimeError):
@@ -156,8 +164,76 @@ def load_committed_json(source_commit: str, filename: str) -> dict[str, Any]:
     return json.loads(committed_bytes(source_commit, f"{RELATIVE}/{filename}"))
 
 
-def curriculum(source_commit: str) -> tuple[dict[str, Any], list[dict[str, Any]]]:
-    manifest_bytes = committed_bytes(source_commit, f"{RELATIVE}/curriculum-manifest.json")
+def bundle_bytes(bundle_dir: Path, filename: str, maximum_bytes: int = 8 * 1024 * 1024) -> bytes:
+    if filename not in BUNDLE_ALLOWED_FILES:
+        raise QualificationError("training bundle filename is not allowlisted")
+    path = bundle_dir / filename
+    if path.is_symlink() or not path.is_file():
+        raise QualificationError(f"training bundle file is unavailable: {filename}")
+    data = path.read_bytes()
+    if len(data) > maximum_bytes:
+        raise QualificationError(f"training bundle file is too large: {filename}")
+    return data
+
+
+def validate_training_bundle(bundle_dir: Path, source_commit: str) -> dict[str, Any]:
+    resolved = bundle_dir.resolve(strict=True)
+    if resolved != bundle_dir or resolved.is_symlink() or not resolved.is_dir():
+        raise QualificationError("training bundle path must be exact and symlink-free")
+    observed_names = {path.name for path in resolved.iterdir()}
+    if observed_names != BUNDLE_ALLOWED_FILES:
+        raise QualificationError("training bundle contains missing or unapproved files")
+    manifest = json.loads(bundle_bytes(resolved, "training-bundle.json"))
+    if not isinstance(manifest, dict):
+        raise QualificationError("training bundle manifest must be one JSON object")
+    declared_digest = manifest.get("bundleSha256")
+    unsigned = dict(manifest)
+    unsigned.pop("bundleSha256", None)
+    if not isinstance(declared_digest, str) or sha256_json(unsigned) != declared_digest:
+        raise QualificationError("training bundle manifest digest is invalid")
+    if manifest.get("schema") != "szl.receiptagent-v3-training-bundle/v1":
+        raise QualificationError("training bundle schema is unsupported")
+    if manifest.get("sourceRevision") != source_commit:
+        raise QualificationError("training bundle source revision differs")
+    if manifest.get("heldOutContentPresent") is not False:
+        raise QualificationError("held-out content cannot enter the training bundle")
+    if manifest.get("allowedFiles") != [*BUNDLE_SOURCE_FILES, "training-bundle.json"]:
+        raise QualificationError("training bundle allowlist differs")
+    declared_files = manifest.get("files")
+    if not isinstance(declared_files, dict) or set(declared_files) != set(BUNDLE_SOURCE_FILES):
+        raise QualificationError("training bundle file manifest differs")
+    for filename in BUNDLE_SOURCE_FILES:
+        data = bundle_bytes(resolved, filename)
+        if declared_files[filename] != {
+            "bytes": len(data),
+            "sha256": sha256_bytes(data),
+        }:
+            raise QualificationError(f"training bundle bytes differ: {filename}")
+    expected_source = {
+        "repository": "szl-holdings/szl-forge",
+        "revision": source_commit,
+        "branch": "main",
+        "originIdentityVerified": True,
+        "freshRemoteMainObserved": False,
+        "freshRemoteMainObservationDelegatedToSupervisor": True,
+        "cachedRemoteTrackingMatches": True,
+        "workingTreeClean": True,
+        "commitSignatureVerifiedByThisTool": False,
+    }
+    if manifest.get("source") != expected_source:
+        raise QualificationError("training bundle source identity differs")
+    return manifest
+
+
+def curriculum(
+    source_commit: str, bundle_dir: Path | None = None
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    read_source = (
+        (lambda filename: bundle_bytes(bundle_dir, filename))
+        if bundle_dir is not None
+        else (lambda filename: committed_bytes(source_commit, f"{RELATIVE}/{filename}"))
+    )
+    manifest_bytes = read_source("curriculum-manifest.json")
     manifest = json.loads(manifest_bytes)
     if manifest.get("schema") != "szl.receiptagent-v3-curriculum-manifest/v2":
         raise QualificationError("curriculum manifest schema is unsupported")
@@ -171,7 +247,7 @@ def curriculum(source_commit: str) -> tuple[dict[str, Any], list[dict[str, Any]]
             raise QualificationError(f"manifest does not exclude {held_out}")
 
     # This is the only split content the trainer opens. Held-out bytes are never read.
-    train_bytes = committed_bytes(source_commit, f"{RELATIVE}/train.jsonl")
+    train_bytes = read_source("train.jsonl")
     train_sha = sha256_bytes(train_bytes)
     if train_sha != train_entry.get("sha256"):
         raise QualificationError("train.jsonl differs from its committed manifest digest")
@@ -337,10 +413,16 @@ def gpu_gate(
     }
 
 
-def validate_output_dir(path: Path) -> Path:
+def validate_output_dir(
+    path: Path, *, forbidden_roots: tuple[Path, ...] = (ROOT,)
+) -> Path:
     resolved = path.resolve()
-    if resolved == ROOT or ROOT in resolved.parents:
-        raise QualificationError("output directory must be outside the repository")
+    for forbidden_root in forbidden_roots:
+        exact_root = forbidden_root.resolve(strict=True)
+        if resolved == exact_root or exact_root in resolved.parents:
+            raise QualificationError(
+                "output directory must remain outside the repository or staged source"
+            )
     if resolved.exists():
         if not resolved.is_dir():
             raise QualificationError("output path exists and is not a directory")
@@ -441,8 +523,10 @@ def sanitized_error(exc: Exception) -> str:
 
 
 def train(args: argparse.Namespace, output_dir: Path) -> dict[str, Any]:
-    source = supervised_local_source(args.source_commit)
-    candidate = load_committed_json(args.source_commit, "candidate.json")
+    bundle_dir = args.source_bundle_dir.resolve(strict=True)
+    bundle_manifest = validate_training_bundle(bundle_dir, args.source_commit)
+    source = bundle_manifest["source"]
+    candidate = json.loads(bundle_bytes(bundle_dir, "candidate.json"))
     if candidate.get("candidate_id") != "SZL-ReceiptAgent-Qwen3.5-0.8B-v3":
         raise QualificationError("unexpected candidate identity")
     if candidate.get("state") != "SOURCE_READY_NOT_TRAINED":
@@ -453,17 +537,20 @@ def train(args: argparse.Namespace, output_dir: Path) -> dict[str, Any]:
         raise QualificationError("candidate cannot be autonomy eligible")
     recipe = candidate["training_recipe"]
     telemetry_executable = candidate["supervision_policy"]["nvidia_smi_executable"]
+    worker_mount_root = Path(candidate["supervision_policy"]["worker_mount_root"])
+    if bundle_dir != worker_mount_root / "input":
+        raise QualificationError("worker source bundle is outside the fixed mount")
+    if output_dir != worker_mount_root / "output":
+        raise QualificationError("worker output is outside the fixed mount")
     supervision_policy_sha = sha256_json(candidate["supervision_policy"])
     training_recipe_sha = sha256_json(recipe)
-    worker_source_sha = sha256_bytes(
-        committed_bytes(args.source_commit, f"{RELATIVE}/train_candidate.py")
-    )
+    worker_source_sha = sha256_bytes(bundle_bytes(bundle_dir, "train_candidate.py"))
     expected_steps = (
         recipe["smoke_optimizer_steps"]
         if args.run_kind == "smoke"
         else recipe["full_optimizer_steps"]
     )
-    source_bundle, rows = curriculum(args.source_commit)
+    source_bundle, rows = curriculum(args.source_commit, bundle_dir)
     raw_gpu = raw_gpu_preflight(recipe, telemetry_executable)
 
     import unsloth  # noqa: F401 - patch before Transformers/PEFT imports
@@ -642,6 +729,7 @@ def main() -> int:
     parser.add_argument("--source-commit", required=True)
     parser.add_argument("--run-kind", choices=("smoke", "full"), required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--source-bundle-dir", type=Path, required=True)
     parser.add_argument("--supervisor-run-id", required=True)
     args = parser.parse_args()
     if not re.fullmatch(r"[0-9a-f]{32}", args.supervisor_run_id):
@@ -649,7 +737,9 @@ def main() -> int:
     output_admitted = False
     report_published = False
     try:
-        output_dir = validate_output_dir(args.output_dir)
+        output_dir = validate_output_dir(
+            args.output_dir, forbidden_roots=(args.source_bundle_dir,)
+        )
         output_admitted = True
         report = train(args, output_dir)
         code = 0

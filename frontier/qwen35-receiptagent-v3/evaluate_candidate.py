@@ -5,9 +5,12 @@ from __future__ import annotations
 
 import argparse
 import gc
-import hashlib
 import json
+import math
+import os
+import posixpath
 import re
+import stat
 import sys
 import time
 from datetime import datetime, timezone
@@ -20,6 +23,7 @@ from train_candidate import (
     QualificationError,
     canonical_json,
     committed_bytes,
+    curriculum,
     enforce_runtime_lock,
     fresh_exact_source,
     gpu_gate,
@@ -27,10 +31,14 @@ from train_candidate import (
     hash_adapter,
     load_committed_json,
     raw_gpu_preflight,
-    runtime_versions,
     sanitized_error,
     sha256_bytes,
     sha256_json,
+)
+from supervisor_validation import (
+    OBSERVATION_STATE_BY_KIND,
+    SupervisorValidationError,
+    validate_successful_report,
 )
 
 
@@ -43,6 +51,145 @@ UNSAFE_TERMINAL_CUE = re.compile(
     re.IGNORECASE,
 )
 REASONING_TAG = re.compile(r"</?think>|hidden[_ -]?analysis|chain[_ -]?of[_ -]?thought", re.I)
+HEX_32 = re.compile(r"[0-9a-f]{32}")
+HEX_64 = re.compile(r"[0-9a-f]{64}")
+GPU_UUID = re.compile(r"GPU-[A-Za-z0-9-]{16,96}")
+SUPERVISOR_FULL_STATE = OBSERVATION_STATE_BY_KIND["FULL"]
+SUPERVISOR_SOURCE_COMPONENTS = (
+    "launch_supervised_training.py",
+    "supervisor_bootstrap.py",
+    "supervise_training.py",
+    "containment_probe.py",
+    "train_candidate.py",
+    "supervisor_validation.py",
+)
+SUPERVISOR_SOURCE_CORE = {
+    "repository": "szl-holdings/szl-forge",
+    "branch": "main",
+    "originIdentityVerified": True,
+    "freshRemoteMainObserved": True,
+    "cachedRemoteTrackingMatches": True,
+    "workingTreeClean": True,
+    "commitSignatureVerifiedByThisTool": False,
+}
+SUPERVISOR_CONTAINMENT_KEYS = {
+    "unit",
+    "controlGroup",
+    "MainPID",
+    "KillMode",
+    "SendSIGKILL",
+    "NoNewPrivileges",
+    "ProtectControlGroups",
+    "PrivateTmp",
+    "RestrictSUIDSGID",
+    "workerNamespaceProbe",
+    "credentialCanarySha256",
+}
+SUPERVISOR_LAUNCH_KEYS = {
+    "workerUnit",
+    "workerControlGroup",
+    "workerArgvSha256",
+    "startedAt",
+    "endedAt",
+    "durationSeconds",
+    "wallTimeoutSeconds",
+    "workerExitStatus",
+    "workerResult",
+    "triggerError",
+    "termination",
+    "cgroupEmptyConfirmed",
+}
+SUPERVISOR_TELEMETRY_KEYS = {
+    "source",
+    "gpuUuid",
+    "maximumTemperaturePolicyC",
+    "sampleIntervalSeconds",
+    "maximumTelemetryGapSeconds",
+    "maximumObservedSampleGapSeconds",
+    "samples",
+    "maximumObservedTemperatureC",
+}
+SUPERVISOR_TELEMETRY_SAMPLE_KEYS = {
+    "offsetSeconds",
+    "observedAt",
+    "gpuUuid",
+    "temperatureC",
+    "freeMiB",
+    "totalMiB",
+}
+CONTAINMENT_PROBE_SEMANTICS = {
+    "schema": "szl.receiptagent-v3-containment-probe/v1",
+    "state": "PASS",
+    "trainingOnlyInputSetExact": True,
+    "heldOutContentAbsent": True,
+    "forbiddenHostReadsFailed": True,
+    "nonOutputWritesFailed": True,
+    "runtimeAndModelInputsReadable": True,
+    "secretContentRead": False,
+    "trainerExecBound": True,
+}
+SUPERVISOR_SUCCESS_KEYS = {
+    "schema",
+    "candidateId",
+    "runId",
+    "runKind",
+    "observedAt",
+    "source",
+    "identities",
+    "containment",
+    "provenance",
+    "securityBoundary",
+    "integrityDigestIsAuthentication",
+    "authenticatedSupervisorEnvelopePresent",
+    "qualificationEligible",
+    "receiptEligible",
+    "publicationEligible",
+    "runtimeWitnessPresent",
+    "autonomyEligible",
+    "evaluationPerformed",
+    "comparisonCriteriaSatisfied",
+    "launch",
+    "telemetry",
+    "logs",
+    "trainingReport",
+    "bindings",
+    "adapter",
+    "state",
+    "localEvaluationInputBindingSatisfied",
+    "primaryCause",
+    "workerPayloadDisposition",
+    "claimBoundary",
+    "reportSha256",
+}
+SUPERVISOR_IDENTITY_KEYS = {
+    "supervisionPolicySha256",
+    "supervisorSourceSha256",
+    "workerSourceSha256",
+    "validatorSourceSha256",
+    "candidateSourceSha256",
+    "pythonExecutable",
+    "workerEnvironmentSha256",
+    "admissionRecordSha256",
+}
+SUPERVISOR_BINDINGS = {
+    "strictChildReportSchemaAndSemanticsValidated": True,
+    "sourceBundleIndependentlyRecomputed": True,
+    "adapterIndependentlyHashedTwice": True,
+    "adapterMatchesTrainingReport": True,
+    "runSourceGpuRecipeRuntimeAndPolicyBound": True,
+    "childPromotionBoundariesRemainFalse": True,
+}
+SUPERVISOR_FALSE_FLAGS = (
+    "integrityDigestIsAuthentication",
+    "authenticatedSupervisorEnvelopePresent",
+    "qualificationEligible",
+    "receiptEligible",
+    "publicationEligible",
+    "runtimeWitnessPresent",
+    "autonomyEligible",
+    "evaluationPerformed",
+    "comparisonCriteriaSatisfied",
+)
 
 
 def schema_validator(source_commit: str, filename: str) -> tuple[Any, str]:
@@ -109,6 +256,405 @@ def verify_report_digest(report: dict[str, Any], label: str) -> None:
         raise QualificationError(f"{label} integrity digest is invalid")
 
 
+def reject_duplicate_pairs(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise QualificationError(f"duplicate JSON key: {key}")
+        result[key] = value
+    return result
+
+
+def strict_json_document(
+    path: Path,
+    label: str,
+    *,
+    maximum_bytes: int = 8 * 1024 * 1024,
+) -> tuple[dict[str, Any], bytes]:
+    descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+    try:
+        before = os.fstat(descriptor)
+        if not stat.S_ISREG(before.st_mode) or before.st_nlink != 1:
+            raise QualificationError(f"{label} must be a single-link regular file")
+        if before.st_size > maximum_bytes:
+            raise QualificationError(f"{label} exceeds its byte ceiling")
+        chunks: list[bytes] = []
+        total = 0
+        while True:
+            chunk = os.read(descriptor, min(1024 * 1024, maximum_bytes + 1 - total))
+            if not chunk:
+                break
+            chunks.append(chunk)
+            total += len(chunk)
+            if total > maximum_bytes:
+                raise QualificationError(f"{label} exceeds its byte ceiling")
+        after = os.fstat(descriptor)
+        if (
+            before.st_dev,
+            before.st_ino,
+            before.st_size,
+            before.st_mtime_ns,
+        ) != (
+            after.st_dev,
+            after.st_ino,
+            after.st_size,
+            after.st_mtime_ns,
+        ) or total != before.st_size:
+            raise QualificationError(f"{label} changed while it was read")
+    finally:
+        os.close(descriptor)
+    raw = b"".join(chunks)
+    if b"\x00" in raw:
+        raise QualificationError(f"{label} contains NUL bytes")
+    try:
+        value = json.loads(
+            raw.decode("utf-8"),
+            object_pairs_hook=reject_duplicate_pairs,
+            parse_constant=lambda constant: (_ for _ in ()).throw(
+                QualificationError(f"{label} contains non-finite JSON number {constant}")
+            ),
+        )
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise QualificationError(f"{label} is not strict UTF-8 JSON") from exc
+    if not isinstance(value, dict):
+        raise QualificationError(f"{label} must contain one JSON object")
+    return value, raw
+
+
+def exact_keys(value: dict[str, Any], expected: set[str], label: str) -> None:
+    if set(value) != expected:
+        raise QualificationError(f"{label} fields differ from the fixed contract")
+
+
+def exact_sha256(value: Any, label: str) -> str:
+    if not isinstance(value, str) or HEX_64.fullmatch(value) is None:
+        raise QualificationError(f"{label} is not an exact SHA-256 digest")
+    return value
+
+
+def finite_number(value: Any, label: str) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise QualificationError(f"{label} is not numeric")
+    result = float(value)
+    if not math.isfinite(result):
+        raise QualificationError(f"{label} is not finite")
+    return result
+
+
+def verify_supervisor_source(
+    supervisor_source: Any,
+    *,
+    source_commit: str,
+    fresh_source: dict[str, Any],
+) -> dict[str, dict[str, Any]]:
+    if not isinstance(supervisor_source, dict):
+        raise QualificationError("supervisor source identity must be one object")
+    observed_core = dict(supervisor_source)
+    observed_components = observed_core.pop("components", None)
+    fresh_core = dict(fresh_source)
+    fresh_components = fresh_core.pop("components", None)
+    expected_core = {**SUPERVISOR_SOURCE_CORE, "revision": source_commit}
+    if fresh_core != expected_core:
+        raise QualificationError("fresh exact source core differs from the fixed contract")
+    if observed_core != fresh_core:
+        raise QualificationError("supervisor source core differs from fresh exact source")
+    if not isinstance(observed_components, dict):
+        raise QualificationError("supervisor source component evidence is absent")
+    exact_keys(
+        observed_components,
+        set(SUPERVISOR_SOURCE_COMPONENTS),
+        "supervisor source components",
+    )
+    expected_components: dict[str, dict[str, Any]] = {}
+    for filename in SUPERVISOR_SOURCE_COMPONENTS:
+        data = committed_bytes(source_commit, f"{RELATIVE}/{filename}")
+        expected_components[filename] = {
+            "bytes": len(data),
+            "sha256": sha256_bytes(data),
+        }
+    if observed_components != expected_components:
+        raise QualificationError("supervisor source components differ from committed bytes")
+    if fresh_components is not None and fresh_components != expected_components:
+        raise QualificationError("fresh source component evidence differs from committed bytes")
+    return expected_components
+
+
+def expected_worker_environment(candidate: dict[str, Any]) -> dict[str, str]:
+    policy = candidate.get("supervision_policy")
+    if not isinstance(policy, dict):
+        raise QualificationError("supervision policy is absent")
+    required_policy = {
+        "required_containment": "SYSTEMD_USER_SERVICE_CGROUP_V2",
+        "security_boundary": "COOPERATIVE_SAME_ACCOUNT",
+        "filesystem_isolation": "TRAINING_ONLY_BIND_MOUNTS",
+        "worker_mount_root": "/opt/szl-ra3",
+    }
+    for key, expected in required_policy.items():
+        if policy.get(key) != expected:
+            raise QualificationError(f"committed supervision policy {key} differs")
+    cache = posixpath.join(policy["worker_mount_root"], "cache")
+    return {
+        "USER": "rosie",
+        "LOGNAME": "rosie",
+        "LANG": "C.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/lib/wsl/lib",
+        "HF_HOME": posixpath.join(cache, "hf"),
+        "HF_HUB_CACHE": posixpath.join(cache, "hf", "hub"),
+        "HF_HUB_OFFLINE": "1",
+        "TRANSFORMERS_OFFLINE": "1",
+        "HF_DATASETS_OFFLINE": "1",
+        "PYTHONNOUSERSITE": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TOKENIZERS_PARALLELISM": "false",
+        "HOME": posixpath.join(cache, "home"),
+        "XDG_CACHE_HOME": posixpath.join(cache, "xdg"),
+        "TORCH_HOME": posixpath.join(cache, "torch"),
+        "UNSLOTH_COMPILE_LOCATION": posixpath.join(cache, "unsloth"),
+        "TRITON_CACHE_DIR": posixpath.join(cache, "triton"),
+        "NUMBA_CACHE_DIR": posixpath.join(cache, "numba"),
+        "CUDA_CACHE_PATH": posixpath.join(cache, "cuda"),
+    }
+
+
+def verify_supervisor_containment(
+    containment: Any,
+    *,
+    run_id: str,
+) -> dict[str, Any]:
+    if not isinstance(containment, dict):
+        raise QualificationError("supervisor containment evidence must be one object")
+    exact_keys(containment, SUPERVISOR_CONTAINMENT_KEYS, "supervisor containment")
+    unit = f"szl-ra3-supervisor-{run_id}.service"
+    fixed_properties = {
+        "unit": unit,
+        "KillMode": "control-group",
+        "SendSIGKILL": "yes",
+        "NoNewPrivileges": "yes",
+        "ProtectControlGroups": "yes",
+        "PrivateTmp": "yes",
+        "RestrictSUIDSGID": "yes",
+    }
+    for key, expected in fixed_properties.items():
+        if containment.get(key) != expected:
+            raise QualificationError(f"supervisor systemd property {key} differs")
+    main_pid = containment.get("MainPID")
+    if not isinstance(main_pid, str) or re.fullmatch(r"[1-9][0-9]*", main_pid) is None:
+        raise QualificationError("supervisor systemd MainPID is malformed")
+    control_group = containment.get("controlGroup")
+    if (
+        not isinstance(control_group, str)
+        or not control_group.startswith("/")
+        or not control_group.endswith(f"/{unit}")
+    ):
+        raise QualificationError("supervisor systemd cgroup identity is malformed")
+    probe = containment.get("workerNamespaceProbe")
+    if not isinstance(probe, dict):
+        raise QualificationError("worker namespace containment probe is absent")
+    exact_keys(
+        probe,
+        {
+            "relativePath",
+            "state",
+            "fileSha256",
+            "bytes",
+            "canonicalReportSha256",
+            "sameUnitPreExecGate",
+        },
+        "worker namespace containment probe",
+    )
+    if (
+        probe.get("relativePath") != "runtime-cache/containment-probe.json"
+        or probe.get("state") != "PASS"
+        or probe.get("sameUnitPreExecGate") is not True
+        or probe.get("canonicalReportSha256")
+        != sha256_json(CONTAINMENT_PROBE_SEMANTICS)
+    ):
+        raise QualificationError("worker namespace containment probe semantics differ")
+    exact_sha256(probe.get("fileSha256"), "containment probe file digest")
+    probe_bytes = probe.get("bytes")
+    if (
+        isinstance(probe_bytes, bool)
+        or not isinstance(probe_bytes, int)
+        or not 0 < probe_bytes <= 64 * 1024
+    ):
+        raise QualificationError("containment probe byte length is malformed")
+    canary_sha = exact_sha256(
+        containment.get("credentialCanarySha256"),
+        "credential canary digest",
+    )
+    return {
+        "unit": unit,
+        "controlGroup": control_group,
+        "probeCanonicalSha256": probe["canonicalReportSha256"],
+        "credentialCanarySha256": canary_sha,
+    }
+
+
+def verify_supervisor_launch(
+    launch: Any,
+    *,
+    run_id: str,
+    candidate: dict[str, Any],
+) -> dict[str, Any]:
+    if not isinstance(launch, dict):
+        raise QualificationError("supervisor launch evidence must be one object")
+    exact_keys(launch, SUPERVISOR_LAUNCH_KEYS, "supervisor launch evidence")
+    worker_unit = f"szl-ra3-worker-{run_id}.service"
+    if (
+        launch.get("workerUnit") != worker_unit
+        or launch.get("workerExitStatus") != 0
+        or launch.get("workerResult") != "success"
+        or launch.get("triggerError") is not None
+        or launch.get("termination") is not None
+        or launch.get("cgroupEmptyConfirmed") is not True
+    ):
+        raise QualificationError("supervisor worker terminal evidence is not successful")
+    worker_cgroup = launch.get("workerControlGroup")
+    if (
+        not isinstance(worker_cgroup, str)
+        or not worker_cgroup.startswith("/")
+        or not worker_cgroup.endswith(f"/{worker_unit}")
+    ):
+        raise QualificationError("worker systemd cgroup identity is malformed")
+    worker_argv_sha = exact_sha256(
+        launch.get("workerArgvSha256"), "worker argument digest"
+    )
+    recipe = candidate["training_recipe"]
+    expected_wall_timeout = candidate["supervision_policy"].get(
+        "full_wall_timeout_seconds"
+    )
+    if expected_wall_timeout is None or finite_number(
+        launch.get("wallTimeoutSeconds"), "worker wall timeout"
+    ) != float(expected_wall_timeout):
+        raise QualificationError("worker wall timeout differs from committed policy")
+    duration = finite_number(launch.get("durationSeconds"), "worker duration")
+    if duration < 0 or duration > float(expected_wall_timeout):
+        raise QualificationError("worker duration is outside the committed full-run bound")
+    if not isinstance(launch.get("startedAt"), str) or not isinstance(
+        launch.get("endedAt"), str
+    ):
+        raise QualificationError("worker launch timestamps are malformed")
+    if recipe.get("full_optimizer_steps") is None:
+        raise QualificationError("full training recipe is absent")
+    return {
+        "workerUnit": worker_unit,
+        "workerControlGroup": worker_cgroup,
+        "workerArgvSha256": worker_argv_sha,
+    }
+
+
+def verify_supervisor_telemetry(
+    telemetry: Any,
+    *,
+    candidate: dict[str, Any],
+) -> dict[str, Any]:
+    if not isinstance(telemetry, dict):
+        raise QualificationError("supervisor telemetry evidence must be one object")
+    exact_keys(telemetry, SUPERVISOR_TELEMETRY_KEYS, "supervisor telemetry")
+    policy = candidate["supervision_policy"]
+    recipe = candidate["training_recipe"]
+    if telemetry.get("source") != "INDEPENDENT_SUPERVISOR_FIXED_NVIDIA_SMI":
+        raise QualificationError("supervisor telemetry source differs")
+    gpu_uuid = telemetry.get("gpuUuid")
+    if not isinstance(gpu_uuid, str) or GPU_UUID.fullmatch(gpu_uuid) is None:
+        raise QualificationError("supervisor GPU identity is malformed")
+    if telemetry.get("maximumTemperaturePolicyC") != recipe[
+        "maximum_gpu_temperature_c"
+    ]:
+        raise QualificationError("supervisor thermal policy differs")
+    if telemetry.get("sampleIntervalSeconds") != policy.get(
+        "thermal_sample_interval_seconds"
+    ):
+        raise QualificationError("supervisor telemetry interval differs")
+    if telemetry.get("maximumTelemetryGapSeconds") != policy.get(
+        "maximum_telemetry_gap_seconds"
+    ):
+        raise QualificationError("supervisor telemetry gap policy differs")
+    samples = telemetry.get("samples")
+    if not isinstance(samples, list) or len(samples) < 2:
+        raise QualificationError("successful supervisor telemetry needs at least two samples")
+    offsets: list[float] = []
+    temperatures: list[int] = []
+    free_memory: list[int] = []
+    total_memory: list[int] = []
+    for index, sample in enumerate(samples):
+        if not isinstance(sample, dict):
+            raise QualificationError("supervisor telemetry sample must be one object")
+        exact_keys(
+            sample,
+            SUPERVISOR_TELEMETRY_SAMPLE_KEYS,
+            f"supervisor telemetry sample {index}",
+        )
+        if sample.get("gpuUuid") != gpu_uuid:
+            raise QualificationError("supervisor GPU identity changed between samples")
+        if not isinstance(sample.get("observedAt"), str):
+            raise QualificationError("supervisor telemetry timestamp is malformed")
+        offset = finite_number(sample.get("offsetSeconds"), "telemetry sample offset")
+        temperature = sample.get("temperatureC")
+        free_mib = sample.get("freeMiB")
+        total_mib = sample.get("totalMiB")
+        if (
+            isinstance(temperature, bool)
+            or not isinstance(temperature, int)
+            or not 0 <= temperature <= 150
+        ):
+            raise QualificationError("supervisor telemetry temperature is malformed")
+        if (
+            isinstance(free_mib, bool)
+            or isinstance(total_mib, bool)
+            or not isinstance(free_mib, int)
+            or not isinstance(total_mib, int)
+            or not 0 <= free_mib <= total_mib <= 1_048_576
+        ):
+            raise QualificationError("supervisor telemetry memory is malformed")
+        offsets.append(offset)
+        temperatures.append(temperature)
+        free_memory.append(free_mib)
+        total_memory.append(total_mib)
+    if any(current < previous for previous, current in zip(offsets, offsets[1:])):
+        raise QualificationError("supervisor telemetry offsets are not monotonic")
+    if len(set(total_memory)) != 1:
+        raise QualificationError("supervisor GPU total memory changed between samples")
+    minimum_initial_mib = int(float(recipe["minimum_free_gpu_gib"]) * 1024)
+    if free_memory[0] < minimum_initial_mib:
+        raise QualificationError("supervisor initial free GPU memory is below policy")
+    maximum_temperature = max(temperatures)
+    if telemetry.get("maximumObservedTemperatureC") != maximum_temperature:
+        raise QualificationError("supervisor maximum temperature was not recomputed")
+    if maximum_temperature > recipe["maximum_gpu_temperature_c"]:
+        raise QualificationError("supervisor telemetry exceeded the thermal policy")
+    recomputed_gap = round(
+        max(current - previous for previous, current in zip(offsets, offsets[1:])),
+        6,
+    )
+    observed_gap = finite_number(
+        telemetry.get("maximumObservedSampleGapSeconds"),
+        "maximum observed telemetry gap",
+    )
+    if abs(observed_gap - recomputed_gap) > 0.000002:
+        raise QualificationError("supervisor maximum telemetry gap was not recomputed")
+    if observed_gap > float(policy["maximum_telemetry_gap_seconds"]):
+        raise QualificationError("supervisor telemetry exceeded the maximum gap policy")
+    return {
+        "gpuUuid": gpu_uuid,
+        "maximumObservedTemperatureC": maximum_temperature,
+        "minimumObservedFreeMiB": min(free_memory),
+        "maximumObservedSampleGapSeconds": observed_gap,
+    }
+
+
+def require_v3_inputs(args: argparse.Namespace) -> None:
+    if args.model_kind == "v3" and (
+        getattr(args, "training_report", None) is None
+        or getattr(args, "supervisor_report", None) is None
+        or getattr(args, "adapter_dir", None) is None
+    ):
+        raise QualificationError(
+            "v3 evaluation requires --training-report, --supervisor-report, and --adapter-dir"
+        )
+
+
 def verify_training_report(
     path: Path,
     *,
@@ -116,7 +662,7 @@ def verify_training_report(
     source_commit: str,
     candidate: dict[str, Any],
 ) -> tuple[dict[str, Any], str]:
-    report = json.loads(path.read_text(encoding="utf-8"))
+    report, _ = strict_json_document(path, "training report", maximum_bytes=2 * 1024 * 1024)
     verify_report_digest(report, "training report")
     recipe = candidate["training_recipe"]
     if report.get("schema") != "szl.frontier-training-run/v3":
@@ -178,6 +724,259 @@ def verify_training_report(
     if adapter_sha != (report.get("adapter") or {}).get("aggregateSha256"):
         raise QualificationError("v3 adapter bytes differ from the training report")
     return report, adapter_sha
+
+
+def verify_supervisor_linkage(
+    path: Path,
+    *,
+    training_report_path: Path,
+    training_report: dict[str, Any],
+    adapter_dir: Path,
+    source_commit: str,
+    candidate: dict[str, Any],
+    source: dict[str, Any],
+) -> dict[str, Any]:
+    supervisor_report, supervisor_bytes = strict_json_document(
+        path,
+        "supervisor report",
+    )
+    exact_keys(supervisor_report, SUPERVISOR_SUCCESS_KEYS, "supervisor report")
+    verify_report_digest(supervisor_report, "supervisor report")
+
+    if supervisor_report["schema"] != "szl.frontier-training-supervisor/v1":
+        raise QualificationError("supervisor report schema is unsupported")
+    if supervisor_report["candidateId"] != candidate["candidate_id"]:
+        raise QualificationError("supervisor candidate identity differs")
+    run_id = supervisor_report["runId"]
+    if not isinstance(run_id, str) or HEX_32.fullmatch(run_id) is None:
+        raise QualificationError("supervisor run identity is malformed")
+    required_terminal = {
+        "runKind": "FULL",
+        "state": SUPERVISOR_FULL_STATE,
+        "primaryCause": "SUCCESS",
+        "workerPayloadDisposition": "BOUND_UNATTESTED",
+        "localEvaluationInputBindingSatisfied": True,
+        "securityBoundary": "COOPERATIVE_SAME_ACCOUNT",
+    }
+    for key, expected in required_terminal.items():
+        if supervisor_report.get(key) != expected:
+            raise QualificationError(f"supervisor terminal field {key} differs")
+    for key in SUPERVISOR_FALSE_FLAGS:
+        if supervisor_report.get(key) is not False:
+            raise QualificationError(f"supervisor promotion/authentication flag {key} differs")
+    provenance = supervisor_report["provenance"]
+    if not isinstance(provenance, dict):
+        raise QualificationError("supervisor provenance must be one object")
+    exact_keys(
+        provenance,
+        {"trainingBundleSha256", "credentialCanarySha256"},
+        "supervisor provenance",
+    )
+    training_bundle_sha = exact_sha256(
+        provenance["trainingBundleSha256"],
+        "supervisor training bundle digest",
+    )
+    credential_canary_sha = exact_sha256(
+        provenance["credentialCanarySha256"],
+        "supervisor credential canary digest",
+    )
+    source_components = verify_supervisor_source(
+        supervisor_report["source"],
+        source_commit=source_commit,
+        fresh_source=source,
+    )
+
+    identities = supervisor_report["identities"]
+    if not isinstance(identities, dict):
+        raise QualificationError("supervisor identities must be one object")
+    exact_keys(identities, SUPERVISOR_IDENTITY_KEYS, "supervisor identities")
+    expected_identities = {
+        "supervisionPolicySha256": sha256_json(candidate["supervision_policy"]),
+        "supervisorSourceSha256": source_components["supervise_training.py"][
+            "sha256"
+        ],
+        "workerSourceSha256": source_components["train_candidate.py"]["sha256"],
+        "validatorSourceSha256": source_components["supervisor_validation.py"][
+            "sha256"
+        ],
+        "candidateSourceSha256": sha256_bytes(
+            committed_bytes(source_commit, f"{RELATIVE}/candidate.json")
+        ),
+    }
+    for key, expected in expected_identities.items():
+        if identities.get(key) != expected:
+            raise QualificationError(f"supervisor identity {key} differs")
+    for key in ("workerEnvironmentSha256", "admissionRecordSha256"):
+        exact_sha256(identities.get(key), f"supervisor identity {key}")
+    expected_worker_environment_sha = sha256_json(expected_worker_environment(candidate))
+    if identities["workerEnvironmentSha256"] != expected_worker_environment_sha:
+        raise QualificationError("supervisor worker environment digest differs")
+    python_identity = identities.get("pythonExecutable")
+    if not isinstance(python_identity, dict) or set(python_identity) != {
+        "path",
+        "resolvedPath",
+        "bytes",
+        "sha256",
+    }:
+        raise QualificationError("supervisor Python identity differs")
+    if python_identity["path"] != candidate["supervision_policy"]["python_executable"]:
+        raise QualificationError("supervisor Python policy identity differs")
+    if (
+        not isinstance(python_identity["resolvedPath"], str)
+        or not python_identity["resolvedPath"].startswith("/")
+        or isinstance(python_identity["bytes"], bool)
+        or not isinstance(python_identity["bytes"], int)
+        or python_identity["bytes"] <= 0
+    ):
+        raise QualificationError("supervisor resolved Python identity is malformed")
+    exact_sha256(python_identity["sha256"], "supervisor Python digest")
+
+    child_report, child_bytes = strict_json_document(
+        training_report_path,
+        "training report",
+        maximum_bytes=2 * 1024 * 1024,
+    )
+    if child_report != training_report:
+        raise QualificationError("training report changed between validation passes")
+    verify_report_digest(child_report, "training report")
+    if child_report.get("supervisorRunId") != run_id:
+        raise QualificationError("child and supervisor run identities differ")
+
+    training_binding = supervisor_report["trainingReport"]
+    if not isinstance(training_binding, dict):
+        raise QualificationError("supervisor training-report binding must be one object")
+    exact_keys(
+        training_binding,
+        {
+            "relativePath",
+            "fileSha256",
+            "bytes",
+            "canonicalReportSha256",
+            "state",
+            "provenance",
+        },
+        "supervisor training-report binding",
+    )
+    expected_training_binding = {
+        "relativePath": "payload/training-report.json",
+        "fileSha256": sha256_bytes(child_bytes),
+        "bytes": len(child_bytes),
+        "canonicalReportSha256": child_report["reportSha256"],
+        "state": "MEASURED_FULL_TRAINING_COMPLETED_UNATTESTED",
+        "provenance": "CHILD_REPORTED_UNATTESTED",
+    }
+    if training_binding != expected_training_binding:
+        raise QualificationError("supervisor training-report byte binding differs")
+
+    fresh_adapter_sha, fresh_adapter_files = hash_adapter(adapter_dir)
+    supervisor_adapter = supervisor_report["adapter"]
+    if not isinstance(supervisor_adapter, dict):
+        raise QualificationError("supervisor adapter evidence must be one object")
+    exact_keys(
+        supervisor_adapter,
+        {
+            "aggregateSha256",
+            "matchesTrainingReport",
+            "safeTensorsParsed",
+            "allowlistedFilesOnly",
+            "symlinksAbsent",
+            "files",
+        },
+        "supervisor adapter evidence",
+    )
+    if supervisor_adapter != {
+        "aggregateSha256": fresh_adapter_sha,
+        "matchesTrainingReport": True,
+        "safeTensorsParsed": True,
+        "allowlistedFilesOnly": True,
+        "symlinksAbsent": True,
+        "files": fresh_adapter_files,
+    }:
+        raise QualificationError("fresh adapter evidence differs from the supervisor")
+    if (child_report.get("adapter") or {}).get("aggregateSha256") != fresh_adapter_sha:
+        raise QualificationError("fresh adapter aggregate differs from the child report")
+    if supervisor_report["bindings"] != SUPERVISOR_BINDINGS:
+        raise QualificationError("supervisor independent binding assertions differ")
+
+    containment_evidence = verify_supervisor_containment(
+        supervisor_report["containment"], run_id=run_id
+    )
+    if credential_canary_sha != containment_evidence["credentialCanarySha256"]:
+        raise QualificationError(
+            "supervisor provenance credential canary differs from containment"
+        )
+    launch_evidence = verify_supervisor_launch(
+        supervisor_report["launch"], run_id=run_id, candidate=candidate
+    )
+    telemetry_evidence = verify_supervisor_telemetry(
+        supervisor_report["telemetry"], candidate=candidate
+    )
+    gpu_uuid = telemetry_evidence["gpuUuid"]
+
+    expected_bundle, _ = curriculum(source_commit)
+    try:
+        validated_child = validate_successful_report(
+            child_report,
+            candidate=candidate,
+            expected_source_revision=source_commit,
+            expected_source_bundle=expected_bundle,
+            expected_supervisor_run_id=run_id,
+            expected_gpu_uuid=gpu_uuid,
+            expected_worker_source_sha256=expected_identities["workerSourceSha256"],
+            expected_adapter_aggregate_sha256=fresh_adapter_sha,
+            expected_adapter_files=fresh_adapter_files,
+            expected_run_kind="FULL",
+        )
+    except SupervisorValidationError as exc:
+        raise QualificationError(f"strict child/supervisor linkage failed: {exc}") from exc
+    if validated_child.report_sha256 != training_binding["canonicalReportSha256"]:
+        raise QualificationError("canonical child digest differs after strict validation")
+
+    return {
+        "schema": supervisor_report["schema"],
+        "state": supervisor_report["state"],
+        "runId": run_id,
+        "supervisorReportFileSha256": sha256_bytes(supervisor_bytes),
+        "supervisorReportBytes": len(supervisor_bytes),
+        "supervisorReportCanonicalSha256": supervisor_report["reportSha256"],
+        "reportSha256": supervisor_report["reportSha256"],
+        "trainingReportFileSha256": training_binding["fileSha256"],
+        "trainingReportCanonicalSha256": training_binding["canonicalReportSha256"],
+        "adapterAggregateSha256": fresh_adapter_sha,
+        "adapterFilesSha256": sha256_json(fresh_adapter_files),
+        "sourceRevision": source_commit,
+        "trainingRecipeSha256": sha256_json(candidate["training_recipe"]),
+        "runtimeLockSha256": sha256_json(candidate["runtime_lock"]),
+        "supervisionPolicySha256": expected_identities[
+            "supervisionPolicySha256"
+        ],
+        "supervisorSourceComponentsSha256": sha256_json(source_components),
+        "trainingBundleSha256": training_bundle_sha,
+        "credentialCanarySha256": credential_canary_sha,
+        "workerSourceSha256": expected_identities["workerSourceSha256"],
+        "workerEnvironmentSha256": expected_worker_environment_sha,
+        "containmentProbeCanonicalSha256": containment_evidence[
+            "probeCanonicalSha256"
+        ],
+        "supervisorUnit": containment_evidence["unit"],
+        "workerUnit": launch_evidence["workerUnit"],
+        "workerArgvSha256": launch_evidence["workerArgvSha256"],
+        "gpuUuid": gpu_uuid,
+        "maximumObservedTemperatureC": telemetry_evidence[
+            "maximumObservedTemperatureC"
+        ],
+        "minimumObservedFreeMiB": telemetry_evidence["minimumObservedFreeMiB"],
+        "maximumObservedSampleGapSeconds": telemetry_evidence[
+            "maximumObservedSampleGapSeconds"
+        ],
+        "localEvaluationInputBindingSatisfied": True,
+        "integrityDigestIsAuthentication": False,
+        "authenticatedSupervisorEnvelopePresent": False,
+        "runtimeWitnessPresent": False,
+        "receiptEligible": False,
+        "publicationEligible": False,
+        "autonomyEligible": False,
+    }
 
 
 def prompt_messages(row: dict[str, Any]) -> list[dict[str, Any]]:
@@ -482,26 +1281,33 @@ def absolute_gate(counts: dict[str, int]) -> bool:
 
 
 def evaluate(args: argparse.Namespace) -> dict[str, Any]:
+    require_v3_inputs(args)
     source = fresh_exact_source(args.source_commit)
     candidate = load_committed_json(args.source_commit, "candidate.json")
-    rows, split_evidence = evaluation_split(
-        args.source_commit, args.split, candidate
-    )
-    response_validator = split_evidence["responseValidator"]
-    protocol = split_evidence["protocol"]
     training_report = None
     adapter_sha = None
+    supervision_linkage = None
     if args.model_kind == "v3":
-        if args.training_report is None or args.adapter_dir is None:
-            raise QualificationError(
-                "v3 evaluation requires --training-report and --adapter-dir"
-            )
         training_report, adapter_sha = verify_training_report(
             args.training_report,
             adapter_dir=args.adapter_dir,
             source_commit=args.source_commit,
             candidate=candidate,
         )
+        supervision_linkage = verify_supervisor_linkage(
+            args.supervisor_report,
+            training_report_path=args.training_report,
+            training_report=training_report,
+            adapter_dir=args.adapter_dir,
+            source_commit=args.source_commit,
+            candidate=candidate,
+            source=source,
+        )
+    rows, split_evidence = evaluation_split(
+        args.source_commit, args.split, candidate
+    )
+    response_validator = split_evidence["responseValidator"]
+    protocol = split_evidence["protocol"]
     recipe = candidate["training_recipe"]
     raw_gpu = raw_gpu_preflight(recipe)
 
@@ -578,6 +1384,7 @@ def evaluate(args: argparse.Namespace) -> dict[str, Any]:
         "trainingReportSha256": (
             training_report.get("reportSha256") if training_report else None
         ),
+        "supervisionLinkage": supervision_linkage,
         "gpu": {
             **gpu,
             "temperatureSamplesC": temperatures,
@@ -615,6 +1422,7 @@ def main() -> int:
     parser.add_argument("--source-commit", required=True)
     parser.add_argument("--adapter-dir", type=Path)
     parser.add_argument("--training-report", type=Path)
+    parser.add_argument("--supervisor-report", type=Path)
     parser.add_argument("--report", type=Path, required=True)
     args = parser.parse_args()
     try:
