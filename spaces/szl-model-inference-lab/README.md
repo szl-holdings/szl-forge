@@ -110,6 +110,13 @@ It requires no provider token or Space secret and is intended for the Hub's free
   combined content is at most 1,200 characters. The exact rendered ChatML is
   tokenized and must remain within the same 800-token prompt budget.
 - Prompts are not intentionally persisted by this source.
+- `llama-cpp-python` currently requires DiskCache, and this release pins
+  `diskcache==5.6.3`, whose `CVE-2025-69872` unsafe-pickle advisory has no
+  patched release. This runtime
+  never attaches a llama.cpp prompt cache and fails startup if the upstream
+  model object lacks the expected cache contract or contains any cache object.
+  That makes the vulnerable deserialization path structurally unavailable; it
+  does not claim the installed third-party package itself is patched.
 
 The upstream training and evaluation receipts are checked against the repository's
 declared Ed25519 key and chained canonical payload hash. That is **declared-key

@@ -5,6 +5,8 @@ certifi==2026.6.17
 cffi==2.1.0
 click==8.4.2
 cryptography==50.0.0
+# Required by llama-cpp-python. CVE-2025-69872 has no patched DiskCache release;
+# app.py therefore fails startup unless llama.cpp prompt caching remains disabled.
 diskcache==5.6.3
 fastapi==0.139.0
 filelock==3.29.7
