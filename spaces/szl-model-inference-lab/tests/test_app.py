@@ -26,6 +26,7 @@ class FakeStream:
 
 class FakeLlm:
     def __init__(self, output="bounded answer", finish_reason="stop"):
+        self.cache = None
         self.output = output
         self.finish_reason = finish_reason
         self.tokenize_calls = []
@@ -63,6 +64,31 @@ class AppContractTests(unittest.TestCase):
         self.assertEqual(len(app.MODEL_SHA256), 64)
         self.assertEqual(app.MODEL_SIZE, 986_047_904)
         self.assertEqual(app.MAX_NEW_TOKENS, 32)
+
+    def test_prompt_cache_is_structurally_disabled(self):
+        safe = FakeLlm()
+        app.enforce_prompt_cache_disabled(safe)
+
+        class MissingCacheContract:
+            pass
+
+        class EnabledCache:
+            cache = object()
+
+        for unsafe in (MissingCacheContract(), EnabledCache()):
+            with self.assertRaisesRegex(
+                RuntimeError, "PROMPT_CACHE_MUST_REMAIN_DISABLED"
+            ):
+                app.enforce_prompt_cache_disabled(unsafe)
+
+        payload = app.identity_payload()
+        self.assertEqual(
+            payload["runtime"]["prompt_cache"]["advisory"], app.DISKCACHE_ADVISORY
+        )
+        self.assertIn(
+            payload["runtime"]["prompt_cache"]["status"],
+            {"NOT_CHECKED", "DISABLED"},
+        )
 
     def test_runtime_artifact_path_is_fixed_regular_and_allowlisted(self):
         with tempfile.TemporaryDirectory() as directory:

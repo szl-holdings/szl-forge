@@ -56,6 +56,7 @@ MAX_PROMPT_TOKENS = 800
 MAX_NEW_TOKENS = 32
 INFERENCE_BUDGET_SECONDS = 45.0
 BODY_READ_TIMEOUT_SECONDS = 10.0
+DISKCACHE_ADVISORY = "CVE-2025-69872"
 RESERVED_CHAT_TOKENS = ("<|im_start|>", "<|im_end|>", "<|endoftext|>")
 SYSTEM_PROMPT = (
     "You are a bounded research demo. Answer briefly. If evidence is missing, "
@@ -76,6 +77,7 @@ state: dict[str, Any] = {
     "source_integrity": False,
     "receipt_status": "NOT_CHECKED",
     "llama_cpp_version": None,
+    "prompt_cache_status": "NOT_CHECKED",
 }
 llm: Any = None
 inference_lock = threading.Lock()
@@ -161,10 +163,25 @@ def verify_receipts() -> dict[str, Any]:
     }
 
 
+def enforce_prompt_cache_disabled(model: Any) -> None:
+    """Fail closed if llama.cpp's optional pickle-backed cache is reachable.
+
+    ``llama-cpp-python`` currently requires DiskCache even when applications do
+    not use prompt caching. DiskCache through 5.6.3 has no patched release for
+    CVE-2025-69872, so this public runtime must never attach any cache object.
+    Requiring the upstream ``cache`` attribute to exist also turns a future
+    dependency contract change into a startup failure instead of an assumption.
+    """
+
+    if not hasattr(model, "cache") or model.cache is not None:
+        raise RuntimeError("PROMPT_CACHE_MUST_REMAIN_DISABLED")
+
+
 def initialize() -> None:
     global llm
     state["status"] = "STARTING"
     state["failure_code"] = None
+    state["prompt_cache_status"] = "NOT_CHECKED"
     try:
         manifest = load_release_manifest()
         state["source_integrity"] = True
@@ -199,6 +216,8 @@ def initialize() -> None:
             use_mlock=False,
             verbose=False,
         )
+        enforce_prompt_cache_disabled(llm)
+        state["prompt_cache_status"] = "DISABLED"
         state["status"] = "READY"
     except Exception as exc:  # keep /health available for honest diagnostics
         state["status"] = "FAILED"
@@ -579,6 +598,14 @@ def identity_payload() -> dict[str, Any]:
         "runtime": {
             "python": platform.python_version(),
             "llama_cpp_python": state["llama_cpp_version"],
+            "prompt_cache": {
+                "status": state["prompt_cache_status"],
+                "advisory": DISKCACHE_ADVISORY,
+                "boundary": (
+                    "llama-cpp-python requires DiskCache, but this runtime never "
+                    "attaches a prompt cache and fails startup if one is present"
+                ),
+            },
             "concurrency": 1,
             "max_input_chars": MAX_INPUT_CHARS,
             "max_chat_messages": MAX_CHAT_MESSAGES,
