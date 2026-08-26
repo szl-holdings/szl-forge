@@ -453,6 +453,7 @@ class EvidenceAndAdmissionTests(unittest.TestCase):
             logs=root / "logs",
             reports=root / "reports",
             runtime_cache=root / "runtime-cache",
+            namespace_root=root / "namespace-root",
             reserve=root / ".evidence-reserve",
         )
         result = supervisor.bootstrap.AdmissionResult(
@@ -466,6 +467,7 @@ class EvidenceAndAdmissionTests(unittest.TestCase):
         )
         attempt = supervisor.attempt_from_atomic_admission(result, RUN_ID)
         self.assertEqual(root / "input", attempt.input_bundle)
+        self.assertEqual(paths.namespace_root, attempt.namespace_root)
         self.assertEqual(paths.reserve, attempt.reserve)
 
     def test_partial_atomic_admission_preserves_tombstone_and_false_claims(self):
@@ -477,6 +479,7 @@ class EvidenceAndAdmissionTests(unittest.TestCase):
             logs=root / "logs",
             reports=root / "reports",
             runtime_cache=root / "runtime-cache",
+            namespace_root=root / "namespace-root",
             reserve=root / ".evidence-reserve",
         )
         artifact = supervisor.bootstrap.PublishedArtifact(
@@ -762,6 +765,11 @@ class WorkerEnvironmentTests(unittest.TestCase):
         }
         worker_argv = ["/trusted/python", "-I", "-B", "/trusted/worker.py"]
         policy = copy.deepcopy(supervisor.EXPECTED_POLICY)
+        properties.update(
+            supervisor.normalized_worker_mount_contract(
+                supervisor.worker_mount_contract(policy, attempt)
+            )
+        )
         with (
             mock.patch.object(
                 supervisor.subprocess,
@@ -769,6 +777,7 @@ class WorkerEnvironmentTests(unittest.TestCase):
                 return_value=subprocess.CompletedProcess([], 0),
             ) as run,
             mock.patch.object(supervisor, "unit_properties", return_value=properties),
+            mock.patch.object(supervisor, "validate_namespace_scaffold"),
             mock.patch.object(pathlib.Path, "is_dir", return_value=True),
             mock.patch("pathlib.Path.read_text", return_value="123\n"),
         ):
@@ -790,10 +799,15 @@ class WorkerEnvironmentTests(unittest.TestCase):
         )
         self.assertIn(expected_inaccessible, command)
         self.assertEqual(
-            "/mnt -/media -/srv /run /root -/var/lib/docker "
-            f"/proc/{supervisor.os.getpid()}",
+            f"-/run/host /proc/{supervisor.os.getpid()}",
             supervisor.worker_inaccessible_paths(supervisor.os.getpid()),
         )
+        mount_contract = supervisor.worker_mount_contract(policy, attempt)
+        for name, value in mount_contract.items():
+            self.assertIn(f"--property={name}={value}", command)
+        read_only_binds = mount_contract["BindReadOnlyPaths"]
+        self.assertNotIn("/etc/hostname", read_only_binds)
+        self.assertNotIn("/mnt/c", read_only_binds)
         separator = command.index("--")
         environment_start = separator + 1
         self.assertEqual(
@@ -853,6 +867,11 @@ class WorkerEnvironmentTests(unittest.TestCase):
             "Result": "exit-code",
         }
         policy = copy.deepcopy(supervisor.EXPECTED_POLICY)
+        properties.update(
+            supervisor.normalized_worker_mount_contract(
+                supervisor.worker_mount_contract(policy, attempt)
+            )
+        )
         with (
             mock.patch.object(
                 supervisor.subprocess,
@@ -860,6 +879,7 @@ class WorkerEnvironmentTests(unittest.TestCase):
                 return_value=subprocess.CompletedProcess([], 0),
             ),
             mock.patch.object(supervisor, "unit_properties", return_value=properties),
+            mock.patch.object(supervisor, "validate_namespace_scaffold"),
             mock.patch.object(pathlib.Path, "is_dir", return_value=True),
         ):
             observed = supervisor.launch_worker_unit(

@@ -420,6 +420,29 @@ class AtomicAdmissionTests(unittest.TestCase):
             self.assertTrue(result.paths.logs.is_dir())
             self.assertTrue(result.paths.reports.is_dir())
             self.assertTrue((result.paths.runtime_cache / "cuda").is_dir())
+            model_target = (
+                result.paths.runtime_cache
+                / "hf"
+                / "hub"
+                / bootstrap.MODEL_CACHE_DIRECTORY
+            )
+            self.assertTrue(model_target.is_dir())
+            observed_directories = {
+                path.relative_to(result.paths.namespace_root).as_posix()
+                for path in result.paths.namespace_root.rglob("*")
+                if path.is_dir()
+            }
+            observed_files = {
+                path.relative_to(result.paths.namespace_root).as_posix()
+                for path in result.paths.namespace_root.rglob("*")
+                if path.is_file()
+            }
+            self.assertEqual(set(bootstrap.NAMESPACE_DIRECTORIES), observed_directories)
+            self.assertEqual(set(bootstrap.NAMESPACE_PLACEHOLDERS), observed_files)
+            for relative in bootstrap.NAMESPACE_PLACEHOLDERS:
+                placeholder = result.paths.namespace_root / relative
+                self.assertEqual(0, placeholder.stat().st_size)
+                self.assertFalse(placeholder.is_symlink())
 
     def test_existing_empty_leaf_is_unchanged_and_not_tombstoned(self):
         with tempfile.TemporaryDirectory() as directory:

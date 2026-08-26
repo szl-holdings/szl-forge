@@ -97,10 +97,57 @@ class ContainmentProbeTests(unittest.TestCase):
                 forbidden_read=[root / "absent-secret"],
                 report=cache_dir / "containment-probe.json",
             )
-            with mock.patch.object(probe, "assert_unwritable"):
+            with (
+                mock.patch.object(probe, "assert_unreadable"),
+                mock.patch.object(probe, "assert_unwritable"),
+            ):
                 report = probe.perform_probe(args)
             self.assertEqual("PASS", report["state"])
+            self.assertEqual(3, report["forbiddenHostReadTargetCount"])
+            self.assertTrue(report["fixedHostDecoysHidden"])
+            self.assertTrue(report["rootWriteDenied"])
+            self.assertTrue(report["workerMountRootWriteDenied"])
             self.assertFalse(report["secretContentRead"])
+
+
+    def test_fixed_host_decoys_are_always_checked_without_content_reads(self):
+        observed: list[pathlib.Path] = []
+
+        def record(path: pathlib.Path) -> None:
+            observed.append(path)
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            input_dir = root / "input"
+            cache_dir = root / "cache"
+            venv_dir = root / "venv"
+            model_repository = root / "model"
+            input_dir.mkdir()
+            cache_dir.mkdir()
+            (venv_dir / "bin").mkdir(parents=True)
+            (venv_dir / "bin" / "python").write_bytes(b"runtime")
+            revision = "a" * 40
+            (model_repository / "snapshots" / revision).mkdir(parents=True)
+            for filename in probe.EXPECTED_INPUT_FILES:
+                (input_dir / filename).write_bytes(b"source")
+            args = argparse.Namespace(
+                input_dir=input_dir,
+                cache_dir=cache_dir,
+                venv_dir=venv_dir,
+                model_repository=model_repository,
+                model_revision=revision,
+                forbidden_read=[root / "credential-canary", root / "dev", root / "test"],
+                report=cache_dir / "containment-probe.json",
+            )
+            with (
+                mock.patch.object(probe, "assert_unreadable", side_effect=record),
+                mock.patch.object(probe, "assert_unwritable"),
+            ):
+                report = probe.perform_probe(args)
+        self.assertEqual(
+            [*args.forbidden_read, *probe.FIXED_HOST_DECOYS], observed
+        )
+        self.assertEqual(5, report["forbiddenHostReadTargetCount"])
 
     def test_heldout_or_extra_file_in_input_bundle_fails(self):
         with tempfile.TemporaryDirectory() as directory:

@@ -32,6 +32,7 @@ EXPECTED_UNREADABLE_ERRNOS = frozenset(
         errno.ENOTDIR,
     }
 )
+FIXED_HOST_DECOYS = (Path("/etc/hostname"), Path("/mnt/c"))
 EXPECTED_UNWRITABLE_ERRNOS = frozenset(
     {
         *EXPECTED_UNREADABLE_ERRNOS,
@@ -142,9 +143,12 @@ def perform_probe(args: argparse.Namespace) -> dict[str, object]:
         raise ProbeError("model revision is malformed")
     if not (model_repository / "snapshots" / args.model_revision).is_dir():
         raise ProbeError("exact model snapshot is unavailable")
-    for forbidden in args.forbidden_read:
+    forbidden_reads = (*args.forbidden_read, *FIXED_HOST_DECOYS)
+    for forbidden in forbidden_reads:
         assert_unreadable(forbidden)
     for forbidden in (
+        Path("/.probe-write"),
+        Path("/opt/szl-ra3/.probe-write"),
         input_dir / ".probe-write",
         venv_dir / ".probe-write",
         model_repository / ".probe-write",
@@ -160,7 +164,11 @@ def perform_probe(args: argparse.Namespace) -> dict[str, object]:
         "trainingOnlyInputSetExact": True,
         "heldOutContentAbsent": True,
         "forbiddenHostReadsFailed": True,
+        "fixedHostDecoysHidden": True,
+        "forbiddenHostReadTargetCount": len(forbidden_reads),
         "nonOutputWritesFailed": True,
+        "rootWriteDenied": True,
+        "workerMountRootWriteDenied": True,
         "runtimeAndModelInputsReadable": True,
         "secretContentRead": False,
     }

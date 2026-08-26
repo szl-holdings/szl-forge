@@ -80,7 +80,7 @@ EXPECTED_POLICY = {
     "cgroup_root": "/sys/fs/cgroup",
     "required_containment": "SYSTEMD_USER_SERVICE_CGROUP_V2",
     "security_boundary": "COOPERATIVE_SAME_ACCOUNT",
-    "filesystem_isolation": "TRAINING_ONLY_BIND_MOUNTS",
+    "filesystem_isolation": "ROOT_DIRECTORY_EXPLICIT_BIND_ALLOWLIST",
     "worker_mount_root": "/opt/szl-ra3",
     "model_cache_repository": "/home/rosie/.cache/huggingface/hub/models--unsloth--Qwen3.5-0.8B",
     "thermal_sample_interval_seconds": 2.0,
@@ -150,6 +150,10 @@ class Attempt:
     runtime_cache: Path
     reserve: Path
     input_bundle: Path | None = None
+
+    @property
+    def namespace_root(self) -> Path:
+        return self.root / "namespace-root"
 
 
 @dataclass(frozen=True)
@@ -440,6 +444,7 @@ def attempt_from_atomic_admission(
         or paths.logs != paths.root / "logs"
         or paths.reports != paths.root / "reports"
         or paths.runtime_cache != paths.root / "runtime-cache"
+        or paths.namespace_root != paths.root / "namespace-root"
         or paths.reserve != paths.root / ".evidence-reserve"
     ):
         raise SupervisionError("atomic admission paths are inconsistent")
@@ -610,6 +615,11 @@ def unit_properties(policy: dict[str, Any], unit: str) -> dict[str, str]:
         "RestrictSUIDSGID",
         "RestrictNamespaces",
         "InaccessiblePaths",
+        "RootDirectory",
+        "MountAPIVFS",
+        "BindReadOnlyPaths",
+        "BindPaths",
+        "ReadWritePaths",
         "LimitFSIZE",
     )
     command = ["show", unit, "--no-pager"]
@@ -749,9 +759,78 @@ def worker_inaccessible_paths(supervisor_pid: int) -> str:
         or supervisor_pid <= 0
     ):
         raise SupervisionError("supervisor PID is invalid for path isolation")
-    return (
-        f"/mnt -/media -/srv /run /root -/var/lib/docker /proc/{supervisor_pid}"
+    return f"-/run/host /proc/{supervisor_pid}"
+
+
+def validate_namespace_scaffold(attempt: Attempt) -> None:
+    root = attempt.namespace_root
+    if root.is_symlink() or not root.is_dir():
+        raise SupervisionError("worker namespace root is unavailable")
+    expected_directories = {".", *bootstrap.NAMESPACE_DIRECTORIES}
+    expected_files = set(bootstrap.NAMESPACE_PLACEHOLDERS)
+    observed_directories = {"."}
+    observed_files: set[str] = set()
+    for path in root.rglob("*"):
+        if path.is_symlink():
+            raise SupervisionError("worker namespace scaffold contains a symlink")
+        relative = path.relative_to(root).as_posix()
+        if path.is_dir():
+            observed_directories.add(relative)
+        elif path.is_file():
+            metadata = path.stat()
+            if metadata.st_nlink != 1 or metadata.st_size != 0:
+                raise SupervisionError("worker namespace placeholder is not empty and single-link")
+            observed_files.add(relative)
+        else:
+            raise SupervisionError("worker namespace scaffold contains a special entry")
+    if observed_directories != expected_directories or observed_files != expected_files:
+        raise SupervisionError("worker namespace scaffold differs from the fixed allowlist")
+
+
+def worker_mount_contract(policy: dict[str, Any], attempt: Attempt) -> dict[str, str]:
+    venv_root = Path(policy["python_executable"]).parent.parent
+    model_repository = Path(policy["model_cache_repository"])
+    read_only = (
+        "/usr:/usr",
+        "/bin:/bin",
+        "/sbin:/sbin",
+        "/lib:/lib",
+        "/lib64:/lib64",
+        "/etc/ld.so.cache:/etc/ld.so.cache",
+        f"{venv_root}:{venv_root}",
+        f"{attempt.input_bundle}:{WORKER_INPUT}",
+        f"{model_repository}:{WORKER_MODEL_REPOSITORY}",
     )
+    writable = (
+        f"{attempt.payload}:{WORKER_OUTPUT}",
+        f"{attempt.runtime_cache}:{WORKER_CACHE}",
+    )
+    return {
+        "RootDirectory": str(attempt.namespace_root),
+        "MountAPIVFS": "yes",
+        "BindReadOnlyPaths": " ".join(read_only),
+        "BindPaths": " ".join(writable),
+        "ReadWritePaths": f"{WORKER_OUTPUT} {WORKER_CACHE}",
+    }
+
+
+def normalized_worker_mount_contract(contract: dict[str, str]) -> dict[str, str]:
+    normalized = dict(contract)
+    for key in ("BindReadOnlyPaths", "BindPaths"):
+        normalized[key] = " ".join(
+            f"{entry}:rbind" for entry in contract[key].split()
+        )
+    return normalized
+
+
+def verify_fixed_host_decoys() -> None:
+    for path in (Path("/etc/hostname"), Path("/mnt/c")):
+        try:
+            descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+        except OSError as exc:
+            raise SupervisionError("fixed host containment decoy is unavailable") from exc
+        else:
+            os.close(descriptor)
 
 
 def launch_worker_unit(
@@ -771,6 +850,8 @@ def launch_worker_unit(
     model_repository = Path(policy["model_cache_repository"])
     if not venv_root.is_dir() or not model_repository.is_dir():
         raise SupervisionError("fixed worker runtime inputs are unavailable")
+    validate_namespace_scaffold(attempt)
+    mount_contract = worker_mount_contract(policy, attempt)
     env_command = ["/usr/bin/env", "-i"]
     env_command.extend(
         f"{key}={value}" for key, value in sorted(worker_environment_values.items())
@@ -791,6 +872,8 @@ def launch_worker_unit(
         "--property=NoNewPrivileges=yes",
         "--property=ProtectControlGroups=yes",
         "--property=ProtectSystem=strict",
+        f"--property=RootDirectory={mount_contract['RootDirectory']}",
+        "--property=MountAPIVFS=yes",
         "--property=ProtectHome=tmpfs",
         "--property=ProtectProc=invisible",
         "--property=ProcSubset=pid",
@@ -806,9 +889,9 @@ def launch_worker_unit(
         "--property=RestrictAddressFamilies=AF_UNIX",
         "--property=CapabilityBoundingSet=",
         "--property=AmbientCapabilities=",
-        f"--property=BindReadOnlyPaths={venv_root}:{venv_root} {attempt.input_bundle}:{WORKER_INPUT} {model_repository}:{WORKER_MODEL_REPOSITORY}",
-        f"--property=BindPaths={attempt.payload}:{WORKER_OUTPUT} {attempt.runtime_cache}:{WORKER_CACHE}",
-        f"--property=ReadWritePaths={WORKER_OUTPUT} {WORKER_CACHE}",
+        f"--property=BindReadOnlyPaths={mount_contract['BindReadOnlyPaths']}",
+        f"--property=BindPaths={mount_contract['BindPaths']}",
+        f"--property=ReadWritePaths={mount_contract['ReadWritePaths']}",
         f"--property=InaccessiblePaths={inaccessible_paths}",
         "--property=UMask=0077",
         "--property=LimitCORE=0",
@@ -847,6 +930,7 @@ def launch_worker_unit(
         "RestrictSUIDSGID": "yes",
         "RestrictNamespaces": "yes",
         "InaccessiblePaths": inaccessible_paths,
+        **normalized_worker_mount_contract(mount_contract),
         "LimitFSIZE": str(policy["maximum_log_bytes_per_stream"]),
     }
     for key, expected in required.items():
@@ -1043,7 +1127,11 @@ def verify_containment_report(path: Path) -> dict[str, Any]:
         "trainingOnlyInputSetExact": True,
         "heldOutContentAbsent": True,
         "forbiddenHostReadsFailed": True,
+        "fixedHostDecoysHidden": True,
+        "forbiddenHostReadTargetCount": 5,
         "nonOutputWritesFailed": True,
+        "rootWriteDenied": True,
+        "workerMountRootWriteDenied": True,
         "runtimeAndModelInputsReadable": True,
         "secretContentRead": False,
         "trainerExecBound": True,
@@ -1410,6 +1498,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         for heldout_path in heldout_paths:
             if heldout_path.is_symlink() or not heldout_path.is_file():
                 raise SupervisionError("required held-out source sentinel is unavailable")
+        verify_fixed_host_decoys()
         worker_source = {
             "repository": "szl-holdings/szl-forge",
             "revision": args.source_commit,
