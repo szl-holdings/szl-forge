@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import ast
 import contextlib
 import copy
-import errno
 import importlib.util
+import inspect
 import io
+import json
 import pathlib
 import subprocess
 import sys
@@ -26,6 +28,17 @@ def load_supervisor():
         sys.path.insert(0, here_text)
     spec = importlib.util.spec_from_file_location(
         "v3_training_supervisor_under_test", HERE / "supervise_training.py"
+    )
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def load_trainer():
+    spec = importlib.util.spec_from_file_location(
+        "v3_training_worker_under_test", HERE / "train_candidate.py"
     )
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
@@ -266,6 +279,127 @@ class FixedPolicyAndTelemetryTests(unittest.TestCase):
                 ),
             ),
         )
+
+    def test_slow_successful_sample_fails_closed_after_command_completion(self):
+        previous_ns = 1_000_000_000
+        at_limit = sample()
+        at_limit = supervisor.TelemetrySample(
+            observed_monotonic_ns=previous_ns + 8_000_000_000,
+            observed_at=at_limit.observed_at,
+            gpu_uuid=at_limit.gpu_uuid,
+            name=at_limit.name,
+            temperature_c=at_limit.temperature_c,
+            free_mib=at_limit.free_mib,
+            total_mib=at_limit.total_mib,
+        )
+        late = supervisor.TelemetrySample(
+            observed_monotonic_ns=at_limit.observed_monotonic_ns + 1,
+            observed_at=at_limit.observed_at,
+            gpu_uuid=at_limit.gpu_uuid,
+            name=at_limit.name,
+            temperature_c=at_limit.temperature_c,
+            free_mib=at_limit.free_mib,
+            total_mib=at_limit.total_mib,
+        )
+        self.assertIsNone(
+            supervisor.successful_telemetry_gap_trigger(previous_ns, at_limit, 8.0)
+        )
+        self.assertEqual(
+            (
+                "TELEMETRY_UNAVAILABLE",
+                "GPU telemetry exceeded the maximum allowed gap after a successful sample",
+            ),
+            supervisor.successful_telemetry_gap_trigger(previous_ns, late, 8.0),
+        )
+
+    def test_sampled_drain_requires_stop_for_hot_lingering_child(self):
+        policy = copy.deepcopy(supervisor.EXPECTED_POLICY)
+        hot = sample(temperature_c=81)
+        hot = supervisor.TelemetrySample(
+            observed_monotonic_ns=3_000_000_000,
+            observed_at=hot.observed_at,
+            gpu_uuid=hot.gpu_uuid,
+            name=hot.name,
+            temperature_c=hot.temperature_c,
+            free_mib=hot.free_mib,
+            total_mib=hot.total_mib,
+        )
+        with (
+            mock.patch.object(supervisor, "cgroup_empty", return_value=False),
+            mock.patch.object(supervisor, "sample_gpu", return_value=hot),
+            mock.patch.object(
+                supervisor.time,
+                "monotonic_ns",
+                side_effect=(2_000_000_000, 3_000_000_000),
+            ),
+        ):
+            result = supervisor.sampled_cgroup_drain(
+                policy,
+                "/user.slice/worker.service",
+                expected_gpu_uuid=GPU_UUID,
+                maximum_temperature_c=80,
+                last_valid_monotonic_ns=1_000_000_000,
+            )
+        self.assertEqual("THERMAL_POLICY_VIOLATION", result.trigger[0])
+        self.assertTrue(result.stop_required)
+        self.assertFalse(result.cgroup_empty_confirmed)
+        self.assertEqual((hot,), result.samples)
+
+    def test_sampled_drain_requires_stop_after_slow_successful_sample(self):
+        policy = copy.deepcopy(supervisor.EXPECTED_POLICY)
+        cool = sample(temperature_c=60)
+        late = supervisor.TelemetrySample(
+            observed_monotonic_ns=9_000_000_001,
+            observed_at=cool.observed_at,
+            gpu_uuid=cool.gpu_uuid,
+            name=cool.name,
+            temperature_c=cool.temperature_c,
+            free_mib=cool.free_mib,
+            total_mib=cool.total_mib,
+        )
+        with (
+            mock.patch.object(supervisor, "cgroup_empty", return_value=False),
+            mock.patch.object(supervisor, "sample_gpu", return_value=late),
+            mock.patch.object(
+                supervisor.time,
+                "monotonic_ns",
+                side_effect=(2_000_000_000, 3_000_000_000),
+            ),
+        ):
+            result = supervisor.sampled_cgroup_drain(
+                policy,
+                "/user.slice/worker.service",
+                expected_gpu_uuid=GPU_UUID,
+                maximum_temperature_c=80,
+                last_valid_monotonic_ns=1_000_000_000,
+            )
+        self.assertEqual("TELEMETRY_UNAVAILABLE", result.trigger[0])
+        self.assertTrue(result.stop_required)
+        self.assertEqual((late,), result.samples)
+
+    def test_sampled_drain_requires_stop_when_child_outlives_deadline(self):
+        policy = copy.deepcopy(supervisor.EXPECTED_POLICY)
+        policy["kill_confirmation_seconds"] = 1.0
+        with (
+            mock.patch.object(supervisor, "cgroup_empty", return_value=False),
+            mock.patch.object(supervisor, "sample_gpu") as telemetry,
+            mock.patch.object(
+                supervisor.time,
+                "monotonic_ns",
+                side_effect=(1_000_000_000, 2_000_000_000),
+            ),
+        ):
+            result = supervisor.sampled_cgroup_drain(
+                policy,
+                "/user.slice/worker.service",
+                expected_gpu_uuid=GPU_UUID,
+                maximum_temperature_c=80,
+                last_valid_monotonic_ns=1_000_000_000,
+            )
+        telemetry.assert_not_called()
+        self.assertEqual("TERMINATION_UNCONFIRMED", result.trigger[0])
+        self.assertTrue(result.stop_required)
+        self.assertFalse(result.cgroup_empty_confirmed)
         self.assertEqual(
             ("TELEMETRY_UNAVAILABLE", "terminal sample failed"),
             supervisor.merge_terminal_observation(
@@ -279,14 +413,14 @@ class FixedPolicyAndTelemetryTests(unittest.TestCase):
 class EvidenceAndAdmissionTests(unittest.TestCase):
     def test_component_binding_rejects_validator_worktree_drift(self):
         exact = b"exact validator source\n"
+        verified_trainer = mock.Mock()
+        verified_trainer.committed_bytes.return_value = exact
         with tempfile.TemporaryDirectory() as directory:
             local_here = pathlib.Path(directory)
             (local_here / "supervisor_validation.py").write_bytes(exact + b"drift")
             with (
                 mock.patch.object(supervisor, "HERE", local_here),
-                mock.patch.object(
-                    supervisor.trainer, "committed_bytes", return_value=exact
-                ),
+                mock.patch.object(supervisor, "trainer", verified_trainer),
             ):
                 with self.assertRaisesRegex(
                     supervisor.SupervisionError, "worktree bytes differ"
@@ -310,104 +444,224 @@ class EvidenceAndAdmissionTests(unittest.TestCase):
                     ):
                         supervisor.strict_json_file(path)
 
-    def test_existing_empty_attempt_leaf_is_refused_and_unchanged(self):
-        with tempfile.TemporaryDirectory() as directory:
-            runs_root = pathlib.Path(directory)
-            leaf = runs_root / RUN_ID
-            leaf.mkdir(mode=0o700)
-            before = leaf.stat()
-            before_entries = list(leaf.iterdir())
+    def test_prepared_atomic_admission_maps_only_exact_bootstrap_paths(self):
+        root = pathlib.Path("/isolated") / RUN_ID
+        paths = supervisor.bootstrap.AdmissionPaths(
+            run_id=RUN_ID,
+            root=root,
+            payload=root / "payload",
+            logs=root / "logs",
+            reports=root / "reports",
+            runtime_cache=root / "runtime-cache",
+            reserve=root / ".evidence-reserve",
+        )
+        result = supervisor.bootstrap.AdmissionResult(
+            paths=paths,
+            prepared=True,
+            failed_stage=None,
+            failure_type=None,
+            created_entries=("reports", "payload", "logs", "runtime-cache"),
+            reserve_allocated=True,
+            tombstone=None,
+        )
+        attempt = supervisor.attempt_from_atomic_admission(result, RUN_ID)
+        self.assertEqual(root / "input", attempt.input_bundle)
+        self.assertEqual(paths.reserve, attempt.reserve)
 
-            root_fd = 123
-            collision = FileExistsError(errno.EEXIST, "already exists", RUN_ID)
+    def test_partial_atomic_admission_preserves_tombstone_and_false_claims(self):
+        root = pathlib.Path("/isolated") / RUN_ID
+        paths = supervisor.bootstrap.AdmissionPaths(
+            run_id=RUN_ID,
+            root=root,
+            payload=root / "payload",
+            logs=root / "logs",
+            reports=root / "reports",
+            runtime_cache=root / "runtime-cache",
+            reserve=root / ".evidence-reserve",
+        )
+        artifact = supervisor.bootstrap.PublishedArtifact(
+            path=paths.reports / "admission-failure.json",
+            sha256="c" * 64,
+            size=512,
+            committed=True,
+            commit_point="FINAL_LINK_AND_DIRECTORY_FSYNC",
+            cleanup_complete=True,
+            cleanup_error=None,
+            temporary_path=None,
+        )
+        result = supervisor.bootstrap.AdmissionResult(
+            paths=paths,
+            prepared=False,
+            failed_stage="CREATE_PAYLOAD_DIRECTORY",
+            failure_type="OSError",
+            created_entries=("reports", ".evidence-reserve"),
+            reserve_allocated=False,
+            tombstone=supervisor.bootstrap.TombstoneResult(
+                artifact=artifact,
+                reserve_released=True,
+                indeterminate=False,
+                error=None,
+            ),
+        )
+        payload, exit_code = supervisor.partial_admission_outcome(result, "smoke")
+        self.assertEqual(
+            supervisor.TERMINAL_EXIT_CODES["PRECONDITION_DENIED"], exit_code
+        )
+        self.assertEqual("COMMITTED", payload["admissionTombstone"]["state"])
+        for field in (
+            "workerLaunched",
+            "supervisorReportPublished",
+            "qualificationEligible",
+            "receiptEligible",
+            "publicationEligible",
+            "runtimeWitnessPresent",
+            "autonomyEligible",
+        ):
+            self.assertFalse(payload[field])
+
+    def test_write_once_wrapper_preserves_atomic_commit_metadata(self):
+        directory = pathlib.Path("/isolated/reports")
+        artifact = supervisor.bootstrap.PublishedArtifact(
+            path=directory / "supervisor-report.json",
+            sha256="d" * 64,
+            size=128,
+            committed=True,
+            commit_point="FINAL_LINK_AND_DIRECTORY_FSYNC",
+            cleanup_complete=True,
+            cleanup_error=None,
+            temporary_path=None,
+        )
+        with mock.patch.object(
+            supervisor.bootstrap, "publish_write_once", return_value=artifact
+        ) as publish:
+            observed = supervisor.publish_evidence_write_once(
+                directory, "supervisor-report.json", b"payload"
+            )
+        publish.assert_called_once_with(
+            directory, "supervisor-report.json", b"payload"
+        )
+        self.assertEqual("COMMITTED", observed["publicationState"])
+        self.assertEqual("FINAL_LINK_AND_DIRECTORY_FSYNC", observed["commitPoint"])
+        self.assertEqual("d" * 64, observed["sha256"])
+
+    def test_staged_manifest_retains_exact_trainer_file_identity_schema(self):
+        exact_trainer = load_trainer()
+        source = {
+            "repository": "szl-holdings/szl-forge",
+            "revision": SOURCE,
+            "branch": "main",
+            "originIdentityVerified": True,
+            "freshRemoteMainObserved": False,
+            "freshRemoteMainObservationDelegatedToSupervisor": True,
+            "cachedRemoteTrackingMatches": True,
+            "workingTreeClean": True,
+            "commitSignatureVerifiedByThisTool": False,
+        }
+
+        def committed_bytes(_source_commit: str, relative_path: str) -> bytes:
+            return (HERE / pathlib.PurePosixPath(relative_path).name).read_bytes()
+
+        def fake_publish(directory: pathlib.Path, name: str, data: bytes) -> dict:
+            path = directory / name
+            path.write_bytes(data)
+            return {
+                "path": str(path),
+                "bytes": len(data),
+                "sha256": supervisor.sha256_bytes(data),
+                "publicationState": "COMMITTED",
+                "commitPoint": "FINAL_LINK_AND_DIRECTORY_FSYNC",
+                "cleanupComplete": True,
+                "cleanupError": None,
+                "temporaryPath": None,
+            }
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory).resolve()
+            input_bundle = root / "input"
+            input_bundle.mkdir()
+            attempt = supervisor.Attempt(
+                run_id=RUN_ID,
+                root=root,
+                payload=root / "payload",
+                logs=root / "logs",
+                reports=root / "reports",
+                runtime_cache=root / "runtime-cache",
+                reserve=root / ".evidence-reserve",
+                input_bundle=input_bundle,
+            )
+            staged_trainer = mock.Mock()
+            staged_trainer.committed_bytes.side_effect = committed_bytes
             with (
-                mock.patch.object(supervisor.os, "O_DIRECTORY", 0, create=True),
-                mock.patch.object(supervisor.os, "open", return_value=root_fd),
+                mock.patch.object(supervisor, "trainer", staged_trainer),
                 mock.patch.object(
-                    supervisor.os, "mkdir", side_effect=collision
-                ) as mkdir,
-                mock.patch.object(supervisor.os, "close") as close,
-                mock.patch.object(supervisor.os, "fsync") as fsync,
-            ):
-                with self.assertRaises(FileExistsError):
-                    supervisor.admit_attempt(runs_root, RUN_ID, 1024)
-
-            mkdir.assert_called_once_with(RUN_ID, mode=0o700, dir_fd=root_fd)
-            close.assert_called_once_with(root_fd)
-            fsync.assert_not_called()
-            after = leaf.stat()
-            self.assertEqual(before_entries, list(leaf.iterdir()))
-            self.assertEqual(before.st_ino, after.st_ino)
-            self.assertEqual(before.st_mode, after.st_mode)
-            self.assertEqual(before.st_mtime_ns, after.st_mtime_ns)
-            self.assertEqual([RUN_ID], [entry.name for entry in runs_root.iterdir()])
-
-    def test_publish_once_never_clobbers_an_existing_final(self):
-        with tempfile.TemporaryDirectory() as directory:
-            reports = pathlib.Path(directory)
-            final = reports / "supervisor-report.json"
-            original = b"immutable-existing-report"
-            final.write_bytes(original)
-            before = final.stat()
-            with (
-                mock.patch.object(supervisor.os, "fchmod", create=True),
+                    supervisor,
+                    "publish_evidence_write_once",
+                    side_effect=fake_publish,
+                ),
+                mock.patch.object(supervisor.os, "chmod"),
                 mock.patch.object(supervisor, "fsync_directory"),
             ):
-                with self.assertRaises(FileExistsError):
-                    supervisor.publish_once(
-                        reports, "supervisor-report.json", b"replacement"
-                    )
-            after = final.stat()
-            self.assertEqual(original, final.read_bytes())
-            self.assertEqual(before.st_ino, after.st_ino)
-            self.assertEqual(before.st_size, after.st_size)
-            self.assertEqual([], list(reports.glob(".*.tmp")))
+                manifest = supervisor.stage_training_bundle(attempt, SOURCE, source)
 
-    def test_publish_once_never_clobbers_an_existing_symlink(self):
-        with tempfile.TemporaryDirectory() as directory:
-            reports = pathlib.Path(directory)
-            target = reports / "target.json"
-            target.write_bytes(b"symlink-target")
-            final = reports / "supervisor-report.json"
-            try:
-                final.symlink_to(target)
-            except OSError:
-                # Windows without Developer Mode cannot create an unprivileged
-                # symlink. Model the kernel's EEXIST response and assert the
-                # publisher neither unlinks nor replaces the destination.
-                final.write_bytes(b"simulated-symlink-entry")
-                with (
-                    mock.patch.object(supervisor.os, "fchmod", create=True),
-                    mock.patch.object(supervisor, "fsync_directory"),
-                    mock.patch.object(
-                        supervisor.os,
-                        "link",
-                        side_effect=FileExistsError(
-                            errno.EEXIST, "symlink destination exists", str(final)
-                        ),
-                    ) as link,
-                ):
-                    with self.assertRaises(FileExistsError):
-                        supervisor.publish_once(
-                            reports, "supervisor-report.json", b"replacement"
-                        )
-                self.assertEqual(b"simulated-symlink-entry", final.read_bytes())
-                self.assertEqual(b"symlink-target", target.read_bytes())
-                self.assertFalse(final.is_symlink())
-                self.assertFalse(link.call_args.kwargs["follow_symlinks"])
-            else:
-                with (
-                    mock.patch.object(supervisor.os, "fchmod", create=True),
-                    mock.patch.object(supervisor, "fsync_directory"),
-                ):
-                    with self.assertRaises(FileExistsError):
-                        supervisor.publish_once(
-                            reports, "supervisor-report.json", b"replacement"
-                        )
-                self.assertTrue(final.is_symlink())
-                self.assertEqual(target.resolve(), final.resolve())
-                self.assertEqual(b"symlink-target", target.read_bytes())
-            self.assertEqual([], list(reports.glob(".*.tmp")))
+            for identity in manifest["files"].values():
+                self.assertEqual({"bytes", "sha256"}, set(identity))
+            self.assertEqual(
+                set(supervisor.BUNDLE_SOURCE_FILES),
+                set(manifest["bundlePublication"]["sourceArtifacts"]),
+            )
+            observed = exact_trainer.validate_training_bundle(input_bundle, SOURCE)
+            self.assertEqual(manifest["bundleSha256"], observed["bundleSha256"])
+
+    def test_indeterminate_publication_is_explicit_and_commit_is_unknown(self):
+        error = supervisor.bootstrap.PublicationIndeterminate(
+            "directory fsync failed",
+            final_path=pathlib.Path("/isolated/reports/supervisor-report.json"),
+            temporary_path=pathlib.Path("/isolated/reports/.report.tmp"),
+            sha256="e" * 64,
+            size=256,
+        )
+        evidence = supervisor.publication_failure_evidence(error)
+        self.assertIsNotNone(evidence)
+        self.assertEqual("INDETERMINATE", evidence["state"])
+        self.assertTrue(evidence["finalLinkExists"])
+        self.assertFalse(evidence["directoryCommitConfirmed"])
+        self.assertIsNone(evidence["committed"])
+
+    def test_terminal_report_base_contains_exact_prelaunch_provenance(self):
+        root = pathlib.Path("/isolated/run")
+        attempt = supervisor.Attempt(
+            run_id=RUN_ID,
+            root=root,
+            payload=root / "payload",
+            logs=root / "logs",
+            reports=root / "reports",
+            runtime_cache=root / "runtime-cache",
+            reserve=root / ".evidence-reserve",
+            input_bundle=root / "input",
+        )
+        report = supervisor.terminal_report_base(
+            attempt=attempt,
+            source={"revision": SOURCE},
+            run_kind="smoke",
+            policy_sha="1" * 64,
+            supervisor_sha="2" * 64,
+            worker_sha="3" * 64,
+            validator_sha="4" * 64,
+            candidate_sha="5" * 64,
+            interpreter={"path": "/trusted/python"},
+            worker_environment_sha="6" * 64,
+            outer_containment={"unit": "outer.service"},
+            admission_sha="7" * 64,
+            training_bundle_sha="8" * 64,
+            credential_canary_sha="9" * 64,
+        )
+        self.assertEqual(
+            {
+                "trainingBundleSha256": "8" * 64,
+                "credentialCanarySha256": "9" * 64,
+            },
+            report["provenance"],
+        )
 
 
 class WorkerEnvironmentTests(unittest.TestCase):
@@ -436,6 +690,25 @@ class WorkerEnvironmentTests(unittest.TestCase):
         "PYTHONINSPECT",
     }
 
+    def test_main_passes_admitted_attempt_to_worker_launcher(self):
+        tree = ast.parse(inspect.getsource(supervisor.main))
+        launch_calls = [
+            node
+            for node in ast.walk(tree)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id == "launch_worker_unit"
+        ]
+        self.assertEqual(1, len(launch_calls))
+        attempt_keywords = [
+            keyword
+            for keyword in launch_calls[0].keywords
+            if keyword.arg == "attempt"
+        ]
+        self.assertEqual(1, len(attempt_keywords))
+        self.assertIsInstance(attempt_keywords[0].value, ast.Name)
+        self.assertEqual("attempt", attempt_keywords[0].value.id)
+
     def test_worker_environment_is_minimal_and_launch_uses_env_i(self):
         root = pathlib.Path("/isolated/run")
         attempt = supervisor.Attempt(
@@ -446,6 +719,7 @@ class WorkerEnvironmentTests(unittest.TestCase):
             reports=root / "reports",
             runtime_cache=root / "runtime-cache",
             reserve=root / "reserve.bin",
+            input_bundle=root / "input",
         )
         exact_environment = supervisor.worker_environment(attempt)
         observed_keys = {key.upper() for key in exact_environment}
@@ -468,11 +742,17 @@ class WorkerEnvironmentTests(unittest.TestCase):
             "NoNewPrivileges": "yes",
             "ProtectControlGroups": "yes",
             "ProtectSystem": "strict",
-            "ProtectHome": "read-only",
+            "ProtectHome": "tmpfs",
+            "ProtectProc": "invisible",
+            "ProcSubset": "pid",
             "PrivateTmp": "yes",
             "PrivateNetwork": "yes",
             "RestrictSUIDSGID": "yes",
             "RestrictNamespaces": "yes",
+            "InaccessiblePaths": supervisor.worker_inaccessible_paths(
+                supervisor.os.getpid()
+            ),
+            "LimitFSIZE": "67108864",
             "BindsTo": "outer.service",
             "ControlGroup": "/user.slice/worker.service",
             "MainPID": "123",
@@ -489,10 +769,12 @@ class WorkerEnvironmentTests(unittest.TestCase):
                 return_value=subprocess.CompletedProcess([], 0),
             ) as run,
             mock.patch.object(supervisor, "unit_properties", return_value=properties),
+            mock.patch.object(pathlib.Path, "is_dir", return_value=True),
             mock.patch("pathlib.Path.read_text", return_value="123\n"),
         ):
             supervisor.launch_worker_unit(
                 policy,
+                attempt=attempt,
                 outer_unit="outer",
                 worker_unit="worker",
                 worker_argv=worker_argv,
@@ -502,6 +784,16 @@ class WorkerEnvironmentTests(unittest.TestCase):
             )
 
         command = run.call_args.args[0]
+        expected_inaccessible = (
+            f"--property=InaccessiblePaths="
+            f"{supervisor.worker_inaccessible_paths(supervisor.os.getpid())}"
+        )
+        self.assertIn(expected_inaccessible, command)
+        self.assertEqual(
+            "/mnt -/media -/srv /run /root -/var/lib/docker "
+            f"/proc/{supervisor.os.getpid()}",
+            supervisor.worker_inaccessible_paths(supervisor.os.getpid()),
+        )
         separator = command.index("--")
         environment_start = separator + 1
         self.assertEqual(
@@ -522,6 +814,17 @@ class WorkerEnvironmentTests(unittest.TestCase):
         self.assertTrue(self.FORBIDDEN_KEYS.isdisjoint(launched_keys))
 
     def test_fast_exit_is_accepted_with_retained_systemd_identity(self):
+        root = pathlib.Path("/isolated/run")
+        attempt = supervisor.Attempt(
+            run_id=RUN_ID,
+            root=root,
+            payload=root / "payload",
+            logs=root / "logs",
+            reports=root / "reports",
+            runtime_cache=root / "runtime-cache",
+            reserve=root / "reserve.bin",
+            input_bundle=root / "input",
+        )
         properties = {
             "ActiveState": "active",
             "SubState": "exited",
@@ -531,11 +834,17 @@ class WorkerEnvironmentTests(unittest.TestCase):
             "NoNewPrivileges": "yes",
             "ProtectControlGroups": "yes",
             "ProtectSystem": "strict",
-            "ProtectHome": "read-only",
+            "ProtectHome": "tmpfs",
+            "ProtectProc": "invisible",
+            "ProcSubset": "pid",
             "PrivateTmp": "yes",
             "PrivateNetwork": "yes",
             "RestrictSUIDSGID": "yes",
             "RestrictNamespaces": "yes",
+            "InaccessiblePaths": supervisor.worker_inaccessible_paths(
+                supervisor.os.getpid()
+            ),
+            "LimitFSIZE": "67108864",
             "BindsTo": "outer.service",
             "ControlGroup": "/user.slice/worker.service",
             "MainPID": "0",
@@ -551,9 +860,11 @@ class WorkerEnvironmentTests(unittest.TestCase):
                 return_value=subprocess.CompletedProcess([], 0),
             ),
             mock.patch.object(supervisor, "unit_properties", return_value=properties),
+            mock.patch.object(pathlib.Path, "is_dir", return_value=True),
         ):
             observed = supervisor.launch_worker_unit(
                 policy,
+                attempt=attempt,
                 outer_unit="outer",
                 worker_unit="worker",
                 worker_argv=["/trusted/python"],

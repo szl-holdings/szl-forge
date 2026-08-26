@@ -7,6 +7,7 @@ import json
 import pathlib
 import signal
 import subprocess
+import tempfile
 import unittest
 from unittest import mock
 
@@ -109,6 +110,59 @@ class LauncherContractTests(unittest.TestCase):
                 candidate(), observed_executable="/usr/bin/python3"
             )
 
+    def test_component_preflight_uses_fixed_git_and_rejects_local_tampering(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory).resolve()
+            committed = {
+                filename: f"exact:{filename}\n".encode("utf-8")
+                for filename in launcher.SUPERVISED_EXECUTABLE_COMPONENTS
+            }
+            for filename, data in committed.items():
+                (root / filename).write_bytes(data)
+            calls: list[list[str]] = []
+
+            def fake_run(command, **kwargs):
+                calls.append(command)
+                filename = command[-1].rsplit("/", 1)[-1]
+                self.assertEqual(
+                    [
+                        "/usr/bin/git",
+                        "show",
+                        f"{SOURCE}:{launcher.RELATIVE}/{filename}",
+                    ],
+                    command,
+                )
+                self.assertEqual(root, kwargs["cwd"])
+                self.assertIs(kwargs["shell"], False)
+                self.assertIs(kwargs["check"], False)
+                return subprocess.CompletedProcess(
+                    command,
+                    0,
+                    stdout=committed[filename],
+                    stderr=b"",
+                )
+
+            with mock.patch.object(launcher.subprocess, "run", side_effect=fake_run):
+                launcher.verify_local_components(
+                    SOURCE,
+                    component_dir=root,
+                    repo_root=root,
+                )
+                (root / "containment_probe.py").write_bytes(b"tampered\n")
+                with self.assertRaisesRegex(
+                    launcher.LauncherError,
+                    "containment_probe.py",
+                ):
+                    launcher.verify_local_components(
+                        SOURCE,
+                        component_dir=root,
+                        repo_root=root,
+                    )
+            self.assertGreaterEqual(
+                len(calls),
+                len(launcher.SUPERVISED_EXECUTABLE_COMPONENTS) + 4,
+            )
+
     def test_service_name_is_random_shape_and_systemd_safe(self):
         with mock.patch.object(
             launcher.secrets, "token_hex", return_value="ab" * 16
@@ -202,12 +256,14 @@ class LauncherContractTests(unittest.TestCase):
             mock.patch.object(launcher.sys, "executable", PYTHON),
             mock.patch.object(launcher.Path, "is_file", return_value=True),
             mock.patch.object(launcher.os, "access", return_value=True),
+            mock.patch.object(launcher, "verify_local_components") as verify_components,
             mock.patch.object(launcher.secrets, "token_hex", return_value="ef" * 16),
             mock.patch.object(launcher.sys, "stdout", output),
         ):
             code = launcher.main(["--source-commit", SOURCE, "--run-kind", "full"])
 
         self.assertEqual(73, code)
+        verify_components.assert_called_once_with(SOURCE)
         self.assertGreaterEqual(output.flush_count, 1)
         self.assertEqual(2, len(managed_calls))
         command, kwargs = managed_calls[0]
@@ -263,6 +319,7 @@ class LauncherContractTests(unittest.TestCase):
                     mock.patch.object(launcher.sys, "executable", PYTHON),
                     mock.patch.object(launcher.Path, "is_file", return_value=True),
                     mock.patch.object(launcher.os, "access", return_value=True),
+                    mock.patch.object(launcher, "verify_local_components"),
                     mock.patch.object(
                         launcher.secrets, "token_hex", return_value="cd" * 16
                     ),
