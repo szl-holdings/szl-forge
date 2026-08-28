@@ -1,0 +1,7 @@
+chaski-r2-adapter/
+chaski-r2-merged/
+outputs/
+training_receipt.json
+training_receipt.status.json
+eval_report.json
+__pycache__/
