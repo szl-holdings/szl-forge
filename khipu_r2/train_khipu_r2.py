@@ -12,19 +12,24 @@
 # ///
 """KHIPU-R2 Unsloth QLoRA abstain-retrain kit. Separate SKU. No Hub PUT.
 
-This is the 2/6 abstain-blocker successor for the Khipu line. It does NOT
-overwrite signed SZLHOLDINGS/SZL-Khipu-1.5B. Default is status (no GPU,
-no job fire, no Hub write). Pass --train to run Unsloth locally.
+Live Hub SZLHOLDINGS/KHIPU-R2 is not empty: job 6a91bf11984507d9db4ea104
+COMPLETED, adapter 147.8MB AVAILABLE, eval_measured.json abstain MEASURED 3/6
+(not a pass; grounding 5/5, plan 11/11). This checkout does not fire a job
+(jobs UNKNOWN for this kit) and does not re-run held-out generate
+(this-SKU evals not-this-run). Does NOT overwrite signed SZL-Khipu-1.5B.
+Signed 1.5B abstain stays MEASURED 2/6 on that card only.
 
-Hub currently also hosts a leftover doctrine-SFT script named
-train_khipu_r2.py (config.yaml knobs). This forge file is the ONE trainer
-for this SKU: the abstain-retrain recipe (khipu curriculum, ABSTAIN_OVERSAMPLE=4,
-r=32 α=64, 45 epochs, seed 11) matching Hub adapter_config / train_khipu_abstain.py
-knobs. We do not ship a second trainer.
+Default is status (no GPU, no job fire, no Hub write). Pass --train to run
+Unsloth locally. Hub's leftover doctrine-SFT train_khipu_r2.py is not a
+second forge recipe; this file is the one trainer (khipu curriculum,
+ABSTAIN_OVERSAMPLE=4, r=32 α=64, 45 epochs, seed 11).
 
-Signed original SZL-Khipu-1.5B abstain remains MEASURED 2/6.
-publication_eligible is false. Jobs UNKNOWN this checkout.
-Doctrine v11 LOCKED. Λ = Conjecture 1.
+publication_eligible is false. Doctrine v11 LOCKED. Λ = Conjecture 1.
+House CPU lab stays signed Khipu GGUF.
+
+CHAWPI extra lock: Hub receipt ddf6c50 publication_eligible false is the
+public claim. stale profile key dropped. Launcher still no --run-job.
+r=32 α=64 this SKU. Signed 1.5B stays 2/6. No Hub PUT. Do not merge #64.
 """
 from __future__ import annotations
 
@@ -33,7 +38,6 @@ import glob
 import hashlib
 import json
 import os
-import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -56,6 +60,29 @@ ABSTAIN_OVERSAMPLE = 4
 WARMUP_STEPS = 10
 SIGNED_ABSTAIN_CORRECT = 2
 SIGNED_ABSTAIN_TOTAL = 6
+
+HUB_JOB_ID = "6a91bf11984507d9db4ea104"
+HUB_JOB_STATUS = "COMPLETED"
+HUB_JOB_URL = f"https://huggingface.co/jobs/SZLHOLDINGS/{HUB_JOB_ID}"
+HUB_ADAPTER_STATUS = "AVAILABLE"
+HUB_ADAPTER_SIZE = "147.8MB"
+HUB_ADAPTER_FILE = "adapter_model.safetensors"
+HUB_ABSTAIN_CORRECT = 3
+HUB_ABSTAIN_TOTAL = 6
+HUB_ABSTAIN_LABEL = "MEASURED"
+HUB_GROUNDING_CORRECT = 5
+HUB_GROUNDING_TOTAL = 5
+HUB_PLAN_VALID = 11
+HUB_PLAN_TOTAL = 11
+HUB_RECEIPT_COMMIT = "ddf6c50d8baa9f818b9f478086e7b5919eb773cf"
+CHAWPI = "hub-receipt-ddf6c50-publication-eligible-false"
+# CHAWPI extra lock: Hub receipt ddf6c50d8baa9f818b9f478086e7b5919eb773cf
+# publication_eligible false is the public claim.
+# Stamp job 6a91bf11984507d9db4ea104 COMPLETED.
+# eval_measured.json abstain 3/6 (grounding 5/5, plan 11/11).
+# stale profile key dropped. Launcher still no --run-job.
+# r=32 α=64 this SKU. Signed 1.5B stays 2/6. No Hub PUT.
+# Do not merge #64.
 
 CURRICULUM_FILES = [
     "train.jsonl",
@@ -171,15 +198,15 @@ def status_receipt(
         "schema": "szl.frontier-training-run/v1",
         "v": 1,
         "artifact": hub,
-        "capabilityProfile": "SZL-Khipu-1.5B-BrainNavigator",
         "sku": "KHIPU-R2",
-        "card_status": "ROADMAP",
         "separate_sku": True,
         "base_model": BASE_CANONICAL,
         "baseModel": BASE_CANONICAL,
         "base_model_relation": "adapter",
         "base_model_runtime": BASE_TRAIN,
         "does_not_overwrite": FORBIDDEN_HUB,
+        "lab": "signed Khipu GGUF",
+        "inference_lab_pin": False,
         "datasets": datasets,
         "schemaFingerprintSha256": contract["schemaFingerprintSha256"],
         "outputSchemaSha256": contract["outputSchemaSha256"],
@@ -204,15 +231,35 @@ def status_receipt(
         "trackio": False,
         "report_to": "none",
         "push_to_hub": False,
-        "jobs": "UNKNOWN",
-        "weights": "LOCAL" if adapter_sha else "UNAVAILABLE",
-        "adapterSha256": adapter_sha or None,
-        "finalTrainLoss": training_loss,
-        "evals": "not-this-run",
+        "hub_job_id": HUB_JOB_ID,
+        "hub_job_status": HUB_JOB_STATUS,
+        "hub_job_url": HUB_JOB_URL,
+        "hub_adapter": HUB_ADAPTER_STATUS,
+        "hub_adapter_file": HUB_ADAPTER_FILE,
+        "hub_adapter_size": HUB_ADAPTER_SIZE,
+        "hub_abstain": f"{HUB_ABSTAIN_CORRECT}/{HUB_ABSTAIN_TOTAL}",
+        "hub_abstain_correct": HUB_ABSTAIN_CORRECT,
+        "hub_abstain_total": HUB_ABSTAIN_TOTAL,
+        "hub_abstain_label": HUB_ABSTAIN_LABEL,
+        "hub_abstain_pass": False,
+        "hub_grounding": f"{HUB_GROUNDING_CORRECT}/{HUB_GROUNDING_TOTAL}",
+        "hub_grounding_correct": HUB_GROUNDING_CORRECT,
+        "hub_grounding_total": HUB_GROUNDING_TOTAL,
+        "hub_plan": f"{HUB_PLAN_VALID}/{HUB_PLAN_TOTAL}",
+        "hub_plan_valid": HUB_PLAN_VALID,
+        "hub_plan_total": HUB_PLAN_TOTAL,
+        "hub_receipt_commit": HUB_RECEIPT_COMMIT,
+        "chawpi": CHAWPI,
         "signed_original_abstain": f"{abstain_correct}/{abstain_total}",
         "signed_original_abstain_correct": abstain_correct,
         "signed_original_abstain_total": abstain_total,
-        "label": "ROADMAP",
+        "jobs": "UNKNOWN",
+        "jobs_scope": "this-kit",
+        "local_adapter": "LOCAL" if adapter_sha else "UNAVAILABLE",
+        "adapterSha256": adapter_sha or None,
+        "finalTrainLoss": training_loss,
+        "evals": "not-this-run",
+        "evals_scope": "this-sku",
         "lambda": "Conjecture 1",
         "doctrine": "v11 LOCKED 749/14/163",
         "proposal_only": True,
@@ -221,10 +268,20 @@ def status_receipt(
         "serve_pin": False,
         "hub_put": False,
         "claim_boundary": (
-            "Separate SKU. Does not overwrite signed SZL-Khipu-1.5B. "
-            f"Signed original abstain remains MEASURED {abstain_correct}/{abstain_total} "
-            "(blocker). This checkout does not fire a Job and does not PUT Hub. "
-            "publication_eligible false. Do not invent 6/6."
+            "Live Hub KHIPU-R2 is not empty: job "
+            f"{HUB_JOB_ID} {HUB_JOB_STATUS}, adapter {HUB_ADAPTER_SIZE} "
+            f"{HUB_ADAPTER_STATUS}, abstain {HUB_ABSTAIN_LABEL} "
+            f"{HUB_ABSTAIN_CORRECT}/{HUB_ABSTAIN_TOTAL} (not a pass), "
+            f"grounding {HUB_GROUNDING_CORRECT}/{HUB_GROUNDING_TOTAL}, "
+            f"plan {HUB_PLAN_VALID}/{HUB_PLAN_TOTAL}. "
+            f"Signed SZL-Khipu-1.5B abstain stays MEASURED "
+            f"{abstain_correct}/{abstain_total} on that card only. "
+            "This-kit jobs UNKNOWN. This-SKU evals not-this-run. "
+            "Does not overwrite signed SZL-Khipu-1.5B. No Hub PUT. "
+            "CHAWPI extra lock: Hub receipt ddf6c50 publication_eligible false "
+            "is the public claim. stale profile key dropped. "
+            "Launcher still no --run-job. r=32 α=64 this SKU. "
+            "Do not merge #64. Lab stays signed Khipu GGUF."
         ),
         "computed_at": datetime.now(timezone.utc).isoformat() if live else None,
         "source": "local-train" if live else "forge-status",
@@ -265,11 +322,28 @@ def status_main(hub: str) -> int:
         f"[khipu-r2] base={BASE_CANONICAL} runtime={BASE_TRAIN} "
         f"hub={hub} seed={SEED}"
     )
-    print("[khipu-r2] card=ROADMAP separate-sku=true overwrite=false")
-    print(f"[khipu-r2] jobs=UNKNOWN hub_put=false publication_eligible=false")
+    print(
+        f"[khipu-r2] hub_job={HUB_JOB_ID} {HUB_JOB_STATUS} "
+        f"adapter={HUB_ADAPTER_STATUS} ({HUB_ADAPTER_SIZE})"
+    )
+    print(
+        f"[khipu-r2] hub_abstain={HUB_ABSTAIN_LABEL} "
+        f"{HUB_ABSTAIN_CORRECT}/{HUB_ABSTAIN_TOTAL} (not a pass) "
+        f"grounding={HUB_GROUNDING_CORRECT}/{HUB_GROUNDING_TOTAL} "
+        f"plan={HUB_PLAN_VALID}/{HUB_PLAN_TOTAL} "
+        "publication_eligible=false"
+    )
+    print(
+        f"[khipu-r2] CHAWPI hub_receipt={HUB_RECEIPT_COMMIT} "
+        "publication_eligible=false is the public claim"
+    )
     print(
         f"[khipu-r2] signed original abstain MEASURED "
-        f"{abstain_correct}/{abstain_total} (blocker, unchanged)"
+        f"{abstain_correct}/{abstain_total} (signed 1.5B card only)"
+    )
+    print(
+        "[khipu-r2] this-kit jobs=UNKNOWN this-sku evals=not-this-run "
+        "hub_put=false overwrite=false"
     )
     print(f"[khipu-r2] curriculum verified ({len(datasets)} files)")
     write_receipt(status_receipt(hub=hub, datasets=datasets), STATUS_RECEIPT)
