@@ -27,6 +27,9 @@ def plan() -> dict:
         "canonical_base": CANONICAL_BASE,
         "base_model": CANONICAL_BASE,
         "hub": HUB,
+        "atelier_lock": True,
+        "hub_id_declared_only": True,
+        "hub_page": False,
         "does_not_overwrite": FORBIDDEN_HUB,
         "forbidden_5050": FORBIDDEN_5050,
         "flavor": "a10g-large",
@@ -66,6 +69,7 @@ def main() -> int:
         print(json.dumps(payload, indent=2))
         return 0
     print("# CHASKI-R2 Jobs plan. Not submitted from this checkout.")
+    print("# ATELIER lock: declared Hub id only; no README-only costume.")
     print(f"# jobs=UNAVAILABLE canonical_base={CANONICAL_BASE} hub={HUB}")
     print(f"# does_not_overwrite={FORBIDDEN_HUB}")
     print(f"# forbidden_5050={FORBIDDEN_5050}")

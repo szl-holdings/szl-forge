@@ -117,6 +117,9 @@ class ChaskiR2KitTests(unittest.TestCase):
         self.assertEqual(32, receipt["lora_alpha"])
         self.assertTrue(receipt["response_only_loss"])
         self.assertTrue(receipt["qlora"])
+        self.assertTrue(receipt["atelier_lock"])
+        self.assertTrue(receipt["hub_id_declared_only"])
+        self.assertFalse(receipt["hub_page"])
         self.assertTrue(receipt["held_out_in_gradients"] is False)
         self.assertIn("v11", receipt["doctrine"])
         self.assertEqual("Conjecture 1", receipt["lambda"])
@@ -149,6 +152,7 @@ class ChaskiR2KitTests(unittest.TestCase):
     def test_eval_reuses_named_n_and_stays_unrun(self) -> None:
         completed = run(EVAL, check=True)
         self.assertIn("none-this-run", completed.stdout)
+        self.assertIn("PR 63 named-N", completed.stdout)
         self.assertIn("json_draft_n=5", completed.stdout)
         self.assertIn("adversarial_refusal_n=6", completed.stdout)
         self.assertIn("publication_eligible=false", completed.stdout)
@@ -168,6 +172,9 @@ class ChaskiR2KitTests(unittest.TestCase):
         )
         self.assertFalse(report["publication_eligible"])
         self.assertFalse(report["gate_ran"])
+        self.assertTrue(report["atelier_lock"])
+        self.assertTrue(report["hub_id_declared_only"])
+        self.assertFalse(report["hub_page"])
         self.assertEqual("none-this-run", report["evals"])
         self.assertEqual("UNAVAILABLE", report["quality"])
         self.assertEqual("UNAVAILABLE", report["jobs"])
@@ -196,6 +203,9 @@ class ChaskiR2KitTests(unittest.TestCase):
         self.assertFalse(payload["publication_eligible"])
         self.assertEqual(FORBIDDEN, payload["does_not_overwrite"])
         self.assertEqual(FORBIDDEN_5050, payload["forbidden_5050"])
+        self.assertTrue(payload["atelier_lock"])
+        self.assertTrue(payload["hub_id_declared_only"])
+        self.assertFalse(payload["hub_page"])
 
     def test_jobs_launcher_prints_uv_and_refuses_to_fire(self) -> None:
         dry = run(LAUNCH, check=True)
@@ -225,20 +235,32 @@ class ChaskiR2KitTests(unittest.TestCase):
             text = path.read_text(encoding="utf-8")
             for token in forbidden_tokens:
                 self.assertNotIn(token, text, f"{path} contains {token}")
+            self.assertNotIn(
+                "huggingface.co/SZLHOLDINGS/chaski-r2",
+                text,
+                f"{path} costumes a README-only Hub ID",
+            )
 
-    def test_readme_is_separate_sku_unavailable(self) -> None:
+    def test_readme_is_atelier_lock_not_hub_costume(self) -> None:
         text = README.read_text(encoding="utf-8")
+        self.assertIn("ATELIER lock", text)
         self.assertIn("Separate SKU", text)
         self.assertIn("publication_eligible", text)
         self.assertIn(FORBIDDEN, text)
         self.assertIn(FORBIDDEN_5050, text)
-        self.assertIn(CANONICAL_BASE, text)
-        self.assertIn("CANONICAL_BASE", text)
+        self.assertIn("Qwen/Qwen3.5-0.8B", text)
+        self.assertIn("Base in prose", text)
         self.assertIn("UNAVAILABLE", text)
         self.assertIn("v11", text)
         self.assertIn("No ROADMAP parking", text)
         self.assertIn("r=16", text)
         self.assertIn("α=32", text)
+        self.assertIn("PR 63 named-N", text)
+        self.assertIn("none-this-run", text)
+        self.assertIn("Do **not** costume a README-only Hub ID", text)
+        self.assertNotIn("https://huggingface.co/SZLHOLDINGS/chaski-r2", text)
+        self.assertNotIn("huggingface.co/SZLHOLDINGS/chaski-r2", text)
+        self.assertFalse(text.lstrip().startswith("---"))
 
     def test_kit_does_not_import_forbidden_lanes(self) -> None:
         banned = (
