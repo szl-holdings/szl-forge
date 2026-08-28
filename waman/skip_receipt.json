@@ -1,0 +1,21 @@
+{
+  "kind": "szl-waman-skip-receipt",
+  "schema": "szl.frontier-training-run/v1",
+  "artifact": "SZLHOLDINGS/waman",
+  "architecture": "rfdetr-nano-through-large",
+  "xl_2xl": false,
+  "roboflow_checkpoint_download": false,
+  "status": "SKIP-NO-ADMITTED-FRAMES",
+  "jobs": "UNKNOWN",
+  "weights": "UNAVAILABLE",
+  "evals": "UNKNOWN",
+  "publication_eligible": false,
+  "autonomy_eligible": false,
+  "frames_loaded": false,
+  "train_loop": false,
+  "effector": "SIMULATED",
+  "alias_of": null,
+  "alias": "SZLHOLDINGS/KILLINCHU-EYE",
+  "github_source": "waman/",
+  "claim_boundary": "No admitted labeled UAV frames. killinchu-osint-corpus is not training-eligible. KILLINCHU-EYE is an alias, not a second detector. This is not a trainer."
+}

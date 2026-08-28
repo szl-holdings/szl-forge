@@ -50,6 +50,27 @@ class StaticForgeContractTests(unittest.TestCase):
             all(item["autonomy_eligible"] is False for item in portfolio["artifacts"])
         )
 
+    def test_atelier_lock_keeps_snapshot_from_becoming_a_studio(self) -> None:
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        index = (ROOT / "index.html").read_text(encoding="utf-8")
+        for blob in (readme, index):
+            with self.subTest(surface="readme" if blob is readme else "index"):
+                self.assertIn("BLUEPRINT_NOT_TRAINED", blob)
+                self.assertIn("szl-model-inference-lab", blob)
+                self.assertIn("SIMULATED", blob)
+                self.assertIn("Ask", blob)
+                self.assertIn("not a live control plane", blob.lower().replace("&amp;", "&"))
+        lowered = (readme + "\n" + index).lower()
+        self.assertIn("not unsloth studio", lowered)
+        self.assertIn("not a jobs launcher", lowered)
+        for forbidden in (
+            "hf jobs uv run",
+            "launch training",
+            "start fine-tune",
+            "train on this space",
+        ):
+            self.assertNotIn(forbidden, lowered)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

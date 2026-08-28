@@ -1,0 +1,17 @@
+{
+  "kind": "szl-qantu-skip-receipt",
+  "schema": "szl.frontier-training-run/v1",
+  "artifact": "SZLHOLDINGS/qantu",
+  "base_model": "google/gemma-4-E4B-it",
+  "base_model_license": "apache-2.0",
+  "status": "SKIP-NO-ADMITTED-IMAGES",
+  "jobs": "UNKNOWN",
+  "weights": "UNAVAILABLE",
+  "evals": "UNKNOWN",
+  "publication_eligible": false,
+  "autonomy_eligible": false,
+  "pixels_loaded": false,
+  "train_loop": false,
+  "github_source": "qantu/",
+  "claim_boundary": "No admitted SZL image corpus. killinchu-osint-corpus is not training-eligible. This is not a trainer."
+}

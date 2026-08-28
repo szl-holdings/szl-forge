@@ -42,6 +42,22 @@ policy, and the governed curriculum blueprint.
 > evidence and performs browser-side integrity checks. It is not a model, model
 > trainer, publisher, promoter, deployment control plane, or independent
 > evaluator. `REACHABLE` describes transport only.
+>
+> **ATELIER lock.** Curriculum status is `BLUEPRINT_NOT_TRAINED`. This Space is
+> not Unsloth Studio, not a Jobs launcher, and not a training UI. Do not recut
+> a studio onto this snapshot.
+>
+> **Serve studio.** Bounded serve is
+> [`SZLHOLDINGS/szl-model-inference-lab`](https://szlholdings-szl-model-inference-lab.hf.space)
+> only. Forge Lab does not serve weights.
+>
+> **Energy.** Rows in `SZLHOLDINGS/energy-attested-runs` labeled 8/8 are
+> **SIMULATED**. This console does not mint joules and does not upgrade a
+> simulated energy fixture into MEASURED.
+>
+> **Ask & Act.** Hugging Face Ask & Act is not a live control plane for this
+> Space. This page does not train, launch Jobs, approve promotion, or mutate
+> external state.
 
 The static console also renders the packaged
 `szl.model-kernel-portfolio/v1` registry. Each entry retains its declared class
@@ -59,6 +75,8 @@ weights.
 - The curriculum is `BLUEPRINT_NOT_TRAINED`.
 - Promotion remains blocked pending independent evaluator, model-owner, and security-reviewer approvals.
 - No Space endpoint trains, publishes, promotes, deploys, downloads data, or mutates external state.
+- No Unsloth Studio chrome, HF Jobs launcher, or training form belongs on this Space.
+- Serve remains the Model Inference Lab Space, not this snapshot.
 
 ## Machine-readable evidence
 
