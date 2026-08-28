@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import gc
 import json
 import math
@@ -12,6 +13,7 @@ import posixpath
 import re
 import stat
 import sys
+import tempfile
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -20,6 +22,7 @@ from typing import Any
 from jsonschema.validators import validator_for
 
 from train_candidate import (
+    ALLOWED_ADAPTER_FILES,
     QualificationError,
     canonical_json,
     committed_bytes,
@@ -54,6 +57,11 @@ REASONING_TAG = re.compile(r"</?think>|hidden[_ -]?analysis|chain[_ -]?of[_ -]?t
 HEX_32 = re.compile(r"[0-9a-f]{32}")
 HEX_64 = re.compile(r"[0-9a-f]{64}")
 GPU_UUID = re.compile(r"GPU-[A-Za-z0-9-]{16,96}")
+MAX_ADAPTER_FILE_BYTES = 256 * 1024 * 1024
+MAX_ADAPTER_SNAPSHOT_BYTES = 512 * 1024 * 1024
+REQUIRED_ADAPTER_FILES = frozenset(
+    {"adapter_config.json", "adapter_model.safetensors"}
+)
 SUPERVISOR_FULL_STATE = OBSERVATION_STATE_BY_KIND["FULL"]
 SUPERVISOR_SOURCE_COMPONENTS = (
     "launch_supervised_training.py",
@@ -123,7 +131,11 @@ CONTAINMENT_PROBE_SEMANTICS = {
     "trainingOnlyInputSetExact": True,
     "heldOutContentAbsent": True,
     "forbiddenHostReadsFailed": True,
+    "fixedHostDecoysHidden": True,
+    "forbiddenHostReadTargetCount": 5,
     "nonOutputWritesFailed": True,
+    "rootWriteDenied": True,
+    "workerMountRootWriteDenied": True,
     "runtimeAndModelInputsReadable": True,
     "secretContentRead": False,
     "trainerExecBound": True,
@@ -386,7 +398,7 @@ def expected_worker_environment(candidate: dict[str, Any]) -> dict[str, str]:
     required_policy = {
         "required_containment": "SYSTEMD_USER_SERVICE_CGROUP_V2",
         "security_boundary": "COOPERATIVE_SAME_ACCOUNT",
-        "filesystem_isolation": "TRAINING_ONLY_BIND_MOUNTS",
+        "filesystem_isolation": "ROOT_DIRECTORY_EXPLICIT_BIND_ALLOWLIST",
         "worker_mount_root": "/opt/szl-ra3",
     }
     for key, expected in required_policy.items():
@@ -1168,11 +1180,196 @@ def v2_snapshot(candidate: dict[str, Any]) -> tuple[Path, dict[str, Any]]:
     }
 
 
+def stable_file_identity(value: os.stat_result) -> tuple[int, ...]:
+    return (
+        value.st_dev,
+        value.st_ino,
+        value.st_mode,
+        value.st_nlink,
+        value.st_uid,
+        value.st_gid,
+        value.st_size,
+        value.st_mtime_ns,
+        value.st_ctime_ns,
+    )
+
+
+def read_stable_adapter_file(directory_fd: int, name: str) -> bytes:
+    if (
+        not name
+        or name in {".", ".."}
+        or "/" in name
+        or "\\" in name
+        or name not in ALLOWED_ADAPTER_FILES
+    ):
+        raise QualificationError(f"adapter snapshot file is not allowlisted: {name}")
+    flags = os.O_RDONLY | os.O_CLOEXEC | os.O_NOFOLLOW
+    try:
+        descriptor = os.open(name, flags, dir_fd=directory_fd)
+    except OSError as exc:
+        raise QualificationError(
+            f"adapter snapshot could not open a regular no-follow file: {name}"
+        ) from exc
+    try:
+        before = os.fstat(descriptor)
+        if not stat.S_ISREG(before.st_mode) or before.st_nlink != 1:
+            raise QualificationError(
+                f"adapter snapshot requires a single-link regular file: {name}"
+            )
+        if before.st_size < 0 or before.st_size > MAX_ADAPTER_FILE_BYTES:
+            raise QualificationError(f"adapter snapshot file is unexpectedly large: {name}")
+        chunks: list[bytes] = []
+        observed = 0
+        while True:
+            chunk = os.read(descriptor, min(1024 * 1024, MAX_ADAPTER_FILE_BYTES + 1 - observed))
+            if not chunk:
+                break
+            chunks.append(chunk)
+            observed += len(chunk)
+            if observed > MAX_ADAPTER_FILE_BYTES:
+                raise QualificationError(
+                    f"adapter snapshot file exceeded its size ceiling: {name}"
+                )
+        after = os.fstat(descriptor)
+    finally:
+        os.close(descriptor)
+    if stable_file_identity(before) != stable_file_identity(after):
+        raise QualificationError(f"adapter source changed during snapshot capture: {name}")
+    data = b"".join(chunks)
+    if len(data) != before.st_size:
+        raise QualificationError(f"adapter source size changed during snapshot capture: {name}")
+    return data
+
+
+def write_snapshot_file(path: Path, data: bytes) -> None:
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_CLOEXEC | os.O_NOFOLLOW
+    descriptor = os.open(path, flags, 0o600)
+    try:
+        view = memoryview(data)
+        written = 0
+        while written < len(view):
+            count = os.write(descriptor, view[written:])
+            if count <= 0:
+                raise QualificationError(
+                    f"adapter snapshot write made no progress: {path.name}"
+                )
+            written += count
+        os.fsync(descriptor)
+        os.fchmod(descriptor, 0o400)
+    finally:
+        os.close(descriptor)
+
+
+@contextlib.contextmanager
+def staged_adapter_snapshot(
+    source: Path,
+) -> Any:
+    if os.name != "posix" or not all(
+        hasattr(os, name) for name in ("O_CLOEXEC", "O_DIRECTORY", "O_NOFOLLOW")
+    ):
+        raise QualificationError(
+            "v3 adapter snapshots require POSIX no-follow descriptor semantics"
+        )
+    directory_flags = os.O_RDONLY | os.O_CLOEXEC | os.O_DIRECTORY | os.O_NOFOLLOW
+    try:
+        source_fd = os.open(source, directory_flags)
+    except OSError as exc:
+        raise QualificationError("adapter source must be a no-follow directory") from exc
+    captured: dict[str, bytes] = {}
+    try:
+        directory_before = os.fstat(source_fd)
+        if not stat.S_ISDIR(directory_before.st_mode):
+            raise QualificationError("adapter source is not a directory")
+        if directory_before.st_uid != os.geteuid():
+            raise QualificationError("adapter source is not owned by the evaluator account")
+        if stat.S_IMODE(directory_before.st_mode) & 0o022:
+            raise QualificationError("adapter source is group- or world-writable")
+        names_before = sorted(os.listdir(source_fd))
+        observed_names = set(names_before)
+        if not REQUIRED_ADAPTER_FILES.issubset(observed_names):
+            raise QualificationError(
+                "adapter snapshot omitted required config or SafeTensors weights"
+            )
+        unexpected = observed_names - ALLOWED_ADAPTER_FILES
+        if unexpected:
+            raise QualificationError(
+                f"adapter snapshot contains non-allowlisted files: {sorted(unexpected)}"
+            )
+        total_bytes = 0
+        for name in names_before:
+            data = read_stable_adapter_file(source_fd, name)
+            total_bytes += len(data)
+            if total_bytes > MAX_ADAPTER_SNAPSHOT_BYTES:
+                raise QualificationError("adapter snapshot exceeded its total size ceiling")
+            captured[name] = data
+        names_after = sorted(os.listdir(source_fd))
+        directory_after = os.fstat(source_fd)
+        if names_after != names_before or stable_file_identity(
+            directory_after
+        ) != stable_file_identity(directory_before):
+            raise QualificationError("adapter source directory changed during snapshot capture")
+    except OSError as exc:
+        raise QualificationError("adapter snapshot capture failed") from exc
+    finally:
+        os.close(source_fd)
+
+    with tempfile.TemporaryDirectory(prefix="szl-ra3-adapter-") as temporary:
+        snapshot = Path(temporary)
+        for name in sorted(captured):
+            write_snapshot_file(snapshot / name, captured[name])
+        snapshot_fd = os.open(snapshot, directory_flags)
+        try:
+            os.fsync(snapshot_fd)
+        finally:
+            os.close(snapshot_fd)
+        os.chmod(snapshot, 0o500)
+        try:
+            snapshot_sha, snapshot_files = hash_adapter(snapshot)
+            yield snapshot, snapshot_sha, snapshot_files
+        finally:
+            os.chmod(snapshot, 0o700)
+
+
+def load_verified_v3_adapter(
+    model: Any,
+    snapshot: Path,
+    *,
+    expected_sha256: str | None,
+    expected_files_sha256: str | None,
+    peft_model: Any,
+) -> Any:
+    if (
+        not isinstance(expected_sha256, str)
+        or HEX_64.fullmatch(expected_sha256) is None
+        or not isinstance(expected_files_sha256, str)
+        or HEX_64.fullmatch(expected_files_sha256) is None
+    ):
+        raise QualificationError("v3 adapter load requires verified aggregate and file evidence")
+    before_sha, before_files = hash_adapter(snapshot)
+    if (
+        before_sha != expected_sha256
+        or sha256_json(before_files) != expected_files_sha256
+    ):
+        raise QualificationError("staged adapter differs before PEFT load")
+    loaded = peft_model.from_pretrained(
+        model,
+        str(snapshot),
+        is_trainable=False,
+        local_files_only=True,
+    )
+    after_sha, after_files = hash_adapter(snapshot)
+    if after_sha != before_sha or after_files != before_files:
+        raise QualificationError("staged adapter changed during PEFT load")
+    return loaded
+
+
 def load_model(
     model_kind: str,
     candidate: dict[str, Any],
     *,
     adapter_dir: Path | None,
+    expected_adapter_sha256: str | None = None,
+    expected_adapter_files_sha256: str | None = None,
 ) -> tuple[Any, Any, dict[str, Any]]:
     import unsloth  # noqa: F401 - patch before Transformers/PEFT imports
     from peft import PeftModel
@@ -1199,8 +1396,22 @@ def load_model(
     elif model_kind == "v3":
         if adapter_dir is None:
             raise QualificationError("v3 evaluation requires --adapter-dir")
-        model = PeftModel.from_pretrained(model, str(adapter_dir), is_trainable=False)
+        model = load_verified_v3_adapter(
+            model,
+            adapter_dir,
+            expected_sha256=expected_adapter_sha256,
+            expected_files_sha256=expected_adapter_files_sha256,
+            peft_model=PeftModel,
+        )
         identity["adapterSource"] = "LOCAL_ATTESTATION_PENDING"
+        identity["adapterLoad"] = {
+            "mechanism": "COOPERATIVE_PRIVATE_SNAPSHOT",
+            "aggregateSha256": expected_adapter_sha256,
+            "filesSha256": expected_adapter_files_sha256,
+            "preAndPostLoadDigestMatched": True,
+            "localFilesOnly": True,
+            "hostileSameAccountImmutability": False,
+        }
     elif model_kind != "base":
         raise QualificationError(f"unsupported model kind {model_kind}")
     FastVisionModel.for_inference(model)
@@ -1287,43 +1498,62 @@ def evaluate(args: argparse.Namespace) -> dict[str, Any]:
     training_report = None
     adapter_sha = None
     supervision_linkage = None
-    if args.model_kind == "v3":
-        training_report, adapter_sha = verify_training_report(
-            args.training_report,
-            adapter_dir=args.adapter_dir,
-            source_commit=args.source_commit,
-            candidate=candidate,
+    with contextlib.ExitStack() as snapshot_stack:
+        evaluation_adapter_dir = args.adapter_dir
+        staged_sha = None
+        staged_files = None
+        if args.model_kind == "v3":
+            if args.adapter_dir is None:
+                raise QualificationError("v3 evaluation requires --adapter-dir")
+            evaluation_adapter_dir, staged_sha, staged_files = snapshot_stack.enter_context(
+                staged_adapter_snapshot(args.adapter_dir)
+            )
+            training_report, adapter_sha = verify_training_report(
+                args.training_report,
+                adapter_dir=evaluation_adapter_dir,
+                source_commit=args.source_commit,
+                candidate=candidate,
+            )
+            supervision_linkage = verify_supervisor_linkage(
+                args.supervisor_report,
+                training_report_path=args.training_report,
+                training_report=training_report,
+                adapter_dir=evaluation_adapter_dir,
+                source_commit=args.source_commit,
+                candidate=candidate,
+                source=source,
+            )
+            if adapter_sha != staged_sha:
+                raise QualificationError("staged adapter aggregate differs after report checks")
+            if supervision_linkage["adapterFilesSha256"] != sha256_json(staged_files):
+                raise QualificationError("staged adapter files differ after report checks")
+        rows, split_evidence = evaluation_split(
+            args.source_commit, args.split, candidate
         )
-        supervision_linkage = verify_supervisor_linkage(
-            args.supervisor_report,
-            training_report_path=args.training_report,
-            training_report=training_report,
-            adapter_dir=args.adapter_dir,
-            source_commit=args.source_commit,
-            candidate=candidate,
-            source=source,
+        response_validator = split_evidence["responseValidator"]
+        protocol = split_evidence["protocol"]
+        recipe = candidate["training_recipe"]
+        raw_gpu = raw_gpu_preflight(recipe)
+
+        import torch
+
+        versions = enforce_runtime_lock(candidate)
+        gpu = gpu_gate(torch, recipe)
+        gpu["preRuntimeImport"] = raw_gpu
+        temperatures = [gpu["temperatureCBeforeLoad"]]
+        model, processor, model_identity = load_model(
+            args.model_kind,
+            candidate,
+            adapter_dir=evaluation_adapter_dir,
+            expected_adapter_sha256=adapter_sha,
+            expected_adapter_files_sha256=(
+                supervision_linkage["adapterFilesSha256"]
+                if supervision_linkage is not None
+                else None
+            ),
         )
-    rows, split_evidence = evaluation_split(
-        args.source_commit, args.split, candidate
-    )
-    response_validator = split_evidence["responseValidator"]
-    protocol = split_evidence["protocol"]
-    recipe = candidate["training_recipe"]
-    raw_gpu = raw_gpu_preflight(recipe)
-
-    import torch
-
-    versions = enforce_runtime_lock(candidate)
-    gpu = gpu_gate(torch, recipe)
-    gpu["preRuntimeImport"] = raw_gpu
-    temperatures = [gpu["temperatureCBeforeLoad"]]
-    model, processor, model_identity = load_model(
-        args.model_kind,
-        candidate,
-        adapter_dir=args.adapter_dir,
-    )
-    if adapter_sha:
-        model_identity["adapterAggregateSha256"] = adapter_sha
+        if adapter_sha is not None:
+            model_identity["adapterAggregateSha256"] = adapter_sha
 
     cases: list[dict[str, Any]] = []
     evaluation_protocol = candidate["evaluation_protocol"]

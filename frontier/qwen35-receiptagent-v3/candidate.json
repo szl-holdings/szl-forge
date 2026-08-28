@@ -71,7 +71,7 @@
     "cgroup_root": "/sys/fs/cgroup",
     "required_containment": "SYSTEMD_USER_SERVICE_CGROUP_V2",
     "security_boundary": "COOPERATIVE_SAME_ACCOUNT",
-    "filesystem_isolation": "TRAINING_ONLY_BIND_MOUNTS",
+    "filesystem_isolation": "ROOT_DIRECTORY_EXPLICIT_BIND_ALLOWLIST",
     "worker_mount_root": "/opt/szl-ra3",
     "model_cache_repository": "/home/rosie/.cache/huggingface/hub/models--unsloth--Qwen3.5-0.8B",
     "thermal_sample_interval_seconds": 2.0,

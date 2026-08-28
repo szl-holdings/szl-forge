@@ -51,6 +51,16 @@ SIBLING_MODULE_NAMES = {
     "supervisor_validation.py": "szl_ra3_supervisor_validation",
 }
 MAX_COMPONENT_BYTES = 2 * 1024 * 1024
+NAMESPACE_DIRECTORIES = (
+    "usr", "bin", "sbin", "lib", "lib64", "etc",
+    "home", "home/rosie", "home/rosie/.venvs",
+    "home/rosie/.venvs/szl-unsloth", "opt", "opt/szl-ra3",
+    "opt/szl-ra3/input", "opt/szl-ra3/output",
+    "opt/szl-ra3/cache", "proc", "sys", "dev", "run",
+    "tmp", "var", "var/tmp",
+)
+NAMESPACE_PLACEHOLDERS = ("etc/ld.so.cache",)
+MODEL_CACHE_DIRECTORY = "models--unsloth--Qwen3.5-0.8B"
 
 
 class BootstrapError(RuntimeError):
@@ -189,6 +199,7 @@ class AdmissionPaths:
     logs: Path
     reports: Path
     runtime_cache: Path
+    namespace_root: Path
     reserve: Path
 
 
@@ -708,12 +719,64 @@ def _admission_paths(runs_root: Path, run_id: str) -> AdmissionPaths:
         logs=root / "logs",
         reports=root / "reports",
         runtime_cache=root / "runtime-cache",
+        namespace_root=root / "namespace-root",
         reserve=root / ".evidence-reserve",
     )
 
 
 def _mkdir_at(directory_fd: int, name: str) -> None:
     os.mkdir(name, mode=0o700, dir_fd=directory_fd)
+
+
+def _prepare_namespace_scaffold(
+    paths: AdmissionPaths, created_entries: list[str]
+) -> None:
+    os.mkdir(paths.namespace_root, mode=0o700)
+    created_entries.append("namespace-root")
+    for relative in NAMESPACE_DIRECTORIES:
+        target = paths.namespace_root / relative
+        os.mkdir(target, mode=0o700)
+        created_entries.append(f"namespace-root/{relative}")
+    for relative in NAMESPACE_PLACEHOLDERS:
+        target = paths.namespace_root / relative
+        descriptor = os.open(
+            target, _open_flags(write=True) | os.O_CREAT | os.O_EXCL, 0o400
+        )
+        try:
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
+        created_entries.append(f"namespace-root/{relative}")
+    for relative in sorted(NAMESPACE_DIRECTORIES, key=lambda value: value.count("/"), reverse=True):
+        descriptor = _open_directory(paths.namespace_root / relative)
+        try:
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
+    descriptor = _open_directory(paths.namespace_root)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+
+def _prepare_runtime_model_target(
+    paths: AdmissionPaths, created_entries: list[str]
+) -> None:
+    hf_fd = _open_directory(paths.runtime_cache / "hf")
+    try:
+        _mkdir_at(hf_fd, "hub")
+        created_entries.append("runtime-cache/hf/hub")
+        os.fsync(hf_fd)
+    finally:
+        os.close(hf_fd)
+    hub_fd = _open_directory(paths.runtime_cache / "hf" / "hub")
+    try:
+        _mkdir_at(hub_fd, MODEL_CACHE_DIRECTORY)
+        created_entries.append(f"runtime-cache/hf/hub/{MODEL_CACHE_DIRECTORY}")
+        os.fsync(hub_fd)
+    finally:
+        os.close(hub_fd)
 
 
 def _allocate_reserve(directory_fd: int, reserve_bytes: int) -> None:
@@ -928,12 +991,17 @@ def admit_attempt_atomic(
                 "triton",
                 "numba",
                 "cuda",
+                "hf",
             ):
                 _mkdir_at(cache_fd, name)
                 created_entries.append(f"runtime-cache/{name}")
             os.fsync(cache_fd)
         finally:
             os.close(cache_fd)
+        stage = "CREATE_RUNTIME_MODEL_BIND_TARGET"
+        _prepare_runtime_model_target(paths, created_entries)
+        stage = "CREATE_NAMESPACE_ROOT_SCAFFOLD"
+        _prepare_namespace_scaffold(paths, created_entries)
         os.fsync(attempt_fd)
     except Exception as exc:
         try:

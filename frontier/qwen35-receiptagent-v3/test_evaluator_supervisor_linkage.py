@@ -108,7 +108,7 @@ def candidate() -> dict:
             "schema": "test-policy",
             "required_containment": "SYSTEMD_USER_SERVICE_CGROUP_V2",
             "security_boundary": "COOPERATIVE_SAME_ACCOUNT",
-            "filesystem_isolation": "TRAINING_ONLY_BIND_MOUNTS",
+            "filesystem_isolation": "ROOT_DIRECTORY_EXPLICIT_BIND_ALLOWLIST",
             "worker_mount_root": "/opt/szl-ra3",
             "thermal_sample_interval_seconds": 2.0,
             "maximum_telemetry_gap_seconds": 8.0,
