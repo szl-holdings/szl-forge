@@ -28,6 +28,7 @@ def main() -> int:
         "base_model": BASE_MODEL,
         "evals": "none-this-run",
         "quality": "UNKNOWN",
+        "train_loss_is_not_eval": True,
         "adapter": "UNAVAILABLE",
         "weights": "UNAVAILABLE",
         "publication_eligible": False,

@@ -52,6 +52,8 @@ szl:
 
 The house CPU lab serves **Khipu GGUF**, not Chaski. Lab load forbidden.
 
+**Evaluation:** none-this-run. Train loss MEASURED `1.782708187121898` is a train metric, not an eval. Quality is UNKNOWN.
+
 ## Training
 
 - Recipe: Unsloth QLoRA SFT. Script: train_chaski.py. Loads only szl_dataset.jsonl.
