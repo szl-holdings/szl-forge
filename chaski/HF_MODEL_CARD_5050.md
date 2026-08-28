@@ -23,6 +23,18 @@ szl:
   sku: SZLHOLDINGS/chaski-5050
   not_live_chaski: SZLHOLDINGS/chaski
   jobs: not-an-hf-job
+  job: local-5050
+  hub_commit: c907ebe6e1fa900021be7b6fec19b38ec45be574
+  hub_adapter: adapter_model.safetensors
+  weights: AVAILABLE
+  train_loss: 2.228136855544466
+  train_loss_label: MEASURED
+  train_runtime_s: 883.2224
+  training_rows: 41
+  seed: 11
+  lora_r: 16
+  lora_alpha: 16
+  dataset_sha256: ddc5594bfb1c78449ba40a263f5ac41d21c896c3c7ed7346341c7c080611a243
   training_label: REPORTED owner-metal
   evals: none-this-run
   publication_eligible: false
@@ -39,12 +51,15 @@ Separate SKU `SZLHOLDINGS/chaski-5050`. Not live `SZLHOLDINGS/chaski`. Adapters.
 | | |
 |---|---|
 | **Hub id** | `SZLHOLDINGS/chaski-5050` |
+| **Hub commit** | `c907ebe6e1fa900021be7b6fec19b38ec45be574` |
 | **Live Chaski** | `SZLHOLDINGS/chaski` — a different artifact. Never overwrite. |
 | **Silhouette** | `Qwen/Qwen3.5-0.8B` (Apache-2.0). Do not recut onto another instruct family. |
 | **Method** | Unsloth bf16 LoRA. `load_in_4bit=False`, `load_in_16bit=True`. r=16, **alpha=16** (not live Chaski's 16/32 pair). |
 | **Why not QLoRA** | Unsloth 2026 Qwen3.5 docs: do not QLoRA this family (quantization differences). |
-| **Hardware** | owner GPU / local RTX 5050. Not an HF Job. |
-| **Data** | jsonl-only `szl_dataset.jsonl`. Refuses `SZL_ESTATE_MANAGED.json`. |
+| **Hardware** | owner GPU / local RTX 5050. Not an HF Job. job `local-5050`. |
+| **Data** | jsonl-only `szl_dataset.jsonl`. Refuses `SZL_ESTATE_MANAGED.json`. `dataset_sha256` `ddc5594bfb1c78449ba40a263f5ac41d21c896c3c7ed7346341c7c080611a243`. |
+| **Weights** | AVAILABLE. `adapter_model.safetensors` present. |
+| **Train loss** | MEASURED `2.228136855544466` (`train_runtime` 883.2224s, 3 epochs, 41 rows). Train metric, not an eval. |
 | **Status** | CUTTING. `publication_eligible: false`. |
 | **Lab** | Do not load into the Khipu lab. No tok/s claims. |
 | **A11OY-MINI** | GGUF of **live** Chaski, not this 5050 kit. |
@@ -69,13 +84,15 @@ Product host: [a-11-oy.com](https://a-11-oy.com).
 
 ## Evaluation
 
-**Status: none-this-run.** Not MEASURED. Train loss is a train metric, not an eval. Do not invent 5/5.
+**Status: none-this-run.** Not MEASURED. Train loss MEASURED `2.228136855544466` is a train metric, not an eval. Do not invent 5/5. Not 5/5.
 
 ## Training
 
-Pinned: seed 11, 3 epochs, LoRA r=16 alpha=16, lr 2e-4, `per_device_train_batch_size=1`, `gradient_accumulation_steps=4`, `optim=adamw_8bit`, `warmup_steps=6`.
+Pinned: seed 11, 3 epochs, LoRA r=16 alpha=16, lr 2e-4, `per_device_train_batch_size=1`, `gradient_accumulation_steps=4`, `optim=adamw_8bit`, `warmup_steps=6`. QLoRA false. job `local-5050`.
 
-Script: `train_chaski_bf16_5050.py`. No Hub PUT from this checkout. Never overwrite `SZLHOLDINGS/chaski`.
+Verified Hub receipt (GitHub stamp only): commit `c907ebe6e1fa900021be7b6fec19b38ec45be574`. `adapter_model.safetensors` present. weights AVAILABLE. `training_receipt.json` train_loss MEASURED `2.228136855544466`, `train_runtime` 883.2224s, 41 rows. `dataset_sha256` `ddc5594bfb1c78449ba40a263f5ac41d21c896c3c7ed7346341c7c080611a243`. Training label stays **REPORTED owner-metal** until a signed receipt exists.
+
+Script: `train_chaski_bf16_5050.py`. GitHub stamp only. No Hub PUT from this checkout. Never overwrite `SZLHOLDINGS/chaski`.
 
 ## Limitations
 

@@ -15,6 +15,15 @@
 NEW Hub id: SZLHOLDINGS/chaski-5050. Not live SZLHOLDINGS/chaski.
 Do not push to SZLHOLDINGS/chaski. No Hub PUT from this checkout.
 
+Verified Hub receipt (GitHub stamp only):
+Hub SZLHOLDINGS/chaski-5050 commit c907ebe6e1fa900021be7b6fec19b38ec45be574.
+adapter_model.safetensors present. weights AVAILABLE.
+training_receipt.json: train_loss MEASURED 2.228136855544466,
+train_runtime 883.2224s, 3 epochs, 41 rows, seed 11, r=16 alpha=16,
+QLoRA false, job local-5050.
+dataset_sha256 ddc5594bfb1c78449ba40a263f5ac41d21c896c3c7ed7346341c7c080611a243.
+train_loss MEASURED is not an eval.
+
 CANONICAL_BASE = Qwen/Qwen3.5-0.8B (Apache, disclosed).
 jsonl-only szl_dataset.jsonl. Refuse SZL_ESTATE_MANAGED.json.
 
@@ -61,6 +70,24 @@ ADAPTER_DIR = HERE / "chaski-5050-adapter"
 OUTPUT_DIR = HERE / "outputs-5050"
 RECEIPT_STATUS = HERE / "training_receipt_5050.status.json"
 RECEIPT_TRAIN = HERE / "training_receipt_5050.json"
+
+# GitHub-only Hub receipt stamp. No Hub PUT. Do not change r/alpha.
+# Hub SZLHOLDINGS/chaski-5050 commit c907ebe6e1fa900021be7b6fec19b38ec45be574
+# adapter_model.safetensors present
+# training_receipt.json: train_loss MEASURED 2.228136855544466, train_runtime 883.2224s, 3 epochs, 41 rows, seed 11, r=16 alpha=16, QLoRA false, job local-5050
+# dataset_sha256 ddc5594bfb1c78449ba40a263f5ac41d21c896c3c7ed7346341c7c080611a243
+# evals none-this-run. publication_eligible false. weights AVAILABLE
+# train_loss MEASURED is not an eval. Training label REPORTED owner-metal until a signed receipt exists. Not 5/5.
+HUB_COMMIT = "c907ebe6e1fa900021be7b6fec19b38ec45be574"
+HUB_ADAPTER_FILE = "adapter_model.safetensors"
+HUB_TRAIN_LOSS = 2.228136855544466
+HUB_TRAIN_RUNTIME_S = 883.2224
+HUB_TRAINING_ROWS = 41
+HUB_DATASET_SHA256 = (
+    "ddc5594bfb1c78449ba40a263f5ac41d21c896c3c7ed7346341c7c080611a243"
+)
+HUB_JOB = "local-5050"
+HUB_WEIGHTS = "AVAILABLE"
 
 OUROBOROS = [
     {
@@ -272,6 +299,15 @@ def kit_receipt(*, live: bool = False, train_loss: float | None = None) -> dict[
         "train_loss_is_not_eval": True,
         "weights": "LOCAL" if local else "UNAVAILABLE",
         "adapter": "LOCAL" if local else "UNAVAILABLE",
+        "hub_commit": HUB_COMMIT,
+        "hub_adapter_file": HUB_ADAPTER_FILE,
+        "hub_train_loss": HUB_TRAIN_LOSS,
+        "hub_train_loss_label": "MEASURED",
+        "hub_train_runtime_s": HUB_TRAIN_RUNTIME_S,
+        "hub_training_rows": HUB_TRAINING_ROWS,
+        "hub_dataset_sha256": HUB_DATASET_SHA256,
+        "hub_job": HUB_JOB,
+        "hub_weights": HUB_WEIGHTS,
         "local_adapter_dir": str(ADAPTER_DIR),
         "proposal_only": True,
         "publication_eligible": False,
@@ -285,9 +321,10 @@ def kit_receipt(*, live: bool = False, train_loss: float | None = None) -> dict[
             "Local RTX 5050 Unsloth LoRA. QLoRA forbidden. Not an HF Job. "
             "Training label REPORTED owner-metal until a signed receipt exists. "
             "Evals none-this-run. Not 5/5. publication_eligible false. "
+            "Hub train_loss MEASURED is not an eval. weights AVAILABLE on Hub. "
             "Do not overwrite SZLHOLDINGS/chaski. Do not load into the Khipu lab. "
             "No tok/s claims. A11OY-MINI is a GGUF of live Chaski, not 5050. "
-            "No Hub PUT from this checkout."
+            "GitHub stamp only. No Hub PUT from this checkout."
         ),
         "computed_at": datetime.now(timezone.utc).isoformat() if live else None,
         "source": "local-train" if live else "forge-status",

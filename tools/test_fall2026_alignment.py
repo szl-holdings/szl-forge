@@ -247,12 +247,22 @@ class Fall2026AlignmentTests(unittest.TestCase):
         self.assertEqual("none-this-run", receipt["evals"])
         self.assertEqual("REPORTED owner-metal", receipt["label"])
         self.assertEqual(16, receipt["lora_alpha"])
+        self.assertEqual(16, receipt["lora_r"])
         self.assertEqual(6, receipt["warmup_steps"])
         self.assertTrue(receipt["qlora_forbidden"])
         self.assertFalse(receipt["signed_receipt"])
         self.assertFalse(receipt["alias_of_live_chaski"])
         self.assertFalse(receipt["a11oy_mini"])
         self.assertFalse(receipt["hub_push"])
+        self.assertEqual(
+            "c907ebe6e1fa900021be7b6fec19b38ec45be574", receipt["hub_commit"]
+        )
+        self.assertEqual("adapter_model.safetensors", receipt["hub_adapter_file"])
+        self.assertEqual(2.228136855544466, receipt["hub_train_loss"])
+        self.assertEqual("MEASURED", receipt["hub_train_loss_label"])
+        self.assertEqual("AVAILABLE", receipt["hub_weights"])
+        self.assertEqual("local-5050", receipt["hub_job"])
+        self.assertTrue(receipt["train_loss_is_not_eval"])
         with tempfile.TemporaryDirectory() as tmp:
             estate = Path(tmp) / "SZL_ESTATE_MANAGED.json"
             estate.write_text("{}", encoding="utf-8")

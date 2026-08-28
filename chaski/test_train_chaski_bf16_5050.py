@@ -94,6 +94,49 @@ class Chaski5050GuardTests(unittest.TestCase):
         self.assertIn("Khipu lab", card)
         self.assertIn("No Hub PUT", card)
 
+    def test_github_hub_receipt_stamp(self) -> None:
+        comments = (
+            "# Hub SZLHOLDINGS/chaski-5050 commit c907ebe6e1fa900021be7b6fec19b38ec45be574",
+            "# adapter_model.safetensors present",
+            "# training_receipt.json: train_loss MEASURED 2.228136855544466, train_runtime 883.2224s, 3 epochs, 41 rows, seed 11, r=16 alpha=16, QLoRA false, job local-5050",
+            "# dataset_sha256 ddc5594bfb1c78449ba40a263f5ac41d21c896c3c7ed7346341c7c080611a243",
+            "# evals none-this-run. publication_eligible false. weights AVAILABLE",
+        )
+        text = SCRIPT.read_text(encoding="utf-8")
+        for line in comments:
+            self.assertIn(line + "\n", text)
+        self.assertIn("LORA_R = 16", text)
+        self.assertIn("LORA_ALPHA = 16", text)
+        self.assertNotIn("LORA_ALPHA = 32", text)
+        for path in (SCRIPT, CARD, README):
+            blob = path.read_text(encoding="utf-8")
+            self.assertIn("c907ebe6e1fa900021be7b6fec19b38ec45be574", blob)
+            self.assertIn("2.228136855544466", blob)
+            self.assertIn("adapter_model.safetensors", blob)
+            self.assertIn(
+                "ddc5594bfb1c78449ba40a263f5ac41d21c896c3c7ed7346341c7c080611a243",
+                blob,
+            )
+            self.assertIn("AVAILABLE", blob)
+            self.assertIn("local-5050", blob)
+            self.assertIn("REPORTED owner-metal", blob)
+            self.assertIn("none-this-run", blob)
+            self.assertIn("883.2224", blob)
+            self.assertNotIn("6a91bf10", blob)
+            self.assertNotIn("a11oy.com", blob.lower())
+        card = CARD.read_text(encoding="utf-8")
+        self.assertIn("Not MEASURED", card)
+        self.assertIn("Not 5/5", card)
+        self.assertIn("A11OY-MINI", card)
+        self.assertIn("live", card.lower())
+        self.assertEqual(16, recut.LORA_R)
+        self.assertEqual(16, recut.LORA_ALPHA)
+        self.assertEqual(
+            "c907ebe6e1fa900021be7b6fec19b38ec45be574", recut.HUB_COMMIT
+        )
+        self.assertEqual("AVAILABLE", recut.HUB_WEIGHTS)
+        self.assertEqual("local-5050", recut.HUB_JOB)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
