@@ -2,8 +2,13 @@
 """Proposal-only KHIPU-R2 generate server. Separate SKU. No Hub pin.
 
 base_model = Qwen/Qwen2.5-1.5B-Instruct
-ROADMAP until a local adapter file lands. Does not load signed SZL-Khipu-1.5B.
-House CPU lab stays on signed Khipu GGUF. Jobs UNKNOWN. No Hub PUT.
+Live Hub adapter is AVAILABLE (147.8MB). This server does not pin Hub serve
+and does not load signed SZL-Khipu-1.5B. House CPU lab stays signed Khipu GGUF.
+This-kit jobs UNKNOWN. No Hub PUT.
+
+CHAWPI extra lock: Hub receipt ddf6c50 publication_eligible false is the
+public claim. Launcher still no --run-job. r=32 α=64 this SKU.
+stale profile key dropped. Signed 1.5B stays 2/6. Do not merge #64.
 """
 from __future__ import annotations
 
@@ -18,6 +23,12 @@ BASE_MODEL = "Qwen/Qwen2.5-1.5B-Instruct"
 HUB = "SZLHOLDINGS/KHIPU-R2"
 FORBIDDEN_HUB = "SZLHOLDINGS/SZL-Khipu-1.5B"
 ADAPTER_DIR = HERE / "khipu-r2-adapter"
+HUB_JOB_ID = "6a91bf11984507d9db4ea104"
+HUB_JOB_STATUS = "COMPLETED"
+HUB_ADAPTER_STATUS = "AVAILABLE"
+HUB_ADAPTER_SIZE = "147.8MB"
+HUB_RECEIPT_COMMIT = "ddf6c50d8baa9f818b9f478086e7b5919eb773cf"
+CHAWPI = "hub-receipt-ddf6c50-publication-eligible-false"
 
 
 def availability() -> dict[str, Any]:
@@ -31,11 +42,18 @@ def availability() -> dict[str, Any]:
         "proposal_only": True,
         "serve_pin": False,
         "inference_lab_pin": False,
+        "lab": "signed Khipu GGUF",
         "hub_put": False,
+        "hub_job_id": HUB_JOB_ID,
+        "hub_job_status": HUB_JOB_STATUS,
+        "hub_adapter": HUB_ADAPTER_STATUS,
+        "hub_adapter_size": HUB_ADAPTER_SIZE,
+        "hub_receipt_commit": HUB_RECEIPT_COMMIT,
+        "chawpi": CHAWPI,
         "jobs": "UNKNOWN",
+        "jobs_scope": "this-kit",
         "adapter": "LOCAL" if adapter_present else "UNAVAILABLE",
-        "weights": "LOCAL" if adapter_present else "UNAVAILABLE",
-        "card_status": "ROADMAP",
+        "local_adapter": "LOCAL" if adapter_present else "UNAVAILABLE",
         "publication_eligible": False,
         "status": "READY" if adapter_present else "UNAVAILABLE",
     }
@@ -69,10 +87,13 @@ class Handler(BaseHTTPRequestHandler):
                 {
                     "error": "UNAVAILABLE",
                     "detail": (
-                        "No local khipu-r2-adapter. ROADMAP. No Hub serve pin. "
+                        "No local khipu-r2-adapter. Hub adapter is AVAILABLE "
+                        f"({HUB_ADAPTER_SIZE}) but this server does not pin Hub. "
+                        "Lab stays signed Khipu GGUF. "
                         f"Does not load {FORBIDDEN_HUB}."
                     ),
                     "base_model": BASE_MODEL,
+                    "hub_adapter": HUB_ADAPTER_STATUS,
                     "jobs": "UNKNOWN",
                     "publication_eligible": False,
                 },
@@ -113,7 +134,7 @@ def serve(host: str, port: int) -> int:
     httpd = ThreadingHTTPServer((host, port), Handler)
     print(
         f"[khipu-r2-serve] {host}:{port} base_model={BASE_MODEL} "
-        "pin=false jobs=UNKNOWN"
+        f"hub_adapter={HUB_ADAPTER_STATUS} pin=false jobs=UNKNOWN"
     )
     httpd.serve_forever()
     return 0
