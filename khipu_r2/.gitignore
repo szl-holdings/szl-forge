@@ -1,0 +1,7 @@
+khipu-r2-adapter/
+khipu-r2-merged/
+outputs/
+training_receipt.json
+training_receipt.status.json
+eval_report.json
+__pycache__/
