@@ -1,0 +1,14 @@
+# Qantu — SZLHOLDINGS/qantu
+
+Document / receipt VLM. **No trainer in this repository.**
+
+| | |
+|---|---|
+| **base_model** | `google/gemma-4-E4B-it` (Apache-2.0, ungated). Not a Gemma 3 recut. |
+| **Training** | `SKIP-NO-ADMITTED-IMAGES` |
+| **Jobs** | UNKNOWN (no job id) |
+| **github_source** | `qantu/` (this note + fail-closed skip receipt) |
+
+`killinchu-osint-corpus` is not an admitted image set. Do not add `qantu/train_*.py`.
+
+House CPU lab serves Khipu GGUF, not this repo.
