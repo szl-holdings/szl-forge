@@ -53,7 +53,12 @@ szl:
 
 The house CPU lab serves **Khipu GGUF**, not Chaski. Lab load forbidden.
 
-**Evaluation:** none-this-run. Train loss MEASURED `1.782708187121898` is a train metric, not an eval. Quality is UNKNOWN. Not 5/5.
+**Evaluation:** none-this-run. Named-N held-out files are wired at
+`chaski/gate/json_drafts.n5.jsonl` (n=5 JSON drafts) and
+`chaski/gate/adversarial_refusals.n6.jsonl` (n=6 adversarial refusals).
+The generate gate has not run. `publication_eligible` stays false until
+run. Train loss MEASURED `1.782708187121898` is a train metric, not an
+eval. Quality is UNKNOWN. Not a passing JSON-draft score.
 
 ## Training
 
