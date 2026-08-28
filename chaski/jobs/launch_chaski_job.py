@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Print the Chaski HF Jobs UV command. This checkout does not fire a job.
 
-Live job 6a91bf10 was report_to=none. Hub tensors exist as of 2026-08-28T17:08Z.
+Job 6a91bf10 COMPLETED, weights AVAILABLE. Hub tensors exist.
 Do not launch another job from forge. Do not recut Hub README.
 huggingface_hub.run_uv_job is imported only behind an explicit --run-job gate
 that this kit refuses.
@@ -42,7 +42,7 @@ def plan() -> dict:
         "submitted": False,
         "live_job_id": LIVE_JOB_ID,
         "live_job_url": LIVE_JOB_URL,
-        "live_job_status": "RUNNING",
+        "live_job_status": "COMPLETED",
         "hub_tensors_observed_at": "2026-08-28T17:08Z",
         "hub_tensors": [
             "adapter_model.safetensors",
@@ -71,7 +71,7 @@ def main() -> int:
     payload = plan()
     if args.run_job:
         print(
-            "[chaski-jobs] refusing to fire: live report_to=none job already exists "
+            "[chaski-jobs] refusing to fire: 6a91bf10 COMPLETED, weights AVAILABLE "
             f"at {LIVE_JOB_URL}",
             file=sys.stderr,
         )

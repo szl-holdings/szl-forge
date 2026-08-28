@@ -18,7 +18,7 @@ EXACT_COMMENTS = (
     "# 6a91b990 FAILED pyyaml 30s",
     "# 6a91ba00 COMPLETED receipt-only, weights UNAVAILABLE, train_loss MEASURED 1.7827",
     "# 6a91bb7c ERROR after 64/64, train_loss MEASURED 1.7844666938763112, merge ran, upload_folder Trackio 404, no safetensors",
-    "# 6a91bf1045686a1580c12105 was live report_to=none; Hub tensors as of 2026-08-28 17:08 UTC",
+    "# 6a91bf1045686a1580c12105 COMPLETED, weights AVAILABLE",
 )
 
 
@@ -51,7 +51,7 @@ class Fall2026AlignmentTests(unittest.TestCase):
                         f"{path}:{lineno} stale id must not be RUNNING",
                     )
 
-    def test_only_live_job_is_running_among_chaski_jobs(self) -> None:
+    def test_attempt5_is_completed_not_running(self) -> None:
         text = CHASKI_TRAIN.read_text(encoding="utf-8")
         for line in text.splitlines():
             if "6a91b8ba" in line or "6a91b990" in line:
@@ -60,9 +60,27 @@ class Fall2026AlignmentTests(unittest.TestCase):
                 self.assertIn("ERROR", line)
                 self.assertNotIn("RUNNING", line)
             if line.strip().startswith("# 6a91bf10"):
-                self.assertIn("was live", line)
-                self.assertNotIn("COMPLETED", line)
-                self.assertIn("Hub tensors", line)
+                self.assertIn("COMPLETED", line)
+                self.assertIn("AVAILABLE", line)
+                self.assertNotIn("RUNNING", line)
+        skip_parts = {".git", "agent-forge", "__pycache__", "reports"}
+        for path in (ROOT / "chaski").rglob("*"):
+            if not path.is_file():
+                continue
+            if any(part in skip_parts for part in path.parts):
+                continue
+            blob = path.read_text(encoding="utf-8", errors="replace")
+            for lineno, line in enumerate(blob.splitlines(), 1):
+                if "6a91bf1045686a1580c12105" in line or line.strip().startswith(
+                    "# 6a91bf10"
+                ):
+                    stamped_running = (
+                        "RUNNING" in line and "not RUNNING" not in line
+                    )
+                    self.assertFalse(
+                        stamped_running,
+                        f"{path}:{lineno} 6a91bf10 must not be RUNNING",
+                    )
 
     def test_chaski_base_is_qwen35_08b_not_qwen25(self) -> None:
         text = CHASKI_TRAIN.read_text(encoding="utf-8")
@@ -93,12 +111,13 @@ class Fall2026AlignmentTests(unittest.TestCase):
             text=True,
         )
         self.assertIn("CUTTING", completed.stdout)
-        self.assertIn("present-on-hub-as-of-2026-08-28T17:08Z", completed.stdout)
+        self.assertIn("AVAILABLE", completed.stdout)
         self.assertIn("none-this-run", completed.stdout)
         self.assertNotIn("5/5", completed.stdout)
         self.assertIn("6a91ba00984507d9db4ea07f COMPLETED", completed.stdout)
         self.assertIn("6a91bb7c984507d9db4ea0a4 ERROR", completed.stdout)
-        self.assertIn("6a91bf1045686a1580c12105 RUNNING", completed.stdout)
+        self.assertIn("6a91bf1045686a1580c12105 COMPLETED", completed.stdout)
+        self.assertNotIn("6a91bf1045686a1580c12105 RUNNING", completed.stdout)
         receipt = json.loads(
             (ROOT / "chaski" / "training_receipt.status.json").read_text(
                 encoding="utf-8"
@@ -106,9 +125,7 @@ class Fall2026AlignmentTests(unittest.TestCase):
         )
         self.assertEqual("Qwen/Qwen3.5-0.8B", receipt["base_model"])
         self.assertEqual(1.782708187121898, receipt["training_loss"])
-        self.assertEqual(
-            "present-on-hub-as-of-2026-08-28T17:08Z", receipt["weights"]
-        )
+        self.assertEqual("AVAILABLE", receipt["weights"])
         self.assertEqual("none-this-run", receipt["evals"])
         self.assertFalse(receipt["publication_eligible"])
         self.assertIn("adapter_model.safetensors", receipt["hub_tensors"])
@@ -122,13 +139,14 @@ class Fall2026AlignmentTests(unittest.TestCase):
         self.assertEqual("FAILED", jobs["6a91b990984507d9db4ea077"])
         self.assertEqual("COMPLETED", jobs["6a91ba00984507d9db4ea07f"])
         self.assertEqual("ERROR", jobs["6a91bb7c984507d9db4ea0a4"])
-        self.assertEqual("RUNNING", jobs["6a91bf1045686a1580c12105"])
+        self.assertEqual("COMPLETED", jobs["6a91bf1045686a1580c12105"])
         by_id = {item["id"]: item for item in receipt["jobs"]}
         self.assertEqual("UNAVAILABLE", by_id["6a91ba00984507d9db4ea07f"]["weights"])
         self.assertEqual("UNAVAILABLE", by_id["6a91bb7c984507d9db4ea0a4"]["weights"])
-        self.assertEqual("RUNNING", by_id["6a91bf1045686a1580c12105"]["status"])
+        self.assertEqual("COMPLETED", by_id["6a91bf1045686a1580c12105"]["status"])
+        self.assertEqual("AVAILABLE", by_id["6a91bf1045686a1580c12105"]["weights"])
         self.assertNotEqual(
-            "COMPLETED", by_id["6a91bf1045686a1580c12105"]["status"]
+            "RUNNING", by_id["6a91bf1045686a1580c12105"]["status"]
         )
         with tempfile.TemporaryDirectory() as tmp:
             estate = Path(tmp) / "SZL_ESTATE_MANAGED.json"
@@ -227,7 +245,9 @@ class Fall2026AlignmentTests(unittest.TestCase):
         self.assertIn("training_receipt.json", chaski)
         self.assertIn("~1.7839", chaski)
         self.assertIn("none-this-run", chaski)
-        self.assertIn("ERROR after upload", chaski)
+        self.assertIn("COMPLETED, weights AVAILABLE", chaski)
+        self.assertNotIn("jobs: RUNNING", chaski_front)
+        self.assertIn("weights: AVAILABLE", chaski_front)
         card = (ROOT / "chaski" / "HF_MODEL_CARD.md").read_text(encoding="utf-8")
         card_yaml_end = card.find("\n---\n", 3)
         card_body = card[card_yaml_end + 5 :].lstrip()

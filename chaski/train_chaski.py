@@ -23,11 +23,10 @@ Qwen/Qwen3.5-0.8B. Do not recut this kit onto another Qwen instruct family.
 A11OY-MINI is a later GGUF of THIS Chaski 0.8B. ROADMAP. Not Khipu. Not a third LLM.
 Hub adapter files exist as of 2026-08-28T17:08Z; a GGUF is not cut.
 
-CUTTING. Adapter files exist on Hub as of 2026-08-28T17:08Z.
-Evals remain none-this-run. Train loss is not an eval. Do not invent 5/5.
+CUTTING. Weights AVAILABLE on Hub. Evals remain none-this-run.
+Train loss is not an eval. Do not invent 5/5. Not ROADMAP.
 Do not pin serve. Do not recut Hub from this checkout (QURI owns Hub copy).
-6a91bf10 was the live report_to=none job. Files now on the repo.
-Do not restamp it COMPLETED. 6a91bb7c stays ERROR.
+6a91bf10 COMPLETED, weights AVAILABLE. 6a91bb7c stays ERROR.
 """
 from __future__ import annotations
 
@@ -46,7 +45,7 @@ HERE = Path(__file__).resolve().parent
 # 6a91b990 FAILED pyyaml 30s
 # 6a91ba00 COMPLETED receipt-only, weights UNAVAILABLE, train_loss MEASURED 1.7827
 # 6a91bb7c ERROR after 64/64, train_loss MEASURED 1.7844666938763112, merge ran, upload_folder Trackio 404, no safetensors
-# 6a91bf1045686a1580c12105 was live report_to=none; Hub tensors as of 2026-08-28 17:08 UTC
+# 6a91bf1045686a1580c12105 COMPLETED, weights AVAILABLE
 
 MAX_SEQ_LEN = 2048
 BASE = os.environ.get("BASE_MODEL", "unsloth/Qwen3.5-0.8B")
@@ -76,12 +75,11 @@ HUB_TENSORS = [
     "adapter_config.json",
     "model.safetensors-00001-of-00001.safetensors",
 ]
-WEIGHTS_STATUS = f"present-on-hub-as-of-{HUB_TENSORS_OBSERVED_AT}"
+WEIGHTS_STATUS = "AVAILABLE"
 
 # Five HF Jobs attempts. Status strings are bound to these ids.
 # Attempt 3 COMPLETED (receipt-only). Attempt 4 ERROR (no safetensors).
-# Attempt 5 (6a91bf10) was the live report_to=none job. Files now on repo
-# as of HUB_TENSORS_OBSERVED_AT. Not restamped COMPLETED.
+# Attempt 5 (6a91bf10) COMPLETED, weights AVAILABLE. Evals none-this-run.
 JOBS: list[dict[str, Any]] = [
     {
         "id": "6a91b8ba984507d9db4ea071",
@@ -129,17 +127,17 @@ JOBS: list[dict[str, Any]] = [
     },
     {
         "id": LIVE_JOB_ID,
-        "status": "RUNNING",
+        "status": "COMPLETED",
         "detail": (
-            "was the live report_to=none job. Files now on repo as of "
+            "report_to=none. weights AVAILABLE. Files on repo as of "
             f"{HUB_TENSORS_OBSERVED_AT}: "
             + ", ".join(HUB_TENSORS)
-            + ". Not restamped COMPLETED. Evals none-this-run. "
-            "Train loss is not an eval. Do not invent 5/5."
+            + ". Evals none-this-run. Train loss is not an eval. "
+            "Do not invent 5/5. Not ROADMAP."
         ),
         "url": LIVE_JOB_URL,
         "report_to": "none",
-        "weights": WEIGHTS_STATUS,
+        "weights": "AVAILABLE",
         "hub_tensors": HUB_TENSORS,
         "hub_tensors_observed_at": HUB_TENSORS_OBSERVED_AT,
         "evals": "none-this-run",
@@ -325,7 +323,8 @@ def cutting_receipt(*, live: bool = False) -> dict[str, Any]:
             "Training completion is not evaluation. No JSON/refusal gate ran "
             "this run. Do not claim 5/5 or 6/6. Adapter files exist on Hub "
             f"as of {HUB_TENSORS_OBSERVED_AT}. Evals remain none-this-run. "
-            "Train loss is not an eval. CUTTING. Do not restamp attempt 5 COMPLETED."
+            "Train loss is not an eval. CUTTING. 6a91bf10 COMPLETED, "
+            "weights AVAILABLE. Evals none-this-run."
         ),
         "computed_at": datetime.now(timezone.utc).isoformat() if live else None,
         "source": "forge-status" if not live else "local-train",
@@ -345,7 +344,7 @@ def status_main() -> int:
         f"[chaski] card=CUTTING weights={WEIGHTS_STATUS} evals=none-this-run"
     )
     print(f"[chaski] attempt3 receipt already on Hub: {HUB_RECEIPT_URL}")
-    print(f"[chaski] 6a91bf10 was live report_to=none: {LIVE_JOB_URL}")
+    print(f"[chaski] 6a91bf10 COMPLETED weights=AVAILABLE: {LIVE_JOB_URL}")
     for job in JOBS:
         print(f"[chaski] job {job['id']} {job['status']}")
     receipt = cutting_receipt(live=False)

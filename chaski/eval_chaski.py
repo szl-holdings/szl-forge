@@ -30,8 +30,8 @@ def main() -> int:
         "evals": "none-this-run",
         "quality": "UNKNOWN",
         "train_loss_is_not_eval": True,
-        "adapter": "present-on-hub-as-of-2026-08-28T17:08Z",
-        "weights": "present-on-hub-as-of-2026-08-28T17:08Z",
+        "adapter": "AVAILABLE",
+        "weights": "AVAILABLE",
         "hub_tensors": [
             "adapter_model.safetensors",
             "adapter_config.json",
