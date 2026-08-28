@@ -88,6 +88,9 @@ jobs:
             chaski/train_chaski.py \
             chaski/eval_chaski.py \
             chaski/serve_chaski.py \
+            chaski/train_chaski_bf16_5050.py \
+            chaski/eval_chaski_5050.py \
+            chaski/serve_chaski_5050.py \
             chaski/jobs/launch_chaski_job.py \
             qantu/skip_receipt.py \
             waman/skip_receipt.py \

@@ -147,9 +147,12 @@ class Fall2026AlignmentTests(unittest.TestCase):
             ROOT / "chakana" / "train_chakana.py",
             ROOT / "tinku" / "train_tinku.py",
             ROOT / "chaski" / "eval_chaski.py",
+            ROOT / "chaski" / "train_chaski_bf16_5050.py",
+            ROOT / "chaski" / "eval_chaski_5050.py",
             ROOT / "chakana" / "eval_chakana.py",
             ROOT / "tinku" / "eval_tinku.py",
             ROOT / "chaski" / "serve_chaski.py",
+            ROOT / "chaski" / "serve_chaski_5050.py",
             ROOT / "khipu" / "serve_khipu.py",
             ROOT / "receiptagent" / "serve_receiptagent.py",
             ROOT / "frontier" / "qwen35-receiptagent-v2" / "serve_candidate.py",
@@ -188,6 +191,77 @@ class Fall2026AlignmentTests(unittest.TestCase):
             )
             self.assertEqual(2, fired.returncode)
             self.assertIn("refusing", fired.stderr.lower())
+
+    def test_chaski_5050_is_new_id_not_live_chaski(self) -> None:
+        train = ROOT / "chaski" / "train_chaski_bf16_5050.py"
+        eval_script = ROOT / "chaski" / "eval_chaski_5050.py"
+        serve = ROOT / "chaski" / "serve_chaski_5050.py"
+        readme = ROOT / "chaski" / "README_5050.md"
+        text = train.read_text(encoding="utf-8")
+        self.assertTrue(train.is_file())
+        self.assertTrue(eval_script.is_file())
+        self.assertTrue(serve.is_file())
+        self.assertTrue(readme.is_file())
+        self.assertIn('HUB = os.environ.get("HUB_MODEL_ID", "SZLHOLDINGS/chaski-5050")', text)
+        self.assertIn('CANONICAL_BASE = "Qwen/Qwen3.5-0.8B"', text)
+        self.assertIn("load_in_4bit=False", text)
+        self.assertIn("load_in_16bit=True", text)
+        self.assertIn("NUM_TRAIN_EPOCHS = 3", text)
+        self.assertIn("GRAD_ACCUM = 4", text)
+        self.assertIn('"jobs": "not-an-hf-job"', text)
+        self.assertIn("Do not push to SZLHOLDINGS/chaski", text)
+        self.assertNotIn("Qwen2.5", text)
+        card = readme.read_text(encoding="utf-8")
+        self.assertIn("SZLHOLDINGS/chaski-5050", card)
+        self.assertIn("Not an HF Job", card)
+        self.assertIn("Not** an alias of live Chaski", card)
+        self.assertIn("Not** `A11OY-MINI`", card)
+        completed = subprocess.run(
+            [sys.executable, str(train)],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        self.assertIn("SZLHOLDINGS/chaski-5050", completed.stdout)
+        self.assertIn("NOT an HF Job", completed.stdout)
+        self.assertIn("none-this-run", completed.stdout)
+        self.assertNotIn("5/5", completed.stdout)
+        receipt = json.loads(
+            (ROOT / "chaski" / "training_receipt_5050.status.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        self.assertEqual("SZLHOLDINGS/chaski-5050", receipt["artifact"])
+        self.assertEqual("Qwen/Qwen3.5-0.8B", receipt["base_model"])
+        self.assertEqual("not-an-hf-job", receipt["jobs"])
+        self.assertEqual("none-this-run", receipt["evals"])
+        self.assertTrue(receipt["train_loss_is_not_eval"])
+        self.assertFalse(receipt["alias_of_live_chaski"])
+        self.assertFalse(receipt["a11oy_mini"])
+        self.assertFalse(receipt["hub_push"])
+        with tempfile.TemporaryDirectory() as tmp:
+            estate = Path(tmp) / "SZL_ESTATE_MANAGED.json"
+            estate.write_text("{}", encoding="utf-8")
+            refused = subprocess.run(
+                [sys.executable, str(train), "--dataset-file", str(estate)],
+                cwd=ROOT,
+                capture_output=True,
+                text=True,
+            )
+            self.assertNotEqual(0, refused.returncode)
+            self.assertIn("SZL_ESTATE_MANAGED.json", refused.stderr + refused.stdout)
+        pinned = subprocess.run(
+            [sys.executable, str(serve), "--check"],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        serve_payload = json.loads(pinned.stdout)
+        self.assertEqual("SZLHOLDINGS/chaski-5050", serve_payload["serve_pin"])
+        self.assertEqual("SZLHOLDINGS/chaski-5050", serve_payload["model"])
+        self.assertFalse(serve_payload["live_chaski_pin"])
 
 
 if __name__ == "__main__":

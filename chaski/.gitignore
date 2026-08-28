@@ -1,7 +1,12 @@
 chaski-adapter/
+chaski-5050-adapter/
 chaski-merged/
 outputs/
+outputs-5050/
 training_receipt.json
 training_receipt.status.json
+training_receipt_5050.json
+training_receipt_5050.status.json
 eval_report.json
+eval_report_5050.json
 __pycache__/
