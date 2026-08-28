@@ -38,6 +38,9 @@ szl:
   dataset_sha256: ddc5594bfb1c78449ba40a263f5ac41d21c896c3c7ed7346341c7c080611a243
   training_label: REPORTED owner-metal
   sku_status: NOT MEASURED
+  live_shelf: false
+  live_portfolio: false
+  chawpi: separate-sku-off-receipted-unsloth-live
   evals: none-this-run
   publication_eligible: false
   qlora: banned-on-qwen3.5
@@ -62,12 +65,15 @@ Separate SKU `SZLHOLDINGS/chaski-5050`. Not live `SZLHOLDINGS/chaski`. Adapters.
 | **Data** | jsonl-only `szl_dataset.jsonl`. Refuses `SZL_ESTATE_MANAGED.json`. `dataset_sha256` `ddc5594bfb1c78449ba40a263f5ac41d21c896c3c7ed7346341c7c080611a243`. |
 | **Weights** | AVAILABLE. `adapter_model.safetensors` present. |
 | **Train loss** | MEASURED `2.228136855544466` (`train_runtime` 883.2224s, 3 epochs, 41 rows). train metric, not an eval. |
-| **SKU** | **NOT MEASURED.** Do not stamp this model as MEASURED. |
+| **SKU** | **NOT MEASURED.** Do not stamp this model as MEASURED. Separate SKU. Off Receipted Unsloth LIVE shelf. Off the LIVE portfolio table. |
 | **Status** | CUTTING. `publication_eligible: false`. |
-| **Lab** | Do not load into the Khipu lab. No tok/s claims. |
+| **Lab** | No lab load. Do not load into the Khipu lab. No tok/s claims. |
 | **A11OY-MINI** | GGUF of **live** Chaski, not this 5050 kit. |
+| **CHAWPI** | Do not add to Receipted Unsloth LIVE shelf. That shelf stays live Chaski / Khipu / ReceiptAgent. Do not merge #59. |
 
 > **Fashion rule.** Silhouette from Qwen3.5 instruct. Cut is original SZL doctrine SFT. We do not republish someone else's tensors. This card is house copy, not an Unsloth default card.
+
+> **CHAWPI fashion.** `chaski-5050` is a separate SKU. Do not add it to the Receipted Unsloth LIVE shelf. That shelf stays live Chaski / Khipu / ReceiptAgent. Keep it off the LIVE portfolio table. No lab load. Do not merge #59. Train loss is not an eval.
 
 ## Intended use
 

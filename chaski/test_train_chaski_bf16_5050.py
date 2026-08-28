@@ -94,6 +94,38 @@ class Chaski5050GuardTests(unittest.TestCase):
         self.assertIn("Khipu lab", card)
         self.assertIn("No Hub PUT", card)
 
+    def test_chawpi_fashion_off_live_shelf(self) -> None:
+        comments = (
+            "# CHAWPI fashion: separate SKU. Do not add to Receipted Unsloth LIVE shelf.",
+            "# That shelf stays live Chaski / Khipu / ReceiptAgent. Keep it off the LIVE portfolio table.",
+            "# No lab load. Do not merge #59. Train loss is not an eval.",
+        )
+        text = SCRIPT.read_text(encoding="utf-8")
+        for line in comments:
+            self.assertIn(line + "\n", text)
+        for path in (SCRIPT, CARD, README):
+            blob = path.read_text(encoding="utf-8")
+            self.assertIn("CHAWPI", blob)
+            self.assertIn("Receipted Unsloth LIVE", blob)
+            self.assertIn("LIVE portfolio", blob)
+            self.assertIn("Do not merge #59", blob)
+            self.assertIn("No lab load", blob)
+            self.assertIn("Train loss is not an eval", blob)
+            self.assertNotIn("6a91bf10", blob)
+            self.assertNotIn("a11oy.com", blob.lower())
+        self.assertFalse(recut.LIVE_SHELF)
+        self.assertFalse(recut.LIVE_PORTFOLIO)
+        live_surfaces = (
+            ROOT / "README.md",
+            ROOT / "portfolio" / "model_portfolio.json",
+            ROOT / "spaces" / "szl-forge-lab" / "model_portfolio.json",
+            ROOT / "publishing" / "model-source-bindings.json",
+        )
+        for path in live_surfaces:
+            blob = path.read_text(encoding="utf-8")
+            self.assertNotIn("chaski-5050", blob)
+            self.assertNotIn("SZLHOLDINGS/chaski-5050", blob)
+
     def test_github_hub_receipt_stamp(self) -> None:
         comments = (
             "# Hub SZLHOLDINGS/chaski-5050 commit c907ebe6e1fa900021be7b6fec19b38ec45be574",

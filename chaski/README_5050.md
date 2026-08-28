@@ -14,10 +14,11 @@ Separate SKU. **Not** live [`SZLHOLDINGS/chaski`](https://huggingface.co/SZLHOLD
 | **Weights** | AVAILABLE. `adapter_model.safetensors` present on Hub. |
 | **Train loss** | MEASURED `2.228136855544466` (`train_runtime` 883.2224s, 3 epochs, 41 rows). train metric, not an eval. |
 | **Training label** | `REPORTED owner-metal` until a signed receipt exists. |
-| **SKU** | **NOT MEASURED.** Do not stamp this model as MEASURED. |
-| **Evals** | none-this-run. Not 5/5. `publication_eligible: false`. |
-| **Lab** | Do not load into the Khipu lab. No tok/s claims. |
+| **SKU** | **NOT MEASURED.** Do not stamp this model as MEASURED. Separate SKU. Off Receipted Unsloth LIVE shelf. Off the LIVE portfolio table. |
+| **Evals** | none-this-run. Not 5/5. `publication_eligible: false`. Train loss is not an eval. |
+| **Lab** | No lab load. Do not load into the Khipu lab. No tok/s claims. |
 | **A11OY-MINI** | GGUF of **live** Chaski, not this 5050 kit. |
+| **CHAWPI** | Do not add to Receipted Unsloth LIVE shelf. That shelf stays live Chaski / Khipu / ReceiptAgent. Do not merge #59. |
 
 ## Scripts
 
@@ -26,4 +27,4 @@ Separate SKU. **Not** live [`SZLHOLDINGS/chaski`](https://huggingface.co/SZLHOLD
 - `chaski/serve_chaski_5050.py` — proposal-only. Serve pin is `SZLHOLDINGS/chaski-5050`, not live Chaski.
 - `chaski/HF_MODEL_CARD_5050.md` — house card for this SKU. Not live Chaski.
 
-GitHub stamp only. No Hub PUT from this checkout. Hub README is not recut from this checkout.
+GitHub stamp only. No Hub PUT from this checkout. Hub README is not recut from this checkout. CHAWPI fashion: keep `chaski-5050` off the LIVE portfolio table.

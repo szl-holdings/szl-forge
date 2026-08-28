@@ -263,8 +263,13 @@ class Fall2026AlignmentTests(unittest.TestCase):
         self.assertEqual("AVAILABLE", receipt["hub_weights"])
         self.assertEqual("local-5050", receipt["hub_job"])
         self.assertEqual("NOT MEASURED", receipt["sku_status"])
+        self.assertFalse(receipt["live_shelf"])
+        self.assertFalse(receipt["live_portfolio"])
         self.assertNotEqual("MEASURED", receipt["label"])
         self.assertTrue(receipt["train_loss_is_not_eval"])
+        self.assertIn("Khipu lab", receipt["claim_boundary"])
+        self.assertIn("Receipted Unsloth LIVE", receipt["claim_boundary"])
+        self.assertIn("Do not merge #59", receipt["claim_boundary"])
         with tempfile.TemporaryDirectory() as tmp:
             estate = Path(tmp) / "SZL_ESTATE_MANAGED.json"
             estate.write_text("{}", encoding="utf-8")

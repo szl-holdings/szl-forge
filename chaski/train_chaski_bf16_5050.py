@@ -25,6 +25,11 @@ dataset_sha256 ddc5594bfb1c78449ba40a263f5ac41d21c896c3c7ed7346341c7c080611a243.
 train_loss MEASURED is a train metric, not an eval.
 The SKU is NOT MEASURED. Do not stamp the model as MEASURED.
 
+CHAWPI fashion: separate SKU. Do not add chaski-5050 to the Receipted
+Unsloth LIVE shelf. That shelf stays live Chaski / Khipu / ReceiptAgent.
+Keep it off the LIVE portfolio table. No lab load. Do not merge #59.
+Train loss is not an eval.
+
 CANONICAL_BASE = Qwen/Qwen3.5-0.8B (Apache, disclosed).
 jsonl-only szl_dataset.jsonl. Refuse SZL_ESTATE_MANAGED.json.
 
@@ -80,6 +85,9 @@ RECEIPT_TRAIN = HERE / "training_receipt_5050.json"
 # evals none-this-run. publication_eligible false. weights AVAILABLE
 # train_loss MEASURED is a train metric, not an eval. Training label REPORTED owner-metal until a signed receipt exists. Not 5/5.
 # SKU is NOT MEASURED (evals none-this-run, publication_eligible false). Do not stamp the model as MEASURED.
+# CHAWPI fashion: separate SKU. Do not add to Receipted Unsloth LIVE shelf.
+# That shelf stays live Chaski / Khipu / ReceiptAgent. Keep it off the LIVE portfolio table.
+# No lab load. Do not merge #59. Train loss is not an eval.
 HUB_COMMIT = "c907ebe6e1fa900021be7b6fec19b38ec45be574"
 HUB_ADAPTER_FILE = "adapter_model.safetensors"
 HUB_TRAIN_LOSS = 2.228136855544466
@@ -91,6 +99,8 @@ HUB_DATASET_SHA256 = (
 HUB_JOB = "local-5050"
 HUB_WEIGHTS = "AVAILABLE"
 SKU_STATUS = "NOT MEASURED"
+LIVE_SHELF = False
+LIVE_PORTFOLIO = False
 
 OUROBOROS = [
     {
@@ -312,6 +322,8 @@ def kit_receipt(*, live: bool = False, train_loss: float | None = None) -> dict[
         "hub_job": HUB_JOB,
         "hub_weights": HUB_WEIGHTS,
         "sku_status": SKU_STATUS,
+        "live_shelf": LIVE_SHELF,
+        "live_portfolio": LIVE_PORTFOLIO,
         "local_adapter_dir": str(ADAPTER_DIR),
         "proposal_only": True,
         "publication_eligible": False,
@@ -329,6 +341,9 @@ def kit_receipt(*, live: bool = False, train_loss: float | None = None) -> dict[
             "train_loss MEASURED is a train metric, not an eval. "
             "weights AVAILABLE on Hub. "
             "Do not overwrite SZLHOLDINGS/chaski. Do not load into the Khipu lab. "
+            "CHAWPI fashion: separate SKU. Off Receipted Unsloth LIVE shelf "
+            "(live Chaski / Khipu / ReceiptAgent). Off the LIVE portfolio table. "
+            "No lab load. Do not merge #59. Train loss is not an eval. "
             "No tok/s claims. A11OY-MINI is a GGUF of live Chaski, not 5050. "
             "GitHub stamp only. No Hub PUT from this checkout."
         ),
