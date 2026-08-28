@@ -38,6 +38,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 
 HERE = Path(__file__).resolve().parent
@@ -81,6 +82,9 @@ QLORA_BAN = (
     "differences). This recut is bf16 LoRA only: load_in_4bit=False, "
     "load_in_16bit=True."
 )
+FORBIDDEN_PRODUCT_HOST = "a11oy.com"
+PRODUCT_HOST = "a-11-oy.com"
+_URL_RE = re.compile(r"https?://[^\s)\]>'\"`]+", flags=re.I)
 
 
 def sha256_bytes(data: bytes) -> str:
@@ -138,12 +142,27 @@ def _yaml_tags(card: str) -> list[str]:
     return tags
 
 
+def _card_hosts(card: str) -> list[str]:
+    """Parse URL hosts from a card. Host compare is exact / DNS-parent, not substring."""
+    hosts: list[str] = []
+    for match in _URL_RE.finditer(card):
+        host = (urlparse(match.group(0)).hostname or "").lower().rstrip(".")
+        if host:
+            hosts.append(host)
+    return hosts
+
+
+def _host_is(host: str, domain: str) -> bool:
+    return host == domain or host.endswith("." + domain)
+
+
 def assert_house_card(card: str) -> None:
     """House fashion for a pushed adapter card. Process only; no Unsloth default."""
-    if "a11oy.com" in card.lower():
+    hosts = _card_hosts(card)
+    if any(_host_is(host, FORBIDDEN_PRODUCT_HOST) for host in hosts):
         raise SystemExit(
-            "[chaski-5050] refuse: card must not contain a11oy.com "
-            "(product host is a-11-oy.com)."
+            "[chaski-5050] refuse: card URL host must not be the retired "
+            "product host (use a-11-oy.com)."
         )
     tags = {tag.lower() for tag in _yaml_tags(card)}
     if "roadmap" in tags:
@@ -165,11 +184,10 @@ def assert_house_card(card: str) -> None:
         raise SystemExit("[chaski-5050] refuse: card must say Not MEASURED")
     if "conjecture 1" not in lowered:
         raise SystemExit("[chaski-5050] refuse: card must keep Λ = Conjecture 1")
-    if "http://" in lowered or "https://" in lowered:
-        if "a-11-oy.com" not in lowered:
-            raise SystemExit(
-                "[chaski-5050] refuse: product host URL must be a-11-oy.com"
-            )
+    if hosts and not any(_host_is(host, PRODUCT_HOST) for host in hosts):
+        raise SystemExit(
+            "[chaski-5050] refuse: product host URL must be a-11-oy.com"
+        )
 
 
 def house_model_card() -> str:

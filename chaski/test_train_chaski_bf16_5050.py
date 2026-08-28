@@ -153,10 +153,29 @@ class Chaski5050GuardTests(unittest.TestCase):
         self.assertIn("Not MEASURED", card)
         self.assertIn("cutting", recut._yaml_tags(card))
         self.assertNotIn("roadmap", recut._yaml_tags(card))
-        self.assertNotIn("a11oy.com", card.lower())
-        self.assertIn("a-11-oy.com", card)
+        hosts = recut._card_hosts(card)
+        self.assertTrue(any(recut._host_is(host, "a-11-oy.com") for host in hosts))
+        self.assertFalse(any(recut._host_is(host, "a11oy.com") for host in hosts))
         self.assertIn("Conjecture 1", card)
         self.assertNotIn("unsloth/unsloth", card.lower())
+
+    def test_card_url_hosts_are_parsed_not_substrings(self) -> None:
+        base = CARD.read_text(encoding="utf-8")
+        poisoned = base.replace(
+            "https://a-11-oy.com",
+            "https://a11oy.com",
+        )
+        with self.assertRaises(SystemExit) as ctx:
+            recut.assert_house_card(poisoned)
+        self.assertIn("retired", str(ctx.exception).lower())
+        decoy = base.replace(
+            "https://a-11-oy.com",
+            "https://example.invalid/?q=a11oy.com",
+        )
+        with self.assertRaises(SystemExit) as ctx:
+            recut.assert_house_card(decoy)
+        self.assertIn("a-11-oy.com", str(ctx.exception))
+        self.assertNotIn("retired", str(ctx.exception).lower())
 
     def test_plan_invocation_does_not_train(self) -> None:
         completed = subprocess.run(
