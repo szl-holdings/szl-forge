@@ -58,6 +58,7 @@ The house CPU lab serves **Khipu GGUF**, not Chaski. Lab load forbidden.
 ## Training
 
 - Recipe: Unsloth QLoRA SFT. Script: train_chaski.py. Loads only szl_dataset.jsonl.
+- Local recut: [`train_chaski_bf16_5050.py`](./train_chaski_bf16_5050.py) — 5050 bf16 LoRA recut, QLoRA banned on this family. Optional `--push` to `SZLHOLDINGS/chaski-5050` only. Never overwrite `SZLHOLDINGS/chaski`.
 - Attempt 5 RUNNING 6a91bf1045686a1580c12105 report_to=none. Likely the upload that landed Hub tensors. Files on repo as of 2026-08-28T17:08Z. Not restamped COMPLETED.
 - Attempt 4 ERROR 6a91bb7c after 64/64, train_loss MEASURED 1.7844666938763112, merge ran, upload_folder Trackio 404, no safetensors.
 - Attempt 3 COMPLETED. Receipt-only. Train loss MEASURED 1.782708187121898 (64/64, 45 rows, seed 11). Safetensors UNAVAILABLE on that job. Job `6a91ba00984507d9db4ea07f`.

@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/szl-holdings/szl-forge/blob/main/chaski/training_receipt.bf16_5050.schema.json",
+  "title": "szl.chaski-5050-training-receipt/v1",
+  "description": "Receipt for a local RTX 5050 Unsloth bf16 LoRA recut. Train loss is a train metric, not an eval. Evals stay none-this-run. publication_eligible is always false for this recipe.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "kind",
+    "schema",
+    "artifact",
+    "base_model",
+    "method",
+    "load_in_4bit",
+    "load_in_16bit",
+    "dataset",
+    "dataset_sha256",
+    "train_loss",
+    "hardware",
+    "evals",
+    "publication_eligible"
+  ],
+  "properties": {
+    "kind": {
+      "type": "string",
+      "const": "szl-chaski-5050-training-receipt"
+    },
+    "schema": {
+      "type": "string",
+      "const": "szl.chaski-5050-training-receipt/v1"
+    },
+    "artifact": {
+      "type": "string",
+      "const": "SZLHOLDINGS/chaski-5050"
+    },
+    "base_model": {
+      "type": "string",
+      "const": "Qwen/Qwen3.5-0.8B"
+    },
+    "base_model_relation": {
+      "type": "string",
+      "const": "adapter"
+    },
+    "method": {
+      "type": "string",
+      "const": "unsloth-bf16-lora"
+    },
+    "load_in_4bit": {
+      "type": "boolean",
+      "const": false
+    },
+    "load_in_16bit": {
+      "type": "boolean",
+      "const": true
+    },
+    "qlora": {
+      "type": "string",
+      "const": "banned-on-qwen3.5"
+    },
+    "dataset": {
+      "type": "string",
+      "const": "SZLHOLDINGS/szl-1-doctrine-sft"
+    },
+    "dataset_file": {
+      "type": "string",
+      "const": "szl_dataset.jsonl"
+    },
+    "dataset_sha256": {
+      "description": "SHA-256 of the admitted jsonl bytes, or null if hashing was unavailable.",
+      "type": ["string", "null"],
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "training_rows": {
+      "type": "integer",
+      "const": 41
+    },
+    "seed": {
+      "type": "integer",
+      "const": 11
+    },
+    "num_train_epochs": {
+      "type": "integer",
+      "const": 3
+    },
+    "lora_r": {
+      "type": "integer",
+      "const": 16
+    },
+    "lora_alpha": {
+      "type": "integer",
+      "const": 16
+    },
+    "learning_rate": {
+      "type": "number",
+      "const": 0.0002
+    },
+    "per_device_train_batch_size": {
+      "type": "integer",
+      "const": 1
+    },
+    "gradient_accumulation_steps": {
+      "type": "integer",
+      "const": 4
+    },
+    "optim": {
+      "type": "string",
+      "const": "adamw_8bit"
+    },
+    "warmup_steps": {
+      "type": "integer",
+      "const": 10
+    },
+    "max_seq_length": {
+      "type": "integer",
+      "const": 2048
+    },
+    "train_loss": {
+      "description": "SFTTrainer training_loss. MEASURED only as a train metric. Not an eval.",
+      "type": ["number", "null"]
+    },
+    "hardware": {
+      "description": "Target GPU string for this recut.",
+      "type": "string",
+      "const": "NVIDIA GeForce RTX 5050 Laptop, 8GB GDDR7 (MEASURED 8151 MiB)"
+    },
+    "vram_table_08b_bf16_lora": {
+      "type": "string",
+      "description": "REPORTED from Unsloth 2026 Qwen3.5 docs, not a this-run measurement."
+    },
+    "evals": {
+      "type": "string",
+      "const": "none-this-run"
+    },
+    "publication_eligible": {
+      "type": "boolean",
+      "const": false
+    },
+    "lambda": {
+      "type": "string",
+      "const": "Conjecture 1"
+    },
+    "card_status": {
+      "type": "string",
+      "const": "CUTTING"
+    }
+  }
+}

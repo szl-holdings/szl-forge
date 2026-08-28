@@ -107,6 +107,7 @@ Future full `forge.ps1` runs birth via this GGUF path automatically (step 6).
 | `forge.ps1` | **One-command bootstrap** — runs the entire pipeline below (downloads kit, fixes CUDA torch, trains, imports into Ollama), stopping honestly on any real failure. |
 | [`RUNBOOK.md`](./RUNBOOK.md) | Step-by-step, one-command-per-step runbook for running the whole pipeline on the laptop. |
 | `train_szl.py` | Unsloth QLoRA training script: loads the 4-bit base, applies LoRA, trains, merges to `./szl-model` (16-bit safetensors). |
+| [`chaski/train_chaski_bf16_5050.py`](./chaski/train_chaski_bf16_5050.py) | Local RTX 5050 Unsloth bf16 LoRA recut of Chaski (`Qwen/Qwen3.5-0.8B`). QLoRA banned on this family. |
 | `szl_dataset.jsonl` | 41 chat-format training examples encoding SZL-1's identity and honesty doctrine. |
 | `rebirth.ps1` | **Birth/rebirth into Ollama via GGUF** — converts `./szl-model` to F16 GGUF with llama.cpp's pure-Python converter, then `ollama create --quantize q4_K_M`. Fixes the corrupted-voice import without retraining. |
 | `Modelfile.gguf` | Ollama recipe used by `rebirth.ps1` (`FROM ./szl1-f16.gguf`) with the SZL-1 system prompt and chat template. |
