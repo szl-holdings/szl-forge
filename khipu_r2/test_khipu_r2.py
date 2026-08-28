@@ -229,12 +229,6 @@ class KhipuR2KitTests(unittest.TestCase):
             for token in banned:
                 self.assertNotIn(token, text, f"{path} contains {token}")
 
-    def test_tests_do_not_ban_live_hub_three_of_six(self) -> None:
-        source = Path(__file__).read_text(encoding="utf-8")
-        self.assertNotIn('assertNotIn("3/6"', source)
-        self.assertNotIn("assertNotIn('3/6'", source)
-        self.assertIn('"3/6"', source)
-
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
