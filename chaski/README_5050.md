@@ -12,8 +12,9 @@ Separate SKU. **Not** live [`SZLHOLDINGS/chaski`](https://huggingface.co/SZLHOLD
 | **Recipe** | Unsloth LoRA bf16. QLoRA forbidden. `load_in_4bit=False`, `load_in_16bit=True`, r=16, **alpha=16**, seed=11, `warmup_steps=6`, 3 epochs, batch 1, ga 4, seq 2048, `adamw_8bit`, unsloth gradient checkpointing, `report_to=none` |
 | **Data** | jsonl-only `szl_dataset.jsonl`. Refuses `SZL_ESTATE_MANAGED.json`. `dataset_sha256` `ddc5594bfb1c78449ba40a263f5ac41d21c896c3c7ed7346341c7c080611a243`. |
 | **Weights** | AVAILABLE. `adapter_model.safetensors` present on Hub. |
-| **Train loss** | MEASURED `2.228136855544466` (`train_runtime` 883.2224s, 3 epochs, 41 rows). Train loss is not an eval. |
+| **Train loss** | MEASURED `2.228136855544466` (`train_runtime` 883.2224s, 3 epochs, 41 rows). train metric, not an eval. |
 | **Training label** | `REPORTED owner-metal` until a signed receipt exists. |
+| **SKU** | **NOT MEASURED.** Do not stamp this model as MEASURED. |
 | **Evals** | none-this-run. Not 5/5. `publication_eligible: false`. |
 | **Lab** | Do not load into the Khipu lab. No tok/s claims. |
 | **A11OY-MINI** | GGUF of **live** Chaski, not this 5050 kit. |

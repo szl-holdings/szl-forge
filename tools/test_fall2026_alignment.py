@@ -262,6 +262,8 @@ class Fall2026AlignmentTests(unittest.TestCase):
         self.assertEqual("MEASURED", receipt["hub_train_loss_label"])
         self.assertEqual("AVAILABLE", receipt["hub_weights"])
         self.assertEqual("local-5050", receipt["hub_job"])
+        self.assertEqual("NOT MEASURED", receipt["sku_status"])
+        self.assertNotEqual("MEASURED", receipt["label"])
         self.assertTrue(receipt["train_loss_is_not_eval"])
         with tempfile.TemporaryDirectory() as tmp:
             estate = Path(tmp) / "SZL_ESTATE_MANAGED.json"

@@ -101,6 +101,8 @@ class Chaski5050GuardTests(unittest.TestCase):
             "# training_receipt.json: train_loss MEASURED 2.228136855544466, train_runtime 883.2224s, 3 epochs, 41 rows, seed 11, r=16 alpha=16, QLoRA false, job local-5050",
             "# dataset_sha256 ddc5594bfb1c78449ba40a263f5ac41d21c896c3c7ed7346341c7c080611a243",
             "# evals none-this-run. publication_eligible false. weights AVAILABLE",
+            "# train_loss MEASURED is a train metric, not an eval. Training label REPORTED owner-metal until a signed receipt exists. Not 5/5.",
+            "# SKU is NOT MEASURED (evals none-this-run, publication_eligible false). Do not stamp the model as MEASURED.",
         )
         text = SCRIPT.read_text(encoding="utf-8")
         for line in comments:
@@ -122,13 +124,18 @@ class Chaski5050GuardTests(unittest.TestCase):
             self.assertIn("REPORTED owner-metal", blob)
             self.assertIn("none-this-run", blob)
             self.assertIn("883.2224", blob)
+            self.assertIn("NOT MEASURED", blob)
+            self.assertIn("train metric, not an eval", blob)
+            self.assertRegex(blob, r"Do not stamp (the|this) model as MEASURED")
             self.assertNotIn("6a91bf10", blob)
             self.assertNotIn("a11oy.com", blob.lower())
+            self.assertNotRegex(blob, r"(?i)sku is MEASURED")
         card = CARD.read_text(encoding="utf-8")
         self.assertIn("Not MEASURED", card)
         self.assertIn("Not 5/5", card)
         self.assertIn("A11OY-MINI", card)
         self.assertIn("live", card.lower())
+        self.assertIn("Do not stamp this model as MEASURED", card)
         self.assertEqual(16, recut.LORA_R)
         self.assertEqual(16, recut.LORA_ALPHA)
         self.assertEqual(
@@ -136,6 +143,7 @@ class Chaski5050GuardTests(unittest.TestCase):
         )
         self.assertEqual("AVAILABLE", recut.HUB_WEIGHTS)
         self.assertEqual("local-5050", recut.HUB_JOB)
+        self.assertEqual("NOT MEASURED", recut.SKU_STATUS)
 
 
 if __name__ == "__main__":

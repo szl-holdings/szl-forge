@@ -22,7 +22,8 @@ training_receipt.json: train_loss MEASURED 2.228136855544466,
 train_runtime 883.2224s, 3 epochs, 41 rows, seed 11, r=16 alpha=16,
 QLoRA false, job local-5050.
 dataset_sha256 ddc5594bfb1c78449ba40a263f5ac41d21c896c3c7ed7346341c7c080611a243.
-train_loss MEASURED is not an eval.
+train_loss MEASURED is a train metric, not an eval.
+The SKU is NOT MEASURED. Do not stamp the model as MEASURED.
 
 CANONICAL_BASE = Qwen/Qwen3.5-0.8B (Apache, disclosed).
 jsonl-only szl_dataset.jsonl. Refuse SZL_ESTATE_MANAGED.json.
@@ -32,7 +33,7 @@ seed=11, warmup_steps=6, 3 epochs, batch 1, ga 4, seq 2048, adamw_8bit,
 unsloth gc, report_to=none.
 
 Training label REPORTED owner-metal until a signed receipt exists.
-Evals none-this-run. Not 5/5. publication_eligible false.
+Evals none-this-run. SKU is NOT MEASURED. Not 5/5. publication_eligible false.
 Not A11OY-MINI (that GGUF is live Chaski). Not an alias of live Chaski.
 """
 from __future__ import annotations
@@ -77,7 +78,8 @@ RECEIPT_TRAIN = HERE / "training_receipt_5050.json"
 # training_receipt.json: train_loss MEASURED 2.228136855544466, train_runtime 883.2224s, 3 epochs, 41 rows, seed 11, r=16 alpha=16, QLoRA false, job local-5050
 # dataset_sha256 ddc5594bfb1c78449ba40a263f5ac41d21c896c3c7ed7346341c7c080611a243
 # evals none-this-run. publication_eligible false. weights AVAILABLE
-# train_loss MEASURED is not an eval. Training label REPORTED owner-metal until a signed receipt exists. Not 5/5.
+# train_loss MEASURED is a train metric, not an eval. Training label REPORTED owner-metal until a signed receipt exists. Not 5/5.
+# SKU is NOT MEASURED (evals none-this-run, publication_eligible false). Do not stamp the model as MEASURED.
 HUB_COMMIT = "c907ebe6e1fa900021be7b6fec19b38ec45be574"
 HUB_ADAPTER_FILE = "adapter_model.safetensors"
 HUB_TRAIN_LOSS = 2.228136855544466
@@ -88,6 +90,7 @@ HUB_DATASET_SHA256 = (
 )
 HUB_JOB = "local-5050"
 HUB_WEIGHTS = "AVAILABLE"
+SKU_STATUS = "NOT MEASURED"
 
 OUROBOROS = [
     {
@@ -308,6 +311,7 @@ def kit_receipt(*, live: bool = False, train_loss: float | None = None) -> dict[
         "hub_dataset_sha256": HUB_DATASET_SHA256,
         "hub_job": HUB_JOB,
         "hub_weights": HUB_WEIGHTS,
+        "sku_status": SKU_STATUS,
         "local_adapter_dir": str(ADAPTER_DIR),
         "proposal_only": True,
         "publication_eligible": False,
@@ -321,7 +325,9 @@ def kit_receipt(*, live: bool = False, train_loss: float | None = None) -> dict[
             "Local RTX 5050 Unsloth LoRA. QLoRA forbidden. Not an HF Job. "
             "Training label REPORTED owner-metal until a signed receipt exists. "
             "Evals none-this-run. Not 5/5. publication_eligible false. "
-            "Hub train_loss MEASURED is not an eval. weights AVAILABLE on Hub. "
+            "SKU is NOT MEASURED. Do not stamp the model as MEASURED. "
+            "train_loss MEASURED is a train metric, not an eval. "
+            "weights AVAILABLE on Hub. "
             "Do not overwrite SZLHOLDINGS/chaski. Do not load into the Khipu lab. "
             "No tok/s claims. A11OY-MINI is a GGUF of live Chaski, not 5050. "
             "GitHub stamp only. No Hub PUT from this checkout."
