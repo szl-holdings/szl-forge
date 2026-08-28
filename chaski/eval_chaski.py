@@ -6,7 +6,8 @@
 """Chaski eval — evals none-this-run. No fabricated k/n. No serve pin.
 
 base_model = Qwen/Qwen3.5-0.8B
-Attempt 3 COMPLETED receipt-only; weights UNAVAILABLE; no adapter to score.
+Hub adapter files exist as of 2026-08-28T17:08Z. That is not an eval.
+Do not invent 5/5. Train loss is not an eval.
 """
 from __future__ import annotations
 
@@ -29,12 +30,19 @@ def main() -> int:
         "evals": "none-this-run",
         "quality": "UNKNOWN",
         "train_loss_is_not_eval": True,
-        "adapter": "UNAVAILABLE",
-        "weights": "UNAVAILABLE",
+        "adapter": "present-on-hub-as-of-2026-08-28T17:08Z",
+        "weights": "present-on-hub-as-of-2026-08-28T17:08Z",
+        "hub_tensors": [
+            "adapter_model.safetensors",
+            "adapter_config.json",
+            "model.safetensors-00001-of-00001.safetensors",
+        ],
+        "hub_tensors_observed_at": "2026-08-28T17:08Z",
         "publication_eligible": False,
         "claim_boundary": (
             "No JSON/refusal gate ran. Do not claim 5/5 or 6/6. "
-            "CUTTING until an adapter file lands."
+            "Hub adapter files exist as of 2026-08-28T17:08Z. "
+            "Evals remain none-this-run. Train loss is not an eval."
         ),
         "computed_at": datetime.now(timezone.utc).isoformat(),
     }
