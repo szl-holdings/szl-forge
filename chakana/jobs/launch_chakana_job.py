@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Chakana Jobs plan. UNKNOWN lane. Refuses to fire a Hub job."""
+"""Print the Chakana HF Jobs UV command. This checkout does not fire a job.
+
+Jobs UNKNOWN. Do not launch a Hub job from forge. No Hub PUT.
+Runnable later as `hf jobs uv run` with HF_TOKEN and Trackio.
+
+base_model = Qwen/Qwen3-Embedding-0.6B
+"""
 from __future__ import annotations
 
 import argparse
@@ -10,16 +16,22 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 TRAIN = HERE.parent / "train_chakana.py"
 BASE_MODEL = "Qwen/Qwen3-Embedding-0.6B"
+HUB = "SZLHOLDINGS/chakana"
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--run-job", action="store_true")
-    args = parser.parse_args()
-    plan = {
+def plan() -> dict:
+    return {
+        "train": str(TRAIN.as_posix()),
         "base_model": BASE_MODEL,
+        "hub": HUB,
+        "flavor": "a10g-large",
         "jobs": "UNKNOWN",
         "submitted": False,
+        "hub_put": False,
+        "publication_eligible": False,
+        "secrets": ["HF_TOKEN"],
+        "trackio": True,
+        "report_to": "trackio",
         "command": [
             "hf",
             "jobs",
@@ -27,13 +39,36 @@ def main() -> int:
             "run",
             "--flavor",
             "a10g-large",
+            "--timeout",
+            "2h",
+            "--secrets",
+            "HF_TOKEN",
             str(TRAIN),
+            "--train",
         ],
     }
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--run-job", action="store_true")
+    parser.add_argument("--json", action="store_true")
+    args = parser.parse_args()
+    payload = plan()
     if args.run_job:
-        print("[chakana-jobs] refusing to fire: Jobs UNKNOWN lane", file=sys.stderr)
+        print(
+            "[chakana-jobs] refusing to fire: Jobs UNKNOWN this checkout. "
+            "No invented job id. No Hub PUT.",
+            file=sys.stderr,
+        )
         return 2
-    print(json.dumps(plan, indent=2))
+    if args.json:
+        print(json.dumps(payload, indent=2))
+        return 0
+    print("# Chakana Jobs plan. Not submitted from this checkout.")
+    print(f"# jobs=UNKNOWN base_model={BASE_MODEL} hub={HUB}")
+    print("# secrets=HF_TOKEN trackio=planned (no dashboard URL until a job exists)")
+    print(" ".join(payload["command"]))
     return 0
 
 

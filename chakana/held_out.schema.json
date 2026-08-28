@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "szl.chakana-held-out/v1",
+  "title": "Chakana held-out nDCG@10 slice",
+  "description": "Frozen in-house retrieval slice. Absent file ⇒ evals UNKNOWN. Do not paste MTEB numbers into a card when this file is missing.",
+  "type": "object",
+  "required": ["query", "positives", "corpus"],
+  "additionalProperties": false,
+  "properties": {
+    "query": {"type": "string", "minLength": 1},
+    "positives": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "corpus": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    }
+  }
+}

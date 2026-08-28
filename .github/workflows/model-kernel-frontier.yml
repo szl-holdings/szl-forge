@@ -92,6 +92,10 @@ jobs:
             qantu/skip_receipt.py \
             waman/skip_receipt.py \
             chakana/train_chakana.py \
+            chakana/eval_chakana.py \
+            chakana/serve_chakana.py \
+            chakana/jobs/launch_chakana_job.py \
+            chakana/sign_receipt.py \
             tinku/train_tinku.py \
             khipu/serve_khipu.py \
             khipu_r2/train_khipu_r2.py \
@@ -104,6 +108,7 @@ jobs:
           PYTHONPATH=. python -m unittest -v tools/test_fall2026_alignment.py
           PYTHONPATH=. python -m unittest -v chaski/test_named_n_gate.py
           PYTHONPATH=. python -m unittest -v khipu_r2/test_khipu_r2.py
+          PYTHONPATH=. python -m unittest -v chakana/test_chakana.py
           PYTHONPATH=tools python -m unittest -v \
             tools/test_authorize_kernels_release.py \
             tools/test_publish_szl_kernels.py
