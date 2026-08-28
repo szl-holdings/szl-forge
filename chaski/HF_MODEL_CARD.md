@@ -37,8 +37,6 @@ szl:
 
 **One line.** Messenger LLM. Proposal-only drafts and honest refusals for the SZL controller.
 
-Copied from the Hub card (`SZLHOLDINGS/chaski`). Forge trainer path: `chaski/train_chaski.py`. One recipe. Not `train_szl.py`.
-
 | | |
 |---|---|
 | **Artifact** | adapter (UNAVAILABLE on Hub) |
@@ -53,6 +51,8 @@ Copied from the Hub card (`SZLHOLDINGS/chaski`). Forge trainer path: `chaski/tra
 > **Fashion rule.** Silhouette from Qwen3 / Qwen3.5 instruct. Cut is original SZL. We do not republish someone else's tensors.
 
 The house CPU lab serves **Khipu GGUF**, not Chaski. Lab load forbidden.
+
+Forge trainer: [`chaski/train_chaski.py`](./train_chaski.py). One recipe. Not `train_szl.py`.
 
 ## Intended use
 
@@ -72,12 +72,12 @@ The house CPU lab serves **Khipu GGUF**, not Chaski. Lab load forbidden.
 
 ## Training
 
-- **Recipe:** Unsloth QLoRA SFT. Script: `train_chaski.py`. Loads **only** `szl_dataset.jsonl`.
-- **Attempt 4 RUNNING:** [`6a91bb7c984507d9db4ea0a4`](https://huggingface.co/jobs/SZLHOLDINGS/6a91bb7c984507d9db4ea0a4) explicit `upload_folder` adapter + merged 16-bit.
-- **Attempt 3 COMPLETED:** [`6a91ba00984507d9db4ea07f`](https://huggingface.co/jobs/SZLHOLDINGS/6a91ba00984507d9db4ea07f). Train loss MEASURED `1.782708187121898` (64/64, 45 rows, seed 11). Safetensors UNAVAILABLE. Receipt only.
-- **Attempts 1–2 FAILED:** `6a91b8ba984507d9db4ea071` CastError; `6a91b990984507d9db4ea077` pyyaml 30s timeout.
-- **Trackio:** 404 `betterwithage/trackio-bucket`. No dashboard URL.
+- Recipe: Unsloth QLoRA SFT. Script: train_chaski.py. Loads only szl_dataset.jsonl.
+- Attempt 4 RUNNING 6a91bb7c upload_folder adapter + merged 16-bit.
+- Attempt 3 COMPLETED. Receipt-only. Train loss MEASURED 1.782708187121898 (64/64, 45 rows, seed 11). Safetensors UNAVAILABLE. Job `6a91ba00984507d9db4ea07f`.
+- Attempts 1–2 FAILED: 6a91b8ba CastError; 6a91b990 pyyaml 30s timeout.
+- Trackio: 404 betterwithage/trackio-bucket. No dashboard URL.
 
 ## Limitations
 
-- Narrow curriculum. Controller required. Λ = Conjecture 1. Trust ceiling 0.97. `publication_eligible: false`. CUTTING until files exist on the repo.
+- Narrow curriculum. Controller required. Λ = Conjecture 1. Trust ceiling 0.97. `publication_eligible: false`. CUTTING until adapter files exist on the repo.

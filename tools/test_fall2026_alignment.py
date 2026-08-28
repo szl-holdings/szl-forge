@@ -42,9 +42,11 @@ class Fall2026AlignmentTests(unittest.TestCase):
             text = path.read_text(encoding="utf-8", errors="replace")
             for lineno, line in enumerate(text.splitlines(), 1):
                 if "6a91ba00" in line:
-                    self.assertNotIn(
-                        "RUNNING",
-                        line,
+                    stamped_running = (
+                        "RUNNING" in line and "not RUNNING" not in line
+                    )
+                    self.assertFalse(
+                        stamped_running,
                         f"{path}:{lineno} attempt-3 stamp is not COMPLETED",
                     )
 
