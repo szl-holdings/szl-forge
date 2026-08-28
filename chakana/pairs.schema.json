@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "szl.chakana-pairs/v1",
+  "title": "SZLHOLDINGS/chakana-pairs row",
+  "description": "Admitted SZL query-positive pairs only. This schema is not a corpus. Do not fill it with MTEB/BEIR rows. Default Hub id SZLHOLDINGS/chakana-pairs does not exist yet.",
+  "type": "object",
+  "additionalProperties": false,
+  "anyOf": [
+    {"required": ["query", "positive"]},
+    {"required": ["anchor", "positive"]},
+    {"required": ["query", "passage"]}
+  ],
+  "properties": {
+    "query": {"type": "string", "minLength": 1},
+    "positive": {"type": "string", "minLength": 1},
+    "anchor": {"type": "string", "minLength": 1},
+    "passage": {"type": "string", "minLength": 1}
+  }
+}

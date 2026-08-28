@@ -1,4 +1,7 @@
 chakana-encoder/
+outputs/
 training_receipt.json
+training_receipt.status.json
 eval_report.json
+held_out.jsonl
 __pycache__/

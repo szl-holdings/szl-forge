@@ -1,0 +1,25 @@
+{
+  "payload": {
+    "kind": "szl-chakana-eval-receipt",
+    "v": 1,
+    "artifact": "SZLHOLDINGS/chakana",
+    "owner": "Stephen Lutar",
+    "lane": "NINA (FORGE-class)",
+    "baseModel": "Qwen/Qwen3-Embedding-0.6B",
+    "jobs": "UNKNOWN",
+    "evals": "UNKNOWN",
+    "ndcg10": "UNKNOWN",
+    "mtebPasted": false,
+    "publication_eligible": false,
+    "signed": false,
+    "keyId": "",
+    "claimBoundary": "UNSIGNED stub. Frozen in-house nDCG@10 has not run. Status stays UNKNOWN."
+  },
+  "canonical": "{\"artifact\":\"SZLHOLDINGS/chakana\",\"baseModel\":\"Qwen/Qwen3-Embedding-0.6B\",\"claimBoundary\":\"UNSIGNED stub. Frozen in-house nDCG@10 has not run. Status stays UNKNOWN.\",\"evals\":\"UNKNOWN\",\"jobs\":\"UNKNOWN\",\"keyId\":\"\",\"kind\":\"szl-chakana-eval-receipt\",\"lane\":\"NINA (FORGE-class)\",\"mtebPasted\":false,\"ndcg10\":\"UNKNOWN\",\"owner\":\"Stephen Lutar\",\"publication_eligible\":false,\"signed\":false,\"v\":1}",
+  "signatureBase64": null,
+  "publicKeySpkiBase64": null,
+  "keyId": "",
+  "signed": false,
+  "status": "STUB-UNSIGNED",
+  "jobs": "UNKNOWN"
+}

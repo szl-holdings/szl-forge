@@ -1,0 +1,32 @@
+{
+  "payload": {
+    "kind": "szl-chakana-training-receipt",
+    "v": 1,
+    "artifact": "SZLHOLDINGS/chakana",
+    "owner": "Stephen Lutar",
+    "lane": "NINA (FORGE-class)",
+    "baseModel": "Qwen/Qwen3-Embedding-0.6B",
+    "altBaseModel": "BAAI/bge-m3",
+    "dataset": "SZLHOLDINGS/chakana-pairs",
+    "seed": 11,
+    "jobs": "UNKNOWN",
+    "weights": "UNAVAILABLE",
+    "evals": "UNKNOWN",
+    "ndcg10": "UNKNOWN",
+    "mtebPasted": false,
+    "publication_eligible": false,
+    "lambda": "Conjecture 1",
+    "doctrine": "v11 LOCKED 749/14/163",
+    "evidenceCeiling": "0.97",
+    "signed": false,
+    "keyId": "",
+    "claimBoundary": "UNSIGNED stub. No job id. No weights. nDCG@10 UNKNOWN. Do not paste MTEB numbers."
+  },
+  "canonical": "{\"altBaseModel\":\"BAAI/bge-m3\",\"artifact\":\"SZLHOLDINGS/chakana\",\"baseModel\":\"Qwen/Qwen3-Embedding-0.6B\",\"claimBoundary\":\"UNSIGNED stub. No job id. No weights. nDCG@10 UNKNOWN. Do not paste MTEB numbers.\",\"dataset\":\"SZLHOLDINGS/chakana-pairs\",\"doctrine\":\"v11 LOCKED 749/14/163\",\"evals\":\"UNKNOWN\",\"evidenceCeiling\":\"0.97\",\"jobs\":\"UNKNOWN\",\"keyId\":\"\",\"kind\":\"szl-chakana-training-receipt\",\"lambda\":\"Conjecture 1\",\"lane\":\"NINA (FORGE-class)\",\"mtebPasted\":false,\"ndcg10\":\"UNKNOWN\",\"owner\":\"Stephen Lutar\",\"publication_eligible\":false,\"seed\":11,\"signed\":false,\"v\":1,\"weights\":\"UNAVAILABLE\"}",
+  "signatureBase64": null,
+  "publicKeySpkiBase64": null,
+  "keyId": "",
+  "signed": false,
+  "status": "STUB-UNSIGNED",
+  "jobs": "UNKNOWN"
+}
