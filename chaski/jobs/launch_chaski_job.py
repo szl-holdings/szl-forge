@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Print the Chaski HF Jobs UV command. This checkout does not fire a job.
 
-Live job is report_to=none. Hub tensors exist as of 2026-08-28T17:08Z.
+Live job 6a91bf10 was report_to=none. Hub tensors exist as of 2026-08-28T17:08Z.
 Do not launch another job from forge. Do not recut Hub README.
 huggingface_hub.run_uv_job is imported only behind an explicit --run-job gate
 that this kit refuses.

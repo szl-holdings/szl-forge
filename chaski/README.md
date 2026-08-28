@@ -44,8 +44,8 @@ szl:
 | **Originality** | SZL fine-tune of a disclosed Apache Qwen instruct base |
 | **Base** | `Qwen/Qwen3.5-0.8B` (Apache-2.0, 0.6B–2B lock) |
 | **License** | `apache-2.0` |
-| **HF Jobs** | Attempt 5 RUNNING [`6a91bf1045686a1580c12105`](https://huggingface.co/jobs/SZLHOLDINGS/6a91bf1045686a1580c12105) (`report_to=none`; likely the upload). Attempt 4 ERROR (no safetensors at that job). |
-| **Status** | CUTTING. Hub adapter files exist as of 2026-08-28T17:08Z. Evals none-this-run. Train loss is not an eval. Not 5/5. |
+| **HF Jobs** | Attempt 5 [`6a91bf1045686a1580c12105`](https://huggingface.co/jobs/SZLHOLDINGS/6a91bf1045686a1580c12105) was the live `report_to=none` job (files now on repo). Attempt 4 `6a91bb7c` stays ERROR. |
+| **Status** | CUTTING. Files exist on Hub as of 2026-08-28T17:08Z. Evals none-this-run. Train loss is not an eval. Not 5/5. |
 | **Later SKU** | `A11OY-MINI` GGUF of this model. ROADMAP. Hub adapters exist; a GGUF is not cut. |
 | **Sibling** | [`szl-receiptagent-qwen35-0.8b-v2`](https://huggingface.co/SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2) |
 
@@ -58,7 +58,7 @@ The house CPU lab serves **Khipu GGUF**, not Chaski. Lab load forbidden.
 ## Training
 
 - Recipe: Unsloth QLoRA SFT. Script: train_chaski.py. Loads only szl_dataset.jsonl.
-- Attempt 5 RUNNING 6a91bf1045686a1580c12105 report_to=none. Likely the upload that landed Hub tensors. Files on repo as of 2026-08-28T17:08Z. Not restamped COMPLETED.
+- Attempt 5 6a91bf1045686a1580c12105 was the live report_to=none job. Files now on repo as of 2026-08-28T17:08Z. Not restamped COMPLETED.
 - Attempt 4 ERROR 6a91bb7c after 64/64, train_loss MEASURED 1.7844666938763112, merge ran, upload_folder Trackio 404, no safetensors.
 - Attempt 3 COMPLETED. Receipt-only. Train loss MEASURED 1.782708187121898 (64/64, 45 rows, seed 11). Safetensors UNAVAILABLE on that job. Job `6a91ba00984507d9db4ea07f`.
 - Attempts 1–2 FAILED: 6a91b8ba CastError; 6a91b990 pyyaml 30s timeout.

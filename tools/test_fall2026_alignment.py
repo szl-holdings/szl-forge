@@ -18,7 +18,7 @@ EXACT_COMMENTS = (
     "# 6a91b990 FAILED pyyaml 30s",
     "# 6a91ba00 COMPLETED receipt-only, weights UNAVAILABLE, train_loss MEASURED 1.7827",
     "# 6a91bb7c ERROR after 64/64, train_loss MEASURED 1.7844666938763112, merge ran, upload_folder Trackio 404, no safetensors",
-    "# 6a91bf1045686a1580c12105 RUNNING report_to=none — live; Hub tensors as of 2026-08-28 17:08 UTC",
+    "# 6a91bf1045686a1580c12105 was live report_to=none; Hub tensors as of 2026-08-28 17:08 UTC",
 )
 
 
@@ -59,8 +59,10 @@ class Fall2026AlignmentTests(unittest.TestCase):
             if "6a91bb7c" in line and line.strip().startswith("#"):
                 self.assertIn("ERROR", line)
                 self.assertNotIn("RUNNING", line)
-            if "6a91bf10" in line and line.strip().startswith("#"):
-                self.assertIn("RUNNING", line)
+            if line.strip().startswith("# 6a91bf10"):
+                self.assertIn("was live", line)
+                self.assertNotIn("COMPLETED", line)
+                self.assertIn("Hub tensors", line)
 
     def test_chaski_base_is_qwen35_08b_not_qwen25(self) -> None:
         text = CHASKI_TRAIN.read_text(encoding="utf-8")
