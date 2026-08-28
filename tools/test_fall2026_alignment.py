@@ -65,6 +65,9 @@ class Fall2026AlignmentTests(unittest.TestCase):
             blob = path.read_text(encoding="utf-8", errors="replace")
             self.assertNotIn("Qwen2.5", blob)
             self.assertNotIn("Qwen3.8-max", blob)
+        card = ROOT / "chaski" / "HF_MODEL_CARD.md"
+        self.assertTrue(card.is_file())
+        self.assertIn("base_model: Qwen/Qwen3.5-0.8B", card.read_text(encoding="utf-8"))
 
     def test_no_qantu_or_waman_trainers(self) -> None:
         self.assertFalse(list((ROOT / "qantu").glob("train_*.py")))
