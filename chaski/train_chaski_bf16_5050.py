@@ -18,11 +18,13 @@ Do not push to SZLHOLDINGS/chaski. No Hub PUT from this checkout.
 CANONICAL_BASE = Qwen/Qwen3.5-0.8B (Apache, disclosed).
 jsonl-only szl_dataset.jsonl. Refuse SZL_ESTATE_MANAGED.json.
 
-load_in_4bit=False, load_in_16bit=True, r=16, alpha=32, seed=11,
-3 epochs, batch 1, ga 4, seq 2048, adamw_8bit, unsloth gc, report_to=none.
+QLoRA forbidden. load_in_4bit=False, load_in_16bit=True, r=16, alpha=16,
+seed=11, warmup_steps=6, 3 epochs, batch 1, ga 4, seq 2048, adamw_8bit,
+unsloth gc, report_to=none.
 
-Receipt only. Evals none-this-run. Train loss MEASURED is not an eval.
-Not A11OY-MINI. Not an alias of live Chaski.
+Training label REPORTED owner-metal until a signed receipt exists.
+Evals none-this-run. Not 5/5. publication_eligible false.
+Not A11OY-MINI (that GGUF is live Chaski). Not an alias of live Chaski.
 """
 from __future__ import annotations
 
@@ -40,16 +42,21 @@ MAX_SEQ_LEN = 2048
 CANONICAL_BASE = "Qwen/Qwen3.5-0.8B"
 BASE = os.environ.get("BASE_MODEL", CANONICAL_BASE)
 LIVE_CHASKI_HUB = "SZLHOLDINGS/chaski"
-HUB = os.environ.get("HUB_MODEL_ID", "SZLHOLDINGS/chaski-5050")
+FORBIDDEN_HUB = LIVE_CHASKI_HUB
+ALLOWED_HUB = "SZLHOLDINGS/chaski-5050"
+HUB = os.environ.get("HUB_MODEL_ID", ALLOWED_HUB)
 DATASET = "SZLHOLDINGS/szl-1-doctrine-sft"
 DATASET_FILE = "szl_dataset.jsonl"
 FORBIDDEN_ESTATE = "SZL_ESTATE_MANAGED.json"
 SEED = 11
 LORA_R = 16
-LORA_ALPHA = 32
+LORA_ALPHA = 16
+WARMUP_STEPS = 6
 NUM_TRAIN_EPOCHS = 3
 BATCH_SIZE = 1
 GRAD_ACCUM = 4
+LOAD_IN_4BIT = False
+LOAD_IN_16BIT = True
 ADAPTER_DIR = HERE / "chaski-5050-adapter"
 OUTPUT_DIR = HERE / "outputs-5050"
 RECEIPT_STATUS = HERE / "training_receipt_5050.status.json"
@@ -146,11 +153,38 @@ def sha256_bytes(data: bytes) -> str:
 
 
 def refuse_live_chaski_hub() -> None:
-    if HUB == LIVE_CHASKI_HUB:
+    assert_push_repo(HUB)
+
+
+def assert_bf16_loader(load_in_4bit: bool, load_in_16bit: bool) -> None:
+    """Refuse QLoRA. This SKU is bf16 LoRA only."""
+    if load_in_4bit is True:
         raise SystemExit(
-            f"[chaski-5050] refuse: do not push to {LIVE_CHASKI_HUB}. "
+            "[chaski-5050] refuse: load_in_4bit=True. QLoRA forbidden. "
+            "bf16 LoRA only (load_in_4bit=False, load_in_16bit=True)."
+        )
+    if load_in_16bit is not True:
+        raise SystemExit(
+            "[chaski-5050] refuse: load_in_16bit must be True. QLoRA forbidden."
+        )
+
+
+def assert_push_repo(repo_id: str) -> None:
+    """Never overwrite live SZLHOLDINGS/chaski. This checkout does not Hub PUT."""
+    normalized = (repo_id or "").strip()
+    if normalized == FORBIDDEN_HUB:
+        raise SystemExit(
+            "[chaski-5050] refuse: never overwrite SZLHOLDINGS/chaski. "
             "This kit is SZLHOLDINGS/chaski-5050 only."
         )
+    if normalized != ALLOWED_HUB:
+        raise SystemExit(
+            f"[chaski-5050] refuse: hub id {normalized!r} is not {ALLOWED_HUB}."
+        )
+
+
+def refuse_qlora() -> None:
+    assert_bf16_loader(LOAD_IN_4BIT, LOAD_IN_16BIT)
 
 
 def refuse_estate_on_path(*paths: str | Path) -> None:
@@ -217,6 +251,8 @@ def kit_receipt(*, live: bool = False, train_loss: float | None = None) -> dict[
         "seed": SEED,
         "lora_r": LORA_R,
         "lora_alpha": LORA_ALPHA,
+        "warmup_steps": WARMUP_STEPS,
+        "qlora_forbidden": True,
         "num_train_epochs": NUM_TRAIN_EPOCHS,
         "per_device_train_batch_size": BATCH_SIZE,
         "gradient_accumulation_steps": GRAD_ACCUM,
@@ -230,7 +266,8 @@ def kit_receipt(*, live: bool = False, train_loss: float | None = None) -> dict[
         "jobs": "not-an-hf-job",
         "response_only_loss": True,
         "training_loss": train_loss,
-        "label": "MEASURED" if train_loss is not None else "UNAVAILABLE",
+        "label": "REPORTED owner-metal",
+        "signed_receipt": False,
         "evals": "none-this-run",
         "train_loss_is_not_eval": True,
         "weights": "LOCAL" if local else "UNAVAILABLE",
@@ -244,10 +281,13 @@ def kit_receipt(*, live: bool = False, train_loss: float | None = None) -> dict[
         "a11oy_mini": False,
         "alias_of_live_chaski": False,
         "claim_boundary": (
-            "Local RTX 5050 Unsloth LoRA. Not an HF Job. "
-            "Receipt only. Evals none-this-run. Train loss MEASURED is not an eval. "
-            "Do not invent 5/5. Do not push to SZLHOLDINGS/chaski. "
-            "Not an alias of live Chaski. Not A11OY-MINI."
+            "Separate SKU SZLHOLDINGS/chaski-5050. Not live SZLHOLDINGS/chaski. "
+            "Local RTX 5050 Unsloth LoRA. QLoRA forbidden. Not an HF Job. "
+            "Training label REPORTED owner-metal until a signed receipt exists. "
+            "Evals none-this-run. Not 5/5. publication_eligible false. "
+            "Do not overwrite SZLHOLDINGS/chaski. Do not load into the Khipu lab. "
+            "No tok/s claims. A11OY-MINI is a GGUF of live Chaski, not 5050. "
+            "No Hub PUT from this checkout."
         ),
         "computed_at": datetime.now(timezone.utc).isoformat() if live else None,
         "source": "local-train" if live else "forge-status",
@@ -261,6 +301,7 @@ def write_receipt(payload: dict[str, Any], path: Path) -> None:
 
 def status_main() -> int:
     refuse_live_chaski_hub()
+    refuse_qlora()
     if CANONICAL_BASE != "Qwen/Qwen3.5-0.8B":
         raise SystemExit("[chaski-5050] refuse: canonical base drifted")
     print(
@@ -278,6 +319,7 @@ def status_main() -> int:
 
 def train_main(dataset_file: Path | None) -> int:
     refuse_live_chaski_hub()
+    refuse_qlora()
     from datasets import Dataset
     from unsloth import FastLanguageModel
     from unsloth.chat_templates import train_on_responses_only
@@ -292,8 +334,8 @@ def train_main(dataset_file: Path | None) -> int:
     model, tokenizer = FastLanguageModel.from_pretrained(
         model_name=BASE,
         max_seq_length=MAX_SEQ_LEN,
-        load_in_4bit=False,
-        load_in_16bit=True,
+        load_in_4bit=LOAD_IN_4BIT,
+        load_in_16bit=LOAD_IN_16BIT,
     )
     model = FastLanguageModel.get_peft_model(
         model,
@@ -329,7 +371,7 @@ def train_main(dataset_file: Path | None) -> int:
             per_device_train_batch_size=BATCH_SIZE,
             gradient_accumulation_steps=GRAD_ACCUM,
             num_train_epochs=NUM_TRAIN_EPOCHS,
-            warmup_steps=6,
+            warmup_steps=WARMUP_STEPS,
             learning_rate=2e-4,
             logging_steps=1,
             optim="adamw_8bit",
@@ -382,7 +424,31 @@ def main() -> int:
         type=Path,
         help="Local jsonl only. Refuses SZL_ESTATE_MANAGED.json.",
     )
+    parser.add_argument(
+        "--load-in-4bit",
+        action="store_true",
+        default=False,
+        help="Forbidden. Present so the recut can refuse QLoRA loudly.",
+    )
+    parser.add_argument(
+        "--push",
+        action="store_true",
+        help="Forbidden. This checkout does not Hub PUT.",
+    )
+    parser.add_argument(
+        "--hub-model-id",
+        default=os.environ.get("HUB_MODEL_ID", ALLOWED_HUB),
+        help=f"Must be {ALLOWED_HUB}. Never {FORBIDDEN_HUB}.",
+    )
     args = parser.parse_args()
+    assert_bf16_loader(args.load_in_4bit, LOAD_IN_16BIT)
+    if args.hub_model_id.strip() == FORBIDDEN_HUB or args.push:
+        assert_push_repo(args.hub_model_id)
+    if args.push:
+        raise SystemExit(
+            "[chaski-5050] refuse: No Hub PUT from this checkout. "
+            f"Never overwrite {FORBIDDEN_HUB}."
+        )
     if args.train:
         return train_main(args.dataset_file)
     if args.dataset_file is not None:

@@ -91,6 +91,7 @@ jobs:
             chaski/train_chaski_bf16_5050.py \
             chaski/eval_chaski_5050.py \
             chaski/serve_chaski_5050.py \
+            chaski/test_train_chaski_bf16_5050.py \
             chaski/jobs/launch_chaski_job.py \
             qantu/skip_receipt.py \
             waman/skip_receipt.py \
@@ -101,6 +102,7 @@ jobs:
             frontier/qwen35-receiptagent-v2/serve_candidate.py
           python tools/test_verify_model_portfolio.py
           PYTHONPATH=. python -m unittest -v tools/test_fall2026_alignment.py
+          PYTHONPATH=. python -m unittest -v chaski/test_train_chaski_bf16_5050.py
           PYTHONPATH=tools python -m unittest -v \
             tools/test_authorize_kernels_release.py \
             tools/test_publish_szl_kernels.py
