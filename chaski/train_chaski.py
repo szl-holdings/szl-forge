@@ -20,12 +20,13 @@ Load ONLY szl_dataset.jsonl — do not let datasets ingest SZL_ESTATE_MANAGED.js
 Hub card is source of truth for the disclosed Apache base:
 Qwen/Qwen3.5-0.8B. Do not recut this kit onto another Qwen instruct family.
 
-A11OY-MINI is a later GGUF of THIS Chaski 0.8B after an adapter file lands.
-Not Khipu. Not a third LLM.
+A11OY-MINI is a later GGUF of THIS Chaski 0.8B. ROADMAP. Not Khipu. Not a third LLM.
+Hub adapter files exist as of 2026-08-28T17:08Z; a GGUF is not cut.
 
-CUTTING until an adapter file lands. A receipt is not an adapter.
-Do not claim a Hub adapter. Do not pin serve.
-Do not recut Hub from this checkout. Do not cancel the live report_to=none job.
+CUTTING. Adapter files exist on Hub as of 2026-08-28T17:08Z.
+Evals remain none-this-run. Train loss is not an eval. Do not invent 5/5.
+Do not pin serve. Do not recut Hub from this checkout.
+Do not cancel the live report_to=none job. Do not restamp it COMPLETED.
 """
 from __future__ import annotations
 
@@ -44,7 +45,7 @@ HERE = Path(__file__).resolve().parent
 # 6a91b990 FAILED pyyaml 30s
 # 6a91ba00 COMPLETED receipt-only, weights UNAVAILABLE, train_loss MEASURED 1.7827
 # 6a91bb7c ERROR after 64/64, train_loss MEASURED 1.7844666938763112, merge ran, upload_folder Trackio 404, no safetensors
-# 6a91bf1045686a1580c12105 RUNNING report_to=none — live
+# 6a91bf1045686a1580c12105 RUNNING report_to=none — live; Hub tensors as of 2026-08-28 17:08 UTC
 
 MAX_SEQ_LEN = 2048
 BASE = os.environ.get("BASE_MODEL", "unsloth/Qwen3.5-0.8B")
@@ -68,10 +69,19 @@ ATTEMPT3_ROWS = 45
 ATTEMPT3_DATASET_SHA256 = (
     "ddc5594bfb1c78449ba40a263f5ac41d21c896c3c7ed7346341c7c080611a243"
 )
+HUB_TENSORS_OBSERVED_AT = "2026-08-28T17:08Z"
+HUB_TENSORS = [
+    "adapter_model.safetensors",
+    "adapter_config.json",
+    "model.safetensors-00001-of-00001.safetensors",
+]
+WEIGHTS_STATUS = f"present-on-hub-as-of-{HUB_TENSORS_OBSERVED_AT}"
 
 # Five HF Jobs attempts. Status strings are bound to these ids.
 # Attempt 3 COMPLETED (receipt-only). Attempt 4 ERROR (no safetensors).
-# The only live stamp is attempt 5 (report_to=none).
+# Attempt 5 is the live stamp (report_to=none). Likely the upload that
+# landed Hub tensors. Not restamped COMPLETED: files exist as of
+# HUB_TENSORS_OBSERVED_AT.
 JOBS: list[dict[str, Any]] = [
     {
         "id": "6a91b8ba984507d9db4ea071",
@@ -120,9 +130,19 @@ JOBS: list[dict[str, Any]] = [
     {
         "id": LIVE_JOB_ID,
         "status": "RUNNING",
-        "detail": "report_to=none. CUTTING until adapter files exist. Not MEASURED as weights.",
+        "detail": (
+            "report_to=none. Likely the upload that landed Hub tensors. "
+            f"Files on repo as of {HUB_TENSORS_OBSERVED_AT}: "
+            + ", ".join(HUB_TENSORS)
+            + ". Not restamped COMPLETED. Evals none-this-run. "
+            "Train loss is not an eval."
+        ),
         "url": LIVE_JOB_URL,
         "report_to": "none",
+        "weights": WEIGHTS_STATUS,
+        "hub_tensors": HUB_TENSORS,
+        "hub_tensors_observed_at": HUB_TENSORS_OBSERVED_AT,
+        "evals": "none-this-run",
     },
 ]
 
@@ -261,7 +281,7 @@ def load_doctrine_jsonl(dataset_file: Path | None = None) -> tuple[list[dict[str
 
 
 def cutting_receipt(*, live: bool = False) -> dict[str, Any]:
-    """Honest kit status. Train loss MEASURED on attempt 3; weights UNAVAILABLE."""
+    """Honest kit status. Hub tensors exist as of 2026-08-28T17:08Z; evals none-this-run."""
     return {
         "kind": "szl-chaski-training-receipt",
         "schema": "szl.frontier-training-run/v1",
@@ -286,8 +306,10 @@ def cutting_receipt(*, live: bool = False) -> dict[str, Any]:
         "training_loss": ATTEMPT3_LOSS,
         "label": "MEASURED",
         "evals": "none-this-run",
-        "weights": "UNAVAILABLE",
-        "adapter": "UNAVAILABLE",
+        "weights": WEIGHTS_STATUS,
+        "adapter": WEIGHTS_STATUS,
+        "hub_tensors": HUB_TENSORS,
+        "hub_tensors_observed_at": HUB_TENSORS_OBSERVED_AT,
         "card_status": "CUTTING",
         "lambda": "Conjecture 1",
         "doctrine": "v11 LOCKED 749/14/163",
@@ -301,8 +323,9 @@ def cutting_receipt(*, live: bool = False) -> dict[str, Any]:
         "jobs": JOBS,
         "claim_boundary": (
             "Training completion is not evaluation. No JSON/refusal gate ran "
-            "attempt 3. Do not claim 5/5 or 6/6. Do not claim a Hub adapter. "
-            "CUTTING until an adapter file lands."
+            "this run. Do not claim 5/5 or 6/6. Adapter files exist on Hub "
+            f"as of {HUB_TENSORS_OBSERVED_AT}. Evals remain none-this-run. "
+            "Train loss is not an eval. CUTTING. Do not restamp attempt 5 COMPLETED."
         ),
         "computed_at": datetime.now(timezone.utc).isoformat() if live else None,
         "source": "forge-status" if not live else "local-train",
@@ -318,7 +341,9 @@ def status_main() -> int:
     print(
         f"[chaski] base={BASE} canonical={CANONICAL_BASE} hub={HUB} seed={SEED}"
     )
-    print("[chaski] card=CUTTING weights=UNAVAILABLE evals=none-this-run")
+    print(
+        f"[chaski] card=CUTTING weights={WEIGHTS_STATUS} evals=none-this-run"
+    )
     print(f"[chaski] attempt3 receipt already on Hub: {HUB_RECEIPT_URL}")
     print(f"[chaski] live report_to=none: {LIVE_JOB_URL}")
     for job in JOBS:
