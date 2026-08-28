@@ -156,7 +156,7 @@ class A11oyMiniKitTests(unittest.TestCase):
 
     def test_readme_roadmap_parent_and_locks(self) -> None:
         text = README.read_text(encoding="utf-8")
-        self.assertIn("ROADMAP until a `.gguf` file exists", text)
+        self.assertIn("ROADMAP until a `.gguf` file exists on `SZLHOLDINGS/A11OY-MINI`", text)
         self.assertIn("SZLHOLDINGS/chaski", text)
         self.assertIn("Qwen/Qwen3.5-0.8B", text)
         self.assertIn("not a new train", text.lower())
@@ -165,6 +165,10 @@ class A11oyMiniKitTests(unittest.TestCase):
         self.assertIn("convert_hf_to_gguf.py", text)
         self.assertIn("Q4_K_M", text)
         self.assertIn("MEASURED 2026-07-12", text)
+        self.assertIn("publication-eligible (INTI)", text)
+        self.assertIn("Kit scripts may land now", text)
+        self.assertNotIn("after the PR exists", text)
+        self.assertNotIn("after this PR exists", text)
         self.assertNotIn("a11oy.com", text)
         front = text.split("---", 2)[1]
         self.assertIsNone(re.search(r"^base_model_relation\s*:", front, flags=re.M))
@@ -174,6 +178,10 @@ class A11oyMiniKitTests(unittest.TestCase):
         self.assertIn("khipu_lab_pin: false", text)
         self.assertIn("chaski-5050", text)
         self.assertNotIn("https://a-11-oy.com", text)
+        convert_src = (HERE / "convert_a11oy_mini_gguf.py").read_text(encoding="utf-8")
+        self.assertNotIn("FORGE pushes after the PR exists", convert_src)
+        self.assertNotIn("FORGE pushes after this PR exists", convert_src)
+        self.assertIn("publication-eligible (INTI)", convert_src)
 
     def test_kit_does_not_touch_foreign_trees(self) -> None:
         for path in (

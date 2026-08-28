@@ -42,7 +42,7 @@ szl:
 
 **Later GGUF SKU of live [`SZLHOLDINGS/chaski`](https://huggingface.co/SZLHOLDINGS/chaski).** Not a new train. Not a third LLM. Not [`SZLHOLDINGS/chaski-5050`](https://huggingface.co/SZLHOLDINGS/chaski-5050).
 
-GitHub conversion scripts are in this folder. **ROADMAP until a `.gguf` file exists locally.** This checkout does not Hub PUT GGUF bytes or an empty parent. FORGE pushes after the PR exists.
+Kit scripts may land now. **ROADMAP until a `.gguf` file exists on `SZLHOLDINGS/A11OY-MINI`.** This checkout does not Hub PUT GGUF bytes or an empty parent. FORGE pushes Hub GGUF only after live Chaski is publication-eligible (INTI). `publication_eligible: false`. No `base_model_relation: quantized`. Direct safetensors→Ollama banned.
 
 | | |
 |---|---|
@@ -82,7 +82,7 @@ That is the szl-forge llama.cpp rebirth path in Python, not PowerShell:
 
 `ollama create` from a safetensors directory is refused.
 
-Default `--status` writes `conversion_receipt.json` with `publication_eligible: false`, `evals: none-this-run`, parent live Chaski, `hub_put: false`. Bytes are labeled MEASURED only when a local `.gguf` hash is written.
+Default `--status` writes `conversion_receipt.json` with `publication_eligible: false`, `evals: none-this-run`, parent live Chaski, `hub_put: false`. FORGE does not push Hub GGUF from this kit until live Chaski is publication-eligible (INTI).
 
 Eval without a local GGUF stays honest: `evals=none-this-run`, `quality=ROADMAP`, `gguf=UNAVAILABLE`. A later hash is bytes MEASURED, not an eval.
 
