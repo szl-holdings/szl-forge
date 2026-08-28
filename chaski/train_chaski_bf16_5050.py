@@ -17,12 +17,14 @@ Do not push to SZLHOLDINGS/chaski. No Hub PUT from this checkout.
 
 Verified Hub receipt (GitHub stamp only):
 Hub SZLHOLDINGS/chaski-5050 commit c907ebe6e1fa900021be7b6fec19b38ec45be574.
+Hub README surgical commit 3734d562bb1e06927c736ac293b4a482a142c4a6.
 adapter_model.safetensors present. weights AVAILABLE.
+adapter_sha256 620b3488fac2ebc6518090424de5b3c6a182293cf52dfd5bd9f886f54aef0df5.
 training_receipt.json: train_loss MEASURED 2.228136855544466,
 train_runtime 883.2224s, 3 epochs, 41 rows, seed 11, r=16 alpha=16,
 QLoRA false, job local-5050.
 dataset_sha256 ddc5594bfb1c78449ba40a263f5ac41d21c896c3c7ed7346341c7c080611a243.
-train_loss MEASURED is a train metric, not an eval.
+train_loss MEASURED 2.228136855544466 is a train metric, not an eval.
 The SKU is NOT MEASURED. Do not stamp the model as MEASURED.
 
 CHAWPI fashion: separate SKU. Do not add chaski-5050 to the Receipted
@@ -80,6 +82,8 @@ RECEIPT_TRAIN = HERE / "training_receipt_5050.json"
 # GitHub-only Hub receipt stamp. No Hub PUT. Do not change r/alpha.
 # Hub SZLHOLDINGS/chaski-5050 commit c907ebe6e1fa900021be7b6fec19b38ec45be574
 # adapter_model.safetensors present
+# adapter_sha256 620b3488fac2ebc6518090424de5b3c6a182293cf52dfd5bd9f886f54aef0df5
+# Hub README surgical commit 3734d562bb1e06927c736ac293b4a482a142c4a6
 # training_receipt.json: train_loss MEASURED 2.228136855544466, train_runtime 883.2224s, 3 epochs, 41 rows, seed 11, r=16 alpha=16, QLoRA false, job local-5050
 # dataset_sha256 ddc5594bfb1c78449ba40a263f5ac41d21c896c3c7ed7346341c7c080611a243
 # evals none-this-run. publication_eligible false. weights AVAILABLE
@@ -89,7 +93,11 @@ RECEIPT_TRAIN = HERE / "training_receipt_5050.json"
 # That shelf stays live Chaski / Khipu / ReceiptAgent. Keep it off the LIVE portfolio table.
 # No lab load. Do not merge #59. Train loss is not an eval.
 HUB_COMMIT = "c907ebe6e1fa900021be7b6fec19b38ec45be574"
+HUB_README_COMMIT = "3734d562bb1e06927c736ac293b4a482a142c4a6"
 HUB_ADAPTER_FILE = "adapter_model.safetensors"
+HUB_ADAPTER_SHA256 = (
+    "620b3488fac2ebc6518090424de5b3c6a182293cf52dfd5bd9f886f54aef0df5"
+)
 HUB_TRAIN_LOSS = 2.228136855544466
 HUB_TRAIN_RUNTIME_S = 883.2224
 HUB_TRAINING_ROWS = 41
@@ -313,7 +321,9 @@ def kit_receipt(*, live: bool = False, train_loss: float | None = None) -> dict[
         "weights": "LOCAL" if local else "UNAVAILABLE",
         "adapter": "LOCAL" if local else "UNAVAILABLE",
         "hub_commit": HUB_COMMIT,
+        "hub_readme_commit": HUB_README_COMMIT,
         "hub_adapter_file": HUB_ADAPTER_FILE,
+        "hub_adapter_sha256": HUB_ADAPTER_SHA256,
         "hub_train_loss": HUB_TRAIN_LOSS,
         "hub_train_loss_label": "MEASURED",
         "hub_train_runtime_s": HUB_TRAIN_RUNTIME_S,
@@ -338,7 +348,9 @@ def kit_receipt(*, live: bool = False, train_loss: float | None = None) -> dict[
             "Training label REPORTED owner-metal until a signed receipt exists. "
             "Evals none-this-run. Not 5/5. publication_eligible false. "
             "SKU is NOT MEASURED. Do not stamp the model as MEASURED. "
-            "train_loss MEASURED is a train metric, not an eval. "
+            "train_loss MEASURED 2.228136855544466 is a train metric, not an eval. "
+            "adapter_sha256 620b3488fac2ebc6518090424de5b3c6a182293cf52dfd5bd9f886f54aef0df5. "
+            "Hub README surgical commit 3734d562bb1e06927c736ac293b4a482a142c4a6. "
             "weights AVAILABLE on Hub. "
             "Do not overwrite SZLHOLDINGS/chaski. Do not load into the Khipu lab. "
             "CHAWPI fashion: separate SKU. Off Receipted Unsloth LIVE shelf "

@@ -257,7 +257,15 @@ class Fall2026AlignmentTests(unittest.TestCase):
         self.assertEqual(
             "c907ebe6e1fa900021be7b6fec19b38ec45be574", receipt["hub_commit"]
         )
+        self.assertEqual(
+            "3734d562bb1e06927c736ac293b4a482a142c4a6",
+            receipt["hub_readme_commit"],
+        )
         self.assertEqual("adapter_model.safetensors", receipt["hub_adapter_file"])
+        self.assertEqual(
+            "620b3488fac2ebc6518090424de5b3c6a182293cf52dfd5bd9f886f54aef0df5",
+            receipt["hub_adapter_sha256"],
+        )
         self.assertEqual(2.228136855544466, receipt["hub_train_loss"])
         self.assertEqual("MEASURED", receipt["hub_train_loss_label"])
         self.assertEqual("AVAILABLE", receipt["hub_weights"])

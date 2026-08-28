@@ -130,6 +130,8 @@ class Chaski5050GuardTests(unittest.TestCase):
         comments = (
             "# Hub SZLHOLDINGS/chaski-5050 commit c907ebe6e1fa900021be7b6fec19b38ec45be574",
             "# adapter_model.safetensors present",
+            "# adapter_sha256 620b3488fac2ebc6518090424de5b3c6a182293cf52dfd5bd9f886f54aef0df5",
+            "# Hub README surgical commit 3734d562bb1e06927c736ac293b4a482a142c4a6",
             "# training_receipt.json: train_loss MEASURED 2.228136855544466, train_runtime 883.2224s, 3 epochs, 41 rows, seed 11, r=16 alpha=16, QLoRA false, job local-5050",
             "# dataset_sha256 ddc5594bfb1c78449ba40a263f5ac41d21c896c3c7ed7346341c7c080611a243",
             "# evals none-this-run. publication_eligible false. weights AVAILABLE",
@@ -145,8 +147,13 @@ class Chaski5050GuardTests(unittest.TestCase):
         for path in (SCRIPT, CARD, README):
             blob = path.read_text(encoding="utf-8")
             self.assertIn("c907ebe6e1fa900021be7b6fec19b38ec45be574", blob)
+            self.assertIn("3734d562bb1e06927c736ac293b4a482a142c4a6", blob)
             self.assertIn("2.228136855544466", blob)
             self.assertIn("adapter_model.safetensors", blob)
+            self.assertIn(
+                "620b3488fac2ebc6518090424de5b3c6a182293cf52dfd5bd9f886f54aef0df5",
+                blob,
+            )
             self.assertIn(
                 "ddc5594bfb1c78449ba40a263f5ac41d21c896c3c7ed7346341c7c080611a243",
                 blob,
@@ -172,6 +179,13 @@ class Chaski5050GuardTests(unittest.TestCase):
         self.assertEqual(16, recut.LORA_ALPHA)
         self.assertEqual(
             "c907ebe6e1fa900021be7b6fec19b38ec45be574", recut.HUB_COMMIT
+        )
+        self.assertEqual(
+            "3734d562bb1e06927c736ac293b4a482a142c4a6", recut.HUB_README_COMMIT
+        )
+        self.assertEqual(
+            "620b3488fac2ebc6518090424de5b3c6a182293cf52dfd5bd9f886f54aef0df5",
+            recut.HUB_ADAPTER_SHA256,
         )
         self.assertEqual("AVAILABLE", recut.HUB_WEIGHTS)
         self.assertEqual("local-5050", recut.HUB_JOB)

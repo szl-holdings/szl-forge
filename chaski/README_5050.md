@@ -6,12 +6,13 @@ Separate SKU. **Not** live [`SZLHOLDINGS/chaski`](https://huggingface.co/SZLHOLD
 |---|---|
 | **Hub id** | `SZLHOLDINGS/chaski-5050` |
 | **Hub commit** | [`c907ebe6e1fa900021be7b6fec19b38ec45be574`](https://huggingface.co/SZLHOLDINGS/chaski-5050/tree/c907ebe6e1fa900021be7b6fec19b38ec45be574) |
+| **Hub README** | surgical commit `3734d562bb1e06927c736ac293b4a482a142c4a6`. GitHub stamp only. No Hub PUT. |
 | **Live Chaski** | `SZLHOLDINGS/chaski` — a different artifact. This kit refuses that id. |
 | **Base** | `Qwen/Qwen3.5-0.8B` (`CANONICAL_BASE`, Apache-2.0). Do not recut onto another instruct family. |
 | **Hardware** | owner GPU / local RTX 5050. **Not an HF Job.** job `local-5050`. |
 | **Recipe** | Unsloth LoRA bf16. QLoRA forbidden. `load_in_4bit=False`, `load_in_16bit=True`, r=16, **alpha=16**, seed=11, `warmup_steps=6`, 3 epochs, batch 1, ga 4, seq 2048, `adamw_8bit`, unsloth gradient checkpointing, `report_to=none` |
 | **Data** | jsonl-only `szl_dataset.jsonl`. Refuses `SZL_ESTATE_MANAGED.json`. `dataset_sha256` `ddc5594bfb1c78449ba40a263f5ac41d21c896c3c7ed7346341c7c080611a243`. |
-| **Weights** | AVAILABLE. `adapter_model.safetensors` present on Hub. |
+| **Weights** | AVAILABLE. `adapter_model.safetensors` present on Hub. `adapter_sha256` `620b3488fac2ebc6518090424de5b3c6a182293cf52dfd5bd9f886f54aef0df5`. |
 | **Train loss** | MEASURED `2.228136855544466` (`train_runtime` 883.2224s, 3 epochs, 41 rows). train metric, not an eval. |
 | **Training label** | `REPORTED owner-metal` until a signed receipt exists. |
 | **SKU** | **NOT MEASURED.** Do not stamp this model as MEASURED. Separate SKU. Off Receipted Unsloth LIVE shelf. Off the LIVE portfolio table. |
