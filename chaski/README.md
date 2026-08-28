@@ -12,6 +12,7 @@ tags:
   - doctrine-v11
   - governed-ai
   - proposal-only
+  - roadmap
 szl:
   doctrine: v11-LOCKED
   lean: "749/14/163"
@@ -36,7 +37,7 @@ szl:
 
 # Chaski
 
-**One line.** Messenger LLM. Proposal-only drafts and honest refusals for the SZL controller.
+ROADMAP. Messenger LLM. Proposal-only drafts and honest refusals for the SZL controller.
 
 | | |
 |---|---|
@@ -45,15 +46,15 @@ szl:
 | **Base** | `Qwen/Qwen3.5-0.8B` (Apache-2.0, 0.6B–2B lock) |
 | **License** | `apache-2.0` |
 | **HF Jobs** | Attempt 5 [`6a91bf1045686a1580c12105`](https://huggingface.co/jobs/SZLHOLDINGS/6a91bf1045686a1580c12105) was the live `report_to=none` job (files now on repo). Attempt 4 `6a91bb7c` stays ERROR. |
-| **Status** | CUTTING. Files exist on Hub as of 2026-08-28T17:08Z. Evals none-this-run. Train loss is not an eval. Not 5/5. |
-| **Later SKU** | `A11OY-MINI` GGUF of this model. ROADMAP. Hub adapters exist; a GGUF is not cut. |
+| **Status** | CUTTING. Hub has `adapter_model.safetensors` as of 2026-08-28T17:08Z. Evals none-this-run. Train loss is not an eval. |
+| **Later SKU** | `A11OY-MINI` is a later quantized GGUF of this adapter. ROADMAP. Not `base_model_relation: quantized` of an empty parent. Hub adapters exist; a GGUF is not cut. |
 | **Sibling** | [`szl-receiptagent-qwen35-0.8b-v2`](https://huggingface.co/SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2) |
 
 > **Fashion rule.** Silhouette from Qwen3 / Qwen3.5 instruct. Cut is original SZL. We do not republish someone else's tensors.
 
 The house CPU lab serves **Khipu GGUF**, not Chaski. Lab load forbidden.
 
-**Evaluation:** none-this-run. Train loss MEASURED `1.782708187121898` is a train metric, not an eval. Quality is UNKNOWN. Not 5/5.
+**Evaluation:** none-this-run. Train loss MEASURED `1.782708187121898` is a train metric, not an eval. Quality is UNKNOWN. Λ is Conjecture 1.
 
 ## Training
 

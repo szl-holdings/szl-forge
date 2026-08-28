@@ -191,6 +191,36 @@ class Fall2026AlignmentTests(unittest.TestCase):
             self.assertEqual(2, fired.returncode)
             self.assertIn("refusing", fired.stderr.lower())
 
+    def test_fall_stub_readme_inti_roadmap_leads(self) -> None:
+        stubs = (
+            ROOT / "chaski" / "README.md",
+            ROOT / "chaski" / "HF_MODEL_CARD.md",
+            ROOT / "qantu" / "README.md",
+            ROOT / "waman" / "README.md",
+            ROOT / "chakana" / "README.md",
+            ROOT / "tinku" / "README.md",
+        )
+        for path in stubs:
+            text = path.read_text(encoding="utf-8")
+            self.assertTrue(text.startswith("---\n"), path)
+            yaml_end = text.find("\n---\n", 3)
+            self.assertNotEqual(-1, yaml_end, path)
+            front = text[4:yaml_end]
+            self.assertIn("- roadmap", front, path)
+            self.assertNotIn("base_model_relation: quantized", front, path)
+            self.assertNotIn("a11oy.com", text, path)
+            body = text[yaml_end + 5 :].lstrip()
+            lines = [ln for ln in body.splitlines() if ln.strip()]
+            self.assertTrue(lines[0].startswith("# "), path)
+            self.assertTrue(lines[1].startswith("ROADMAP."), path)
+        alias = (ROOT / "waman" / "ALIASES.md").read_text(encoding="utf-8")
+        self.assertTrue(alias.startswith("ALIAS."))
+        chaski = (ROOT / "chaski" / "README.md").read_text(encoding="utf-8")
+        self.assertIn("adapter_model.safetensors", chaski)
+        self.assertIn("none-this-run", chaski)
+        self.assertFalse((ROOT / "willay").exists())
+        self.assertFalse((ROOT / "khipu" / "README_R2.md").exists())
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
