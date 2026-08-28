@@ -19,6 +19,7 @@ README = KIT / "README.md"
 FORBIDDEN = "SZLHOLDINGS/SZL-Khipu-1.5B"
 BASE_MODEL = "Qwen/Qwen2.5-1.5B-Instruct"
 HUB_JOB_ID = "6a91bf11984507d9db4ea104"
+HUB_RECEIPT_COMMIT = "ddf6c50d8baa9f818b9f478086e7b5919eb773cf"
 STALE_PROFILE = "SZL-Khipu-1.5B-BrainNavigator"
 
 
@@ -102,6 +103,12 @@ class KhipuR2KitTests(unittest.TestCase):
         self.assertEqual("signed Khipu GGUF", receipt["lab"])
         self.assertNotIn("capabilityProfile", receipt)
         self.assertNotIn("card_status", receipt)
+        self.assertEqual(HUB_RECEIPT_COMMIT, receipt["hub_receipt_commit"])
+        self.assertEqual(
+            "hub-receipt-ddf6c50-publication-eligible-false", receipt["chawpi"]
+        )
+        self.assertIn("ddf6c50", receipt["claim_boundary"])
+        self.assertIn("Do not merge #64", receipt["claim_boundary"])
 
     def test_refuses_signed_khipu_hub(self) -> None:
         completed = run(TRAIN, "--hub", FORBIDDEN)
@@ -140,6 +147,8 @@ class KhipuR2KitTests(unittest.TestCase):
         self.assertEqual(FORBIDDEN, report["does_not_overwrite"])
         self.assertEqual("COMPLETED", report["hub_job_status"])
         self.assertEqual("AVAILABLE", report["hub_adapter"])
+        self.assertEqual(HUB_RECEIPT_COMMIT, report["hub_receipt_commit"])
+        self.assertFalse(report["publication_eligible"])
         self.assertNotIn("capabilityProfile", report)
         dumped = json.dumps(report)
         self.assertIn("3/6", dumped)
@@ -159,6 +168,8 @@ class KhipuR2KitTests(unittest.TestCase):
         self.assertEqual("signed Khipu GGUF", payload["lab"])
         self.assertFalse(payload["publication_eligible"])
         self.assertEqual(FORBIDDEN, payload["does_not_overwrite"])
+        self.assertEqual(HUB_RECEIPT_COMMIT, payload["hub_receipt_commit"])
+        self.assertFalse(payload["publication_eligible"])
 
     def test_jobs_launcher_refuses_to_fire(self) -> None:
         dry = run(LAUNCH, check=True)
@@ -170,6 +181,9 @@ class KhipuR2KitTests(unittest.TestCase):
         self.assertIn("refusing", fired.stderr.lower())
         self.assertIn("COMPLETED", fired.stderr)
         self.assertIn(HUB_JOB_ID, fired.stderr)
+        self.assertIn("ddf6c50", fired.stderr)
+        self.assertIn("--run-job", fired.stderr)
+        self.assertIn("Do not merge #64", fired.stderr)
 
     def test_no_hub_put_in_kit_source(self) -> None:
         forbidden_tokens = (
@@ -206,7 +220,36 @@ class KhipuR2KitTests(unittest.TestCase):
         self.assertIn("signed Khipu GGUF", text)
         self.assertIn("r=32", text)
         self.assertIn("α=64", text)
+        self.assertIn("ddf6c50", text)
+        self.assertIn("CHAWPI", text)
+        self.assertIn("Do not merge #64", text)
         self.assertNotIn(STALE_PROFILE, text)
+
+    def test_chawpi_extra_lock_receipt_ddf6c50_is_public_claim(self) -> None:
+        comments = (
+            "# CHAWPI extra lock: Hub receipt ddf6c50d8baa9f818b9f478086e7b5919eb773cf\n",
+            "# publication_eligible false is the public claim.\n",
+            "# Stamp job 6a91bf11984507d9db4ea104 COMPLETED.\n",
+            "# eval_measured.json abstain 3/6 (grounding 5/5, plan 11/11).\n",
+            "# stale profile key dropped. Launcher still no --run-job.\n",
+            "# r=32 α=64 this SKU. Signed 1.5B stays 2/6. No Hub PUT.\n",
+            "# Do not merge #64.\n",
+        )
+        text = TRAIN.read_text(encoding="utf-8")
+        for line in comments:
+            self.assertIn(line, text)
+        for path, blob in kit_text_files():
+            if path.name == ".gitignore":
+                continue
+            self.assertIn("ddf6c50", blob, f"{path} missing Hub receipt ddf6c50")
+            self.assertIn("publication_eligible", blob)
+            self.assertNotIn(STALE_PROFILE, blob)
+            self.assertNotIn("capabilityProfile", blob)
+        launch_text = LAUNCH.read_text(encoding="utf-8")
+        self.assertIn("still no --run-job", launch_text)
+        self.assertIn("Do not merge #64", launch_text)
+        self.assertIn("r=32", TRAIN.read_text(encoding="utf-8"))
+        self.assertIn("α=64", TRAIN.read_text(encoding="utf-8"))
 
     def test_stale_capability_profile_is_absent(self) -> None:
         for path, text in kit_text_files():

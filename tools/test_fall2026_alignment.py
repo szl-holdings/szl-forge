@@ -81,9 +81,10 @@ class Fall2026AlignmentTests(unittest.TestCase):
         self.assertFalse((ROOT / "khipu" / "train_khipu_r2.py").exists())
         # Live Hub KHIPU-R2 is not empty (job 6a91bf11984507d9db4ea104
         # COMPLETED, adapter AVAILABLE, abstain MEASURED 3/6, grounding 5/5,
-        # plan 11/11). Signed 1.5B abstain stays MEASURED 2/6. Successor
-        # trainer is the separate SKU khipu_r2/train_khipu_r2.py. This-kit
-        # jobs UNKNOWN.
+        # plan 11/11). Hub receipt ddf6c50 publication_eligible false is the
+        # public claim (CHAWPI extra lock). Signed 1.5B abstain stays
+        # MEASURED 2/6. Successor trainer is the separate SKU
+        # khipu_r2/train_khipu_r2.py. This-kit jobs UNKNOWN. No --run-job.
         self.assertTrue((ROOT / "khipu_r2" / "train_khipu_r2.py").is_file())
         self.assertFalse((ROOT / "khipu_r2" / "train_khipu_abstain.py").exists())
 

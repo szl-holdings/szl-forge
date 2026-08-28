@@ -26,6 +26,10 @@ ABSTAIN_OVERSAMPLE=4, r=32 α=64, 45 epochs, seed 11).
 
 publication_eligible is false. Doctrine v11 LOCKED. Λ = Conjecture 1.
 House CPU lab stays signed Khipu GGUF.
+
+CHAWPI extra lock: Hub receipt ddf6c50 publication_eligible false is the
+public claim. stale profile key dropped. Launcher still no --run-job.
+r=32 α=64 this SKU. Signed 1.5B stays 2/6. No Hub PUT. Do not merge #64.
 """
 from __future__ import annotations
 
@@ -70,6 +74,15 @@ HUB_GROUNDING_CORRECT = 5
 HUB_GROUNDING_TOTAL = 5
 HUB_PLAN_VALID = 11
 HUB_PLAN_TOTAL = 11
+HUB_RECEIPT_COMMIT = "ddf6c50d8baa9f818b9f478086e7b5919eb773cf"
+CHAWPI = "hub-receipt-ddf6c50-publication-eligible-false"
+# CHAWPI extra lock: Hub receipt ddf6c50d8baa9f818b9f478086e7b5919eb773cf
+# publication_eligible false is the public claim.
+# Stamp job 6a91bf11984507d9db4ea104 COMPLETED.
+# eval_measured.json abstain 3/6 (grounding 5/5, plan 11/11).
+# stale profile key dropped. Launcher still no --run-job.
+# r=32 α=64 this SKU. Signed 1.5B stays 2/6. No Hub PUT.
+# Do not merge #64.
 
 CURRICULUM_FILES = [
     "train.jsonl",
@@ -235,6 +248,8 @@ def status_receipt(
         "hub_plan": f"{HUB_PLAN_VALID}/{HUB_PLAN_TOTAL}",
         "hub_plan_valid": HUB_PLAN_VALID,
         "hub_plan_total": HUB_PLAN_TOTAL,
+        "hub_receipt_commit": HUB_RECEIPT_COMMIT,
+        "chawpi": CHAWPI,
         "signed_original_abstain": f"{abstain_correct}/{abstain_total}",
         "signed_original_abstain_correct": abstain_correct,
         "signed_original_abstain_total": abstain_total,
@@ -263,7 +278,10 @@ def status_receipt(
             f"{abstain_correct}/{abstain_total} on that card only. "
             "This-kit jobs UNKNOWN. This-SKU evals not-this-run. "
             "Does not overwrite signed SZL-Khipu-1.5B. No Hub PUT. "
-            "publication_eligible false. Lab stays signed Khipu GGUF."
+            "CHAWPI extra lock: Hub receipt ddf6c50 publication_eligible false "
+            "is the public claim. stale profile key dropped. "
+            "Launcher still no --run-job. r=32 α=64 this SKU. "
+            "Do not merge #64. Lab stays signed Khipu GGUF."
         ),
         "computed_at": datetime.now(timezone.utc).isoformat() if live else None,
         "source": "local-train" if live else "forge-status",
@@ -314,6 +332,10 @@ def status_main(hub: str) -> int:
         f"grounding={HUB_GROUNDING_CORRECT}/{HUB_GROUNDING_TOTAL} "
         f"plan={HUB_PLAN_VALID}/{HUB_PLAN_TOTAL} "
         "publication_eligible=false"
+    )
+    print(
+        f"[khipu-r2] CHAWPI hub_receipt={HUB_RECEIPT_COMMIT} "
+        "publication_eligible=false is the public claim"
     )
     print(
         f"[khipu-r2] signed original abstain MEASURED "

@@ -5,6 +5,10 @@ Live Hub job 6a91bf11984507d9db4ea104 is COMPLETED. This-kit jobs UNKNOWN.
 Do not launch another Hub job from forge. No Hub PUT. Never retarget
 SZLHOLDINGS/SZL-Khipu-1.5B.
 
+CHAWPI extra lock: Hub receipt ddf6c50 publication_eligible false is the
+public claim. Launcher still no --run-job. r=32 α=64 this SKU.
+stale profile key dropped. Signed 1.5B stays 2/6. Do not merge #64.
+
 base_model = Qwen/Qwen2.5-1.5B-Instruct
 """
 from __future__ import annotations
@@ -24,6 +28,8 @@ HUB_JOB_STATUS = "COMPLETED"
 HUB_JOB_URL = f"https://huggingface.co/jobs/SZLHOLDINGS/{HUB_JOB_ID}"
 HUB_ADAPTER_STATUS = "AVAILABLE"
 HUB_ADAPTER_SIZE = "147.8MB"
+HUB_RECEIPT_COMMIT = "ddf6c50d8baa9f818b9f478086e7b5919eb773cf"
+CHAWPI = "hub-receipt-ddf6c50-publication-eligible-false"
 
 
 def plan() -> dict:
@@ -38,6 +44,8 @@ def plan() -> dict:
         "hub_job_url": HUB_JOB_URL,
         "hub_adapter": HUB_ADAPTER_STATUS,
         "hub_adapter_size": HUB_ADAPTER_SIZE,
+        "hub_receipt_commit": HUB_RECEIPT_COMMIT,
+        "chawpi": CHAWPI,
         "jobs": "UNKNOWN",
         "jobs_scope": "this-kit",
         "submitted": False,
@@ -69,8 +77,10 @@ def main() -> int:
         print(
             "[khipu-r2-jobs] refusing to fire: Hub job "
             f"{HUB_JOB_ID} already {HUB_JOB_STATUS}. "
-            "This-kit jobs UNKNOWN. Do not overwrite signed SZL-Khipu-1.5B. "
-            "No Hub PUT.",
+            "This-kit jobs UNKNOWN. CHAWPI extra lock: launcher still no "
+            "--run-job. Hub receipt ddf6c50 publication_eligible false is "
+            "the public claim. Do not overwrite signed SZL-Khipu-1.5B. "
+            "No Hub PUT. Do not merge #64.",
             file=sys.stderr,
         )
         return 2
@@ -81,6 +91,10 @@ def main() -> int:
     print(
         f"# hub_job={HUB_JOB_ID} {HUB_JOB_STATUS} "
         f"adapter={HUB_ADAPTER_STATUS} ({HUB_ADAPTER_SIZE})"
+    )
+    print(
+        f"# CHAWPI hub_receipt={HUB_RECEIPT_COMMIT} "
+        "publication_eligible=false is the public claim"
     )
     print(f"# this-kit jobs=UNKNOWN base_model={BASE_MODEL} hub={HUB}")
     print(f"# does_not_overwrite={FORBIDDEN_HUB}")

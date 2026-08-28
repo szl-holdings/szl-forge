@@ -5,6 +5,10 @@ base_model = Qwen/Qwen2.5-1.5B-Instruct
 Live Hub adapter is AVAILABLE (147.8MB). This server does not pin Hub serve
 and does not load signed SZL-Khipu-1.5B. House CPU lab stays signed Khipu GGUF.
 This-kit jobs UNKNOWN. No Hub PUT.
+
+CHAWPI extra lock: Hub receipt ddf6c50 publication_eligible false is the
+public claim. Launcher still no --run-job. r=32 α=64 this SKU.
+stale profile key dropped. Signed 1.5B stays 2/6. Do not merge #64.
 """
 from __future__ import annotations
 
@@ -23,6 +27,8 @@ HUB_JOB_ID = "6a91bf11984507d9db4ea104"
 HUB_JOB_STATUS = "COMPLETED"
 HUB_ADAPTER_STATUS = "AVAILABLE"
 HUB_ADAPTER_SIZE = "147.8MB"
+HUB_RECEIPT_COMMIT = "ddf6c50d8baa9f818b9f478086e7b5919eb773cf"
+CHAWPI = "hub-receipt-ddf6c50-publication-eligible-false"
 
 
 def availability() -> dict[str, Any]:
@@ -42,6 +48,8 @@ def availability() -> dict[str, Any]:
         "hub_job_status": HUB_JOB_STATUS,
         "hub_adapter": HUB_ADAPTER_STATUS,
         "hub_adapter_size": HUB_ADAPTER_SIZE,
+        "hub_receipt_commit": HUB_RECEIPT_COMMIT,
+        "chawpi": CHAWPI,
         "jobs": "UNKNOWN",
         "jobs_scope": "this-kit",
         "adapter": "LOCAL" if adapter_present else "UNAVAILABLE",

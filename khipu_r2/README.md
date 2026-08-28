@@ -4,6 +4,8 @@ Forge kit for a **separate SKU**. Live Hub [`SZLHOLDINGS/KHIPU-R2`](https://hugg
 
 This checkout does not fire a job (`jobs` UNKNOWN for this kit) and does not re-run held-out generate (this-SKU evals not-this-run). No Hub PUT. Does not overwrite signed [`SZL-Khipu-1.5B`](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B). House CPU lab stays signed Khipu GGUF. Signed 1.5B abstain stays **MEASURED 2/6** on that card only.
 
+> **CHAWPI extra lock.** Hub receipt [`ddf6c50`](https://huggingface.co/SZLHOLDINGS/KHIPU-R2/commit/ddf6c50d8baa9f818b9f478086e7b5919eb773cf) `publication_eligible: false` is the public claim. stale profile key dropped. Launcher still no `--run-job`. r=32 α=64 this SKU. Signed 1.5B stays 2/6. No Hub PUT. Do not merge #64.
+
 | | |
 |---|---|
 | **SKU** | `KHIPU-R2` — separate from signed [`SZL-Khipu-1.5B`](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B) |
@@ -17,7 +19,9 @@ This checkout does not fire a job (`jobs` UNKNOWN for this kit) and does not re-
 | **Signed original abstain** | **MEASURED 2/6** (signed `SZL-Khipu-1.5B` card only) |
 | **This-kit jobs** | **UNKNOWN** — this PR does not fire a job |
 | **This-SKU evals** | not-this-run |
-| **publication_eligible** | **false** |
+| **publication_eligible** | **false** (Hub receipt `ddf6c50` public claim) |
+| **Hub receipt** | [`ddf6c50d8baa9f818b9f478086e7b5919eb773cf`](https://huggingface.co/SZLHOLDINGS/KHIPU-R2/commit/ddf6c50d8baa9f818b9f478086e7b5919eb773cf) |
+| **CHAWPI** | extra lock: receipt `ddf6c50` `publication_eligible` false; no `--run-job`; Do not merge #64 |
 | **Hub PUT** | **false** |
 | **Lab** | signed Khipu GGUF (no KHIPU-R2 pin) |
 | **Doctrine** | v11 LOCKED (749 / 14 / 163). Λ = Conjecture 1 |

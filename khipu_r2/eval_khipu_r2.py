@@ -8,6 +8,10 @@ Hub eval_measured.json: grounding 5/5, plan 11/11, abstain 3/6.
 This-SKU evals are not-this-run. This-kit jobs UNKNOWN.
 publication_eligible false. Signed SZL-Khipu-1.5B abstain stays MEASURED 2/6
 on that card only. Does not overwrite signed 1.5B. Lab stays signed Khipu GGUF.
+
+CHAWPI extra lock: Hub receipt ddf6c50 publication_eligible false is the
+public claim. stale profile key dropped. Launcher still no --run-job.
+r=32 α=64 this SKU. No Hub PUT. Do not merge #64.
 """
 from __future__ import annotations
 
@@ -33,6 +37,8 @@ HUB_GROUNDING_CORRECT = 5
 HUB_GROUNDING_TOTAL = 5
 HUB_PLAN_VALID = 11
 HUB_PLAN_TOTAL = 11
+HUB_RECEIPT_COMMIT = "ddf6c50d8baa9f818b9f478086e7b5919eb773cf"
+CHAWPI = "hub-receipt-ddf6c50-publication-eligible-false"
 SIGNED_ABSTAIN_CORRECT = 2
 SIGNED_ABSTAIN_TOTAL = 6
 
@@ -75,6 +81,8 @@ def main() -> int:
         "hub_plan": f"{HUB_PLAN_VALID}/{HUB_PLAN_TOTAL}",
         "hub_plan_valid": HUB_PLAN_VALID,
         "hub_plan_total": HUB_PLAN_TOTAL,
+        "hub_receipt_commit": HUB_RECEIPT_COMMIT,
+        "chawpi": CHAWPI,
         "signed_original_repo": FORBIDDEN_HUB,
         "signed_original_abstain": f"{signed_correct}/{signed_total}",
         "signed_original_abstain_correct": signed_correct,
@@ -97,7 +105,10 @@ def main() -> int:
             f"{signed_correct}/{signed_total} on that card only. "
             "This-SKU evals not-this-run. This-kit jobs UNKNOWN. "
             "Does not overwrite signed SZL-Khipu-1.5B. publication_eligible false. "
-            "Lab stays signed Khipu GGUF."
+            "CHAWPI extra lock: Hub receipt ddf6c50 publication_eligible false "
+            "is the public claim. stale profile key dropped. "
+            "Launcher still no --run-job. r=32 α=64 this SKU. "
+            "Do not merge #64. Lab stays signed Khipu GGUF."
         ),
         "computed_at": datetime.now(timezone.utc).isoformat(),
     }
@@ -120,6 +131,10 @@ def main() -> int:
     print(
         f"[khipu-r2-eval] hub_job={HUB_JOB_ID} {HUB_JOB_STATUS} "
         f"adapter={HUB_ADAPTER_STATUS} ({HUB_ADAPTER_SIZE})"
+    )
+    print(
+        f"[khipu-r2-eval] CHAWPI hub_receipt={HUB_RECEIPT_COMMIT} "
+        "publication_eligible=false is the public claim"
     )
     print(f"[khipu-r2-eval] base_model={BASE_MODEL}")
     print(f"[khipu-r2-eval] wrote {path}")
