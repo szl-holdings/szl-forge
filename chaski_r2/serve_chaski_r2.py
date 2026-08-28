@@ -27,6 +27,9 @@ def availability() -> dict[str, Any]:
     return {
         "model": HUB,
         "sku": "CHASKI-R2",
+        "atelier_lock": True,
+        "hub_id_declared_only": True,
+        "hub_page": False,
         "separate_sku": True,
         "does_not_overwrite": FORBIDDEN_HUB,
         "forbidden_5050": FORBIDDEN_5050,

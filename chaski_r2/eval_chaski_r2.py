@@ -98,6 +98,9 @@ def main() -> int:
         "kind": "szl-chaski-r2-eval-report",
         "artifact": HUB,
         "sku": "CHASKI-R2",
+        "atelier_lock": True,
+        "hub_id_declared_only": True,
+        "hub_page": False,
         "separate_sku": True,
         "does_not_overwrite": FORBIDDEN_HUB,
         "forbidden_5050": FORBIDDEN_5050,
@@ -118,16 +121,20 @@ def main() -> int:
         "hub_put": False,
         "khipu_lab_pin": False,
         "claim_boundary": (
-            "Reused parent named-N files. The generate gate has not run. "
-            "Do not stamp MEASURED from an unrun gate. Do not claim 5/5 or 6/6. "
-            "quality=UNAVAILABLE. publication_eligible false until MEASURED "
-            "generate. Separate SKU — not an overwrite of SZLHOLDINGS/chaski."
+            "ATELIER lock. Eval is PR 63 named-N after train. "
+            "The generate gate has not run. evals=none-this-run until that "
+            "generate. Do not stamp MEASURED from an unrun gate. "
+            "Do not claim 5/5 or 6/6. quality=UNAVAILABLE. "
+            "publication_eligible false until MEASURED generate. "
+            "Declared SKU id only — not a Hub page. Not an overwrite of "
+            "SZLHOLDINGS/chaski."
         ),
         "computed_at": datetime.now(timezone.utc).isoformat(),
     }
     path = HERE / "eval_report.json"
     path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
-    print("[chaski-r2-eval] evals=none-this-run quality=UNAVAILABLE")
+    print("[chaski-r2-eval] evals=none-this-run until PR 63 named-N generate")
+    print("[chaski-r2-eval] quality=UNAVAILABLE")
     print(
         f"[chaski-r2-eval] json_draft_n={drafts['n']} "
         f"adversarial_refusal_n={refusals['n']} gate_ran=false"

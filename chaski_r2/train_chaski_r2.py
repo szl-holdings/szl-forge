@@ -9,10 +9,11 @@
 #     "transformers",
 # ]
 # ///
-"""CHASKI-R2 Unsloth QLoRA kit. Separate SKU. No Hub PUT. No job fire.
+"""CHASKI-R2 Unsloth QLoRA kit. Separate SKU. ATELIER lock. No Hub PUT.
 
-CHAWPI silhouette on CANONICAL_BASE = Qwen/Qwen3.5-0.8B (Apache-2.0).
-Hub SZLHOLDINGS/chaski-r2. Never overwrite SZLHOLDINGS/chaski.
+CHAWPI silhouette. Base in prose: Qwen/Qwen3.5-0.8B (Apache-2.0).
+Reserved Hub id SZLHOLDINGS/chaski-r2 is declared only — not a Hub page.
+Never overwrite SZLHOLDINGS/chaski.
 Not SZLHOLDINGS/chaski-5050. Not bf16. Not the owner-metal sixteen-alpha kit.
 
 QLoRA r=16 α=32, seed 11, response-only CE. Trains only chaski_r2/train.jsonl.
@@ -184,6 +185,9 @@ def status_receipt(
         "artifact": hub,
         "sku": "CHASKI-R2",
         "silhouette": "CHAWPI",
+        "atelier_lock": True,
+        "hub_id_declared_only": True,
+        "hub_page": False,
         "separate_sku": True,
         "canonical_base": CANONICAL_BASE,
         "base_model": CANONICAL_BASE,
@@ -233,13 +237,15 @@ def status_receipt(
         "hub_put": False,
         "training_rows": training_rows,
         "claim_boundary": (
-            "Separate SKU SZLHOLDINGS/chaski-r2. Does not overwrite "
-            f"{FORBIDDEN_HUB}. Not {FORBIDDEN_5050}. CANONICAL_BASE="
+            "ATELIER lock. Separate SKU id SZLHOLDINGS/chaski-r2 is declared "
+            "only — do not costume a README-only Hub ID. Does not overwrite "
+            f"{FORBIDDEN_HUB}. Not {FORBIDDEN_5050}. Base in prose: "
             f"{CANONICAL_BASE}. GPU honesty is MEASURED or UNAVAILABLE. "
             "No ROADMAP parking. Jobs this checkout UNAVAILABLE (not fired). "
-            "chaski/gate/*.jsonl are eval-only. publication_eligible false "
-            "until MEASURED generate. Lab stays Khipu. A11OY-MINI stays "
-            "scripts-only. Doctrine v11. This checkout does not PUT Hub."
+            "Eval is PR 63 named-N after train; none-this-run until that "
+            "generate. publication_eligible false until MEASURED generate. "
+            "Lab stays Khipu. A11OY-MINI stays scripts-only. Doctrine v11. "
+            "This checkout does not PUT Hub."
         ),
         "computed_at": datetime.now(timezone.utc).isoformat() if live else None,
         "source": "local-train" if live else "forge-status",
@@ -263,6 +269,7 @@ def status_main(hub: str, dataset_file: Path | None) -> int:
     print("[chaski-r2] qlora r=16 alpha=32 response-only-CE")
     print("[chaski-r2] jobs=UNAVAILABLE weights=UNAVAILABLE quality=UNAVAILABLE")
     print("[chaski-r2] publication_eligible=false hub_put=false overwrite=false")
+    print("[chaski-r2] ATELIER lock: declared Hub id only; no README-only costume")
     print("[chaski-r2] GPU honesty MEASURED or UNAVAILABLE; no ROADMAP parking")
     write_receipt(
         status_receipt(hub=hub, dataset_sha=digest, training_rows=len(rows)),
