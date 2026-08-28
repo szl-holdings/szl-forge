@@ -79,8 +79,10 @@ class Fall2026AlignmentTests(unittest.TestCase):
         self.assertFalse(list((ROOT / "qantu").glob("train_*.py")))
         self.assertFalse(list((ROOT / "waman").glob("train_*.py")))
         self.assertFalse((ROOT / "khipu" / "train_khipu_r2.py").exists())
-        # KHIPU-R2: 6a91ba2c ERROR (abstain still 2/6 MEASURED, no tensors).
-        # Retry 6a91bf11984507d9db4ea104 RUNNING. No trainer in this repo.
+        # Signed SZL-Khipu-1.5B abstain remains 2/6. Successor trainer is the
+        # separate SKU khipu_r2/train_khipu_r2.py. Jobs UNKNOWN this checkout.
+        self.assertTrue((ROOT / "khipu_r2" / "train_khipu_r2.py").is_file())
+        self.assertFalse((ROOT / "khipu_r2" / "train_khipu_abstain.py").exists())
 
     def test_chaski_status_and_estate_refuse(self) -> None:
         completed = subprocess.run(
@@ -151,6 +153,9 @@ class Fall2026AlignmentTests(unittest.TestCase):
             ROOT / "tinku" / "eval_tinku.py",
             ROOT / "chaski" / "serve_chaski.py",
             ROOT / "khipu" / "serve_khipu.py",
+            ROOT / "khipu_r2" / "train_khipu_r2.py",
+            ROOT / "khipu_r2" / "eval_khipu_r2.py",
+            ROOT / "khipu_r2" / "serve_khipu_r2.py",
             ROOT / "receiptagent" / "serve_receiptagent.py",
             ROOT / "frontier" / "qwen35-receiptagent-v2" / "serve_candidate.py",
         ]
@@ -170,6 +175,7 @@ class Fall2026AlignmentTests(unittest.TestCase):
             ROOT / "chaski" / "jobs" / "launch_chaski_job.py",
             ROOT / "chakana" / "jobs" / "launch_chakana_job.py",
             ROOT / "tinku" / "jobs" / "launch_tinku_job.py",
+            ROOT / "khipu_r2" / "jobs" / "launch_khipu_r2_job.py",
         ]
         for launcher in launchers:
             dry = subprocess.run(

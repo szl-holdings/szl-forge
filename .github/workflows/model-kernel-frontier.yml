@@ -94,10 +94,15 @@ jobs:
             chakana/train_chakana.py \
             tinku/train_tinku.py \
             khipu/serve_khipu.py \
+            khipu_r2/train_khipu_r2.py \
+            khipu_r2/eval_khipu_r2.py \
+            khipu_r2/serve_khipu_r2.py \
+            khipu_r2/jobs/launch_khipu_r2_job.py \
             receiptagent/serve_receiptagent.py \
             frontier/qwen35-receiptagent-v2/serve_candidate.py
           python tools/test_verify_model_portfolio.py
           PYTHONPATH=. python -m unittest -v tools/test_fall2026_alignment.py
+          PYTHONPATH=. python -m unittest -v khipu_r2/test_khipu_r2.py
           PYTHONPATH=tools python -m unittest -v \
             tools/test_authorize_kernels_release.py \
             tools/test_publish_szl_kernels.py
