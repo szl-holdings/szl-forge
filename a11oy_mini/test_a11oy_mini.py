@@ -166,9 +166,11 @@ class A11oyMiniKitTests(unittest.TestCase):
         self.assertIn("Q4_K_M", text)
         self.assertIn("MEASURED 2026-07-12", text)
         self.assertIn("publication-eligible (INTI)", text)
-        self.assertIn("Kit scripts may land now", text)
-        self.assertNotIn("after the PR exists", text)
-        self.assertNotIn("after this PR exists", text)
+        self.assertIn("Scripts only this week", text)
+        self.assertIn("No GGUF bytes", text)
+        self.assertIn("FORGE does not push after this PR exists", text)
+        self.assertNotIn("FORGE pushes after the PR exists", text)
+        self.assertNotIn("FORGE pushes after this PR exists", text)
         self.assertNotIn("a11oy.com", text)
         front = text.split("---", 2)[1]
         self.assertIsNone(re.search(r"^base_model_relation\s*:", front, flags=re.M))
@@ -181,7 +183,9 @@ class A11oyMiniKitTests(unittest.TestCase):
         convert_src = (HERE / "convert_a11oy_mini_gguf.py").read_text(encoding="utf-8")
         self.assertNotIn("FORGE pushes after the PR exists", convert_src)
         self.assertNotIn("FORGE pushes after this PR exists", convert_src)
+        self.assertIn("FORGE does not push after this PR exists", convert_src)
         self.assertIn("publication-eligible (INTI)", convert_src)
+        self.assertIn("Scripts only this week", convert_src)
 
     def test_kit_does_not_touch_foreign_trees(self) -> None:
         for path in (

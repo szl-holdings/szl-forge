@@ -11,8 +11,9 @@ House path (same as rebirth.ps1 / rebirth-khipu.ps1, in Python):
   2) Q4_K_M via llama-quantize (or ollama create FROM the F16 GGUF)
 
 BANNED (MEASURED 2026-07-12 @ spam): direct safetensors → ollama create.
-This script MUST NOT Hub PUT. Kit scripts may land now.
-FORGE pushes Hub GGUF only after live Chaski is publication-eligible (INTI).
+This script MUST NOT Hub PUT. Scripts only this week. No GGUF bytes in this PR.
+FORGE does not push after this PR exists.
+Hub GGUF only after live Chaski is publication-eligible (INTI).
 publication_eligible false. No base_model_relation quantized.
 Do not overwrite SZLHOLDINGS/chaski. Do not pin the Khipu lab.
 Do not claim tok/s.
@@ -88,16 +89,18 @@ def _looks_like_5050(text: str) -> bool:
 
 
 def refuse_hub_put(*flags: str) -> None:
-    """GitHub kit only. No Hub PUT here.
+    """GitHub kit only. Scripts only this week. No Hub PUT. No GGUF bytes.
 
-    FORGE pushes Hub GGUF only after live Chaski is publication-eligible (INTI).
+    FORGE does not push after this PR exists.
+    Hub GGUF only after live Chaski is publication-eligible (INTI).
     """
     offered = [flag for flag in flags if flag in UPLOAD_FLAG_NAMES]
     if offered:
         raise ConvertError(
             "[a11oy-mini] refusing Hub PUT from this checkout "
-            f"({', '.join(offered)}). FORGE pushes Hub GGUF only after live "
-            "Chaski is publication-eligible (INTI). Kit scripts may land now. "
+            f"({', '.join(offered)}). Scripts only this week. No GGUF bytes. "
+            "FORGE does not push after this PR exists. Hub GGUF only after live "
+            "Chaski is publication-eligible (INTI). "
             f"Do not upload GGUF or an empty parent to {SKU}."
         )
 
@@ -331,8 +334,9 @@ def conversion_receipt(
             "not a new train and not chaski-5050. Evals inherit "
             "none-this-run. publication_eligible false. Quality ROADMAP. "
             "No base_model_relation quantized. Direct safetensors→Ollama banned. "
-            "FORGE pushes Hub GGUF only after live Chaski is "
-            "publication-eligible (INTI). Kit scripts may land now. "
+            "Scripts only this week. No GGUF bytes. "
+            "FORGE does not push after this PR exists. Hub GGUF only after live "
+            "Chaski is publication-eligible (INTI). "
             "No Hub PUT from this checkout. Lab stays Khipu. No tok/s."
         ),
         "computed_at": datetime.now(timezone.utc).isoformat() if live else None,
