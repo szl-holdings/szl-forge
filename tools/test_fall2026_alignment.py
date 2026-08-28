@@ -79,8 +79,9 @@ class Fall2026AlignmentTests(unittest.TestCase):
         self.assertFalse(list((ROOT / "qantu").glob("train_*.py")))
         self.assertFalse(list((ROOT / "waman").glob("train_*.py")))
         self.assertFalse((ROOT / "khipu" / "train_khipu_r2.py").exists())
-        # Signed SZL-Khipu-1.5B abstain remains 2/6. Successor trainer is the
-        # separate SKU khipu_r2/train_khipu_r2.py. Jobs UNKNOWN this checkout.
+        # Live Hub KHIPU-R2 is not empty (job 6a91bf11 COMPLETED, adapter
+        # AVAILABLE, abstain MEASURED 3/6). Successor trainer is the separate
+        # SKU khipu_r2/train_khipu_r2.py. This-kit jobs UNKNOWN.
         self.assertTrue((ROOT / "khipu_r2" / "train_khipu_r2.py").is_file())
         self.assertFalse((ROOT / "khipu_r2" / "train_khipu_abstain.py").exists())
 
