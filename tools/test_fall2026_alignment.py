@@ -193,8 +193,6 @@ class Fall2026AlignmentTests(unittest.TestCase):
 
     def test_fall_stub_readme_inti_roadmap_leads(self) -> None:
         stubs = (
-            ROOT / "chaski" / "README.md",
-            ROOT / "chaski" / "HF_MODEL_CARD.md",
             ROOT / "qantu" / "README.md",
             ROOT / "waman" / "README.md",
             ROOT / "chakana" / "README.md",
@@ -216,8 +214,26 @@ class Fall2026AlignmentTests(unittest.TestCase):
         alias = (ROOT / "waman" / "ALIASES.md").read_text(encoding="utf-8")
         self.assertTrue(alias.startswith("ALIAS."))
         chaski = (ROOT / "chaski" / "README.md").read_text(encoding="utf-8")
+        yaml_end = chaski.find("\n---\n", 3)
+        chaski_front = chaski[4:yaml_end]
+        self.assertNotIn("- roadmap", chaski_front)
+        body = chaski[yaml_end + 5 :].lstrip()
+        lines = [ln for ln in body.splitlines() if ln.strip()]
+        self.assertTrue(lines[0].startswith("# "))
+        self.assertFalse(lines[1].startswith("ROADMAP."))
         self.assertIn("adapter_model.safetensors", chaski)
+        self.assertIn("25.6MB", chaski)
+        self.assertIn("1.7GB", chaski)
+        self.assertIn("training_receipt.json", chaski)
+        self.assertIn("~1.7839", chaski)
         self.assertIn("none-this-run", chaski)
+        self.assertIn("ERROR after upload", chaski)
+        card = (ROOT / "chaski" / "HF_MODEL_CARD.md").read_text(encoding="utf-8")
+        card_yaml_end = card.find("\n---\n", 3)
+        card_body = card[card_yaml_end + 5 :].lstrip()
+        card_lines = [ln for ln in card_body.splitlines() if ln.strip()]
+        self.assertFalse(card_lines[1].startswith("ROADMAP."))
+        self.assertNotIn("- roadmap", card[4:card_yaml_end])
         self.assertFalse((ROOT / "willay").exists())
         self.assertFalse((ROOT / "khipu" / "README_R2.md").exists())
 
