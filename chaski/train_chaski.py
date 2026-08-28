@@ -25,7 +25,7 @@ Not Khipu. Not a third LLM.
 
 CUTTING until an adapter file lands. A receipt is not an adapter.
 Do not claim a Hub adapter. Do not pin serve.
-Do not recut Hub from this checkout. Do not cancel live upload_folder.
+Do not recut Hub from this checkout. Do not cancel the live report_to=none job.
 """
 from __future__ import annotations
 
@@ -42,8 +42,9 @@ HERE = Path(__file__).resolve().parent
 
 # 6a91b8ba FAILED CastError
 # 6a91b990 FAILED pyyaml 30s
-# 6a91ba00 COMPLETED receipt-only, weights UNAVAILABLE
-# 6a91bb7c RUNNING upload_folder — live
+# 6a91ba00 COMPLETED receipt-only, weights UNAVAILABLE, train_loss MEASURED 1.7827
+# 6a91bb7c ERROR after 64/64, train_loss MEASURED 1.7844666938763112, merge ran, upload_folder Trackio 404, no safetensors
+# 6a91bf1045686a1580c12105 RUNNING report_to=none — live
 
 MAX_SEQ_LEN = 2048
 BASE = os.environ.get("BASE_MODEL", "unsloth/Qwen3.5-0.8B")
@@ -59,15 +60,18 @@ MAX_STEPS = 64
 HUB_RECEIPT_URL = (
     "https://huggingface.co/SZLHOLDINGS/chaski/blob/main/training_receipt.json"
 )
-LIVE_JOB_URL = "https://huggingface.co/jobs/SZLHOLDINGS/6a91bb7c984507d9db4ea0a4"
+LIVE_JOB_ID = "6a91bf1045686a1580c12105"
+LIVE_JOB_URL = f"https://huggingface.co/jobs/SZLHOLDINGS/{LIVE_JOB_ID}"
 ATTEMPT3_LOSS = 1.782708187121898
+ATTEMPT4_LOSS = 1.7844666938763112
 ATTEMPT3_ROWS = 45
 ATTEMPT3_DATASET_SHA256 = (
     "ddc5594bfb1c78449ba40a263f5ac41d21c896c3c7ed7346341c7c080611a243"
 )
 
-# Four HF Jobs attempts. Status strings are bound to these ids.
-# Attempt 3 is COMPLETED (receipt-only). The only live stamp is attempt 4.
+# Five HF Jobs attempts. Status strings are bound to these ids.
+# Attempt 3 COMPLETED (receipt-only). Attempt 4 ERROR (no safetensors).
+# The only live stamp is attempt 5 (report_to=none).
 JOBS: list[dict[str, Any]] = [
     {
         "id": "6a91b8ba984507d9db4ea071",
@@ -98,14 +102,27 @@ JOBS: list[dict[str, Any]] = [
         "training_rows": ATTEMPT3_ROWS,
         "seed": SEED,
         "base_model": CANONICAL_BASE,
-        "trackio": "404 betterwithage/trackio-bucket, no dashboard URL",
+        "trackio": "404, no dashboard URL",
     },
     {
         "id": "6a91bb7c984507d9db4ea0a4",
+        "status": "ERROR",
+        "detail": (
+            f"after 64/64, train_loss MEASURED {ATTEMPT4_LOSS}, merge ran, "
+            "upload_folder Trackio 404, no safetensors"
+        ),
+        "train_loss": ATTEMPT4_LOSS,
+        "train_loss_label": "MEASURED",
+        "weights": "UNAVAILABLE",
+        "trackio": "404, no dashboard URL",
+        "url": "https://huggingface.co/jobs/SZLHOLDINGS/6a91bb7c984507d9db4ea0a4",
+    },
+    {
+        "id": LIVE_JOB_ID,
         "status": "RUNNING",
-        "detail": "upload_folder adapter + merged 16-bit. Not MEASURED until files exist on the repo.",
+        "detail": "report_to=none. CUTTING until adapter files exist. Not MEASURED as weights.",
         "url": LIVE_JOB_URL,
-        "train_run": False,
+        "report_to": "none",
     },
 ]
 
@@ -279,7 +296,7 @@ def cutting_receipt(*, live: bool = False) -> dict[str, Any]:
         "publication_eligible": False,
         "autonomy_eligible": False,
         "serve_pin": False,
-        "trackio": "404 betterwithage/trackio-bucket, no dashboard URL",
+        "trackio": "404, no dashboard URL",
         "hub_receipt": HUB_RECEIPT_URL,
         "jobs": JOBS,
         "claim_boundary": (
@@ -303,7 +320,7 @@ def status_main() -> int:
     )
     print("[chaski] card=CUTTING weights=UNAVAILABLE evals=none-this-run")
     print(f"[chaski] attempt3 receipt already on Hub: {HUB_RECEIPT_URL}")
-    print(f"[chaski] live upload_folder: {LIVE_JOB_URL}")
+    print(f"[chaski] live report_to=none: {LIVE_JOB_URL}")
     for job in JOBS:
         print(f"[chaski] job {job['id']} {job['status']}")
     receipt = cutting_receipt(live=False)
