@@ -23,6 +23,9 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CONTRACT = ROOT / "publishing" / "model-source-bindings.json"
 DEFAULT_REPORT = ROOT / "reports" / "model-source-bindings.json"
 FULL_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
+BINDING_MODES = frozenset(
+    {"PUBLISH_GENERATED_BINDING", "VERIFY_IMMUTABLE_RELEASE"}
+)
 
 
 class BindingError(RuntimeError):
@@ -63,11 +66,26 @@ def load_contract(path: Path) -> dict[str, Any]:
         repo_ids.add(repo_id)
         if not artifact.get("source_path"):
             raise BindingError(f"{repo_id}: source_path is required")
-        if artifact.get("artifact_class") not in {
+        artifact_class = artifact.get("artifact_class")
+        if artifact_class not in {
+            "fine_tuned_adapter",
             "fine_tuned_model",
             "quantized_model",
         }:
             raise BindingError(f"{repo_id}: unsupported artifact_class")
+        binding_mode = artifact.get("binding_mode", "PUBLISH_GENERATED_BINDING")
+        if binding_mode not in BINDING_MODES:
+            raise BindingError(f"{repo_id}: unsupported binding_mode")
+        hub_revision = artifact.get("hub_revision")
+        if (
+            hub_revision is not None
+            and FULL_SHA_RE.fullmatch(str(hub_revision)) is None
+        ):
+            raise BindingError(f"{repo_id}: hub_revision must be an exact Git revision")
+        if binding_mode == "VERIFY_IMMUTABLE_RELEASE" and hub_revision is None:
+            raise BindingError(
+                f"{repo_id}: immutable verification requires an exact hub_revision"
+            )
         if not artifact.get("promotion_state"):
             raise BindingError(f"{repo_id}: promotion_state is required")
         if not artifact.get("required_hub_files"):
@@ -78,6 +96,59 @@ def load_contract(path: Path) -> dict[str, Any]:
             raise BindingError(f"{repo_id}: exact base-model lineage is required")
         if not artifact.get("signed_receipts"):
             raise BindingError(f"{repo_id}: signed_receipts contract is required")
+        if artifact_class == "fine_tuned_adapter":
+            adapter = artifact.get("adapter_binding")
+            if not isinstance(adapter, dict):
+                raise BindingError(f"{repo_id}: adapter_binding is required")
+            required_adapter_fields = {
+                "adapter_file",
+                "adapter_sha256",
+                "base_model_repo_id",
+                "base_model_revision",
+                "config_file",
+                "owner_attested_release_revision",
+                "training_receipt_adapter_sha256_field",
+                "training_receipt_base_field",
+            }
+            missing_adapter_fields = sorted(required_adapter_fields - set(adapter))
+            if missing_adapter_fields:
+                raise BindingError(
+                    f"{repo_id}: adapter_binding fields are missing: {missing_adapter_fields}"
+                )
+            if FULL_SHA_RE.fullmatch(str(adapter["base_model_revision"])) is None:
+                raise BindingError(
+                    f"{repo_id}: adapter base_model_revision must be exact"
+                )
+            if (
+                FULL_SHA_RE.fullmatch(
+                    str(adapter["owner_attested_release_revision"])
+                )
+                is None
+            ):
+                raise BindingError(
+                    f"{repo_id}: owner-attested release revision must be exact"
+                )
+            if re.fullmatch(r"[0-9a-f]{64}", str(adapter["adapter_sha256"])) is None:
+                raise BindingError(f"{repo_id}: adapter_sha256 must be exact")
+            if adapter["adapter_file"] not in artifact["required_hub_files"]:
+                raise BindingError(f"{repo_id}: adapter file is not required Hub evidence")
+            if adapter["config_file"] not in artifact["required_hub_files"]:
+                raise BindingError(f"{repo_id}: adapter config is not required Hub evidence")
+            expected_hash = (artifact.get("expected_weight_sha256") or {}).get(
+                adapter["adapter_file"]
+            )
+            if expected_hash != adapter["adapter_sha256"]:
+                raise BindingError(f"{repo_id}: adapter hash contract is inconsistent")
+            if not any(
+                step.get("repo_id") == adapter["base_model_repo_id"]
+                and step.get("revision") == adapter["base_model_revision"]
+                for step in artifact["lineage"]
+            ):
+                raise BindingError(f"{repo_id}: adapter base is absent from exact lineage")
+            if not artifact["signed_receipts"].get("release"):
+                raise BindingError(
+                    f"{repo_id}: owner-signed release receipt is required"
+                )
     return payload
 
 
@@ -100,7 +171,17 @@ def source_evidence(artifact: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def hub_evidence(api: HfApi, artifact: dict[str, Any]) -> tuple[str, list[dict[str, Any]]]:
-    info = api.model_info(artifact["repo_id"], files_metadata=True)
+    expected_revision = artifact.get("hub_revision")
+    info = api.model_info(
+        artifact["repo_id"],
+        files_metadata=True,
+        revision=expected_revision,
+    )
+    if expected_revision is not None and info.sha != expected_revision:
+        raise BindingError(
+            f"{artifact['repo_id']}: immutable Hub revision drifted "
+            f"(expected {expected_revision}, observed {info.sha})"
+        )
     files = {sibling.rfilename: sibling for sibling in info.siblings or []}
     missing = sorted(set(artifact["required_hub_files"]) - set(files))
     if missing:
@@ -128,6 +209,50 @@ def hub_evidence(api: HfApi, artifact: dict[str, Any]) -> tuple[str, list[dict[s
             }
         )
     return info.sha, evidence
+
+
+def adapter_config_evidence(
+    artifact: dict[str, Any],
+    hub_revision: str,
+    token: str | None,
+    downloader: Callable[..., str],
+) -> dict[str, Any] | None:
+    contract = artifact.get("adapter_binding")
+    if contract is None:
+        return None
+    path = Path(
+        downloader(
+            repo_id=artifact["repo_id"],
+            filename=contract["config_file"],
+            repo_type="model",
+            revision=hub_revision,
+            token=token,
+        )
+    )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    observed_repo = payload.get("base_model_name_or_path")
+    if observed_repo != contract["base_model_repo_id"]:
+        raise BindingError(
+            f"{artifact['repo_id']}: adapter config base drifted "
+            f"(expected {contract['base_model_repo_id']}, observed {observed_repo or 'UNAVAILABLE'})"
+        )
+    config_revision = payload.get("revision")
+    if (
+        config_revision is not None
+        and config_revision != contract["base_model_revision"]
+    ):
+        raise BindingError(
+            f"{artifact['repo_id']}: adapter config revision conflicts with the binding"
+        )
+    return {
+        "status": "CONFIG_BASE_AND_IMMUTABLE_REVISION_BOUND",
+        "config_file": contract["config_file"],
+        "config_sha256": file_sha256(path),
+        "base_model_repo_id": contract["base_model_repo_id"],
+        "base_model_revision": contract["base_model_revision"],
+        "config_declared_revision": config_revision,
+        "revision_evidence": "OWNER_SIGNED_TRAINING_RECEIPT_AND_EXACT_LINEAGE",
+    }
 
 
 def _card_license(info: Any) -> str | None:
@@ -189,6 +314,8 @@ def signed_receipt_evidence(
         "training": contract["training"],
         "evaluation": contract["evaluation"],
     }
+    if contract.get("release"):
+        names["release"] = contract["release"]
     paths = {
         role: Path(
             downloader(
@@ -204,7 +331,10 @@ def signed_receipt_evidence(
     declared_key = json.loads(paths["public_key"].read_text(encoding="utf-8"))
     receipts: dict[str, dict[str, Any]] = {}
     file_evidence: dict[str, dict[str, Any]] = {}
-    for role in ("training", "evaluation"):
+    receipt_roles = ["training", "evaluation"]
+    if "release" in names:
+        receipt_roles.append("release")
+    for role in receipt_roles:
         path = paths[role]
         receipt = json.loads(path.read_text(encoding="utf-8"))
         canonical = json.dumps(
@@ -227,9 +357,72 @@ def signed_receipt_evidence(
             "signature": "VALID_AGAINST_REPOSITORY_DECLARED_KEY",
         }
     training_canonical_sha = file_evidence[names["training"]]["canonical_sha256"]
-    if receipts["evaluation"]["payload"].get("trainingReceiptSha256") != training_canonical_sha:
+    chain_field = contract.get(
+        "evaluation_training_receipt_sha256_field", "trainingReceiptSha256"
+    )
+    if not isinstance(chain_field, str) or not chain_field:
+        raise BindingError(f"{artifact['repo_id']}: receipt chain field is malformed")
+    if receipts["evaluation"]["payload"].get(chain_field) != training_canonical_sha:
         raise BindingError(f"{artifact['repo_id']}: evaluation receipt chain mismatch")
     eval_payload = receipts["evaluation"]["payload"]
+    adapter_receipt = None
+    adapter = artifact.get("adapter_binding")
+    if adapter is not None:
+        training_payload = receipts["training"]["payload"]
+        base_field = adapter["training_receipt_base_field"]
+        adapter_hash_field = adapter["training_receipt_adapter_sha256_field"]
+        observed_base = training_payload.get(base_field) or {}
+        if (
+            observed_base.get("repo_id") != adapter["base_model_repo_id"]
+            or observed_base.get("revision") != adapter["base_model_revision"]
+        ):
+            raise BindingError(
+                f"{artifact['repo_id']}: signed training base does not match adapter binding"
+            )
+        if training_payload.get(adapter_hash_field) != adapter["adapter_sha256"]:
+            raise BindingError(
+                f"{artifact['repo_id']}: signed adapter hash does not match Hub binding"
+            )
+        release_receipt = receipts.get("release")
+        if release_receipt is None:
+            raise BindingError(
+                f"{artifact['repo_id']}: owner-signed release receipt is missing"
+            )
+        release_payload = release_receipt["payload"]
+        release_repository = release_payload.get("repository") or {}
+        release_evidence = release_payload.get("evidence") or {}
+        inference = release_payload.get("immutableGpuInference") or {}
+        if (
+            release_repository.get("repoId") != artifact["repo_id"]
+            or release_repository.get("releaseRevision")
+            != adapter["owner_attested_release_revision"]
+        ):
+            raise BindingError(
+                f"{artifact['repo_id']}: owner-signed release revision does not match"
+            )
+        if release_evidence.get("adapterModelSha256") != adapter["adapter_sha256"]:
+            raise BindingError(
+                f"{artifact['repo_id']}: release receipt adapter hash does not match"
+            )
+        if (
+            inference.get("baseImplementationRevision")
+            != adapter["base_model_revision"]
+        ):
+            raise BindingError(
+                f"{artifact['repo_id']}: release receipt base revision does not match"
+            )
+        adapter_receipt = {
+            "status": "OWNER_SIGNED_RELEASE_BASE_AND_ADAPTER_HASH_VERIFIED",
+            "base_model_repo_id": adapter["base_model_repo_id"],
+            "base_model_revision": adapter["base_model_revision"],
+            "adapter_sha256": adapter["adapter_sha256"],
+            "owner_attested_release_revision": adapter[
+                "owner_attested_release_revision"
+            ],
+            "release_receipt": names["release"],
+            "training_receipt_base_field": base_field,
+            "training_receipt_adapter_sha256_field": adapter_hash_field,
+        }
     return {
         "status": "DECLARED_KEY_SIGNATURES_VALID",
         "claim_scope": contract["claim_scope"],
@@ -249,9 +442,20 @@ def signed_receipt_evidence(
                 "abstainTotal",
                 "abstainCorrect",
                 "hallucinatedCitationCount",
+                "evalTotal",
+                "evalContractValid",
+                "adversarialTotal",
+                "adversarialRefused",
+                "acceptancePassed",
             )
             if key in eval_payload
         },
+        "adapter_binding": adapter_receipt,
+        "release_receipt_status": (
+            "EXISTING_OWNER_SIGNED_RELEASE_VERIFIED_AND_PRESERVED"
+            if adapter_receipt is not None
+            else "UNSIGNED_EXACT_REVISION_READBACK"
+        ),
         "independent_identity_binding": "NOT_ESTABLISHED",
     }
 
@@ -441,6 +645,7 @@ def publication_payload(
     hub_files: list[dict[str, Any]],
     lineage: list[dict[str, Any]],
     signed_receipts: dict[str, Any],
+    adapter_config: dict[str, Any] | None,
     runtime: dict[str, Any] | None,
 ) -> dict[str, Any]:
     return {
@@ -466,6 +671,7 @@ def publication_payload(
         "hub_files": hub_files,
         "lineage": lineage,
         "signed_receipts": signed_receipts,
+        "adapter_binding": adapter_config or {"status": "NOT_APPLICABLE"},
         "runtime": runtime or {"status": "NOT_QUALIFIED_NO_RUNTIME_PROBE"},
         "autonomy_boundary": artifact.get("autonomy_boundary")
         or {
@@ -474,9 +680,19 @@ def publication_payload(
             "reason": "No autonomous authority is granted by this binding.",
         },
         "release_receipt": {
-            "status": "UNSIGNED_EXACT_REVISION_READBACK",
-            "owner_signed_release_receipt": "UNAVAILABLE",
-            "reason": "The publication record is hash-bound and immutable-readback verified; no approved local owner signing key is used by this workflow.",
+            "status": signed_receipts["release_receipt_status"],
+            "owner_signed_release_receipt": (
+                (signed_receipts.get("adapter_binding") or {}).get(
+                    "release_receipt", "UNAVAILABLE"
+                )
+            ),
+            "reason": (
+                "The existing owner-signed immutable release is verified and "
+                "preserved without Hub mutation."
+                if signed_receipts.get("adapter_binding") is not None
+                else "The publication record is hash-bound and immutable-readback "
+                "verified; no approved local owner signing key is used by this workflow."
+            ),
         },
         "claims": {
             "source_binding": "EXACT_GIT_REVISION",
@@ -507,6 +723,9 @@ def prepare_one(
     source_files = source_evidence(artifact)
     hub_revision_before, hub_files = hub_evidence(api, artifact)
     lineage = lineage_evidence(api, artifact)
+    adapter_config = adapter_config_evidence(
+        artifact, hub_revision_before, token, downloader
+    )
     receipts = signed_receipt_evidence(
         artifact, hub_revision_before, token, downloader
     )
@@ -525,6 +744,7 @@ def prepare_one(
         hub_files,
         lineage,
         receipts,
+        adapter_config,
         runtime,
     )
     result: dict[str, Any] = {
@@ -532,15 +752,22 @@ def prepare_one(
         "artifact_class": artifact["artifact_class"],
         "promotion_state": artifact["promotion_state"],
         "status": "VERIFIED_DRY_RUN",
+        "binding_mode": artifact.get(
+            "binding_mode", "PUBLISH_GENERATED_BINDING"
+        ),
         "source_revision": source_revision,
         "hub_revision_before": hub_revision_before,
+        "hub_revision_contract": artifact.get("hub_revision"),
         "lineage_status": "EXACT_REVISIONS_AND_LICENSES_VERIFIED",
         "signed_receipt_status": receipts["status"],
+        "adapter_binding_status": (adapter_config or {}).get(
+            "status", "NOT_APPLICABLE"
+        ),
         "held_out_evaluation": receipts["held_out_evaluation"],
         "runtime_status": (runtime or {}).get(
             "status", "NOT_QUALIFIED_NO_RUNTIME_PROBE"
         ),
-        "release_receipt_status": "UNSIGNED_EXACT_REVISION_READBACK",
+        "release_receipt_status": receipts["release_receipt_status"],
         "publication_sha256": hashlib.sha256(
             canonical_json(publication).encode("utf-8")
         ).hexdigest(),
@@ -558,6 +785,19 @@ def publish_prepared(
     source_revision: str,
     token: str,
 ) -> dict[str, Any]:
+    if artifact.get("binding_mode") == "VERIFY_IMMUTABLE_RELEASE":
+        expected_revision = artifact["hub_revision"]
+        if result.get("hub_revision_before") != expected_revision:
+            raise BindingError(
+                f"{artifact['repo_id']}: immutable release changed after preparation"
+            )
+        result.update(
+            {
+                "status": "IMMUTABLE_RELEASE_VERIFIED_NO_MUTATION",
+                "hub_revision_after": expected_revision,
+            }
+        )
+        return result
     commit = api.upload_file(
         path_or_fileobj=io.BytesIO(body),
         path_in_repo="publication.json",
@@ -697,12 +937,20 @@ def run(
         "source_repository": contract["source_repository"],
         "source_revision": source_revision,
         "results": results,
-        "status": (
-            "PUBLISHED_AND_READBACK_VERIFIED"
-            if publish
-            else "VERIFIED_DRY_RUN"
-        ),
+        "status": "VERIFIED_DRY_RUN",
     }
+    if publish:
+        result_statuses = {result["status"] for result in results}
+        immutable_status = "IMMUTABLE_RELEASE_VERIFIED_NO_MUTATION"
+        published_status = "PUBLISHED_AND_READBACK_VERIFIED"
+        if result_statuses == {immutable_status}:
+            report["status"] = "IMMUTABLE_RELEASES_VERIFIED_NO_MUTATION"
+        elif result_statuses <= {published_status, immutable_status}:
+            report["status"] = "PUBLISHED_AND_IMMUTABLE_RELEASES_VERIFIED"
+        else:
+            raise BindingError(
+                f"publication ended in unexpected states: {sorted(result_statuses)}"
+            )
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(canonical_json(report), encoding="utf-8")
     return report

@@ -58,6 +58,94 @@
       ]
     },
     {
+      "repo_id": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2",
+      "artifact_class": "fine_tuned_adapter",
+      "binding_mode": "VERIFY_IMMUTABLE_RELEASE",
+      "hub_revision": "bd642c7ff18736248e84fd83dace7ab368fc2288",
+      "promotion_state": "NOT_PROMOTED_LIMITED_EVIDENCE",
+      "source_path": "frontier/qwen35-receiptagent-v2",
+      "maturity": "MEASURED_PUBLISHED_LIMITED",
+      "role": "governed_receipt_draft_proposer_v2",
+      "required_hub_files": [
+        "adapter_config.json",
+        "adapter_model.safetensors",
+        "candidate.json",
+        "owner_pubkey.json",
+        "publication.json",
+        "receipts/eval_receipt.signed.json",
+        "receipts/publication_receipt.signed.json",
+        "receipts/training_receipt.signed.json"
+      ],
+      "expected_weight_sha256": {
+        "adapter_model.safetensors": "885fc29fcb4cf55c280dc085fdb0a40f40d6b946fee400dd5e4ed3459fe6334f"
+      },
+      "adapter_binding": {
+        "adapter_file": "adapter_model.safetensors",
+        "adapter_sha256": "885fc29fcb4cf55c280dc085fdb0a40f40d6b946fee400dd5e4ed3459fe6334f",
+        "config_file": "adapter_config.json",
+        "base_model_repo_id": "unsloth/Qwen3.5-0.8B",
+        "base_model_revision": "23c69c53358a07516b5827588b3fdb12ae78fd65",
+        "owner_attested_release_revision": "7a0d9efdebe92ea3b5b26b97cc722c6b5afde621",
+        "training_receipt_base_field": "trainingImplementation",
+        "training_receipt_adapter_sha256_field": "adapterModelSha256"
+      },
+      "lineage": [
+        {
+          "relation": "training_implementation",
+          "repo_id": "unsloth/Qwen3.5-0.8B",
+          "revision": "23c69c53358a07516b5827588b3fdb12ae78fd65",
+          "license": "apache-2.0"
+        },
+        {
+          "relation": "declared_upstream_lineage",
+          "repo_id": "Qwen/Qwen3.5-0.8B",
+          "revision": "2fc06364715b967f1860aea9cf38778875588b17",
+          "license": "apache-2.0"
+        }
+      ],
+      "signed_receipts": {
+        "public_key": "owner_pubkey.json",
+        "training": "receipts/training_receipt.signed.json",
+        "evaluation": "receipts/eval_receipt.signed.json",
+        "release": "receipts/publication_receipt.signed.json",
+        "evaluation_training_receipt_sha256_field": "trainingReceiptCanonicalSha256",
+        "claim_scope": "REPOSITORY_DECLARED_KEY_CONTINUITY_ONLY"
+      },
+      "autonomy_boundary": {
+        "autonomous_execution": false,
+        "controller_validation_required": true,
+        "reason": "The adapter proposes bounded receipt drafts. Approval, execution, and authoritative receipt minting remain outside the weights."
+      },
+      "source_files": [
+        "frontier/qwen35-receiptagent-v2/MODEL_CARD.md",
+        "frontier/qwen35-receiptagent-v2/README.md",
+        "frontier/qwen35-receiptagent-v2/candidate.json",
+        "frontier/qwen35-receiptagent-v2/curriculum.supplement.json",
+        "frontier/qwen35-receiptagent-v2/evaluate_candidate.py",
+        "frontier/qwen35-receiptagent-v2/evidence_chain.py",
+        "frontier/qwen35-receiptagent-v2/publication.json",
+        "frontier/qwen35-receiptagent-v2/qualify_runtime.py",
+        "frontier/qwen35-receiptagent-v2/receipts/eval_receipt.signed.json",
+        "frontier/qwen35-receiptagent-v2/receipts/publication_receipt.signed.json",
+        "frontier/qwen35-receiptagent-v2/receipts/training_receipt.signed.json",
+        "frontier/qwen35-receiptagent-v2/requirements-eval.txt",
+        "frontier/qwen35-receiptagent-v2/train.status-refusals.jsonl",
+        "frontier/qwen35-receiptagent-v2/train_candidate.py",
+        "receiptagent/adversarial.jsonl",
+        "receiptagent/eval.jsonl",
+        "receiptagent/owner_pubkey.json",
+        "receiptagent/receiptagent.schema.json",
+        "receiptagent/train.jsonl",
+        "receiptagent/train.refusals.jsonl"
+      ],
+      "limitations": [
+        "The adapter is bound to the exact Unsloth implementation revision used for training; the canonical Qwen repository is recorded as declared upstream lineage without a byte-equivalence claim.",
+        "The owner-measured gate contains 5 structured-draft and 6 adversarial-refusal cases; it is not a broad quality or safety benchmark.",
+        "The adapter proposes drafts only and is not eligible for autonomous execution.",
+        "This contract verifies the existing immutable Hub release and does not republish or replace its owner-signed publication record."
+      ]
+    },
+    {
       "repo_id": "SZLHOLDINGS/SZL-Khipu-1.5B",
       "artifact_class": "fine_tuned_model",
       "promotion_state": "NOT_PROMOTED_RESEARCH_ONLY",

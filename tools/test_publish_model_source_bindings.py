@@ -60,7 +60,13 @@ class FakeApi:
         )
 
 
-def _receipt_downloader(root: Path):
+def _receipt_downloader(
+    root: Path,
+    *,
+    training_payload: dict | None = None,
+    chain_field: str = "trainingReceiptSha256",
+    release_payload: dict | None = None,
+):
     private_key = Ed25519PrivateKey.generate()
     public_der = private_key.public_key().public_bytes(
         Encoding.DER, PublicFormat.SubjectPublicKeyInfo
@@ -80,12 +86,14 @@ def _receipt_downloader(root: Path):
             "keyId": key_id,
         }
 
-    training = signed({"kind": "training", "baseModel": "Qwen/example"})
+    training = signed(
+        training_payload or {"kind": "training", "baseModel": "Qwen/example"}
+    )
     training_sha = hashlib.sha256(training["canonical"].encode("utf-8")).hexdigest()
     evaluation = signed(
         {
             "kind": "evaluation",
-            "trainingReceiptSha256": training_sha,
+            chain_field: training_sha,
             "abstainTotal": 2,
             "abstainCorrect": 2,
         }
@@ -99,6 +107,8 @@ def _receipt_downloader(root: Path):
         "training_receipt.signed.json": training,
         "eval_receipt.signed.json": evaluation,
     }
+    if release_payload is not None:
+        files["release_receipt.signed.json"] = signed(release_payload)
     for name, payload in files.items():
         (root / name).write_text(json.dumps(payload), encoding="utf-8")
 
@@ -109,6 +119,93 @@ def _receipt_downloader(root: Path):
 
 
 class PublishModelSourceBindingsTests(unittest.TestCase):
+    def test_qwen_adapter_contract_pins_immutable_hub_and_actual_base(self) -> None:
+        repository_root = Path(__file__).parents[1]
+        contract_path = repository_root / "publishing/model-source-bindings.json"
+        contract = bindings.load_contract(contract_path)
+        artifacts = {
+            artifact["repo_id"]: artifact for artifact in contract["artifacts"]
+        }
+        adapter = artifacts["SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2"]
+
+        self.assertEqual("fine_tuned_adapter", adapter["artifact_class"])
+        self.assertEqual("VERIFY_IMMUTABLE_RELEASE", adapter["binding_mode"])
+        self.assertEqual(
+            "bd642c7ff18736248e84fd83dace7ab368fc2288",
+            adapter["hub_revision"],
+        )
+        self.assertEqual(
+            "885fc29fcb4cf55c280dc085fdb0a40f40d6b946fee400dd5e4ed3459fe6334f",
+            adapter["adapter_binding"]["adapter_sha256"],
+        )
+        self.assertEqual(
+            "unsloth/Qwen3.5-0.8B",
+            adapter["adapter_binding"]["base_model_repo_id"],
+        )
+        self.assertEqual(
+            "23c69c53358a07516b5827588b3fdb12ae78fd65",
+            adapter["adapter_binding"]["base_model_revision"],
+        )
+        self.assertEqual(
+            "7a0d9efdebe92ea3b5b26b97cc722c6b5afde621",
+            adapter["adapter_binding"]["owner_attested_release_revision"],
+        )
+
+    def test_immutable_adapter_contract_requires_exact_hub_revision(self) -> None:
+        repository_root = Path(__file__).parents[1]
+        payload = json.loads(
+            (
+                repository_root / "publishing/model-source-bindings.json"
+            ).read_text(encoding="utf-8")
+        )
+        adapter = next(
+            artifact
+            for artifact in payload["artifacts"]
+            if artifact["repo_id"]
+            == "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2"
+        )
+        del adapter["hub_revision"]
+        with tempfile.TemporaryDirectory() as temporary:
+            contract = Path(temporary) / "contract.json"
+            contract.write_text(json.dumps(payload), encoding="utf-8")
+            with self.assertRaisesRegex(
+                bindings.BindingError, "requires an exact hub_revision"
+            ):
+                bindings.load_contract(contract)
+
+    def test_hub_evidence_resolves_pinned_adapter_revision(self) -> None:
+        revision = "a" * 40
+        api = mock.Mock()
+        api.model_info.return_value = SimpleNamespace(
+            sha=revision,
+            siblings=[
+                SimpleNamespace(
+                    rfilename="adapter_model.safetensors",
+                    size=7,
+                    blob_id="blob-adapter",
+                    lfs=SimpleNamespace(sha256="b" * 64),
+                )
+            ],
+        )
+        artifact = {
+            "repo_id": "SZLHOLDINGS/example-adapter",
+            "hub_revision": revision,
+            "required_hub_files": ["adapter_model.safetensors"],
+            "expected_weight_sha256": {
+                "adapter_model.safetensors": "b" * 64
+            },
+        }
+
+        observed, _evidence = bindings.hub_evidence(api, artifact)
+
+        self.assertEqual(revision, observed)
+        api.model_info.assert_called_once_with(
+            artifact["repo_id"], files_metadata=True, revision=revision
+        )
+        api.model_info.return_value.sha = "c" * 40
+        with self.assertRaisesRegex(bindings.BindingError, "revision drifted"):
+            bindings.hub_evidence(api, artifact)
+
     def test_runtime_probe_matches_packaged_model_lab_release(self) -> None:
         repository_root = Path(__file__).parents[1]
         contract = json.loads(
@@ -216,6 +313,94 @@ class PublishModelSourceBindingsTests(unittest.TestCase):
         }
         with self.assertRaisesRegex(bindings.BindingError, "drifted"):
             bindings.hub_evidence(FakeApi(), artifact)
+
+    def test_adapter_config_and_signed_receipt_bind_same_base(self) -> None:
+        base_revision = "d" * 40
+        release_revision = "f" * 40
+        adapter_sha256 = "b" * 64
+        artifact = {
+            "repo_id": "SZLHOLDINGS/example-adapter",
+            "adapter_binding": {
+                "adapter_file": "adapter_model.safetensors",
+                "adapter_sha256": adapter_sha256,
+                "config_file": "adapter_config.json",
+                "base_model_repo_id": "unsloth/Qwen3.5-0.8B",
+                "base_model_revision": base_revision,
+                "owner_attested_release_revision": release_revision,
+                "training_receipt_base_field": "trainingImplementation",
+                "training_receipt_adapter_sha256_field": "adapterModelSha256",
+            },
+            "signed_receipts": {
+                "public_key": "owner_pubkey.json",
+                "training": "training_receipt.signed.json",
+                "evaluation": "eval_receipt.signed.json",
+                "release": "release_receipt.signed.json",
+                "evaluation_training_receipt_sha256_field": (
+                    "trainingReceiptCanonicalSha256"
+                ),
+                "claim_scope": "REPOSITORY_DECLARED_KEY_CONTINUITY_ONLY",
+            },
+        }
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "adapter_config.json").write_text(
+                json.dumps(
+                    {
+                        "base_model_name_or_path": "unsloth/Qwen3.5-0.8B",
+                        "revision": None,
+                    }
+                ),
+                encoding="utf-8",
+            )
+            downloader = _receipt_downloader(
+                root,
+                training_payload={
+                    "kind": "training",
+                    "trainingImplementation": {
+                        "repo_id": "unsloth/Qwen3.5-0.8B",
+                        "revision": base_revision,
+                    },
+                    "adapterModelSha256": adapter_sha256,
+                },
+                chain_field="trainingReceiptCanonicalSha256",
+                release_payload={
+                    "repository": {
+                        "repoId": "SZLHOLDINGS/example-adapter",
+                        "releaseRevision": release_revision,
+                    },
+                    "evidence": {"adapterModelSha256": adapter_sha256},
+                    "immutableGpuInference": {
+                        "baseImplementationRevision": base_revision
+                    },
+                },
+            )
+            config = bindings.adapter_config_evidence(
+                artifact, "a" * 40, None, downloader
+            )
+            receipts = bindings.signed_receipt_evidence(
+                artifact, "a" * 40, None, downloader
+            )
+
+            self.assertEqual(
+                "CONFIG_BASE_AND_IMMUTABLE_REVISION_BOUND", config["status"]
+            )
+            self.assertEqual(
+                "OWNER_SIGNED_RELEASE_BASE_AND_ADAPTER_HASH_VERIFIED",
+                receipts["adapter_binding"]["status"],
+            )
+            self.assertEqual(
+                "EXISTING_OWNER_SIGNED_RELEASE_VERIFIED_AND_PRESERVED",
+                receipts["release_receipt_status"],
+            )
+
+            artifact["adapter_binding"]["base_model_revision"] = "e" * 40
+            with self.assertRaisesRegex(
+                bindings.BindingError, "signed training base"
+            ):
+                bindings.signed_receipt_evidence(
+                    artifact, "a" * 40, None, downloader
+                )
+
 
     def test_publish_requires_token(self) -> None:
         artifact = {
@@ -583,6 +768,34 @@ class PublishModelSourceBindingsTests(unittest.TestCase):
                     source_revision=source_revision,
                     token="test-token",
                 )
+
+    def test_immutable_release_publish_mode_never_mutates_hub(self) -> None:
+        revision = "a" * 40
+        artifact = {
+            "repo_id": "SZLHOLDINGS/example-adapter",
+            "binding_mode": "VERIFY_IMMUTABLE_RELEASE",
+            "hub_revision": revision,
+        }
+        api = mock.Mock()
+        result = {
+            "status": "VERIFIED_DRY_RUN",
+            "hub_revision_before": revision,
+        }
+
+        observed = bindings.publish_prepared(
+            api,
+            artifact,
+            result,
+            b'{"schema":"test"}\n',
+            source_revision="3" * 40,
+            token="test-token",
+        )
+
+        self.assertEqual(
+            "IMMUTABLE_RELEASE_VERIFIED_NO_MUTATION", observed["status"]
+        )
+        self.assertEqual(revision, observed["hub_revision_after"])
+        api.upload_file.assert_not_called()
 
 
 if __name__ == "__main__":
