@@ -87,6 +87,8 @@ jobs:
             frontier/qwen35-receiptagent-v3/test_supervisor_validation.py \
             chaski/train_chaski.py \
             chaski/eval_chaski.py \
+            chaski/bakeoff_named_n.py \
+            chaski/test_bakeoff_named_n.py \
             chaski/serve_chaski.py \
             chaski/jobs/launch_chaski_job.py \
             qantu/skip_receipt.py \
@@ -111,6 +113,7 @@ jobs:
           python tools/test_verify_model_portfolio.py
           PYTHONPATH=. python -m unittest -v tools/test_fall2026_alignment.py
           PYTHONPATH=. python -m unittest -v chaski/test_named_n_gate.py
+          PYTHONPATH=. python -m unittest -v chaski/test_bakeoff_named_n.py
           PYTHONPATH=. python -m unittest -v khipu_r2/test_khipu_r2.py
           PYTHONPATH=. python -m unittest -v chaski_r2/test_chaski_r2.py
           PYTHONPATH=. python -m unittest -v chakana/test_chakana.py
