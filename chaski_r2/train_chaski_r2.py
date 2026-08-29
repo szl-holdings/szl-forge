@@ -6,17 +6,18 @@
 #     "trl>=0.12.0",
 #     "peft>=0.7.0",
 #     "datasets",
-#     "transformers",
+#     "transformers>=5.0.0",
 # ]
 # ///
-"""CHASKI-R2 Unsloth QLoRA kit. Separate SKU. ATELIER lock. No Hub PUT.
+"""CHASKI-R2 Unsloth bf16 LoRA kit. Separate SKU. ATELIER lock. No Hub PUT.
 
 CHAWPI silhouette. Base in prose: Qwen/Qwen3.5-0.8B (Apache-2.0).
 Reserved Hub id SZLHOLDINGS/chaski-r2 is declared only — not a Hub page.
 Never overwrite SZLHOLDINGS/chaski.
-Not SZLHOLDINGS/chaski-5050. Not bf16. Not the owner-metal sixteen-alpha kit.
+Not SZLHOLDINGS/chaski-5050. Not the owner-metal sixteen-alpha kit.
 
-QLoRA r=16 α=32, seed 11, response-only CE. Trains only chaski_r2/train.jsonl.
+Unsloth 2026-08: QLoRA is not recommended on Qwen3.5 (dense or MoE).
+bf16 LoRA r=16 α=32, seed 11, response-only CE. Trains only chaski_r2/train.jsonl.
 Refuses chaski/gate/*.jsonl (eval-only named-N files).
 
 GPU honesty is MEASURED or UNAVAILABLE. No ROADMAP parking.
@@ -31,6 +32,8 @@ import glob
 import hashlib
 import json
 import os
+import platform
+import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -41,7 +44,7 @@ GATE_DIR = ROOT / "chaski" / "gate"
 TRAIN_FILE = HERE / "train.jsonl"
 
 CANONICAL_BASE = "Qwen/Qwen3.5-0.8B"
-BASE_TRAIN = "unsloth/Qwen3.5-0.8B"
+BASE_TRAIN = "Qwen/Qwen3.5-0.8B"
 DEFAULT_HUB = "SZLHOLDINGS/chaski-r2"
 FORBIDDEN_HUB = "SZLHOLDINGS/chaski"
 FORBIDDEN_5050 = "SZLHOLDINGS/chaski-5050"
@@ -66,6 +69,48 @@ STATUS_RECEIPT = HERE / "training_receipt.status.json"
 TRAIN_RECEIPT = HERE / "training_receipt.json"
 
 
+def refuse_qlora_runtime(runtime: str) -> None:
+    lower = runtime.lower()
+    if "4bit" in lower or "bnb" in lower:
+        raise SystemExit(
+            "[chaski-r2] refuse: QLoRA/4bit runtime forbidden on Qwen3.5. "
+            "Unsloth 2026-08: use bf16 LoRA (load_in_4bit=False, load_in_16bit=True)."
+        )
+
+
+def gpu_receipt() -> dict[str, Any]:
+    info: dict[str, Any] = {
+        "platform": platform.platform(),
+        "python": platform.python_version(),
+    }
+    try:
+        out = subprocess.check_output(
+            [
+                "nvidia-smi",
+                "--query-gpu=name,memory.total,memory.free,driver_version",
+                "--format=csv,noheader",
+            ],
+            text=True,
+            timeout=20,
+        ).strip()
+        info["nvidia_smi"] = out
+    except Exception as exc:  # noqa: BLE001
+        info["nvidia_smi_error"] = str(exc)
+    try:
+        import torch
+
+        info["torch"] = torch.__version__
+        info["cuda"] = bool(torch.cuda.is_available())
+        if torch.cuda.is_available():
+            info["gpu_name"] = torch.cuda.get_device_name(0)
+            info["gpu_mem_gb"] = round(
+                torch.cuda.get_device_properties(0).total_memory / 1024**3, 2
+            )
+    except Exception as exc:  # noqa: BLE001
+        info["torch_error"] = str(exc)
+    return info
+
+
 def refuse_overwrite(hub: str) -> None:
     """Never retarget live Chaski or the 5050 SKU."""
     normalized = hub.strip().rstrip("/")
@@ -78,7 +123,7 @@ def refuse_overwrite(hub: str) -> None:
     if "CHASKI-5050" in upper or "BF16-5050" in upper:
         raise SystemExit(
             f"[chaski-r2] refuse: hub {hub!r} is the 5050 / bf16 kit. "
-            "This SKU is SZLHOLDINGS/chaski-r2 only (QLoRA r=16 α=32)."
+            "This SKU is SZLHOLDINGS/chaski-r2 only (bf16 LoRA r=16 α=32)."
         )
     if normalized != DEFAULT_HUB:
         raise SystemExit(
@@ -198,8 +243,10 @@ def status_receipt(
         "forbidden_5050": FORBIDDEN_5050,
         "not_5050": True,
         "not_bf16_5050": True,
-        "qlora": True,
-        "load_in_4bit": True,
+        "qlora": False,
+        "load_in_4bit": False,
+        "load_in_16bit": True,
+        "quant": "bf16-lora",
         "dataset_file": "chaski_r2/train.jsonl",
         "dataset_sha256": dataset_sha,
         "held_out_in_gradients": False,
@@ -241,7 +288,9 @@ def status_receipt(
             "only — do not costume a README-only Hub ID. Does not overwrite "
             f"{FORBIDDEN_HUB}. Not {FORBIDDEN_5050}. Base in prose: "
             f"{CANONICAL_BASE}. GPU honesty is MEASURED or UNAVAILABLE. "
-            "No ROADMAP parking. Jobs this checkout UNAVAILABLE (not fired). "
+            "No ROADMAP parking. QLoRA is not recommended on Qwen3.5; this "
+            "SKU is bf16 LoRA r=16 α=32 (not the 5050 sixteen-alpha kit). "
+            "Jobs this checkout UNAVAILABLE (not fired). "
             "Eval is PR 63 named-N after train; none-this-run until that "
             "generate. publication_eligible false until MEASURED generate. "
             "Lab stays Khipu. A11OY-MINI stays scripts-only. Doctrine v11. "
@@ -261,12 +310,14 @@ def status_main(hub: str, dataset_file: Path | None) -> int:
     refuse_overwrite(hub)
     if CANONICAL_BASE != "Qwen/Qwen3.5-0.8B":
         raise SystemExit("[chaski-r2] refuse: canonical base drifted")
+    refuse_qlora_runtime(BASE_TRAIN)
     rows, digest = load_train_rows(dataset_file)
     print(
         f"[chaski-r2] base={CANONICAL_BASE} canonical={CANONICAL_BASE} "
         f"runtime={BASE_TRAIN} hub={hub} seed={SEED}"
     )
-    print("[chaski-r2] qlora r=16 alpha=32 response-only-CE")
+    print("[chaski-r2] bf16 LoRA r=16 alpha=32 response-only-CE")
+    print("[chaski-r2] QLoRA not recommended on Qwen3.5; load_in_4bit=false")
     print("[chaski-r2] jobs=UNAVAILABLE weights=UNAVAILABLE quality=UNAVAILABLE")
     print("[chaski-r2] publication_eligible=false hub_put=false overwrite=false")
     print("[chaski-r2] ATELIER lock: declared Hub id only; no README-only costume")
@@ -287,9 +338,12 @@ def train_main(hub: str, dataset_file: Path | None) -> int:
 
     if CANONICAL_BASE != "Qwen/Qwen3.5-0.8B":
         raise SystemExit("[chaski-r2] refuse: canonical base drifted")
+    refuse_qlora_runtime(BASE_TRAIN)
     if LORA_R != 16 or LORA_ALPHA != 32:
         raise SystemExit("[chaski-r2] refuse: owner pin is r=16 alpha=32")
     rows, digest = load_train_rows(dataset_file)
+    gpu = gpu_receipt()
+    print(f"[chaski-r2] gpu={gpu}")
     print(
         f"[chaski-r2] train base={CANONICAL_BASE} runtime={BASE_TRAIN} "
         f"hub={hub} seed={SEED} r={LORA_R} alpha={LORA_ALPHA}"
@@ -299,7 +353,9 @@ def train_main(hub: str, dataset_file: Path | None) -> int:
     model, tokenizer = FastLanguageModel.from_pretrained(
         model_name=BASE_TRAIN,
         max_seq_length=MAX_SEQ_LEN,
-        load_in_4bit=True,
+        load_in_4bit=False,
+        load_in_16bit=True,
+        full_finetuning=False,
     )
     model = FastLanguageModel.get_peft_model(
         model,
@@ -315,8 +371,10 @@ def train_main(hub: str, dataset_file: Path | None) -> int:
             "up_proj",
             "down_proj",
         ],
+        bias="none",
         use_gradient_checkpointing="unsloth",
         random_state=SEED,
+        max_seq_length=MAX_SEQ_LEN,
     )
     texts = [
         tokenizer.apply_chat_template(
@@ -345,6 +403,7 @@ def train_main(hub: str, dataset_file: Path | None) -> int:
             report_to="none",
             push_to_hub=False,
             save_strategy="no",
+            bf16=True,
         ),
     )
     try:
@@ -384,6 +443,11 @@ def train_main(hub: str, dataset_file: Path | None) -> int:
     receipt["evals"] = "none-this-run"
     receipt["quality"] = "UNAVAILABLE"
     receipt["publication_eligible"] = False
+    receipt["gpu"] = gpu
+    receipt["qlora"] = False
+    receipt["load_in_4bit"] = False
+    receipt["load_in_16bit"] = True
+    receipt["quant"] = "bf16-lora"
     write_receipt(receipt, TRAIN_RECEIPT)
     return 0
 
@@ -393,7 +457,7 @@ def main() -> int:
     parser.add_argument(
         "--train",
         action="store_true",
-        help="Run Unsloth QLoRA locally. Default is status (no GPU, no Hub write).",
+        help="Run Unsloth bf16 LoRA locally. Default is status (no GPU, no Hub write).",
     )
     parser.add_argument(
         "--hub",

@@ -116,7 +116,10 @@ class ChaskiR2KitTests(unittest.TestCase):
         self.assertEqual(16, receipt["lora_r"])
         self.assertEqual(32, receipt["lora_alpha"])
         self.assertTrue(receipt["response_only_loss"])
-        self.assertTrue(receipt["qlora"])
+        self.assertFalse(receipt["qlora"])
+        self.assertFalse(receipt["load_in_4bit"])
+        self.assertTrue(receipt["load_in_16bit"])
+        self.assertEqual("bf16-lora", receipt["quant"])
         self.assertTrue(receipt["atelier_lock"])
         self.assertTrue(receipt["hub_id_declared_only"])
         self.assertFalse(receipt["hub_page"])
@@ -255,6 +258,8 @@ class ChaskiR2KitTests(unittest.TestCase):
         self.assertIn("No ROADMAP parking", text)
         self.assertIn("r=16", text)
         self.assertIn("α=32", text)
+        self.assertIn("bf16 LoRA", text)
+        self.assertIn("QLoRA is **not recommended**", text)
         self.assertIn("PR 63 named-N", text)
         self.assertIn("none-this-run", text)
         self.assertIn("Do **not** costume a README-only Hub ID", text)
@@ -270,7 +275,6 @@ class ChaskiR2KitTests(unittest.TestCase):
             "Waman",
             "admitted_pairs",
             "admitted_triples",
-            "load_in_16bit=True",
             "job=local-5050",
         )
         skip_names = {"test_chaski_r2.py"}

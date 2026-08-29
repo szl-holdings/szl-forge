@@ -8,19 +8,20 @@ does not PUT Hub and does not claim a live Hub page.
 
 Base in prose: **Qwen/Qwen3.5-0.8B** (Apache-2.0). Disclose that silhouette.
 Never overwrite live `SZLHOLDINGS/chaski`. Not `SZLHOLDINGS/chaski-5050`.
-Not bf16. Not the owner-metal sixteen-alpha kit.
+Not the owner-metal sixteen-alpha kit.
 
-It ships one Unsloth QLoRA trainer, an honest eval stamp that **reuses** the
-PR 63 named-N gates **after train**, a Python serve path, and a Jobs launcher
-that **refuses to fire**.
+Unsloth 2026-08: QLoRA is **not recommended** on Qwen3.5. This kit is
+**bf16 LoRA** (r=16 α=32). It ships one Unsloth trainer, an honest eval stamp
+that **reuses** the PR 63 named-N gates **after train**, a Python serve path,
+and a Jobs launcher that **refuses to fire**.
 
 | | |
 |---|---|
 | **SKU** | `CHASKI-R2` — reserved Hub id `SZLHOLDINGS/chaski-r2` (declared, not a Hub page) |
 | **Base** | Qwen/Qwen3.5-0.8B (Apache-2.0). Disclosed in prose. |
-| **Runtime train** | `unsloth/Qwen3.5-0.8B` QLoRA |
+| **Runtime train** | `Qwen/Qwen3.5-0.8B` bf16 LoRA (`load_in_4bit=False`) |
 | **LoRA** | r=16 α=32, seed 11, response-only CE |
-| **Not** | live `SZLHOLDINGS/chaski`, `SZLHOLDINGS/chaski-5050`, bf16, owner-metal sixteen-alpha |
+| **Not** | live `SZLHOLDINGS/chaski`, `SZLHOLDINGS/chaski-5050`, QLoRA, owner-metal sixteen-alpha |
 | **ATELIER lock** | GitHub recipe only. No Hub YAML card. No README-only Hub costume. |
 | **Status** | GPU honesty **MEASURED** or **UNAVAILABLE**. **No ROADMAP parking.** |
 | **HF Jobs** | **UNAVAILABLE** — this PR does not fire a job |
@@ -48,7 +49,7 @@ Evals stay **none-this-run** until that generate actually runs.
 ## What this is NOT
 
 - Not a replacement for live `SZLHOLDINGS/chaski`
-- Not `SZLHOLDINGS/chaski-5050` and not a bf16 / sixteen-alpha owner-metal kit
+- Not `SZLHOLDINGS/chaski-5050` and not the sixteen-alpha owner-metal kit
 - Not a publication of a passing JSON-draft or refusal gate
 - Not a Hub overwrite, merge, Hub card, or Jobs launch from this checkout
 - Not a costumed README-only Hub ID
