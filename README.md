@@ -119,6 +119,7 @@ Future full `forge.ps1` runs birth via this GGUF path automatically (step 6).
 | `conjecture_machine.py` | **Conjecture Machine** — points the sovereign model at the formula corpus, asking each formula for an *advisory* proof sketch / lemma decomposition / counterexample search. Stdlib-only. NEVER claims proven. |
 | [`RUNBOOK-CONJECTURE.md`](./RUNBOOK-CONJECTURE.md) | One-command-per-step runbook to run the Conjecture Machine against the sovereign endpoint. |
 | `thesis_formula_index.json` | Local snapshot of the estate's `thesis-formula-index` (80 entries) so the Conjecture Machine runs offline. |
+| `chaski/bakeoff_named_n.py` | Owner-metal named-N JSON-draft (n=5) + refusal (n=6) bake-off: base `Qwen/Qwen3.5-0.8B` vs local chaski-5050 and chaski-r2 adapters. Writes a MEASURED receipt. Gate files stay held-out. `publication_eligible` stays false. |
 
 ## Exact-source model publication
 

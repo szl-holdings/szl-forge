@@ -61,9 +61,15 @@ Evals stay **none-this-run** until that generate actually runs.
 ```bash
 python chaski_r2/train_chaski_r2.py
 python chaski_r2/eval_chaski_r2.py
+python chaski/bakeoff_named_n.py --check
 python chaski_r2/serve_chaski_r2.py --check
 python chaski_r2/jobs/launch_chaski_r2_job.py
 ```
+
+SKU `eval_chaski_r2.py` stays **none-this-run**. The parent named-N
+bake-off (`chaski/bakeoff_named_n.py`) is a separate owner-metal
+generate against held-out PR 63 files. `publication_eligible` stays
+false.
 
 `--train` runs Unsloth on the owner's metal and writes a **local** adapter
 under `chaski_r2/chaski-r2-adapter/`. Train loss may be MEASURED as a train
