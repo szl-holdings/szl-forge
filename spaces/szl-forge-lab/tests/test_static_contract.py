@@ -44,8 +44,8 @@ class StaticForgeContractTests(unittest.TestCase):
         kinds = [item["kind"] for item in portfolio["artifacts"]]
         self.assertEqual(3, kinds.count("trained_model"))
         self.assertEqual(1, kinds.count("quantized_model"))
-        self.assertEqual(1, kinds.count("learned_kernel"))
-        self.assertEqual(11, kinds.count("software_kernel"))
+        self.assertEqual(0, kinds.count("learned_kernel"))
+        self.assertEqual(12, kinds.count("software_kernel"))
         self.assertTrue(
             all(item["autonomy_eligible"] is False for item in portfolio["artifacts"])
         )

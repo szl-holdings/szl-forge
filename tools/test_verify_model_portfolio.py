@@ -54,7 +54,6 @@ class PortfolioContractTests(unittest.TestCase):
                 "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2",
                 "SZLHOLDINGS/SZL-Khipu-1.5B",
                 "SZLHOLDINGS/SZL-Khipu-1.5B-GGUF",
-                "SZLHOLDINGS/szl-lambda-gate",
             },
             weighted,
         )

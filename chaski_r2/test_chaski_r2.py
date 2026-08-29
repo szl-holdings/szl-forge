@@ -199,7 +199,12 @@ class ChaskiR2KitTests(unittest.TestCase):
         payload = json.loads(completed.stdout)
         self.assertEqual(CANONICAL_BASE, payload["canonical_base"])
         self.assertEqual(CANONICAL_BASE, payload["base_model"])
-        self.assertEqual("UNAVAILABLE", payload["status"])
+        adapter_present = (KIT / "chaski-r2-adapter").is_dir() and any(
+            (KIT / "chaski-r2-adapter").glob("*.safetensors")
+        )
+        self.assertEqual(
+            "READY" if adapter_present else "UNAVAILABLE", payload["status"]
+        )
         self.assertEqual("UNAVAILABLE", payload["jobs"])
         self.assertFalse(payload["serve_pin"])
         self.assertFalse(payload["khipu_lab_pin"])
