@@ -1,0 +1,17 @@
+{
+  "schema": "szl.hf-estate-relock/v1",
+  "requested_at": "2026-08-28T00:00:00Z",
+  "source_authority": "protected-main-after-squash-merge",
+  "targets": [
+    "models",
+    "adapters",
+    "gguf",
+    "kernels",
+    "inference-lab-space"
+  ],
+  "claims": {
+    "merge_is_publication": false,
+    "immutable_hub_revision_requires_readback": true,
+    "lineage_and_digest_validation_required": true
+  }
+}
