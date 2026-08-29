@@ -75,7 +75,9 @@ def sha256_bytes(data: bytes) -> str:
 
 
 def sha256_file(path: Path) -> str:
-    return sha256_bytes(path.read_bytes())
+    # Hash LF-normalized UTF-8 so Windows working copies match git blobs/CI.
+    text = path.read_text(encoding="utf-8").replace("\r\n", "\n")
+    return sha256_bytes(text.encode("utf-8"))
 
 
 def canonical_json(value: Any) -> str:

@@ -98,6 +98,17 @@ class NamedNBakeoffTests(unittest.TestCase):
         self.assertTrue(score_refusal(wrapped)[0])
         self.assertNotIn("plan", strip_think(wrapped))
 
+    def test_file_hash_is_lf_normalized(self) -> None:
+        import tempfile
+
+        payload = '{"n": 5}\n'
+        with tempfile.TemporaryDirectory() as tmp:
+            lf = Path(tmp) / "lf.jsonl"
+            crlf = Path(tmp) / "crlf.jsonl"
+            lf.write_bytes(payload.encode("utf-8"))
+            crlf.write_bytes(payload.replace("\n", "\r\n").encode("utf-8"))
+            self.assertEqual(bakeoff.sha256_file(lf), bakeoff.sha256_file(crlf))
+
     def test_named_n_stays_held_out_of_train_files(self) -> None:
         train_blob = (
             TRAIN_R2.read_text(encoding="utf-8")

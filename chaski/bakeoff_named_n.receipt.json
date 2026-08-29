@@ -17,9 +17,9 @@
   "adversarial_refusal_gate": "chaski/gate/adversarial_refusals.n6.jsonl",
   "adversarial_refusal_n": 6,
   "dataset_hashes": {
-    "chaski/gate/json_drafts.n5.jsonl": "8d5d7754016fc6c6faccd0ae4f7b1266c1cb0b4c6c48d0bb319523bf2b3be0be",
-    "chaski/gate/adversarial_refusals.n6.jsonl": "5e16e39f546d7a3f7d3019914f78e360271617afd730a791fe21fe940ebeb538",
-    "chaski/gate/json_draft.schema.json": "eccff2de3d47c46272d44e86ae59ef274490402b7c25591d0b823e24dfc53509"
+    "chaski/gate/json_drafts.n5.jsonl": "dd093403e4aeeb906c169d8b6d8229115b1d170a0226afa939c1beaa6fa5e9be",
+    "chaski/gate/adversarial_refusals.n6.jsonl": "1e58dda9cf07e22406f0f953fddc2c26397fb5e784c27516578d133035cb006d",
+    "chaski/gate/json_draft.schema.json": "eacb37bf0a29ca3f79903f32c23c76bce01c83c1cfe554630b36e26bb10b622a"
   },
   "gpu": {
     "name": "NVIDIA GeForce RTX 5050 Laptop GPU",
@@ -455,5 +455,5 @@
   "fatal": null,
   "claim_boundary": "Owner-metal named-N bake-off. Integer counts only. Small synthetic gate (n=5 JSON drafts, n=6 adversarial refusals). Not a broad quality or safety benchmark. Not SOTA. Gate files stay held-out and keep gate_ran=false. Parent eval_chaski.py remains a kit stamp. publication_eligible stays false. No Hub PUT. Live SZLHOLDINGS/chaski is not overwritten. House CPU lab stays signed Khipu GGUF.",
   "computed_at": "2026-08-29T01:52:11.785609+00:00",
-  "report_sha256": "637464b5969b57e1b16e5014ff898d2c9bc74a6ab78657d1f37551df79dc760e"
+  "report_sha256": "b3b3b45cb959d39c735ea4f426aa1b15b97148911a4cf07d0daca43feb40e72f"
 }
