@@ -102,12 +102,17 @@ jobs:
             khipu_r2/eval_khipu_r2.py \
             khipu_r2/serve_khipu_r2.py \
             khipu_r2/jobs/launch_khipu_r2_job.py \
+            chaski_r2/train_chaski_r2.py \
+            chaski_r2/eval_chaski_r2.py \
+            chaski_r2/serve_chaski_r2.py \
+            chaski_r2/jobs/launch_chaski_r2_job.py \
             receiptagent/serve_receiptagent.py \
             frontier/qwen35-receiptagent-v2/serve_candidate.py
           python tools/test_verify_model_portfolio.py
           PYTHONPATH=. python -m unittest -v tools/test_fall2026_alignment.py
           PYTHONPATH=. python -m unittest -v chaski/test_named_n_gate.py
           PYTHONPATH=. python -m unittest -v khipu_r2/test_khipu_r2.py
+          PYTHONPATH=. python -m unittest -v chaski_r2/test_chaski_r2.py
           PYTHONPATH=. python -m unittest -v chakana/test_chakana.py
           PYTHONPATH=tools python -m unittest -v \
             tools/test_authorize_kernels_release.py \

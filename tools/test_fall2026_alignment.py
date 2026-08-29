@@ -87,6 +87,8 @@ class Fall2026AlignmentTests(unittest.TestCase):
         # khipu_r2/train_khipu_r2.py. This-kit jobs UNKNOWN. No --run-job.
         self.assertTrue((ROOT / "khipu_r2" / "train_khipu_r2.py").is_file())
         self.assertFalse((ROOT / "khipu_r2" / "train_khipu_abstain.py").exists())
+        self.assertTrue((ROOT / "chaski_r2" / "train_chaski_r2.py").is_file())
+        self.assertFalse((ROOT / "chaski" / "train_chaski_r2.py").exists())
 
     def test_chaski_status_and_estate_refuse(self) -> None:
         completed = subprocess.run(
@@ -160,6 +162,9 @@ class Fall2026AlignmentTests(unittest.TestCase):
             ROOT / "khipu_r2" / "train_khipu_r2.py",
             ROOT / "khipu_r2" / "eval_khipu_r2.py",
             ROOT / "khipu_r2" / "serve_khipu_r2.py",
+            ROOT / "chaski_r2" / "train_chaski_r2.py",
+            ROOT / "chaski_r2" / "eval_chaski_r2.py",
+            ROOT / "chaski_r2" / "serve_chaski_r2.py",
             ROOT / "receiptagent" / "serve_receiptagent.py",
             ROOT / "frontier" / "qwen35-receiptagent-v2" / "serve_candidate.py",
         ]
@@ -180,6 +185,7 @@ class Fall2026AlignmentTests(unittest.TestCase):
             ROOT / "chakana" / "jobs" / "launch_chakana_job.py",
             ROOT / "tinku" / "jobs" / "launch_tinku_job.py",
             ROOT / "khipu_r2" / "jobs" / "launch_khipu_r2_job.py",
+            ROOT / "chaski_r2" / "jobs" / "launch_chaski_r2_job.py",
         ]
         for launcher in launchers:
             dry = subprocess.run(
