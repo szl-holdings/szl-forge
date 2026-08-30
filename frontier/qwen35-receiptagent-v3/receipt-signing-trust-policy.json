@@ -1,0 +1,9 @@
+{
+  "schema": "szl.receiptagent-v3-receipt-signing-trust-policy/v1",
+  "candidateId": "SZL-ReceiptAgent-Qwen3.5-0.8B-v3",
+  "algorithm": "Ed25519",
+  "keyId": "szl-receiptagent-v3-owner-2026-08",
+  "publicKeyFingerprintSha256": "6732fe615cf7d87ccf1013db92b5287f6a81deea51c290984638befde47eade0",
+  "usage": "AUTHENTICATED_TRAINING_EVALUATION_COMPARISON_RECEIPTS",
+  "state": "ACTIVE"
+}

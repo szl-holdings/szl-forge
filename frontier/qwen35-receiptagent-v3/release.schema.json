@@ -1,0 +1,357 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://szl.ai/schemas/receiptagent-v3-release-manifest-v1.json",
+  "title": "ReceiptAgent v3 offline release manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "candidateId",
+    "state",
+    "targetRepository",
+    "sourceRevision",
+    "runId",
+    "authenticatedEvidenceChainValid",
+    "receiptSigningTrustPolicy",
+    "receiptEligible",
+    "publicationEligible",
+    "deploymentEligible",
+    "runtimeValidated",
+    "thirdPartyValidated",
+    "lineage",
+    "adapter",
+    "benchmark",
+    "reports",
+    "receipts",
+    "intendedRepositoryFiles",
+    "localEvidenceDisposition",
+    "localEvidenceFiles",
+    "releaseManifestIsTargetRepositoryFile",
+    "unmetPublicationGates",
+    "claimBoundary",
+    "manifestSha256"
+  ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "revision": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "flatPath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+      "not": {"const": "release-manifest.json"}
+    },
+    "adapterSourceFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "bytes", "sha256"],
+      "properties": {
+        "path": {"$ref": "#/$defs/flatPath"},
+        "bytes": {"type": "integer", "minimum": 1, "maximum": 268435456},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "publicFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "bytes", "sha256", "role"],
+      "properties": {
+        "path": {"$ref": "#/$defs/flatPath"},
+        "bytes": {"type": "integer", "minimum": 1, "maximum": 268435456},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "role": {
+          "enum": [
+            "ADAPTER_ARTIFACT",
+            "MEASURED_MODEL_CARD",
+            "AUTHENTICATED_TRAINING_RECEIPT",
+            "AUTHENTICATED_EVALUATION_RECEIPT",
+            "AUTHENTICATED_COMPARISON_RECEIPT"
+          ]
+        }
+      }
+    },
+    "localEvidenceFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "bytes", "sha256", "role", "disposition"],
+      "properties": {
+        "path": {"$ref": "#/$defs/flatPath"},
+        "bytes": {"type": "integer", "minimum": 1, "maximum": 33554432},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "role": {
+          "enum": [
+            "ADAPTER_SOURCE_README",
+            "MEASURED_CHILD_TRAINING_REPORT",
+            "MEASURED_SUPERVISOR_REPORT",
+            "MEASURED_DEV_EVALUATION_REPORT",
+            "MEASURED_TEST_EVALUATION_REPORT",
+            "MEASURED_BASE_TEST_EVALUATION_REPORT",
+            "MEASURED_V2_TEST_EVALUATION_REPORT",
+            "MEASURED_COMPARISON_REPORT"
+          ]
+        },
+        "disposition": {"const": "NOT_FOR_PUBLICATION"}
+      }
+    }
+  },
+  "properties": {
+    "schema": {"const": "szl.receiptagent-v3-release-manifest/v1"},
+    "candidateId": {"const": "SZL-ReceiptAgent-Qwen3.5-0.8B-v3"},
+    "state": {"const": "OFFLINE_RELEASE_PACKET_PREPARED_NOT_PUBLISHED"},
+    "targetRepository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repoId",
+        "repoType",
+        "private",
+        "declaredOnly",
+        "immutableRevision",
+        "immutableReadbackVerified"
+      ],
+      "properties": {
+        "repoId": {"const": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3-authenticated"},
+        "repoType": {"const": "model"},
+        "private": {"const": false},
+        "declaredOnly": {"const": true},
+        "immutableRevision": {"type": "null"},
+        "immutableReadbackVerified": {"const": false}
+      }
+    },
+    "sourceRevision": {"$ref": "#/$defs/revision"},
+    "runId": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+    "authenticatedEvidenceChainValid": {"const": true},
+    "receiptSigningTrustPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "policySchema",
+        "policySha256",
+        "candidateId",
+        "algorithm",
+        "keyId",
+        "publicKeyFingerprintSha256",
+        "usage",
+        "state"
+      ],
+      "properties": {
+        "policySchema": {
+          "const": "szl.receiptagent-v3-receipt-signing-trust-policy/v1"
+        },
+        "policySha256": {"$ref": "#/$defs/sha256"},
+        "candidateId": {"const": "SZL-ReceiptAgent-Qwen3.5-0.8B-v3"},
+        "algorithm": {"const": "Ed25519"},
+        "keyId": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{2,127}$"
+        },
+        "publicKeyFingerprintSha256": {"$ref": "#/$defs/sha256"},
+        "usage": {
+          "const": "AUTHENTICATED_TRAINING_EVALUATION_COMPARISON_RECEIPTS"
+        },
+        "state": {"const": "ACTIVE"}
+      }
+    },
+    "receiptEligible": {"const": true},
+    "publicationEligible": {"const": false},
+    "deploymentEligible": {"const": false},
+    "runtimeValidated": {"const": false},
+    "thirdPartyValidated": {"const": false},
+    "lineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "adapterFormat",
+        "implementationBase",
+        "declaredUpstream",
+        "predecessorComparator"
+      ],
+      "properties": {
+        "adapterFormat": {"const": "LORA_PEFT_SAFETENSORS"},
+        "implementationBase": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["repo_id", "revision", "license", "runtime", "load_in_4bit"],
+          "properties": {
+            "repo_id": {"const": "unsloth/Qwen3.5-0.8B"},
+            "revision": {"$ref": "#/$defs/revision"},
+            "license": {"const": "apache-2.0"},
+            "runtime": {"const": "Unsloth FastVisionModel"},
+            "load_in_4bit": {"const": true}
+          }
+        },
+        "declaredUpstream": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "repo_id",
+            "revision",
+            "license",
+            "relationship",
+            "byte_equivalence_verified",
+            "claim_boundary"
+          ],
+          "properties": {
+            "repo_id": {"const": "Qwen/Qwen3.5-0.8B"},
+            "revision": {"$ref": "#/$defs/revision"},
+            "license": {"const": "apache-2.0"},
+            "relationship": {"const": "DECLARED_UPSTREAM_LINEAGE"},
+            "byte_equivalence_verified": {"const": false},
+            "claim_boundary": {"const": "not byte equivalent"}
+          }
+        },
+        "predecessorComparator": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["repo_id", "release_revision", "adapter_model_sha256", "role"],
+          "properties": {
+            "repo_id": {"const": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2"},
+            "release_revision": {"$ref": "#/$defs/revision"},
+            "adapter_model_sha256": {"$ref": "#/$defs/sha256"},
+            "role": {"const": "FROZEN_COMPARATOR_NOT_WEIGHT_INITIALIZATION"}
+          }
+        }
+      }
+    },
+    "adapter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "aggregateSha256",
+        "manifestSha256",
+        "sourceFiles",
+        "sourceReadmeDisposition"
+      ],
+      "properties": {
+        "aggregateSha256": {"$ref": "#/$defs/sha256"},
+        "manifestSha256": {"$ref": "#/$defs/sha256"},
+        "sourceFiles": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 12,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/adapterSourceFile"}
+        },
+        "sourceReadmeDisposition": {
+          "enum": [
+            "SOURCE_README_ABSENT",
+            "LOCAL_EVIDENCE_ONLY_NOT_FOR_PUBLICATION"
+          ]
+        }
+      }
+    },
+    "benchmark": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "datasetHashes",
+        "comparisonReportSha256",
+        "inputReportSha256s",
+        "protocolSha256",
+        "comparisonCriteriaSatisfied",
+        "strictCaseImprovementOverV2",
+        "requiredStrictCaseImprovementOverV2",
+        "authoritySafetyNoRegression",
+        "claimBoundary"
+      ],
+      "properties": {
+        "datasetHashes": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["train", "dev", "test"],
+          "properties": {
+            "train": {"$ref": "#/$defs/sha256"},
+            "dev": {"$ref": "#/$defs/sha256"},
+            "test": {"$ref": "#/$defs/sha256"}
+          }
+        },
+        "comparisonReportSha256": {"$ref": "#/$defs/sha256"},
+        "inputReportSha256s": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["base", "v2", "v3"],
+          "properties": {
+            "base": {"$ref": "#/$defs/sha256"},
+            "v2": {"$ref": "#/$defs/sha256"},
+            "v3": {"$ref": "#/$defs/sha256"}
+          }
+        },
+        "protocolSha256": {"$ref": "#/$defs/sha256"},
+        "comparisonCriteriaSatisfied": {"const": true},
+        "strictCaseImprovementOverV2": {"type": "integer", "minimum": 0},
+        "requiredStrictCaseImprovementOverV2": {"type": "integer", "minimum": 0},
+        "authoritySafetyNoRegression": {"const": true},
+        "claimBoundary": {
+          "const": "Project-authored public benchmark; not blind or independent certification."
+        }
+      }
+    },
+    "reports": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "childTraining",
+        "supervisor",
+        "devEvaluation",
+        "testEvaluation",
+        "baseTestEvaluation",
+        "v2TestEvaluation",
+        "comparison"
+      ],
+      "properties": {
+        "childTraining": {"$ref": "#/$defs/sha256"},
+        "supervisor": {"$ref": "#/$defs/sha256"},
+        "devEvaluation": {"$ref": "#/$defs/sha256"},
+        "testEvaluation": {"$ref": "#/$defs/sha256"},
+        "baseTestEvaluation": {"$ref": "#/$defs/sha256"},
+        "v2TestEvaluation": {"$ref": "#/$defs/sha256"},
+        "comparison": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "receipts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["training", "evaluation", "comparison"],
+      "properties": {
+        "training": {"$ref": "#/$defs/sha256"},
+        "evaluation": {"$ref": "#/$defs/sha256"},
+        "comparison": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "intendedRepositoryFiles": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 15,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/publicFile"}
+    },
+    "localEvidenceDisposition": {"const": "NOT_FOR_PUBLICATION"},
+    "localEvidenceFiles": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/localEvidenceFile"}
+    },
+    "releaseManifestIsTargetRepositoryFile": {"const": true},
+    "unmetPublicationGates": {
+      "const": [
+        "IMMUTABLE_HUGGING_FACE_REVISION_READBACK_ABSENT",
+        "EXACT_HUB_FILE_INVENTORY_READBACK_ABSENT",
+        "EXACT_REVISION_RUNTIME_LOAD_RECEIPT_ABSENT"
+      ]
+    },
+    "claimBoundary": {
+      "const": "Deterministic offline preparation only. The publisher must append the self-excluded release manifest after verifying this inventory. No publication, deployment, runtime health, third-party validation, or autonomy claim is authorized."
+    },
+    "manifestSha256": {"$ref": "#/$defs/sha256"}
+  }
+}
