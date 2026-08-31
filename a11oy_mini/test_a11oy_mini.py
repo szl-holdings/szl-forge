@@ -19,7 +19,6 @@ README = HERE / "README.md"
 sys.path.insert(0, str(HERE))
 import convert_a11oy_mini_gguf as convert  # noqa: E402
 import eval_a11oy_mini as evaluate  # noqa: E402
-import serve_a11oy_mini as serve  # noqa: E402
 
 
 class A11oyMiniKitTests(unittest.TestCase):

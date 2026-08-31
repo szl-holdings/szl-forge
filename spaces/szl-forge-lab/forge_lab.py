@@ -220,7 +220,7 @@ def get_status() -> dict[str, Any]:
     training = _training_summary()
     evaluation = get_evaluation()
     integrity = get_integrity()
-    claims = manifest.get("claims", {})
+    _ = manifest.get("claims", {})
     training_status = training.get("status", manifest.get("status", "UNKNOWN"))
     return {
         "schema": "szl.forge.lab-status/v1",
