@@ -1098,7 +1098,7 @@ class PublishReceiptAgentV3Tests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             manifest, receipt = make_packet(root)
-            manifest_link = root / "manifest-link.json"
+            manifest_link = root / publisher.RELEASE_MANIFEST_FILENAME
             key_link = root / "trusted-key-link.pem"
             try:
                 manifest_link.symlink_to(manifest)
