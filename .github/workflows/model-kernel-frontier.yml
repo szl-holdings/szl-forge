@@ -55,6 +55,10 @@ jobs:
             tools/test_authorize_kernels_release.py \
             tools/publish_szl_kernels.py \
             tools/test_publish_szl_kernels.py \
+            tools/authorize_invariants_release.py \
+            tools/test_authorize_invariants_release.py \
+            tools/publish_szl_invariants.py \
+            tools/test_publish_szl_invariants.py \
             tools/publish_model_source_bindings.py \
             tools/test_publish_model_source_bindings.py \
             tools/test_model_binding_workflow.py \
@@ -141,6 +145,9 @@ jobs:
           PYTHONPATH=tools python -m unittest -v \
             tools/test_authorize_kernels_release.py \
             tools/test_publish_szl_kernels.py
+          PYTHONPATH=tools python -m unittest -v \
+            tools/test_authorize_invariants_release.py \
+            tools/test_publish_szl_invariants.py
           PYTHONPATH=tools python tools/test_publish_model_source_bindings.py
           python tools/test_model_binding_workflow.py
           PYTHONPATH=tools python tools/test_publish_hf_space.py

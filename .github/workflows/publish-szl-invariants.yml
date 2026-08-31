@@ -1,0 +1,156 @@
+name: Publish SZL invariants source binding
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_revision:
+        description: Exact protected-main szl-invariants Git revision
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-szl-invariants
+  cancel-in-progress: false
+
+jobs:
+  authorize:
+    name: Authorize protected source without publisher secret
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout trusted Forge gateway
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Checkout exact invariants source as untrusted test input
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: szl-holdings/szl-invariants
+          ref: ${{ inputs.source_revision }}
+          path: source
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install trusted gateway test dependency
+        run: >-
+          python -m pip install --disable-pip-version-check
+          "huggingface-hub==1.26.0"
+
+      - name: Test trusted invariants gateway contracts
+        env:
+          PYTHONPATH: tools
+        run: >-
+          python -m unittest -v
+          tools/test_authorize_invariants_release.py
+          tools/test_publish_szl_invariants.py
+
+      - name: Test untrusted source publication contract without publisher secret
+        run: python -m unittest -v source/tests/test_publication_contract.py
+
+      - name: Wait for exact protected-main source gate
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PUBLISHER_REVISION: ${{ github.sha }}
+          SOURCE_REVISION: ${{ inputs.source_revision }}
+        run: >-
+          python tools/authorize_invariants_release.py
+          --source-revision "${SOURCE_REVISION}"
+          --publisher-revision "${PUBLISHER_REVISION}"
+          --wait-seconds 900
+          --report reports/invariants-release-authorization.json
+
+      - name: Upload non-secret authorization evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: invariants-release-authorization-${{ github.run_id }}
+          path: reports/invariants-release-authorization.json
+          if-no-files-found: error
+          retention-days: 90
+
+  publish:
+    name: Publish with trusted Forge code and verify exact readback
+    needs: authorize
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout trusted Forge publisher
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Checkout authorized invariants source as data only
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: szl-holdings/szl-invariants
+          ref: ${{ inputs.source_revision }}
+          path: source
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install exact publication client without publisher secret
+        run: >-
+          python -m pip install --disable-pip-version-check
+          "huggingface-hub==1.26.0"
+
+      - name: Re-authorize exact source immediately before publication
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PUBLISHER_REVISION: ${{ github.sha }}
+          SOURCE_REVISION: ${{ inputs.source_revision }}
+        run: >-
+          python tools/authorize_invariants_release.py
+          --source-revision "${SOURCE_REVISION}"
+          --publisher-revision "${PUBLISHER_REVISION}"
+          --wait-seconds 0
+          --report reports/invariants-release-authorization.json
+
+      - name: Publish declared Python with trusted code and verify exact readback
+        env:
+          HF_TOKEN: ${{ secrets.HF_ORG_TOKEN }}
+          SOURCE_REVISION: ${{ inputs.source_revision }}
+        run: >-
+          python tools/publish_szl_invariants.py
+          --source-dir source
+          --source-revision "${SOURCE_REVISION}"
+          --authorization-report reports/invariants-release-authorization.json
+          --publisher-repository "${GITHUB_REPOSITORY}"
+          --publisher-revision "${GITHUB_SHA}"
+          --publisher-workflow-ref "${GITHUB_WORKFLOW_REF}"
+          --publisher-run-id "${GITHUB_RUN_ID}"
+          --publisher-run-attempt "${GITHUB_RUN_ATTEMPT}"
+          --publish
+          --report reports/invariants-publication.json
+
+      - name: Upload immutable publication evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: invariants-publication-${{ github.run_id }}
+          path: |
+            reports/invariants-release-authorization.json
+            reports/invariants-publication.json
+          if-no-files-found: error
+          retention-days: 90
