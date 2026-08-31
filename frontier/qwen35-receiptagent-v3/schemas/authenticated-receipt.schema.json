@@ -1,0 +1,201 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://szl.ai/schemas/receiptagent-v3/authenticated-receipt.schema.json",
+  "title": "ReceiptAgent v3 authenticated evidence receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "kind",
+    "candidateId",
+    "sourceRevision",
+    "payload",
+    "payloadSha256",
+    "authentication",
+    "receiptSha256"
+  ],
+  "properties": {
+    "schema": {
+      "const": "szl.receiptagent-v3-authenticated-receipt/v1"
+    },
+    "kind": {
+      "enum": ["TRAINING", "EVALUATION", "COMPARISON"]
+    },
+    "candidateId": {
+      "const": "SZL-ReceiptAgent-Qwen3.5-0.8B-v3"
+    },
+    "sourceRevision": {
+      "$ref": "#/$defs/gitCommit"
+    },
+    "payload": {
+      "type": "object"
+    },
+    "payloadSha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "authentication": {
+      "$ref": "#/$defs/authentication"
+    },
+    "receiptSha256": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "oneOf": [
+    {
+      "properties": {
+        "kind": {"const": "TRAINING"},
+        "payload": {"$ref": "#/$defs/trainingPayload"}
+      }
+    },
+    {
+      "properties": {
+        "kind": {"const": "EVALUATION"},
+        "payload": {"$ref": "#/$defs/evaluationPayload"}
+      }
+    },
+    {
+      "properties": {
+        "kind": {"const": "COMPARISON"},
+        "payload": {"$ref": "#/$defs/comparisonPayload"}
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "gitCommit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "runId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{32}$"
+    },
+    "publicationFalse": {
+      "const": false
+    },
+    "authentication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "algorithm",
+        "keyId",
+        "publicKeyFingerprintSha256",
+        "publicKeySpkiBase64",
+        "signatureBase64"
+      ],
+      "properties": {
+        "algorithm": {"const": "Ed25519"},
+        "keyId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{2,127}$"
+        },
+        "publicKeyFingerprintSha256": {"$ref": "#/$defs/sha256"},
+        "publicKeySpkiBase64": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9+/]+={0,2}$"
+        },
+        "signatureBase64": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9+/]+={0,2}$"
+        }
+      }
+    },
+    "datasetHashes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["train", "dev", "test"],
+      "properties": {
+        "train": {"$ref": "#/$defs/sha256"},
+        "dev": {"$ref": "#/$defs/sha256"},
+        "test": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "comparisonInputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["base", "v2", "v3"],
+      "properties": {
+        "base": {"$ref": "#/$defs/sha256"},
+        "v2": {"$ref": "#/$defs/sha256"},
+        "v3": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "trainingPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runId",
+        "childReportSha256",
+        "supervisorReportSha256",
+        "adapterAggregateSha256",
+        "adapterManifestSha256",
+        "datasetHashes",
+        "gpuIdentitySha256",
+        "containmentIdentitySha256",
+        "runtimeIdentitySha256",
+        "componentIdentitiesSha256",
+        "previousReceiptSha256",
+        "publicationEligible"
+      ],
+      "properties": {
+        "runId": {"$ref": "#/$defs/runId"},
+        "childReportSha256": {"$ref": "#/$defs/sha256"},
+        "supervisorReportSha256": {"$ref": "#/$defs/sha256"},
+        "adapterAggregateSha256": {"$ref": "#/$defs/sha256"},
+        "adapterManifestSha256": {"$ref": "#/$defs/sha256"},
+        "datasetHashes": {"$ref": "#/$defs/datasetHashes"},
+        "gpuIdentitySha256": {"$ref": "#/$defs/sha256"},
+        "containmentIdentitySha256": {"$ref": "#/$defs/sha256"},
+        "runtimeIdentitySha256": {"$ref": "#/$defs/sha256"},
+        "componentIdentitiesSha256": {"$ref": "#/$defs/sha256"},
+        "previousReceiptSha256": {"type": "null"},
+        "publicationEligible": {"$ref": "#/$defs/publicationFalse"}
+      }
+    },
+    "evaluationPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runId",
+        "devReportSha256",
+        "testReportSha256",
+        "adapterAggregateSha256",
+        "trainingReceiptSha256",
+        "previousReceiptSha256",
+        "publicationEligible"
+      ],
+      "properties": {
+        "runId": {"$ref": "#/$defs/runId"},
+        "devReportSha256": {"$ref": "#/$defs/sha256"},
+        "testReportSha256": {"$ref": "#/$defs/sha256"},
+        "adapterAggregateSha256": {"$ref": "#/$defs/sha256"},
+        "trainingReceiptSha256": {"$ref": "#/$defs/sha256"},
+        "previousReceiptSha256": {"$ref": "#/$defs/sha256"},
+        "publicationEligible": {"$ref": "#/$defs/publicationFalse"}
+      }
+    },
+    "comparisonPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "comparisonReportSha256",
+        "inputReportSha256s",
+        "evaluationReceiptSha256",
+        "previousReceiptSha256",
+        "comparisonCriteriaSatisfied",
+        "publicationEligible"
+      ],
+      "properties": {
+        "comparisonReportSha256": {"$ref": "#/$defs/sha256"},
+        "inputReportSha256s": {"$ref": "#/$defs/comparisonInputs"},
+        "evaluationReceiptSha256": {"$ref": "#/$defs/sha256"},
+        "previousReceiptSha256": {"$ref": "#/$defs/sha256"},
+        "comparisonCriteriaSatisfied": {"const": true},
+        "publicationEligible": {"$ref": "#/$defs/publicationFalse"}
+      }
+    }
+  }
+}

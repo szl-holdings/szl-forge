@@ -2,7 +2,7 @@
   "schema": "szl.frontier-model-candidate/v2",
   "candidate_id": "SZL-ReceiptAgent-Qwen3.5-0.8B-v3",
   "state": "SOURCE_READY_NOT_TRAINED",
-  "target_repo_id": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3",
+  "target_repo_id": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3-authenticated",
   "actual_training_base": {
     "repo_id": "unsloth/Qwen3.5-0.8B",
     "revision": "23c69c53358a07516b5827588b3fdb12ae78fd65",

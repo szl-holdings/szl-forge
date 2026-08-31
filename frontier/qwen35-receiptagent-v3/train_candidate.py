@@ -501,6 +501,18 @@ def hash_adapter(directory: Path) -> tuple[str, list[dict[str, Any]]]:
     return combined.hexdigest(), files
 
 
+def bind_peft_adapter_config(model: Any, implementation: dict[str, Any]) -> None:
+    """Bind the serialized adapter config to the exact immutable base revision."""
+    peft_configs = getattr(model, "peft_config", None)
+    if not isinstance(peft_configs, dict) or "default" not in peft_configs:
+        raise QualificationError("PEFT model did not expose the default adapter config")
+    default_peft_config = peft_configs["default"]
+    if default_peft_config is None:
+        raise QualificationError("PEFT default adapter config is absent")
+    default_peft_config.base_model_name_or_path = implementation["repo_id"]
+    default_peft_config.revision = implementation["revision"]
+
+
 def sanitized_error(exc: Exception) -> str:
     message = str(exc).replace(str(ROOT), "<REPOSITORY>")
     message = re.sub(r"[A-Za-z]:\\[^\s]+", "<LOCAL_PATH>", message)
@@ -601,6 +613,7 @@ def train(args: argparse.Namespace, output_dir: Path) -> dict[str, Any]:
         use_rslora=False,
         loftq_config=None,
     )
+    bind_peft_adapter_config(model, implementation)
     checkpoints = output_dir / "checkpoints"
     adapter_dir = output_dir / "adapter"
     warmup_steps = recipe["warmup_steps"] if args.run_kind == "full" else 0

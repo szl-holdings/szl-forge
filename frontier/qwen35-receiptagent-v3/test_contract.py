@@ -6,6 +6,7 @@ import pathlib
 import subprocess
 import tempfile
 import unittest
+from types import SimpleNamespace
 from unittest import mock
 
 from jsonschema.validators import validator_for
@@ -212,6 +213,29 @@ class TrainerBoundaryTests(unittest.TestCase):
         candidate = json.loads((HERE / "candidate.json").read_text(encoding="utf-8"))
         self.assertEqual("2026.7.4", candidate["runtime_lock"]["unsloth-zoo"])
         self.assertIn("unsloth-zoo", trainer.RUNTIME_PACKAGES)
+
+    def test_peft_config_is_bound_to_exact_implementation_revision(self):
+        adapter_config = SimpleNamespace(
+            base_model_name_or_path="mutable-alias",
+            revision=None,
+        )
+        model = SimpleNamespace(peft_config={"default": adapter_config})
+        implementation = {
+            "repo_id": "unsloth/Qwen3.5-0.8B",
+            "revision": "2" * 40,
+        }
+
+        trainer.bind_peft_adapter_config(model, implementation)
+
+        self.assertEqual(implementation["repo_id"], adapter_config.base_model_name_or_path)
+        self.assertEqual(implementation["revision"], adapter_config.revision)
+
+    def test_peft_config_requires_a_default_adapter(self):
+        with self.assertRaisesRegex(trainer.QualificationError, "default adapter config"):
+            trainer.bind_peft_adapter_config(
+                SimpleNamespace(peft_config={}),
+                {"repo_id": "unsloth/Qwen3.5-0.8B", "revision": "2" * 40},
+            )
 
     def test_adapter_policy_parses_safetensors_and_rejects_disguised_bytes(self):
         with tempfile.TemporaryDirectory() as directory:

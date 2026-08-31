@@ -81,10 +81,16 @@ jobs:
             frontier/qwen35-receiptagent-v3/train_candidate.py \
             frontier/qwen35-receiptagent-v3/evaluate_candidate.py \
             frontier/qwen35-receiptagent-v3/compare_reports.py \
+            frontier/qwen35-receiptagent-v3/evidence_chain.py \
+            frontier/qwen35-receiptagent-v3/prepare_release.py \
             frontier/qwen35-receiptagent-v3/test_contract.py \
+            frontier/qwen35-receiptagent-v3/test_evidence_chain.py \
             frontier/qwen35-receiptagent-v3/test_launch_supervised_training.py \
+            frontier/qwen35-receiptagent-v3/test_prepare_release.py \
             frontier/qwen35-receiptagent-v3/test_supervise_training.py \
             frontier/qwen35-receiptagent-v3/test_supervisor_validation.py \
+            tools/publish_receiptagent_v3.py \
+            tools/test_publish_receiptagent_v3.py \
             chaski/train_chaski.py \
             chaski/eval_chaski.py \
             chaski/bakeoff_named_n.py \
@@ -110,6 +116,21 @@ jobs:
             chaski_r2/jobs/launch_chaski_r2_job.py \
             receiptagent/serve_receiptagent.py \
             frontier/qwen35-receiptagent-v2/serve_candidate.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          from jsonschema.validators import validator_for
+
+          for schema_path in (
+              Path("frontier/qwen35-receiptagent-v3/schemas/authenticated-receipt.schema.json"),
+              Path("frontier/qwen35-receiptagent-v3/release.schema.json"),
+          ):
+              schema = json.loads(schema_path.read_text(encoding="utf-8"))
+              if not isinstance(schema, dict):
+                  raise TypeError(f"{schema_path} must contain one JSON object")
+              validator_for(schema).check_schema(schema)
+          PY
           python tools/test_verify_model_portfolio.py
           PYTHONPATH=. python -m unittest -v tools/test_fall2026_alignment.py
           PYTHONPATH=. python -m unittest -v chaski/test_named_n_gate.py
@@ -131,6 +152,8 @@ jobs:
             python -m unittest discover \
               -s frontier/qwen35-receiptagent-v3 \
               -p 'test_*.py' -v
+          PYTHONPATH=tools \
+            python -m unittest -v tools/test_publish_receiptagent_v3.py
           PYTHONPATH=spaces/szl-model-inference-lab \
             python -m unittest discover \
               -s spaces/szl-model-inference-lab/tests -v
@@ -191,3 +214,93 @@ jobs:
           path: reports/model-portfolio-live.json
           if-no-files-found: error
           retention-days: 30
+
+  verify-receiptagent-v3-windows:
+    name: ReceiptAgent v3 authenticated release (Windows)
+    runs-on: windows-latest
+    timeout-minutes: 15
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install ReceiptAgent v3 verification dependencies
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          python -m pip install --disable-pip-version-check `
+            "cryptography==49.0.0" `
+            "huggingface-hub==1.23.0" `
+            "jsonschema==4.26.0"
+          if ($LASTEXITCODE -ne 0) {
+            throw "dependency installation failed with exit code $LASTEXITCODE"
+          }
+
+      - name: Compile and run ReceiptAgent v3 authenticated release contracts
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          function Invoke-CheckedPython {
+            & python @args
+            if ($LASTEXITCODE -ne 0) {
+              throw "python command failed with exit code $LASTEXITCODE"
+            }
+          }
+
+          Invoke-CheckedPython -B -m py_compile `
+            frontier/qwen35-receiptagent-v3/evidence_chain.py `
+            frontier/qwen35-receiptagent-v3/prepare_release.py `
+            frontier/qwen35-receiptagent-v3/test_evidence_chain.py `
+            frontier/qwen35-receiptagent-v3/test_prepare_release.py `
+            tools/publish_receiptagent_v3.py `
+            tools/test_publish_receiptagent_v3.py
+
+          @'
+          import json
+          from pathlib import Path
+
+          from jsonschema.validators import validator_for
+
+          for schema_path in (
+              Path("frontier/qwen35-receiptagent-v3/schemas/authenticated-receipt.schema.json"),
+              Path("frontier/qwen35-receiptagent-v3/release.schema.json"),
+          ):
+              schema = json.loads(schema_path.read_text(encoding="utf-8"))
+              if not isinstance(schema, dict):
+                  raise TypeError(f"{schema_path} must contain one JSON object")
+              validator_for(schema).check_schema(schema)
+          '@ | python -B -
+          if ($LASTEXITCODE -ne 0) {
+            throw "schema validation failed with exit code $LASTEXITCODE"
+          }
+
+          $env:PYTHONPATH = "frontier/qwen35-receiptagent-v3"
+          Invoke-CheckedPython -B -m unittest -v `
+            frontier/qwen35-receiptagent-v3/test_evidence_chain.py `
+            frontier/qwen35-receiptagent-v3/test_prepare_release.py
+
+          $env:PYTHONPATH = "tools"
+          Invoke-CheckedPython -B -m unittest -v tools/test_publish_receiptagent_v3.py
+
+          Remove-Item Env:PYTHONPATH -ErrorAction SilentlyContinue
+
+          git diff --check
+          if ($LASTEXITCODE -ne 0) {
+            throw "git diff --check failed with exit code $LASTEXITCODE"
+          }
