@@ -18,7 +18,6 @@ from train_candidate import (
     enforce_runtime_lock,
     load_committed_json,
     raw_gpu_preflight,
-    runtime_versions,
     sanitized_error,
     sha256_json,
 )

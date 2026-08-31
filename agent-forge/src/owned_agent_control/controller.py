@@ -48,7 +48,7 @@ import subprocess
 import sys
 import tempfile
 import time
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any, Mapping, Sequence
 import uuid
 
 try:

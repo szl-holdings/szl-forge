@@ -137,7 +137,7 @@ def generate_owner_key(out_dir: str, force: bool = False) -> str:
         f.write("\n")
 
     print(f"[sign_receipt] PRIVATE key written to {pem_path}")
-    print(f"[sign_receipt]   -> KEEP THIS SECRET. Never commit it. Never paste it.")
+    print("[sign_receipt]   -> KEEP THIS SECRET. Never commit it. Never paste it.")
     print(f"[sign_receipt] PUBLIC key committed to {pub_path}")
     print(f"[sign_receipt] keyId = {key_id}")
     print(

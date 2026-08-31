@@ -8,7 +8,6 @@ import os
 import platform
 import threading
 import time
-import urllib.request
 import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
