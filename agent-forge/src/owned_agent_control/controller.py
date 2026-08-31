@@ -5807,7 +5807,7 @@ def build_parser(*, include_internal: bool = False) -> argparse.ArgumentParser:
         child.add_argument("--state-dir", required=True, type=Path)
         return child
 
-    init_parser = state_command("init", "initialize protected controller state")
+    _ = state_command("init", "initialize protected controller state")
 
     keygen_parser = subparsers.add_parser("keygen", help="create an encrypted Ed25519 operator key")
     keygen_parser.add_argument("--operator", required=True)
@@ -5885,7 +5885,7 @@ def build_parser(*, include_internal: bool = False) -> argparse.ArgumentParser:
     )
     credential_parser.add_argument("--target", required=True)
 
-    audit_parser = state_command("audit-verify", "verify the local hash-chained audit ledger")
+    _ = state_command("audit-verify", "verify the local hash-chained audit ledger")
 
     subparsers.add_parser("self-test", help="run a disposable real parent/child isolation test")
 
