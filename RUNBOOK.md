@@ -16,6 +16,23 @@ laptop — treat each step as measured only when it succeeds on screen.
 Every step below is ONE single-line PowerShell command. Screenshot anything
 surprising.
 
+## Step -1 — preflight and dataset proof (new, runs anywhere)
+
+Before touching the GPU, prove the environment and the dataset. Both tools
+are stdlib-only and fail closed with honest MEASURED/UNAVAILABLE labels:
+
+```powershell
+python tools/validate_sft_dataset.py szl_dataset.jsonl --min-examples 8
+python tools/forge_preflight.py --dataset szl_dataset.jsonl --out receipts/preflight.json
+```
+
+The validator refuses malformed JSONL, missing `messages`, unknown roles, and
+empty content — the exact failure class that once sent a package file to the
+trainer. The preflight writes a hashed `szl.forge-preflight/v1` receipt and
+exits non-zero (`NOT_READY`) if Python, disk, the training stack, CUDA, or
+the dataset cannot support a run. A READY preflight is **not** a training
+receipt: the run still needs its own artifact + evaluation + receipt evidence.
+
 ## Step 0 — check Python
 
 ```powershell
