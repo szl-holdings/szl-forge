@@ -155,6 +155,20 @@ Publication is performed only from protected `main` by the dependent
 after that same workflow verifies the exact live Space revision and using the
 repository's encrypted Hugging Face organization credential.
 
+## Doctrine gate (dataset content)
+
+`tools/validate_sft_dataset.py` proves a dataset is well-formed;
+`tools/nemo_doctrine_gate.py` proves its **content** conforms to doctrine.
+Every training/eval JSONL in this repo is gated through the
+[`szl-nemo`](https://github.com/szl-holdings/szl-nemo) kernel (`rule_check`
+R1–R5) — fabrication labels, honest unknowns, Λ-is-not-a-theorem, the 0.97
+trust ceiling, and persona-correct fine-tune provenance — and each run is
+bound into a deterministic, hash-chained `szl.nemo.receipt.v1` ledger.
+CI enforces it on every PR that touches doctrine-bearing data
+(`.github/workflows/nemo-doctrine-gate.yml`, kernel pinned by commit SHA).
+Current state (MEASURED 2026-09-01): all five gated datasets VALID, 75
+records, 0 violations.
+
 ## Pipeline
 
 ```
