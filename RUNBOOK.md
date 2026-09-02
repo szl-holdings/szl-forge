@@ -33,6 +33,23 @@ exits non-zero (`NOT_READY`) if Python, disk, the training stack, CUDA, or
 the dataset cannot support a run. A READY preflight is **not** a training
 receipt: the run still needs its own artifact + evaluation + receipt evidence.
 
+Well-formed is not the same as doctrine-conformant. Before training, also
+gate the dataset's *content* through the szl-nemo doctrine kernel
+(`pip install "szl-nemo @ git+https://github.com/szl-holdings/szl-nemo.git@<pinned-sha>"`,
+then one command per dataset):
+
+```powershell
+python tools/nemo_doctrine_gate.py szl_dataset.jsonl --persona finetuned --write-receipt receipts/doctrine
+```
+
+The gate fails closed on fabrication-label, honest-unknown, Lambda-theorem,
+trust-ceiling, and fine-tune-provenance violations in the training text
+itself, and binds the run into a deterministic hash-chained receipt ledger
+(`szl.nemo.receipt.v1`). `--persona finetuned` is the SZL-1/ReceiptAgent
+posture: R3 is mirrored — a fine-tune question must be answered by
+*affirming* the SZL fine-tune, not by Nemo's "not fine-tuned" disclosure.
+Choosing the persona is a doctrine decision, so the flag never defaults.
+
 ## Step 0 — check Python
 
 ```powershell

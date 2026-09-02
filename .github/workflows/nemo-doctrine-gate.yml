@@ -1,0 +1,63 @@
+# Doctrine-content gate: every change to doctrine-bearing training/eval data
+# must pass the szl-nemo kernel (rule_check R1-R5) before it can shape a model.
+# Complements validate_sft_dataset.py (well-formedness) with content semantics.
+# The kernel is pinned to a full commit SHA; bumping it is an explicit,
+# reviewable doctrine decision.
+name: nemo-doctrine-gate
+
+on:
+  pull_request:
+    paths:
+      - "szl_dataset.jsonl"
+      - "receiptagent/*.jsonl"
+      - "tools/nemo_doctrine_gate.py"
+      - "tests/test_nemo_doctrine_gate.py"
+      - ".github/workflows/nemo-doctrine-gate.yml"
+  push:
+    branches: [main]
+    paths:
+      - "szl_dataset.jsonl"
+      - "receiptagent/*.jsonl"
+      - "tools/nemo_doctrine_gate.py"
+      - "tests/test_nemo_doctrine_gate.py"
+      - ".github/workflows/nemo-doctrine-gate.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  doctrine:
+    name: gate doctrine-bearing datasets
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # Org policy: every action is pinned to a full-length commit SHA.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install the szl-nemo doctrine kernel (pinned commit)
+        run: |
+          python -m pip install --disable-pip-version-check \
+            "szl-nemo @ git+https://github.com/szl-holdings/szl-nemo.git@7d4514a6fa4687a4b8f4b60fbd8e252e36374cd3"
+          szl-nemo selftest
+
+      - name: Gate doctrine-bearing datasets (fail closed)
+        run: |
+          set -euo pipefail
+          for ds in \
+            szl_dataset.jsonl \
+            receiptagent/train.jsonl \
+            receiptagent/train.refusals.jsonl \
+            receiptagent/adversarial.jsonl \
+            receiptagent/eval.jsonl; do
+            python tools/nemo_doctrine_gate.py "$ds" --persona finetuned
+          done
+
+      - name: Gate contract tests
+        run: |
+          python -m pip install --disable-pip-version-check pytest
+          python -m pytest -q tests/test_nemo_doctrine_gate.py
