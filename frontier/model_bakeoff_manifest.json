@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "status": "EXPERIMENTAL",
+  "promotion_rule": "A candidate replaces an SZL baseline only after measured workload improvement plus governance and reproducibility passes.",
+  "lanes": [
+    {
+      "id": "khipu-governed-navigation",
+      "baseline": "SZLHOLDINGS/SZL-Khipu-1.5B",
+      "candidate_families": ["Qwen coder/tool-use", "DeepSeek long-context/agentic"],
+      "metrics": ["schema_valid_rate", "grounding_correct_rate", "abstention_correct_rate", "citation_binding_rate", "latency_ms", "peak_memory_mb"]
+    },
+    {
+      "id": "receipt-agent",
+      "baseline": "SZLHOLDINGS/SZL-Forge-1.5B-ReceiptAgent",
+      "candidate_families": ["Qwen coder/tool-use", "DeepSeek coder/agentic"],
+      "metrics": ["receipt_schema_rate", "authority_boundary_pass_rate", "tool_call_correct_rate", "abstention_correct_rate", "latency_ms"]
+    },
+    {
+      "id": "multivector-retrieval",
+      "baseline": "dense-bi-encoder",
+      "candidate_families": ["sparse+dense", "multi-vector-late-interaction", "reranker"],
+      "metrics": ["recall_at_10", "mrr_at_10", "citation_binding_rate", "latency_ms", "index_bytes"]
+    },
+    {
+      "id": "quantized-sovereign-inference",
+      "baseline": "full-precision-or-existing-gguf",
+      "candidate_families": ["gguf", "4bit", "quantization-aware-healing"],
+      "metrics": ["quality_delta", "tokens_per_second", "time_to_first_token_ms", "peak_memory_mb"]
+    }
+  ],
+  "required_experiment_fields": [
+    "upstream_model_id",
+    "upstream_revision",
+    "license",
+    "dataset_revision",
+    "contamination_notes",
+    "tokenizer_revision",
+    "template_revision",
+    "training_config_sha256",
+    "hardware_fingerprint",
+    "software_fingerprint",
+    "seed",
+    "baseline_results_sha256",
+    "candidate_results_sha256",
+    "governance_pass",
+    "reproducibility_pass",
+    "receipt_sha256"
+  ]
+}
