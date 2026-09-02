@@ -42,7 +42,7 @@ jobs:
       - name: Install the szl-nemo doctrine kernel (pinned commit)
         run: |
           python -m pip install --disable-pip-version-check \
-            "szl-nemo @ git+https://github.com/szl-holdings/szl-nemo.git@36ebfa12aea5cc2e1abdfc9f9df901d96d22ab32"
+            "szl-nemo @ git+https://github.com/szl-holdings/szl-nemo.git@7d4514a6fa4687a4b8f4b60fbd8e252e36374cd3"
           szl-nemo selftest
 
       - name: Gate doctrine-bearing datasets (fail closed)
