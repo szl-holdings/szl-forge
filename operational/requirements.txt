@@ -1,0 +1,9 @@
+# operational/ layer dependencies.
+# Lane scripts keep their own inline uv/PEP-723 headers; this file covers
+# the orchestration and evaluation layer only.
+sentence-transformers>=3.0.0
+transformers>=4.44.0
+datasets>=2.20.0
+peft>=0.12.0
+accelerate>=0.33.0
+huggingface_hub>=0.24.0
