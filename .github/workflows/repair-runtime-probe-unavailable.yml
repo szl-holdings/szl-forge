@@ -145,6 +145,12 @@ jobs:
           workflow_path.unlink()
           PY
 
+      - name: Install exact test dependency
+        shell: bash
+        run: >-
+          python -m pip install --disable-pip-version-check
+          "huggingface-hub==1.23.0"
+
       - name: Verify exact contract
         shell: bash
         env:
