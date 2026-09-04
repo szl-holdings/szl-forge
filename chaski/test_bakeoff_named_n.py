@@ -167,6 +167,45 @@ class NamedNBakeoffTests(unittest.TestCase):
         self.assertIn("gate_ran = False", eval_src)
         self.assertIn("none-this-run", eval_src)
 
+    def test_publicize_runtime_strips_owner_homes(self) -> None:
+        snap = (
+            r"C:\Users\steph\.cache\huggingface\hub\models--Qwen--Qwen3.5-0.8B"
+            r"\snapshots\2fc06364715b967f1860aea9cf38778875588b17"
+        )
+        self.assertEqual(
+            "huggingface:Qwen/Qwen3.5-0.8B@2fc06364715b967f1860aea9cf38778875588b17",
+            bakeoff.publicize_runtime(snap),
+        )
+        self.assertEqual(
+            "chaski-5050-adapter",
+            bakeoff.publicize_runtime(r"C:\Users\steph\szl-forge\chaski-5050-adapter"),
+        )
+        self.assertEqual(
+            "chaski_r2/chaski-r2-adapter",
+            bakeoff.publicize_runtime(
+                r"C:\Users\steph\work-pr\szl-forge-r2-bf16\chaski_r2\chaski-r2-adapter"
+            ),
+        )
+        with self.assertRaises(SystemExit):
+            bakeoff.publicize_runtime(r"C:\Users\steph\secret-weights")
+
+    def test_committed_receipt_has_no_owner_home_paths(self) -> None:
+        text = RECEIPT_PATH.read_text(encoding="utf-8")
+        for needle in ("C:\\Users", "C:/Users", "/Users/", "/home/"):
+            self.assertNotIn(needle, text)
+        receipt = json.loads(text)
+        self.assertTrue(
+            str(receipt.get("base_runtime", "")).startswith("huggingface:Qwen/")
+        )
+        for row in receipt["candidates"]:
+            runtime = str(row.get("base_runtime") or "")
+            adapter = str(row.get("adapter") or "")
+            self.assertFalse(runtime.startswith("C:"))
+            self.assertFalse(adapter.startswith("C:"))
+        body = dict(receipt)
+        body.pop("report_sha256", None)
+        self.assertEqual(receipt["report_sha256"], bakeoff.sha256_json(body))
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

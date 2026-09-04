@@ -68,6 +68,34 @@ LOCAL_SNAPSHOT = (
     / "snapshots"
     / "2fc06364715b967f1860aea9cf38778875588b17"
 )
+HF_SNAPSHOT_RE = re.compile(
+    r"models--([^/\\]+)--([^/\\]+)[/\\]snapshots[/\\]([0-9a-f]{7,40})",
+    re.I,
+)
+OWNER_HOME_RE = re.compile(r"(?i)(?:[A-Z]:[\\/]|/)(?:Users|home)[\\/]")
+
+
+def publicize_runtime(value: str | Path | None) -> str | None:
+    """Record Hub snapshot IDs and repo-relative adapters. Never owner homes."""
+    if value is None:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    norm = text.replace("\\", "/")
+    match = HF_SNAPSHOT_RE.search(norm)
+    if match:
+        return f"huggingface:{match.group(1)}/{match.group(2)}@{match.group(3)}"
+    trimmed = norm.rstrip("/")
+    if trimmed.endswith("chaski-5050-adapter"):
+        return "chaski-5050-adapter"
+    if trimmed.endswith("chaski-r2-adapter"):
+        return "chaski_r2/chaski-r2-adapter"
+    if OWNER_HOME_RE.search(norm) or (len(text) > 2 and text[1] == ":"):
+        raise SystemExit(
+            f"[chaski-bakeoff] refusing to record owner path {text!r}"
+        )
+    return text
 
 
 def sha256_bytes(data: bytes) -> str:
@@ -534,8 +562,8 @@ def score_candidate(
         "kind": spec["kind"],
         "hub": spec.get("hub"),
         "base_model": CANONICAL_BASE,
-        "base_runtime": base_id,
-        "adapter": str(adapter) if adapter else None,
+        "base_runtime": publicize_runtime(base_id),
+        "adapter": publicize_runtime(adapter),
         "adapter_sha256": sha256_adapter(adapter) if adapter else None,
         "does_not_overwrite": spec.get("does_not_overwrite"),
         "hub_id_declared_only": spec.get("hub_id_declared_only", False),
@@ -723,7 +751,7 @@ def run_bakeoff(args: argparse.Namespace) -> dict[str, Any]:
             candidates=candidates,
         )
         payload["gpu"] = gpu
-        payload["base_runtime"] = base_id
+        payload["base_runtime"] = publicize_runtime(base_id)
         return payload
 
     payload = {
@@ -739,7 +767,7 @@ def run_bakeoff(args: argparse.Namespace) -> dict[str, Any]:
         "held_out_in_gradients": False,
         "artifact": PARENT_HUB,
         "base_model": CANONICAL_BASE,
-        "base_runtime": base_id,
+        "base_runtime": publicize_runtime(base_id),
         "json_draft_gate": "chaski/gate/json_drafts.n5.jsonl",
         "json_draft_n": drafts["n"],
         "adversarial_refusal_gate": "chaski/gate/adversarial_refusals.n6.jsonl",
@@ -779,13 +807,13 @@ def status_payload(drafts: dict[str, Any], refusals: dict[str, Any]) -> dict[str
             {
                 "id": "chaski-5050",
                 "kind": "adapter",
-                "adapter": str(resolve_5050(None) or ""),
+                "adapter": publicize_runtime(resolve_5050(None)),
                 "state": "UNAVAILABLE",
             },
             {
                 "id": "chaski-r2",
                 "kind": "adapter",
-                "adapter": str(resolve_r2(None) or ""),
+                "adapter": publicize_runtime(resolve_r2(None)),
                 "state": "UNAVAILABLE",
                 "hub_id_declared_only": True,
             },
