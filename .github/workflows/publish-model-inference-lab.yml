@@ -13,7 +13,6 @@ on:
       - "tests/test_acquire_hf_publisher_token.py"
       - "tests/test_governed_live_verifier_entrypoint.py"
       - ".github/workflows/publish-model-inference-lab.yml"
-  workflow_dispatch:
 
 permissions:
   contents: read
