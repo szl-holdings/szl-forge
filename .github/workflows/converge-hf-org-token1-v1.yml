@@ -1,0 +1,311 @@
+name: Converge HF ORG TOKEN1 fallback v1
+
+on:
+  push:
+    branches:
+      - ops/converge-hf-org-token1-v1
+    paths:
+      - .github/workflows/converge-hf-org-token1-v1.yml
+
+permissions:
+  actions: write
+  checks: read
+  contents: write
+  pull-requests: write
+  statuses: read
+
+concurrency:
+  group: converge-hf-org-token1-v1
+  cancel-in-progress: false
+
+jobs:
+  converge:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPOSITORY: ${{ github.repository }}
+      SOURCE_BRANCH: fix/hf-org-token1-fallback-v1
+      OPS_BRANCH: ops/converge-hf-org-token1-v1
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
+        with:
+          egress-policy: audit
+
+      - name: Wait for branch-local materializers to quiesce
+        shell: bash
+        run: |
+          set -euo pipefail
+          for _attempt in $(seq 1 90); do
+            runs="$(gh api --method GET "repos/${REPOSITORY}/actions/runs" \
+              -f branch="$SOURCE_BRANCH" -f per_page=100)"
+            active="$(jq '[.workflow_runs[] | select(.name | startswith("Materialize HF ORG TOKEN1")) | select(.status == "queued" or .status == "in_progress" or .status == "pending" or .status == "waiting")] | length' <<<"$runs")"
+            [ "$active" -eq 0 ] && exit 0
+            sleep 10
+          done
+          echo "::error::Credential materializers did not quiesce."
+          exit 2
+
+      - name: Checkout exact source branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: fix/hf-org-token1-fallback-v1
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up exact Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12.10'
+          check-latest: false
+
+      - name: Recover or validate the permanent four-file candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git branch --show-current)" = "$SOURCE_BRANCH"
+          test -f tools/acquire_hf_publisher_token.py
+          test -f tests/test_acquire_hf_publisher_token.py
+          test -f tests/test_hf_org_token1_fallback.py
+          if ! grep -Fq '("HF_ORG_TOKEN1", "HF_ORG_TOKEN1_CANDIDATE")' tools/acquire_hf_publisher_token.py; then
+            test -f tools/materialize_hf_org_token1_fallback_v2.py
+            python -B tools/materialize_hf_org_token1_fallback_v2.py
+          fi
+          python -B -m py_compile \
+            tools/acquire_hf_publisher_token.py \
+            tests/test_acquire_hf_publisher_token.py \
+            tests/test_hf_org_token1_fallback.py
+          python -B tests/test_acquire_hf_publisher_token.py
+          python -B tests/test_hf_org_token1_fallback.py
+          test "$(grep -Fc 'HF_ORG_TOKEN1_CANDIDATE' .github/workflows/publish-model-inference-lab.yml)" -eq 2
+          test "$(grep -Fc 'tests/test_hf_org_token1_fallback.py' .github/workflows/publish-model-inference-lab.yml)" -eq 3
+          grep -Fq 'self.assertTrue(attempts[2].valid)' tests/test_acquire_hf_publisher_token.py
+          git rm -f --ignore-unmatch \
+            .github/workflows/materialize-hf-org-token1-fallback-once.yml \
+            .github/workflows/materialize-hf-org-token1-fallback-once-v2.yml \
+            tools/materialize_hf_org_token1_fallback.py \
+            tools/materialize_hf_org_token1_fallback_v2.py
+          git add -A
+          git diff --cached --check
+          if ! git diff --cached --quiet; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git commit \
+              -m 'fix(deploy): complete alternate organization token support' \
+              -m 'Validate both credential suites, wire the alternate organization candidate into both publishers, preserve the explicit missing-attempt contract, and remove every branch-local materializer.' \
+              -m 'Signed-off-by: Stephen Lutar <stephenlutar2@gmail.com>'
+            git push origin HEAD:"$SOURCE_BRANCH"
+          fi
+
+      - name: Resolve the exact PR and stable final head
+        id: candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          owner="${REPOSITORY%/*}"
+          expected="$(printf '%s\n' \
+            '.github/workflows/publish-model-inference-lab.yml' \
+            'tests/test_acquire_hf_publisher_token.py' \
+            'tests/test_hf_org_token1_fallback.py' \
+            'tools/acquire_hf_publisher_token.py' | sort)"
+          number=""
+          selected=""
+          stable=""
+          stable_count=0
+          for _attempt in $(seq 1 120); do
+            prs="$(gh api --method GET "repos/${REPOSITORY}/pulls" \
+              -f state=open -f head="${owner}:${SOURCE_BRANCH}")"
+            if [ "$(jq 'length' <<<"$prs")" -ne 1 ]; then
+              sleep 10
+              continue
+            fi
+            number="$(jq -r '.[0].number' <<<"$prs")"
+            test "$(jq -r '.[0].base.ref' <<<"$prs")" = main
+            test "$(jq -r '.[0].head.repo.full_name' <<<"$prs")" = "$REPOSITORY"
+            test "$(jq -r '.[0].draft' <<<"$prs")" = false
+            head_sha="$(jq -r '.[0].head.sha' <<<"$prs")"
+            branch_sha="$(gh api "repos/${REPOSITORY}/branches/${SOURCE_BRANCH}" --jq '.commit.sha' 2>/dev/null || true)"
+            changed="$(gh api --paginate "repos/${REPOSITORY}/pulls/${number}/files?per_page=100" --jq '.[].filename' | sort)"
+            if [ "$head_sha" != "$branch_sha" ] || [ "$changed" != "$expected" ]; then
+              stable=""
+              stable_count=0
+              sleep 10
+              continue
+            fi
+            for path in \
+              '.github/workflows/materialize-hf-org-token1-fallback-once.yml' \
+              '.github/workflows/materialize-hf-org-token1-fallback-once-v2.yml' \
+              'tools/materialize_hf_org_token1_fallback.py' \
+              'tools/materialize_hf_org_token1_fallback_v2.py'; do
+              if gh api "repos/${REPOSITORY}/contents/${path}?ref=${head_sha}" >/dev/null 2>&1; then
+                echo "::error::Temporary materializer remains: ${path}"
+                exit 2
+              fi
+            done
+            if [ "$head_sha" = "$stable" ]; then
+              stable_count=$((stable_count + 1))
+            else
+              stable="$head_sha"
+              stable_count=1
+            fi
+            if [ "$stable_count" -ge 3 ]; then
+              selected="$head_sha"
+              break
+            fi
+            sleep 10
+          done
+          test -n "$number" && test -n "$selected"
+          echo "pr_number=$number" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$selected" >> "$GITHUB_OUTPUT"
+          jq -n --arg schema szl.hf-org-token1-convergence/v1 \
+            --arg repository "$REPOSITORY" --arg source_branch "$SOURCE_BRANCH" \
+            --arg head_sha "$selected" --argjson pull_request "$number" \
+            '{schema:$schema,repository:$repository,source_branch:$source_branch,head_sha:$head_sha,pull_request:$pull_request,state:"CANDIDATE_STABLE"}' \
+            > evidence/convergence.json
+
+      - name: Require terminal acceptable exact-head checks
+        id: checks
+        shell: bash
+        env:
+          PR_NUMBER: ${{ steps.candidate.outputs.pr_number }}
+          HEAD_SHA: ${{ steps.candidate.outputs.head_sha }}
+        run: |
+          set -euo pipefail
+          signature=""
+          stable_count=0
+          selected_count=0
+          for _attempt in $(seq 1 150); do
+            test "$(gh api "repos/${REPOSITORY}/pulls/${PR_NUMBER}" --jq '.head.sha')" = "$HEAD_SHA"
+            checks="$(gh api "repos/${REPOSITORY}/commits/${HEAD_SHA}/check-runs?per_page=100")"
+            count="$(jq '.total_count' <<<"$checks")"
+            pending="$(jq '[.check_runs[] | select(.status != "completed")] | length' <<<"$checks")"
+            bad="$(jq '[.check_runs[] | select(.status == "completed") | select((.conclusion == "success" or .conclusion == "neutral" or .conclusion == "skipped") | not)] | length' <<<"$checks")"
+            statuses="$(gh api "repos/${REPOSITORY}/commits/${HEAD_SHA}/status")"
+            bad_status="$(jq '[.statuses[] | select(.state != "success")] | length' <<<"$statuses")"
+            current_signature="$(jq -c '[.check_runs[] | {name,status,conclusion}] | sort_by(.name)' <<<"$checks")"
+            if [ "$count" -ge 5 ] && [ "$pending" -eq 0 ] && [ "$bad" -eq 0 ] && [ "$bad_status" -eq 0 ]; then
+              if [ "$current_signature" = "$signature" ]; then
+                stable_count=$((stable_count + 1))
+              else
+                signature="$current_signature"
+                stable_count=1
+              fi
+              if [ "$stable_count" -ge 3 ]; then
+                selected_count="$count"
+                break
+              fi
+            else
+              signature=""
+              stable_count=0
+            fi
+            sleep 12
+          done
+          test "$selected_count" -ge 5
+          echo "check_count=$selected_count" >> "$GITHUB_OUTPUT"
+          jq --arg state CHECKS_VERIFIED --argjson check_count "$selected_count" \
+            '.state=$state | .check_count=$check_count' evidence/convergence.json > evidence/tmp.json
+          mv evidence/tmp.json evidence/convergence.json
+
+      - name: Require clean reviews and normal mergeability
+        shell: bash
+        env:
+          PR_NUMBER: ${{ steps.candidate.outputs.pr_number }}
+          HEAD_SHA: ${{ steps.candidate.outputs.head_sha }}
+        run: |
+          set -euo pipefail
+          pr="$(gh api "repos/${REPOSITORY}/pulls/${PR_NUMBER}")"
+          test "$(jq -r '.head.sha' <<<"$pr")" = "$HEAD_SHA"
+          test "$(jq -r '.mergeable' <<<"$pr")" = true
+          merge_state="$(jq -r '.mergeable_state' <<<"$pr")"
+          case "$merge_state" in clean|has_hooks|unstable) ;; *) exit 2 ;; esac
+          reviews="$(gh api --paginate "repos/${REPOSITORY}/pulls/${PR_NUMBER}/reviews?per_page=100")"
+          test "$(jq '[sort_by(.submitted_at) | group_by(.user.login)[] | last | select(.state == "CHANGES_REQUESTED")] | length' <<<"$reviews")" -eq 0
+          owner="${REPOSITORY%/*}"
+          name="${REPOSITORY#*/}"
+          query='query($owner:String!,$name:String!,$number:Int!){repository(owner:$owner,name:$name){pullRequest(number:$number){reviewThreads(first:100){nodes{isResolved} pageInfo{hasNextPage}}}}}'
+          threads="$(gh api graphql -f query="$query" -F owner="$owner" -F name="$name" -F number="$PR_NUMBER")"
+          test "$(jq -r '.data.repository.pullRequest.reviewThreads.pageInfo.hasNextPage' <<<"$threads")" = false
+          test "$(jq '[.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false)] | length' <<<"$threads")" -eq 0
+
+      - name: Squash merge through the protected endpoint
+        id: merge
+        shell: bash
+        env:
+          PR_NUMBER: ${{ steps.candidate.outputs.pr_number }}
+          HEAD_SHA: ${{ steps.candidate.outputs.head_sha }}
+        run: |
+          set -euo pipefail
+          payload="$(jq -n --arg sha "$HEAD_SHA" \
+            --arg title 'fix(deploy): validate the alternate organization publisher token' \
+            --arg message $'Add the estate alternate organization credential after the primary token, preserve active validation and secret-free evidence, and prove broader fallbacks remain unobserved when the alternate succeeds.\n\nSigned-off-by: Stephen Lutar <stephenlutar2@gmail.com>' \
+            '{sha:$sha,merge_method:"squash",commit_title:$title,commit_message:$message}')"
+          response="$(gh api --method PUT "repos/${REPOSITORY}/pulls/${PR_NUMBER}/merge" --input - <<<"$payload")"
+          test "$(jq -r '.merged' <<<"$response")" = true
+          merge_sha="$(jq -r '.sha' <<<"$response")"
+          [[ "$merge_sha" =~ ^[0-9a-f]{40}$ ]]
+          echo "merge_sha=$merge_sha" >> "$GITHUB_OUTPUT"
+          jq --arg state MERGED --arg merge_sha "$merge_sha" \
+            '.state=$state | .merge_sha=$merge_sha' evidence/convergence.json > evidence/tmp.json
+          mv evidence/tmp.json evidence/convergence.json
+
+      - name: Require post-merge inference publication success
+        id: live
+        shell: bash
+        env:
+          MERGE_SHA: ${{ steps.merge.outputs.merge_sha }}
+        run: |
+          set -euo pipefail
+          run_id=""
+          for _attempt in $(seq 1 90); do
+            runs="$(gh api --method GET "repos/${REPOSITORY}/actions/runs" \
+              -f head_sha="$MERGE_SHA" -f event=push -f per_page=100)"
+            run_id="$(jq -r '[.workflow_runs[] | select(.name == "Publish model inference lab")][0].id // empty' <<<"$runs")"
+            [ -n "$run_id" ] && break
+            sleep 10
+          done
+          test -n "$run_id"
+          rerun=false
+          for _attempt in $(seq 1 150); do
+            run="$(gh api "repos/${REPOSITORY}/actions/runs/${run_id}")"
+            status="$(jq -r '.status' <<<"$run")"
+            conclusion="$(jq -r '.conclusion // ""' <<<"$run")"
+            attempt="$(jq -r '.run_attempt' <<<"$run")"
+            if [ "$status" != completed ]; then
+              sleep 12
+              continue
+            fi
+            if [ "$conclusion" = success ]; then
+              echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+              jq --arg state LIVE_VERIFIED --argjson publication_run "$run_id" \
+                '.state=$state | .publication_run=$publication_run' evidence/convergence.json > evidence/tmp.json
+              mv evidence/tmp.json evidence/convergence.json
+              exit 0
+            fi
+            if [ "$rerun" = false ] && [ "$attempt" -eq 1 ] && \
+               { [ "$conclusion" = failure ] || [ "$conclusion" = timed_out ]; }; then
+              gh api --method POST "repos/${REPOSITORY}/actions/runs/${run_id}/rerun-failed-jobs"
+              rerun=true
+              sleep 15
+              continue
+            fi
+            echo "::error::Post-merge publication concluded ${conclusion} on attempt ${attempt}."
+            exit 2
+          done
+          echo "::error::Post-merge publication did not reach a terminal success."
+          exit 2
+
+      - name: Delete the temporary operations branch
+        shell: bash
+        run: gh api --method DELETE "repos/${REPOSITORY}/git/refs/heads/${OPS_BRANCH}"
+
+      - name: Upload immutable convergence evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: hf-org-token1-convergence-${{ github.run_id }}
+          path: evidence/convergence.json
+          if-no-files-found: warn
+          retention-days: 90
