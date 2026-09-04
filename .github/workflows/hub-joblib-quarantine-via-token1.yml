@@ -1,0 +1,74 @@
+name: Hub joblib quarantine via TOKEN1
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: hub-joblib-quarantine-via-token1
+  cancel-in-progress: false
+
+jobs:
+  quarantine:
+    name: Acquire publisher token and quarantine joblib
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install Hub client
+        run: >-
+          python -m pip install --disable-pip-version-check
+          "huggingface-hub==1.23.0"
+
+      - name: Acquire validated publisher credential
+        env:
+          HF_ORG_TOKEN_CANDIDATE: ${{ secrets.HF_ORG_TOKEN }}
+          HF_ORG_TOKEN1_CANDIDATE: ${{ secrets.HF_ORG_TOKEN1 }}
+          HF_WRITE_TOKEN_CANDIDATE: ${{ secrets.HF_WRITE_TOKEN }}
+          HF_TOKEN_CANDIDATE: ${{ secrets.HF_TOKEN }}
+          HUGGINGFACE_TOKEN_CANDIDATE: ${{ secrets.HUGGINGFACE_TOKEN }}
+          HUGGING_FACE_HUB_TOKEN_CANDIDATE: ${{ secrets.HUGGING_FACE_HUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          python tools/acquire_hf_publisher_token.py \
+            --target-repo SZLHOLDINGS/szl-blocked \
+            --target-type model \
+            --allow-create \
+            --github-env "${GITHUB_ENV}" \
+            --report reports/hf-quarantine-publisher-credential.json
+
+      - name: Quarantine joblib on C4 Hub models
+        run: |
+          set -euo pipefail
+          python tools/quarantine_hub_joblib.py --repo-id SZLHOLDINGS/szl-blocked
+          python tools/quarantine_hub_joblib.py --repo-id SZLHOLDINGS/szl-provctl
+          python tools/quarantine_hub_joblib.py --repo-id SZLHOLDINGS/szl-formulas
+          python tools/quarantine_hub_joblib.py --repo-id SZLHOLDINGS/szl-ouroboros
+          python tools/quarantine_hub_joblib.py --repo-id SZLHOLDINGS/szl-nemo
+
+      - name: Upload sanitized credential report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0d # v7.0.1
+        with:
+          name: hub-joblib-quarantine-${{ github.run_id }}
+          path: reports/hf-quarantine-publisher-credential.json
+          if-no-files-found: warn
+          retention-days: 30
