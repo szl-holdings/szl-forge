@@ -8,6 +8,8 @@ on:
       - "publishing/model-source-bindings.json"
       - "tools/publish_model_source_bindings.py"
       - "tools/test_publish_model_source_bindings.py"
+      - "tools/run_governed_live_verifier.py"
+      - "tests/test_governed_live_verifier_entrypoint.py"
       - ".github/workflows/publish-model-inference-lab.yml"
 
 permissions:
@@ -45,6 +47,12 @@ jobs:
           python -m pip install --disable-pip-version-check
           "huggingface-hub==1.23.0"
           "requests==2.32.5"
+          "pytest==9.1.1"
+
+      - name: Verify definition-complete live verifier entrypoint
+        run: >-
+          python -m pytest -q
+          tests/test_governed_live_verifier_entrypoint.py
 
       - name: Acquire Hugging Face publisher credential
         env:
@@ -90,7 +98,8 @@ jobs:
       - name: Exercise live Brain, Forge, Nemo, Formula, and Anatomy path
         run: |
           set -euo pipefail
-          python spaces/szl-model-inference-lab/verify_governed_live.py \
+          python tools/run_governed_live_verifier.py \
+            --script spaces/szl-model-inference-lab/verify_governed_live.py \
             --base-url https://szlholdings-szl-model-inference-lab.hf.space \
             --expected-source-revision "${GITHUB_SHA}" \
             --report reports/governed-space-live-verification.json
