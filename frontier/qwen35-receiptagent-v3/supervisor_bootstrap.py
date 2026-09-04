@@ -37,7 +37,7 @@ CANONICAL_ORIGINS = frozenset(
 )
 SOURCE_COMMIT_PATTERN = re.compile(r"[0-9a-f]{40}")
 RUN_ID_PATTERN = re.compile(r"[0-9a-f]{32}")
-EVIDENCE_NAME_PATTERN = re.compile(r"[a-z0-9][a-z0-9.-]{0,127}")
+EVIDENCE_NAME_PATTERN = re.compile(r"[a-z0-9][a-z0-9._-]{0,127}")
 REQUIRED_COMPONENTS = (
     "launch_supervised_training.py",
     "supervisor_bootstrap.py",
