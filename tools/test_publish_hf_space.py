@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import subprocess
 import unittest
+
+import httpx
+from huggingface_hub.utils import RepositoryNotFoundError
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
@@ -60,6 +63,92 @@ class SpacePublicationPlanTests(unittest.TestCase):
                     REVISION,
                     static=True,
                 )
+
+    @staticmethod
+    def _missing_space() -> RepositoryNotFoundError:
+        request = httpx.Request(
+            "GET", "https://huggingface.co/api/spaces/owner/space"
+        )
+        return RepositoryNotFoundError(
+            "missing Space",
+            response=httpx.Response(404, request=request),
+        )
+
+    def test_existing_space_is_write_confirmed_without_recreation(self) -> None:
+        api = Mock()
+        api.space_info.return_value = SimpleNamespace(
+            id="owner/space",
+            runtime=SimpleNamespace(volumes=[]),
+        )
+
+        result = publisher.ensure_space_repository(api, "owner/space")
+
+        self.assertEqual(
+            "EXISTING_AND_WRITE_CONFIRMED", result["state"]
+        )
+        self.assertFalse(result["created"])
+        self.assertEqual("docker", result["sdk"])
+        api.create_repo.assert_not_called()
+        api.auth_check.assert_called_once_with(
+            repo_id="owner/space",
+            repo_type="space",
+            write=True,
+        )
+
+    def test_missing_docker_space_is_created_and_read_back(self) -> None:
+        api = Mock()
+        api.space_info.side_effect = [
+            self._missing_space(),
+            SimpleNamespace(
+                id="owner/space",
+                runtime=SimpleNamespace(volumes=[]),
+            ),
+        ]
+
+        result = publisher.ensure_space_repository(api, "owner/space")
+
+        self.assertEqual(
+            "CREATED_AND_WRITE_CONFIRMED", result["state"]
+        )
+        self.assertTrue(result["created"])
+        self.assertEqual("public", result["visibility_on_create"])
+        api.create_repo.assert_called_once_with(
+            repo_id="owner/space",
+            repo_type="space",
+            space_sdk="docker",
+            private=False,
+            exist_ok=True,
+        )
+        api.auth_check.assert_called_once_with(
+            repo_id="owner/space",
+            repo_type="space",
+            write=True,
+        )
+
+    def test_missing_static_space_uses_static_sdk(self) -> None:
+        api = Mock()
+        api.space_info.side_effect = [
+            self._missing_space(),
+            SimpleNamespace(
+                id="owner/space",
+                runtime=SimpleNamespace(volumes=[]),
+            ),
+        ]
+
+        result = publisher.ensure_space_repository(
+            api,
+            "owner/space",
+            static=True,
+        )
+
+        self.assertEqual("static", result["sdk"])
+        api.create_repo.assert_called_once_with(
+            repo_id="owner/space",
+            repo_type="space",
+            space_sdk="static",
+            private=False,
+            exist_ok=True,
+        )
 
     def test_legacy_volume_removal_is_observed(self) -> None:
         api = Mock()
