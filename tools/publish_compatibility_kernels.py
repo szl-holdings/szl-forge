@@ -50,6 +50,11 @@ def load_manifest(path: Path) -> dict[str, Any]:
         files = item.get("expected_files")
         if not isinstance(files, dict) or not files:
             raise QualificationError("expected_files must be a non-empty object")
+        unsafe = [name for name in files if Path(name).suffix.lower() in {".joblib", ".pkl", ".pickle"}]
+        if unsafe:
+            raise QualificationError(
+                "expected_files cannot include unsafe serialization: " + ", ".join(sorted(unsafe))
+            )
     return value
 
 
