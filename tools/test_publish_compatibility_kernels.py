@@ -72,6 +72,24 @@ class CompatibilityKernelTests(unittest.TestCase):
             loaded = publisher.load_manifest(manifest)
             self.assertEqual(loaded["artifacts"][0]["artifact_class"], "RETAINED_COMPATIBILITY_KERNEL")
 
+    def test_joblib_cannot_be_an_expected_publication_file(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            path, _ = self.manifest(Path(temporary))
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            payload["artifacts"][0]["expected_files"]["model.joblib"] = "0" * 64
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            with self.assertRaisesRegex(publisher.QualificationError, "unsafe serialization"):
+                publisher.load_manifest(path)
+
+    def test_live_manifest_does_not_expect_joblib(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        live = publisher.load_manifest(root / "publishing" / "compatibility-kernels.json")
+        files = live["artifacts"][0]["expected_files"]
+        self.assertNotIn("model.joblib", files)
+        quarantined = live["artifacts"][0].get("quarantined_hub_files", {})
+        self.assertIn("model.joblib", quarantined)
+        self.assertEqual(quarantined["model.joblib"]["load_path"], "FORBIDDEN")
+
     def test_cli_writes_a_refusal_report(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             report = Path(temporary) / "refusal.json"

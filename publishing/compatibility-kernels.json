@@ -25,8 +25,15 @@
         "build/torch-universal/szl_governed_norm/_norm.py": "cf72ace281ec86c504426f75e23eebdb661a1e3a12e4dfcc6c8b9fa634b03942",
         "build/torch-universal/szl_governed_norm/layers.py": "d79c83355cb2332b9d0e9d98584b86434e486532e27d30652df10158b30fc37b",
         "MODEL_PROVENANCE.json": "0f2b0c44180a3a5d38ed67e3e858d5acf2569baa8a8c00f86fc92546638f577b",
-        "TRAINING_RECEIPT.json": "a6f94949ce500057418db25f0208dd406324f923a9a18a354af77ac2d757a485",
-        "model.joblib": "1bd8756f120d338dfe9d962fa5c1e8c54b31dec37c9a71f3286c33b8906062f5"
+        "TRAINING_RECEIPT.json": "a6f94949ce500057418db25f0208dd406324f923a9a18a354af77ac2d757a485"
+      },
+      "quarantined_hub_files": {
+        "model.joblib": {
+          "sha256": "1bd8756f120d338dfe9d962fa5c1e8c54b31dec37c9a71f3286c33b8906062f5",
+          "publication_block": "UNSAFE_SERIALIZATION",
+          "load_path": "FORBIDDEN",
+          "note": "Historical companion. Not an approved load path. Qualification must not download or execute it."
+        }
       },
       "runtime": {
         "module_path": "build/torch-universal",
