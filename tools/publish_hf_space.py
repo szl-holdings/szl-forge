@@ -107,6 +107,60 @@ def live_origin(repo_id: str, *, static: bool = False) -> str:
     return f"https://{host}{suffix}"
 
 
+def ensure_space_repository(
+    api: Any,
+    repo_id: str,
+    *,
+    static: bool = False,
+) -> dict[str, Any]:
+    """Create a missing Space or prove write access to the existing one.
+
+    Credential validation happens before this function. A missing target is
+    created once with the declared SDK; ``exist_ok`` makes concurrent recovery
+    race-safe. The post-create readback and write check remain mandatory.
+    """
+
+    from huggingface_hub.utils import RepositoryNotFoundError
+
+    sdk = "static" if static else "docker"
+    created = False
+    try:
+        info = api.space_info(repo_id, files_metadata=False)
+    except RepositoryNotFoundError:
+        api.create_repo(
+            repo_id=repo_id,
+            repo_type="space",
+            space_sdk=sdk,
+            private=False,
+            exist_ok=True,
+        )
+        created = True
+        info = api.space_info(repo_id, files_metadata=False)
+
+    observed_id = str(
+        getattr(info, "id", None)
+        or getattr(info, "repo_id", None)
+        or repo_id
+    )
+    if observed_id.casefold() != repo_id.casefold():
+        raise PublishError(
+            f"Space identity mismatch: {observed_id!r} != {repo_id!r}"
+        )
+    api.auth_check(repo_id=repo_id, repo_type="space", write=True)
+    return {
+        "state": (
+            "CREATED_AND_WRITE_CONFIRMED"
+            if created
+            else "EXISTING_AND_WRITE_CONFIRMED"
+        ),
+        "repo_id": repo_id,
+        "sdk": sdk,
+        "created": created,
+        "visibility_on_create": "public" if created else None,
+        "write_access": "CONFIRMED",
+    }
+
+
 def clear_legacy_space_volumes(
     api: Any,
     repo_id: str,
@@ -240,6 +294,11 @@ def publish_and_verify(
 
     api = HfApi(token=token)
     repo_id = plan["repo_id"]
+    plan["repository_reconciliation"] = ensure_space_repository(
+        api,
+        repo_id,
+        static=static,
+    )
     if clear_space_volumes:
         plan["volume_reconciliation"] = {
             "pre_publish": clear_legacy_space_volumes(api, repo_id)
