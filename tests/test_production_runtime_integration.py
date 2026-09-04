@@ -122,8 +122,14 @@ def test_real_second_brain_and_nemo_produce_a_governed_proposal():
     ]
     serialized = json.dumps(result, sort_keys=True)
     assert _request()["prompt"] not in serialized
-    assert "hydrated_content" not in serialized
     assert "chain_of_thought" not in serialized
+    assert result["anatomy_observation"]["event"]["hydrated_content_present"] is False
+    assert result["continuation"]["hydrated_content_present"] is False
+    assert all("content" not in handle for handle in result["evidence_handles"])
+    assert all(
+        "content" not in item
+        for item in result["continuation"]["evidence"]["items"]
+    )
 
 
 def test_real_nemo_routes_unapproved_tool_intent_to_review():
