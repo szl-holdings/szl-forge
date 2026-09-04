@@ -243,7 +243,7 @@
         "model_revision": "67d60ec577730747055491640cfb91fc4a4b5d25",
         "model_file": "SZL-Khipu-1.5B-Q4_K_M.gguf",
         "model_sha256": "13c1a1993063e1dff92f7413ccf48eaca6d48efc8801ae9af35961ae3396623a",
-        "release_id": "c893e93c-9bd8-47e9-941e-f8613a608992",
+        "release_id": "6165392a-f3b7-4128-8f77-e37074c2e60d",
         "prompt": "Given no evidence, state that you must abstain.",
         "max_new_tokens": 24,
         "repeat_count": 2,

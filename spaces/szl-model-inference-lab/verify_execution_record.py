@@ -34,7 +34,7 @@ EXPECTED_MODEL = {
     "sha256": "13c1a1993063e1dff92f7413ccf48eaca6d48efc8801ae9af35961ae3396623a",
 }
 EXPECTED_SPACE_ID = "SZLHOLDINGS/szl-model-inference-lab"
-EXPECTED_RELEASE_ID = "c893e93c-9bd8-47e9-941e-f8613a608992"
+EXPECTED_RELEASE_ID = "6165392a-f3b7-4128-8f77-e37074c2e60d"
 EXPECTED_RECORD_HASH_SCOPE = (
     "canonical UTF-8 JSON with sorted keys and compact separators, "
     "excluding record_sha256"
