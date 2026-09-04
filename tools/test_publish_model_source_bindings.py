@@ -542,6 +542,56 @@ class PublishModelSourceBindingsTests(unittest.TestCase):
         )
         self.assertEqual(requested, ["https://example.invalid/health"])
 
+    def test_missing_runtime_route_is_explicitly_not_qualified_in_dry_run(
+        self,
+    ) -> None:
+        artifact = {
+            "repo_id": "SZLHOLDINGS/example",
+            "runtime_probe": {"base_url": "https://example.invalid"},
+        }
+        requested: list[str] = []
+
+        def missing(url: str, payload=None):
+            del payload
+            requested.append(url)
+            raise bindings.RuntimeUnavailableBindingError(
+                "runtime probe returned 404"
+            )
+
+        evidence = bindings.runtime_evidence(artifact, missing)
+
+        self.assertEqual(
+            evidence,
+            {
+                "status": "NOT_QUALIFIED_NO_RUNTIME_PROBE",
+                "failure_reason": "runtime probe returned 404",
+                "failure_code": "RUNTIME_SERVICE_UNAVAILABLE",
+            },
+        )
+        self.assertEqual(requested, ["https://example.invalid/health"])
+
+    def test_required_runtime_rejects_missing_route(self) -> None:
+        artifact = {
+            "repo_id": "SZLHOLDINGS/example",
+            "runtime_probe": {"base_url": "https://example.invalid"},
+        }
+
+        def missing(_url: str, payload=None):
+            del payload
+            raise bindings.RuntimeUnavailableBindingError(
+                "runtime probe returned 404"
+            )
+
+        with self.assertRaisesRegex(
+            bindings.BindingError,
+            "exact runtime evidence is required but unavailable",
+        ):
+            bindings.runtime_evidence(
+                artifact,
+                missing,
+                require_available=True,
+            )
+
     def test_expected_source_rejects_transient_runtime_probe(self) -> None:
         artifact = {
             "repo_id": "SZLHOLDINGS/example",
