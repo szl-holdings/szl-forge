@@ -4,6 +4,9 @@ import unittest
 
 from tools import acquire_hf_publisher_token as auth
 
+# This contract is intentionally in the inference-lab publisher's protected path
+# set. A source-only change here forces one complete credential-validation,
+# publication, live-readiness, and model-binding relock from current main.
 PRIMARY = "hf_primary_expired"
 ALTERNATE = "hf_alternate_valid"
 WRITE = "hf_write_should_not_be_reached"
