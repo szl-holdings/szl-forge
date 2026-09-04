@@ -1,0 +1,919 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <title>Owned Agent Clinical Control</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --canvas: #eef4f3;
+        --ink: #102a2e;
+        --muted: #536a6e;
+        --panel: #fff;
+        --line: #cddcda;
+        --brand: #006b67;
+        --brand-strong: #004d4a;
+        --blue: #164f8a;
+        --warn: #8a4b00;
+        --danger: #9b2833;
+        --good: #1c6b42;
+        --shadow: 0 18px 55px rgba(17, 48, 51, 0.1);
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background:
+          radial-gradient(circle at 92% 5%, rgba(24, 123, 118, 0.15), transparent 33rem),
+          linear-gradient(180deg, #f9fbfb 0, var(--canvas) 100%);
+        color: var(--ink);
+      }
+
+      button, input, select, textarea { font: inherit; }
+      a { color: var(--blue); }
+      code {
+        padding: 0.12em 0.35em;
+        border-radius: 5px;
+        background: rgba(0, 107, 103, 0.08);
+      }
+
+      .topline {
+        padding: 9px 20px;
+        background: #102a2e;
+        color: #e6fffb;
+        font-size: 0.74rem;
+        font-weight: 800;
+        letter-spacing: 0.13em;
+        text-align: center;
+        text-transform: uppercase;
+      }
+
+      .shell {
+        width: min(1180px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 34px 0 54px;
+      }
+
+      header {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 24px;
+        align-items: end;
+        margin-bottom: 22px;
+      }
+
+      h1 {
+        max-width: 780px;
+        margin: 6px 0 10px;
+        font-size: clamp(2rem, 5vw, 4.25rem);
+        line-height: 0.98;
+        letter-spacing: -0.055em;
+      }
+
+      h2, h3, p { margin-top: 0; }
+      h2 { margin-bottom: 6px; font-size: 1.25rem; letter-spacing: -0.02em; }
+      h3 { margin-bottom: 8px; font-size: 0.95rem; }
+
+      .eyebrow {
+        color: var(--brand);
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.11em;
+        text-transform: uppercase;
+      }
+
+      .lede {
+        max-width: 790px;
+        margin-bottom: 0;
+        color: var(--muted);
+        font-size: 1rem;
+        line-height: 1.6;
+      }
+
+      .truth-badge {
+        min-width: 235px;
+        padding: 14px 16px;
+        border: 1px solid #e4b98b;
+        border-radius: 14px;
+        background: #fff7ed;
+        color: var(--warn);
+        font-size: 0.78rem;
+        font-weight: 800;
+        line-height: 1.45;
+        text-transform: uppercase;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .card {
+        grid-column: span 12;
+        padding: 20px;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.94);
+        box-shadow: var(--shadow);
+      }
+
+      .card.connection, .card.source { grid-column: span 6; }
+
+      .card-head {
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 18px;
+      }
+
+      .card-head p, .note, .field-note {
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      .card-head p { max-width: 730px; margin-bottom: 0; font-size: 0.88rem; }
+
+      .status-pill {
+        flex: 0 0 auto;
+        padding: 7px 10px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: #f4f7f7;
+        color: var(--muted);
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .status-pill.good { border-color: #a5d3bb; background: #edf9f2; color: var(--good); }
+      .status-pill.warn { border-color: #e4b98b; background: #fff7ed; color: var(--warn); }
+      .status-pill.bad { border-color: #e8aab1; background: #fff1f3; color: var(--danger); }
+
+      .fields {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .field.full { grid-column: 1 / -1; }
+
+      label {
+        display: block;
+        margin-bottom: 6px;
+        color: #294448;
+        font-size: 0.78rem;
+        font-weight: 800;
+      }
+
+      input, select, textarea {
+        width: 100%;
+        min-height: 42px;
+        padding: 10px 11px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        outline: none;
+        background: #fbfdfd;
+        color: var(--ink);
+      }
+
+      textarea { min-height: 76px; resize: vertical; }
+      input:focus, select:focus, textarea:focus {
+        border-color: var(--brand);
+        box-shadow: 0 0 0 3px rgba(0, 107, 103, 0.13);
+      }
+      input[readonly] { background: #f0f4f3; color: var(--muted); }
+      .field-note, .note { margin: 6px 0 0; font-size: 0.76rem; }
+
+      .check {
+        display: flex;
+        min-height: 42px;
+        gap: 9px;
+        align-items: center;
+        padding: 10px 11px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #fbfdfd;
+      }
+      .check input { width: auto; min-height: 0; margin: 0; }
+      .check label { margin: 0; font-weight: 700; }
+
+      .actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 16px; }
+      button {
+        min-height: 42px;
+        padding: 10px 14px;
+        border: 1px solid var(--brand);
+        border-radius: 10px;
+        background: var(--brand);
+        color: white;
+        font-weight: 800;
+        cursor: pointer;
+      }
+      button:hover { background: var(--brand-strong); }
+      button.secondary { background: white; color: var(--brand-strong); }
+      button.danger { border-color: #c47c83; background: white; color: var(--danger); }
+      button:disabled { cursor: wait; opacity: 0.58; }
+
+      .boundary {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1px;
+        overflow: hidden;
+        margin: 18px 0;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--line);
+      }
+      .boundary div { min-height: 96px; padding: 13px; background: #f8fbfa; }
+      .boundary strong, .boundary span { display: block; }
+      .boundary strong { margin-bottom: 5px; font-size: 0.76rem; text-transform: uppercase; }
+      .boundary span { color: var(--muted); font-size: 0.75rem; line-height: 1.45; }
+
+      .transport-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 2fr) minmax(260px, 0.9fr);
+        gap: 16px;
+      }
+
+      .protocol {
+        padding: 16px;
+        border: 1px solid #bfd3e7;
+        border-radius: 14px;
+        background: #f2f7fc;
+      }
+      .protocol dl {
+        display: grid;
+        grid-template-columns: 92px 1fr;
+        gap: 9px;
+        margin: 0;
+        font-size: 0.78rem;
+      }
+      .protocol dt { color: var(--blue); font-weight: 800; }
+      .protocol dd { margin: 0; color: #34536f; line-height: 1.4; }
+
+      .outputs {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+      }
+      .output {
+        min-height: 170px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: #102a2e;
+        color: #d8f5f1;
+      }
+      .output h3 { color: #92d9d2; }
+      pre {
+        max-height: 330px;
+        margin: 0;
+        overflow: auto;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font: 0.72rem/1.55 ui-monospace, SFMono-Regular, Consolas, monospace;
+      }
+
+      .privacy {
+        margin: 18px 0 0;
+        padding: 13px 15px;
+        border-left: 4px solid var(--danger);
+        border-radius: 8px;
+        background: #fff5f5;
+        color: #6f2d34;
+        font-size: 0.8rem;
+        line-height: 1.55;
+      }
+      footer { margin-top: 18px; color: var(--muted); font-size: 0.75rem; line-height: 1.55; }
+
+      @media (max-width: 850px) {
+        header, .transport-layout { grid-template-columns: 1fr; }
+        .truth-badge { min-width: 0; }
+        .card.connection, .card.source { grid-column: span 12; }
+        .boundary, .outputs { grid-template-columns: 1fr; }
+      }
+      @media (max-width: 560px) {
+        .shell { width: min(100% - 20px, 1180px); padding-top: 22px; }
+        .fields { grid-template-columns: 1fr; }
+        .field.full { grid-column: auto; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topline">Control plane only · no PHI entry · not for clinical use</div>
+    <main class="shell">
+      <header>
+        <div>
+          <div class="eyebrow">Owned Agent Control · Clinical shadow</div>
+          <h1>Device result ingress, with the truth boundary visible.</h1>
+          <p class="lede">
+            Configure synthetic MOCK processing or deidentified LIVE_SHADOW
+            transport. This shell never accepts or displays raw HL7, patient,
+            specimen, order, observation, or result data.
+          </p>
+        </div>
+        <div class="truth-badge">
+          Not site validated<br />
+          Not clinical delivery<br />
+          Device commands disabled
+        </div>
+      </header>
+
+      <section class="grid" aria-label="Clinical control configuration">
+        <article class="card connection">
+          <div class="card-head">
+            <div>
+              <h2>Local API</h2>
+              <p>Loopback control connection. The token is held only in this page session.</p>
+            </div>
+            <span class="status-pill" id="healthPill">Not checked</span>
+          </div>
+          <div class="fields">
+            <div class="field full">
+              <label for="backend">Backend URL</label>
+              <input id="backend" type="url" value="http://127.0.0.1:8010" spellcheck="false" />
+            </div>
+            <div class="field full">
+              <label for="apiToken">API bearer token</label>
+              <input id="apiToken" type="password" minlength="32" autocomplete="off"
+                placeholder="OAC_API_KEY value" spellcheck="false" />
+              <p class="field-note">At least 32 characters; never written to localStorage, cookies, logs, or status output.</p>
+            </div>
+            <div class="field full">
+              <label for="stateDir">Backend state directory</label>
+              <input id="stateDir" value="state" readonly />
+            </div>
+          </div>
+          <div class="actions">
+            <button id="checkHealth" class="secondary" type="button">Check health</button>
+            <button id="loadCapabilities" class="secondary" type="button">Load capabilities</button>
+          </div>
+        </article>
+
+        <article class="card source">
+          <div class="card-head">
+            <div>
+              <h2>Source profile</h2>
+              <p id="modeDescription">Synthetic, offline fixture processing only.</p>
+            </div>
+            <span class="status-pill warn" id="modePill">MOCK</span>
+          </div>
+          <div class="fields">
+            <div class="field full">
+              <label for="mode">Operating mode</label>
+              <select id="mode">
+                <option value="MOCK">MOCK · synthetic only</option>
+                <option value="LIVE_SHADOW">LIVE_SHADOW · deidentified only</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="sourceId">Source ID</label>
+              <input id="sourceId" spellcheck="false" />
+            </div>
+            <div class="field">
+              <label for="assayMap">Assay map path</label>
+              <input id="assayMap" spellcheck="false" />
+            </div>
+            <div class="field full">
+              <label for="profileId">Pinned profile ID</label>
+              <input id="profileId" readonly spellcheck="false" />
+            </div>
+            <div class="field">
+              <label for="senderApplication">Expected MSH-3</label>
+              <input id="senderApplication" spellcheck="false" />
+            </div>
+            <div class="field">
+              <label for="senderFacility">Expected MSH-4</label>
+              <input id="senderFacility" spellcheck="false" />
+            </div>
+          </div>
+          <div class="actions">
+            <button id="initialize" class="secondary" type="button">Initialize state</button>
+            <button id="registerSource" type="button">Register source</button>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <div>
+              <h2>Operational transport-health advisory</h2>
+              <p>
+                Score eight bounded infrastructure signals with the verified
+                synthetic model. This advisory has no ACK, device-control,
+                result, review, release, or clinical authority.
+              </p>
+            </div>
+            <span class="status-pill warn" id="modelPill">Not checked</span>
+          </div>
+          <div class="fields">
+            <div class="field"><div class="check"><input id="modelListenerRunning" type="checkbox" checked /><label for="modelListenerRunning">Listener running</label></div></div>
+            <div class="field"><div class="check"><input id="modelTlsEnabled" type="checkbox" checked /><label for="modelTlsEnabled">TLS enabled</label></div></div>
+            <div class="field"><div class="check"><input id="modelPeerAllowlist" type="checkbox" checked /><label for="modelPeerAllowlist">Peer allowlist configured</label></div></div>
+            <div class="field"><div class="check"><input id="modelLedgerIntegrity" type="checkbox" checked /><label for="modelLedgerIntegrity">Local ledger integrity check passed</label></div></div>
+            <div class="field"><div class="check"><input id="modelConfigurationValid" type="checkbox" checked /><label for="modelConfigurationValid">Configuration validation passed</label></div></div>
+            <div class="field">
+              <label for="modelQueueUtilization">Queue utilization (0-1)</label>
+              <input id="modelQueueUtilization" type="number" min="0" max="1" step="0.01" value="0.05" />
+            </div>
+            <div class="field">
+              <label for="modelConsecutiveFailures">Consecutive operational failures (0-20)</label>
+              <input id="modelConsecutiveFailures" type="number" min="0" max="20" step="1" value="0" />
+            </div>
+            <div class="field">
+              <label for="modelSecondsSinceSuccess">Seconds since last operational success (0-86400)</label>
+              <input id="modelSecondsSinceSuccess" type="number" min="0" max="86400" step="1" value="10" />
+            </div>
+          </div>
+          <div class="actions">
+            <button id="checkModel" class="secondary" type="button">Check model</button>
+            <button id="scoreModel" type="button">Evaluate advisory</button>
+          </div>
+          <div class="output" style="margin-top: 16px; min-height: 130px;"><h3>Advisory</h3><pre id="modelOutput">Not evaluated.</pre></div>
+          <p class="privacy">
+            Enter operational counters only. The endpoint rejects extra,
+            identity-like, HL7, FHIR, patient, order, specimen, and result fields.
+            Synthetic metrics are implementation evidence, not production calibration.
+          </p>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <div>
+              <h2>Roche cobas Liat TLS listener preset</h2>
+              <p>
+                Configured from Roche Host Interface Manual v11.3 for software
+                3.4/3.5. Exact device, software, region, certificate, network,
+                and retry behavior still require site validation.
+              </p>
+            </div>
+            <span class="status-pill warn" id="transportPill">Stopped · unvalidated</span>
+          </div>
+
+          <div class="boundary" aria-label="Transport truth boundary">
+            <div>
+              <strong>Direction</strong>
+              <span>Liat TCP client to this host listener. Result ingress only.</span>
+            </div>
+            <div>
+              <strong>Message</strong>
+              <span><code>ORU^R30^ORU_R30</code>; MSH-12 literal <code>2.5</code>.</span>
+            </div>
+            <div>
+              <strong>Reply</strong>
+              <span><code>ACK^R33^ACK</code>; AA only after accepted processing.</span>
+            </div>
+            <div>
+              <strong>Security</strong>
+              <span>TLS server certificate plus peer allowlist; analyzer client cert not assumed.</span>
+            </div>
+          </div>
+
+          <div class="transport-layout">
+            <div class="fields">
+              <div class="field">
+                <label for="transportId">Transport ID</label>
+                <input id="transportId" value="roche-liat-live-shadow" spellcheck="false" />
+              </div>
+              <div class="field">
+                <label for="transportKind">Adapter profile</label>
+                <input id="transportKind" value="roche-cobas-liat-v2.0" readonly />
+              </div>
+              <div class="field">
+                <label for="bindHost">Bind host</label>
+                <input id="bindHost" value="127.0.0.1" spellcheck="false" />
+              </div>
+              <div class="field">
+                <label for="bindPort">Bind port</label>
+                <input id="bindPort" type="number" min="1" max="65535" value="2100" />
+              </div>
+              <div class="field full">
+                <label for="allowedPeers">Allowed analyzer peer IPs</label>
+                <textarea id="allowedPeers" spellcheck="false">127.0.0.1</textarea>
+                <p class="field-note">Literal IPv4/IPv6 addresses only, separated by lines or commas.</p>
+              </div>
+              <div class="field full">
+                <label for="bindingDir">Deidentified binding registry directory</label>
+                <input id="bindingDir" value="clinical-gateway/fixtures/live-shadow-bindings" spellcheck="false" />
+                <p class="field-note">Existing server-side directory. Hashed binding files never enter this page.</p>
+              </div>
+              <div class="field">
+                <label for="tlsCert">TLS server certificate path</label>
+                <input id="tlsCert" value="clinical-gateway/site-config/tls/server.crt" spellcheck="false" />
+              </div>
+              <div class="field">
+                <label for="tlsKey">TLS server private-key path</label>
+                <input id="tlsKey" value="clinical-gateway/site-config/tls/server.key" spellcheck="false" />
+              </div>
+              <div class="field full">
+                <label for="tlsCa">Optional client-certificate CA path</label>
+                <input id="tlsCa" placeholder="Leave empty unless the site validates mTLS" spellcheck="false" />
+              </div>
+              <div class="field">
+                <div class="check">
+                  <input id="allowNonLoopback" type="checkbox" />
+                  <label for="allowNonLoopback">Allow non-loopback bind</label>
+                </div>
+              </div>
+              <div class="field">
+                <div class="check">
+                  <input id="requireClientCert" type="checkbox" />
+                  <label for="requireClientCert">Require client certificate</label>
+                </div>
+              </div>
+            </div>
+
+            <aside class="protocol">
+              <h3>Preset invariants</h3>
+              <dl>
+                <dt>Mode</dt><dd>Always LIVE_SHADOW at the transport boundary.</dd>
+                <dt>Framing</dt><dd>MLLP VT + message + FS + CR.</dd>
+                <dt>Connection</dt><dd>One result message per connection.</dd>
+                <dt>TLS</dt><dd>Enabled, server minimum TLS 1.2.</dd>
+                <dt>Peers</dt><dd>Explicit IP allowlist required.</dd>
+                <dt>Bindings</dt><dd>Hashed registry lookup; not identity proof.</dd>
+                <dt>Commands</dt><dd>Disabled. No host order or device-control workflow.</dd>
+              </dl>
+            </aside>
+          </div>
+
+          <div class="actions">
+            <button id="startTransport" type="button">Start listener</button>
+            <button id="transportStatus" class="secondary" type="button">Refresh status</button>
+            <button id="listTransports" class="secondary" type="button">List transports</button>
+            <button id="stopTransport" class="danger" type="button">Stop listener</button>
+          </div>
+
+          <p class="privacy">
+            Do not paste PHI, raw messages, patient/sample/order identifiers, or
+            clinical results into this shell. LIVE_SHADOW requires deidentification
+            before ingress. A running listener proves only local transport-process
+            state; it does not prove analyzer connectivity, identity resolution,
+            clinical validation, or authorized result delivery.
+          </p>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <div>
+              <h2>Operational evidence</h2>
+              <p>Only bounded control metadata is rendered; clinical-content keys are withheld.</p>
+            </div>
+          </div>
+          <div class="outputs">
+            <div class="output"><h3>Health</h3><pre id="healthOutput">Not checked.</pre></div>
+            <div class="output"><h3>Capabilities / source</h3><pre id="capabilitiesOutput">Not loaded.</pre></div>
+            <div class="output"><h3>Transport</h3><pre id="transportOutput">Not started.</pre></div>
+          </div>
+        </article>
+      </section>
+
+      <footer>
+        Protocol source:
+        <a href="https://diagnostics.roche.com/content/dam/diagnostics/us/en/products/c/cobas-liat-support/host-interface-manual-hl7-sw-v3.4-v3.5-v11.3.pdf"
+          rel="noreferrer noopener" target="_blank">Roche cobas Liat Host Interface Manual HL7 v11.3</a>.
+        Product names identify interoperability targets; they do not imply endorsement.
+      </footer>
+    </main>
+
+    <script>
+      "use strict";
+
+      const profiles = Object.freeze({
+        MOCK: Object.freeze({
+          sourceId: "synthetic-liat",
+          profileId: "illustrative-mock-roche-cobas-liat-hl7-sw-3.4-3.5-him-11.3",
+          senderApplication: "LIAT-SIM",
+          senderFacility: "LAB-SIM",
+          assayMap: "clinical-gateway/fixtures/assay_map.json",
+          description: "Synthetic, offline fixture processing only."
+        }),
+        LIVE_SHADOW: Object.freeze({
+          sourceId: "liat-live-shadow",
+          profileId: "unvalidated-live-shadow-roche-cobas-liat-hl7-sw-3.4-3.5-him-11.3",
+          senderApplication: "LIAT-DEID",
+          senderFacility: "SITE-DEID",
+          assayMap: "clinical-gateway/fixtures/assay_map.live-shadow.example.json",
+          description: "Deidentified transport observation only; no clinical delivery or site validation."
+        })
+      });
+
+      const ids = [
+        "backend", "apiToken", "stateDir", "mode", "sourceId", "profileId",
+        "senderApplication", "senderFacility", "assayMap", "transportId",
+        "transportKind", "bindHost", "bindPort", "allowedPeers", "bindingDir",
+        "tlsCert", "tlsKey", "tlsCa", "allowNonLoopback", "requireClientCert",
+        "healthOutput", "capabilitiesOutput", "transportOutput", "healthPill",
+        "modePill", "transportPill", "modeDescription", "modelPill", "modelOutput",
+        "modelListenerRunning", "modelTlsEnabled", "modelPeerAllowlist",
+        "modelLedgerIntegrity", "modelConfigurationValid", "modelQueueUtilization",
+        "modelConsecutiveFailures", "modelSecondsSinceSuccess"
+      ];
+      const ui = Object.fromEntries(ids.map(function (id) {
+        return [id, document.getElementById(id)];
+      }));
+
+      const withheldKey = /^(?:authorization|api_?key|token|raw|raw_b64|raw_message|hl7|patient|patient_name|patient_reference|person|subject|subject_id|source_subject_token|mrn|dob|birth_date|address|phone|email|pid|obr|obx|note|comment|result_id|result_value|specimen_id|specimen_reference|order_id|order_reference|source_order_token|recipient_id|message_control_id|message_control_token)$/i;
+
+      function boundedControlView(value, key) {
+        if (withheldKey.test(key || "")) return "[WITHHELD_FROM_BROWSER]";
+        if (Array.isArray(value)) {
+          return value.slice(0, 100).map(function (item) { return boundedControlView(item, ""); });
+        }
+        if (value && typeof value === "object") {
+          return Object.fromEntries(Object.entries(value).map(function (entry) {
+            return [entry[0], boundedControlView(entry[1], entry[0])];
+          }));
+        }
+        if (typeof value === "string" && value.length > 1000) {
+          return value.slice(0, 1000) + "…[TRUNCATED]";
+        }
+        return value;
+      }
+
+      function render(target, payload) {
+        target.textContent = JSON.stringify(boundedControlView(payload, ""), null, 2);
+      }
+
+      function setPill(target, text, state) {
+        target.textContent = text;
+        target.className = "status-pill " + (state || "warn");
+      }
+
+      function backendBase() {
+        const url = new URL(ui.backend.value.trim());
+        if (url.protocol !== "http:" && url.protocol !== "https:") {
+          throw new Error("Backend URL must use HTTP or HTTPS.");
+        }
+        if (!["127.0.0.1", "localhost", "::1", "[::1]"].includes(url.hostname)) {
+          throw new Error("This shell permits loopback backend URLs only.");
+        }
+        return url.href.replace(/\/$/, "");
+      }
+
+      function requestHeaders() {
+        const headers = { "Content-Type": "application/json" };
+        if (ui.apiToken.value) headers.Authorization = "Bearer " + ui.apiToken.value;
+        return headers;
+      }
+
+      async function callApi(path, method, body) {
+        const httpMethod = method || "GET";
+        const response = await fetch(backendBase() + path, {
+          method: httpMethod,
+          headers: requestHeaders(),
+          cache: "no-store",
+          credentials: "omit",
+          referrerPolicy: "no-referrer",
+          body: httpMethod === "GET" ? undefined : JSON.stringify(body || {})
+        });
+        const text = await response.text();
+        let payload;
+        try {
+          payload = JSON.parse(text);
+        } catch {
+          payload = { ok: false, code: "NON_JSON_RESPONSE_WITHHELD", http_status: response.status };
+        }
+        if (!response.ok) {
+          const code = payload && typeof payload === "object" ? payload.code || payload.error : null;
+          const error = new Error(String(code || ("HTTP " + response.status)));
+          error.payload = payload;
+          throw error;
+        }
+        return payload;
+      }
+
+      async function runButton(button, output, operation) {
+        const original = button.textContent;
+        button.disabled = true;
+        button.textContent = "Working…";
+        try {
+          const payload = await operation();
+          render(output, payload);
+          return payload;
+        } catch (error) {
+          const payload = error && error.payload
+            ? error.payload
+            : { ok: false, code: "CONTROL_REQUEST_FAILED", error: String(error.message || error) };
+          render(output, payload);
+          throw error;
+        } finally {
+          button.disabled = false;
+          button.textContent = original;
+        }
+      }
+
+      function applyMode() {
+        const profile = profiles[ui.mode.value];
+        ui.sourceId.value = profile.sourceId;
+        ui.profileId.value = profile.profileId;
+        ui.senderApplication.value = profile.senderApplication;
+        ui.senderFacility.value = profile.senderFacility;
+        ui.assayMap.value = profile.assayMap;
+        ui.modeDescription.textContent = profile.description;
+        setPill(ui.modePill, ui.mode.value, "warn");
+      }
+
+      function stateQuery() {
+        return encodeURIComponent(ui.stateDir.value || "state");
+      }
+
+      function peerList() {
+        const peers = ui.allowedPeers.value.split(/[\s,]+/).map(function (value) {
+          return value.trim();
+        }).filter(Boolean);
+        if (!peers.length) throw new Error("At least one allowed analyzer peer IP is required.");
+        return Array.from(new Set(peers));
+      }
+
+      function boundedNumber(input, minimum, maximum, label) {
+        const value = Number(input.value);
+        if (!Number.isFinite(value) || value < minimum || value > maximum) {
+          throw new Error(label + " must be between " + minimum + " and " + maximum + ".");
+        }
+        return value;
+      }
+
+      function operationalFeatures() {
+        return {
+          listener_running: ui.modelListenerRunning.checked,
+          tls_enabled: ui.modelTlsEnabled.checked,
+          peer_allowlist_configured: ui.modelPeerAllowlist.checked,
+          queue_utilization: boundedNumber(ui.modelQueueUtilization, 0, 1, "Queue utilization"),
+          consecutive_failures: boundedNumber(ui.modelConsecutiveFailures, 0, 20, "Consecutive failures"),
+          seconds_since_last_success: boundedNumber(ui.modelSecondsSinceSuccess, 0, 86400, "Seconds since last success"),
+          ledger_integrity_ok: ui.modelLedgerIntegrity.checked,
+          configuration_valid: ui.modelConfigurationValid.checked
+        };
+      }
+
+      document.getElementById("checkHealth").addEventListener("click", async function (event) {
+        try {
+          const payload = await runButton(event.currentTarget, ui.healthOutput, function () {
+            return callApi("/api/health");
+          });
+          const truthful = payload.ok && payload.clinical_use_authorized === false && payload.site_validated === false;
+          setPill(ui.healthPill, truthful ? "Local API reachable" : "Boundary mismatch", truthful ? "good" : "bad");
+        } catch {
+          setPill(ui.healthPill, "Unavailable", "bad");
+        }
+      });
+
+      document.getElementById("loadCapabilities").addEventListener("click", async function (event) {
+        try {
+          await runButton(event.currentTarget, ui.capabilitiesOutput, function () {
+            return callApi("/api/capabilities");
+          });
+        } catch {}
+      });
+
+      document.getElementById("initialize").addEventListener("click", async function (event) {
+        try {
+          await runButton(event.currentTarget, ui.capabilitiesOutput, function () {
+            return callApi("/api/command", "POST", {
+              command: "clinical-init",
+              args: { state_dir: ui.stateDir.value || "state" }
+            });
+          });
+        } catch {}
+      });
+
+      document.getElementById("registerSource").addEventListener("click", async function (event) {
+        try {
+          await runButton(event.currentTarget, ui.capabilitiesOutput, function () {
+            return callApi("/api/command", "POST", {
+              command: "clinical-source-add",
+              args: {
+                state_dir: ui.stateDir.value || "state",
+                source_id: ui.sourceId.value.trim(),
+                mode: ui.mode.value,
+                profile_id: ui.profileId.value,
+                sender_application: ui.senderApplication.value.trim(),
+                sender_facility: ui.senderFacility.value.trim(),
+                assay_map: ui.assayMap.value.trim()
+              }
+            });
+          });
+        } catch {}
+      });
+
+      document.getElementById("startTransport").addEventListener("click", async function (event) {
+        if (ui.mode.value !== "LIVE_SHADOW") {
+          ui.mode.value = "LIVE_SHADOW";
+          applyMode();
+        }
+        try {
+          const bindingDir = ui.bindingDir.value.trim();
+          const config = {
+            bind_host: ui.bindHost.value.trim(),
+            bind_port: Number(ui.bindPort.value),
+            allow_non_loopback: ui.allowNonLoopback.checked,
+            allowed_peer_ips: peerList(),
+            binding_dir: bindingDir,
+            tls_enabled: true,
+            tls_certfile: ui.tlsCert.value.trim(),
+            tls_keyfile: ui.tlsKey.value.trim(),
+            tls_require_client_cert: ui.requireClientCert.checked,
+            max_connections: 1
+          };
+          if (ui.tlsCa.value.trim()) config.tls_ca_file = ui.tlsCa.value.trim();
+          const payload = await runButton(event.currentTarget, ui.transportOutput, function () {
+            return callApi("/api/transport/start", "POST", {
+              transport_id: ui.transportId.value.trim(),
+              kind: ui.transportKind.value,
+              source_id: ui.sourceId.value.trim(),
+              state_dir: ui.stateDir.value || "state",
+              binding_dir: bindingDir,
+              config: config
+            });
+          });
+          const running = Boolean(payload.status && payload.status.running);
+          setPill(ui.transportPill, running ? "Running · unvalidated" : "Not running", running ? "warn" : "bad");
+        } catch {
+          setPill(ui.transportPill, "Start failed", "bad");
+        }
+      });
+
+      document.getElementById("transportStatus").addEventListener("click", async function (event) {
+        const id = encodeURIComponent(ui.transportId.value.trim());
+        try {
+          const payload = await runButton(event.currentTarget, ui.transportOutput, function () {
+            return callApi("/api/transport/status?state_dir=" + stateQuery() + "&transport_id=" + id);
+          });
+          const transports = payload.transports;
+          const running = Array.isArray(transports)
+            ? transports.some(function (item) { return item.running; })
+            : Boolean(transports && transports.running);
+          setPill(ui.transportPill, running ? "Running · unvalidated" : "Stopped · unvalidated", "warn");
+        } catch {
+          setPill(ui.transportPill, "Unknown", "bad");
+        }
+      });
+
+      document.getElementById("listTransports").addEventListener("click", async function (event) {
+        try {
+          await runButton(event.currentTarget, ui.transportOutput, function () {
+            return callApi("/api/transports?state_dir=" + stateQuery());
+          });
+        } catch {}
+      });
+
+      document.getElementById("stopTransport").addEventListener("click", async function (event) {
+        try {
+          await runButton(event.currentTarget, ui.transportOutput, function () {
+            return callApi("/api/transport/stop", "POST", {
+              transport_id: ui.transportId.value.trim(),
+              state_dir: ui.stateDir.value || "state"
+            });
+          });
+          setPill(ui.transportPill, "Stopped · unvalidated", "warn");
+        } catch {
+          setPill(ui.transportPill, "Stop unconfirmed", "bad");
+        }
+      });
+
+      document.getElementById("checkModel").addEventListener("click", async function (event) {
+        try {
+          const payload = await runButton(event.currentTarget, ui.modelOutput, function () {
+            return callApi("/api/operational-health");
+          });
+          setPill(
+            ui.modelPill,
+            payload.configured ? "Verified artifact loaded" : "Not configured",
+            payload.configured ? "good" : "bad"
+          );
+        } catch {
+          setPill(ui.modelPill, "Unavailable", "bad");
+        }
+      });
+
+      document.getElementById("scoreModel").addEventListener("click", async function (event) {
+        try {
+          const payload = await runButton(event.currentTarget, ui.modelOutput, function () {
+            return callApi("/api/operational-health/score", "POST", {
+              features: operationalFeatures()
+            });
+          });
+          const advisory = payload.advisory || {};
+          setPill(
+            ui.modelPill,
+            advisory.operator_attention_required ? "Operator attention" : "No synthetic alert",
+            advisory.operator_attention_required ? "warn" : "good"
+          );
+        } catch {
+          setPill(ui.modelPill, "Evaluation failed", "bad");
+        }
+      });
+
+      ui.mode.addEventListener("change", applyMode);
+      window.addEventListener("beforeunload", function () { ui.apiToken.value = ""; });
+      applyMode();
+    </script>
+  </body>
+</html>

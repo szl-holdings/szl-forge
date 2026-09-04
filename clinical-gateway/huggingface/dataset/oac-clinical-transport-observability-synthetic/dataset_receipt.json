@@ -1,0 +1,21 @@
+{
+  "authority": "advisory_only_no_ack_release_or_clinical_authority",
+  "contains_clinical_results": false,
+  "contains_phi": false,
+  "files": {
+    "data/test.jsonl": "7fc6ea635fcc501d56eed6a8b9e4f5f3a9057d0aa04505502759197150d79679",
+    "data/train.jsonl": "b868acce6a2e6a8f6a5e5edb3f5b45c4f2e7e7b33c1bc56d22128620aab8b1f6",
+    "data/validation.jsonl": "4557220a73b7f8efbb59ab41d043785cebaff71eac4d9fef8c59800a4f8f5abf"
+  },
+  "generated_data": "synthetic_only",
+  "generator_sha256": "63cf2ca394af007e8b6c3e5259544fa620bd80ffd1210877000e57633a1cdb48",
+  "purpose": "synthetic_operational_transport_observability_only",
+  "schema": "szl-oac/transport-health-dataset-receipt/v1",
+  "schema_sha256": "b88658a104928152e862613968cb005b4e5e78a813f594d08dc57aaccfd1c832",
+  "seed": 2500,
+  "split_rows": {
+    "test": 240,
+    "train": 768,
+    "validation": 192
+  }
+}

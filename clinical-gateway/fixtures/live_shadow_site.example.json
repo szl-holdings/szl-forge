@@ -1,0 +1,32 @@
+{
+  "truth_boundary": "deidentified_live_shadow_not_clinical_use_or_site_validation",
+  "source": {
+    "assay_map": "clinical-gateway/fixtures/assay_map.live-shadow.example.json",
+    "mode": "LIVE_SHADOW",
+    "profile_id": "unvalidated-live-shadow-roche-cobas-liat-hl7-sw-3.4-3.5-him-11.3",
+    "sender_application": "LIAT-DEID",
+    "sender_facility": "SITE-DEID",
+    "source_id": "liat-live-shadow"
+  },
+  "transport_request": {
+    "binding_dir": "clinical-gateway/fixtures/live-shadow-bindings",
+    "config": {
+      "allow_non_loopback": false,
+      "allowed_peer_ips": [
+        "127.0.0.1"
+      ],
+      "bind_host": "127.0.0.1",
+      "bind_port": 2100,
+      "binding_dir": "clinical-gateway/fixtures/live-shadow-bindings",
+      "max_connections": 1,
+      "tls_certfile": "clinical-gateway/site-config/tls/server.crt",
+      "tls_enabled": true,
+      "tls_keyfile": "clinical-gateway/site-config/tls/server.key",
+      "tls_require_client_cert": false
+    },
+    "kind": "roche-cobas-liat-v2.0",
+    "source_id": "liat-live-shadow",
+    "state_dir": "state",
+    "transport_id": "roche-liat-live-shadow"
+  }
+}

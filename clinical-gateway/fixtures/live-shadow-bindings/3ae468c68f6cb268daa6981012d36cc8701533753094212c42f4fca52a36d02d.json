@@ -1,0 +1,11 @@
+{
+  "deidentified": true,
+  "order_reference": "ServiceRequest/DEID-ORDER0001",
+  "patient_reference": "Patient/DEID-SUBJECT01",
+  "recipient_id": "SHADOW-OFFLINE-RECIPIENT",
+  "source_order_token": "DEID-ORDER0001",
+  "source_subject_token": "DEID-SUBJECT01",
+  "specimen_reference": "Specimen/DEID-SPECIMEN1",
+  "supersedes_result_id": null,
+  "synthetic": false
+}

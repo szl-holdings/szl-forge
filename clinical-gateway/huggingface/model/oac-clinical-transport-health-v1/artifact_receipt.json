@@ -1,0 +1,70 @@
+{
+  "authority": "advisory_only_no_ack_release_or_clinical_authority",
+  "dataset_receipt_sha256": "004dee573fa54cf7888c905adb6ea6f68fc1503b12adbaea235cd3e3893a3ed0",
+  "generator_sha256": "63cf2ca394af007e8b6c3e5259544fa620bd80ffd1210877000e57633a1cdb48",
+  "kernel_sha256": "2fd8ffd3fd3ca8d0f960d4e0d471593b86e6cccb03607116390cbe9300992669",
+  "metrics": {
+    "test": {
+      "accuracy": 0.716666666667,
+      "balanced_accuracy": 0.741363211951,
+      "confusion": {
+        "false_negative": 11,
+        "false_positive": 57,
+        "true_negative": 132,
+        "true_positive": 40
+      },
+      "f1": 0.540540540541,
+      "log_loss": 0.433486431378,
+      "negative_rows": 189,
+      "positive_rows": 51,
+      "precision": 0.412371134021,
+      "recall": 0.78431372549,
+      "roc_auc": 0.830169104679,
+      "rows": 240,
+      "specificity": 0.698412698413
+    },
+    "train": {
+      "accuracy": 0.743489583333,
+      "balanced_accuracy": 0.775333540846,
+      "confusion": {
+        "false_negative": 26,
+        "false_positive": 171,
+        "true_negative": 446,
+        "true_positive": 125
+      },
+      "f1": 0.559284116331,
+      "log_loss": 0.375771132524,
+      "negative_rows": 617,
+      "positive_rows": 151,
+      "precision": 0.422297297297,
+      "recall": 0.827814569536,
+      "roc_auc": 0.867850204472,
+      "rows": 768,
+      "specificity": 0.722852512156
+    },
+    "validation": {
+      "accuracy": 0.791666666667,
+      "balanced_accuracy": 0.766152086907,
+      "confusion": {
+        "false_negative": 9,
+        "false_positive": 31,
+        "true_negative": 128,
+        "true_positive": 24
+      },
+      "f1": 0.545454545455,
+      "log_loss": 0.373672417159,
+      "negative_rows": 159,
+      "positive_rows": 33,
+      "precision": 0.436363636364,
+      "recall": 0.727272727273,
+      "roc_auc": 0.832094530208,
+      "rows": 192,
+      "specificity": 0.805031446541
+    }
+  },
+  "metrics_scope": "fixed_seed_synthetic_splits_only_not_production_validation",
+  "model_sha256": "f111b7fc65db561c80763b25e538366a19bed18526ca881915777487935d9557",
+  "purpose": "synthetic_operational_transport_attention_only",
+  "schema": "szl-oac/transport-health-artifact-receipt/v1",
+  "seed": 2500
+}

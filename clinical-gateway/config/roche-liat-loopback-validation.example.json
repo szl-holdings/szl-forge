@@ -1,0 +1,22 @@
+{
+  "binding_dir": "bindings",
+  "config": {
+    "allowed_peer_ips": [
+      "127.0.0.1"
+    ],
+    "bind_host": "127.0.0.1",
+    "bind_port": 2100,
+    "idle_timeout": 30,
+    "ingest_timeout": 60,
+    "max_connections": 2,
+    "max_frame_bytes": 1048576,
+    "queue_capacity": 32,
+    "tls_certfile": "tls/site-server-chain.pem",
+    "tls_enabled": true,
+    "tls_keyfile": "tls/site-server-key.pem",
+    "tls_require_client_cert": false
+  },
+  "kind": "roche-cobas-liat-v2.0",
+  "source_id": "liat-live-shadow",
+  "transport_id": "liat-shadow-loopback"
+}
