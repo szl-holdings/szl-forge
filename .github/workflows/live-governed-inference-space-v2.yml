@@ -1,0 +1,102 @@
+name: Live governed inference Space v2
+
+on:
+  pull_request:
+    paths:
+      - "spaces/szl-model-inference-lab/**"
+      - ".github/workflows/live-governed-inference-space-v2.yml"
+      - ".github/workflows/publish-model-inference-lab.yml"
+  push:
+    branches: [main]
+    paths:
+      - "spaces/szl-model-inference-lab/**"
+      - ".github/workflows/live-governed-inference-space-v2.yml"
+      - ".github/workflows/publish-model-inference-lab.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: governed-inference-space-v2-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.11"
+
+      - name: Verify every governed source digest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+
+          root = Path("spaces/szl-model-inference-lab")
+          manifest = json.loads((root / "release.json").read_text(encoding="utf-8"))
+          mismatches = []
+          for relative, expected in manifest["source_files"].items():
+              path = root / relative
+              if not path.is_file():
+                  mismatches.append({"path": relative, "expected": expected, "actual": "MISSING"})
+                  continue
+              actual = hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+              if actual != expected:
+                  mismatches.append({"path": relative, "expected": expected, "actual": actual})
+          print(json.dumps({"schema": manifest["schema"], "release_id": manifest["release_id"], "mismatches": mismatches}, indent=2, sort_keys=True))
+          if mismatches:
+              raise SystemExit(2)
+          PY
+
+      - name: Install exact Space runtime
+        run: >-
+          python -m pip install --disable-pip-version-check
+          -r spaces/szl-model-inference-lab/requirements.txt
+          "pytest>=8,<9"
+
+      - name: Verify immutable installed dependencies
+        run: |
+          python - <<'PY'
+          import importlib.metadata
+          from inference import load_production_contract
+          from second_brain import index
+
+          assert importlib.metadata.version("szl-forge-inference") == "0.2.0"
+          assert importlib.metadata.version("szl-second-brain") == "1.2.0"
+          assert importlib.metadata.version("szl-nemo") == "0.4.0"
+          assert index().built is True
+          assert index().n == 575
+          contract = load_production_contract()
+          assert contract["formula_authority"]["locked_proven_count"] == 8
+          assert contract["runtime_selection"]["winner"] == "UNSELECTED"
+          PY
+
+      - name: Compile governed entrypoint and live verifier
+        run: >-
+          python -m py_compile
+          spaces/szl-model-inference-lab/app.py
+          spaces/szl-model-inference-lab/app_governed.py
+          spaces/szl-model-inference-lab/verify_governed_live.py
+
+      - name: Run legacy and governed Space contracts
+        env:
+          PYTHONPATH: spaces/szl-model-inference-lab:.
+        run: >-
+          python -m pytest -q
+          spaces/szl-model-inference-lab/tests/test_app.py
+          spaces/szl-model-inference-lab/tests/test_governed_app.py
+
+      - name: Verify dependency graph
+        run: python -m pip check
