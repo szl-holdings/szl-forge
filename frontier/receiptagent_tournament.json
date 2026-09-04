@@ -1,0 +1,42 @@
+{
+  "schema": "szl.receiptagent-tournament/v1",
+  "lane": "L1",
+  "cluster": "C1",
+  "status": "NOT_RUN",
+  "order": "https://github.com/szl-holdings/szl-hf-frontier/issues/8",
+  "winner": null,
+  "false_allow_budget": null,
+  "promotion": "HOLD",
+  "note": "Contract only. This file does not invent scores. A winner field that is non-null without sample logs is a defect.",
+  "entrants": [
+    {
+      "hub_id": "SZLHOLDINGS/ReceiptAgent-Nano",
+      "role": "entrant",
+      "eligible": true
+    },
+    {
+      "hub_id": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2",
+      "role": "entrant",
+      "eligible": true
+    },
+    {
+      "hub_id": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3",
+      "role": "quarantined",
+      "eligible": false,
+      "reason": "C1 placeholder card"
+    },
+    {
+      "hub_id": "SZLHOLDINGS/SZL-Forge-1.5B-ReceiptAgent",
+      "role": "baseline",
+      "eligible": true
+    }
+  ],
+  "required_logs": [
+    "sample_level_predictions",
+    "controller_bound_decode",
+    "naked_decode",
+    "false_allow_rate",
+    "receipt_schema_rate",
+    "authority_boundary_pass_rate"
+  ]
+}

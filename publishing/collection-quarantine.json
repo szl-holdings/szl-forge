@@ -1,0 +1,83 @@
+{
+  "schema": "szl.collection-quarantine/v1",
+  "issued": "2026-09-04",
+  "order": "CTO-HF-FRONTIER-2026-09-04",
+  "tracker": "https://github.com/szl-holdings/szl-hf-frontier/issues/1",
+  "doctrine": "Fail closed. Signed is not correct. Live is not qualified. Downloads are not promotion.",
+  "hub_write": "DENIED_IN_THIS_CHANGE",
+  "hub_write_note": "This file is the GitHub-side deny list a publisher must consult. It does not mutate Hugging Face collections or cards.",
+  "flagship_collection_slugs": [
+    "flagship",
+    "product",
+    "receiptagent",
+    "khipu-product",
+    "governed-models"
+  ],
+  "research_collection_slugs": [
+    "research",
+    "negative-evidence",
+    "quarantine"
+  ],
+  "items": [
+    {
+      "hub_id": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3",
+      "cluster": "C1",
+      "lane": "L1",
+      "code": "MODEL_CARD_PLACEHOLDER",
+      "promotion": "HOLD",
+      "allowed_collections": ["research", "negative-evidence", "quarantine"],
+      "denied_collections": ["flagship", "product", "receiptagent", "khipu-product", "governed-models"],
+      "reason": "Template card. No bakeoff versus v2. No promotion until bytes and a v2-versus-v3 bakeoff exist."
+    },
+    {
+      "hub_id": "SZLHOLDINGS/SZL-Khipu-1.5B-abstain",
+      "cluster": "C2",
+      "lane": "L2",
+      "code": "EXPECTED_ARTIFACT_BYTES_MISSING",
+      "promotion": "HOLD",
+      "allowed_collections": ["research", "negative-evidence", "quarantine"],
+      "denied_collections": ["flagship", "product", "receiptagent", "khipu-product", "governed-models"],
+      "reason": "Empty adapter must not look like a product. Recover weights or keep experiment/empty."
+    },
+    {
+      "hub_id": "SZLHOLDINGS/chaski",
+      "cluster": "C5",
+      "lane": "L3",
+      "code": "PUBLISHED_BLOCKED_OR_FAILED_STATE",
+      "promotion": "HOLD",
+      "allowed_collections": ["research", "negative-evidence", "quarantine"],
+      "denied_collections": ["flagship", "product", "receiptagent", "khipu-product", "governed-models"],
+      "reason": "Failed qualification. Highest downloads in the estate. Traction is not a pass."
+    },
+    {
+      "hub_id": "SZLHOLDINGS/chaski-5050",
+      "cluster": "C5",
+      "lane": "L3",
+      "code": "PUBLISHED_BLOCKED_OR_FAILED_STATE",
+      "promotion": "HOLD",
+      "allowed_collections": ["research", "negative-evidence", "quarantine"],
+      "denied_collections": ["flagship", "product", "receiptagent", "khipu-product", "governed-models"],
+      "reason": "Leaks owner-machine paths. Research-only until metadata is scrubbed."
+    },
+    {
+      "hub_id": "SZLHOLDINGS/A11OY-MINI",
+      "cluster": "C5",
+      "lane": "L3",
+      "code": "PUBLISHED_BLOCKED_OR_FAILED_STATE",
+      "promotion": "HOLD",
+      "allowed_collections": ["research", "negative-evidence", "quarantine"],
+      "denied_collections": ["flagship", "product", "receiptagent", "khipu-product", "governed-models"],
+      "reason": "Derived GGUF of a failed parent. Unpin or rebuild from a winning parent."
+    },
+    {
+      "hub_id": "SZLHOLDINGS/chaski-r2",
+      "cluster": "C5",
+      "lane": "L3",
+      "code": "RESEARCH_ONLY",
+      "promotion": "HOLD",
+      "allowed_collections": ["research", "negative-evidence", "quarantine"],
+      "denied_collections": ["flagship", "product", "receiptagent", "khipu-product", "governed-models"],
+      "reason": "Research cut of a failed line. No flagship placement."
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "schema": "szl.chaski-research-only/v1",
+  "lane": "L3",
+  "cluster": "C5",
+  "status": "RESEARCH_ONLY",
+  "promotion": "HOLD",
+  "order": "https://github.com/szl-holdings/szl-hf-frontier/issues/10",
+  "family": [
+    {"hub_id": "SZLHOLDINGS/chaski", "role": "failed-parent"},
+    {"hub_id": "SZLHOLDINGS/chaski-r2", "role": "research-cut"},
+    {"hub_id": "SZLHOLDINGS/chaski-5050", "role": "path-leak"},
+    {"hub_id": "SZLHOLDINGS/A11OY-MINI", "role": "derived-gguf"}
+  ],
+  "gate": {
+    "name": "held-out-json-refusal",
+    "beats_disclosed_baseline": false,
+    "baseline": null
+  },
+  "note": "No flagship placement. Promote only after the held-out JSON/refusal gate beats a disclosed baseline."
+}
