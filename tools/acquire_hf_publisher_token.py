@@ -34,6 +34,15 @@ TOKEN_LINE = re.compile(r"^hf_[A-Za-z0-9._-]+$")
 class CredentialSelectionError(RuntimeError):
     """No configured credential passed active Hub validation."""
 
+    def __init__(
+        self,
+        message: str,
+        *,
+        attempts: Sequence[Attempt] = (),
+    ) -> None:
+        super().__init__(message)
+        self.attempts = tuple(attempts)
+
 
 class OidcExchangeError(RuntimeError):
     """The GitHub OIDC to Hugging Face token exchange failed."""
@@ -211,7 +220,10 @@ def select_credential(
         except Exception as error:
             attempts.append(_failure_evidence(source, error))
 
-    raise CredentialSelectionError("no valid Hugging Face publisher credential")
+    raise CredentialSelectionError(
+        "no valid Hugging Face publisher credential",
+        attempts=attempts,
+    )
 
 
 def _write_report(
@@ -293,6 +305,8 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 0
     except Exception as error:
+        if isinstance(error, CredentialSelectionError) and error.attempts:
+            attempts = list(error.attempts)
         _write_report(
             args.report,
             target_repo=args.target_repo,
