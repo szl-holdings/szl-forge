@@ -22,6 +22,7 @@ from typing import Callable, Mapping, Sequence
 
 TOKEN_ENV_ORDER: tuple[tuple[str, str], ...] = (
     ("HF_ORG_TOKEN", "HF_ORG_TOKEN_CANDIDATE"),
+    ("HF_ORG_TOKEN1", "HF_ORG_TOKEN1_CANDIDATE"),
     ("HF_WRITE_TOKEN", "HF_WRITE_TOKEN_CANDIDATE"),
     ("HF_TOKEN", "HF_TOKEN_CANDIDATE"),
     ("HUGGINGFACE_TOKEN", "HUGGINGFACE_TOKEN_CANDIDATE"),

@@ -76,7 +76,9 @@ class PublisherCredentialSelectionTests(unittest.TestCase):
         )
         self.assertFalse(attempts[0].valid)
         self.assertEqual("RuntimeError", attempts[0].failure_type)
-        self.assertTrue(attempts[1].valid)
+        self.assertEqual("HF_ORG_TOKEN1", attempts[1].source)
+        self.assertFalse(attempts[1].present)
+        self.assertTrue(attempts[2].valid)
 
     def test_missing_candidates_are_explicit(self) -> None:
         def validator(token: str, **kwargs):
