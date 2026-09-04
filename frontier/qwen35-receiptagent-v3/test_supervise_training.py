@@ -349,7 +349,7 @@ class FixedPolicyAndTelemetryTests(unittest.TestCase):
         policy = copy.deepcopy(supervisor.EXPECTED_POLICY)
         cool = sample(temperature_c=60)
         late = supervisor.TelemetrySample(
-            observed_monotonic_ns=9_000_000_001,
+            observed_monotonic_ns=21_000_000_001,
             observed_at=cool.observed_at,
             gpu_uuid=cool.gpu_uuid,
             name=cool.name,
