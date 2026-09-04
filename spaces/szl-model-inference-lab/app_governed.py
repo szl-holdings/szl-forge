@@ -6,7 +6,7 @@ import json
 import os
 import platform
 import threading
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from typing import Any, Callable
 
 from fastapi import HTTPException

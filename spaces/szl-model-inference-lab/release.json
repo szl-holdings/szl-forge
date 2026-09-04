@@ -7,7 +7,7 @@
     "LICENSE": "0a41cda63c0751e5cdb240864525fc8bf29b2d3f2cb5c6406b9bae97f1e1407b",
     "README.md": "e5e951011044a0663bc41b25cb3b732b9e1a918e2bfe787a50c491bc93b5d319",
     "app.py": "ae29bfba0898350eb08f3c4e0f7fd29572b3ee4023ca1942dcb17bc8bf3bbe8d",
-    "app_governed.py": "6ccdf8dbe6496540b8cf0a611e196805299ef21a3278d3a641dfb8b60c2740c9",
+    "app_governed.py": "dde817ad5f8a8fc7df161f2b726106f3aae5b0568a678a90162ed8570bac1931",
     "download_artifacts.py": "aa9f98b3d19753953864beae167b5e74872270c880e78430bb345a5f06b4ef36",
     "requirements.txt": "6340d588cb693de347c5515f49218bc3118931d9eec4325127c7fa8d8aa3b835",
     "tests/test_app.py": "edde81adfe2be63e4d54174ad1b3179469d8ebe96146eaf840ff6b6b67ec4128",
