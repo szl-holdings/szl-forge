@@ -1,0 +1,105 @@
+# SPDX-License-Identifier: Apache-2.0
+name: Repair governed inference release once
+
+on:
+  push:
+    branches:
+      - feat/live-governed-inference-space-v2
+    paths:
+      - .github/workflows/fix-governed-inference-release-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout exact feature branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: feat/live-governed-inference-space-v2
+          fetch-depth: 0
+
+      - name: Align release identity and recompute the immutable source manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from __future__ import annotations
+
+          import hashlib
+          import json
+          from pathlib import Path
+
+          root = Path("spaces/szl-model-inference-lab")
+          release_path = root / "release.json"
+          release = json.loads(release_path.read_text(encoding="utf-8"))
+          new_id = str(release["release_id"])
+          old_id = "c893e93c-9bd8-47e9-941e-f8613a608992"
+          if new_id != "6165392a-f3b7-4128-8f77-e37074c2e60d":
+              raise SystemExit(f"unexpected governed release id: {new_id}")
+
+          app_path = root / "app_governed.py"
+          app = app_path.read_text(encoding="utf-8")
+          app = app.replace("import hashlib\n", "")
+          app = app.replace("from collections.abc import Sequence\n", "")
+          app_path.write_text(app, encoding="utf-8", newline="\n")
+
+          targets = [
+              root / "verify_execution_record.py",
+              root / "verify_governed_live.py",
+              root / "tests" / "test_governed_app.py",
+              Path("publishing/model-source-bindings.json"),
+              Path("tools/test_publish_model_source_bindings.py"),
+          ]
+          replaced = []
+          for path in targets:
+              if not path.is_file():
+                  continue
+              text = path.read_text(encoding="utf-8")
+              if old_id in text:
+                  path.write_text(text.replace(old_id, new_id), encoding="utf-8", newline="\n")
+                  replaced.append(path.as_posix())
+          if not replaced:
+              raise SystemExit("no stale release identity was found")
+
+          for relative in list(release["source_files"]):
+              source = root / relative
+              if not source.is_file():
+                  raise SystemExit(f"release source missing: {source}")
+              release["source_files"][relative] = hashlib.sha256(source.read_bytes()).hexdigest()
+          release_path.write_text(
+              json.dumps(release, indent=2, sort_keys=False) + "\n",
+              encoding="utf-8",
+          )
+
+          remaining = []
+          for path in targets:
+              if path.is_file() and old_id in path.read_text(encoding="utf-8"):
+                  remaining.append(path.as_posix())
+          if remaining:
+              raise SystemExit("stale release identity remains: " + ", ".join(remaining))
+          print(json.dumps({"release_id": new_id, "replaced": replaced}, sort_keys=True))
+          PY
+          python -m json.tool spaces/szl-model-inference-lab/release.json >/dev/null
+          python -m json.tool publishing/model-source-bindings.json >/dev/null
+          python -m compileall -q spaces/szl-model-inference-lab tools/test_publish_model_source_bindings.py
+          git diff --check
+
+      - name: Commit deterministic release repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "Lutar, Stephen P."
+          git config user.email "stephenlutar2@gmail.com"
+          git add --all
+          git diff --cached --quiet && { echo "no release changes"; exit 1; }
+          git commit -s -m "fix(inference): align governed release identity and source hashes"
+          git push origin HEAD:feat/live-governed-inference-space-v2
