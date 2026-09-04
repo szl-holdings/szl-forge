@@ -675,7 +675,14 @@ def verify_supervisor_unit(policy: dict[str, Any], unit: str) -> dict[str, Any]:
     return {"unit": f"{unit}.service", "controlGroup": cgroup, **required}
 
 
-def sample_gpu(policy: dict[str, Any]) -> TelemetrySample:
+def sample_gpu(
+    policy: dict[str, Any], *, timeout_seconds: float | None = None
+) -> TelemetrySample:
+    configured_timeout = float(policy["telemetry_timeout_seconds"])
+    if timeout_seconds is not None:
+        if not math.isfinite(timeout_seconds) or timeout_seconds <= 0:
+            raise SupervisionError("GPU telemetry deadline has expired")
+        configured_timeout = min(configured_timeout, timeout_seconds)
     result = subprocess.run(
         [
             policy["nvidia_smi_executable"],
@@ -684,7 +691,7 @@ def sample_gpu(policy: dict[str, Any]) -> TelemetrySample:
         ],
         check=True,
         capture_output=True,
-        timeout=policy["telemetry_timeout_seconds"],
+        timeout=configured_timeout,
     )
     try:
         lines = [
@@ -1275,7 +1282,10 @@ def sampled_cgroup_drain(
             )
         if now_ns >= next_sample_ns:
             try:
-                sample = sample_gpu(policy)
+                sample = sample_gpu(
+                    policy,
+                    timeout_seconds=(deadline_ns - now_ns) / 1e9,
+                )
             except Exception as exc:  # noqa: BLE001 - a live child cannot go unobserved
                 return terminal(
                     ("TELEMETRY_UNAVAILABLE", trainer.sanitized_error(exc))
@@ -1648,7 +1658,10 @@ def main(argv: Sequence[str] | None = None) -> int:
                 break
             if now_ns >= next_sample_ns:
                 try:
-                    sample = sample_gpu(policy)
+                    sample = sample_gpu(
+                        policy,
+                        timeout_seconds=(deadline_ns - now_ns) / 1e9,
+                    )
                 except Exception as exc:  # noqa: BLE001
                     terminal_cause = "TELEMETRY_UNAVAILABLE"
                     trigger_error = trainer.sanitized_error(exc)
