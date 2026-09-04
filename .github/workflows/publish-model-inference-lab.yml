@@ -67,7 +67,7 @@ jobs:
           echo "HF_TOKEN=${token}" >> "${GITHUB_ENV}"
           rm -f oidc-error.log
 
-      - name: Publish and independently verify
+      - name: Publish and independently verify source/readiness
         run: |
           set -euo pipefail
           python tools/publish_hf_space.py \
@@ -81,16 +81,28 @@ jobs:
             --smoke-path /health \
             --smoke-path /api/build-info \
             --smoke-path /api/v1/identity \
+            --smoke-path /api/v2/governed-health \
             --smoke-path /.well-known/szl-inference-contract.json \
+            --smoke-path /.well-known/szl-governed-inference-contract.json \
             --smoke-path /v1/models \
             --report reports/model-inference-lab-publication.json
+
+      - name: Exercise live Brain, Forge, Nemo, Formula, and Anatomy path
+        run: |
+          set -euo pipefail
+          python spaces/szl-model-inference-lab/verify_governed_live.py \
+            --base-url https://szlholdings-szl-model-inference-lab.hf.space \
+            --expected-source-revision "${GITHUB_SHA}" \
+            --report reports/governed-space-live-verification.json
 
       - name: Upload deployment evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: model-inference-lab-publication-${{ github.run_id }}
-          path: reports/model-inference-lab-publication.json
+          path: |
+            reports/model-inference-lab-publication.json
+            reports/governed-space-live-verification.json
           if-no-files-found: error
           retention-days: 90
 

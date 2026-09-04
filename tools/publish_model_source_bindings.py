@@ -36,6 +36,10 @@ class TransientBindingError(BindingError):
     """Raised when runtime probe failures are transient and can degrade to no-op runtime evidence."""
 
 
+class RuntimeUnavailableBindingError(BindingError):
+    """Raised when the governed runtime or required route does not exist yet."""
+
+
 def canonical_json(payload: Any) -> str:
     return json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
 
@@ -488,6 +492,10 @@ def _json_request(
                 return json.loads(response.read())
         except urllib.error.HTTPError as error:
             status = error.code
+            if status == 404:
+                raise RuntimeUnavailableBindingError(
+                    f"runtime probe failed: {url} returned {status}: {error.reason}"
+                ) from error
             if status in transient_statuses and attempt < attempts:
                 time.sleep(base_delay_seconds * attempt)
                 continue
@@ -510,7 +518,7 @@ def _runtime_probe_or_unavailable(requester: Callable[..., dict[str, Any]], base
         health = requester(f"{base}/health")
         build = requester(f"{base}/api/build-info")
         identity = requester(f"{base}/api/v1/identity")
-    except TransientBindingError as error:
+    except (TransientBindingError, RuntimeUnavailableBindingError) as error:
         return {
             "status": "NOT_QUALIFIED_NO_RUNTIME_PROBE",
             "failure_reason": str(error),
