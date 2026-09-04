@@ -1,0 +1,82 @@
+{
+  "schema": "szl.forge.production-control-plane/v2",
+  "status": "OPERATIONAL_GOVERNED_BOUNDARY",
+  "sources": {
+    "formal_formula": {
+      "repository": "szl-holdings/lutar-lean",
+      "commit": "c497b4ed402249f23da7f290426f0e21c70ab926"
+    },
+    "formula_kernel": {
+      "repository": "szl-holdings/szl-formulas",
+      "commit": "46cfa948367e8133eaa8dd6bcfb781b19165b9bb"
+    },
+    "second_brain": {
+      "repository": "szl-holdings/szl-second-brain",
+      "commit": "fa3e4605344b13db220a79f9dcd267ee5725c87e"
+    },
+    "nemo_witness": {
+      "repository": "szl-holdings/szl-nemo",
+      "commit": "810231a531188bb569e3faa17396386eb0a5e260"
+    },
+    "action_admission": {
+      "repository": "szl-holdings/a11oy",
+      "commit": "e492dd12d3baaf07a7f6c9b988531c332b80a4f5"
+    }
+  },
+  "authority": {
+    "model": "PROPOSAL_ONLY",
+    "second_brain": "READ_ONLY_EVIDENCE",
+    "nemo": "INDEPENDENT_WITNESS",
+    "a11oy": "ACTION_ADMISSION",
+    "anatomy": "OBSERVER_ONLY"
+  },
+  "formula_authority": {
+    "locked_proven_count": 8,
+    "locked_proven_ids": [
+      "F1",
+      "F4",
+      "F7",
+      "F11",
+      "F12",
+      "F18",
+      "F19",
+      "F22"
+    ],
+    "f_id_to_callable_mapping": "UNKNOWN_NOT_ASSERTED",
+    "lambda": {
+      "formula_id": "F23",
+      "status": "CONJECTURE_1_ADVISORY",
+      "can_authorize": false,
+      "can_be_sole_allow_basis": false
+    }
+  },
+  "runtime_selection": {
+    "winner": "UNSELECTED",
+    "policy": "MEASURED_WORKLOAD_BAKEOFF_REQUIRED",
+    "qualified_lanes": [
+      "local-cpu-gguf",
+      "single-node-gpu",
+      "distributed-gpu"
+    ]
+  },
+  "truth_labels": [
+    "MEASURED",
+    "REPORTED",
+    "MODELED",
+    "CONJECTURE",
+    "UNKNOWN",
+    "UNAVAILABLE"
+  ],
+  "deployment": {
+    "controller_package": "szl-forge-inference",
+    "controller_version": "0.2.0",
+    "legacy_endpoint_status": "UNWITNESSED_LEGACY",
+    "governed_endpoint": "/api/v2/governed-infer",
+    "tool_execution": "EXTERNAL_A11OY_ONLY"
+  },
+  "remaining_promotion_blockers": [
+    "NO_UNIVERSAL_RUNTIME_WINNER",
+    "NO_MODEL_QUALITY_PROMOTION_WITHOUT_HELD_OUT_EVIDENCE",
+    "LIVE_SPACE_REQUIRES_SOURCE_AND_RUNTIME_ATTESTATION"
+  ]
+}
