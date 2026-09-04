@@ -44,6 +44,16 @@ signed A11oy continuation and are outside this public runtime.
 - `POST /api/v2/governed-infer`
 - `GET /api/v2/anatomy/last`
 
+## Runtime-availability semantics
+
+A credentialless source-binding dry run may execute before the governed Space
+exists. A missing Space or required runtime route is recorded explicitly as
+`NOT_QUALIFIED_NO_RUNTIME_PROBE` with
+`RUNTIME_SERVICE_UNAVAILABLE`; it is not misclassified as source corruption.
+This classification never authorizes promotion. Publication and every path that
+requires exact runtime evidence continue to fail closed until the Space exists,
+the expected routes answer, and their immutable source/model identities verify.
+
 ## Promotion gates
 
 The branch may merge only when all repository checks are terminal and green,
