@@ -6,6 +6,7 @@ import copy
 import importlib.util
 import inspect
 import io
+import os
 import pathlib
 import subprocess
 import sys
@@ -545,6 +546,20 @@ class EvidenceAndAdmissionTests(unittest.TestCase):
         self.assertEqual("COMMITTED", observed["publicationState"])
         self.assertEqual("FINAL_LINK_AND_DIRECTORY_FSYNC", observed["commitPoint"])
         self.assertEqual("d" * 64, observed["sha256"])
+
+    @unittest.skipUnless(os.name == "posix", "write-once protocol requires POSIX")
+    def test_every_training_bundle_filename_is_atomic_publication_safe(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory).resolve()
+            for name in (*supervisor.BUNDLE_SOURCE_FILES, "training-bundle.json"):
+                with self.subTest(name=name):
+                    observed = supervisor.publish_evidence_write_once(
+                        root,
+                        name,
+                        b"committed component",
+                    )
+                    self.assertEqual("COMMITTED", observed["publicationState"])
+                    self.assertEqual(b"committed component", (root / name).read_bytes())
 
     def test_staged_manifest_retains_exact_trainer_file_identity_schema(self):
         exact_trainer = load_trainer()

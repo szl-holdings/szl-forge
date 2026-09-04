@@ -301,6 +301,37 @@ class WriteOncePublicationTests(unittest.TestCase):
             self.assertEqual(b"evidence", artifact.path.read_bytes())
             self.assertEqual([], list(root.glob(".*.tmp")))
 
+    def test_safe_underscored_name_reaches_explicit_commit_point(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory).resolve()
+            artifact = bootstrap.publish_write_once(
+                root,
+                "containment_probe.py",
+                b"committed component",
+            )
+            self.assertTrue(artifact.committed)
+            self.assertEqual(b"committed component", artifact.path.read_bytes())
+
+    def test_path_bearing_and_hidden_names_remain_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory).resolve()
+            for name in (
+                "../report.json",
+                "/tmp/report.json",
+                "nested/report.json",
+                r"nested\report.json",
+                ".hidden",
+                "_leading.json",
+                "report:name.json",
+                "report name.json",
+                "report\x00name.json",
+                "a" * 129,
+            ):
+                with self.subTest(name=name):
+                    with self.assertRaises(bootstrap.PublicationNotCommitted):
+                        bootstrap.publish_write_once(root, name, b"evidence")
+            self.assertEqual([], list(root.iterdir()))
+
     def test_existing_final_and_symlink_are_never_clobbered(self):
         with tempfile.TemporaryDirectory() as directory:
             root = pathlib.Path(directory).resolve()
