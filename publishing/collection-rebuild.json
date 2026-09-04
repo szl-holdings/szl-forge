@@ -1,0 +1,29 @@
+{
+  "schema": "szl.collection-rebuild/v1",
+  "issued": "2026-09-04",
+  "hub_write": "DENIED_IN_THIS_CHANGE",
+  "note": "Intended Hub collection membership after a publisher job with an owner token. Empty flagship is correct: nothing is promoted.",
+  "collections": {
+    "flagship": [],
+    "research": [
+      "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3",
+      "SZLHOLDINGS/SZL-Khipu-1.5B-abstain",
+      "SZLHOLDINGS/chaski",
+      "SZLHOLDINGS/chaski-r2",
+      "SZLHOLDINGS/chaski-5050",
+      "SZLHOLDINGS/A11OY-MINI"
+    ],
+    "candidates": [
+      "SZLHOLDINGS/SZL-Forge-1.5B-ReceiptAgent",
+      "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2",
+      "SZLHOLDINGS/SZL-Khipu-1.5B",
+      "SZLHOLDINGS/KHIPU-R2"
+    ],
+    "kernels": [
+      "SZLHOLDINGS/YARQA-ATTN",
+      "SZLHOLDINGS/szl-receipt-attn",
+      "SZLHOLDINGS/szl-block-kv",
+      "SZLHOLDINGS/szl-maskmod"
+    ]
+  }
+}
