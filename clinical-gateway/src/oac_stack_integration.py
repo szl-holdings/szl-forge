@@ -318,6 +318,7 @@ class ClinicalKernel:
 
         self._transport_runtime_class = LiveTransportRuntime
         self._runtime_by_state: dict[str, Any] = {}
+        self._runtime_lock = threading.Lock()
 
     def _dataset_for(self, state_dir: Path) -> ClinicalDataset:
         return ClinicalDataset(state_dir)
@@ -380,11 +381,12 @@ class ClinicalKernel:
 
     def _transport_runtime(self, state_dir: Path | str | None = None) -> Any:
         state_root = str(self._resolve_state_dir(state_dir))
-        runtime = self._runtime_by_state.get(state_root)
-        if runtime is None:
-            runtime = self._transport_runtime_class(self, state_dir=Path(state_root))
-            self._runtime_by_state[state_root] = runtime
-        return runtime
+        with self._runtime_lock:
+            runtime = self._runtime_by_state.get(state_root)
+            if runtime is None:
+                runtime = self._transport_runtime_class(self, state_dir=Path(state_root))
+                self._runtime_by_state[state_root] = runtime
+            return runtime
 
     def transport_start(
         self,

@@ -142,6 +142,13 @@ a bearer credential cannot cross origins. Non-loopback plaintext MLLP or HTTP
 requires an explicit insecure-transport acknowledgement and is not enabled by
 the Roche TLS preset.
 
+Security acknowledgements must be JSON booleans, not strings or numbers.
+Automatic loopback trust applies only to literal loopback IP addresses.
+File-drop wait timeouts retain one pending ingestion until its terminal outcome;
+archive retries do not repeat that completed ingestion. Pending-file retention
+is capped by the configured queue capacity. This reconciliation is in-process:
+it is not a durable crash-recovery or exactly-once-after-restart guarantee.
+
 ## Start the local control plane
 
 Create an isolated environment and install the exact source tree:

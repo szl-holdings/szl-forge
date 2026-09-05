@@ -27,6 +27,9 @@ transport-health examples** for the companion OAC Transport Health v1 model.
 It contains no records collected from a patient, laboratory, analyzer,
 instrument, LIS, EHR, network, or health-care site.
 
+Companion model: [OAC Transport Health v1](https://huggingface.co/SZLHOLDINGS/oac-clinical-transport-health-v1).
+Canonical source: [szl-forge clinical gateway](https://github.com/szl-holdings/szl-forge/tree/main/clinical-gateway).
+
 ## Data boundary
 
 The closed schema contains only eight bounded operational counters/flags and a
@@ -79,6 +82,8 @@ its canonical source-tree layout also requires `src/oac_operational_health.py`.
 Clone the source repository and run:
 
 ```bash
+git clone https://github.com/szl-holdings/szl-forge.git
+cd szl-forge/clinical-gateway
 python -I -B tools/train_operational_health_model.py --verify
 ```
 

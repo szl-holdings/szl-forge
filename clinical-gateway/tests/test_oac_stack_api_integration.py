@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 from io import BytesIO
+from concurrent.futures import ThreadPoolExecutor
 import json
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import threading
+import time
 import unittest
 from unittest import mock
 
@@ -157,6 +160,18 @@ class HandlerBoundaryTests(unittest.TestCase):
         self.assertEqual(Path(resolved), self.root / "bindings" / "site.json")
         with self.assertRaisesRegex(ValueError, "within data_root"):
             api._resolve_bounded_path(self.root.parent / "outside.json", self.root, "binding_path")
+        for path in ("../outside.json", "bindings/../site.json", "~/site.json"):
+            with self.assertRaisesRegex(ValueError, "within data_root"):
+                api._resolve_bounded_path(path, self.root, "binding_path")
+
+    def test_cors_rejects_control_characters_even_in_configuration(self) -> None:
+        malformed = "https://console.example\n"
+        api.OACStackHandler.allowed_origins = frozenset({malformed})
+        handler, headers, _statuses = _bare_handler()
+        handler.headers = {"Origin": malformed}  # type: ignore[assignment]
+        self.assertFalse(handler._origin_allowed())
+        handler._set_cors_headers()
+        self.assertEqual(headers, [])
 
     def test_transport_request_accepts_fixed_binding_or_registry(self) -> None:
         handler, _headers, _statuses = _bare_handler()
@@ -266,6 +281,29 @@ class HandlerBoundaryTests(unittest.TestCase):
 
 
 class IntegrationNormalizationTests(unittest.TestCase):
+    def test_concurrent_initial_requests_share_one_runtime(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="oac-runtime-race-") as temporary:
+            root = Path(temporary).resolve()
+            kernel = ClinicalKernel(root / "state", data_root=root)
+            start = threading.Barrier(8)
+            created = []
+
+            def factory(*_args, **_kwargs):
+                runtime = object()
+                created.append(runtime)
+                time.sleep(0.02)
+                return runtime
+
+            def request(_index):
+                start.wait(timeout=5)
+                return kernel._transport_runtime()
+
+            kernel._transport_runtime_class = factory
+            with ThreadPoolExecutor(max_workers=8) as pool:
+                results = list(pool.map(request, range(8)))
+            self.assertEqual(len(created), 1)
+            self.assertTrue(all(item is created[0] for item in results))
+
     def test_ui_never_overrides_server_state_directory(self) -> None:
         html = (
             Path(__file__).resolve().parents[1] / "frontend" / "index.html"

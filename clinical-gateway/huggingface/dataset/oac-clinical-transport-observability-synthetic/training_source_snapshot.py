@@ -11,7 +11,6 @@ artifact byte-reproducible.
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
 import argparse
-import hashlib
 import json
 import math
 import random
@@ -352,7 +351,7 @@ def _reject_unexpected_stage_files(stage: Path, allowed: frozenset[str]) -> None
 def _copy_package_input(source: Path, destination: Path) -> None:
     destination.parent.mkdir(parents=True, exist_ok=True)
     if source.resolve() != destination.resolve():
-        shutil.copyfile(source, destination)
+        destination.write_bytes(source.read_text(encoding="utf-8").encode("utf-8"))
 
 
 def build(output_root: Path) -> dict[str, Any]:

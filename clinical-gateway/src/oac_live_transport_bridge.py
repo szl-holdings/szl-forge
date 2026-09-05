@@ -113,6 +113,13 @@ def _bounded_float(value: Any, default: float, minimum: float, maximum: float, n
     return parsed
 
 
+def _config_bool(config: Mapping[str, Any], name: str, default: bool = False) -> bool:
+    value = config.get(name, default)
+    if not isinstance(value, bool):
+        raise TransportFailure(f"{name} must be a boolean")
+    return value
+
+
 def _extract_messages_from_response(payload: str) -> list[tuple[bytes, dict[str, Any]]]:
     normalized = payload.strip()
     if not normalized:
@@ -447,14 +454,11 @@ class BaseTransport:
                 item.completion.set()
                 self._inbound_queue.task_done()
 
-    def _submit(
+    def _enqueue(
         self,
         raw: bytes,
         metadata: Mapping[str, Any],
-        *,
-        wait: bool,
-        timeout: float | None = None,
-    ) -> IngestOutcome:
+    ) -> _WorkItem | IngestOutcome:
         if self._stop_event.is_set():
             return IngestOutcome(False, "TRANSPORT_STOPPING")
         item = _WorkItem(bytes(raw), dict(metadata), threading.Event())
@@ -467,6 +471,19 @@ class BaseTransport:
                 self._queue_rejected += 1
                 self._last_error = "INGEST_QUEUE_FULL"
             return IngestOutcome(False, "INGEST_QUEUE_FULL")
+        return item
+
+    def _submit(
+        self,
+        raw: bytes,
+        metadata: Mapping[str, Any],
+        *,
+        wait: bool,
+        timeout: float | None = None,
+    ) -> IngestOutcome:
+        item = self._enqueue(raw, metadata)
+        if isinstance(item, IngestOutcome):
+            return item
         if not wait:
             return IngestOutcome(True, "QUEUED")
         if not item.completion.wait(timeout):
@@ -536,6 +553,7 @@ class FileDropTransport(BaseTransport):
             config.get("max_file_bytes"), DEFAULT_MAX_FRAME_BYTES, 1, MAX_MAX_FRAME_BYTES, "max_file_bytes"
         )
         self._candidates: dict[str, tuple[int, int, float]] = {}
+        self._pending_files: dict[str, tuple[_WorkItem, bytes, tuple[int, int]]] = {}
 
     def _destination(self, root: Path, payload: bytes) -> Path:
         stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
@@ -547,7 +565,7 @@ class FileDropTransport(BaseTransport):
         shutil.move(str(path), str(destination))
         return destination
 
-    def _quarantine(self, path: Path, payload: bytes, code: str) -> None:
+    def _quarantine(self, path: Path, payload: bytes, code: str) -> bool:
         try:
             destination = self._move(path, self.quarantine_dir, payload)
             destination.with_suffix(".json").write_text(
@@ -562,8 +580,47 @@ class FileDropTransport(BaseTransport):
                 ),
                 encoding="utf-8",
             )
+            return True
         except OSError as exc:
             self._set_error("FILE_QUARANTINE_FAILED", exc)
+            return False
+
+    def _finalize_pending(self, key: str) -> None:
+        item, payload, snapshot = self._pending_files[key]
+        if not item.completion.is_set():
+            return
+        path = Path(key)
+        try:
+            if path.is_symlink() or not _is_under(path, self.watch_dir):
+                self._set_error("FILE_CHANGED_AFTER_SUBMIT")
+                self._pending_files.pop(key, None)
+                return
+            stat = path.stat()
+            if (stat.st_size, stat.st_mtime_ns) != snapshot or path.read_bytes() != payload:
+                # Never archive or quarantine a producer's replacement file.
+                self._set_error("FILE_CHANGED_AFTER_SUBMIT")
+                self._pending_files.pop(key, None)
+                return
+        except FileNotFoundError:
+            self._set_error("FILE_SOURCE_MISSING_AFTER_SUBMIT")
+            self._pending_files.pop(key, None)
+            return
+        except OSError as exc:
+            self._set_error("FILE_FINALIZE_READ_FAILED", exc)
+            return
+        outcome = item.outcome
+        if outcome is None:
+            self._set_error("INGEST_OUTCOME_MISSING")
+            return
+        if outcome.ok:
+            try:
+                self._move(path, self.archive_dir, payload)
+            except OSError as exc:
+                self._set_error("FILE_ARCHIVE_FAILED", exc)
+                return  # Retry finalization, never the already-completed ingest.
+        elif not self._quarantine(path, payload, outcome.code):
+            return
+        self._pending_files.pop(key, None)
 
     def run_loop(self) -> None:
         self.watch_dir.mkdir(parents=True, exist_ok=True)
@@ -571,6 +628,8 @@ class FileDropTransport(BaseTransport):
         self.quarantine_dir.mkdir(parents=True, exist_ok=True)
         self._mark_ready()
         while not self._stop_event.is_set():
+            for key in list(self._pending_files):
+                self._finalize_pending(key)
             now = time.monotonic()
             paths = sorted(self.watch_dir.glob(self.pattern))
             visible: set[str] = set()
@@ -587,6 +646,14 @@ class FileDropTransport(BaseTransport):
                     continue
                 key = str(path.resolve())
                 visible.add(key)
+                if key in self._pending_files:
+                    continue  # A wait timeout does not cancel the queued work.
+                if len(self._pending_files) >= self._queue_capacity:
+                    # Completed ingests may still retain payloads while their
+                    # archive is unavailable. Bound those together with pending
+                    # ingests instead of draining unlimited files into memory.
+                    self._set_error("FILE_PENDING_CAPACITY")
+                    continue
                 try:
                     stat = path.stat()
                 except OSError as exc:
@@ -617,26 +684,22 @@ class FileDropTransport(BaseTransport):
                     self._quarantine(path, payload, "INVALID_FILE_SIZE")
                     self._candidates.pop(key, None)
                     continue
-                outcome = self._submit(
+                item = self._enqueue(
                     payload,
                     {
                         "kind": "file-drop",
                         "source_file_token": _redacted_token(path.name),
                         "payload_size": len(payload),
                     },
-                    wait=True,
-                    timeout=self.ingest_timeout,
                 )
-                if outcome.ok:
-                    try:
-                        self._move(path, self.archive_dir, payload)
-                    except OSError as exc:
-                        self._set_error("FILE_ARCHIVE_FAILED", exc)
-                elif outcome.code in {"INGEST_QUEUE_FULL", "TRANSPORT_STOPPING"}:
-                    pass  # Retryable backpressure: leave the source untouched.
-                else:
-                    self._quarantine(path, payload, outcome.code)
                 self._candidates.pop(key, None)
+                if isinstance(item, IngestOutcome):
+                    continue  # Queue refusal leaves the unsubmitted source intact.
+                self._pending_files[key] = (item, payload, snapshot)
+                if not item.completion.wait(self.ingest_timeout):
+                    self._set_error("INGEST_WAIT_TIMEOUT")
+                    continue  # Outcome unknown: neither reject nor enqueue again.
+                self._finalize_pending(key)
             for key in set(self._candidates) - visible:
                 self._candidates.pop(key, None)
             self._stop_event.wait(self._poll_interval)
@@ -767,8 +830,12 @@ class MLLPReceiverBase(BaseTransport):
 
 
 def _loopback_host(host: str) -> bool:
-    lowered = host.strip().lower()
-    return lowered == "localhost" or lowered == "::1" or lowered.startswith("127.")
+    # Only literal addresses qualify. Hostnames (including localhost), partial
+    # IPv4 forms and names prefixed by 127 must not gain an implicit trust grant.
+    try:
+        return "%" not in host and ipaddress.ip_address(host).is_loopback
+    except ValueError:
+        return False
 
 
 class MLLPListenerTransport(MLLPReceiverBase):
@@ -790,7 +857,8 @@ class MLLPListenerTransport(MLLPReceiverBase):
         self.bind_port = _bounded_int(config.get("bind_port"), 2100, 0, 65535, "bind_port")
         if not self.bind_host:
             raise TransportFailure("bind_host is required")
-        if not _loopback_host(self.bind_host) and not bool(config.get("allow_non_loopback", False)):
+        allow_non_loopback = _config_bool(config, "allow_non_loopback")
+        if not _loopback_host(self.bind_host) and not allow_non_loopback:
             raise TransportFailure("non-loopback MLLP binding requires allow_non_loopback=true")
         self.max_connections = _bounded_int(config.get("max_connections"), 4, 1, 32, "max_connections")
         allowed_peer_values = config.get("allowed_peer_ips", [])
@@ -804,7 +872,10 @@ class MLLPListenerTransport(MLLPReceiverBase):
             )
         except ValueError as exc:
             raise TransportFailure("allowed_peer_ips contains an invalid IP address") from exc
-        self.tls_enabled = bool(config.get("tls_enabled", False))
+        self.tls_enabled = _config_bool(config, "tls_enabled")
+        self.tls_require_client_cert = _config_bool(config, "tls_require_client_cert")
+        if self.tls_require_client_cert and not self.tls_enabled:
+            raise TransportFailure("tls_require_client_cert requires tls_enabled=true")
         self.tls_certfile = Path(str(config.get("tls_certfile", ""))).expanduser() if self.tls_enabled else None
         self.tls_keyfile = Path(str(config.get("tls_keyfile", ""))).expanduser() if self.tls_enabled else None
         self.tls_handshake_timeout = _bounded_float(
@@ -873,7 +944,7 @@ class MLLPListenerTransport(MLLPReceiverBase):
             ca_file = self.config.get("tls_ca_file")
             if ca_file:
                 context.load_verify_locations(cafile=str(Path(str(ca_file)).expanduser()))
-            if bool(self.config.get("tls_require_client_cert", False)):
+            if self.tls_require_client_cert:
                 context.verify_mode = ssl.CERT_REQUIRED
             return context
         except (OSError, ssl.SSLError) as exc:
@@ -959,9 +1030,8 @@ class MLLPClientReceiverTransport(MLLPReceiverBase):
         self.connect_timeout = _bounded_float(config.get("connect_timeout"), 5.0, 0.1, 60.0, "connect_timeout")
         if not self.remote_host:
             raise TransportFailure("remote_host is required for mllp-client-receiver")
-        if not _loopback_host(self.remote_host) and not bool(
-            config.get("allow_plaintext_upstream", False)
-        ):
+        allow_plaintext_upstream = _config_bool(config, "allow_plaintext_upstream")
+        if not _loopback_host(self.remote_host) and not allow_plaintext_upstream:
             raise TransportFailure(
                 "non-loopback mllp-client-receiver requires allow_plaintext_upstream=true"
             )
@@ -1014,9 +1084,8 @@ class RestPollingTransport(BaseTransport):
             raise TransportFailure("endpoint must be an absolute HTTP(S) URL")
         if parsed.username is not None or parsed.password is not None:
             raise TransportFailure("endpoint URL credentials are forbidden")
-        if parsed.scheme == "http" and not _loopback_host(parsed.hostname) and not bool(
-            config.get("allow_insecure_http", False)
-        ):
+        allow_insecure_http = _config_bool(config, "allow_insecure_http")
+        if parsed.scheme == "http" and not _loopback_host(parsed.hostname) and not allow_insecure_http:
             raise TransportFailure("non-loopback HTTP polling requires allow_insecure_http=true")
         self._endpoint_token = _redacted_token(f"{parsed.scheme}://{parsed.hostname}:{parsed.port or ''}")
         self._endpoint_scheme = parsed.scheme
@@ -1204,7 +1273,7 @@ class LiveTransportRuntime:
         if kind in {"rest-poll", "http-poll"}:
             return RestPollingTransport(transport_id, transport_config, callback, stop_event=event)
         if kind in {"roche_cobas_liat_v2.0", "roche-cobas-liat-v2.0"}:
-            if not bool(transport_config.get("tls_enabled", False)):
+            if not _config_bool(transport_config, "tls_enabled"):
                 raise TransportFailure("configured Roche-compatible profile requires tls_enabled=true")
             transport_config["required_hl7_version"] = "2.5"
             transport_config["required_message_type"] = "ORU^R30^ORU_R30"

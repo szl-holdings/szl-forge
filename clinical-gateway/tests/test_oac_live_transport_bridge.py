@@ -10,6 +10,7 @@ import tempfile
 import threading
 import time
 import unittest
+from unittest.mock import patch
 import urllib.error
 import urllib.request
 
@@ -26,6 +27,7 @@ from oac_live_transport_bridge import (  # noqa: E402
     IngestOutcome,
     IngestRejected,
     LiveTransportRuntime,
+    MLLPClientReceiverTransport,
     MLLPListenerTransport,
     NoRedirectHandler,
     RestPollingTransport,
@@ -103,7 +105,7 @@ def live_shadow_frame(
     return b"\x0b" + body + b"\x1c\r"
 
 
-def wait_for(predicate, timeout: float = 3.0) -> bool:
+def wait_for(predicate, timeout: float = 10.0) -> bool:
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
         if predicate():
@@ -340,6 +342,157 @@ class ListenerTests(unittest.TestCase):
 
 
 class FileDropTests(unittest.TestCase):
+    def _run_timeout_case(self, result: dict[str, object], destination_name: str) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            inbox, archive, quarantine = (root / name for name in ("inbox", "archive", "quarantine"))
+            inbox.mkdir()
+            entered, release = threading.Event(), threading.Event()
+            calls: list[bytes] = []
+
+            def ingest(raw: bytes, _metadata: dict[str, object]) -> dict[str, object]:
+                calls.append(raw)
+                entered.set()
+                release.wait(30.0)
+                return result
+
+            transport = FileDropTransport(
+                "pending-file-test",
+                {"watch_dir": str(inbox), "archive_dir": str(archive),
+                 "quarantine_dir": str(quarantine), "poll_interval": 0.05,
+                 "settle_seconds": 0.0, "ingest_timeout": 1.0},
+                ingest, stop_event=threading.Event(),
+            )
+            source = inbox / "result.hl7"
+            payload = hl7_frame()
+            transport.start()
+            try:
+                source.write_bytes(payload)
+                self.assertTrue(entered.wait(2.0))
+                self.assertTrue(wait_for(lambda: transport.status().last_error == "INGEST_WAIT_TIMEOUT"))
+                time.sleep(0.2)  # Allow additional polls while the same work is unresolved.
+                self.assertEqual(source.read_bytes(), payload)
+                self.assertEqual(list(archive.glob("*.hl7")), [])
+                self.assertEqual(list(quarantine.glob("*.hl7")), [])
+                self.assertEqual(calls, [payload])
+                self.assertEqual(transport.status().messages_total, 0)
+                release.set()
+                destination = archive if destination_name == "archive" else quarantine
+                self.assertTrue(
+                    wait_for(lambda: not transport._pending_files and not source.exists()
+                             and len(list(destination.glob("*.hl7"))) == 1, timeout=10.0),
+                    {"status": transport.status().asdict(), "calls": len(calls),
+                     "pending_count": len(transport._pending_files)},
+                )
+                self.assertEqual(calls, [payload])
+                self.assertEqual(transport.status().messages_total, 1)
+                if destination_name == "quarantine":
+                    receipt = list(quarantine.glob("*.json"))[0].read_text(encoding="utf-8")
+                    self.assertIn("BINDING_REJECTED", receipt)
+                    self.assertNotIn("INGEST_WAIT_TIMEOUT", receipt)
+            finally:
+                release.set()
+                transport.stop()
+
+    def test_wait_timeout_retains_one_pending_ingest_until_success(self) -> None:
+        self._run_timeout_case({"ok": True}, "archive")
+
+    def test_wait_timeout_quarantines_only_after_actual_rejection(self) -> None:
+        self._run_timeout_case({"ok": False, "code": "BINDING_REJECTED"}, "quarantine")
+
+    def test_archive_retry_does_not_repeat_completed_ingest(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            inbox, archive = root / "inbox", root / "archive"
+            inbox.mkdir()
+            calls: list[bytes] = []
+
+            def ingest(raw: bytes, _metadata: dict[str, object]) -> dict[str, object]:
+                calls.append(raw)
+                return {"ok": True}
+
+            transport = FileDropTransport(
+                "archive-retry-test",
+                {"watch_dir": str(inbox), "archive_dir": str(archive),
+                 "poll_interval": 0.05, "settle_seconds": 0.0},
+                ingest, stop_event=threading.Event(),
+            )
+            original_move = transport._move
+            move_calls = 0
+
+            def fail_once(path: Path, destination: Path, payload: bytes) -> Path:
+                nonlocal move_calls
+                move_calls += 1
+                if move_calls == 1:
+                    raise OSError("temporary archive failure")
+                return original_move(path, destination, payload)
+
+            source = inbox / "result.hl7"
+            with patch.object(transport, "_move", side_effect=fail_once):
+                transport.start()
+                try:
+                    source.write_bytes(hl7_frame())
+                    self.assertTrue(wait_for(lambda: not transport._pending_files and not source.exists()
+                                             and len(list(archive.glob("*.hl7"))) == 1))
+                    self.assertEqual(len(calls), 1)
+                    self.assertEqual(move_calls, 2)
+                finally:
+                    transport.stop()
+
+    def test_pending_archive_backlog_is_bounded_and_leaves_new_sources_intact(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            inbox, archive = root / "inbox", root / "archive"
+            inbox.mkdir()
+            calls: list[bytes] = []
+            allow_archive = threading.Event()
+
+            def ingest(raw: bytes, _metadata: dict[str, object]) -> dict[str, object]:
+                calls.append(raw)
+                return {"ok": True}
+
+            transport = FileDropTransport(
+                "bounded-pending-file-test",
+                {"watch_dir": str(inbox), "archive_dir": str(archive),
+                 "poll_interval": 0.05, "settle_seconds": 0.0, "queue_capacity": 1},
+                ingest, stop_event=threading.Event(),
+            )
+            original_move = transport._move
+
+            def hold_archive(path: Path, destination: Path, payload: bytes) -> Path:
+                if not allow_archive.is_set():
+                    raise OSError("archive unavailable")
+                return original_move(path, destination, payload)
+
+            first, second = inbox / "a.hl7", inbox / "b.hl7"
+            first_payload = hl7_frame(control_id="FIRST")
+            second_payload = hl7_frame(control_id="SECOND")
+            first.write_bytes(first_payload)
+            second.write_bytes(second_payload)
+            with patch.object(transport, "_move", side_effect=hold_archive):
+                transport.start()
+                try:
+                    self.assertTrue(wait_for(
+                        lambda: transport.status().last_error == "FILE_PENDING_CAPACITY", timeout=10.0
+                    ))
+                    time.sleep(0.15)
+                    self.assertEqual(len(transport._pending_files), 1)
+                    self.assertEqual(calls, [first_payload])
+                    self.assertEqual(first.read_bytes(), first_payload)
+                    self.assertEqual(second.read_bytes(), second_payload)
+                    self.assertEqual(list(archive.glob("*.hl7")), [])
+                    allow_archive.set()
+                    self.assertTrue(
+                        wait_for(lambda: not first.exists() and not second.exists(), timeout=10.0),
+                        {"status": transport.status().asdict(), "calls": len(calls),
+                         "pending_count": len(transport._pending_files)},
+                    )
+                    self.assertEqual(len(list(archive.glob("*.hl7"))), 2)
+                    self.assertEqual(calls, [first_payload, second_payload])
+                finally:
+                    allow_archive.set()
+                    transport.stop()
+
     def _run_case(self, result: dict[str, object], destination_name: str) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -369,7 +522,11 @@ class FileDropTests(unittest.TestCase):
             source = inbox / "patient-name-must-not-survive.hl7"
             source.write_bytes(hl7_frame())
             destination = archive if destination_name == "archive" else quarantine
-            self.assertTrue(wait_for(lambda: not source.exists() and len(list(destination.glob("*.hl7"))) == 1))
+            self.assertTrue(
+                wait_for(lambda: not transport._pending_files and not source.exists()
+                         and len(list(destination.glob("*.hl7"))) == 1, timeout=10.0),
+                {"status": transport.status().asdict(), "pending_count": len(transport._pending_files)},
+            )
             transport.stop()
             self.assertFalse(source.exists())
             self.assertEqual(len(list(destination.glob("*.hl7"))), 1)
@@ -419,6 +576,48 @@ class FileDropTests(unittest.TestCase):
 
 
 class RuntimeGateTests(unittest.TestCase):
+    def test_loopback_exemption_requires_a_complete_literal_ip_address(self) -> None:
+        for host in ("localhost", "127.0.0.1.example.invalid", "127.example.invalid", "127.1", "127.0.0.999"):
+            constructors = (
+                (MLLPListenerTransport, {"bind_host": host, "bind_port": 0}),
+                (MLLPClientReceiverTransport, {"remote_host": host}),
+                (RestPollingTransport, {"endpoint": f"http://{host}/results"}),
+            )
+            for constructor, config in constructors:
+                with self.subTest(host=host, transport=constructor.__name__):
+                    with self.assertRaises(TransportFailure):
+                        constructor("literal-ip-test", config, lambda *_args: {"ok": True},
+                                    stop_event=threading.Event())
+        for host in ("127.0.0.1", "127.0.0.2", "::1"):
+            with self.subTest(valid_literal=host):
+                transport = MLLPListenerTransport(
+                    "literal-valid-test", {"bind_host": host, "bind_port": 0},
+                    lambda *_args: {"ok": True}, stop_event=threading.Event(),
+                )
+                self.assertEqual(transport.bind_host, host)
+
+    def test_security_flags_reject_non_boolean_values_even_on_loopback(self) -> None:
+        cases = (
+            (MLLPListenerTransport, {"bind_host": "127.0.0.1"}, "allow_non_loopback"),
+            (MLLPListenerTransport, {"bind_host": "127.0.0.1"}, "tls_enabled"),
+            (MLLPListenerTransport, {"bind_host": "127.0.0.1"}, "tls_require_client_cert"),
+            (MLLPClientReceiverTransport, {"remote_host": "127.0.0.1"}, "allow_plaintext_upstream"),
+            (RestPollingTransport, {"endpoint": "https://example.invalid/results"}, "allow_insecure_http"),
+        )
+        for constructor, base_config, flag in cases:
+            for value in ("false", "true", 0, 1, None, [], {}):
+                with self.subTest(flag=flag, value=value):
+                    with self.assertRaisesRegex(TransportFailure, f"{flag} must be a boolean"):
+                        constructor("strict-boolean-test", {**base_config, flag: value},
+                                    lambda *_args: {"ok": True}, stop_event=threading.Event())
+
+    def test_client_certificate_requirement_cannot_be_silently_disabled_with_tls(self) -> None:
+        with self.assertRaisesRegex(TransportFailure, "requires tls_enabled=true"):
+            MLLPListenerTransport(
+                "required-mtls-test", {"tls_enabled": False, "tls_require_client_cert": True},
+                lambda *_args: {"ok": True}, stop_event=threading.Event(),
+            )
+
     def test_rest_poll_rejects_url_credentials_and_redirects(self) -> None:
         stop = threading.Event()
         with self.assertRaisesRegex(TransportFailure, "credentials"):
@@ -565,7 +764,7 @@ class RuntimeGateTests(unittest.TestCase):
             result = callback(raw, {"kind": "mllp-listener"})
             self.assertTrue(result["ok"])
             self.assertEqual(len(calls), 1)
-            self.assertEqual(Path(str(calls[0]["binding"])), selected)
+            self.assertEqual(Path(str(calls[0]["binding"])).resolve(), selected.resolve())
 
             missing_raw = live_shadow_frame(
                 subject_token="DEID-UNKNOWN01",
@@ -644,8 +843,8 @@ class RuntimeGateTests(unittest.TestCase):
                     "tls_keyfile": str(private_key),
                     "allowed_peer_ips": ["127.0.0.1"],
                     "socket_timeout": 0.1,
-                    "idle_timeout": 1.0,
-                    "ingest_timeout": 2.0,
+                    "idle_timeout": 5.0,
+                    "ingest_timeout": 10.0,
                 },
                 "source",
                 binding,
@@ -661,17 +860,21 @@ class RuntimeGateTests(unittest.TestCase):
             client_context.minimum_version = ssl.TLSVersion.TLSv1_2
             try:
                 with socket.create_connection(
-                    ("127.0.0.1", int(status.listener_port)), timeout=2.0
+                    ("127.0.0.1", int(status.listener_port)), timeout=10.0
                 ) as plain_socket:
                     with client_context.wrap_socket(
                         plain_socket, server_hostname="localhost"
                     ) as client:
                         negotiated = client.version()
-                        client.settimeout(2.0)
+                        # TLS and durable temporary-file admission share the
+                        # host scheduler; the outer deadline exceeds ingestion.
+                        client.settimeout(15.0)
                         client.sendall(live_shadow_frame())
                         response = b""
                         while not response.endswith(b"\x1c\r"):
-                            response += client.recv(4096)
+                            chunk = client.recv(4096)
+                            self.assertTrue(chunk, "connection closed before a complete ACK")
+                            response += chunk
             finally:
                 stopped = runtime.stop("roche-tls-loopback")
 

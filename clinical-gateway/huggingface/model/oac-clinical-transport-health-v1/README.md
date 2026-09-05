@@ -15,6 +15,9 @@ for **synthetic operational transport telemetry**. It emits a non-authoritative
 operator-attention advisory. The repository is staged from the canonical source
 at [szl-holdings/szl-forge](https://github.com/szl-holdings/szl-forge).
 
+Companion data: [synthetic transport observability](https://huggingface.co/datasets/SZLHOLDINGS/oac-clinical-transport-observability-synthetic).
+Integration source: [clinical gateway](https://github.com/szl-holdings/szl-forge/tree/main/clinical-gateway).
+
 ## Critical boundary
 
 This is not a medical, diagnostic, prognostic, triage, treatment, or clinical
@@ -74,6 +77,11 @@ the Python standard library. A fixed seed generates 768 training, 192
 validation, and 240 test examples. The receipt records exact split metrics and
 hashes. Validation chooses the decision threshold; the test split is otherwise
 held out.
+
+The 240-row synthetic test split reports balanced accuracy 0.7414, precision
+0.4124, recall 0.7843, F1 0.5405, and ROC AUC 0.8302 at threshold 0.16.
+These are baseline implementation results, including 57 false positives and
+11 false negatives; they do not justify production promotion.
 
 All reported metrics are from generated synthetic examples. The score is not
 production-calibrated and the metrics must not be generalized to a real

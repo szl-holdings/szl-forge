@@ -113,9 +113,13 @@ def _resolve_bounded_path(value: Any, root: Path, label: str) -> str:
     if not text:
         raise ValueError(f"{label} must not be empty")
     resolved_root = root.resolve(strict=False)
-    candidate = Path(text).expanduser()
+    candidate = Path(text)
+    if ".." in candidate.parts or text.startswith("~") or "\x00" in text:
+        raise ValueError(f"{label} must stay within data_root")
     if not candidate.is_absolute():
         candidate = resolved_root / candidate
+    if not candidate.is_relative_to(resolved_root):
+        raise ValueError(f"{label} must stay within data_root")
     candidate = candidate.resolve(strict=False)
     try:
         candidate.relative_to(resolved_root)
@@ -225,9 +229,11 @@ class OACStackHandler(BaseHTTPRequestHandler):
 
     def _set_cors_headers(self) -> None:
         origin = self.headers.get("Origin")
-        if origin and origin in OACStackHandler.allowed_origins:
-            self.send_header("Access-Control-Allow-Origin", origin)
-            self.send_header("Vary", "Origin")
+        for configured in OACStackHandler.allowed_origins:
+            if configured == origin and not any(ord(char) < 32 or ord(char) > 126 for char in configured):
+                self.send_header("Access-Control-Allow-Origin", configured)
+                self.send_header("Vary", "Origin")
+                break
 
     def _set_default_headers(self) -> None:
         self._set_cors_headers()
@@ -238,7 +244,10 @@ class OACStackHandler(BaseHTTPRequestHandler):
 
     def _origin_allowed(self) -> bool:
         origin = self.headers.get("Origin")
-        return origin is None or origin in OACStackHandler.allowed_origins
+        return origin is None or (
+            origin in OACStackHandler.allowed_origins
+            and not any(ord(char) < 32 or ord(char) > 126 for char in origin)
+        )
 
     def _authorized(self) -> bool:
         expected = OACStackHandler.api_key
