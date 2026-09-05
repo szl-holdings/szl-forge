@@ -1,0 +1,95 @@
+{
+  "$id": "szl-oac/transport-health-observation/v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Operational-only synthetic telemetry; no PHI or clinical result fields.",
+  "properties": {
+    "features": {
+      "additionalProperties": false,
+      "properties": {
+        "configuration_valid": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "integer"
+        },
+        "consecutive_failures": {
+          "maximum": 20.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        "ledger_integrity_ok": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "integer"
+        },
+        "listener_running": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "integer"
+        },
+        "peer_allowlist_configured": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "integer"
+        },
+        "queue_utilization": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        "seconds_since_last_success": {
+          "maximum": 86400.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        "tls_enabled": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "listener_running",
+        "tls_enabled",
+        "peer_allowlist_configured",
+        "queue_utilization",
+        "consecutive_failures",
+        "seconds_since_last_success",
+        "ledger_integrity_ok",
+        "configuration_valid"
+      ],
+      "type": "object"
+    },
+    "label": {
+      "additionalProperties": false,
+      "properties": {
+        "operator_attention_required": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "operator_attention_required"
+      ],
+      "type": "object"
+    },
+    "sample_id": {
+      "pattern": "^(train|validation|test)-[0-9]{6}$",
+      "type": "string"
+    },
+    "schema": {
+      "const": "szl-oac/transport-health-observation/v1"
+    },
+    "synthetic": {
+      "const": true
+    }
+  },
+  "required": [
+    "schema",
+    "synthetic",
+    "sample_id",
+    "features",
+    "label"
+  ],
+  "title": "Synthetic OAC transport-health observation",
+  "type": "object"
+}

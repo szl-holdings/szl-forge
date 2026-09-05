@@ -1,0 +1,154 @@
+name: OAC Clinical Gateway v2.5
+
+on:
+  pull_request:
+    paths:
+      - "clinical-gateway/**"
+      - ".github/workflows/oac-clinical-gateway.yml"
+      - "README.md"
+  push:
+    branches: [main]
+    paths:
+      - "clinical-gateway/**"
+      - ".github/workflows/oac-clinical-gateway.yml"
+      - "README.md"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: oac-clinical-gateway-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  portable-contracts:
+    name: Clinical contracts (Python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12", "3.13"]
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install pinned runtime
+        run: |
+          python -m pip install --disable-pip-version-check --requirement clinical-gateway/requirements.lock
+          python -m pip check
+
+      - name: Compile and run contracts
+        env:
+          PYTHONPATH: clinical-gateway/src
+        run: |
+          python -m compileall -q clinical-gateway/src clinical-gateway/tests
+          python -I -B clinical-gateway/tools/train_operational_health_model.py --verify
+          python -m unittest discover -s clinical-gateway/tests -v
+
+  wheel:
+    name: Build and install wheel
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install pinned build tools
+        run: python -m pip install --disable-pip-version-check build==1.5.0 setuptools==83.0.0 wheel==0.47.0
+
+      - name: Build wheel
+        run: python -m build --wheel clinical-gateway
+
+      - name: Install and verify wheel
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m venv /tmp/oac-clinical-wheel-test
+          /tmp/oac-clinical-wheel-test/bin/python -m pip install --disable-pip-version-check \
+            --requirement clinical-gateway/requirements.lock
+          wheel_path="$(find clinical-gateway/dist -maxdepth 1 -type f -name '*.whl' -print -quit)"
+          test -n "${wheel_path}"
+          /tmp/oac-clinical-wheel-test/bin/python -m pip install --disable-pip-version-check \
+            --no-deps "${wheel_path}"
+          /tmp/oac-clinical-wheel-test/bin/python -m pip check
+          /tmp/oac-clinical-wheel-test/bin/owned-agent-clinical-control --version
+          /tmp/oac-clinical-wheel-test/bin/owned-agent-clinical-control clinical-capabilities
+          /tmp/oac-clinical-wheel-test/bin/oac-clinical-gateway --help
+          /tmp/oac-clinical-wheel-test/bin/oac-operational-health \
+            --model clinical-gateway/operational-model/artifacts/model.json \
+            --receipt clinical-gateway/operational-model/artifacts/model-receipt.json \
+            --input clinical-gateway/operational-model/example-input.json
+
+      - name: Upload wheel
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: oac-clinical-gateway-wheel-${{ github.run_id }}
+          path: clinical-gateway/dist/*.whl
+          if-no-files-found: error
+          retention-days: 30
+
+  windows-contracts:
+    name: Windows clinical contracts
+    runs-on: windows-2022
+    timeout-minutes: 25
+    needs: [portable-contracts, wheel]
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Download exact wheel
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: oac-clinical-gateway-wheel-${{ github.run_id }}
+          path: wheelhouse
+
+      - name: Install exact wheel and run tests
+        shell: pwsh
+        run: |
+          python -m venv .venv-oac-clinical-ci
+          .\.venv-oac-clinical-ci\Scripts\python.exe -m pip install --disable-pip-version-check --requirement clinical-gateway/requirements.lock
+          $wheel = Get-ChildItem wheelhouse\szl_oac_clinical_gateway-2.5.0-py3-none-any.whl -ErrorAction Stop
+          .\.venv-oac-clinical-ci\Scripts\python.exe -m pip install --disable-pip-version-check --no-deps $wheel.FullName
+          .\.venv-oac-clinical-ci\Scripts\python.exe -m pip check
+          .\.venv-oac-clinical-ci\Scripts\python.exe -m unittest discover -s clinical-gateway/tests -v

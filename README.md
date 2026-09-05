@@ -23,6 +23,7 @@ software, curriculum, schemas, and evidence; it is not itself a weight repo.
 |---|---|---|---|
 | Forge bootstrap and runbooks | **Executable software + training recipe** | Source-controlled and locally runnable | A recipe does not prove a run completed or that its output matches a published model. |
 | [`agent-forge/`](./agent-forge/) | **Beta local Windows control software** | Portable contracts are source-controlled; Windows enforcement is qualified only by its behavioral self-test | Controls only registered process trees it launches under the same Windows identity. A11oy receives a read-only projection and no process-control authority. |
+| [`clinical-gateway/`](./clinical-gateway/) | **Beta synthetic and pre-deidentified live-shadow integration software** | Source and local contract tests cover the bounded result engine, TLS MLLP listener, file drop, read-only polling, local API, and operator UI | Not site-validated, not authorized for real PHI or clinical use, and not evidence of physical-analyzer interoperability or LIS/EHR delivery. Models and kernels are excluded from result interpretation and release. |
 | [`SZL-Forge-1.5B-ReceiptAgent`](https://huggingface.co/SZLHOLDINGS/SZL-Forge-1.5B-ReceiptAgent) | **Trained fine-tuned weights** | `MEASURED_LIMITED`; expected public weight hashes and owner-signed training/evaluation receipts are bound in `publishing/model-source-bindings.json` | Proposal-only, not promoted, and not independently certified. |
 | [`SZL-Khipu-1.5B`](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B) | **Trained fine-tuned weights** | `MEASURED_RESEARCH_ONLY`; repository-declared key continuity | Held-out abstention is 2/6; autonomous and high-stakes use is prohibited. |
 | [`KHIPU-R2`](./khipu_r2/) | **Separate SKU** | Hub job `6a91bf11984507d9db4ea104` COMPLETED; adapter 147.8MB AVAILABLE; abstain MEASURED 3/6 (not a pass; grounding 5/5, plan 11/11). Hub receipt `ddf6c50` `publication_eligible: false` is the public claim. This-kit jobs UNKNOWN; this-SKU evals not-this-run; CHAWPI extra lock (no `--run-job`). | Does **not** overwrite signed `SZL-Khipu-1.5B`. Signed 1.5B abstain stays MEASURED 2/6. Lab stays signed Khipu GGUF. |
@@ -74,6 +75,31 @@ or claim to sandbox hostile code running as the same Windows user.
 Start with [`agent-forge/README.md`](./agent-forge/README.md). Operational status
 must remain `NOT_READY` until the exact Windows runtime passes `doctor` and
 `self-test`; a Linux or packaging pass establishes portable contracts only.
+
+## OAC Clinical Gateway v2.5
+
+[`clinical-gateway/`](./clinical-gateway/) is the separately bounded integration
+surface for synthetic and already-deidentified cobas liat-shaped result traffic.
+It implements a local control engine, an analyzer-initiated TLS MLLP host
+listener, deterministic `ACK^R33` responses, bounded file and polling adapters,
+a loopback API, and an operator UI. It produces signed, offline FHIR R4
+candidate bundles; it does not publish those bundles into a clinical system.
+
+The separate [OAC Transport Health v1 model](https://huggingface.co/SZLHOLDINGS/oac-clinical-transport-health-v1)
+and [synthetic operational dataset](https://huggingface.co/datasets/SZLHOLDINGS/oac-clinical-transport-observability-synthetic)
+provide a reproducible, standard-library baseline for operator-attention
+advisories. Its 1,200 generated examples are not gateway event records or
+clinical data. The inference kernel verifies artifact receipts and cannot
+acknowledge a message, command a device, interpret a result, or authorize release.
+
+The gateway intentionally provides no analyzer command, order download,
+calibration, test-start, result reinterpretation, automatic release, or clinical
+alert path. Its operational dataset and control-evidence score contain only
+local run observations and must never be treated as clinical evidence or a
+training corpus. Start with [`clinical-gateway/README.md`](./clinical-gateway/README.md)
+and keep every deployment claim at `NOT_SITE_VALIDATED` until the exact device,
+site certificate, assay mappings, network, privacy controls, laboratory workflow,
+and destination reconciliation have been witnessed and approved.
 
 ## One command (laptop)
 

@@ -1,0 +1,6 @@
+{
+  "SITE-FLU": {
+    "display": "Site-configured influenza assay placeholder",
+    "local_system": "urn:example:site:assay"
+  }
+}

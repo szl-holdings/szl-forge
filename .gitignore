@@ -8,3 +8,9 @@ unsloth_compiled_cache/
 agent-forge/build/
 agent-forge/dist/
 agent-forge/src/*.egg-info/
+clinical-gateway/build/
+clinical-gateway/dist/
+clinical-gateway/dist-model-test/
+clinical-gateway/src/*.egg-info/
+clinical-gateway/site-config/
+.runtime/
