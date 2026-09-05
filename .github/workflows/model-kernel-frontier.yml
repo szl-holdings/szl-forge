@@ -150,6 +150,7 @@ jobs:
             tools/test_publish_szl_invariants.py
           PYTHONPATH=tools python tools/test_publish_model_source_bindings.py
           python tools/test_model_binding_workflow.py
+          python tools/test_model_frontier_auth_boundary.py
           PYTHONPATH=tools python tools/test_publish_hf_space.py
           PYTHONPATH=frontier/qwen35-receiptagent-v2 \
             python frontier/qwen35-receiptagent-v2/test_qualify_runtime.py
@@ -167,10 +168,8 @@ jobs:
           PYTHONPATH=spaces/szl-forge-lab \
             python -m unittest discover \
               -s spaces/szl-forge-lab/tests -v
-          python tools/verify_model_portfolio.py --offline
-          python tools/publish_model_source_bindings.py \
-            --source-revision "${GITHUB_SHA}" \
-            --report reports/model-source-bindings-dry-run.json
+          python tools/verify_model_portfolio.py --offline \
+            --report reports/model-portfolio-offline.json
           python tools/publish_hf_space.py \
             --source-dir spaces/szl-model-inference-lab \
             --repo-id SZLHOLDINGS/szl-model-inference-lab \
@@ -206,19 +205,15 @@ jobs:
               raise SystemExit("invalid revision unexpectedly passed isolated runtime verification")
           PY
 
-      - name: Audit public Hugging Face artifacts
-        run: |
-          set -euo pipefail
-          python tools/verify_model_portfolio.py \
-            --live \
-            --report reports/model-portfolio-live.json
-
-      - name: Upload audit evidence
+      - name: Upload source-only audit evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: model-kernel-portfolio-${{ github.run_id }}
-          path: reports/model-portfolio-live.json
+          name: model-kernel-source-${{ github.run_id }}
+          path: |
+            reports/model-portfolio-offline.json
+            reports/model-inference-lab-dry-run.json
+            reports/szl-forge-lab-dry-run.json
           if-no-files-found: error
           retention-days: 30
 
@@ -311,3 +306,70 @@ jobs:
           if ($LASTEXITCODE -ne 0) {
             throw "git diff --check failed with exit code $LASTEXITCODE"
           }
+
+  verify-hub-evidence:
+    name: Authenticated Hub receipts and exact source bindings
+    if: github.repository == 'szl-holdings/szl-forge' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    needs: [verify, verify-receiptagent-v3-windows]
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+      - name: Checkout exact tested main revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Install exact verification clients
+        run: >-
+          python -m pip install --disable-pip-version-check
+          "huggingface-hub==1.23.0" "cryptography==49.0.0"
+      - name: Verify credential selection without exposing any secret
+        run: |
+          set -euo pipefail
+          python -m unittest -q tests/test_acquire_hf_publisher_token.py
+          python -m unittest -q tests/test_hf_org_token1_fallback.py
+      - name: Acquire existing owner credential for read-only gated evidence
+        env:
+          HF_ORG_TOKEN_CANDIDATE: ${{ secrets.HF_ORG_TOKEN }}
+          HF_ORG_TOKEN1_CANDIDATE: ${{ secrets.HF_ORG_TOKEN1 }}
+          HF_WRITE_TOKEN_CANDIDATE: ${{ secrets.HF_WRITE_TOKEN }}
+          HF_TOKEN_CANDIDATE: ${{ secrets.HF_TOKEN }}
+          HUGGINGFACE_TOKEN_CANDIDATE: ${{ secrets.HUGGINGFACE_TOKEN }}
+          HUGGING_FACE_HUB_TOKEN_CANDIDATE: ${{ secrets.HUGGING_FACE_HUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          python tools/acquire_hf_publisher_token.py \
+            --target-repo SZLHOLDINGS/SZL-Forge-1.5B-ReceiptAgent \
+            --target-type model \
+            --github-env "${GITHUB_ENV}" \
+            --report reports/hf-model-verifier-credential.json
+      - name: Verify remote signatures and source bindings without publication
+        run: |
+          set -euo pipefail
+          python tools/publish_model_source_bindings.py \
+            --source-revision "${GITHUB_SHA}" \
+            --report reports/model-source-bindings-dry-run.json
+          python tools/verify_model_portfolio.py --live \
+            --report reports/model-portfolio-live.json
+      - name: Upload authenticated read-only evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: model-kernel-authenticated-${{ github.run_id }}
+          path: |
+            reports/hf-model-verifier-credential.json
+            reports/model-source-bindings-dry-run.json
+            reports/model-portfolio-live.json
+          if-no-files-found: error
+          retention-days: 30
