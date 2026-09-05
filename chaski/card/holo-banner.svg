@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" width="1200" height="360">
+  <defs>
+    <linearGradient id="holo" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#22d3ee"/>
+      <stop offset="0.35" stop-color="#818cf8"/>
+      <stop offset="0.7" stop-color="#c084fc"/>
+      <stop offset="1" stop-color="#f472b6"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="10"/>
+    </filter>
+    <radialGradient id="fade" cx="0.5" cy="0.5" r="0.75">
+      <stop offset="0" stop-color="#0b0b14"/>
+      <stop offset="1" stop-color="#050508"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="360" fill="url(#fade)"/>
+  <path d="M0 205 C 150 130, 300 285, 450 200 S 750 105, 900 195 S 1120 280, 1200 190" fill="none" stroke="url(#holo)" stroke-width="7" opacity="0.55" filter="url(#glow)"/>
+  <path d="M0 205 C 150 130, 300 285, 450 200 S 750 105, 900 195 S 1120 280, 1200 190" fill="none" stroke="url(#holo)" stroke-width="1.6"/>
+  <path d="M0 235 C 170 170, 330 300, 480 230 S 760 150, 930 225 S 1120 300, 1200 220" fill="none" stroke="url(#holo)" stroke-width="5" opacity="0.35" filter="url(#glow)"/>
+  <path d="M0 235 C 170 170, 330 300, 480 230 S 760 150, 930 225 S 1120 300, 1200 220" fill="none" stroke="url(#holo)" stroke-width="1" opacity="0.7"/>
+</svg>
