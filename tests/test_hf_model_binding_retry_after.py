@@ -1,8 +1,18 @@
 from __future__ import annotations
 
+import sys
+import types
 import unittest
 from types import SimpleNamespace
 from unittest import mock
+
+# The generic repository gate intentionally installs only the package itself.
+# These unit tests exercise the retry state machine and must not require the
+# optional Hugging Face publisher SDK merely to import the module under test.
+hf_stub = types.ModuleType("huggingface_hub")
+hf_stub.HfApi = object
+hf_stub.hf_hub_download = lambda *args, **kwargs: ""  # pragma: no cover
+sys.modules.setdefault("huggingface_hub", hf_stub)
 
 import publish_model_source_bindings as bindings
 
