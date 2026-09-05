@@ -85,8 +85,12 @@ def validate_assets(assets: dict[str, bytes]) -> dict[str, dict[str, Any]]:
         if required not in banner:
             raise PublicationError(f"required SVG contract missing: {required}")
     lowered = banner.lower()
+    namespace = 'xmlns="http://www.w3.org/2000/svg"'
+    if lowered.count(namespace) != 1:
+        raise PublicationError("canonical SVG namespace must appear exactly once")
+    remote_scan = lowered.replace(namespace, "", 1)
     for forbidden in ("<script", "javascript:", "http://", "https://"):
-        if forbidden in lowered:
+        if forbidden in remote_scan:
             raise PublicationError(f"unsafe or remote SVG content present: {forbidden}")
 
     return {

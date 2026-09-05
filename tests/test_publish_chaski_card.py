@@ -38,9 +38,23 @@ def test_svg_is_local_scriptless_and_bounded() -> None:
     assert svg.lstrip().startswith("<svg")
     assert '<script' not in svg
     assert "javascript:" not in svg
-    assert "http://" not in svg
-    assert "https://" not in svg
+    namespace = 'xmlns="http://www.w3.org/2000/svg"'
+    assert svg.count(namespace) == 1
+    remote_scan = svg.replace(namespace, "", 1)
+    assert "http://" not in remote_scan
+    assert "https://" not in remote_scan
     assert len(assets["holo-banner.svg"]) < 10_000
+
+
+def test_svg_remote_reference_is_rejected() -> None:
+    assets = publisher.load_assets()
+    assets["holo-banner.svg"] = assets["holo-banner.svg"].replace(
+        b"<svg ",
+        b'<svg data-remote="https://evil.invalid" ',
+        1,
+    )
+    with pytest.raises(publisher.PublicationError, match="remote SVG content"):
+        publisher.validate_assets(assets)
 
 
 def test_dry_run_report_is_source_bound_and_grants_no_extra_authority(tmp_path: Path) -> None:
