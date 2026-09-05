@@ -1,0 +1,13 @@
+{
+  "title": "SZL-Forge — governed, receipt-verified model forge (ReceiptAgent family)",
+  "upload_type": "software",
+  "description": "QLoRA fine-tune kit and governed ReceiptAgent family (SZL-Forge-1.5B-ReceiptAgent; szl-receiptagent-qwen35-0.8b-v2/v3). Every capability claim is derived from committed ed25519 owner-signed receipts; proposal-only boundary; refusal oversampling with held-out adversarial set. Λ = Conjecture 1 — never a theorem — per SZL Doctrine v11.",
+  "creators": [{"name": "Lutar, Stephen P., Jr."}],
+  "license": {"id": "Apache-2.0"},
+  "keywords": ["governed-ai", "receipts", "qlora", "proposal-only", "doctrine-v11", "szl-holdings"],
+  "related_identifiers": [
+    {"identifier": "10.5281/zenodo.19944926", "relation": "isSupplementTo", "scheme": "doi"},
+    {"identifier": "https://huggingface.co/SZLHOLDINGS/SZL-Forge-1.5B-ReceiptAgent", "relation": "isDocumentedBy", "scheme": "url"}
+  ],
+  "notes": "NEW work (not a version of any existing SZL record) per the szl-papers deposit policy. Minted via GitHub release after enabling this repository in the owner's Zenodo account."
+}

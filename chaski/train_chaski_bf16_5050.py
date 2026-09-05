@@ -13,7 +13,7 @@
 """Owner-GPU Chaski-5050 recipe. Local RTX 5050 Unsloth LoRA. Not an HF Job.
 
 Byte-aligned to the running owner file:
-  C:\\Users\\steph\\szl-forge\\train_chaski_bf16_5050.py
+  chaski/train_chaski_bf16_5050.py
 
 CANONICAL_BASE = Qwen/Qwen3.5-0.8B
 HUB = SZLHOLDINGS/chaski-5050

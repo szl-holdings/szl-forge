@@ -345,11 +345,40 @@ class FixedPolicyAndTelemetryTests(unittest.TestCase):
         self.assertFalse(result.cgroup_empty_confirmed)
         self.assertEqual((hot,), result.samples)
 
+    def test_sample_gpu_clamps_subprocess_to_remaining_deadline(self):
+        completed = subprocess.CompletedProcess(
+            args=[],
+            returncode=0,
+            stdout=f"{GPU_UUID}, Test GPU, 60, 4096, 8192\n".encode(),
+            stderr=b"",
+        )
+        with mock.patch.object(
+            supervisor.subprocess, "run", return_value=completed
+        ) as run:
+            supervisor.sample_gpu(
+                supervisor.EXPECTED_POLICY,
+                timeout_seconds=0.75,
+            )
+        self.assertEqual(0.75, run.call_args.kwargs["timeout"])
+
+    def test_sample_gpu_rejects_expired_deadline_before_subprocess(self):
+        with (
+            mock.patch.object(supervisor.subprocess, "run") as run,
+            self.assertRaisesRegex(
+                supervisor.SupervisionError, "telemetry deadline has expired"
+            ),
+        ):
+            supervisor.sample_gpu(
+                supervisor.EXPECTED_POLICY,
+                timeout_seconds=0.0,
+            )
+        run.assert_not_called()
+
     def test_sampled_drain_requires_stop_after_slow_successful_sample(self):
         policy = copy.deepcopy(supervisor.EXPECTED_POLICY)
         cool = sample(temperature_c=60)
         late = supervisor.TelemetrySample(
-            observed_monotonic_ns=9_000_000_001,
+            observed_monotonic_ns=21_000_000_001,
             observed_at=cool.observed_at,
             gpu_uuid=cool.gpu_uuid,
             name=cool.name,

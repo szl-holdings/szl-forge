@@ -11,6 +11,7 @@ on:
       - "tools/acquire_hf_publisher_token.py"
       - "tools/run_governed_live_verifier.py"
       - "tests/test_acquire_hf_publisher_token.py"
+      - "tests/test_hf_org_token1_fallback.py"
       - "tests/test_governed_live_verifier_entrypoint.py"
       - ".github/workflows/publish-model-inference-lab.yml"
 
@@ -55,11 +56,13 @@ jobs:
         run: >-
           python -m pytest -q
           tests/test_acquire_hf_publisher_token.py
+          tests/test_hf_org_token1_fallback.py
           tests/test_governed_live_verifier_entrypoint.py
 
       - name: Acquire and actively validate Space publisher credential
         env:
           HF_ORG_TOKEN_CANDIDATE: ${{ secrets.HF_ORG_TOKEN }}
+          HF_ORG_TOKEN1_CANDIDATE: ${{ secrets.HF_ORG_TOKEN1 }}
           HF_WRITE_TOKEN_CANDIDATE: ${{ secrets.HF_WRITE_TOKEN }}
           HF_TOKEN_CANDIDATE: ${{ secrets.HF_TOKEN }}
           HUGGINGFACE_TOKEN_CANDIDATE: ${{ secrets.HUGGINGFACE_TOKEN }}
@@ -151,10 +154,12 @@ jobs:
         run: |
           python tools/test_publish_model_source_bindings.py
           python -m unittest -q tests/test_acquire_hf_publisher_token.py
+          python -m unittest -q tests/test_hf_org_token1_fallback.py
 
       - name: Acquire and actively validate model publisher credential
         env:
           HF_ORG_TOKEN_CANDIDATE: ${{ secrets.HF_ORG_TOKEN }}
+          HF_ORG_TOKEN1_CANDIDATE: ${{ secrets.HF_ORG_TOKEN1 }}
           HF_WRITE_TOKEN_CANDIDATE: ${{ secrets.HF_WRITE_TOKEN }}
           HF_TOKEN_CANDIDATE: ${{ secrets.HF_TOKEN }}
           HUGGINGFACE_TOKEN_CANDIDATE: ${{ secrets.HUGGINGFACE_TOKEN }}
