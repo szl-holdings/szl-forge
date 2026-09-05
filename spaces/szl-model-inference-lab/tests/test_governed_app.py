@@ -269,6 +269,10 @@ class GovernedSpaceTests(unittest.TestCase):
                 return_value={"ready": True, "packages": {}, "contract_ready": True},
             ),
             mock.patch.object(governed, "_components", return_value=components),
+            mock.patch.object(governed, "frontier_status", return_value={
+                "ready": True, "state": "REVIEW_REQUIRED", "source_count": 7,
+                "training_authority": "NONE", "execution_authority": "NONE",
+            }),
         ):
             response = governed.governed_health()
         payload = json.loads(response.body)

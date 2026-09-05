@@ -12,7 +12,6 @@ from typing import Any, Callable
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-from second_brain import frontier_status
 
 import app as legacy
 from inference import (
@@ -109,6 +108,13 @@ def _components() -> dict[str, Any]:
                     "witness": make_szl_nemo_envelope_witness(),
                 }
     return _components_cache
+
+
+def frontier_status() -> dict[str, Any]:
+    # Keep the optional installed memory dependency inside the health boundary.
+    from second_brain import frontier_status as read_frontier
+
+    return read_frontier()
 
 
 def _distribution_direct_url(name: str) -> dict[str, Any] | None:
