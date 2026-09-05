@@ -1,0 +1,15 @@
+# CITATION.cff — szl-holdings/szl-forge
+# Covers the SZL-Forge family: SZL-Forge-1.5B-ReceiptAgent,
+# szl-receiptagent-qwen35-0.8b-v2/v3 and the forge kit.
+# Mint step: enable the GitHub-Zenodo integration on this repo to mint a
+# concept DOI on the next release, then add `doi:` below.
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "SZL-Forge — governed, receipt-verified model forge (ReceiptAgent family)"
+authors:
+  - family-names: Lutar
+    given-names: Stephen Paul
+license: Apache-2.0
+url: "https://huggingface.co/SZLHOLDINGS/SZL-Forge-1.5B-ReceiptAgent"
+repository-code: "https://github.com/szl-holdings/szl-forge"
