@@ -42,18 +42,19 @@ jobs:
           set -euo pipefail
           python - <<'PY'
           from pathlib import Path
+          from textwrap import dedent
 
           source_path = Path("tools/publish_model_source_bindings.py")
-          test_path = Path("tools/test_publish_model_source_bindings.py")
+          test_path = Path("tests/test_hf_model_binding_retry_after.py")
           source = source_path.read_text(encoding="utf-8")
-          tests = test_path.read_text(encoding="utf-8")
 
-          class_anchor = '''class RuntimeUnavailableBindingError(BindingError):
-              """Raised when the governed runtime or required route does not exist yet."""
-
-
-          '''
-          helper = '''class RuntimeUnavailableBindingError(BindingError):
+          class_anchor = (
+              'class RuntimeUnavailableBindingError(BindingError):\n'
+              '    """Raised when the governed runtime or required route does not exist yet."""\n'
+              '\n\n'
+          )
+          helper = dedent('''
+          class RuntimeUnavailableBindingError(BindingError):
               """Raised when the governed runtime or required route does not exist yet."""
 
 
@@ -130,66 +131,79 @@ jobs:
               raise AssertionError("unreachable Hub retry state")
 
 
-          '''
+          ''').lstrip()
           if source.count(class_anchor) != 1:
               raise SystemExit("RuntimeUnavailableBindingError anchor drifted")
           source = source.replace(class_anchor, helper, 1)
 
-          artifact_call = '''    info = api.model_info(
-              artifact["repo_id"],
-              files_metadata=True,
-              revision=expected_revision,
+          artifact_call = (
+              "info = api.model_info(\n"
+              '        artifact["repo_id"],\n'
+              "        files_metadata=True,\n"
+              "        revision=expected_revision,\n"
+              "    )"
           )
-          '''
-          artifact_replacement = '''    info = _model_info_with_retry(
-              api,
-              artifact["repo_id"],
-              files_metadata=True,
-              revision=expected_revision,
+          artifact_replacement = (
+              "info = _model_info_with_retry(\n"
+              "        api,\n"
+              '        artifact["repo_id"],\n'
+              "        files_metadata=True,\n"
+              "        revision=expected_revision,\n"
+              "    )"
           )
-          '''
           if source.count(artifact_call) != 1:
-              raise SystemExit("artifact model_info call drifted")
+              raise SystemExit(
+                  f"artifact model_info call drifted; count={source.count(artifact_call)}"
+              )
           source = source.replace(artifact_call, artifact_replacement, 1)
 
-          lineage_call = '''        info = api.model_info(repo_id, revision=revision)
-          '''
-          lineage_replacement = '''        info = _model_info_with_retry(api, repo_id, revision=revision)
-          '''
+          lineage_call = "info = api.model_info(repo_id, revision=revision)"
+          lineage_replacement = "info = _model_info_with_retry(api, repo_id, revision=revision)"
           if source.count(lineage_call) != 1:
-              raise SystemExit("lineage model_info call drifted")
+              raise SystemExit(
+                  f"lineage model_info call drifted; count={source.count(lineage_call)}"
+              )
           source = source.replace(lineage_call, lineage_replacement, 1)
 
-          test_anchor = '''    def test_runtime_probe_matches_packaged_model_lab_release(self) -> None:
-          '''
-          test_block = '''    def test_model_info_honors_numeric_retry_after(self) -> None:
-              class RateLimitError(RuntimeError):
-                  def __init__(self) -> None:
-                      super().__init__("rate limited")
-                      self.response = SimpleNamespace(
-                          status_code=429,
-                          headers={"Retry-After": "17"},
-                      )
+          tests = dedent('''
+          from __future__ import annotations
 
-              expected = SimpleNamespace(sha="a" * 40, siblings=[])
-              api = mock.Mock()
-              api.model_info.side_effect = [RateLimitError(), expected]
-              sleeps: list[float] = []
+          import unittest
+          from types import SimpleNamespace
+          from unittest import mock
 
-              observed = bindings._model_info_with_retry(
-                  api,
-                  "SZLHOLDINGS/example",
-                  sleeper=sleeps.append,
-                  max_attempts=3,
-                  total_sleep_budget_seconds=30,
-                  files_metadata=True,
-              )
+          import publish_model_source_bindings as bindings
 
-              self.assertIs(observed, expected)
-              self.assertEqual([17.0], sleeps)
-              self.assertEqual(2, api.model_info.call_count)
 
-              def test_model_info_does_not_retry_nontransient_denial(self) -> None:
+          class HubModelInfoRetryTests(unittest.TestCase):
+              def test_honors_numeric_retry_after(self) -> None:
+                  class RateLimitError(RuntimeError):
+                      def __init__(self) -> None:
+                          super().__init__("rate limited")
+                          self.response = SimpleNamespace(
+                              status_code=429,
+                              headers={"Retry-After": "17"},
+                          )
+
+                  expected = SimpleNamespace(sha="a" * 40, siblings=[])
+                  api = mock.Mock()
+                  api.model_info.side_effect = [RateLimitError(), expected]
+                  sleeps: list[float] = []
+
+                  observed = bindings._model_info_with_retry(
+                      api,
+                      "SZLHOLDINGS/example",
+                      sleeper=sleeps.append,
+                      max_attempts=3,
+                      total_sleep_budget_seconds=30,
+                      files_metadata=True,
+                  )
+
+                  self.assertIs(observed, expected)
+                  self.assertEqual([17.0], sleeps)
+                  self.assertEqual(2, api.model_info.call_count)
+
+              def test_does_not_retry_nontransient_denial(self) -> None:
                   class ProviderPermissionError(RuntimeError):
                       def __init__(self) -> None:
                           super().__init__("denied")
@@ -210,7 +224,7 @@ jobs:
                   self.assertEqual([], sleeps)
                   self.assertEqual(1, api.model_info.call_count)
 
-              def test_model_info_fails_closed_when_retry_budget_is_exhausted(self) -> None:
+              def test_fails_closed_when_retry_budget_is_exhausted(self) -> None:
                   class RateLimitError(RuntimeError):
                       def __init__(self) -> None:
                           super().__init__("rate limited")
@@ -238,42 +252,39 @@ jobs:
                   self.assertEqual([], sleeps)
                   self.assertEqual(1, api.model_info.call_count)
 
-              def test_runtime_probe_matches_packaged_model_lab_release(self) -> None:
-          '''
-          # De-indent the two additional methods: keep them peers of the first test.
-          test_block = test_block.replace(
-              "\n              def test_model_info_does_not_retry_nontransient_denial",
-              "\n          def test_model_info_does_not_retry_nontransient_denial",
-          ).replace(
-              "\n              def test_model_info_fails_closed_when_retry_budget_is_exhausted",
-              "\n          def test_model_info_fails_closed_when_retry_budget_is_exhausted",
-          ).replace(
-              "\n              def test_runtime_probe_matches_packaged_model_lab_release",
-              "\n          def test_runtime_probe_matches_packaged_model_lab_release",
-          )
-          # Normalize the bodies of peer methods from 18 spaces to 8.
-          lines = test_block.splitlines()
-          normalized = []
-          peer = False
-          for line in lines:
-              if line.startswith("          def test_"):
-                  peer = True
-                  normalized.append("    " + line[10:])
-              elif peer and line.startswith("              "):
-                  normalized.append(line[10:])
-              else:
-                  normalized.append(line)
-          test_block = "\n".join(normalized) + "\n"
+              def test_caps_numeric_retry_after(self) -> None:
+                  class RateLimitError(RuntimeError):
+                      def __init__(self) -> None:
+                          super().__init__("rate limited")
+                          self.response = SimpleNamespace(
+                              status_code=429,
+                              headers={"retry-after": "999"},
+                          )
 
-          if tests.count(test_anchor) != 1:
-              raise SystemExit("test insertion anchor drifted")
-          tests = tests.replace(test_anchor, test_block, 1)
+                  expected = SimpleNamespace(sha="a" * 40, siblings=[])
+                  api = mock.Mock()
+                  api.model_info.side_effect = [RateLimitError(), expected]
+                  sleeps: list[float] = []
+
+                  bindings._model_info_with_retry(
+                      api,
+                      "SZLHOLDINGS/example",
+                      sleeper=sleeps.append,
+                      max_attempts=2,
+                      total_sleep_budget_seconds=180,
+                  )
+                  self.assertEqual([180.0], sleeps)
+
+
+          if __name__ == "__main__":
+              unittest.main(verbosity=2)
+          ''').lstrip()
 
           source_path.write_text(source, encoding="utf-8", newline="\n")
           test_path.write_text(tests, encoding="utf-8", newline="\n")
           PY
 
-      - name: Prove retry, denial, budget, and existing evidence behavior
+      - name: Prove retry, denial, budget, cap, and existing evidence behavior
         shell: bash
         run: |
           set -euo pipefail
@@ -281,11 +292,9 @@ jobs:
             "cryptography==49.0.0" "huggingface-hub==1.23.0"
           python -m py_compile \
             tools/publish_model_source_bindings.py \
-            tools/test_publish_model_source_bindings.py
+            tests/test_hf_model_binding_retry_after.py
           PYTHONPATH=tools python -m unittest -v \
-            tools.test_publish_model_source_bindings.PublishModelSourceBindingsTests.test_model_info_honors_numeric_retry_after \
-            tools.test_publish_model_source_bindings.PublishModelSourceBindingsTests.test_model_info_does_not_retry_nontransient_denial \
-            tools.test_publish_model_source_bindings.PublishModelSourceBindingsTests.test_model_info_fails_closed_when_retry_budget_is_exhausted \
+            tests.test_hf_model_binding_retry_after \
             tools.test_publish_model_source_bindings.PublishModelSourceBindingsTests.test_hub_evidence_resolves_pinned_adapter_revision
           git diff --check
 
@@ -294,7 +303,9 @@ jobs:
         run: |
           set -euo pipefail
           git rm -f .github/workflows/materialize-hf-model-binding-retry-once.yml
-          git add tools/publish_model_source_bindings.py tools/test_publish_model_source_bindings.py
+          git add \
+            tools/publish_model_source_bindings.py \
+            tests/test_hf_model_binding_retry_after.py
           git diff --cached --check
           git config user.name "Lutar, Stephen P."
           git config user.email "stephenlutar2@gmail.com"
