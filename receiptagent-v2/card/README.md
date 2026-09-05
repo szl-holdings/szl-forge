@@ -1,0 +1,186 @@
+---
+base_model: Qwen/Qwen3.5-0.8B
+base_model_relation: adapter
+library_name: peft
+license: apache-2.0
+pipeline_tag: text-generation
+tags:
+- qwen3.5
+- peft
+- lora
+- unsloth
+- governed-ai
+- receipt-agent
+---
+
+<p align="center">
+  <img src="holo-banner.svg" alt="SZL ReceiptAgent Qwen3.5 0.8B v2 — holographic house banner" width="100%"/>
+</p>
+
+<h1 align="center">R E C E I P T A G E N T · 0 . 8 B</h1>
+
+<p align="center"><em>A receipt agent you can retrain between coffee and lunch.</em></p>
+
+<p align="center">
+  <img alt="Base: Qwen3.5-0.8B" src="https://img.shields.io/badge/base-Qwen3.5--0.8B-334155?style=flat-square"/>
+  <img alt="Downloads" src="https://img.shields.io/huggingface/dt/SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2?style=flat-square&color=6ee7b7&label=downloads"/>
+  <img alt="Artifact: PEFT LoRA adapter" src="https://img.shields.io/badge/artifact-PEFT%20LoRA%20adapter-818cf8?style=flat-square"/>
+  <img alt="License: Apache-2.0" src="https://img.shields.io/badge/License-Apache--2.0-7e8aa3?style=flat-square"/>
+  <img alt="JSON contract drafts 5/5" src="https://img.shields.io/badge/drafts-5%2F5-16a34a?style=flat-square"/>
+  <img alt="Adversarial refusals 6/6" src="https://img.shields.io/badge/adversarial%20refusals-6%2F6-16a34a?style=flat-square"/>
+  <img alt="Evidence: Ed25519 owner-signed chain" src="https://img.shields.io/badge/evidence-Ed25519%20signed%20chain-3af4c8?style=flat-square"/>
+</p>
+
+SZL ReceiptAgent Qwen3.5 0.8B v2 is a small, proposal-only adapter for drafting
+structured governance receipts and refusing requests that would fabricate
+evidence, approval, execution, or measured values.
+
+<!-- SZL-ATELIER-CUT:v1:START -->
+## The cut
+
+Everyone fine-tunes 8B because it looks serious. We fine-tune 0.8B because the receipt loop should be cheap enough to run every night.
+
+A receipt agent you can retrain between coffee and lunch, with the same doctrine as the 1.5B.
+
+### Silhouette → leave → SZL
+
+| Leader | Take, then tweak |
+|---|---|
+| Anthropic | Same constitution, smaller body. |
+| NVIDIA | Small NIM-shaped thing, without NIM. |
+| Unsloth | This is the Unsloth poster: FastLanguageModel, Qwen3.5-0.8B, PEFT. |
+
+Nobody else ships this combination. That is the point of a one-of-one.
+
+## Intended use
+
+Nightly receipted Unsloth loop.
+
+## Limitations
+
+- Adapter only. Load on the disclosed base.
+- No signed eval in this atelier.
+
+Canonical GitHub: [`szl-holdings/szl-forge`](https://github.com/szl-holdings/szl-forge/blob/main/frontier/qwen35-receiptagent-v2/)
+<!-- SZL-ATELIER-CUT:v1:END -->
+
+## Intended use
+
+Use this adapter behind a validating controller that:
+
+1. validates every draft against the published JSON schema;
+2. requires policy and human approval outside the model;
+3. executes actions outside the weights; and
+4. mints a cryptographic receipt only after approved execution.
+
+The adapter is not an autonomous agent, authorizer, executor, factual oracle,
+or substitute for source retrieval.
+
+## Exact lineage
+
+- Canonical base: `Qwen/Qwen3.5-0.8B`
+- Base revision: `2fc06364715b967f1860aea9cf38778875588b17`
+- Training implementation: `unsloth/Qwen3.5-0.8B`
+- Implementation revision: `23c69c53358a07516b5827588b3fdb12ae78fd65`
+- Runtime: Unsloth `FastVisionModel`
+- License: Apache-2.0
+
+## Training
+
+- Hardware: NVIDIA GeForce RTX 5050 Laptop GPU
+- Optimizer steps: 64
+- Admitted training rows: 37
+- Trainable parameters: 10,822,656
+- Total parameters observed: 863,808,576
+- Final aggregate training loss: 0.9142942871840205
+- Peak reserved training memory: 1,671,430,144 bytes
+- Training report SHA-256:
+  `1d1ce062e76aeccabe75fabb2c74d8bdddfc6f9a86f13c5cfd9960e9e5821f38`
+- Aggregate adapter SHA-256:
+  `dde649ca3166881b675a3db093ee273c6186e3d8e801c8491fac0a2da03e58f7`
+- Adapter weights SHA-256:
+  `885fc29fcb4cf55c280dc085fdb0a40f40d6b946fee400dd5e4ed3459fe6334f`
+
+Only the repository-owned ReceiptAgent curriculum was admitted. The A11oy
+Brain corpus was excluded from gradients because row-level rights and
+provenance admission have not passed.
+
+## Held-out acceptance
+
+The exact saved adapter was reloaded on the same GPU and evaluated against
+committed, digest-pinned held-out files:
+
+| Gate | Result |
+|---|---:|
+| JSON contract-valid drafts | 5 / 5 |
+| Adversarial refusals | 6 / 6 |
+
+These are raw **MEASURED** acceptance counts for a small preregistered gate.
+They are not a broad benchmark, do not establish factual accuracy, and do not
+make the adapter autonomy-eligible.
+
+Evaluation report SHA-256:
+`0852fe55716da7b5fddf2340a00dd632c34d551096c685bd84923eb164f2a420`.
+
+## Evidence boundary
+
+The public, proposal-only release is available at
+[`SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2`](https://huggingface.co/SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2).
+Its immutable evidence revision is
+`7a0d9efdebe92ea3b5b26b97cc722c6b5afde621`.
+
+The release includes:
+
+- an owner-signed training receipt;
+- an owner-signed evaluation receipt chained to the training receipt;
+- the public Ed25519 verification key;
+- source, dataset, adapter, and report digests; and
+- an owner-signed post-publication receipt after the Hub bytes were
+  independently fetched and hashed.
+
+All 26 intended files (63,499,318 bytes) were fetched from the immutable Hub
+revision and matched their source or generated-artifact digest. The Hub-managed
+`.gitattributes` file is accounted for separately. The adapter weights matched
+SHA-256
+`885fc29fcb4cf55c280dc085fdb0a40f40d6b946fee400dd5e4ed3459fe6334f`.
+
+The owner-signed evidence chain binds source commit
+`2a5f9cd98503923a49c34e4ef3d3f92e40ca1386` and the durable qualification
+source-bundle SHA-256
+`b7b0eb703062981636d7cca41ed9ecaa8ca87a0ba51bd515cca721a6df0f5f8a`
+to:
+
+- training receipt canonical SHA-256:
+  `8c5e74892b8a9933ffea074f92b7081f360634a1e8397a249f07a3efd06ca433`
+- evaluation receipt canonical SHA-256:
+  `f3b79e4b3aed7359c56ad33b72c7c4f6a4a517166d097a220fa8f3d3fa5402ff`
+- Ed25519 key ID: `e7f01810aaa97394`
+
+The publication receipt canonical SHA-256 is
+`51444e7a8d6a6556ec848641620fbbea6b47e8363254aaf50d4ccdd38d6210cc`.
+The evidence chain is valid and the bounded publication gate has passed.
+Autonomy eligibility remains false.
+
+## Immutable Hub runtime readback
+
+The adapter was loaded from the exact Hub revision above and executed on an
+NVIDIA GeForce RTX 5050 Laptop GPU:
+
+- 28 generated tokens in 16.274 seconds;
+- peak reserved GPU memory: 1,004,535,808 bytes;
+- generated-output SHA-256:
+  `909cfdd105fc78b9d665ba5dffd12e0a0feff554ba9d1c42415aeca29e200396`;
+- required refusal prefix observed: yes.
+
+This is one immutable-revision GPU inference receipt. It is not a broad
+quality, safety, factual-accuracy, autonomy, or third-party benchmark claim.
+
+## Limitations
+
+- Narrow synthetic curriculum.
+- Small held-out set.
+- Proposal-only behavior.
+- No independent third-party evaluation.
+- No ground-truth retrieval or autonomous execution.
+- English-dominant evaluation.
+- The validating controller remains mandatory.
