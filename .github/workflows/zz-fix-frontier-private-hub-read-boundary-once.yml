@@ -1,0 +1,153 @@
+# SPDX-License-Identifier: Apache-2.0
+name: Fix frontier private-Hub read boundary once
+
+on:
+  push:
+    branches:
+      - fix/frontier-private-hub-read-boundary-20260905
+    paths:
+      - .github/workflows/zz-fix-frontier-private-hub-read-boundary-once.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fix-frontier-private-hub-read-boundary-once
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    name: separate credentialless PR proof from trusted-main gated readback
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+
+      - name: Check out exact repair branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: fix/frontier-private-hub-read-boundary-20260905
+          fetch-depth: 1
+          persist-credentials: true
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Patch the permanent workflow exactly
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path(".github/workflows/model-kernel-frontier.yml")
+          text = path.read_text(encoding="utf-8")
+
+          compile_anchor = "            tools/test_model_binding_workflow.py \\\n"
+          compile_insert = compile_anchor + "            tools/test_model_kernel_frontier_workflow.py \\\n"
+          if text.count(compile_anchor) != 1:
+              raise SystemExit("compile anchor count changed")
+          text = text.replace(compile_anchor, compile_insert, 1)
+
+          test_anchor = "          python tools/test_model_binding_workflow.py\n"
+          test_insert = test_anchor + "          python tools/test_model_kernel_frontier_workflow.py\n"
+          if text.count(test_anchor) != 1:
+              raise SystemExit("test anchor count changed")
+          text = text.replace(test_anchor, test_insert, 1)
+
+          networked_dry_run = '''          python tools/publish_model_source_bindings.py \\
+            --source-revision "${GITHUB_SHA}" \\
+            --report reports/model-source-bindings-dry-run.json
+'''
+          if text.count(networked_dry_run) != 1:
+              raise SystemExit("networked dry-run anchor count changed")
+          text = text.replace(networked_dry_run, "", 1)
+
+          old_live = '''      - name: Audit public Hugging Face artifacts
+        run: |
+          set -euo pipefail
+          python tools/verify_model_portfolio.py \\
+            --live \\
+            --report reports/model-portfolio-live.json
+
+      - name: Upload audit evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: model-kernel-portfolio-${{ github.run_id }}
+          path: reports/model-portfolio-live.json
+          if-no-files-found: error
+          retention-days: 30
+'''
+          new_live = '''      - name: Acquire validated private-Hub read credential
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          HF_ORG_TOKEN_CANDIDATE: ${{ secrets.HF_ORG_TOKEN }}
+          HF_ORG_TOKEN1_CANDIDATE: ${{ secrets.HF_ORG_TOKEN1 }}
+          HF_WRITE_TOKEN_CANDIDATE: ${{ secrets.HF_WRITE_TOKEN }}
+          HF_TOKEN_CANDIDATE: ${{ secrets.HF_TOKEN }}
+          HUGGINGFACE_TOKEN_CANDIDATE: ${{ secrets.HUGGINGFACE_TOKEN }}
+          HUGGING_FACE_HUB_TOKEN_CANDIDATE: ${{ secrets.HUGGING_FACE_HUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          python tools/acquire_hf_publisher_token.py \\
+            --target-repo SZLHOLDINGS/SZL-Forge-1.5B-ReceiptAgent \\
+            --target-type model \\
+            --github-env "${GITHUB_ENV}" \\
+            --report reports/hf-private-read-credential.json
+
+      - name: Audit exact gated bindings and public portfolio
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          set -euo pipefail
+          python tools/publish_model_source_bindings.py \\
+            --source-revision "${GITHUB_SHA}" \\
+            --report reports/model-source-bindings-dry-run.json
+          python tools/verify_model_portfolio.py \\
+            --live \\
+            --report reports/model-portfolio-live.json
+
+      - name: Upload audit evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: model-kernel-portfolio-${{ github.run_id }}
+          path: |
+            reports/model-portfolio-live.json
+            reports/model-source-bindings-dry-run.json
+            reports/hf-private-read-credential.json
+          if-no-files-found: warn
+          retention-days: 30
+'''
+          if text.count(old_live) != 1:
+              raise SystemExit("live audit anchor count changed")
+          text = text.replace(old_live, new_live, 1)
+          path.write_text(text, encoding="utf-8")
+          PY
+
+      - name: Prove the lifecycle separation contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile tools/test_model_kernel_frontier_workflow.py
+          python tools/test_model_kernel_frontier_workflow.py
+          git diff --check
+
+      - name: Commit the permanent repair and retire this controller
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/zz-fix-frontier-private-hub-read-boundary-once.yml
+          git add .github/workflows/model-kernel-frontier.yml tools/test_model_kernel_frontier_workflow.py
+          git config user.name "SZL Frontier Evidence Controller"
+          git config user.email "stephenlutar2@gmail.com"
+          git commit \
+            -m "fix(ci): isolate gated Hub readback from PR verification" \
+            -m "Keep pull requests credentialless and prove source-binding behavior through offline contracts. Run exact private-Hub receipt readback only on a trusted main push after actively validating an organization credential, and retain sanitized evidence." \
+            -m "Signed-off-by: Stephen Lutar <stephenlutar2@gmail.com>"
+          git push origin HEAD:fix/frontier-private-hub-read-boundary-20260905
