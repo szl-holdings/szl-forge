@@ -30,7 +30,7 @@ tqdm==4.68.4
 typing-extensions==4.16.0
 typing-inspection==0.4.2
 uvicorn==0.51.0
-szl-forge-inference @ https://github.com/szl-holdings/szl-forge/archive/943f6ab987bbe120cae32649c46c3a5f0b6f9e9b.tar.gz
-szl-second-brain @ https://github.com/szl-holdings/szl-second-brain/archive/fa3e4605344b13db220a79f9dcd267ee5725c87e.tar.gz
+szl-forge-inference @ https://github.com/szl-holdings/szl-forge/archive/9f227f6a10dac178b29130c742c98451b6ed8391.tar.gz
+szl-second-brain @ https://github.com/szl-holdings/szl-second-brain/archive/1d3960c69235f117b7ec2b5ea97472f81fb588f5.tar.gz
 szl-nemo @ https://github.com/szl-holdings/szl-nemo/archive/810231a531188bb569e3faa17396386eb0a5e260.tar.gz
 llama-cpp-python @ https://github.com/abetlen/llama-cpp-python/releases/download/v0.3.21/llama_cpp_python-0.3.21-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=d9d4e0cc1a7f779dd224d0e07ac8ea793a58b345723ba90cd68ee20acf85ad68

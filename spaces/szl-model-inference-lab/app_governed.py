@@ -12,6 +12,7 @@ from typing import Any, Callable
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+from second_brain import frontier_status
 
 import app as legacy
 from inference import (
@@ -25,11 +26,11 @@ from inference import (
 from inference.production import canonical_sha256, text_sha256
 
 
-FORGE_CONTROLLER_REVISION = "943f6ab987bbe120cae32649c46c3a5f0b6f9e9b"
-SECOND_BRAIN_REVISION = "fa3e4605344b13db220a79f9dcd267ee5725c87e"
+FORGE_CONTROLLER_REVISION = "9f227f6a10dac178b29130c742c98451b6ed8391"
+SECOND_BRAIN_REVISION = "1d3960c69235f117b7ec2b5ea97472f81fb588f5"
 NEMO_REVISION = "810231a531188bb569e3faa17396386eb0a5e260"
 CONTROLLER_VERSION = "0.2.0"
-SECOND_BRAIN_VERSION = "1.2.0"
+SECOND_BRAIN_VERSION = "1.3.0"
 NEMO_VERSION = "0.4.0"
 PUBLIC_PRINCIPAL = "public-anonymous"
 PUBLIC_TENANT = "public"
@@ -367,6 +368,7 @@ def governed_health() -> JSONResponse:
     dependency = _dependency_status()
     brain_ready = False
     brain_chunks = None
+    frontier = {}
     component_error = None
     try:
         components = _components()
@@ -378,6 +380,7 @@ def governed_health() -> JSONResponse:
             and probe.get("handles")
         )
         brain_chunks = probe.get("corpus_n")
+        frontier = frontier_status()
     except Exception as exc:
         component_error = type(exc).__name__
 
@@ -387,6 +390,11 @@ def governed_health() -> JSONResponse:
         and source_revision is not None
         and dependency["ready"]
         and brain_ready
+        and frontier.get("ready") is True
+        and frontier.get("source_count") == 7
+        and frontier.get("state") == "REVIEW_REQUIRED"
+        and frontier.get("training_authority") == "NONE"
+        and frontier.get("execution_authority") == "NONE"
     )
     payload = {
         "schema": "szl.model-inference-lab.governed-health/v2",
@@ -400,6 +408,15 @@ def governed_health() -> JSONResponse:
             "public_chunk_count": brain_chunks,
             "content_access": "HANDLES_ONLY",
             "private_graph_present": False,
+            "frontier": {
+                "ready": frontier.get("ready", False),
+                "state": frontier.get("state", "UNAVAILABLE"),
+                "candidate_count": frontier.get("candidate_count"),
+                "source_count": frontier.get("source_count"),
+                "candidate_set_sha256": frontier.get("candidate_set_sha256"),
+                "training_authority": frontier.get("training_authority", "NONE"),
+                "execution_authority": frontier.get("execution_authority", "NONE"),
+            },
         },
         "nemo": {
             "version": NEMO_VERSION,

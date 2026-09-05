@@ -1,18 +1,18 @@
 {
   "schema": "szl.space-source-release/v1",
-  "release_id": "6165392a-f3b7-4128-8f77-e37074c2e60d",
+  "release_id": "brain13-1d3960c-controller-9f227f6",
   "source_files": {
     ".dockerignore": "dba1fb4c6538a44cd8d7e77f133af90a8e7927d3dee23f8694fe6d867238333c",
     "Dockerfile": "49ae4b1ab9e35675c2133c0acd592bdbd4e2a6cf41cdeb205223a8b60e836212",
     "LICENSE": "0a41cda63c0751e5cdb240864525fc8bf29b2d3f2cb5c6406b9bae97f1e1407b",
     "README.md": "e5e951011044a0663bc41b25cb3b732b9e1a918e2bfe787a50c491bc93b5d319",
     "app.py": "ae29bfba0898350eb08f3c4e0f7fd29572b3ee4023ca1942dcb17bc8bf3bbe8d",
-    "app_governed.py": "dde817ad5f8a8fc7df161f2b726106f3aae5b0568a678a90162ed8570bac1931",
+    "app_governed.py": "3c98840e7d62eec1631c4d48e4af8df8a628dd44b75bf6e7907cc4f09f7019a7",
     "download_artifacts.py": "aa9f98b3d19753953864beae167b5e74872270c880e78430bb345a5f06b4ef36",
-    "requirements.txt": "6340d588cb693de347c5515f49218bc3118931d9eec4325127c7fa8d8aa3b835",
+    "requirements.txt": "0fbdb25326826741cdb8864cf5285054ef3897328d44e2305c4e94f71547acb1",
     "tests/test_app.py": "edde81adfe2be63e4d54174ad1b3179469d8ebe96146eaf840ff6b6b67ec4128",
-    "tests/test_governed_app.py": "ea2e958f5efe99f48025ab552ed92517fcd0ca80c58e4bcfcf3798608c8d5de8",
-    "verify_execution_record.py": "bc9a7254cf0d8787d8296b370eaadb333f606cadf20d9a2f7dfdeda528b692c0",
-    "verify_governed_live.py": "37223faf46bc9361e9c35c1a940da270a65fa0b0d555e89405d5591f04f24009"
+    "tests/test_governed_app.py": "8a51672e9376194c5633092306e8418139ba29f380710feeeeb6b2e1db098b1a",
+    "verify_execution_record.py": "d9e5dfde6eb88662d7565f6b2b998caff5172c1d908cf3a1b9f860cf1f8fbadb",
+    "verify_governed_live.py": "9923af8452bd9afed137a60adb05ddfd29eefbaff31a342953eb461e6f8dfe5b"
   }
 }
