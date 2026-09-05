@@ -43,45 +43,54 @@ jobs:
 
           publisher_path = Path('tools/publish_chaski_card.py')
           publisher = publisher_path.read_text(encoding='utf-8')
-          marker = 'FULL_SHA = re.compile(r"^[0-9a-f]{40}$")\n'
-          constant = '''FULL_SHA = re.compile(r"^[0-9a-f]{40}$")
-          REMOTE_SVG_REFERENCE = re.compile(
-              r'''(?:\\b(?:href|xlink:href|src)\\s*=\\s*["']\\s*https?://|url\\(\\s*["']?\\s*https?://|@import\\s+(?:url\\()?\\s*["']?\\s*https?://)''',
-              re.IGNORECASE,
-          )
-          '''
-          if marker in publisher and 'REMOTE_SVG_REFERENCE = re.compile' not in publisher:
-              publisher = publisher.replace(marker, constant, 1)
-          old_validation = '''    lowered = banner.lower()
-              for forbidden in ("<script", "javascript:", "http://", "https://"):
+          old_validation = """    lowered = banner.lower()
+              for forbidden in (\"<script\", \"javascript:\", \"http://\", \"https://\"):
                   if forbidden in lowered:
-                      raise PublicationError(f"unsafe or remote SVG content present: {forbidden}")
-          '''
-          new_validation = '''    lowered = banner.lower()
-              for forbidden in ("<script", "javascript:"):
+                      raise PublicationError(f\"unsafe or remote SVG content present: {forbidden}\")
+          """
+          new_validation = """    lowered = banner.lower()
+              for forbidden in (\"<script\", \"javascript:\"):
                   if forbidden in lowered:
-                      raise PublicationError(f"unsafe SVG content present: {forbidden}")
-              if REMOTE_SVG_REFERENCE.search(banner):
-                  raise PublicationError("remote SVG resource reference present")
-          '''
+                      raise PublicationError(f\"unsafe SVG content present: {forbidden}\")
+              remote_reference = re.search(
+                  r'''(?:\\b(?:href|xlink:href|src)\\s*=\\s*[\"']\\s*https?://|url\\(\\s*[\"']?\\s*https?://|@import\\s+(?:url\\()?\\s*[\"']?\\s*https?://)''',
+                  banner,
+                  flags=re.IGNORECASE,
+              )
+              if remote_reference:
+                  raise PublicationError(\"remote SVG resource reference present\")
+          """
           if old_validation not in publisher:
               raise SystemExit('publisher SVG-validation anchor is missing')
           publisher_path.write_text(publisher.replace(old_validation, new_validation, 1), encoding='utf-8')
 
           test_path = Path('tests/test_publish_chaski_card.py')
           test_source = test_path.read_text(encoding='utf-8')
-          old_test = '''    assert '<script' not in svg
-              assert "javascript:" not in svg
-              assert "http://" not in svg
-              assert "https://" not in svg
-              assert len(assets["holo-banner.svg"]) < 10_000
-          '''
-          new_test = '''    assert '<script' not in svg
-              assert "javascript:" not in svg
-              assert 'xmlns="http://www.w3.org/2000/svg"' in svg
-              assert publisher.REMOTE_SVG_REFERENCE.search(svg) is None
-              assert len(assets["holo-banner.svg"]) < 10_000
-          '''
+          old_test = """    assert '<script' not in svg
+              assert \"javascript:\" not in svg
+              assert \"http://\" not in svg
+              assert \"https://\" not in svg
+              assert len(assets[\"holo-banner.svg\"]) < 10_000
+          """
+          new_test = """    assert '<script' not in svg
+              assert \"javascript:\" not in svg
+              assert 'xmlns=\"http://www.w3.org/2000/svg\"' in svg
+              assert 'href=\"http://' not in svg
+              assert 'href=\"https://' not in svg
+              assert \"url(http://\" not in svg
+              assert \"url(https://\" not in svg
+              assert len(assets[\"holo-banner.svg\"]) < 10_000
+          
+          
+          def test_svg_rejects_a_remote_resource_reference() -> None:
+              assets = publisher.load_assets()
+              malicious = assets[\"holo-banner.svg\"].replace(
+                  b\"</svg>\",
+                  b'<image href=\"https://example.invalid/remote.png\" /></svg>',
+              )
+              with pytest.raises(publisher.PublicationError, match=\"remote SVG resource\"):
+                  publisher.validate_assets(assets | {\"holo-banner.svg\": malicious})
+          """
           if old_test not in test_source:
               raise SystemExit('SVG regression-test anchor is missing')
           test_path.write_text(test_source.replace(old_test, new_test, 1), encoding='utf-8')
@@ -92,7 +101,7 @@ jobs:
         run: |
           set -euo pipefail
           python -m pip install --disable-pip-version-check --no-cache-dir -e . pytest==9.1.1 huggingface-hub==1.23.0 ruff==0.16.6
-          python -m py_compile tools/publish_chaski_card.py
+          python -m py_compile tools/publish_chaski_card.py tests/test_publish_chaski_card.py
           ruff check . --output-format github --select E9,F
           python -m pytest -q tests/test_publish_chaski_card.py tests/test_acquire_hf_publisher_token.py tests/test_hf_org_token1_fallback.py
           python -m pytest -q tests
