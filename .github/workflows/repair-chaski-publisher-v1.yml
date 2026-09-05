@@ -1,0 +1,112 @@
+# SPDX-License-Identifier: Apache-2.0
+name: Repair Chaski publisher v1
+
+on:
+  push:
+    branches:
+      - feat/source-bound-chaski-card-publisher-20260905
+    paths:
+      - .github/workflows/repair-chaski-publisher-v1.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: repair-chaski-publisher-v1
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
+        with:
+          egress-policy: audit
+
+      - name: Check out exact PR branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: feat/source-bound-chaski-card-publisher-20260905
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Forward-port protected main and repair SVG resource validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main
+          git merge --no-edit origin/main
+          python - <<'PY'
+          from pathlib import Path
+
+          publisher_path = Path('tools/publish_chaski_card.py')
+          publisher = publisher_path.read_text(encoding='utf-8')
+          marker = 'FULL_SHA = re.compile(r"^[0-9a-f]{40}$")\n'
+          constant = '''FULL_SHA = re.compile(r"^[0-9a-f]{40}$")
+          REMOTE_SVG_REFERENCE = re.compile(
+              r'''(?:\\b(?:href|xlink:href|src)\\s*=\\s*["']\\s*https?://|url\\(\\s*["']?\\s*https?://|@import\\s+(?:url\\()?\\s*["']?\\s*https?://)''',
+              re.IGNORECASE,
+          )
+          '''
+          if marker in publisher and 'REMOTE_SVG_REFERENCE = re.compile' not in publisher:
+              publisher = publisher.replace(marker, constant, 1)
+          old_validation = '''    lowered = banner.lower()
+              for forbidden in ("<script", "javascript:", "http://", "https://"):
+                  if forbidden in lowered:
+                      raise PublicationError(f"unsafe or remote SVG content present: {forbidden}")
+          '''
+          new_validation = '''    lowered = banner.lower()
+              for forbidden in ("<script", "javascript:"):
+                  if forbidden in lowered:
+                      raise PublicationError(f"unsafe SVG content present: {forbidden}")
+              if REMOTE_SVG_REFERENCE.search(banner):
+                  raise PublicationError("remote SVG resource reference present")
+          '''
+          if old_validation not in publisher:
+              raise SystemExit('publisher SVG-validation anchor is missing')
+          publisher_path.write_text(publisher.replace(old_validation, new_validation, 1), encoding='utf-8')
+
+          test_path = Path('tests/test_publish_chaski_card.py')
+          test_source = test_path.read_text(encoding='utf-8')
+          old_test = '''    assert '<script' not in svg
+              assert "javascript:" not in svg
+              assert "http://" not in svg
+              assert "https://" not in svg
+              assert len(assets["holo-banner.svg"]) < 10_000
+          '''
+          new_test = '''    assert '<script' not in svg
+              assert "javascript:" not in svg
+              assert 'xmlns="http://www.w3.org/2000/svg"' in svg
+              assert publisher.REMOTE_SVG_REFERENCE.search(svg) is None
+              assert len(assets["holo-banner.svg"]) < 10_000
+          '''
+          if old_test not in test_source:
+              raise SystemExit('SVG regression-test anchor is missing')
+          test_path.write_text(test_source.replace(old_test, new_test, 1), encoding='utf-8')
+          PY
+
+      - name: Prove full repository and publisher contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check --no-cache-dir -e . pytest==9.1.1 huggingface-hub==1.23.0 ruff==0.16.6
+          python -m py_compile tools/publish_chaski_card.py
+          ruff check . --output-format github --select E9,F
+          python -m pytest -q tests/test_publish_chaski_card.py tests/test_acquire_hf_publisher_token.py tests/test_hf_org_token1_fallback.py
+          python -m pytest -q tests
+          python tools/publish_chaski_card.py --source-revision "$(git rev-parse HEAD)" --report /tmp/chaski-card-dry-run.json
+          git diff --check
+
+      - name: Commit only durable source and tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/repair-chaski-publisher-v1.yml
+          git config user.name "Lutar, Stephen P."
+          git config user.email "stephenlutar2@gmail.com"
+          git add -A
+          git diff --cached --check
+          git commit -s -m "fix(publish): validate SVG resources without rejecting its namespace"
+          git push origin HEAD:feat/source-bound-chaski-card-publisher-20260905
