@@ -105,12 +105,14 @@ def candidate() -> dict:
         "runtime_lock": copy.deepcopy(RUNTIME_LOCK),
         "supervision_policy": {
             "python_executable": "/home/rosie/.venvs/szl-unsloth/bin/python",
-            "schema": "test-policy",
+            "schema": "szl.receiptagent-v3-supervision-policy/v2",
             "required_containment": "SYSTEMD_USER_SERVICE_CGROUP_V2",
             "security_boundary": "COOPERATIVE_SAME_ACCOUNT",
             "filesystem_isolation": "ROOT_DIRECTORY_EXPLICIT_BIND_ALLOWLIST",
             "worker_mount_root": "/opt/szl-ra3",
             "thermal_sample_interval_seconds": 2.0,
+            "admission_telemetry_timeout_seconds": 15.0,
+            "runtime_telemetry_timeout_seconds": 5.0,
             "maximum_telemetry_gap_seconds": 8.0,
             "full_wall_timeout_seconds": 10800.0,
         },
@@ -255,13 +257,44 @@ def supervisor_report(child: dict, child_bytes: bytes) -> dict:
             "cgroupEmptyConfirmed": True,
         },
         "telemetry": {
-            "source": "INDEPENDENT_SUPERVISOR_FIXED_NVIDIA_SMI",
+            "source": "INDEPENDENT_SUPERVISOR_TWO_STAGE_FIXED_NVIDIA_SMI",
+            "runtimeSampleTimeoutSeconds": 5.0,
+            "admission": {
+                "phase": "ADMISSION_READINESS",
+                "state": "OBSERVED",
+                "timeoutSeconds": 15.0,
+                "durationSeconds": 4.25,
+                "sample": {
+                    "offsetSeconds": 4.25,
+                    "observedAt": "2026-08-13T11:59:58+00:00",
+                    "gpuUuid": GPU_UUID,
+                    "temperatureC": 54,
+                    "freeMiB": 7100,
+                    "totalMiB": 8192,
+                },
+                "error": None,
+            },
+            "runtimeConfirmation": {
+                "phase": "RUNTIME_CONFIRMATION",
+                "state": "OBSERVED",
+                "timeoutSeconds": 5.0,
+                "durationSeconds": 1.25,
+                "sample": {
+                    "offsetSeconds": 5.5,
+                    "observedAt": "2026-08-13T12:00:00+00:00",
+                    "gpuUuid": GPU_UUID,
+                    "temperatureC": 55,
+                    "freeMiB": 7000,
+                    "totalMiB": 8192,
+                },
+                "error": None,
+            },
             "gpuUuid": GPU_UUID,
             "maximumTemperaturePolicyC": 80,
             "sampleIntervalSeconds": 2.0,
             "maximumTelemetryGapSeconds": 8.0,
-            "maximumObservedSampleGapSeconds": 2.1,
-            "samples": [
+            "maximumObservedRuntimeSampleGapSeconds": 2.1,
+            "runtimeSamples": [
                 {
                     "offsetSeconds": -0.1,
                     "observedAt": "2026-08-13T12:00:00+00:00",
@@ -380,7 +413,7 @@ class SupervisorLinkageTests(unittest.TestCase):
         self.assertEqual(GPU_UUID, linkage["gpuUuid"])
         self.assertEqual(60, linkage["maximumObservedTemperatureC"])
         self.assertEqual(5000, linkage["minimumObservedFreeMiB"])
-        self.assertEqual(2.1, linkage["maximumObservedSampleGapSeconds"])
+        self.assertEqual(2.1, linkage["maximumObservedRuntimeSampleGapSeconds"])
         self.assertEqual("6" * 64, linkage["trainingBundleSha256"])
         self.assertEqual("4" * 64, linkage["credentialCanarySha256"])
         self.assertEqual(
@@ -408,6 +441,28 @@ class SupervisorLinkageTests(unittest.TestCase):
                 evaluator.QualificationError, "integrity digest is invalid"
             ):
                 self.verify()
+
+    def test_readiness_duration_includes_observational_overhead(self):
+        telemetry = self.supervisor["telemetry"]
+        telemetry["admission"]["durationSeconds"] = 16.0
+        telemetry["admission"]["sample"]["offsetSeconds"] = 16.0
+        telemetry["runtimeConfirmation"]["durationSeconds"] = 6.0
+        telemetry["runtimeConfirmation"]["sample"]["offsetSeconds"] = 22.0
+        self.write_supervisor(self.supervisor)
+        with self.linkage_mocks():
+            linkage = self.verify()
+        self.assertEqual(2.1, linkage["maximumObservedRuntimeSampleGapSeconds"])
+
+    def test_readiness_duration_requires_a_finite_nonnegative_number(self):
+        for phase in ("admission", "runtimeConfirmation"):
+            for duration in (-0.1, float("inf"), float("nan"), True):
+                with self.subTest(phase=phase, duration=duration):
+                    telemetry = copy.deepcopy(self.supervisor["telemetry"])
+                    telemetry[phase]["durationSeconds"] = duration
+                    with self.assertRaises(evaluator.QualificationError):
+                        evaluator.verify_supervisor_telemetry(
+                            telemetry, candidate=candidate()
+                        )
 
     def test_recomputed_tampering_of_every_required_link_is_rejected(self):
         mutations = {
@@ -459,18 +514,33 @@ class SupervisorLinkageTests(unittest.TestCase):
             "worker cgroup": lambda report: report["launch"].__setitem__(
                 "workerControlGroup", "/wrong.service"
             ),
-            "telemetry GPU": lambda report: report["telemetry"]["samples"][1].__setitem__(
+            "telemetry GPU": lambda report: report["telemetry"]["runtimeSamples"][1].__setitem__(
                 "gpuUuid", "GPU-aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
             ),
             "telemetry temperature": lambda report: report["telemetry"].__setitem__(
                 "maximumObservedTemperatureC", 59
             ),
-            "telemetry memory": lambda report: report["telemetry"]["samples"][0].__setitem__(
+            "telemetry memory": lambda report: report["telemetry"]["admission"]["sample"].__setitem__(
                 "freeMiB", 4095
             ),
             "telemetry gap": lambda report: report["telemetry"].__setitem__(
-                "maximumObservedSampleGapSeconds", 7.9
+                "maximumObservedRuntimeSampleGapSeconds", 7.9
             ),
+            "admission timeout": lambda report: report["telemetry"][
+                "admission"
+            ].__setitem__("timeoutSeconds", 5.0),
+            "runtime sample timeout": lambda report: report["telemetry"].__setitem__(
+                "runtimeSampleTimeoutSeconds", 15.0
+            ),
+            "runtime confirmation duration": lambda report: report["telemetry"][
+                "runtimeConfirmation"
+            ].__setitem__("durationSeconds", -0.1),
+            "phase order": lambda report: report["telemetry"][
+                "runtimeConfirmation"
+            ]["sample"].__setitem__("offsetSeconds", 4.0),
+            "runtime baseline": lambda report: report["telemetry"][
+                "runtimeConfirmation"
+            ]["sample"].__setitem__("freeMiB", 6999),
             "child file": lambda report: report["trainingReport"].__setitem__(
                 "fileSha256", "4" * 64
             ),
