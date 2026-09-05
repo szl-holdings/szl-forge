@@ -196,7 +196,6 @@ class FixedPolicyAndTelemetryTests(unittest.TestCase):
                 maximum_temperature_c=80,
             )
         )
-
         with self.assertRaisesRegex(supervisor.SupervisionError, "81 C exceeds 80 C"):
             supervisor.initial_temperature_gate(sample(temperature_c=81), recipe)
         self.assertEqual(
@@ -211,6 +210,118 @@ class FixedPolicyAndTelemetryTests(unittest.TestCase):
             ),
         )
 
+    def test_distinct_samplers_use_one_exact_query_and_fixed_timeouts(self):
+        completed = subprocess.CompletedProcess(
+            [],
+            0,
+            stdout=(
+                f"{GPU_UUID}, NVIDIA Test GPU, 55, 7000, 8192\n".encode()
+            ),
+            stderr=b"",
+        )
+        with mock.patch.object(
+            supervisor.subprocess, "run", return_value=completed
+        ) as run:
+            admission = supervisor.sample_gpu_for_admission(
+                supervisor.EXPECTED_POLICY
+            )
+            confirmation = supervisor.sample_gpu_for_runtime(
+                supervisor.EXPECTED_POLICY
+            )
+        self.assertEqual(GPU_UUID, admission.gpu_uuid)
+        self.assertEqual(GPU_UUID, confirmation.gpu_uuid)
+        self.assertEqual(2, run.call_count)
+        expected_command = [
+            supervisor.EXPECTED_POLICY["nvidia_smi_executable"],
+            *supervisor.NVIDIA_SMI_QUERY,
+        ]
+        self.assertEqual(
+            [expected_command, expected_command],
+            [call.args[0] for call in run.call_args_list],
+        )
+        self.assertEqual(
+            [15.0, 5.0],
+            [call.kwargs["timeout"] for call in run.call_args_list],
+        )
+        for call in run.call_args_list:
+            self.assertTrue(call.kwargs["check"])
+            self.assertTrue(call.kwargs["capture_output"])
+
+    def test_sampler_timeout_fails_once_without_retry_or_fallback(self):
+        for sampler in (
+            supervisor.sample_gpu_for_admission,
+            supervisor.sample_gpu_for_runtime,
+        ):
+            with self.subTest(sampler=sampler.__name__):
+                with mock.patch.object(
+                    supervisor.subprocess,
+                    "run",
+                    side_effect=subprocess.TimeoutExpired("nvidia-smi", 1),
+                ) as run:
+                    with self.assertRaises(subprocess.TimeoutExpired):
+                        sampler(supervisor.EXPECTED_POLICY)
+                run.assert_called_once()
+
+    def test_readiness_pair_gates_both_samples_and_requires_stable_uuid(self):
+        recipe = candidate()["training_recipe"]
+        supervisor.readiness_pair_gate(sample(), sample(), recipe)
+        for admission, confirmation, error in (
+            (
+                sample(free_mib=4095),
+                sample(),
+                "below the fixed policy floor",
+            ),
+            (
+                sample(),
+                sample(free_mib=4095),
+                "below the fixed policy floor",
+            ),
+            (
+                sample(),
+                sample(gpu_uuid="GPU-aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+                "changed between readiness phases",
+            ),
+        ):
+            with self.subTest(error=error):
+                with self.assertRaisesRegex(supervisor.SupervisionError, error):
+                    supervisor.readiness_pair_gate(admission, confirmation, recipe)
+
+    def test_readiness_evidence_distinguishes_observed_rejected_and_not_run(self):
+        observed = supervisor.telemetry_phase_evidence(
+            phase="ADMISSION_READINESS",
+            timeout_seconds=15.0,
+            started_monotonic_ns=1_000_000_000,
+            completed_monotonic_ns=5_250_000_000,
+            origin_monotonic_ns=1_000_000_000,
+            sample=sample(),
+            error=None,
+        )
+        rejected = supervisor.telemetry_phase_evidence(
+            phase="ADMISSION_READINESS",
+            timeout_seconds=15.0,
+            started_monotonic_ns=1_000_000_000,
+            completed_monotonic_ns=2_000_000_000,
+            origin_monotonic_ns=1_000_000_000,
+            sample=sample(free_mib=4095),
+            error="initial free GPU memory is below the fixed policy floor",
+        )
+        not_run = supervisor.telemetry_phase_not_run_evidence(
+            phase="RUNTIME_CONFIRMATION",
+            timeout_seconds=5.0,
+            reason="ADMISSION_READINESS_NOT_SATISFIED",
+        )
+        self.assertEqual(
+            ("OBSERVED", 4.25, 15.0),
+            (
+                observed["state"],
+                observed["durationSeconds"],
+                observed["timeoutSeconds"],
+            ),
+        )
+        self.assertEqual("REJECTED", rejected["state"])
+        self.assertEqual("NOT_RUN", not_run["state"])
+        self.assertIsNone(not_run["sample"])
+
     def test_gpu_uuid_drift_is_telemetry_failure(self):
         self.assertEqual(
             ("TELEMETRY_UNAVAILABLE", "GPU UUID changed during the run"),
@@ -224,6 +335,17 @@ class FixedPolicyAndTelemetryTests(unittest.TestCase):
     def test_initial_four_gib_gate_is_inclusive_and_one_mib_below_fails(self):
         recipe = candidate()["training_recipe"]
         supervisor.initial_temperature_gate(sample(free_mib=4096), recipe)
+        self.assertIsNone(
+            supervisor.readiness_rejection_cause(sample(free_mib=4096), recipe)
+        )
+        self.assertEqual(
+            "PRECONDITION_DENIED",
+            supervisor.readiness_rejection_cause(sample(free_mib=4095), recipe),
+        )
+        self.assertEqual(
+            "THERMAL_POLICY_VIOLATION",
+            supervisor.readiness_rejection_cause(sample(temperature_c=81), recipe),
+        )
         with self.assertRaisesRegex(
             supervisor.SupervisionError, "below the fixed policy floor"
         ):
@@ -260,7 +382,10 @@ class FixedPolicyAndTelemetryTests(unittest.TestCase):
             ).encode("utf-8")
         )
         self.assertLessEqual(
-            telemetry_bytes + supervisor.MAX_NON_TELEMETRY_REPORT_BYTES,
+            telemetry_bytes
+            + supervisor.TELEMETRY_READINESS_SAMPLE_COPIES
+            * supervisor.MAX_TELEMETRY_SAMPLE_JSON_BYTES
+            + supervisor.MAX_NON_TELEMETRY_REPORT_BYTES,
             policy["evidence_reserve_bytes"],
         )
 
@@ -326,7 +451,9 @@ class FixedPolicyAndTelemetryTests(unittest.TestCase):
         )
         with (
             mock.patch.object(supervisor, "cgroup_empty", return_value=False),
-            mock.patch.object(supervisor, "sample_gpu", return_value=hot),
+            mock.patch.object(
+                supervisor, "sample_gpu_for_runtime", return_value=hot
+            ),
             mock.patch.object(
                 supervisor.time,
                 "monotonic_ns",
@@ -352,27 +479,67 @@ class FixedPolicyAndTelemetryTests(unittest.TestCase):
             stdout=f"{GPU_UUID}, Test GPU, 60, 4096, 8192\n".encode(),
             stderr=b"",
         )
-        with mock.patch.object(
-            supervisor.subprocess, "run", return_value=completed
-        ) as run:
-            supervisor.sample_gpu(
-                supervisor.EXPECTED_POLICY,
-                timeout_seconds=0.75,
-            )
-        self.assertEqual(0.75, run.call_args.kwargs["timeout"])
+        for remaining, expected in ((0.75, 0.75), (10.0, 5.0)):
+            with self.subTest(remaining=remaining):
+                with mock.patch.object(
+                    supervisor.subprocess, "run", return_value=completed
+                ) as run:
+                    supervisor.sample_gpu_for_runtime(
+                        supervisor.EXPECTED_POLICY,
+                        timeout_seconds=remaining,
+                    )
+                self.assertEqual(expected, run.call_args.kwargs["timeout"])
 
     def test_sample_gpu_rejects_expired_deadline_before_subprocess(self):
-        with (
-            mock.patch.object(supervisor.subprocess, "run") as run,
-            self.assertRaisesRegex(
-                supervisor.SupervisionError, "telemetry deadline has expired"
-            ),
+        for remaining in (0.0, -1.0, float("inf"), float("nan")):
+            with self.subTest(remaining=remaining):
+                with (
+                    mock.patch.object(supervisor.subprocess, "run") as run,
+                    self.assertRaisesRegex(
+                        supervisor.SupervisionError, "telemetry deadline has expired"
+                    ),
+                ):
+                    supervisor.sample_gpu_for_runtime(
+                        supervisor.EXPECTED_POLICY,
+                        timeout_seconds=remaining,
+                    )
+                run.assert_not_called()
+
+    def test_sampled_drain_clamps_to_drain_and_telemetry_gap_deadlines(self):
+        completed = subprocess.CompletedProcess(
+            args=[],
+            returncode=0,
+            stdout=f"{GPU_UUID}, Test GPU, 81, 4096, 8192\n".encode(),
+            stderr=b"",
+        )
+        for drain_seconds, previous_ns, expected in (
+            (1.5, 1_000_000_000, 0.5),
+            (10.0, -4_250_000_000, 0.75),
         ):
-            supervisor.sample_gpu(
-                supervisor.EXPECTED_POLICY,
-                timeout_seconds=0.0,
-            )
-        run.assert_not_called()
+            with self.subTest(drain_seconds=drain_seconds):
+                policy = copy.deepcopy(supervisor.EXPECTED_POLICY)
+                policy["kill_confirmation_seconds"] = drain_seconds
+                with (
+                    mock.patch.object(supervisor, "cgroup_empty", return_value=False),
+                    mock.patch.object(
+                        supervisor.subprocess, "run", return_value=completed
+                    ) as run,
+                    mock.patch.object(
+                        supervisor.time,
+                        "monotonic_ns",
+                        side_effect=(2_000_000_000, 3_000_000_000, 3_100_000_000),
+                    ),
+                ):
+                    result = supervisor.sampled_cgroup_drain(
+                        policy,
+                        "/user.slice/worker.service",
+                        expected_gpu_uuid=GPU_UUID,
+                        maximum_temperature_c=80,
+                        last_valid_monotonic_ns=previous_ns,
+                    )
+                self.assertEqual(expected, run.call_args.kwargs["timeout"])
+                self.assertEqual("THERMAL_POLICY_VIOLATION", result.trigger[0])
+                self.assertTrue(result.stop_required)
 
     def test_sampled_drain_requires_stop_after_slow_successful_sample(self):
         policy = copy.deepcopy(supervisor.EXPECTED_POLICY)
@@ -388,7 +555,9 @@ class FixedPolicyAndTelemetryTests(unittest.TestCase):
         )
         with (
             mock.patch.object(supervisor, "cgroup_empty", return_value=False),
-            mock.patch.object(supervisor, "sample_gpu", return_value=late),
+            mock.patch.object(
+                supervisor, "sample_gpu_for_runtime", return_value=late
+            ),
             mock.patch.object(
                 supervisor.time,
                 "monotonic_ns",
@@ -411,7 +580,7 @@ class FixedPolicyAndTelemetryTests(unittest.TestCase):
         policy["kill_confirmation_seconds"] = 1.0
         with (
             mock.patch.object(supervisor, "cgroup_empty", return_value=False),
-            mock.patch.object(supervisor, "sample_gpu") as telemetry,
+            mock.patch.object(supervisor, "sample_gpu_for_runtime") as telemetry,
             mock.patch.object(
                 supervisor.time,
                 "monotonic_ns",
@@ -754,6 +923,70 @@ class WorkerEnvironmentTests(unittest.TestCase):
         self.assertEqual(1, len(attempt_keywords))
         self.assertIsInstance(attempt_keywords[0].value, ast.Name)
         self.assertEqual("attempt", attempt_keywords[0].value.id)
+
+    def test_main_orders_fresh_confirmation_immediately_before_launch(self):
+        tree = ast.parse(inspect.getsource(supervisor.main))
+
+        def named_calls(name: str) -> list[ast.Call]:
+            return [
+                node
+                for node in ast.walk(tree)
+                if isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Name)
+                and node.func.id == name
+            ]
+
+        admission_calls = named_calls("sample_gpu_for_admission")
+        runtime_calls = named_calls("sample_gpu_for_runtime")
+        admission_gates = named_calls("initial_temperature_gate")
+        pair_gates = named_calls("readiness_pair_gate")
+        launch_calls = named_calls("launch_worker_unit")
+        self.assertEqual(1, len(admission_calls))
+        self.assertEqual(4, len(runtime_calls))
+        self.assertEqual(1, len(admission_gates))
+        self.assertEqual(2, len(pair_gates))
+        self.assertEqual(1, len(launch_calls))
+        confirmation = min(runtime_calls, key=lambda call: call.lineno)
+        launch = launch_calls[0]
+        prelaunch_confirmation = max(
+            (call for call in runtime_calls if call.lineno < launch.lineno),
+            key=lambda call: call.lineno,
+        )
+        ordered_pair_gates = sorted(pair_gates, key=lambda call: call.lineno)
+        evidence_writes = named_calls("publish_evidence_write_once")
+        report_builds = named_calls("terminal_report_base")
+        self.assertLess(admission_calls[0].lineno, admission_gates[0].lineno)
+        self.assertLess(admission_gates[0].lineno, confirmation.lineno)
+        self.assertLess(confirmation.lineno, ordered_pair_gates[0].lineno)
+        self.assertLess(
+            min(call.lineno for call in evidence_writes),
+            prelaunch_confirmation.lineno,
+        )
+        self.assertLess(
+            max(call.lineno for call in report_builds),
+            prelaunch_confirmation.lineno,
+        )
+        self.assertLess(
+            prelaunch_confirmation.lineno, ordered_pair_gates[-1].lineno
+        )
+        self.assertLess(ordered_pair_gates[-1].lineno, launch.lineno)
+        self.assertTrue(
+            all(
+                call.lineno > launch.lineno
+                for call in runtime_calls
+                if call not in (confirmation, prelaunch_confirmation)
+            )
+        )
+        guarded_confirmation = [
+            node
+            for node in ast.walk(tree)
+            if isinstance(node, ast.If)
+            and any(call is confirmation for call in ast.walk(node))
+        ]
+        self.assertTrue(guarded_confirmation)
+        guard = ast.unparse(guarded_confirmation[-1].test)
+        self.assertIn("admission_error is None", guard)
+        self.assertIn("admission_gate_error is None", guard)
 
     def test_worker_environment_is_minimal_and_launch_uses_env_i(self):
         root = pathlib.Path("/isolated/run")

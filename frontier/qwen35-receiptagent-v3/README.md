@@ -85,10 +85,19 @@ exact source commit is still current remote main. Hardware limits and the
 process-supervision policy are fixed in `candidate.json`; callers cannot raise
 the 80 C thermal ceiling, lower the free-memory floor, select a different
 executable, or extend a deadline. Training runs inside a dedicated systemd
-user-service cgroup. The supervisor independently samples the exact GPU UUID
-every two seconds, fails closed on telemetry loss, and requires the worker
-cgroup to become empty. The worker receives no inherited credentials, no
-network namespace, and only run-local writable staging/cache paths.
+user-service cgroup. Before any worker launch, the supervisor takes exactly one
+admission sample with the fixed 15-second slow-start timeout. Only when that
+sample satisfies the fixed temperature and free-memory gates does it immediately
+take exactly one confirmation sample with the fixed 5-second runtime timeout.
+Both samples must report the same GPU UUID and satisfy both gates. There are no
+retries, fallback commands, or caller overrides. The confirmation is the runtime
+telemetry baseline; every post-launch sample uses the same exact `nvidia-smi`
+query and 5-second timeout. Runtime sampling continues every two seconds, fails
+closed if the observed gap exceeds eight seconds, and requires the worker cgroup
+to become empty. Admission, confirmation, and runtime evidence record their
+distinct phases, configured timeouts, and measured durations. The worker
+receives no inherited credentials, no network namespace, and only run-local
+writable staging/cache paths.
 
 ```bash
 PY=/home/rosie/.venvs/szl-unsloth/bin/python
@@ -110,8 +119,8 @@ $PY launch_supervised_training.py \
 The smoke run is one optimizer step and can never enter evaluation as a
 qualified adapter. The full run is fixed at 135 optimizer steps: 540 scheduled
 examples, or three passes over 180 unique rows, with batch size 1 and gradient
-accumulation 4. Temperature is sampled independently before launch, throughout
-the entire worker lifetime, after worker exit, and inside the trainer at
+accumulation 4. Temperature is sampled independently in the two-stage readiness
+gate, throughout the entire worker lifetime, after worker exit, and inside the trainer at
 optimizer boundaries. A sample of 80 C may pass; 81 C terminates the one-shot
 run with no completion claim. Final adapter weights must parse as SafeTensors;
 metadata is allowlisted.

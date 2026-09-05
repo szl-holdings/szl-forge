@@ -70,8 +70,11 @@ class SuccessfulReportValidationTests(unittest.TestCase):
                 "maximum_gpu_temperature_c": 80,
             },
             "supervision_policy": {
-                "schema": "szl.receiptagent-v3-supervision-policy/v1",
+                "schema": "szl.receiptagent-v3-supervision-policy/v2",
                 "required_containment": "SYSTEMD_USER_SERVICE_CGROUP_V2",
+                "admission_telemetry_timeout_seconds": 15.0,
+                "runtime_telemetry_timeout_seconds": 5.0,
+                "maximum_telemetry_gap_seconds": 8.0,
             },
             "runtime_lock": {"torch": "2.10.0", "unsloth": "2026.7.4"},
             "publication_eligible": False,
@@ -251,6 +254,19 @@ class SuccessfulReportValidationTests(unittest.TestCase):
             result.observation_state,
         )
         self.assertFalse(result.local_evaluation_input_binding_satisfied)
+
+    def test_supervision_policy_v2_telemetry_contract_is_fixed(self):
+        for field, value in (
+            ("schema", "szl.receiptagent-v3-supervision-policy/v1"),
+            ("admission_telemetry_timeout_seconds", 14.0),
+            ("runtime_telemetry_timeout_seconds", 6.0),
+            ("maximum_telemetry_gap_seconds", 9.0),
+        ):
+            with self.subTest(field=field):
+                drifted = copy.deepcopy(self.candidate)
+                drifted["supervision_policy"][field] = value
+                with self.assertRaises(validation.SupervisorValidationError):
+                    self.validate(self.make_report(), candidate=drifted)
 
     def test_run_source_gpu_recipe_and_adapter_tampering_fail(self):
         mutations = {
