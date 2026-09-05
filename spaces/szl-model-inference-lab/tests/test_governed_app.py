@@ -25,11 +25,11 @@ class GovernedSpaceTests(unittest.TestCase):
         self.assertEqual(len(governed.PUBLIC_POLICY_REVISION), 71)
         self.assertEqual(
             governed.FORGE_CONTROLLER_REVISION,
-            "943f6ab987bbe120cae32649c46c3a5f0b6f9e9b",
+            "9f227f6a10dac178b29130c742c98451b6ed8391",
         )
         self.assertEqual(
             governed.SECOND_BRAIN_REVISION,
-            "fa3e4605344b13db220a79f9dcd267ee5725c87e",
+            "1d3960c69235f117b7ec2b5ea97472f81fb588f5",
         )
         self.assertEqual(
             governed.NEMO_REVISION,
@@ -269,12 +269,34 @@ class GovernedSpaceTests(unittest.TestCase):
                 return_value={"ready": True, "packages": {}, "contract_ready": True},
             ),
             mock.patch.object(governed, "_components", return_value=components),
+            mock.patch.object(governed, "frontier_status", return_value={
+                "ready": True, "state": "REVIEW_REQUIRED", "source_count": 7,
+                "training_authority": "NONE", "execution_authority": "NONE",
+            }),
         ):
             response = governed.governed_health()
         payload = json.loads(response.body)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(payload["status"], "READY")
         self.assertEqual(payload["second_brain"]["public_chunk_count"], 575)
+        self.assertEqual(payload["second_brain"]["frontier"]["source_count"], 7)
+        self.assertEqual(payload["second_brain"]["frontier"]["state"], "REVIEW_REQUIRED")
+
+    def test_unavailable_frontier_blocks_governed_health(self):
+        app.state.update({"status": "READY", "llama_cpp_version": "0.3.21"})
+        components = {"retriever": lambda *_args: {
+            "ready": True, "content_access": "HANDLES_ONLY",
+            "handles": [{"nodeId": "node-1"}], "corpus_n": 575,
+        }}
+        with (
+            mock.patch.dict(os.environ, {app.SOURCE_REVISION_ENV: "f" * 40}),
+            mock.patch.object(governed, "_dependency_status", return_value={"ready": True}),
+            mock.patch.object(governed, "_components", return_value=components),
+            mock.patch.object(governed, "frontier_status", return_value={"ready": False}),
+        ):
+            response = governed.governed_health()
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(json.loads(response.body)["status"], "UNAVAILABLE")
 
     def test_governed_endpoint_passes_only_fixed_public_scope_to_controller(self):
         app.state.update(

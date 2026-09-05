@@ -13,8 +13,8 @@ from pathlib import Path
 from typing import Any
 
 PROMPT = "Answer with exactly this status, then cite evidence: Lambda remains Conjecture 1, advisory only."
-FORGE_CONTROLLER_REVISION = "943f6ab987bbe120cae32649c46c3a5f0b6f9e9b"
-SECOND_BRAIN_REVISION = "fa3e4605344b13db220a79f9dcd267ee5725c87e"
+FORGE_CONTROLLER_REVISION = "9f227f6a10dac178b29130c742c98451b6ed8391"
+SECOND_BRAIN_REVISION = "1d3960c69235f117b7ec2b5ea97472f81fb588f5"
 NEMO_REVISION = "810231a531188bb569e3faa17396386eb0a5e260"
 MODEL_REVISION = "67d60ec577730747055491640cfb91fc4a4b5d25"
 LOCKED_EIGHT = ["F1", "F4", "F7", "F11", "F12", "F18", "F19", "F22"]
@@ -164,6 +164,12 @@ def verify_health(
         brain.get("private_graph_present") is False,
         "private graph appeared in public runtime",
     )
+    frontier = brain.get("frontier") or {}
+    require(frontier.get("ready") is True, "frontier index is not ready")
+    require(frontier.get("source_count") == 7, "frontier source count drift")
+    require(frontier.get("state") == "REVIEW_REQUIRED", "frontier review boundary drift")
+    require(frontier.get("training_authority") == "NONE", "frontier gained training authority")
+    require(frontier.get("execution_authority") == "NONE", "frontier gained execution authority")
     nemo = health.get("nemo") or {}
     require(nemo.get("version") == "0.4.0", "Nemo version drift")
     require(
@@ -177,7 +183,7 @@ def verify_health(
     packages = (health.get("dependency_status") or {}).get("packages") or {}
     for name, expected in (
         ("szl-forge-inference", "0.2.0"),
-        ("szl-second-brain", "1.2.0"),
+        ("szl-second-brain", "1.3.0"),
         ("szl-nemo", "0.4.0"),
     ):
         observed = packages.get(name) or {}

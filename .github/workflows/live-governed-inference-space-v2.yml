@@ -71,13 +71,15 @@ jobs:
           python - <<'PY'
           import importlib.metadata
           from inference import load_production_contract
-          from second_brain import index
+          from second_brain import frontier_status, index
 
           assert importlib.metadata.version("szl-forge-inference") == "0.2.0"
-          assert importlib.metadata.version("szl-second-brain") == "1.2.0"
+          assert importlib.metadata.version("szl-second-brain") == "1.3.0"
           assert importlib.metadata.version("szl-nemo") == "0.4.0"
           assert index().built is True
           assert index().n == 575
+          assert frontier_status()["ready"] is True
+          assert frontier_status()["source_count"] == 7
           contract = load_production_contract()
           assert contract["formula_authority"]["locked_proven_count"] == 8
           assert contract["runtime_selection"]["winner"] == "UNSELECTED"
