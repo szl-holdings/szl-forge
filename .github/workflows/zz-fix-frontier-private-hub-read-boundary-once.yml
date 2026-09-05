@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-name: Fix frontier private-Hub read boundary once
+name: Export frontier private-Hub workflow repair once
 
 on:
   push:
@@ -12,12 +12,12 @@ permissions:
   contents: write
 
 concurrency:
-  group: fix-frontier-private-hub-read-boundary-once
+  group: export-frontier-private-hub-workflow-repair-once
   cancel-in-progress: false
 
 jobs:
-  repair:
-    name: separate credentialless PR proof from trusted-main gated readback
+  export:
+    name: prove and export the permanent workflow bytes
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -38,31 +38,28 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Patch the permanent workflow exactly
-        run: python tools/patch_frontier_private_hub_workflow_once.py
-
-      - name: Prove the lifecycle separation contract
+      - name: Transform and prove the workflow
         run: |
           set -euo pipefail
+          python tools/patch_frontier_private_hub_workflow_once.py
           python -m py_compile \
             tools/patch_frontier_private_hub_workflow_once.py \
             tools/test_model_kernel_frontier_workflow.py
           python tools/test_model_kernel_frontier_workflow.py
           git diff --check
 
-      - name: Commit the permanent repair and retire bounded controls
+      - name: Export exact verified bytes without workflow-token mutation
         run: |
           set -euo pipefail
-          git rm \
-            .github/workflows/zz-fix-frontier-private-hub-read-boundary-once.yml \
-            tools/patch_frontier_private_hub_workflow_once.py
-          git add \
-            .github/workflows/model-kernel-frontier.yml \
-            tools/test_model_kernel_frontier_workflow.py
+          mkdir -p reports
+          cp .github/workflows/model-kernel-frontier.yml \
+            reports/model-kernel-frontier.patched.yml
+          git restore .github/workflows/model-kernel-frontier.yml
+          git add reports/model-kernel-frontier.patched.yml
           git config user.name "SZL Frontier Evidence Controller"
           git config user.email "stephenlutar2@gmail.com"
           git commit \
-            -m "fix(ci): isolate gated Hub readback from PR verification" \
-            -m "Keep pull requests credentialless and prove source-binding behavior through offline contracts. Run exact private-Hub receipt readback only on a trusted main push after actively validating an organization credential, and retain sanitized evidence." \
+            -m "chore(ci): export verified frontier workflow repair" \
+            -m "The generated file is an exact connector handoff and will be deleted after the workflow file is committed through an identity with workflow permission." \
             -m "Signed-off-by: Stephen Lutar <stephenlutar2@gmail.com>"
           git push origin HEAD:fix/frontier-private-hub-read-boundary-20260905
