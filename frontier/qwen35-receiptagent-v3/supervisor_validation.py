@@ -18,6 +18,7 @@ from typing import Any, Mapping, Sequence
 
 
 REPORT_SCHEMA = "szl.frontier-training-run/v3"
+SUPERVISION_POLICY_SCHEMA = "szl.receiptagent-v3-supervision-policy/v2"
 CLAIM_BOUNDARY = (
     "This is measured local training, not evaluation or authenticated receipt "
     "evidence. Train loss is not an evaluation metric."
@@ -342,10 +343,19 @@ def _validate_candidate(candidate: Mapping[str, Any]) -> dict[str, Any]:
         training_data["train_rows"] * recipe["full_epochs_over_unique_rows"],
         "candidate full epochs over unique rows",
     )
-    if not _mapping(
+    policy = _mapping(
         candidate_dict["supervision_policy"], "candidate supervision policy"
-    ):
+    )
+    if not policy:
         _fail("candidate supervision policy must not be empty")
+    _exact(policy.get("schema"), SUPERVISION_POLICY_SCHEMA, "policy schema")
+    for key, expected in (
+        ("admission_telemetry_timeout_seconds", 15.0),
+        ("runtime_telemetry_timeout_seconds", 5.0),
+        ("maximum_telemetry_gap_seconds", 8.0),
+    ):
+        _finite_number(policy.get(key), f"candidate supervision policy.{key}")
+        _exact(policy[key], expected, f"candidate supervision policy.{key}")
     runtime_lock = _mapping(candidate_dict["runtime_lock"], "candidate runtime lock")
     if not runtime_lock or any(
         not isinstance(key, str) or not key or not isinstance(value, str) or not value
@@ -353,7 +363,7 @@ def _validate_candidate(candidate: Mapping[str, Any]) -> dict[str, Any]:
     ):
         _fail("candidate runtime lock must contain nonempty string bindings")
     _sha256(sha256_json(recipe), "computed recipe digest")
-    _sha256(sha256_json(candidate_dict["supervision_policy"]), "computed policy digest")
+    _sha256(sha256_json(policy), "computed policy digest")
     return candidate_dict
 
 

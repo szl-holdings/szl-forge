@@ -53,15 +53,15 @@ UNSAFE_TERMINAL_CUE = re.compile(
     r"resubmitted|replayed|disclosed|fabricated)\b",
     re.IGNORECASE,
 )
-REASONING_TAG = re.compile(r"</?think>|hidden[_ -]?analysis|chain[_ -]?of[_ -]?thought", re.I)
+REASONING_TAG = re.compile(
+    r"</?think>|hidden[_ -]?analysis|chain[_ -]?of[_ -]?thought", re.I
+)
 HEX_32 = re.compile(r"[0-9a-f]{32}")
 HEX_64 = re.compile(r"[0-9a-f]{64}")
 GPU_UUID = re.compile(r"GPU-[A-Za-z0-9-]{16,96}")
 MAX_ADAPTER_FILE_BYTES = 256 * 1024 * 1024
 MAX_ADAPTER_SNAPSHOT_BYTES = 512 * 1024 * 1024
-REQUIRED_ADAPTER_FILES = frozenset(
-    {"adapter_config.json", "adapter_model.safetensors"}
-)
+REQUIRED_ADAPTER_FILES = frozenset({"adapter_config.json", "adapter_model.safetensors"})
 SUPERVISOR_FULL_STATE = OBSERVATION_STATE_BY_KIND["FULL"]
 SUPERVISOR_SOURCE_COMPONENTS = (
     "launch_supervised_training.py",
@@ -109,13 +109,25 @@ SUPERVISOR_LAUNCH_KEYS = {
 }
 SUPERVISOR_TELEMETRY_KEYS = {
     "source",
+    "runtimeSampleTimeoutSeconds",
+    "admission",
+    "runtimeConfirmation",
     "gpuUuid",
     "maximumTemperaturePolicyC",
     "sampleIntervalSeconds",
     "maximumTelemetryGapSeconds",
-    "maximumObservedSampleGapSeconds",
-    "samples",
+    "maximumObservedRuntimeSampleGapSeconds",
+    "runtimeSamples",
     "maximumObservedTemperatureC",
+}
+TELEMETRY_DURATION_OVERHEAD_SECONDS = 0.25
+SUPERVISOR_TELEMETRY_PHASE_KEYS = {
+    "phase",
+    "state",
+    "timeoutSeconds",
+    "durationSeconds",
+    "sample",
+    "error",
 }
 SUPERVISOR_TELEMETRY_SAMPLE_KEYS = {
     "offsetSeconds",
@@ -218,7 +230,9 @@ def evaluation_split(
     candidate: dict[str, Any],
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     filename = f"{split}.jsonl"
-    manifest_bytes = committed_bytes(source_commit, f"{RELATIVE}/curriculum-manifest.json")
+    manifest_bytes = committed_bytes(
+        source_commit, f"{RELATIVE}/curriculum-manifest.json"
+    )
     manifest = json.loads(manifest_bytes)
     entry = (manifest.get("files") or {}).get(filename)
     if not isinstance(entry, dict) or entry.get("trainingEligible") is not False:
@@ -226,7 +240,9 @@ def evaluation_split(
     data = committed_bytes(source_commit, f"{RELATIVE}/{filename}")
     digest = sha256_bytes(data)
     if digest != entry.get("sha256"):
-        raise QualificationError(f"{filename} differs from its committed manifest digest")
+        raise QualificationError(
+            f"{filename} differs from its committed manifest digest"
+        )
     rows = [json.loads(line) for line in data.splitlines() if line.strip()]
     expected_rows = candidate["evaluation_protocol"][f"{split}_rows"]
     if len(rows) != expected_rows or len(rows) != entry.get("rows"):
@@ -323,7 +339,9 @@ def strict_json_document(
             raw.decode("utf-8"),
             object_pairs_hook=reject_duplicate_pairs,
             parse_constant=lambda constant: (_ for _ in ()).throw(
-                QualificationError(f"{label} contains non-finite JSON number {constant}")
+                QualificationError(
+                    f"{label} contains non-finite JSON number {constant}"
+                )
             ),
         )
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
@@ -367,9 +385,13 @@ def verify_supervisor_source(
     fresh_components = fresh_core.pop("components", None)
     expected_core = {**SUPERVISOR_SOURCE_CORE, "revision": source_commit}
     if fresh_core != expected_core:
-        raise QualificationError("fresh exact source core differs from the fixed contract")
+        raise QualificationError(
+            "fresh exact source core differs from the fixed contract"
+        )
     if observed_core != fresh_core:
-        raise QualificationError("supervisor source core differs from fresh exact source")
+        raise QualificationError(
+            "supervisor source core differs from fresh exact source"
+        )
     if not isinstance(observed_components, dict):
         raise QualificationError("supervisor source component evidence is absent")
     exact_keys(
@@ -385,9 +407,13 @@ def verify_supervisor_source(
             "sha256": sha256_bytes(data),
         }
     if observed_components != expected_components:
-        raise QualificationError("supervisor source components differ from committed bytes")
+        raise QualificationError(
+            "supervisor source components differ from committed bytes"
+        )
     if fresh_components is not None and fresh_components != expected_components:
-        raise QualificationError("fresh source component evidence differs from committed bytes")
+        raise QualificationError(
+            "fresh source component evidence differs from committed bytes"
+        )
     return expected_components
 
 
@@ -521,7 +547,9 @@ def verify_supervisor_launch(
         or launch.get("termination") is not None
         or launch.get("cgroupEmptyConfirmed") is not True
     ):
-        raise QualificationError("supervisor worker terminal evidence is not successful")
+        raise QualificationError(
+            "supervisor worker terminal evidence is not successful"
+        )
     worker_cgroup = launch.get("workerControlGroup")
     if (
         not isinstance(worker_cgroup, str)
@@ -542,7 +570,9 @@ def verify_supervisor_launch(
         raise QualificationError("worker wall timeout differs from committed policy")
     duration = finite_number(launch.get("durationSeconds"), "worker duration")
     if duration < 0 or duration > float(expected_wall_timeout):
-        raise QualificationError("worker duration is outside the committed full-run bound")
+        raise QualificationError(
+            "worker duration is outside the committed full-run bound"
+        )
     if not isinstance(launch.get("startedAt"), str) or not isinstance(
         launch.get("endedAt"), str
     ):
@@ -566,14 +596,23 @@ def verify_supervisor_telemetry(
     exact_keys(telemetry, SUPERVISOR_TELEMETRY_KEYS, "supervisor telemetry")
     policy = candidate["supervision_policy"]
     recipe = candidate["training_recipe"]
-    if telemetry.get("source") != "INDEPENDENT_SUPERVISOR_FIXED_NVIDIA_SMI":
+    if policy.get("schema") != "szl.receiptagent-v3-supervision-policy/v2":
+        raise QualificationError("supervision policy telemetry schema differs")
+    if policy.get("admission_telemetry_timeout_seconds") != 15.0:
+        raise QualificationError("admission telemetry timeout differs")
+    if policy.get("runtime_telemetry_timeout_seconds") != 5.0:
+        raise QualificationError("runtime telemetry timeout differs")
+    if policy.get("maximum_telemetry_gap_seconds") != 8.0:
+        raise QualificationError("runtime telemetry gap policy differs")
+    if telemetry.get("source") != "INDEPENDENT_SUPERVISOR_TWO_STAGE_FIXED_NVIDIA_SMI":
         raise QualificationError("supervisor telemetry source differs")
     gpu_uuid = telemetry.get("gpuUuid")
     if not isinstance(gpu_uuid, str) or GPU_UUID.fullmatch(gpu_uuid) is None:
         raise QualificationError("supervisor GPU identity is malformed")
-    if telemetry.get("maximumTemperaturePolicyC") != recipe[
-        "maximum_gpu_temperature_c"
-    ]:
+    if (
+        telemetry.get("maximumTemperaturePolicyC")
+        != recipe["maximum_gpu_temperature_c"]
+    ):
         raise QualificationError("supervisor thermal policy differs")
     if telemetry.get("sampleIntervalSeconds") != policy.get(
         "thermal_sample_interval_seconds"
@@ -583,21 +622,16 @@ def verify_supervisor_telemetry(
         "maximum_telemetry_gap_seconds"
     ):
         raise QualificationError("supervisor telemetry gap policy differs")
-    samples = telemetry.get("samples")
-    if not isinstance(samples, list) or len(samples) < 2:
-        raise QualificationError("successful supervisor telemetry needs at least two samples")
-    offsets: list[float] = []
-    temperatures: list[int] = []
-    free_memory: list[int] = []
-    total_memory: list[int] = []
-    for index, sample in enumerate(samples):
+    if telemetry.get("runtimeSampleTimeoutSeconds") != policy.get(
+        "runtime_telemetry_timeout_seconds"
+    ):
+        raise QualificationError("supervisor runtime sample timeout differs")
+    minimum_initial_mib = int(float(recipe["minimum_free_gpu_gib"]) * 1024)
+
+    def sample_values(sample: Any, label: str) -> tuple[float, int, int, int]:
         if not isinstance(sample, dict):
-            raise QualificationError("supervisor telemetry sample must be one object")
-        exact_keys(
-            sample,
-            SUPERVISOR_TELEMETRY_SAMPLE_KEYS,
-            f"supervisor telemetry sample {index}",
-        )
+            raise QualificationError(f"{label} must be one object")
+        exact_keys(sample, SUPERVISOR_TELEMETRY_SAMPLE_KEYS, label)
         if sample.get("gpuUuid") != gpu_uuid:
             raise QualificationError("supervisor GPU identity changed between samples")
         if not isinstance(sample.get("observedAt"), str):
@@ -620,18 +654,96 @@ def verify_supervisor_telemetry(
             or not 0 <= free_mib <= total_mib <= 1_048_576
         ):
             raise QualificationError("supervisor telemetry memory is malformed")
+        return offset, temperature, free_mib, total_mib
+
+    def readiness_phase(
+        value: Any,
+        *,
+        phase: str,
+        timeout_seconds: float,
+    ) -> tuple[dict[str, Any], tuple[float, int, int, int]]:
+        if not isinstance(value, dict):
+            raise QualificationError(f"{phase} telemetry evidence must be one object")
+        exact_keys(value, SUPERVISOR_TELEMETRY_PHASE_KEYS, phase)
+        if value.get("phase") != phase or value.get("state") != "OBSERVED":
+            raise QualificationError(f"{phase} telemetry state differs")
+        if value.get("timeoutSeconds") != timeout_seconds:
+            raise QualificationError(f"{phase} telemetry timeout differs")
+        duration = finite_number(
+            value.get("durationSeconds"), f"{phase} telemetry duration"
+        )
+        if duration < 0 or duration > (
+            timeout_seconds + TELEMETRY_DURATION_OVERHEAD_SECONDS
+        ):
+            raise QualificationError(f"{phase} telemetry duration is out of bounds")
+        if value.get("error") is not None:
+            raise QualificationError(f"{phase} telemetry reports an error")
+        sample = value.get("sample")
+        return sample, sample_values(sample, f"{phase} telemetry sample")
+
+    _, admission_values = readiness_phase(
+        telemetry.get("admission"),
+        phase="ADMISSION_READINESS",
+        timeout_seconds=15.0,
+    )
+    confirmation_sample, confirmation_values = readiness_phase(
+        telemetry.get("runtimeConfirmation"),
+        phase="RUNTIME_CONFIRMATION",
+        timeout_seconds=5.0,
+    )
+    if confirmation_values[0] < admission_values[0]:
+        raise QualificationError(
+            "runtime confirmation predates the admission telemetry sample"
+        )
+    for label, values in (
+        ("admission", admission_values),
+        ("runtime confirmation", confirmation_values),
+    ):
+        if values[1] > recipe["maximum_gpu_temperature_c"]:
+            raise QualificationError(f"supervisor {label} exceeded the thermal policy")
+        if values[2] < minimum_initial_mib:
+            raise QualificationError(
+                f"supervisor {label} free GPU memory is below policy"
+            )
+
+    samples = telemetry.get("runtimeSamples")
+    if not isinstance(samples, list) or len(samples) < 2:
+        raise QualificationError(
+            "successful supervisor runtime telemetry needs at least two samples"
+        )
+    offsets: list[float] = []
+    temperatures: list[int] = []
+    free_memory: list[int] = []
+    total_memory: list[int] = []
+    for index, sample in enumerate(samples):
+        offset, temperature, free_mib, total_mib = sample_values(
+            sample, f"supervisor runtime telemetry sample {index}"
+        )
         offsets.append(offset)
         temperatures.append(temperature)
         free_memory.append(free_mib)
         total_memory.append(total_mib)
+    for key in (
+        "observedAt",
+        "gpuUuid",
+        "temperatureC",
+        "freeMiB",
+        "totalMiB",
+    ):
+        if samples[0].get(key) != confirmation_sample.get(key):
+            raise QualificationError(
+                "runtime confirmation is not the runtime telemetry baseline"
+            )
     if any(current < previous for previous, current in zip(offsets, offsets[1:])):
         raise QualificationError("supervisor telemetry offsets are not monotonic")
-    if len(set(total_memory)) != 1:
+    all_total_memory = [admission_values[3], confirmation_values[3], *total_memory]
+    if len(set(all_total_memory)) != 1:
         raise QualificationError("supervisor GPU total memory changed between samples")
-    minimum_initial_mib = int(float(recipe["minimum_free_gpu_gib"]) * 1024)
-    if free_memory[0] < minimum_initial_mib:
-        raise QualificationError("supervisor initial free GPU memory is below policy")
-    maximum_temperature = max(temperatures)
+    maximum_temperature = max(
+        admission_values[1],
+        confirmation_values[1],
+        *temperatures,
+    )
     if telemetry.get("maximumObservedTemperatureC") != maximum_temperature:
         raise QualificationError("supervisor maximum temperature was not recomputed")
     if maximum_temperature > recipe["maximum_gpu_temperature_c"]:
@@ -641,7 +753,7 @@ def verify_supervisor_telemetry(
         6,
     )
     observed_gap = finite_number(
-        telemetry.get("maximumObservedSampleGapSeconds"),
+        telemetry.get("maximumObservedRuntimeSampleGapSeconds"),
         "maximum observed telemetry gap",
     )
     if abs(observed_gap - recomputed_gap) > 0.000002:
@@ -651,8 +763,12 @@ def verify_supervisor_telemetry(
     return {
         "gpuUuid": gpu_uuid,
         "maximumObservedTemperatureC": maximum_temperature,
-        "minimumObservedFreeMiB": min(free_memory),
-        "maximumObservedSampleGapSeconds": observed_gap,
+        "minimumObservedFreeMiB": min(
+            admission_values[2],
+            confirmation_values[2],
+            *free_memory,
+        ),
+        "maximumObservedRuntimeSampleGapSeconds": observed_gap,
     }
 
 
@@ -674,14 +790,19 @@ def verify_training_report(
     source_commit: str,
     candidate: dict[str, Any],
 ) -> tuple[dict[str, Any], str]:
-    report, _ = strict_json_document(path, "training report", maximum_bytes=2 * 1024 * 1024)
+    report, _ = strict_json_document(
+        path, "training report", maximum_bytes=2 * 1024 * 1024
+    )
     verify_report_digest(report, "training report")
     recipe = candidate["training_recipe"]
     if report.get("schema") != "szl.frontier-training-run/v3":
         raise QualificationError("v3 training report schema is unsupported")
     if report.get("state") != "MEASURED_FULL_TRAINING_COMPLETED_UNATTESTED":
         raise QualificationError("v3 evaluation requires the fixed full training run")
-    if report.get("runKind") != "FULL" or report.get("qualificationEligible") is not True:
+    if (
+        report.get("runKind") != "FULL"
+        or report.get("qualificationEligible") is not True
+    ):
         raise QualificationError("training report is not the qualifying full recipe")
     if report.get("candidateId") != candidate["candidate_id"]:
         raise QualificationError("training report candidate identity differs")
@@ -714,7 +835,9 @@ def verify_training_report(
         if configuration.get(key) != expected:
             raise QualificationError(f"training configuration {key} differs")
     source_bundle = report.get("sourceBundle") or {}
-    manifest_bytes = committed_bytes(source_commit, f"{RELATIVE}/curriculum-manifest.json")
+    manifest_bytes = committed_bytes(
+        source_commit, f"{RELATIVE}/curriculum-manifest.json"
+    )
     manifest = json.loads(manifest_bytes)
     if source_bundle.get("manifestSha256") != sha256_bytes(manifest_bytes):
         raise QualificationError("training report manifest commitment differs")
@@ -722,16 +845,28 @@ def verify_training_report(
     if source_bundle.get("trainSha256") != train_entry["sha256"]:
         raise QualificationError("training report train commitment differs")
     if source_bundle.get("trainerOpenedSplitContent") != ["TRAIN"]:
-        raise QualificationError("training report does not assert train-only split access")
+        raise QualificationError(
+            "training report does not assert train-only split access"
+        )
     gpu = report.get("gpu") or {}
     if gpu.get("maximumTemperaturePolicyC") != recipe["maximum_gpu_temperature_c"]:
         raise QualificationError("training thermal policy differs")
-    if gpu.get("maximumObservedTemperatureC", 10**9) > recipe["maximum_gpu_temperature_c"]:
+    if (
+        gpu.get("maximumObservedTemperatureC", 10**9)
+        > recipe["maximum_gpu_temperature_c"]
+    ):
         raise QualificationError("training exceeded the fixed thermal policy")
     if report.get("authenticatedTrainingEnvelopePresent") is not False:
-        raise QualificationError("unsigned evaluator expects an explicitly unauthenticated report")
-    if report.get("receiptEligible") is not False or report.get("publicationEligible") is not False:
-        raise QualificationError("unsigned training report crossed a promotion boundary")
+        raise QualificationError(
+            "unsigned evaluator expects an explicitly unauthenticated report"
+        )
+    if (
+        report.get("receiptEligible") is not False
+        or report.get("publicationEligible") is not False
+    ):
+        raise QualificationError(
+            "unsigned training report crossed a promotion boundary"
+        )
     adapter_sha, _ = hash_adapter(adapter_dir)
     if adapter_sha != (report.get("adapter") or {}).get("aggregateSha256"):
         raise QualificationError("v3 adapter bytes differ from the training report")
@@ -775,7 +910,9 @@ def verify_supervisor_linkage(
             raise QualificationError(f"supervisor terminal field {key} differs")
     for key in SUPERVISOR_FALSE_FLAGS:
         if supervisor_report.get(key) is not False:
-            raise QualificationError(f"supervisor promotion/authentication flag {key} differs")
+            raise QualificationError(
+                f"supervisor promotion/authentication flag {key} differs"
+            )
     provenance = supervisor_report["provenance"]
     if not isinstance(provenance, dict):
         raise QualificationError("supervisor provenance must be one object")
@@ -804,9 +941,7 @@ def verify_supervisor_linkage(
     exact_keys(identities, SUPERVISOR_IDENTITY_KEYS, "supervisor identities")
     expected_identities = {
         "supervisionPolicySha256": sha256_json(candidate["supervision_policy"]),
-        "supervisorSourceSha256": source_components["supervise_training.py"][
-            "sha256"
-        ],
+        "supervisorSourceSha256": source_components["supervise_training.py"]["sha256"],
         "workerSourceSha256": source_components["train_candidate.py"]["sha256"],
         "validatorSourceSha256": source_components["supervisor_validation.py"][
             "sha256"
@@ -820,7 +955,9 @@ def verify_supervisor_linkage(
             raise QualificationError(f"supervisor identity {key} differs")
     for key in ("workerEnvironmentSha256", "admissionRecordSha256"):
         exact_sha256(identities.get(key), f"supervisor identity {key}")
-    expected_worker_environment_sha = sha256_json(expected_worker_environment(candidate))
+    expected_worker_environment_sha = sha256_json(
+        expected_worker_environment(candidate)
+    )
     if identities["workerEnvironmentSha256"] != expected_worker_environment_sha:
         raise QualificationError("supervisor worker environment digest differs")
     python_identity = identities.get("pythonExecutable")
@@ -856,7 +993,9 @@ def verify_supervisor_linkage(
 
     training_binding = supervisor_report["trainingReport"]
     if not isinstance(training_binding, dict):
-        raise QualificationError("supervisor training-report binding must be one object")
+        raise QualificationError(
+            "supervisor training-report binding must be one object"
+        )
     exact_keys(
         training_binding,
         {
@@ -906,7 +1045,9 @@ def verify_supervisor_linkage(
     }:
         raise QualificationError("fresh adapter evidence differs from the supervisor")
     if (child_report.get("adapter") or {}).get("aggregateSha256") != fresh_adapter_sha:
-        raise QualificationError("fresh adapter aggregate differs from the child report")
+        raise QualificationError(
+            "fresh adapter aggregate differs from the child report"
+        )
     if supervisor_report["bindings"] != SUPERVISOR_BINDINGS:
         raise QualificationError("supervisor independent binding assertions differ")
 
@@ -940,9 +1081,13 @@ def verify_supervisor_linkage(
             expected_run_kind="FULL",
         )
     except SupervisorValidationError as exc:
-        raise QualificationError(f"strict child/supervisor linkage failed: {exc}") from exc
+        raise QualificationError(
+            f"strict child/supervisor linkage failed: {exc}"
+        ) from exc
     if validated_child.report_sha256 != training_binding["canonicalReportSha256"]:
-        raise QualificationError("canonical child digest differs after strict validation")
+        raise QualificationError(
+            "canonical child digest differs after strict validation"
+        )
 
     return {
         "schema": supervisor_report["schema"],
@@ -959,17 +1104,13 @@ def verify_supervisor_linkage(
         "sourceRevision": source_commit,
         "trainingRecipeSha256": sha256_json(candidate["training_recipe"]),
         "runtimeLockSha256": sha256_json(candidate["runtime_lock"]),
-        "supervisionPolicySha256": expected_identities[
-            "supervisionPolicySha256"
-        ],
+        "supervisionPolicySha256": expected_identities["supervisionPolicySha256"],
         "supervisorSourceComponentsSha256": sha256_json(source_components),
         "trainingBundleSha256": training_bundle_sha,
         "credentialCanarySha256": credential_canary_sha,
         "workerSourceSha256": expected_identities["workerSourceSha256"],
         "workerEnvironmentSha256": expected_worker_environment_sha,
-        "containmentProbeCanonicalSha256": containment_evidence[
-            "probeCanonicalSha256"
-        ],
+        "containmentProbeCanonicalSha256": containment_evidence["probeCanonicalSha256"],
         "supervisorUnit": containment_evidence["unit"],
         "workerUnit": launch_evidence["workerUnit"],
         "workerArgvSha256": launch_evidence["workerArgvSha256"],
@@ -978,8 +1119,8 @@ def verify_supervisor_linkage(
             "maximumObservedTemperatureC"
         ],
         "minimumObservedFreeMiB": telemetry_evidence["minimumObservedFreeMiB"],
-        "maximumObservedSampleGapSeconds": telemetry_evidence[
-            "maximumObservedSampleGapSeconds"
+        "maximumObservedRuntimeSampleGapSeconds": telemetry_evidence[
+            "maximumObservedRuntimeSampleGapSeconds"
         ],
         "localEvaluationInputBindingSatisfied": True,
         "integrityDigestIsAuthentication": False,
@@ -1001,7 +1142,9 @@ def prompt_messages(row: dict[str, Any]) -> list[dict[str, Any]]:
     ]
 
 
-def validate_structured(output: str, row: dict[str, Any], validator: Any) -> dict[str, Any]:
+def validate_structured(
+    output: str, row: dict[str, Any], validator: Any
+) -> dict[str, Any]:
     oracle = row["oracle"]
     request = json.loads(row["messages"][1]["content"])
     result: dict[str, Any] = {
@@ -1035,9 +1178,7 @@ def validate_structured(output: str, row: dict[str, Any], validator: Any) -> dic
     result["evidenceExact"] = canonical_json(parsed["evidence"]) == canonical_json(
         oracle["expectedEvidence"]
     )
-    expected_evidence = {
-        canonical_json(item) for item in oracle["expectedEvidence"]
-    }
+    expected_evidence = {canonical_json(item) for item in oracle["expectedEvidence"]}
     result["unsupportedEvidenceCount"] = sum(
         canonical_json(item) not in expected_evidence for item in parsed["evidence"]
     )
@@ -1167,7 +1308,9 @@ def v2_snapshot(candidate: dict[str, Any]) -> tuple[Path, dict[str, Any]]:
     weights = snapshot / "adapter_model.safetensors"
     digest = sha256_bytes(weights.read_bytes())
     if digest != predecessor["adapter_model_sha256"]:
-        raise QualificationError("v2 adapter SafeTensors digest differs from candidate.json")
+        raise QualificationError(
+            "v2 adapter SafeTensors digest differs from candidate.json"
+        )
     with safe_open(weights, framework="pt", device="cpu") as handle:
         tensor_count = len(list(handle.keys()))
     if tensor_count < 1:
@@ -1217,11 +1360,15 @@ def read_stable_adapter_file(directory_fd: int, name: str) -> bytes:
                 f"adapter snapshot requires a single-link regular file: {name}"
             )
         if before.st_size < 0 or before.st_size > MAX_ADAPTER_FILE_BYTES:
-            raise QualificationError(f"adapter snapshot file is unexpectedly large: {name}")
+            raise QualificationError(
+                f"adapter snapshot file is unexpectedly large: {name}"
+            )
         chunks: list[bytes] = []
         observed = 0
         while True:
-            chunk = os.read(descriptor, min(1024 * 1024, MAX_ADAPTER_FILE_BYTES + 1 - observed))
+            chunk = os.read(
+                descriptor, min(1024 * 1024, MAX_ADAPTER_FILE_BYTES + 1 - observed)
+            )
             if not chunk:
                 break
             chunks.append(chunk)
@@ -1234,10 +1381,14 @@ def read_stable_adapter_file(directory_fd: int, name: str) -> bytes:
     finally:
         os.close(descriptor)
     if stable_file_identity(before) != stable_file_identity(after):
-        raise QualificationError(f"adapter source changed during snapshot capture: {name}")
+        raise QualificationError(
+            f"adapter source changed during snapshot capture: {name}"
+        )
     data = b"".join(chunks)
     if len(data) != before.st_size:
-        raise QualificationError(f"adapter source size changed during snapshot capture: {name}")
+        raise QualificationError(
+            f"adapter source size changed during snapshot capture: {name}"
+        )
     return data
 
 
@@ -1274,14 +1425,18 @@ def staged_adapter_snapshot(
     try:
         source_fd = os.open(source, directory_flags)
     except OSError as exc:
-        raise QualificationError("adapter source must be a no-follow directory") from exc
+        raise QualificationError(
+            "adapter source must be a no-follow directory"
+        ) from exc
     captured: dict[str, bytes] = {}
     try:
         directory_before = os.fstat(source_fd)
         if not stat.S_ISDIR(directory_before.st_mode):
             raise QualificationError("adapter source is not a directory")
         if directory_before.st_uid != os.geteuid():
-            raise QualificationError("adapter source is not owned by the evaluator account")
+            raise QualificationError(
+                "adapter source is not owned by the evaluator account"
+            )
         if stat.S_IMODE(directory_before.st_mode) & 0o022:
             raise QualificationError("adapter source is group- or world-writable")
         names_before = sorted(os.listdir(source_fd))
@@ -1300,14 +1455,18 @@ def staged_adapter_snapshot(
             data = read_stable_adapter_file(source_fd, name)
             total_bytes += len(data)
             if total_bytes > MAX_ADAPTER_SNAPSHOT_BYTES:
-                raise QualificationError("adapter snapshot exceeded its total size ceiling")
+                raise QualificationError(
+                    "adapter snapshot exceeded its total size ceiling"
+                )
             captured[name] = data
         names_after = sorted(os.listdir(source_fd))
         directory_after = os.fstat(source_fd)
         if names_after != names_before or stable_file_identity(
             directory_after
         ) != stable_file_identity(directory_before):
-            raise QualificationError("adapter source directory changed during snapshot capture")
+            raise QualificationError(
+                "adapter source directory changed during snapshot capture"
+            )
     except OSError as exc:
         raise QualificationError("adapter snapshot capture failed") from exc
     finally:
@@ -1344,7 +1503,9 @@ def load_verified_v3_adapter(
         or not isinstance(expected_files_sha256, str)
         or HEX_64.fullmatch(expected_files_sha256) is None
     ):
-        raise QualificationError("v3 adapter load requires verified aggregate and file evidence")
+        raise QualificationError(
+            "v3 adapter load requires verified aggregate and file evidence"
+        )
     before_sha, before_files = hash_adapter(snapshot)
     if (
         before_sha != expected_sha256
@@ -1422,7 +1583,9 @@ def rate(numerator: int, denominator: int) -> float:
     return numerator / denominator if denominator else 0.0
 
 
-def recompute_counts(cases: list[dict[str, Any]]) -> tuple[dict[str, int], dict[str, float]]:
+def recompute_counts(
+    cases: list[dict[str, Any]],
+) -> tuple[dict[str, int], dict[str, float]]:
     counts = {
         "total": len(cases),
         "draftTotal": sum(case["kind"] == "DRAFT" for case in cases),
@@ -1432,7 +1595,9 @@ def recompute_counts(cases: list[dict[str, Any]]) -> tuple[dict[str, int], dict[
         "parsed": sum(bool(case.get("parsed")) for case in cases),
         "schemaValid": sum(bool(case.get("schemaValid")) for case in cases),
         "requestBound": sum(bool(case.get("requestBound")) for case in cases),
-        "dispositionCorrect": sum(bool(case.get("dispositionCorrect")) for case in cases),
+        "dispositionCorrect": sum(
+            bool(case.get("dispositionCorrect")) for case in cases
+        ),
         "authoritySafe": sum(bool(case.get("authoritySafe")) for case in cases),
         "evidenceExact": sum(bool(case.get("evidenceExact")) for case in cases),
         "effortContractExact": sum(
@@ -1505,8 +1670,8 @@ def evaluate(args: argparse.Namespace) -> dict[str, Any]:
         if args.model_kind == "v3":
             if args.adapter_dir is None:
                 raise QualificationError("v3 evaluation requires --adapter-dir")
-            evaluation_adapter_dir, staged_sha, staged_files = snapshot_stack.enter_context(
-                staged_adapter_snapshot(args.adapter_dir)
+            evaluation_adapter_dir, staged_sha, staged_files = (
+                snapshot_stack.enter_context(staged_adapter_snapshot(args.adapter_dir))
             )
             training_report, adapter_sha = verify_training_report(
                 args.training_report,
@@ -1524,9 +1689,13 @@ def evaluate(args: argparse.Namespace) -> dict[str, Any]:
                 source=source,
             )
             if adapter_sha != staged_sha:
-                raise QualificationError("staged adapter aggregate differs after report checks")
+                raise QualificationError(
+                    "staged adapter aggregate differs after report checks"
+                )
             if supervision_linkage["adapterFilesSha256"] != sha256_json(staged_files):
-                raise QualificationError("staged adapter files differ after report checks")
+                raise QualificationError(
+                    "staged adapter files differ after report checks"
+                )
         rows, split_evidence = evaluation_split(
             args.source_commit, args.split, candidate
         )

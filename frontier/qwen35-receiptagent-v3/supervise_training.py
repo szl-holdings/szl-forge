@@ -49,6 +49,12 @@ MAX_GPU_MEMORY_MIB = 10_000_000
 MAX_GPU_TEMPERATURE_C = 200
 MAX_TELEMETRY_SAMPLE_JSON_BYTES = 512
 MAX_NON_TELEMETRY_REPORT_BYTES = 2 * 1024 * 1024
+TELEMETRY_READINESS_SAMPLE_COPIES = 2
+TELEMETRY_SOURCE = "INDEPENDENT_SUPERVISOR_TWO_STAGE_FIXED_NVIDIA_SMI"
+NVIDIA_SMI_QUERY = (
+    "--query-gpu=uuid,name,temperature.gpu,memory.free,memory.total",
+    "--format=csv,noheader,nounits",
+)
 
 
 def load_bootstrap(filename: str, module_name: str) -> Any:
@@ -71,7 +77,7 @@ supervisor_validation: Any | None = None
 RUN_ID_PATTERN = re.compile(r"[0-9a-f]{32}")
 SUPERVISOR_UNIT_PATTERN = re.compile(r"szl-ra3-supervisor-([0-9a-f]{32})")
 EXPECTED_POLICY = {
-    "schema": "szl.receiptagent-v3-supervision-policy/v1",
+    "schema": "szl.receiptagent-v3-supervision-policy/v2",
     "runs_root": "/home/rosie/szl-runs/receiptagent-v3-supervised",
     "python_executable": "/home/rosie/.venvs/szl-unsloth/bin/python",
     "nvidia_smi_executable": "/usr/lib/wsl/lib/nvidia-smi",
@@ -84,7 +90,8 @@ EXPECTED_POLICY = {
     "worker_mount_root": "/opt/szl-ra3",
     "model_cache_repository": "/home/rosie/.cache/huggingface/hub/models--unsloth--Qwen3.5-0.8B",
     "thermal_sample_interval_seconds": 2.0,
-    "telemetry_timeout_seconds": 5.0,
+    "admission_telemetry_timeout_seconds": 15.0,
+    "runtime_telemetry_timeout_seconds": 5.0,
     "maximum_telemetry_gap_seconds": 8.0,
     "control_plane_timeout_seconds": 2.0,
     "smoke_wall_timeout_seconds": 1200.0,
@@ -216,7 +223,11 @@ def minimum_evidence_reserve_bytes(policy: dict[str, Any]) -> int:
     """Return the conservative maximum report bytes the reserve must cover."""
 
     return (
-        maximum_telemetry_samples(policy) * MAX_TELEMETRY_SAMPLE_JSON_BYTES
+        (
+            maximum_telemetry_samples(policy)
+            + TELEMETRY_READINESS_SAMPLE_COPIES
+        )
+        * MAX_TELEMETRY_SAMPLE_JSON_BYTES
         + MAX_NON_TELEMETRY_REPORT_BYTES
     )
 
@@ -675,16 +686,17 @@ def verify_supervisor_unit(policy: dict[str, Any], unit: str) -> dict[str, Any]:
     return {"unit": f"{unit}.service", "controlGroup": cgroup, **required}
 
 
-def sample_gpu(policy: dict[str, Any]) -> TelemetrySample:
+def _sample_gpu(policy: dict[str, Any], *, timeout_seconds: float) -> TelemetrySample:
+    """Run and parse the one fixed NVIDIA telemetry command."""
+
     result = subprocess.run(
         [
             policy["nvidia_smi_executable"],
-            "--query-gpu=uuid,name,temperature.gpu,memory.free,memory.total",
-            "--format=csv,noheader,nounits",
+            *NVIDIA_SMI_QUERY,
         ],
         check=True,
         capture_output=True,
-        timeout=policy["telemetry_timeout_seconds"],
+        timeout=timeout_seconds,
     )
     try:
         lines = [
@@ -721,6 +733,24 @@ def sample_gpu(policy: dict[str, Any]) -> TelemetrySample:
         temperature,
         free_mib,
         total_mib,
+    )
+
+
+def sample_gpu_for_admission(policy: dict[str, Any]) -> TelemetrySample:
+    """Take the sole slow-start admission sample under the fixed 15 s bound."""
+
+    return _sample_gpu(
+        policy,
+        timeout_seconds=policy["admission_telemetry_timeout_seconds"],
+    )
+
+
+def sample_gpu_for_runtime(policy: dict[str, Any]) -> TelemetrySample:
+    """Take a confirmation or post-launch sample under the fixed 5 s bound."""
+
+    return _sample_gpu(
+        policy,
+        timeout_seconds=policy["runtime_telemetry_timeout_seconds"],
     )
 
 
@@ -1186,6 +1216,56 @@ def successful_telemetry_gap_trigger(
     return None
 
 
+def telemetry_phase_evidence(
+    *,
+    phase: str,
+    timeout_seconds: float,
+    started_monotonic_ns: int,
+    completed_monotonic_ns: int,
+    origin_monotonic_ns: int,
+    sample: TelemetrySample | None,
+    error: str | None,
+) -> dict[str, Any]:
+    """Render one bounded readiness observation without hiding failure state."""
+
+    if completed_monotonic_ns < started_monotonic_ns:
+        raise SupervisionError("GPU telemetry phase completion time moved backwards")
+    if sample is None and error is None:
+        raise SupervisionError("GPU telemetry phase must contain one result")
+    return {
+        "phase": phase,
+        "state": (
+            "OBSERVED"
+            if sample is not None and error is None
+            else "REJECTED"
+            if sample is not None
+            else "FAILED"
+        ),
+        "timeoutSeconds": timeout_seconds,
+        "durationSeconds": round(
+            (completed_monotonic_ns - started_monotonic_ns) / 1e9,
+            6,
+        ),
+        "sample": sample.public(origin_monotonic_ns) if sample is not None else None,
+        "error": error,
+    }
+
+
+def telemetry_phase_not_run_evidence(
+    *, phase: str, timeout_seconds: float, reason: str
+) -> dict[str, Any]:
+    """Record that a later readiness phase was deliberately not executed."""
+
+    return {
+        "phase": phase,
+        "state": "NOT_RUN",
+        "timeoutSeconds": timeout_seconds,
+        "durationSeconds": 0.0,
+        "sample": None,
+        "error": reason,
+    }
+
+
 def initial_temperature_gate(sample: TelemetrySample, recipe: dict[str, Any]) -> None:
     if sample.temperature_c > recipe["maximum_gpu_temperature_c"]:
         raise SupervisionError(
@@ -1196,6 +1276,31 @@ def initial_temperature_gate(sample: TelemetrySample, recipe: dict[str, Any]) ->
         raise SupervisionError(
             "initial free GPU memory is below the fixed policy floor"
         )
+
+
+def readiness_rejection_cause(
+    sample: TelemetrySample, recipe: dict[str, Any]
+) -> str | None:
+    """Classify a readiness rejection without treating low capacity as telemetry loss."""
+
+    if sample.temperature_c > recipe["maximum_gpu_temperature_c"]:
+        return "THERMAL_POLICY_VIOLATION"
+    if sample.free_mib < int(float(recipe["minimum_free_gpu_gib"]) * 1024):
+        return "PRECONDITION_DENIED"
+    return None
+
+
+def readiness_pair_gate(
+    admission_sample: TelemetrySample,
+    runtime_confirmation: TelemetrySample,
+    recipe: dict[str, Any],
+) -> None:
+    """Require both readiness phases to satisfy one immutable GPU contract."""
+
+    initial_temperature_gate(admission_sample, recipe)
+    initial_temperature_gate(runtime_confirmation, recipe)
+    if runtime_confirmation.gpu_uuid != admission_sample.gpu_uuid:
+        raise SupervisionError("GPU UUID changed between readiness phases")
 
 
 def sample_trigger(
@@ -1275,7 +1380,7 @@ def sampled_cgroup_drain(
             )
         if now_ns >= next_sample_ns:
             try:
-                sample = sample_gpu(policy)
+                sample = sample_gpu_for_runtime(policy)
             except Exception as exc:  # noqa: BLE001 - a live child cannot go unobserved
                 return terminal(
                     ("TELEMETRY_UNAVAILABLE", trainer.sanitized_error(exc))
@@ -1519,13 +1624,90 @@ def main(argv: Sequence[str] | None = None) -> int:
         stderr_path = attempt.logs / "worker.stderr"
         create_log(stdout_path)
         create_log(stderr_path)
-        started_ns = time.monotonic_ns()
-        initial_sample: TelemetrySample | None = None
-        initial_error: str | None = None
+        recipe = candidate["training_recipe"]
+        readiness_started_ns = time.monotonic_ns()
+        admission_sample: TelemetrySample | None = None
+        admission_error: str | None = None
+        admission_gate_error: str | None = None
+        admission_started_ns = time.monotonic_ns()
         try:
-            initial_sample = sample_gpu(policy)
+            admission_sample = sample_gpu_for_admission(policy)
         except Exception as exc:  # noqa: BLE001 - terminal evidence records bounded failure
-            initial_error = trainer.sanitized_error(exc)
+            admission_error = trainer.sanitized_error(exc)
+        admission_completed_ns = time.monotonic_ns()
+        if admission_error is not None:
+            terminal_cause = "TELEMETRY_UNAVAILABLE"
+        else:
+            assert admission_sample is not None
+            admission_rejection = readiness_rejection_cause(
+                admission_sample, recipe
+            )
+            if admission_rejection is not None:
+                terminal_cause = admission_rejection
+            try:
+                initial_temperature_gate(admission_sample, recipe)
+            except Exception as exc:  # noqa: BLE001 - preserve rejected admission evidence
+                admission_gate_error = trainer.sanitized_error(exc)
+        runtime_confirmation: TelemetrySample | None = None
+        runtime_confirmation_error: str | None = None
+        runtime_confirmation_gate_error: str | None = None
+        if admission_error is None and admission_gate_error is None:
+            runtime_confirmation_started_ns = time.monotonic_ns()
+            try:
+                runtime_confirmation = sample_gpu_for_runtime(policy)
+            except Exception as exc:  # noqa: BLE001 - bounded confirmation failure
+                runtime_confirmation_error = trainer.sanitized_error(exc)
+                terminal_cause = "TELEMETRY_UNAVAILABLE"
+            runtime_confirmation_completed_ns = time.monotonic_ns()
+            if runtime_confirmation_error is None:
+                assert admission_sample is not None
+                assert runtime_confirmation is not None
+                confirmation_rejection = readiness_rejection_cause(
+                    runtime_confirmation, recipe
+                )
+                if confirmation_rejection is not None:
+                    terminal_cause = confirmation_rejection
+                if runtime_confirmation.gpu_uuid != admission_sample.gpu_uuid:
+                    terminal_cause = "TELEMETRY_UNAVAILABLE"
+                try:
+                    readiness_pair_gate(
+                        admission_sample, runtime_confirmation, recipe
+                    )
+                except Exception as exc:  # noqa: BLE001 - preserve rejected evidence
+                    runtime_confirmation_gate_error = trainer.sanitized_error(exc)
+            runtime_confirmation_evidence = telemetry_phase_evidence(
+                phase="RUNTIME_CONFIRMATION",
+                timeout_seconds=policy["runtime_telemetry_timeout_seconds"],
+                started_monotonic_ns=runtime_confirmation_started_ns,
+                completed_monotonic_ns=runtime_confirmation_completed_ns,
+                origin_monotonic_ns=readiness_started_ns,
+                sample=runtime_confirmation,
+                error=(
+                    runtime_confirmation_error or runtime_confirmation_gate_error
+                ),
+            )
+        else:
+            runtime_confirmation_evidence = telemetry_phase_not_run_evidence(
+                phase="RUNTIME_CONFIRMATION",
+                timeout_seconds=policy["runtime_telemetry_timeout_seconds"],
+                reason="ADMISSION_READINESS_NOT_SATISFIED",
+            )
+        telemetry_readiness = {
+            "source": TELEMETRY_SOURCE,
+            "runtimeSampleTimeoutSeconds": policy[
+                "runtime_telemetry_timeout_seconds"
+            ],
+            "admission": telemetry_phase_evidence(
+                phase="ADMISSION_READINESS",
+                timeout_seconds=policy["admission_telemetry_timeout_seconds"],
+                started_monotonic_ns=admission_started_ns,
+                completed_monotonic_ns=admission_completed_ns,
+                origin_monotonic_ns=readiness_started_ns,
+                sample=admission_sample,
+                error=admission_error or admission_gate_error,
+            ),
+            "runtimeConfirmation": runtime_confirmation_evidence,
+        }
         worker_argv = expected_worker_argv(
             policy,
             args.source_commit,
@@ -1535,7 +1717,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             forbidden_reads=(Path(credential_canary["path"]), *heldout_paths),
         )
         admission = {
-            "schema": "szl.frontier-training-supervisor-admission/v1",
+            "schema": "szl.frontier-training-supervisor-admission/v2",
             "state": "PREPARED",
             "runId": attempt.run_id,
             "runKind": args.run_kind.upper(),
@@ -1561,10 +1743,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "cleanupComplete": credential_canary["cleanupComplete"],
             },
             "forbiddenReadTargetCount": 3,
-            "initialGpuTelemetry": initial_sample.public(started_ns)
-            if initial_sample
-            else None,
-            "initialGpuTelemetryError": initial_error,
+            "gpuTelemetryReadiness": telemetry_readiness,
             "outputIdentity": {
                 "device": attempt.root.stat().st_dev,
                 "inode": attempt.root.stat().st_ino,
@@ -1595,17 +1774,27 @@ def main(argv: Sequence[str] | None = None) -> int:
             training_bundle_sha=training_bundle["bundleSha256"],
             credential_canary_sha=credential_canary["sha256"],
         )
-        samples: list[TelemetrySample] = []
-        if initial_sample is not None:
-            samples.append(initial_sample)
-        if initial_error is not None:
-            terminal_cause = "TELEMETRY_UNAVAILABLE"
-            raise SupervisionError(initial_error)
-        assert initial_sample is not None
-        recipe = candidate["training_recipe"]
-        if initial_sample.temperature_c > recipe["maximum_gpu_temperature_c"]:
-            terminal_cause = "THERMAL_POLICY_VIOLATION"
-        initial_temperature_gate(initial_sample, recipe)
+        report["telemetry"] = telemetry_readiness
+        runtime_samples: list[TelemetrySample] = []
+        if runtime_confirmation is not None:
+            runtime_samples.append(runtime_confirmation)
+        readiness_errors = tuple(
+            error
+            for error in (
+                admission_error,
+                admission_gate_error,
+                runtime_confirmation_error,
+                runtime_confirmation_gate_error,
+            )
+            if error is not None
+        )
+        if readiness_errors:
+            readiness_errors = "; ".join(
+                readiness_errors
+            )
+            raise SupervisionError(readiness_errors)
+        assert admission_sample is not None
+        assert runtime_confirmation is not None
 
         launch_ns = time.monotonic_ns()
         wall_timeout = policy[
@@ -1631,7 +1820,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         next_sample_ns = launch_ns + int(
             policy["thermal_sample_interval_seconds"] * 1e9
         )
-        last_valid_ns = initial_sample.observed_monotonic_ns
+        last_valid_ns = runtime_confirmation.observed_monotonic_ns
         trigger_error: str | None = None
         final_worker_properties = worker_properties
         while True:
@@ -1648,12 +1837,12 @@ def main(argv: Sequence[str] | None = None) -> int:
                 break
             if now_ns >= next_sample_ns:
                 try:
-                    sample = sample_gpu(policy)
+                    sample = sample_gpu_for_runtime(policy)
                 except Exception as exc:  # noqa: BLE001
                     terminal_cause = "TELEMETRY_UNAVAILABLE"
                     trigger_error = trainer.sanitized_error(exc)
                     break
-                samples.append(sample)
+                runtime_samples.append(sample)
                 gap_violation = successful_telemetry_gap_trigger(
                     last_valid_ns,
                     sample,
@@ -1665,7 +1854,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 last_valid_ns = sample.observed_monotonic_ns
                 violation = sample_trigger(
                     sample,
-                    expected_gpu_uuid=initial_sample.gpu_uuid,
+                    expected_gpu_uuid=runtime_confirmation.gpu_uuid,
                     maximum_temperature_c=recipe["maximum_gpu_temperature_c"],
                 )
                 if violation is not None:
@@ -1708,11 +1897,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             drain = sampled_cgroup_drain(
                 policy,
                 worker_cgroup,
-                expected_gpu_uuid=initial_sample.gpu_uuid,
+                expected_gpu_uuid=runtime_confirmation.gpu_uuid,
                 maximum_temperature_c=recipe["maximum_gpu_temperature_c"],
                 last_valid_monotonic_ns=last_valid_ns,
             )
-            samples.extend(drain.samples)
+            runtime_samples.extend(drain.samples)
             last_valid_ns = drain.last_valid_monotonic_ns
             if drain.trigger is not None:
                 terminal_cause, trigger_error = drain.trigger
@@ -1742,8 +1931,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 terminal_cause = "CONTAINMENT_UNAVAILABLE"
 
         try:
-            terminal_sample = sample_gpu(policy)
-            samples.append(terminal_sample)
+            terminal_sample = sample_gpu_for_runtime(policy)
+            runtime_samples.append(terminal_sample)
             terminal_gap_violation = successful_telemetry_gap_trigger(
                 last_valid_ns,
                 terminal_sample,
@@ -1757,7 +1946,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 last_valid_ns = terminal_sample.observed_monotonic_ns
             terminal_violation = sample_trigger(
                 terminal_sample,
-                expected_gpu_uuid=initial_sample.gpu_uuid,
+                expected_gpu_uuid=runtime_confirmation.gpu_uuid,
                 maximum_temperature_c=recipe["maximum_gpu_temperature_c"],
             )
             if terminal_violation is not None:
@@ -1790,17 +1979,20 @@ def main(argv: Sequence[str] | None = None) -> int:
             "cgroupEmptyConfirmed": cgroup_empty(policy, worker_cgroup),
         }
         report["telemetry"] = {
-            "source": "INDEPENDENT_SUPERVISOR_FIXED_NVIDIA_SMI",
-            "gpuUuid": initial_sample.gpu_uuid,
+            **telemetry_readiness,
+            "gpuUuid": runtime_confirmation.gpu_uuid,
             "maximumTemperaturePolicyC": recipe["maximum_gpu_temperature_c"],
             "sampleIntervalSeconds": policy["thermal_sample_interval_seconds"],
             "maximumTelemetryGapSeconds": policy["maximum_telemetry_gap_seconds"],
-            "maximumObservedSampleGapSeconds": maximum_observed_telemetry_gap_seconds(
-                samples
+            "maximumObservedRuntimeSampleGapSeconds": (
+                maximum_observed_telemetry_gap_seconds(runtime_samples)
             ),
-            "samples": [sample.public(launch_ns) for sample in samples],
+            "runtimeSamples": [
+                sample.public(launch_ns) for sample in runtime_samples
+            ],
             "maximumObservedTemperatureC": max(
-                sample.temperature_c for sample in samples
+                admission_sample.temperature_c,
+                *(sample.temperature_c for sample in runtime_samples),
             ),
         }
         report["logs"] = {
@@ -1852,7 +2044,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 run_id=attempt.run_id,
                 worker_sha=worker_sha,
                 policy_sha=policy_sha,
-                gpu_uuid=initial_sample.gpu_uuid,
+                gpu_uuid=runtime_confirmation.gpu_uuid,
                 adapter_dir=attempt.payload / "adapter",
             )
             worker_report_file = hash_file(worker_report_path, 2 * 1024 * 1024)

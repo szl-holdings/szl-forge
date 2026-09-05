@@ -196,7 +196,6 @@ class FixedPolicyAndTelemetryTests(unittest.TestCase):
                 maximum_temperature_c=80,
             )
         )
-
         with self.assertRaisesRegex(supervisor.SupervisionError, "81 C exceeds 80 C"):
             supervisor.initial_temperature_gate(sample(temperature_c=81), recipe)
         self.assertEqual(
@@ -211,6 +210,118 @@ class FixedPolicyAndTelemetryTests(unittest.TestCase):
             ),
         )
 
+    def test_distinct_samplers_use_one_exact_query_and_fixed_timeouts(self):
+        completed = subprocess.CompletedProcess(
+            [],
+            0,
+            stdout=(
+                f"{GPU_UUID}, NVIDIA Test GPU, 55, 7000, 8192\n".encode()
+            ),
+            stderr=b"",
+        )
+        with mock.patch.object(
+            supervisor.subprocess, "run", return_value=completed
+        ) as run:
+            admission = supervisor.sample_gpu_for_admission(
+                supervisor.EXPECTED_POLICY
+            )
+            confirmation = supervisor.sample_gpu_for_runtime(
+                supervisor.EXPECTED_POLICY
+            )
+        self.assertEqual(GPU_UUID, admission.gpu_uuid)
+        self.assertEqual(GPU_UUID, confirmation.gpu_uuid)
+        self.assertEqual(2, run.call_count)
+        expected_command = [
+            supervisor.EXPECTED_POLICY["nvidia_smi_executable"],
+            *supervisor.NVIDIA_SMI_QUERY,
+        ]
+        self.assertEqual(
+            [expected_command, expected_command],
+            [call.args[0] for call in run.call_args_list],
+        )
+        self.assertEqual(
+            [15.0, 5.0],
+            [call.kwargs["timeout"] for call in run.call_args_list],
+        )
+        for call in run.call_args_list:
+            self.assertTrue(call.kwargs["check"])
+            self.assertTrue(call.kwargs["capture_output"])
+
+    def test_sampler_timeout_fails_once_without_retry_or_fallback(self):
+        for sampler in (
+            supervisor.sample_gpu_for_admission,
+            supervisor.sample_gpu_for_runtime,
+        ):
+            with self.subTest(sampler=sampler.__name__):
+                with mock.patch.object(
+                    supervisor.subprocess,
+                    "run",
+                    side_effect=subprocess.TimeoutExpired("nvidia-smi", 1),
+                ) as run:
+                    with self.assertRaises(subprocess.TimeoutExpired):
+                        sampler(supervisor.EXPECTED_POLICY)
+                run.assert_called_once()
+
+    def test_readiness_pair_gates_both_samples_and_requires_stable_uuid(self):
+        recipe = candidate()["training_recipe"]
+        supervisor.readiness_pair_gate(sample(), sample(), recipe)
+        for admission, confirmation, error in (
+            (
+                sample(free_mib=4095),
+                sample(),
+                "below the fixed policy floor",
+            ),
+            (
+                sample(),
+                sample(free_mib=4095),
+                "below the fixed policy floor",
+            ),
+            (
+                sample(),
+                sample(gpu_uuid="GPU-aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+                "changed between readiness phases",
+            ),
+        ):
+            with self.subTest(error=error):
+                with self.assertRaisesRegex(supervisor.SupervisionError, error):
+                    supervisor.readiness_pair_gate(admission, confirmation, recipe)
+
+    def test_readiness_evidence_distinguishes_observed_rejected_and_not_run(self):
+        observed = supervisor.telemetry_phase_evidence(
+            phase="ADMISSION_READINESS",
+            timeout_seconds=15.0,
+            started_monotonic_ns=1_000_000_000,
+            completed_monotonic_ns=5_250_000_000,
+            origin_monotonic_ns=1_000_000_000,
+            sample=sample(),
+            error=None,
+        )
+        rejected = supervisor.telemetry_phase_evidence(
+            phase="ADMISSION_READINESS",
+            timeout_seconds=15.0,
+            started_monotonic_ns=1_000_000_000,
+            completed_monotonic_ns=2_000_000_000,
+            origin_monotonic_ns=1_000_000_000,
+            sample=sample(free_mib=4095),
+            error="initial free GPU memory is below the fixed policy floor",
+        )
+        not_run = supervisor.telemetry_phase_not_run_evidence(
+            phase="RUNTIME_CONFIRMATION",
+            timeout_seconds=5.0,
+            reason="ADMISSION_READINESS_NOT_SATISFIED",
+        )
+        self.assertEqual(
+            ("OBSERVED", 4.25, 15.0),
+            (
+                observed["state"],
+                observed["durationSeconds"],
+                observed["timeoutSeconds"],
+            ),
+        )
+        self.assertEqual("REJECTED", rejected["state"])
+        self.assertEqual("NOT_RUN", not_run["state"])
+        self.assertIsNone(not_run["sample"])
+
     def test_gpu_uuid_drift_is_telemetry_failure(self):
         self.assertEqual(
             ("TELEMETRY_UNAVAILABLE", "GPU UUID changed during the run"),
@@ -224,6 +335,17 @@ class FixedPolicyAndTelemetryTests(unittest.TestCase):
     def test_initial_four_gib_gate_is_inclusive_and_one_mib_below_fails(self):
         recipe = candidate()["training_recipe"]
         supervisor.initial_temperature_gate(sample(free_mib=4096), recipe)
+        self.assertIsNone(
+            supervisor.readiness_rejection_cause(sample(free_mib=4096), recipe)
+        )
+        self.assertEqual(
+            "PRECONDITION_DENIED",
+            supervisor.readiness_rejection_cause(sample(free_mib=4095), recipe),
+        )
+        self.assertEqual(
+            "THERMAL_POLICY_VIOLATION",
+            supervisor.readiness_rejection_cause(sample(temperature_c=81), recipe),
+        )
         with self.assertRaisesRegex(
             supervisor.SupervisionError, "below the fixed policy floor"
         ):
@@ -260,7 +382,10 @@ class FixedPolicyAndTelemetryTests(unittest.TestCase):
             ).encode("utf-8")
         )
         self.assertLessEqual(
-            telemetry_bytes + supervisor.MAX_NON_TELEMETRY_REPORT_BYTES,
+            telemetry_bytes
+            + supervisor.TELEMETRY_READINESS_SAMPLE_COPIES
+            * supervisor.MAX_TELEMETRY_SAMPLE_JSON_BYTES
+            + supervisor.MAX_NON_TELEMETRY_REPORT_BYTES,
             policy["evidence_reserve_bytes"],
         )
 
@@ -326,7 +451,9 @@ class FixedPolicyAndTelemetryTests(unittest.TestCase):
         )
         with (
             mock.patch.object(supervisor, "cgroup_empty", return_value=False),
-            mock.patch.object(supervisor, "sample_gpu", return_value=hot),
+            mock.patch.object(
+                supervisor, "sample_gpu_for_runtime", return_value=hot
+            ),
             mock.patch.object(
                 supervisor.time,
                 "monotonic_ns",
@@ -359,7 +486,9 @@ class FixedPolicyAndTelemetryTests(unittest.TestCase):
         )
         with (
             mock.patch.object(supervisor, "cgroup_empty", return_value=False),
-            mock.patch.object(supervisor, "sample_gpu", return_value=late),
+            mock.patch.object(
+                supervisor, "sample_gpu_for_runtime", return_value=late
+            ),
             mock.patch.object(
                 supervisor.time,
                 "monotonic_ns",
@@ -382,7 +511,7 @@ class FixedPolicyAndTelemetryTests(unittest.TestCase):
         policy["kill_confirmation_seconds"] = 1.0
         with (
             mock.patch.object(supervisor, "cgroup_empty", return_value=False),
-            mock.patch.object(supervisor, "sample_gpu") as telemetry,
+            mock.patch.object(supervisor, "sample_gpu_for_runtime") as telemetry,
             mock.patch.object(
                 supervisor.time,
                 "monotonic_ns",
@@ -725,6 +854,52 @@ class WorkerEnvironmentTests(unittest.TestCase):
         self.assertEqual(1, len(attempt_keywords))
         self.assertIsInstance(attempt_keywords[0].value, ast.Name)
         self.assertEqual("attempt", attempt_keywords[0].value.id)
+
+    def test_main_orders_one_admission_gate_and_confirmation_before_launch(self):
+        tree = ast.parse(inspect.getsource(supervisor.main))
+
+        def named_calls(name: str) -> list[ast.Call]:
+            return [
+                node
+                for node in ast.walk(tree)
+                if isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Name)
+                and node.func.id == name
+            ]
+
+        admission_calls = named_calls("sample_gpu_for_admission")
+        runtime_calls = named_calls("sample_gpu_for_runtime")
+        admission_gates = named_calls("initial_temperature_gate")
+        pair_gates = named_calls("readiness_pair_gate")
+        launch_calls = named_calls("launch_worker_unit")
+        self.assertEqual(1, len(admission_calls))
+        self.assertEqual(3, len(runtime_calls))
+        self.assertEqual(1, len(admission_gates))
+        self.assertEqual(1, len(pair_gates))
+        self.assertEqual(1, len(launch_calls))
+        confirmation = min(runtime_calls, key=lambda call: call.lineno)
+        launch = launch_calls[0]
+        self.assertLess(admission_calls[0].lineno, admission_gates[0].lineno)
+        self.assertLess(admission_gates[0].lineno, confirmation.lineno)
+        self.assertLess(confirmation.lineno, pair_gates[0].lineno)
+        self.assertLess(pair_gates[0].lineno, launch.lineno)
+        self.assertTrue(
+            all(
+                call.lineno > launch.lineno
+                for call in runtime_calls
+                if call is not confirmation
+            )
+        )
+        guarded_confirmation = [
+            node
+            for node in ast.walk(tree)
+            if isinstance(node, ast.If)
+            and any(call is confirmation for call in ast.walk(node))
+        ]
+        self.assertTrue(guarded_confirmation)
+        guard = ast.unparse(guarded_confirmation[-1].test)
+        self.assertIn("admission_error is None", guard)
+        self.assertIn("admission_gate_error is None", guard)
 
     def test_worker_environment_is_minimal_and_launch_uses_env_i(self):
         root = pathlib.Path("/isolated/run")
