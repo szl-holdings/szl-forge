@@ -924,7 +924,7 @@ class WorkerEnvironmentTests(unittest.TestCase):
         self.assertIsInstance(attempt_keywords[0].value, ast.Name)
         self.assertEqual("attempt", attempt_keywords[0].value.id)
 
-    def test_main_orders_one_admission_gate_and_confirmation_before_launch(self):
+    def test_main_orders_fresh_confirmation_immediately_before_launch(self):
         tree = ast.parse(inspect.getsource(supervisor.main))
 
         def named_calls(name: str) -> list[ast.Call]:
@@ -942,21 +942,39 @@ class WorkerEnvironmentTests(unittest.TestCase):
         pair_gates = named_calls("readiness_pair_gate")
         launch_calls = named_calls("launch_worker_unit")
         self.assertEqual(1, len(admission_calls))
-        self.assertEqual(3, len(runtime_calls))
+        self.assertEqual(4, len(runtime_calls))
         self.assertEqual(1, len(admission_gates))
-        self.assertEqual(1, len(pair_gates))
+        self.assertEqual(2, len(pair_gates))
         self.assertEqual(1, len(launch_calls))
         confirmation = min(runtime_calls, key=lambda call: call.lineno)
         launch = launch_calls[0]
+        prelaunch_confirmation = max(
+            (call for call in runtime_calls if call.lineno < launch.lineno),
+            key=lambda call: call.lineno,
+        )
+        ordered_pair_gates = sorted(pair_gates, key=lambda call: call.lineno)
+        evidence_writes = named_calls("publish_evidence_write_once")
+        report_builds = named_calls("terminal_report_base")
         self.assertLess(admission_calls[0].lineno, admission_gates[0].lineno)
         self.assertLess(admission_gates[0].lineno, confirmation.lineno)
-        self.assertLess(confirmation.lineno, pair_gates[0].lineno)
-        self.assertLess(pair_gates[0].lineno, launch.lineno)
+        self.assertLess(confirmation.lineno, ordered_pair_gates[0].lineno)
+        self.assertLess(
+            min(call.lineno for call in evidence_writes),
+            prelaunch_confirmation.lineno,
+        )
+        self.assertLess(
+            max(call.lineno for call in report_builds),
+            prelaunch_confirmation.lineno,
+        )
+        self.assertLess(
+            prelaunch_confirmation.lineno, ordered_pair_gates[-1].lineno
+        )
+        self.assertLess(ordered_pair_gates[-1].lineno, launch.lineno)
         self.assertTrue(
             all(
                 call.lineno > launch.lineno
                 for call in runtime_calls
-                if call is not confirmation
+                if call not in (confirmation, prelaunch_confirmation)
             )
         )
         guarded_confirmation = [

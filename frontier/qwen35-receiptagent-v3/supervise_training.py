@@ -1810,6 +1810,32 @@ def main(argv: Sequence[str] | None = None) -> int:
         assert admission_sample is not None
         assert runtime_confirmation is not None
 
+        prelaunch_confirmation: TelemetrySample | None = None
+        prelaunch_confirmation_error: str | None = None
+        prelaunch_confirmation_started_ns = time.monotonic_ns()
+        try:
+            prelaunch_confirmation = sample_gpu_for_runtime(policy)
+            readiness_pair_gate(
+                runtime_confirmation, prelaunch_confirmation, recipe
+            )
+        except Exception as exc:  # noqa: BLE001 - fail closed before launch
+            prelaunch_confirmation_error = trainer.sanitized_error(exc)
+        prelaunch_confirmation_completed_ns = time.monotonic_ns()
+        telemetry_readiness["prelaunchConfirmation"] = telemetry_phase_evidence(
+            phase="PRELAUNCH_CONFIRMATION",
+            timeout_seconds=policy["runtime_telemetry_timeout_seconds"],
+            started_monotonic_ns=prelaunch_confirmation_started_ns,
+            completed_monotonic_ns=prelaunch_confirmation_completed_ns,
+            origin_monotonic_ns=readiness_started_ns,
+            sample=prelaunch_confirmation,
+            error=prelaunch_confirmation_error,
+        )
+        if prelaunch_confirmation_error is not None:
+            raise SupervisionError(prelaunch_confirmation_error)
+        assert prelaunch_confirmation is not None
+        runtime_confirmation = prelaunch_confirmation
+        runtime_samples.append(prelaunch_confirmation)
+
         launch_ns = time.monotonic_ns()
         wall_timeout = policy[
             "smoke_wall_timeout_seconds"
