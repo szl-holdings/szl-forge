@@ -31,7 +31,7 @@ jobs:
             "pytest>=8,<9" \
             "build>=1.2,<2" \
             "szl-nemo @ git+https://github.com/szl-holdings/szl-nemo.git@810231a531188bb569e3faa17396386eb0a5e260" \
-            "szl-second-brain @ git+https://github.com/szl-holdings/szl-second-brain.git@fa3e4605344b13db220a79f9dcd267ee5725c87e"
+            "szl-second-brain @ git+https://github.com/szl-holdings/szl-second-brain.git@1d3960c69235f117b7ec2b5ea97472f81fb588f5"
           python -m pip install --disable-pip-version-check -e .
 
       - name: Validate pinned authority contract
@@ -43,9 +43,9 @@ jobs:
           contract = load_production_contract()
           assert __version__ == importlib.metadata.version("szl-forge-inference") == "0.2.0"
           assert importlib.metadata.version("szl-nemo") == "0.4.0"
-          assert importlib.metadata.version("szl-second-brain") == "1.2.0"
+          assert importlib.metadata.version("szl-second-brain") == "1.3.0"
           assert contract["sources"]["nemo_witness"]["commit"] == "810231a531188bb569e3faa17396386eb0a5e260"
-          assert contract["sources"]["second_brain"]["commit"] == "fa3e4605344b13db220a79f9dcd267ee5725c87e"
+          assert contract["sources"]["second_brain"]["commit"] == "1d3960c69235f117b7ec2b5ea97472f81fb588f5"
           assert contract["formula_authority"]["locked_proven_count"] == 8
           assert contract["runtime_selection"]["winner"] == "UNSELECTED"
           PY
@@ -67,7 +67,7 @@ jobs:
           python -m venv "$venv"
           "$venv/bin/python" -m pip install --disable-pip-version-check \
             "szl-nemo @ git+https://github.com/szl-holdings/szl-nemo.git@810231a531188bb569e3faa17396386eb0a5e260" \
-            "szl-second-brain @ git+https://github.com/szl-holdings/szl-second-brain.git@fa3e4605344b13db220a79f9dcd267ee5725c87e"
+            "szl-second-brain @ git+https://github.com/szl-holdings/szl-second-brain.git@1d3960c69235f117b7ec2b5ea97472f81fb588f5"
           "$venv/bin/python" -m pip install --disable-pip-version-check --no-deps dist/*.whl
           (
             cd "$RUNNER_TEMP"
@@ -79,11 +79,17 @@ jobs:
               make_second_brain_retriever,
               make_szl_nemo_envelope_witness,
           )
-          from second_brain import index
+          from second_brain import frontier_status, index
 
           assert importlib.metadata.version("szl-forge-inference") == "0.2.0"
           assert index().built is True
           assert index().n == 575
+          assert importlib.metadata.version("szl-second-brain") == "1.3.0"
+          frontier = frontier_status()
+          assert frontier["ready"] is True
+          assert frontier["source_count"] == 7
+          assert frontier["training_authority"] == "NONE"
+          assert frontier["execution_authority"] == "NONE"
           assert callable(make_second_brain_retriever())
           assert callable(make_second_brain_hydrator(lambda *_args: True))
           assert callable(make_szl_nemo_envelope_witness())

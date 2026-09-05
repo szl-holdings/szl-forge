@@ -69,7 +69,7 @@ class IntegrationGenerator:
 
 def _runtime():
     assert importlib.metadata.version("szl-nemo") == "0.4.0"
-    assert importlib.metadata.version("szl-second-brain") == "1.2.0"
+    assert importlib.metadata.version("szl-second-brain") == "1.3.0"
     retriever = make_second_brain_retriever()
 
     def authorizer(principal_id, tenant_id, policy_revision, node_id, source):
