@@ -171,6 +171,17 @@ from an approved secret manager; do not commit it or put it in a fixture. The
 API itself is loopback-only; use an authenticated TLS reverse proxy if a
 separately approved deployment needs another access pattern.
 
+Filesystem trust is a deployment precondition: `--data-root`, its parent
+directories, state, and key files must be writable only by the trusted
+service account and administrators. Request paths are checked for component
+containment before canonicalization and again afterward; escaped paths are
+not returned for downstream use. This is not a filesystem sandbox against
+untrusted local writers. Canonicalization can follow a pre-existing symlink
+or junction before rejecting an outside destination, and these checks do not
+eliminate concurrent replacement races. Do not expose a shared writable tree
+as `data_root`, or treat API bearer authentication as protection from a local
+account that can replace those directories.
+
 The preferred same-origin shell is then available at
 http://127.0.0.1:8010/. The backend URL field remains
 http://127.0.0.1:8010.
