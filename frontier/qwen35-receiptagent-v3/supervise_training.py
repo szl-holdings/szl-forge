@@ -745,12 +745,20 @@ def sample_gpu_for_admission(policy: dict[str, Any]) -> TelemetrySample:
     )
 
 
-def sample_gpu_for_runtime(policy: dict[str, Any]) -> TelemetrySample:
-    """Take a confirmation or post-launch sample under the fixed 5 s bound."""
+def sample_gpu_for_runtime(
+    policy: dict[str, Any], *, timeout_seconds: float | None = None
+) -> TelemetrySample:
+    """Bound runtime telemetry by 5 s and any earlier caller deadline."""
+
+    configured_timeout = float(policy["runtime_telemetry_timeout_seconds"])
+    if timeout_seconds is not None:
+        if not math.isfinite(timeout_seconds) or timeout_seconds <= 0:
+            raise SupervisionError("GPU telemetry deadline has expired")
+        configured_timeout = min(configured_timeout, timeout_seconds)
 
     return _sample_gpu(
         policy,
-        timeout_seconds=policy["runtime_telemetry_timeout_seconds"],
+        timeout_seconds=configured_timeout,
     )
 
 
@@ -1380,7 +1388,13 @@ def sampled_cgroup_drain(
             )
         if now_ns >= next_sample_ns:
             try:
-                sample = sample_gpu_for_runtime(policy)
+                sample = sample_gpu_for_runtime(
+                    policy,
+                    timeout_seconds=min(
+                        deadline_ns - now_ns,
+                        last_valid_monotonic_ns + maximum_gap_ns - now_ns,
+                    ) / 1e9,
+                )
             except Exception as exc:  # noqa: BLE001 - a live child cannot go unobserved
                 return terminal(
                     ("TELEMETRY_UNAVAILABLE", trainer.sanitized_error(exc))
@@ -1837,7 +1851,15 @@ def main(argv: Sequence[str] | None = None) -> int:
                 break
             if now_ns >= next_sample_ns:
                 try:
-                    sample = sample_gpu_for_runtime(policy)
+                    sample = sample_gpu_for_runtime(
+                        policy,
+                        timeout_seconds=min(
+                            deadline_ns - now_ns,
+                            last_valid_ns
+                            + int(policy["maximum_telemetry_gap_seconds"] * 1e9)
+                            - now_ns,
+                        ) / 1e9,
+                    )
                 except Exception as exc:  # noqa: BLE001
                     terminal_cause = "TELEMETRY_UNAVAILABLE"
                     trigger_error = trainer.sanitized_error(exc)

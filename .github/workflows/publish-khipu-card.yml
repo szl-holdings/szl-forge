@@ -1,0 +1,149 @@
+# SPDX-License-Identifier: Apache-2.0
+name: Publish Khipu model card
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "khipu/card/**"
+      - "tools/publish_khipu_card.py"
+      - "tests/test_publish_khipu_card.py"
+      - "tools/acquire_hf_publisher_token.py"
+      - "tests/test_acquire_hf_publisher_token.py"
+      - "tests/test_hf_org_token1_fallback.py"
+      - ".github/workflows/publish-khipu-card.yml"
+  push:
+    branches: [main]
+    paths:
+      - "khipu/card/**"
+      - "tools/publish_khipu_card.py"
+      - "tests/test_publish_khipu_card.py"
+      - "tools/acquire_hf_publisher_token.py"
+      - "tests/test_acquire_hf_publisher_token.py"
+      - "tests/test_hf_org_token1_fallback.py"
+      - ".github/workflows/publish-khipu-card.yml"
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: publish-khipu-card
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    if: ${{ github.event_name == 'pull_request' }}
+    name: Verify exact two-file Khipu card contract
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
+        with:
+          egress-policy: audit
+
+      - name: Check out candidate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Verify publisher and credential contracts offline
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check --no-cache-dir \
+            "huggingface-hub==1.23.0" "pytest==9.1.1"
+          python -m pytest -q \
+            tests/test_publish_khipu_card.py \
+            tests/test_acquire_hf_publisher_token.py \
+            tests/test_hf_org_token1_fallback.py
+          python -m py_compile tools/publish_khipu_card.py
+          python tools/publish_khipu_card.py \
+            --source-revision "${GITHUB_SHA}" \
+            --report reports/khipu-card-dry-run.json
+          git diff --check
+
+      - name: Upload dry-run evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: khipu-card-dry-run-${{ github.run_id }}
+          path: reports/khipu-card-dry-run.json
+          if-no-files-found: error
+          retention-days: 30
+
+  publish:
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    name: Publish exact Khipu source and read back Hub bytes
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
+        with:
+          egress-policy: audit
+
+      - name: Check out exact protected-main revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install exact publication clients
+        run: >-
+          python -m pip install --disable-pip-version-check --no-cache-dir
+          "huggingface-hub==1.23.0" "pytest==9.1.1"
+
+      - name: Prove local publisher contracts
+        run: >-
+          python -m pytest -q
+          tests/test_publish_khipu_card.py
+          tests/test_acquire_hf_publisher_token.py
+          tests/test_hf_org_token1_fallback.py
+
+      - name: Acquire and actively validate model publisher credential
+        env:
+          HF_ORG_TOKEN_CANDIDATE: ${{ secrets.HF_ORG_TOKEN }}
+          HF_ORG_TOKEN1_CANDIDATE: ${{ secrets.HF_ORG_TOKEN1 }}
+          HF_WRITE_TOKEN_CANDIDATE: ${{ secrets.HF_WRITE_TOKEN }}
+          HF_TOKEN_CANDIDATE: ${{ secrets.HF_TOKEN }}
+          HUGGINGFACE_TOKEN_CANDIDATE: ${{ secrets.HUGGINGFACE_TOKEN }}
+          HUGGING_FACE_HUB_TOKEN_CANDIDATE: ${{ secrets.HUGGING_FACE_HUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          python tools/acquire_hf_publisher_token.py \
+            --target-repo SZLHOLDINGS/SZL-Khipu-1.5B \
+            --target-type model \
+            --github-env "${GITHUB_ENV}" \
+            --report reports/khipu-card-credential.json
+
+      - name: Publish only the card and banner, then read back exact bytes
+        run: |
+          set -euo pipefail
+          python tools/publish_khipu_card.py \
+            --source-revision "${GITHUB_SHA}" \
+            --publish \
+            --report reports/khipu-card-publication.json
+
+      - name: Upload secret-free publication evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: khipu-card-publication-${{ github.run_id }}
+          path: |
+            reports/khipu-card-credential.json
+            reports/khipu-card-publication.json
+          if-no-files-found: error
+          retention-days: 90

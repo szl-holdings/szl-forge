@@ -40,6 +40,79 @@ class RuntimeUnavailableBindingError(BindingError):
     """Raised when the governed runtime or required route does not exist yet."""
 
 
+HUB_RETRYABLE_STATUS_CODES = frozenset({429, 500, 502, 503, 504})
+HUB_MODEL_INFO_MAX_ATTEMPTS = 6
+HUB_MODEL_INFO_MAX_DELAY_SECONDS = 180.0
+HUB_MODEL_INFO_TOTAL_SLEEP_BUDGET_SECONDS = 360.0
+
+
+def _retry_after_seconds(error: BaseException) -> float | None:
+    """Return a bounded numeric Retry-After without exposing request data."""
+
+    response = getattr(error, "response", None)
+    headers = getattr(response, "headers", None)
+    if headers is None:
+        return None
+    value = headers.get("Retry-After") or headers.get("retry-after")
+    if value is None:
+        return None
+    try:
+        delay = float(str(value).strip())
+    except (TypeError, ValueError):
+        return None
+    if delay < 0 or not (delay < float("inf")):
+        return None
+    return min(delay, HUB_MODEL_INFO_MAX_DELAY_SECONDS)
+
+
+def _model_info_with_retry(
+    api: HfApi,
+    repo_id: str,
+    *,
+    sleeper: Callable[[float], None] = time.sleep,
+    max_attempts: int = HUB_MODEL_INFO_MAX_ATTEMPTS,
+    total_sleep_budget_seconds: float = HUB_MODEL_INFO_TOTAL_SLEEP_BUDGET_SECONDS,
+    **kwargs: Any,
+) -> Any:
+    """Call model_info with bounded provider-directed retry semantics."""
+
+    if max_attempts < 1:
+        raise ValueError("max_attempts must be positive")
+    if total_sleep_budget_seconds < 0:
+        raise ValueError("total_sleep_budget_seconds cannot be negative")
+
+    slept = 0.0
+    for attempt in range(1, max_attempts + 1):
+        try:
+            return api.model_info(repo_id, **kwargs)
+        except Exception as error:
+            response = getattr(error, "response", None)
+            status_code = getattr(response, "status_code", None)
+            if status_code not in HUB_RETRYABLE_STATUS_CODES:
+                raise
+            if attempt >= max_attempts:
+                raise TransientBindingError(
+                    f"{repo_id}: Hub model metadata retry attempts exhausted "
+                    f"after HTTP {status_code}"
+                ) from error
+
+            directed_delay = _retry_after_seconds(error)
+            delay = (
+                directed_delay
+                if directed_delay is not None
+                else min(float(2 ** (attempt - 1)), 30.0)
+            )
+            if slept + delay > total_sleep_budget_seconds:
+                raise TransientBindingError(
+                    f"{repo_id}: Hub model metadata retry budget exhausted "
+                    f"after HTTP {status_code}"
+                ) from error
+            sleeper(delay)
+            slept += delay
+
+    raise AssertionError("unreachable Hub retry state")
+
+
 def canonical_json(payload: Any) -> str:
     return json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
 
@@ -176,7 +249,8 @@ def source_evidence(artifact: dict[str, Any]) -> list[dict[str, Any]]:
 
 def hub_evidence(api: HfApi, artifact: dict[str, Any]) -> tuple[str, list[dict[str, Any]]]:
     expected_revision = artifact.get("hub_revision")
-    info = api.model_info(
+    info = _model_info_with_retry(
+        api,
         artifact["repo_id"],
         files_metadata=True,
         revision=expected_revision,
@@ -280,7 +354,7 @@ def lineage_evidence(api: HfApi, artifact: dict[str, Any]) -> list[dict[str, Any
             raise BindingError(f"{artifact['repo_id']}: lineage requires exact repo and revision")
         if not expected_license:
             raise BindingError(f"{artifact['repo_id']}: lineage license is required")
-        info = api.model_info(repo_id, revision=revision)
+        info = _model_info_with_retry(api, repo_id, revision=revision)
         if info.sha != revision:
             raise BindingError(
                 f"{artifact['repo_id']}: lineage revision drift for {repo_id} "

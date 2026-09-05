@@ -472,11 +472,80 @@ class FixedPolicyAndTelemetryTests(unittest.TestCase):
         self.assertFalse(result.cgroup_empty_confirmed)
         self.assertEqual((hot,), result.samples)
 
+    def test_sample_gpu_clamps_subprocess_to_remaining_deadline(self):
+        completed = subprocess.CompletedProcess(
+            args=[],
+            returncode=0,
+            stdout=f"{GPU_UUID}, Test GPU, 60, 4096, 8192\n".encode(),
+            stderr=b"",
+        )
+        for remaining, expected in ((0.75, 0.75), (10.0, 5.0)):
+            with self.subTest(remaining=remaining):
+                with mock.patch.object(
+                    supervisor.subprocess, "run", return_value=completed
+                ) as run:
+                    supervisor.sample_gpu_for_runtime(
+                        supervisor.EXPECTED_POLICY,
+                        timeout_seconds=remaining,
+                    )
+                self.assertEqual(expected, run.call_args.kwargs["timeout"])
+
+    def test_sample_gpu_rejects_expired_deadline_before_subprocess(self):
+        for remaining in (0.0, -1.0, float("inf"), float("nan")):
+            with self.subTest(remaining=remaining):
+                with (
+                    mock.patch.object(supervisor.subprocess, "run") as run,
+                    self.assertRaisesRegex(
+                        supervisor.SupervisionError, "telemetry deadline has expired"
+                    ),
+                ):
+                    supervisor.sample_gpu_for_runtime(
+                        supervisor.EXPECTED_POLICY,
+                        timeout_seconds=remaining,
+                    )
+                run.assert_not_called()
+
+    def test_sampled_drain_clamps_to_drain_and_telemetry_gap_deadlines(self):
+        completed = subprocess.CompletedProcess(
+            args=[],
+            returncode=0,
+            stdout=f"{GPU_UUID}, Test GPU, 81, 4096, 8192\n".encode(),
+            stderr=b"",
+        )
+        for drain_seconds, previous_ns, expected in (
+            (1.5, 1_000_000_000, 0.5),
+            (10.0, -4_250_000_000, 0.75),
+        ):
+            with self.subTest(drain_seconds=drain_seconds):
+                policy = copy.deepcopy(supervisor.EXPECTED_POLICY)
+                policy["kill_confirmation_seconds"] = drain_seconds
+                with (
+                    mock.patch.object(supervisor, "cgroup_empty", return_value=False),
+                    mock.patch.object(
+                        supervisor.subprocess, "run", return_value=completed
+                    ) as run,
+                    mock.patch.object(
+                        supervisor.time,
+                        "monotonic_ns",
+                        side_effect=(2_000_000_000, 3_000_000_000, 3_100_000_000),
+                    ),
+                ):
+                    result = supervisor.sampled_cgroup_drain(
+                        policy,
+                        "/user.slice/worker.service",
+                        expected_gpu_uuid=GPU_UUID,
+                        maximum_temperature_c=80,
+                        last_valid_monotonic_ns=previous_ns,
+                    )
+                self.assertEqual(expected, run.call_args.kwargs["timeout"])
+                self.assertEqual("THERMAL_POLICY_VIOLATION", result.trigger[0])
+                self.assertTrue(result.stop_required)
+
     def test_sampled_drain_requires_stop_after_slow_successful_sample(self):
         policy = copy.deepcopy(supervisor.EXPECTED_POLICY)
         cool = sample(temperature_c=60)
         late = supervisor.TelemetrySample(
-            observed_monotonic_ns=9_000_000_001,
+            observed_monotonic_ns=21_000_000_001,
             observed_at=cool.observed_at,
             gpu_uuid=cool.gpu_uuid,
             name=cool.name,

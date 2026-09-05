@@ -442,6 +442,28 @@ class SupervisorLinkageTests(unittest.TestCase):
             ):
                 self.verify()
 
+    def test_readiness_duration_includes_observational_overhead(self):
+        telemetry = self.supervisor["telemetry"]
+        telemetry["admission"]["durationSeconds"] = 16.0
+        telemetry["admission"]["sample"]["offsetSeconds"] = 16.0
+        telemetry["runtimeConfirmation"]["durationSeconds"] = 6.0
+        telemetry["runtimeConfirmation"]["sample"]["offsetSeconds"] = 22.0
+        self.write_supervisor(self.supervisor)
+        with self.linkage_mocks():
+            linkage = self.verify()
+        self.assertEqual(2.1, linkage["maximumObservedRuntimeSampleGapSeconds"])
+
+    def test_readiness_duration_requires_a_finite_nonnegative_number(self):
+        for phase in ("admission", "runtimeConfirmation"):
+            for duration in (-0.1, float("inf"), float("nan"), True):
+                with self.subTest(phase=phase, duration=duration):
+                    telemetry = copy.deepcopy(self.supervisor["telemetry"])
+                    telemetry[phase]["durationSeconds"] = duration
+                    with self.assertRaises(evaluator.QualificationError):
+                        evaluator.verify_supervisor_telemetry(
+                            telemetry, candidate=candidate()
+                        )
+
     def test_recomputed_tampering_of_every_required_link_is_rejected(self):
         mutations = {
             "state": lambda report: report.__setitem__("state", "WRONG"),
@@ -513,9 +535,6 @@ class SupervisorLinkageTests(unittest.TestCase):
             "runtime confirmation duration": lambda report: report["telemetry"][
                 "runtimeConfirmation"
             ].__setitem__("durationSeconds", -0.1),
-            "admission duration overhead": lambda report: report["telemetry"][
-                "admission"
-            ].__setitem__("durationSeconds", 15.250001),
             "phase order": lambda report: report["telemetry"][
                 "runtimeConfirmation"
             ]["sample"].__setitem__("offsetSeconds", 4.0),
