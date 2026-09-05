@@ -88,6 +88,14 @@ class HandlerBoundaryTests(unittest.TestCase):
     def test_private_key_signing_is_not_exposed_by_the_http_api(self) -> None:
         self.assertNotIn("clinical-review-sign", api.API_ALLOWED_COMMANDS)
 
+    def test_omitted_state_uses_nondefault_server_directory(self) -> None:
+        configured = self.root / ".runtime" / "site-state"
+        api.OACStackHandler.default_state_dir = configured
+        handler, _headers, _statuses = _bare_handler()
+        self.assertEqual(handler._bounded_state_dir(None), str(configured))
+        with self.assertRaisesRegex(ValueError, "override is disabled"):
+            handler._bounded_state_dir("state")
+
     def test_operational_model_endpoint_is_strictly_advisory_and_rejects_identity(self) -> None:
         artifacts = Path(__file__).resolve().parents[1] / "operational-model" / "artifacts"
         api.OACStackHandler._operational_kernel = OperationalHealthKernel(
@@ -258,6 +266,14 @@ class HandlerBoundaryTests(unittest.TestCase):
 
 
 class IntegrationNormalizationTests(unittest.TestCase):
+    def test_ui_never_overrides_server_state_directory(self) -> None:
+        html = (
+            Path(__file__).resolve().parents[1] / "frontend" / "index.html"
+        ).read_text(encoding="utf-8")
+        self.assertIn("Server configured (locked)", html)
+        self.assertNotIn("state_dir", html)
+        self.assertNotIn("stateQuery", html)
+
     def test_packaged_ui_wires_only_typed_operational_model_inputs(self) -> None:
         html = (
             Path(__file__).resolve().parents[1] / "frontend" / "index.html"

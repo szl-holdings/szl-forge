@@ -348,7 +348,7 @@
             </div>
             <div class="field full">
               <label for="stateDir">Backend state directory</label>
-              <input id="stateDir" value="state" readonly />
+              <input id="stateDir" value="Server configured (locked)" readonly />
             </div>
           </div>
           <div class="actions">
@@ -720,10 +720,6 @@
         setPill(ui.modePill, ui.mode.value, "warn");
       }
 
-      function stateQuery() {
-        return encodeURIComponent(ui.stateDir.value || "state");
-      }
-
       function peerList() {
         const peers = ui.allowedPeers.value.split(/[\s,]+/).map(function (value) {
           return value.trim();
@@ -778,7 +774,7 @@
           await runButton(event.currentTarget, ui.capabilitiesOutput, function () {
             return callApi("/api/command", "POST", {
               command: "clinical-init",
-              args: { state_dir: ui.stateDir.value || "state" }
+              args: {}
             });
           });
         } catch {}
@@ -790,7 +786,6 @@
             return callApi("/api/command", "POST", {
               command: "clinical-source-add",
               args: {
-                state_dir: ui.stateDir.value || "state",
                 source_id: ui.sourceId.value.trim(),
                 mode: ui.mode.value,
                 profile_id: ui.profileId.value,
@@ -828,7 +823,6 @@
               transport_id: ui.transportId.value.trim(),
               kind: ui.transportKind.value,
               source_id: ui.sourceId.value.trim(),
-              state_dir: ui.stateDir.value || "state",
               binding_dir: bindingDir,
               config: config
             });
@@ -844,7 +838,7 @@
         const id = encodeURIComponent(ui.transportId.value.trim());
         try {
           const payload = await runButton(event.currentTarget, ui.transportOutput, function () {
-            return callApi("/api/transport/status?state_dir=" + stateQuery() + "&transport_id=" + id);
+            return callApi("/api/transport/status?transport_id=" + id);
           });
           const transports = payload.transports;
           const running = Array.isArray(transports)
@@ -859,7 +853,7 @@
       document.getElementById("listTransports").addEventListener("click", async function (event) {
         try {
           await runButton(event.currentTarget, ui.transportOutput, function () {
-            return callApi("/api/transports?state_dir=" + stateQuery());
+            return callApi("/api/transports");
           });
         } catch {}
       });
@@ -868,8 +862,7 @@
         try {
           await runButton(event.currentTarget, ui.transportOutput, function () {
             return callApi("/api/transport/stop", "POST", {
-              transport_id: ui.transportId.value.trim(),
-              state_dir: ui.stateDir.value || "state"
+              transport_id: ui.transportId.value.trim()
             });
           });
           setPill(ui.transportPill, "Stopped · unvalidated", "warn");
