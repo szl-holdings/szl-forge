@@ -51,11 +51,10 @@ jobs:
       - name: Export exact verified bytes without workflow-token mutation
         run: |
           set -euo pipefail
-          mkdir -p reports
           cp .github/workflows/model-kernel-frontier.yml \
-            reports/model-kernel-frontier.patched.yml
+            tools/model-kernel-frontier.patched.yml
           git restore .github/workflows/model-kernel-frontier.yml
-          git add reports/model-kernel-frontier.patched.yml
+          git add tools/model-kernel-frontier.patched.yml
           git config user.name "SZL Frontier Evidence Controller"
           git config user.email "stephenlutar2@gmail.com"
           git commit \
