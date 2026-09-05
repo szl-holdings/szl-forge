@@ -13,21 +13,18 @@ tags:
 ---
 
 <p align="center">
-  <img src="holo-banner.svg" alt="SZL-Forge-1.5B-ReceiptAgent — holographic house banner" width="100%"/>
+  <a href="https://huggingface.co/SZLHOLDINGS/SZL-Forge-1.5B-ReceiptAgent/blob/main/training_receipt.signed.json"><img alt="receipts: training + eval signed" src="https://img.shields.io/badge/receipts-training%20%2B%20eval%20signed-3af4c8?style=flat-square&labelColor=0b0f1a"></a>
+  <a href="https://huggingface.co/SZLHOLDINGS/SZL-Forge-1.5B-ReceiptAgent/blob/main/eval_receipt.signed.json"><img alt="adversarial refusal 6 of 6" src="https://img.shields.io/badge/adversarial%20refusal-6%2F6-b96bff?style=flat-square&labelColor=0b0f1a"></a>
+  <a href="https://huggingface.co/SZLHOLDINGS/SZL-Forge-1.5B-ReceiptAgent/tree/main"><img alt="weights: 1.5B safetensors + LoRA" src="https://img.shields.io/badge/weights-1.5B%20safetensors%20%2B%20LoRA-5b8dee?style=flat-square&labelColor=0b0f1a"></a>
+  <a href="https://huggingface.co/SZLHOLDINGS"><img alt="family: SZL-Forge" src="https://img.shields.io/badge/family-SZL--Forge-d7b96b?style=flat-square&labelColor=0b0f1a"></a>
+  <a href="https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct"><img alt="base: Qwen2.5-1.5B-Instruct" src="https://img.shields.io/badge/base-Qwen2.5--1.5B--Instruct-3af4c8?style=flat-square&labelColor=0b0f1a"></a>
+  <a href="https://github.com/szl-holdings/szl-forge"><img alt="authority: outside the tensor" src="https://img.shields.io/badge/authority-outside%20the%20tensor-b96bff?style=flat-square&labelColor=0b0f1a"></a>
 </p>
 
-<h1 align="center">R E C E I P T A G E N T</h1>
+<h1 align="center">SZL-Forge-1.5B-ReceiptAgent</h1>
 
-<p align="center"><em>It proposes. The controller signs. That split is the product.</em></p>
-
-<p align="center">
-  <a href="https://huggingface.co/SZLHOLDINGS/SZL-Forge-1.5B-ReceiptAgent/blob/main/training_receipt.signed.json"><img alt="Receipts: training + eval signed" src="https://img.shields.io/badge/receipts-training%20%2B%20eval%20signed-3af4c8?style=flat-square"/></a>
-  <img alt="Downloads" src="https://img.shields.io/huggingface/dt/SZLHOLDINGS/SZL-Forge-1.5B-ReceiptAgent?style=flat-square&color=5b8dee&label=downloads"/>
-  <img alt="Base: Qwen2.5-1.5B-Instruct" src="https://img.shields.io/badge/base-Qwen2.5--1.5B--Instruct-334155?style=flat-square"/>
-  <a href="https://huggingface.co/SZLHOLDINGS/SZL-Forge-1.5B-ReceiptAgent/tree/main"><img alt="Weights: 1.5B safetensors + LoRA" src="https://img.shields.io/badge/weights-1.5B%20safetensors%20%2B%20LoRA-5b8dee?style=flat-square"/></a>
-  <img alt="Adversarial refusal 6/6" src="https://img.shields.io/badge/adversarial%20refusal-6%2F6-16a34a?style=flat-square"/>
-  <a href="https://huggingface.co/SZLHOLDINGS"><img alt="Family: SZL-Forge" src="https://img.shields.io/badge/family-SZL--Forge-d7b96b?style=flat-square"/></a>
-</p>
+<p align="center"><strong>The agent that cannot act.</strong><br>
+<sub>It proposes. The controller signs. The weights never hold the keys.</sub></p>
 
 <!--
   Model card for SZL-Forge-1.5B-ReceiptAgent. Every number below is DERIVED from
@@ -38,16 +35,18 @@ tags:
   Qwen2.5-1.5B-Instruct base; the operator may change it at any time.
 -->
 
-A **governed, proposal-only** agent fine-tune of `Qwen/Qwen2.5-1.5B-Instruct`.
-It **proposes** evidence-bound, approval-gated decision **drafts** as JSON — it
-never finalizes, never executes, and never fabricates a number, citation, or
-receipt. When asked to overstep that boundary, it **refuses**.
+A **governed, proposal-only** fine-tune of `Qwen/Qwen2.5-1.5B-Instruct`. It
+emits evidence-bound, approval-gated decision **drafts** as JSON — it never
+finalizes, never executes, and never fabricates a number, citation, or receipt.
+Asked to overstep that boundary, it **refuses** — and the refusal rate is the
+metric we signed.
 
 > **Provenance, not vibes.** Every capability claim on this card is backed by an
 > ed25519 owner-signed receipt committed alongside the weights and
-> **independently re-verified** by the Alloy backbone. Verify it yourself (see
-> *Verify this model* below). Nothing here is asserted that a signature does not
-> already prove.
+> **independently re-verified** by the Alloy backbone. Verify it yourself below.
+> Nothing here is asserted that a signature does not already prove.
+
+<p align="center">✦ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ✦ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ✦</p>
 
 <!-- SZL-ATELIER-CUT:v1:START -->
 ## The cut
@@ -78,16 +77,29 @@ Alloy controller inbound. Never a naked chatbot.
 Canonical GitHub: [`szl-holdings/szl-forge`](https://github.com/szl-holdings/szl-forge/blob/main/receiptagent/)
 <!-- SZL-ATELIER-CUT:v1:END -->
 
-## What it does
+## The architecture of a refusal
 
-- Emits a single JSON **draft** conforming to the ReceiptAgent output schema:
-  `decision=DRAFT`, `approvalRequired=true`, `executed=false`,
-  `provenance=MODEL_PROPOSED`, `receiptBinding.status=NOT_BOUND`, and at least
-  one cited evidence source carrying an honest label
-  (`MEASURED / REPORTED / DECLARED / SIMULATED / UNKNOWN / UNAVAILABLE`).
-- The model is a **proposer inside a controller boundary**: Alloy validates the
-  draft's arguments, gates on human approval, and executes any action *outside
-  the weights*. The model never decides or acts.
+```
+        ┌──────────────────────────────────────────────┐
+        │                 human operator               │
+        └───────────────────┬──────────────────────────┘
+                            │ approves / denies
+        ┌───────────────────▼──────────────────────────┐
+        │            Alloy controller boundary         │
+        │   validates schema · gates approval · acts   │
+        └───────────────────┬──────────────────────────┘
+                            │ draft in · receipt out
+        ┌───────────────────▼──────────────────────────┐
+        │      SZL-Forge-1.5B-ReceiptAgent (1.5B)      │
+        │   proposes JSON drafts — or refuses, signed  │
+        └──────────────────────────────────────────────┘
+```
+
+The arrow of authority never points into the tensor. Every draft leaves the
+weights stamped `decision=DRAFT`, `approvalRequired=true`, `executed=false`,
+`provenance=MODEL_PROPOSED`, `receiptBinding.status=NOT_BOUND` — with at least
+one evidence citation carrying an honest label
+(`MEASURED / REPORTED / DECLARED / SIMULATED / UNKNOWN / UNAVAILABLE`).
 
 ## Training (REPORTED — owner-metal, not server-measured)
 
