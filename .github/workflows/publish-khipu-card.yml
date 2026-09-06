@@ -7,8 +7,11 @@ on:
     paths:
       - "khipu/card/**"
       - "khipu-r2/card/**"
+      - "chaski-5050/card/**"
       - "tools/publish_khipu_card.py"
+      - "tools/publish_governed_model_card.py"
       - "tests/test_publish_khipu_card.py"
+      - "tests/test_publish_governed_model_card.py"
       - "tools/acquire_hf_publisher_token.py"
       - "tests/test_acquire_hf_publisher_token.py"
       - "tests/test_hf_org_token1_fallback.py"
@@ -18,8 +21,11 @@ on:
     paths:
       - "khipu/card/**"
       - "khipu-r2/card/**"
+      - "chaski-5050/card/**"
       - "tools/publish_khipu_card.py"
+      - "tools/publish_governed_model_card.py"
       - "tests/test_publish_khipu_card.py"
+      - "tests/test_publish_governed_model_card.py"
       - "tools/acquire_hf_publisher_token.py"
       - "tests/test_acquire_hf_publisher_token.py"
       - "tests/test_hf_org_token1_fallback.py"
@@ -70,19 +76,25 @@ jobs:
           test "$(git rev-parse HEAD)" = "${SOURCE_REVISION}"
           python -m pytest -q \
             tests/test_publish_khipu_card.py \
+            tests/test_publish_governed_model_card.py \
             tests/test_acquire_hf_publisher_token.py \
             tests/test_hf_org_token1_fallback.py
           python -m py_compile \
             tools/publish_khipu_card.py \
+            tools/publish_governed_model_card.py \
             tools/acquire_hf_publisher_token.py
-          python tools/publish_khipu_card.py \
+          python tools/publish_governed_model_card.py \
             --profile khipu \
             --source-revision "${SOURCE_REVISION}" \
             --report reports/khipu-card-dry-run.json
-          python tools/publish_khipu_card.py \
+          python tools/publish_governed_model_card.py \
             --profile khipu-r2 \
             --source-revision "${SOURCE_REVISION}" \
             --report reports/khipu-r2-card-dry-run.json
+          python tools/publish_governed_model_card.py \
+            --profile chaski-5050 \
+            --source-revision "${SOURCE_REVISION}" \
+            --report reports/chaski-5050-card-dry-run.json
           git diff --check
 
       - name: Upload dry-run evidence
@@ -93,6 +105,7 @@ jobs:
           path: |
             reports/khipu-card-dry-run.json
             reports/khipu-r2-card-dry-run.json
+            reports/chaski-5050-card-dry-run.json
           if-no-files-found: error
           retention-days: 30
 
@@ -111,6 +124,9 @@ jobs:
           - profile: khipu-r2
             repo_id: SZLHOLDINGS/KHIPU-R2
             receipt: khipu-r2-card
+          - profile: chaski-5050
+            repo_id: SZLHOLDINGS/chaski-5050
+            receipt: chaski-5050-card
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
@@ -138,6 +154,7 @@ jobs:
         run: >-
           python -m pytest -q
           tests/test_publish_khipu_card.py
+          tests/test_publish_governed_model_card.py
           tests/test_acquire_hf_publisher_token.py
           tests/test_hf_org_token1_fallback.py
 
@@ -149,7 +166,7 @@ jobs:
           set -euo pipefail
           python - <<'PY'
           import os
-          from tools.publish_khipu_card import resolve_profile
+          from tools.publish_governed_model_card import resolve_profile
 
           profile = resolve_profile(os.environ["PROFILE"])
           if profile.repo_id != os.environ["TARGET_REPO"]:
@@ -175,7 +192,7 @@ jobs:
       - name: Publish card, banner, and deterministic source binding
         run: |
           set -euo pipefail
-          python tools/publish_khipu_card.py \
+          python tools/publish_governed_model_card.py \
             --profile "${{ matrix.profile }}" \
             --source-revision "${GITHUB_SHA}" \
             --publish \
