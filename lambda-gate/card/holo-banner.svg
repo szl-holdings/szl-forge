@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" width="1200" height="360">
+  <defs>
+    <linearGradient id="gate" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#5B8DEE"/>
+      <stop offset="0.55" stop-color="#8b5cf6"/>
+      <stop offset="1" stop-color="#c4b5fd"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="10"/>
+    </filter>
+    <radialGradient id="fade" cx="0.5" cy="0.5" r="0.75">
+      <stop offset="0" stop-color="#0b0d16"/>
+      <stop offset="1" stop-color="#050609"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="360" fill="url(#fade)"/>
+  <path d="M0 150 L 1200 150" fill="none" stroke="#8b5cf6" stroke-width="6" opacity="0.35" filter="url(#glow)"/>
+  <path d="M0 150 L 1200 150" fill="none" stroke="#c4b5fd" stroke-width="1.2" opacity="0.9" stroke-dasharray="14 10"/>
+  <path d="M0 260 C 150 260, 220 150, 350 150 S 520 260, 650 260 S 830 150, 950 150 S 1120 260, 1200 210" fill="none" stroke="url(#gate)" stroke-width="7" opacity="0.55" filter="url(#glow)"/>
+  <path d="M0 260 C 150 260, 220 150, 350 150 S 520 260, 650 260 S 830 150, 950 150 S 1120 260, 1200 210" fill="none" stroke="url(#gate)" stroke-width="1.6"/>
+  <path d="M0 300 C 180 300, 260 215, 400 215 S 600 300, 740 300 S 950 215, 1080 215 S 1180 265, 1200 250" fill="none" stroke="url(#gate)" stroke-width="4" opacity="0.3" filter="url(#glow)"/>
+  <path d="M0 300 C 180 300, 260 215, 400 215 S 600 300, 740 300 S 950 215, 1080 215 S 1180 265, 1200 250" fill="none" stroke="url(#gate)" stroke-width="1" opacity="0.65"/>
+</svg>
