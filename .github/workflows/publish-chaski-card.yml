@@ -11,6 +11,7 @@ on:
       - "tools/publish_chaski_card.py"
       - "tests/test_publish_chaski_card.py"
       - "tests/test_chaski_5050_card_evidence.py"
+      - "tests/test_chaski_card_claim_honesty.py"
       - "tools/acquire_hf_publisher_token.py"
       - "tests/test_acquire_hf_publisher_token.py"
       - "tests/test_hf_org_token1_fallback.py"
@@ -24,6 +25,7 @@ on:
       - "tools/publish_chaski_card.py"
       - "tests/test_publish_chaski_card.py"
       - "tests/test_chaski_5050_card_evidence.py"
+      - "tests/test_chaski_card_claim_honesty.py"
       - "tools/acquire_hf_publisher_token.py"
       - "tests/test_acquire_hf_publisher_token.py"
       - "tests/test_hf_org_token1_fallback.py"
@@ -74,6 +76,7 @@ jobs:
           python -m pytest -q \
             tests/test_publish_chaski_card.py \
             tests/test_chaski_5050_card_evidence.py \
+            tests/test_chaski_card_claim_honesty.py \
             tests/test_acquire_hf_publisher_token.py \
             tests/test_hf_org_token1_fallback.py
           python -m py_compile \
@@ -107,6 +110,7 @@ jobs:
     timeout-minutes: 20
     strategy:
       fail-fast: false
+      max-parallel: 1
       matrix:
         include:
           - profile: chaski
@@ -143,8 +147,18 @@ jobs:
           python -m pytest -q
           tests/test_publish_chaski_card.py
           tests/test_chaski_5050_card_evidence.py
+          tests/test_chaski_card_claim_honesty.py
           tests/test_acquire_hf_publisher_token.py
           tests/test_hf_org_token1_fallback.py
+
+      - name: Refuse a superseded protected-main source
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin main
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" || {
+            echo "::error::This publication run no longer owns current protected main."
+            exit 1
+          }
 
       - name: Bind matrix target to the closed profile registry
         env:
