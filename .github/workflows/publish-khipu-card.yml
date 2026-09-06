@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
-name: Publish Khipu model card
+name: Publish Khipu family model cards
 
 on:
   pull_request:
     branches: [main]
     paths:
       - "khipu/card/**"
+      - "khipu-r2/card/**"
       - "tools/publish_khipu_card.py"
       - "tests/test_publish_khipu_card.py"
       - "tools/acquire_hf_publisher_token.py"
@@ -16,6 +17,7 @@ on:
     branches: [main]
     paths:
       - "khipu/card/**"
+      - "khipu-r2/card/**"
       - "tools/publish_khipu_card.py"
       - "tests/test_publish_khipu_card.py"
       - "tools/acquire_hf_publisher_token.py"
@@ -28,13 +30,13 @@ permissions:
   id-token: write
 
 concurrency:
-  group: publish-khipu-card
+  group: publish-khipu-family-cards
   cancel-in-progress: false
 
 jobs:
   verify:
     if: ${{ github.event_name == 'pull_request' }}
-    name: Verify exact two-file Khipu card contract
+    name: Verify closed-profile card and source-binding contracts
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -43,9 +45,10 @@ jobs:
         with:
           egress-policy: audit
 
-      - name: Check out candidate
+      - name: Check out exact candidate
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 1
           persist-credentials: false
 
@@ -54,35 +57,60 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Verify publisher and credential contracts offline
+      - name: Install exact verification clients
+        run: >-
+          python -m pip install --disable-pip-version-check --no-cache-dir
+          "huggingface-hub==1.23.0" "pytest==9.1.1"
+
+      - name: Prove publisher and credential contracts offline
+        env:
+          SOURCE_REVISION: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
-          python -m pip install --disable-pip-version-check --no-cache-dir \
-            "huggingface-hub==1.23.0" "pytest==9.1.1"
+          test "$(git rev-parse HEAD)" = "${SOURCE_REVISION}"
           python -m pytest -q \
             tests/test_publish_khipu_card.py \
             tests/test_acquire_hf_publisher_token.py \
             tests/test_hf_org_token1_fallback.py
-          python -m py_compile tools/publish_khipu_card.py
+          python -m py_compile \
+            tools/publish_khipu_card.py \
+            tools/acquire_hf_publisher_token.py
           python tools/publish_khipu_card.py \
-            --source-revision "${GITHUB_SHA}" \
+            --profile khipu \
+            --source-revision "${SOURCE_REVISION}" \
             --report reports/khipu-card-dry-run.json
+          python tools/publish_khipu_card.py \
+            --profile khipu-r2 \
+            --source-revision "${SOURCE_REVISION}" \
+            --report reports/khipu-r2-card-dry-run.json
           git diff --check
 
       - name: Upload dry-run evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: khipu-card-dry-run-${{ github.run_id }}
-          path: reports/khipu-card-dry-run.json
+          name: khipu-family-card-dry-run-${{ github.run_id }}
+          path: |
+            reports/khipu-card-dry-run.json
+            reports/khipu-r2-card-dry-run.json
           if-no-files-found: error
           retention-days: 30
 
   publish:
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-    name: Publish exact Khipu source and read back Hub bytes
+    name: Publish ${{ matrix.profile }} and verify exact Hub bytes
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - profile: khipu
+            repo_id: SZLHOLDINGS/SZL-Khipu-1.5B
+            receipt: khipu-card
+          - profile: khipu-r2
+            repo_id: SZLHOLDINGS/KHIPU-R2
+            receipt: khipu-r2-card
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
@@ -113,6 +141,21 @@ jobs:
           tests/test_acquire_hf_publisher_token.py
           tests/test_hf_org_token1_fallback.py
 
+      - name: Bind matrix target to the closed profile registry
+        env:
+          PROFILE: ${{ matrix.profile }}
+          TARGET_REPO: ${{ matrix.repo_id }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import os
+          from tools.publish_khipu_card import resolve_profile
+
+          profile = resolve_profile(os.environ["PROFILE"])
+          if profile.repo_id != os.environ["TARGET_REPO"]:
+              raise SystemExit("workflow target drifted from the closed profile registry")
+          PY
+
       - name: Acquire and actively validate model publisher credential
         env:
           HF_ORG_TOKEN_CANDIDATE: ${{ secrets.HF_ORG_TOKEN }}
@@ -124,26 +167,27 @@ jobs:
         run: |
           set -euo pipefail
           python tools/acquire_hf_publisher_token.py \
-            --target-repo SZLHOLDINGS/SZL-Khipu-1.5B \
+            --target-repo "${{ matrix.repo_id }}" \
             --target-type model \
             --github-env "${GITHUB_ENV}" \
-            --report reports/khipu-card-credential.json
+            --report "reports/${{ matrix.receipt }}-credential.json"
 
-      - name: Publish only the card and banner, then read back exact bytes
+      - name: Publish card, banner, and deterministic source binding
         run: |
           set -euo pipefail
           python tools/publish_khipu_card.py \
+            --profile "${{ matrix.profile }}" \
             --source-revision "${GITHUB_SHA}" \
             --publish \
-            --report reports/khipu-card-publication.json
+            --report "reports/${{ matrix.receipt }}-publication.json"
 
       - name: Upload secret-free publication evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: khipu-card-publication-${{ github.run_id }}
+          name: ${{ matrix.receipt }}-publication-${{ github.run_id }}
           path: |
-            reports/khipu-card-credential.json
-            reports/khipu-card-publication.json
+            reports/${{ matrix.receipt }}-credential.json
+            reports/${{ matrix.receipt }}-publication.json
           if-no-files-found: error
           retention-days: 90
