@@ -54,7 +54,7 @@ szl:
   <code>KANCHAY</code> · Doctrine v11 · Lean <code>749/14/163</code> · Λ = Conjecture 1 (advisory) · <a href="https://a-11-oy.com">a-11-oy.com</a>
 </p>
 
-Adapters are on this repo. Abstain is MEASURED 3/6, not a pass. Not publication-eligible.
+Adapter files are present in this Hub model repository. This card-only release does not modify them. Abstain is MEASURED 3/6, not a pass. Not publication-eligible.
 
 QLoRA adapter on disclosed [`Qwen/Qwen2.5-1.5B-Instruct`](https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct) (runtime `unsloth/Qwen2.5-1.5B-Instruct-bnb-4bit`). Proposal-only brain navigator / abstain retrain. Doctrine v11 LOCKED. Λ = Conjecture 1 (advisory, never a theorem).
 
@@ -70,21 +70,22 @@ A public retrain whose only job is to improve one metric: honest abstain under a
 | Leader | Take, then tweak |
 |---|---|
 | Anthropic | Red-team → constitution update. We red-team → adapter. |
-| NVIDIA | Recipe re-run with a new seed and a signed delta. |
-| Unsloth | Same FastLanguageModel loop, new curriculum, new receipt. |
+| NVIDIA | Recipe re-run with a new seed and a bounded delta. |
+| Unsloth | Same FastLanguageModel loop, new curriculum, new evidence record. |
 
-Nobody else ships this combination. That is the point of a one-of-one.
+This card makes the combination inspectable: a separate abstain-retraining SKU, bounded small-n results, and an exact-source documentation publisher that cannot modify weights or promotion state.
 
 ## Intended use
 
-Continue the abstain-retrain loop. Fail closed until the receipt lands.
+Continue the abstain-retrain loop. Keep publication and autonomy gates closed until an independently verifiable evaluation receipt satisfies them.
 
 ## Limitations
 
 - research-only
 - No signed R2 eval receipt in this atelier.
+- Publishing this card is a documentation update, not model promotion or autonomy approval.
 
-Canonical GitHub: [`szl-holdings/szl-forge`](https://github.com/szl-holdings/szl-forge/blob/main/khipu/)
+Canonical GitHub: [`szl-holdings/szl-forge/khipu_r2`](https://github.com/szl-holdings/szl-forge/tree/main/khipu_r2)
 <!-- SZL-ATELIER-CUT:v1:END -->
 
 ## Specification
@@ -95,6 +96,7 @@ Canonical GitHub: [`szl-holdings/szl-forge`](https://github.com/szl-holdings/szl
 | **Job** | [`6a91bf11984507d9db4ea104`](https://huggingface.co/jobs/SZLHOLDINGS/6a91bf11984507d9db4ea104) **COMPLETED** |
 | **Does NOT overwrite** | signed [`SZL-Khipu-1.5B`](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B) |
 | **Prior job** | [`6a91ba2c`](https://huggingface.co/jobs/SZLHOLDINGS/6a91ba2c45686a1580c12020) **ERROR** Trackio 404 |
+| **Card publication** | Exact-source README + local SVG only; weights, adapter, configs, evals, visibility, hardware, and runtime unchanged |
 | **Lab** | Forbidden. Pin stays Khipu GGUF. GPU **UNAVAILABLE**. |
 | **License** | Apache-2.0 |
 | **Autonomy** | false |
