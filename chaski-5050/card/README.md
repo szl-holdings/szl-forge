@@ -1,5 +1,4 @@
 ---
-thumbnail: https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B/resolve/main/og-card.png
 license: apache-2.0
 language:
   - en
@@ -12,6 +11,7 @@ tags:
   - peft
   - governed-ai
   - proposal-only
+  - research-only
   - szl-holdings
   - chaski
   - cutting
@@ -58,7 +58,7 @@ szl:
   <code>KANCHAY</code> · Doctrine v11 · Lean <code>749/14/163</code> · Λ = Conjecture 1 (advisory) · <a href="https://a-11-oy.com">a-11-oy.com</a>
 </p>
 
-Adapters are on this repo. Evals none-this-run. Not MEASURED.
+Adapters are present in the target model repository. Evaluation state: none-this-run; no evaluation score is claimed by this card. This card-only release updates documentation and an exact-source binding; it does not modify model artifacts or provider settings.
 
 Owner-GPU recut on an RTX 5050 Laptop (bf16 LoRA, not QLoRA). Original SZL cut of disclosed Apache [`Qwen/Qwen3.5-0.8B`](https://huggingface.co/Qwen/Qwen3.5-0.8B). Not a republish of Qwen tensors. Not an Unsloth-default card. CUTTING.
 
@@ -77,7 +77,7 @@ Curriculum as identity. The filename is the experiment.
 | NVIDIA | Recipe variant, published. |
 | Unsloth | LoRA on Qwen3.5-0.8B, cutting tag. |
 
-Nobody else ships this combination. That is the point of a one-of-one.
+The differentiator is inspectability: the mix is named, the adapter digest is recorded, the evaluation gap stays visible, and the publication controller cannot promote the model.
 
 ## Intended use
 
@@ -85,10 +85,11 @@ Ablation sibling of chaski.
 
 ## Limitations
 
-- proposal-only
-- No signed mix-ablation in this atelier.
+- proposal-only and research-only
+- No signed held-out evaluation receipt for this 5050 adapter is present in this source tree.
+- Publishing this card is a documentation update, not model promotion or autonomy approval.
 
-Canonical GitHub: [`szl-holdings/szl-forge`](https://github.com/szl-holdings/szl-forge/blob/main/chaski/)
+Canonical GitHub: [`chaski/README_5050.md`](https://github.com/szl-holdings/szl-forge/blob/main/chaski/README_5050.md)
 <!-- SZL-ATELIER-CUT:v1:END -->
 
 ## Specification
@@ -100,6 +101,7 @@ Canonical GitHub: [`szl-holdings/szl-forge`](https://github.com/szl-holdings/szl
 | **Does NOT overwrite** | [`SZLHOLDINGS/chaski`](https://huggingface.co/SZLHOLDINGS/chaski) |
 | **Dataset** | [`SZLHOLDINGS/szl-1-doctrine-sft`](https://huggingface.co/datasets/SZLHOLDINGS/szl-1-doctrine-sft) · 41 rows · jsonl sha256 `ddc5594b…0611a243` |
 | **Publication / autonomy** | false / false |
+| **Card publication** | Card, banner, and source binding only; weights, adapter, configs, evals, visibility, hardware, collection, and runtime state unchanged |
 | **License** | Apache-2.0 |
 
 ## Evaluation
