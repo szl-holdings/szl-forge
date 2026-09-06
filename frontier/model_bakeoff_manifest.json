@@ -6,36 +6,80 @@
     {
       "id": "khipu-governed-navigation",
       "baseline": "SZLHOLDINGS/SZL-Khipu-1.5B",
-      "candidate_families": ["Qwen coder/tool-use", "DeepSeek long-context/agentic"],
-      "metrics": ["schema_valid_rate", "grounding_correct_rate", "abstention_correct_rate", "citation_binding_rate", "latency_ms", "peak_memory_mb"]
+      "candidate_families": [
+        "Qwen coder/tool-use",
+        "DeepSeek long-context/agentic",
+        "IFM K2 Horizon dense/MoVA"
+      ],
+      "metrics": [
+        "schema_valid_rate",
+        "grounding_correct_rate",
+        "abstention_correct_rate",
+        "citation_binding_rate",
+        "latency_ms",
+        "peak_memory_mb"
+      ]
     },
     {
       "id": "receipt-agent",
       "baseline": "SZLHOLDINGS/SZL-Forge-1.5B-ReceiptAgent",
-      "candidate_families": ["Qwen coder/tool-use", "DeepSeek coder/agentic"],
-      "metrics": ["receipt_schema_rate", "authority_boundary_pass_rate", "tool_call_correct_rate", "abstention_correct_rate", "latency_ms"]
+      "candidate_families": [
+        "Qwen coder/tool-use",
+        "DeepSeek coder/agentic",
+        "IFM K2 Horizon dense/MoVA"
+      ],
+      "metrics": [
+        "receipt_schema_rate",
+        "authority_boundary_pass_rate",
+        "tool_call_correct_rate",
+        "abstention_correct_rate",
+        "latency_ms"
+      ]
     },
     {
       "id": "multivector-retrieval",
       "baseline": "dense-bi-encoder",
-      "candidate_families": ["sparse+dense", "multi-vector-late-interaction", "reranker"],
-      "metrics": ["recall_at_10", "mrr_at_10", "citation_binding_rate", "latency_ms", "index_bytes"]
+      "candidate_families": [
+        "sparse+dense",
+        "multi-vector-late-interaction",
+        "reranker"
+      ],
+      "metrics": [
+        "recall_at_10",
+        "mrr_at_10",
+        "citation_binding_rate",
+        "latency_ms",
+        "index_bytes"
+      ]
     },
     {
       "id": "quantized-sovereign-inference",
       "baseline": "full-precision-or-existing-gguf",
-      "candidate_families": ["gguf", "4bit", "quantization-aware-healing"],
-      "metrics": ["quality_delta", "tokens_per_second", "time_to_first_token_ms", "peak_memory_mb"]
+      "candidate_families": [
+        "gguf",
+        "4bit",
+        "quantization-aware-healing",
+        "K2 Horizon GGUF/FP8"
+      ],
+      "metrics": [
+        "quality_delta",
+        "tokens_per_second",
+        "time_to_first_token_ms",
+        "peak_memory_mb"
+      ]
     }
   ],
   "required_experiment_fields": [
     "upstream_model_id",
     "upstream_revision",
     "license",
+    "license_compatibility_pass",
     "dataset_revision",
     "contamination_notes",
     "tokenizer_revision",
     "template_revision",
+    "remote_code_review_sha256",
+    "model_card_claims_snapshot_sha256",
     "training_config_sha256",
     "hardware_fingerprint",
     "software_fingerprint",
