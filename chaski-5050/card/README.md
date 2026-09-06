@@ -1,5 +1,5 @@
 ---
-thumbnail: https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B/resolve/main/og-card.png
+thumbnail: https://huggingface.co/SZLHOLDINGS/chaski-5050/resolve/main/og-card.png
 license: apache-2.0
 language:
   - en
@@ -12,6 +12,7 @@ tags:
   - peft
   - governed-ai
   - proposal-only
+  - research-only
   - szl-holdings
   - chaski
   - cutting
@@ -58,14 +59,14 @@ szl:
   <code>KANCHAY</code> · Doctrine v11 · Lean <code>749/14/163</code> · Λ = Conjecture 1 (advisory) · <a href="https://a-11-oy.com">a-11-oy.com</a>
 </p>
 
-Adapters are on this repo. Evals none-this-run. Not MEASURED.
+Adapter files are present in this Hub model repository. Status: none-this-run. No evaluation score was measured in this run; the measured training loss below is not an evaluation. This card-only release does not modify adapter files and does not open the publication or autonomy gates.
 
-Owner-GPU recut on an RTX 5050 Laptop (bf16 LoRA, not QLoRA). Original SZL cut of disclosed Apache [`Qwen/Qwen3.5-0.8B`](https://huggingface.co/Qwen/Qwen3.5-0.8B). Not a republish of Qwen tensors. Not an Unsloth-default card. CUTTING.
+Owner-GPU recut on an RTX 5050 Laptop (bf16 LoRA, not QLoRA), trained from disclosed Apache [`Qwen/Qwen3.5-0.8B`](https://huggingface.co/Qwen/Qwen3.5-0.8B). It is not a republish of Qwen tensors and not an Unsloth-default card. CUTTING.
 
 <!-- SZL-ATELIER-CUT:v1:START -->
 ## The cut
 
-Mix-ratio is usually a blog footnote. We named the model after the mix. 50/50 is the cut.
+Mix ratio is usually a training footnote. Here, 50/50 names the ablation checkpoint and its curriculum contract.
 
 Curriculum as identity. The filename is the experiment.
 
@@ -73,22 +74,24 @@ Curriculum as identity. The filename is the experiment.
 
 | Leader | Take, then tweak |
 |---|---|
-| Anthropic | Balanced helpful/harmless mix, as a named checkpoint. |
-| NVIDIA | Recipe variant, published. |
-| Unsloth | LoRA on Qwen3.5-0.8B, cutting tag. |
+| Anthropic | Balanced helpful/harmless mix, represented as a named experimental checkpoint. |
+| NVIDIA | Recipe variant with explicit provenance and a separate release boundary. |
+| Unsloth | LoRA on Qwen3.5-0.8B, tagged as a cutting rather than a production model. |
 
-Nobody else ships this combination. That is the point of a one-of-one.
+The inspectable contribution is the separately identified 50/50 curriculum variant, its bounded training receipt, and a publication lane that cannot mutate model or promotion state.
 
 ## Intended use
 
-Ablation sibling of chaski.
+Ablation sibling of Chaski for controlled comparison after a signed evaluation receipt exists. It is not approved for the Khipu lab or autonomous execution.
 
 ## Limitations
 
-- proposal-only
+- proposal-only and research-only
 - No signed mix-ablation in this atelier.
+- Evaluation status is none-this-run; no quality or comparative superiority claim follows from training loss.
+- Publishing this card is a documentation update, not model promotion or autonomy approval.
 
-Canonical GitHub: [`szl-holdings/szl-forge`](https://github.com/szl-holdings/szl-forge/blob/main/chaski/)
+Canonical GitHub evidence: [`szl-holdings/szl-forge/chaski/README_5050.md`](https://github.com/szl-holdings/szl-forge/blob/main/chaski/README_5050.md)
 <!-- SZL-ATELIER-CUT:v1:END -->
 
 ## Specification
@@ -99,27 +102,29 @@ Canonical GitHub: [`szl-holdings/szl-forge`](https://github.com/szl-holdings/szl
 | **Job** | `local-5050` (owner metal, **not** an HF Job) |
 | **Does NOT overwrite** | [`SZLHOLDINGS/chaski`](https://huggingface.co/SZLHOLDINGS/chaski) |
 | **Dataset** | [`SZLHOLDINGS/szl-1-doctrine-sft`](https://huggingface.co/datasets/SZLHOLDINGS/szl-1-doctrine-sft) · 41 rows · jsonl sha256 `ddc5594b…0611a243` |
+| **Card publication** | Exact-source README + local SVG + source binding only; weights, adapter, configs, evals, visibility, hardware, and runtime unchanged |
 | **Publication / autonomy** | false / false |
 | **License** | Apache-2.0 |
 
 ## Evaluation
 
-**Status: none-this-run.** No JSON/refusal gate ran. Not 5/5. Not 6/6. Do not load this ID into the Khipu lab.
+**Status: none-this-run.** No JSON or refusal gate ran. Not 5/5. Not 6/6. Do not load this ID into the Khipu lab.
 
-`train_loss` MEASURED `2.228136855544466` is a **train metric**, not an eval (method: Unsloth trainer log, N=41 rows, 3 epochs, 33 steps, `train_runtime` 883.2224s, 2026-08-28 17:56 UTC). File: `training_receipt.json`.
+`train_loss` MEASURED `2.228136855544466` is a **train metric**, not an evaluation result (method: Unsloth trainer log, N=41 rows, 3 epochs, 33 steps, `train_runtime` 883.2224s, 2026-08-28 17:56 UTC). File: `training_receipt.json`.
 
 ## Training (MEASURED this run)
 
 - Recipe: `train_chaski_bf16_5050.py` · Unsloth 2026.7.2 · transformers 5.5.0 · torch 2.10.0+cu128
 - GPU: NVIDIA GeForce RTX 5050 Laptop, 7.96 GB
-- LoRA r=16 α=16, bf16, batch 1, ga 4, lr 2e-4, adamw_8bit, seed 11, max_seq 2048
+- LoRA r=16 α=16, bf16, batch 1, gradient accumulation 4, lr 2e-4, adamw_8bit, seed 11, max sequence 2048
 - `copied_live_chaski_weights: false`
 
 ## What this is NOT
 
 - Not live Chaski
 - Not a Qwen rehost
-- Not a GGUF of this adapter. Mini GGUFs are LIVE on [`A11OY-MINI`](https://huggingface.co/SZLHOLDINGS/A11OY-MINI) (evals none-this-run; they do not inherit this card)
+- Not an autonomous agent
+- Not a GGUF of this adapter. Mini GGUFs are live on [`A11OY-MINI`](https://huggingface.co/SZLHOLDINGS/A11OY-MINI), but they have evaluations none-this-run and do not inherit this card.
 - Not production. Lab load forbidden.
 
 ## Load
