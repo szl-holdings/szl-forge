@@ -30,8 +30,11 @@ def test_experiments_are_revision_license_and_receipt_bound():
         "upstream_model_id",
         "upstream_revision",
         "license",
+        "license_compatibility_pass",
         "dataset_revision",
         "tokenizer_revision",
+        "remote_code_review_sha256",
+        "model_card_claims_snapshot_sha256",
         "training_config_sha256",
         "hardware_fingerprint",
         "software_fingerprint",
@@ -49,3 +52,10 @@ def test_every_lane_has_baseline_candidates_and_metrics():
         assert lane["baseline"]
         assert lane["candidate_families"]
         assert lane["metrics"]
+
+
+def test_k2_horizon_is_routed_into_governed_and_quantized_lanes():
+    lanes = {lane["id"]: lane for lane in _load()["lanes"]}
+    assert "IFM K2 Horizon dense/MoVA" in lanes["khipu-governed-navigation"]["candidate_families"]
+    assert "IFM K2 Horizon dense/MoVA" in lanes["receipt-agent"]["candidate_families"]
+    assert "K2 Horizon GGUF/FP8" in lanes["quantized-sovereign-inference"]["candidate_families"]
