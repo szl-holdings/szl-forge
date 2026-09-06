@@ -1,11 +1,13 @@
 # SPDX-License-Identifier: Apache-2.0
-name: Publish Chaski model card
+name: Publish Chaski family model cards
 
 on:
   pull_request:
     branches: [main]
     paths:
       - "chaski/card/**"
+      - "chaski-5050/card/**"
+      - "chaski/README_5050.md"
       - "tools/publish_chaski_card.py"
       - "tests/test_publish_chaski_card.py"
       - "tools/acquire_hf_publisher_token.py"
@@ -16,6 +18,8 @@ on:
     branches: [main]
     paths:
       - "chaski/card/**"
+      - "chaski-5050/card/**"
+      - "chaski/README_5050.md"
       - "tools/publish_chaski_card.py"
       - "tests/test_publish_chaski_card.py"
       - "tools/acquire_hf_publisher_token.py"
@@ -28,13 +32,13 @@ permissions:
   id-token: write
 
 concurrency:
-  group: publish-chaski-card
+  group: publish-chaski-family-cards
   cancel-in-progress: false
 
 jobs:
   verify:
     if: ${{ github.event_name == 'pull_request' }}
-    name: Verify exact two-file card contract
+    name: Verify closed-profile card and source-binding contracts
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -43,9 +47,10 @@ jobs:
         with:
           egress-policy: audit
 
-      - name: Check out candidate
+      - name: Check out exact candidate
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 1
           persist-credentials: false
 
@@ -64,25 +69,38 @@ jobs:
             tests/test_acquire_hf_publisher_token.py \
             tests/test_hf_org_token1_fallback.py
           python -m py_compile tools/publish_chaski_card.py
-          python tools/publish_chaski_card.py \
-            --source-revision "${GITHUB_SHA}" \
-            --report reports/chaski-card-dry-run.json
+          for profile in chaski chaski-5050; do
+            python tools/publish_chaski_card.py \
+              --profile "${profile}" \
+              --source-revision "${GITHUB_SHA}" \
+              --report "reports/${profile}-card-dry-run.json"
+          done
           git diff --check
 
       - name: Upload dry-run evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: chaski-card-dry-run-${{ github.run_id }}
-          path: reports/chaski-card-dry-run.json
+          name: chaski-family-card-dry-run-${{ github.run_id }}
+          path: reports/*-card-dry-run.json
           if-no-files-found: error
           retention-days: 30
 
   publish:
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-    name: Publish exact source and read back Hub bytes
+    name: Publish ${{ matrix.profile }} and verify exact Hub bytes
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - profile: chaski
+            repo: SZLHOLDINGS/chaski
+            report: chaski
+          - profile: chaski-5050
+            repo: SZLHOLDINGS/chaski-5050
+            report: chaski-5050
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
@@ -113,6 +131,20 @@ jobs:
           tests/test_acquire_hf_publisher_token.py
           tests/test_hf_org_token1_fallback.py
 
+      - name: Bind matrix target to the closed profile registry
+        env:
+          PROFILE: ${{ matrix.profile }}
+          EXPECTED_REPO: ${{ matrix.repo }}
+        run: |
+          set -euo pipefail
+          observed="$(python - "${PROFILE}" <<'PY'
+          import sys
+          from tools.publish_chaski_card import resolve_profile
+          print(resolve_profile(sys.argv[1]).repo_id)
+          PY
+          )"
+          test "${observed}" = "${EXPECTED_REPO}"
+
       - name: Acquire and actively validate model publisher credential
         env:
           HF_ORG_TOKEN_CANDIDATE: ${{ secrets.HF_ORG_TOKEN }}
@@ -124,26 +156,27 @@ jobs:
         run: |
           set -euo pipefail
           python tools/acquire_hf_publisher_token.py \
-            --target-repo SZLHOLDINGS/chaski \
+            --target-repo "${{ matrix.repo }}" \
             --target-type model \
             --github-env "${GITHUB_ENV}" \
-            --report reports/chaski-card-credential.json
+            --report "reports/${{ matrix.report }}-card-credential.json"
 
-      - name: Publish only the card and banner, then read back exact bytes
+      - name: Publish card, banner, and deterministic source binding
         run: |
           set -euo pipefail
           python tools/publish_chaski_card.py \
+            --profile "${{ matrix.profile }}" \
             --source-revision "${GITHUB_SHA}" \
             --publish \
-            --report reports/chaski-card-publication.json
+            --report "reports/${{ matrix.report }}-card-publication.json"
 
       - name: Upload secret-free publication evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: chaski-card-publication-${{ github.run_id }}
+          name: ${{ matrix.report }}-card-publication-${{ github.run_id }}
           path: |
-            reports/chaski-card-credential.json
-            reports/chaski-card-publication.json
+            reports/${{ matrix.report }}-card-credential.json
+            reports/${{ matrix.report }}-card-publication.json
           if-no-files-found: error
           retention-days: 90
