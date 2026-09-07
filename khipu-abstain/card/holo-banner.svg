@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" width="1200" height="360">
+  <defs>
+    <linearGradient id="gate" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#9f1239"/>
+      <stop offset="0.55" stop-color="#fb7185"/>
+      <stop offset="1" stop-color="#fecdd3"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="9"/>
+    </filter>
+    <radialGradient id="fade" cx="0.5" cy="0.5" r="0.75">
+      <stop offset="0" stop-color="#120a0e"/>
+      <stop offset="1" stop-color="#070406"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="360" fill="url(#fade)"/>
+  <path d="M 240 180 L 540 180" fill="none" stroke="url(#gate)" stroke-width="8" opacity="0.4" filter="url(#glow)"/>
+  <path d="M 240 180 L 540 180" fill="none" stroke="url(#gate)" stroke-width="1.8" opacity="0.9"/>
+  <circle cx="240" cy="180" r="7" fill="#fb7185" opacity="0.9"/>
+  <circle cx="240" cy="180" r="7" fill="#fb7185" opacity="0.5" filter="url(#glow)"/>
+  <circle cx="540" cy="180" r="10" fill="none" stroke="#fecdd3" stroke-width="2.4" opacity="0.95"/>
+  <circle cx="540" cy="180" r="10" fill="none" stroke="#fecdd3" stroke-width="7" opacity="0.35" filter="url(#glow)"/>
+  <path d="M 590 120 L 590 240 M 630 110 L 630 250 M 670 120 L 670 240" stroke="url(#gate)" stroke-width="9" opacity="0.4" filter="url(#glow)" stroke-linecap="round"/>
+  <path d="M 590 120 L 590 240 M 630 110 L 630 250 M 670 120 L 670 240" stroke="url(#gate)" stroke-width="2.2" opacity="0.9" stroke-linecap="round"/>
+  <path d="M 566 150 L 694 150 M 566 210 L 694 210" stroke="url(#gate)" stroke-width="2" opacity="0.65" stroke-linecap="round"/>
+  <path d="M 700 180 L 960 180" fill="none" stroke="#3f1d27" stroke-width="1.6" opacity="0.8" stroke-dasharray="3 9" stroke-linecap="round"/>
+  <path d="M0 292 L 1200 292" fill="none" stroke="url(#gate)" stroke-width="4" opacity="0.22" filter="url(#glow)"/>
+  <path d="M0 292 L 1200 292" fill="none" stroke="url(#gate)" stroke-width="0.9" opacity="0.5"/>
+</svg>
