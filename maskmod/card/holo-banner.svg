@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" width="1200" height="360">
+  <defs>
+    <linearGradient id="mask" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0e7490"/>
+      <stop offset="0.55" stop-color="#22d3ee"/>
+      <stop offset="1" stop-color="#a5f3fc"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="9"/>
+    </filter>
+    <radialGradient id="fade" cx="0.5" cy="0.5" r="0.75">
+      <stop offset="0" stop-color="#081014"/>
+      <stop offset="1" stop-color="#04080a"/>
+    </radialGradient>
+    <clipPath id="lower"><path d="M 480 70 L 720 310 L 480 310 Z"/></clipPath>
+  </defs>
+  <rect width="1200" height="360" fill="url(#fade)"/>
+  <rect x="480" y="70" width="240" height="240" fill="#05080a" stroke="#1c2830" stroke-width="1.2"/>
+  <g clip-path="url(#lower)">
+    <path d="M 480 70 L 720 310 L 480 310 Z" fill="none" stroke="url(#mask)" stroke-width="10" opacity="0.35" filter="url(#glow)"/>
+    <rect x="480" y="70" width="240" height="240" fill="none" stroke="url(#mask)" stroke-width="1.4" opacity="0.9"/>
+    <path d="M 508 310 L 508 282 M 536 310 L 536 254 M 564 310 L 564 226 M 592 310 L 592 198 M 620 310 L 620 170 M 648 310 L 648 142 M 676 310 L 676 114 M 704 310 L 704 86" stroke="url(#mask)" stroke-width="1.1" opacity="0.55"/>
+    <path d="M 480 282 L 508 282 M 480 254 L 536 254 M 480 226 L 564 226 M 480 198 L 592 198 M 480 170 L 620 170 M 480 142 L 648 142 M 480 114 L 676 114 M 480 86 L 704 86" stroke="url(#mask)" stroke-width="1.1" opacity="0.55"/>
+    <circle cx="536" cy="282" r="3" fill="#a5f3fc" opacity="0.95"/><circle cx="592" cy="254" r="3" fill="#a5f3fc" opacity="0.9"/><circle cx="648" cy="226" r="3" fill="#a5f3fc" opacity="0.9"/><circle cx="620" cy="282" r="3" fill="#22d3ee" opacity="0.85"/><circle cx="676" cy="254" r="3" fill="#22d3ee" opacity="0.85"/>
+  </g>
+  <path d="M 480 70 L 720 310" stroke="url(#mask)" stroke-width="6" opacity="0.45" filter="url(#glow)"/>
+  <path d="M 480 70 L 720 310" stroke="#e0f9ff" stroke-width="1.6" opacity="0.95"/>
+  <path d="M 600 30 L 600 46 M 600 334 L 600 350" stroke="#7e8aa3" stroke-width="1.2" opacity="0.5" stroke-linecap="round"/>
+  <path d="M0 334 L 1200 334" fill="none" stroke="url(#mask)" stroke-width="4" opacity="0.2" filter="url(#glow)"/>
+  <path d="M0 334 L 1200 334" fill="none" stroke="url(#mask)" stroke-width="0.9" opacity="0.45"/>
+</svg>
