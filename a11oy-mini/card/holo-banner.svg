@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" width="1200" height="360">
+  <defs>
+    <linearGradient id="kanchay" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fde68a"/>
+      <stop offset="0.5" stop-color="#fbbf24"/>
+      <stop offset="1" stop-color="#C9B787"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="9"/>
+    </filter>
+    <radialGradient id="fade" cx="0.5" cy="0.5" r="0.75">
+      <stop offset="0" stop-color="#100d06"/>
+      <stop offset="1" stop-color="#060503"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="360" fill="url(#fade)"/>
+  <path d="M 600 30 L 600 62 M 600 298 L 600 330 M 452 180 L 484 180 M 716 180 L 748 180 M 496 76 L 518 98 M 704 76 L 682 98 M 496 284 L 518 262 M 704 284 L 682 262" stroke="url(#kanchay)" stroke-width="1.4" opacity="0.5" stroke-linecap="round"/>
+  <rect x="470" y="66" width="260" height="228" fill="none" stroke="url(#kanchay)" stroke-width="7" opacity="0.35" filter="url(#glow)"/>
+  <rect x="470" y="66" width="260" height="228" fill="none" stroke="url(#kanchay)" stroke-width="1.5" opacity="0.75"/>
+  <rect x="520" y="104" width="160" height="152" fill="none" stroke="url(#kanchay)" stroke-width="5.5" opacity="0.45" filter="url(#glow)"/>
+  <rect x="520" y="104" width="160" height="152" fill="none" stroke="url(#kanchay)" stroke-width="1.3" opacity="0.85"/>
+  <rect x="562" y="136" width="76" height="88" fill="none" stroke="url(#kanchay)" stroke-width="4.5" opacity="0.55" filter="url(#glow)"/>
+  <rect x="562" y="136" width="76" height="88" fill="none" stroke="url(#kanchay)" stroke-width="1.2" opacity="0.95"/>
+  <rect x="588" y="168" width="24" height="24" fill="#fde68a" opacity="0.9"/>
+  <rect x="588" y="168" width="24" height="24" fill="#fde68a" opacity="0.6" filter="url(#glow)"/>
+  <path d="M0 322 L 1200 322" fill="none" stroke="url(#kanchay)" stroke-width="4" opacity="0.25" filter="url(#glow)"/>
+  <path d="M0 322 L 1200 322" fill="none" stroke="url(#kanchay)" stroke-width="1" opacity="0.55"/>
+</svg>
