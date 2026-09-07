@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" width="1200" height="360">
+  <defs>
+    <linearGradient id="moonA" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#9f1239"/>
+      <stop offset="1" stop-color="#fb7185"/>
+    </linearGradient>
+    <linearGradient id="moonB" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0e7490"/>
+      <stop offset="1" stop-color="#22d3ee"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="8"/>
+    </filter>
+    <radialGradient id="fade" cx="0.5" cy="0.5" r="0.75">
+      <stop offset="0" stop-color="#0c0910"/>
+      <stop offset="1" stop-color="#050408"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="360" fill="url(#fade)"/>
+  <path d="M 420 130 A 90 90 0 0 1 780 130 A 130 130 0 0 0 420 130 Z" fill="none" stroke="url(#moonA)" stroke-width="7" opacity="0.35" filter="url(#glow)"/>
+  <path d="M 420 130 A 90 90 0 0 1 780 130 A 130 130 0 0 0 420 130 Z" fill="none" stroke="url(#moonA)" stroke-width="1.6" opacity="0.85"/>
+  <path d="M 460 250 A 90 90 0 0 0 820 250 A 130 130 0 0 1 460 250 Z" fill="none" stroke="url(#moonB)" stroke-width="7" opacity="0.35" filter="url(#glow)" transform="translate(-20,0)"/>
+  <path d="M 460 250 A 90 90 0 0 0 820 250 A 130 130 0 0 1 460 250 Z" fill="none" stroke="url(#moonB)" stroke-width="1.6" opacity="0.85" transform="translate(-20,0)"/>
+  <path d="M 430 185 C 500 150 540 230 610 195 C 670 165 710 235 800 190" fill="none" stroke="#e2e8f0" stroke-width="6" opacity="0.4" filter="url(#glow)"/>
+  <path d="M 430 185 C 500 150 540 230 610 195 C 670 165 710 235 800 190" fill="none" stroke="#e2e8f0" stroke-width="1.4" opacity="0.9" stroke-dasharray="10 7"/>
+  <circle cx="480" cy="120" r="3.4" fill="#fb7185" opacity="0.9"/><circle cx="560" cy="100" r="3.4" fill="#fb7185" opacity="0.85"/><circle cx="650" cy="95" r="3.4" fill="#fb7185" opacity="0.9"/><circle cx="730" cy="118" r="3.4" fill="#fb7185" opacity="0.85"/>
+  <circle cx="500" cy="260" r="3.4" fill="#22d3ee" opacity="0.9"/><circle cx="590" cy="282" r="3.4" fill="#22d3ee" opacity="0.85"/><circle cx="680" cy="286" r="3.4" fill="#22d3ee" opacity="0.9"/><circle cx="760" cy="262" r="3.4" fill="#22d3ee" opacity="0.85"/>
+  <path d="M0 330 L 1200 330" fill="none" stroke="url(#moonB)" stroke-width="4" opacity="0.2" filter="url(#glow)"/>
+  <path d="M0 330 L 1200 330" fill="none" stroke="url(#moonB)" stroke-width="0.9" opacity="0.45"/>
+</svg>
