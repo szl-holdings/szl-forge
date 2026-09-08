@@ -20,6 +20,8 @@ SOURCE_REPOSITORY = "szl-holdings/szl-invariants"
 PUBLISHER_REPOSITORY = "szl-holdings/szl-forge"
 REQUIRED_CHECKS = frozenset({"verify canonical kernel"})
 FULL_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
+GitHubPayload = dict[str, Any] | list[Any]
+Getter = Callable[[str], GitHubPayload]
 
 
 class AuthorizationError(RuntimeError):
@@ -30,7 +32,7 @@ def canonical_json(payload: Any) -> str:
     return json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
 
 
-def github_get(path: str, token: str | None) -> dict[str, Any]:
+def github_get(path: str, token: str | None) -> GitHubPayload:
     headers = {
         "Accept": "application/vnd.github+json",
         "User-Agent": "szl-forge-invariants-release-gateway",
@@ -42,9 +44,9 @@ def github_get(path: str, token: str | None) -> dict[str, Any]:
     try:
         with urllib.request.urlopen(request, timeout=30) as response:
             payload = json.load(response)
-    except (OSError, urllib.error.HTTPError, urllib.error.URLError) as error:
+    except (OSError, urllib.error.HTTPError, urllib.error.URLError, ValueError) as error:
         raise AuthorizationError(f"GitHub authorization query failed: {error}") from error
-    if not isinstance(payload, dict):
+    if not isinstance(payload, (dict, list)):
         raise AuthorizationError("GitHub authorization response is malformed")
     return payload
 
@@ -56,17 +58,92 @@ def _full_sha(value: str, field: str) -> str:
     return normalized
 
 
-def _ref_sha(getter: Callable[[str], dict[str, Any]], repository: str) -> str:
-    payload = getter(f"/repos/{repository}/git/ref/heads/main")
-    observed = str(payload.get("object", {}).get("sha", "")).lower()
+def _mapping(payload: Any, description: str) -> dict[str, Any]:
+    if not isinstance(payload, dict):
+        raise AuthorizationError(f"{description} response is malformed")
+    return payload
+
+
+def _ref_sha(getter: Getter, repository: str) -> str:
+    payload = _mapping(getter(f"/repos/{repository}/git/ref/heads/main"), "Git ref")
+    observed = str(_mapping(payload.get("object"), "Git ref object").get("sha", "")).lower()
     return _full_sha(observed, f"{repository} protected main")
+
+
+def _protected_main(getter: Getter, repository: str, revision: str) -> dict[str, Any]:
+    branch = _mapping(getter(f"/repos/{repository}/branches/main"), "branch protection")
+    if branch.get("name") != "main" or branch.get("protected") is not True:
+        raise AuthorizationError(f"{repository} main branch protection is not established")
+    commit = _mapping(branch.get("commit"), "protected branch commit")
+    observed = _full_sha(str(commit.get("sha", "")), "protected branch revision")
+    if observed != revision:
+        raise AuthorizationError(f"{repository} main changed during protection observation")
+    return branch
+
+
+def _check_contexts(checks: Any) -> set[str]:
+    if not isinstance(checks, list):
+        raise AuthorizationError("required-check enforcement response is malformed")
+    contexts = set()
+    for check in checks:
+        if not isinstance(check, dict) or not isinstance(check.get("context"), str) or not check["context"]:
+            raise AuthorizationError("required-check enforcement context is malformed")
+        contexts.add(check["context"])
+    return contexts
+
+
+def _source_check_enforcement(getter: Getter, branch: dict[str, Any]) -> dict[str, Any]:
+    # This endpoint returns active rules only, including organization rules;
+    # evaluate/disabled rulesets are excluded by GitHub. Enumerate every page.
+    effective: set[str] = set()
+    for page in range(1, 11):
+        rules = getter(f"/repos/{SOURCE_REPOSITORY}/rules/branches/main?per_page=100&page={page}")
+        if not isinstance(rules, list) or len(rules) > 100:
+            raise AuthorizationError("effective branch rules response is malformed")
+        for rule in rules:
+            if not isinstance(rule, dict) or not isinstance(rule.get("type"), str):
+                raise AuthorizationError("effective branch rule is malformed")
+            if rule["type"] == "required_status_checks":
+                parameters = _mapping(rule.get("parameters"), "required-check enforcement")
+                effective.update(_check_contexts(parameters.get("required_status_checks")))
+        if len(rules) < 100:
+            break
+    else:
+        raise AuthorizationError("effective branch rule enumeration exceeded its bound")
+
+    # Classic branch protections are not rulesets. The branch observation's
+    # enforcement level and concrete required contexts provide the legacy basis.
+    classic: set[str] = set()
+    protection = branch.get("protection")
+    if protection is not None:
+        required = _mapping(protection, "classic branch protection").get("required_status_checks")
+        if required is not None:
+            required = _mapping(required, "classic required-check enforcement")
+            level = required.get("enforcement_level")
+            if not isinstance(level, str) or level not in {"off", "non_admins", "everyone"}:
+                raise AuthorizationError("classic required-check enforcement level is malformed")
+            contexts = required.get("contexts", [])
+            if not isinstance(contexts, list) or any(not isinstance(item, str) or not item for item in contexts):
+                raise AuthorizationError("classic required-check contexts are malformed")
+            declared = set(contexts) | _check_contexts(required.get("checks", []))
+            if level != "off" and protection.get("enabled") is not False:
+                classic.update(declared)
+
+    if not REQUIRED_CHECKS <= effective | classic:
+        raise AuthorizationError("source required-check enforcement is not established for verify canonical kernel")
+    basis = []
+    if effective:
+        basis.append("effective_branch_rules")
+    if classic:
+        basis.append("classic_branch_protection")
+    return {"basis": basis, "required_contexts_observed": sorted(effective | classic)}
 
 
 def authorize_once(
     *,
     source_revision: str,
     publisher_revision: str,
-    getter: Callable[[str], dict[str, Any]],
+    getter: Getter,
 ) -> dict[str, Any]:
     source_revision = _full_sha(source_revision, "source_revision")
     publisher_revision = _full_sha(publisher_revision, "publisher_revision")
@@ -83,17 +160,21 @@ def authorize_once(
             f"(run {publisher_revision}, protected main {publisher_main})"
         )
 
-    commit = getter(f"/repos/{SOURCE_REPOSITORY}/commits/{source_revision}")
-    verification = commit.get("commit", {}).get("verification", {})
+    source_branch = _protected_main(getter, SOURCE_REPOSITORY, source_main)
+    _protected_main(getter, PUBLISHER_REPOSITORY, publisher_main)
+    check_enforcement = _source_check_enforcement(getter, source_branch)
+
+    commit = _mapping(getter(f"/repos/{SOURCE_REPOSITORY}/commits/{source_revision}"), "source commit")
+    verification = _mapping(_mapping(commit.get("commit"), "source commit").get("verification"), "commit verification")
     if verification.get("verified") is not True:
         raise AuthorizationError(
             "source commit signature is not verified: "
             f"{verification.get('reason', 'unknown')}"
         )
 
-    checks_payload = getter(
+    checks_payload = _mapping(getter(
         f"/repos/{SOURCE_REPOSITORY}/commits/{source_revision}/check-runs?per_page=100"
-    )
+    ), "source check-run")
     check_runs = checks_payload.get("check_runs")
     if not isinstance(check_runs, list):
         raise AuthorizationError("source check-run response is malformed")
@@ -125,6 +206,8 @@ def authorize_once(
             "repository": SOURCE_REPOSITORY,
             "revision": source_revision,
             "protected_main": source_main,
+            "branch_protection_observed": True,
+            "required_check_enforcement": check_enforcement,
             "signature_verified": True,
             "signature_reason": verification.get("reason"),
             "checks": [
@@ -141,6 +224,7 @@ def authorize_once(
             "repository": PUBLISHER_REPOSITORY,
             "revision": publisher_revision,
             "protected_main": publisher_main,
+            "branch_protection_observed": True,
         },
     }
 
@@ -150,7 +234,7 @@ def authorize_with_wait(
     source_revision: str,
     publisher_revision: str,
     wait_seconds: int,
-    getter: Callable[[str], dict[str, Any]],
+    getter: Getter,
 ) -> dict[str, Any]:
     deadline = time.monotonic() + wait_seconds
     while True:

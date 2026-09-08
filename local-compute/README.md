@@ -1,5 +1,26 @@
 # Local compute: measured work, zero paid-provider jobs
 
+## Measured September 7-8 batch
+
+The [batch evidence](evidence/local-batch-20260908.json) records five installed
+Ollama models, a one-step native smoke, a failed memory-gated attempt, and a
+completed 16-step native continuation. The candidate is **HOLD_NOT_QUALIFIED**:
+heldout cross-entropy worsened from 1.2760287934 to 1.3987944813, and a separate
+saved-weight reload comparison scored **4/6 for both parent and candidate** on
+the same six synthetic checks. No existing model was overwritten or promoted.
+
+The completed continuation changed 10,822,656 LoRA parameters and saved a
+43,346,432-byte safetensors adapter. Its source-revision field in the original
+v1 training receipt identifies the committed **curriculum**, not the executable
+revision; the executable is separately bound by runner SHA-256. The public
+summary names that field `curriculum_source_revision` to avoid conflating them.
+The original local receipts retain all failures and parent-integrity checks.
+
+`evaluate_native_smoke.py` requires an externally supplied trusted SHA-256 of
+the completed training report, rehashes candidate files, reloads both adapters
+onto the same pinned base, and checks normal EOS completion and exact typed
+answers. This is a reload/inference check, not an independent safety assessment.
+
 Use existing hardware and installed models. This lane does **not** buy cloud
 compute, pull Ollama models, deploy Spaces, publish weights, or execute generated
 code. Electricity, hardware depreciation and existing connectivity are not free
