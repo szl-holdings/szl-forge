@@ -19,8 +19,8 @@ jobs:
           python-version: '3.12'
       - name: Verify bounded evaluator without ML dependencies or network
         run: |
-          python -m py_compile inference/minicpm5_qualification.py
-          python -m unittest discover -s tests -p 'test_minicpm5_qualification.py' -v
+          python -m py_compile inference/minicpm5_qualification.py inference/verify_minicpm5_report.py
+          python -m unittest discover -s tests -p 'test_minicpm5*.py' -v
       - name: Emit plan, not fabricated measurements
         run: python inference/minicpm5_qualification.py --output artifacts/minicpm5-plan.json
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
