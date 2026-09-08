@@ -7,6 +7,7 @@ on:
     paths:
       - "chaski/card/**"
       - "chaski-5050/card/**"
+      - "chaski-r2/card/**"
       - "chaski/README_5050.md"
       - "tools/publish_chaski_card.py"
       - "tests/test_publish_chaski_card.py"
@@ -21,6 +22,7 @@ on:
     paths:
       - "chaski/card/**"
       - "chaski-5050/card/**"
+      - "chaski-r2/card/**"
       - "chaski/README_5050.md"
       - "tools/publish_chaski_card.py"
       - "tests/test_publish_chaski_card.py"
@@ -90,6 +92,10 @@ jobs:
             --profile chaski-5050 \
             --source-revision "${SOURCE_REVISION}" \
             --report reports/chaski-5050-card-dry-run.json
+          python tools/publish_chaski_card.py \
+            --profile chaski-r2 \
+            --source-revision "${SOURCE_REVISION}" \
+            --report reports/chaski-r2-card-dry-run.json
           git diff --check
 
       - name: Upload dry-run evidence
@@ -100,6 +106,7 @@ jobs:
           path: |
             reports/chaski-card-dry-run.json
             reports/chaski-5050-card-dry-run.json
+            reports/chaski-r2-card-dry-run.json
           if-no-files-found: error
           retention-days: 30
 
@@ -119,6 +126,9 @@ jobs:
           - profile: chaski-5050
             repo_id: SZLHOLDINGS/chaski-5050
             receipt: chaski-5050-card
+          - profile: chaski-r2
+            repo_id: SZLHOLDINGS/chaski-r2
+            receipt: chaski-r2-card
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
