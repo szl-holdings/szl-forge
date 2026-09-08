@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" width="1200" height="360">
+  <defs>
+    <linearGradient id="dag" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4c1d95"/>
+      <stop offset="0.55" stop-color="#a78bfa"/>
+      <stop offset="1" stop-color="#ddd6fe"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="8"/>
+    </filter>
+    <radialGradient id="fade" cx="0.5" cy="0.5" r="0.75">
+      <stop offset="0" stop-color="#0c0912"/>
+      <stop offset="1" stop-color="#050408"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="360" fill="url(#fade)"/>
+  <g fill="none" stroke="url(#dag)" stroke-width="1.6" opacity="0.75">
+    <path d="M 430 180 L 520 120"/>
+    <path d="M 430 180 L 520 240"/>
+    <path d="M 520 120 L 640 120"/>
+    <path d="M 520 120 L 640 240"/>
+    <path d="M 520 240 L 640 240"/>
+    <path d="M 640 120 L 760 180"/>
+    <path d="M 640 240 L 760 180"/>
+  </g>
+  <g>
+    <circle cx="430" cy="180" r="13" fill="none" stroke="url(#dag)" stroke-width="5" opacity="0.35" filter="url(#glow)"/>
+    <circle cx="430" cy="180" r="13" fill="none" stroke="url(#dag)" stroke-width="1.6" opacity="0.95"/>
+    <circle cx="430" cy="180" r="4" fill="#a78bfa" opacity="0.9"/>
+    <circle cx="520" cy="120" r="11" fill="none" stroke="url(#dag)" stroke-width="1.6" opacity="0.9"/>
+    <circle cx="520" cy="120" r="3.5" fill="#a78bfa" opacity="0.9"/>
+    <circle cx="520" cy="240" r="11" fill="none" stroke="#f87171" stroke-width="1.6" opacity="0.9"/>
+    <circle cx="520" cy="240" r="11" fill="none" stroke="#f87171" stroke-width="4" opacity="0.35" filter="url(#glow)"/>
+    <circle cx="520" cy="240" r="3.5" fill="#f87171" opacity="0.9"/>
+    <circle cx="640" cy="120" r="11" fill="none" stroke="url(#dag)" stroke-width="1.6" opacity="0.9"/>
+    <circle cx="640" cy="120" r="3.5" fill="#a78bfa" opacity="0.9"/>
+    <circle cx="640" cy="240" r="11" fill="none" stroke="url(#dag)" stroke-width="1.6" opacity="0.9"/>
+    <circle cx="640" cy="240" r="3.5" fill="#a78bfa" opacity="0.9"/>
+    <circle cx="760" cy="180" r="13" fill="none" stroke="url(#dag)" stroke-width="5" opacity="0.35" filter="url(#glow)"/>
+    <circle cx="760" cy="180" r="13" fill="none" stroke="url(#dag)" stroke-width="1.6" opacity="0.95"/>
+    <circle cx="760" cy="180" r="4" fill="#ddd6fe" opacity="0.95"/>
+  </g>
+  <path d="M 520 240 L 640 240" stroke="#f87171" stroke-width="1.4" opacity="0.7" stroke-dasharray="4 5"/>
+  <path d="M0 312 L 1200 312" fill="none" stroke="url(#dag)" stroke-width="4" opacity="0.22" filter="url(#glow)"/>
+  <path d="M0 312 L 1200 312" fill="none" stroke="url(#dag)" stroke-width="0.9" opacity="0.5"/>
+</svg>
