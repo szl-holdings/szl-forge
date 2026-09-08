@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" width="1200" height="360">
+  <defs>
+    <linearGradient id="gate" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#701a75"/>
+      <stop offset="0.55" stop-color="#e879f9"/>
+      <stop offset="1" stop-color="#fae8ff"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="9"/>
+    </filter>
+    <radialGradient id="fade" cx="0.5" cy="0.5" r="0.75">
+      <stop offset="0" stop-color="#140a18"/>
+      <stop offset="1" stop-color="#08050b"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="360" fill="url(#fade)"/>
+  <g stroke-linecap="round">
+    <path d="M 480 150 L 480 244 M 516 160 L 516 244 M 552 128 L 552 244" stroke="url(#gate)" stroke-width="5" opacity="0.55" fill="none"/>
+    <path d="M 588 244 L 588 244" stroke="url(#gate)" stroke-width="5" opacity="0.9" fill="none"/>
+    <circle cx="588" cy="238" r="5" fill="#fae8ff" opacity="0.95"/>
+    <path d="M 624 150 L 624 244" stroke="url(#gate)" stroke-width="5" opacity="0.55" fill="none"/>
+  </g>
+  <path d="M 560 120 L 508 252 M 560 120 L 664 252" fill="none" stroke="url(#gate)" stroke-width="10" opacity="0.4" filter="url(#glow)"/>
+  <path d="M 560 120 L 508 252 M 560 120 L 664 252" fill="none" stroke="url(#gate)" stroke-width="2.2" opacity="0.95" stroke-linecap="round"/>
+  <path d="M 636 210 L 676 210" stroke="#fae8ff" stroke-width="2.2" opacity="0.9" stroke-linecap="round"/>
+  <path d="M 460 266 L 720 266" stroke="#e879f9" stroke-width="2" opacity="0.8" stroke-dasharray="10 7" stroke-linecap="round"/>
+  <path d="M 588 238 L 588 266" stroke="#fae8ff" stroke-width="1.6" opacity="0.8"/>
+  <path d="M0 316 L 1200 316" fill="none" stroke="url(#gate)" stroke-width="4" opacity="0.22" filter="url(#glow)"/>
+  <path d="M0 316 L 1200 316" fill="none" stroke="url(#gate)" stroke-width="0.9" opacity="0.5"/>
+</svg>
