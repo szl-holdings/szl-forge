@@ -18,6 +18,8 @@ concurrency:
 jobs:
   authorize:
     name: Authorize protected source without publisher secret
+    outputs:
+      publisher_revision: ${{ steps.resolve_publisher_revision.outputs.publisher_revision }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -60,10 +62,21 @@ jobs:
       - name: Test untrusted source publication contract without publisher secret
         run: python -m unittest -v source/tests/test_publication_contract.py
 
+      - name: Resolve protected publisher revision
+        id: resolve_publisher_revision
+        run: |
+          set -euo pipefail
+          publisher_revision="$(git -C . ls-remote https://github.com/szl-holdings/szl-forge.git refs/heads/main | awk '{print $1}')"
+          if [ -z "$publisher_revision" ]; then
+            echo "Failed to resolve szl-forge main revision" >&2
+            exit 1
+          fi
+          echo "publisher_revision=$publisher_revision" >> "$GITHUB_OUTPUT"
+
       - name: Wait for exact protected-main source gate
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          PUBLISHER_REVISION: ${{ github.sha }}
+          PUBLISHER_REVISION: ${{ steps.resolve_publisher_revision.outputs.publisher_revision }}
           SOURCE_REVISION: ${{ inputs.source_revision }}
         run: >-
           python tools/authorize_invariants_release.py
@@ -121,29 +134,41 @@ jobs:
             hf-kernel-builder
           test "$(kernel-builder --version)" = "hf-kernel-builder 0.17.0-dev0"
 
-      - name: Re-authorize exact source immediately before publication
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          PUBLISHER_REVISION: ${{ github.sha }}
-          SOURCE_REVISION: ${{ inputs.source_revision }}
-        run: >-
-          python tools/authorize_invariants_release.py
-          --source-revision "${SOURCE_REVISION}"
-          --publisher-revision "${PUBLISHER_REVISION}"
-          --wait-seconds 0
-          --report reports/invariants-release-authorization.json
+      - name: Download canonical authorization evidence
+        uses: actions/download-artifact@5b8c2fce2f9e5ebc9ebcde2fbe5f0a9f7f9a7e56 # v5.0.0
+        with:
+          name: invariants-release-authorization-${{ github.run_id }}
+          path: reports
+
+      - name: Read canonical authorization evidence
+        id: authorization
+        run: |
+          set -euo pipefail
+          test -s reports/invariants-release-authorization.json
+          report_publisher_revision="$(jq -r '.publisher.revision' reports/invariants-release-authorization.json)"
+          source_revision="$(jq -r '.source.revision' reports/invariants-release-authorization.json)"
+          status="$(jq -r '.status' reports/invariants-release-authorization.json)"
+          test -n "$report_publisher_revision"
+          test -n "$source_revision"
+          test "$report_publisher_revision" = "${{ needs.authorize.outputs.publisher_revision }}"
+          test "$status" = "AUTHORIZED_PROTECTED_MAIN"
+          echo "source_revision=$source_revision" >> "$GITHUB_OUTPUT"
+
+      - name: Verify requested source revision matches authorization evidence
+        run: test "${{ inputs.source_revision }}" = "${{ steps.authorization.outputs.source_revision }}"
 
       - name: Publish declared Python with trusted code and verify exact readback
         env:
           HF_TOKEN: ${{ secrets.HF_ORG_TOKEN }}
-          SOURCE_REVISION: ${{ inputs.source_revision }}
+          SOURCE_REVISION: ${{ steps.authorization.outputs.source_revision }}
+          PUBLISHER_REVISION: ${{ needs.authorize.outputs.publisher_revision }}
         run: >-
           python tools/publish_szl_invariants.py
           --source-dir source
           --source-revision "${SOURCE_REVISION}"
           --authorization-report reports/invariants-release-authorization.json
           --publisher-repository "${GITHUB_REPOSITORY}"
-          --publisher-revision "${GITHUB_SHA}"
+          --publisher-revision "${PUBLISHER_REVISION}"
           --publisher-workflow-ref "${GITHUB_WORKFLOW_REF}"
           --publisher-run-id "${GITHUB_RUN_ID}"
           --publisher-run-attempt "${GITHUB_RUN_ATTEMPT}"
