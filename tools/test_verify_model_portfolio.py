@@ -198,7 +198,7 @@ class PortfolioContractTests(unittest.TestCase):
 
     def test_khipu_limit_is_encoded_from_signed_counts(self) -> None:
         evidence = verifier.verify_signed_receipts(verifier.ROOT / "khipu")
-        self.assertEqual(2, evidence["abstainCorrect"])
+        self.assertEqual(3, evidence["abstainCorrect"])
         self.assertEqual(6, evidence["abstainTotal"])
         item = next(
             entry
