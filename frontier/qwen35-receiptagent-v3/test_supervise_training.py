@@ -351,9 +351,44 @@ class FixedPolicyAndTelemetryTests(unittest.TestCase):
         ):
             supervisor.initial_temperature_gate(sample(free_mib=4095), recipe)
 
+    def test_prelaunch_failure_cause_preserves_policy_and_telemetry_meaning(self):
+        recipe = candidate()["training_recipe"]
+        for observed, expected in (
+            (None, "TELEMETRY_UNAVAILABLE"),
+            (sample(temperature_c=81), "THERMAL_POLICY_VIOLATION"),
+            (sample(free_mib=4095), "PRECONDITION_DENIED"),
+            (
+                sample(gpu_uuid="GPU-aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+                "TELEMETRY_UNAVAILABLE",
+            ),
+            (
+                sample(
+                    temperature_c=81,
+                    gpu_uuid="GPU-aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                ),
+                "TELEMETRY_UNAVAILABLE",
+            ),
+            (
+                sample(
+                    free_mib=4095,
+                    gpu_uuid="GPU-aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                ),
+                "TELEMETRY_UNAVAILABLE",
+            ),
+        ):
+            with self.subTest(expected=expected):
+                self.assertEqual(
+                    expected,
+                    supervisor.prelaunch_failure_cause(
+                        observed,
+                        recipe,
+                        expected_gpu_uuid=GPU_UUID,
+                    ),
+                )
+
     def test_report_reserve_exceeds_the_derived_full_run_bound(self):
         policy = supervisor.EXPECTED_POLICY
-        self.assertEqual(5_402, supervisor.maximum_telemetry_samples(policy))
+        self.assertEqual(5_403, supervisor.maximum_telemetry_samples(policy))
         self.assertLessEqual(
             supervisor.minimum_evidence_reserve_bytes(policy),
             policy["evidence_reserve_bytes"],
@@ -940,11 +975,13 @@ class WorkerEnvironmentTests(unittest.TestCase):
         runtime_calls = named_calls("sample_gpu_for_runtime")
         admission_gates = named_calls("initial_temperature_gate")
         pair_gates = named_calls("readiness_pair_gate")
+        prelaunch_failure_classifiers = named_calls("prelaunch_failure_cause")
         launch_calls = named_calls("launch_worker_unit")
         self.assertEqual(1, len(admission_calls))
         self.assertEqual(4, len(runtime_calls))
         self.assertEqual(1, len(admission_gates))
         self.assertEqual(2, len(pair_gates))
+        self.assertEqual(1, len(prelaunch_failure_classifiers))
         self.assertEqual(1, len(launch_calls))
         confirmation = min(runtime_calls, key=lambda call: call.lineno)
         launch = launch_calls[0]
@@ -970,6 +1007,11 @@ class WorkerEnvironmentTests(unittest.TestCase):
             prelaunch_confirmation.lineno, ordered_pair_gates[-1].lineno
         )
         self.assertLess(ordered_pair_gates[-1].lineno, launch.lineno)
+        self.assertLess(
+            prelaunch_confirmation.lineno,
+            prelaunch_failure_classifiers[0].lineno,
+        )
+        self.assertLess(prelaunch_failure_classifiers[0].lineno, launch.lineno)
         self.assertTrue(
             all(
                 call.lineno > launch.lineno

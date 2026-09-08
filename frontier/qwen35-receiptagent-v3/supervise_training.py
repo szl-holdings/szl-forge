@@ -49,7 +49,7 @@ MAX_GPU_MEMORY_MIB = 10_000_000
 MAX_GPU_TEMPERATURE_C = 200
 MAX_TELEMETRY_SAMPLE_JSON_BYTES = 512
 MAX_NON_TELEMETRY_REPORT_BYTES = 2 * 1024 * 1024
-TELEMETRY_READINESS_SAMPLE_COPIES = 2
+TELEMETRY_READINESS_SAMPLE_COPIES = 3
 TELEMETRY_SOURCE = "INDEPENDENT_SUPERVISOR_TWO_STAGE_FIXED_NVIDIA_SMI"
 NVIDIA_SMI_QUERY = (
     "--query-gpu=uuid,name,temperature.gpu,memory.free,memory.total",
@@ -210,13 +210,13 @@ def sha256_json(value: Any) -> str:
 
 
 def maximum_telemetry_samples(policy: dict[str, Any]) -> int:
-    """Bound initial, periodic, and terminal samples for the longest run."""
+    """Bound both confirmations, periodic samples, and the terminal sample."""
 
     longest_seconds = max(
         policy["smoke_wall_timeout_seconds"], policy["full_wall_timeout_seconds"]
     )
     interval_seconds = policy["thermal_sample_interval_seconds"]
-    return math.ceil(longest_seconds / interval_seconds) + 2
+    return math.ceil(longest_seconds / interval_seconds) + 3
 
 
 def minimum_evidence_reserve_bytes(policy: dict[str, Any]) -> int:
@@ -1298,6 +1298,19 @@ def readiness_rejection_cause(
     return None
 
 
+def prelaunch_failure_cause(
+    sample: TelemetrySample | None,
+    recipe: dict[str, Any],
+    *,
+    expected_gpu_uuid: str,
+) -> str:
+    """Classify the failed final readiness gate before any worker launch."""
+
+    if sample is None or sample.gpu_uuid != expected_gpu_uuid:
+        return "TELEMETRY_UNAVAILABLE"
+    return readiness_rejection_cause(sample, recipe) or "TELEMETRY_UNAVAILABLE"
+
+
 def readiness_pair_gate(
     admission_sample: TelemetrySample,
     runtime_confirmation: TelemetrySample,
@@ -1812,6 +1825,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
         prelaunch_confirmation: TelemetrySample | None = None
         prelaunch_confirmation_error: str | None = None
+        terminal_cause = "TELEMETRY_UNAVAILABLE"
         prelaunch_confirmation_started_ns = time.monotonic_ns()
         try:
             prelaunch_confirmation = sample_gpu_for_runtime(policy)
@@ -1820,6 +1834,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         except Exception as exc:  # noqa: BLE001 - fail closed before launch
             prelaunch_confirmation_error = trainer.sanitized_error(exc)
+            terminal_cause = prelaunch_failure_cause(
+                prelaunch_confirmation,
+                recipe,
+                expected_gpu_uuid=runtime_confirmation.gpu_uuid,
+            )
         prelaunch_confirmation_completed_ns = time.monotonic_ns()
         telemetry_readiness["prelaunchConfirmation"] = telemetry_phase_evidence(
             phase="PRELAUNCH_CONFIRMATION",
