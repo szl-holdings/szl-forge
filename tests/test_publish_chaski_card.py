@@ -20,9 +20,10 @@ class RateLimited(RuntimeError):
 
 
 def test_profile_registry_is_closed_and_target_specific() -> None:
-    assert set(publisher.PROFILES) == {"chaski", "chaski-5050"}
+    assert set(publisher.PROFILES) == {"chaski", "chaski-5050", "chaski-r2"}
     assert publisher.resolve_profile("chaski").repo_id == "SZLHOLDINGS/chaski"
     assert publisher.resolve_profile("chaski-5050").repo_id == "SZLHOLDINGS/chaski-5050"
+    assert publisher.resolve_profile("chaski-r2").repo_id == "SZLHOLDINGS/chaski-r2"
     with pytest.raises(publisher.PublicationError, match="unknown card profile"):
         publisher.resolve_profile("operator-controlled-target")
 
@@ -54,7 +55,45 @@ def test_chaski_5050_preserves_quarantine_and_no_eval_boundary() -> None:
     assert "one-of-one" not in card.casefold()
 
 
-@pytest.mark.parametrize("profile", ["chaski", "chaski-5050"])
+def test_chaski_r2_requires_search_tag_in_frontmatter() -> None:
+    assets = publisher.load_assets("chaski-r2")
+    publisher.validate_assets(assets, "chaski-r2")
+    # The existing prose limitation is insufficient for Hub search metadata.
+    assets["README.md"] = assets["README.md"].replace(b"- proposal-only\n", b"", 1)
+    assert b"- proposal-only\n" in assets["README.md"]
+    with pytest.raises(publisher.PublicationError, match="search tags missing"):
+        publisher.validate_assets(assets, "chaski-r2")
+
+
+def test_r2_source_binding_preserves_research_qualification() -> None:
+    profile = publisher.resolve_profile("chaski-r2")
+    assets = publisher.load_assets(profile)
+    binding = json.loads(publisher.build_source_binding(
+        profile=profile,
+        source_revision="c" * 40,
+        source_assets=publisher.validate_assets(assets, profile),
+    ))
+    assert binding["target"]["repo_id"] == "SZLHOLDINGS/chaski-r2"
+    assert binding["qualification"]["evaluation_state"] == "NONE_THIS_RUN"
+    assert binding["qualification"]["publication_eligible"] is False
+    assert binding["qualification"]["autonomy_eligible"] is False
+    assert all(value is False for value in binding["authority"].values())
+
+
+def test_r2_is_in_candidate_and_publication_workflow() -> None:
+    import yaml
+
+    workflow = yaml.safe_load((publisher.ROOT / ".github/workflows/publish-chaski-card.yml").read_text())
+    events = workflow.get("on", workflow.get(True))
+    for event in ("pull_request", "push"):
+        assert "chaski-r2/card/**" in events[event]["paths"]
+    profiles = workflow["jobs"]["publish"]["strategy"]["matrix"]["include"]
+    assert {row["profile"] for row in profiles} == set(publisher.PROFILES)
+    for row in profiles:
+        assert row["repo_id"] == publisher.resolve_profile(row["profile"]).repo_id
+
+
+@pytest.mark.parametrize("profile", ["chaski", "chaski-5050", "chaski-r2"])
 def test_svg_is_local_scriptless_and_bounded(profile: str) -> None:
     assets = publisher.load_assets(profile)
     publisher.validate_assets(assets, profile)

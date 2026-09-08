@@ -1,0 +1,52 @@
+{
+  "schema": "szl.frontier.k2-source-gate.v1",
+  "captured_on": "2026-09-08",
+  "truth_label": "REPORTED_UPSTREAM_WITH_MEASURED_SOURCE_CORRECTION",
+  "candidate_id": "k2-horizon-7b",
+  "model_id": "IFM/K2-Horizon-7B",
+  "pinned_revision": "14985b2765262fc7850476f71a7d0ab08e86af69",
+  "pin_basis": "Current observed Hugging Face repository head after the upstream serving-recipe revision failed exact resolution",
+  "stale_upstream_recipe_revision": {
+    "revision": "69ada542b68fe13d767479db2ab9421baff88681",
+    "state": "MEASURED_INVALID_404",
+    "github_workflow_run_id": 34219351248,
+    "github_workflow_job_id": 102038541050,
+    "observed_on": "2026-09-08",
+    "error_class": "RevisionNotFoundError",
+    "effect": "REJECTED_NOT_USED_FOR_QUALIFICATION"
+  },
+  "declared_license": "apache-2.0",
+  "reported_context_tokens": 524288,
+  "reported_serving": [
+    "vLLM",
+    "SGLang",
+    "Transformers"
+  ],
+  "requires_custom_repository_code": true,
+  "hf_inference_provider_state": "UNAVAILABLE_UPSTREAM_NOT_DEPLOYED",
+  "qualification_order": 1,
+  "source_gate": {
+    "download_weights": false,
+    "execute_repository_code": false,
+    "trust_remote_code": false,
+    "hash_bounded_metadata": true,
+    "hash_custom_python": true,
+    "static_python_inventory": true,
+    "manual_remote_code_review": "REQUIRED"
+  },
+  "next_runtime_gate": {
+    "state": "BLOCKED_PENDING_SOURCE_REVIEW_AND_QUALIFIED_COMPUTE",
+    "preferred_runtime": "SGLang",
+    "reported_dtype": "bfloat16",
+    "reported_tensor_parallel_size": 1,
+    "measured_by_szl": false
+  },
+  "production_disposition": "HOLD",
+  "promotion_effect": "NONE",
+  "model_output_authority": "PROPOSAL_ONLY",
+  "consequential_action_admission_layer": "A11oy",
+  "primary_sources": [
+    "https://huggingface.co/IFM/K2-Horizon-7B",
+    "https://huggingface.co/collections/IFM/k2-horizon"
+  ]
+}
