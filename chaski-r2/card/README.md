@@ -13,6 +13,7 @@ tags:
 - transformers
 - trl
 - unsloth
+- proposal-only
 szl:
   doctrine: v11-LOCKED
   lean: 749/14/163
@@ -25,6 +26,7 @@ szl:
   weights: AVAILABLE
   evals: none-this-run
   publication_eligible: false
+  autonomy_eligible: false
   never_overwrite: SZLHOLDINGS/chaski
 ---
 
@@ -69,7 +71,7 @@ A lineage you can walk. R1 stays up. R2 is the next knot.
 | NVIDIA | Recipe rerun. |
 | Unsloth | Another FastLanguageModel job. |
 
-Nobody else ships this combination. That is the point of a one-of-one.
+This adapter remains a research proposal artifact; no qualification pass is claimed.
 
 ## Intended use
 
@@ -79,7 +81,7 @@ Lineage walk. Compare, do not silently replace.
 
 - proposal-only
 
-Canonical GitHub: [`szl-holdings/szl-forge`](https://github.com/szl-holdings/szl-forge/blob/main/chaski/)
+Canonical GitHub: [`chaski-r2/card/README.md`](https://github.com/szl-holdings/szl-forge/blob/main/chaski-r2/card/README.md)
 <!-- SZL-ATELIER-CUT:v1:END -->
 
 ## Honest status
@@ -94,8 +96,8 @@ Canonical GitHub: [`szl-holdings/szl-forge`](https://github.com/szl-holdings/szl
 | **Train loss** | MEASURED `0.7656` — train metric, **not an eval** |
 | **Train runtime** | MEASURED on RTX 5050 Laptop 8GB |
 | **Adapter sha256** | `440340ce29e19344c0625d0adfe820b277cdb0e24099d4e612f88ad6b3cf49c6` |
-| **Evals** | see `training_receipt.local.json`; do not treat train loss as JSON-draft/refusal |
-| **publication_eligible** | Hub PUT of adapter bytes is LIVE; eval gates remain labeled in the receipt |
+| **Evals** | none-this-run; train loss is not a JSON-draft/refusal evaluation |
+| **publication_eligible** | false; published adapter bytes do not establish qualification |
 | **Jobs** | local-5050 owner metal; HF Jobs not fired from the GitHub kit |
 | **Ollama / llama-server** | `llama-server` is missing. No tok/s claimed. |
 

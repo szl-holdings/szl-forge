@@ -21,6 +21,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Mapping
 
+import yaml
+
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_REPOSITORY = "szl-holdings/szl-forge"
 FULL_SHA = re.compile(r"^[0-9a-f]{40}$")
@@ -43,6 +45,7 @@ class CardProfile:
     forbidden_card_claims: tuple[str, ...]
     required_svg_boundaries: tuple[str, ...]
     commit_description: str
+    required_card_tags: tuple[str, ...] = ()
 
     @property
     def source_files(self) -> dict[str, Path]:
@@ -165,6 +168,54 @@ PROFILES: Mapping[str, CardProfile] = {
             "evals, visibility, hardware, collection, or runtime state changed."
         ),
     ),
+    "chaski-r2": CardProfile(
+        key="chaski-r2",
+        repo_id="SZLHOLDINGS/chaski-r2",
+        source_directory=ROOT / "chaski-r2" / "card",
+        display_name="Chaski-R2",
+        required_card_tags=("proposal-only",),
+        report_schema="szl.hf.chaski-r2-card-publication/v1",
+        evaluation_state="NONE_THIS_RUN",
+        release_blocker="no_json_or_refusal_gate",
+        autonomy_eligible=False,
+        required_card_boundaries=(
+            "base_model: Qwen/Qwen3.5-0.8B",
+            "base_model_relation: adapter",
+            "artifact_class: ADAPTER",
+            "sku: CHASKI-R2",
+            "quant: bf16-lora",
+            "qlora: false",
+            "- proposal-only\n",
+            "evals: none-this-run",
+            "publication_eligible: false",
+            "autonomy_eligible: false",
+            "never_overwrite: SZLHOLDINGS/chaski",
+            "Train loss is not a JSON-draft or refusal gate. Not 5/5 or 6/6.",
+        ),
+        forbidden_card_claims=(
+            "publication_eligible: true",
+            "autonomy_eligible: true",
+            "nobody else ships this combination",
+            "one-of-one",
+            "status: production ready",
+            "named-n-measured%20pass",
+            "evals: measured pass",
+        ),
+        required_svg_boundaries=(
+            'viewBox="0 0 1200 360"',
+            'id="r2"',
+            'id="glow"',
+            'id="fade"',
+            'stop-color="#8b5cf6"',
+            'stop-color="#f472b6"',
+        ),
+        commit_description=(
+            "Exact-source Chaski-R2 card publication with proposal-only search "
+            "metadata. Evaluation remains none-this-run; publication_eligible "
+            "and autonomy_eligible remain false. No weights, adapter, configs, "
+            "evals, visibility, hardware, collection, or runtime state changed."
+        ),
+    ),
 }
 DEFAULT_PROFILE = "chaski"
 
@@ -227,6 +278,16 @@ def validate_assets(
 
     if not card.startswith("---\n") or card.count("\n---\n") < 1:
         raise PublicationError("model card front matter is missing")
+    if selected.required_card_tags:
+        try:
+            metadata = yaml.safe_load(card.split("\n---\n", 1)[0][4:])
+        except yaml.YAMLError as error:
+            raise PublicationError("model card front matter is invalid") from error
+        tags = metadata.get("tags") if isinstance(metadata, dict) else None
+        if not isinstance(tags, list) or any(
+            tag not in tags for tag in selected.required_card_tags
+        ):
+            raise PublicationError("required model-card search tags missing")
     for boundary in selected.required_card_boundaries:
         if boundary not in card:
             raise PublicationError(f"required model-card boundary missing: {boundary}")
