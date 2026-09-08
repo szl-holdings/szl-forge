@@ -43,7 +43,7 @@ DATASET_RECEIPT_SCHEMA = "szl-oac/transport-health-dataset-receipt/v1"
 DATASET_PURPOSE = "synthetic_operational_transport_observability_only"
 GENERATOR_RELATIVE_PATH = "tools/train_operational_health_model.py"
 KERNEL_RELATIVE_PATH = "src/oac_operational_health.py"
-MODEL_STAGE_RELATIVE = Path("huggingface/model/oac-clinical-transport-health-v1")
+MODEL_STAGE_RELATIVE = Path("huggingface/model/oac-system-health-v1")
 DATASET_STAGE_RELATIVE = Path(
     "huggingface/dataset/oac-clinical-transport-observability-synthetic"
 )
@@ -506,12 +506,12 @@ def generated_relative_paths() -> list[Path]:
         Path("operational-model/artifacts/model.json"),
         Path("operational-model/artifacts/model-receipt.json"),
         Path("operational-model/artifacts/dataset-receipt.json"),
-        Path("huggingface/model/oac-clinical-transport-health-v1/model.json"),
-        Path("huggingface/model/oac-clinical-transport-health-v1/artifact_receipt.json"),
-        Path("huggingface/model/oac-clinical-transport-health-v1/oac_operational_health.py"),
-        Path("huggingface/model/oac-clinical-transport-health-v1/example_input.json"),
-        Path("huggingface/model/oac-clinical-transport-health-v1/LICENSE"),
-        Path("huggingface/model/oac-clinical-transport-health-v1/README.md"),
+        Path("huggingface/model/oac-system-health-v1/model.json"),
+        Path("huggingface/model/oac-system-health-v1/artifact_receipt.json"),
+        Path("huggingface/model/oac-system-health-v1/oac_operational_health.py"),
+        Path("huggingface/model/oac-system-health-v1/example_input.json"),
+        Path("huggingface/model/oac-system-health-v1/LICENSE"),
+        Path("huggingface/model/oac-system-health-v1/README.md"),
         Path("huggingface/dataset/oac-clinical-transport-observability-synthetic/schema.json"),
         Path("huggingface/dataset/oac-clinical-transport-observability-synthetic/dataset_receipt.json"),
         Path("huggingface/dataset/oac-clinical-transport-observability-synthetic/training_source_snapshot.py"),

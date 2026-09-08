@@ -270,7 +270,7 @@ class SyntheticDatasetTests(unittest.TestCase):
         self.assertTrue(json.loads(proc.stdout)["ok"])
 
     def test_hugging_face_staging_manifests_are_closed(self) -> None:
-        model_stage = ROOT / "huggingface" / "model" / "oac-clinical-transport-health-v1"
+        model_stage = ROOT / "huggingface" / "model" / "oac-system-health-v1"
         dataset_stage = (
             ROOT
             / "huggingface"
