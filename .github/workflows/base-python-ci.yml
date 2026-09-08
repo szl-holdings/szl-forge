@@ -37,10 +37,15 @@ jobs:
         run: |
           set -euo pipefail
           if [ -f pyproject.toml ]; then
-            # Prefer the repo's own dev/test extra so test-time imports resolve
-            # the same way they do in that repo's primary CI.
-            if grep -qE '^\s*(dev|test|tests)\s*=\s*\[' pyproject.toml; then
+            # Install the exact optional dependency group declared by the repo.
+            # Do not detect test/tests and then hard-code .[dev]: that leaves
+            # test-only dependencies absent and produces false-red collection.
+            if grep -qE '^\s*dev\s*=\s*\[' pyproject.toml; then
               python -m pip install -e ".[dev]"
+            elif grep -qE '^\s*test\s*=\s*\[' pyproject.toml; then
+              python -m pip install -e ".[test]"
+            elif grep -qE '^\s*tests\s*=\s*\[' pyproject.toml; then
+              python -m pip install -e ".[tests]"
             else
               python -m pip install -e .
             fi
