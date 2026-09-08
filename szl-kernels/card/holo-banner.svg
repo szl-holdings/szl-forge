@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" width="1200" height="360">
+  <defs>
+    <linearGradient id="suite" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#1e3a8a"/>
+      <stop offset="0.55" stop-color="#5b8dee"/>
+      <stop offset="1" stop-color="#bfdbfe"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="9"/>
+    </filter>
+    <radialGradient id="fade" cx="0.5" cy="0.5" r="0.75">
+      <stop offset="0" stop-color="#0a0f1c"/>
+      <stop offset="1" stop-color="#05070d"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="360" fill="url(#fade)"/>
+  <g fill="none" stroke="url(#suite)" stroke-width="1.7" opacity="0.8">
+    <path d="M 400 110 L 560 176"/>
+    <path d="M 400 250 L 560 184"/>
+    <path d="M 400 180 L 560 180"/>
+  </g>
+  <g>
+    <circle cx="400" cy="110" r="14" fill="none" stroke="url(#suite)" stroke-width="5" opacity="0.35" filter="url(#glow)"/>
+    <circle cx="400" cy="110" r="14" fill="none" stroke="url(#suite)" stroke-width="1.7" opacity="0.95"/>
+    <circle cx="400" cy="110" r="4" fill="#5b8dee" opacity="0.95"/>
+    <circle cx="400" cy="180" r="14" fill="none" stroke="url(#suite)" stroke-width="5" opacity="0.35" filter="url(#glow)"/>
+    <circle cx="400" cy="180" r="14" fill="none" stroke="url(#suite)" stroke-width="1.7" opacity="0.95"/>
+    <circle cx="400" cy="180" r="4" fill="#5b8dee" opacity="0.95"/>
+    <circle cx="400" cy="250" r="14" fill="none" stroke="url(#suite)" stroke-width="5" opacity="0.35" filter="url(#glow)"/>
+    <circle cx="400" cy="250" r="14" fill="none" stroke="url(#suite)" stroke-width="1.7" opacity="0.95"/>
+    <circle cx="400" cy="250" r="4" fill="#5b8dee" opacity="0.95"/>
+  </g>
+  <g fill="none" stroke="url(#suite)">
+    <ellipse cx="620" cy="180" rx="30" ry="17" stroke-width="7" opacity="0.35" filter="url(#glow)"/>
+    <ellipse cx="620" cy="180" rx="30" ry="17" stroke-width="1.8" opacity="0.95"/>
+    <ellipse cx="688" cy="180" rx="30" ry="17" stroke-width="1.8" opacity="0.85" transform="rotate(90 688 180)"/>
+    <ellipse cx="756" cy="180" rx="30" ry="17" stroke-width="7" opacity="0.35" filter="url(#glow)"/>
+    <ellipse cx="756" cy="180" rx="30" ry="17" stroke-width="1.8" opacity="0.95"/>
+  </g>
+  <circle cx="810" cy="180" r="6" fill="#bfdbfe" opacity="0.95"/>
+  <circle cx="810" cy="180" r="6" fill="#bfdbfe" opacity="0.5" filter="url(#glow)"/>
+  <path d="M0 318 L 1200 318" fill="none" stroke="url(#suite)" stroke-width="4" opacity="0.22" filter="url(#glow)"/>
+  <path d="M0 318 L 1200 318" fill="none" stroke="url(#suite)" stroke-width="0.9" opacity="0.5"/>
+</svg>
