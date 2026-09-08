@@ -289,6 +289,21 @@ def supervisor_report(child: dict, child_bytes: bytes) -> dict:
                 },
                 "error": None,
             },
+            "prelaunchConfirmation": {
+                "phase": "PRELAUNCH_CONFIRMATION",
+                "state": "OBSERVED",
+                "timeoutSeconds": 5.0,
+                "durationSeconds": 0.25,
+                "sample": {
+                    "offsetSeconds": 5.75,
+                    "observedAt": "2026-08-13T12:00:00.250000+00:00",
+                    "gpuUuid": GPU_UUID,
+                    "temperatureC": 56,
+                    "freeMiB": 6900,
+                    "totalMiB": 8192,
+                },
+                "error": None,
+            },
             "gpuUuid": GPU_UUID,
             "maximumTemperaturePolicyC": 80,
             "sampleIntervalSeconds": 2.0,
@@ -296,11 +311,19 @@ def supervisor_report(child: dict, child_bytes: bytes) -> dict:
             "maximumObservedRuntimeSampleGapSeconds": 2.1,
             "runtimeSamples": [
                 {
-                    "offsetSeconds": -0.1,
+                    "offsetSeconds": -0.25,
                     "observedAt": "2026-08-13T12:00:00+00:00",
                     "gpuUuid": GPU_UUID,
                     "temperatureC": 55,
                     "freeMiB": 7000,
+                    "totalMiB": 8192,
+                },
+                {
+                    "offsetSeconds": -0.1,
+                    "observedAt": "2026-08-13T12:00:00.250000+00:00",
+                    "gpuUuid": GPU_UUID,
+                    "temperatureC": 56,
+                    "freeMiB": 6900,
                     "totalMiB": 8192,
                 },
                 {
@@ -448,13 +471,19 @@ class SupervisorLinkageTests(unittest.TestCase):
         telemetry["admission"]["sample"]["offsetSeconds"] = 16.0
         telemetry["runtimeConfirmation"]["durationSeconds"] = 6.0
         telemetry["runtimeConfirmation"]["sample"]["offsetSeconds"] = 22.0
+        telemetry["prelaunchConfirmation"]["durationSeconds"] = 6.5
+        telemetry["prelaunchConfirmation"]["sample"]["offsetSeconds"] = 28.5
         self.write_supervisor(self.supervisor)
         with self.linkage_mocks():
             linkage = self.verify()
         self.assertEqual(2.1, linkage["maximumObservedRuntimeSampleGapSeconds"])
 
     def test_readiness_duration_requires_a_finite_nonnegative_number(self):
-        for phase in ("admission", "runtimeConfirmation"):
+        for phase in (
+            "admission",
+            "runtimeConfirmation",
+            "prelaunchConfirmation",
+        ):
             for duration in (-0.1, float("inf"), float("nan"), True):
                 with self.subTest(phase=phase, duration=duration):
                     telemetry = copy.deepcopy(self.supervisor["telemetry"])
@@ -463,6 +492,45 @@ class SupervisorLinkageTests(unittest.TestCase):
                         evaluator.verify_supervisor_telemetry(
                             telemetry, candidate=candidate()
                         )
+
+    def test_prelaunch_confirmation_is_bound_to_second_runtime_sample(self):
+        telemetry = copy.deepcopy(self.supervisor["telemetry"])
+        telemetry["prelaunchConfirmation"]["sample"]["freeMiB"] = 6899
+        with self.assertRaisesRegex(
+            evaluator.QualificationError,
+            "prelaunch confirmation is not its runtime telemetry sample",
+        ):
+            evaluator.verify_supervisor_telemetry(telemetry, candidate=candidate())
+
+    def test_prelaunch_confirmation_must_follow_runtime_confirmation(self):
+        telemetry = copy.deepcopy(self.supervisor["telemetry"])
+        telemetry["prelaunchConfirmation"]["sample"]["offsetSeconds"] = 5.4
+        with self.assertRaisesRegex(
+            evaluator.QualificationError,
+            "prelaunch confirmation predates the runtime confirmation",
+        ):
+            evaluator.verify_supervisor_telemetry(telemetry, candidate=candidate())
+
+    def test_runtime_samples_bracket_worker_launch(self):
+        for index, offset, error in (
+            (
+                1,
+                0.1,
+                "prelaunch confirmation runtime sample follows worker launch",
+            ),
+            (
+                2,
+                -0.05,
+                "first post-launch runtime sample predates worker launch",
+            ),
+        ):
+            with self.subTest(index=index):
+                telemetry = copy.deepcopy(self.supervisor["telemetry"])
+                telemetry["runtimeSamples"][index]["offsetSeconds"] = offset
+                with self.assertRaisesRegex(evaluator.QualificationError, error):
+                    evaluator.verify_supervisor_telemetry(
+                        telemetry, candidate=candidate()
+                    )
 
     def test_recomputed_tampering_of_every_required_link_is_rejected(self):
         mutations = {
@@ -541,6 +609,35 @@ class SupervisorLinkageTests(unittest.TestCase):
             "runtime baseline": lambda report: report["telemetry"][
                 "runtimeConfirmation"
             ]["sample"].__setitem__("freeMiB", 6999),
+            "prelaunch phase": lambda report: report["telemetry"][
+                "prelaunchConfirmation"
+            ].__setitem__("phase", "WRONG"),
+            "prelaunch required": lambda report: report["telemetry"].pop(
+                "prelaunchConfirmation"
+            ),
+            "prelaunch order": lambda report: report["telemetry"][
+                "prelaunchConfirmation"
+            ]["sample"].__setitem__("offsetSeconds", 5.4),
+            "prelaunch GPU": lambda report: report["telemetry"][
+                "prelaunchConfirmation"
+            ]["sample"].__setitem__(
+                "gpuUuid", "GPU-aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+            ),
+            "prelaunch temperature": lambda report: report["telemetry"][
+                "prelaunchConfirmation"
+            ]["sample"].__setitem__("temperatureC", 81),
+            "prelaunch memory": lambda report: report["telemetry"][
+                "prelaunchConfirmation"
+            ]["sample"].__setitem__("freeMiB", 4095),
+            "prelaunch runtime binding": lambda report: report["telemetry"][
+                "prelaunchConfirmation"
+            ]["sample"].__setitem__("freeMiB", 6899),
+            "prelaunch after launch": lambda report: report["telemetry"][
+                "runtimeSamples"
+            ][1].__setitem__("offsetSeconds", 0.1),
+            "post-launch before launch": lambda report: report["telemetry"][
+                "runtimeSamples"
+            ][2].__setitem__("offsetSeconds", -0.05),
             "child file": lambda report: report["trainingReport"].__setitem__(
                 "fileSha256", "4" * 64
             ),

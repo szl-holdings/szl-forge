@@ -112,6 +112,7 @@ SUPERVISOR_TELEMETRY_KEYS = {
     "runtimeSampleTimeoutSeconds",
     "admission",
     "runtimeConfirmation",
+    "prelaunchConfirmation",
     "gpuUuid",
     "maximumTemperaturePolicyC",
     "sampleIntervalSeconds",
@@ -690,13 +691,23 @@ def verify_supervisor_telemetry(
         phase="RUNTIME_CONFIRMATION",
         timeout_seconds=5.0,
     )
+    prelaunch_sample, prelaunch_values = readiness_phase(
+        telemetry.get("prelaunchConfirmation"),
+        phase="PRELAUNCH_CONFIRMATION",
+        timeout_seconds=5.0,
+    )
     if confirmation_values[0] < admission_values[0]:
         raise QualificationError(
             "runtime confirmation predates the admission telemetry sample"
         )
+    if prelaunch_values[0] < confirmation_values[0]:
+        raise QualificationError(
+            "prelaunch confirmation predates the runtime confirmation"
+        )
     for label, values in (
         ("admission", admission_values),
         ("runtime confirmation", confirmation_values),
+        ("prelaunch confirmation", prelaunch_values),
     ):
         if values[1] > recipe["maximum_gpu_temperature_c"]:
             raise QualificationError(f"supervisor {label} exceeded the thermal policy")
@@ -706,9 +717,9 @@ def verify_supervisor_telemetry(
             )
 
     samples = telemetry.get("runtimeSamples")
-    if not isinstance(samples, list) or len(samples) < 2:
+    if not isinstance(samples, list) or len(samples) < 3:
         raise QualificationError(
-            "successful supervisor runtime telemetry needs at least two samples"
+            "successful supervisor runtime telemetry needs at least three samples"
         )
     offsets: list[float] = []
     temperatures: list[int] = []
@@ -722,25 +733,43 @@ def verify_supervisor_telemetry(
         temperatures.append(temperature)
         free_memory.append(free_mib)
         total_memory.append(total_mib)
-    for key in (
-        "observedAt",
-        "gpuUuid",
-        "temperatureC",
-        "freeMiB",
-        "totalMiB",
+    for readiness_sample, runtime_index, label in (
+        (confirmation_sample, 0, "runtime confirmation"),
+        (prelaunch_sample, 1, "prelaunch confirmation"),
     ):
-        if samples[0].get(key) != confirmation_sample.get(key):
-            raise QualificationError(
-                "runtime confirmation is not the runtime telemetry baseline"
-            )
+        for key in (
+            "observedAt",
+            "gpuUuid",
+            "temperatureC",
+            "freeMiB",
+            "totalMiB",
+        ):
+            if samples[runtime_index].get(key) != readiness_sample.get(key):
+                raise QualificationError(
+                    f"{label} is not its runtime telemetry sample"
+                )
     if any(current < previous for previous, current in zip(offsets, offsets[1:])):
         raise QualificationError("supervisor telemetry offsets are not monotonic")
-    all_total_memory = [admission_values[3], confirmation_values[3], *total_memory]
+    if offsets[1] > 0:
+        raise QualificationError(
+            "prelaunch confirmation runtime sample follows worker launch"
+        )
+    if offsets[2] < 0:
+        raise QualificationError(
+            "first post-launch runtime sample predates worker launch"
+        )
+    all_total_memory = [
+        admission_values[3],
+        confirmation_values[3],
+        prelaunch_values[3],
+        *total_memory,
+    ]
     if len(set(all_total_memory)) != 1:
         raise QualificationError("supervisor GPU total memory changed between samples")
     maximum_temperature = max(
         admission_values[1],
         confirmation_values[1],
+        prelaunch_values[1],
         *temperatures,
     )
     if telemetry.get("maximumObservedTemperatureC") != maximum_temperature:
@@ -765,6 +794,7 @@ def verify_supervisor_telemetry(
         "minimumObservedFreeMiB": min(
             admission_values[2],
             confirmation_values[2],
+            prelaunch_values[2],
             *free_memory,
         ),
         "maximumObservedRuntimeSampleGapSeconds": observed_gap,
