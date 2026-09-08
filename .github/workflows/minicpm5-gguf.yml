@@ -1,0 +1,49 @@
+# Copyright 2026 SZL Holdings — SPDX-License-Identifier: Apache-2.0
+name: MiniCPM5 GGUF contracts and source
+
+on:
+  pull_request:
+    paths:
+      - 'inference/minicpm5*'
+      - 'tests/test_minicpm5*'
+      - 'frontier/minicpm5/**'
+      - '.github/workflows/minicpm5-gguf.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'inference/minicpm5*'
+      - 'tests/test_minicpm5*'
+      - 'frontier/minicpm5/**'
+      - '.github/workflows/minicpm5-gguf.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Verify offline GGUF controls and historical negative evidence
+        run: python -m unittest discover -s tests -p 'test_minicpm5_gguf.py' -v
+      - name: Verify deterministic evaluation plan
+        run: |
+          python -m inference.minicpm5_gguf plan --output /tmp/gguf-plan.json
+          cmp /tmp/gguf-plan.json frontier/minicpm5/gguf-plan.v1.json
+      - name: Verify exact upstream metadata without downloading weights
+        run: python -m inference.minicpm5_gguf source --output artifacts/gguf-source.json
+      - name: Retain metadata evidence on success or failure
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: minicpm5-gguf-source-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/gguf-source.json
+          if-no-files-found: error
+          retention-days: 30
