@@ -53,7 +53,34 @@ FALLBACK_CASE = {
 
 
 class ProviderError(RuntimeError):
-    pass
+    """Base class for bounded provider-selection failures."""
+
+
+class ProviderUnavailable(ProviderError):
+    """All configured routes failed before a candidate fixture completed.
+
+    ``attempts`` contains only the bounded fields emitted by ``choose_provider``:
+    provider name, routed model identity, transport status, latency, error class,
+    and a digest of the sanitized error. Raw provider bodies and credentials are
+    never retained.
+    """
+
+    def __init__(self, attempts: Sequence[Mapping[str, Any]]) -> None:
+        self.attempts = tuple(dict(attempt) for attempt in attempts)
+        self.attempts_sha256 = canonical_sha256(list(self.attempts))
+        super().__init__(
+            "no configured provider completed the first fixture; "
+            f"attempts_sha256={self.attempts_sha256}"
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "state": "UNAVAILABLE",
+            "attempt_count": len(self.attempts),
+            "attempts_sha256": self.attempts_sha256,
+            "raw_provider_body_recorded": False,
+            "credential_value_recorded": False,
+        }
 
 
 def choose_provider(
@@ -80,19 +107,16 @@ def choose_provider(
             {
                 "provider": provider,
                 "model": routed_model,
-                "ok": result["ok"],
+                "ok": bool(result.get("ok")),
                 "http_status": result.get("http_status"),
                 "latency_ms": result.get("latency_ms"),
                 "error_type": result.get("error_type"),
                 "error_sha256": result.get("error_sha256"),
             }
         )
-        if result["ok"]:
+        if result.get("ok"):
             return provider, result, attempts
-    raise ProviderError(
-        "no configured provider completed the first fixture; attempts_sha256="
-        + canonical_sha256(attempts)
-    )
+    raise ProviderUnavailable(attempts)
 
 
 def validate_safe_fallback_output(value: Any) -> bool:
