@@ -158,7 +158,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         model_id=str(candidate["upstream_model_id"]),
         token=inference_token,
         providers=args.providers,
-        timeout=args.timeot_seconds,
+        timeout=args.timeout_seconds,
     )
     candidate_records = [first] + [
         execute_case(
@@ -174,11 +174,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     ]
     fallback = exercise_fallback(
         cases[0],
-        model_id=str(candidate["upstreal_model_id"]),
+        model_id=str(candidate["upstream_model_id"]),
         provider=provider,
         token=inference_token,
         baseline_model=baseline_model,
-        timeout=args.timeot_seconds,
+        timeout=args.timeout_seconds,
     )
     receipt = make_receipt(
         args=args,
@@ -252,4 +252,4 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SYstemExit(main())
+    raise SystemExit(main())
