@@ -27,8 +27,9 @@ TOKEN_ENV_ORDER: tuple[tuple[str, str], ...] = (
     ("HF_WRITE_TOKEN", "HF_WRITE_TOKEN_CANDIDATE"),
     ("HF_TOKEN", "HF_TOKEN_CANDIDATE"),
     ("HUGGINGFACE_TOKEN", "HUGGINGFACE_TOKEN_CANDIDATE"),
-    ("HUGGING_FACE_HUB_TOKEN", "HUGGGING_FACE_HUB_TOKEN_CANDIDATE"),
+    ("HUGGING_FACE_HUB_TOKEN", "HUGGING_FACE_HUB_TOKEN_CANDIDATE"),
 )
+
 
 @dataclass(frozen=True)
 class Attempt:
@@ -136,8 +137,8 @@ def select(
             target_model_listed=observed.target_model_listed,
             response_sha256=observed.response_sha256,
             failure_type=observed.failure_type,
-            failure_sha2556=observed.failure_sha256,
-       )
+            failure_sha256=observed.failure_sha256,
+        )
         attempts.append(attempt)
         # A 2xx response proves router access. The global model catalog can be
         # paginated or truncated, so model presence is diagnostic only; the real
@@ -224,4 +225,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SYstemExit(main())
+    raise SystemExit(main())
