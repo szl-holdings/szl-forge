@@ -1,0 +1,224 @@
+# SPDX-License-Identifier: Apache-2.0
+name: Publish kernel mirror cards
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "szl-blocked/README.md"
+      - "szl-blocked/card/holo-banner.svg"
+      - "szl-formulas/README.md"
+      - "szl-formulas/card/holo-banner.svg"
+      - "szl-govsign/README.md"
+      - "szl-govsign/card/holo-banner.svg"
+      - "szl-invariants/README.md"
+      - "szl-invariants/card/holo-banner.svg"
+      - "szl-ouroboros/README.md"
+      - "szl-ouroboros/card/holo-banner.svg"
+      - "szl-provctl/README.md"
+      - "szl-provctl/card/holo-banner.svg"
+      - "tools/publish_kernel_mirror_cards.py"
+      - "tests/test_publish_kernel_mirror_cards.py"
+      - "tools/acquire_hf_publisher_token.py"
+      - "tests/test_acquire_hf_publisher_token.py"
+      - "tests/test_hf_org_token1_fallback.py"
+      - ".github/workflows/publish-kernel-mirror-cards.yml"
+  push:
+    branches: [main]
+    paths:
+      - "szl-blocked/README.md"
+      - "szl-blocked/card/holo-banner.svg"
+      - "szl-formulas/README.md"
+      - "szl-formulas/card/holo-banner.svg"
+      - "szl-govsign/README.md"
+      - "szl-govsign/card/holo-banner.svg"
+      - "szl-invariants/README.md"
+      - "szl-invariants/card/holo-banner.svg"
+      - "szl-ouroboros/README.md"
+      - "szl-ouroboros/card/holo-banner.svg"
+      - "szl-provctl/README.md"
+      - "szl-provctl/card/holo-banner.svg"
+      - "tools/publish_kernel_mirror_cards.py"
+      - "tests/test_publish_kernel_mirror_cards.py"
+      - "tools/acquire_hf_publisher_token.py"
+      - "tests/test_acquire_hf_publisher_token.py"
+      - "tests/test_hf_org_token1_fallback.py"
+      - ".github/workflows/publish-kernel-mirror-cards.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-kernel-mirror-cards-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify closed card publisher and all six source pairs
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    env:
+      SOURCE_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
+        with:
+          egress-policy: audit
+
+      - name: Check out exact candidate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.SOURCE_REVISION }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install exact verification clients
+        run: >-
+          python -m pip install --disable-pip-version-check --no-cache-dir
+          "huggingface-hub==1.23.0" "pytest==9.1.1"
+
+      - name: Prove closed registry, static assets, and credential selection
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${SOURCE_REVISION}"
+          python -m pytest -q \
+            tests/test_publish_kernel_mirror_cards.py \
+            tests/test_acquire_hf_publisher_token.py \
+            tests/test_hf_org_token1_fallback.py
+          python -m py_compile \
+            tools/publish_kernel_mirror_cards.py \
+            tools/acquire_hf_publisher_token.py
+          for profile in \
+            szl-blocked \
+            szl-formulas \
+            szl-govsign \
+            szl-invariants \
+            szl-ouroboros \
+            szl-provctl
+          do
+            python tools/publish_kernel_mirror_cards.py \
+              --profile "${profile}" \
+              --source-revision "${SOURCE_REVISION}" \
+              --report "reports/${profile}-card-dry-run.json"
+          done
+          git diff --check
+
+      - name: Upload secret-free dry-run evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: kernel-mirror-card-dry-run-${{ github.run_id }}
+          path: reports/*-card-dry-run.json
+          if-no-files-found: error
+          retention-days: 30
+
+  publish:
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    name: Publish ${{ matrix.profile }} and verify exact Hub bytes
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        include:
+          - profile: szl-blocked
+            repo_id: SZLHOLDINGS/szl-blocked
+            receipt: szl-blocked-card
+          - profile: szl-formulas
+            repo_id: SZLHOLDINGS/szl-formulas
+            receipt: szl-formulas-card
+          - profile: szl-govsign
+            repo_id: SZLHOLDINGS/szl-govsign
+            receipt: szl-govsign-card
+          - profile: szl-invariants
+            repo_id: SZLHOLDINGS/szl-invariants
+            receipt: szl-invariants-card
+          - profile: szl-ouroboros
+            repo_id: SZLHOLDINGS/szl-ouroboros
+            receipt: szl-ouroboros-card
+          - profile: szl-provctl
+            repo_id: SZLHOLDINGS/szl-provctl
+            receipt: szl-provctl-card
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
+        with:
+          egress-policy: audit
+
+      - name: Check out exact protected-main revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install exact publication client
+        run: >-
+          python -m pip install --disable-pip-version-check --no-cache-dir
+          "huggingface-hub==1.23.0"
+
+      - name: Bind matrix target to the closed registry
+        env:
+          PROFILE: ${{ matrix.profile }}
+          TARGET_REPO: ${{ matrix.repo_id }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import os
+          from tools.publish_kernel_mirror_cards import resolve_profile
+
+          profile = resolve_profile(os.environ["PROFILE"])
+          if profile.repo_id != os.environ["TARGET_REPO"]:
+              raise SystemExit("workflow target drifted from the closed profile registry")
+          PY
+
+      - name: Acquire and actively validate model publisher credential
+        env:
+          HF_ORG_TOKEN_CANDIDATE: ${{ secrets.HF_ORG_TOKEN }}
+          HF_ORG_TOKEN1_CANDIDATE: ${{ secrets.HF_ORG_TOKEN1 }}
+          HF_WRITE_TOKEN_CANDIDATE: ${{ secrets.HF_WRITE_TOKEN }}
+          HF_TOKEN_CANDIDATE: ${{ secrets.HF_TOKEN }}
+          HUGGINGFACE_TOKEN_CANDIDATE: ${{ secrets.HUGGINGFACE_TOKEN }}
+          HUGGING_FACE_HUB_TOKEN_CANDIDATE: ${{ secrets.HUGGING_FACE_HUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          python tools/acquire_hf_publisher_token.py \
+            --target-repo "${{ matrix.repo_id }}" \
+            --target-type model \
+            --github-env "${GITHUB_ENV}" \
+            --report "reports/${{ matrix.receipt }}-credential.json"
+
+      - name: Publish the closed two-file set and verify exact readback
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin main
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" || {
+            echo "::error::This publication run no longer owns current protected main."
+            exit 1
+          }
+          python tools/publish_kernel_mirror_cards.py \
+            --profile "${{ matrix.profile }}" \
+            --source-revision "${GITHUB_SHA}" \
+            --publish \
+            --report "reports/${{ matrix.receipt }}-publication.json"
+
+      - name: Upload immutable secret-free publication evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ${{ matrix.receipt }}-publication-${{ github.run_id }}
+          path: reports/${{ matrix.receipt }}-*.json
+          if-no-files-found: error
+          retention-days: 90
