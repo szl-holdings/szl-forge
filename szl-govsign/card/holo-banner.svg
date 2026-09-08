@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" width="1200" height="360">
+  <defs>
+    <linearGradient id="env" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#713f12"/>
+      <stop offset="0.55" stop-color="#fbbf24"/>
+      <stop offset="1" stop-color="#fef3c7"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="9"/>
+    </filter>
+    <radialGradient id="fade" cx="0.5" cy="0.5" r="0.75">
+      <stop offset="0" stop-color="#0f0c06"/>
+      <stop offset="1" stop-color="#060503"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="360" fill="url(#fade)"/>
+  <g fill="none" stroke="url(#env)">
+    <rect x="480" y="105" width="240" height="150" rx="10" stroke-width="10" opacity="0.35" filter="url(#glow)"/>
+    <rect x="480" y="105" width="240" height="150" rx="10" stroke-width="2.2" opacity="0.95"/>
+    <path d="M 484 112 L 600 200 L 716 112" stroke-width="2" opacity="0.9" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="600" cy="200" r="22" stroke-width="6" opacity="0.4" filter="url(#glow)"/>
+    <circle cx="600" cy="200" r="22" stroke-width="1.8" opacity="0.95"/>
+    <circle cx="600" cy="200" r="12" stroke-width="1.4" opacity="0.8"/>
+    <path d="M 595 200 L 599 205 L 606 196" stroke-width="2" opacity="0.95" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <g stroke="#fbbf24" stroke-width="1.4" opacity="0.55" stroke-linecap="round">
+    <path d="M 440 180 L 470 180" stroke-dasharray="3 6"/>
+    <path d="M 730 180 L 760 180" stroke-dasharray="3 6"/>
+  </g>
+  <path d="M0 310 L 1200 310" fill="none" stroke="url(#env)" stroke-width="4" opacity="0.22" filter="url(#glow)"/>
+  <path d="M0 310 L 1200 310" fill="none" stroke="url(#env)" stroke-width="0.9" opacity="0.5"/>
+</svg>

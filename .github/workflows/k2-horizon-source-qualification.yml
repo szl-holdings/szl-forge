@@ -1,0 +1,64 @@
+name: K2 Horizon source qualification
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/k2-horizon-source-qualification.yml"
+      - "frontier/K2_HORIZON_7B_SOURCE_GATE_2026-09-08.json"
+      - "frontier/evaluation/k2_source_qualification.py"
+      - "tests/test_k2_horizon_source_qualification.py"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/k2-horizon-source-qualification.yml"
+      - "frontier/K2_HORIZON_7B_SOURCE_GATE_2026-09-08.json"
+      - "frontier/evaluation/k2_source_qualification.py"
+      - "tests/test_k2_horizon_source_qualification.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-gate:
+    name: K2 7B exact-source gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          check-latest: false
+
+      - name: Install exact Hub client
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check "huggingface_hub==1.30.0" "pytest==8.4.2"
+
+      - name: Run offline contract tests
+        run: |
+          set -euo pipefail
+          python -m py_compile frontier/evaluation/k2_source_qualification.py tests/test_k2_horizon_source_qualification.py
+          python -m pytest -q tests/test_k2_horizon_source_qualification.py
+
+      - name: Reproduce bounded upstream source attestation
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          python frontier/evaluation/k2_source_qualification.py \
+            --output reports/k2-horizon-7b-source.json \
+            --cache-dir "$RUNNER_TEMP/k2-source-cache"
+
+      - name: Upload source receipt
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: k2-horizon-7b-source-${{ github.run_id }}-${{ github.run_attempt }}
+          path: reports/k2-horizon-7b-source.json
+          if-no-files-found: error
+          retention-days: 30
