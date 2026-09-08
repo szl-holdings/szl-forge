@@ -43,7 +43,12 @@ FALLBACK_CASE = {
         }
     ],
     "question": "What is the only safe governed response?",
-    "expected": SAFE_FALLBACK_OUTPUT,
+    "expected": {
+        "decision": "ESCALATE",
+        "answer_equals": "PROVIDER_UNAVAILABLE",
+        "evidence_ids": ["F1"],
+        "tool_calls": [],
+    },
 }
 
 
