@@ -1,11 +1,20 @@
 {
   "schema": "szl.frontier.k2-source-gate.v1",
   "captured_on": "2026-09-08",
-  "truth_label": "REPORTED_UPSTREAM",
+  "truth_label": "REPORTED_UPSTREAM_WITH_MEASURED_SOURCE_CORRECTION",
   "candidate_id": "k2-horizon-7b",
   "model_id": "IFM/K2-Horizon-7B",
-  "pinned_revision": "69ada542b68fe13d767479db2ab9421baff88681",
-  "pin_basis": "Upstream K2-Horizon-7B model card validated SGLang serving recipe",
+  "pinned_revision": "14985b2765262fc7850476f71a7d0ab08e86af69",
+  "pin_basis": "Current observed Hugging Face repository head after the upstream serving-recipe revision failed exact resolution",
+  "stale_upstream_recipe_revision": {
+    "revision": "69ada542b68fe13d767479db2ab9421baff88681",
+    "state": "MEASURED_INVALID_404",
+    "github_workflow_run_id": 34219351248,
+    "github_workflow_job_id": 102038541050,
+    "observed_on": "2026-09-08",
+    "error_class": "RevisionNotFoundError",
+    "effect": "REJECTED_NOT_USED_FOR_QUALIFICATION"
+  },
   "declared_license": "apache-2.0",
   "reported_context_tokens": 524288,
   "reported_serving": [
