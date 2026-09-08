@@ -1,0 +1,45 @@
+{
+  "product": {
+    "evidenceRecordSha256": "177c49709d7cc6f981bdda195bcea73febd8062335ecd9d3be4393b8095ed6b7",
+    "executionState": "SMOKE_FAIL",
+    "independentlyCertified": false,
+    "modelId": "openbmb/MiniCPM5-2B",
+    "modelOperational": false,
+    "modelRevision": "3497c460c89e00520c3cfa2e73f49ab7647f1177",
+    "productionDisposition": "HOLD",
+    "schema": "szl.forge.product-evaluation-projection.v1",
+    "sourceRepository": "szl-holdings/szl-forge",
+    "sourceRevision": "8edf8c1ee72e5ae3cc59857097363e571a36d75f",
+    "status": "EVALUATION",
+    "surface": "a-11-oy.com",
+    "trust": "UNSIGNED_RECORD_REQUIRES_EXTERNAL_JOB_VERIFICATION"
+  },
+  "proof": {
+    "completedCases": 12,
+    "evidenceRecordSha256": "177c49709d7cc6f981bdda195bcea73febd8062335ecd9d3be4393b8095ed6b7",
+    "expectedCases": 12,
+    "independentlyCertified": false,
+    "limitations": [
+      "independent held-out benchmark",
+      "SGLang tool-parser qualification",
+      "matched baseline comparison",
+      "runtime image and dependency closure admission",
+      "Nemo and Serve integration witnesses",
+      "data rights and decontamination",
+      "rollback and product/proof projection"
+    ],
+    "modelId": "openbmb/MiniCPM5-2B",
+    "modelOperational": false,
+    "modelRevision": "3497c460c89e00520c3cfa2e73f49ab7647f1177",
+    "p50GenerationMs": 638.951,
+    "p95GenerationMs": 1206.672,
+    "passedCases": 9,
+    "productionDisposition": "HOLD",
+    "schema": "szl.forge.proof-evaluation-projection.v1",
+    "sourceRepository": "szl-holdings/szl-forge",
+    "sourceRevision": "8edf8c1ee72e5ae3cc59857097363e571a36d75f",
+    "suiteClass": "PUBLIC_SYNTHETIC_CONTRACT_PROBES",
+    "surface": "a11oy.net",
+    "trust": "UNSIGNED_RECORD_REQUIRES_EXTERNAL_JOB_VERIFICATION"
+  }
+}
