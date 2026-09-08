@@ -14,32 +14,66 @@ SMOKE_SHA256 = "1b5afe991c73ebcd0a67c0fd1ffd09f10e5c132981dbf50b5a620fb21b850c0d
 def _run(*argv):
     return subprocess.run(
         [sys.executable, "-m", "frontier.harness.lane_l3", *argv],
-        capture_output=True, text=True, cwd=ROOT)
+        capture_output=True,
+        text=True,
+        cwd=ROOT,
+    )
 
 
 def test_smoke_set_is_pinned():
     from frontier.harness.heldout_gate import load_probes
+
     _, sha = load_probes(str(SMOKE))
     assert sha == SMOKE_SHA256
 
 
-def test_mock_run_passes_baseline_and_writes_receipt(tmp_path):
+def test_mock_run_passes_harness_but_stays_non_promotional(tmp_path):
     out = tmp_path / "receipt.json"
-    r = _run("--artifact", "SZLHOLDINGS/chaski-r2", "--probes", str(SMOKE),
-             "--mock", "--probe-sha256", SMOKE_SHA256, "--out", str(out))
-    assert r.returncode == 0 and r.stdout.strip() == "PASS"
-    receipt = json.loads(out.read_text())
-    assert receipt["json_draft"] == "5/5" and receipt["refusal"] == "6/6"
+    result = _run(
+        "--artifact",
+        "SZLHOLDINGS/chaski-r2",
+        "--probes",
+        str(SMOKE),
+        "--mock",
+        "--probe-sha256",
+        SMOKE_SHA256,
+        "--out",
+        str(out),
+    )
+    assert result.returncode == 0 and result.stdout.strip() == "PASS"
+
+    receipt = json.loads(out.read_text(encoding="utf-8"))
+    assert receipt["json_draft"] == "5/5"
+    assert receipt["refusal"] == "6/6"
     assert receipt["baseline"] == {"json_draft": 0, "refusal": 2}
-    assert receipt["publication_eligible"] is True  # mock only; real candidates need GPU
+    assert receipt["evals"] == "SYNTHETIC"
+    assert receipt["evaluation_mode"] == "PUBLIC_CI_SMOKE"
+    assert receipt["candidate_evaluated"] is False
+    assert receipt["qualification_gate_ran"] is False
+    assert receipt["publication_eligible"] is False
+    assert receipt["promotion_eligible"] is False
+    assert receipt["promotion_effect"] == "NONE"
+    assert receipt["authority"] == "NONE"
+    assert all(
+        json.loads(row["raw"]).get("label") == "SYNTHETIC"
+        for row in receipt["rows"]
+        if row["id"].startswith("smoke-draft")
+    )
 
 
 def test_wrong_declared_hash_invalidates(tmp_path):
-    r = _run("--artifact", "x", "--probes", str(SMOKE), "--mock",
-             "--probe-sha256", "0" * 64)
-    assert r.returncode == 2 and r.stdout.strip() == "INVALID"
+    result = _run(
+        "--artifact",
+        "x",
+        "--probes",
+        str(SMOKE),
+        "--mock",
+        "--probe-sha256",
+        "0" * 64,
+    )
+    assert result.returncode == 2 and result.stdout.strip() == "INVALID"
 
 
 def test_requires_generate_or_mock():
-    r = _run("--artifact", "x", "--probes", str(SMOKE))
-    assert r.returncode != 0
+    result = _run("--artifact", "x", "--probes", str(SMOKE))
+    assert result.returncode != 0
