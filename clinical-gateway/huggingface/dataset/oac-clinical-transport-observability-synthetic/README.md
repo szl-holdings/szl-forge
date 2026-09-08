@@ -27,7 +27,7 @@ transport-health examples** for the companion OAC Transport Health v1 model.
 It contains no records collected from a patient, laboratory, analyzer,
 instrument, LIS, EHR, network, or health-care site.
 
-Companion model: [OAC Transport Health v1](https://huggingface.co/SZLHOLDINGS/oac-clinical-transport-health-v1).
+Companion model: [OAC Transport Health v1](https://huggingface.co/SZLHOLDINGS/oac-system-health-v1).
 Canonical source: [szl-forge clinical gateway](https://github.com/szl-holdings/szl-forge/tree/main/clinical-gateway).
 
 ## Data boundary
