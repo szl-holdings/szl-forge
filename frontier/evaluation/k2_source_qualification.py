@@ -17,7 +17,8 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
 
 MODEL_ID = "IFM/K2-Horizon-7B"
-REVISION = "69ada542b68fe13d767479db2ab9421baff88681"
+REVISION = "14985b2765262fc7850476f71a7d0ab08e86af69"
+STALE_UPSTREAM_RECIPE_REVISION = "69ada542b68fe13d767479db2ab9421baff88681"
 HEX40 = re.compile(r"^[0-9a-f]{40}$")
 MAX_REVIEW_FILE_BYTES = 4 * 1024 * 1024
 WEIGHT_SUFFIXES = (".safetensors", ".bin", ".pt", ".pth", ".gguf", ".ckpt")
@@ -182,9 +183,7 @@ def qualify(*, output: Path, cache_dir: Path) -> dict[str, Any]:
 
     for name in review_files:
         size = sibling_size(sibling_map[name])
-        if size is None:
-            raise QualificationError(f"refusing file with unknown size: {name}")
-        if size > MAX_REVIEW_FILE_BYTES:
+        if size is not None and size > MAX_REVIEW_FILE_BYTES:
             raise QualificationError(
                 f"review file exceeds {MAX_REVIEW_FILE_BYTES} bytes: {name} ({size})"
             )
@@ -202,6 +201,7 @@ def qualify(*, output: Path, cache_dir: Path) -> dict[str, Any]:
             raise QualificationError(f"downloaded review file exceeds bound: {name}")
 
         record: dict[str, Any] = {
+            "declared_bytes": size,
             "bytes": len(data),
             "sha256": sha256_bytes(data),
             "kind": "python" if name.endswith(".py") else "metadata",
@@ -253,6 +253,12 @@ def qualify(*, output: Path, cache_dir: Path) -> dict[str, Any]:
             "requested_revision": REVISION,
             "resolved_revision": resolved,
             "declared_license": declared_license,
+        },
+        "source_correction": {
+            "stale_upstream_recipe_revision": STALE_UPSTREAM_RECIPE_REVISION,
+            "state": "MEASURED_INVALID_404",
+            "github_workflow_run_id": 34219351248,
+            "github_workflow_job_id": 102038541050,
         },
         "source": {
             "files_reviewed": observed,
