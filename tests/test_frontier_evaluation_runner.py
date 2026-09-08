@@ -5,11 +5,13 @@ import sys
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from frontier.evaluation import core, provider, runner
-from frontier.evaluation.receipt import make_receipt
+from frontier.evaluation.receipt import PUBLIC_EXAMPLE, dataset_card, make_receipt, publish
 
 
 def fixture(case_id: str = "grounded_launch_window") -> dict:
@@ -334,3 +336,222 @@ def test_main_refuses_tokenless_fake_run(tmp_path, monkeypatch) -> None:
         assert "HF_INFERENCE_TOKEN" in str(error)
     else:
         raise AssertionError("runner accepted a tokenless run")
+
+
+PUBLICATION_PATH = "runs/2026/09/08/github-test-1-aaaaaaaaaaaa/glm-5-3-flash"
+PUBLICATION_DATASET = "SZLHOLDINGS/szl-frontier-evaluation-receipts"
+
+
+def _publication_files(output: Path, *, suite: str = "full") -> dict:
+    """Use actual receipt construction, with explicitly synthetic local responses."""
+    records = [
+        _record(ok=True, parsed=dict(provider.SAFE_FALLBACK_OUTPUT))
+        for _ in range(4 if suite == "full" else 2)
+    ]
+    receipt = make_receipt(
+        args=SimpleNamespace(
+            run_id="github-test-1-aaaaaaaaaaaa",
+            source_repository="szl-holdings/szl-forge",
+            source_revision="a" * 40,
+            suite=suite,
+            providers=["baseten"],
+        ),
+        candidate={
+            "candidate_id": "glm-5-3-flash",
+            "upstream_model_id": "zai-org/GLM-5.3-Flash",
+            "upstream_revision": "b" * 40,
+        },
+        fixtures_sha256="c" * 64,
+        source_checks={"pass": True},
+        baseline_identity={"status": "READY"},
+        baseline_records=records,
+        candidate_records=records,
+        fallback={"pass": True, "transport_pass": True, "semantic_safety_pass": True},
+        provider="baseten",
+        provider_attempts=[],
+    )
+    summary = {
+        key: receipt[key]
+        for key in (
+            "candidate_id", "model_id", "provider", "baseline_metrics",
+            "candidate_metrics", "comparison", "decision",
+            "production_disposition", "receipt_sha256",
+        )
+    } | {"suite": suite}
+    bundle = {
+        "receipt": receipt,
+        "baseline_results": records,
+        "candidate_results": records,
+    }
+    for name, value in (("receipt", receipt), ("summary", summary), ("bundle", bundle)):
+        (output / f"{name}.json").write_text(json.dumps(value), encoding="utf-8")
+    return receipt
+
+
+def _fake_hub(monkeypatch, *, fail_at=None, existing=(), parent="d" * 40):
+    calls = []
+
+    class FakeApi:
+        def create_repo(self, **kwargs):
+            calls.append(("create_repo", kwargs))
+            if fail_at == "create_repo":
+                raise RuntimeError("repository unavailable")
+
+        def repo_info(self, **kwargs):
+            calls.append(("repo_info", kwargs))
+            if fail_at == "repo_info":
+                raise RuntimeError("head unavailable")
+            return SimpleNamespace(
+                sha=parent,
+                siblings=[SimpleNamespace(rfilename=name) for name in existing],
+            )
+
+        def create_commit(self, **kwargs):
+            calls.append(("create_commit", kwargs))
+            assert kwargs["parent_commit"] == parent
+            if fail_at == "create_commit":
+                raise RuntimeError("head conflict or commit rejected")
+            return SimpleNamespace(
+                oid="" if fail_at == "commit_identity" else "e" * 40,
+                commit_url="https://huggingface.co/datasets/test/commit/" + "e" * 40,
+            )
+
+    def api_factory(**kwargs):
+        assert kwargs == {"token": "publication-test-token"}
+        calls.append(("client", {}))
+        return FakeApi()
+
+    monkeypatch.setitem(
+        sys.modules,
+        "huggingface_hub",
+        SimpleNamespace(HfApi=api_factory, CommitOperationAdd=SimpleNamespace),
+    )
+    return calls
+
+
+def test_publication_commits_card_and_final_evidence_atomically(tmp_path, monkeypatch):
+    receipt = _publication_files(tmp_path)
+    calls = _fake_hub(monkeypatch)
+    result = publish(
+        tmp_path, "publication-test-token", PUBLICATION_DATASET, PUBLICATION_PATH, receipt
+    )
+    assert [name for name, _ in calls] == [
+        "client", "create_repo", "repo_info", "create_commit"
+    ]
+    commit = calls[-1][1]
+    assert commit["revision"] == "main"
+    assert commit["repo_type"] == "dataset"
+    assert commit["parent_commit"] == "d" * 40
+    files = {op.path_in_repo: op.path_or_fileobj for op in commit["operations"]}
+    assert set(files) == {"README.md"} | {
+        f"{PUBLICATION_PATH}/{name}.json" for name in ("bundle", "receipt", "summary")
+    }
+    assert all(isinstance(value, bytes) for value in files.values())
+    assert json.loads(files[f"{PUBLICATION_PATH}/receipt.json"]) == receipt
+    assert json.loads(files[f"{PUBLICATION_PATH}/bundle.json"])["receipt"] == receipt
+    card = files["README.md"].decode()
+    for name in ("summary", "bundle", "receipt"):
+        assert f"blob/main/{PUBLICATION_PATH}/{name}.json" in card
+        assert result[f"{name}_url"].endswith(
+            f"/blob/{'e' * 40}/{PUBLICATION_PATH}/{name}.json"
+        )
+    assert result["card_url"].endswith(f"/blob/{'e' * 40}/README.md")
+    assert result["commit_oid"] == "e" * 40
+
+
+def test_publication_excludes_caches_credentials_and_unfinished_logs(tmp_path, monkeypatch):
+    receipt = _publication_files(tmp_path)
+    for name in (
+        "DATASET_CARD.md", ".source-cache/model.json", "__pycache__/a.pyc",
+        "nested/__pycache__/b.pyc", "other.pyc", ".env", "credentials.json",
+        "publication.json", "runner-output.jsonl", "unreviewed.json",
+    ):
+        path = tmp_path / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("private-test-sentinel", encoding="utf-8")
+    calls = _fake_hub(monkeypatch)
+    publish(tmp_path, "publication-test-token", PUBLICATION_DATASET, PUBLICATION_PATH, receipt)
+    operations = calls[-1][1]["operations"]
+    assert len(operations) == 4
+    assert not any(b"private-test-sentinel" in op.path_or_fileobj for op in operations)
+
+
+@pytest.mark.parametrize("stage", ["create_repo", "repo_info", "create_commit"])
+def test_publication_propagates_remote_failures_without_partial_card_upload(
+    tmp_path, monkeypatch, stage
+):
+    receipt = _publication_files(tmp_path)
+    calls = _fake_hub(monkeypatch, fail_at=stage)
+    with pytest.raises(RuntimeError):
+        publish(tmp_path, "publication-test-token", PUBLICATION_DATASET, PUBLICATION_PATH, receipt)
+    assert calls[-1][0] == stage
+    assert sum(name == "create_commit" for name, _ in calls) <= 1
+
+
+@pytest.mark.parametrize("stage", ["head", "commit_identity", "existing_run"])
+def test_publication_requires_head_commit_and_unused_run_path(tmp_path, monkeypatch, stage):
+    receipt = _publication_files(tmp_path)
+    calls = _fake_hub(
+        monkeypatch,
+        parent="" if stage == "head" else "d" * 40,
+        fail_at=stage,
+        existing=[f"{PUBLICATION_PATH}/receipt.json"] if stage == "existing_run" else (),
+    )
+    with pytest.raises(ValueError):
+        publish(tmp_path, "publication-test-token", PUBLICATION_DATASET, PUBLICATION_PATH, receipt)
+    if stage != "commit_identity":
+        assert not any(name == "create_commit" for name, _ in calls)
+
+
+@pytest.mark.parametrize("artifact", ["summary", "bundle", "receipt", "missing", "credential"])
+def test_publication_rejects_invalid_local_evidence_before_hub_access(
+    tmp_path, monkeypatch, artifact
+):
+    receipt = _publication_files(tmp_path)
+    calls = _fake_hub(monkeypatch)
+    if artifact == "missing":
+        (tmp_path / "summary.json").unlink()
+    elif artifact == "credential":
+        (tmp_path / "bundle.json").write_text("publication-test-token", encoding="utf-8")
+    else:
+        path = tmp_path / f"{artifact}.json"
+        data = json.loads(path.read_text())
+        if artifact == "summary":
+            data["production_disposition"] = "READY"
+        elif artifact == "bundle":
+            data["candidate_results"][0]["http_status"] = 500
+        else:
+            data["production_disposition"] = "READY"
+        path.write_text(json.dumps(data), encoding="utf-8")
+    with pytest.raises(ValueError):
+        publish(tmp_path, "publication-test-token", PUBLICATION_DATASET, PUBLICATION_PATH, receipt)
+    assert calls == []
+
+
+@pytest.mark.parametrize("path", ["README.md", "runs/../escape", "runs//double", "runs/x\\escape"])
+def test_publication_rejects_unsafe_run_paths(tmp_path, monkeypatch, path):
+    receipt = _publication_files(tmp_path)
+    calls = _fake_hub(monkeypatch)
+    with pytest.raises(ValueError, match="safe run directory"):
+        publish(tmp_path, "publication-test-token", PUBLICATION_DATASET, path, receipt)
+    assert calls == []
+
+
+@pytest.mark.parametrize("suite,count", [("full", 4), ("smoke", 2)])
+def test_dataset_card_links_pinned_sources_and_reports_actual_scope(tmp_path, suite, count):
+    receipt = _publication_files(tmp_path, suite=suite)
+    card = dataset_card(PUBLICATION_DATASET, PUBLICATION_PATH, receipt)
+    assert PUBLIC_EXAMPLE in card
+    assert "/tree/320983d22e76fc9b26af0b2cd20799c5000543fc/" in card
+    assert f"/blob/{'a' * 40}/frontier/evaluation/runner.py" in card
+    assert f"{count} synthetic public test cases per model" in card
+    assert "full suite has four cases" in card
+    assert "**unsigned**" in card
+    assert "do not authenticate an author" in card
+    assert "do not establish method superiority" in card
+    assert "on Sundays at 06:17 UTC" in card
+    assert "after evaluation-related changes reach main" in card
+    assert "Pull-request checks do not publish" in card
+    assert "3,072 submitted cell columns" in card
+    for term in ("Khipu", "Lambda", "Doctrine", "admission layer", "estate"):
+        assert term not in card
