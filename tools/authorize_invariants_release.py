@@ -22,6 +22,7 @@ REQUIRED_CHECKS = frozenset({"verify canonical kernel"})
 FULL_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 GitHubPayload = dict[str, Any] | list[Any]
 Getter = Callable[[str], GitHubPayload]
+CheckBinding = tuple[str, int | None]
 
 
 class AuthorizationError(RuntimeError):
@@ -81,21 +82,35 @@ def _protected_main(getter: Getter, repository: str, revision: str) -> dict[str,
     return branch
 
 
-def _check_contexts(checks: Any) -> set[str]:
+def _check_bindings(checks: Any, app_field: str) -> set[CheckBinding]:
     if not isinstance(checks, list):
         raise AuthorizationError("required-check enforcement response is malformed")
-    contexts = set()
+    bindings = set()
     for check in checks:
         if not isinstance(check, dict) or not isinstance(check.get("context"), str) or not check["context"]:
             raise AuthorizationError("required-check enforcement context is malformed")
-        contexts.add(check["context"])
-    return contexts
+        other_field = "app_id" if app_field == "integration_id" else "integration_id"
+        if other_field in check or (app_field == "app_id" and app_field not in check):
+            raise AuthorizationError("required-check app binding is malformed or unobserved")
+        app_id = check.get(app_field)
+        # Rules integration_id is optional. Classic GET may return null; -1
+        # explicitly allows any app. Never coerce a boolean/string/zero to an ID.
+        if app_id is None or (app_field == "app_id" and type(app_id) is int and app_id == -1):
+            app_id = None
+        elif type(app_id) is not int or app_id < 1:
+            raise AuthorizationError("required-check app binding is malformed")
+        bindings.add((check["context"], app_id))
+    return bindings
+
+
+def _binding_order(binding: CheckBinding) -> tuple[str, int]:
+    return binding[0], -1 if binding[1] is None else binding[1]
 
 
 def _source_check_enforcement(getter: Getter, branch: dict[str, Any]) -> dict[str, Any]:
     # This endpoint returns active rules only, including organization rules;
     # evaluate/disabled rulesets are excluded by GitHub. Enumerate every page.
-    effective: set[str] = set()
+    effective: set[CheckBinding] = set()
     for page in range(1, 11):
         rules = getter(f"/repos/{SOURCE_REPOSITORY}/rules/branches/main?per_page=100&page={page}")
         if not isinstance(rules, list) or len(rules) > 100:
@@ -105,7 +120,7 @@ def _source_check_enforcement(getter: Getter, branch: dict[str, Any]) -> dict[st
                 raise AuthorizationError("effective branch rule is malformed")
             if rule["type"] == "required_status_checks":
                 parameters = _mapping(rule.get("parameters"), "required-check enforcement")
-                effective.update(_check_contexts(parameters.get("required_status_checks")))
+                effective.update(_check_bindings(parameters.get("required_status_checks"), "integration_id"))
         if len(rules) < 100:
             break
     else:
@@ -113,7 +128,7 @@ def _source_check_enforcement(getter: Getter, branch: dict[str, Any]) -> dict[st
 
     # Classic branch protections are not rulesets. The branch observation's
     # enforcement level and concrete required contexts provide the legacy basis.
-    classic: set[str] = set()
+    classic: set[CheckBinding] = set()
     protection = branch.get("protection")
     if protection is not None:
         required = _mapping(protection, "classic branch protection").get("required_status_checks")
@@ -125,18 +140,72 @@ def _source_check_enforcement(getter: Getter, branch: dict[str, Any]) -> dict[st
             contexts = required.get("contexts", [])
             if not isinstance(contexts, list) or any(not isinstance(item, str) or not item for item in contexts):
                 raise AuthorizationError("classic required-check contexts are malformed")
-            declared = set(contexts) | _check_contexts(required.get("checks", []))
+            declared = _check_bindings(required.get("checks", []), "app_id")
             if level != "off" and protection.get("enabled") is not False:
+                # A legacy context may have been automatically bound to an app.
+                # Do not silently turn a names-only summary into an any-app rule.
+                if not set(contexts) <= {context for context, _app in declared}:
+                    raise AuthorizationError("classic required-check app binding is unobserved")
                 classic.update(declared)
 
-    if not REQUIRED_CHECKS <= effective | classic:
+    bindings = effective | classic
+    if not REQUIRED_CHECKS <= {context for context, _app in bindings}:
         raise AuthorizationError("source required-check enforcement is not established for verify canonical kernel")
     basis = []
     if effective:
         basis.append("effective_branch_rules")
     if classic:
         basis.append("classic_branch_protection")
-    return {"basis": basis, "required_contexts_observed": sorted(effective | classic)}
+    return {"basis": basis, "required_contexts_observed": sorted({context for context, _app in bindings}),
+            "required_checks_observed": [{"context": context, "app_id": app_id}
+                                         for context, app_id in sorted(bindings, key=_binding_order)]}
+
+
+def _verified_checks(getter: Getter, revision: str, enforcement: dict[str, Any]) -> list[dict[str, Any]]:
+    bindings = [(check["context"], check["app_id"]) for check in enforcement["required_checks_observed"]]
+    names = {context for context, _app in bindings}
+    observed: dict[int, dict[str, Any]] = {}
+    for page in range(1, 11):
+        payload = _mapping(getter(
+            f"/repos/{SOURCE_REPOSITORY}/commits/{revision}/check-runs?per_page=100&filter=all&page={page}"
+        ), "source check-run")
+        runs = payload.get("check_runs")
+        if not isinstance(runs, list) or len(runs) > 100:
+            raise AuthorizationError("source check-run response is malformed")
+        for check in runs:
+            if not isinstance(check, dict) or not isinstance(check.get("name"), str):
+                raise AuthorizationError("source check-run entry is malformed")
+            if check["name"] not in names:
+                continue
+            run_id = check.get("id")
+            app_id = _mapping(check.get("app"), "source check-run app").get("id")
+            if type(run_id) is not int or run_id < 1 or type(app_id) is not int or app_id < 1:
+                raise AuthorizationError("source check-run/app ID is malformed")
+            if check.get("head_sha") != revision:
+                raise AuthorizationError("source check-run revision does not match authorized source")
+            if run_id in observed and observed[run_id] != check:
+                raise AuthorizationError("conflicting observations of the same source check-run ID")
+            observed[run_id] = check
+        if len(runs) < 100:
+            break
+    else:
+        raise AuthorizationError("source check-run enumeration exceeded its bound")
+
+    selected = []
+    for context, required_app in bindings:
+        eligible = [check for check in observed.values() if check["name"] == context
+                    and (required_app is None or check["app"]["id"] == required_app)]
+        if not eligible:
+            raise AuthorizationError(f"required source check is missing: {context} (app {required_app})")
+        latest = max(eligible, key=lambda check: check["id"])
+        if latest.get("status") != "completed":
+            raise AuthorizationError(f"required source check is pending: {context} (app {required_app})")
+        if latest.get("conclusion") != "success":
+            raise AuthorizationError(f"required source check failed: {context} (app {required_app})")
+        selected.append({"name": context, "required_app_id": required_app, "app_id": latest["app"]["id"],
+                         "run_id": latest["id"], "status": latest["status"], "conclusion": latest["conclusion"],
+                         "details_url": latest.get("details_url")})
+    return selected
 
 
 def authorize_once(
@@ -172,31 +241,7 @@ def authorize_once(
             f"{verification.get('reason', 'unknown')}"
         )
 
-    checks_payload = _mapping(getter(
-        f"/repos/{SOURCE_REPOSITORY}/commits/{source_revision}/check-runs?per_page=100"
-    ), "source check-run")
-    check_runs = checks_payload.get("check_runs")
-    if not isinstance(check_runs, list):
-        raise AuthorizationError("source check-run response is malformed")
-    latest: dict[str, dict[str, Any]] = {}
-    for check in check_runs:
-        if isinstance(check, dict) and check.get("name") in REQUIRED_CHECKS:
-            latest[str(check["name"])] = check
-    missing = sorted(REQUIRED_CHECKS - set(latest))
-    if missing:
-        raise AuthorizationError(f"required source checks are missing: {missing}")
-    pending = sorted(
-        name for name, check in latest.items() if check.get("status") != "completed"
-    )
-    failed = sorted(
-        name
-        for name, check in latest.items()
-        if check.get("status") == "completed" and check.get("conclusion") != "success"
-    )
-    if failed:
-        raise AuthorizationError(f"required source checks failed: {failed}")
-    if pending:
-        raise AuthorizationError(f"required source checks are pending: {pending}")
+    verified_checks = _verified_checks(getter, source_revision, check_enforcement)
 
     return {
         "schema": "szl.invariants-release-authorization/v1",
@@ -210,15 +255,7 @@ def authorize_once(
             "required_check_enforcement": check_enforcement,
             "signature_verified": True,
             "signature_reason": verification.get("reason"),
-            "checks": [
-                {
-                    "name": name,
-                    "status": latest[name]["status"],
-                    "conclusion": latest[name]["conclusion"],
-                    "details_url": latest[name].get("details_url"),
-                }
-                for name in sorted(REQUIRED_CHECKS)
-            ],
+            "checks": verified_checks,
         },
         "publisher": {
             "repository": PUBLISHER_REPOSITORY,

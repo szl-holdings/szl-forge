@@ -31,11 +31,14 @@ class AuthorizeInvariantsReleaseTests(unittest.TestCase):
                     "verification": {"verified": True, "reason": "valid"}
                 }
             }
-        if path.endswith("/check-runs?per_page=100"):
+        if "/check-runs?" in path:
             return {
                 "check_runs": [
                     {
                         "name": "verify canonical kernel",
+                        "id": 42,
+                        "head_sha": self.source,
+                        "app": {"id": 17},
                         "status": "completed",
                         "conclusion": "success",
                         "details_url": "https://example.invalid/check",
@@ -43,6 +46,142 @@ class AuthorizeInvariantsReleaseTests(unittest.TestCase):
                 ]
             }
         raise AssertionError(path)
+
+    def _with_bindings(self, checks, runs, *, classic=False):
+        def getter(path):
+            if "/rules/branches/main?" in path:
+                return [] if classic else [{"type": "required_status_checks", "parameters": {"required_status_checks": checks}}]
+            payload = self._get(path)
+            if "/check-runs?" in path:
+                payload["check_runs"] = runs
+            if classic and path.endswith("/szl-invariants/branches/main"):
+                payload["protection"] = {"required_status_checks": {
+                    "enforcement_level": "everyone", "contexts": [check["context"] for check in checks], "checks": checks}}
+            return payload
+        return authorization.authorize_once(source_revision=self.source, publisher_revision=self.publisher, getter=getter)
+
+    def _run(self, *, run_id=42, app_id=17, conclusion="success", status="completed"):
+        return {"id": run_id, "name": "verify canonical kernel", "app": {"id": app_id},
+                "head_sha": self.source, "status": status, "conclusion": conclusion}
+
+    def test_bound_check_cannot_be_satisfied_by_foreign_app(self) -> None:
+        for classic, field in ((False, "integration_id"), (True, "app_id")):
+            with self.subTest(classic=classic):
+                with self.assertRaises(authorization.AuthorizationError):
+                    self._with_bindings([{"context": "verify canonical kernel", field: 17}], [self._run(app_id=99)], classic=classic)
+
+    def test_foreign_success_does_not_override_bound_failure_or_pending(self) -> None:
+        for state in ("failure", "pending"):
+            bound = self._run(run_id=50, conclusion="failure" if state == "failure" else None,
+                              status="completed" if state == "failure" else "in_progress")
+            for runs in ([bound, self._run(run_id=60, app_id=99)], [self._run(run_id=60, app_id=99), bound]):
+                with self.subTest(state=state, order=[run["id"] for run in runs]):
+                    with self.assertRaises(authorization.AuthorizationError):
+                        self._with_bindings([{"context": "verify canonical kernel", "integration_id": 17}], runs)
+
+    def test_newest_run_id_wins_independently_of_response_order(self) -> None:
+        failed = self._run(run_id=50, conclusion="failure")
+        old_success = self._run(run_id=40)
+        for runs in ([failed, old_success], [old_success, failed]):
+            with self.subTest(order=[run["id"] for run in runs]):
+                with self.assertRaisesRegex(authorization.AuthorizationError, "failed"):
+                    self._with_bindings([{"context": "verify canonical kernel", "integration_id": 17}], runs)
+
+    def test_every_specific_binding_survives_duplicate_contexts_and_wildcard(self) -> None:
+        bindings = [{"context": "verify canonical kernel", "integration_id": app} for app in (None, 17, 18)]
+        with self.assertRaises(authorization.AuthorizationError):
+            self._with_bindings(bindings, [self._run(app_id=18, run_id=50)])
+        result = self._with_bindings(bindings, [self._run(app_id=17), self._run(app_id=18, run_id=50)])
+        self.assertEqual(len(result["source"]["checks"]), 3)
+
+    def test_specific_app_receipt_retains_bound_and_observed_identity(self) -> None:
+        result = self._with_bindings([{"context": "verify canonical kernel", "integration_id": 17}], [self._run()])
+        observed = result["source"]["checks"][0]
+        self.assertEqual(observed["required_app_id"], 17)
+        self.assertEqual(observed["app_id"], 17)
+        self.assertEqual(observed["run_id"], 42)
+
+    def test_documented_wildcard_bindings_accept_an_observed_app(self) -> None:
+        for classic, check in ((False, {"context": "verify canonical kernel"}),
+                               (False, {"context": "verify canonical kernel", "integration_id": None}),
+                               (True, {"context": "verify canonical kernel", "app_id": -1}),
+                               (True, {"context": "verify canonical kernel", "app_id": None})):
+            with self.subTest(classic=classic, check=check):
+                result = self._with_bindings([check], [self._run(app_id=99)], classic=classic)
+                self.assertEqual(result["source"]["checks"][0]["required_app_id"], None)
+
+    def test_malformed_policy_app_bindings_fail_closed(self) -> None:
+        for classic, field, invalid in ((False, "integration_id", [True, "17", 0, -1, -2, [], {}]),
+                                        (True, "app_id", [True, "17", 0, -2, [], {}])):
+            for app_id in invalid:
+                with self.subTest(classic=classic, app_id=app_id):
+                    with self.assertRaises(authorization.AuthorizationError):
+                        self._with_bindings([{"context": "verify canonical kernel", field: app_id}], [self._run()], classic=classic)
+
+    def test_missing_or_malformed_observed_app_or_run_id_fails_closed(self) -> None:
+        for field in ("app", "id"):
+            for value in (None, True, "17", 0, -1, []):
+                run = self._run()
+                run[field] = {"id": value} if field == "app" else value
+                with self.subTest(field=field, value=value):
+                    with self.assertRaises(authorization.AuthorizationError):
+                        self._with_bindings([{"context": "verify canonical kernel", "integration_id": 17}], [run])
+
+    def test_missing_classic_or_wrongly_named_policy_binding_is_rejected(self) -> None:
+        for classic, check in ((True, {"context": "verify canonical kernel"}),
+                               (False, {"context": "verify canonical kernel", "app_id": 17}),
+                               (True, {"context": "verify canonical kernel", "integration_id": 17})):
+            with self.subTest(classic=classic, check=check):
+                with self.assertRaisesRegex(authorization.AuthorizationError, "binding"):
+                    self._with_bindings([check], [self._run()], classic=classic)
+
+    def test_latest_matching_success_can_replace_an_older_failure(self) -> None:
+        result = self._with_bindings([{"context": "verify canonical kernel", "integration_id": 17}],
+                                     [self._run(run_id=50), self._run(run_id=40, conclusion="failure")])
+        self.assertEqual(result["source"]["checks"][0]["run_id"], 50)
+
+    def test_all_enforced_contexts_are_verified_not_only_the_minimum_name(self) -> None:
+        bindings = [{"context": name, "integration_id": 17} for name in ("verify canonical kernel", "secondary-check")]
+        with self.assertRaisesRegex(authorization.AuthorizationError, "missing"):
+            self._with_bindings(bindings, [self._run()])
+        secondary = dict(self._run(run_id=50), name="secondary-check")
+        result = self._with_bindings(bindings, [self._run(), secondary])
+        self.assertEqual({check["name"] for check in result["source"]["checks"]}, {"verify canonical kernel", "secondary-check"})
+
+    def test_later_check_page_can_invalidate_older_first_page_success(self) -> None:
+        observed = []
+
+        def paginated(path):
+            observed.append(path)
+            if "/check-runs?" in path:
+                if path.endswith("page=1"):
+                    return {"check_runs": [self._run(run_id=40)] + [{"name": "unrelated"}] * 99}
+                return {"check_runs": [self._run(run_id=50, conclusion="failure")]}
+            return self._get(path)
+
+        with self.assertRaisesRegex(authorization.AuthorizationError, "failed"):
+            authorization.authorize_once(source_revision=self.source, publisher_revision=self.publisher, getter=paginated)
+        self.assertTrue(any("filter=all&page=2" in path for path in observed))
+
+    def test_check_revision_and_duplicate_run_observations_fail_closed(self) -> None:
+        for runs in ([dict(self._run(), head_sha="c" * 40)],
+                     [self._run(), self._run(conclusion="failure")]):
+            with self.subTest(runs=runs):
+                with self.assertRaises(authorization.AuthorizationError):
+                    self._with_bindings([{"context": "verify canonical kernel", "integration_id": 17}], runs)
+
+    def test_legacy_context_only_summary_cannot_invent_any_app_permission(self) -> None:
+        def ambiguous(path):
+            if "/rules/branches/main?" in path:
+                return []
+            payload = self._get(path)
+            if path.endswith("/szl-invariants/branches/main"):
+                payload["protection"] = {"required_status_checks": {
+                    "enforcement_level": "everyone", "contexts": ["verify canonical kernel"], "checks": []}}
+            return payload
+
+        with self.assertRaisesRegex(authorization.AuthorizationError, "binding"):
+            authorization.authorize_once(source_revision=self.source, publisher_revision=self.publisher, getter=ambiguous)
 
     def test_authorizes_exact_verified_mains_with_terminal_check(self) -> None:
         result = authorization.authorize_once(
@@ -113,7 +252,8 @@ class AuthorizeInvariantsReleaseTests(unittest.TestCase):
             payload = self._get(path)
             if path.endswith("/szl-invariants/branches/main"):
                 payload["protection"] = {"required_status_checks": {
-                    "enforcement_level": "everyone", "contexts": ["verify canonical kernel"], "checks": []}}
+                    "enforcement_level": "everyone", "contexts": ["verify canonical kernel"],
+                    "checks": [{"context": "verify canonical kernel", "app_id": -1}]}}
             return payload
 
         result = authorization.authorize_once(source_revision=self.source, publisher_revision=self.publisher, getter=classic)
@@ -227,7 +367,7 @@ class AuthorizeInvariantsReleaseTests(unittest.TestCase):
     def test_rejects_missing_required_check(self) -> None:
         def missing(path: str) -> dict[str, object]:
             payload = self._get(path)
-            if path.endswith("/check-runs?per_page=100"):
+            if "/check-runs?" in path:
                 payload["check_runs"] = []
             return payload
 
@@ -241,7 +381,7 @@ class AuthorizeInvariantsReleaseTests(unittest.TestCase):
     def test_rejects_failed_required_check(self) -> None:
         def failed(path: str) -> dict[str, object]:
             payload = self._get(path)
-            if path.endswith("/check-runs?per_page=100"):
+            if "/check-runs?" in path:
                 payload["check_runs"][0]["conclusion"] = "failure"
             return payload
 

@@ -60,8 +60,14 @@ def summarize(ollama_path: Path, training_paths: list[Path], native_path: Path |
         result["training"].append(summary)
     if native_path is not None:
         native, native_hash = read_report(native_path)
-        if native.get("schema") != "szl.native-reloaded-smoke/v1" or native.get("provider_cost_usd") != 0:
+        if (native.get("schema") != "szl.native-reloaded-smoke/v1"
+                or type(native.get("provider_cost_usd")) is not int or native["provider_cost_usd"] != 0):
             raise ValueError("native zero-provider-cost smoke evidence required")
+        linked = [item for item in result["training"]
+                  if item["raw_report_sha256"] == native.get("expected_training_report_sha256")]
+        if (len(linked) != 1 or linked[0].get("candidate_id") != native.get("candidate_id")
+                or linked[0].get("state") != "MEASURED_LOCAL_CONTINUATION_COMPLETED"):
+            raise ValueError("native reload must bind exactly one completed training report and candidate")
         result["native_reload"] = {"raw_report_sha256": native_hash,
             **select(native, ("state", "candidate_id", "started_at", "finished_at", "expected_training_report_sha256",
                               "runner_sha256", "grader_sha256", "protocol_sha256", "generation", "versions")),
