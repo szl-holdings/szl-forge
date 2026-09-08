@@ -32,7 +32,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Verify offline GGUF controls and historical negative evidence
-        run: python -m unittest discover -s tests -p 'test_minicpm5_gguf.py' -v
+        run: python -m unittest discover -s tests -p 'test_minicpm5_gguf*.py' -v
       - name: Verify deterministic evaluation plan
         run: |
           python -m inference.minicpm5_gguf plan --output /tmp/gguf-plan.json
