@@ -14,8 +14,10 @@ spec.loader.exec_module(k2)
 
 def test_revision_is_immutable_and_candidate_is_exact():
     assert k2.MODEL_ID == "IFM/K2-Horizon-7B"
-    assert k2.REVISION == "69ada542b68fe13d767479db2ab9421baff88681"
+    assert k2.REVISION == "14985b2765262fc7850476f71a7d0ab08e86af69"
+    assert k2.STALE_UPSTREAM_RECIPE_REVISION == "69ada542b68fe13d767479db2ab9421baff88681"
     assert k2.HEX40.fullmatch(k2.REVISION)
+    assert k2.REVISION != k2.STALE_UPSTREAM_RECIPE_REVISION
 
 
 def test_weight_files_are_never_review_download_targets():
