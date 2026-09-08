@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" width="1200" height="360">
+  <defs>
+    <linearGradient id="gate4" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#334155"/>
+      <stop offset="0.55" stop-color="#7e8aa3"/>
+      <stop offset="1" stop-color="#e2e8f0"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="8"/>
+    </filter>
+    <radialGradient id="fade" cx="0.5" cy="0.5" r="0.75">
+      <stop offset="0" stop-color="#0b0d12"/>
+      <stop offset="1" stop-color="#05070a"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="360" fill="url(#fade)"/>
+  <g stroke="url(#gate4)" stroke-width="0.8" opacity="0.3">
+    <path d="M 400 90 L 540 40 M 400 90 L 540 73 M 400 90 L 540 106 M 400 90 L 540 139 M 400 90 L 540 172 M 400 90 L 540 205 M 400 90 L 540 238 M 400 90 L 540 271 M 400 90 L 540 287 M 400 90 L 540 320"/>
+    <path d="M 400 150 L 540 40 M 400 150 L 540 73 M 400 150 L 540 106 M 400 150 L 540 139 M 400 150 L 540 172 M 400 150 L 540 205 M 400 150 L 540 238 M 400 150 L 540 271 M 400 150 L 540 287 M 400 150 L 540 320"/>
+    <path d="M 400 210 L 540 40 M 400 210 L 540 73 M 400 210 L 540 106 M 400 210 L 540 139 M 400 210 L 540 172 M 400 210 L 540 205 M 400 210 L 540 238 M 400 210 L 540 271 M 400 210 L 540 287 M 400 210 L 540 320"/>
+    <path d="M 400 270 L 540 40 M 400 270 L 540 73 M 400 270 L 540 106 M 400 270 L 540 139 M 400 270 L 540 172 M 400 270 L 540 205 M 400 270 L 540 238 M 400 270 L 540 271 M 400 270 L 540 287 M 400 270 L 540 320"/>
+    <path d="M 540 40 L 740 90 M 540 73 L 740 90 M 540 106 L 740 90 M 540 139 L 740 90 M 540 172 L 740 90 M 540 205 L 740 90 M 540 238 L 740 90 M 540 271 L 740 90 M 540 287 L 740 90 M 540 320 L 740 90"/>
+    <path d="M 540 40 L 740 150 M 540 73 L 740 150 M 540 106 L 740 150 M 540 139 L 740 150 M 540 172 L 740 150 M 540 205 L 740 150 M 540 238 L 740 150 M 540 271 L 740 150 M 540 287 L 740 150 M 540 320 L 740 150"/>
+    <path d="M 540 40 L 740 210 M 540 73 L 740 210 M 540 106 L 740 210 M 540 139 L 740 210 M 540 172 L 740 210 M 540 205 L 740 210 M 540 238 L 740 210 M 540 271 L 740 210 M 540 287 L 740 210 M 540 320 L 740 210"/>
+    <path d="M 540 40 L 740 270 M 540 73 L 740 270 M 540 106 L 740 270 M 540 139 L 740 270 M 540 172 L 740 270 M 540 205 L 740 270 M 540 238 L 740 270 M 540 271 L 740 270 M 540 287 L 740 270 M 540 320 L 740 270"/>
+  </g>
+  <circle cx="400" cy="90" r="6" fill="#94a3b8" opacity="0.85"/><circle cx="400" cy="150" r="6" fill="#94a3b8" opacity="0.85"/><circle cx="400" cy="210" r="6" fill="#94a3b8" opacity="0.85"/><circle cx="400" cy="270" r="6" fill="#94a3b8" opacity="0.85"/>
+  <circle cx="540" cy="40" r="5" fill="#7e8aa3" opacity="0.8"/><circle cx="540" cy="73" r="5" fill="#7e8aa3" opacity="0.8"/><circle cx="540" cy="106" r="5" fill="#7e8aa3" opacity="0.8"/><circle cx="540" cy="139" r="5" fill="#7e8aa3" opacity="0.8"/><circle cx="540" cy="172" r="5" fill="#7e8aa3" opacity="0.8"/><circle cx="540" cy="205" r="5" fill="#7e8aa3" opacity="0.8"/><circle cx="540" cy="238" r="5" fill="#7e8aa3" opacity="0.8"/><circle cx="540" cy="271" r="5" fill="#7e8aa3" opacity="0.8"/><circle cx="540" cy="287" r="5" fill="#7e8aa3" opacity="0.8"/><circle cx="540" cy="320" r="5" fill="#7e8aa3" opacity="0.8"/>
+  <rect x="732" y="80" width="16" height="20" rx="3" fill="none" stroke="#34d399" stroke-width="2" opacity="0.95"/>
+  <rect x="732" y="140" width="16" height="20" rx="3" fill="none" stroke="#f87171" stroke-width="2" opacity="0.95"/>
+  <rect x="732" y="200" width="16" height="20" rx="3" fill="none" stroke="#fbbf24" stroke-width="2" opacity="0.95"/>
+  <rect x="732" y="260" width="16" height="20" rx="3" fill="none" stroke="#e2e8f0" stroke-width="2" opacity="0.95"/>
+  <rect x="732" y="80" width="16" height="20" rx="3" fill="none" stroke="#34d399" stroke-width="6" opacity="0.3" filter="url(#glow)"/>
+  <rect x="732" y="260" width="16" height="20" rx="3" fill="none" stroke="#e2e8f0" stroke-width="6" opacity="0.3" filter="url(#glow)"/>
+  <path d="M0 336 L 1200 336" fill="none" stroke="url(#gate4)" stroke-width="4" opacity="0.22" filter="url(#glow)"/>
+  <path d="M0 336 L 1200 336" fill="none" stroke="url(#gate4)" stroke-width="0.9" opacity="0.5"/>
+</svg>
