@@ -1,12 +1,22 @@
 # Frontier real evaluation runner
 
-This directory turns the model-intake contract into a real, bounded evaluation path. It performs inference against the live Khipu baseline and one Hugging Face Inference Providers route, scores the same synthetic fixtures, exercises an intentional candidate-route failure followed by a real Khipu fallback, and emits a content-addressed Nemo-shaped receipt.
+This directory turns the model-intake contract into a real, bounded evaluation path. It performs inference against the live Khipu baseline and one Hugging Face Inference Providers route, scores the same synthetic fixtures, exercises an intentional candidate-route failure, verifies Khipu fallback transport, and emits a content-addressed Nemo-shaped receipt.
 
 ## Authority and production boundary
 
 The runner is an evaluation instrument, not a deployment controller. Candidate output is proposal-only. It cannot execute tools, mutate infrastructure, route production traffic, or grant production authority. Every run retains `production_disposition: HOLD`; A11oy remains the consequential-action admission layer.
 
 The provider chat API generally does not attest the exact server-side weight revision, runtime build, or hardware. Those fields are therefore recorded as `UNAVAILABLE`, never inferred. A successful run establishes measured request/response behavior for the selected provider route at the run time; it does not prove self-hosted equivalence or authorize promotion.
+
+## Fail-closed fallback
+
+A provider-failure exercise uses an intentionally invalid provider route and then reaches the live Khipu baseline with a dedicated failover fixture. Khipu output is accepted only when it exactly matches the non-executing fallback envelope:
+
+```json
+{"decision":"ESCALATE","answer":"PROVIDER_UNAVAILABLE","evidence_ids":["F1"],"tool_calls":[]}
+```
+
+If Khipu transport succeeds but its output is malformed or semantically different, a deterministic external safety guard emits that same envelope. The receipt records the baseline attempt, whether its model output passed, which fallback source was selected, the selected-output digest, transport status, semantic-safety status, and zero production authority. This avoids converting transport success into a false semantic pass.
 
 ## Execution modes
 

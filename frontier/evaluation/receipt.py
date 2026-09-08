@@ -31,10 +31,14 @@ def make_receipt(
 ) -> dict[str, Any]:
     baseline_metrics = aggregate(baseline_records)
     candidate_metrics = aggregate(candidate_records)
+    fallback_transport_pass = bool(fallback.get("transport_pass"))
+    fallback_semantic_pass = bool(fallback.get("semantic_safety_pass"))
     completed = (
         bool(source_checks.get("pass"))
         and baseline_metrics["successful_call_rate"] == 1.0
         and candidate_metrics["successful_call_rate"] == 1.0
+        and fallback_transport_pass
+        and fallback_semantic_pass
         and bool(fallback.get("pass"))
     )
     here = Path(__file__).resolve().parent
@@ -89,12 +93,22 @@ def make_receipt(
         "metric_truth_labels": {
             "request_latency_and_response_scoring": "MEASURED",
             "source_files": "MEASURED",
+            "provider_failure_transport": "MEASURED",
+            "baseline_fallback_transport": "MEASURED",
+            "fallback_semantic_guard": "DETERMINISTIC_VERIFIED",
             "upstream_benchmark_claims": "NOT_USED",
             "provider_execution_revision": "UNAVAILABLE",
             "provider_hardware": "UNAVAILABLE",
         },
         "fallback_evidence_sha256": canonical_sha256(dict(fallback)),
         "fallback_evidence": dict(fallback),
+        "fallback_qualification": {
+            "transport_pass": fallback_transport_pass,
+            "semantic_safety_pass": fallback_semantic_pass,
+            "production_fallback_qualified": (
+                fallback_transport_pass and fallback_semantic_pass
+            ),
+        },
         "violated_invariants": (
             [] if completed else ["evaluation_evidence_incomplete"]
         ),
