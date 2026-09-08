@@ -1,0 +1,193 @@
+{
+  "schema_version": "szl.forge.frontier-model-wave.v1",
+  "captured_on": "2026-09-07",
+  "status": "PINNED_UNQUALIFIED",
+  "promotion_authority": "NONE",
+  "production_disposition": "HOLD",
+  "source_registry": {
+    "repository": "szl-holdings/szl-frontier",
+    "commit": "dcc128140f3873d0ca396b9a83cf0eb5a0102b87",
+    "manifest_path": "public/frontier/release-evaluation-manifest.v1.json",
+    "default_effect": "hold",
+    "production_promotion_count": 0
+  },
+  "execution_policy": {
+    "automatic_weight_download": false,
+    "automatic_remote_code_execution": false,
+    "network_access_default": "DENY",
+    "model_output_authority": "PROPOSAL_ONLY",
+    "consequential_action_admission_layer": "A11oy",
+    "baseline_fallback": "REQUIRED"
+  },
+  "qualification_order": [
+    "zai-org/GLM-5.3-Flash",
+    "deepseek-ai/DeepSeek-V4-Flash-Vision-Exp",
+    "nvidia/Qwen3.8-Flash-Next-NVFP4",
+    "zai-org/GLM-5.3",
+    "Qwen/Qwen3.8-Flash-Next"
+  ],
+  "candidates": [
+    {
+      "candidate_id": "glm-5-3-flash",
+      "family": "GLM-5.3",
+      "role": "PRIMARY_EVALUATION",
+      "upstream_model_id": "zai-org/GLM-5.3-Flash",
+      "upstream_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+      "declared_license": "mit",
+      "source_verification_pass": true,
+      "license_compatibility_pass": null,
+      "runtime_compatibility_pass": null,
+      "safety_pass": null,
+      "cost_pass": null,
+      "fallback_pass": null,
+      "evaluation_state": "SOURCE_PINNED",
+      "production_disposition": "HOLD",
+      "target_lanes": [
+        "khipu-governed-navigation",
+        "receipt-agent"
+      ],
+      "required_metrics": [
+        "schema_valid_rate",
+        "grounding_correct_rate",
+        "citation_binding_rate",
+        "authority_boundary_pass_rate",
+        "tool_call_correct_rate",
+        "abstention_correct_rate",
+        "latency_ms",
+        "peak_memory_mb",
+        "cost_per_success"
+      ],
+      "results": null
+    },
+    {
+      "candidate_id": "glm-5-3-reference",
+      "family": "GLM-5.3",
+      "role": "REFERENCE_ONLY",
+      "upstream_model_id": "zai-org/GLM-5.3",
+      "upstream_revision": "aca966e4e02791568aa6a4ced368624b3d897f42",
+      "declared_license": "other",
+      "source_verification_pass": true,
+      "license_compatibility_pass": null,
+      "runtime_compatibility_pass": null,
+      "safety_pass": null,
+      "cost_pass": null,
+      "fallback_pass": null,
+      "evaluation_state": "LICENSE_REVIEW_REQUIRED",
+      "production_disposition": "HOLD",
+      "target_lanes": [
+        "frontier-reference-only"
+      ],
+      "required_metrics": [
+        "schema_valid_rate",
+        "grounding_correct_rate",
+        "citation_binding_rate",
+        "authority_boundary_pass_rate",
+        "latency_ms",
+        "peak_memory_mb",
+        "cost_per_success"
+      ],
+      "results": null
+    },
+    {
+      "candidate_id": "deepseek-v4-flash-vision-exp",
+      "family": "DeepSeek-V4",
+      "role": "EXPERIMENTAL_EVALUATION",
+      "upstream_model_id": "deepseek-ai/DeepSeek-V4-Flash-Vision-Exp",
+      "upstream_revision": "6821d6ad3681a4b137b066b76094fa82ebd0a380",
+      "declared_license": "mit",
+      "source_verification_pass": true,
+      "license_compatibility_pass": null,
+      "runtime_compatibility_pass": null,
+      "safety_pass": null,
+      "cost_pass": null,
+      "fallback_pass": null,
+      "evaluation_state": "SOURCE_PINNED",
+      "production_disposition": "HOLD",
+      "target_lanes": [
+        "khipu-governed-navigation",
+        "receipt-agent"
+      ],
+      "required_metrics": [
+        "schema_valid_rate",
+        "grounding_correct_rate",
+        "citation_binding_rate",
+        "authority_boundary_pass_rate",
+        "tool_call_correct_rate",
+        "abstention_correct_rate",
+        "latency_ms",
+        "peak_memory_mb",
+        "cost_per_success"
+      ],
+      "results": null
+    },
+    {
+      "candidate_id": "qwen3-8-flash-next-nvfp4",
+      "family": "Qwen3.8-Flash-Next",
+      "role": "QUANTIZED_BENCHMARK",
+      "upstream_model_id": "nvidia/Qwen3.8-Flash-Next-NVFP4",
+      "upstream_revision": "fc694b54fb0174e0913e6adf86691ef85a4ead47",
+      "declared_license": "other",
+      "base_model_id": "Qwen/Qwen3.8-Flash-Next",
+      "base_model_revision": "de4b8e4d43b917e7706784d8bb445c9af86a3540",
+      "base_model_declared_license": "other",
+      "source_verification_pass": true,
+      "license_compatibility_pass": null,
+      "runtime_compatibility_pass": null,
+      "safety_pass": null,
+      "cost_pass": null,
+      "fallback_pass": null,
+      "evaluation_state": "LICENSE_REVIEW_REQUIRED",
+      "production_disposition": "HOLD",
+      "target_lanes": [
+        "quantized-sovereign-inference"
+      ],
+      "required_metrics": [
+        "quality_delta",
+        "tokens_per_second",
+        "time_to_first_token_ms",
+        "peak_memory_mb",
+        "load_success_rate",
+        "fallback_success_rate"
+      ],
+      "results": null
+    },
+    {
+      "candidate_id": "qwen3-8-flash-next-base-reference",
+      "family": "Qwen3.8-Flash-Next",
+      "role": "BASE_REFERENCE_ONLY",
+      "upstream_model_id": "Qwen/Qwen3.8-Flash-Next",
+      "upstream_revision": "de4b8e4d43b917e7706784d8bb445c9af86a3540",
+      "declared_license": "other",
+      "source_verification_pass": true,
+      "license_compatibility_pass": null,
+      "runtime_compatibility_pass": null,
+      "safety_pass": null,
+      "cost_pass": null,
+      "fallback_pass": null,
+      "evaluation_state": "LICENSE_REVIEW_REQUIRED",
+      "production_disposition": "HOLD",
+      "target_lanes": [
+        "frontier-reference-only"
+      ],
+      "required_metrics": [
+        "quality_delta",
+        "schema_valid_rate",
+        "grounding_correct_rate",
+        "latency_ms",
+        "peak_memory_mb"
+      ],
+      "results": null
+    }
+  ],
+  "shared_qualification_gates": [
+    "Re-fetch every model card, config, tokenizer, template, and custom-code artifact at the pinned revision and seal SHA-256 digests.",
+    "Complete license compatibility review before downloading restricted or review-required artifacts.",
+    "Keep trust_remote_code disabled until every executable upstream file is reviewed and digest-bound.",
+    "Run checksum-pinned held-out SZL schema, grounding, citation, abstention, authority-boundary, tool-use, coding, long-context, and multimodal tasks appropriate to each candidate.",
+    "Measure time-to-first-token, decode throughput, peak memory, structured-output validity, failure behavior, and cost on a recorded hardware/software fingerprint.",
+    "Exercise baseline fallback for load failure, timeout, malformed output, unsupported modality, and policy rejection.",
+    "Treat every upstream benchmark or performance claim as unverified until reproduced in an SZL receipt.",
+    "Keep all model output proposal-only; A11oy remains the consequential-action admission layer.",
+    "Seal baseline results, candidate results, configuration, environment, and decision into a reproducible receipt before any promotion review."
+  ]
+}
