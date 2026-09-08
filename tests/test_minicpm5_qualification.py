@@ -1,5 +1,4 @@
 """Offline contracts, not model-quality results. No torch or network required."""
-import copy
 import hashlib
 import importlib.util
 import json
