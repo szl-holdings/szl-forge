@@ -89,12 +89,18 @@ user-service cgroup. Before any worker launch, the supervisor takes exactly one
 admission sample with the fixed 15-second slow-start timeout. Only when that
 sample satisfies the fixed temperature and free-memory gates does it immediately
 take exactly one confirmation sample with the fixed 5-second runtime timeout.
-Both samples must report the same GPU UUID and satisfy both gates. There are no
-retries, fallback commands, or caller overrides. The confirmation is the runtime
-telemetry baseline; every post-launch sample uses the same exact `nvidia-smi`
-query and 5-second timeout. Runtime sampling continues every two seconds, fails
-closed if the observed gap exceeds eight seconds, and requires the worker cgroup
-to become empty. Admission, confirmation, and runtime evidence record their
+After durable admission evidence is written, it takes one fresh prelaunch
+confirmation with the same 5-second timeout immediately before starting the
+worker. All three readiness samples must report the same GPU UUID and satisfy
+the temperature and free-memory gates. There are no retries, fallback commands,
+or caller overrides. The runtime and prelaunch confirmations are the first two
+runtime telemetry samples; every post-launch sample uses the same exact
+`nvidia-smi` query and 5-second timeout. Runtime sampling continues every two
+seconds, fails closed if the observed gap exceeds eight seconds, and requires
+the worker cgroup to become empty. A missing or identity-drifted prelaunch
+sample is classified as unavailable telemetry, while a hot or low-memory sample
+retains its thermal-policy or precondition cause. Admission, runtime
+confirmation, prelaunch confirmation, and runtime evidence record their
 distinct phases, configured timeouts, and measured durations. The worker
 receives no inherited credentials, no network namespace, and only run-local
 writable staging/cache paths.
@@ -119,11 +125,11 @@ $PY launch_supervised_training.py \
 The smoke run is one optimizer step and can never enter evaluation as a
 qualified adapter. The full run is fixed at 135 optimizer steps: 540 scheduled
 examples, or three passes over 180 unique rows, with batch size 1 and gradient
-accumulation 4. Temperature is sampled independently in the two-stage readiness
-gate, throughout the entire worker lifetime, after worker exit, and inside the trainer at
-optimizer boundaries. A sample of 80 C may pass; 81 C terminates the one-shot
-run with no completion claim. Final adapter weights must parse as SafeTensors;
-metadata is allowlisted.
+accumulation 4. Temperature is sampled independently in the three-sample
+readiness sequence, throughout the entire worker lifetime, after worker exit,
+and inside the trainer at optimizer boundaries. A sample of 80 C may pass; 81 C
+terminates the one-shot run with no completion claim. Final adapter weights must
+parse as SafeTensors; metadata is allowlisted.
 
 Each launch generates a random exclusive attempt under the committed WSL-native
 runs root. An existing attempt is never reused, even if empty. Admission and
