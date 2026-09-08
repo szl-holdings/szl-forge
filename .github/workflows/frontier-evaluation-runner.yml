@@ -7,6 +7,8 @@ on:
       - "frontier/evaluation/**"
       - "tools/acquire_hf_inference_token.py"
       - "tests/test_frontier_evaluation_runner.py"
+      - "tests/test_frontier_provider_unavailable_receipt.py"
+      - "tests/test_frontier_terminal_evidence.py"
       - "tests/test_acquire_hf_inference_token.py"
   push:
     branches: [main]
@@ -15,6 +17,8 @@ on:
       - "frontier/evaluation/**"
       - "tools/acquire_hf_inference_token.py"
       - "tests/test_frontier_evaluation_runner.py"
+      - "tests/test_frontier_provider_unavailable_receipt.py"
+      - "tests/test_frontier_terminal_evidence.py"
       - "tests/test_acquire_hf_inference_token.py"
   workflow_dispatch:
     inputs:
@@ -67,13 +71,19 @@ jobs:
             frontier/evaluation/core.py \
             frontier/evaluation/source.py \
             frontier/evaluation/provider.py \
+            frontier/evaluation/failure.py \
             frontier/evaluation/receipt.py \
             frontier/evaluation/runner.py \
+            frontier/evaluation/terminal.py \
             tools/acquire_hf_inference_token.py \
             tests/test_frontier_evaluation_runner.py \
+            tests/test_frontier_provider_unavailable_receipt.py \
+            tests/test_frontier_terminal_evidence.py \
             tests/test_acquire_hf_inference_token.py
           python -m pytest -q \
             tests/test_frontier_evaluation_runner.py \
+            tests/test_frontier_provider_unavailable_receipt.py \
+            tests/test_frontier_terminal_evidence.py \
             tests/test_acquire_hf_inference_token.py
 
   real-evaluation:
@@ -167,7 +177,7 @@ jobs:
             --github-env "$GITHUB_ENV" \
             --report reports/hf-publisher-credential.json
 
-      - name: Execute real bounded evaluation
+      - name: Execute and verify real bounded evaluation
         shell: bash
         run: |
           set -euo pipefail
@@ -186,9 +196,20 @@ jobs:
           if [[ "$PUBLISH_RECEIPT" == "true" ]]; then
             args+=(--publish)
           fi
+
+          set +e
           python frontier/evaluation/runner.py "${args[@]}" \
             | tee "$output/runner-output.jsonl"
+          runner_rc="${PIPESTATUS[0]}"
+          set -e
           rm -rf "$output/.source-cache"
+
+          # Operational success means the run terminated with complete,
+          # content-addressed evidence. It does not mean the model passed.
+          python -m frontier.evaluation.terminal \
+            --output-dir "$output" \
+            --runner-exit-code "$runner_rc" \
+            --report "$output/terminal-verification.json"
 
       - name: Render evaluation summary
         if: always()
@@ -198,20 +219,27 @@ jobs:
           import json
           from pathlib import Path
 
-          path = Path("reports/frontier-evaluation/summary.json")
+          summary_path = Path("reports/frontier-evaluation/summary.json")
+          terminal_path = Path(
+              "reports/frontier-evaluation/terminal-verification.json"
+          )
           print("## SZL frontier real evaluation")
-          if not path.exists():
-              print("\nNo completed summary was produced. Inspect the sanitized credential report and job logs.")
+          if not summary_path.exists():
+              print("\nNo terminal summary was produced. The workflow remains failed.")
               raise SystemExit(0)
-          data = json.loads(path.read_text())
+          data = json.loads(summary_path.read_text())
           print(f"\n- Candidate: `{data['model_id']}`")
           print(f"- Provider: `{data['provider']}`")
           print(f"- Suite: `{data['suite']}`")
           print(f"- Candidate score rate: `{data['candidate_metrics']['score_rate']}`")
           print(f"- Khipu score rate: `{data['baseline_metrics']['score_rate']}`")
-          print(f"- Decision: `{data['decision']}`")
+          print(f"- Model decision: `{data['decision']}`")
           print(f"- Production disposition: `{data['production_disposition']}`")
           print(f"- Receipt: `{data['receipt_sha256']}`")
+          if terminal_path.exists():
+              terminal = json.loads(terminal_path.read_text())
+              print(f"- Terminal evidence verified: `{terminal['ok']}`")
+              print(f"- Runner exit code: `{terminal['runner_exit_code']}`")
           PY
 
       - name: Upload sanitized evidence bundle
