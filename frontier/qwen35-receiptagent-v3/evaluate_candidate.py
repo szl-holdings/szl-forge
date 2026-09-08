@@ -61,6 +61,7 @@ HEX_64 = re.compile(r"[0-9a-f]{64}")
 GPU_UUID = re.compile(r"GPU-[A-Za-z0-9-]{16,96}")
 MAX_ADAPTER_FILE_BYTES = 256 * 1024 * 1024
 MAX_ADAPTER_SNAPSHOT_BYTES = 512 * 1024 * 1024
+TELEMETRY_OFFSET_DELTA_TOLERANCE_SECONDS = 0.000002
 REQUIRED_ADAPTER_FILES = frozenset({"adapter_config.json", "adapter_model.safetensors"})
 SUPERVISOR_FULL_STATE = OBSERVATION_STATE_BY_KIND["FULL"]
 SUPERVISOR_SOURCE_COMPONENTS = (
@@ -757,6 +758,17 @@ def verify_supervisor_telemetry(
     if offsets[2] < 0:
         raise QualificationError(
             "first post-launch runtime sample predates worker launch"
+        )
+    readiness_confirmation_delta = prelaunch_values[0] - confirmation_values[0]
+    runtime_confirmation_delta = offsets[1] - offsets[0]
+    if not math.isclose(
+        readiness_confirmation_delta,
+        runtime_confirmation_delta,
+        rel_tol=0.0,
+        abs_tol=TELEMETRY_OFFSET_DELTA_TOLERANCE_SECONDS,
+    ):
+        raise QualificationError(
+            "readiness and runtime confirmation offset deltas differ"
         )
     all_total_memory = [
         admission_values[3],

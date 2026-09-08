@@ -311,7 +311,7 @@ def supervisor_report(child: dict, child_bytes: bytes) -> dict:
             "maximumObservedRuntimeSampleGapSeconds": 2.1,
             "runtimeSamples": [
                 {
-                    "offsetSeconds": -0.25,
+                    "offsetSeconds": -0.35,
                     "observedAt": "2026-08-13T12:00:00+00:00",
                     "gpuUuid": GPU_UUID,
                     "temperatureC": 55,
@@ -473,10 +473,12 @@ class SupervisorLinkageTests(unittest.TestCase):
         telemetry["runtimeConfirmation"]["sample"]["offsetSeconds"] = 22.0
         telemetry["prelaunchConfirmation"]["durationSeconds"] = 6.5
         telemetry["prelaunchConfirmation"]["sample"]["offsetSeconds"] = 28.5
+        telemetry["runtimeSamples"][0]["offsetSeconds"] = -6.6
+        telemetry["maximumObservedRuntimeSampleGapSeconds"] = 6.5
         self.write_supervisor(self.supervisor)
         with self.linkage_mocks():
             linkage = self.verify()
-        self.assertEqual(2.1, linkage["maximumObservedRuntimeSampleGapSeconds"])
+        self.assertEqual(6.5, linkage["maximumObservedRuntimeSampleGapSeconds"])
 
     def test_readiness_duration_requires_a_finite_nonnegative_number(self):
         for phase in (
@@ -499,6 +501,15 @@ class SupervisorLinkageTests(unittest.TestCase):
         with self.assertRaisesRegex(
             evaluator.QualificationError,
             "prelaunch confirmation is not its runtime telemetry sample",
+        ):
+            evaluator.verify_supervisor_telemetry(telemetry, candidate=candidate())
+
+    def test_confirmation_offset_delta_must_match_both_serializations(self):
+        telemetry = copy.deepcopy(self.supervisor["telemetry"])
+        telemetry["runtimeSamples"][0]["offsetSeconds"] = -0.3
+        with self.assertRaisesRegex(
+            evaluator.QualificationError,
+            "readiness and runtime confirmation offset deltas differ",
         ):
             evaluator.verify_supervisor_telemetry(telemetry, candidate=candidate())
 
