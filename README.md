@@ -85,7 +85,7 @@ listener, deterministic `ACK^R33` responses, bounded file and polling adapters,
 a loopback API, and an operator UI. It produces signed, offline FHIR R4
 candidate bundles; it does not publish those bundles into a clinical system.
 
-The separate [OAC Transport Health v1 model](https://huggingface.co/SZLHOLDINGS/oac-clinical-transport-health-v1)
+The separate [OAC System Health v1 model](https://huggingface.co/SZLHOLDINGS/oac-system-health-v1)
 and [synthetic operational dataset](https://huggingface.co/datasets/SZLHOLDINGS/oac-clinical-transport-observability-synthetic)
 provide a reproducible, standard-library baseline for operator-attention
 advisories. Its 1,200 generated examples are not gateway event records or
