@@ -133,19 +133,22 @@ def verify_terminal_artifacts(
             "candidate_results_sha256_mismatch",
         )
 
+    # ``completed`` was not present in the first admitted receipt schema. Keep
+    # those historical receipts verifiable, but enforce any explicit value.
+    completed = receipt.get("completed")
     if decision == SUCCESS_DECISION:
         _error(errors, runner_exit_code == 0, "success_decision_requires_exit_0")
         _error(
             errors,
-            receipt.get("completed") is True,
-            "success_decision_requires_completed_true",
+            completed in (None, True),
+            "success_decision_conflicts_with_completed",
         )
     elif decision in HOLD_DECISIONS:
         _error(errors, runner_exit_code == 2, "hold_decision_requires_exit_2")
         _error(
             errors,
-            receipt.get("completed") is False,
-            "hold_decision_requires_completed_false",
+            completed in (None, False),
+            "hold_decision_conflicts_with_completed",
         )
 
     if decision == "HOLD_PROVIDER_UNAVAILABLE":
@@ -197,6 +200,7 @@ def verify_terminal_artifacts(
         "ok": not errors,
         "runner_exit_code": runner_exit_code,
         "decision": decision or None,
+        "completed": completed,
         "production_disposition": receipt.get("production_disposition"),
         "promotion_effect": receipt.get("promotion_effect"),
         "receipt_sha256": declared_receipt_sha or None,
