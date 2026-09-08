@@ -28,12 +28,13 @@ No domain, Space, credential, model default, or public runtime is modified by th
 command. Existing GitHub -> Hugging Face -> product -> proof publication owners
 must admit these bytes through their own tested publishing path.
 
-Run all 43 offline tests with:
+Run all 46 offline tests, including replay of the observed negative result:
 
 ```bash
 python -m unittest discover -s tests -p 'test_minicpm5*.py' -v
 ```
 
-The synthetic fixtures in these tests are not model-execution evidence. This
-projection contract complements the existing held-out gate harness; it does not
-replace Named-N, Nemo envelopes, signed authority, or model-release gates.
+Synthetic fixtures are not model-execution evidence. The distinct recorded A10G
+run and its transport normalization are documented in `evidence/README.md`.
+This projection contract complements the existing held-out gate harness; it does
+not replace Named-N, Nemo envelopes, signed authority, or model-release gates.
