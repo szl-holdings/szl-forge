@@ -9,7 +9,9 @@
       "candidate_families": [
         "Qwen coder/tool-use",
         "DeepSeek long-context/agentic",
-        "IFM K2 Horizon dense/MoVA"
+        "IFM K2 Horizon dense/MoVA",
+        "zai-org/GLM-5.3-Flash",
+        "deepseek-ai/DeepSeek-V4-Flash-Vision-Exp"
       ],
       "metrics": [
         "schema_valid_rate",
@@ -26,7 +28,9 @@
       "candidate_families": [
         "Qwen coder/tool-use",
         "DeepSeek coder/agentic",
-        "IFM K2 Horizon dense/MoVA"
+        "IFM K2 Horizon dense/MoVA",
+        "zai-org/GLM-5.3-Flash",
+        "deepseek-ai/DeepSeek-V4-Flash-Vision-Exp"
       ],
       "metrics": [
         "receipt_schema_rate",
@@ -59,7 +63,8 @@
         "gguf",
         "4bit",
         "quantization-aware-healing",
-        "K2 Horizon GGUF/FP8"
+        "K2 Horizon GGUF/FP8",
+        "nvidia/Qwen3.8-Flash-Next-NVFP4"
       ],
       "metrics": [
         "quality_delta",
@@ -67,6 +72,16 @@
         "time_to_first_token_ms",
         "peak_memory_mb"
       ]
+    }
+  ],
+  "pinned_candidate_waves": [
+    {
+      "id": "hf-model-wave-2026-09-07",
+      "manifest": "frontier/PINNED_MODEL_WAVE_2026-09-07.json",
+      "source_registry_repository": "szl-holdings/szl-frontier",
+      "source_registry_commit": "dcc128140f3873d0ca396b9a83cf0eb5a0102b87",
+      "state": "PINNED_UNQUALIFIED",
+      "production_disposition": "HOLD"
     }
   ],
   "required_experiment_fields": [
@@ -86,8 +101,15 @@
     "seed",
     "baseline_results_sha256",
     "candidate_results_sha256",
+    "runtime_compatibility_pass",
+    "safety_pass",
+    "cost_pass",
+    "fallback_pass",
     "governance_pass",
     "reproducibility_pass",
-    "receipt_sha256"
+    "receipt_sha256",
+    "evaluation_state",
+    "production_disposition",
+    "source_registry_commit"
   ]
 }

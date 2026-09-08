@@ -29,3 +29,4 @@ jobs:
           python -m pytest -q
           tests/test_frontier_model_bakeoff_manifest.py
           tests/test_k2_horizon_frontier_intake.py
+          tests/test_pinned_model_wave_2026_09_07.py
