@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import train_receiptagent as target
 
@@ -105,7 +105,19 @@ class Admissions(unittest.TestCase):
             "revision": target.BASE_REVISION, "verified_from": "PINNED_HUB_METADATA_AND_LOCAL_BYTES",
             "files": [{"path": "model.safetensors", "bytes": len(payload), "sha256": target.sha(payload)}]}
         path = root / "manifest.json"; path.write_text(json.dumps(manifest), encoding="utf-8")
+        self.enterContext(patch.dict(target.TRUSTED_MANIFESTS,
+            {(target.BASE_REPO, target.BASE_REVISION): target.sha(path.read_bytes())}))
         return directory, path, manifest
+
+    def test_self_consistent_forged_manifest_cannot_rebind_weights(self):
+        with tempfile.TemporaryDirectory() as temp:
+            directory, path, manifest = self.make_artifact(Path(temp))
+            substituted = b"substitute-arbitrary-weights"
+            (directory / "model.safetensors").write_bytes(substituted)
+            manifest["files"][0].update(bytes=len(substituted), sha256=target.sha(substituted))
+            path.write_text(json.dumps(manifest), encoding="utf-8")
+            with self.assertRaisesRegex(target.GateError, "MANIFEST_NOT_AUTHENTICATED"):
+                target.verify_artifact(directory, path, target.BASE_REPO, target.BASE_REVISION)
 
     def test_manifest_rehash_and_identity(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -135,6 +147,22 @@ class Admissions(unittest.TestCase):
             target.configure_local_environment(Path("output"))
             self.assertEqual(os.environ["HF_HUB_OFFLINE"], "1")
             self.assertEqual(os.environ["TRACKIO_DIR"], str(Path("output") / "trackio"))
+
+    def test_unused_gpu_cache_can_be_reclaimed_without_weakening_floor(self):
+        with tempfile.TemporaryDirectory() as temp, patch.object(target.subprocess, "check_output", return_value="60\n"):
+            args = options(Path(temp))
+            for available, accepted in ((512 * 1024**2, True), (80 * 1024**2, False)):
+                torch = Mock()
+                torch.cuda.mem_get_info.side_effect = [(80 * 1024**2, 8 * 1024**3), (available, 8 * 1024**3)]
+                torch.cuda.memory_reserved.return_value = 0
+                if accepted:
+                    report = target.runtime_guard(torch, args, target.time.monotonic())
+                    self.assertTrue(report["unused_cache_reclaim_attempted"])
+                    self.assertEqual(report["free_bytes"], available)
+                else:
+                    with self.assertRaisesRegex(target.GateError, "GPU_MEMORY_LIMIT"):
+                        target.runtime_guard(torch, args, target.time.monotonic())
+                torch.cuda.empty_cache.assert_called_once()
 
     def test_failure_emits_evidence_without_promoting_or_leaking_exception(self):
         with tempfile.TemporaryDirectory() as temp, patch.object(target, "HERE", Path(temp)):

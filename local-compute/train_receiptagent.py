@@ -30,6 +30,13 @@ BASE_REVISION = "23c69c53358a07516b5827588b3fdb12ae78fd65"
 ADAPTER_REPO = "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2"
 ADAPTER_REVISION = "46f54373c6bf8f17a288b4c8799e9fbe4b82ecc1"
 ADAPTER_WEIGHT_SHA256 = "885fc29fcb4cf55c280dc085fdb0a40f40d6b946fee400dd5e4ed3459fe6334f"
+# Independent pinned Hub metadata + local Git/LFS byte verification.
+# The adjacent manifest is untrusted, not its own authority. Changing these
+# digests requires reviewed source and renewed provider verification.
+TRUSTED_MANIFESTS = {
+    (BASE_REPO, BASE_REVISION): "38838f6e620416c7d29b360de7d6b674cb85fd4e99ece5c9144f9e8034bbc0e6",
+    (ADAPTER_REPO, ADAPTER_REVISION): "c0068e21b3a686dd9a9136520a9c5c4a01693e7e5616683b41d60155420cdaa6",
+}
 DATA = {
     "receiptagent/train.jsonl": ("775e25b526a96d1486e80aae048f731bdad02a0d94ea76144593e115802fa24f", 15, "train", 1),
     "receiptagent/train.refusals.jsonl": ("c5136b612951c209d1041839d1ac19a8fa378c31015d61dd7565994b4f3e2b47", 8, "train", 2),
@@ -98,6 +105,7 @@ def verify_artifact(directory, manifest_path, repo, revision):
     manifest = strict_json(raw)
     require(manifest.get("schema") == "szl.local-artifact/v1", "ARTIFACT_SCHEMA")
     require(manifest.get("repo_id") == repo and manifest.get("revision") == revision, "ARTIFACT_IDENTITY")
+    require(sha(raw) == TRUSTED_MANIFESTS.get((repo, revision)), "ARTIFACT_MANIFEST_NOT_AUTHENTICATED")
     require(manifest.get("verified_from") == "PINNED_HUB_METADATA_AND_LOCAL_BYTES", "ARTIFACT_PROVENANCE_REQUIRED")
     entries = manifest.get("files")
     require(isinstance(entries, list) and 1 <= len(entries) <= 256, "ARTIFACT_FILE_COUNT")
@@ -223,9 +231,17 @@ def runtime_guard(torch, args, started, *, before_load=False):
     temperature = int(measured.strip().splitlines()[0])
     require(temperature <= args.max_temperature_c, "THERMAL_LIMIT")
     free, total = torch.cuda.mem_get_info()
-    require(free >= (args.min_free_gib if before_load else 0.15) * 1024**3, "GPU_MEMORY_LIMIT")
+    minimum = (args.min_free_gib if before_load else 0.15) * 1024**3
+    cached_reclaimed = False
+    if not before_load and free < minimum:
+        # Only unused allocator cache can be returned. Do not change the floor,
+        # discard live tensors, or infer availability from reserved-byte counts.
+        torch.cuda.empty_cache()
+        free, total = torch.cuda.mem_get_info()
+        cached_reclaimed = True
+    require(free >= minimum, "GPU_MEMORY_LIMIT")
     require(shutil.disk_usage(args.output).free >= 1024**3, "DISK_LIMIT")
-    return {"temperature_c": temperature, "free_bytes": free, "total_bytes": total, "reserved_bytes": torch.cuda.memory_reserved()}
+    return {"temperature_c": temperature, "free_bytes": free, "total_bytes": total, "reserved_bytes": torch.cuda.memory_reserved(), "unused_cache_reclaim_attempted": cached_reclaimed}
 
 
 def compute_loss(model, item, torch):

@@ -37,7 +37,7 @@ def verify(repo_id: str, revision: str, directory: Path, output: Path) -> dict:
         raise ValueError("only exact public snapshots are admitted")
     admitted = {entry.rfilename: entry for entry in info.siblings}
     rows = []
-    for path in sorted(root.rglob("*")):
+    for path in sorted(root.rglob("*"), key=lambda p: p.relative_to(root).as_posix().casefold()):
         relative = path.relative_to(root)
         if relative.parts[0] == ".cache":
             continue

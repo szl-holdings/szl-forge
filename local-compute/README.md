@@ -54,7 +54,10 @@ filenames. No `trust_remote_code`, pickle, or executable model artifacts:
 Use `verify_snapshot.py --repo ... --revision ... --directory ... --output ...`
 to bind each local file to provider LFS SHA-256 or Git blob hash. The manifest
 goes outside the snapshot. The trainer independently rehashes every declared
-file and rejects undeclared artifacts before loading weights.
+file and rejects undeclared artifacts before loading weights. The manifest's
+own SHA-256 is pinned in reviewed source; changing both a file and the adjacent
+manifest cannot rebind arbitrary weights to an approved revision. Regenerate the
+manifest with the supplied deterministic writer; edited serialization is refused.
 
 ```powershell
 python -I -B local-compute/train_receiptagent.py `
