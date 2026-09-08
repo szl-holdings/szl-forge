@@ -1,0 +1,39 @@
+{
+  "candidate_id": "glm-5-3-flash",
+  "captured_at": "2026-09-08T00:51:09Z",
+  "hub_job_ids": [
+    "6a9f5bfd259f8e97255ed53a",
+    "6a9f5c11e686246ca69a9a2b"
+  ],
+  "license": {
+    "bytes": 1070,
+    "compatibility_for_bounded_evaluation": "PASS",
+    "file": "LICENSE",
+    "metadata": "mit",
+    "sha256": "30b85b6b9659f2e78aa259f8faf5d920a68dee7c9ced3fa6dba1f19f2bc4fca1"
+  },
+  "metadata_files": {
+    "README.md": "e6c5d41400e28f5a89418a0d15b09b9c113314a7553d40d7d4a8a72fcdb87d02",
+    "config.json": "bb8f01c42cb92a52ca72e65afb4d5bd8d11aef083cd210e8de25dfb904f23e9f",
+    "generation_config.json": "230c30609ecbbb9e6583bedde8e7bdda0c6eb8fe5fad0eaeb3d1b293d751cb4f",
+    "tokenizer_config.json": "98b1271574f41abf89427ae2dda030d94dc9478f0edc5a8bd240db213c6fd5fc"
+  },
+  "model_file_count": 73,
+  "model_id": "zai-org/GLM-5.3-Flash",
+  "provider_execution_boundary": {
+    "exact_source_revision_pinned": true,
+    "production_promotion_effect": "NONE",
+    "provider_hardware_disclosed": false,
+    "provider_served_weight_revision_verifiable_from_chat_response": false
+  },
+  "python_files": [],
+  "remote_code_posture": {
+    "bounded_evaluation_review": "PASS",
+    "provider_api_path_executes_no_repository_code_in_szl_runner": true,
+    "repository_python_files_observed": 0,
+    "self_hosted_weight_execution_review": "NOT_PERFORMED"
+  },
+  "requested_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+  "resolved_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+  "schema": "szl.frontier.source-attestation.v1"
+}
