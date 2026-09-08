@@ -1,0 +1,146 @@
+{
+  "schema": "szl.forge.frontier-evaluation-anchor.v1",
+  "captured_at": "2026-09-08T01:50:01.648766+00:00",
+  "source": {
+    "repository": "szl-holdings/szl-forge",
+    "commit": "146ffd9a3415442a0758f78cf7e37d1e77448310",
+    "workflow": ".github/workflows/frontier-evaluation-runner.yml",
+    "workflow_run_id": 34177931732,
+    "workflow_job_id": 101910979655,
+    "artifact": {
+      "id": 10037895448,
+      "name": "frontier-real-evaluation-34177931732-1",
+      "sha256": "3966569cc96b5303b58ec81e0837fa87a4c6d4c725f3cb1921c933dad8de7961",
+      "retention_days": 30
+    }
+  },
+  "candidate": {
+    "candidate_id": "glm-5-3-flash",
+    "model_id": "zai-org/GLM-5.3-Flash",
+    "source_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+    "provider": "baseten",
+    "provider_route": "zai-org/GLM-5.3-Flash:baseten",
+    "source_attestation": "frontier/evaluation/source-attestation.glm-5.3-flash.v1.json"
+  },
+  "baseline": {
+    "model_id": "SZLHOLDINGS/SZL-Khipu-1.5B-GGUF",
+    "revision": "67d60ec577730747055491640cfb91fc4a4b5d25",
+    "file": "SZL-Khipu-1.5B-Q4_K_M.gguf",
+    "weight_sha256": "13c1a1993063e1dff92f7413ccf48eaca6d48efc8801ae9af35961ae3396623a",
+    "hardware": {
+      "accelerator": "cpu",
+      "cpu_cores": 2,
+      "memory": "16.0G"
+    }
+  },
+  "suite": {
+    "name": "full",
+    "case_count": 4,
+    "fixture_set_sha256": "588299a6d926bb979a7a42316d781f3469220062399aacd0c22d859922ef2ee6",
+    "configuration_sha256": "1185f4481eef5750b838af78c5dc79628a29cdb18e3373bc5f0d63c423d8b987"
+  },
+  "measurements": {
+    "truth_label": "MEASURED",
+    "candidate": {
+      "successful_call_rate": 1.0,
+      "json_valid_rate": 1.0,
+      "schema_valid_rate": 1.0,
+      "decision_match_rate": 1.0,
+      "answer_match_rate": 0.5,
+      "evidence_match_rate": 1.0,
+      "tool_boundary_pass_rate": 1.0,
+      "score_rate": 0.916667,
+      "latency_ms": {
+        "min": 657.401,
+        "mean": 828.268,
+        "max": 1174.003
+      }
+    },
+    "baseline": {
+      "successful_call_rate": 1.0,
+      "json_valid_rate": 0.5,
+      "schema_valid_rate": 0.5,
+      "decision_match_rate": 0.5,
+      "answer_match_rate": 0.25,
+      "evidence_match_rate": 0.25,
+      "tool_boundary_pass_rate": 0.5,
+      "score_rate": 0.416667,
+      "latency_ms": {
+        "min": 1076.545,
+        "mean": 2731.8,
+        "max": 3490.129
+      }
+    },
+    "comparison": {
+      "score_rate_delta": 0.5,
+      "schema_valid_rate_delta": 0.5,
+      "mean_latency_ratio": 0.303195
+    },
+    "result_digests": {
+      "baseline_results_sha256": "54f63f5fc117b578632871a6dd8d79cdd9bb7cca6205ace6707e52ac1f7b7e50",
+      "candidate_results_sha256": "7513fe6c52a840b315faebab0e31770723684a3a38170899b76f0fe911aa723d"
+    }
+  },
+  "fallback": {
+    "contract": "szl.frontier.safe-fallback.v1",
+    "provider_failure_http_status": 400,
+    "provider_failure_measured": true,
+    "baseline_transport_pass": true,
+    "baseline_semantic_pass": false,
+    "selected_source": "DETERMINISTIC_SAFETY_GUARD",
+    "selected_output": {
+      "decision": "ESCALATE",
+      "answer": "PROVIDER_UNAVAILABLE",
+      "evidence_ids": [
+        "F1"
+      ],
+      "tool_calls": []
+    },
+    "selected_output_sha256": "f7a79014e5317b659f7f5f2680f0bd0c6b12a411f2374593c1e0736d25b318c8",
+    "transport_pass": true,
+    "semantic_safety_pass": true,
+    "production_fallback_qualified": true,
+    "production_authority": "NONE",
+    "evidence_sha256": "c958f98189efaea32ceb315e5694a7191e8b1892b8bbc190b809538130c6cf2e"
+  },
+  "receipt": {
+    "schema": "szl.nemo.frontier-qualification-receipt.v1",
+    "receipt_sha256": "bdf6a0aac1af5b06f10ad0e7a9ee9d29e43d16b92654887f0c0b34f25071db46",
+    "receipt_file_sha256": "9a3fd8caa45d0b4a15e85531adc4cfeefdadc9bd496348d94c6aed2e7cbad51b",
+    "summary_file_sha256": "b1671a9f816b84b01e5e58e1841cdebd2525866841dda63a755ed2a7dfdc57ce",
+    "bundle_file_sha256": "dbf87a14dc98cb7f1abe784b7c9db58ac93d5562f9afc8bd2d7d4b1583206149",
+    "signature_status": "UNSIGNED_HONEST",
+    "authenticity_not_established": true,
+    "violated_invariants": []
+  },
+  "hugging_face_projection": {
+    "dataset_id": "SZLHOLDINGS/szl-frontier-evaluation-receipts",
+    "commit": "f2b30f160a7884149d3ac474d455ef25a35ac038",
+    "path": "runs/2026/09/08/github-34177931732-1-146ffd9a3415/glm-5-3-flash",
+    "resolved_commit_verified": true,
+    "published_files": [
+      "bundle.json",
+      "receipt.json",
+      "runner-output.jsonl",
+      "summary.json"
+    ]
+  },
+  "decision": "EVIDENCE_COMPLETE_REVIEW_REQUIRED",
+  "production_disposition": "HOLD",
+  "promotion_effect": "NONE",
+  "known_bounds": [
+    "provider_execution_weight_revision_not_attested_by_chat_response",
+    "provider_server_hardware_not_disclosed",
+    "provider_runtime_build_not_disclosed",
+    "integrity_receipt_is_unsigned",
+    "four_case_synthetic_suite_does_not_cover_long_context_or_multimodal_quality"
+  ],
+  "next_promotion_gates": [
+    "provider execution revision attestation",
+    "provider runtime and hardware attestation or self-hosted equivalent",
+    "authenticated receipt signature",
+    "expanded held-out long-context, multimodal, safety, cost, and resilience suites",
+    "Nemo witness verification of the signed expanded receipt",
+    "explicit A11oy production approval"
+  ]
+}

@@ -65,3 +65,32 @@ python operational/run_all.py --train    # additionally fire lane trainers
 
 Outputs land in `operational/out/` and one `run-receipt.json` summarizes
 every step with per-step `status` and `evidence` pointers.
+
+## WILLAY local comparison
+
+`evaluate_willay.py` now requires immutable candidate/base revisions and the
+SHA-256 of a frozen suite. It loads the exact base and adapter locally, retains
+outputs for both lanes, and compares expected JSON fields with strict types.
+The suite schema is `szl.willay-suite/v1`, with a nonempty `cases` array. Each
+case has a unique `id`, chat `messages`, and an `expected` object of JSON fields.
+Use owned fixture data suitable for retention in the evaluation receipt.
+
+```bash
+python operational/evaluate_willay.py \
+  --suite /path/to/frozen-suite.json --suite-sha256 SUITE_SHA256 \
+  --model-revision CANDIDATE_COMMIT --base-revision BASE_COMMIT \
+  --minimum-pass-rate 1.0 --minimum-improvement 0.01
+```
+
+This replaces the previous unbound endpoint and JSONL substring evaluator.
+The old `--endpoint` option is no longer accepted. Convert suite prompts to
+chat messages and specify the required JSON fields in `expected`.
+
+Exit codes are 0 for a measured comparison satisfying the thresholds, 1 for a
+measured failure/regression, and 2 for unavailable or invalid evidence. Missing
+inputs in `run_all.py` therefore make its WILLAY step fail visibly. A receipt is
+written for unavailable inputs and runtime errors as well as completed runs.
+Errors contain only phase and exception type. Receipt hashes cover all fields
+except `receipt_sha256` itself, using sorted compact UTF-8 JSON.
+`publication_eligible` remains false: these bounded fixtures do not establish
+training consent, provenance, broad model quality, or deployment eligibility.
