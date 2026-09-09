@@ -1,0 +1,64 @@
+name: HF Kernel 0.16.1 migration
+
+on:
+  pull_request:
+    paths:
+      - "tools/hf_kernel_migration_guard.py"
+      - "tools/test_hf_kernel_migration_guard.py"
+      - ".github/workflows/hf-kernel-0161-migration.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hf-kernel-0161-migration-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  migration-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install bounded test dependency
+        run: python -m pip install --disable-pip-version-check "huggingface-hub==1.26.0"
+
+      - name: Run migration guard unit tests
+        env:
+          PYTHONPATH: tools
+        run: python -m unittest -v tools.test_hf_kernel_migration_guard
+
+      - name: Verify public first-class Kernel Hub projection
+        env:
+          PYTHONPATH: tools
+          HF_HUB_DISABLE_IMPLICIT_TOKEN: "1"
+        run: |
+          python - <<'PY'
+          from dataclasses import asdict
+          import json
+          from hf_kernel_migration_guard import verify_first_class_kernel
+
+          evidence = verify_first_class_kernel(
+              "SZLHOLDINGS/szl-kernels",
+              client_version="0.16.1",
+          )
+          print(json.dumps(asdict(evidence), indent=2, sort_keys=True))
+          PY
+
+      - name: Enforce migration invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F 'KERNELS_CLIENT_VERSION = "0.16.1"' tools/hf_kernel_migration_guard.py
+          grep -F 'FIRST_CLASS_REPO_TYPE = "kernel"' tools/hf_kernel_migration_guard.py
+          grep -F 'LEGACY_REPO_TYPE = "model"' tools/hf_kernel_migration_guard.py
+          git diff --check
