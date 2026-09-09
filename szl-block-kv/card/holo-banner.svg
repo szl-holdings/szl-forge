@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" width="1200" height="360">
+  <defs>
+    <linearGradient id="kv" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1e3a5f"/>
+      <stop offset="0.55" stop-color="#60a5fa"/>
+      <stop offset="1" stop-color="#dbeafe"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="8"/>
+    </filter>
+    <radialGradient id="fade" cx="0.5" cy="0.5" r="0.75">
+      <stop offset="0" stop-color="#0a0f16"/>
+      <stop offset="1" stop-color="#05070b"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="360" fill="url(#fade)"/>
+  <g fill="none" stroke="url(#kv)" stroke-width="1.7">
+    <rect x="450" y="110" width="56" height="40" rx="5" opacity="0.9"/>
+    <rect x="516" y="110" width="56" height="40" rx="5" opacity="0.9"/>
+    <rect x="582" y="110" width="56" height="40" rx="5" opacity="0.9"/>
+    <rect x="648" y="110" width="56" height="40" rx="5" opacity="0.9"/>
+    <rect x="450" y="160" width="56" height="40" rx="5" opacity="0.9"/>
+    <rect x="516" y="160" width="56" height="40" rx="5" opacity="0.9"/>
+    <rect x="648" y="160" width="56" height="40" rx="5" opacity="0.9"/>
+    <rect x="450" y="210" width="56" height="40" rx="5" opacity="0.9"/>
+    <rect x="516" y="210" width="56" height="40" rx="5" opacity="0.9"/>
+    <rect x="582" y="210" width="56" height="40" rx="5" opacity="0.9"/>
+    <rect x="648" y="210" width="56" height="40" rx="5" opacity="0.9"/>
+  </g>
+  <rect x="582" y="160" width="56" height="40" rx="5" fill="none" stroke="url(#kv)" stroke-width="6" opacity="0.35" filter="url(#glow)"/>
+  <rect x="582" y="160" width="56" height="40" rx="5" fill="none" stroke="#dbeafe" stroke-width="2" opacity="0.95"/>
+  <path d="M 588 168 L 632 192 M 632 168 L 588 192" stroke="#dbeafe" stroke-width="2" opacity="0.9" stroke-linecap="round"/>
+  <path d="M 596 160 L 596 150 a 14 14 0 0 1 28 0 L 624 160" fill="none" stroke="#dbeafe" stroke-width="2" opacity="0.9" stroke-linecap="round"/>
+  <path d="M0 306 L 1200 306" fill="none" stroke="url(#kv)" stroke-width="4" opacity="0.22" filter="url(#glow)"/>
+  <path d="M0 306 L 1200 306" fill="none" stroke="url(#kv)" stroke-width="0.9" opacity="0.5"/>
+</svg>

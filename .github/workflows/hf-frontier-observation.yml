@@ -1,0 +1,74 @@
+# Copyright 2026 SZL Holdings. SPDX-License-Identifier: Apache-2.0
+name: HF frontier observation v2
+
+on:
+  pull_request:
+    paths:
+      - 'inference/hf_frontier.py'
+      - 'tests/test_hf_frontier*.py'
+      - 'payloads/001-hf-frontier-evaluation.md'
+      - '.github/workflows/hf-frontier-observation.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'inference/hf_frontier.py'
+      - 'tests/test_hf_frontier*.py'
+      - 'payloads/001-hf-frontier-evaluation.md'
+      - '.github/workflows/hf-frontier-observation.yml'
+  schedule:
+    - cron: '23 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hf-frontier-observation-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.12']
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Offline frontier regressions (standard library only)
+        run: python -m unittest discover -s tests -p 'test_hf_frontier_v2.py' -v
+      - name: Offline plan
+        run: python -m inference.hf_frontier
+
+  observe:
+    needs: contracts
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Observe public metadata and verify non-serving projection
+        run: |
+          python -m inference.hf_frontier --refresh \
+            --source-revision "$GITHUB_SHA" \
+            --output artifacts/hf-frontier/manifest.json \
+            --projection-output artifacts/hf-frontier/projection.json
+      - name: Preserve evidence even when an upstream is unavailable
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: hf-frontier-observation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/hf-frontier/*.json
+          if-no-files-found: error
+          retention-days: 30

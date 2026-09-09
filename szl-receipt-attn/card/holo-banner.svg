@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" width="1200" height="360">
+  <defs>
+    <linearGradient id="attn" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#155e75"/>
+      <stop offset="0.55" stop-color="#22d3ee"/>
+      <stop offset="1" stop-color="#cffafe"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="9"/>
+    </filter>
+    <radialGradient id="fade" cx="0.5" cy="0.5" r="0.75">
+      <stop offset="0" stop-color="#081114"/>
+      <stop offset="1" stop-color="#04080a"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="360" fill="url(#fade)"/>
+  <g stroke="url(#attn)" stroke-width="1.5" fill="none">
+    <rect x="480" y="80" width="240" height="200" rx="6" stroke-width="7" opacity="0.3" filter="url(#glow)"/>
+    <rect x="480" y="80" width="240" height="200" rx="6" opacity="0.95"/>
+  </g>
+  <g stroke="#22d3ee" stroke-width="1.1" opacity="0.75">
+    <path d="M 480 120 L 600 120 M 480 160 L 640 160 M 480 200 L 680 200 M 480 240 L 720 240"/>
+    <path d="M 520 80 L 520 280 M 560 80 L 560 280 M 600 80 L 600 280 M 640 80 L 640 280 M 680 80 L 680 280"/>
+  </g>
+  <path d="M 480 80 L 720 280" stroke="#cffafe" stroke-width="2" opacity="0.95"/>
+  <path d="M 480 80 L 720 80 L 720 280 Z" fill="#0e7490" opacity="0.18"/>
+  <path d="M 486 86 L 714 86 L 714 274 Z" fill="none" stroke="#f87171" stroke-width="1.6" opacity="0.7" stroke-dasharray="5 5"/>
+  <circle cx="660" cy="130" r="5" fill="#f87171" opacity="0.8"/>
+  <circle cx="620" cy="170" r="5" fill="#f87171" opacity="0.8"/>
+  <path d="M0 320 L 1200 320" fill="none" stroke="url(#attn)" stroke-width="4" opacity="0.22" filter="url(#glow)"/>
+  <path d="M0 320 L 1200 320" fill="none" stroke="url(#attn)" stroke-width="0.9" opacity="0.5"/>
+</svg>
