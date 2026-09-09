@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" width="1200" height="360">
+  <defs>
+    <linearGradient id="meter" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#115e59"/>
+      <stop offset="0.55" stop-color="#2dd4bf"/>
+      <stop offset="1" stop-color="#ccfbf1"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="9"/>
+    </filter>
+    <radialGradient id="fade" cx="0.5" cy="0.5" r="0.75">
+      <stop offset="0" stop-color="#07120f"/>
+      <stop offset="1" stop-color="#030807"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="360" fill="url(#fade)"/>
+  <path d="M 460 250 A 150 150 0 0 1 740 250" fill="none" stroke="url(#meter)" stroke-width="10" opacity="0.4" filter="url(#glow)"/>
+  <path d="M 460 250 A 150 150 0 0 1 740 250" fill="none" stroke="url(#meter)" stroke-width="2.2" opacity="0.95" stroke-linecap="round"/>
+  <g stroke="#2dd4bf" stroke-width="2.2" opacity="0.75" stroke-linecap="round">
+    <path d="M 460 250 L 448 256"/>
+    <path d="M 505 148 L 497 136"/>
+    <path d="M 600 118 L 600 102"/>
+    <path d="M 695 148 L 703 136"/>
+  </g>
+  <path d="M 740 250 L 752 256" stroke="#2dd4bf" stroke-width="2.2" opacity="0.25" stroke-linecap="round" stroke-dasharray="2 6"/>
+  <path d="M 600 250 L 545 168" stroke="#ccfbf1" stroke-width="3" opacity="0.95" stroke-linecap="round"/>
+  <circle cx="600" cy="250" r="10" fill="none" stroke="url(#meter)" stroke-width="2" opacity="0.95"/>
+  <circle cx="600" cy="250" r="4" fill="#2dd4bf" opacity="0.95"/>
+  <rect x="692" y="232" width="58" height="20" rx="4" fill="none" stroke="#2dd4bf" stroke-width="1.4" opacity="0.6" stroke-dasharray="4 4"/>
+  <path d="M0 314 L 1200 314" fill="none" stroke="url(#meter)" stroke-width="4" opacity="0.22" filter="url(#glow)"/>
+  <path d="M0 314 L 1200 314" fill="none" stroke="url(#meter)" stroke-width="0.9" opacity="0.5"/>
+</svg>
