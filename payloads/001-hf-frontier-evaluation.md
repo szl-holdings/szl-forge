@@ -1,54 +1,107 @@
-# Payload 1 — SZL Hugging Face Frontier Evaluation Backend
+# Payload 1 — SZL Hugging Face Frontier Backend v2
 
-**Repository:** `szl-holdings/szl-forge`  
-**Authority chain:** GitHub → Hugging Face → a-11-oy.com → a11oy.net  
-**Mode:** fail-closed evaluation; no automatic production promotion.
+Repository: `szl-holdings/szl-forge`.
+Authority order: **GitHub → Hugging Face → a-11-oy.com → a11oy.net**.
+Scope: public candidate metadata, evidence integrity, repeatable observations and
+non-serving consumer projections. This is not model qualification or deployment.
 
-## Objective
+## Continue the existing implementation, not another disconnected build
 
-Complete and maintain the backend frontier-admission lane implemented in
-`inference/hf_frontier.py`. The lane must discover upstream Hugging Face metadata,
-pin evidence to immutable revisions, classify candidates, emit proof receipts,
-and require explicit benchmark/licensing/runtime gates before any model can become
-a deployment candidate.
+PR #202 merged the original lane as `99d73a290de79e65e76bafb69a7ffa84fbc8c76c`.
+This upgrade is based on inspected main `38d1184473e2928ee06a8cb573dee0f5cd088eef`.
+The v1 implementation allowed explicit HOLD/REJECT to fall through to EVALUATE,
+accepted absent gating as clear, selected the first license declaration, accepted
+ambiguous JSON, and had no receipt verifier. v2 closes those gaps.
 
-Current candidates:
+Files: `inference/hf_frontier.py`, existing `tests/test_hf_frontier.py`, new
+`tests/test_hf_frontier_v2.py`, `.github/workflows/hf-frontier-observation.yml`,
+and this single handoff document. The runtime package remains dependency-free.
 
-- `bodhan-ai/indic-transcribe-core` — multilingual ASR evaluation.
-- `bodhan-ai/indic-speak` — multilingual TTS evaluation.
-- `gdiamos/amx-reasoning-v1-instruct` — CPU/AMX architecture watch only.
+## What v2 implements
 
-The Bodhan repositories are gated and currently expose `license: other`; therefore
-they remain HOLD/EVALUATE candidates until license/data-rights review is explicitly
-admitted. The AMX checkpoint is architecture/kernel research only even though its
-Hub license is Apache-2.0.
+Explicit HOLD and REJECT remain absorbing; WATCH remains research-only even with
+blockers. Missing or malformed access-gating information does not imply clearance.
+Conflicting card/tag licenses become HOLD rather than selecting a convenient term.
+Repository identity fields must agree and references must be immutable SHA pins.
+Remote-code signals include metadata auto_map fields and repository Python files,
+not just custom_code tags. These are observations, not an exhaustive source audit.
 
-## Non-negotiable boundaries
+The bounded JSON reader rejects duplicate keys, NaN, Infinity, exponent overflow,
+invalid Unicode, non-object roots and oversized bodies. The public client refuses
+redirects, has finite timeouts, and makes at most three GET attempts per candidate.
+It honors bounded numeric Retry-After values; longer/date-form delays are deferred
+as failures, never converted to permission. No auth header or model loader is used.
 
-1. Never execute Hub-provided Python or enable `trust_remote_code`.
-2. Never download weights from the discovery command.
-3. Never auto-promote, deploy, train, publish, or mutate Hugging Face.
-4. Reject missing/ambiguous repository identity or immutable revision SHA.
-5. Treat unknown/non-admitted licenses as HOLD.
-6. Generate immutable/canonical SHA-256 receipts for every observation.
-7. Keep GitHub as source of truth. HF is an upstream candidate/evidence source;
-   `a-11-oy.com` receives only admitted runtime/product state and `a11oy.net`
-   receives proof/receipt/evaluation state.
-8. Any future artifact execution requires a separate pinned inventory, file hashes,
-   sandbox/runtime qualification, benchmark evidence, Nemo/A11oy witness, rollback,
-   and explicit human promotion approval.
+Refresh isolates individual upstream failures into explicit PARTIAL/UNAVAILABLE
+reports while retaining valid observations for other candidates. It never reuses
+stale success to hide a current failure. CLI exit 2 means incomplete observation;
+exit 1 means invalid evidence or an operational error; exit 0 is complete metadata
+observation or successful offline verification, not model approval.
 
-## Acceptance commands
+Every observation has a receipt hash. The manifest verifier checks nested hashes,
+the trusted registry, complete/unique coverage, normalized fields, recomputed gates,
+source identity, and authority flags. A separate semantic digest excludes scan time
+and popularity counters so repeated observations do not manufacture frontier events.
+
+Projection generation requires a source revision, verifies the manifest, and rejects
+observations older than 24 hours or more than 60 seconds in the future. It labels
+model evaluation and runtime verification NOT_PERFORMED. Its production disposition
+is HOLD and all execution/publication/promotion flags remain false.
+
+Important: hashes provide integrity checks, NOT authenticated provenance. An attacker
+who controls all source evidence can recompute hashes. Source trust must be anchored
+by the protected GitHub commit and the exact trusted workflow run/artifact. Atomic
+local writes are not immutable storage. Artifact retention is 30 days, not permanent.
+
+## Candidates and independent evaluation lanes
+
+`bodhan-ai/indic-transcribe-core`: multilingual/code-mixed ASR. On the connected
+Hub inspection of 2026-09-09, it was gated, license other, and custom_code-tagged.
+Keep HOLD pending actual license/access/source review. Later measure WER/CER per
+language, language-ID errors, code-mixing, p50/p95 latency, RAM/VRAM and realtime
+factor on consented, rights-cleared independent audio. Preserve failed cases.
+
+`bodhan-ai/indic-speak`: multilingual/code-mixed TTS. The same inspection showed
+gated access and license other. Keep HOLD. Later measure intelligibility,
+pronunciation, consistency, time-to-first-audio, realtime factor and resource cost;
+require consent for any real person's voice and explicit abuse/provenance controls.
+
+`gdiamos/amx-reasoning-v1-instruct`: CPU/kernel architecture WATCH only. Its upstream
+card describes a custom architecture rather than a Transformers drop-in. Observe
+transferable CPU/attention mechanics; do not imply that a license tag, checkpoint
+size, or upstream score establishes SZL production reasoning quality. Reproduction
+requires a reviewed runtime and matching supported hardware in a separate change.
+
+No weights are downloaded, retrained, rehosted, or executed by this payload.
+
+## Execute and verify
+
+Run from the existing Forge repository root with Python 3.11 or later.
+The original eight pytest tests remain in base CI; the v2 unittest suite needs no
+additional packages. Full-repository validation still belongs to the protected CI.
 
 ```bash
-python -m pytest -q
+python -m unittest discover -s tests -p 'test_hf_frontier_v2.py' -v
+python -m pytest -q tests/test_hf_frontier.py tests/test_hf_frontier_v2.py
 python -m inference.hf_frontier
-python -m inference.hf_frontier --refresh --output evidence/hf-frontier/latest.json
 ```
 
-`--refresh` is metadata-only. A successful refresh is **not** production approval.
+Explicit live observation on a clean checkout (POSIX shell):
 
-## Codex completion payload (Python)
+```bash
+python -m inference.hf_frontier --refresh \
+  --source-revision "$(git rev-parse HEAD)" \
+  --output artifacts/hf-frontier/manifest.json \
+  --projection-output artifacts/hf-frontier/projection.json
+python -m inference.hf_frontier --verify artifacts/hf-frontier/manifest.json \
+  --source-revision "$(git rev-parse HEAD)"
+```
+
+The source SHA above is an assertion by the operator. For trusted publication,
+verify the clean checkout and use the exact protected-main workflow artifact.
+Do not stamp a branch, dirty checkout, or stale artifact as a deployed-main witness.
+
+## One Python handoff block (offline by default)
 
 ```python
 from pathlib import Path
@@ -56,53 +109,67 @@ import json
 import subprocess
 import sys
 
-ROOT = Path.cwd()
-required = [
-    ROOT / "inference" / "hf_frontier.py",
-    ROOT / "tests" / "test_hf_frontier.py",
-]
-
-missing = [str(path.relative_to(ROOT)) for path in required if not path.is_file()]
+root = Path.cwd()
+paths = ["inference/hf_frontier.py", "tests/test_hf_frontier.py",
+         "tests/test_hf_frontier_v2.py",
+         ".github/workflows/hf-frontier-observation.yml"]
+missing = [name for name in paths if not (root / name).is_file()]
 if missing:
     raise SystemExit(f"missing frontier files: {missing}")
-
-subprocess.run([sys.executable, "-m", "pytest", "-q"], check=True)
-plan = subprocess.check_output(
-    [sys.executable, "-m", "inference.hf_frontier"],
-    text=True,
-)
-parsed = json.loads(plan)
-assert parsed["networkAction"] == "metadata-only"
-assert parsed["automaticPromotionAuthorized"] is False
-assert parsed["deploymentAuthorized"] is False
-
-# Networked evidence refresh is intentionally a separate explicit step:
-# python -m inference.hf_frontier --refresh \
-#   --output evidence/hf-frontier/latest.json
-#
-# Review the generated receipt before committing it. Do not convert HOLD/WATCH
-# into deployment authority in this payload.
-
-print("SZL HF frontier backend validated: fail-closed, metadata-only, no auto-promotion.")
+subprocess.run([sys.executable, "-m", "unittest", "discover", "-s", "tests",
+                "-p", "test_hf_frontier_v2.py", "-v"], check=True)
+plan = json.loads(subprocess.check_output(
+    [sys.executable, "-m", "inference.hf_frontier"], text=True))
+for flag in ("weightDownloadAuthorized", "remoteCodeExecutionAuthorized",
+             "trainingAuthorized", "publicationAuthorized",
+             "deploymentAuthorized", "automaticPromotionAuthorized"):
+    if plan.get(flag) is not False:
+        raise SystemExit(f"unexpected authority: {flag}")
+print("Offline frontier verification passed. No live scan or deployment performed.")
 ```
 
-## Next evaluation lanes
+## Automation and downstream handoff
 
-For Indic Transcribe: WER/CER by language, code-mixing accuracy, language-ID
-accuracy, p50/p95 latency, VRAM/RAM, realtime factor, adversarial audio behavior,
-gated-access terms, training/data rights, and deterministic inference closure.
+The new workflow runs offline contracts on PRs. On protected-main push, manual
+main dispatch, and a six-hour schedule, it observes only the three public model
+metadata endpoints and stores source-bound manifest/projection artifacts. There is
+no Hugging Face token, provider mutation, repo write, merge bot, hardware purchase,
+training job, or production rollout in this workflow. An upstream failure leaves
+the observation job non-green and retains the available failure evidence.
 
-For Indic Speak: intelligibility, multilingual/code-mixed pronunciation, speaker
-consistency, p50/p95 time-to-first-audio, realtime factor, VRAM/RAM, watermark/
-provenance options, abuse controls, gated-access terms, training/data rights, and
-deterministic inference closure.
+After this PR passes exact-head checks and review, merge through the normal
+protected path. Re-read the final main SHA and the first main observation artifact.
+Verify the artifact's run/repository/source binding outside the self-hash verifier.
+Consumers must explicitly adopt v2; old v1 evidence is not silently upgraded.
 
-For AMX: reproduce CPU throughput/latency and memory behavior on supported Intel
-hardware; isolate transferable kernel/attention ideas. Do not benchmark it as a
-candidate replacement for SZL's production reasoning models.
+The downstream projection file is a CONTRACT, not proof that sites consumed it.
+Use the existing single-writer workflow and source-binding conventions in each
+consumer. Open a focused consumer PR in `szl-frontier` only after inspecting its
+current renderer/manifest schema; do not overwrite the catalog or create new Spaces.
+Expose unavailable/partial/stale separately from a clean metadata scan. Keep actual
+runtime eligibility separate on a-11-oy.com; expose receipts and bounds on a11oy.net.
+Re-observe deployed source plus semantic/artifact parity before claiming alignment.
 
-## Definition of done
+Keep `.github#728` inventory-scope drift and `lyte-services#18` exact-source drift
+independent. Their current state must be re-read before remediation; this lane does
+not resolve them. The existing `szl-frontier#55` ghlore project-memory intake is a
+separate candidate: do not duplicate it or ingest private issue/PR corpora here.
 
-The backend and tests are green; live metadata can be captured as a revision-pinned
-receipt; all candidates remain non-production by construction; and any future
-promotion requires a new evidence-bearing PR rather than an automatic state change.
+## Completion and rollback
+
+Done for this slice means tested source, protected merge, and a real main-branch
+metadata observation artifact. Done for the ecosystem additionally requires each
+consumer's admitted update and live readback; this source PR does not claim that.
+Rollback is a reviewed revert of this change, followed by rechecking consumers.
+Do not roll back to v1 evidence as though its weaker verifier were equivalent.
+
+## Primary references
+
+- https://huggingface.co/docs/huggingface_hub/package_reference/hf_api
+- https://huggingface.co/bodhan-ai/indic-transcribe-core
+- https://huggingface.co/bodhan-ai/indic-speak
+- https://huggingface.co/gdiamos/amx-reasoning-v1-instruct
+- https://github.com/szl-holdings/szl-forge/pull/202
+
+These sources establish metadata/declared behavior, not independently reproduced
+model performance, license approval for SZL's intended use, or live deployment.
