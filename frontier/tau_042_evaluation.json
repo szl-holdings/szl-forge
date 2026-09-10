@@ -1,0 +1,33 @@
+{
+  "schema": "szl.forge.frontier-evaluation.v1",
+  "candidate": "huggingface/tau",
+  "release": "v0.4.2",
+  "upstream_revision": "55df51608b8b2d172c4bbac2cd11e8345e307476",
+  "license": "MIT",
+  "frontier_predecessor_merge": "77186cdaab11435638668f64d84e0808efd8291d",
+  "frontier_successor_pr": 62,
+  "disposition": "HOLD",
+  "production_eligible": false,
+  "authority": {
+    "autonomous_merge": false,
+    "deploy": false,
+    "secret_access": false,
+    "branch_protection_mutation": false,
+    "upstream_write": false,
+    "production_route_change": false,
+    "live_catalog_authority": false
+  },
+  "required_evidence": [
+    "exact-install-build-receipt",
+    "fixed-non-secret-task-corpus-digest",
+    "pre-0.4.2-session-replay",
+    "session-label-and-custom-message-persistence",
+    "stream-ordering-and-incomplete-sse-negative-path",
+    "live-codex-catalog-nonauthority-test",
+    "zai-thinking-serialization",
+    "shell-stdin-timeout-path-command-isolation",
+    "baseline-comparison",
+    "rollback-disable"
+  ],
+  "evaluation_only": true
+}
