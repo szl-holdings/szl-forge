@@ -62,7 +62,6 @@ jobs:
       HF_HUB_ETAG_TIMEOUT: '15'
       HF_HUB_DOWNLOAD_TIMEOUT: '15'
       HF_HUB_OFFLINE: ${{ matrix.lane == 'hub' && '0' || '1' }}
-      HF_HOME: ${{ runner.temp }}/szl-tooling-hf-home
       OMP_NUM_THREADS: '1'
       MKL_NUM_THREADS: '1'
       WANDB_DISABLED: 'true'
@@ -100,6 +99,8 @@ jobs:
               check=True, timeout=600)
           subprocess.run([str(exe), '-m', 'pip', 'check'], check=True, timeout=60)
       - name: Execute actual installed-library probes and retain honest bounds
+        env:
+          HF_HOME: ${{ runner.temp }}/szl-tooling-hf-home
         shell: python
         run: |
           import os, pathlib, subprocess
