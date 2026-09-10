@@ -8,6 +8,8 @@ from __future__ import annotations
 import copy
 import io
 import json
+import tempfile
+from pathlib import Path
 import unittest
 from unittest.mock import MagicMock, patch
 
@@ -260,6 +262,58 @@ class ToolingControllerTests(unittest.TestCase):
         before = copy.deepcopy(report)
         runner.verify_report(report, SOURCE)
         self.assertEqual(report, before)
+
+
+class HubDryRunBoundaryTests(unittest.TestCase):
+    def test_absent_destination_is_a_payload_free_dry_run(self):
+        with tempfile.TemporaryDirectory() as directory:
+            self.assertEqual(runner.verify_dry_run_payload(Path(directory) / "absent"), [])
+
+    def test_known_sdk_bookkeeping_is_not_mistaken_for_downloaded_payload(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            files = (".cache/huggingface/.gitignore", ".cache/huggingface/CACHEDIR.TAG",
+                     ".cache/huggingface/download/README.md.lock")
+            for name in files:
+                path = root / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("fixture bookkeeping", encoding="utf-8")
+            self.assertEqual(runner.verify_dry_run_payload(root), sorted(files))
+
+    def test_copied_readme_always_fails_even_with_bookkeeping_present(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            cache = root / ".cache/huggingface"
+            cache.mkdir(parents=True)
+            (cache / ".gitignore").write_text("*")
+            (root / "README.md").write_text("payload was incorrectly copied")
+            with self.assertRaises(adapters.ToolingError):
+                runner.verify_dry_run_payload(root)
+
+    def test_unknown_cache_payload_is_not_admitted_as_bookkeeping(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            cache = root / ".cache/huggingface"
+            cache.mkdir(parents=True)
+            (cache / "model.safetensors").write_bytes(b"not metadata")
+            with self.assertRaises(adapters.ToolingError):
+                runner.verify_dry_run_payload(root)
+
+    def test_oversized_bookkeeping_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            cache = root / ".cache/huggingface"
+            cache.mkdir(parents=True)
+            (cache / "CACHEDIR.TAG").write_bytes(b"x" * 4097)
+            with self.assertRaises(adapters.ToolingError):
+                runner.verify_dry_run_payload(root)
+
+    def test_unexpected_directory_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "weights").mkdir()
+            with self.assertRaises(adapters.ToolingError):
+                runner.verify_dry_run_payload(root)
 
 
 if __name__ == "__main__":

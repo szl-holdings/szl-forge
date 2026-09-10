@@ -139,6 +139,35 @@ def hub_httpx() -> dict[str, Any]:
     return {"sharedExceptionIdentity": True, "networkCalls": 0}
 
 
+def verify_dry_run_payload(destination: Path) -> list[str]:
+    """A dry run may create SDK bookkeeping, but must never copy payload bytes.
+
+    Hub 1.31's local-folder helper creates CACHEDIR.TAG, .gitignore and lock
+    files while resolving paths. The regression fixed by upstream #4817 is
+    copying the cached requested file before the dry-run return, not those
+    bookkeeping writes. Only the inspected SDK bookkeeping is admitted here.
+    """
+    allowed_files = {
+        ".cache/huggingface/.gitignore", ".cache/huggingface/.gitignore.lock",
+        ".cache/huggingface/CACHEDIR.TAG", ".cache/huggingface/download/README.md.lock",
+    }
+    allowed_directories = {".cache", ".cache/huggingface", ".cache/huggingface/download"}
+    check(not destination.is_symlink(), "dry_run_root_is_symlink")
+    if not destination.exists():
+        return []
+    files = []
+    for index, path in enumerate(destination.rglob("*")):
+        check(index < 16 and not path.is_symlink(), "dry_run_inventory_not_admitted")
+        name = path.relative_to(destination).as_posix()
+        if path.is_dir():
+            check(name in allowed_directories, "dry_run_unexpected_directory")
+        else:
+            check(path.is_file() and name in allowed_files, "dry_run_copied_payload_or_unknown_file")
+            check(path.stat().st_size <= 4096, "dry_run_bookkeeping_oversized")
+            files.append(name)
+    return sorted(files)
+
+
 def hub_public_snapshot() -> dict[str, Any]:
     """Explicit, small README-only live probe. Never download weights or Python."""
     from huggingface_hub import snapshot_download
@@ -170,11 +199,11 @@ def hub_public_snapshot() -> dict[str, Any]:
         check(len(set(hashes)) == 1, "concurrent_cache_bytes_disagree")
         destination = root / "dry-run-only"
         snapshot_download(**kwargs, dry_run=True, local_dir=destination)
-        check(not destination.exists() or not any(destination.rglob("*")),
-              "dry_run_copied_cached_file")
+        bookkeeping = verify_dry_run_payload(destination)
         return {"repoId": PUBLIC_REPO, "revision": PUBLIC_REVISION, "file": PUBLIC_FILE,
                 "fileBytes": file.file_size, "fileSha256": hashes[0], "concurrentReaders": 3,
-                "dryRunWroteNoFiles": True, "weightDownload": False}
+                "dryRunCopiedNoPayload": True, "dryRunBookkeepingFiles": bookkeeping,
+                "weightDownload": False}
 
 
 def trl_loss_parity() -> dict[str, Any]:

@@ -59,6 +59,9 @@ writes; verify the shared httpx exception API. The optional live probe reads onl
 an immutable, bounded public README, compares three concurrent cached downloads,
 and checks that a dry run does not copy cached bytes into local_dir. It cannot
 download model weights or execute the README. Linux and Windows get separate jobs.
+A dry run may create the inspected SDK cache bookkeeping (.gitignore, CACHEDIR.TAG
+and lock files); the check explicitly records those and rejects any requested
+README payload or unknown file. It does not claim zero filesystem writes.
 This is not an injected timeout test or proof of every mutable-ref race scenario.
 
 TRL: eight small CPU float32 chunked-NLL loss/gradient comparisons against ordinary
