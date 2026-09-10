@@ -1,0 +1,26 @@
+name: HF core stack evaluation contract
+
+on:
+  pull_request:
+    paths:
+      - "tools/hf_core_stack_guard.py"
+      - "tools/test_hf_core_stack_guard.py"
+      - ".github/workflows/hf-core-stack-eval.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run fail-closed core-stack contract tests
+        working-directory: tools
+        run: python -m unittest -v test_hf_core_stack_guard.py
+      - name: Emit bounded plan
+        working-directory: tools
+        run: python hf_core_stack_guard.py
