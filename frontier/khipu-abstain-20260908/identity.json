@@ -1,0 +1,44 @@
+{
+  "schema": "szl.khipu.distinct-candidate/v1",
+  "observation": {
+    "observed_at": "2026-09-10T00:37:10+00:00",
+    "job": "https://huggingface.co/jobs/SZLHOLDINGS/6aa1fbb05527934177ebea65",
+    "scope": "Anonymous pinned primary-Hub metadata and receipt bytes; no weights downloaded or executed."
+  },
+  "bindings": {
+    "original": {
+      "repo_id": "SZLHOLDINGS/SZL-Khipu-1.5B",
+      "hub_revision": "8d3032dcf954f347b98f80050de107169d69eb7e",
+      "local_receipt_dir": "khipu",
+      "abstain_correct": 2,
+      "weights_artifact_sha256": "ea91ef6aee4e147f5ae5b3cafc4615059749549c735b1078c3c7fc146ca6791d",
+      "receipt_sha256": {
+        "owner_pubkey.json": "843d0958392b4ee11ad8e36519261bebf841ee20caec479cbbc4bb9e8c991031",
+        "training_receipt.signed.json": "7af76dd4f26dcd122012bfd1e47a0f55481a952b86aee28956cf7cfaaf59bd04",
+        "eval_receipt.signed.json": "32edd2d862fd5abac390bee3d30950f4718afedc41f4da4e24f3d0dfe67f8450"
+      }
+    },
+    "candidate": {
+      "repo_id": "SZLHOLDINGS/SZL-Khipu-1.5B-abstain",
+      "hub_revision": "7f93c1b53d19a174e831af61425f101c8cbd41de",
+      "local_receipt_dir": "frontier/khipu-abstain-20260908",
+      "abstain_correct": 3,
+      "weights_artifact_sha256": "86c33222c44349c31c3db9a42429a4bfe7b79acc1b68b26645645e881e553476",
+      "receipt_sha256": {
+        "owner_pubkey.json": "843d0958392b4ee11ad8e36519261bebf841ee20caec479cbbc4bb9e8c991031",
+        "training_receipt.signed.json": "63b76e044c23e3fb5d2c759a0c7027aa0d3ad55d682da658d2d260420cc0c870",
+        "eval_receipt.signed.json": "d1114da7fc8fec9d591234c7812af31002bf8a9bfc1f542503f0cdb32a9d3cd5"
+      }
+    }
+  },
+  "candidate_weight_metadata": [
+    {"path": "khipu-abstain-adapter/adapter_model.safetensors", "bytes": 147770496, "lfs_sha256": "da0f948b7a6b555cbd50026eafcbb38ae8187b66be450fd1c3ed27f7eff9bef1", "weight_bytes_verified": false},
+    {"path": "khipu-f16.gguf", "bytes": 3093668832, "lfs_sha256": "0df16da8dc6d5865370b90880080dfefda028a5e4c0f758825bf40cdcfb93bd2", "weight_bytes_verified": false}
+  ],
+  "production_authorization": false,
+  "autonomy_eligible": false,
+  "hidden_l2_acceptance": false,
+  "weights_recomputed": false,
+  "quantized_metrics_inherited": false,
+  "production_disposition": "HOLD"
+}

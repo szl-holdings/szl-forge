@@ -1,0 +1,28 @@
+{
+  "payload": {
+    "kind": "szl-khipu-training-receipt",
+    "v": 1,
+    "capabilityProfile": "SZL-Khipu-1.5B-BrainNavigator",
+    "baseModel": "Qwen/Qwen2.5-1.5B-Instruct",
+    "datasets": {
+      "train.jsonl": "f0f8a9b232e8662f65eda1a58e3875ee9c1f859851ef3c2bfb28dd727cc27a75",
+      "eval.jsonl": "61ede1488e3c6e3cded81679affe258e8d03c47019424182330a94b8c505794e",
+      "train.abstain.jsonl": "421a6e733fda656c18b250ad5a5140f010392598750c48d672972f45a1e6c4a6",
+      "adversarial.jsonl": "812a23b3ed15c1df8c5e18b2365b6e7c474968f42f329a5f30b7c57c445659fd",
+      "khipu.schema.json": "b95f9927366dae7c5d36cfb7de6e229eb605524318ab642a6aa2292a212170d0"
+    },
+    "schemaFingerprintSha256": "f05e38b406b5e893e8a7dd23029a0c252b5e53994e8ac777a810b227dc2d7e64",
+    "outputSchemaSha256": "b95f9927366dae7c5d36cfb7de6e229eb605524318ab642a6aa2292a212170d0",
+    "adapterSha256": "bd5a1a92b24d85bac19a8df203287e1d4173b6d59d4bc7212f862eef60d9f1db",
+    "weightsArtifactSha256": "86c33222c44349c31c3db9a42429a4bfe7b79acc1b68b26645645e881e553476",
+    "servedModel": "khipu",
+    "trainedAt": "2026-09-08T18:44:18.461205+00:00",
+    "host": "betterwithage",
+    "finalTrainLoss": "0.0250",
+    "keyId": "89540347a69b789e"
+  },
+  "canonical": "{\"adapterSha256\":\"bd5a1a92b24d85bac19a8df203287e1d4173b6d59d4bc7212f862eef60d9f1db\",\"baseModel\":\"Qwen/Qwen2.5-1.5B-Instruct\",\"capabilityProfile\":\"SZL-Khipu-1.5B-BrainNavigator\",\"datasets\":{\"adversarial.jsonl\":\"812a23b3ed15c1df8c5e18b2365b6e7c474968f42f329a5f30b7c57c445659fd\",\"eval.jsonl\":\"61ede1488e3c6e3cded81679affe258e8d03c47019424182330a94b8c505794e\",\"khipu.schema.json\":\"b95f9927366dae7c5d36cfb7de6e229eb605524318ab642a6aa2292a212170d0\",\"train.abstain.jsonl\":\"421a6e733fda656c18b250ad5a5140f010392598750c48d672972f45a1e6c4a6\",\"train.jsonl\":\"f0f8a9b232e8662f65eda1a58e3875ee9c1f859851ef3c2bfb28dd727cc27a75\"},\"finalTrainLoss\":\"0.0250\",\"host\":\"betterwithage\",\"keyId\":\"89540347a69b789e\",\"kind\":\"szl-khipu-training-receipt\",\"outputSchemaSha256\":\"b95f9927366dae7c5d36cfb7de6e229eb605524318ab642a6aa2292a212170d0\",\"schemaFingerprintSha256\":\"f05e38b406b5e893e8a7dd23029a0c252b5e53994e8ac777a810b227dc2d7e64\",\"servedModel\":\"khipu\",\"trainedAt\":\"2026-09-08T18:44:18.461205+00:00\",\"v\":1,\"weightsArtifactSha256\":\"86c33222c44349c31c3db9a42429a4bfe7b79acc1b68b26645645e881e553476\"}",
+  "signatureBase64": "zP/AcUxUF2AYdf3QpolXMpO+1Q4d433M+otOuprhqnhZtrHFYF53+2qNPZjgjaqzCFOwfBxjE0rBYHigbH/2BA==",
+  "publicKeySpkiBase64": "MCowBQYDK2VwAyEAk3N3ZehTp+jwgSEm9Qvl+bn3fKTAsGlyP96WT2EF1A0=",
+  "keyId": "89540347a69b789e"
+}

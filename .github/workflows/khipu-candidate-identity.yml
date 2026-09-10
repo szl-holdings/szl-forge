@@ -1,0 +1,57 @@
+# SPDX-License-Identifier: Apache-2.0
+name: Khipu distinct-candidate identity
+on:
+  pull_request:
+    paths:
+      - 'khipu/**'
+      - 'frontier/khipu-abstain-20260908/**'
+      - 'portfolio/model_portfolio.json'
+      - 'tools/verify_model_portfolio.py'
+      - 'tools/verify_khipu_candidate_identity.py'
+      - 'tools/test_khipu_candidate_identity.py'
+      - '.github/workflows/khipu-candidate-identity.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'khipu/**'
+      - 'frontier/khipu-abstain-20260908/**'
+      - 'portfolio/model_portfolio.json'
+      - 'tools/verify_model_portfolio.py'
+      - 'tools/verify_khipu_candidate_identity.py'
+      - 'tools/test_khipu_candidate_identity.py'
+      - '.github/workflows/khipu-candidate-identity.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: khipu-candidate-identity-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  identity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Install existing verification-only dependency
+        run: python -m pip install --disable-pip-version-check -r khipu/requirements-verify.txt
+      - name: Verify both receipt identities and all five bound inputs
+        run: |
+          set -euo pipefail
+          mkdir -p reports/khipu-candidate-identity
+          git rev-parse HEAD > reports/khipu-candidate-identity/checkout.txt
+          python tools/verify_khipu_candidate_identity.py > reports/khipu-candidate-identity/identity.json
+          python -m unittest discover -s tools -p test_khipu_candidate_identity.py -v
+          git diff --check
+      - name: Preserve source and integrity evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: khipu-distinct-identity-${{ github.run_id }}-${{ github.run_attempt }}
+          path: reports/khipu-candidate-identity
+          if-no-files-found: error
+          retention-days: 90

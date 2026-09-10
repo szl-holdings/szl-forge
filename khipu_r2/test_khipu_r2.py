@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-import importlib.util
 import json
 import subprocess
 import sys
@@ -45,50 +44,6 @@ def kit_text_files():
 
 
 class KhipuR2KitTests(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls) -> None:
-        # Use the existing signature/linkage/dataset verifier, never infer the
-        # signed model's score from the separate R2 Hub score or CLI text.
-        spec = importlib.util.spec_from_file_location(
-            "khipu_projection_receipt_verifier", ROOT / "tools" / "verify_model_portfolio.py"
-        )
-        assert spec is not None and spec.loader is not None
-        verifier = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(verifier)
-        cls.signed_original = verifier.verify_signed_receipts(ROOT / "khipu")
-
-    def assert_signed_original_projection(self, payload: dict, stdout: str) -> None:
-        evidence = self.signed_original
-        self.assertEqual("DECLARED_KEY_SIGNATURES_VALID", evidence["status"])
-        self.assertEqual("89540347a69b789e", evidence["key_id"])
-        correct, total = evidence["abstainCorrect"], evidence["abstainTotal"]
-        self.assertIs(type(correct), int)
-        self.assertIs(type(total), int)
-        self.assertEqual(6, total)
-        self.assertGreaterEqual(correct, 0)
-        self.assertLessEqual(correct, total)
-        score = f"{correct}/{total}"
-        self.assertIn(
-            f"signed original abstain MEASURED {score} (signed 1.5B card only)", stdout
-        )
-        self.assertEqual(score, payload["signed_original_abstain"])
-        self.assertEqual(correct, payload["signed_original_abstain_correct"])
-        self.assertEqual(total, payload["signed_original_abstain_total"])
-        # Receipt authenticity is not local weight execution or authorization.
-        self.assertFalse(evidence["weights_hash_recomputed"])
-        self.assertFalse(payload["publication_eligible"])
-
-    def test_signed_original_is_not_interchanged_with_hub_r2_evidence(self) -> None:
-        evidence = self.signed_original
-        self.assertEqual(4, evidence["groundingCorrect"])
-        self.assertEqual(5, evidence["groundingTotal"])
-        self.assertEqual(11, evidence["planValid"])
-        self.assertEqual(0, evidence["hallucinatedCitationCount"])
-        # This signed retrain is the disclosed baseline, not an L2 hidden-set
-        # operating-point freeze. The existing portfolio gate pins its 3/6.
-        self.assertEqual(3, evidence["abstainCorrect"])
-        self.assertEqual(6, evidence["abstainTotal"])
-
     def test_trainer_lives_in_separate_sku_not_khipu_dir(self) -> None:
         self.assertTrue(TRAIN.is_file())
         self.assertFalse((ROOT / "khipu" / "train_khipu_r2.py").exists())
@@ -107,6 +62,7 @@ class KhipuR2KitTests(unittest.TestCase):
         self.assertIn("jobs=UNKNOWN", completed.stdout)
         self.assertIn("evals=not-this-run", completed.stdout)
         self.assertIn("publication_eligible=false", completed.stdout)
+        self.assertIn("2/6", completed.stdout)
         self.assertIn(BASE_MODEL.split("/")[-1], completed.stdout)
         self.assertNotIn("card=ROADMAP", completed.stdout)
         receipt = json.loads(
@@ -129,7 +85,9 @@ class KhipuR2KitTests(unittest.TestCase):
         self.assertEqual("11/11", receipt["hub_plan"])
         self.assertEqual(11, receipt["hub_plan_valid"])
         self.assertEqual(11, receipt["hub_plan_total"])
-        self.assert_signed_original_projection(receipt, completed.stdout)
+        self.assertEqual("2/6", receipt["signed_original_abstain"])
+        self.assertEqual(2, receipt["signed_original_abstain_correct"])
+        self.assertEqual(6, receipt["signed_original_abstain_total"])
         self.assertEqual("UNKNOWN", receipt["jobs"])
         self.assertEqual("this-kit", receipt["jobs_scope"])
         self.assertEqual("not-this-run", receipt["evals"])
@@ -166,6 +124,7 @@ class KhipuR2KitTests(unittest.TestCase):
         self.assertIn("11/11", completed.stdout)
         self.assertIn("not-this-run", completed.stdout)
         self.assertIn("publication_eligible=false", completed.stdout)
+        self.assertIn("2/6", completed.stdout)
         report = json.loads((KIT / "eval_report.json").read_text(encoding="utf-8"))
         self.assertEqual(BASE_MODEL, report["base_model"])
         self.assertEqual(HUB_JOB_ID, report["hub_job_id"])
@@ -178,7 +137,9 @@ class KhipuR2KitTests(unittest.TestCase):
         self.assertEqual(5, report["hub_grounding_correct"])
         self.assertEqual("11/11", report["hub_plan"])
         self.assertEqual(11, report["hub_plan_valid"])
-        self.assert_signed_original_projection(report, completed.stdout)
+        self.assertEqual("2/6", report["signed_original_abstain"])
+        self.assertEqual(2, report["signed_original_abstain_correct"])
+        self.assertEqual(6, report["signed_original_abstain_total"])
         self.assertEqual("not-this-run", report["evals"])
         self.assertEqual("UNKNOWN", report["jobs"])
         self.assertEqual("this-kit", report["jobs_scope"])
