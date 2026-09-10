@@ -1,0 +1,122 @@
+# Copyright 2026 SZL Holdings. SPDX-License-Identifier: Apache-2.0
+name: HF tooling installed runtime
+
+on:
+  pull_request:
+    paths:
+      - 'inference/hf_tooling.py'
+      - 'tools/evaluate_hf_tooling.py'
+      - 'tests/test_hf_tooling_runtime.py'
+      - '.github/workflows/hf-tooling-runtime.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'inference/hf_tooling.py'
+      - 'tools/evaluate_hf_tooling.py'
+      - 'tests/test_hf_tooling_runtime.py'
+      - '.github/workflows/hf-tooling-runtime.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hf-tooling-runtime-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - run: git config --global core.autocrlf false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tests -p 'test_hf_tooling_runtime.py' -v
+      - run: python -m tools.evaluate_hf_tooling plan
+
+  runtime:
+    needs: contracts
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - lane: hub
+            os: ubuntu-latest
+          - lane: hub
+            os: windows-latest
+          - lane: trl
+            os: ubuntu-latest
+          - lane: tau
+            os: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    env:
+      SZL_TOOLING_LANE: ${{ matrix.lane }}
+      HF_HUB_DISABLE_IMPLICIT_TOKEN: '1'
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      HF_HUB_ETAG_TIMEOUT: '15'
+      HF_HUB_DOWNLOAD_TIMEOUT: '15'
+      HF_HUB_OFFLINE: ${{ matrix.lane == 'hub' && '0' || '1' }}
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+      WANDB_DISABLED: 'true'
+    steps:
+      - run: git config --global core.autocrlf false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Install exact evaluation sources into a fresh job-local venv
+        shell: python
+        run: |
+          import os, pathlib, subprocess, sys, venv
+          sys.path.insert(0, str(pathlib.Path.cwd()))
+          from inference.hf_tooling import requirements
+          lane = os.environ['SZL_TOOLING_LANE']
+          root = pathlib.Path(os.environ['RUNNER_TEMP']) / 'szl-tooling-venv'
+          venv.EnvBuilder(with_pip=True).create(root)
+          exe = root / ('Scripts/python.exe' if os.name == 'nt' else 'bin/python')
+          output = pathlib.Path('artifacts/hf-tooling')
+          output.mkdir(parents=True, exist_ok=True)
+          req = root / 'requirements.txt'
+          req.write_text(requirements(lane), encoding='utf-8')
+          constraint_args = []
+          if lane == 'trl':
+              subprocess.run([str(exe), '-m', 'pip', 'install', 'torch==2.10.0',
+                  '--index-url', 'https://download.pytorch.org/whl/cpu'], check=True, timeout=600)
+              constraint = root / 'cpu-constraint.txt'
+              constraint.write_text('torch==2.10.0\n', encoding='utf-8')
+              constraint_args = ['-c', str(constraint)]
+          subprocess.run([str(exe), '-m', 'pip', 'install', '--report',
+              str(output / 'install-report.json'), '-r', str(req), *constraint_args],
+              check=True, timeout=600)
+          subprocess.run([str(exe), '-m', 'pip', 'check'], check=True, timeout=60)
+      - name: Execute actual installed-library probes and retain honest bounds
+        env:
+          HF_HOME: ${{ runner.temp }}/szl-tooling-hf-home
+        shell: python
+        run: |
+          import os, pathlib, subprocess
+          root = pathlib.Path(os.environ['RUNNER_TEMP']) / 'szl-tooling-venv'
+          exe = root / ('Scripts/python.exe' if os.name == 'nt' else 'bin/python')
+          lane = os.environ['SZL_TOOLING_LANE']
+          args = [str(exe), '-m', 'tools.evaluate_hf_tooling', 'run', '--lane', lane,
+                  '--output', 'artifacts/hf-tooling/runtime-report.json']
+          if lane == 'hub':
+              args.append('--live-hub')
+          subprocess.run(args, check=True, timeout=300)
+      - name: Retain install and runtime evidence on success or failure
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: hf-tooling-${{ matrix.lane }}-${{ matrix.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/hf-tooling/*.json
+          if-no-files-found: error
+          retention-days: 30
