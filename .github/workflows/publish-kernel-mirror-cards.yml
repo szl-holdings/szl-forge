@@ -1,7 +1,11 @@
 # SPDX-License-Identifier: Apache-2.0
 name: Publish kernel mirror cards
 
+# CARD_ONLY. Publication is fail-closed if this run no longer owns
+# current protected main. workflow_dispatch exists so a later main can
+# finish remaining family cards after a mid-matrix main move.
 on:
+  workflow_dispatch:
   pull_request:
     branches: [main]
     paths:
@@ -148,7 +152,7 @@ jobs:
           retention-days: 30
 
   publish:
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' }}
     name: Publish ${{ matrix.profile }} and verify exact Hub bytes
     needs: verify
     runs-on: ubuntu-24.04
@@ -239,7 +243,7 @@ jobs:
           HUGGING_FACE_HUB_TOKEN_CANDIDATE: ${{ secrets.HUGGING_FACE_HUB_TOKEN }}
         run: |
           set -euo pipefail
-          python tools/acquire_hf_publisher_token.py \
+          python tools.acquire_hf_publisher_token.py \
             --target-repo "${{ matrix.repo_id }}" \
             --target-type model \
             --github-env "${GITHUB_ENV}" \
