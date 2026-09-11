@@ -243,13 +243,13 @@ jobs:
           HUGGING_FACE_HUB_TOKEN_CANDIDATE: ${{ secrets.HUGGING_FACE_HUB_TOKEN }}
         run: |
           set -euo pipefail
-          python tools.acquire_hf_publisher_token.py \
+          python tools/acquire_hf_publisher_token.py \
             --target-repo "${{ matrix.repo_id }}" \
             --target-type model \
             --github-env "${GITHUB_ENV}" \
             --report "reports/${{ matrix.receipt }}-credential.json"
 
-      - name: Publish the closed two-file set and verify exact readback
+      - name: Publish the closed two-file set and verify exact Hub bytes
         run: |
           set -euo pipefail
           git fetch --no-tags --depth=1 origin main
