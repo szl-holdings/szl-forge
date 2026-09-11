@@ -70,11 +70,11 @@ def observe(
             "no_provider_details",
         ],
     }
-    if raw is None or http_status == 404:
+    if http_status == 404:
         base["observationStatus"] = "UNAVAILABLE"
         base["reasonCode"] = "public_counter_absent"
         return base
-    if http_status is not None and http_status != 200:
+    if raw is None or (http_status is not None and http_status != 200):
         base["observationStatus"] = "UNAVAILABLE"
         base["reasonCode"] = "public_counter_fetch_failed"
         return base
