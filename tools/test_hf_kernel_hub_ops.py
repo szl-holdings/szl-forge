@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import unittest
-from unittest.mock import patch
 
 import hf_kernel_hub_ops as ops
 
