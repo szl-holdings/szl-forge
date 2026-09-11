@@ -2,10 +2,17 @@
 
 State: `HOLD` (kernel-type live; leftover model-type mirrors not retired).
 
-- 14 first-class kernel-type repositories on `SZLHOLDINGS`
-- 14 leftover model-type mirrors, all SHA-divergent from the kernel-type head
+Live unauthenticated `GET https://huggingface.co/api/kernels?author=SZLHOLDINGS` at 2026-09-11T23:07Z:
+
+- kernels API list cardinality: **14**
+- objects carrying tag `kernel`: **9**
+- objects on that list without tag `kernel`: **5** (`szl-governed-norm`, `governed-inference-meter`, `szl-maskmod`, `szl-block-kv`, `szl-receipt-attn`)
+
+Those two numbers are different predicates. Do not add them to membership 46/35/21 or inventory 44/30/48.
+
+Prior same-day observation still records missing kernel-type `v1` branches on `szl-maskmod`, `szl-block-kv`, `szl-receipt-attn`, `YARQA-ATTN`. Branch presence was not re-verified in the 23:07Z tag/list sweep; that field stays HOLD.
+
 - Hugging Face model-type compiled-kernel takedown starts **2026-09-13**
-- Missing kernel-type `v1` branch: `szl-maskmod`, `szl-block-kv`, `szl-receipt-attn`, `YARQA-ATTN`
 - Consumer contract: `kernels==0.16.1`, repo type `kernel`, exact revision (`v1` SHA preferred). Floating `main` and omitted revision are HOLD.
 - `trust_remote_code=True` is a review flag, not a compatibility repair
 - This change does **not** delete Hub mirrors, load weights, or mint production authorization
