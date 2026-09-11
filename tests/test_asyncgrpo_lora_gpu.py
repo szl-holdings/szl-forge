@@ -15,7 +15,9 @@ from frontier.asyncgrpo_lora_gpu import (
     VllmHandle,
     admit_gpu_measurements,
     gpu_blocker,
+    materialize_adapter,
     measure_gpu_sync_paths,
+    observe_gpu_negatives,
     resolve_gpu_artifacts,
     try_gpu_negative_paths,
     try_gpu_sync_paths,
@@ -44,10 +46,11 @@ FAKE = {
 
 
 class _MockState:
-    def __init__(self, *, enable_lora: bool, runtime_updates: bool, max_loras: int) -> None:
+    def __init__(self, *, enable_lora: bool, runtime_updates: bool, max_loras: int, max_lora_rank: int = 32) -> None:
         self.enable_lora = enable_lora
         self.runtime_updates = runtime_updates
         self.max_loras = max_loras
+        self.max_lora_rank = max_lora_rank
         self.loaded: list[str] = []
         self.served_model = "base"
 
@@ -71,12 +74,15 @@ class _MockHandler(BaseHTTPRequestHandler):
 
     def _send(self, status: int, payload: dict[str, object]) -> None:
         body = json.dumps(payload).encode("utf-8")
-        self.send_response(status)
-        self.send_header("Content-Type", "application/json")
-        self.send_header("Content-Length", str(len(body)))
-        self.send_header("Connection", "close")
-        self.end_headers()
-        self.wfile.write(body)
+        try:
+            self.send_response(status)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Connection", "close")
+            self.end_headers()
+            self.wfile.write(body)
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+            return
 
     def do_GET(self) -> None:  # noqa: N802
         state: _MockState = self.server.state  # type: ignore[attr-defined]
@@ -100,6 +106,19 @@ class _MockHandler(BaseHTTPRequestHandler):
                 return
             if not state.enable_lora:
                 self._send(400, {"error": "lora disabled"})
+                return
+            lora_path = Path(str(payload.get("lora_path") or ""))
+            rank = 32
+            config_path = lora_path / "adapter_config.json"
+            if config_path.is_file():
+                try:
+                    config = json.loads(config_path.read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+                    config = {}
+                if isinstance(config, dict) and type(config.get("r")) is int:
+                    rank = int(config["r"])
+            if rank > state.max_lora_rank:
+                self._send(400, {"error": "rank too high"})
                 return
             if len(state.loaded) >= state.max_loras:
                 self._send(400, {"error": "max loras exceeded"})
@@ -132,8 +151,20 @@ class _MockHandler(BaseHTTPRequestHandler):
 
 
 class MockVllm:
-    def __init__(self, *, enable_lora: bool = True, runtime_updates: bool = True, max_loras: int = 6) -> None:
-        self.state = _MockState(enable_lora=enable_lora, runtime_updates=runtime_updates, max_loras=max_loras)
+    def __init__(
+        self,
+        *,
+        enable_lora: bool = True,
+        runtime_updates: bool = True,
+        max_loras: int = 6,
+        max_lora_rank: int = 32,
+    ) -> None:
+        self.state = _MockState(
+            enable_lora=enable_lora,
+            runtime_updates=runtime_updates,
+            max_loras=max_loras,
+            max_lora_rank=max_lora_rank,
+        )
         self.server = ThreadingHTTPServer(("127.0.0.1", 0), _MockHandler)
         self.server.state = self.state  # type: ignore[attr-defined]
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
@@ -262,9 +293,11 @@ class GpuBackendTests(unittest.TestCase):
             "python3", Path("/tmp/model"), 8010, enable_lora=True, max_lora_rank=32, max_loras=6
         )
         self.assertIn("--enable-lora", command)
+        self.assertIn("--model", command)
         self.assertIn("32", command)
         self.assertIn("6", command)
         self.assertIn("vllm.entrypoints.openai.api_server", command)
+        self.assertEqual(command[command.index("--model") + 1], "/tmp/model")
         bare = vllm_command(
             "python3", Path("/tmp/model"), 8010, enable_lora=False, max_lora_rank=32, max_loras=6
         )
@@ -285,6 +318,8 @@ class GpuBackendTests(unittest.TestCase):
                     cache_root=Path(tmp),
                     merged_ready_seconds=0.05,
                 )
+                self.assertTrue(Path(str(measured["stagedAdapterPath"])).is_dir())
+                self.assertIn(".vllm_lora", str(measured["stagedAdapterPath"]))
             self.assertLess(measured["adapterOnlyTransferredBytes"], measured["mergedTransferredBytes"])
             self.assertGreater(measured["adapterOnlyGenerationThroughput"], 0)
             self.assertGreater(measured["mergedGenerationThroughput"], 0)
@@ -357,6 +392,84 @@ class GpuBackendTests(unittest.TestCase):
     def test_vllm_eval_client_rejects_non_int_port(self) -> None:
         with self.assertRaises(EvaluationContractError):
             VllmEvalClient("127.0.0.1", True)  # type: ignore[arg-type]
+
+    def _spawn_factory(self, servers: list[MockVllm]):
+        def spawn(output_dir: Path, model: Path, python: str, **kwargs: object) -> VllmHandle:
+            del output_dir, model, python
+            enable = bool(kwargs.get("enable_lora", True))
+            updates = bool(kwargs.get("runtime_updates", True))
+            max_loras = int(kwargs.get("max_loras", 6) or 6)
+            max_rank = int(kwargs.get("max_lora_rank", 32) or 32)
+            mock = MockVllm(
+                enable_lora=enable,
+                runtime_updates=updates,
+                max_loras=max_loras,
+                max_lora_rank=max_rank,
+            )
+            if not enable:
+                mock.state.served_model = "merged"
+            servers.append(mock)
+            return VllmHandle(process=_IdleProcess(), client=mock.client, log_path=Path("/dev/null"))  # type: ignore[arg-type]
+
+        return spawn
+
+    def test_env_weights_outside_job_dir_are_staged_and_measured(self) -> None:
+        servers: list[MockVllm] = []
+        spawn = self._spawn_factory(servers)
+        try:
+            with tempfile.TemporaryDirectory() as tmp:
+                source = Path(tmp) / "weights"
+                job = Path(tmp) / "job"
+                source.mkdir()
+                job.mkdir()
+                artifacts = _write_artifacts(source)
+                env = {
+                    "SZL_ASYNCGRPO_GPU_MODEL": str(artifacts["model"]),
+                    "SZL_ASYNCGRPO_GPU_ADAPTER": str(artifacts["adapter"]),
+                    "SZL_ASYNCGRPO_GPU_MERGED": str(artifacts["merged"]),
+                }
+                result = try_gpu_sync_paths(READY, job, execute=True, spawn=spawn, environ=env)
+            self.assertEqual(result["status"], "MEASURED")
+            self.assertGreater(result["mergedTransferredBytes"], result["adapterOnlyTransferredBytes"])
+            self.assertTrue(str(result["stagedAdapterPath"]).startswith(str(job)))
+        finally:
+            for server in servers:
+                server.close()
+
+    def test_materialize_refuses_symlink_source(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            artifacts = _write_artifacts(root / "src")
+            link = root / "escaped"
+            link.symlink_to(artifacts["adapter"], target_is_directory=True)
+            with self.assertRaises(Exception) as caught:
+                materialize_adapter(link, root / "cache" / "adapter")
+            self.assertIn("path_escape_symlink", str(caught.exception))
+
+    def test_injected_spawn_observes_gpu_negatives(self) -> None:
+        servers: list[MockVllm] = []
+        spawn = self._spawn_factory(servers)
+        try:
+            with tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                artifacts = _write_artifacts(root)
+                observed = observe_gpu_negatives(artifacts, root, "python3", spawn=spawn)
+            self.assertTrue(observed["vllm_without_lora_support"]["observed"])
+            self.assertTrue(observed["runtime_adapter_update_unavailable"]["observed"])
+            self.assertTrue(observed["unsupported_or_insufficient_max_rank"]["observed"])
+            self.assertTrue(observed["insufficient_max_loras"]["observed"])
+            self.assertTrue(observed["server_restart"]["observed"])
+            self.assertTrue(observed["serving_cache_eviction"]["observed"])
+            self.assertTrue(observed["path_escape_symlink"]["observed"])
+            self.assertTrue(observed["partially_written_adapter"]["observed"])
+            self.assertFalse(observed["hybrid_recurrent_state_logprob_mismatch"]["observed"])
+            self.assertEqual(
+                observed["hybrid_recurrent_state_logprob_mismatch"]["reason"],
+                "architecture_not_hybrid_recurrent",
+            )
+        finally:
+            for server in servers:
+                server.close()
 
 
 if __name__ == "__main__":

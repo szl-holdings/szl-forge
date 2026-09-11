@@ -10,11 +10,17 @@ Adapter-only sync matches huggingface/trl@f540773f5250c816e992ae3d35a41142ef3625
 `VLLMClient`: pause, POST /v1/load_lora_adapter, resume, generate. Merged
 fallback is a process-reload of merged weights — the NCCL send path is the
 trainer's, not this evaluation lane's.
+
+Source adapters may live outside the job directory (SZL_ASYNCGRPO_GPU_ADAPTER).
+They are copied into <output>/.vllm_lora before load; that copy is the use-time
+path and is re-checked for symlink escape. Isolation does not require the env
+source tree to sit under the job directory.
 """
 from __future__ import annotations
 
 import json
 import os
+import shutil
 import socket
 import subprocess
 import time
@@ -53,8 +59,10 @@ HYBRID_MODEL_TYPES = frozenset(
 ENV_MODEL = "SZL_ASYNCGRPO_GPU_MODEL"
 ENV_ADAPTER = "SZL_ASYNCGRPO_GPU_ADAPTER"
 ENV_MERGED = "SZL_ASYNCGRPO_GPU_MERGED"
-VLLM_SERVE_TIMEOUT_SECONDS = 60
-VLLM_HTTP_TIMEOUT_SECONDS = 10
+# Match TRL VLLMClient defaults: wait_for_server_ready=240s, load_lora_adapter=1800s.
+VLLM_SERVE_TIMEOUT_SECONDS = 240
+VLLM_HTTP_TIMEOUT_SECONDS = 60
+VLLM_LOAD_TIMEOUT_SECONDS = 1800
 PROMPT_TEXT = "0"
 COMPLETION_TOKENS = 8
 
@@ -180,6 +188,34 @@ def adapter_payload_ready(root: Path) -> bool:
     return root.is_dir() and (root / "adapter_config.json").is_file() and has_weight_files(root)
 
 
+def refuse_symlink_tree(root: Path) -> None:
+    if root.is_symlink():
+        raise GpuUnavailable("path_escape_symlink")
+    if not root.exists():
+        raise GpuUnavailable("partially_written_adapter")
+    for path in root.rglob("*"):
+        if path.is_symlink():
+            raise GpuUnavailable("path_escape_symlink")
+
+
+def materialize_adapter(source: Path, dest: Path) -> Path:
+    """Copy a source adapter into the job-local serving cache. Refuses symlinks."""
+    refuse_symlink_tree(source)
+    if not adapter_payload_ready(source):
+        raise GpuUnavailable("partially_written_adapter")
+    if dest.exists() or dest.is_symlink():
+        if dest.is_dir() and not dest.is_symlink():
+            shutil.rmtree(dest)
+        else:
+            dest.unlink()
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(source, dest, symlinks=False)
+    refuse_symlink_tree(dest)
+    if not adapter_payload_ready(dest):
+        raise GpuUnavailable("partially_written_adapter")
+    return dest
+
+
 def is_hybrid_recurrent(model_dir: Path) -> bool:
     config_path = model_dir / "config.json"
     if not config_path.is_file():
@@ -227,9 +263,16 @@ class VllmEvalClient:
         self.port = port
         self.timeout = timeout
 
-    def _request(self, method: str, path: str, payload: dict[str, object] | None = None) -> tuple[int, dict[str, object] | None, str]:
+    def _request(
+        self,
+        method: str,
+        path: str,
+        payload: dict[str, object] | None = None,
+        *,
+        timeout: int | None = None,
+    ) -> tuple[int, dict[str, object] | None, str]:
         body = None if payload is None else json.dumps(payload).encode("utf-8")
-        connection = HTTPConnection(self.host, self.port, timeout=self.timeout)
+        connection = HTTPConnection(self.host, self.port, timeout=timeout if timeout is not None else self.timeout)
         try:
             connection.request(method, path, body=body, headers={"Content-Type": "application/json", "Connection": "close"})
             response = connection.getresponse()
@@ -260,7 +303,7 @@ class VllmEvalClient:
         started = time.perf_counter()
         while time.time() < deadline:
             try:
-                status, _, _ = self._request("GET", "/health")
+                status, _, _ = self._request("GET", "/health", timeout=5)
                 if status == 200:
                     return time.perf_counter() - started
             except GpuUnavailable:
@@ -289,8 +332,10 @@ class VllmEvalClient:
         if not adapter_payload_ready(path):
             raise GpuUnavailable("partially_written_adapter")
         status, _, text = self._request(
-            "POST", "/v1/load_lora_adapter",
+            "POST",
+            "/v1/load_lora_adapter",
             {"lora_name": name, "lora_path": str(path), "load_inplace": False},
+            timeout=VLLM_LOAD_TIMEOUT_SECONDS,
         )
         if status == 404:
             raise GpuUnavailable("runtime_adapter_update_unavailable")
@@ -303,7 +348,8 @@ class VllmEvalClient:
     def complete(self, model: str, tokens: int = COMPLETION_TOKENS) -> dict[str, object]:
         started = time.perf_counter()
         status, payload, text = self._request(
-            "POST", "/v1/completions",
+            "POST",
+            "/v1/completions",
             {"model": model, "prompt": PROMPT_TEXT, "max_tokens": tokens, "temperature": 0, "logprobs": 1},
         )
         elapsed = time.perf_counter() - started
@@ -323,9 +369,21 @@ class VllmEvalClient:
 
 def vllm_command(python: str, model: Path, port: int, *, enable_lora: bool, max_lora_rank: int, max_loras: int) -> list[str]:
     command = [
-        python, "-m", "vllm.entrypoints.openai.api_server", str(model),
-        "--host", "127.0.0.1", "--port", str(port),
-        "--max-model-len", "256", "--gpu-memory-utilization", "0.4", "--dtype", "auto",
+        python,
+        "-m",
+        "vllm.entrypoints.openai.api_server",
+        "--model",
+        str(model),
+        "--host",
+        "127.0.0.1",
+        "--port",
+        str(port),
+        "--max-model-len",
+        "1024",
+        "--gpu-memory-utilization",
+        "0.4",
+        "--dtype",
+        "auto",
     ]
     if enable_lora:
         command.extend(["--enable-lora", "--max-lora-rank", str(max_lora_rank), "--max-loras", str(max_loras)])
@@ -389,9 +447,10 @@ def measure_gpu_sync_paths(
     adapter_bytes = tree_bytes(adapter_dir)
     merged_bytes = tree_bytes(merged_dir)
     lora_name = f"{adapter_name}-v{version}"
+    staged = materialize_adapter(adapter_dir, cache_root / ".vllm_lora" / lora_name)
     adapter_client.pause()
     started = time.perf_counter()
-    adapter_client.load_lora(lora_name, adapter_dir, cache_root=cache_root)
+    adapter_client.load_lora(lora_name, staged, cache_root=cache_root)
     adapter_pause = time.perf_counter() - started
     adapter_client.resume()
     adapter_gen = adapter_client.complete(lora_name)
@@ -416,6 +475,7 @@ def measure_gpu_sync_paths(
         "mergedSyncMethod": "process-reload-merged-weights",
         "loadedAdapterIdentities": [lora_name],
         "gpuSyncExecuted": True,
+        "stagedAdapterPath": str(staged),
     }
 
 
@@ -431,6 +491,7 @@ def observe_gpu_negatives(
     adapter = artifacts["adapter"]
     model = artifacts["model"]
     cache_root = output_dir
+    good = materialize_adapter(adapter, output_dir / ".vllm_lora" / "good-adapter")
 
     def _run(code: str, fn: Callable[[], None], expect: str) -> None:
         try:
@@ -445,7 +506,7 @@ def observe_gpu_negatives(
     def _no_lora() -> None:
         handle = _spawned("neg-lora-off", enable_lora=False, max_lora_rank=32, max_loras=6, runtime_updates=True)
         try:
-            handle.client.load_lora("policy-v1", adapter, cache_root=cache_root)
+            handle.client.load_lora("policy-v1", good, cache_root=cache_root)
         finally:
             handle.close()
 
@@ -454,7 +515,7 @@ def observe_gpu_negatives(
     def _no_update() -> None:
         handle = _spawned("neg-no-update", enable_lora=True, max_lora_rank=32, max_loras=6, runtime_updates=False)
         try:
-            handle.client.load_lora("policy-v1", adapter, cache_root=cache_root)
+            handle.client.load_lora("policy-v1", good, cache_root=cache_root)
         finally:
             handle.close()
 
@@ -463,7 +524,7 @@ def observe_gpu_negatives(
     def _rank() -> None:
         handle = _spawned("neg-rank", enable_lora=True, max_lora_rank=1, max_loras=6, runtime_updates=True)
         try:
-            handle.client.load_lora("policy-v1", adapter, cache_root=cache_root)
+            handle.client.load_lora("policy-v1", good, cache_root=cache_root)
         finally:
             handle.close()
 
@@ -472,8 +533,8 @@ def observe_gpu_negatives(
     def _capacity() -> None:
         handle = _spawned("neg-capacity", enable_lora=True, max_lora_rank=32, max_loras=1, runtime_updates=True)
         try:
-            handle.client.load_lora("policy-v1", adapter, cache_root=cache_root)
-            handle.client.load_lora("policy-v2", adapter, cache_root=cache_root)
+            handle.client.load_lora("policy-v1", good, cache_root=cache_root)
+            handle.client.load_lora("policy-v2", good, cache_root=cache_root)
         finally:
             handle.close()
 
@@ -482,7 +543,7 @@ def observe_gpu_negatives(
     def _restart() -> None:
         handle = _spawned("neg-restart", enable_lora=True, max_lora_rank=32, max_loras=6, runtime_updates=True)
         try:
-            handle.client.load_lora("policy-v3", adapter, cache_root=cache_root)
+            handle.client.load_lora("policy-v3", good, cache_root=cache_root)
             handle.close()
             restarted = _spawned("neg-restart-2", enable_lora=True, max_lora_rank=32, max_loras=6, runtime_updates=True)
             try:
@@ -498,7 +559,7 @@ def observe_gpu_negatives(
     def _evict() -> None:
         handle = _spawned("neg-evict", enable_lora=True, max_lora_rank=32, max_loras=6, runtime_updates=True)
         try:
-            handle.client.load_lora("policy-v1", adapter, cache_root=cache_root)
+            handle.client.load_lora("policy-v1", good, cache_root=cache_root)
             handle.client.unload_lora("policy-v1")
             handle.client.complete("policy-v1")
         finally:
@@ -510,7 +571,7 @@ def observe_gpu_negatives(
         link = cache_root / "escaped-adapter"
         if link.exists() or link.is_symlink():
             link.unlink()
-        link.symlink_to(adapter, target_is_directory=True)
+        link.symlink_to(good, target_is_directory=True)
         VllmEvalClient("127.0.0.1", pick_free_port()).load_lora("escaped", link, cache_root=cache_root)
 
     _run("path_escape_symlink", _symlink, "path_escape_symlink")
@@ -595,4 +656,3 @@ def try_gpu_negative_paths(
 
 def closure_specs() -> dict[str, str]:
     return {"peft": PEFT_SPEC, "vllm": VLLM_SPEC, "trlRevision": TRL_REVISION}
-

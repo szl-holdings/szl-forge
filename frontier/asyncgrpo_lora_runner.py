@@ -320,6 +320,8 @@ def evaluate_host(
             present.add("generation-throughput")
             probe = dict(probe)
             probe["adapterOnlyHardwareExecuted"] = True
+            if "measured_comparison_absent" in reasons:
+                reasons.remove("measured_comparison_absent")
         else:
             gpu_status = "UNAVAILABLE"
             if "gpu_generation_throughput_unavailable" not in reasons:
