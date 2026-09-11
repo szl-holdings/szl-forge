@@ -1,0 +1,89 @@
+{
+  "schema": "szl.frontier.command-readout.v1",
+  "observedAt": "2026-09-11T23:16:00Z",
+  "productionDisposition": "HOLD",
+  "signatureState": "UNSIGNED",
+  "hashMeaning": "Integrity of this JSON only; not a cryptographic signature of a run",
+  "schedulerMayLaunch": false,
+  "denied": {
+    "productionPromotion": false,
+    "providerWrites": false,
+    "trainingLaunch": false,
+    "billableJobCreation": false,
+    "weightPublication": false,
+    "toolExecution": false
+  },
+  "authorityOrder": ["GitHub", "Hugging Face", "a-11-oy.com", "a11oy.net"],
+  "helpers": {
+    "package": "frontier_completion",
+    "version": "0.1.0",
+    "pr": 236,
+    "prHead": "8fb0559f17540ed74e508461644003208b571e17",
+    "merge": "MERGED",
+    "onMain": true,
+    "localTests": "63 Forge unittest OK; 78 sandbox unittest OK",
+    "production": "HOLD"
+  },
+  "heads": {
+    "szl-holdings/szl-forge": {
+      "sha": "e97d7dc8ccf09b2941bca32a84ad70fe3cc93d08",
+      "note": "Helpers on main after #236. Later #240 fail-closed AsyncGRPO probe and #235 Kernel Hub HOLD ops. Production HOLD."
+    },
+    "szl-holdings/a11oy": {
+      "sha": "7253ccb1f6ef888f87fcd9299baabde239a0ced0",
+      "note": "AIS CITATION_ONLY. E03 outstanding. Does not stamp LIVE."
+    },
+    "szl-holdings/szl-frontier": {
+      "sha": "fde55c77bb78d70cad5d16fb753b2965557f72c6",
+      "note": "Command readout #90 under HOLD. Does not stamp ALL_DONE."
+    },
+    "szl-holdings/lyte-services": {
+      "sha": "dd17d9f524b76c8f0e260d7ec1e084cc079dfc43",
+      "note": "Forecast Loom workbench. Granite checkpoint inference NOT_PERFORMED."
+    },
+    "szl-holdings/a11oy-net": {
+      "sha": "50829911cc268e822cd4e8419041d88d77319c21",
+      "note": "Four-origin ops recapture #179. ready=false. Independent proof origin."
+    }
+  },
+  "product": {
+    "schema": "szl.hf-tooling-product.v1",
+    "kind": "ARCHIVED_MEASUREMENT",
+    "productionDisposition": "HOLD",
+    "signatureState": "UNSIGNED",
+    "sourceRevision": "74a8a07ced6c6b8697b31b7d0e482c4241d55880",
+    "productSourceRevision": "7253ccb1f6ef888f87fcd9299baabde239a0ced0",
+    "productMatchesA11oyMain": true,
+    "sourceBinding": "RUNTIME_REPORTED_NOT_INDEPENDENTLY_ATTESTED",
+    "hub": {
+      "installedVersion": "1.31.0",
+      "state": "VERSION_MATCH_ONLY",
+      "exactInstalledSourceVerified": false
+    },
+    "notInstalledInProductProcess": ["transformers", "accelerate", "trl", "tau-ai"]
+  },
+  "proof": {
+    "origin": "https://a11oy.net/record.json",
+    "statusState": "PARTIAL",
+    "liveChain": "UNAVAILABLE",
+    "thisOriginIsNotProductHost": true,
+    "estateReleaseState": "PARTIAL_LYTE_PUBLICATION_FAILURE",
+    "productionModelAdmission": false
+  },
+  "huggingface": {
+    "org": "SZLHOLDINGS",
+    "class": "INVENTORY",
+    "note": "Org reachable. Counts are inventory-class, not runtime qualification. Helper RELEASES pins match product evaluated revisions."
+  },
+  "openDraftsDoNotMerge": [239, 220],
+  "mergedThisWindow": [236, 240, 235],
+  "remainingOpen": [
+    "Lyte canonical republish",
+    "Hub exact-source attestation",
+    "Granite checkpoint inference",
+    "MiniCPM held-out suite",
+    "DSpark controlled evaluation",
+    "DeepSeek compute block"
+  ],
+  "doNotPromote": true
+}
