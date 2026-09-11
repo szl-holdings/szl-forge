@@ -1,23 +1,34 @@
 {
-  "schema": "szl.forge.asyncgrpo-lora-vllm-evaluation.v1",
-  "candidate": "huggingface/trl AsyncGRPO LoRA / vLLM",
-  "sourceRepository": "huggingface/trl",
-  "sourceRevision": "f540773f5250c816e992ae3d35a41142ef3625c0",
-  "stableBaselineVersion": "1.13.0",
-  "stableBaselineRevision": "3d9261f1fec9f9a8140099c78a65c7da73dce79c",
-  "upstreamAdapterOnlyCommit": "f540773f5250c816e992ae3d35a41142ef3625c0",
-  "upstreamAdapterOnlyPr": "huggingface/trl#7017",
-  "frontierTrackingIssue": 224,
-  "frontierTracking": [
-    "https://github.com/szl-holdings/szl-forge/issues/224",
-    "https://github.com/szl-holdings/szl-frontier/issues/76"
-  ],
+  "schema": "szl.forge.frontier-evaluation.v1",
+  "candidate": "huggingface/trl",
+  "sourceVersion": "asyncgrpo-lora-vllm-exact-commit",
+  "upstreamRevision": "f540773f5250c816e992ae3d35a41142ef3625c0",
+  "predecessorRevision": "3d9261f1fec9f9a8140099c78a65c7da73dce79c",
+  "license": "Apache-2.0",
+  "frontierTrackingIssue": 76,
+  "forgeTrackingIssue": 224,
   "disposition": "UNAVAILABLE",
   "evaluationOnly": true,
-  "productionEligible": false,
-  "automaticPromotionAuthorized": false,
-  "observedAt": "2026-09-11T22:40:00Z",
-  "observation": "Host probe this session found no admitted GPU/vLLM/exact-TRL job-local environment. Contract #238 is on main; hardware lane remains UNAVAILABLE. PEFT/vLLM versions are not invented.",
+  "authority": {
+    "autonomousMerge": false,
+    "deploy": false,
+    "secretAccess": false,
+    "branchProtectionMutation": false,
+    "upstreamWrite": false,
+    "productionRouteChange": false,
+    "productionTrainingAuthorized": false,
+    "productionServingAuthorized": false,
+    "hubPublicationAuthorized": false,
+    "automaticPromotionAuthorized": false
+  },
+  "syncContract": {
+    "adapterOnlyPreferred": true,
+    "mergedFallbackRemainsAvailable": true,
+    "adapterOnlyApiVerifiedAtPin": false,
+    "upstreamAdapterOnlyIssue": "https://github.com/huggingface/trl/issues/5975",
+    "jobLocalEnvironmentRequired": true,
+    "productionRuntimeInstallForbidden": true
+  },
   "requiredEvidence": [
     "exact-trl-commit-install-receipt",
     "pep610-direct-url-provenance",
@@ -32,6 +43,7 @@
     "loaded-evicted-adapter-identities",
     "checkpoint-presence",
     "resource-use",
+    "adapter-only-vs-merged-equivalent-conditions",
     "vllm-without-lora-support",
     "runtime-adapter-update-unavailable",
     "unsupported-or-insufficient-max-rank",
@@ -46,15 +58,8 @@
     "checkpoint-missing",
     "hybrid-recurrent-state-logprob-mismatch",
     "serving-cache-ephemeral-not-durable-artifact",
-    "adapter-only-vs-merged-fallback-comparison"
+    "adapter-only-sync-api-at-pinned-trl-revision"
   ],
-  "authority": {
-    "productionTrainingAuthorized": false,
-    "productionServingAuthorized": false,
-    "providerCredentialUseAuthorized": false,
-    "externalProviderWriteAuthorized": false,
-    "hubPublicationAuthorized": false,
-    "automaticPromotionAuthorized": false,
-    "mergeDeployAuthority": false
-  }
+  "productionEligible": false,
+  "automaticPromotionAuthorized": false
 }
