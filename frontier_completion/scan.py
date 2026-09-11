@@ -73,6 +73,7 @@ class PublicClient:
                 code = exc.code
                 retry = exc.headers.get("Retry-After") if exc.headers else None
                 exc.close()
+                # Auth/access and unknown retry dates are never bypassed.
                 if code not in {429, 500, 502, 503, 504} or attempt == 1:
                     raise EvidenceError("http_" + str(code)) from exc
                 if retry is not None and (not re.fullmatch(r"\d{1,2}", retry) or int(retry) > 10):
@@ -145,6 +146,7 @@ def materiality(candidate: Candidate, raw: dict[str, Any]) -> dict[str, Any]:
     declarations = [] if card_license is None else [card_license] if type(card_license) is str else card_license
     require(type(declarations) is list and all(type(v) is str for v in declarations), "invalid_license_metadata")
     licenses = sorted(set(declarations + [tag[8:] for tag in tags if tag.startswith("license:")]))
+    # Do not decide that two licenses mean OR vs AND from metadata tags alone.
     files, complete, file_code = _file_facts(raw)
     config = {} if raw.get("config") is None else raw["config"]
     require(type(config) is dict, "invalid_config_metadata")
@@ -183,6 +185,7 @@ def observe(candidate: Candidate, client: PublicClient) -> dict[str, Any]:
     base = "https://huggingface.co/api/" + noun + "/" + urllib.parse.quote(candidate.repo, safe="/")
     current = client.json(base)
     _identity(current, candidate)
+    # A second lookup binds observation to immutable revision, not a moving main.
     pinned = client.json(base + "/revision/" + current["sha"] + "?blobs=true")
     _identity(pinned, candidate)
     require(pinned["sha"] == current["sha"], "pinned_lookup_revision_mismatch")
@@ -220,6 +223,7 @@ def scan(candidates: list[Candidate], source: str, client: PublicClient,
                 notices.append({"key": candidate.key, **delta,
                                 "sourceUrl": "https://huggingface.co/" + ("datasets/" if candidate.kind == "dataset" else "") + candidate.repo})
         except EvidenceError as exc:
+            # Only locally defined reason codes; response bodies/tokens never enter receipts.
             failures.append({"key": candidate.key, "state": "UNAVAILABLE", "reasonCode": str(exc)})
     report = {**observation_shell("szl.handoff.frontier-scan.v1", source),
               "observations": observations, "failures": failures, "notifications": notices,

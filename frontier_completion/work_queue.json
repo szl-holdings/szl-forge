@@ -1,0 +1,504 @@
+{
+  "schema": "szl.grok.frontier-work-queue.v1",
+  "preparedDate": "2026-09-11",
+  "authorityOrder": [
+    "GitHub",
+    "Hugging Face",
+    "a-11-oy.com",
+    "a11oy.net"
+  ],
+  "dependencyMeaning": "DAG for one admitted slice; independent engineering may proceed during compute/rights blocks. D07 must report unresolved tasks, not force unsupported qualification.",
+  "disclaimer": "These are remaining-work tasks, not new success claims. Reconcile already-completed successors first. Never create duplicate services from this queue.",
+  "workItems": [
+    {
+      "id": "A00",
+      "priority": "P0",
+      "ownerRepository": "szl-holdings/szl-frontier",
+      "ownershipMustBeRevalidated": true,
+      "task": "Re-read current ownership/PRs/runtime",
+      "acceptance": "Fresh exact-head/source/route capture; duplicate work ruled out",
+      "dependsOn": [],
+      "state": "NOT_EXECUTED_BY_THIS_HANDOFF",
+      "blockedPrerequisite": null,
+      "evidence": [],
+      "mergeRevision": null,
+      "publishedRuntimeRevision": null,
+      "modelProductionAdmission": false
+    },
+    {
+      "id": "A01",
+      "priority": "P0",
+      "ownerRepository": "szl-holdings/a11oy",
+      "ownershipMustBeRevalidated": true,
+      "task": "Diagnose Lyte canonical failure",
+      "acceptance": "Full failed controller evidence; precise cause, no inferred diagnosis",
+      "dependsOn": [
+        "A00"
+      ],
+      "state": "NOT_EXECUTED_BY_THIS_HANDOFF",
+      "blockedPrerequisite": null,
+      "evidence": [],
+      "mergeRevision": null,
+      "publishedRuntimeRevision": null,
+      "modelProductionAdmission": false
+    },
+    {
+      "id": "A02",
+      "priority": "P0",
+      "ownerRepository": "szl-holdings/lyte-services",
+      "ownershipMustBeRevalidated": true,
+      "task": "Repair and republish Lyte through owner",
+      "acceptance": "Tested source pin; canonical publish; exact live Lyte route/source readback",
+      "dependsOn": [
+        "A01"
+      ],
+      "state": "NOT_EXECUTED_BY_THIS_HANDOFF",
+      "blockedPrerequisite": null,
+      "evidence": [],
+      "mergeRevision": null,
+      "publishedRuntimeRevision": null,
+      "modelProductionAdmission": false
+    },
+    {
+      "id": "A03",
+      "priority": "P0",
+      "ownerRepository": "szl-holdings/a11oy",
+      "ownershipMustBeRevalidated": true,
+      "task": "Resolve Hub canonical dependency drift",
+      "acceptance": "Reviewed closure, Linux/Windows regressions, container and live source/install identity",
+      "dependsOn": [
+        "A00"
+      ],
+      "state": "NOT_EXECUTED_BY_THIS_HANDOFF",
+      "blockedPrerequisite": null,
+      "evidence": [],
+      "mergeRevision": null,
+      "publishedRuntimeRevision": null,
+      "modelProductionAdmission": false
+    },
+    {
+      "id": "A04",
+      "priority": "P0",
+      "ownerRepository": "szl-holdings/a11oy",
+      "ownershipMustBeRevalidated": true,
+      "task": "Fix full-app UI/middleware gaps",
+      "acceptance": "Actual production-stack browser evidence, CSP/keyboard/mobile pass",
+      "dependsOn": [
+        "A00"
+      ],
+      "state": "NOT_EXECUTED_BY_THIS_HANDOFF",
+      "blockedPrerequisite": null,
+      "evidence": [],
+      "mergeRevision": null,
+      "publishedRuntimeRevision": null,
+      "modelProductionAdmission": false
+    },
+    {
+      "id": "B01",
+      "priority": "P1",
+      "ownerRepository": "szl-holdings/szl-forge",
+      "ownershipMustBeRevalidated": true,
+      "task": "Evolve existing shared schemas",
+      "acceptance": "Backward compatibility, strict negatives, owner tests, no authority escalation",
+      "dependsOn": [
+        "A00"
+      ],
+      "state": "NOT_EXECUTED_BY_THIS_HANDOFF",
+      "blockedPrerequisite": null,
+      "evidence": [],
+      "mergeRevision": null,
+      "publishedRuntimeRevision": null,
+      "modelProductionAdmission": false
+    },
+    {
+      "id": "B02",
+      "priority": "P1",
+      "ownerRepository": "szl-holdings/szl-frontier",
+      "ownershipMustBeRevalidated": true,
+      "task": "Freeze release and artifact identities",
+      "acceptance": "Immutable refs, full selected file manifests, licensing/code review",
+      "dependsOn": [
+        "A00"
+      ],
+      "state": "NOT_EXECUTED_BY_THIS_HANDOFF",
+      "blockedPrerequisite": null,
+      "evidence": [],
+      "mergeRevision": null,
+      "publishedRuntimeRevision": null,
+      "modelProductionAdmission": false
+    },
+    {
+      "id": "B03",
+      "priority": "P1",
+      "ownerRepository": "szl-holdings/szl-forge",
+      "ownershipMustBeRevalidated": true,
+      "task": "MiniCPM baseline/held-out diagnostics",
+      "acceptance": "Original failures retained; separate frozen holdout and full outputs",
+      "dependsOn": [
+        "B01",
+        "B02"
+      ],
+      "state": "NOT_EXECUTED_BY_THIS_HANDOFF",
+      "blockedPrerequisite": null,
+      "evidence": [],
+      "mergeRevision": null,
+      "publishedRuntimeRevision": null,
+      "modelProductionAdmission": false
+    },
+    {
+      "id": "B04",
+      "priority": "P1",
+      "ownerRepository": "szl-holdings/szl-forge",
+      "ownershipMustBeRevalidated": true,
+      "task": "DSpark controlled evaluation",
+      "acceptance": "Correct target/draft/runtime; parity/quality/latency/memory results",
+      "dependsOn": [
+        "B03"
+      ],
+      "state": "NOT_EXECUTED_BY_THIS_HANDOFF",
+      "blockedPrerequisite": null,
+      "evidence": [],
+      "mergeRevision": null,
+      "publishedRuntimeRevision": null,
+      "modelProductionAdmission": false
+    },
+    {
+      "id": "B05",
+      "priority": "P1",
+      "ownerRepository": "szl-holdings/szl-forge",
+      "ownershipMustBeRevalidated": true,
+      "task": "Quantization canary/Pareto experiment",
+      "acceptance": "Same task/hardware budgets; reject/fallback proof, per-case evidence",
+      "dependsOn": [
+        "B03"
+      ],
+      "state": "NOT_EXECUTED_BY_THIS_HANDOFF",
+      "blockedPrerequisite": null,
+      "evidence": [],
+      "mergeRevision": null,
+      "publishedRuntimeRevision": null,
+      "modelProductionAdmission": false
+    },
+    {
+      "id": "B06",
+      "priority": "P1",
+      "ownerRepository": "szl-holdings/lyte-services",
+      "ownershipMustBeRevalidated": true,
+      "task": "Actual Granite checkpoint evaluation",
+      "acceptance": "Real admitted checkpoint run; no-leakage folds; baseline and interval metrics",
+      "dependsOn": [
+        "A02",
+        "B01",
+        "B02"
+      ],
+      "state": "NOT_EXECUTED_BY_THIS_HANDOFF",
+      "blockedPrerequisite": null,
+      "evidence": [],
+      "mergeRevision": null,
+      "publishedRuntimeRevision": null,
+      "modelProductionAdmission": false
+    },
+    {
+      "id": "B07",
+      "priority": "P1",
+      "ownerRepository": "szl-holdings/a11oy",
+      "ownershipMustBeRevalidated": true,
+      "task": "Lyte risk/forecast UX",
+      "acceptance": "Existing API consumed; genuine data/uncertainty/receipt views; mobile test",
+      "dependsOn": [
+        "A04",
+        "B06"
+      ],
+      "state": "NOT_EXECUTED_BY_THIS_HANDOFF",
+      "blockedPrerequisite": null,
+      "evidence": [],
+      "mergeRevision": null,
+      "publishedRuntimeRevision": null,
+      "modelProductionAdmission": false
+    },
+    {
+      "id": "B08",
+      "priority": "P1",
+      "ownerRepository": "szl-holdings/szl-forge",
+      "ownershipMustBeRevalidated": true,
+      "task": "Tau authenticated host/Second Brain",
+      "acceptance": "Tenant/replay/tombstone/poisoning negatives; real host consumer",
+      "dependsOn": [
+        "B01",
+        "B02"
+      ],
+      "state": "NOT_EXECUTED_BY_THIS_HANDOFF",
+      "blockedPrerequisite": null,
+      "evidence": [],
+      "mergeRevision": null,
+      "publishedRuntimeRevision": null,
+      "modelProductionAdmission": false
+    },
+    {
+      "id": "B09",
+      "priority": "P1",
+      "ownerRepository": "szl-holdings/szl-forge",
+      "ownershipMustBeRevalidated": true,
+      "task": "TRL post-training compatibility",
+      "acceptance": "Applicable CPU/GPU/distributed tests; rights-reviewed data; bounded pilot",
+      "dependsOn": [
+        "B01",
+        "B02"
+      ],
+      "state": "NOT_EXECUTED_BY_THIS_HANDOFF",
+      "blockedPrerequisite": null,
+      "evidence": [],
+      "mergeRevision": null,
+      "publishedRuntimeRevision": null,
+      "modelProductionAdmission": false
+    },
+    {
+      "id": "C01",
+      "priority": "P2",
+      "ownerRepository": "szl-holdings/szl-forge",
+      "ownershipMustBeRevalidated": true,
+      "task": "DeepSeek capacity and protocol",
+      "acceptance": "Exact encoder/recipe; actual capacity plan; honest compute block or approved pilot",
+      "dependsOn": [
+        "B02"
+      ],
+      "state": "NOT_EXECUTED_BY_THIS_HANDOFF",
+      "blockedPrerequisite": null,
+      "evidence": [],
+      "mergeRevision": null,
+      "publishedRuntimeRevision": null,
+      "modelProductionAdmission": false
+    },
+    {
+      "id": "C02",
+      "priority": "P2",
+      "ownerRepository": "szl-holdings/szl-forge",
+      "ownershipMustBeRevalidated": true,
+      "task": "DeepSeek multimodal/agent experiment",
+      "acceptance": "Pinned runtime/provider limits; independent task outcomes; no assumed 1M capacity",
+      "dependsOn": [
+        "C01",
+        "B01"
+      ],
+      "state": "NOT_EXECUTED_BY_THIS_HANDOFF",
+      "blockedPrerequisite": null,
+      "evidence": [],
+      "mergeRevision": null,
+      "publishedRuntimeRevision": null,
+      "modelProductionAdmission": false
+    },
+    {
+      "id": "C03",
+      "priority": "P2",
+      "ownerRepository": "szl-holdings/szl-forge",
+      "ownershipMustBeRevalidated": true,
+      "task": "K2 sparse-agent qualification",
+      "acceptance": "Variant-specific lineage, parser, code review, real resource/quality evidence",
+      "dependsOn": [
+        "B01",
+        "B02"
+      ],
+      "state": "NOT_EXECUTED_BY_THIS_HANDOFF",
+      "blockedPrerequisite": null,
+      "evidence": [],
+      "mergeRevision": null,
+      "publishedRuntimeRevision": null,
+      "modelProductionAdmission": false
+    },
+    {
+      "id": "C04",
+      "priority": "P2",
+      "ownerRepository": "szl-holdings/szl-forge",
+      "ownershipMustBeRevalidated": true,
+      "task": "Speech rights and evaluation",
+      "acceptance": "Actual rights/access decision; consented per-language ASR/TTS evaluation",
+      "dependsOn": [
+        "B01",
+        "B02"
+      ],
+      "state": "NOT_EXECUTED_BY_THIS_HANDOFF",
+      "blockedPrerequisite": null,
+      "evidence": [],
+      "mergeRevision": null,
+      "publishedRuntimeRevision": null,
+      "modelProductionAdmission": false
+    },
+    {
+      "id": "C05",
+      "priority": "P2",
+      "ownerRepository": "szl-holdings/szl-forge",
+      "ownershipMustBeRevalidated": true,
+      "task": "AMX/kernel qualification",
+      "acceptance": "Correct hardware/ISA, numerical reference, measured fallback; no production LLM claim",
+      "dependsOn": [
+        "B01",
+        "B02"
+      ],
+      "state": "NOT_EXECUTED_BY_THIS_HANDOFF",
+      "blockedPrerequisite": null,
+      "evidence": [],
+      "mergeRevision": null,
+      "publishedRuntimeRevision": null,
+      "modelProductionAdmission": false
+    },
+    {
+      "id": "C06",
+      "priority": "P2",
+      "ownerRepository": "szl-holdings/szl-frontier",
+      "ownershipMustBeRevalidated": true,
+      "task": "Retrieval/reranker/ACL evaluation",
+      "acceptance": "Fixed corpus/qrels; ranking and latency; no tenant leakage",
+      "dependsOn": [
+        "B01",
+        "B02"
+      ],
+      "state": "NOT_EXECUTED_BY_THIS_HANDOFF",
+      "blockedPrerequisite": null,
+      "evidence": [],
+      "mergeRevision": null,
+      "publishedRuntimeRevision": null,
+      "modelProductionAdmission": false
+    },
+    {
+      "id": "D01",
+      "priority": "P1",
+      "ownerRepository": "szl-holdings/a11oy",
+      "ownershipMustBeRevalidated": true,
+      "task": "Interactive shared evaluation UX",
+      "acceptance": "Growing-lane schema, failure states, source/measurement/runtime separation",
+      "dependsOn": [
+        "B01",
+        "A04"
+      ],
+      "state": "NOT_EXECUTED_BY_THIS_HANDOFF",
+      "blockedPrerequisite": null,
+      "evidence": [],
+      "mergeRevision": null,
+      "publishedRuntimeRevision": null,
+      "modelProductionAdmission": false
+    },
+    {
+      "id": "D02",
+      "priority": "P1",
+      "ownerRepository": "szl-holdings/szl-frontier",
+      "ownershipMustBeRevalidated": true,
+      "task": "Material-only watcher convergence",
+      "acceptance": "Content-based dedup, baseline/restart/partial coverage tests, one scheduler",
+      "dependsOn": [
+        "A00",
+        "B01",
+        "B02"
+      ],
+      "state": "NOT_EXECUTED_BY_THIS_HANDOFF",
+      "blockedPrerequisite": null,
+      "evidence": [],
+      "mergeRevision": null,
+      "publishedRuntimeRevision": null,
+      "modelProductionAdmission": false
+    },
+    {
+      "id": "D03",
+      "priority": "P1",
+      "ownerRepository": "szl-holdings/a11oy",
+      "ownershipMustBeRevalidated": true,
+      "task": "Durable evidence and signatures",
+      "acceptance": "Existing trusted signer/store; verified subject identity; unsigned history preserved",
+      "dependsOn": [
+        "A00",
+        "B01"
+      ],
+      "state": "NOT_EXECUTED_BY_THIS_HANDOFF",
+      "blockedPrerequisite": null,
+      "evidence": [],
+      "mergeRevision": null,
+      "publishedRuntimeRevision": null,
+      "modelProductionAdmission": false
+    },
+    {
+      "id": "D04",
+      "priority": "P1",
+      "ownerRepository": "szl-holdings/szl-forge",
+      "ownershipMustBeRevalidated": true,
+      "task": "Complete dependency/runtime closure",
+      "acceptance": "Hashed transitive artifacts, SBOM, provenance and rollback",
+      "dependsOn": [
+        "A00",
+        "B02"
+      ],
+      "state": "NOT_EXECUTED_BY_THIS_HANDOFF",
+      "blockedPrerequisite": null,
+      "evidence": [],
+      "mergeRevision": null,
+      "publishedRuntimeRevision": null,
+      "modelProductionAdmission": false
+    },
+    {
+      "id": "D05",
+      "priority": "P1",
+      "ownerRepository": "szl-holdings/a11oy",
+      "ownershipMustBeRevalidated": true,
+      "task": "Canonical publication and live checks",
+      "acceptance": "Same admitted build→HF→product; real browser/API checks; no alternate writer",
+      "dependsOn": [
+        "D01",
+        "D03",
+        "D04"
+      ],
+      "state": "NOT_EXECUTED_BY_THIS_HANDOFF",
+      "blockedPrerequisite": null,
+      "evidence": [],
+      "mergeRevision": null,
+      "publishedRuntimeRevision": null,
+      "modelProductionAdmission": false
+    },
+    {
+      "id": "D06",
+      "priority": "P1",
+      "ownerRepository": "szl-holdings/a11oy-net",
+      "ownershipMustBeRevalidated": true,
+      "task": "Proof-origin handoff",
+      "acceptance": "Published dated pointers match exact bytes; static independence and limits",
+      "dependsOn": [
+        "D05"
+      ],
+      "state": "NOT_EXECUTED_BY_THIS_HANDOFF",
+      "blockedPrerequisite": null,
+      "evidence": [],
+      "mergeRevision": null,
+      "publishedRuntimeRevision": null,
+      "modelProductionAdmission": false
+    },
+    {
+      "id": "D07",
+      "priority": "P1",
+      "ownerRepository": "szl-holdings/szl-frontier",
+      "ownershipMustBeRevalidated": true,
+      "task": "End-to-end closeout",
+      "acceptance": "Source/CI/eval/deploy/proof receipts per slice; honest unresolved blockers",
+      "dependsOn": [
+        "A02",
+        "A03",
+        "B03",
+        "B04",
+        "B05",
+        "B06",
+        "B07",
+        "B08",
+        "B09",
+        "C02",
+        "C03",
+        "C04",
+        "C05",
+        "C06",
+        "D02",
+        "D06"
+      ],
+      "state": "NOT_EXECUTED_BY_THIS_HANDOFF",
+      "blockedPrerequisite": null,
+      "evidence": [],
+      "mergeRevision": null,
+      "publishedRuntimeRevision": null,
+      "modelProductionAdmission": false
+    }
+  ]
+}
