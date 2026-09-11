@@ -36,6 +36,7 @@ from frontier.evaluation.provider import (  # noqa: E402
     exercise_fallback,
 )
 from frontier.evaluation.receipt import make_receipt, publish  # noqa: E402
+from frontier.evaluation.sealed_count import publish_sealed_count  # noqa: E402
 from frontier.evaluation.source import load_json, verify_source, write_json  # noqa: E402
 
 DATASET_ID = "SZLHOLDINGS/szl-frontier-evaluation-receipts"
@@ -281,10 +282,17 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
         write_json(output / "publication.json", publication)
     elif args.publish:
+        # Seal the run in public as a count+date only. Never call publish()
+        # with the negative payload — that is the #193 contract.
+        sealed_publication = publish_sealed_count(
+            token=publish_token,
+            dataset_id=args.dataset_id,
+        )
         publication = {
-            "status": "SKIPPED_PROVIDER_UNAVAILABLE",
+            "status": "SEALED_COUNT_ONLY",
             "production_disposition": "HOLD",
             "promotion_effect": "NONE",
+            "sealed_count": sealed_publication,
         }
         write_json(output / "publication.json", publication)
 

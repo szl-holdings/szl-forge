@@ -1,0 +1,56 @@
+{
+  "schema": "szl.forge.frontier-evaluation.v1",
+  "candidate": "huggingface/ghlore",
+  "sourceVersion": "0.3.0-source",
+  "upstreamRevision": "87290a46c79e26ebb0d47575263b7ee34c1c1390",
+  "predecessorRevision": "82fd2b25be9205025afa43c334a578307b95d7b4",
+  "license": "Apache-2.0",
+  "frontierTrackingIssue": 54,
+  "frontierSuccessorPr": 79,
+  "disposition": "HOLD",
+  "evaluationOnly": true,
+  "authority": {
+    "autonomousMerge": false,
+    "deploy": false,
+    "secretAccess": false,
+    "branchProtectionMutation": false,
+    "upstreamWrite": false,
+    "productionRouteChange": false,
+    "privateCorpusIngestion": false,
+    "trustNetworkEnablement": false,
+    "historicalTextInstructionAuthority": false,
+    "inflightClaimActionAuthority": false
+  },
+  "networkContract": {
+    "trustNetworkDefault": false,
+    "independentPrivatePerimeterRequiredForEvaluation": true,
+    "lossOfPerimeterMustFailClosed": true
+  },
+  "retrievalContract": {
+    "retrievedProseUntrusted": true,
+    "perLineQuoteBoundaryRequired": true,
+    "citationsRequired": true,
+    "freshnessRequired": true,
+    "currentSourceRevalidationRequiredBeforeChange": true,
+    "inflightClaimsRepositoryScoped": true,
+    "inflightClaimsAdvisoryOnly": true,
+    "truncationMustBeExplicit": true
+  },
+  "requiredEvidence": [
+    "exact-install-build-receipt",
+    "fixed-public-non-secret-corpus-digest",
+    "client-daemon-wire-version-mismatch-refusal",
+    "trust-network-default-off-and-perimeter-negative-path",
+    "read-only-github-ingestion",
+    "per-line-untrusted-quotation-test",
+    "repo-scoped-inflight-relationship-test",
+    "citation-freshness-and-truncation-test",
+    "fixed-query-relevance-baseline-comparison",
+    "stale-history-and-prompt-injection-negative-path",
+    "bot-self-output-and-empty-result-negative-path",
+    "retention-deletion-unavailable-backend-credential-loss",
+    "rollback-disable"
+  ],
+  "productionEligible": false,
+  "automaticPromotionAuthorized": false
+}

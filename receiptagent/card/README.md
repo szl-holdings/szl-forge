@@ -23,6 +23,10 @@ tags:
 
 <h1 align="center">SZL-Forge-1.5B-ReceiptAgent</h1>
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/main/receiptagent/card/holo-banner.svg" alt="SZL-Forge-1.5B-ReceiptAgent — holographic house banner" width="100%"/>
+</p>
+
 <p align="center"><strong>The agent that cannot act.</strong><br>
 <sub>It proposes. The controller signs. The weights never hold the keys.</sub></p>
 
