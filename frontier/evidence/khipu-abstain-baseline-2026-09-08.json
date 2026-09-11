@@ -1,0 +1,45 @@
+{
+  "kind": "szl-frontier-baseline-evidence",
+  "v": 1,
+  "lane": "L2",
+  "subject": "khipu abstain baseline",
+  "recordedAt": "2026-09-09",
+  "declaredLine": {
+    "abstainCorrect": 3,
+    "abstainTotal": 6,
+    "groundingCorrect": 4,
+    "groundingTotal": 5,
+    "planValid": 11,
+    "planTotal": 11,
+    "hallucinatedCitationCount": 0
+  },
+  "signedReceipt": {
+    "servedModel": "khipu",
+    "capabilityProfile": "SZL-Khipu-1.5B-BrainNavigator",
+    "baseModel": "Qwen/Qwen2.5-1.5B-Instruct",
+    "weightsArtifactSha256": "86c33222c44349c31c3db9a42429a4bfe7b79acc1b68b26645645e881e553476",
+    "trainingReceiptSha256": "71386aba999410f475272eec32420bae50d030f7c83f1c165e1a0831a745d063",
+    "adapterSha256": "bd5a1a92b24d85bac19a8df203287e1d4173b6d59d4bc7212f862eef60d9f1db",
+    "evaluatedAt": "2026-09-08T19:00:17.946003+00:00",
+    "trainedAt": "2026-09-08T18:44:18.461205+00:00",
+    "host": "betterwithage",
+    "keyId": "89540347a69b789e",
+    "schemaFingerprintSha256": "f05e38b406b5e893e8a7dd23029a0c252b5e53994e8ac777a810b227dc2d7e64",
+    "outputSchemaSha256": "b95f9927366dae7c5d36cfb7de6e229eb605524318ab642a6aa2292a212170d0"
+  },
+  "publication": {
+    "hfRepo": "SZLHOLDINGS/SZL-Khipu-1.5B-abstain",
+    "githubEvidencePR": "szl-holdings/szl-forge#201"
+  },
+  "bench": {
+    "runner": "frontier/harness/lane_l2.py",
+    "baselineConstant": "KHIPU_BASELINE = {\"abstain\": 3}",
+    "strictBeatRule": "the next candidate must strictly beat abstain 3/6 on the hidden handle set before any operating point freezes; ties and self-authored evidence fail closed"
+  },
+  "lineage": {
+    "priorLine": "abstain 2/6 (signed receipt 2026-07-14)",
+    "currentLine": "abstain 3/6 (signed receipt 2026-09-08)",
+    "note": "disclosed line moved by owner-metal retrain; grounding unchanged at 4/5"
+  },
+  "contentPolicy": "receipt counts and identifiers only — no hidden handles, prompts, or completions are recorded here"
+}
