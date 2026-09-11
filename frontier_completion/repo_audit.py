@@ -1,6 +1,5 @@
 """Read-only inventory of explicit local SZL clones. No pull, reset, push or merge."""
 from __future__ import annotations
-import re
 import subprocess
 from pathlib import Path
 from .core import EvidenceError, digest, observation_shell, receipt, require

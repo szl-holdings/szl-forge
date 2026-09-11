@@ -7,8 +7,6 @@ is about changed evidence, not popularity or an edited collection timestamp.
 from __future__ import annotations
 
 import dataclasses
-import hashlib
-import json
 import re
 import time
 import urllib.error
@@ -17,7 +15,7 @@ import urllib.request
 from pathlib import PurePosixPath
 from typing import Any
 
-from .core import MAX_JSON, EvidenceError, canonical, digest, observation_shell, parse_json, receipt, require, sha256, text, verify_receipt
+from .core import MAX_JSON, EvidenceError, digest, observation_shell, parse_json, receipt, require, sha256, text, verify_receipt
 
 ALLOWED_HOSTS = {"huggingface.co", "api.github.com", "a-11-oy.com", "a11oy.net", "szlholdings-a11oy.hf.space"}
 REPO_PATTERN = re.compile(r"[A-Za-z0-9_][A-Za-z0-9_.-]{0,95}/[A-Za-z0-9_][A-Za-z0-9_.-]{0,95}")

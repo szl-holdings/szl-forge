@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from typing import Any
-from .core import AUTHORITY_ORDER, DENIED, EvidenceError, age_seconds, canonical, digest, finite, integer, receipt, require, sha256, text
+from .core import AUTHORITY_ORDER, DENIED, age_seconds, digest, finite, integer, receipt, require, sha256, text
 
 STAGES = ("source", "artifact", "runtime", "browser", "proof")
 

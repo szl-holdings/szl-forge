@@ -8,7 +8,7 @@ from __future__ import annotations
 import math
 import statistics
 from typing import Any
-from .core import EvidenceError, finite, integer, require, text
+from .core import finite, integer, require, text
 
 
 def numeric(values: list[float], name: str) -> list[float]:

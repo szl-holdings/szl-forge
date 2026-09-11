@@ -58,5 +58,7 @@ evidence array is not an approved run.
 - No Lyte canonical republish.
 - No merge to `main` without review.
 
-File hashes match the handoff inventory. Those hashes establish byte
-integrity, not author trust.
+File hashes of the original handoff inventory are recorded on the PR. The
+committed tree drops unused imports required by Forge ruff F401 (E9/F gate).
+Those remaining hashes establish byte integrity of the committed files, not
+author trust.
