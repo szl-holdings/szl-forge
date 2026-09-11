@@ -14,7 +14,7 @@ tags:
 ---
 
 <p align="center">
-  <img src="holo-banner.svg" alt="SZL ReceiptAgent Qwen3.5 0.8B v2 — holographic house banner" width="100%"/>
+  <img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/main/receiptagent-v2/card/holo-banner.svg" alt="SZL ReceiptAgent Qwen3.5 0.8B v2 — holographic house banner" width="100%"/>
 </p>
 
 <h1 align="center">R E C E I P T A G E N T · 0 . 8 B</h1>
