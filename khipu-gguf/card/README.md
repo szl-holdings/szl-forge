@@ -29,7 +29,7 @@ tags:
 <!-- SZL-ESTATE-CARD:v2:END -->
 
 <p align="center">
-  <img src="holo-banner.svg" alt="SZL-Khipu-1.5B-GGUF — holographic house banner" width="100%"/>
+  <img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/main/khipu-gguf/card/holo-banner.svg" alt="SZL-Khipu-1.5B-GGUF — holographic house banner" width="100%"/>
 </p>
 
 <h1 align="center">K H I P U · G G U F</h1>

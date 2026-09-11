@@ -19,7 +19,7 @@ tags:
 > not.
 
 <p align="center">
-  <img src="holo-banner.svg" alt="szl-nemo — holographic doctrine-triage banner" width="100%"/>
+  <img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/main/nemo/card/holo-banner.svg" alt="szl-nemo — holographic doctrine-triage banner" width="100%"/>
 </p>
 
 <h1 align="center">S Z L &nbsp;N E M O</h1>

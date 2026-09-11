@@ -35,7 +35,7 @@ tags:
 > deployable model. Evidence status: plan_valid 1.00 / abstain 1.00 (SYNTHETIC).
 
 <p align="center">
-  <img src="holo-banner.svg" alt="TinyKhipu-Nano — holographic 4-6-2 MLP banner" width="100%"/>
+  <img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/main/tinykhipu-nano/card/holo-banner.svg" alt="TinyKhipu-Nano — holographic 4-6-2 MLP banner" width="100%"/>
 </p>
 
 <h1 align="center">T I N Y K H I P U &nbsp;N A N O</h1>
