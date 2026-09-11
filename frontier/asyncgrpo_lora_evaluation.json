@@ -7,8 +7,15 @@
   "license": "Apache-2.0",
   "frontierTrackingIssue": 76,
   "forgeTrackingIssue": 224,
+  "forgePullRequest": 240,
   "disposition": "UNAVAILABLE",
   "evaluationOnly": true,
+  "protocolStatus": "IMPLEMENTED",
+  "gpuStatus": "UNAVAILABLE",
+  "ciGreenClaimed": false,
+  "allDone": false,
+  "ato": false,
+  "live": false,
   "authority": {
     "autonomousMerge": false,
     "deploy": false,
@@ -24,10 +31,16 @@
   "syncContract": {
     "adapterOnlyPreferred": true,
     "mergedFallbackRemainsAvailable": true,
-    "adapterOnlyApiVerifiedAtPin": false,
+    "adapterOnlyApiVerifiedAtPin": true,
+    "adapterOnlyHardwareExecuted": false,
+    "upstreamAdapterOnlyCommit": "https://github.com/huggingface/trl/commit/f540773f5250c816e992ae3d35a41142ef3625c0",
     "upstreamAdapterOnlyIssue": "https://github.com/huggingface/trl/issues/5975",
+    "upstreamAdapterOnlyPr": "https://github.com/huggingface/trl/pull/7017",
     "jobLocalEnvironmentRequired": true,
-    "productionRuntimeInstallForbidden": true
+    "productionRuntimeInstallForbidden": true,
+    "recordedPeftSpec": "peft>=0.13.0",
+    "recordedVllmSpec": "vllm>=0.19.1,<=0.28.0",
+    "inventedExactVersions": false
   },
   "requiredEvidence": [
     "exact-trl-commit-install-receipt",
@@ -59,6 +72,13 @@
     "hybrid-recurrent-state-logprob-mismatch",
     "serving-cache-ephemeral-not-durable-artifact",
     "adapter-only-sync-api-at-pinned-trl-revision"
+  ],
+  "siblingHolds": [
+    {"id": "ghlore", "owner": "szl-holdings/szl-forge#207", "disposition": "HOLD"},
+    {"id": "harbor", "owner": "szl-holdings/szl-forge#217", "disposition": "HOLD"},
+    {"id": "tau", "owner": "szl-holdings/szl-forge#206", "disposition": "HOLD"},
+    {"id": "lyte", "owner": "szl-holdings/lyte-services#18", "disposition": "HOLD"},
+    {"id": "browser-acceptance", "owner": "WP23", "disposition": "HOLD"}
   ],
   "productionEligible": false,
   "automaticPromotionAuthorized": false
