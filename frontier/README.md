@@ -29,6 +29,8 @@ Watcher (outside this directory, do not rebuild): `inference/sealed_count_watch.
 - `harbor_private_datasets_contract.py` — Harbor private-dataset safety boundary
 - `harbor_provider_refs_contract.py` — Harbor provider-reference safety contract
 - `asyncgrpo_lora_contract.py` — TRL AsyncGRPO + LoRA + vLLM sync lane
+- `asyncgrpo_lora_runner.py` — job-local protocol + recorded PEFT/vLLM closure; GPU path talks to TRL `VLLMClient` endpoints and stays UNAVAILABLE without CUDA
+- `asyncgrpo_lora_gpu.py` — adapter-only `load_lora_adapter` vs merged process-reload; negatives include no-LoRA, restart, eviction, symlink-at-use, partial adapter
 
 ### Evaluation records (what lanes observed)
 
