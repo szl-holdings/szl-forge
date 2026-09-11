@@ -1,0 +1,20 @@
+{
+  "schema": "szl.kernel-hub-ops-counts/v1",
+  "observed_at": "2026-09-11T18:52:00Z",
+  "takedown_starts": "2026-09-13",
+  "state": "HOLD",
+  "counts": {
+    "kernel_type": 14,
+    "model_type_mirrors": 14,
+    "missing_v1": 4
+  },
+  "missing_v1": [
+    "SZLHOLDINGS/szl-maskmod",
+    "SZLHOLDINGS/szl-block-kv",
+    "SZLHOLDINGS/szl-receipt-attn",
+    "SZLHOLDINGS/YARQA-ATTN"
+  ],
+  "mirrors_deleted": false,
+  "runtime_loaded": false,
+  "production_authorization": false
+}
