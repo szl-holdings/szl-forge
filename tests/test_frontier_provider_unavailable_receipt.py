@@ -261,6 +261,23 @@ def test_provider_unavailable_run_never_calls_publication(
         ),
     )
 
+    sealed_calls: list[str] = []
+
+    def fake_sealed_count(*, token, dataset_id, **kwargs):
+        sealed_calls.append(dataset_id)
+        assert token == "publication-secret"
+        return {
+            "status": "SEALED_COUNT_ONLY",
+            "path_in_repo": "runs/SEALED_COUNT.json",
+            "total_sealed": 1,
+            "days": [{"date": "2026-09-11", "sealed": 1}],
+            "production_disposition": "HOLD",
+            "promotion_effect": "NONE",
+            "counter_sha256": "c" * 64,
+        }
+
+    monkeypatch.setattr(runner, "publish_sealed_count", fake_sealed_count)
+
     rc = runner.main(
         [
             "--output-dir",
@@ -276,9 +293,11 @@ def test_provider_unavailable_run_never_calls_publication(
     )
 
     assert rc == 2
+    assert sealed_calls == ["SZLHOLDINGS/szl-frontier-evaluation-receipts"]
     publication = json.loads((tmp_path / "publication.json").read_text())
-    assert publication == {
-        "status": "SKIPPED_PROVIDER_UNAVAILABLE",
-        "production_disposition": "HOLD",
-        "promotion_effect": "NONE",
-    }
+    assert publication["status"] == "SEALED_COUNT_ONLY"
+    assert publication["production_disposition"] == "HOLD"
+    assert publication["promotion_effect"] == "NONE"
+    assert publication["sealed_count"]["total_sealed"] == 1
+    assert publication["sealed_count"]["path_in_repo"] == "runs/SEALED_COUNT.json"
+    assert "provider" not in publication["sealed_count"]
