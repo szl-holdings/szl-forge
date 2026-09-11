@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: Apache-2.0
-"""Publish the six governed kernel-mirror cards with exact Hub readback.
+"""Publish governed kernel-mirror and family cards with exact Hub readback.
 
 The publisher has a closed target registry and a closed two-file write set.
 It never deletes Hub files, changes model weights, alters runtime settings, or
 promotes any artifact. Publication is fail-closed on malformed source assets,
-target drift, concurrent Hub updates, missing credentials, or byte mismatch.
+target drift, concurrent Hub updates, missing credentials, gated targets, or
+byte mismatch.
 """
 
 from __future__ import annotations
@@ -27,10 +28,15 @@ TARGET_REPO_TYPE = "model"
 FULL_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 MAX_README_BYTES = 512 * 1024
 MAX_SVG_BYTES = 2 * 1024 * 1024
-WRITE_SET: tuple[tuple[str, str], ...] = (
+KERNEL_WRITE_SET: tuple[tuple[str, str], ...] = (
     ("README.md", "README.md"),
     ("card/holo-banner.svg", "card/holo-banner.svg"),
 )
+FAMILY_WRITE_SET: tuple[tuple[str, str], ...] = (
+    ("card/README.md", "README.md"),
+    ("card/holo-banner.svg", "card/holo-banner.svg"),
+)
+WRITE_SET = KERNEL_WRITE_SET
 
 
 class PublicationError(RuntimeError):
@@ -42,6 +48,9 @@ class Profile:
     name: str
     source_dir: str
     repo_id: str
+    library_name: str | None = "kernels"
+    write_set: tuple[tuple[str, str], ...] = KERNEL_WRITE_SET
+    gated: bool = False
 
 
 @dataclass(frozen=True)
@@ -91,6 +100,49 @@ PROFILES: dict[str, Profile] = {
         source_dir="szl-provctl",
         repo_id="SZLHOLDINGS/szl-provctl",
     ),
+    "khipu-gguf": Profile(
+        name="khipu-gguf",
+        source_dir="khipu-gguf",
+        repo_id="SZLHOLDINGS/SZL-Khipu-1.5B-GGUF",
+        library_name="llama.cpp",
+        write_set=FAMILY_WRITE_SET,
+    ),
+    "nemo": Profile(
+        name="nemo",
+        source_dir="nemo",
+        repo_id="SZLHOLDINGS/szl-nemo",
+        library_name=None,
+        write_set=FAMILY_WRITE_SET,
+    ),
+    "tinykhipu-nano": Profile(
+        name="tinykhipu-nano",
+        source_dir="tinykhipu-nano",
+        repo_id="SZLHOLDINGS/TinyKhipu-Nano",
+        library_name="numpy",
+        write_set=FAMILY_WRITE_SET,
+    ),
+    "receiptagent-nano": Profile(
+        name="receiptagent-nano",
+        source_dir="receiptagent-nano",
+        repo_id="SZLHOLDINGS/ReceiptAgent-Nano",
+        library_name="numpy",
+        write_set=FAMILY_WRITE_SET,
+    ),
+    "receiptagent-v2": Profile(
+        name="receiptagent-v2",
+        source_dir="receiptagent-v2",
+        repo_id="SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2",
+        library_name="peft",
+        write_set=FAMILY_WRITE_SET,
+    ),
+    "receiptagent": Profile(
+        name="receiptagent",
+        source_dir="receiptagent",
+        repo_id="SZLHOLDINGS/SZL-Forge-1.5B-ReceiptAgent",
+        library_name="transformers",
+        write_set=FAMILY_WRITE_SET,
+        gated=True,
+    ),
 }
 
 
@@ -137,6 +189,13 @@ def _frontmatter(text: str) -> str:
     return text[4:end]
 
 
+def banner_url(profile: Profile) -> str:
+    return (
+        f"https://raw.githubusercontent.com/{SOURCE_REPOSITORY}/main/"
+        f"{profile.source_dir}/card/holo-banner.svg"
+    )
+
+
 def validate_readme(profile: Profile, payload: bytes) -> None:
     if not payload or len(payload) > MAX_README_BYTES:
         raise PublicationError("README size is outside the closed publication bound")
@@ -146,25 +205,32 @@ def validate_readme(profile: Profile, payload: bytes) -> None:
         raise PublicationError("README is not valid UTF-8") from error
 
     frontmatter = _frontmatter(text)
-    if re.search(r"(?m)^library_name:\s*kernels\s*$", frontmatter) is None:
-        raise PublicationError("README must declare library_name: kernels")
+    if profile.library_name is None:
+        if re.search(r"(?m)^library_name:\s*\S+", frontmatter):
+            raise PublicationError(
+                "README must not declare library_name for this profile"
+            )
+    elif (
+        re.search(
+            rf"(?m)^library_name:\s*{re.escape(profile.library_name)}\s*$",
+            frontmatter,
+        )
+        is None
+    ):
+        raise PublicationError(
+            f"README must declare library_name: {profile.library_name}"
+        )
     if re.search(r"(?m)^license:\s*apache-2\.0\s*$", frontmatter) is None:
         raise PublicationError("README must declare license: apache-2.0")
 
-    expected_banner = (
-        f"https://raw.githubusercontent.com/{SOURCE_REPOSITORY}/main/"
-        f"{profile.source_dir}/card/holo-banner.svg"
-    )
+    expected_banner = banner_url(profile)
     if expected_banner not in text:
         raise PublicationError("README is not bound to its exact Forge banner path")
 
     for other in PROFILES.values():
         if other.name == profile.name:
             continue
-        foreign_banner = (
-            f"https://raw.githubusercontent.com/{SOURCE_REPOSITORY}/main/"
-            f"{other.source_dir}/card/holo-banner.svg"
-        )
+        foreign_banner = banner_url(other)
         if foreign_banner in text:
             raise PublicationError("README contains another mirror's banner path")
 
@@ -223,11 +289,12 @@ def validate_svg(payload: bytes) -> None:
 
 def collect_assets(root: Path, profile: Profile) -> list[Asset]:
     assets: list[Asset] = []
-    for local_path, path_in_repo in WRITE_SET:
+    write_set = profile.write_set
+    for local_path, path_in_repo in write_set:
         relative = f"{profile.source_dir}/{local_path}"
         source_path = safe_file(root, relative)
         payload = source_path.read_bytes()
-        if local_path == "README.md":
+        if local_path.endswith("README.md") or path_in_repo == "README.md":
             validate_readme(profile, payload)
         elif local_path.endswith(".svg"):
             validate_svg(payload)
@@ -243,7 +310,7 @@ def collect_assets(root: Path, profile: Profile) -> list[Asset]:
         )
 
     if {asset.path_in_repo for asset in assets} != {
-        target for _, target in WRITE_SET
+        target for _, target in write_set
     }:
         raise PublicationError(
             "resolved asset destinations drifted from the closed write set"
@@ -320,6 +387,7 @@ def publication_report(
             "profile": profile.name,
             "repo_id": profile.repo_id,
             "repo_type": TARGET_REPO_TYPE,
+            "gated": profile.gated,
         },
         "scope": {
             "authority": "CARD_ONLY",
@@ -360,6 +428,11 @@ def publish(
     token: str,
     credential_source: str | None,
 ) -> dict[str, Any]:
+    if profile.gated:
+        raise PublicationError(
+            "gated target requires owner publish_rights=true; no workaround"
+        )
+
     try:
         from huggingface_hub import CommitOperationAdd, HfApi, hf_hub_download
     except ImportError as error:  # pragma: no cover - publisher workflow owns it
