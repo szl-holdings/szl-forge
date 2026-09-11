@@ -24,6 +24,22 @@ Pull requests run the two-case smoke suite without publication. Pushes to `main`
 
 The GitHub workflow independently validates configured Hugging Face credentials. Secret bytes are masked, never placed in artifacts, and never written to the repository. The runner dependency is fixed at `huggingface_hub==1.30.0`, and each receipt records the client software and hardware fingerprint.
 
+## Sealed-run counter
+
+Since merge #193, a provider-unavailable run still seals a local
+`HOLD_PROVIDER_UNAVAILABLE` receipt but does **not** publish the payload
+bundle. That made public silence ambiguous (no run versus sealed negative).
+
+When `--publish` is set and the candidate provider is unavailable, the runner
+updates `runs/SEALED_COUNT.json` on the receipts dataset: UTC dates and
+integer counts only. It never uploads the receipt, bundle, summary, provider
+name, or run id for that seal. Historical silence from before this counter
+existed remains **UNAVAILABLE**, not a filled zero. Genesis evidence:
+`frontier/evidence/sealed-run-counter-genesis-2026-09-11.json`.
+
+Public fixtures and their exact `answer_equals` strings are documented in
+`FIXTURES.md`. That file does not change the fixture bytes.
+
 ## Evidence produced
 
 Each completed run emits:

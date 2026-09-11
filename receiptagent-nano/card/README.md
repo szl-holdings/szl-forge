@@ -35,7 +35,7 @@ tags:
 > deployable model. Evidence status: see TRAINING_RECEIPT.json / BENCH.*.json (SYNTHETIC).
 
 <p align="center">
-  <img src="holo-banner.svg" alt="ReceiptAgent-Nano — holographic 4-10-4 four-gate banner" width="100%"/>
+  <img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/main/receiptagent-nano/card/holo-banner.svg" alt="ReceiptAgent-Nano — holographic 4-10-4 four-gate banner" width="100%"/>
 </p>
 
 <h1 align="center">R E C E I P T A G E N T &nbsp;N A N O</h1>

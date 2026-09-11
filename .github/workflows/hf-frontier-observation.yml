@@ -5,14 +5,20 @@ on:
   pull_request:
     paths:
       - 'inference/hf_frontier.py'
+      - 'inference/sealed_count_watch.py'
       - 'tests/test_hf_frontier*.py'
+      - 'tests/test_sealed_count_watch.py'
+      - 'frontier/evaluation/sealed_count.py'
       - 'payloads/001-hf-frontier-evaluation.md'
       - '.github/workflows/hf-frontier-observation.yml'
   push:
     branches: [main]
     paths:
       - 'inference/hf_frontier.py'
+      - 'inference/sealed_count_watch.py'
       - 'tests/test_hf_frontier*.py'
+      - 'tests/test_sealed_count_watch.py'
+      - 'frontier/evaluation/sealed_count.py'
       - 'payloads/001-hf-frontier-evaluation.md'
       - '.github/workflows/hf-frontier-observation.yml'
   schedule:
@@ -43,6 +49,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Offline frontier regressions (standard library only)
         run: python -m unittest discover -s tests -p 'test_hf_frontier_v2.py' -v
+      - name: Offline sealed-count watcher regressions
+        run: python -m unittest discover -s tests -p 'test_sealed_count_watch.py' -v
       - name: Offline plan
         run: python -m inference.hf_frontier
 
@@ -64,6 +72,21 @@ jobs:
             --source-revision "$GITHUB_SHA" \
             --output artifacts/hf-frontier/manifest.json \
             --projection-output artifacts/hf-frontier/projection.json
+      - name: Observe public sealed-run counter
+        if: always()
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from inference.sealed_count_watch import refresh
+
+          observation = refresh(source_revision="${{ github.sha }}")
+          out = Path("artifacts/hf-frontier/sealed-count-observation.json")
+          out.parent.mkdir(parents=True, exist_ok=True)
+          out.write_text(json.dumps(observation, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+          print(observation["observationStatus"], observation.get("reasonCode"))
+          PY
       - name: Preserve evidence even when an upstream is unavailable
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a

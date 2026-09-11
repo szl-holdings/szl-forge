@@ -1,7 +1,11 @@
 # SPDX-License-Identifier: Apache-2.0
 name: Publish kernel mirror cards
 
+# CARD_ONLY. Publication is fail-closed if this run no longer owns
+# current protected main. workflow_dispatch exists so a later main can
+# finish remaining family cards after a mid-matrix main move.
 on:
+  workflow_dispatch:
   pull_request:
     branches: [main]
     paths:
@@ -17,6 +21,18 @@ on:
       - "szl-ouroboros/card/holo-banner.svg"
       - "szl-provctl/README.md"
       - "szl-provctl/card/holo-banner.svg"
+      - "khipu-gguf/card/README.md"
+      - "khipu-gguf/card/holo-banner.svg"
+      - "nemo/card/README.md"
+      - "nemo/card/holo-banner.svg"
+      - "tinykhipu-nano/card/README.md"
+      - "tinykhipu-nano/card/holo-banner.svg"
+      - "receiptagent-nano/card/README.md"
+      - "receiptagent-nano/card/holo-banner.svg"
+      - "receiptagent-v2/card/README.md"
+      - "receiptagent-v2/card/holo-banner.svg"
+      - "receiptagent/card/README.md"
+      - "receiptagent/card/holo-banner.svg"
       - "tools/publish_kernel_mirror_cards.py"
       - "tests/test_publish_kernel_mirror_cards.py"
       - "tools/acquire_hf_publisher_token.py"
@@ -38,6 +54,18 @@ on:
       - "szl-ouroboros/card/holo-banner.svg"
       - "szl-provctl/README.md"
       - "szl-provctl/card/holo-banner.svg"
+      - "khipu-gguf/card/README.md"
+      - "khipu-gguf/card/holo-banner.svg"
+      - "nemo/card/README.md"
+      - "nemo/card/holo-banner.svg"
+      - "tinykhipu-nano/card/README.md"
+      - "tinykhipu-nano/card/holo-banner.svg"
+      - "receiptagent-nano/card/README.md"
+      - "receiptagent-nano/card/holo-banner.svg"
+      - "receiptagent-v2/card/README.md"
+      - "receiptagent-v2/card/holo-banner.svg"
+      - "receiptagent/card/README.md"
+      - "receiptagent/card/holo-banner.svg"
       - "tools/publish_kernel_mirror_cards.py"
       - "tests/test_publish_kernel_mirror_cards.py"
       - "tools/acquire_hf_publisher_token.py"
@@ -54,7 +82,7 @@ concurrency:
 
 jobs:
   verify:
-    name: Verify closed card publisher and all six source pairs
+    name: Verify closed card publisher and all admitted source pairs
     runs-on: ubuntu-24.04
     timeout-minutes: 12
     env:
@@ -99,7 +127,13 @@ jobs:
             szl-govsign \
             szl-invariants \
             szl-ouroboros \
-            szl-provctl
+            szl-provctl \
+            khipu-gguf \
+            nemo \
+            tinykhipu-nano \
+            receiptagent-nano \
+            receiptagent-v2 \
+            receiptagent
           do
             python tools/publish_kernel_mirror_cards.py \
               --profile "${profile}" \
@@ -118,7 +152,7 @@ jobs:
           retention-days: 30
 
   publish:
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' }}
     name: Publish ${{ matrix.profile }} and verify exact Hub bytes
     needs: verify
     runs-on: ubuntu-24.04
@@ -146,6 +180,21 @@ jobs:
           - profile: szl-provctl
             repo_id: SZLHOLDINGS/szl-provctl
             receipt: szl-provctl-card
+          - profile: khipu-gguf
+            repo_id: SZLHOLDINGS/SZL-Khipu-1.5B-GGUF
+            receipt: khipu-gguf-card
+          - profile: nemo
+            repo_id: SZLHOLDINGS/szl-nemo
+            receipt: nemo-card
+          - profile: tinykhipu-nano
+            repo_id: SZLHOLDINGS/TinyKhipu-Nano
+            receipt: tinykhipu-nano-card
+          - profile: receiptagent-nano
+            repo_id: SZLHOLDINGS/ReceiptAgent-Nano
+            receipt: receiptagent-nano-card
+          - profile: receiptagent-v2
+            repo_id: SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2
+            receipt: receiptagent-v2-card
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
@@ -200,7 +249,7 @@ jobs:
             --github-env "${GITHUB_ENV}" \
             --report "reports/${{ matrix.receipt }}-credential.json"
 
-      - name: Publish the closed two-file set and verify exact readback
+      - name: Publish the closed two-file set and verify exact Hub bytes
         run: |
           set -euo pipefail
           git fetch --no-tags --depth=1 origin main
