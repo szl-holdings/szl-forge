@@ -7,6 +7,7 @@ import json
 import sys
 import tempfile
 import unittest
+import urllib.parse
 from pathlib import Path
 from unittest.mock import patch
 
@@ -163,7 +164,10 @@ class MeshContractTests(unittest.TestCase):
         fixture.report()
         urls = [url for url, _ in fixture.calls]
         self.assertIn(fixture.pin_url, urls)
-        self.assertFalse(any("raw.githubusercontent.com" in url and "/main/" in url for url in urls))
+        self.assertFalse(any(
+            urllib.parse.urlsplit(url).hostname == "raw.githubusercontent.com" and "/main/" in url
+            for url in urls
+        ))
 
     def test_duplicate_pin_assignment_rejected(self):
         fixture = Fixture()
