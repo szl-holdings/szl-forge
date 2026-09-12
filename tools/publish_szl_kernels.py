@@ -8,6 +8,7 @@ import base64
 import hashlib
 import io
 import json
+import math
 import os
 import re
 import shutil
@@ -701,6 +702,9 @@ def validate_retrieval_runtime_evidence(evidence: Any) -> None:
     try:
         if (
             type(evidence) is not dict
+            or evidence.keys() != {
+                "indices", "scores", "receipt", "receipt_depth", "chain_verified"
+            }
             or not same_json_value(evidence.get("indices"), RETRIEVAL_SMOKE_INDICES)
             or not same_json_value(evidence.get("scores"), RETRIEVAL_SMOKE_SCORES)
             or evidence.get("chain_verified") is not True
@@ -709,12 +713,28 @@ def validate_retrieval_runtime_evidence(evidence: Any) -> None:
         ):
             raise ValueError("values or chain depth")
         receipt = evidence["receipt"]
-        attrs = receipt["attrs"]
-        if type(receipt) is not dict or type(attrs) is not dict:
+        if type(receipt) is not dict or receipt.keys() != {
+            "seq", "kernel", "op", "attrs", "prev", "digest", "ts"
+        }:
             raise ValueError("receipt object schema")
-        expected = retrieval_smoke_attributes(attrs["byte_order"])
+        attrs = receipt["attrs"]
+        if type(attrs) is not dict:
+            raise ValueError("receipt object schema")
+        # The kernel runs in a separate, credentialless container. Its reported
+        # byte order cannot select the trusted host's reference tensor hashes.
+        byte_order = sys.byteorder
+        if not same_json_value(attrs.get("byte_order"), byte_order):
+            raise ValueError("receipt byte order differs from trusted host")
+        expected = retrieval_smoke_attributes(byte_order)
         if (
-            type(receipt.get("seq")) is not int
+            attrs.keys() != expected.keys() | {"torch_version", "matmul_precision"}
+            or type(attrs.get("torch_version")) is not str
+            or not attrs["torch_version"]
+            or type(attrs.get("matmul_precision")) is not str
+            or attrs["matmul_precision"] not in {"highest", "high", "medium"}
+            or type(receipt["ts"]) is not float
+            or not math.isfinite(receipt["ts"])
+            or type(receipt.get("seq")) is not int
             or receipt["seq"] != 0
             or receipt.get("prev") != "0" * 64
             or receipt.get("kernel") != "governed_retrieval"
@@ -722,10 +742,13 @@ def validate_retrieval_runtime_evidence(evidence: Any) -> None:
             or any(not same_json_value(attrs.get(key), value) for key, value in expected.items())
         ):
             raise ValueError("receipt contract")
+        # The producer uses time.time(); ts has a finite-float shape but is
+        # deliberately outside the digest. It proves neither freshness nor
+        # timestamp authenticity, and is never used as a freshness gate.
         # Python equality treats -0.0 as +0.0. Bind the reported output values
         # themselves to the exact float32/int64 bytes recorded in the receipt.
         for field, kind in (("scores", "f"), ("indices", "q")):
-            if raw_values_sha256(evidence[field][0], kind, attrs["byte_order"]) != attrs[f"{field}_sha256"]:
+            if raw_values_sha256(evidence[field][0], kind, byte_order) != attrs[f"{field}_sha256"]:
                 raise ValueError("reported output raw hash")
         body = {key: receipt[key] for key in ("seq", "kernel", "op", "attrs", "prev")}
         digest = hashlib.sha3_256(

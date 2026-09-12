@@ -28,6 +28,7 @@ def retrieval_evidence() -> dict[str, object]:
         "zero_document_count": 0, "zero_document_policy": "score_zero",
         "tie_break": "ascending_document_index",
         "implementation": "pytorch_float32_blocked_reference",
+        "torch_version": "2.9.1+cpu", "matmul_precision": "highest",
         "cuda_tf32_allowed": None, "receipt_authenticity": "UNSIGNED",
         "retrieval_quality": "NOT_MEASURED", "acceleration_claim": False,
     }
@@ -994,6 +995,16 @@ class PublishSzlKernelsTests(unittest.TestCase):
             ("receipt.attrs.input_hash_format", "rounded_decimal"),
             ("receipt.attrs.device", "cuda:0"),
             ("receipt.attrs.tie_break", "unspecified"),
+            ("receipt.attrs.torch_version", None),
+            ("receipt.attrs.torch_version", 2.9),
+            ("receipt.attrs.torch_version", ""),
+            ("receipt.attrs.matmul_precision", True),
+            ("receipt.attrs.matmul_precision", "unknown"),
+            ("receipt.ts", None), ("receipt.ts", True),
+            ("receipt.ts", 1), ("receipt.ts", "1.0"),
+            ("receipt.ts", float("nan")),
+            ("receipt.ts", float("inf")),
+            ("receipt.ts", float("-inf")),
             ("receipt.seq", 1), ("receipt.prev", "f" * 64),
             ("receipt.seq", False), ("receipt.seq", 0.0),
             ("receipt.digest", "0" * 64), ("receipt.kernel", "other"),
@@ -1016,6 +1027,70 @@ class PublishSzlKernelsTests(unittest.TestCase):
                     ).encode("utf-8")).hexdigest()
                 with self.assertRaisesRegex(publisher.PublicationError, "retrieval runtime evidence"):
                     publisher.validate_retrieval_runtime_evidence(evidence)
+
+    def test_retrieval_rejects_self_consistent_opposite_byte_order(self) -> None:
+        evidence = retrieval_evidence()
+        receipt = evidence["receipt"]
+        attrs = receipt["attrs"]
+        opposite = "big" if sys.byteorder == "little" else "little"
+        attrs["byte_order"] = opposite
+        prefix = ">" if opposite == "big" else "<"
+        for name, kind, values in (
+            ("query", "f", [1.0, 0.0]),
+            ("documents", "f", [0.0, 1.0, 1.0, 0.0, 1.0, 0.0, -1.0, 0.0]),
+            ("scores", "f", [1.0, 1.0, 0.0, -1.0]),
+            ("indices", "q", [1, 2, 0, 3]),
+        ):
+            attrs[f"{name}_sha256"] = hashlib.sha256(
+                struct.pack(f"{prefix}{len(values)}{kind}", *values)
+            ).hexdigest()
+        body = {key: receipt[key] for key in ("seq", "kernel", "op", "attrs", "prev")}
+        receipt["digest"] = hashlib.sha3_256(json.dumps(
+            body, sort_keys=True, separators=(",", ":")
+        ).encode("utf-8")).hexdigest()
+        with self.assertRaisesRegex(publisher.PublicationError, "retrieval runtime evidence"):
+            publisher.validate_retrieval_runtime_evidence(evidence)
+
+    def test_retrieval_rejects_extra_or_missing_schema_fields(self) -> None:
+        valid = retrieval_evidence()
+        for level in ((), ("receipt",), ("receipt", "attrs")):
+            valid_target = valid
+            for key in level:
+                valid_target = valid_target[key]
+            for missing in (None, *valid_target):
+                with self.subTest(level=level, missing=missing):
+                    evidence = copy.deepcopy(valid)
+                    target = evidence
+                    for key in level:
+                        target = target[key]
+                    if missing is None:
+                        target["authenticated"] = True
+                    else:
+                        del target[missing]
+                    receipt = evidence.get("receipt", {})
+                    body_keys = ("seq", "kernel", "op", "attrs", "prev")
+                    if all(key in receipt for key in body_keys) and "digest" in receipt:
+                        body = {key: receipt[key] for key in body_keys}
+                        receipt["digest"] = hashlib.sha3_256(json.dumps(
+                            body, sort_keys=True, separators=(",", ":")
+                        ).encode("utf-8")).hexdigest()
+                    with self.assertRaisesRegex(publisher.PublicationError, "retrieval runtime evidence"):
+                        publisher.validate_retrieval_runtime_evidence(evidence)
+
+    def test_retrieval_accepts_legitimate_runtime_metadata(self) -> None:
+        for precision in ("highest", "high", "medium"):
+            with self.subTest(precision=precision):
+                evidence = retrieval_evidence()
+                receipt = evidence["receipt"]
+                receipt["attrs"]["torch_version"] = "2.11.0+cu128"
+                receipt["attrs"]["matmul_precision"] = precision
+                # Timestamp is deliberately not digest-bound or a freshness gate.
+                receipt["ts"] = 1_800_000_000.5
+                body = {key: receipt[key] for key in ("seq", "kernel", "op", "attrs", "prev")}
+                receipt["digest"] = hashlib.sha3_256(json.dumps(
+                    body, sort_keys=True, separators=(",", ":")
+                ).encode("utf-8")).hexdigest()
+                publisher.validate_retrieval_runtime_evidence(evidence)
 
     def test_runtime_readback_rejects_missing_exports_or_retrieval_evidence(self) -> None:
         valid = runtime_evidence()
