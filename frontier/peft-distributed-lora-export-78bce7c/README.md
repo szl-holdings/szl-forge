@@ -1,84 +1,92 @@
-# PEFT export integrity: executable bounded byte evaluation
+# PEFT export integrity: byte inspection and real CPU execution
 
 Owner: Forge #257 / PR #258. Canonical intake: Frontier #110.
-Upstream binding: `huggingface/peft@78bce7cb48f800a7ad0d352b68a46302e13e1687`.
+Upstream: `huggingface/peft@78bce7cb48f800a7ad0d352b68a46302e13e1687`.
 
-This advances a **subset of P4**, not completion of P0-P5. PEFT's upstream
-inferred-state-dict heuristic warns; it does not refuse publication. Its
-explicit-state-dict bypass is unchanged. This new SZL evaluator does not import
-PEFT or modify any publisher, dependency lock, model route, or production default.
+The full P0-P5 plan remains EVALUATION/HOLD. Source admission, CPU fixture
+execution, distributed gathering and production publication are separate gates.
+No command in this lane publishes, trains, downloads pretrained weights, or
+accepts a user-supplied model, URL or export directory.
 
-## Run without optional dependencies
-
-From the repository root:
+## Dependency-free byte inspector
 
 ```sh
 python -m tools.evaluate_peft_export
-python -m unittest discover -s tests -p 'test_peft_export_bytes.py' -v
-python -O -m unittest discover -s tests -p 'test_peft_export_bytes.py' -v
+python -m unittest discover -s tests -p 'test_peft_*.py' -v
+python -O -m unittest discover -s tests -p 'test_peft_*.py' -v
 ```
 
-The first command inspects a fixed synthetic artifact and prints its bounded
-report to stdout. It opens no paths, creates no model artifacts, and calls no
-provider. Exit zero means only that this fixture passed the structural check.
+`inspect_adapter(artifact_bytes, config_bytes, binding)` checks a bounded linear
+LoRA safetensors subset: exact declared inventory and shape, complete A/B pairs,
+rank/dtype agreement, JSON, payload accounting, finite values and content/config
+hashes. It accepts previously acquired bytes, not paths. Limits: 4 MiB artifact,
+64 KiB header/config, 256 tensors, F16/BF16/F32/F64. This is not a replacement for
+the official safetensors loader. Unsupported formats are unqualified, not corrupt.
+DoRA/AdaLoRA auxiliary parameters are not malformed A/B findings; they remain
+UNSUPPORTED by the linear-LoRA evaluator. Caller bindings remain
+CALLER_DECLARED_NOT_AUTHENTICATED. Do not derive an expected tensor inventory from
+the artifact under inspection in a qualification path.
 
-`inspect_adapter(artifact_bytes, config_bytes, binding)` accepts bytes that a
-separately authorized caller has already acquired. The binding must declare the
-exact artifact/config SHA-256, base repository/revision, upstream PEFT revision,
-state-dict provenance, and an independently specified complete tensor/shape map.
-Never derive the expected inventory from the artifact being tested in a real
-qualification path. This function compares the declarations but does not
-authenticate them: `CALLER_DECLARED_NOT_AUTHENTICATED` is always explicit.
+## Real pinned-PEFT CPU lane
 
-## What this evaluator actually checks
+The `PEFT export runtime evaluation` workflow installs an isolated CPU environment
+on Python 3.11 and 3.12. Existing project dependencies and production workflows
+are unchanged. It executes the exact PR head (or admitted push SHA), verifies a
+clean checkout, validates PEP 610 Git bindings for PEFT/Transformers/Accelerate/Hub,
+and checks the installed critical PEFT save/load file against its upstream Git
+blob. Torch 2.10.0+cpu, safetensors 0.7.0 and numpy 2.3.5 are fixed. Ancillary
+resolved dependencies and pip download/installation reports are captured with
+the observation; they are not represented as a pre-existing hash-locked closure.
 
-The parser is deliberately bounded to a 4 MiB artifact, 64 KiB header/config,
-256 tensors, and F16/BF16/F32/F64 storage. It rejects duplicate JSON keys,
-non-finite JSON numbers (including exponent overflow), malformed descriptors,
-truncated bytes, forged lengths, gaps, overlap, trailing payload, empty/flat
-A/B shards, missing A/B pairs, inventory/shape/rank/dtype mismatches, and actual
-NaN/Inf values in the tensor payload. It does not allocate a model or interpret
-pickle or custom code. Input-size or format limits are evaluation rejection,
-not evidence that an otherwise valid larger adapter is corrupt.
+The executable `python -m tools.evaluate_peft_runtime run` covers:
 
-Only standard serialized **linear LoRA** pairs receive STRUCTURE_ONLY PASS.
-DoRA magnitude vectors and AdaLoRA lora_E are recognized as outside the A/B
-shape heuristic; they lead to UNSUPPORTED/HOLD, never a false malformed-A/B
-finding or a claim that those methods were evaluated. Convolutional tensors,
-other dtypes, rank patterns, modules-to-save, biases and other formats need
-separate scoped evaluation. Unsupported means unqualified, not defective.
+- Real PEFT save/load for a deterministic, nontrivial linear LoRA adapter.
+- Exact synthetic base bytes, strict output equality before/after reload, a
+  wrong-base negative, and unchanged adapter bytes after reload.
+- Twelve real save_pretrained cases: A/B times flat/empty/scalar times
+  inferred/explicit state dict. Inferred states must warn but still write;
+  explicit states must bypass the upstream warning. All malformed A/B exports
+  must remain rejected by the separate SZL structural evaluator.
+- Legitimate 1-D DoRA/AdaLoRA helper inputs must not trigger the upstream A/B
+  warning. A real DoRA export remains UNSUPPORTED by the linear-LoRA evaluator.
+- Fail-closed observation validation: partial cases, wrong revisions, invalid
+  reload evidence or authority flags cannot exit successfully.
 
-## Optional official-loader interoperability
+The synthetic base is twelve fixed CPU parameters, identified as
+SYNTHETIC_RECIPE_NOT_HUB_MODEL. Its recipe binds to the exact Forge execution
+commit and its actual bytes have a SHA-256. It is not an upstream pretrained
+model or proof of an external model's authenticated lineage. No Hub weights
+are downloaded or rehosted. Files exist only in a private temporary directory
+and are removed on exit. Python socket attempts fail during fixture execution;
+this trap is not an OS sandbox. Hosted workflow permissions are contents:read,
+with no secrets, no credential persistence, and a 15-minute job limit.
 
-`python -m tools.evaluate_peft_export_interop` requires the exact recorded
-CPU environment: torch `2.10.0+cpu`, safetensors `0.7.0`, numpy `2.3.5`.
-It refuses a different version set rather than silently transferring evidence.
-It does not install dependencies or change project dependencies.
+To reproduce in an isolated environment, install the CPU torch pin separately
+from the official PyTorch CPU index, then generate and install the exact-source
+requirements with `python -m tools.evaluate_peft_runtime requirements`. Run the
+runtime command only from a clean checkout. All output evidence goes to stdout.
+The workflow is the reference installation/command sequence; there is no new
+production dependency default.
 
-This cross-check reads our fixtures with the official safetensors loader,
-reads official serialized bytes with the bounded inspector, and compares a
-small synthetic linear expression before/after load for all four storage
-formats. Numerical comparison uses float64 arithmetic. These are eight
-serialization directions and four synthetic roundtrips, **not a PEFT model
-reload, distributed execution, performance benchmark, or adapter quality test**.
-The dependency-free tests are collected by the existing base Python CI.
-The optional interoperability command is separate and its local evidence must
-not be described as a hosted CI result.
+## Evidence and remaining acceptance
 
-## Remaining gates / Codex continuation
+Each hosted attempt uploads source.txt, installation reports, the resolved
+package environment, runtime.json and official safetensors interoperability
+output, even on failure. A missing/failed runtime.json is not success. Verify the
+outer Actions run head and artifact digest before relying on the contents.
+CPU_EVALUATION_PASS is limited to these real-package CPU fixtures, never to
+actual ZeRO-3/FSDP gathering or production qualification. PEP 610 is local
+installation metadata, not an independent package attestation.
 
-Keep PR #258 draft until normal source checks and review pass. Preserve the
-existing evaluation plan and its entire P0-P5 acceptance list. Execute pinned
-PEFT warning/inferred/explicit-state-dict tests under the real package; produce
-actual ZeRO-3/FSDP gathered/ungathered evidence on authorized hardware; verify
-an exact base-model/config-bound save/reload and separately authorized immutable
-provider readback. Review this subset parser against more official adversarial
-fixtures before considering use outside evaluation. Do not wire it into a
-publisher until that publisher's independent controls admit the change.
+The original local-observation.json and local-observation-v2.json are preserved
+as dated predecessor byte-inspector evidence, not new CPU-execution receipts.
+A run result is recorded only after the actual job and artifact are inspected.
 
-Every report keeps production/publication/automatic promotion false. Binding
-authentication, distributed gathering, PEFT execution, exact-base reload and
-provider readback remain NOT_RUN. No signed receipt or full source admission
-is implied by the unsigned local observation JSON. Rollback removes only these
-standalone evaluation files; existing publisher behavior and artifacts remain
-unchanged.
+Real distributed gathering, distributed cancellation/failure/rollback,
+authenticated external-base lineage, separately authorized immutable provider
+readback, model quality, and independent publisher admission remain required.
+No successful test substitutes for them. The original evaluation-plan.json and
+all acceptance criteria remain unchanged. PEFT's warning is not write denial.
+
+Rollback reverts these standalone evaluation files and their CPU-only workflow;
+existing model artifacts, publishers, routes and permissions remain unchanged.

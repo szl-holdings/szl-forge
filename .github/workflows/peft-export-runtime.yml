@@ -1,0 +1,86 @@
+name: PEFT export runtime evaluation
+
+on:
+  pull_request:
+    paths:
+      - 'tools/evaluate_peft_*.py'
+      - 'tests/test_peft_*.py'
+      - 'frontier/peft-distributed-lora-export-78bce7c/**'
+      - '.github/workflows/peft-export-runtime.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/evaluate_peft_*.py'
+      - 'tests/test_peft_*.py'
+      - 'frontier/peft-distributed-lora-export-78bce7c/**'
+      - '.github/workflows/peft-export-runtime.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: peft-cpu-evaluation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  cpu:
+    name: Exact-source PEFT CPU (${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+    env:
+      HF_HUB_OFFLINE: "1"
+      TRANSFORMERS_OFFLINE: "1"
+      HF_HUB_DISABLE_TELEMETRY: "1"
+      DO_NOT_TRACK: "1"
+      TOKENIZERS_PARALLELISM: "false"
+      OMP_NUM_THREADS: "1"
+      SZL_EVAL_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Prepare evidence and validate dependency-free contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/peft-evidence"
+          git rev-parse HEAD > "$RUNNER_TEMP/peft-evidence/source.txt"
+          python -m unittest discover -s tests -p 'test_peft_*.py' -v
+          python -O -m unittest discover -s tests -p 'test_peft_*.py' -v
+          python -m tools.evaluate_peft_runtime requirements > "$RUNNER_TEMP/peft-evidence/requirements.txt"
+      - name: Install isolated exact-source CPU evaluation environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m venv "$RUNNER_TEMP/peft-venv"
+          "$RUNNER_TEMP/peft-venv/bin/python" -m pip install --disable-pip-version-check \
+            --index-url https://download.pytorch.org/whl/cpu 'torch==2.10.0+cpu' \
+            --report "$RUNNER_TEMP/peft-evidence/torch-install.json"
+          "$RUNNER_TEMP/peft-venv/bin/python" -m pip install --disable-pip-version-check \
+            -r "$RUNNER_TEMP/peft-evidence/requirements.txt" \
+            --report "$RUNNER_TEMP/peft-evidence/source-install.json"
+          "$RUNNER_TEMP/peft-venv/bin/python" -m pip check
+          "$RUNNER_TEMP/peft-venv/bin/python" -m pip freeze --all > "$RUNNER_TEMP/peft-evidence/freeze.txt"
+      - name: Execute real PEFT exports and exact synthetic-base reload
+        shell: bash
+        run: |
+          set -euo pipefail
+          source "$RUNNER_TEMP/peft-venv/bin/activate"
+          python -m tools.evaluate_peft_runtime run > "$RUNNER_TEMP/peft-evidence/runtime.json"
+          python -m tools.evaluate_peft_export_interop > "$RUNNER_TEMP/peft-evidence/interop.json"
+      - name: Preserve exact-run evidence even on failure
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: peft-cpu-${{ matrix.python-version }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/peft-evidence/
+          if-no-files-found: error
+          retention-days: 90
