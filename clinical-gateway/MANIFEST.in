@@ -1,0 +1,7 @@
+include frontend/index.html
+include fixtures/assay_map.json
+include operational-model/artifacts/model.json
+include operational-model/artifacts/model-receipt.json
+include operational-model/example-input.json
+include requirements.lock
+include tools/verify_installed_workspace.py
