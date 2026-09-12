@@ -1,0 +1,9 @@
+{
+  "schema": "szl.recovery-source-manifest/v1",
+  "version": "1.1.0",
+  "files": {
+    "README.md": "95af0769b9d88c01ad1fcbea94de48b344be1bdc3798ee723c05587d8f796b43",
+    "szl_recovery.py": "f6db9512ca628289fa70647dce828471befb873a6e7c22f1a3f244e4d33904bf",
+    "test_szl_recovery.py": "9062f5dd505595859f459316e7afc1de22a5c678d30c31536d368bd6169caf54"
+  }
+}
