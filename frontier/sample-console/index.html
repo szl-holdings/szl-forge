@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>a11oy Frontier SAMPLE — operator console</title>
+  <meta name="description" content="SAMPLE public baseline. Refuses to mint alignment from missing evidence. Not a live a-11-oy.com deployment. Signer ABSENT. Lambda Conjecture 1." />
+  <style>
+    :root { --bg:#070b0c; --fg:#eaf6f9; --muted:#8fb3bd; --line:#1b3a44; --teal:#7ad0c6; --bad:#c46d5c; --hold:#c4a15a; }
+    * { box-sizing:border-box } html,body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.45 ui-sans-serif,system-ui,sans-serif }
+    a { color:var(--teal) } header,main { max-width:1100px; margin:0 auto; padding:16px }
+    .chips span { display:inline-block; border:1px solid var(--line); border-radius:999px; padding:2px 10px; margin:0 6px 6px 0; font-size:12px }
+    .dock button, .palette button, button { font:inherit; color:inherit; background:transparent; border:1px solid var(--line); border-radius:8px; padding:6px 10px; cursor:pointer }
+    .dock button.on { border-color:var(--teal) }
+    table { width:100%; border-collapse:collapse; font-size:13px } th,td { text-align:left; padding:8px; border-bottom:1px solid var(--line); vertical-align:top }
+    .INCOMPLETE,.DIVERGENT,.SMOKE_FAIL,.UNAVAILABLE { color:var(--bad) } .HOLD,.UNRUN { color:var(--hold) } .PASS,.MEASURED { color:var(--teal) }
+    .palette { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0; padding:10px; border:1px dashed var(--line); border-radius:12px }
+    svg { width:100%; height:180px; background:#05080a; border:1px solid var(--line); border-radius:8px }
+    textarea { width:100%; min-height:70px; background:transparent; color:inherit; border:1px solid var(--line); border-radius:8px; padding:8px }
+    .note { color:var(--muted); font-size:13px }
+  </style>
+</head>
+<body>
+  <header>
+    <p class="chips"><span>SAMPLE</span><span>signer ABSENT</span><span>Λ Conjecture 1</span><span>production authorized false</span></p>
+    <h1>a11oy Frontier</h1>
+    <p class="note">Operator console that refuses to mint alignment from missing evidence. Not a live a-11-oy.com deployment. Not production admission. ⌘K jumps any surface.</p>
+    <nav class="dock" id="dock" aria-label="Surfaces"></nav>
+  </header>
+  <main id="main"></main>
+  <script>
+    const PACKAGES = [
+      { id: "mesh-v5", title: "Forge #239 live-mesh V5 HTML-metrics", status: "INCOMPLETE", note: "Do not merge unchanged. HTML 200 metrics is not ALIGNED." },
+      { id: "loom", title: "Lyte Forecast Loom SAMPLE", status: "PASS", note: "Caller-supplied inspect. Not Granite. Not MEASURED." },
+      { id: "minicpm", title: "MiniCPM held-out smoke", status: "HOLD", note: "9/12 SMOKE_FAIL locked. Historical failures may not be upgraded." },
+      { id: "deepseek", title: "DeepSeek V4.1 Flash", status: "HOLD", note: "Missing metrics UNAVAILABLE, not zero." },
+      { id: "nex", title: "Nex Mini", status: "HOLD", note: "Missing metrics UNAVAILABLE, not zero." },
+      { id: "kernels", title: "Kernel Hub inventory", status: "INCOMPLETE", note: "Four missing v1 names labeled. No deletions." },
+      { id: "gpu-243", title: "AsyncGRPO GPU runner #243", status: "UNRUN", note: "Generation UNAVAILABLE without local weights." },
+    ];
+    const DOUBLES = [
+      { id: "html-metrics", title: "HTML 200 metrics", verdict: "INCOMPLETE", detail: "text/html 200 on /api/lyte/v2/metrics. Not a metrics object. Sibling cannot ride a green parent." },
+      { id: "empty-metrics", title: "Empty JSON metrics on green parent", verdict: "INCOMPLETE", detail: "200 {} while identities match. lyte_source_parity:INCOMPLETE." },
+      { id: "404-sha", title: "404 with a SHA", verdict: "DIVERGENT", detail: "Error body sha is not identity. IDENTITY_FROM_ERROR_REFUSED." },
+      { id: "missing-proof", title: "Missing proof document", verdict: "INCOMPLETE", detail: "One of two health.json reads 404. STATIC_DOCUMENT needs both." },
+      { id: "skipped-sibling", title: "Skipped sibling", verdict: "INCOMPLETE", detail: "503 metrics while GitHub/pin/space match. No green parent ride." },
+      { id: "string-true", title: "bindings_agree: \"true\"", verdict: "DIVERGENT", detail: "Literal true required. String true is not observed." },
+      { id: "conflict-alias", title: "Conflicting runtime aliases", verdict: "DIVERGENT", detail: "source_revision ≠ build.revision. CONFLICT, no first-alias win." },
+    ];
+    const LANES = [
+      { id: "minicpm-gguf", title: "MiniCPM5 GGUF", status: "SMOKE_FAIL", note: "passedCases 9 / 12. Do not upgrade the historical fail." },
+      { id: "deepseek-v41-flash", title: "DeepSeek V4.1 Flash", status: "HOLD", note: "UNAVAILABLE metrics, not 0." },
+      { id: "nex-mini", title: "Nex Mini", status: "HOLD", note: "UNAVAILABLE metrics, not 0." },
+      { id: "khipu-abstain", title: "Khipu abstain", status: "HOLD", note: "Research-only. Not a winner." },
+    ];
+    const KERNELS = [
+      { name: "native locked-8", kind: "native", status: "MEASURED", note: "c7c0ba17 doctrine lock. Not Hub deletion." },
+      { name: "model-mirror", kind: "mirror", status: "HOLD", note: "Mirror ≠ native kernel-type v1." },
+      { name: "szl-maskmod", kind: "missing-v1", status: "UNAVAILABLE", note: "Labeled missing. No Hub delete." },
+      { name: "szl-block-kv", kind: "missing-v1", status: "UNAVAILABLE", note: "Labeled missing. No Hub delete." },
+      { name: "szl-receipt-attn", kind: "missing-v1", status: "UNAVAILABLE", note: "Labeled missing. No Hub delete." },
+      { name: "YARQA-ATTN", kind: "missing-v1", status: "UNAVAILABLE", note: "Labeled missing. No Hub delete." },
+    ];
+    const APPS = ["command", "lyte", "mesh", "frontier", "kernels"];
+    let surface = "command";
+    let meshCase = null;
+    let palette = false;
+    let loomMsg = "";
+
+    function sampleSeries() {
+      const y = [];
+      for (let i = 0; i < 24; i++) {
+        y.push(i === 7 || i === 8 ? null : 10 + Math.sin(i / 3) * 2 + (i > 16 ? 0.4 * (i - 16) : 0));
+      }
+      return y;
+    }
+    const SERIES = sampleSeries();
+
+    async function sha256(text) {
+      const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+      return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+    }
+
+    function ribbon() {
+      const w = 1000, h = 180, pad = 16;
+      const vals = SERIES.map((v, i) => ({ i, v }));
+      const nums = SERIES.filter((v) => v != null);
+      const min = Math.min(...nums) - 2, max = Math.max(...nums) + 2;
+      const x = (i) => pad + i * ((w - 2 * pad) / (SERIES.length - 1));
+      const y = (v) => h - pad - ((v - min) / (max - min)) * (h - 2 * pad);
+      const line = SERIES.map((v, i) => v == null ? null : `${x(i)},${y(v)}`).filter(Boolean).join(" ");
+      const p10 = SERIES.map((v, i) => v == null ? "" : `${x(i)},${y(v - 1.6)}`).join(" ");
+      const p90 = SERIES.map((v, i) => v == null ? "" : `${x(i)},${y(v + 1.6)}`).reverse().join(" ");
+      return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="SAMPLE uncalibrated p10-p90 ribbon">
+        <polygon points="${p10} ${p90}" fill="#7ad0c633"></polygon>
+        <polyline points="${line}" fill="none" stroke="#7ad0c6" stroke-width="2"></polyline>
+        <line x1="${x(18)}" x2="${x(18)}" y1="${pad}" y2="${h-pad}" stroke="#c4a15a" stroke-dasharray="4 4"></line>
+      </svg><p class="note">SAMPLE series. Gaps are missing data. Ribbon is uncalibrated p10–p90. Holdout pinball/coverage are not a production certificate. Not Granite.</p>`;
+    }
+
+    function table(rows) {
+      return `<table><thead><tr><th>Item</th><th>Status</th><th>Note</th></tr></thead><tbody>${rows}</tbody></table>`;
+    }
+
+    function render() {
+      const dock = document.getElementById("dock");
+      dock.innerHTML = APPS.map((id) => `<button type="button" class="${surface===id?"on":""}" data-go="${id}">${id}</button>`).join("");
+      let body = "";
+      if (surface === "command") {
+        body = `<h2>Command</h2><p class="note">Work-package board. No ALL_DONE.</p>` + table(PACKAGES.map((p) => `<tr><td>${p.title}</td><td class="${p.status}">${p.status}</td><td>${p.note}</td></tr>`).join(""));
+      } else if (surface === "lyte") {
+        body = `<h2>Lyte Forecast Loom</h2>${ribbon()}
+          <p>Submit is CALLER_SUPPLIED, not MEASURED. Paste <code>true</code> fails closed.</p>
+          <textarea id="loom-in" placeholder="paste envelope or true"></textarea>
+          <p><button type="button" id="loom-submit">Submit SAMPLE</button> <button type="button" id="loom-export">Export canonical JSON</button></p>
+          <p class="${loomMsg.includes("rejected")?"INCOMPLETE":"note"}" id="loom-msg">${loomMsg}</p>`;
+      } else if (surface === "mesh") {
+        const detail = meshCase ? DOUBLES.find((d) => d.id === meshCase) : null;
+        body = `<h2>Mesh</h2><p class="note">Seven Forge #239 false ALIGNED doubles. A skipped sibling cannot ride a green parent.</p>` + table(DOUBLES.map((d) => `<tr><td><button type="button" data-case="${d.id}">${d.title}</button></td><td class="${d.verdict}">${d.verdict}</td><td>${d.detail}</td></tr>`).join(""));
+        if (detail) body += `<p class="${detail.verdict}"><strong>Selected: ${detail.title}</strong> — ${detail.detail} observation_state INCOMPLETE_OR_DIVERGENT. production_authorization false.</p>`;
+      } else if (surface === "frontier") {
+        body = `<h2>Frontier lanes</h2>` + table(LANES.map((p) => `<tr><td>${p.title}</td><td class="${p.status}">${p.status}</td><td>${p.note}</td></tr>`).join(""));
+      } else {
+        body = `<h2>Kernels</h2><p class="note">Native vs model-mirror kept distinct. No deletions.</p>` + table(KERNELS.map((p) => `<tr><td>${p.name} <span class="note">${p.kind}</span></td><td class="${p.status}">${p.status}</td><td>${p.note}</td></tr>`).join(""));
+      }
+      if (palette) {
+        body = `<div class="palette">${[...APPS, ...PACKAGES.map((p)=>p.id), ...DOUBLES.map((d)=>d.id)].map((id) => `<button type="button" data-jump="${id}">${id}</button>`).join("")}</div>` + body;
+      }
+      document.getElementById("main").innerHTML = body;
+      dock.querySelectorAll("[data-go]").forEach((n) => n.onclick = () => { surface = n.dataset.go; palette = false; render(); });
+      document.querySelectorAll("[data-case]").forEach((n) => n.onclick = () => { meshCase = n.dataset.case; render(); });
+      document.querySelectorAll("[data-jump]").forEach((n) => n.onclick = () => {
+        const id = n.dataset.jump;
+        if (APPS.includes(id)) surface = id;
+        else if (DOUBLES.some((d) => d.id === id)) { surface = "mesh"; meshCase = id; }
+        else surface = "command";
+        palette = false; render();
+      });
+      const submit = document.getElementById("loom-submit");
+      const exp = document.getElementById("loom-export");
+      if (submit) submit.onclick = () => {
+        const raw = document.getElementById("loom-in").value.trim();
+        if (raw === "true" || raw === "false") {
+          loomMsg = "numeric_boolean_rejected";
+        } else {
+          loomMsg = "CALLER_SUPPLIED accepted as SAMPLE inspect. Not MEASURED. Not Granite.";
+        }
+        render();
+      };
+      if (exp) exp.onclick = async () => {
+        const payload = { schema: "szl.lyte.forecast-inspection-envelope/v1", series: SERIES, calibration: "NOT_ESTABLISHED", execution_authority: "NONE", label: "SAMPLE" };
+        const text = JSON.stringify(payload);
+        const digest = await sha256(text);
+        loomMsg = `exported sha256 ${digest}`;
+        const blob = new Blob([text], { type: "application/json" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "loom-sample.json";
+        a.click();
+        render();
+      };
+    }
+
+    window.addEventListener("keydown", (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault(); palette = !palette; render();
+      }
+    });
+    render();
+  </script>
+</body>
+</html>
