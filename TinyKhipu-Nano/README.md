@@ -93,7 +93,7 @@ Infers on `POST /api/infer {"kind":"tiny_khipu"}`. Hard ID filter. **Not Qwen. N
 ## Limitations
 
 - Synthetic features. Perfect holdout is a design fact, not a field claim.
-- The 1.5B abstain rate is 2/6 — this nano does not wash that.
+- The signed 1.5B abstain line is 3/6 (owner-metal receipt 2026-09-08; earlier line 2/6) — this nano does not wash that.
 
 ## Honesty
 
