@@ -31,7 +31,7 @@ SOURCES = {
     "accelerate": ("1.15.0", "huggingface/accelerate", "6afc1e5ee217051fde702b23de2813344dc0fd33"),
     "huggingface-hub": ("1.31.0", "huggingface/huggingface_hub", "495b17c8529614759ae0f1ccf1ebe9a61c148b7c"),
 }
-VERSIONS = {"torch": "2.10.0+cpu", "safetensors": "0.7.0", "numpy": "2.3.5"}
+VERSIONS = {"torch": "2.10.0+cpu", "safetensors": "0.8.0", "numpy": "2.3.5"}
 SAVE_AND_LOAD_BLOB = "f576ffdfd33dd8a81b9be50c97f8a7b399477d69"
 BASE_ID = "szl-fixture/linear-lora"
 SHAPES = {"base_model.model.linear.lora_A.weight": [2, 3],
@@ -55,7 +55,7 @@ def sha256(data: bytes) -> str:
 def requirements() -> str:
     """Installation preparation only. No package is installed by this module."""
     return "\n".join([
-        "numpy==2.3.5", "safetensors==0.7.0",
+        "numpy==2.3.5", "safetensors==0.8.0",
         *(f"{name} @ git+https://github.com/{repo}.git@{revision}"
           for name, (_, repo, revision) in SOURCES.items()),
     ]) + "\n"
