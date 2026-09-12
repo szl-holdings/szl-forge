@@ -58,7 +58,7 @@ class OnceTests(unittest.TestCase):
 
     def test_output_cannot_escape_home(self):
         with self.assertRaisesRegex(m.GateError, "OUTPUT_PATH"):
-            m.claim_paired_attempt(self.home, self.out)
+            m.claim_paired_attempt(self.home, self.home.parent)
 
     def test_linked_claim_root_refused(self):
         target = self.home / "target"; target.mkdir()
