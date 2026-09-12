@@ -90,3 +90,36 @@ Official interface documentation:
 - https://docs.ollama.com/capabilities/structured-outputs
 - https://docs.ollama.com/api/chat
 - https://docs.ollama.com/api/ps
+
+## Version 1.2: permanent attempt claims and raw failure evidence
+
+The previous cooperative lock prevented simultaneous helpers but was removed
+on exit, including timeouts. It did not by itself prevent replay on a later
+invocation. Version 1.2 creates an exclusive, flushed/fsynced claim under
+`~/.szl-recovery-attempts/<input-identity>.json` after existing admission checks
+and before any generation. Its identity binds baseline hashes, model digest
+and the complete ordered request plan; changing the helper version or output
+folder does not create a fresh experiment. The claim is never removed after
+success, failure, interruption or uncertain timeout. A claim proves only that
+an attempt was reserved, not that generation happened or succeeded.
+
+Before claiming, the helper inspects only known-format legacy recovery output
+folders directly under the home directory, bounded to 512 matching folders.
+A prior paired report, per-case result, unrecognized report or incomplete run
+blocks replay. Metadata-only runs and explicitly recognized pre-admission
+failures do not consume the experiment. Unknown historical state is never
+silently treated as an unused attempt. There is no reset, force, expiry or
+PID-based reclaim option. A block requires evidence review, not file deletion.
+
+Every received raw API response is written to `raw-response-NN.json` before
+schema validation and post-request identity/telemetry checks. Thus an abnormal
+response remains inspectable even when those later gates stop the experiment.
+These are local synthetic diagnostic outputs and must not be published to
+GitHub as part of source changes.
+
+This is cooperative single-host replay protection, not a hostile-user boundary
+or a durability guarantee for every filesystem/power-failure mode. An owner
+can remove files; legacy executions whose records were deleted cannot be
+reconstructed. A disconnected HTTP request can remain active server-side.
+Original workload, metadata, temperature, memory, baseline and no-mutation
+checks remain unchanged. Issue #264 still requires actual laptop evidence.
