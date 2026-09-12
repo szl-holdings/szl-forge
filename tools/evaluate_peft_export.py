@@ -103,13 +103,16 @@ def parse_tensors(raw: bytes) -> dict[str, dict[str, Any]]:
         need(0 <= start <= end <= len(payload), "OFFSET_BOUNDS")
         need(math.prod(shape) * WIDTHS[dtype] == end - start, "TENSOR_BYTE_LENGTH")
         intervals.append((start, end, name))
-        result[name] = {"dtype": dtype, "shape": shape,
-                        "finite": finite_values(dtype, payload[start:end])}
+        result[name] = {"dtype": dtype, "shape": shape}
     cursor = 0
     for start, end, _ in sorted(intervals):
         need(start == cursor, "PAYLOAD_GAP_OR_OVERLAP")
         cursor = end
     need(cursor == len(payload), "UNACCOUNTED_PAYLOAD")
+    # Verify the complete layout before scanning values. Otherwise many forged
+    # overlapping descriptors could rescan the same payload MAX_TENSORS times.
+    for start, end, name in intervals:
+        result[name]["finite"] = finite_values(result[name]["dtype"], payload[start:end])
     return result
 
 

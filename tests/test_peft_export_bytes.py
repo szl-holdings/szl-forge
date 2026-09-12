@@ -146,6 +146,12 @@ class SerializedLoraTests(unittest.TestCase):
         self.assertEqual(self.mutate(lambda h, p: ({**h, B: {**h[B], "data_offsets": [0, 32]}}, p))["reason"],
                          "PAYLOAD_GAP_OR_OVERLAP")
 
+    def test_invalid_layout_is_rejected_before_value_scan(self):
+        with patch("tools.evaluate_peft_export.finite_values", side_effect=AssertionError("early scan")) as scan:
+            result = self.mutate(lambda h, p: ({**h, B: {**h[B], "data_offsets": [0, 32]}}, p))
+        self.assertEqual(result["reason"], "PAYLOAD_GAP_OR_OVERLAP")
+        scan.assert_not_called()
+
     def test_malformed_descriptor_shape_metadata_and_dtype(self):
         changes = [({**{}, "dtype": "I32"}, "UNSUPPORTED_DTYPE"),
                    ({"shape": [True, 3]}, "INVALID_SHAPE"),
