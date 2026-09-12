@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: Apache-2.0
-"""Local SZL evidence recovery and ReceiptAgent JSON-schema adapter, v1.1.0.
+"""Local SZL evidence recovery and ReceiptAgent JSON-schema adapter, v1.2.0.
 
 Standard library only. No package installs, downloads, remote calls, model
 creation/deletion, training, process termination, service changes, or publishing.
@@ -29,7 +29,7 @@ from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_ope
 import uuid
 import zipfile
 
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 ORIGIN = "http://127.0.0.1:11434"
 RECEIPT = "receiptagent:latest"
 ROOT_NAME = "szl-laptop-lab-20260912-163155-124"
@@ -380,6 +380,9 @@ def paired_check(client, out: Path, record: dict, gpu_probe=gpu_observation) -> 
             tick = time.monotonic()
             # No retry: a timeout may leave the server still evaluating a request.
             response = client.call("/api/chat", request, timeout=90)
+            # Preserve a received answer even if assessment/readback fails.
+            # Local diagnostic data only; never publish these reports to GitHub.
+            write_new(out / f"raw-response-{count:02d}.json", response)
             item = {"case": case["id"], "mode": mode, "wall_seconds": round(time.monotonic()-tick, 6),
                     "request_sha256": sha(canonical(request)), "response_sha256": sha(canonical(response)),
                     "gpu_before": observed, **assess(case, response)}
@@ -396,6 +399,105 @@ def paired_check(client, out: Path, record: dict, gpu_probe=gpu_observation) -> 
     record["state"] = ("SCHEMA_INTERFACE_PASSED_REUSED_SIX_CASES_ONLY" if record["scores"]["schema"]["passed"] == 6
                        else "SCHEMA_INTERFACE_NOT_QUALIFIED")
     record["finished_at"] = now()
+
+def experiment_identity() -> str:
+    """Stable across output folders and helper releases; not a retry nonce."""
+    requests = []
+    for index, case in enumerate(CASES):
+        for mode in ((False, True) if index % 2 == 0 else (True, False)):
+            requests.append(build_request(case, mode, last=len(requests) == 11))
+    return sha(canonical({"schema": "szl.paired-input/v1",
+                          "baseline": EVIDENCE_HASHES,
+                          "model_digest": EXPECTED[RECEIPT],
+                          "requests": requests}))
+
+
+def require_no_prior_attempt(home: Path, output: Path) -> None:
+    """Inspect bounded, known legacy output locations before claiming a run.
+
+    Old helpers had no durable claim. Completed, partial or ambiguous legacy
+    runs block replay. A metadata-only or proven pre-admission report does not.
+    No old report is edited, removed, imported as code, or promoted to a pass.
+    """
+    seen = 0
+    for folder in home.iterdir():
+        if not re.fullmatch(r"szl-recovery-\d{8}-\d{6}-[0-9a-f]{8}", folder.name):
+            continue
+        if folder == output:
+            continue
+        seen += 1
+        require(seen <= 512, "PRIOR_RUN_SCAN_LIMIT_NO_INFERENCE")
+        require(plain_path(folder) and folder.is_dir(), "PRIOR_RUN_LINKED_OR_INVALID")
+        # File presence alone is enough to block, including broken symlinks.
+        attempts = [folder / "paired-schema-report.json"]
+        attempts.extend(folder / f"check-{i:02d}.json" for i in range(12))
+        require(not any(p.exists() or p.is_symlink() for p in attempts),
+                "PRIOR_PAIRED_RESULT_NO_REPLAY:" + folder.name)
+        report_path = folder / "recovery-report.json"
+        require(plain_path(report_path) and report_path.is_file(),
+                "PRIOR_RUN_INCOMPLETE_NO_REPLAY:" + folder.name)
+        require(report_path.stat().st_size <= 8 * 1024**2, "PRIOR_REPORT_TOO_LARGE")
+        report = strict_json(report_path.read_bytes())
+        require(isinstance(report, dict) and report.get("schema") == "szl.laptop-recovery/v1",
+                "PRIOR_REPORT_UNRECOGNIZED_NO_REPLAY")
+        require(not report.get("paired_result") and not report.get("attempt_claim"),
+                "PRIOR_PAIRED_RESULT_NO_REPLAY:" + folder.name)
+        metadata_only = report.get("state") == "METADATA_RECORDED_NO_INFERENCE_REQUESTED"
+        # In v1.2, this field changes only after the permanent claim is written.
+        preclaim = (report.get("version") == "1.2.0"
+                    and report.get("paired_execution") == "NOT_CLAIMED")
+        # These legacy gates occur before any call to paired_check.
+        legacy_preclaim = (report.get("version") in {"1.0.0", "1.1.0"}
+                           and report.get("state") == "STOPPED_WITH_EVIDENCE_NO_AUTOMATIC_RETRY"
+                           and report.get("error_code") in {
+                               "EXISTING_LAB_LOCK_NO_DUPLICATE_JOB",
+                               "OTHER_GPU_WORK_PRESENT_NO_PROCESS_STOPPED",
+                               "INSUFFICIENT_FREE_GPU_MEMORY_FOR_SMALL_INFERENCE",
+                               "GPU_TEMPERATURE_TOO_HIGH_NO_JOB_STARTED",
+                               "OLLAMA_ALREADY_LOADED_NO_WORK_INTERRUPTED",
+                               "RECEIPTAGENT_NOT_INSTALLED",
+                               "RECEIPTAGENT_CHANGED_NO_AUTOMATIC_REBASE",
+                               "LOCAL_WEIGHTS_REQUIRED", "CLOUD_MODEL_REFUSED",
+                               "LOCAL_COMPLETION_REQUIRED"})
+        require(metadata_only or preclaim or legacy_preclaim,
+                "PRIOR_RUN_UNCERTAIN_NO_REPLAY:" + folder.name)
+
+
+def claim_paired_attempt(home: Path, output: Path) -> dict:
+    """Persist a permanent claim BEFORE generation; never clear it on failure.
+
+    This is cooperative local replay prevention, not protection against an
+    owner who deletes files or power-loss guarantees for every filesystem.
+    No expiry, PID-based reclaim, force flag or retry/reset mode is provided.
+    """
+    require(plain_path(home) and plain_path(output) and output.is_dir()
+            and output.parent == home, "ATTEMPT_OUTPUT_PATH_INVALID")
+    require(re.fullmatch(r"szl-recovery-\d{8}-\d{6}-[0-9a-f]{8}", output.name),
+            "ATTEMPT_OUTPUT_NAME_INVALID")
+    root = home / ".szl-recovery-attempts"
+    require(plain_path(root), "ATTEMPT_DIRECTORY_LINKED")
+    root.mkdir(exist_ok=True)
+    require(root.is_dir() and plain_path(root), "ATTEMPT_DIRECTORY_INVALID")
+    identity = experiment_identity()
+    claim_path = root / (identity + ".json")
+    require(plain_path(claim_path), "ATTEMPT_CLAIM_LINKED")
+    require(not claim_path.exists(), "PAIRED_ATTEMPT_ALREADY_CLAIMED_NO_REPLAY")
+    require_no_prior_attempt(home, output)
+    value = {"schema": "szl.paired-attempt-claim/v1", "input_identity": identity,
+             "state": "CLAIMED_NO_REPLAY", "created_at": now(),
+             "output_directory": output.name, "model_digest": EXPECTED[RECEIPT],
+             "runner_sha256": sha(Path(__file__).read_bytes()),
+             "boundary": "A claim is not a completed request or a passing result."}
+    try:
+        # Exclusive creation handles races; a truncated claim still blocks.
+        with claim_path.open("xb") as stream:
+            stream.write(canonical(value) + b"\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+    except FileExistsError:
+        raise GateError("PAIRED_ATTEMPT_ALREADY_CLAIMED_NO_REPLAY") from None
+    return value
+
 
 def verify_package() -> None:
     root = Path(__file__).resolve().parent
@@ -429,7 +531,8 @@ def main() -> int:
     require(shutil.disk_usage(home).free >= 256*1024**2, "INSUFFICIENT_DISK_FOR_SMALL_REPORTS")
     out.mkdir(exist_ok=False)
     receipt = {"schema": "szl.laptop-recovery/v1", "version": VERSION, "started_at": now(),
-               "state": "INCOMPLETE", "trained": False, "model_weights_changed": False,
+               "state": "INCOMPLETE", "paired_execution": "NOT_CLAIMED",
+               "trained": False, "model_weights_changed": False,
                "existing_models_deleted": False, "existing_app_routes_changed": False,
                "remote_calls": False, "publication_eligible": False, "autonomy_eligible": False,
                "boundary": "Local Ollama metadata and a bounded ReceiptAgent interface experiment, not a global repair."}
@@ -480,7 +583,10 @@ def main() -> int:
             require(not receipt["ollama_loaded_before"], "OLLAMA_ALREADY_LOADED_NO_WORK_INTERRUPTED")
             require_idle_gpu(receipt["gpu_before"])
             print("Starting 12 paired requests on ONLY the installed 1.5B ReceiptAgent. No downloads or training.", flush=True)
+            receipt["attempt_claim"] = claim_paired_attempt(home, out)
+            receipt["paired_execution"] = "CLAIMED_NO_REPLAY"
             paired_check(client, out, paired)
+            receipt["paired_execution"] = "COMPLETED_REPLAY_BLOCKED"
             receipt["paired_result"] = {k:paired[k] for k in ("state","scores","original_unconstrained_score")}
             receipt["state"] = paired["state"]
             code = 0 if receipt["state"] == "SCHEMA_INTERFACE_PASSED_REUSED_SIX_CASES_ONLY" else 2
