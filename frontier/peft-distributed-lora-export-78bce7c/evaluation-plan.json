@@ -1,0 +1,96 @@
+{
+  "schema": "szl.forge.frontier-evaluation.v1",
+  "candidate": "peft-distributed-lora-export-78bce7c",
+  "frontierIssue": 110,
+  "forgeIssue": 257,
+  "source": {
+    "repository": "huggingface/peft",
+    "revision": "78bce7cb48f800a7ad0d352b68a46302e13e1687",
+    "upstreamPullRequest": 3251,
+    "sourceClass": "MAIN_ONLY_WATCH"
+  },
+  "authority": {
+    "disposition": "EVALUATION_HOLD",
+    "trainingAuthorized": false,
+    "adapterPublicationAuthorized": false,
+    "modelPublicationAuthorized": false,
+    "providerWritesAuthorized": false,
+    "automaticPromotion": false,
+    "paidComputeAuthorizedByThisPlan": false,
+    "weightRehostingForInventory": false
+  },
+  "requiredPins": [
+    "peft_git_revision",
+    "torch_version",
+    "deepspeed_or_fsdp_version",
+    "safetensors_version",
+    "base_model_revision",
+    "adapter_config_digest",
+    "fixture_digest",
+    "hardware_inventory",
+    "launch_command"
+  ],
+  "truthBoundary": {
+    "upstreamBehavior": "warning_only_for_inferred_state_dict",
+    "explicitStateDictHeuristic": "NOT_APPLIED",
+    "upstreamWarningIsPublicationDenial": false,
+    "szlFailClosedPublisherPolicyAdmitted": false
+  },
+  "stages": [
+    {
+      "id": "P0",
+      "name": "static-source-preflight",
+      "acceptance": [
+        "Resolve all required pins and exact PEFT source before execution.",
+        "Record upstream PeftWarning behavior without claiming it rejects writes.",
+        "Keep explicit-state-dict provenance UNKNOWN rather than inferring completeness."
+      ]
+    },
+    {
+      "id": "P1",
+      "name": "gathered-export-reference",
+      "acceptance": [
+        "Create a correctly gathered LoRA adapter on a fixed synthetic or public non-secret fixture.",
+        "Verify every serialized lora_A and lora_B tensor is at least 2-D and non-empty.",
+        "Read immutable adapter bytes back and load them against the exact base-model and adapter configuration binding."
+      ]
+    },
+    {
+      "id": "P2",
+      "name": "ungathered-shard-negative",
+      "acceptance": [
+        "Create controlled one-dimensional and zero-sized lora_A or lora_B shard cases under ZeRO-3 and or FSDP.",
+        "Require the pinned upstream inferred-state-dict path to emit PeftWarning.",
+        "Prove the warning does not itself prevent adapter files from being written."
+      ]
+    },
+    {
+      "id": "P3",
+      "name": "scope-and-bypass",
+      "acceptance": [
+        "Prove explicitly supplied state_dict bypasses the heuristic and remains UNKNOWN rather than PASS.",
+        "Prove legitimate one-dimensional DoRA magnitude vectors and AdaLoRA lora_E values are not treated as malformed lora_A or lora_B tensors.",
+        "Record adapter method and provenance class in the receipt."
+      ]
+    },
+    {
+      "id": "P4",
+      "name": "candidate-szl-prepublication-integrity",
+      "acceptance": [
+        "Evaluate, but do not automatically promote, a local receipt-backed pre-publication check over serialized adapter bytes.",
+        "Candidate check requires every serialized LoRA A/B tensor to be at least 2-D, non-empty, immutable-byte readable, exact-base bound and successfully reloadable.",
+        "Any fail-closed publication behavior is an SZL policy decision requiring separate code review and tests."
+      ]
+    },
+    {
+      "id": "P5",
+      "name": "failure-and-rollback",
+      "acceptance": [
+        "Exercise malformed shard, explicit-state-dict, save-load, byte-readback, cancellation and failure paths.",
+        "Verify rollback leaves existing admitted publisher behavior and artifacts unchanged.",
+        "Partial evidence cannot become publication or model qualification."
+      ]
+    }
+  ],
+  "claimBoundary": "This file prepares evaluation only. The upstream PEFT warning does not certify adapter completeness or deny malformed writes, and no SZL fail-closed publication policy is admitted by this plan."
+}
