@@ -1122,6 +1122,22 @@ class PublishSzlKernelsTests(unittest.TestCase):
                 with self.assertRaises(publisher.PublicationError):
                     publisher.validate_stable_kernel_runtime_evidence(evidence, revision="2" * 40)
 
+    def test_runtime_readback_requires_complete_outer_schema(self) -> None:
+        valid = runtime_evidence()
+        publisher.validate_stable_kernel_runtime_evidence(valid, revision="2" * 40)
+        for missing in valid:
+            with self.subTest(missing=missing):
+                evidence = copy.deepcopy(valid)
+                del evidence[missing]
+                with self.assertRaises(publisher.PublicationError):
+                    publisher.validate_stable_kernel_runtime_evidence(evidence, revision="2" * 40)
+        for field, value in (("authenticated", True), ("error", "contradictory failure")):
+            with self.subTest(extra=field):
+                evidence = copy.deepcopy(valid)
+                evidence[field] = value
+                with self.assertRaises(publisher.PublicationError):
+                    publisher.validate_stable_kernel_runtime_evidence(evidence, revision="2" * 40)
+
     def test_stable_runtime_rejects_unrecorded_retrieval_receipt(self) -> None:
         module = runtime_module()
         valid_retrieval = module.governed_cosine_topk
@@ -1505,6 +1521,48 @@ class PublishSzlKernelsTests(unittest.TestCase):
                 "szl_kernels/__init__.py",
                 metadata["digest"]["files"],
             )
+
+    def test_extra_runtime_claim_is_not_persisted_or_promoted_to_legacy(self) -> None:
+        for field, value in (("authenticated", True), ("error", "UNTRUSTED_ERROR_MARKER")):
+            with self.subTest(extra=field), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                authorization, artifacts = self._fixture(root)
+                api = FakeApi(artifacts)
+                api.download_root = root / "downloads"
+                identity = publisher.publisher_identity(
+                    repository=publisher.EXPECTED_PUBLISHER_REPOSITORY,
+                    revision=self.publisher_revision,
+                    workflow_ref=(
+                        f"{publisher.EXPECTED_PUBLISHER_REPOSITORY}/"
+                        ".github/workflows/publish-szl-kernels.yml@refs/heads/main"
+                    ),
+                    run_id="123", run_attempt="1",
+                )
+
+                def invalid_runtime(*, revision: str) -> dict[str, object]:
+                    evidence = runtime_evidence(revision)
+                    evidence[field] = value
+                    return evidence
+
+                report = root / "report.json"
+                with self.assertRaisesRegex(publisher.PublicationError, "runtime evidence failed validation"):
+                    publisher.run(
+                        source_root=root, report_path=report,
+                        authorization_path=authorization, source_revision=self.source_revision,
+                        publisher=identity, publish=True, token="test-token", api=api,
+                        download_fn=api.download, kernel_upload_fn=api.upload_kernel,
+                        kernel_runtime_fn=invalid_runtime,
+                    )
+                partial = json.loads(report.read_text(encoding="utf-8"))
+                self.assertEqual(partial["status"], "PUBLICATION_IN_PROGRESS")
+                observed = partial["targets"]["first_class_kernel"]["runtime"]
+                self.assertEqual(observed["status"], "FAILED")
+                self.assertEqual(set(observed), {"status", "client_version", "error"})
+                self.assertNotIn("UNTRUSTED_ERROR_MARKER", report.read_text(encoding="utf-8"))
+                self.assertEqual(api.commits, [
+                    {"repo_type": "kernel", "revision": "main"},
+                    {"repo_type": "kernel", "revision": "v1"},
+                ])
 
     def test_failed_readback_preserves_the_created_kernel_revision(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

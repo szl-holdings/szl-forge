@@ -1163,7 +1163,10 @@ def validate_stable_kernel_runtime_evidence(
             "1": {"passed": False, "receipt_depth": 1},
         },
     }
-    if any(not same_json_value(evidence.get(key), value) for key, value in expected.items()):
+    if (
+        evidence.keys() != expected.keys() | {"retrieval"}
+        or any(not same_json_value(evidence.get(key), value) for key, value in expected.items())
+    ):
         raise PublicationError(
             "isolated stable Kernel runtime evidence failed validation"
         )
