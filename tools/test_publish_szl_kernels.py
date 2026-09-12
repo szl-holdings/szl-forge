@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import copy
 import hashlib
 import io
 import json
+import struct
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -11,6 +14,110 @@ from unittest.mock import patch
 
 import publish_szl_kernels as publisher
 import verify_szl_kernel_runtime as runtime_verifier
+
+
+def retrieval_evidence() -> dict[str, object]:
+    byte_prefix = "<" if sys.byteorder == "little" else ">"
+    attrs = {
+        "schema": "szl.governed-cosine-topk/v1",
+        "query_shape": [2], "documents_shape": [4, 2], "output_shape": [1, 4],
+        "dtype": "float32", "index_dtype": "int64", "device": "cpu",
+        "byte_order": sys.byteorder, "input_hash_format": "logical_c_order_raw_bytes",
+        "hash_algorithm": "sha256", "k": 4, "block_rows": 1,
+        "actual_block_rows": 1, "max_similarity_elements": 1,
+        "zero_document_count": 0, "zero_document_policy": "score_zero",
+        "tie_break": "ascending_document_index",
+        "implementation": "pytorch_float32_blocked_reference",
+        "cuda_tf32_allowed": None, "receipt_authenticity": "UNSIGNED",
+        "retrieval_quality": "NOT_MEASURED", "acceleration_claim": False,
+    }
+    for name, kind, values in (
+        ("query", "f", [1.0, 0.0]),
+        ("documents", "f", [0.0, 1.0, 1.0, 0.0, 1.0, 0.0, -1.0, 0.0]),
+        ("scores", "f", [1.0, 1.0, 0.0, -1.0]),
+        ("indices", "q", [1, 2, 0, 3]),
+    ):
+        attrs[f"{name}_sha256"] = hashlib.sha256(
+            struct.pack(f"{byte_prefix}{len(values)}{kind}", *values)
+        ).hexdigest()
+    body = {
+        "seq": 0, "kernel": "governed_retrieval", "op": "cosine_topk",
+        "attrs": attrs, "prev": "0" * 64,
+    }
+    receipt = dict(body, ts=1.0, digest=hashlib.sha3_256(
+        json.dumps(body, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest())
+    return {
+        "indices": [[1, 2, 0, 3]], "scores": [[1.0, 1.0, 0.0, -1.0]],
+        "receipt": receipt, "receipt_depth": 1, "chain_verified": True,
+    }
+
+
+class FakeRuntimeChain:
+    def __init__(self) -> None:
+        self.depth = 0
+        self.records = []
+
+    def verify(self) -> tuple[bool, int, int]:
+        return True, self.depth, -1
+
+    def head(self) -> str:
+        return self.records[-1]["digest"] if self.records else "0" * 64
+
+    def to_json(self) -> str:
+        return json.dumps(self.records)
+
+
+def runtime_module() -> SimpleNamespace:
+    def gate(chain, _axes, *, threshold):
+        if not 0.0 <= threshold <= 1.0:
+            raise ValueError("invalid threshold")
+        chain.depth += 1
+        return {"threshold": threshold, "passed": 0.5 >= threshold}
+
+    def retrieval(chain, query, documents, *, k, block_rows):
+        if query != [1.0, 0.0] or documents != [
+            [0.0, 1.0], [1.0, 0.0], [1.0, 0.0], [-1.0, 0.0]
+        ] or k != 4 or block_rows != 1:
+            raise AssertionError("retrieval smoke inputs changed")
+        evidence = retrieval_evidence()
+        chain.depth += 1
+        chain.records.append(evidence["receipt"])
+        return {
+            "indices": SimpleNamespace(
+                dtype="torch.int64", device="cpu", tolist=lambda: evidence["indices"]
+            ),
+            "scores": SimpleNamespace(
+                dtype="torch.float32", device="cpu", tolist=lambda: evidence["scores"]
+            ),
+            "receipt": evidence["receipt"],
+        }
+
+    module = SimpleNamespace(**{
+        name: (lambda *_args, **_kwargs: None)
+        for name in publisher.KERNEL_REQUIRED_EXPORTS
+    })
+    module.__version__ = "0.2.0"
+    module.GENESIS = "0" * 64
+    module.UnifiedReceiptChain = FakeRuntimeChain
+    module.selfcheck = lambda: {"ok": True, "version": "0.2.0"}
+    module.governed_lambda_gate = gate
+    module.governed_cosine_topk = retrieval
+    return module
+
+
+def runtime_evidence(revision: str = "2" * 40) -> dict[str, object]:
+    return {
+        "status": "STABLE_GET_KERNEL_VERIFIED", "client_version": "0.16.0",
+        "revision": revision, "package_version": "0.2.0", "selfcheck_ok": True,
+        "verified_exports": list(publisher.KERNEL_REQUIRED_EXPORTS),
+        "invalid_thresholds_rejected_before_receipt": 4,
+        "inclusive_boundaries": {
+            "0": {"passed": True, "receipt_depth": 1},
+            "1": {"passed": False, "receipt_depth": 1},
+        },
+        "retrieval": retrieval_evidence(),
+    }
 
 
 class FakeApi:
@@ -251,18 +358,7 @@ class PublishSzlKernelsTests(unittest.TestCase):
     def test_isolated_runtime_cleanup_timeout_fails_after_valid_evidence(self) -> None:
         revision = "2" * 40
         container_id = "c" * 64
-        evidence = {
-            "status": "STABLE_GET_KERNEL_VERIFIED",
-            "client_version": publisher.KERNEL_RUNTIME_CLIENT_VERSION,
-            "revision": revision,
-            "package_version": publisher.EXPECTED_KERNEL_PACKAGE_VERSION,
-            "selfcheck_ok": True,
-            "invalid_thresholds_rejected_before_receipt": 4,
-            "inclusive_boundaries": {
-                "0": {"passed": True, "receipt_depth": 1},
-                "1": {"passed": False, "receipt_depth": 1},
-            },
-        }
+        evidence = runtime_evidence(revision)
 
         def run_docker(command: list[str], **kwargs: object) -> SimpleNamespace:
             operation = command[1]
@@ -295,18 +391,7 @@ class PublishSzlKernelsTests(unittest.TestCase):
 
     def test_isolated_runtime_scrubs_credentials_and_validates_evidence(self) -> None:
         revision = "2" * 40
-        evidence = {
-            "status": "STABLE_GET_KERNEL_VERIFIED",
-            "client_version": "0.16.0",
-            "revision": revision,
-            "package_version": "0.1.1",
-            "selfcheck_ok": True,
-            "invalid_thresholds_rejected_before_receipt": 4,
-            "inclusive_boundaries": {
-                "0": {"passed": True, "receipt_depth": 1},
-                "1": {"passed": False, "receipt_depth": 1},
-            },
-        }
+        evidence = runtime_evidence(revision)
         container_id = "c" * 64
 
         def run_docker(command: list[str], **_: object) -> SimpleNamespace:
@@ -451,18 +536,7 @@ class PublishSzlKernelsTests(unittest.TestCase):
     def test_isolated_runtime_recovers_success_evidence_from_bounded_logs(self) -> None:
         revision = "2" * 40
         container_id = "c" * 64
-        evidence = {
-            "status": "STABLE_GET_KERNEL_VERIFIED",
-            "client_version": publisher.KERNEL_RUNTIME_CLIENT_VERSION,
-            "revision": revision,
-            "package_version": publisher.EXPECTED_KERNEL_PACKAGE_VERSION,
-            "selfcheck_ok": True,
-            "invalid_thresholds_rejected_before_receipt": 4,
-            "inclusive_boundaries": {
-                "0": {"passed": True, "receipt_depth": 1},
-                "1": {"passed": False, "receipt_depth": 1},
-            },
-        }
+        evidence = runtime_evidence(revision)
 
         def run_docker(command: list[str], **_: object) -> SimpleNamespace:
             operation = command[1]
@@ -810,42 +884,12 @@ class PublishSzlKernelsTests(unittest.TestCase):
             )
 
     def test_stable_runtime_verifies_exact_load_and_threshold_contract(self) -> None:
-        class Chain:
-            def __init__(self) -> None:
-                self.depth = 0
-
-            def verify(self) -> tuple[bool, int, int]:
-                return True, self.depth, -1
-
-        class Module:
-            UnifiedReceiptChain = Chain
-
-            @staticmethod
-            def selfcheck() -> dict[str, object]:
-                return {"ok": True, "version": "0.1.1"}
-
-            @staticmethod
-            def governed_lambda_gate(
-                chain: Chain,
-                axes: list[float],
-                *,
-                threshold: float,
-            ) -> dict[str, object]:
-                del axes
-                if not 0.0 <= threshold <= 1.0:
-                    raise ValueError("invalid threshold")
-                chain.depth += 1
-                return {
-                    "threshold": threshold,
-                    "passed": 0.5 >= threshold,
-                }
-
-        def get_kernel(repo_id: str, **kwargs: object) -> Module:
+        def get_kernel(repo_id: str, **kwargs: object) -> SimpleNamespace:
             self.assertEqual(repo_id, publisher.EXPECTED_REPO_ID)
             self.assertEqual(kwargs["revision"], "2" * 40)
             self.assertEqual(kwargs["backend"], "cpu")
             self.assertIs(kwargs["trust_remote_code"], True)
-            return Module()
+            return runtime_module()
 
         evidence = publisher.verify_stable_kernel_runtime(
             revision="2" * 40,
@@ -862,37 +906,18 @@ class PublishSzlKernelsTests(unittest.TestCase):
         self.assertEqual(evidence["inclusive_boundaries"]["1"]["receipt_depth"], 1)
         self.assertIs(evidence["inclusive_boundaries"]["0"]["passed"], True)
         self.assertIs(evidence["inclusive_boundaries"]["1"]["passed"], False)
+        self.assertEqual(evidence, runtime_evidence())
 
     def test_stable_runtime_rejects_inverted_boundary_decision(self) -> None:
-        class Chain:
-            def __init__(self) -> None:
-                self.depth = 0
+        module = runtime_module()
+        valid_gate = module.governed_lambda_gate
 
-            def verify(self) -> tuple[bool, int, int]:
-                return True, self.depth, -1
+        def inverted_gate(*args, **kwargs):
+            result = valid_gate(*args, **kwargs)
+            result["passed"] = not result["passed"]
+            return result
 
-        class Module:
-            UnifiedReceiptChain = Chain
-
-            @staticmethod
-            def selfcheck() -> dict[str, object]:
-                return {"ok": True, "version": "0.1.1"}
-
-            @staticmethod
-            def governed_lambda_gate(
-                chain: Chain,
-                axes: list[float],
-                *,
-                threshold: float,
-            ) -> dict[str, object]:
-                del axes
-                if not 0.0 <= threshold <= 1.0:
-                    raise ValueError("invalid threshold")
-                chain.depth += 1
-                return {
-                    "threshold": threshold,
-                    "passed": threshold == 1.0,
-                }
+        module.governed_lambda_gate = inverted_gate
 
         with self.assertRaisesRegex(
             publisher.PublicationError,
@@ -900,7 +925,142 @@ class PublishSzlKernelsTests(unittest.TestCase):
         ):
             publisher.verify_stable_kernel_runtime(
                 revision="2" * 40,
-                get_kernel_fn=lambda *_args, **_kwargs: Module(),
+                get_kernel_fn=lambda *_args, **_kwargs: module,
+                tensor_fn=lambda values: values,
+                client_version="0.16.0",
+            )
+
+    def test_stable_runtime_requires_every_legacy_and_retrieval_export(self) -> None:
+        self.assertEqual(len(publisher.KERNEL_REQUIRED_EXPORTS), 16)
+        for missing in publisher.KERNEL_REQUIRED_EXPORTS:
+            with self.subTest(missing=missing):
+                module = runtime_module()
+                delattr(module, missing)
+                with self.assertRaisesRegex(publisher.PublicationError, "missing public exports"):
+                    publisher.verify_stable_kernel_runtime(
+                        revision="2" * 40,
+                        get_kernel_fn=lambda *_args, **_kwargs: module,
+                        tensor_fn=lambda values: values,
+                        client_version="0.16.0",
+                    )
+
+    def test_stable_runtime_rejects_package_or_selfcheck_version_drift(self) -> None:
+        for field in ("__version__", "selfcheck"):
+            with self.subTest(field=field):
+                module = runtime_module()
+                setattr(module, field, "0.1.1" if field == "__version__" else (
+                    lambda: {"ok": True, "version": "0.1.1"}
+                ))
+                with self.assertRaisesRegex(publisher.PublicationError, "unexpected package version"):
+                    publisher.verify_stable_kernel_runtime(
+                        revision="2" * 40,
+                        get_kernel_fn=lambda *_args, **_kwargs: module,
+                        tensor_fn=lambda values: values,
+                        client_version="0.16.0",
+                    )
+
+    def test_retrieval_rejects_wrong_values_raw_hashes_or_unsigned_claims(self) -> None:
+        mutations = (
+            ("indices", [[2, 1, 0, 3]]), ("scores", [[1.0, 1.0, 0.1, -1.0]]),
+            ("indices", [[True, 2, 0, 3]]), ("indices", [[1.0, 2, 0, 3]]),
+            ("indices", [(1, 2, 0, 3)]),
+            ("scores", [[True, 1.0, 0.0, -1.0]]),
+            ("scores", [[1, 1, 0, -1]]),
+            ("scores", [[1.0, 1.0, -0.0, -1.0]]),
+            ("scores", [(1.0, 1.0, 0.0, -1.0)]),
+            ("receipt_depth", 2), ("chain_verified", False),
+            ("receipt_depth", True), ("receipt_depth", 1.0),
+            ("chain_verified", 1),
+            ("receipt.attrs.query_sha256", "0" * 64),
+            ("receipt.attrs.documents_sha256", "0" * 64),
+            ("receipt.attrs.scores_sha256", "0" * 64),
+            ("receipt.attrs.indices_sha256", "0" * 64),
+            ("receipt.attrs.receipt_authenticity", "SIGNED"),
+            ("receipt.attrs.retrieval_quality", "MEASURED"),
+            ("receipt.attrs.acceleration_claim", True),
+            ("receipt.attrs.acceleration_claim", 0),
+            ("receipt.attrs.query_shape", [2.0]),
+            ("receipt.attrs.documents_shape", [4.0, 2]),
+            ("receipt.attrs.output_shape", [True, 4]),
+            ("receipt.attrs.output_shape", [1.0, 4]),
+            ("receipt.attrs.output_shape", (1, 4)),
+            ("receipt.attrs.k", 4.0),
+            ("receipt.attrs.block_rows", True),
+            ("receipt.attrs.actual_block_rows", 1.0),
+            ("receipt.attrs.max_similarity_elements", True),
+            ("receipt.attrs.zero_document_count", False),
+            ("receipt.attrs.zero_document_count", 0.0),
+            ("receipt.attrs.byte_order", "unknown"),
+            ("receipt.attrs.input_hash_format", "rounded_decimal"),
+            ("receipt.attrs.device", "cuda:0"),
+            ("receipt.attrs.tie_break", "unspecified"),
+            ("receipt.seq", 1), ("receipt.prev", "f" * 64),
+            ("receipt.seq", False), ("receipt.seq", 0.0),
+            ("receipt.digest", "0" * 64), ("receipt.kernel", "other"),
+        )
+        for field, value in mutations:
+            with self.subTest(field=field):
+                evidence = retrieval_evidence()
+                target = evidence
+                parts = field.split(".")
+                for part in parts[:-1]:
+                    target = target[part]
+                target[parts[-1]] = value
+                # A self-consistent modified receipt must still fail the known
+                # fixture's data/meaning contract, independently of its digest.
+                if field != "receipt.digest":
+                    receipt = evidence["receipt"]
+                    body = {key: receipt[key] for key in ("seq", "kernel", "op", "attrs", "prev")}
+                    receipt["digest"] = hashlib.sha3_256(json.dumps(
+                        body, sort_keys=True, separators=(",", ":")
+                    ).encode("utf-8")).hexdigest()
+                with self.assertRaisesRegex(publisher.PublicationError, "retrieval runtime evidence"):
+                    publisher.validate_retrieval_runtime_evidence(evidence)
+
+    def test_runtime_readback_rejects_missing_exports_or_retrieval_evidence(self) -> None:
+        valid = runtime_evidence()
+        for field, value in (
+            ("verified_exports", valid["verified_exports"][:-1]),
+            ("retrieval", None), ("retrieval", []),
+            ("retrieval", {"receipt": None}),
+            ("package_version", "0.1.1"),
+            ("inclusive_boundaries", []),
+            ("inclusive_boundaries", {"0": None, "1": {}}),
+            ("invalid_thresholds_rejected_before_receipt", 4.0),
+            ("selfcheck_ok", 1),
+            ("inclusive_boundaries", {
+                "0": {"passed": True, "receipt_depth": True},
+                "1": {"passed": False, "receipt_depth": 1},
+            }),
+            ("inclusive_boundaries", {
+                "0": {"passed": True, "receipt_depth": 1},
+                "1": {"passed": False, "receipt_depth": 1.0},
+            }),
+            ("inclusive_boundaries", {
+                "0": {"passed": 1, "receipt_depth": 1},
+                "1": {"passed": 0, "receipt_depth": 1},
+            }),
+        ):
+            with self.subTest(field=field, value=value):
+                evidence = copy.deepcopy(valid)
+                evidence[field] = value
+                with self.assertRaises(publisher.PublicationError):
+                    publisher.validate_stable_kernel_runtime_evidence(evidence, revision="2" * 40)
+
+    def test_stable_runtime_rejects_unrecorded_retrieval_receipt(self) -> None:
+        module = runtime_module()
+        valid_retrieval = module.governed_cosine_topk
+
+        def unrecorded_retrieval(*args, **kwargs):
+            result = valid_retrieval(*args, **kwargs)
+            args[0].records.clear()
+            return result
+
+        module.governed_cosine_topk = unrecorded_retrieval
+        with self.assertRaisesRegex(publisher.PublicationError, "receipt chain contract"):
+            publisher.verify_stable_kernel_runtime(
+                revision="2" * 40,
+                get_kernel_fn=lambda *_args, **_kwargs: module,
                 tensor_fn=lambda values: values,
                 client_version="0.16.0",
             )
@@ -1000,14 +1160,21 @@ class PublishSzlKernelsTests(unittest.TestCase):
             ".gitattributes": root / ".gitattributes",
             "LICENSE": root / "LICENSE",
             "README.md": root / "README.md",
+            "KERNEL_HUB.md": root / "KERNEL_HUB.md",
             "build/torch-universal/szl_kernels/__init__.py": (
                 root / "build/torch-universal/szl_kernels/__init__.py"
+            ),
+            "build/torch-universal/szl_kernels/_kernel_api.py": (
+                root / "build/torch-universal/szl_kernels/_kernel_api.py"
             ),
             "build/torch-universal/szl_kernels/_chain.py": (
                 root / "build/torch-universal/szl_kernels/_chain.py"
             ),
             "build/torch-universal/szl_kernels/_ops.py": (
                 root / "build/torch-universal/szl_kernels/_ops.py"
+            ),
+            "build/torch-universal/szl_kernels/retrieval.py": (
+                root / "build/torch-universal/szl_kernels/retrieval.py"
             ),
             "build/torch-universal/szl_kernels/metadata.json": (
                 root / "build/torch-universal/szl_kernels/metadata.json"
@@ -1018,9 +1185,14 @@ class PublishSzlKernelsTests(unittest.TestCase):
             path.parent.mkdir(parents=True, exist_ok=True)
         artifacts[".gitattributes"].write_text("*.bin lfs\n", encoding="utf-8")
         artifacts["LICENSE"].write_text("Apache-2.0\n", encoding="utf-8")
-        artifacts["README.md"].write_text("kernel\n", encoding="utf-8")
+        artifacts["README.md"].write_text("legacy distribution\n", encoding="utf-8")
+        artifacts["KERNEL_HUB.md"].write_text("CPU Kernel Hub card\n", encoding="utf-8")
         artifacts["build/torch-universal/szl_kernels/__init__.py"].write_text(
-            '__version__ = "0.1.1"\n', encoding="utf-8"
+            'import numpy\n__version__ = "0.2.0"\n', encoding="utf-8"
+        )
+        artifacts["build/torch-universal/szl_kernels/_kernel_api.py"].write_text(
+            'from .retrieval import governed_cosine_topk\n__version__ = "0.2.0"\n',
+            encoding="utf-8",
         )
         artifacts["build/torch-universal/szl_kernels/_chain.py"].write_text(
             "GENESIS = '0' * 64\n", encoding="utf-8"
@@ -1028,8 +1200,11 @@ class PublishSzlKernelsTests(unittest.TestCase):
         artifacts["build/torch-universal/szl_kernels/_ops.py"].write_text(
             "def op(): return True\n", encoding="utf-8"
         )
+        artifacts["build/torch-universal/szl_kernels/retrieval.py"].write_text(
+            "def governed_cosine_topk(): return {}\n", encoding="utf-8"
+        )
         artifacts["build/torch-universal/szl_kernels/metadata.json"].write_text(
-            json.dumps({"name": "szl_kernels", "version": "0.1.1"}),
+            json.dumps({"name": "szl_kernels", "version": "0.2.0"}),
             encoding="utf-8",
         )
         artifacts["vectors.npz"].write_bytes(b"weights")
@@ -1072,6 +1247,59 @@ class PublishSzlKernelsTests(unittest.TestCase):
         )
         return authorization, artifacts
 
+    def test_staging_uses_cpu_facade_and_all_four_modules_in_both_layouts(self) -> None:
+        source_prefix = "build/torch-universal/szl_kernels/"
+        mapping = {
+            "_kernel_api.py": "__init__.py", "_chain.py": "_chain.py",
+            "_ops.py": "_ops.py", "retrieval.py": "retrieval.py",
+        }
+        self.assertEqual(publisher.FIRST_CLASS_KERNEL_FILES, {
+            source_prefix + source: "build/torch-cpu/" + target
+            for source, target in mapping.items()
+        })
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            _, artifacts = self._fixture(root)
+            staged = root / "staged"
+            expected = publisher.stage_first_class_kernel(root, b"binding", staged)
+            self.assertEqual(expected["main"]["README.md"], artifacts["KERNEL_HUB.md"].read_bytes())
+            self.assertNotEqual(expected["main"]["README.md"], artifacts["README.md"].read_bytes())
+            metadata = json.loads(expected["v1"]["build/torch-cpu/metadata.json"])
+            self.assertEqual(metadata["python-depends"], [])
+            self.assertEqual(metadata["backend"], {"type": "cpu"})
+            self.assertEqual(len(expected["v1"]), 10)
+            for source, target in mapping.items():
+                for layout in ("", "szl_kernels/"):
+                    relative = f"build/torch-cpu/{layout}{target}"
+                    self.assertEqual(expected["v1"][relative], artifacts[source_prefix + source].read_bytes())
+                    self.assertEqual((staged / relative).read_bytes(), expected["v1"][relative])
+                    self.assertEqual(metadata["digest"]["files"][layout + target],
+                                     publisher.digest_base64(expected["v1"][relative]))
+                    if target == "__init__.py":
+                        self.assertNotIn(b"import numpy", expected["v1"][relative])
+
+    def test_readback_rejects_drift_in_card_or_either_four_module_layout(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self._fixture(root)
+            expected = publisher.stage_first_class_kernel(root, b"binding", root / "staged")
+            download_path = root / "downloaded"
+            for branch, files in expected.items():
+                for corrupt_path in files:
+                    with self.subTest(branch=branch, corrupt_path=corrupt_path):
+                        def download(_repo, relative, **kwargs):
+                            self.assertEqual(kwargs["revision"], "2" * 40)
+                            download_path.write_bytes(
+                                b"drift" if relative == corrupt_path else files[relative]
+                            )
+                            return str(download_path)
+
+                        with self.assertRaisesRegex(publisher.PublicationError, "readback mismatch"):
+                            publisher.verify_kernel_readback(
+                                files, branch=branch, revision="2" * 40,
+                                token="test-token", download_fn=download,
+                            )
+
     def test_dry_run_uses_authorized_data_and_immutable_publisher(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -1113,10 +1341,10 @@ class PublishSzlKernelsTests(unittest.TestCase):
             )
             self.assertIn(
                 {
-                    "source_path": "README.md",
+                    "source_path": "KERNEL_HUB.md",
                     "kernel_path": "README.md",
-                    "bytes": artifacts["README.md"].stat().st_size,
-                    "sha256": publisher.file_sha256(artifacts["README.md"]),
+                    "bytes": artifacts["KERNEL_HUB.md"].stat().st_size,
+                    "sha256": publisher.file_sha256(artifacts["KERNEL_HUB.md"]),
                 },
                 binding["source"]["kernel_files"],
             )
@@ -1146,12 +1374,7 @@ class PublishSzlKernelsTests(unittest.TestCase):
 
             def verify_runtime(*, revision: str) -> dict[str, object]:
                 self.assertEqual(revision, "2" * 40)
-                return {
-                    "status": "STABLE_GET_KERNEL_VERIFIED",
-                    "client_version": "0.16.0",
-                    "revision": revision,
-                    "package_version": "0.1.1",
-                }
+                return runtime_evidence(revision)
 
             result = publisher.run(
                 source_root=root,
@@ -1283,7 +1506,7 @@ class PublishSzlKernelsTests(unittest.TestCase):
             self._fixture(root)
             contract_path = root / publisher.CONTRACT_RELATIVE
             contract = json.loads(contract_path.read_text(encoding="utf-8"))
-            contract["artifact_files"].remove("README.md")
+            contract["artifact_files"].remove("KERNEL_HUB.md")
             contract_path.write_text(json.dumps(contract), encoding="utf-8")
             with self.assertRaisesRegex(
                 publisher.PublicationError,
