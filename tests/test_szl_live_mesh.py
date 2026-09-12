@@ -289,5 +289,72 @@ class TransportAndOutputTests(unittest.TestCase):
             self.assertEqual(json.loads(output.getvalue())["state"], "HOLD")
 
 
+class FalseAlignedDoublesTests(unittest.TestCase):
+    """Seven V5 doubles that must not mint ALIGNED. HTML-metrics is the merge blocker."""
+
+    def _assert_divergent(self, result):
+        self.assertEqual(result["state"], "HOLD")
+        self.assertEqual(result["observation_state"], "INCOMPLETE_OR_DIVERGENT")
+        self.assertFalse(result["production_authorization"])
+        self.assertFalse(result["product_aligned"])
+
+    def test_html_200_metrics_is_not_aligned(self):
+        fixture = Fixture()
+        fixture.responses[M.ORIGINS["hf_lyte"] + "/api/lyte/v2/metrics"] = (
+            200, "<!doctype html><html><body>metrics ok</body></html>",
+        )
+        result = fixture.report()
+        self._assert_divergent(result)
+        self.assertFalse(result["lyte_source_parity"])
+        self.assertTrue(any("lyte_metrics_alias:HTML_200_NOT_METRICS" in item for item in result["blockers"]))
+        self.assertIn("lyte_source_parity:INCOMPLETE", result["blockers"])
+
+    def test_404_with_a_sha_is_not_identity(self):
+        fixture = Fixture()
+        fixture.responses[M.ORIGINS["product"] + "/api/build-info"] = (404, {"sha": A, "build": {"revision": A}})
+        result = fixture.report()
+        self._assert_divergent(result)
+        self.assertTrue(any("IDENTITY_FROM_ERROR_REFUSED" in item for item in result["blockers"]))
+        self.assertFalse(result["product_source_parity"])
+
+    def test_missing_proof_is_incomplete(self):
+        fixture = Fixture()
+        fixture.responses[fixture.proof_live] = (404, "")
+        result = fixture.report()
+        self._assert_divergent(result)
+        self.assertEqual(result["proof_document"]["state"], "UNAVAILABLE")
+
+    def test_skipped_metrics_sibling_cannot_ride_green_parent(self):
+        fixture = Fixture()
+        fixture.responses[M.ORIGINS["hf_lyte"] + "/api/lyte/v2/metrics"] = (503, {})
+        result = fixture.report()
+        self._assert_divergent(result)
+        self.assertFalse(result["lyte_source_parity"])
+        self.assertIn("lyte_source_parity:INCOMPLETE", result["blockers"])
+
+    def test_string_true_binding_is_not_observed(self):
+        fixture = Fixture()
+        fixture.responses[M.ORIGINS["hf_lyte"] + "/api/build-info"][1]["source_binding"]["bindings_agree"] = "true"
+        result = fixture.report()
+        self._assert_divergent(result)
+        self.assertIn("lyte_live_space:BINDING_AGREEMENT_NOT_OBSERVED", result["blockers"])
+
+    def test_conflicting_runtime_aliases_divergent(self):
+        fixture = Fixture()
+        fixture.responses[M.ORIGINS["hf_lyte"] + "/api/build-info"] = (
+            200, {"source_revision": L, "build": {"revision": F}, "source_binding": {"bindings_agree": True}},
+        )
+        result = fixture.report()
+        self._assert_divergent(result)
+        self.assertEqual(result["identity_states"]["lyte_live_space"], "CONFLICT")
+
+    def test_non200_identity_body_is_divergent(self):
+        fixture = Fixture()
+        fixture.responses[M.ORIGINS["product"] + "/api/a11oy/v1/honest"] = (500, {"git_sha": A})
+        result = fixture.report()
+        self._assert_divergent(result)
+        self.assertFalse(result["product_source_parity"])
+
+
 if __name__ == "__main__":
     unittest.main()

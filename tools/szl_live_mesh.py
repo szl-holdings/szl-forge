@@ -205,6 +205,15 @@ def probe(fetch: Fetch | None = None, clock: Callable[[], str] | None = None) ->
         status, body = _observe(fetch, url)
         http[name] = status
         bodies[name] = body
+        if type(body) is str:
+            kind = "HTML_200_NOT_METRICS" if "metrics" in name and "<" in body else "NON_OBJECT_BODY"
+            blockers.append(f"{name}:{kind}")
+            return {}
+        if type(status) is int and status == 404:
+            blockers.append(f"{name}:HTTP_404")
+            if type(body) is dict and any(_sha(body, key) for key in ("sha", "git_sha", "revision")):
+                blockers.append(f"{name}:IDENTITY_FROM_ERROR_REFUSED")
+            return {}
         if not _object_ok(status, body):
             blockers.append(f"{name}:UNAVAILABLE_OR_INVALID_OBJECT")
             return {}
@@ -268,6 +277,12 @@ def probe(fetch: Fetch | None = None, clock: Callable[[], str] | None = None) ->
 
     product_parity = compare("product_source_parity", ("a11oy_github", "a11oy_product", "a11oy_honest", "a11oy_hf_space"))
     lyte_parity = compare("lyte_source_parity", ("lyte_github", "lyte_publisher_pin", "lyte_live_space"))
+    # A skipped sibling cannot ride a green parent. HTML-200 metrics, 404-with-a-SHA,
+    # and missing proof are INCOMPLETE/DIVERGENT even when identities otherwise match.
+    metrics_blockers = [item for item in blockers if item.startswith("lyte_metrics_alias:")]
+    if metrics_blockers:
+        lyte_parity = False
+        blockers.append("lyte_source_parity:INCOMPLETE")
 
     # health.json is explicitly STATIC_DOCUMENT, not its own future commit SHA.
     # Compare its exact served bytes with bytes at the observed proof Git source.
