@@ -1,0 +1,60 @@
+{
+  "schema": "szl.transformers-pp-tp-evaluation/v1",
+  "frontier_issue": "szl-holdings/szl-frontier#106",
+  "owner_issue": "szl-holdings/szl-forge#253",
+  "state": "EVALUATION_HOLD",
+  "upstream": {
+    "repository": "huggingface/transformers",
+    "revision": "5474a55e920f358d8382f3ecd3377edca979baa1",
+    "pull_request": 48155,
+    "multimodal_pp_tp_claimed": false
+  },
+  "authority": {
+    "production_authorization": false,
+    "route_default_change": false,
+    "automatic_promotion": false,
+    "weight_rehosting": false
+  },
+  "required_pins": [
+    "transformers_revision",
+    "torch_version",
+    "model_repo",
+    "model_revision",
+    "tokenizer_revision",
+    "hardware_topology",
+    "launch_command"
+  ],
+  "topologies": [
+    {"name": "single", "pp": 1, "tp": 1, "fsdp": 1},
+    {"name": "pp_only", "pp": 2, "tp": 1, "fsdp": 1},
+    {"name": "tp_only", "pp": 1, "tp": 2, "fsdp": 1},
+    {"name": "pp_tp", "pp": 2, "tp": 2, "fsdp": 1}
+  ],
+  "correctness_gates": [
+    "world_size_equals_pp_times_tp",
+    "named_mesh_dimensions_pp_tp",
+    "deterministic_partition_ownership",
+    "process_group_global_rank_translation",
+    "stage_boundary_shape_dtype",
+    "no_layer_omission_or_duplication",
+    "generation_termination",
+    "cross_stage_error_propagation",
+    "task_specific_output_parity"
+  ],
+  "negative_gates": [
+    "reject_incompatible_device_map",
+    "reject_world_size_mismatch",
+    "reject_mps_tensor_parallel",
+    "reject_fsdp_combined_with_pp_or_tp",
+    "process_loss_fails_closed",
+    "timeout_fails_closed",
+    "cancellation_fails_closed",
+    "malformed_mesh_fails_closed"
+  ],
+  "performance_after_correctness_only": [
+    "latency_same_hardware",
+    "throughput_same_hardware",
+    "peak_memory_same_hardware"
+  ],
+  "promotion_rule": "Remain EVALUATION/HOLD until deterministic correctness, failure, rollback, and same-hardware evidence are all attached to the exact-source receipt under normal repository controls."
+}
