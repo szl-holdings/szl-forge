@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "szl-oac-clinical-gateway"
-version = "2.5.0"
+version = "2.5.1"
 description = "Fail-closed synthetic and pre-deidentified live-shadow clinical result gateway"
 readme = "README.md"
 requires-python = ">=3.11,<3.14"
@@ -34,6 +34,7 @@ test = [
 owned-agent-clinical-control = "owned_agent_clinical_control:main"
 oac-clinical-gateway = "oac_stack_api:main"
 oac-operational-health = "oac_operational_health:main"
+oac-clinical-prepare-workspace = "oac_clinical_resources:main"
 
 [project.urls]
 Repository = "https://github.com/szl-holdings/szl-forge"
@@ -47,6 +48,7 @@ py-modules = [
   "oac_stack_api",
   "oac_operational_health",
 ]
+packages = ["oac_clinical_resources"]
 
 [tool.pytest.ini_options]
 addopts = "-ra"

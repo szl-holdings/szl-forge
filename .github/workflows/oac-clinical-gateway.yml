@@ -106,6 +106,7 @@ jobs:
             --model clinical-gateway/operational-model/artifacts/model.json \
             --receipt clinical-gateway/operational-model/artifacts/model-receipt.json \
             --input clinical-gateway/operational-model/example-input.json
+          /tmp/oac-clinical-wheel-test/bin/python -I -B clinical-gateway/tools/verify_installed_workspace.py
 
       - name: Upload wheel
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -147,8 +148,15 @@ jobs:
         shell: pwsh
         run: |
           python -m venv .venv-oac-clinical-ci
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           .\.venv-oac-clinical-ci\Scripts\python.exe -m pip install --disable-pip-version-check --requirement clinical-gateway/requirements.lock
-          $wheel = Get-ChildItem wheelhouse\szl_oac_clinical_gateway-2.5.0-py3-none-any.whl -ErrorAction Stop
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $wheel = Get-ChildItem wheelhouse\szl_oac_clinical_gateway-2.5.1-py3-none-any.whl -ErrorAction Stop
           .\.venv-oac-clinical-ci\Scripts\python.exe -m pip install --disable-pip-version-check --no-deps $wheel.FullName
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           .\.venv-oac-clinical-ci\Scripts\python.exe -m pip check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           .\.venv-oac-clinical-ci\Scripts\python.exe -m unittest discover -s clinical-gateway/tests -v
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          .\.venv-oac-clinical-ci\Scripts\python.exe -I -B clinical-gateway/tools/verify_installed_workspace.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
