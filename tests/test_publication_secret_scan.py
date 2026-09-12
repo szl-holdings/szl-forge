@@ -13,6 +13,8 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
+import yaml
+
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "scan_publication_secrets.py"
 SPEC = importlib.util.spec_from_file_location("publication_secret_scan_subject", SCRIPT)
@@ -146,6 +148,27 @@ class PublicationSecretScanTests(unittest.TestCase):
         for preserved in ("--assert-no-regression", "--require-all-pass", "environment: hub-production",
                           "semgrep/semgrep-action@713efdd345f3035192eaa63f56867b88e63e4e5d"):
             self.assertIn(preserved, body)
+
+    def test_signing_identity_and_publication_token_are_least_privilege(self):
+        body = (ROOT / ".github" / "workflows" / "model-publish-gate.yml").read_text(encoding="utf-8")
+        workflow = yaml.safe_load(body)
+        self.assertEqual(workflow["permissions"], {"contents": "read"})
+        self.assertNotIn("HF_TOKEN", workflow["env"])
+        token_steps = []
+        for name, job in workflow["jobs"].items():
+            self.assertNotIn("HF_TOKEN", job.get("env", {}))
+            if name == "sign":
+                self.assertEqual(job["permissions"], {
+                    "contents": "read", "attestations": "write", "id-token": "write",
+                })
+            else:
+                self.assertNotIn("permissions", job)
+            for step in job["steps"]:
+                if "HF_TOKEN" in step.get("env", {}):
+                    token_steps.append((name, step["name"]))
+                    self.assertEqual(step["env"]["HF_TOKEN"], "${{ secrets.HF_TOKEN_PUBLISH }}")
+        self.assertEqual(token_steps, [("publish", "Upload to Hub (gated)")])
+        self.assertEqual(workflow["jobs"]["publish"]["environment"], "hub-production")
 
     def test_cli_preserves_blocking_exit_and_does_not_echo_matches(self):
         with tempfile.TemporaryDirectory() as directory:

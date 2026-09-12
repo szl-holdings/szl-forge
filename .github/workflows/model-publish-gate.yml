@@ -35,11 +35,8 @@ concurrency:
 
 permissions:
   contents: read
-  attestations: write
-  id-token: write                      # Sigstore keyless identity
 
 env:
-  HF_TOKEN: ${{ secrets.HF_TOKEN_PUBLISH }}   # write-scoped, rotates quarterly
   BOM_OUT: bom/model-bom.cdx.json
   MANIFEST_OUT: release/run-manifest.json
 
@@ -134,6 +131,10 @@ jobs:
   sign:
     needs: model-bom
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      attestations: write
+      id-token: write                  # Only this job can request signing identity
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Emit run manifest
@@ -221,6 +222,8 @@ jobs:
             --template cards/model-card.md.tmpl \
             --out release/README.md
       - name: Upload to Hub (gated)
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN_PUBLISH }}
         run: |
           huggingface-cli upload "${{ inputs.model_repo }}" \
             "${{ inputs.model_dir }}" . \
