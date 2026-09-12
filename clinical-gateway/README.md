@@ -151,6 +151,45 @@ it is not a durable crash-recovery or exactly-once-after-restart guarantee.
 
 ## Start the local control plane
 
+### Portable installed-wheel workspace (distribution 2.5.1)
+
+The wheel now contains a closed, build-derived bundle of the browser shell,
+fixed synthetic assay map, operational advisory model/receipt, and example.
+The existing control engine remains version 2.5.0; 2.5.1 changes packaging and
+workspace preparation only, not diagnostic, result, or transport behavior.
+No site bindings, keys, clinical data, live configuration or training splits
+are included. Install the reviewed wheel in an isolated environment, then run
+this from any working directory; the source checkout is not required:
+
+    oac-clinical-prepare-workspace --directory C:\OAC\shadow-workspace
+    $env:OAC_API_KEY = "<strong random value from your secret manager>"
+    $env:OAC_ALLOWED_ORIGINS = "http://127.0.0.1:8010"
+    oac-clinical-gateway --host 127.0.0.1 --port 8010 --data-root C:\OAC\shadow-workspace --state-dir state
+
+`C:\OAC` must already exist and be controlled by the trusted operator.
+`shadow-workspace` must **not** exist, even as an empty directory. The command
+verifies the wheel's manifest against its generated integrity module and every
+declared asset hash before creating it; it refuses existing targets, dot
+traversal, symlinks/reparse points and Windows network/device/removable paths
+(including mapped network drives, using the controller's fixed-drive check). Incomplete
+new work is retained on an I/O error and has no successful preparation receipt;
+inspect it and choose a new directory, never blindly retry over existing data.
+No listener, state initialization, signing key or device connection is created
+by preparation. The operator starts the loopback API explicitly afterward.
+
+Open `http://127.0.0.1:8010/` and enter the bearer token. The default UI and
+hash-verified advisory model are now available under the prepared `data_root`.
+The initialization command is also available as
+`python -I -B -m oac_clinical_resources --directory <new-directory>`.
+The five copied asset hashes are recorded in `portable-assets.json`; this is
+a package-integrity record, not independent provenance or clinical approval.
+The installed Python environment is trusted; an attacker able to replace both
+code and its integrity module is outside this integrity boundary. The trusted
+parent-directory precondition below still applies, including concurrent local
+filesystem replacement risks. Preparation does not widen API filesystem access.
+
+### Existing source-tree startup
+
 Create an isolated environment and install the exact source tree:
 
     py -3.12 -m venv .venv-oac-clinical
@@ -353,3 +392,11 @@ CI runs the portable contracts on Python 3.11, 3.12, and 3.13, builds and
 installs the wheel, and re-runs the contracts on Windows Server 2022. These are
 source and isolated-runtime checks; they do not establish device or clinical
 validation.
+
+Both Linux and Windows wheel jobs also run
+`python -I -B clinical-gateway/tools/verify_installed_workspace.py`. It imports
+the installed distribution, prepares a fresh workspace outside the checkout,
+starts the API from a fresh working directory, verifies exact HTML bytes and
+authenticated advisory scoring, rejects unauthenticated and non-operational
+requests, and checks the all-false authority boundary. It does not connect a
+device or train a model.
