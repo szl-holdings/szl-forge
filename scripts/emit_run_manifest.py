@@ -5,8 +5,9 @@ Emits exactly the schema the model-publish-gate publish job checks:
   eval.heldout_passed            (from release/heldout-eval.json)
   eval.refusal_no_regression     (from heldout-eval.json merged w/ refusal evidence)
   model_bom_sha256               (sha256 of the CycloneDX BOM file)
-  signatures.manifest            (True only with --signed-manifest, set by the
-                                  sign job AFTER cosign sign-blob succeeds)
+  signatures.manifest            (caller declaration, NOT signature verification;
+                                  verify the signature over FINAL bytes outside
+                                  this manifest before publication)
   conformance.all_vectors_passed (True only with --conformance-passed, set by
                                   the conformance job after run_vectors.py)
   release.kind                   (patch|minor|major; 'major' needs allow_major)
@@ -19,8 +20,15 @@ import argparse
 import datetime
 import hashlib
 import json
+import math
 import pathlib
+import re
+import subprocess
 import sys
+
+MAX_JSON_BYTES = 1024 * 1024
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+RUN_URL = re.compile(r"https://github\.com/szl-holdings/szl-forge/actions/runs/[1-9][0-9]{0,19}")
 
 
 def die(msg: str) -> "SystemExit":
@@ -29,13 +37,82 @@ def die(msg: str) -> "SystemExit":
 
 
 def load_json(p: str, label: str) -> dict:
-    fp = pathlib.Path(p)
-    if not fp.is_file():
-        die(f"{label} not found: {fp}")
+    """Read bounded, unambiguous evidence; malformed input is never coerced."""
+    def pairs(items):
+        result = {}
+        for key, value in items:
+            if key in result:
+                raise ValueError("duplicate key")
+            result[key] = value
+        return result
+
+    def invalid_number(_):
+        raise ValueError("nonfinite number")
+
+    def finite_number(text):
+        value = float(text)
+        if not math.isfinite(value):
+            raise ValueError("nonfinite number")
+        return value
+
     try:
-        return json.loads(fp.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as e:
-        die(f"{label} is not valid JSON: {e}")
+        with pathlib.Path(p).open("rb") as stream:
+            raw = stream.read(MAX_JSON_BYTES + 1)
+        if not raw or len(raw) > MAX_JSON_BYTES:
+            die(f"{label}: JSON_SIZE")
+        result = json.loads(raw.decode("utf-8"), object_pairs_hook=pairs,
+                            parse_constant=invalid_number, parse_float=finite_number)
+    except (OSError, UnicodeError, ValueError, RecursionError):
+        die(f"{label}: INVALID_OR_UNREADABLE_JSON")
+    if type(result) is not dict:
+        die(f"{label}: JSON_OBJECT_REQUIRED")
+    return result
+
+
+def validate_evaluation(evidence: dict) -> None:
+    """Keep true/false as actual JSON booleans, never Python truthiness."""
+    for field in ("heldout_passed", "refusal_no_regression"):
+        if type(evidence.get(field)) is not bool:
+            die(f"held-out eval result: {field} MUST_BE_BOOLEAN")
+    rate = evidence.get("pass_rate")
+    # bool is a subclass of int; exact types intentionally exclude it.
+    if type(rate) not in (int, float) or not 0 <= rate <= 1:
+        die("held-out eval result: PASS_RATE_OUT_OF_RANGE")
+    if type(rate) is float and not math.isfinite(rate):
+        die("held-out eval result: PASS_RATE_NOT_FINITE")
+    # The existing evaluation job owns thresholds and refusal baselines.
+    # This assembler cannot infer qualification from a rate or change that policy.
+
+
+def validate_subject(git_sha: str, workflow_run: str, previous: str | None) -> str:
+    """Bind the declaration to clean checked-out source, not a shortened label.
+
+    A syntactically valid workflow URL is not proof of a hosted run. Independent
+    run, signature, conformance and publication checks remain required.
+    """
+    if re.fullmatch(r"[0-9a-f]{40}", git_sha) is None:
+        die("source: EXACT_LOWERCASE_SHA40_REQUIRED")
+    if RUN_URL.fullmatch(workflow_run) is None:
+        die("source: CANONICAL_FORGE_WORKFLOW_RUN_REQUIRED")
+    previous = "genesis" if previous is None else previous
+    if previous != "genesis" and re.fullmatch(r"[0-9a-f]{64}", previous) is None:
+        die("chain: GENESIS_OR_EXACT_SHA256_REQUIRED")
+    try:
+        current = subprocess.check_output(
+            ["git", "rev-parse", "--verify", "HEAD"], cwd=ROOT,
+            text=True, stderr=subprocess.DEVNULL, timeout=10,
+        ).strip()
+        dirty = subprocess.check_output(
+            ["git", "status", "--porcelain", "--untracked-files=no"], cwd=ROOT,
+            text=True, stderr=subprocess.DEVNULL, timeout=10,
+        ).strip()
+    except (OSError, subprocess.SubprocessError):
+        die("source: CHECKOUT_UNAVAILABLE")
+    if current != git_sha:
+        die("source: CHECKOUT_REVISION_MISMATCH")
+    if dirty:
+        die("source: TRACKED_CHECKOUT_DIRTY")
+    return previous
 
 
 def sha256_file(p: pathlib.Path) -> str:
@@ -55,7 +132,7 @@ def main() -> int:
     ap.add_argument("--workflow-run", required=True, help="URL of the GH Actions run (provenance)")
     ap.add_argument("--release-kind", default="patch", choices=["patch", "minor", "major"])
     ap.add_argument("--signed-manifest", action="store_true",
-                    help="Set ONLY by the sign job after cosign sign-blob succeeded.")
+                    help="Legacy caller declaration only; does not verify or preserve a signature.")
     ap.add_argument("--conformance-passed", action="store_true",
                     help="Set ONLY by the conformance job after run_vectors --require-all-pass.")
     ap.add_argument("--prev-hash", default=None,
@@ -68,16 +145,13 @@ def main() -> int:
     if not md.is_dir():
         die(f"model dir not found: {md}")
     ev = load_json(a.eval_json, "held-out eval result")
-    for field in ("pass_rate", "heldout_passed", "refusal_no_regression"):
-        if field not in ev:
-            die(f"held-out eval result missing required field: {field}")
+    validate_evaluation(ev)
+    previous = validate_subject(a.git_sha, a.workflow_run, a.prev_hash)
     bp = pathlib.Path(a.bom)
     if not bp.is_file():
         die(f"BOM not found: {bp}")
     bom_sha = sha256_file(bp)
-    git_sha = a.git_sha.strip()
-    if not (4 <= len(git_sha) <= 64 and all(c in "0123456789abcdef" for c in git_sha.lower())):
-        die(f"--git-sha does not look like a hex sha: {git_sha!r}")
+    git_sha = a.git_sha
 
     manifest = {
         "schema": "szl.run-manifest/v1",
@@ -89,21 +163,21 @@ def main() -> int:
         },
         "eval": {
             "pass_rate": ev["pass_rate"],
-            "heldout_passed": bool(ev["heldout_passed"]),
-            "refusal_no_regression": bool(ev["refusal_no_regression"]),
+            "heldout_passed": ev["heldout_passed"],
+            "refusal_no_regression": ev["refusal_no_regression"],
         },
         "model_bom_sha256": bom_sha,
         "signatures": {"manifest": bool(a.signed_manifest)},
         "conformance": {"all_vectors_passed": bool(a.conformance_passed)},
         "release": {"kind": a.release_kind},
-        "chain": {"prev_hash": a.prev_hash or "genesis"},
+        "chain": {"prev_hash": previous},
     }
     op = pathlib.Path(a.out)
     op.parent.mkdir(parents=True, exist_ok=True)
-    op.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    op.write_text(json.dumps(manifest, indent=2, sort_keys=True, allow_nan=False) + "\n", encoding="utf-8")
     print(f"wrote {op} (bom sha256 {bom_sha[:16]}..., kind={a.release_kind})")
     if not a.signed_manifest:
-        print("::notice::signatures.manifest=false — sign job must re-emit with --signed-manifest")
+        print("::notice::signatures.manifest=false — verify a signature over final bytes before publication")
     return 0
 
 
