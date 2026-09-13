@@ -1,4 +1,4 @@
-"""Offline tests: typed tokens, secret-free failures, and partial-write evidence."""
+"""Offline tests for typed credentials and non-publishing preflight evidence."""
 from __future__ import annotations
 
 import contextlib
@@ -127,30 +127,65 @@ class CredentialTests(unittest.TestCase):
 
 
     def test_real_sdk_transport_does_not_call_unsupported_kernel_auth_check(self):
-        # Exercise real SDK argument handling, header creation and refs decoding.
-        # Only network transport is simulated; no SDK constants are patched.
-        import httpx
-        from huggingface_hub import HfApi
-        import huggingface_hub.hf_api as hf_api
-        requests = []
-        def handle(request):
-            requests.append(request)
-            if request.url.path == "/api/models/SZLHOLDINGS/szl-invariants/auth-check/write":
-                self.assertEqual(request.headers["authorization"], "Bearer " + MODEL)
-                return httpx.Response(200, json={})
-            self.assertEqual(request.url.path, "/api/kernels/SZLHOLDINGS/szl-invariants/refs")
-            self.assertEqual(request.headers["authorization"], "Bearer " + KERNEL)
-            return httpx.Response(200, json={"branches": [
-                {"name": "main", "ref": "refs/heads/main", "targetCommit": "c"*40},
-                {"name": "v1", "ref": "refs/heads/v1", "targetCommit": "d"*40},
-            ], "tags": [], "converts": []})
-        with httpx.Client(transport=httpx.MockTransport(handle)) as client, \
-                mock.patch.object(hf_api, "get_session", return_value=client):
-            pair = credentials.acquire_pair(environment=ENV,
-                supplier=mock.Mock(side_effect=[MODEL, KERNEL]),
-                api=HfApi(endpoint="https://huggingface.co", token=False))
-        self.assertEqual(pair.kernel, KERNEL)
-        self.assertEqual(len(requests), 2)
+        # Other suites install process-global SDK stubs. Run real SDK transport
+        # in an isolated interpreter, not against those stubs or a skipped test.
+        script = r"""
+import sys
+import unittest
+from unittest import mock
+sys.path.insert(0, sys.argv[1])
+import invariants_keyless_credentials as credentials
+import httpx
+from huggingface_hub import HfApi
+import huggingface_hub.hf_api as hf_api
+case = unittest.TestCase()
+model, kernel = "hf_model_fixture", "hf_kernel_fixture"
+environment = {
+    "GITHUB_ACTIONS": "true", "GITHUB_REPOSITORY": credentials.REPOSITORY,
+    "GITHUB_REF": "refs/heads/main", "GITHUB_WORKFLOW_REF": credentials.WORKFLOW_REF,
+    "GITHUB_EVENT_NAME": "workflow_dispatch", "GITHUB_SHA": "b" * 40,
+}
+requests = []
+def handle(request):
+    requests.append(request)
+    case.assertEqual(request.url.host, "huggingface.co")
+    if request.url.path == "/api/models/SZLHOLDINGS/szl-invariants/auth-check/write":
+        case.assertEqual(request.headers["authorization"], "Bearer " + model)
+        return httpx.Response(200, json={})
+    case.assertEqual(request.url.path, "/api/kernels/SZLHOLDINGS/szl-invariants/refs")
+    case.assertEqual(request.headers["authorization"], "Bearer " + kernel)
+    return httpx.Response(200, json={"branches": [
+        {"name": "main", "ref": "refs/heads/main", "targetCommit": "c" * 40},
+        {"name": "v1", "ref": "refs/heads/v1", "targetCommit": "d" * 40},
+    ], "tags": [], "converts": []})
+with httpx.Client(transport=httpx.MockTransport(handle)) as client, \
+        mock.patch.object(hf_api, "get_session", return_value=client), \
+        mock.patch("socket.socket.connect", side_effect=AssertionError("network forbidden")):
+    pair = credentials.acquire_pair(environment=environment,
+        supplier=mock.Mock(side_effect=[model, kernel]),
+        api=HfApi(endpoint="https://huggingface.co", token=False))
+case.assertEqual(pair.model, model)
+case.assertEqual(pair.kernel, kernel)
+case.assertEqual(len(requests), 2)
+print("SDK_TRANSPORT_VERIFIED_OFFLINE")
+"""
+        command = [sys.executable, "-I"]
+        if sys.flags.optimize:
+            command.append("-O")
+        command.extend(["-c", script, str(Path(__file__).resolve().parents[1] / "tools")])
+        with tempfile.TemporaryDirectory(prefix="sdk-transport-") as home:
+            environment = {key: os.environ[key] for key in
+                           ("PATH", "SYSTEMROOT", "WINDIR", "TEMP", "TMP")
+                           if key in os.environ}
+            environment.update({"HF_HOME": home, "HF_HUB_DISABLE_IMPLICIT_TOKEN": "1"})
+            # Deliberately contaminate the parent to prove interpreter isolation.
+            with mock.patch.dict(sys.modules, {"huggingface_hub": SimpleNamespace()}):
+                result = credentials.subprocess.run(
+                    command, env=environment, capture_output=True, text=True,
+                    check=False, timeout=30,
+                )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("SDK_TRANSPORT_VERIFIED_OFFLINE", result.stdout)
 
     def test_incomplete_or_invalid_kernel_refs_refuse_pair(self):
         for branches in ([], [SimpleNamespace(name="main", target_commit="c"*40)],
