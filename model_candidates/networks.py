@@ -72,6 +72,24 @@ class RouteUtilityModel(nn.Module):
         return RouteProposal(logits, distribution, eligible.clone(), selected)
 
 
+def _finite_loss(loss: Tensor) -> Tensor:
+    """Reject reduction overflow without hiding it or detaching autograd.
+
+    Finite logits do not imply a finite reduced loss. Preserve the exact
+    backend result, dtype and gradient graph when valid; never clamp, replace
+    NaN with zero, or silently skip a minibatch. This forward-loss check is not
+    proof of finite gradients, optimizer state, or model/training quality.
+    """
+    if (
+        not isinstance(loss, Tensor)
+        or loss.ndim != 0
+        or not loss.is_floating_point()
+        or not torch.isfinite(loss).item()
+    ):
+        raise ValueError("loss must be a finite floating-point scalar")
+    return loss
+
+
 def route_loss(proposal: RouteProposal, winners: Tensor) -> Tensor:
     """Supervised ranking loss; labels MUST be observed eligible winners.
 
@@ -87,9 +105,9 @@ coverage. This function validates tensors, not the truth of human labels.
         raise ValueError("winner out of range")
     if not proposal.eligible.gather(1, winners[:, None]).all():
         raise ValueError("training label selects an ineligible route")
-    return F.cross_entropy(
+    return _finite_loss(F.cross_entropy(
         proposal.logits.masked_fill(~proposal.eligible, float("-inf")), winners,
-    )
+    ))
 
 
 class InvariantRiskModel(nn.Module):
@@ -118,7 +136,7 @@ def risk_loss(logits: Tensor, labels: Tensor) -> Tensor:
         raise ValueError("risk labels must be finite floats")
     if not ((labels == 0) | (labels == 1)).all():
         raise ValueError("risk labels must be observed binary outcomes")
-    return F.binary_cross_entropy_with_logits(logits, labels)
+    return _finite_loss(F.binary_cross_entropy_with_logits(logits, labels))
 
 
 def canal_mask(length: int, canal_width: int, device: torch.device) -> Tensor:
@@ -200,7 +218,10 @@ first. GPU behavior is unqualified until measured separately.
         if token_ids.ndim != 2 or token_ids.shape[1] < 2:
             raise ValueError("next-token training needs at least two tokens")
         logits = self(token_ids)
-        return F.cross_entropy(logits[:, :-1].reshape(-1, self.vocab_size), token_ids[:, 1:].reshape(-1))
+        return _finite_loss(F.cross_entropy(
+            logits[:, :-1].reshape(-1, self.vocab_size),
+            token_ids[:, 1:].reshape(-1),
+        ))
 
 
 def build_candidate(key: str) -> nn.Module:
