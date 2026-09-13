@@ -22,7 +22,7 @@ nav{display:flex;gap:24px;flex-wrap:wrap;min-height:44px;align-items:center}nav 
 <body><main>
 <header><span class="eyebrow">SZL Holdings / Forge / Research</span><h1>Models, with boundaries.</h1>
 <p>Two advisory model recipes. Your existing pool remains in control. No training, remote generation, or publication runs from this interface.</p>
-<nav aria-label="Workbench"><a href="/">Model tracks</a><a href="/compute">Inspect configured compute</a><a href="/api/catalog">Catalog JSON</a></nav></header>
+<nav aria-label="Workbench"><a href="/">Model tracks</a><a href="/compute">Inspect configured compute</a><a href="/pool#pool">Canonical pool snapshot</a><a href="/api/catalog">Catalog JSON</a></nav></header>
 <section aria-labelledby="tracks"><h2 id="tracks">Model tracks</h2><div class="grid">
 {% for track in tracks %}<article class="card"><h3>{{ track.display_name }}</h3><span class="state">{{ track.state }}</span>
 <p>{{ track.boundary if track.boundary is defined else track.reason }}</p>
@@ -40,6 +40,16 @@ nav{display:flex;gap:24px;flex-wrap:wrap;min-height:44px;align-items:center}nav 
 {% for model in node.stored_models %}<tr><td>{{ model.name }}</td><td><code>{{ model.digest }}</code></td></tr>{% else %}<tr><td colspan="2">No stored-model rows observed.</td></tr>{% endfor %}
 </tbody></table><p class="meta">Running models observed: {{ node.running_models|length }}. Size/VRAM figures are available in the authenticated JSON endpoint; no missing value becomes zero.</p>
 </article>{% endfor %}{% endif %}</section>
+<section aria-labelledby="pool"><h2 id="pool">Canonical pool · reported snapshot</h2>
+<span class="state">{{ pool.state }}</span>
+<p>This view consumes the existing a11oy compute-pool/v1 schema. A matched snapshot hash checks bytes, not the producer’s signatures, machine identity or current eligibility.</p>
+{% if pool.nodes is not none %}
+<p class="meta">Snapshot freshness: {{ pool.snapshot_fresh }}. Qualification verified here: false. Scheduling authority: none.</p>
+<table><caption>Reported upstream states — not local permission to dispatch</caption><thead><tr><th scope="col">Node</th><th scope="col">Reported state</th><th scope="col">Reported model</th></tr></thead><tbody>
+{% for item in pool.nodes %}<tr><td>{{ item.node_id }}</td><td>{{ item.reported_state }}</td><td>{{ item.model_id_reported or 'UNAVAILABLE' }}</td></tr>{% else %}<tr><td colspan="3">The validated snapshot explicitly contains no node rows.</td></tr>{% endfor %}
+</tbody></table>
+{% else %}<p>No usable snapshot supplied. Unknown inventory is not counted as zero.</p>{% endif %}
+<p class="meta"><a href="/api/pool">Authenticated pool projection JSON</a></p></section>
 <footer>Source addition · not deployed · not a training console · not a Hugging Face publisher.<br>
 GitHub source → qualified HF artifacts → product status → evidence. Existing signed release controls remain authoritative.</footer>
 </main></body></html>

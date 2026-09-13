@@ -22,11 +22,12 @@ REPOSITORY = "szl-holdings/szl-forge"
 SCHEMA = "szl.model-lab.blueprint/v1"
 SOURCE_FILES = (
     "pyproject.toml", "LICENSE", "README.md", "constraints-test.txt",
-    "docs/DATA_CONTRACT.md", "docs/THREAT_MODEL.md",
+    "docs/DATA_CONTRACT.md", "docs/THREAT_MODEL.md", "docs/POOL_VIEW.md",
     "src/szl_model_lab/__init__.py", "src/szl_model_lab/catalog.py",
     "src/szl_model_lab/models.py", "src/szl_model_lab/data.py",
     "src/szl_model_lab/safeio.py", "src/szl_model_lab/artifacts.py",
     "src/szl_model_lab/training.py", "src/szl_model_lab/probes.py",
+    "src/szl_model_lab/pool_view.py",
     "src/szl_model_lab/app.py", "src/szl_model_lab/cli.py",
     "src/szl_model_lab/blueprints.py", "src/szl_model_lab/templates/index.html",
 )
