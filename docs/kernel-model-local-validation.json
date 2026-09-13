@@ -11,15 +11,16 @@
     "pytest": "9.0.2",
     "httpx": "0.28.1",
     "safetensors": "0.7.0",
-    "pydantic": "2.13.4"
+    "pydantic": "2.13.4",
+    "numpy": "2.3.5"
   },
   "command": "python -m pytest -q candidate-tests",
   "exit_code": 0,
-  "summary": "45 passed in 4.37s",
-  "stdout_sha256": "f74be41fe67fa9552ff38e6f3c829ff9e0bee58357450396cea352de1098c0f2",
+  "summary": "45 passed in 4.03s",
+  "stdout_sha256": "eb2a7e5bd8119f630266a456f744e236143abf8429cf71987de6bce9e07bc745",
   "source_sha256": {
     ".github/workflows/model-candidates.yml": "ab089ce405ea9b826117c480d9cbf5519db0c713de9aaa34459e0455fbe57df8",
-    "candidate-tests/requirements.txt": "8ec29454fa099a1587658094fc7d9a119536f8e33972fd494d89431f8a507b68",
+    "candidate-tests/requirements.txt": "daec49df8b0b4224ac0d19821ca217e3842b5432cedaae0610cb42c4e7b425d9",
     "candidate-tests/test_candidates.py": "5b06f57d10e5685597afc7179fdd477bbac4e194ab6259456ed95deb79668e2b",
     "candidate-tests/test_workbench.py": "0f224953d231d4687e40bfb46b6021c1c4629c76ec098c22bfe65295ee00d5ca",
     "docs/2026-09-13-kernel-model-audit.md": "aeed7dc462fe462f3df04b3442e55e1c5ca2e5d23bd101e8682e0afca2134b88",
@@ -31,8 +32,8 @@
     "pyproject.toml": "11c26e60b5cb04bbcc539be179a561c2a685ebb579befb0d7d35c946a7be57db"
   },
   "not_observed": [
-    "full-repository tests",
-    "hosted CI",
+    "full-repository tests in the local environment",
+    "repair-head hosted CI at record creation",
     "GPU/owner host",
     "browser rendering",
     "live mesh",
@@ -40,6 +41,22 @@
     "Hugging Face publication",
     "model quality"
   ],
-  "commit_parent": "7789e6051de75365730e0bca6fb5f9ef8b306683",
-  "source_movement": "Compared two commits ahead; only existing audit and GGUF forensics additions, no edited-file overlap."
+  "commit_parent": "6a050aa27eb8e040fa9933424f5370b737cc2cb0",
+  "source_movement": "Repair adds only the explicit NumPy dependency and this validation record. Original model source, tests and main history remain unchanged.",
+  "prior_local_validation": {
+    "source_head": "6a050aa27eb8e040fa9933424f5370b737cc2cb0",
+    "summary": "45 passed in 4.37s",
+    "stdout_sha256": "f74be41fe67fa9552ff38e6f3c829ff9e0bee58357450396cea352de1098c0f2",
+    "requirements_sha256": "8ec29454fa099a1587658094fc7d9a119536f8e33972fd494d89431f8a507b68"
+  },
+  "initial_hosted_ci": {
+    "head": "6a050aa27eb8e040fa9933424f5370b737cc2cb0",
+    "candidate_run_id": 34755555918,
+    "linux_job_id": 103719203517,
+    "linux_result": "3 failed, 42 passed; SafeTensors serialization imports NumPy, which was absent from the clean environment.",
+    "windows_job_id": 103719203648,
+    "windows_result": "test step failed; not inferred green from local results",
+    "other_workflows": "Nine observed existing workflows succeeded, including base-python-ci and CodeQL.",
+    "repair": "Declare the already locally tested numpy==2.3.5 in the dedicated CPU test requirements; retain all round-trip tests."
+  }
 }
