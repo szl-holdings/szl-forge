@@ -63,12 +63,19 @@ jobs:
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: ${{ matrix.python }}
+      - name: Install test harness without the upstream runtime
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          python -m pip install --only-binary=:all: 'pytest==9.0.2'
+          python -m pip check
+          python -m pip freeze --all > reports/omni-wheel-test-environment.txt
       - name: Execute offline contracts and verify admitted source pins
         run: |
           set -euo pipefail
           mkdir -p reports
-          python -m unittest discover -s tests -p 'test_vllm_omni*.py' -v 2>&1 | tee reports/omni-wheel-contracts.log
-          python -O -m unittest discover -s tests -p 'test_vllm_omni*.py' -v 2>&1 | tee reports/omni-wheel-contracts-optimized.log
+          python -m pytest -q tests/test_vllm_omni_029rc1_contract.py tests/test_vllm_omni_wheel.py 2>&1 | tee reports/omni-wheel-contracts.log
+          python -O -m unittest discover -s tests -p 'test_vllm_omni_wheel.py' -v 2>&1 | tee reports/omni-wheel-contracts-optimized.log
           python - <<'PY'
           from frontier.vllm_omni_029rc1_contract import (
               VLLM_OMNI_REVISION, FRONTIER_ADMISSION_MERGE,
@@ -92,5 +99,6 @@ jobs:
             forge/reports/omni-wheel-contracts.log
             forge/reports/omni-wheel-contracts-optimized.log
             forge/reports/omni-wheel-acquisition.log
+            forge/reports/omni-wheel-test-environment.txt
           if-no-files-found: error
           retention-days: 90

@@ -16,8 +16,9 @@ to Forge #288; it does not create another intake or replace that contract.
 PyPI's release metadata constrains Transformers to `>=5.13.0,<5.15`. Do not
 install this package into the independent Transformers 5.17 evaluation lane.
 The Python/ABI wheel tag is not evidence of a complete platform dependency
-closure. This acquisition workflow installs no dependencies and imports no
-upstream package. The file page reports Trusted Publishing was not used; that
+closure. This acquisition workflow installs only the pytest test harness and imports no
+upstream package. It records the resolved test environment separately; that is
+not a runtime dependency lock. The file page reports Trusted Publishing was not used; that
 is not a malicious-content finding or proof that no other attestation exists.
 
 ## Execute
@@ -28,8 +29,10 @@ step is run. The workflow creates both checkouts with immutable revisions and
 read-only, non-persisted repository credentials, then runs on Python 3.11/3.12:
 
 ```sh
-python -m unittest discover -s tests -p 'test_vllm_omni*.py' -v
-python -O -m unittest discover -s tests -p 'test_vllm_omni*.py' -v
+python -m pip install --only-binary=:all: 'pytest==9.0.2'
+python -m pip check
+python -m pytest -q tests/test_vllm_omni_029rc1_contract.py tests/test_vllm_omni_wheel.py
+python -O -m unittest discover -s tests -p 'test_vllm_omni_wheel.py' -v
 python -m tools.evaluate_vllm_omni_wheel --acquire
 ```
 
