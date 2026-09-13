@@ -16,7 +16,7 @@ dependencies = []
 test = ["pytest>=8,<9", "build>=1.2,<2", "PyYAML>=6.0,<7"]
 
 [tool.setuptools]
-packages = ["inference"]
+packages = ["inference", "model_candidates"]
 
 [tool.setuptools.package-data]
 inference = ["*.json"]
