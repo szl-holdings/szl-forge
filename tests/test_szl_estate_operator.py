@@ -46,7 +46,7 @@ def native_fixture(aligned=True):
     estate = {
         'schema': 'szl.estate-release-train.receipt/v1',
         'state': 'ALIGNED' if aligned else 'DRIFT',
-        'source_vector': {'a11oy': SHA},
+        'source_vector': {key: SHA for key in op.VECTOR_REPOS},
         'blockers': [] if aligned else ['terra:SOURCE_REVISION_MISMATCH'],
         'observed_at': '2026-09-13T12:01:00Z',
         'authority': {'production_authorization': False},
@@ -77,8 +77,17 @@ def archive(raw, inv, extra=None):
         z.writestr('root/reports/estate-release-train.json', raw)
         z.writestr('root/reports/hf-public-inventory-preflight.json', json.dumps(inv))
         if extra:
-            z.writestr(*extra)
-    return stream.getvalue()
+            # ZIP's Windows writer normalizes backslashes. Construct the same
+            # malicious raw name on every OS instead of testing a sanitized ZIP.
+            name, content = extra
+            z.writestr(name.replace('\\', '/'), content)
+    result = stream.getvalue()
+    if extra and '\\' in extra[0]:
+        wanted = extra[0].encode('ascii')
+        canonical = extra[0].replace('\\', '/').encode('ascii')
+        assert len(wanted) == len(canonical) and result.count(canonical) == 2
+        result = result.replace(canonical, wanted)  # Local and central headers.
+    return result
 
 
 class OperatorTests(unittest.TestCase):
@@ -241,6 +250,78 @@ class OperatorTests(unittest.TestCase):
         raw,inv=native_fixture();estate=json.loads(raw);estate['components']=[]
         raw=json.dumps(estate).encode();inv['estate_receipt_sha256']=hashlib.sha256(raw).hexdigest()
         with self.assertRaises(op.OperatorError): op.inspect_archive(archive(raw,inv),SHA)
+
+
+    def readback_fixture(self):
+        raw, inv = native_fixture()
+        packed = archive(raw, inv)
+        run = {'id':77, 'head_sha':SHA, 'head_branch':'main',
+               'event':'workflow_dispatch', 'path':op.WORKFLOW_PATH,
+               'repository':{'id':op.REPO_ID}, 'run_attempt':1,
+               'status':'completed', 'conclusion':'success',
+               'created_at':'2026-09-13T12:00:00Z', 'updated_at':'2026-09-13T12:02:00Z'}
+        item = {'id':88, 'name':'estate-release-train-77-1', 'size_in_bytes':len(packed),
+                'expired':False, 'digest':'sha256:'+hashlib.sha256(packed).hexdigest(),
+                'workflow_run':{'id':77, 'head_sha':SHA, 'repository_id':op.REPO_ID}}
+        page = {'total_count':1, 'artifacts':[item]}
+        gh=FakeGH()
+        def request(endpoint, payload=None, binary=False):
+            gh.calls.append((endpoint,payload))
+            self.assertIsNone(payload, 'readback must never mutate')
+            if endpoint.endswith('/actions/runs/77'): return run
+            if endpoint.endswith('/actions/runs/77/artifacts?per_page=100'): return page
+            if endpoint.endswith('/actions/artifacts/88/zip'):
+                self.assertTrue(binary)
+                return packed
+            if endpoint.endswith('/branches/main'):
+                return {'name':'main', 'protected':True, 'commit':{'sha':SHA}}
+            raise AssertionError(endpoint)
+        gh.request=request
+        return gh, run, page, item
+
+    def test_whole_readback_binds_archive_run_clock_and_current_vector(self):
+        gh, run, page, item=self.readback_fixture()
+        result=op.observe(gh,SHA,77)
+        self.assertEqual(result['state'],'NATIVE_ALIGNMENT_RECEIPT_VERIFIED')
+        self.assertEqual(result['run_id'],77)
+        self.assertFalse(result['independent_live_probe_replay'])
+        self.assertFalse(result['production_authorization'])
+        for repo in op.VECTOR_REPOS.values():
+            self.assertIn((f'repos/szl-holdings/{repo}/branches/main',None),gh.calls)
+
+    def test_whole_readback_rejects_outer_artifact_mismatch(self):
+        for field,value in [('digest','sha256:'+'0'*64),('size_in_bytes',3),('expired',True),('id',True)]:
+            gh,run,page,item=self.readback_fixture(); item[field]=value
+            with self.subTest(field=field), self.assertRaises(op.OperatorError):
+                op.observe(gh,SHA,77)
+
+    def test_whole_readback_cannot_override_native_failure_or_copy_old_receipt(self):
+        for field,value in [('conclusion','failure'),('created_at','2026-09-14T12:00:00Z'),('updated_at','2026-09-13T12:00:00Z'),('run_attempt',2)]:
+            gh,run,page,item=self.readback_fixture(); run[field]=value
+            with self.subTest(field=field), self.assertRaises(op.OperatorError):
+                op.observe(gh,SHA,77)
+
+    def test_whole_readback_refuses_moved_proof_source(self):
+        gh,run,page,item=self.readback_fixture(); original=gh.request
+        def moved(endpoint,payload=None,binary=False):
+            if endpoint == 'repos/szl-holdings/a11oy-net/branches/main':
+                return {'commit':{'sha':'b'*40}}
+            return original(endpoint,payload,binary)
+        gh.request=moved
+        with self.assertRaisesRegex(op.OperatorError,'authority vector moved'):
+            op.observe(gh,SHA,77)
+
+    def test_gh_mutation_is_limited_to_native_dispatch(self):
+        gh=op.GHClient(executable='/not/executed')
+        with self.assertRaisesRegex(op.OperatorError,'only native estate dispatch'):
+            gh.request(f'{op.PREFIX}/issues',{'title':'never'})
+
+    def test_raw_backslash_fixture_survives_writer_normalization(self):
+        raw,inv=native_fixture()
+        data=archive(raw,inv,('a\\b.json',raw))
+        self.assertEqual(data.count(b'a\\b.json'),2)
+        with self.assertRaisesRegex(op.OperatorError,'unsafe archive path'):
+            op.inspect_archive(data,SHA)
 
 
 if __name__ == '__main__':

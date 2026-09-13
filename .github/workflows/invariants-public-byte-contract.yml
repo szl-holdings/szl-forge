@@ -1,0 +1,37 @@
+name: Invariants public byte comparison contract
+on:
+  pull_request:
+    paths:
+      - tools/verify_invariants_hub_bytes.py
+      - tests/test_invariants_hub_bytes.py
+      - docs/invariants-public-byte-verification.md
+      - .github/workflows/invariants-public-byte-contract.yml
+  push:
+    branches: [main]
+    paths:
+      - tools/verify_invariants_hub_bytes.py
+      - tests/test_invariants_hub_bytes.py
+      - docs/invariants-public-byte-verification.md
+      - .github/workflows/invariants-public-byte-contract.yml
+permissions:
+  contents: read
+jobs:
+  offline:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ['3.11', '3.12']
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Offline byte-comparison and transport contracts
+        run: python -m unittest discover -s tests -p test_invariants_hub_bytes.py -v
+      - name: Repeat without Python assertions
+        run: python -O -m unittest discover -s tests -p test_invariants_hub_bytes.py -v
