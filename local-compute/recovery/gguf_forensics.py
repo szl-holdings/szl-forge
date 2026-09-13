@@ -14,7 +14,7 @@ import hashlib
 import json
 import math
 import os
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 import re
 import stat
 import struct
@@ -59,6 +59,41 @@ def digest(raw: bytes) -> str:
 def canonical(value: object) -> bytes:
     return json.dumps(value, sort_keys=True, separators=(",", ":"),
                       ensure_ascii=True, allow_nan=False).encode("ascii")
+
+
+def windows_drive_type(anchor: str) -> int:
+    """Query the OS drive classification; never probe a remote file/share.
+
+    Load only the system32 DLL. Unknown drive types are NOT a local fallback.
+    This is a cooperative admission check, not protection against a concurrent
+    drive remap or a hostile storage driver.
+    """
+    require(os.name == "nt", "WINDOWS_DRIVE_QUERY_REQUIRED")
+    import ctypes
+    try:
+        kernel = ctypes.WinDLL("kernel32.dll", use_last_error=True, winmode=0x800)
+        query = kernel.GetDriveTypeW
+        query.argtypes = [ctypes.c_wchar_p]
+        query.restype = ctypes.c_uint
+        return int(query(anchor))
+    except (AttributeError, OSError, TypeError, ValueError):
+        raise ForensicsError("LOCAL_DRIVE_TYPE_UNAVAILABLE") from None
+
+
+def require_local_windows_path(path: str | os.PathLike[str]) -> None:
+    """Admit fixed local drive-letter paths BEFORE lstat/is_dir/open/mkdir.
+
+    A mapped network drive may be spelled with a drive letter, not a UNC path. Checking
+    only the spelling would allow network I/O before the historical byte pin.
+    Both the input root and the report home must pass this independent gate.
+    """
+    raw = os.fspath(path)
+    require(isinstance(raw, str) and "\x00" not in raw, "LOCAL_DRIVE_PATH_REQUIRED")
+    parsed = PureWindowsPath(raw)
+    require(parsed.is_absolute() and re.fullmatch(r"[A-Za-z]:", parsed.drive) is not None
+            and ".." not in parsed.parts
+            and all(":" not in part for part in parsed.parts[1:]), "LOCAL_DRIVE_PATH_REQUIRED")
+    require(windows_drive_type(parsed.anchor) == 3, "FIXED_LOCAL_DRIVE_REQUIRED")
 
 
 def plain_path(path: Path) -> bool:
@@ -280,8 +315,10 @@ def main(argv: list[str] | None = None) -> int:
             "BETTERWITHAGE_WINDOWS_ONLY")
     home = Path.home()
     root = args.blob_root or home / ".ollama" / "models" / "blobs"
-    require(root.is_absolute() and ".." not in root.parts and not str(root).startswith(("\\\\", "//"))
-            and plain_path(root) and root.is_dir(), "LOCAL_BLOB_DIRECTORY_REQUIRED")
+    # Admit both storage locations before any path metadata read or report write.
+    require_local_windows_path(home)
+    require_local_windows_path(root)
+    require(plain_path(root) and root.is_dir(), "LOCAL_BLOB_DIRECTORY_REQUIRED")
     require(plain_path(home), "LINKED_HOME_REFUSED")
     out = home / ("szl-gguf-forensics-" + uuid.uuid4().hex)
     require(not out.is_relative_to(root), "OUTPUT_INSIDE_BLOB_ROOT")
