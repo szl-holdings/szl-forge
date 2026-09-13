@@ -11,9 +11,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 from dataclasses import asdict, dataclass
 from importlib.metadata import PackageNotFoundError, version
+from types import ModuleType
 from typing import Any, Iterable
 
 from huggingface_hub import HfApi
@@ -38,6 +40,11 @@ class KernelEvidence:
     branch_revisions: dict[str, str]
     runtime_revision: str | None = None
     runtime_loaded: bool = False
+    # client_version is the required version, not evidence of an installation.
+    installed_client_version: str | None = None
+    runtime_evidence_kind: str = "NOT_RUN"
+    numerical_equivalence_verified: bool = False
+    production_authorization: bool = False
 
 
 def installed_kernels_version() -> str:
@@ -113,36 +120,110 @@ def verify_first_class_kernel(
     )
 
 
+def _runtime_identity(evidence: KernelEvidence) -> dict[str, str]:
+    """Revalidate mutable branch metadata at use, before importing kernel code."""
+    if not isinstance(evidence, KernelEvidence):
+        raise KernelMigrationError("expected KernelEvidence")
+    require_first_class_repo_type(evidence.repo_type)
+    if evidence.client_version != KERNELS_CLIENT_VERSION:
+        raise KernelMigrationError("runtime evidence has an unsupported client requirement")
+    repo_id = evidence.repo_id
+    if (
+        not isinstance(repo_id, str)
+        or re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,95}/[A-Za-z0-9][A-Za-z0-9._-]{0,95}", repo_id) is None
+        or ".." in repo_id
+        or "--" in repo_id
+        or repo_id.endswith((".git", "."))
+    ):
+        raise KernelMigrationError("invalid kernel repository identity")
+    if not isinstance(evidence.repo_revision, str) or FULL_SHA_RE.fullmatch(evidence.repo_revision) is None:
+        raise KernelMigrationError("invalid kernel repository revision")
+    if not isinstance(evidence.branch_revisions, dict):
+        raise KernelMigrationError("invalid branch metadata")
+    branches = dict(evidence.branch_revisions)
+    for branch in REQUIRED_BRANCHES:
+        target = branches.get(branch)
+        if not isinstance(target, str) or FULL_SHA_RE.fullmatch(target) is None:
+            raise KernelMigrationError("required branch is not an exact commit")
+    return {name: branches[name] for name in REQUIRED_BRANCHES}
+
+
+def _require_runtime_environment() -> None:
+    """Disallow local redirection, offline trust bypass and implicit credentials.
+
+    This is a process configuration preflight, not an operating-system sandbox.
+    Execute real imports only in the existing isolated, credentialless runner.
+    """
+    from huggingface_hub import constants
+
+    if "LOCAL_KERNELS" in os.environ:
+        raise KernelMigrationError("LOCAL_KERNELS overrides are forbidden for Hub witnesses")
+    if constants.HF_HUB_OFFLINE or os.environ.get("HF_HUB_OFFLINE", "").upper() in {"1", "TRUE", "YES", "ON"}:
+        raise KernelMigrationError("offline publisher-trust bypass is forbidden")
+    if not constants.HF_HUB_DISABLE_IMPLICIT_TOKEN:
+        raise KernelMigrationError("set HF_HUB_DISABLE_IMPLICIT_TOKEN=1 before starting Python")
+    if constants.ENDPOINT != "https://huggingface.co":
+        raise KernelMigrationError("runtime witness requires the canonical Hugging Face endpoint")
+
+
 def verify_runtime_load(
     evidence: KernelEvidence,
     *,
     backend: str = "cpu",
     get_kernel_fn: Any | None = None,
 ) -> KernelEvidence:
-    """Load the v1 package through kernels 0.16.1 using the exact Hub revision."""
-    require_first_class_repo_type(evidence.repo_type)
-    require_supported_client(evidence.client_version)
-    revision = evidence.branch_revisions["v1"]
-    if get_kernel_fn is None:
-        from kernels import get_kernel
+    """Observe a real import separately from an explicitly injected test double.
+
+    kernels 0.16.1 does not enforce exact repository lists in trust_remote_code.
+    Keep its default publisher check; never retry with True on a trust failure.
+    A module import is not numerical parity, source admission, or production.
+    """
+    branches = _runtime_identity(evidence)
+    revision = branches["v1"]
+    if not isinstance(backend, str) or backend not in {"cpu", "cuda"}:
+        raise KernelMigrationError("this witness lane supports only explicit cpu or cuda")
+    injected = get_kernel_fn is not None
+    installed = None
+    if injected:
+        if not callable(get_kernel_fn):
+            raise KernelMigrationError("test double must be callable")
+    else:
+        # Never use a caller-provided version string as installation evidence.
+        installed = require_supported_client()
+        _require_runtime_environment()
+        from kernels import get_kernel, get_loaded_kernels
 
         get_kernel_fn = get_kernel
     module = get_kernel_fn(
         evidence.repo_id,
         revision=revision,
         backend=backend,
-        trust_remote_code=True,
+        trust_remote_code=False,
     )
     if module is None:
         raise KernelMigrationError("get_kernel returned no module")
+    if not injected:
+        if not isinstance(module, ModuleType):
+            raise KernelMigrationError("loader returned an unexpected object after invocation")
+        # Observe the loader's own origin record, not just a non-null return.
+        matches = [
+            item for item in get_loaded_kernels()
+            if getattr(item, "module", None) is module
+            and getattr(getattr(item, "repo_info", None), "repo_id", None) == evidence.repo_id
+            and getattr(getattr(item, "repo_info", None), "revision", None) == revision
+        ]
+        if len(matches) != 1:
+            raise KernelMigrationError("module was loaded but exact Hub origin was not established")
     return KernelEvidence(
         repo_id=evidence.repo_id,
         repo_type=evidence.repo_type,
         client_version=evidence.client_version,
         repo_revision=evidence.repo_revision,
-        branch_revisions=evidence.branch_revisions,
-        runtime_revision=revision,
-        runtime_loaded=True,
+        branch_revisions=branches,
+        runtime_revision=None if injected else revision,
+        runtime_loaded=not injected,
+        installed_client_version=installed,
+        runtime_evidence_kind="INJECTED_TEST_DOUBLE" if injected else "LOADER_IMPORT_ONLY",
     )
 
 
