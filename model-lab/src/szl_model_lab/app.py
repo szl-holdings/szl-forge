@@ -16,6 +16,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from .artifacts import load_candidate
 from .catalog import TRACKS, catalog, track_for
 from .probes import inspect_node, node_config
+from .pool_view import load_pool_snapshot, unavailable_pool
 from .safeio import strict_json
 
 @dataclass(frozen=True)
@@ -23,6 +24,8 @@ class Settings:
     access_token: str
     nodes: dict[str, str]
     artifacts: dict[str, Path]
+    pool_snapshot: Path | None = None
+    pool_snapshot_sha256: str | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.access_token, str) or len(self.access_token) < 32:
@@ -31,13 +34,23 @@ class Settings:
         node_config(json.dumps(self.nodes))
         if not set(self.artifacts).issubset(TRACKS):
             raise ValueError("unknown_artifact_track")
+        if (self.pool_snapshot is None) != (self.pool_snapshot_sha256 is None):
+            raise ValueError("pool_snapshot_and_external_digest_required_together")
+        if self.pool_snapshot is not None and not isinstance(self.pool_snapshot, Path):
+            raise ValueError("pool_snapshot_path_required")
+        if self.pool_snapshot_sha256 is not None:
+            import re
+            if not isinstance(self.pool_snapshot_sha256, str) or not re.fullmatch(r"[0-9a-f]{64}", self.pool_snapshot_sha256):
+                raise ValueError("invalid_pool_snapshot_digest")
 
     @classmethod
     def from_env(cls) -> "Settings":
         artifacts = {slug: Path(value) for slug in TRACKS
                      if (value := os.environ.get(f"SZL_LAB_{slug.upper()}_ARTIFACT"))}
         return cls(os.environ.get("SZL_LAB_ACCESS_TOKEN", ""),
-                   node_config(os.environ.get("SZL_LAB_OLLAMA_ENDPOINTS_JSON", "{}")), artifacts)
+                   node_config(os.environ.get("SZL_LAB_OLLAMA_ENDPOINTS_JSON", "{}")), artifacts,
+                   Path(pool_path) if (pool_path := os.environ.get("SZL_LAB_POOL_SNAPSHOT")) else None,
+                   os.environ.get("SZL_LAB_POOL_SNAPSHOT_SHA256") or None)
 
 class ScoreRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
@@ -126,6 +139,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 row["ready"] = False
         return rows
 
+    def pool_state() -> dict:
+        if settings.pool_snapshot is None:
+            return unavailable_pool()
+        try:
+            return load_pool_snapshot(settings.pool_snapshot, settings.pool_snapshot_sha256)
+        except (ValueError, OSError, TypeError, KeyError):
+            return unavailable_pool("INVALID_OR_UNAVAILABLE_SNAPSHOT")
+
+    @app.get("/api/pool", dependencies=[Depends(authorize)])
+    def api_pool() -> dict:
+        return pool_state()
+
     async def node_rows() -> list[dict]:
         return list(await asyncio.gather(*(inspect_node(name, url) for name, url in settings.nodes.items())))
 
@@ -142,15 +167,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return {"nodes": await node_rows(), "source": "EXPLICIT_READ_ONLY_OLLAMA_PROBE",
                 "pool_qualification_verified": False, "ready": False}
 
+    @app.get("/pool", response_class=HTMLResponse, dependencies=[Depends(authorize)])
     @app.get("/", response_class=HTMLResponse, dependencies=[Depends(authorize)])
     def home() -> HTMLResponse:
         return HTMLResponse(env.get_template("index.html").render(tracks=state(), nodes=None,
-                            configured_nodes=len(settings.nodes)))
+                            configured_nodes=len(settings.nodes), pool=pool_state()))
 
     @app.get("/compute", response_class=HTMLResponse, dependencies=[Depends(authorize)])
     async def compute() -> HTMLResponse:
         return HTMLResponse(env.get_template("index.html").render(tracks=state(), nodes=await node_rows(),
-                            configured_nodes=len(settings.nodes)))
+                            configured_nodes=len(settings.nodes), pool=pool_state()))
 
     @app.post("/api/score/{track}", dependencies=[Depends(authorize)])
     def score(track: str, body: ScoreRequest) -> dict:
