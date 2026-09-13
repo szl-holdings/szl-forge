@@ -8,6 +8,9 @@ on:
       - "tools/hf_kernel_hub_ops.py"
       - "tools/test_hf_kernel_hub_ops.py"
       - "docs/KERNEL_HUB_STATUS.md"
+      - "tools/observe_kernel_fleet.py"
+      - "tools/test_observe_kernel_fleet.py"
+      - "docs/KERNEL_FLEET_OBSERVATION.md"
       - ".github/workflows/hf-kernel-0161-migration.yml"
   workflow_dispatch:
 
@@ -68,3 +71,31 @@ jobs:
           grep -F 'FIRST_CLASS_REPO_TYPE = "kernel"' tools/hf_kernel_migration_guard.py
           grep -F 'LEGACY_REPO_TYPE = "model"' tools/hf_kernel_migration_guard.py
           git diff --check
+
+  fleet-observation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout without persisted credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Set up Python 3.12
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: "3.12"
+      - name: Offline collector regressions
+        run: python -m unittest -v tools.test_observe_kernel_fleet
+      - name: Observe public first-class kernel items and immutable metadata
+        run: |
+          python tools/observe_kernel_fleet.py \
+            --source-revision "$(git rev-parse HEAD)" \
+            --output kernel-fleet-observation.json
+      - name: Retain observation including unavailable or partial results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: kernel-fleet-observation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: kernel-fleet-observation.json
+          if-no-files-found: error
+          retention-days: 30
