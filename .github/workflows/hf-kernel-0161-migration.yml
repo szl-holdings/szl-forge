@@ -5,6 +5,9 @@ on:
     paths:
       - "tools/hf_kernel_migration_guard.py"
       - "tools/test_hf_kernel_migration_guard.py"
+      - "tools/hf_kernel_hub_ops.py"
+      - "tools/test_hf_kernel_hub_ops.py"
+      - "docs/KERNEL_HUB_STATUS.md"
       - ".github/workflows/hf-kernel-0161-migration.yml"
   workflow_dispatch:
 
@@ -28,6 +31,9 @@ jobs:
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
+
+      - name: Run offline fleet consumer and evidence regressions
+        run: python -m unittest -v tools.test_hf_kernel_hub_ops
 
       - name: Install bounded test dependency
         run: python -m pip install --disable-pip-version-check "huggingface-hub==1.26.0"
