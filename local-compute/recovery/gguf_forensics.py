@@ -22,7 +22,7 @@ import time
 from typing import BinaryIO
 import uuid
 
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 SPEC_COMMIT = "7840aaba1989c6deeefede1d77d5aaf8f52b947e"
 # Provider-reported FROM identities in the inspected owner recovery report.
 # These are NOT installed-tag digests and NOT claims about current local files.
@@ -110,6 +110,33 @@ def plain_path(path: Path) -> bool:
 
 def snapshot(info: os.stat_result) -> tuple[int, int, int, int, int]:
     return info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns
+
+
+def require_stat_match(before: os.stat_result, after: os.stat_result,
+                       stage: str, *, same_api: bool) -> None:
+    """Compare equivalent metadata, retaining ctime in same-API observations.
+
+    CPython 3.12.10 on Windows maps path-stat ctime to CreationTime, while
+    fstat exposes ChangeTime. Comparing those fields across APIs can reject
+    an unchanged file. Cross-API comparison uses explicit birthtime instead.
+    Descriptor-to-descriptor and path-to-path checks STILL compare ctime;
+    there is no tolerance, zero-ID fallback, or exception-to-success path.
+    """
+    fields = ["st_dev", "st_ino", "st_size", "st_mtime_ns"]
+    if os.name == "nt":
+        fields.append("st_birthtime_ns")
+    if same_api or os.name != "nt":
+        fields.append("st_ctime_ns")
+    missing = [name for name in fields
+               if type(getattr(before, name, None)) is not int
+               or type(getattr(after, name, None)) is not int]
+    require(not missing, "FILE_METADATA_UNAVAILABLE:" + ",".join(missing))
+    require(before.st_ino != 0 and after.st_ino != 0, "FILE_IDENTITY_UNAVAILABLE")
+    require(stat.S_ISREG(before.st_mode) and stat.S_ISREG(after.st_mode),
+            "REGULAR_FILE_REQUIRED")
+    changed = [name for name in fields if getattr(before, name) != getattr(after, name)]
+    # Field names only: never print local paths, IDs, timestamps, or raw metadata.
+    require(not changed, stage + ":" + ",".join(changed))
 
 
 class Reader:
@@ -272,12 +299,21 @@ def inspect_file(path: Path, expected: str, seconds: float = 600) -> dict:
     flags = os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0)
     fd = os.open(path, flags)
     with os.fdopen(fd, "rb") as stream:
-        require(snapshot(before) == snapshot(os.fstat(stream.fileno())), "INPUT_CHANGED_AT_OPEN")
-        result = fingerprint_stream(stream, before.st_size, seconds)
-        require(snapshot(before) == snapshot(os.fstat(stream.fileno())), "INPUT_CHANGED_DURING_READ")
-    require(plain_path(path) and snapshot(before) == snapshot(path.stat()), "INPUT_CHANGED_AFTER_READ")
+        opened = os.fstat(stream.fileno())
+        require_stat_match(before, opened, "INPUT_CHANGED_AT_OPEN", same_api=False)
+        result = fingerprint_stream(stream, opened.st_size, seconds)
+        require_stat_match(opened, os.fstat(stream.fileno()),
+                           "INPUT_CHANGED_DURING_READ", same_api=True)
+    require(plain_path(path), "INPUT_CHANGED_AFTER_READ:linked_path")
+    require_stat_match(before, path.stat(), "INPUT_CHANGED_AFTER_READ", same_api=True)
     require(result["container_sha256"] == expected, "BLOB_DIGEST_MISMATCH")
     result["matches_historical_from_digest"] = True
+    result["file_identity_observation"] = {
+        "protocol": "equivalent-fields-and-same-api-stability/v1",
+        "windows_cross_api_ctime_difference":
+            (before.st_ctime_ns != opened.st_ctime_ns) if os.name == "nt" else None,
+        "descriptor_and_path_stability_checked": True,
+    }
     return result
 
 
@@ -376,7 +412,10 @@ def main(argv: list[str] | None = None) -> int:
         report["state"] = "FORENSICS_COMPLETED_NOT_MODEL_QUALIFICATION"
     report["finished_at"] = datetime.now(timezone.utc).isoformat()
     write_evidence(out / "gguf-forensics.json", report)
-    print(json.dumps({"state": report["state"], "comparison": report["comparison"]}, indent=2))
+    model_status = {name: {key: item.get(key) for key in ("state", "error_code")}
+                    for name, item in report["models"].items()}
+    print(json.dumps({"state": report["state"], "models": model_status,
+                      "comparison": report["comparison"]}, indent=2))
     print("Report:", out / "gguf-forensics.json")
     return 0 if report["comparison"] is not None else 1
 

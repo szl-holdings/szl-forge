@@ -117,11 +117,15 @@ py -3.12 -I -B -m unittest discover -s local-compute/recovery -p 'test_gguf_fore
 
 Source reference does not mean upstream authors reviewed this implementation.
 
-## Interrupted reads and durable evidence (forensic v1.1)
+## Interrupted reads and durable evidence (forensic v1.2)
+
+This successor preserves #275's Windows path/fstat correction and per-model
+error reporting; see `FILE_IDENTITY.md`. The version here belongs to the GGUF
+diagnostic, not the separate `szl_recovery.py` v1.2 paired-runtime helper.
 
 The original inspector wrote its only report after both reads. An interruption
-during the second read could discard the first completed result. Forensic v1.1
-adds exclusive-create checkpoints in the same new report directory: one initial
+during the second read could discard the first completed result. Forensic v1.2
+adds exclusive-create checkpoints in the same report directory: one initial
 record, then read-intent and result records for each of the two historical blobs
 (`checkpoint-000.json` through `checkpoint-004.json`). The directory is printed
 before model-byte reading begins. No existing reports are changed or deleted.
