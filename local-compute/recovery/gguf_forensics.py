@@ -22,7 +22,7 @@ import time
 from typing import BinaryIO
 import uuid
 
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 SPEC_COMMIT = "7840aaba1989c6deeefede1d77d5aaf8f52b947e"
 # Provider-reported FROM identities in the inspected owner recovery report.
 # These are NOT installed-tag digests and NOT claims about current local files.
@@ -338,6 +338,31 @@ def compare(left: dict, right: dict) -> dict:
             "root_cause_proven": False, "model_qualified": False}
 
 
+
+def write_evidence(path: Path, value: dict) -> None:
+    """Create one flushed, fsynced evidence file; never replace or retry it.
+
+    Serialize before opening so invalid data does not create an empty record.
+    A write/fsync failure stops admission of further reads. Partial files remain
+    evidence of uncertainty, not permission to resume or repeat an experiment.
+    """
+    payload = (json.dumps(value, indent=2, allow_nan=False) + "\n").encode("utf-8")
+    require(plain_path(path), "LINKED_OUTPUT_REFUSED")
+    with path.open("xb") as stream:
+        stream.write(payload)
+        stream.flush()
+        os.fsync(stream.fileno())
+
+
+def checkpoint(out: Path, report: dict, sequence: int, phase: str) -> None:
+    """Preserve read intent/results independently of final-report completion."""
+    write_evidence(out / f"checkpoint-{sequence:03d}.json", {
+        "schema": "szl.gguf-forensics-checkpoint/v1", "sequence": sequence,
+        "phase": phase, "recorded_at": datetime.now(timezone.utc).isoformat(),
+        "automatic_resume_authorized": False, "report": report,
+    })
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--inspect-blobs", action="store_true", help="Explicitly read both historical blobs; CPU/disk only")
@@ -364,8 +389,14 @@ def main(argv: list[str] | None = None) -> int:
               "source_sha256": digest(Path(__file__).read_bytes()), "spec_commit": SPEC_COMMIT,
               "state": "INCOMPLETE", "models": {}, "comparison": None,
               "inference": False, "training": False, "model_weights_changed": False,
-              "paired_attempts_touched": False, "publication_eligible": False}
-    for name, expected in BLOBS.items():
+              "paired_attempts_touched": False, "publication_eligible": False,
+              "expected_historical_blobs": dict(BLOBS), "active_model": None,
+              "automatic_resume_authorized": False}
+    checkpoint(out, report, 0, "INSPECTION_PLANNED")
+    print("Evidence directory:", out, flush=True)
+    for index, (name, expected) in enumerate(BLOBS.items(), start=1):
+        report["active_model"] = name
+        checkpoint(out, report, 2 * index - 1, "BLOB_READ_INTENT")
         print("Reading historical blob for " + name + " (no inference).", flush=True)
         try:
             report["models"][name] = {"state": "BYTE_IDENTITY_VERIFIED_LAYOUT_INSPECTED",
@@ -373,14 +404,14 @@ def main(argv: list[str] | None = None) -> int:
         except (ForensicsError, OSError, ValueError, struct.error) as error:
             report["models"][name] = {"state": "UNAVAILABLE_OR_REJECTED",
                                       "error_code": str(error) if isinstance(error, ForensicsError) else type(error).__name__}
+        report["active_model"] = None
+        checkpoint(out, report, 2 * index, "BLOB_RESULT_RECORDED")
     models = list(report["models"].values())
     if all(m["state"] == "BYTE_IDENTITY_VERIFIED_LAYOUT_INSPECTED" for m in models):
         report["comparison"] = compare(*models)
         report["state"] = "FORENSICS_COMPLETED_NOT_MODEL_QUALIFICATION"
     report["finished_at"] = datetime.now(timezone.utc).isoformat()
-    with (out / "gguf-forensics.json").open("x", encoding="utf-8", newline="\n") as stream:
-        json.dump(report, stream, indent=2, allow_nan=False)
-        stream.write("\n")
+    write_evidence(out / "gguf-forensics.json", report)
     model_status = {name: {key: item.get(key) for key in ("state", "error_code")}
                     for name, item in report["models"].items()}
     print(json.dumps({"state": report["state"], "models": model_status,
