@@ -22,7 +22,7 @@ Use an isolated Python 3.11/3.12 environment. The existing CUDA environments and
 owner workloads must not be modified to install this small CPU module.
 
 ```bash
-python -m venv .venv-model-lab
+python -m venv ../szl-model-lab-venv
 # Activate the virtual environment using the command appropriate for your shell.
 python -m pip install 'torch==2.10.0+cpu' --index-url https://download.pytorch.org/whl/cpu
 python -m pip install -c model-lab/constraints-test.txt -e 'model-lab[test]'
@@ -51,7 +51,7 @@ qualification, GPU availability, pooled VRAM, a signature, or a quality benchmar
 
 `SZL_LAB_ROUTER_ARTIFACT` and `SZL_LAB_INVARIANT_ARTIFACT` optionally select trusted
 owner-controlled local candidate directories. Missing, corrupt and fixture-only
-weights are unavailable, never replaced by random-weight inference. `/api/score`
+weights are unavailable, never replaced by random-weight inference. `/api/score/{track}`
 checks exact features and normalization and returns explicitly uncalibrated advice.
 No web route trains, executes commands, publishes, merges or creates jobs.
 

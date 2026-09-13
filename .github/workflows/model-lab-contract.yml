@@ -45,8 +45,11 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p reports
-          python -m pip install 'torch==2.10.0+cpu' --index-url https://download.pytorch.org/whl/cpu
+          python -m pip --version > reports/model-lab-bootstrap.txt
+          python -m pip freeze > reports/model-lab-initial-environment.txt
+          python -m pip install 'torch==2.10.0+cpu' --index-url https://download.pytorch.org/whl/cpu --report reports/model-lab-torch-install.json
           python -m pip install -c model-lab/constraints-test.txt -e 'model-lab[test]' --report reports/model-lab-install.json
+          python -m pip check
           python -m pip freeze > reports/model-lab-environment.txt
       - name: Exercise source, API, UI and negative publication contracts
         run: python -m pytest -q -c model-lab/pyproject.toml model-lab/tests --junitxml=reports/model-lab-tests.xml
