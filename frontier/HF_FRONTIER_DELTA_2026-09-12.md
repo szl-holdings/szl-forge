@@ -2,6 +2,31 @@
 
 Local Omen pipeline night (RTX 5050 laptop, CPU merge). Delta since `HF_FRONTIER_INTAKE_2026-09-06.md`.
 
+## Evidence boundary
+
+This is a dated operator-reported activity log, not an independently verified
+publication, benchmark, or production-qualification receipt. The original report
+below is retained verbatim, including its `MEASURED` and `Verified` labels; those
+labels describe the operator's reported observations, not a new verification
+performed by the documentation reviewer or by merging this file.
+
+The abbreviated commit IDs and approximate sizes are investigation pointers,
+not immutable source/weight bindings. Before using these results for promotion,
+resolve full provider revisions, inspect and validate each `merge_receipt.json`,
+bind base/adapter/merged-weight hashes and evaluation configuration, and reconcile
+the stated abstention discrepancy. A non-zero weight delta alone does not prove
+correct adapter mapping, reload parity, model quality, or lawful data use.
+
+The v3 recommendation below is part of the historical operator report, not a
+change to a canonical candidate, model route, or approval gate. The reported token
+exposure remains a blocker for reuse of that credential until rotation and scope
+are verified; this document neither contains a credential nor certifies rotation.
+Source CI validates source changes, not the historical training or publication
+claims below. No training, salvage, provider mutation, or promotion is requested
+or executed by this note.
+
+## Original operator report
+
 ## Merged + published (additive)
 
 Full standalone `model.safetensors` merged and published into all seven live adapter
