@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=77,<83"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "szl-model-lab"
+version = "0.1.0"
+license = "Apache-2.0"
+readme = "README.md"
+description = "Advisory model research and read-only owner-compute inspection for SZL Forge"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+  "torch>=2.6,<3", "safetensors>=0.6,<0.8", "fastapi>=0.120,<0.130",
+  "pydantic>=2.10,<3", "httpx>=0.28,<0.29", "uvicorn>=0.34,<0.49",
+  "jinja2>=3.1.6,<4", "numpy>=2.3.5,<3"
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8,<10", "huggingface-hub>=1.16,<2", "PyYAML>=6,<7"]
+
+[project.scripts]
+szl-model-lab = "szl_model_lab.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+szl_model_lab = ["templates/*.html"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-ra"
