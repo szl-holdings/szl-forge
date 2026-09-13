@@ -1,0 +1,135 @@
+name: Model Lab source and blueprint contract
+
+on:
+  pull_request:
+    paths: ['model-lab/**', '.github/workflows/model-lab-contract.yml']
+  push:
+    branches: [main]
+    paths: ['model-lab/**', '.github/workflows/model-lab-contract.yml']
+  workflow_dispatch:
+    inputs:
+      source_revision:
+        description: Exact admitted main SHA; checked again before publication
+        required: true
+        type: string
+      publish_blueprints:
+        description: Publish code-only Router and Invariant blueprints; never weights
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: model-lab-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Model Lab tests (${{ matrix.python }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.11', '3.12']
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install isolated CPU test dependencies
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          python -m pip --version > reports/model-lab-bootstrap.txt
+          python -m pip freeze > reports/model-lab-initial-environment.txt
+          python -m pip install 'torch==2.10.0+cpu' --index-url https://download.pytorch.org/whl/cpu --report reports/model-lab-torch-install.json
+          python -m pip install -c model-lab/constraints-test.txt -e 'model-lab[test]' --report reports/model-lab-install.json
+          python -m pip check
+          python -m pip freeze > reports/model-lab-environment.txt
+      - name: Exercise source, API, UI and negative publication contracts
+        run: python -m pytest -q -c model-lab/pyproject.toml model-lab/tests --junitxml=reports/model-lab-tests.xml
+      - name: Build code-only plans without credentials or Hub requests
+        env:
+          PYTHONPATH: model-lab/src
+        run: |
+          set -euo pipefail
+          python -m szl_model_lab.blueprints --track router --source-revision "${GITHUB_SHA}" --report reports/router-plan.json
+          python -m szl_model_lab.blueprints --track invariant --source-revision "${GITHUB_SHA}" --report reports/invariant-plan.json
+      - name: Preserve scoped test evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: model-lab-tests-${{ matrix.python }}-${{ github.run_id }}
+          path: |
+            reports/model-lab-*
+            reports/router-plan.json
+            reports/invariant-plan.json
+          if-no-files-found: error
+          retention-days: 30
+
+  publish-blueprints:
+    name: Publish code-only ${{ matrix.track }} blueprint
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.publish_blueprints
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - track: router
+            repo: SZLHOLDINGS/A11OY-Router
+          - track: invariant
+            repo: SZLHOLDINGS/A11OY-Invariant
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - name: Recheck exact admitted source before any Hub mutation
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_SOURCE: ${{ inputs.source_revision }}
+        run: |
+          set -euo pipefail
+          test "${EXPECTED_SOURCE}" = "${GITHUB_SHA}"
+          test "$(git rev-parse HEAD)" = "${GITHUB_SHA}"
+          test "$(gh api repos/szl-holdings/szl-forge/branches/main --jq .commit.sha)" = "${GITHUB_SHA}"
+      - name: Install existing publication client versions
+        run: python -m pip install 'huggingface-hub==1.23.0' 'requests==2.32.5'
+      - name: Acquire existing Forge publisher credential for exact target
+        env:
+          HF_ORG_TOKEN_CANDIDATE: ${{ secrets.HF_ORG_TOKEN }}
+          HF_ORG_TOKEN1_CANDIDATE: ${{ secrets.HF_ORG_TOKEN1 }}
+          HF_WRITE_TOKEN_CANDIDATE: ${{ secrets.HF_WRITE_TOKEN }}
+          HF_TOKEN_CANDIDATE: ${{ secrets.HF_TOKEN }}
+          HUGGINGFACE_TOKEN_CANDIDATE: ${{ secrets.HUGGINGFACE_TOKEN }}
+          HUGGING_FACE_HUB_TOKEN_CANDIDATE: ${{ secrets.HUGGING_FACE_HUB_TOKEN }}
+          TARGET_REPO: ${{ matrix.repo }}
+        run: |
+          set -euo pipefail
+          python tools/acquire_hf_publisher_token.py --target-repo "${TARGET_REPO}" --target-type model --allow-create --github-env "${GITHUB_ENV}" --report reports/blueprint-credential.json
+      - name: Publish exact source and verify immutable Hub bytes
+        env:
+          PYTHONPATH: model-lab/src
+          TRACK: ${{ matrix.track }}
+          HF_HUB_DISABLE_IMPLICIT_TOKEN: '1'
+        run: |
+          set -euo pipefail
+          python -m szl_model_lab.blueprints --track "${TRACK}" --source-revision "${GITHUB_SHA}" --report reports/blueprint-publication.json --publish
+      - name: Preserve publication and uncertainty evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: model-lab-blueprint-${{ matrix.track }}-${{ github.run_id }}
+          path: reports/blueprint-*
+          if-no-files-found: error
+          retention-days: 90
