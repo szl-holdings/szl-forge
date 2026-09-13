@@ -16,6 +16,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, Response
 
 from .specs import candidate_spec, candidate_specs, mesh_declaration
+from .blueprint import blueprint_plan
 
 CSS = """
 :root{color-scheme:dark;font-family:system-ui,sans-serif;background:#080e18;color:#ecf6ff}
@@ -30,6 +31,10 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:.9rem;line-height:1.5}
 select,button{font:inherit;color:inherit;background:#152a3b;border:1px solid #7898ac;
 min-height:44px;padding:10px;border-radius:8px;max-width:100%}button{cursor:pointer}
 :focus-visible{outline:3px solid #81f1dc;outline-offset:4px}
+summary{cursor:pointer;min-height:44px;padding:12px 0}
+.journey{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.journey div{border-left:2px solid #81f1dc;padding:12px;overflow-wrap:anywhere}
+@media(max-width:720px){.journey{grid-template-columns:repeat(2,minmax(0,1fr))}}
 form{display:flex;flex-wrap:wrap;gap:12px;align-items:center}footer{margin-top:28px}
 @media(max-width:720px){.grid{grid-template-columns:1fr}section,article{padding:16px}}
 @media(prefers-contrast:more){article,section,select,button{border-color:white}}
@@ -52,6 +57,7 @@ def render_page(key: str) -> str:
     )
     detail = escape(json.dumps(spec, indent=2, allow_nan=False))
     mesh = escape(json.dumps(mesh_declaration(), indent=2, allow_nan=False))
+    delivery = escape(json.dumps(blueprint_plan(key), indent=2, allow_nan=False))
     return f'''<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SZL model candidates</title><link rel="stylesheet" href="/assets/workbench.css">
@@ -62,10 +68,19 @@ inspects source recipes; it does not control your hardware or change Hugging Fac
 </header><div class="grid">{cards}</div><section aria-labelledby="recipe-title">
 <h2 id="recipe-title">Inspect a training contract</h2><form action="/" method="get">
 <label for="candidate">Candidate</label><select id="candidate" name="candidate">{options}</select>
-<button type="submit">Inspect</button></form><pre>{detail}</pre>
+<button type="submit">Inspect</button></form><details><summary>Architecture and feature contract</summary><pre>{detail}</pre></details>
 <p class="muted">Before a supervised run: admit licensed data and feature normalization,
 freeze the evaluation split, verify the current source and local environment, reserve an
 idle device, and use the existing Forge supervisor. UI reachability grants none of these.</p>
+</section><section aria-labelledby="delivery-title"><h2 id="delivery-title">GitHub-first delivery</h2>
+<div class="journey" aria-label="Publication sequence">
+<div><strong>01 / GitHub</strong><p>Reviewed source</p></div>
+<div><strong>02 / Hugging Face</strong><p>Exact code projection</p></div>
+<div><strong>03 / Product</strong><p>a-11-oy.com</p></div>
+<div><strong>04 / Proof</strong><p>a11oy.net</p></div></div>
+<p class="badge">NO TRAINED WEIGHTS</p><p>Sequence, not completion status.
+This view has not observed admission, publication or either deployment.</p>
+<details><summary>Projection contract and remaining gates</summary><pre>{delivery}</pre></details>
 </section><section aria-labelledby="mesh-title"><h2 id="mesh-title">Existing mesh / source map</h2>
 <p class="badge">DECLARED, NOT OBSERVED</p><details><summary>Show source connections</summary>
 <pre>{mesh}</pre></details></section><footer class="muted">
@@ -134,6 +149,13 @@ def create_app() -> FastAPI:
     async def candidate_detail(key: str):
         try:
             return candidate_spec(key)
+        except ValueError as exc:
+            raise HTTPException(404, "unknown candidate") from exc
+
+    @app.get("/api/blueprints/{key}")
+    async def blueprint_detail(key: str):
+        try:
+            return blueprint_plan(key)
         except ValueError as exc:
             raise HTTPException(404, "unknown candidate") from exc
 

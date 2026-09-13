@@ -5,6 +5,7 @@ on:
       - 'model_candidates/**'
       - 'candidate-tests/**'
       - 'pyproject.toml'
+      - '.gitattributes'
       - '.github/workflows/model-candidates.yml'
   push:
     branches: [main]
@@ -12,6 +13,7 @@ on:
       - 'model_candidates/**'
       - 'candidate-tests/**'
       - 'pyproject.toml'
+      - '.gitattributes'
       - '.github/workflows/model-candidates.yml'
 permissions:
   contents: read
@@ -38,3 +40,29 @@ jobs:
           python -m pip install -r candidate-tests/requirements.txt
       - name: Synthetic architecture and local HTTP contracts, not model qualification
         run: python -m pytest -q candidate-tests
+      - name: Build and verify exact-source archives, no Hub writes or weights
+        shell: python
+        run: |
+          import hashlib
+          import json
+          import subprocess
+          import sys
+          from pathlib import Path
+          sys.path.insert(0, str(Path.cwd()))
+          from model_candidates.blueprint import build_blueprint, verify_projection, write_archive
+          revision = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+          output = Path("candidate-source-archives")
+          output.mkdir(exist_ok=False)
+          for key in ("router", "invariant-risk", "yarqa-causal"):
+              files = build_blueprint(Path("."), revision, key)
+              digest = hashlib.sha256(files["blueprint-manifest.json"]).hexdigest()
+              result = verify_projection(files, digest)
+              write_archive(output / (key + ".zip"), files)
+              print(json.dumps({"candidate": key, "manifest_sha256": digest, **result}))
+      - name: Preserve code-only review artifacts, not model releases
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: candidate-source-${{ matrix.os }}-${{ matrix.python }}
+          path: candidate-source-archives/*.zip
+          if-no-files-found: error
+          retention-days: 14
