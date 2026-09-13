@@ -14,7 +14,7 @@ import hashlib
 import json
 import math
 import os
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 import re
 import stat
 import struct
@@ -22,7 +22,7 @@ import time
 from typing import BinaryIO
 import uuid
 
-VERSION = "1.0.0"
+VERSION = "1.2.1"
 SPEC_COMMIT = "7840aaba1989c6deeefede1d77d5aaf8f52b947e"
 # Provider-reported FROM identities in the inspected owner recovery report.
 # These are NOT installed-tag digests and NOT claims about current local files.
@@ -52,6 +52,37 @@ def require(ok: bool, code: str) -> None:
         raise ForensicsError(code)
 
 
+class UnsupportedTensorType(ForensicsError):
+    """A bounded header observation, not an authenticated file/weight result."""
+    def __init__(self, kind: int, tensor_index: int, type_field_offset: int):
+        require(type(kind) is int and 0 <= kind <= 0xffffffff,
+                "INVALID_TENSOR_TYPE_OBSERVATION")
+        require(type(tensor_index) is int and 0 <= tensor_index < MAX_TENSORS,
+                "INVALID_TENSOR_TYPE_OBSERVATION")
+        require(type(type_field_offset) is int and 0 <= type_field_offset <= MAX_HEADER - 4,
+                "INVALID_TENSOR_TYPE_OBSERVATION")
+        super().__init__(f"UNSUPPORTED_TENSOR_TYPE:ggml_type_id={kind}")
+        # Fixed keys and integers only; never retain tensor names or raw headers.
+        self.observation = {
+            "ggml_type_id": kind,
+            "tensor_index_zero_based": tensor_index,
+            "type_field_byte_offset": type_field_offset,
+            "supported_ggml_type_ids": sorted(TENSOR_TYPES),
+            "scope": "PARTIAL_HEADER_NOT_FULL_FILE_AUTHENTICATED",
+            "historical_blob_sha256_verification": "NOT_COMPLETED",
+            "inferred_from_model_label": False,
+        }
+
+
+def rejected_model(error: Exception) -> dict:
+    """Keep rejection separate from successful layout and full-file checks."""
+    result = {"state": "UNAVAILABLE_OR_REJECTED",
+              "error_code": str(error) if isinstance(error, ForensicsError) else type(error).__name__}
+    if isinstance(error, UnsupportedTensorType):
+        result["tensor_type_observation"] = dict(error.observation)
+    return result
+
+
 def digest(raw: bytes) -> str:
     return hashlib.sha256(raw).hexdigest()
 
@@ -59,6 +90,41 @@ def digest(raw: bytes) -> str:
 def canonical(value: object) -> bytes:
     return json.dumps(value, sort_keys=True, separators=(",", ":"),
                       ensure_ascii=True, allow_nan=False).encode("ascii")
+
+
+def windows_drive_type(anchor: str) -> int:
+    """Query the OS drive classification; never probe a remote file/share.
+
+    Load only the system32 DLL. Unknown drive types are NOT a local fallback.
+    This is a cooperative admission check, not protection against a concurrent
+    drive remap or a hostile storage driver.
+    """
+    require(os.name == "nt", "WINDOWS_DRIVE_QUERY_REQUIRED")
+    import ctypes
+    try:
+        kernel = ctypes.WinDLL("kernel32.dll", use_last_error=True, winmode=0x800)
+        query = kernel.GetDriveTypeW
+        query.argtypes = [ctypes.c_wchar_p]
+        query.restype = ctypes.c_uint
+        return int(query(anchor))
+    except (AttributeError, OSError, TypeError, ValueError):
+        raise ForensicsError("LOCAL_DRIVE_TYPE_UNAVAILABLE") from None
+
+
+def require_local_windows_path(path: str | os.PathLike[str]) -> None:
+    """Admit fixed local drive-letter paths BEFORE lstat/is_dir/open/mkdir.
+
+    A mapped network drive may be spelled with a drive letter, not a UNC path. Checking
+    only the spelling would allow network I/O before the historical byte pin.
+    Both the input root and the report home must pass this independent gate.
+    """
+    raw = os.fspath(path)
+    require(isinstance(raw, str) and "\x00" not in raw, "LOCAL_DRIVE_PATH_REQUIRED")
+    parsed = PureWindowsPath(raw)
+    require(parsed.is_absolute() and re.fullmatch(r"[A-Za-z]:", parsed.drive) is not None
+            and ".." not in parsed.parts
+            and all(":" not in part for part in parsed.parts[1:]), "LOCAL_DRIVE_PATH_REQUIRED")
+    require(windows_drive_type(parsed.anchor) == 3, "FIXED_LOCAL_DRIVE_REQUIRED")
 
 
 def plain_path(path: Path) -> bool:
@@ -75,6 +141,33 @@ def plain_path(path: Path) -> bool:
 
 def snapshot(info: os.stat_result) -> tuple[int, int, int, int, int]:
     return info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns
+
+
+def require_stat_match(before: os.stat_result, after: os.stat_result,
+                       stage: str, *, same_api: bool) -> None:
+    """Compare equivalent metadata, retaining ctime in same-API observations.
+
+    CPython 3.12.10 on Windows maps path-stat ctime to CreationTime, while
+    fstat exposes ChangeTime. Comparing those fields across APIs can reject
+    an unchanged file. Cross-API comparison uses explicit birthtime instead.
+    Descriptor-to-descriptor and path-to-path checks STILL compare ctime;
+    there is no tolerance, zero-ID fallback, or exception-to-success path.
+    """
+    fields = ["st_dev", "st_ino", "st_size", "st_mtime_ns"]
+    if os.name == "nt":
+        fields.append("st_birthtime_ns")
+    if same_api or os.name != "nt":
+        fields.append("st_ctime_ns")
+    missing = [name for name in fields
+               if type(getattr(before, name, None)) is not int
+               or type(getattr(after, name, None)) is not int]
+    require(not missing, "FILE_METADATA_UNAVAILABLE:" + ",".join(missing))
+    require(before.st_ino != 0 and after.st_ino != 0, "FILE_IDENTITY_UNAVAILABLE")
+    require(stat.S_ISREG(before.st_mode) and stat.S_ISREG(after.st_mode),
+            "REGULAR_FILE_REQUIRED")
+    changed = [name for name in fields if getattr(before, name) != getattr(after, name)]
+    # Field names only: never print local paths, IDs, timestamps, or raw metadata.
+    require(not changed, stage + ":" + ",".join(changed))
 
 
 class Reader:
@@ -191,7 +284,8 @@ def fingerprint_stream(stream: BinaryIO, size: int, seconds: float = 600) -> dic
         shape = [r.number("Q") for _ in range(dimensions)]
         require(all(0 < x <= 2**31 for x in shape), "DIMENSION_SIZE_BOUND")
         kind = r.number("I")
-        require(kind in TENSOR_TYPES, "UNSUPPORTED_TENSOR_TYPE")
+        if kind not in TENSOR_TYPES:
+            raise UnsupportedTensorType(kind, len(tensors), r.offset - 4)
         offset = r.number("Q")
         nbytes = math.prod(shape) * TENSOR_TYPES[kind][1]
         require(nbytes <= MAX_FILE and offset <= MAX_FILE and offset % alignment == 0,
@@ -237,12 +331,21 @@ def inspect_file(path: Path, expected: str, seconds: float = 600) -> dict:
     flags = os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0)
     fd = os.open(path, flags)
     with os.fdopen(fd, "rb") as stream:
-        require(snapshot(before) == snapshot(os.fstat(stream.fileno())), "INPUT_CHANGED_AT_OPEN")
-        result = fingerprint_stream(stream, before.st_size, seconds)
-        require(snapshot(before) == snapshot(os.fstat(stream.fileno())), "INPUT_CHANGED_DURING_READ")
-    require(plain_path(path) and snapshot(before) == snapshot(path.stat()), "INPUT_CHANGED_AFTER_READ")
+        opened = os.fstat(stream.fileno())
+        require_stat_match(before, opened, "INPUT_CHANGED_AT_OPEN", same_api=False)
+        result = fingerprint_stream(stream, opened.st_size, seconds)
+        require_stat_match(opened, os.fstat(stream.fileno()),
+                           "INPUT_CHANGED_DURING_READ", same_api=True)
+    require(plain_path(path), "INPUT_CHANGED_AFTER_READ:linked_path")
+    require_stat_match(before, path.stat(), "INPUT_CHANGED_AFTER_READ", same_api=True)
     require(result["container_sha256"] == expected, "BLOB_DIGEST_MISMATCH")
     result["matches_historical_from_digest"] = True
+    result["file_identity_observation"] = {
+        "protocol": "equivalent-fields-and-same-api-stability/v1",
+        "windows_cross_api_ctime_difference":
+            (before.st_ctime_ns != opened.st_ctime_ns) if os.name == "nt" else None,
+        "descriptor_and_path_stability_checked": True,
+    }
     return result
 
 
@@ -267,6 +370,31 @@ def compare(left: dict, right: dict) -> dict:
             "root_cause_proven": False, "model_qualified": False}
 
 
+
+def write_evidence(path: Path, value: dict) -> None:
+    """Create one flushed, fsynced evidence file; never replace or retry it.
+
+    Serialize before opening so invalid data does not create an empty record.
+    A write/fsync failure stops admission of further reads. Partial files remain
+    evidence of uncertainty, not permission to resume or repeat an experiment.
+    """
+    payload = (json.dumps(value, indent=2, allow_nan=False) + "\n").encode("utf-8")
+    require(plain_path(path), "LINKED_OUTPUT_REFUSED")
+    with path.open("xb") as stream:
+        stream.write(payload)
+        stream.flush()
+        os.fsync(stream.fileno())
+
+
+def checkpoint(out: Path, report: dict, sequence: int, phase: str) -> None:
+    """Preserve read intent/results independently of final-report completion."""
+    write_evidence(out / f"checkpoint-{sequence:03d}.json", {
+        "schema": "szl.gguf-forensics-checkpoint/v1", "sequence": sequence,
+        "phase": phase, "recorded_at": datetime.now(timezone.utc).isoformat(),
+        "automatic_resume_authorized": False, "report": report,
+    })
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--inspect-blobs", action="store_true", help="Explicitly read both historical blobs; CPU/disk only")
@@ -280,8 +408,10 @@ def main(argv: list[str] | None = None) -> int:
             "BETTERWITHAGE_WINDOWS_ONLY")
     home = Path.home()
     root = args.blob_root or home / ".ollama" / "models" / "blobs"
-    require(root.is_absolute() and ".." not in root.parts and not str(root).startswith(("\\\\", "//"))
-            and plain_path(root) and root.is_dir(), "LOCAL_BLOB_DIRECTORY_REQUIRED")
+    # Admit both storage locations before any path metadata read or report write.
+    require_local_windows_path(home)
+    require_local_windows_path(root)
+    require(plain_path(root) and root.is_dir(), "LOCAL_BLOB_DIRECTORY_REQUIRED")
     require(plain_path(home), "LINKED_HOME_REFUSED")
     out = home / ("szl-gguf-forensics-" + uuid.uuid4().hex)
     require(not out.is_relative_to(root), "OUTPUT_INSIDE_BLOB_ROOT")
@@ -291,24 +421,33 @@ def main(argv: list[str] | None = None) -> int:
               "source_sha256": digest(Path(__file__).read_bytes()), "spec_commit": SPEC_COMMIT,
               "state": "INCOMPLETE", "models": {}, "comparison": None,
               "inference": False, "training": False, "model_weights_changed": False,
-              "paired_attempts_touched": False, "publication_eligible": False}
-    for name, expected in BLOBS.items():
+              "paired_attempts_touched": False, "publication_eligible": False,
+              "expected_historical_blobs": dict(BLOBS), "active_model": None,
+              "automatic_resume_authorized": False}
+    checkpoint(out, report, 0, "INSPECTION_PLANNED")
+    print("Evidence directory:", out, flush=True)
+    for index, (name, expected) in enumerate(BLOBS.items(), start=1):
+        report["active_model"] = name
+        checkpoint(out, report, 2 * index - 1, "BLOB_READ_INTENT")
         print("Reading historical blob for " + name + " (no inference).", flush=True)
         try:
             report["models"][name] = {"state": "BYTE_IDENTITY_VERIFIED_LAYOUT_INSPECTED",
                                       **inspect_file(root / ("sha256-" + expected), expected)}
         except (ForensicsError, OSError, ValueError, struct.error) as error:
-            report["models"][name] = {"state": "UNAVAILABLE_OR_REJECTED",
-                                      "error_code": str(error) if isinstance(error, ForensicsError) else type(error).__name__}
+            report["models"][name] = rejected_model(error)
+        report["active_model"] = None
+        checkpoint(out, report, 2 * index, "BLOB_RESULT_RECORDED")
     models = list(report["models"].values())
     if all(m["state"] == "BYTE_IDENTITY_VERIFIED_LAYOUT_INSPECTED" for m in models):
         report["comparison"] = compare(*models)
         report["state"] = "FORENSICS_COMPLETED_NOT_MODEL_QUALIFICATION"
     report["finished_at"] = datetime.now(timezone.utc).isoformat()
-    with (out / "gguf-forensics.json").open("x", encoding="utf-8", newline="\n") as stream:
-        json.dump(report, stream, indent=2, allow_nan=False)
-        stream.write("\n")
-    print(json.dumps({"state": report["state"], "comparison": report["comparison"]}, indent=2))
+    write_evidence(out / "gguf-forensics.json", report)
+    model_status = {name: {key: item.get(key) for key in
+                          ("state", "error_code", "tensor_type_observation")}
+                    for name, item in report["models"].items()}
+    print(json.dumps({"state": report["state"], "models": model_status,
+                      "comparison": report["comparison"]}, indent=2))
     print("Report:", out / "gguf-forensics.json")
     return 0 if report["comparison"] is not None else 1
 
