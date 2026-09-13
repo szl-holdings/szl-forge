@@ -4,6 +4,7 @@ on:
     paths:
       - 'model_candidates/**'
       - 'candidate-tests/**'
+      - 'model-lab/src/szl_model_lab/catalog.py'
       - 'pyproject.toml'
       - '.gitattributes'
       - '.github/workflows/model-candidates.yml'
@@ -12,6 +13,7 @@ on:
     paths:
       - 'model_candidates/**'
       - 'candidate-tests/**'
+      - 'model-lab/src/szl_model_lab/catalog.py'
       - 'pyproject.toml'
       - '.gitattributes'
       - '.github/workflows/model-candidates.yml'

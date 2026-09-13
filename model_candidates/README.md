@@ -1,116 +1,93 @@
-# Kernel-derived model candidates — source first
+# Kernel-derived research candidates
 
-**SOURCE_ONLY_NOT_TRAINED.** Three small, randomly initialized PyTorch modules,
-a Python/FastAPI backend and Python-rendered local frontend. This is a source
-slice, not a trained release, new estate registry, scheduler, publisher or Space.
-The production inference package retains its dependency-free default install.
-The CPU validation dependencies are opt-in and isolated.
+**SOURCE_ONLY_NOT_TRAINED.** The admitted [`model-lab/`](../model-lab/) retains
+its authenticated operator interface, two 161-parameter baselines, current HF
+identities and guarded code-only publisher. This package is a distinct research
+slice, not their replacement and not a second estate registry or control plane.
 
-| Candidate key | Trainable parameters | Interface | Proposed, not reserved, Hub name |
-| --- | ---: | --- | --- |
-| `router` | 1,377 | normalized `B x R x 8`, external boolean eligibility; route proposal | `SZLHOLDINGS/A11OY-Router` |
-| `invariant-risk` | 1,476 | normalized `B x 8`; four advisory risk logits | `SZLHOLDINGS/A11OY-Invariant` |
-| `yarqa-causal` | 141,184 | byte/BOS IDs `B x T`; next-token logits | `SZLHOLDINGS/YARQA-1` |
+| Candidate | Parameters | Research identity (proposed, not reserved) |
+|---|---:|---|
+| `router` | 1,377 | `SZLHOLDINGS/A11OY-RouteRank-Research-v1` |
+| `invariant-risk` | 1,476 | `SZLHOLDINGS/A11OY-InvariantRisk-Research-v1` |
+| `yarqa-causal` | 141,184 | `SZLHOLDINGS/YARQA-Causal-Reference-v1` |
 
-These counts describe the small default research architectures, not useful model
-quality. The route scorer is permutation-equivariant over routes. An entirely
-ineligible row returns zero probability mass and selection `-1` (ABSTAIN).
-Training labels that select an ineligible route are rejected. Feature names,
-order, missing values, booleans, nonfinite values and normalization bounds are
-checked by `encode_features`; the training-data lane must separately bind their
-meaning, provenance and normalization constants. Route and risk feature schemas
-are different. Scores and softmax outputs are not calibrated confidence.
+The route scorer consumes normalized `B x R x 8` features and an external boolean
+eligibility mask. It is permutation-equivariant, never authorizes or dispatches,
+and returns zero probability mass and index -1 when no route is eligible.
+The risk model consumes a different named eight-feature contract and emits four
+advisory outcome-risk logits. Scores are not calibrated confidence. Neither model
+replaces deterministic invariants, router policy or human approval.
 
-The risk model cannot override `szl-invariants`, `szl-router/router_control.app`
-or any human approval. The Lambda aggregator remains advisory; Lambda uniqueness
-is Conjecture 1, OPEN. Do not train a network merely to approximate that already
-available deterministic formula and then claim new learned governance ability.
+These are different feature/target/architecture contracts from Model Lab's binary
+baselines. Existing weights must never be loaded or relabeled as these models.
+`candidate-tests/test_identity.py` checks the actual Model Lab source catalog,
+including deferred tracks, and rejects colliding Hub identities.
 
 ## YARQA distinction
 
-The existing `szl-holdings/YARQA-ATTN` v0 operator is CPU-only, noncausal attention
-inside contiguous compartments. The new module is a **separate causal research
-adaptation**, not a wrapper silently claiming the old kernel became a language
-model. It uses fixed-width canals plus a causal mask so extending a sequence does
-not change past boundaries. Each canal is isolated: no cross-canal context.
-It uses dense PyTorch SDPA with a boolean mask, not an optimized sparse kernel.
-No speedup, CUDA-kernel support, distributed training, KV cache, GGUF conversion,
-Ollama import or frontier-level language quality is claimed. It is a tiny byte
-reference to establish correct gradients and causal semantics before scaling.
-BOS is 256; ordinary UTF-8 byte IDs are 0 through 255. No tokenizer is downloaded.
+The original `YARQA-ATTN` kernel is CPU-only, noncausal compartment attention.
+The causal reference here uses fixed-width independent canals and a causal mask
+with dense PyTorch SDPA. It is a separate adaptation, not a kernel acceleration.
+It has no cross-canal context, KV cache, GGUF conversion or Ollama integration.
+Byte IDs are 0..255, BOS is 256. No frontier-quality, throughput or GPU claim.
+Lambda uniqueness remains Conjecture 1, OPEN; the Lambda aggregate is advisory.
 
-## Run the local Python frontend
+## Inspect research recipes locally
 
-Use an inspected source checkout and a NEW environment; do not change the working
-GPU environment or interrupt an existing Ollama/training process. For the existing
-case-distinct Forge directories, prefer a WSL checkout on its Linux filesystem
-rather than a case-insensitive Windows source checkout. The new package adds no
-case-colliding paths.
+In a new reviewed environment, not the working owner CUDA environment:
 
-```bash
-python -m venv .venv-candidate-ui
-# Linux / WSL:
-. .venv-candidate-ui/bin/activate
-# Windows equivalent: .venv-candidate-ui\Scripts\Activate.ps1
+```sh
 python -m pip install fastapi==0.128.2 uvicorn==0.48.0
-python -m model_candidates.workbench --port 8765
+python -m model_candidates.workbench --port 8766
 ```
 
-Open `http://127.0.0.1:8765`. This starts only a local recipe inspector, not a
-model or training job. It requires no HF, OpenRouter, Tailscale or GitHub token.
-`GET /api/candidates`, `/api/candidates/{key}`, `/api/mesh` and `/healthz` expose
-source-only declarations. Loopback client/Host checks, same-origin checks,
-no-store responses and restrictive CSP are enforced. There are no train, shell,
-probe, upload, arbitrary file/URL, provider, checkpoint-load or publish endpoints.
-It is NOT a multi-user authenticated service; do not tunnel it or bind it publicly.
-The public static `spaces/szl-forge-lab` and existing model-inference Space are
-unchanged. Responsive CSS is present; real browser/accessibility acceptance is
-separate from ASGI HTTP tests.
+Open `http://127.0.0.1:8766`. Model Lab's operator port remains 8765. This local
+recipe inspector has no authentication suitable for multi-user deployment and
+must not be tunneled or bound publicly. Host, loopback-client and same-origin
+checks, no-store headers and CSP remain enforced. It cannot train, probe,
+execute, load checkpoints, publish or approve anything. Public Forge Lab and the
+existing inference Space remain unchanged.
 
-## Exercise the model source (CPU test environment only)
+`GET /api/candidates`, `/api/candidates/{key}`, `/api/blueprints/{key}` and
+`/api/mesh` are source declarations, not live inventory or serving qualification.
+The compact delivery view shows a sequence, not verified remote completion.
 
-In a separate fresh environment, install the bounded CPU validation dependencies:
+## Test and package source
 
-```bash
+Use a fresh CPU test environment; never replace the laptop's CUDA Torch build:
+
+```sh
 python -m pip install torch==2.10.0 --index-url https://download.pytorch.org/whl/cpu
 python -m pip install -r candidate-tests/requirements.txt
 python -m pytest -q candidate-tests
 ```
 
-These are direct dependency pins for CPU validation, not a complete transitive
-lockfile and NOT an instruction to replace the laptop's CUDA Torch build.
-The root default test group remains unchanged. The dedicated workflow runs only
-synthetic architecture and local HTTP contracts, never a GPU or provider job.
+Direct dependency pins are not a complete artifact hash lock or production
+qualification. Structural tests use synthetic inputs and random initialization,
+not user-data training. The existing CPU workflow also produces three exact-source
+code archives for review, never trained releases or automatic HF uploads.
 
-`networks.py` exposes `build_candidate`, `route_loss`, `risk_loss`, and
-`CanalLanguageModel.loss` as minibatch interfaces. They are not standalone
-trainers and do not save, download or publish weights. Tests include a SafeTensors
-round-trip of random initialization entirely in memory, finite backward passes,
-an independent masked-matmul attention reference, prefix consistency and gradient
-isolation. None of that establishes a trained, calibrated or deployable model.
+```sh
+python -m model_candidates.blueprint --repository . \
+  --source-revision FULL_REVIEWED_GIT_COMMIT \
+  --candidate router --output NEW-router-source.zip
+```
 
-## Remaining wiring before training and Hugging Face
+The exporter reads literal Git paths at a full commit and verifies its own running
+package matches that source. It does not read arbitrary data or credentials. An
+externally supplied manifest hash can establish byte consistency, not signer
+identity, source admission, training, model quality or live Hub publication.
+Research targets are NOT registered with Model Lab's two-target publisher.
 
-Keep the existing Forge supervisor/release gates as authority. A successor must
-admit versioned data, normalization and label provenance, group/time-held-out
-splits, and a fixed evaluation protocol. Then add an explicit bounded candidate
-adapter to the existing owner supervisor: source/environment readback, idle-device
-lease, resource/time limits, cancellation and non-overwriting checkpoint paths.
-Do not claim that adapter exists in this slice. Preserve existing ReceiptAgent,
-Khipu and Chaski candidates and every failed/rejected run.
+## Remaining gates
 
-For the router, compare against the existing deterministic router on matched tasks
-and real route outcomes, not just whichever route historically received traffic.
-Measure selection quality/regret, cost, latency, abstention and hard-policy bypass
-attempts; do not send private tasks to OpenRouter without explicit data policy.
-For risk, assess per-label false negatives, calibration and adversarial examples;
-its output stays advisory even after training. For YARQA, compare a matched dense
-causal baseline on held-out loss and context tasks, preserving compute/parameter
-budgets. Any later quantization needs its own post-export evaluation.
+Source admission, licensed data and frozen normalization/splits, outcome-label
+provenance, bounded owner-supervisor adapters, qualified hardware and matched
+baseline evaluation remain separate. Training is not started by source admission.
+Model Lab/Forge own operator and publication integration; szl-router owns admission
+and dispatch; native Ollama/private Tailscale provide declared transport only.
+Research can inform those systems only after explicit compatible integration.
 
-Only after source admission and explicit repository-purpose review should any HF
-model scaffolding be created. No scaffold is a trained model. Actual publication
-must use the existing Forge writer with config, SafeTensors/adapter bytes, exact
-source/base/data revisions, training/evaluation records, licenses and independent
-readback. Then project product status to `a-11-oy.com` and proof to `a11oy.net`.
-See [the scoped estate audit](../docs/2026-09-13-kernel-model-audit.md).
+Read [the integration work order](../docs/FRONTIER_INTEGRATION_2026-09-13.md).
+GitHub -> Hugging Face -> a-11-oy.com product -> a11oy.net proof. No pipeline
+stage is promoted solely because a page responds or an archive is consistent.

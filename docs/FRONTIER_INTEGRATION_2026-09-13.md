@@ -1,183 +1,139 @@
-# Frontier integration: one source path, distinct evidence stages
+# SZL frontier integration: preserve authority, distinguish research
 
-## Scope and current delivery
+## Current source reconciliation
 
-This document joins the frontier-release thread to existing Forge PR #271. It
-is a work order and source contract, NOT a complete organization census, trained
-release, runtime observation, live HF alignment claim or production declaration.
-The inspected main was `5cf608e96d9bbd94049d083a46ab93fbc64703b8`; #271's original
-head was `7f0bfa454a63a4f02fbc9f9b594814cba0c74d54`. Main's test dependency addition
-and the branch's model package registration are reconciled, retaining an empty
-default runtime dependency set. Re-read current heads before further mutation.
+At `cae7b4946b569b6f0b3cd43036c63f2df290877b`, Forge main ALREADY contains
+`model-lab/`: an authenticated Python operator interface, two 161-parameter
+binary advisory models, and a guarded two-target code-only HF publisher.
+**Model Lab is the operator and publication starting point. Do not replace it.**
+The earlier archive is not the only copy anymore; apply no blind handoff patch.
 
-Use `model_candidates/` as the integration starting point. Do not blindly apply
-the earlier standalone `model-lab/` archive: its two 161-parameter models have
-DIFFERENT architectures and feature/target contracts. Port useful tests and
-adapters individually; never treat their checkpoints as interchangeable.
+PR #271 carries different research: a 1,377-parameter route ranker, a
+1,476-parameter four-label risk model, and a 141,184-parameter causal canal
+reference. They had proposed the same HF names as Model Lab's current/deferred
+catalog. That collision is now repaired in source, before any Hub write:
 
-This addition supplies:
+| Source | Retained or proposed identity | Meaning |
+|---|---|---|
+| Model Lab router | `SZLHOLDINGS/A11OY-Router` | Existing binary success baseline |
+| Model Lab invariant | `SZLHOLDINGS/A11OY-Invariant` | Existing binary violation baseline |
+| Model Lab deferred YARQA | `SZLHOLDINGS/YARQA-1` | Noncausal encoder design, not implemented |
+| Candidate router | `SZLHOLDINGS/A11OY-RouteRank-Research-v1` | Different route-ranking research contract |
+| Candidate risk | `SZLHOLDINGS/A11OY-InvariantRisk-Research-v1` | Different four-label research contract |
+| Candidate causal | `SZLHOLDINGS/YARQA-Causal-Reference-v1` | Separate causal adaptation, not the original kernel |
 
-- `model_candidates.blueprint`: exact-Git-object source reader, three code-only
-  HF projections, externally anchored byte-map verifier and exclusive local ZIP
-  writer. No Hub client, token access, training or promotion operation.
-- `GET /api/blueprints/{key}` in the existing loopback workbench, using the same
-  recipes as model source and exporter. No user-provided file paths or URLs.
-- A compact four-stage delivery view; details are expandable, not a prose wall.
-  The view shows a sequence, NOT completion/availability badges for external sites.
-- Code-archive build/verification in the existing CPU workflow, Linux and Windows.
-  These artifacts are for review, not trained model releases. Package files use LF
-  so Windows checkout normalization cannot silently change projected Python bytes.
+No HF name is reserved by this table. The new research identities are NOT added
+to Model Lab's two-target publisher. Weights, features, normalization and labels
+are not interchangeable. `candidate-tests/test_identity.py` checks the actual
+Model Lab source catalog; the existing workflow now watches both sides.
+Historical validation records retain their original scope and hashes.
 
-The three existing architectures remain unchanged: route-utility scorer,
-four-label advisory invariant-risk classifier, and fixed-canal causal reference.
-No trained weights, dataset, benchmark, owner machine observation or GPU result
-is introduced by this source change. Existing static Forge Lab stays read-only.
+## Source delivered in this branch
 
-## Exact-source packaging
+`model_candidates.blueprint` reads six literal regular Git paths at a full
+commit: LICENSE and five Python modules. It rejects mutable refs, nonregular
+entries, size/blob mismatches and a running exporter different from the projected
+source. It emits three code-only research projections with exact recipe/config,
+license, source bytes and an unsigned digest manifest. It never uploads or trains.
 
-Run in a fresh, inspected checkout/environment containing this source. The full
-source commit must contain this exact exporter and all projected modules.
+`GET /api/blueprints/{key}` and the compact four-stage Python-rendered view reuse
+those same recipes. Details are expandable. This is an isolated research recipe
+inspector on loopback port 8766, NOT the admitted Model Lab operator on 8765, a
+public service or a second control plane. Host/origin/client/CSP boundaries remain.
+No web route reads arbitrary paths, probes nodes, loads weights or executes jobs.
+The static public Forge Lab and existing inference Space remain unchanged.
+
+The existing Linux/Windows CPU workflow builds and verifies all three source
+archives and retains them as review artifacts. LF attributes preserve Python
+bytes on Windows. Dependency versions are direct test pins, not a complete
+artifact hash lock or production qualification. Root runtime dependencies stay
+empty; the working owner CUDA environment is untouched.
 
 ```sh
 python -m model_candidates.blueprint --repository . \
   --source-revision FULL_REVIEWED_GIT_COMMIT \
-  --candidate router --output router-source.zip
+  --candidate router --output NEW-router-source.zip
 ```
 
-Candidate choices: `router`, `invariant-risk`, `yarqa-causal`. No automatic upload.
-The output path must be new; interrupted partial output is not silently reused.
-The CLI prints the manifest hash and explicitly false Hub/training flags.
+The output must be new. Partial output is not silently reused. The pure projection
+function does not establish Git origin; the byte-map verifier does not authenticate
+the hash supplier. Reading an expected hash from the SAME bundle is a structural
+self-check only. A PR synthetic-merge SHA is not protected-main admission.
+Source, publication, trained weights, model quality and live runtime stay separate.
 
-Source paths are a literal allowlist: LICENSE plus five model-candidate modules.
-Datasets, private endpoints, keys, old receipts, arbitrary files and weights are
-excluded. Nonregular Git entries, mutable revisions, corrupt blob/size bindings,
-and mismatched running/projected source fail. Supplied Git environment overrides
-and replacement refs cannot substitute another source. No projected code is
-imported by the Git reader.
+## Complete the existing alignment chain, not a parallel publisher
 
-The pure `project_source` function does NOT establish Git origin. Likewise,
-`verify_projection` authenticates neither the hash supplier nor a Hub response;
-it compares the complete supplied byte map to an externally provided manifest
-hash. A hash read from the SAME bundle is only a structural consistency check.
-CI archive verification is intentionally labeled that way. It is not source
-admission, a signature, a reproducible training claim or model qualification.
+**GitHub.** Inspect exact-head checks, source review, threads and repository rules
+before normal admission. No force or admin bypass. Do not close owner recovery
+#264 or the separate AsyncGRPO GPU HOLD because candidate tests pass.
 
-## Remaining GitHub -> HF -> product -> proof work
+**Hugging Face.** Model Lab's existing guarded publisher handles the two canonical
+binary baselines. Complete its explicit dispatch/readback path; do not replace it
+or feed it these incompatible research archives. A reviewed extension is needed
+before publishing research identities. Bind admitted source, target/type, exact
+file set, hashes and conditional HF parent. Keep credentials in existing protected
+injection, never source/chat. Refuse unexpected existing contents. An uncertain
+write is UNKNOWN_OUTCOME: read remote state before retry. Verify the immutable HF
+commit and every expected byte; keep failures and partial states. GitHub and HF
+commit IDs are distinct. No random weights, fabricated metrics or unsupported
+Transformers/Ollama tags. Working kernel identities and old releases stay intact.
 
-### 1. Source admission
+**a-11-oy.com.** Consume admitted, sanitized capability/runtime status through the
+existing product APIs. Do not publish private tailnet addresses, tokens, signing
+keys or owner-control endpoints. A reachable page is not a trained/ready model.
 
-Read exact-head checks, review threads and repository rules. Reconcile rather
-than overwrite concurrent branches. Keep normal branch protections and release
-approvals; no admin bypass. Do not close hardware recovery #264 or infer its
-runtime state from this unrelated candidate source gate.
+**a11oy.net.** Use existing proof schemas and source owners for source SHA, HF SHA,
+manifest/digests, evaluation scope, runtime observation and known bounds. Never
+substitute an unsigned hash for an approval/signature. Missing observations are
+null with an error/scope, not zero. Verify served identity and browser behavior at
+320x568, 375x812, 768x1024 and 1440x900: focus, overflow, 44px controls, reduced
+motion, high contrast, loading/error/empty states. Neither domain is deployed by
+this research branch.
 
-### 2. HF projection through the existing release authority
+## Pool, mesh, routing and later owner training
 
-After source admission, extend the existing Forge publisher with a separately
-reviewed CODE_ONLY operation for these three proposed IDs only:
-`SZLHOLDINGS/A11OY-Router`, `SZLHOLDINGS/A11OY-Invariant`, `SZLHOLDINGS/YARQA-1`.
-Do not give a code-only artifact the existing trained-weight admission predicate.
-Do not overwrite a newly discovered repository or retire working kernel mirrors.
+Preserve `a11oy/box-scripts/litellm_config.yaml`: native Ollama, private Tailscale
+and stateless Docker sidecars. `szl-router/router_control.app` owns policy,
+eligibility, dispatch and retry budgets; LiteLLM may be subordinate transport,
+not an independent cloud-fallback policy. `szl-mesh` is separate CRDT/UDS work.
+Two tailnet GPUs do not combine VRAM. Source declarations are not node observations.
 
-Bind the admitted source SHA, complete expected file set and manifest SHA before
-any write. Reconcile current repo existence/type/access explicitly; a connector
-404 is not proof that a private repo cannot exist. A proposed HF name is not a
-reservation. No random/test weights, misleading Transformers tags or fabricated
-benchmarks. Preserve upstream copyright, license and modification notices.
+The learned scorer ranks ONLY already-eligible routes. Recheck current model
+digest, identity and resource lease at dispatch. Unknown/OOD/uncalibrated scores,
+missing weights or timeouts preserve the reviewed deterministic baseline. Consume
+`szl.compute-pool/v1` through its actual receipt authority, not arbitrary ready=true.
+OpenRouter needs an explicit remote data/provider/model policy and spend cap.
+Teacher outputs need rights review and independently checked labels.
 
-Use the existing protected publishing environment and credential injection, not
-secrets in source/chat. A write timeout is UNKNOWN_OUTCOME: inspect current Hub
-commit/files before retry; do not blindly replay. Read back the immutable HF
-commit, exact source-manifest hash and ALL declared files. Reject extra weight or
-secret files; retain receipts for partial/failed publication. Git and HF SHAs are
-different identities. A source ZIP from a PR's synthetic-merge SHA is not evidence
-that the SHA was admitted to main.
+Owner training starts later, after licensed data, normalization, provenance,
+group/time-separated splits and a frozen evaluation plan are admitted. Register
+bounded adapters under existing Owned Agent Control/gpu-bridge; bind source,
+environment, attempts, output roots and resource/time limits. Do not unload active
+Ollama work, replay an old attempt or initialize from a frozen comparator. No
+owner training, model download or paid job was started in this source work.
 
-This writer integration and live readback are NOT implemented by blueprint.py.
+## Frontier priorities from the thread
 
-### 3. Product and proof projections
+Study, adapt with attribution, and measure. These are experiments, not automatic
+admissions or novelty claims. Primary sources were consulted on 2026-09-13.
 
-Only after HF readback should a-11-oy.com expose the admitted source capability
-and a11oy.net expose its source/HF/digest evidence. Use the existing site APIs,
-artifact manifests and canonical source owners rather than inventing a second
-estate registry. Public pages receive sanitized status, never the private mesh
-endpoint list, signing keys, provider credentials or a laptop execution console.
-
-Keep status dimensions separate: source admitted, code published, weights
-trained, evaluation passed, runtime qualified, live deployment observed. A page
-returning HTTP 200 is not model readiness. Missing observations remain null with
-an error/scope, not invented zero counts. The pool adapter must consume the actual
-`szl.compute-pool/v1` authority, not trust an arbitrary JSON `ready: true`.
-
-Browser acceptance on BOTH product/proof surfaces: 320x568, 375x812, 768x1024,
-1440x900; keyboard focus; no horizontal overflow; 44px targets; reduced motion;
-high contrast; error/empty/slow states. Test served source identity, not only HTML.
-No new public-domain deployment is claimed by the local workbench render.
-
-### 4. Owner-supervised training remains a separate start
-
-Bind licensed data, group/time-separated train/validation/test splits, frozen
-feature normalization, label provenance, environment and explicit job budgets.
-Register a bounded adapter under the EXISTING owner supervisor. Check idle-device
-leases and attempt identity; never unload an active Ollama workload as a UI side
-effect. Do not initialize from a frozen comparator or restart a claimed attempt.
-The current candidate minibatch interfaces are not that completed adapter.
-
-## Pool/mesh/provider architecture to preserve
-
-`a11oy/box-scripts/litellm_config.yaml` is the existing two-node intended serving
-pool, with native Ollama, private Tailscale transport and stateless Docker
-sidecars. `szl-router/router_control.app` is the policy/routing authority to
-integrate. `szl-mesh` is separate CRDT/UDS coordination, not combined GPU memory.
-The source map is a declaration; no owner-node probe was performed here.
-
-The learned router ranks ONLY already-eligible candidates. Recheck eligibility,
-current model digest and resource lease at dispatch. Missing weights, timeout or
-uncalibrated/OOD input preserves the reviewed deterministic policy. LiteLLM may
-be transport, not an independent fallback engine bypassing the same policy.
-Pin actual shared-model digests, not mutable tags, before claiming equivalent
-replicas. Two GPUs over a tailnet do not become one combined-VRAM training GPU.
-
-OpenRouter remains an explicit remote lane with approved data/provider/model
-policy and spend cap, never silent local-to-cloud fallback. Teacher output needs
-rights review and independent label checking. Do not install a new CUDA/PyTorch
-stack into a working owner environment merely because upstream released one.
-
-## Frontier choices: evaluate, adapt with attribution, measure
-
-This is an integration backlog, not another alert or automatic model admission.
-Primary sources were consulted for this work order on 2026-09-13. Upstream claims
-below remain upstream-reported until SZL measures the same condition. Preserve
-license/NOTICE/lineage and identify adaptations honestly; no novelty guarantee.
-
-| Priority | Source | SZL experiment / acceptance |
+| Priority | Primary source | SZL evaluation |
 |---|---|---|
-| P0, conditional on use | [DeepSeek V4.1-Flash](https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash) | Audit mutable API aliases and exact served identity; rebaseline any actual caller. Do not switch SZL models merely because the name exists. |
-| P1 | [TRL 1.13.0](https://github.com/huggingface/trl/releases/tag/v1.13.0) | Isolated chunked-loss parity/peak-memory/throughput experiment with a frozen workload, before changing existing training recipes. Million-token results are not a laptop guarantee. |
-| P1 | [vLLM 0.29.0](https://github.com/vllm-project/vllm/releases/tag/v0.29.0) | Continue existing Forge #282/#283, not a duplicate lane. Model Runner V2 default/rollback, exact wheel bytes, dependency closure and actual hardware need qualification. Keep the older AsyncGRPO bounds intact. |
-| P1 | [Per-tensor GGUF layouts](https://huggingface.co/blog/bartowski/per-tensor-layout-maps-for-gguf-quantization) | Compare equal-budget Khipu/A11OY-MINI quant candidates for output quality, KLD and memory; retain the old artifact if not improved. Qualify post-quantization separately. |
-| P1 | [Granite time-series r2](https://huggingface.co/ibm-granite/granite-timeseries-patchtst-fm-r2) | Lyte forecasting with rolling-origin evaluation, leakage-free splits, naive/seasonal baselines and coverage tests. Forecasts are not causal explanations or incident approvals. |
-| P1 research | [OUI-1](https://huggingface.co/thesysdev/OUI-1) | Generate proposed component trees; validate with an approved schema/library and test task completion/a11y. No raw executable HTML/JS, credential-bearing tools or generated control authority. Capture repeated runs because the published sampler does not honor per-request seeds. |
-| P2 hardware-gated | [Agnes-3.0-Flash Preview](https://huggingface.co/Agnes-AI/Agnes-3.0-Flash) | Study hybrid recurrent/global attention and evaluate document grounding only after custom-code and hardware review. Preview weights must not inherit production/API checkpoint benchmarks. |
-| P0 verification, not blind migration | [Kernel migration](https://huggingface.co/docs/kernels/migration) | Observe BOTH repo types, immutable revisions, loader/trust policy and numerical tests. Model listing alone does not prove a missing first-class kernel. Preserve mirrors until each consumer is reconciled. |
+| P0 if used | [DeepSeek V4.1-Flash](https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash) | Audit actual mutable-alias consumers and served identities; rebaseline those callers, not the entire estate by assumption. |
+| P1 | [TRL 1.13.0](https://github.com/huggingface/trl/releases/tag/v1.13.0) | Isolated chunked-loss numerical parity, peak memory and throughput on a fixed workload. Million-token results are not a laptop guarantee. |
+| P1 | [vLLM 0.29.0](https://github.com/vllm-project/vllm/releases/tag/v0.29.0) | Continue existing Forge #282/#283: Model Runner V2, rollback, wheel/dependency closure and actual hardware. Preserve older AsyncGRPO bounds. |
+| P1 | [Per-tensor GGUF layouts](https://huggingface.co/blog/bartowski/per-tensor-layout-maps-for-gguf-quantization) | Equal-budget quality/KLD/memory comparison for Khipu/A11OY-MINI. Keep old artifacts when not improved; evaluate post-quantization. |
+| P1 | [Granite time-series r2](https://huggingface.co/ibm-granite/granite-timeseries-patchtst-fm-r2) | Lyte rolling-origin forecasting, seasonal/naive baselines, leakage-free splits and interval coverage. Not causal evidence or incident authority. |
+| P1 research | [OUI-1](https://huggingface.co/thesysdev/OUI-1) | Propose component trees; enforce approved schema/components and evidence handles. No generated executable HTML/JS or action authority. Repeat-run evaluation: published sampler ignores per-request seeds. |
+| P2 hardware-gated | [Agnes preview](https://huggingface.co/Agnes-AI/Agnes-3.0-Flash) | Hybrid recurrent/global attention study and document grounding after custom-code/hardware review. Do not inherit production/API checkpoint metrics. |
+| P0 verify scope | [Kernel migration](https://huggingface.co/docs/kernels/migration) | Observe both repo types, exact revisions, trust policy and numerical tests. A model listing alone is not failed migration. |
 
-### Differentiating research hypotheses, not shipped features
+The proposed SZL differentiators are evidence-conditioned routing with matched
+counterfactual outcomes; causally gated cross-canal summary exchange evaluated
+against dense and isolated-canal baselines; model-proposed layouts whose facts and
+actions resolve only through server-validated evidence handles; and Lyte forecasts
+that visibly distinguish uncertainty, missing data and observed history.
 
-1. Evidence-conditioned routing: learn quality/cost tradeoffs on eligible routes
-   with matched outcome coverage; measure regret, latency, cost and abstention.
-   Historical traffic alone is selection-biased; do not call an unobserved route
-   the counterfactual winner.
-2. YARQA cross-canal context: the current reference has no cross-canal memory.
-   Evaluate a separately named, causally gated summary-exchange adaptation against
-   dense causal and isolated-canal baselines with matched data/compute. Prove
-   prefix/no-future-leakage contracts and measure privacy-boundary failures before
-   any stronger context or efficiency claim. Do not relabel the original kernel.
-3. Evidence-bound UI proposals: let a model select a layout, but bind all displayed
-   facts/actions to server-validated evidence handles and approved components.
-   The model chooses presentation, not data truth, permissions or execution.
-4. Lyte evidence-aware forecasting: show forecast interval, actual history,
-   missing-data state and evaluation coverage together. The UI must make an
-   uncertain forecast distinguishable from an observed metric.
-
-These experiments are not in the candidate implementation and are not approved
-for automatic production rollout by this document.
+These hypotheses are NOT implemented by the current candidate models. Preserve
+upstream license/NOTICE/lineage, disclose adaptations, predeclare comparisons and
+retain negative results. A new name or model card is not measured frontier progress.

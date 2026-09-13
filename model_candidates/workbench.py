@@ -22,11 +22,11 @@ CSS = """
 :root{color-scheme:dark;font-family:system-ui,sans-serif;background:#080e18;color:#ecf6ff}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(at 80% 0%,#173344,transparent 65%)}
 main{max-width:1120px;margin:auto;padding:clamp(16px,4vw,48px)}
-h1{font-size:clamp(2rem,5vw,3.5rem);line-height:1.1}h2{font-size:1.2rem}
+h1{font-size:clamp(2rem,5vw,3.5rem);line-height:1.1}h2{font-size:1.2rem;overflow-wrap:anywhere}
 p{line-height:1.65;max-width:76ch}.muted{color:#bbc9d8}.badge{color:#81f1dc;font-weight:700}
 .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
 article,section{border:1px solid #3b596c;border-radius:16px;padding:22px;background:#0a1524dd}
-section{margin-top:22px}a{color:#9bdcff}article a{display:inline-block;padding:12px 0}
+section{margin-top:22px}a{color:#9bdcff}article a{display:inline-block;padding:12px 0;min-height:44px}
 pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:.9rem;line-height:1.5}
 select,button{font:inherit;color:inherit;background:#152a3b;border:1px solid #7898ac;
 min-height:44px;padding:10px;border-radius:8px;max-width:100%}button{cursor:pointer}
@@ -64,7 +64,8 @@ def render_page(key: str) -> str:
 </head><body><main><header><p class="badge">SZL FORGE / LOCAL RESEARCH</p>
 <h1>Kernels to learned models.</h1>
 <p>Three trainable architectures. No trained release is claimed. This local workbench
-inspects source recipes; it does not control your hardware or change Hugging Face.</p>
+inspects source recipes; it does not control your hardware or change Hugging Face.
+The admitted Model Lab remains the operator interface; these are separate research variants.</p>
 </header><div class="grid">{cards}</div><section aria-labelledby="recipe-title">
 <h2 id="recipe-title">Inspect a training contract</h2><form action="/" method="get">
 <label for="candidate">Candidate</label><select id="candidate" name="candidate">{options}</select>
@@ -168,7 +169,7 @@ def create_app() -> FastAPI:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--port", type=int, default=8765)
+    parser.add_argument("--port", type=int, default=8766)
     args = parser.parse_args()
     if not 1024 <= args.port <= 65535:
         parser.error("port must be between 1024 and 65535")

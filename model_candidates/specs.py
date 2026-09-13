@@ -2,6 +2,8 @@
 
 The published-asset authority remains portfolio/model_portfolio.json and the
 existing Forge release gates. Proposed Hub names below are not reserved repos.
+Model Lab retains its existing identities and operator/publisher role. These
+architecturally different research variants must not overwrite its baselines.
 Importing this module requires neither Torch nor a connection to the mesh.
 """
 from __future__ import annotations
@@ -26,7 +28,7 @@ RISK_LABELS = (
 )
 SPECS: dict[str, dict[str, Any]] = {
     "router": {
-        "proposed_hf_id": "SZLHOLDINGS/A11OY-Router",
+        "proposed_hf_id": "SZLHOLDINGS/A11OY-RouteRank-Research-v1",
         "architecture": "candidate-utility-mlp/v1",
         "purpose": "Rank already-eligible routes; never authorize or dispatch.",
         "config": {"input_dim": 8, "hidden_dim": 32},
@@ -34,7 +36,7 @@ SPECS: dict[str, dict[str, Any]] = {
         "targets": ["eligible_winner_index"],
     },
     "invariant-risk": {
-        "proposed_hf_id": "SZLHOLDINGS/A11OY-Invariant",
+        "proposed_hf_id": "SZLHOLDINGS/A11OY-InvariantRisk-Research-v1",
         "architecture": "advisory-risk-mlp/v1",
         "purpose": "Predict outcome risks; deterministic invariants remain outside weights.",
         "config": {"input_dim": 8, "hidden_dim": 32, "label_count": 4},
@@ -42,7 +44,7 @@ SPECS: dict[str, dict[str, Any]] = {
         "targets": list(RISK_LABELS),
     },
     "yarqa-causal": {
-        "proposed_hf_id": "SZLHOLDINGS/YARQA-1",
+        "proposed_hf_id": "SZLHOLDINGS/YARQA-Causal-Reference-v1",
         "architecture": "fixed-canal-causal-reference/v1",
         "purpose": "Byte-level causal research model, not the original CPU YARQA kernel.",
         "config": {
