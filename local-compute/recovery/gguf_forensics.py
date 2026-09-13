@@ -22,7 +22,7 @@ import time
 from typing import BinaryIO
 import uuid
 
-VERSION = "1.0.0"
+VERSION = "1.2.0"
 SPEC_COMMIT = "7840aaba1989c6deeefede1d77d5aaf8f52b947e"
 # Provider-reported FROM identities in the inspected owner recovery report.
 # These are NOT installed-tag digests and NOT claims about current local files.
@@ -110,6 +110,33 @@ def plain_path(path: Path) -> bool:
 
 def snapshot(info: os.stat_result) -> tuple[int, int, int, int, int]:
     return info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns
+
+
+def require_stat_match(before: os.stat_result, after: os.stat_result,
+                       stage: str, *, same_api: bool) -> None:
+    """Compare equivalent metadata, retaining ctime in same-API observations.
+
+    CPython 3.12.10 on Windows maps path-stat ctime to CreationTime, while
+    fstat exposes ChangeTime. Comparing those fields across APIs can reject
+    an unchanged file. Cross-API comparison uses explicit birthtime instead.
+    Descriptor-to-descriptor and path-to-path checks STILL compare ctime;
+    there is no tolerance, zero-ID fallback, or exception-to-success path.
+    """
+    fields = ["st_dev", "st_ino", "st_size", "st_mtime_ns"]
+    if os.name == "nt":
+        fields.append("st_birthtime_ns")
+    if same_api or os.name != "nt":
+        fields.append("st_ctime_ns")
+    missing = [name for name in fields
+               if type(getattr(before, name, None)) is not int
+               or type(getattr(after, name, None)) is not int]
+    require(not missing, "FILE_METADATA_UNAVAILABLE:" + ",".join(missing))
+    require(before.st_ino != 0 and after.st_ino != 0, "FILE_IDENTITY_UNAVAILABLE")
+    require(stat.S_ISREG(before.st_mode) and stat.S_ISREG(after.st_mode),
+            "REGULAR_FILE_REQUIRED")
+    changed = [name for name in fields if getattr(before, name) != getattr(after, name)]
+    # Field names only: never print local paths, IDs, timestamps, or raw metadata.
+    require(not changed, stage + ":" + ",".join(changed))
 
 
 class Reader:
@@ -272,12 +299,21 @@ def inspect_file(path: Path, expected: str, seconds: float = 600) -> dict:
     flags = os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0)
     fd = os.open(path, flags)
     with os.fdopen(fd, "rb") as stream:
-        require(snapshot(before) == snapshot(os.fstat(stream.fileno())), "INPUT_CHANGED_AT_OPEN")
-        result = fingerprint_stream(stream, before.st_size, seconds)
-        require(snapshot(before) == snapshot(os.fstat(stream.fileno())), "INPUT_CHANGED_DURING_READ")
-    require(plain_path(path) and snapshot(before) == snapshot(path.stat()), "INPUT_CHANGED_AFTER_READ")
+        opened = os.fstat(stream.fileno())
+        require_stat_match(before, opened, "INPUT_CHANGED_AT_OPEN", same_api=False)
+        result = fingerprint_stream(stream, opened.st_size, seconds)
+        require_stat_match(opened, os.fstat(stream.fileno()),
+                           "INPUT_CHANGED_DURING_READ", same_api=True)
+    require(plain_path(path), "INPUT_CHANGED_AFTER_READ:linked_path")
+    require_stat_match(before, path.stat(), "INPUT_CHANGED_AFTER_READ", same_api=True)
     require(result["container_sha256"] == expected, "BLOB_DIGEST_MISMATCH")
     result["matches_historical_from_digest"] = True
+    result["file_identity_observation"] = {
+        "protocol": "equivalent-fields-and-same-api-stability/v1",
+        "windows_cross_api_ctime_difference":
+            (before.st_ctime_ns != opened.st_ctime_ns) if os.name == "nt" else None,
+        "descriptor_and_path_stability_checked": True,
+    }
     return result
 
 
@@ -300,6 +336,31 @@ def compare(left: dict, right: dict) -> dict:
             "same_serialized_chat_template_metadata": group_match("chat_template"),
             "same_serialized_architecture_metadata": group_match("architecture"),
             "root_cause_proven": False, "model_qualified": False}
+
+
+
+def write_evidence(path: Path, value: dict) -> None:
+    """Create one flushed, fsynced evidence file; never replace or retry it.
+
+    Serialize before opening so invalid data does not create an empty record.
+    A write/fsync failure stops admission of further reads. Partial files remain
+    evidence of uncertainty, not permission to resume or repeat an experiment.
+    """
+    payload = (json.dumps(value, indent=2, allow_nan=False) + "\n").encode("utf-8")
+    require(plain_path(path), "LINKED_OUTPUT_REFUSED")
+    with path.open("xb") as stream:
+        stream.write(payload)
+        stream.flush()
+        os.fsync(stream.fileno())
+
+
+def checkpoint(out: Path, report: dict, sequence: int, phase: str) -> None:
+    """Preserve read intent/results independently of final-report completion."""
+    write_evidence(out / f"checkpoint-{sequence:03d}.json", {
+        "schema": "szl.gguf-forensics-checkpoint/v1", "sequence": sequence,
+        "phase": phase, "recorded_at": datetime.now(timezone.utc).isoformat(),
+        "automatic_resume_authorized": False, "report": report,
+    })
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -328,8 +389,14 @@ def main(argv: list[str] | None = None) -> int:
               "source_sha256": digest(Path(__file__).read_bytes()), "spec_commit": SPEC_COMMIT,
               "state": "INCOMPLETE", "models": {}, "comparison": None,
               "inference": False, "training": False, "model_weights_changed": False,
-              "paired_attempts_touched": False, "publication_eligible": False}
-    for name, expected in BLOBS.items():
+              "paired_attempts_touched": False, "publication_eligible": False,
+              "expected_historical_blobs": dict(BLOBS), "active_model": None,
+              "automatic_resume_authorized": False}
+    checkpoint(out, report, 0, "INSPECTION_PLANNED")
+    print("Evidence directory:", out, flush=True)
+    for index, (name, expected) in enumerate(BLOBS.items(), start=1):
+        report["active_model"] = name
+        checkpoint(out, report, 2 * index - 1, "BLOB_READ_INTENT")
         print("Reading historical blob for " + name + " (no inference).", flush=True)
         try:
             report["models"][name] = {"state": "BYTE_IDENTITY_VERIFIED_LAYOUT_INSPECTED",
@@ -337,15 +404,18 @@ def main(argv: list[str] | None = None) -> int:
         except (ForensicsError, OSError, ValueError, struct.error) as error:
             report["models"][name] = {"state": "UNAVAILABLE_OR_REJECTED",
                                       "error_code": str(error) if isinstance(error, ForensicsError) else type(error).__name__}
+        report["active_model"] = None
+        checkpoint(out, report, 2 * index, "BLOB_RESULT_RECORDED")
     models = list(report["models"].values())
     if all(m["state"] == "BYTE_IDENTITY_VERIFIED_LAYOUT_INSPECTED" for m in models):
         report["comparison"] = compare(*models)
         report["state"] = "FORENSICS_COMPLETED_NOT_MODEL_QUALIFICATION"
     report["finished_at"] = datetime.now(timezone.utc).isoformat()
-    with (out / "gguf-forensics.json").open("x", encoding="utf-8", newline="\n") as stream:
-        json.dump(report, stream, indent=2, allow_nan=False)
-        stream.write("\n")
-    print(json.dumps({"state": report["state"], "comparison": report["comparison"]}, indent=2))
+    write_evidence(out / "gguf-forensics.json", report)
+    model_status = {name: {key: item.get(key) for key in ("state", "error_code")}
+                    for name, item in report["models"].items()}
+    print(json.dumps({"state": report["state"], "models": model_status,
+                      "comparison": report["comparison"]}, indent=2))
     print("Report:", out / "gguf-forensics.json")
     return 0 if report["comparison"] is not None else 1
 
