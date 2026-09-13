@@ -12,7 +12,7 @@ requires-python = ">=3.11,<3.14"
 dependencies = [
   "torch>=2.6,<3", "safetensors>=0.6,<0.8", "fastapi>=0.120,<0.130",
   "pydantic>=2.10,<3", "httpx>=0.28,<0.29", "uvicorn>=0.34,<0.49",
-  "jinja2>=3.1.6,<4"
+  "jinja2>=3.1.6,<4", "numpy>=2.3.5,<3"
 ]
 
 [project.optional-dependencies]
