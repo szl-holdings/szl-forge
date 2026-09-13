@@ -71,13 +71,15 @@ retains admission and dispatch; no active learned routing hook is enabled here.
 ## GitHub -> Hugging Face source alignment
 
 The `Model Lab source and blueprint contract` workflow tests pull requests without
-secrets. Its explicitly dispatched main-only publication jobs reuse
+secrets. Its protected-main publication jobs reuse
 `tools/acquire_hf_publisher_token.py`. They export an allowlisted source tree from
 an exact Git revision to the two model repositories above, with no checkpoints,
 fixtures, private node configuration or tokens. No kernel identity is moved.
 
-The publication default is off. It is permitted only after normal protected-main
-admission, a matching dispatch source SHA and passing tests. Each write uses a
+Reviewed main merges affecting this package trigger code-only alignment after
+passing tests. Manual workflow dispatch remains opt-in with an exact source SHA.
+Publication never runs on pull requests. Main identity is rechecked before any
+Hub mutation. Each write uses a
 conditional HF parent commit and is followed by immutable file-by-file readback.
 Existing non-blueprint artifacts are preserved by refusal, not overwritten. Reports
 record request-start stages so a timeout is not mistaken for verified publication.

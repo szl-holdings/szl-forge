@@ -2,6 +2,7 @@
 # HF Hub 1.23 requires click>=8.4.2; verified by the first hosted resolver.
 # Production platform and supply-chain qualification remain separate.
 torch==2.10.0+cpu
+numpy==2.3.5
 safetensors==0.7.0
 fastapi==0.128.2
 pydantic==2.13.4

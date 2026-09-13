@@ -1,7 +1,7 @@
 """Code-only HF projections. Reuses Forge credentials; never publishes weights.
 
-Only an explicitly dispatched protected-main workflow may publish. The default
-operation builds a plan from exact Git objects without contacting any service.
+Only an admitted main-push or explicitly dispatched main workflow may publish.
+The CLI defaults to a plan from exact Git objects without contacting any service.
 Neither a successful upload nor a manifest is a trained-model qualification.
 """
 from __future__ import annotations
@@ -105,10 +105,10 @@ models and Kernel Hub identities remain separate and unchanged.
 
 def publish_context(environment: dict[str, str], revision: str) -> None:
     expected = {"GITHUB_ACTIONS": "true", "GITHUB_REPOSITORY": REPOSITORY,
-                "GITHUB_REF": "refs/heads/main", "GITHUB_SHA": revision,
-                "GITHUB_EVENT_NAME": "workflow_dispatch"}
-    if any(environment.get(key) != value for key, value in expected.items()):
-        raise ValueError("protected_main_dispatch_context_required")
+                "GITHUB_REF": "refs/heads/main", "GITHUB_SHA": revision}
+    if (any(environment.get(key) != value for key, value in expected.items())
+            or environment.get("GITHUB_EVENT_NAME") not in {"push", "workflow_dispatch"}):
+        raise ValueError("admitted_main_publication_context_required")
 
 
 def publish_payload(api, track: str, payload: dict[str, bytes], *, download: Callable,

@@ -74,7 +74,7 @@ jobs:
 
   publish-blueprints:
     name: Publish code-only ${{ matrix.track }} blueprint
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.publish_blueprints
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish_blueprints))
     needs: test
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -97,7 +97,7 @@ jobs:
       - name: Recheck exact admitted source before any Hub mutation
         env:
           GH_TOKEN: ${{ github.token }}
-          EXPECTED_SOURCE: ${{ inputs.source_revision }}
+          EXPECTED_SOURCE: ${{ inputs.source_revision || github.sha }}
         run: |
           set -euo pipefail
           test "${EXPECTED_SOURCE}" = "${GITHUB_SHA}"
