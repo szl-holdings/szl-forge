@@ -35,11 +35,8 @@ concurrency:
 
 permissions:
   contents: read
-  attestations: write
-  id-token: write                      # Sigstore keyless identity
 
 env:
-  HF_TOKEN: ${{ secrets.HF_TOKEN_PUBLISH }}   # write-scoped, rotates quarterly
   BOM_OUT: bom/model-bom.cdx.json
   MANIFEST_OUT: release/run-manifest.json
 
@@ -49,10 +46,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - name: Secret pattern scan (stdlib)
-        run: |
-          # gitleaks for orgs is paid; the scan is replaced with a self-contained grep
-          grep -rEn "AIza[0-9A-Za-z_-]{35}|ghp_[A-Za-z0-9]{36,}|sk-[A-Za-z0-9]{20,}|-----BEGIN PRIVATE KEY-----" --exclude-dir=.git . && exit 1 || true
+      - name: Secret pattern scan (fail-closed)
+        run: python scripts/scan_publication_secrets.py
       - name: Reject pickle payloads
         run: |
           if find "${{ inputs.model_dir }}" -name '*.pkl' -o -name '*.pt' -o -name 'pytorch_model.bin' | grep .; then
@@ -136,6 +131,10 @@ jobs:
   sign:
     needs: model-bom
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      attestations: write
+      id-token: write                  # Only this job can request signing identity
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Emit run manifest
@@ -223,6 +222,8 @@ jobs:
             --template cards/model-card.md.tmpl \
             --out release/README.md
       - name: Upload to Hub (gated)
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN_PUBLISH }}
         run: |
           huggingface-cli upload "${{ inputs.model_repo }}" \
             "${{ inputs.model_dir }}" . \

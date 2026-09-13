@@ -1,0 +1,39 @@
+name: Laptop recovery contract
+
+on:
+  pull_request:
+    paths:
+      - local-compute/recovery/**
+      - .github/workflows/local-compute-recovery.yml
+  push:
+    branches: [main]
+    paths:
+      - local-compute/recovery/**
+      - .github/workflows/local-compute-recovery.yml
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: laptop-recovery-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  recovery-contract:
+    name: Recovery contracts (${{ matrix.os }}, Python 3.12)
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - name: Offline recovery contracts; no Ollama, model downloads or GPU jobs
+        run: python -I -B -m unittest discover -s local-compute/recovery -p 'test_*.py' -v
