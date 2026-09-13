@@ -116,3 +116,46 @@ py -3.12 -I -B -m unittest discover -s local-compute/recovery -p 'test_gguf_fore
   https://docs.ollama.com/faq#where-are-models-stored
 
 Source reference does not mean upstream authors reviewed this implementation.
+
+## Interrupted reads and durable evidence (forensic v1.1)
+
+The original inspector wrote its only report after both reads. An interruption
+during the second read could discard the first completed result. Forensic v1.1
+adds exclusive-create checkpoints in the same new report directory: one initial
+record, then read-intent and result records for each of the two historical blobs
+(`checkpoint-000.json` through `checkpoint-004.json`). The directory is printed
+before model-byte reading begins. No existing reports are changed or deleted.
+
+Each checkpoint binds the source hash, exact historical blob digests, sequence,
+phase, current read intent and completed per-model observations. The envelope is
+`szl.gguf-forensics-checkpoint/v1`; `automatic_resume_authorized` is always false.
+All checkpoints retain an INCOMPLETE report and null comparison. The existing
+`gguf-forensics.json` final report alone records the completed comparison when
+both inspected inputs pass. Fingerprint semantics and qualification limits do
+not change. A checkpoint is not a model-quality pass or an attempt claim.
+
+Writes are serialized before exclusive creation, then flushed and fsynced before
+the next blob is read. A checkpoint write, close or fsync failure propagates and
+stops further reads; it is not retried. KeyboardInterrupt and unexpected failures
+still terminate the operation, leaving earlier checkpoint files intact. This is
+OS-acknowledged file durability, not a guarantee against all power loss, storage
+failure or hostile filesystem races. A present file does not by itself prove its
+fsync/close succeeded, and a truncated record remains uncertain.
+
+For an interrupted run, inspect the exact existing output directory and all its
+checkpoints before planning any further work. Read intent means a read may have
+started, not that it completed. A missing model result remains UNKNOWN. Do not
+infer successful completion from the largest sequence number, merge unrelated
+runs, delete partial evidence, or restart a job to manufacture a final report.
+This change has no automatic resume/retry path, no model API calls, and no access
+to recovery v1.2's permanent claims. A changed helper version or output directory
+never makes a new ReceiptAgent experiment. Read current workload/storage state,
+existing recovery reports and claims before any separately admitted device work.
+
+`test_gguf_evidence.py` adds mocked, offline regression cases for interrupted
+reads, initial/result/final write failures, exclusive creation, redaction, flush
+ordering and unchanged plan/host/quality boundaries. The existing Windows/Linux
+recovery workflow discovers it without changing workflow or security controls.
+
+Primary write-durability reference:
+https://docs.python.org/3.12/library/os.html#os.fsync
