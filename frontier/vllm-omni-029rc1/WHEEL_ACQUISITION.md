@@ -29,7 +29,7 @@ step is run. The workflow creates both checkouts with immutable revisions and
 read-only, non-persisted repository credentials, then runs on Python 3.11/3.12:
 
 ```sh
-python -m pip install --only-binary=:all: 'pytest==9.0.2'
+python -m pip install --only-binary=:all: 'pytest==9.0.3'
 python -m pip check
 python -m pytest -q tests/test_vllm_omni_029rc1_contract.py tests/test_vllm_omni_wheel.py
 python -O -m unittest discover -s tests -p 'test_vllm_omni_wheel.py' -v

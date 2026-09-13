@@ -67,7 +67,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p reports
-          python -m pip install --only-binary=:all: 'pytest==9.0.2'
+          python -m pip install --only-binary=:all: 'pytest==9.0.3'
           python -m pip check
           python -m pip freeze --all > reports/omni-wheel-test-environment.txt
       - name: Execute offline contracts and verify admitted source pins
