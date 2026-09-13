@@ -22,7 +22,7 @@ import time
 from typing import BinaryIO
 import uuid
 
-VERSION = "1.2.0"
+VERSION = "1.2.1"
 SPEC_COMMIT = "7840aaba1989c6deeefede1d77d5aaf8f52b947e"
 # Provider-reported FROM identities in the inspected owner recovery report.
 # These are NOT installed-tag digests and NOT claims about current local files.
@@ -50,6 +50,37 @@ class ForensicsError(ValueError):
 def require(ok: bool, code: str) -> None:
     if not ok:
         raise ForensicsError(code)
+
+
+class UnsupportedTensorType(ForensicsError):
+    """A bounded header observation, not an authenticated file/weight result."""
+    def __init__(self, kind: int, tensor_index: int, type_field_offset: int):
+        require(type(kind) is int and 0 <= kind <= 0xffffffff,
+                "INVALID_TENSOR_TYPE_OBSERVATION")
+        require(type(tensor_index) is int and 0 <= tensor_index < MAX_TENSORS,
+                "INVALID_TENSOR_TYPE_OBSERVATION")
+        require(type(type_field_offset) is int and 0 <= type_field_offset <= MAX_HEADER - 4,
+                "INVALID_TENSOR_TYPE_OBSERVATION")
+        super().__init__(f"UNSUPPORTED_TENSOR_TYPE:ggml_type_id={kind}")
+        # Fixed keys and integers only; never retain tensor names or raw headers.
+        self.observation = {
+            "ggml_type_id": kind,
+            "tensor_index_zero_based": tensor_index,
+            "type_field_byte_offset": type_field_offset,
+            "supported_ggml_type_ids": sorted(TENSOR_TYPES),
+            "scope": "PARTIAL_HEADER_NOT_FULL_FILE_AUTHENTICATED",
+            "historical_blob_sha256_verification": "NOT_COMPLETED",
+            "inferred_from_model_label": False,
+        }
+
+
+def rejected_model(error: Exception) -> dict:
+    """Keep rejection separate from successful layout and full-file checks."""
+    result = {"state": "UNAVAILABLE_OR_REJECTED",
+              "error_code": str(error) if isinstance(error, ForensicsError) else type(error).__name__}
+    if isinstance(error, UnsupportedTensorType):
+        result["tensor_type_observation"] = dict(error.observation)
+    return result
 
 
 def digest(raw: bytes) -> str:
@@ -253,7 +284,8 @@ def fingerprint_stream(stream: BinaryIO, size: int, seconds: float = 600) -> dic
         shape = [r.number("Q") for _ in range(dimensions)]
         require(all(0 < x <= 2**31 for x in shape), "DIMENSION_SIZE_BOUND")
         kind = r.number("I")
-        require(kind in TENSOR_TYPES, "UNSUPPORTED_TENSOR_TYPE")
+        if kind not in TENSOR_TYPES:
+            raise UnsupportedTensorType(kind, len(tensors), r.offset - 4)
         offset = r.number("Q")
         nbytes = math.prod(shape) * TENSOR_TYPES[kind][1]
         require(nbytes <= MAX_FILE and offset <= MAX_FILE and offset % alignment == 0,
@@ -402,8 +434,7 @@ def main(argv: list[str] | None = None) -> int:
             report["models"][name] = {"state": "BYTE_IDENTITY_VERIFIED_LAYOUT_INSPECTED",
                                       **inspect_file(root / ("sha256-" + expected), expected)}
         except (ForensicsError, OSError, ValueError, struct.error) as error:
-            report["models"][name] = {"state": "UNAVAILABLE_OR_REJECTED",
-                                      "error_code": str(error) if isinstance(error, ForensicsError) else type(error).__name__}
+            report["models"][name] = rejected_model(error)
         report["active_model"] = None
         checkpoint(out, report, 2 * index, "BLOB_RESULT_RECORDED")
     models = list(report["models"].values())
@@ -412,7 +443,8 @@ def main(argv: list[str] | None = None) -> int:
         report["state"] = "FORENSICS_COMPLETED_NOT_MODEL_QUALIFICATION"
     report["finished_at"] = datetime.now(timezone.utc).isoformat()
     write_evidence(out / "gguf-forensics.json", report)
-    model_status = {name: {key: item.get(key) for key in ("state", "error_code")}
+    model_status = {name: {key: item.get(key) for key in
+                          ("state", "error_code", "tensor_type_observation")}
                     for name, item in report["models"].items()}
     print(json.dumps({"state": report["state"], "models": model_status,
                       "comparison": report["comparison"]}, indent=2))
