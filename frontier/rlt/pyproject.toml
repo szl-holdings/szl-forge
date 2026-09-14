@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "szl-forge-rlt-research"
+version = "0.1.0"
+description = "Bounded CPU recurrent-state continuity reference and measured replay evidence; not a trained model."
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.11,<3.14"
+dependencies = ["torch==2.10.0", "safetensors==0.7.0"]
+
+[project.scripts]
+szl-rlt-research = "frontier.rlt.cli:main"
+
+[tool.setuptools]
+packages = ["frontier.rlt"]
+
+[tool.setuptools.package-dir]
+"frontier.rlt" = "."
+
+[tool.setuptools.package-data]
+"frontier.rlt" = ["README.md"]
