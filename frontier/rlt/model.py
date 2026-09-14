@@ -141,8 +141,8 @@ class TinyRLT(nn.Module):
     def step(self, token: Tensor, state: CompleteState) -> tuple[Tensor, CompleteState]:
         """Consume one observed token; returned logits predict the NEXT token.
 
-        This low-level math primitive is not a secure cache API. Callers must
-        enforce continuity.py and validate actual tensor shapes/dtypes/devices.
+        This low-level math primitive is not a secure cache API. Inference
+        callers use runtime.Session for complete-state continuity validation.
         """
         self._check_tokens(token)
         if token.shape[1] != 1 or token.shape[0] != state.output.shape[0]:
