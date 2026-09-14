@@ -42,14 +42,14 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: szl-holdings/szl-kernels
-          ref: 782c04a5c6affffdb8f497e77ae2d0fd8d73ed70
+          ref: 13668fd1b22890d6a3b92d3cd9ee516ec5a267c9
           path: source-candidate
           persist-credentials: false
       - name: Bind source and build disposable client image
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git -C source-candidate rev-parse HEAD)" = 782c04a5c6affffdb8f497e77ae2d0fd8d73ed70
+          test "$(git -C source-candidate rev-parse HEAD)" = 13668fd1b22890d6a3b92d3cd9ee516ec5a267c9
           git rev-parse HEAD > forge-source.txt
           git -C source-candidate rev-parse HEAD > kernel-source.txt
           docker build --iidfile kernel-image.txt -f tools/kernel-0161-qualification.Dockerfile .
