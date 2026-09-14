@@ -22,7 +22,7 @@ nav{display:flex;gap:24px;flex-wrap:wrap;min-height:44px;align-items:center}nav 
 <body><main>
 <header><span class="eyebrow">SZL Holdings / Forge / Research</span><h1>Models, with boundaries.</h1>
 <p>Two advisory model recipes. Your existing pool remains in control. No training, remote generation, or publication runs from this interface.</p>
-<nav aria-label="Workbench"><a href="/">Model tracks</a><a href="/compute">Inspect configured compute</a><a href="/pool#pool">Canonical pool snapshot</a><a href="/api/catalog">Catalog JSON</a></nav></header>
+<nav aria-label="Workbench"><a href="/">Model tracks</a><a href="/compute">Inspect configured compute</a><a href="/pool#pool">Canonical pool snapshot</a><a href="/corpus-review#corpus">Corpus review</a><a href="/api/catalog">Catalog JSON</a></nav></header>
 <section aria-labelledby="tracks"><h2 id="tracks">Model tracks</h2><div class="grid">
 {% for track in tracks %}<article class="card"><h3>{{ track.display_name }}</h3><span class="state">{{ track.state }}</span>
 <p>{{ track.boundary if track.boundary is defined else track.reason }}</p>
@@ -50,6 +50,16 @@ nav{display:flex;gap:24px;flex-wrap:wrap;min-height:44px;align-items:center}nav 
 </tbody></table>
 {% else %}<p>No usable snapshot supplied. Unknown inventory is not counted as zero.</p>{% endif %}
 <p class="meta"><a href="/api/pool">Authenticated pool projection JSON</a></p></section>
+{% if corpus is defined %}<section aria-labelledby="corpus"><h2 id="corpus">Corpus review · preparation only</h2>
+<span class="state">{{ corpus.state }}</span>
+<p>This is a redacted summary from the existing Forge pilot reviewer, not another dataset parser. A report hash checks supplied bytes, not rights, rewards, source authenticity or training permission.</p>
+{% if corpus.counts is not none %}
+<p class="meta">Dataset: <code>{{ corpus.dataset_repo_id }}</code><br>Report generated: <code>{{ corpus.report_generated_at }}</code><br>{{ corpus.freshness }}</p>
+<table><caption>Reported pilot structure — not model quality or whole-corpus acceptance</caption><thead><tr><th scope="col">Rows inspected</th><th scope="col">Format checked</th><th scope="col">Review required</th></tr></thead><tbody>
+<tr><td>{{ corpus.counts.total }}</td><td>{{ corpus.counts.format_checked }}</td><td>{{ corpus.counts.review_required }}</td></tr></tbody></table>
+{% else %}<p>No usable, externally pinned report was supplied. Unknown coverage is not zero.</p>{% endif %}
+<p>Rights, privacy, decontamination and outcome reviews are not established here. Training, execution and publication remain disabled.</p>
+<p class="meta"><a href="/api/corpus-review">Authenticated redacted report JSON</a></p></section>{% endif %}
 <footer>Source addition · not deployed · not a training console · not a Hugging Face publisher.<br>
 GitHub source → qualified HF artifacts → product status → evidence. Existing signed release controls remain authoritative.</footer>
 </main></body></html>
