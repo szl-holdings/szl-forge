@@ -2,7 +2,7 @@
   "schema": "szl.forge.receiptagent-merged-candidate.v1",
   "repo_id": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2-merged",
   "kind": "merged_full_model",
-  "status": "QUALIFIED_NOT_PUBLISHED",
+  "status": "PUBLISHED",
   "proposal_only": true,
   "base": {
     "repo_id": "unsloth/Qwen3.5-0.8B",
@@ -35,9 +35,11 @@
     "rate": 1.0
   },
   "publication": {
-    "status": "NOT_PUBLISHED",
-    "hub_write": false,
-    "publisher": "canonical publisher only, after this lane is admitted and the owner executes publication"
+    "status": "PUBLISHED",
+    "url": "https://huggingface.co/SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2-merged",
+    "hub_write": true,
+    "executed_by": "owner (org admin) after lane admission (forge PR #308)",
+    "evidence": "frontier/qwen35-receiptagent-v2-merged/publication.json (dual readback verified, intendedFileCount 8, intendedBytes 3432006714)"
   },
-  "honesty_boundary": "Proposal-only merged SKU. Does not overwrite the frozen v2 comparator repo or any immutable release binding. No weights are rehosted by this admission; merged safetensors stay local until the canonical publisher uploads them. No production route, default, or inference authority changes."
+  "honesty_boundary": "Proposal-only merged SKU. Does not overwrite the frozen v2 comparator repo or any immutable release binding. No production route, default, or inference authority changes."
 }
