@@ -78,18 +78,73 @@ runs outside the checkout. Production's existing base workflow remains unchanged
 ## Downstream integration boundary
 
 GitHub reviewed source -> qualified HF runtime/artifact -> a-11-oy.com product
-observation -> a11oy.net proof. This PR implements the first executable research
-package and its local observation, not the entire deployment chain.
+observation -> a11oy.net proof. Version 0.2 implements a trained synthetic experiment and an installed-package
+research integration, not the entire production deployment chain.
 
 Forge's `inference/governed_inference.py` remains the production coordinator.
 Nemo remains the independent witness; A11oy retains action admission. The random
-TinyRLT is deliberately not registered as a natural-language generator. Later
-integration must supply trained checkpoint bytes, task-specific quality and
-abstention evaluation, actual Nemo/Second Brain integration tests, a reviewed HF
-sole-writer publication contract and live revision/byte readback. No such success
+TinyRLT is deliberately not registered as a natural-language generator. Production
+integration still requires an appropriate task-qualified model, broader quality
+and abstention evaluation, a reviewed HF sole-writer publication contract and
+live revision/byte readback. The v0.2 section below defines the narrower trained
+register experiment and actual installed Nemo/Second Brain research integration. No such success
 is inferred from a CPU test, a model card, a digest or a reachable website.
 
 Ayllu observation producer/consumer repair is separately tracked by
 https://github.com/szl-holdings/ayllu/pull/35 . No duplicated Ayllu patch lives here.
 Clinical result interpretation/release, private graph training admission, financial
 execution, branch-rule changes and autonomous promotion are outside this package.
+
+## v0.2 — actual training and installed estate integration
+
+The existing untrained continuity demonstration is retained. A separate bounded
+experiment now trains this architecture on **synthetic register state labels**:
+SET0, SET1, FLIP, KEEP, REVOKE. This is not natural-language pretraining or a
+fine-tune of any existing SZL model. The model predicts one of three state labels
+from output slots 8/9/10; those trained weights must not be registered as a general
+text generator or interpreted using unrestricted `emit_greedy` vocabulary output.
+
+```bash
+python -m frontier.rlt.training --output ./register-run-001 --steps 120
+python -m frontier.rlt.reporting --evaluation ./register-run-001/evaluation.json --output ./register-run-001/index.html
+```
+
+Nine runs: three disclosed seeds and three variants. Training uses 256 programs
+of 16 operations, 120 optimizer steps and full BPTT. Validation uses 128 programs;
+held-out tests use 128 programs each at lengths 16, 32 and 64. Programs with the
+same first six operations always share a split. All datasets and weights are
+hash-bound; code movement during an experiment prevents a terminal receipt.
+Every seed/variant is reported, and the test split selects neither checkpoints
+nor hyperparameters. This is shared-grammar generalization, not semantic
+independence or proof of broad reasoning. Labels come from a separate oracle.
+
+`no_output_feedback` disables only the previous-output merge; SWA and encoder
+memory remain. The two-layer causal Transformer baseline has the same width,
+examples and optimizer steps but different parameter and compute budgets.
+**No parameter/FLOP/time-matched superiority or speedup claim is made.** Timings
+are measured host observations. All weights are inference artifacts, not
+optimizer-resume checkpoints, and all production/publication gates remain false.
+
+`ecosystem.py` is not a replacement inference service. It is exposed as `python -m frontier.rlt.ecosystem`. It adapts the
+installed exact-commit Second Brain public index and Nemo E1–E10 envelope witness.
+Install `./frontier/rlt[estate]` and the existing root Forge controller package.
+It rejects unpinned installed versions and corpus environment overrides. The
+existing Forge control-plane contract supplies formula identities; no formula
+application or authorization basis is invented for the synthetic task.
+
+An enclosing trusted controller supplies authorization. PRE and POST Nemo
+witnesses bind each exact envelope; refusal does not advance an accepted cache.
+Compatible prefix continuation restores actual state; edited histories or changed
+public evidence force reconstruction. Second Brain content never enters gradients
+or the register task inputs. Its handles bind cache validity only: this does not
+establish RAG answer quality. The synthetic oracle may verify a single register
+answer or cause abstention; it does not turn Nemo into a factual oracle or grant
+A11oy tool authority.
+
+CI performs actual installed-package integration outside the checkout, retains
+synthetic model weights/data and sanitized evidence, and never publishes private
+inference state. The Python 3.12 lane repeats all nine full bounded experiments;
+Python 3.11 runs an eight-step optimizer/export smoke, not the same quality run.
+The main-push workflow is unfiltered so its check can run for each main revision.
+This workflow is read-only toward repository contents and has no HF credential,
+provider-write path, automatic promotion, or production deployment.
