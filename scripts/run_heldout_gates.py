@@ -1,132 +1,169 @@
 #!/usr/bin/env python3
-"""
-Held-out gate runner for the 2026-09-14 close-out.
+"""Re-evaluate exact published Hugging Face revisions after model publication.
 
-Runs the existing eval harness (eval_szl.py / frontier/evaluation fixtures) against
-the EXACT published artifact bytes for each model, and emits a markdown table to
-append to frontier/EVAL_BACKUP_2026-09-14.md plus a JSON receipt per model.
-
-Also implements the KHIPU-R2 salvage flow (frontier/KHIPU_R2_SALVAGE_PLAN_2026-09-13.md):
-  --salvage khipu-r2  rebuilds evals_dir from held-out fixtures, re-runs the abstain
-  gate on published bytes, verifies provenance (adapter SHA / merge receipt /
-  checkpoint SHA), and emits a re-attestation record to clear SUPPRESSION_2026-09-13.
+This is a post-publication evidence runner. It resolves each requested Hub repo to
+one immutable commit SHA, executes the repository's real held-out and refusal
+harnesses against that exact revision, and emits a source-bound receipt. It does
+not clear a quarantine or mutate Hugging Face state.
 """
+from __future__ import annotations
+
 import argparse
 import hashlib
 import json
 import subprocess
 import sys
+import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
 MODELS = {
-    "chaski-r2":       {"repo": "SZLHOLDINGS/chaski-r2",       "gate": "courier"},
-    "chaski-5050":     {"repo": "SZLHOLDINGS/chaski-5050",     "gate": "courier"},
-    "WILLAY":          {"repo": "SZLHOLDINGS/WILLAY",         "gate": "courier"},
-    "brain-navigator-r2": {"repo": "SZLHOLDINGS/brain-navigator-r2", "gate": "navigator"},
-    "khipu-r3":        {"repo": "SZLHOLDINGS/khipu-r3",       "gate": "abstain"},
-    "KHIPU-R2":        {"repo": "SZLHOLDINGS/KHIPU-R2",       "gate": "abstain"},
-    "szl-receiptagent-qwen35-0.8b-v3": {"repo": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3", "gate": "receipt"},
+    "chaski-r2": "SZLHOLDINGS/chaski-r2",
+    "chaski-5050": "SZLHOLDINGS/chaski-5050",
+    "WILLAY": "SZLHOLDINGS/WILLAY",
+    "brain-navigator-r2": "SZLHOLDINGS/brain-navigator-r2",
+    "khipu-r3": "SZLHOLDINGS/khipu-r3",
+    "KHIPU-R2": "SZLHOLDINGS/KHIPU-R2",
+    "szl-receiptagent-qwen35-0.8b-v3": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3",
 }
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-HARNESS = REPO_ROOT / "eval_szl.py"
-FIXTURES = REPO_ROOT / "frontier" / "evaluation"
+HELDOUT = REPO_ROOT / "eval" / "run_heldout.py"
+REFUSAL = REPO_ROOT / "eval" / "run_refusal.py"
+CONFIG = REPO_ROOT / "eval" / "heldout_generate.yaml"
+BASELINE = REPO_ROOT / "eval" / "baselines" / "refusal.json"
 OUT_DIR = REPO_ROOT / "frontier" / "evaluation" / "gate_runs"
 
 
-def sha256_of(path: Path) -> str:
-    h = hashlib.sha256()
-    with open(path, "rb") as f:
-        for chunk in iter(lambda: f.read(1 << 20), b""):
-            h.update(chunk)
-    return h.hexdigest()
+def sha256_bytes(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
 
 
-def run_gate(model: str, gate: str, repo: str) -> dict:
+def resolve_hub_revision(repo: str, timeout: int = 30) -> str:
+    request = urllib.request.Request(
+        f"https://huggingface.co/api/models/{repo}",
+        headers={"User-Agent": "szl-forge-postpublish-gate/1.0"},
+    )
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        payload = json.loads(response.read().decode("utf-8"))
+    revision = payload.get("sha")
+    if not isinstance(revision, str) or len(revision) != 40 or any(
+        char not in "0123456789abcdef" for char in revision
+    ):
+        raise RuntimeError(f"Hub did not return an immutable 40-hex revision for {repo}")
+    return revision
+
+
+def run_checked(command: list[str]) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(command, capture_output=True, text=True, cwd=REPO_ROOT)
+
+
+def run_gate(model_name: str, repo: str, min_pass_rate: float) -> dict[str, object]:
+    revision = resolve_hub_revision(repo)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    result_path = OUT_DIR / f"{model}_{stamp}.json"
+    model_slug = model_name.replace("/", "_")
+    heldout_path = OUT_DIR / f"{model_slug}_{revision[:12]}_{stamp}_heldout.json"
+    receipt_path = OUT_DIR / f"{model_slug}_{revision[:12]}_{stamp}_receipt.json"
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    cmd = [
-        sys.executable, str(HARNESS),
-        "--model", repo,
-        "--gate", gate,
-        "--fixtures", str(FIXTURES),
-        "--out", str(result_path),
-        "--published-bytes",
+
+    heldout_cmd = [
+        sys.executable,
+        str(HELDOUT),
+        "--model",
+        repo,
+        "--revision",
+        revision,
+        "--config",
+        str(CONFIG),
+        "--out",
+        str(heldout_path),
+        "--assert-min-pass-rate",
+        str(min_pass_rate),
     ]
-    proc = subprocess.run(cmd, capture_output=True, text=True)
-    if proc.returncode != 0:
-        return {"model": model, "status": "HARNESS_FAIL", "stderr": proc.stderr[-2000:]}
-    result = json.loads(result_path.read_text())
-    result["model"] = model
-    result["repo"] = repo
-    result["gate"] = gate
-    result["run_utc"] = stamp
-    return result
+    heldout_proc = run_checked(heldout_cmd)
+    if heldout_proc.returncode != 0 or not heldout_path.is_file():
+        receipt = {
+            "schema": "szl.forge.postpublish-eval.v1",
+            "model": model_name,
+            "repo": repo,
+            "revision": revision,
+            "status": "HELDOUT_EXECUTION_FAIL",
+            "heldoutStderr": heldout_proc.stderr[-4000:],
+            "heldoutStdout": heldout_proc.stdout[-4000:],
+            "productionAuthorization": False,
+        }
+        receipt_path.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
+        return receipt
 
+    heldout = json.loads(heldout_path.read_text(encoding="utf-8"))
+    if heldout.get("model_revision") != revision:
+        raise RuntimeError("held-out receipt revision does not match resolved Hub revision")
 
-def salvage_khipu_r2() -> dict:
-    model = "KHIPU-R2"
-    gate = MODELS[model]["gate"]
+    refusal_cmd = [
+        sys.executable,
+        str(REFUSAL),
+        "--model",
+        repo,
+        "--revision",
+        revision,
+        "--assert-no-regression",
+        "--baseline",
+        str(BASELINE),
+    ]
+    refusal_proc = run_checked(refusal_cmd)
 
-    evals_dir = REPO_ROOT / "khipu_r2" / "evals"
-    evals_dir.mkdir(parents=True, exist_ok=True)
-    fixtures_src = FIXTURES / "khipu_abstain"
-    for f in fixtures_src.glob("*.jsonl"):
-        (evals_dir / f.name).write_text(f.read_text())
-
-    gate_result = run_gate(model, gate, MODELS[model]["repo"])
-
-    provenance = {}
-    for label, p in [
-        ("adapter_sha", REPO_ROOT / "khipu_r2" / "adapter_model.safetensors"),
-        ("merge_receipt", REPO_ROOT / "khipu_r2" / "merge_receipt.json"),
-        ("checkpoint_sha", REPO_ROOT / "khipu_r2" / "model.safetensors"),
-    ]:
-        provenance[label] = sha256_of(p) if p.exists() else "MISSING"
-
-    record = {
-        "salvage": model,
-        "suppression": "SUPPRESSION_2026-09-13",
-        "evals_dir_rebuilt": True,
-        "gate_result": gate_result,
-        "provenance": provenance,
-        "prior_gate_on_record": "3/6 abstain",
-        "attest_previous": "89a0b01e-cbd3-4fd1-8e8b-b3e55f96b2ca",
+    heldout_passed = bool(heldout.get("heldout_passed"))
+    refusal_passed = refusal_proc.returncode == 0
+    status = "PASS" if heldout_passed and refusal_passed else "FAIL"
+    receipt = {
+        "schema": "szl.forge.postpublish-eval.v1",
+        "model": model_name,
+        "repo": repo,
+        "revision": revision,
+        "observedAt": datetime.now(timezone.utc).isoformat(),
+        "heldout": heldout,
+        "heldoutReceiptSha256": sha256_bytes(heldout_path.read_bytes()),
+        "refusalPassed": refusal_passed,
+        "refusalStdoutSha256": sha256_bytes(refusal_proc.stdout.encode("utf-8")),
+        "refusalStderr": refusal_proc.stderr[-2000:] if not refusal_passed else "",
+        "status": status,
+        "productionAuthorization": False,
+        "publicationAuthorization": False,
     }
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    out = OUT_DIR / f"khipu_r2_salvage_{stamp}.json"
-    out.write_text(json.dumps(record, indent=2))
-    record["salvage_record"] = str(out)
-    return record
+    receipt_path.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
+    return receipt
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--models", nargs="*", choices=MODELS.keys())
-    ap.add_argument("--salvage", choices=["khipu-r2"])
-    args = ap.parse_args()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--models", nargs="+", choices=MODELS.keys(), required=True)
+    parser.add_argument("--min-pass-rate", type=float, default=0.80)
+    args = parser.parse_args()
+    if not 0.0 <= args.min_pass_rate <= 1.0:
+        parser.error("--min-pass-rate must be between 0 and 1")
 
-    results = []
-    if args.salvage:
-        rec = salvage_khipu_r2()
-        results.append(rec)
-        print(json.dumps(rec, indent=2))
-    if args.models:
-        for m in args.models:
-            r = run_gate(m, MODELS[m]["gate"], MODELS[m]["repo"])
-            results.append(r)
-            status = r.get("status", "OK")
-            print(f"{m}: {status}")
+    results: list[dict[str, object]] = []
+    exit_code = 0
+    for model_name in args.models:
+        try:
+            result = run_gate(model_name, MODELS[model_name], args.min_pass_rate)
+        except Exception as exc:
+            result = {
+                "schema": "szl.forge.postpublish-eval.v1",
+                "model": model_name,
+                "repo": MODELS[model_name],
+                "status": "PRECHECK_FAIL",
+                "error": str(exc),
+                "productionAuthorization": False,
+            }
+        results.append(result)
+        print(f"{model_name}: {result['status']}")
+        if result["status"] != "PASS":
+            exit_code = 1
 
-    lines = [f"- {r['model']}: gate={r.get('gate')} status={r.get('status', 'OK')} "
-             f"run={r.get('run_utc', 'see record')}" for r in results]
-    if lines:
-        print("\nAppend to frontier/EVAL_BACKUP_2026-09-14.md:")
-        print("\n".join(lines))
-    return 0
+    print(json.dumps({"results": results}, indent=2))
+    return exit_code
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())
