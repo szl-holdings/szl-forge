@@ -46,15 +46,31 @@ Digest checks have material overhead; no speedup is claimed.
 
 ## Install and run
 
-Use a fresh environment. The CPU wheel index avoids unintentionally provisioning
-a CUDA runtime. No GPU, model download or paid service is required.
+Use a fresh, dedicated CPU environment from this repository checkout. Do not run
+these commands in an existing laptop CUDA/training environment. No GPU, model
+download or paid service is required. The project declaration is the single
+Torch version authority; every install below retains the derived CPU constraint.
 
 ```bash
-python -m pip install torch==2.10.0 --index-url https://download.pytorch.org/whl/cpu
-python -m pip install ./frontier/rlt
+set -euo pipefail
+CPU_CONSTRAINT=$(mktemp)
+trap 'rm -f "$CPU_CONSTRAINT"' EXIT
+python tools/rlt_cpu_environment.py requirement > "$CPU_CONSTRAINT"
+python -m pip install -r "$CPU_CONSTRAINT" --index-url https://download.pytorch.org/whl/cpu
+python -m pip install -c "$CPU_CONSTRAINT" ./frontier/rlt
 python -m pip check
+python tools/rlt_cpu_environment.py verify
 szl-rlt-research --output ./rlt-run-001
 ```
+
+The Bash example applies to the isolated CPU research lane, not the deferred
+owner-laptop training lane. CI uses the same helper, constrains subsequent
+resolver invocations, and verifies distribution/module versions plus CUDA/HIP
+build metadata both before tensor tests and after wheel installation. A CPU
+runner alone does not prove that a CPU wheel was installed. Missing or mismatched
+identity fails rather than downgrading a pin. This is local package identity,
+not a complete hash-locked dependency closure or wheel-byte provenance. Existing
+synthetic training and installed-package integration remain separate gates.
 
 The package declares `safetensors[torch]==0.7.0` and `numpy==2.3.5`: NumPy is
 required by the safetensors PyTorch serializer even though SZL's tensor-digest
