@@ -51,10 +51,15 @@ a CUDA runtime. No GPU, model download or paid service is required.
 
 ```bash
 python -m pip install torch==2.10.0 --index-url https://download.pytorch.org/whl/cpu
-python -m pip install safetensors==0.7.0
-python -m pip install --no-deps ./frontier/rlt
+python -m pip install ./frontier/rlt
+python -m pip check
 szl-rlt-research --output ./rlt-run-001
 ```
+
+The package declares `safetensors[torch]==0.7.0` and `numpy==2.3.5`: NumPy is
+required by the safetensors PyTorch serializer even though SZL's tensor-digest
+helper does not use it. Install declared dependencies; do not use `--no-deps`
+unless an independently verified compatible environment already exists.
 
 `--output` must not exist; its parent must exist. It creates `receipt.json`,
 `checkpoint.safetensors`, and a local `index.html`. Open the HTML locally to
