@@ -10,7 +10,7 @@
   "lora_r": 16,
   "lora_alpha": 16,
   "max_seq_length": 2048,
-  "num_epochs": 3,
+  "num_epochs": 8,
   "batch": 1,
   "grad_accum": 4,
   "lr": 0.0002,
@@ -22,7 +22,7 @@
   "push_to_hub": false,
   "job": "local-5050",
   "hardware": "local-RTX-5050",
-  "training_loss": 1.5543435293215293,
+  "training_loss": 1.0232566954946378,
   "train_loss_label": "MEASURED",
   "train_loss_is_not_eval": true,
   "label": "REPORTED owner-metal",
@@ -38,16 +38,16 @@
   "a11oy_mini": false,
   "hub_push": false,
   "claim_boundary": "Separate SKU SZLHOLDINGS/chaski-5050. Not live SZLHOLDINGS/chaski. job=local-5050. Not an HF Job. QLoRA forbidden. Training card label REPORTED owner-metal until a signed receipt exists. train_loss may be MEASURED as a train metric, not an eval. Evals none-this-run. Not 5/5. publication_eligible false. A11OY-MINI is a GGUF of live Chaski, not 5050. No tok/s. No Khipu lab pin. push_to_hub=False during train; FORGE uploads after.",
-  "computed_at": "2026-09-14T02:42:30.378451+00:00",
+  "computed_at": "2026-09-14T02:29:58.714567+00:00",
   "source": "local-train",
-  "dataset_sha256": "72ca5820b71ebd509d5707a9c24804e34cb6c2c1ceaee17271f86e5f1c4e3e3b",
-  "training_rows": 69,
+  "dataset_sha256": "ddc5594bfb1c78449ba40a263f5ac41d21c896c3c7ed7346341c7c080611a243",
+  "training_rows": 45,
   "metrics": {
-    "train_runtime": 56.8946,
-    "train_samples_per_second": 3.638,
-    "train_steps_per_second": 0.949,
-    "total_flos": 112345432778880.0,
-    "train_loss": 1.5543435293215293,
-    "epoch": 3.0
+    "train_runtime": 103.5407,
+    "train_samples_per_second": 3.477,
+    "train_steps_per_second": 0.927,
+    "total_flos": 124816192112640.0,
+    "train_loss": 1.0232566954946378,
+    "epoch": 8.0
   }
 }
