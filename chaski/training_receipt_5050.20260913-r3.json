@@ -22,7 +22,7 @@
   "push_to_hub": false,
   "job": "local-5050",
   "hardware": "local-RTX-5050",
-  "training_loss": 2.046356290578842,
+  "training_loss": 1.5543435293215293,
   "train_loss_label": "MEASURED",
   "train_loss_is_not_eval": true,
   "label": "REPORTED owner-metal",
@@ -38,16 +38,16 @@
   "a11oy_mini": false,
   "hub_push": false,
   "claim_boundary": "Separate SKU SZLHOLDINGS/chaski-5050. Not live SZLHOLDINGS/chaski. job=local-5050. Not an HF Job. QLoRA forbidden. Training card label REPORTED owner-metal until a signed receipt exists. train_loss may be MEASURED as a train metric, not an eval. Evals none-this-run. Not 5/5. publication_eligible false. A11OY-MINI is a GGUF of live Chaski, not 5050. No tok/s. No Khipu lab pin. push_to_hub=False during train; FORGE uploads after.",
-  "computed_at": "2026-09-14T02:52:36.229406+00:00",
+  "computed_at": "2026-09-14T02:42:30.378451+00:00",
   "source": "local-train",
-  "dataset_sha256": "e61d64b6612571d7ae609716ee4b9e952b71c9887e3a62ef7d664384a39e79dd",
-  "training_rows": 14,
+  "dataset_sha256": "72ca5820b71ebd509d5707a9c24804e34cb6c2c1ceaee17271f86e5f1c4e3e3b",
+  "training_rows": 69,
   "metrics": {
-    "train_runtime": 26.0873,
-    "train_samples_per_second": 1.61,
-    "train_steps_per_second": 0.46,
-    "total_flos": 25944247357056.0,
-    "train_loss": 2.046356290578842,
+    "train_runtime": 56.8946,
+    "train_samples_per_second": 3.638,
+    "train_steps_per_second": 0.949,
+    "total_flos": 112345432778880.0,
+    "train_loss": 1.5543435293215293,
     "epoch": 3.0
   }
 }
