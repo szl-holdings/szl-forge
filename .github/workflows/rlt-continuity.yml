@@ -13,8 +13,6 @@ jobs:
     defaults:
       run:
         shell: bash
-    env:
-      PIP_CONSTRAINT: ${{ runner.temp }}/rlt-cpu-constraint.txt
     strategy:
       fail-fast: false
       matrix:
@@ -30,7 +28,9 @@ jobs:
         run: |
           python -m unittest discover -s tests -p test_rlt_cpu_environment.py -v
           python -O -m unittest discover -s tests -p test_rlt_cpu_environment.py -v
+          PIP_CONSTRAINT="$RUNNER_TEMP/rlt-cpu-constraint.txt"
           python tools/rlt_cpu_environment.py requirement > "$PIP_CONSTRAINT"
+          printf 'PIP_CONSTRAINT=%s\n' "$PIP_CONSTRAINT" >> "$GITHUB_ENV"
       - name: Install declared CPU research and exact estate packages
         run: |
           python -m pip install -r "$PIP_CONSTRAINT" --index-url https://download.pytorch.org/whl/cpu

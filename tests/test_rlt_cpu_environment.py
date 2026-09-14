@@ -88,7 +88,9 @@ class RltCpuEnvironmentTests(unittest.TestCase):
     def test_workflow_uses_constraint_and_verifies_both_install_stages(self):
         workflow = (ROOT / ".github/workflows/rlt-continuity.yml").read_text()
         self.assertIn("python tools/rlt_cpu_environment.py requirement", workflow)
-        self.assertIn('PIP_CONSTRAINT: ${{ runner.temp }}/rlt-cpu-constraint.txt', workflow)
+        self.assertNotIn('    env:\n      PIP_CONSTRAINT: ${{ runner.temp }}', workflow)
+        self.assertIn('PIP_CONSTRAINT="$RUNNER_TEMP/rlt-cpu-constraint.txt"', workflow)
+        self.assertIn('>> "$GITHUB_ENV"', workflow)
         self.assertEqual(workflow.count("python tools/rlt_cpu_environment.py verify"), 2)
         self.assertNotIn("torch==2.10.0", workflow)
         self.assertIn("tools/rlt_cpu_environment.py", workflow.split("  push:")[0])
