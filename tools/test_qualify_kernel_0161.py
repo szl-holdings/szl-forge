@@ -2,9 +2,13 @@
 from __future__ import annotations
 
 from pathlib import Path
+import base64
+import hashlib
+import json
 import tempfile
+from types import ModuleType, SimpleNamespace
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import qualify_kernel_0161 as q
 
@@ -132,7 +136,9 @@ class ControlTests(unittest.TestCase):
         with self.assertRaises(q.QualificationError):
             q.validate_report(report, "provider")
         report["byte_comparison"] = {"all_equal": True}
-        q.validate_report(report, "provider")
+        # A summary flag alone cannot substitute for retained validated controls.
+        with self.assertRaises(q.QualificationError):
+            q.validate_report(report, "provider")
 
     def test_actual_version_is_checked_before_loading(self):
         with patch.dict("os.environ", {"HF_HUB_DISABLE_IMPLICIT_TOKEN": "1"}, clear=True), \
@@ -162,6 +168,134 @@ class ControlTests(unittest.TestCase):
         self.assertEqual(len(calls), 1)
         trust = next(item.value for item in calls[0].keywords if item.arg == "trust_remote_code")
         self.assertIs(trust.value, False)
+
+
+class ProviderTreeTests(unittest.TestCase):
+    def file(self, path="build/torch-cpu/_ops.py", size=7):
+        from huggingface_hub import RepoFile
+        return RepoFile(path=path, size=size, oid="a" * 40)
+
+    def folder(self, path="build"):
+        from huggingface_hub import RepoFolder
+        return RepoFolder(path=path, oid="b" * 40)
+
+    def api(self, entries):
+        return SimpleNamespace(list_repo_tree=Mock(return_value=iter(entries)))
+
+    def test_real_sdk_tree_types_and_pinned_call(self):
+        api = self.api([self.folder(), self.file()])
+        self.assertEqual(q.provider_files(api), {"build/torch-cpu/_ops.py": 7})
+        api.list_repo_tree.assert_called_once_with(
+            q.HUB_REPOSITORY, repo_type="kernel", revision=q.HUB_REVISION,
+            recursive=True, token=False)
+
+    def test_malformed_tree_records_rejected(self):
+        for entries in ([{}], [SimpleNamespace(path="x", size=5)],
+                        [self.file(size=True)], [self.file(size=-1)],
+                        [self.file(path="../x")], [self.file(path="a//b")],
+                        [self.file(path="a/b\\c")]):
+            with self.subTest(entries=entries), self.assertRaises(q.QualificationError):
+                q.provider_files(self.api(entries))
+
+    def test_duplicate_file_or_folder_is_not_silently_collapsed(self):
+        for entries in ([self.file(), self.file()], [self.folder(), self.folder()],
+                        [self.file(path="build"), self.folder()]):
+            with self.subTest(entries=entries), self.assertRaisesRegex(q.QualificationError, "duplicate"):
+                q.provider_files(self.api(entries))
+
+    def test_empty_or_folder_only_tree_is_not_missing_everything(self):
+        for entries in ([], [self.folder()]):
+            with self.assertRaisesRegex(q.QualificationError, "empty"):
+                q.provider_files(self.api(entries))
+
+    def test_entry_limit_stops_iteration(self):
+        with self.assertRaisesRegex(q.QualificationError, "bound"):
+            q.provider_files(self.api(self.file(path=f"file{i}") for i in range(257)))
+
+    def test_partial_iteration_error_is_not_a_complete_tree(self):
+        def interrupted():
+            yield self.file()
+            raise OSError("fixture interrupted page")
+        with self.assertRaises(OSError):
+            q.provider_files(self.api(interrupted()))
+
+    def test_kernel_info_without_siblings_reaches_real_tree_method(self):
+        # Actual SDK RepoFile objects; API and installed-version responses are fixtures.
+        # No downloaded/executed kernel is claimed by this unit test.
+        api = self.api([self.file(path="README.md")])
+        api.repo_info = Mock(return_value=SimpleNamespace(sha=q.HUB_REVISION))
+        self.assertFalse(hasattr(api.repo_info.return_value, "siblings"))
+        source = {name: b"fixture" for name in q.SOURCE_BLOBS}
+        with patch.dict("os.environ", {"HF_HUB_DISABLE_IMPLICIT_TOKEN": "1"}, clear=True), \
+             patch.object(q.importlib.metadata, "version", return_value=q.CLIENT_VERSION), \
+             patch.object(q, "read_source", return_value=source), \
+             patch.dict("sys.modules", {"kernels": ModuleType("kernels")}), \
+             patch("huggingface_hub.HfApi", return_value=api), \
+             patch("huggingface_hub.hf_hub_download") as download:
+            report = q.observe("provider")
+        self.assertEqual(report["state"], "SOURCE_PROVIDER_DRIFT")
+        self.assertIs(report["runtime_qualified"], False)
+        self.assertEqual(len(report["missing_files"]), 8)
+        download.assert_not_called()
+        api.list_repo_tree.assert_called_once()
+
+
+class ProviderControlTests(unittest.TestCase):
+    def fixture(self):
+        source = {name: b"fixture" for name in q.SOURCE_BLOBS}
+        binding = {"schema": "szl.hf-first-class-kernel-binding/v1",
+                   "source_repository": q.SOURCE_REPOSITORY, "source_revision": q.SOURCE_REVISION,
+                   "artifact": {"repo_id": q.HUB_REPOSITORY, "repo_type": "kernel",
+                                "backend": "torch-cpu", "package": "szl_kernels", "version": 1}}
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            q.stage_local(root, source)
+            metadata = q.strict_json((root / q.PREFIX / "metadata.json").read_bytes())
+        raw_binding = json.dumps(binding).encode()
+        metadata["digest"]["files"]["source-binding.json"] = base64.b64encode(hashlib.sha256(raw_binding).digest()).decode()
+        controls = {"metadata.json": json.dumps(metadata).encode(), "source-binding.json": raw_binding}
+        return source, controls, metadata, binding
+
+    def test_complete_control_bytes_and_source_binding(self):
+        source, controls, _, _ = self.fixture()
+        q.validate_control_bytes(source, controls)
+
+    def test_metadata_cannot_redirect_execution_or_dependencies(self):
+        for changes in ({"name": "another"}, {"version": True}, {"python-depends": ["os"]},
+                        {"backend": {"type": "cuda"}}, {"id": "../escape"}, {"extra": "field"}):
+            source, controls, metadata, _ = self.fixture()
+            controls["metadata.json"] = json.dumps(metadata | changes).encode()
+            with self.subTest(changes=changes), self.assertRaises(q.QualificationError):
+                q.validate_control_bytes(source, controls)
+
+    def test_digest_manifest_must_cover_only_verified_bytes(self):
+        source, controls, metadata, _ = self.fixture()
+        metadata["digest"]["files"]["../extra.py"] = "a" * 44
+        controls["metadata.json"] = json.dumps(metadata).encode()
+        with self.assertRaisesRegex(q.QualificationError, "digest"):
+            q.validate_control_bytes(source, controls)
+
+    def test_source_binding_must_match_even_with_recomputed_digest(self):
+        for changes in ({"source_revision": "a" * 40}, {"source_repository": "OTHER/repo"},
+                        {"artifact": {"repo_type": "model"}}):
+            source, controls, metadata, binding = self.fixture()
+            controls["source-binding.json"] = json.dumps(binding | changes).encode()
+            metadata["digest"]["files"]["source-binding.json"] = base64.b64encode(
+                hashlib.sha256(controls["source-binding.json"]).digest()).decode()
+            controls["metadata.json"] = json.dumps(metadata).encode()
+            with self.subTest(changes=changes), self.assertRaises(q.QualificationError):
+                q.validate_control_bytes(source, controls)
+
+    def test_host_revalidates_controls_for_trust_blocker(self):
+        source, controls, _, _ = self.fixture()
+        report = blocked_report() | {"state": "PUBLISHER_UNTRUSTED",
+                    "source_sha256": {key: q.sha256(value) for key, value in source.items()},
+                    "byte_comparison": {"all_equal": True},
+                    "provider_control_bytes": {key: base64.b64encode(value).decode() for key, value in controls.items()}}
+        q.validate_report(report, "provider", source)
+        report["provider_control_bytes"]["metadata.json"] = "invalid=base64!"
+        with self.assertRaises(q.QualificationError):
+            q.validate_report(report, "provider", source)
 
 
 if __name__ == "__main__":

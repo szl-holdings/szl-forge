@@ -16,6 +16,7 @@ import importlib.metadata
 import json
 import math
 import os
+import re
 from pathlib import Path
 import sys
 import tempfile
@@ -98,6 +99,81 @@ def compare_bytes(expected: dict[str, bytes], observed: dict[str, bytes]) -> dic
     return {"all_equal": all(row["equal"] for row in rows), "files": rows}
 
 
+def provider_files(api: Any) -> dict[str, int]:
+    """Consume the bounded pinned tree; KernelInfo has no model-style siblings.
+
+    Both RepoFile and RepoFolder are SDK types. Directory records are validated
+    but never downloaded. An incomplete iterator raises, never returns an empty
+    inventory. This is SDK-mediated metadata, not retained raw HTTP evidence.
+    """
+    from huggingface_hub import RepoFile, RepoFolder
+
+    files: dict[str, int] = {}
+    seen: set[str] = set()
+    entries = api.list_repo_tree(HUB_REPOSITORY, repo_type="kernel",
+                                revision=HUB_REVISION, recursive=True, token=False)
+    for index, entry in enumerate(entries):
+        if index >= 256:
+            raise QualificationError("provider tree entry bound exceeded")
+        if not isinstance(entry, (RepoFile, RepoFolder)):
+            raise QualificationError("unexpected provider tree record type")
+        path = entry.path
+        if (not isinstance(path, str) or len(path) > 512
+                or re.fullmatch(r"[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*", path) is None
+                or any(part in {".", ".."} for part in path.split("/"))):
+            raise QualificationError("invalid provider tree path")
+        if path in seen:
+            raise QualificationError("duplicate provider tree path")
+        seen.add(path)
+        if isinstance(entry, RepoFile):
+            if type(entry.size) is not int or entry.size < 0:
+                raise QualificationError("invalid provider tree file size")
+            files[path] = entry.size
+    if not files:
+        raise QualificationError("empty provider tree is not admitted")
+    return files
+
+
+def validate_control_bytes(source: dict[str, bytes], controls: dict[str, bytes]) -> None:
+    """Check pinned provider control files before the loader consumes them.
+
+    The embedded binding is a source claim, not independent build attestation.
+    Its bytes and all executable bytes are included in the metadata digest map.
+    """
+    if set(controls) != {"metadata.json", "source-binding.json"}:
+        raise QualificationError("missing provider control files")
+    metadata = strict_json(controls["metadata.json"])
+    binding = strict_json(controls["source-binding.json"])
+    expected_fields = {"name", "id", "version", "license", "python-depends", "backend", "digest"}
+    if (type(metadata) is not dict or set(metadata) != expected_fields
+            or metadata.get("name") != "szl-kernels"
+            or metadata.get("license") != "Apache-2.0"
+            or type(metadata.get("version")) is not int or metadata["version"] != 1
+            or metadata.get("backend") != {"type": "cpu"}
+            or metadata.get("python-depends") != []
+            or not isinstance(metadata.get("id"), str)
+            or re.fullmatch(r"_szl_kernels_cpu_[0-9a-f]{8}", metadata["id"]) is None):
+        raise QualificationError("provider control metadata mismatch")
+    expected_digests = {
+        key.removeprefix(PREFIX): base64.b64encode(hashlib.sha256(value).digest()).decode()
+        for key, value in executable_map(source).items()}
+    expected_digests["source-binding.json"] = base64.b64encode(
+        hashlib.sha256(controls["source-binding.json"]).digest()).decode()
+    if metadata["digest"] != {"algorithm": "sha256", "files": expected_digests}:
+        raise QualificationError("provider control digest mismatch")
+    if (type(binding) is not dict
+            or binding.get("schema") != "szl.hf-first-class-kernel-binding/v1"
+            or binding.get("source_repository") != SOURCE_REPOSITORY
+            or binding.get("source_revision") != SOURCE_REVISION):
+        raise QualificationError("provider source binding mismatch")
+    artifact = binding.get("artifact")
+    if (type(artifact) is not dict or artifact.get("repo_id") != HUB_REPOSITORY
+            or artifact.get("repo_type") != "kernel" or artifact.get("backend") != "torch-cpu"
+            or artifact.get("package") != "szl_kernels"
+            or type(artifact.get("version")) is not int or artifact["version"] != 1):
+        raise QualificationError("provider artifact binding mismatch")
+
+
 def stage_local(root: Path, source: dict[str, bytes]) -> None:
     mapped = executable_map(source)
     for relative, data in mapped.items():
@@ -164,6 +240,15 @@ def validate_report(report: Any, lane: str, source: dict[str, bytes] | None = No
     packages = report.get("installed_packages")
     if not isinstance(packages, dict) or packages.get("kernels") != CLIENT_VERSION:
         raise QualificationError("missing installed-client observation")
+    if lane == "provider" and report.get("state") != "SOURCE_PROVIDER_DRIFT":
+        encoded = report.get("provider_control_bytes")
+        if source is None or type(encoded) is not dict or set(encoded) != {"metadata.json", "source-binding.json"}:
+            raise QualificationError("provider control byte evidence required")
+        try:
+            controls = {key: base64.b64decode(value, validate=True) for key, value in encoded.items()}
+        except (ValueError, TypeError) as exc:
+            raise QualificationError("invalid provider control encoding") from exc
+        validate_control_bytes(source, controls)
     if report.get("state") in BLOCKERS and lane == "provider":
         if report.get("runtime_qualified") is not False or report.get("smoke") is not None:
             raise QualificationError("blocked provider cannot claim execution")
@@ -226,10 +311,9 @@ def observe(lane: str) -> dict[str, Any]:
             raise QualificationError("provider revision mismatch")
         expected = executable_map(source)
         allowed = set(expected) | {PREFIX + "metadata.json", PREFIX + "source-binding.json"}
-        siblings = {entry.rfilename: entry for entry in info.siblings}
-        if len(siblings) != len(info.siblings):
-            raise QualificationError("duplicate provider files")
-        actual_build = {name for name in siblings if name.startswith("build/")}
+        files = provider_files(api)
+        report["provider_tree_files"] = files
+        actual_build = {name for name in files if name.startswith("build/")}
         report["missing_files"] = sorted(set(expected) - actual_build)
         report["unexpected_build_files"] = sorted(actual_build - allowed)
         if report["missing_files"] or report["unexpected_build_files"]:
@@ -237,7 +321,7 @@ def observe(lane: str) -> dict[str, Any]:
             return report
         observed = {}
         for name in sorted(expected):
-            size = siblings[name].size
+            size = files[name]
             if type(size) is not int or not 0 < size <= MAX_BYTES:
                 raise QualificationError("provider file size unavailable or excessive")
             path = hf_hub_download(HUB_REPOSITORY, filename=name, repo_type="kernel", revision=HUB_REVISION, token=False)
@@ -249,6 +333,20 @@ def observe(lane: str) -> dict[str, Any]:
         if not report["byte_comparison"]["all_equal"]:
             report["state"] = "SOURCE_PROVIDER_DRIFT"
             return report
+        controls = {}
+        for name in ("metadata.json", "source-binding.json"):
+            key = PREFIX + name
+            size = files.get(key)
+            if type(size) is not int or not 0 < size <= 65536:
+                raise QualificationError("provider control file unavailable or excessive")
+            path = hf_hub_download(HUB_REPOSITORY, filename=key, repo_type="kernel", revision=HUB_REVISION, token=False)
+            data = Path(path).read_bytes()
+            if len(data) != size:
+                raise QualificationError("provider control file size changed")
+            controls[name] = data
+        validate_control_bytes(source, controls)
+        report["provider_control_bytes"] = {key: base64.b64encode(value).decode()
+                                            for key, value in controls.items()}
         trust = getattr(api.get_organization_overview("SZLHOLDINGS"), "trustedKernelPublisher", None)
         if trust is not True:
             report["state"] = "PUBLISHER_UNTRUSTED" if trust is False else "PUBLISHER_TRUST_UNKNOWN"
