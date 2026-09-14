@@ -1,18 +1,13 @@
 #!/usr/bin/env python3
+"""Fail-closed LoRA merge for the 2026-09-13 empty-merge incident.
+
+The critical invariant is source-to-target binding: an adapter module such as
+``model.layers.0.self_attn.q_proj.lora_A.weight`` updates the base tensor
+``model.layers.0.self_attn.q_proj.weight``.  A missing, ambiguous, duplicated,
+shape-incompatible, or zero-delta target aborts before any output is written.
 """
-Hardened LoRA merge — the fix for the 2026-09-13 empty-merge incident.
+from __future__ import annotations
 
-Policy (frontier/HF_FRONTIER_DELTA_2026-09-14.md):
-  1. STRICT key matching: every adapter key must map to a base tensor. Unmapped keys hard-fail.
-  2. Zero-delta assert: every target module must show a non-zero weight delta. Zero delta hard-fails.
-  3. Merge receipt: modules applied, per-module delta checksums, method, written next to the output.
-
-Usage:
-  python merge_lora_hardened.py --base Qwen/Qwen3.5-0.8B --adapter ./chaski_r2_adapter \
-      --out ./chaski_r2_merged --alpha 16 --rank 32
-
-Exit codes: 0 = clean merge, 1 = hard failure (no output written).
-"""
 import argparse
 import hashlib
 import json
@@ -22,109 +17,182 @@ from pathlib import Path
 import torch
 from safetensors.torch import load_file, save_file
 
-# Key-normalization rules learned from the incident: Unsloth on the Qwen3.5 mm build
-# saves LoRA keys with a different module path and no adapter-name segment.
-def normalize_key(key: str) -> str:
-    k = key
-    for marker in (".adapter.", ".default.", ".base_model.model."):
-        if marker in k:
-            k = k.replace(marker, ".")
-    k = k.replace(".self_attn.", ".self_attn.")
-    if k.startswith("base_model."):
-        k = k[len("base_model."):]
-    return k
+_LORA_SUFFIXES = (
+    (".lora_A.default.weight", "A"),
+    (".lora_B.default.weight", "B"),
+    (".lora_A.weight", "A"),
+    (".lora_B.weight", "B"),
+)
+_LEADING_WRAPPERS = ("base_model.model.", "base_model.")
 
 
-def delta_checksum(base_t: torch.Tensor, merged_t: torch.Tensor) -> str:
-    d = (merged_t.float() - base_t.float()).abs()
-    return hashlib.sha256(d.cpu().numpy().tobytes()).hexdigest()[:16]
+def normalize_module_stem(key: str) -> tuple[str, str] | None:
+    """Return (base-module stem, side) for supported PEFT/Unsloth LoRA keys."""
+    suffix = next(((s, side) for s, side in _LORA_SUFFIXES if key.endswith(s)), None)
+    if suffix is None:
+        return None
+    suffix_text, side = suffix
+    stem = key[: -len(suffix_text)]
+    for prefix in _LEADING_WRAPPERS:
+        if stem.startswith(prefix):
+            stem = stem[len(prefix) :]
+            break
+    if not stem or stem.endswith("."):
+        raise ValueError(f"invalid normalized LoRA stem from {key!r}")
+    return stem, side
+
+
+def base_weight_key(stem: str, base_keys: set[str]) -> str:
+    """Resolve exactly one base weight tensor for a normalized LoRA module stem."""
+    candidates = [f"{stem}.weight"]
+    # Some checkpoints retain an outer model. wrapper after PEFT removes its own.
+    if stem.startswith("model."):
+        candidates.append(f"{stem[len('model.'):]}.weight")
+    else:
+        candidates.append(f"model.{stem}.weight")
+    matches = [candidate for candidate in dict.fromkeys(candidates) if candidate in base_keys]
+    if len(matches) != 1:
+        raise KeyError(
+            f"LoRA module {stem!r} must resolve to exactly one base weight tensor; "
+            f"matches={matches!r} candidates={candidates!r}"
+        )
+    return matches[0]
+
+
+def delta_checksum(delta: torch.Tensor) -> str:
+    return hashlib.sha256(delta.float().cpu().numpy().tobytes()).hexdigest()
+
+
+def collect_targets(adapter: dict[str, torch.Tensor], base: dict[str, torch.Tensor]) -> dict[str, tuple[torch.Tensor, torch.Tensor]]:
+    sides: dict[str, dict[str, torch.Tensor]] = {}
+    source_keys: dict[tuple[str, str], str] = {}
+    for key, tensor in adapter.items():
+        normalized = normalize_module_stem(key)
+        if normalized is None:
+            continue
+        stem, side = normalized
+        slot = (stem, side)
+        if slot in source_keys:
+            raise ValueError(
+                f"duplicate normalized LoRA {side} target {stem!r}: "
+                f"{source_keys[slot]!r} and {key!r}"
+            )
+        source_keys[slot] = key
+        sides.setdefault(stem, {})[side] = tensor
+
+    if not sides:
+        raise ValueError("adapter contains no supported LoRA A/B tensors")
+
+    targets: dict[str, tuple[torch.Tensor, torch.Tensor]] = {}
+    base_keys = set(base)
+    for stem, pair in sides.items():
+        if set(pair) != {"A", "B"}:
+            raise ValueError(f"LoRA target {stem!r} is unpaired; sides={sorted(pair)}")
+        key = base_weight_key(stem, base_keys)
+        a, b = pair["A"], pair["B"]
+        weight = base[key]
+        if a.ndim != 2 or b.ndim != 2 or weight.ndim != 2:
+            raise ValueError(f"LoRA/base tensors for {key!r} must all be rank-2")
+        if b.shape[1] != a.shape[0] or (b.shape[0], a.shape[1]) != tuple(weight.shape):
+            raise ValueError(
+                f"shape mismatch for {key!r}: A={tuple(a.shape)} B={tuple(b.shape)} "
+                f"weight={tuple(weight.shape)}"
+            )
+        if key in targets:
+            raise ValueError(f"multiple LoRA modules resolved to base tensor {key!r}")
+        targets[key] = (a, b)
+    return targets
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--base", required=True, help="Path to base model safetensors dir")
-    ap.add_argument("--adapter", required=True, help="Path to adapter dir (adapter_model.safetensors)")
-    ap.add_argument("--out", required=True, help="Output dir for merged checkpoint")
-    ap.add_argument("--alpha", type=float, required=True, help="LoRA alpha")
-    ap.add_argument("--rank", type=int, required=True, help="LoRA rank r")
-    ap.add_argument("--expect-modules", type=int, default=96, help="Expected target module count")
-    args = ap.parse_args()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--base", required=True, help="Local base-model safetensors directory")
+    parser.add_argument("--adapter", required=True, help="Local adapter directory")
+    parser.add_argument("--out", required=True, help="New output directory")
+    parser.add_argument("--alpha", type=float, required=True)
+    parser.add_argument("--rank", type=int, required=True)
+    parser.add_argument("--expect-modules", type=int, default=96)
+    args = parser.parse_args()
+
+    if args.rank <= 0 or args.alpha <= 0 or args.expect_modules <= 0:
+        print("FAIL: alpha, rank, and expect-modules must be positive", file=sys.stderr)
+        return 1
+
+    out_dir = Path(args.out)
+    if out_dir.exists():
+        print("FAIL: output directory already exists; refusing partial/overwrite semantics", file=sys.stderr)
+        return 1
 
     base_files = sorted(Path(args.base).glob("*.safetensors"))
     adapter_file = Path(args.adapter) / "adapter_model.safetensors"
-    if not base_files or not adapter_file.exists():
+    if not base_files or not adapter_file.is_file():
         print("FAIL: base safetensors or adapter_model.safetensors not found", file=sys.stderr)
         return 1
 
-    base = {}
-    for f in base_files:
-        base.update(load_file(str(f)))
-    adapter = load_file(str(adapter_file))
-
-    lora_A = {normalize_key(k): v for k, v in adapter.items() if k.endswith(".lora_A.weight")}
-    lora_B = {normalize_key(k): v for k, v in adapter.items() if k.endswith(".lora_B.weight")}
-
-    targets = {}
-    for k, a in lora_A.items():
-        stem = k[: -len(".lora_A.weight")]
-        b = lora_B.get(stem + ".lora_B.weight")
-        if b is None:
-            print(f"FAIL: unpaired lora_A without lora_B: {stem}", file=sys.stderr)
-            return 1
-        targets[stem] = (a, b)
-
-    # STRICT MATCHING: every adapter target must exist in the base tensors.
-    missing = [t for t in targets if t not in base]
-    if missing:
-        print(f"FAIL: {len(missing)} adapter keys matched no base tensor (silent no-op risk):", file=sys.stderr)
-        for m in missing[:10]:
-            print(f"  {m}", file=sys.stderr)
+    try:
+        base: dict[str, torch.Tensor] = {}
+        for file in base_files:
+            for key, tensor in load_file(str(file)).items():
+                if key in base:
+                    raise ValueError(f"duplicate base tensor across shards: {key}")
+                base[key] = tensor
+        adapter = dict(load_file(str(adapter_file)))
+        targets = collect_targets(adapter, base)
+    except (KeyError, ValueError) as exc:
+        print(f"FAIL: {exc}", file=sys.stderr)
         return 1
+
     if len(targets) != args.expect_modules:
-        print(f"FAIL: expected {args.expect_modules} target modules, found {len(targets)}", file=sys.stderr)
+        print(
+            f"FAIL: expected {args.expect_modules} target modules, resolved {len(targets)}",
+            file=sys.stderr,
+        )
         return 1
 
     scale = args.alpha / args.rank
     merged = dict(base)
-    receipt = {
-        "method": "manual LoRA merge: W' = W + (alpha/r) * B @ A",
+    receipt: dict[str, object] = {
+        "schema": "szl.forge.lora-merge-receipt.v1",
+        "method": "W' = W + (alpha/r) * B @ A",
         "alpha": args.alpha,
         "rank": args.rank,
         "scale": scale,
-        "modules_applied": 0,
-        "zero_delta_failures": [],
+        "expectedModules": args.expect_modules,
+        "modulesApplied": 0,
+        "baseFiles": [file.name for file in base_files],
+        "adapterFile": adapter_file.name,
         "deltas": {},
     }
 
-    for stem, (a, b) in targets.items():
-        w = base[stem]
-        delta = (scale * (b @ a)).to(w.dtype)
-        if delta.abs().max().item() == 0.0:
-            receipt["zero_delta_failures"].append(stem)
-            continue
-        merged[stem] = w + delta
-        receipt["modules_applied"] += 1
-        receipt["deltas"][stem] = delta_checksum(w, merged[stem])
+    deltas: dict[str, str] = {}
+    for key, (a, b) in sorted(targets.items()):
+        weight = base[key]
+        delta = (scale * (b.float() @ a.float())).to(weight.dtype)
+        if not torch.isfinite(delta).all().item():
+            print(f"FAIL: non-finite delta for {key}", file=sys.stderr)
+            return 1
+        if torch.count_nonzero(delta).item() == 0:
+            print(f"FAIL: zero delta for {key}", file=sys.stderr)
+            return 1
+        merged_weight = weight + delta
+        if torch.equal(merged_weight, weight):
+            print(f"FAIL: dtype rounding produced unchanged target {key}", file=sys.stderr)
+            return 1
+        merged[key] = merged_weight
+        deltas[key] = delta_checksum(delta)
 
-    if receipt["zero_delta_failures"]:
-        print(f"FAIL: {len(receipt['zero_delta_failures'])} modules had zero delta — merge aborted", file=sys.stderr)
-        for m in receipt["zero_delta_failures"][:10]:
-            print(f"  {m}", file=sys.stderr)
-        return 1
-    if receipt["modules_applied"] != len(targets):
-        print(f"FAIL: applied {receipt['modules_applied']}/{len(targets)} modules", file=sys.stderr)
-        return 1
+    receipt["modulesApplied"] = len(targets)
+    receipt["deltas"] = deltas
 
-    out_dir = Path(args.out)
-    out_dir.mkdir(parents=True, exist_ok=True)
+    out_dir.mkdir(parents=False)
     save_file(merged, str(out_dir / "model.safetensors"), metadata={"format": "pt"})
-
-    receipt_path = out_dir / "merge_receipt.json"
-    receipt_path.write_text(json.dumps(receipt, indent=2))
-    print(f"OK: {receipt['modules_applied']}/{len(targets)} modules merged, zero-delta assert passed")
-    print(f"receipt: {receipt_path}")
+    (out_dir / "merge_receipt.json").write_text(
+        json.dumps(receipt, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    print(f"OK: {len(targets)}/{len(targets)} modules merged with non-zero deltas")
     return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())
