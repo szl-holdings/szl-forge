@@ -93,3 +93,17 @@ def test_single_flight_and_packaged_corpus_only(monkeypatch):
     finally:c._lock.release()
     monkeypatch.setenv('SECOND_BRAIN_CORPUS','unadmitted')
     with pytest.raises(BoundaryError):EvidenceBoundController.from_installed(TinyRLT(),c._principal,authorize=lambda *a:True)
+
+
+def test_witness_binds_requested_history_and_post_binds_actual_pre():
+    c,_,calls=setup()
+    first=c.evaluate([0,2,1],evidence_query='allowed')
+    edited=c.evaluate([1,2,1],evidence_query='allowed')
+    assert first['request_sha256'] != edited['request_sha256']
+    assert calls[0]['continuity'] == calls[2]['continuity']
+    assert nemo_digest(calls[0]) != nemo_digest(calls[2])
+    for pre,post in ((calls[0],calls[1]),(calls[2],calls[3])):
+        assert pre['request_sha256'] == post['request_sha256']
+        assert pre['pre_generation_envelope_sha256'] is None
+        assert post['pre_generation_envelope_sha256'] == nemo_digest(pre)
+        assert not {'history','evidence_query'} & pre.keys()

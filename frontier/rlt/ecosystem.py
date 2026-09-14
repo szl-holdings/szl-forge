@@ -126,7 +126,8 @@ class EvidenceBoundController:
         instance.installation = installs
         return instance
 
-    def _envelope(self, stage: str, bound: dict, scope: Scope, observation: dict) -> dict:
+    def _envelope(self, stage: str, bound: dict, scope: Scope, observation: dict,
+                  request_sha256: str, pre_envelope_sha256: str | None = None) -> dict:
         p = self._principal
         return {"schema": "szl.nemo.inference-envelope.v1", "stage": stage,
                 "witness_identity": {"artifact_kind": "SOFTWARE_KERNEL", "generative": False, "not_nemotron": True},
@@ -145,7 +146,8 @@ class EvidenceBoundController:
                 "claims": [{"label": "MEASURED", "statement_sha256": nemo_digest(observation)}],
                 "tool_intent": None, "action_admission": None, "receipt": None,
                 "tool_result": None, "postcondition": None,
-                "continuity": observation}
+                "continuity": observation, "request_sha256": request_sha256,
+                "pre_generation_envelope_sha256": pre_envelope_sha256}
 
     def _check(self, envelope: dict) -> dict:
         decision = self._witness(deepcopy(envelope))
@@ -184,12 +186,17 @@ class EvidenceBoundController:
                 candidate = Session(self._model, scope)
                 tokens = history
                 mode = "FRESH" if self._scope is None else "EVIDENCE_OR_HISTORY_REPLAY"
-            pre = self._check(self._envelope("PRE_GENERATION", bound, scope, candidate.observation()))
+            request_digest = nemo_digest({"history": history, "evidence_query": evidence_query,
+                                          "principal_sha256": self._principal.principal_sha256,
+                                          "scope": {"tenant": scope.tenant_sha256, "policy": scope.policy_sha256,
+                                                    "evidence": scope.evidence_sha256}})
+            pre = self._check(self._envelope("PRE_GENERATION", bound, scope, candidate.observation(), request_digest))
             logits = candidate.append(tokens)
             pred = int(logits[0,-1,LABEL_OFFSET:LABEL_OFFSET+3].argmax())
             post_observation = candidate.observation()
             post_observation["output_sha256"] = digest(canonical({"predicted_register_state": pred}))
-            post = self._check(self._envelope("POST_GENERATION", bound, scope, post_observation))
+            post = self._check(self._envelope("POST_GENERATION", bound, scope, post_observation,
+                                              request_digest, pre["input_sha256"]))
             artifact = candidate.checkpoint()
             self._cache, self._cache_digest = artifact, digest(artifact)
             self._scope, self._history = scope, tuple(history)
@@ -198,7 +205,7 @@ class EvidenceBoundController:
                     "task_verified": status == "VERIFIED_SYNTHETIC", "verification_scope": "EXACT_SYNTHETIC_REGISTER_FINAL_STATE_ONLY",
                     "model_matched_oracle": pred == target, "evidence_count": len(bound["items"]),
                     "evidence_sha256": scope.evidence_sha256, "observation": post_observation,
-                    "witness": [pre,post], "installation": self.installation,
+                    "witness": [pre,post], "request_sha256": request_digest, "installation": self.installation,
                     "executed": False, "execution_authority": "NONE", "receipt_status": "UNSIGNED"}
         finally:
             self._lock.release()
