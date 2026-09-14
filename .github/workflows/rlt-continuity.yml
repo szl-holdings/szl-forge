@@ -10,6 +10,9 @@ jobs:
   cpu-reference:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
     env:
       PIP_CONSTRAINT: ${{ runner.temp }}/rlt-cpu-constraint.txt
     strategy:

@@ -94,6 +94,7 @@ class RltCpuEnvironmentTests(unittest.TestCase):
         self.assertIn("tools/rlt_cpu_environment.py", workflow.split("  push:")[0])
         self.assertIn("tests/test_rlt_cpu_environment.py", workflow.split("  push:")[0])
         self.assertNotIn("paths:", workflow.split("  push:")[1].split("permissions:")[0])
+        self.assertIn("    defaults:\n      run:\n        shell: bash", workflow)
         self.assertIn("if: always()", workflow)
         self.assertIn("--steps 120", workflow)
         self.assertIn("--steps 8 --single-seed 17", workflow)
