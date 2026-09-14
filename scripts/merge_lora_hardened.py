@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -63,13 +64,23 @@ def delta_checksum(delta: torch.Tensor) -> str:
     return hashlib.sha256(delta.float().cpu().numpy().tobytes()).hexdigest()
 
 
-def collect_targets(adapter: dict[str, torch.Tensor], base: dict[str, torch.Tensor]) -> dict[str, tuple[torch.Tensor, torch.Tensor]]:
+def collect_targets(
+    adapter: dict[str, torch.Tensor], base: dict[str, torch.Tensor], *, expected_rank: int | None = None,
+) -> dict[str, tuple[torch.Tensor, torch.Tensor]]:
+    """Bind every tensor for the supported uniform-rank dense LoRA format.
+
+    Extra adapter tensors may encode bias, DoRA, saved modules or another named
+    adapter. Silently dropping them would recreate a partial/no-op merge, so
+    unsupported formats require a separate implementation rather than guessing.
+    """
+    if expected_rank is not None and (type(expected_rank) is not int or expected_rank <= 0):
+        raise ValueError("expected rank must be a positive integer")
     sides: dict[str, dict[str, torch.Tensor]] = {}
     source_keys: dict[tuple[str, str], str] = {}
     for key, tensor in adapter.items():
         normalized = normalize_module_stem(key)
         if normalized is None:
-            continue
+            raise ValueError(f"unsupported adapter tensor {key!r}; no tensors may be silently dropped")
         stem, side = normalized
         slot = (stem, side)
         if slot in source_keys:
@@ -91,8 +102,17 @@ def collect_targets(adapter: dict[str, torch.Tensor], base: dict[str, torch.Tens
         key = base_weight_key(stem, base_keys)
         a, b = pair["A"], pair["B"]
         weight = base[key]
-        if a.ndim != 2 or b.ndim != 2 or weight.ndim != 2:
-            raise ValueError(f"LoRA/base tensors for {key!r} must all be rank-2")
+        for role, tensor in (("A", a), ("B", b), ("base", weight)):
+            if not isinstance(tensor, torch.Tensor) or tensor.ndim != 2:
+                raise ValueError(f"LoRA/base tensors for {key!r} must all be rank-2")
+            if any(dimension <= 0 for dimension in tensor.shape):
+                raise ValueError(f"LoRA/base dimensions for {key!r} must be positive")
+            if tensor.dtype not in (torch.float16, torch.bfloat16, torch.float32):
+                raise ValueError(f"unsupported {role} tensor dtype for {key!r}")
+            if not torch.isfinite(tensor).all().item():
+                raise ValueError(f"non-finite {role} tensor for {key!r}")
+        if expected_rank is not None and a.shape[0] != expected_rank:
+            raise ValueError(f"observed LoRA rank for {key!r} differs from declared rank {expected_rank}")
         if b.shape[1] != a.shape[0] or (b.shape[0], a.shape[1]) != tuple(weight.shape):
             raise ValueError(
                 f"shape mismatch for {key!r}: A={tuple(a.shape)} B={tuple(b.shape)} "
@@ -114,8 +134,8 @@ def main() -> int:
     parser.add_argument("--expect-modules", type=int, default=96)
     args = parser.parse_args()
 
-    if args.rank <= 0 or args.alpha <= 0 or args.expect_modules <= 0:
-        print("FAIL: alpha, rank, and expect-modules must be positive", file=sys.stderr)
+    if args.rank <= 0 or not math.isfinite(args.alpha) or args.alpha <= 0 or args.expect_modules <= 0:
+        print("FAIL: alpha must be finite and alpha, rank, and expect-modules must be positive", file=sys.stderr)
         return 1
 
     out_dir = Path(args.out)
@@ -137,7 +157,7 @@ def main() -> int:
                     raise ValueError(f"duplicate base tensor across shards: {key}")
                 base[key] = tensor
         adapter = dict(load_file(str(adapter_file)))
-        targets = collect_targets(adapter, base)
+        targets = collect_targets(adapter, base, expected_rank=args.rank)
     except (KeyError, ValueError) as exc:
         print(f"FAIL: {exc}", file=sys.stderr)
         return 1
@@ -175,6 +195,11 @@ def main() -> int:
             print(f"FAIL: zero delta for {key}", file=sys.stderr)
             return 1
         merged_weight = weight + delta
+        # A finite delta and a finite input can still overflow in the output dtype.
+        # Check the actual value to be serialized, before creating any output.
+        if not torch.isfinite(merged_weight).all().item():
+            print(f"FAIL: non-finite merged weight for {key}", file=sys.stderr)
+            return 1
         if torch.equal(merged_weight, weight):
             print(f"FAIL: dtype rounding produced unchanged target {key}", file=sys.stderr)
             return 1
@@ -187,7 +212,7 @@ def main() -> int:
     out_dir.mkdir(parents=False)
     save_file(merged, str(out_dir / "model.safetensors"), metadata={"format": "pt"})
     (out_dir / "merge_receipt.json").write_text(
-        json.dumps(receipt, indent=2, sort_keys=True) + "\n",
+        json.dumps(receipt, indent=2, sort_keys=True, allow_nan=False) + "\n",
         encoding="utf-8",
     )
     print(f"OK: {len(targets)}/{len(targets)} modules merged with non-zero deltas")
