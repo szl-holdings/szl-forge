@@ -9,7 +9,7 @@ description = "Bounded CPU recurrent-state continuity reference and measured rep
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.11,<3.14"
-dependencies = ["torch==2.10.0", "safetensors[torch]==0.7.0", "numpy==2.3.5"]
+dependencies = ["torch==2.13.0", "safetensors[torch]==0.7.0", "numpy==2.3.5"]
 
 [project.optional-dependencies]
 estate = [
