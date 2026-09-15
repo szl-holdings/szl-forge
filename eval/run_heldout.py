@@ -56,14 +56,63 @@ def matches(output: str, prompt: dict) -> bool:
     return False
 
 
+def _stage_merged_model(model_ref, revision):
+    # Stage a published merged full model at an exact revision.
+    # Repos may ship model.safetensors (merged) alongside a preserved adapter.
+    # transformers auto-detects adapter_config.json and rebuilds base+adapter
+    # from base_model_name_or_path instead of loading the published merged
+    # weights; that path depends on a mutable third-party base and can mask a
+    # defective merge. Staging the merged files gates the published bytes.
+    import os
+    import shutil
+    import tempfile
+
+    if not ("/" in model_ref) or os.path.isdir(model_ref):
+        return None
+    try:
+        from huggingface_hub import hf_hub_download
+        from huggingface_hub.utils import EntryNotFoundError
+    except ImportError:
+        return None
+    try:
+        hf_hub_download(repo_id=model_ref, filename="model.safetensors", revision=revision)
+    except EntryNotFoundError:
+        return None
+    staging = tempfile.mkdtemp(prefix="szl_gate_merged_")
+    for filename in (
+        "model.safetensors",
+        "config.json",
+        "generation_config.json",
+        "tokenizer.json",
+        "tokenizer_config.json",
+        "chat_template.jinja",
+    ):
+        try:
+            fetched = hf_hub_download(repo_id=model_ref, filename=filename, revision=revision)
+        except EntryNotFoundError:
+            continue
+        real = os.path.realpath(fetched)
+        dst = os.path.join(staging, filename)
+        try:
+            os.link(real, dst)
+        except OSError:
+            shutil.copyfile(real, dst)
+    return staging
+
+
 def run_transformers_cpu(model_ref: str, prompts: list, revision: str | None = None) -> list[str]:
     """Generate with a local/Hub model; exact Hub revisions are forwarded."""
     import torch  # noqa: F401
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
-    kwargs = {"revision": revision} if revision else {}
-    tokenizer = AutoTokenizer.from_pretrained(model_ref, **kwargs)
-    model = AutoModelForCausalLM.from_pretrained(model_ref, **kwargs)
+    staging = _stage_merged_model(model_ref, revision)
+    if staging is not None:
+        tokenizer = AutoTokenizer.from_pretrained(staging)
+        model = AutoModelForCausalLM.from_pretrained(staging)
+    else:
+        kwargs = {"revision": revision} if revision else {}
+        tokenizer = AutoTokenizer.from_pretrained(model_ref, **kwargs)
+        model = AutoModelForCausalLM.from_pretrained(model_ref, **kwargs)
     outputs: list[str] = []
     for prompt in prompts:
         ids = tokenizer(prompt["prompt"], return_tensors="pt")
