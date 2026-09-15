@@ -1,16 +1,18 @@
 name: RLT continuity research
 on:
   pull_request:
-    paths: ['frontier/rlt/**', '.github/workflows/rlt-continuity.yml']
+    paths: ['frontier/rlt/**', 'inference/**', 'pyproject.toml', 'tools/rlt_cpu_environment.py', 'tests/test_rlt_cpu_environment.py', '.github/workflows/rlt-continuity.yml']
   push:
     branches: [main]
-    paths: ['frontier/rlt/**', '.github/workflows/rlt-continuity.yml']
 permissions:
   contents: read
 jobs:
   cpu-reference:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
     strategy:
       fail-fast: false
       matrix:
@@ -22,11 +24,20 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: ${{ matrix.python }}
-      - name: Install declared CPU research package
+      - name: Verify CPU environment contract and derive the single source pin
         run: |
-          python -m pip install torch==2.10.0 --index-url https://download.pytorch.org/whl/cpu
-          python -m pip install ./frontier/rlt pytest==9.0.2 build==1.3.0
+          python -m unittest discover -s tests -p test_rlt_cpu_environment.py -v
+          python -O -m unittest discover -s tests -p test_rlt_cpu_environment.py -v
+          PIP_CONSTRAINT="$RUNNER_TEMP/rlt-cpu-constraint.txt"
+          python tools/rlt_cpu_environment.py requirement > "$PIP_CONSTRAINT"
+          printf 'PIP_CONSTRAINT=%s\n' "$PIP_CONSTRAINT" >> "$GITHUB_ENV"
+      - name: Install declared CPU research and exact estate packages
+        run: |
+          python -m pip install -r "$PIP_CONSTRAINT" --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install './frontier/rlt[estate]' pytest==9.0.2 build==1.3.0
+          python -m pip install --no-deps .
           python -m pip check
+          python tools/rlt_cpu_environment.py verify 2>&1 | tee "$RUNNER_TEMP/rlt-cpu-environment.json"
       - name: Contract and tensor tests
         run: python -m pytest frontier/rlt/tests -q
       - name: Build and install the wheel
@@ -34,8 +45,36 @@ jobs:
           python -m build --wheel --outdir "$RUNNER_TEMP/rlt-dist" frontier/rlt
           python -m pip install --force-reinstall --no-deps "$RUNNER_TEMP"/rlt-dist/*.whl
           python -m pip check
-      - name: Installed-mode execution outside checkout
+          python tools/rlt_cpu_environment.py verify 2>&1 | tee "$RUNNER_TEMP/rlt-cpu-wheel-environment.json"
+      - name: Installed execution outside checkout
         working-directory: ${{ runner.temp }}
         run: |
-          python -c 'import frontier.rlt, os; assert not os.path.realpath(frontier.rlt.__file__).startswith(os.environ["GITHUB_WORKSPACE"] + os.sep)'
-          szl-rlt-research --output "$RUNNER_TEMP/rlt-measured-run"
+          python -I -c 'import frontier.rlt, os; assert not os.path.realpath(frontier.rlt.__file__).startswith(os.environ["GITHUB_WORKSPACE"] + os.sep)'
+          python -I -m frontier.rlt --output "$RUNNER_TEMP/rlt-continuity"
+      - name: Train all disclosed seeds and baselines (Python 3.12)
+        if: matrix.python == '3.12'
+        working-directory: ${{ runner.temp }}
+        run: python -I -m frontier.rlt.training --output "$RUNNER_TEMP/rlt-training" --steps 120
+      - name: Bounded optimizer and export smoke (Python 3.11)
+        if: matrix.python == '3.11'
+        working-directory: ${{ runner.temp }}
+        run: python -I -m frontier.rlt.training --output "$RUNNER_TEMP/rlt-training" --steps 8 --single-seed 17
+      - name: Actual installed Second Brain and Nemo integration
+        working-directory: ${{ runner.temp }}
+        run: |
+          unset SECOND_BRAIN_CORPUS AYLLU_BRAIN_CORPUS
+          EXPECTED=$(python -I -c 'import json,os; p=json.load(open(os.environ["RUNNER_TEMP"]+"/rlt-training/evaluation.json")); print(next(r["weight_sha256"] for r in p["runs"] if r["variant"]=="rlt" and r["seed"]==17))')
+          python -I -m frontier.rlt.ecosystem --weights "$RUNNER_TEMP/rlt-training/rlt-17.safetensors" --expected-sha256 "$EXPECTED" > "$RUNNER_TEMP/rlt-training/estate-integration.json"
+          python -I -m frontier.rlt.reporting --evaluation "$RUNNER_TEMP/rlt-training/evaluation.json" --output "$RUNNER_TEMP/rlt-training/index.html"
+      - name: Retain synthetic weights and sanitized evidence (not private state)
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: rlt-synthetic-evidence-${{ matrix.python }}
+          path: |
+            ${{ runner.temp }}/rlt-training/
+            ${{ runner.temp }}/rlt-cpu-constraint.txt
+            ${{ runner.temp }}/rlt-cpu-environment.json
+            ${{ runner.temp }}/rlt-cpu-wheel-environment.json
+          if-no-files-found: error
+          retention-days: 30

@@ -4,12 +4,18 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "szl-forge-rlt-research"
-version = "0.1.0"
+version = "0.2.0"
 description = "Bounded CPU recurrent-state continuity reference and measured replay evidence; not a trained model."
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.11,<3.14"
-dependencies = ["torch==2.10.0", "safetensors[torch]==0.7.0", "numpy==2.3.5"]
+dependencies = ["torch==2.13.0", "safetensors[torch]==0.7.0", "numpy==2.3.5"]
+
+[project.optional-dependencies]
+estate = [
+  "szl-nemo @ git+https://github.com/szl-holdings/szl-nemo.git@158fd7e072da1086ff15405dda5df1718de1ff22",
+  "szl-second-brain @ git+https://github.com/szl-holdings/szl-second-brain.git@25c12301e2fdcb8876352f6566dc2f4d2c6710fc",
+]
 
 [project.scripts]
 szl-rlt-research = "frontier.rlt.cli:main"

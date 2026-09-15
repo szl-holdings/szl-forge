@@ -23,13 +23,13 @@ import tempfile
 from typing import Any
 
 SOURCE_REPOSITORY = "szl-holdings/szl-kernels"
-SOURCE_REVISION = "782c04a5c6affffdb8f497e77ae2d0fd8d73ed70"
+SOURCE_REVISION = "13668fd1b22890d6a3b92d3cd9ee516ec5a267c9"
 HUB_REPOSITORY = "SZLHOLDINGS/szl-kernels"
 HUB_REVISION = "09818b62d683c33d200fca32e2ebfd95c64c65c7"
 CLIENT_VERSION = "0.16.1"
 SOURCE_BLOBS = {
     "_kernel_api.py": "c575c6e767f5fca7d184447f82e6d100448304f8",
-    "_chain.py": "30cea88b060451333dcdced3da22c2022240ba23",
+    "_chain.py": "87118ab32287dad4b64a6c0a92d61ac3bf58d05c",
     "_ops.py": "fa0c3bf41d64f9c332b0d3c47ba5b64f87db0942",
     "retrieval.py": "7588d75d18366619a06f6465eb0c0fc3fd0771ff",
 }
