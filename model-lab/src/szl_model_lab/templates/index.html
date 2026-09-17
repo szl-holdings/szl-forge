@@ -22,7 +22,7 @@ nav{display:flex;gap:24px;flex-wrap:wrap;min-height:44px;align-items:center}nav 
 <body><main>
 <header><span class="eyebrow">SZL Holdings / Forge / Research</span><h1>Models, with boundaries.</h1>
 <p>Two advisory model recipes. Your existing pool remains in control. No training, remote generation, or publication runs from this interface.</p>
-<nav aria-label="Workbench"><a href="/">Model tracks</a><a href="/compute">Inspect configured compute</a><a href="/pool#pool">Canonical pool snapshot</a><a href="/corpus-review#corpus">Corpus review</a><a href="/api/catalog">Catalog JSON</a></nav></header>
+<nav aria-label="Workbench"><a href="/">Model tracks</a><a href="/compute">Inspect configured compute</a><a href="/pool#pool">Canonical pool snapshot</a><a href="/corpus-review#corpus">Corpus review</a><a href="/storage">Storage-aware research</a><a href="/api/catalog">Catalog JSON</a></nav></header>
 <section aria-labelledby="tracks"><h2 id="tracks">Model tracks</h2><div class="grid">
 {% for track in tracks %}<article class="card"><h3>{{ track.display_name }}</h3><span class="state">{{ track.state }}</span>
 <p>{{ track.boundary if track.boundary is defined else track.reason }}</p>

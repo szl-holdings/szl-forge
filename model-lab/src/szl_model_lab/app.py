@@ -227,4 +227,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 "action_authorized": False, "execution_performed": False,
                 "publication_eligible": False}
 
+    from .storage_web import register_storage
+    register_storage(app, authorize, env)
     return app
