@@ -1,0 +1,82 @@
+name: Public estate file census
+
+on:
+  pull_request:
+    paths:
+      - tools/observe_public_estate_files.py
+      - tests/test_public_estate_files.py
+      - tests/test_public_estate_rate_control.py
+      - docs/PUBLIC_ESTATE_FILE_CENSUS.md
+      - .github/workflows/public-estate-file-census.yml
+  push:
+    branches: [main]
+    paths:
+      - tools/observe_public_estate_files.py
+      - tests/test_public_estate_files.py
+      - tests/test_public_estate_rate_control.py
+      - docs/PUBLIC_ESTATE_FILE_CENSUS.md
+      - .github/workflows/public-estate-file-census.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-estate-file-census-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.11', '3.12']
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Run actual stdlib contracts normally and optimized
+        run: |
+          python -m unittest -v tests.test_public_estate_files tests.test_public_estate_rate_control
+          python -O -m unittest -v tests.test_public_estate_files tests.test_public_estate_rate_control
+          git diff --check
+
+  census:
+    needs: unit
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        lane: [github, huggingface]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Capture source-bound public file metadata; incomplete stays nonzero
+        env:
+          GITHUB_TOKEN: ${{ matrix.lane == 'github' && github.token || '' }}
+          CENSUS_LANE: ${{ matrix.lane }}
+        run: |
+          mkdir -p reports
+          python -I -B tools/observe_public_estate_files.py \
+            --lane "$CENSUS_LANE" \
+            --source-revision "$(git rev-parse HEAD)" \
+            --output "reports/public-files-$CENSUS_LANE.json"
+      - name: Preserve the public observation, including partial outcomes
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: public-files-${{ matrix.lane }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: reports/public-files-${{ matrix.lane }}.json
+          if-no-files-found: error
+          retention-days: 30
