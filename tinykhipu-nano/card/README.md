@@ -34,6 +34,8 @@ tags:
 > `custom_code` handler is added), treat this repo as a **test fixture**, not a
 > deployable model. Evidence status: plan_valid 1.00 / abstain 1.00 (SYNTHETIC).
 
+> **Now loadable:** [`load.py`](https://github.com/szl-holdings/szl-forge/blob/main/TinyKhipu-Nano/load.py) ships the forward pass — resolve the layout by shape, tanh hidden layer, softmax over NAVIGATE/ABSTAIN with the abstain-leaning margin. `python load.py 0.1,0.2,0.3,0.4` prints a class.
+
 <p align="center">
   <img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/main/tinykhipu-nano/card/holo-banner.svg" alt="TinyKhipu-Nano — holographic 4-6-2 MLP banner" width="100%"/>
 </p>
@@ -91,7 +93,7 @@ Infers on `POST /api/infer {"kind":"tiny_khipu"}`. Hard ID filter. **Not Qwen. N
 ## Limitations
 
 - Synthetic features. Perfect holdout is a design fact, not a field claim.
-- The 1.5B abstain rate is 2/6 — this nano does not wash that.
+- The signed 1.5B abstain line is 3/6 (owner-metal receipt 2026-09-08; earlier line 2/6) — this nano does not wash that.
 
 ## Honesty
 
