@@ -33,9 +33,11 @@ szl:
   tok_s_claim: false
   third_llm: false
   new_train: false
+  r2_rebuild: 2026-09-17
+  r2_gate: "5/5 + 6/6 MEASURED ollama"
 ---
 
-> **GGUF of a failed parent (chaski).** Not flagship. Not a11oy production.
+> **Rebuilt 2026-09-17 from the chaski-r2 winner (named-N gate champion).** Legacy GGUFs below are DEPRECATED failed-parent lineage. Not flagship. Not a11oy production.
 
 <p align="center">
   <img src="holo-banner.svg" alt="A11OY-MINI — holographic KANCHAY banner" width="100%"/>
@@ -97,6 +99,9 @@ Canonical GitHub: [`szl-holdings/szl-forge`](https://github.com/szl-holdings/szl
 | **Silhouette base** | `Qwen/Qwen3.5-0.8B` (named in prose only; no YAML `base_model`) |
 | **F16** | `a11oy-mini-f16.gguf` 1557662240 sha256 `a5df00e4e3ca07f65a4b43aad4ef1505625952a3105e6dcc0dba87f2fa35fc57` **MEASURED** |
 | **Q4_K_M** | `a11oy-mini-q4_k_m.gguf` 541903392 sha256 `06136ba385b2e052cf4cdb3dc8d333948e0b612bd15a541b314e170399c2faa6` **MEASURED** |
+| **R2 parent** | `chaski-r2` local named-N winner (GitHub receipts only; no Hub page) |
+| **R2 Q4_K_M** | `a11oy-mini-r2-Q4_K_M.gguf` 541903328 sha256 `6d42341c932a76e91b2c04a859a4248e7d2c77308f998a32771f43802f097b62` **MEASURED** - GGUF gate 5/5 + 6/6 (ollama, 2026-09-17) |
+| **R2 mmproj** | `a11oy-mini-r2-BF16-mmproj.gguf` 207346048 sha256 `4855efe034435b9b3b289b2c07d09b263c088749d1f85c43c1cf4672bc7fcbf2` **MEASURED** (vision projector pair) |
 | **Convert** | llama.cpp F16 then Q4_K_M |
 | **Banned** | Direct safetensors→Ollama. Lab load. |
 | **Evals** | none-this-run. Not 5/5. Bytes MEASURED is not an eval. |
