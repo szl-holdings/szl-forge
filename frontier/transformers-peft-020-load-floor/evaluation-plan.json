@@ -1,0 +1,119 @@
+{
+  "schema": "szl.forge.frontier-evaluation.v1",
+  "candidate": "transformers-peft-020-load-floor",
+  "frontierIssue": 142,
+  "forgeIssue": 316,
+  "source": {
+    "repository": "huggingface/transformers",
+    "revision": "75c3583e042c0765874784306fb9ace2137925d1",
+    "upstreamPullRequest": 48716,
+    "sourceClass": "POST_5_17_MAIN_ONLY_WATCH"
+  },
+  "peft": {
+    "stableMinimum": "0.20.0",
+    "stableTag": "v0.20.0",
+    "unreleasedSuccessorRevision": "e99fdd275075068d093f8996a59bc0eb865f71a2",
+    "unreleasedSuccessorQualification": "SEPARATE_WATCH"
+  },
+  "authority": {
+    "disposition": "EVALUATION_HOLD",
+    "trainingAuthorized": false,
+    "adapterPublicationAuthorized": false,
+    "modelPublicationAuthorized": false,
+    "providerWritesAuthorized": false,
+    "automaticPromotion": false,
+    "paidComputeAuthorizedByThisPlan": false,
+    "weightRehostingForInventory": false
+  },
+  "requiredPins": [
+    "transformers_git_revision",
+    "peft_version_and_source_digest",
+    "torch_version",
+    "safetensors_version",
+    "python_version",
+    "base_model_fixture_revision",
+    "adapter_fixture_digest",
+    "dependency_freeze_digest",
+    "launch_command"
+  ],
+  "currentEstatePins": [
+    {
+      "repository": "szl-holdings/a11oy",
+      "path": "training/box/requirements-box.txt",
+      "peft": "0.19.1",
+      "transformers": "5.10.1",
+      "classification": "INCUMBENT_PIN_NOT_DECLARED_BROKEN_BY_THIS_PLAN"
+    },
+    {
+      "repository": "szl-holdings/szl-gpu-bridge",
+      "path": "laptop/Dockerfile.nemo-v3",
+      "peft": "0.19.1",
+      "classification": "INCUMBENT_PIN_NOT_DECLARED_BROKEN_BY_THIS_PLAN"
+    },
+    {
+      "repository": "szl-holdings/szl-gpu-bridge",
+      "path": "laptop/bootstrap.ps1",
+      "peft": "0.19.1",
+      "classification": "INCUMBENT_PIN_NOT_DECLARED_BROKEN_BY_THIS_PLAN"
+    }
+  ],
+  "stages": [
+    {
+      "id": "P0",
+      "name": "exact-source-and-version-floor-preflight",
+      "acceptance": [
+        "Resolve exact Transformers source and PEFT 0.20.0 source/package identity before execution.",
+        "Read the pinned Transformers MIN_PEFT_VERSION from exact source rather than assuming moving-main behavior.",
+        "Reject or quarantine a successor plan requiring PEFT >=0.20.0 when that same planned environment pins 0.19.1.",
+        "Do not treat an incumbent older purpose-pinned stack as broken solely because a newer Transformers source raises its minimum."
+      ]
+    },
+    {
+      "id": "P1",
+      "name": "adapter-lifecycle-reference",
+      "acceptance": [
+        "Use fixed synthetic or public non-secret LoRA fixtures.",
+        "Exercise adapter load, add, switch, delete, save and reload.",
+        "Record adapter state keys, shapes, dtypes and content digests before and after round trip.",
+        "Require deterministic output parity within a declared numeric tolerance."
+      ]
+    },
+    {
+      "id": "P2",
+      "name": "stable-current-versus-successor-matrix",
+      "acceptance": [
+        "Run the same fixtures on the currently admitted Forge compatibility baseline and the exact successor pair.",
+        "Classify differences as expected API floor, regression, improvement, unsupported or unknown.",
+        "Package installation alone is not compatibility evidence."
+      ]
+    },
+    {
+      "id": "P3",
+      "name": "distributed-export-integrity-regression",
+      "acceptance": [
+        "Reuse the Frontier #110 / Forge #257/#258 gathered and ungathered LoRA integrity cases.",
+        "Preserve malformed lora_A/lora_B shape detection, exact base/adapter binding and immutable byte readback.",
+        "Explicitly supplied state_dict provenance remains UNKNOWN unless independently proven complete."
+      ]
+    },
+    {
+      "id": "P4",
+      "name": "owner-lane-handoff",
+      "acceptance": [
+        "Only after Forge correctness passes, hand the exact package set to szl-gpu-bridge for hardware/laptop qualification.",
+        "Only after owner-lane evidence passes may szl-holdings/a11oy consider a training-box pin update.",
+        "Preserve incumbent rollback until all owner-specific controls pass."
+      ]
+    },
+    {
+      "id": "P5",
+      "name": "failure-rollback-and-proof-boundary",
+      "acceptance": [
+        "Exercise incompatible-version, malformed-adapter, load failure, save failure and cancellation paths.",
+        "No Hugging Face artifact/runtime projection follows from partial evidence.",
+        "a-11-oy.com remains unchanged and a11oy.net may publish only exact-source measured receipts with known bounds."
+      ]
+    }
+  ],
+  "claimBoundary": "This plan prepares deterministic compatibility evaluation only. It does not authorize dependency promotion, training, model or adapter publication, runtime route changes, provider writes, or production claims."
+}
