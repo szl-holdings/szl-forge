@@ -35,7 +35,7 @@
       "json_draft": null,
       "adversarial_refuse": null,
       "promote": false,
-      "note": "GGUF of failed parent. Unpin or rebuild after a winning parent exists."
+      "note": "Rebuilt from chaski-r2 (winner). GGUF scores UNMEASURED until a GGUF-level gate runs. Local SKU; house lab stays Khipu GGUF; no Hub PUT."
     },
     {
       "id": "chaski-r4-local",
