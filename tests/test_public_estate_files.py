@@ -187,9 +187,9 @@ class HuggingFace(unittest.TestCase):
     def test_success_is_metadata_not_execution(self):
         fake = mock.Mock()
         fake.get.side_effect = [
-            ({"id": "SZLHOLDINGS/a", "sha": BLOB}, ""),
+            ({"id": "SZLHOLDINGS/a", "private": False, "sha": BLOB}, ""),
             ([{"path": "README.md", "type": "file", "oid": "b" * 40, "size": 4}], ""),
-            ({"id": "SZLHOLDINGS/a", "sha": BLOB}, ""),
+            ({"id": "SZLHOLDINGS/a", "private": False, "sha": BLOB}, ""),
         ]
         result = census.observe_hf_repo(fake, "models", "SZLHOLDINGS/a")
         self.assertTrue(result["complete"])
@@ -199,8 +199,8 @@ class HuggingFace(unittest.TestCase):
 
     def test_revision_movement_retains_exact_tree(self):
         fake = mock.Mock()
-        fake.get.side_effect = [({"id": "SZLHOLDINGS/a", "sha": BLOB}, ""), ([], ""),
-                                ({"id": "SZLHOLDINGS/a", "sha": "b" * 40}, "")]
+        fake.get.side_effect = [({"id": "SZLHOLDINGS/a", "private": False, "sha": BLOB}, ""), ([], ""),
+                                ({"id": "SZLHOLDINGS/a", "private": False, "sha": "b" * 40}, "")]
         result = census.observe_hf_repo(fake, "spaces", "SZLHOLDINGS/a")
         self.assertFalse(result["complete"])
         self.assertTrue(result["tree_complete"])
@@ -253,6 +253,176 @@ class Scope(unittest.TestCase):
                                        {"path": "server.py"}, {"path": "README.md"}])
         self.assertEqual(signals["frontend_paths"], 1)
         self.assertEqual(signals["test_paths"], 1)
+
+
+class GatedLfsMetadata(unittest.TestCase):
+    """Synthetic versions of the masked public shape; never real LFS payloads."""
+    @staticmethod
+    def item(oid=None):
+        return {"path": "model.safetensors", "type": "file", "oid": BLOB, "size": 42,
+                "lfs": {"oid": "*" * 64 if oid is None else oid, "size": 42, "pointerSize": 133}}
+
+    @staticmethod
+    def info(**changes):
+        return {"id": "SZLHOLDINGS/a", "private": False, "sha": BLOB, "gated": "auto", **changes}
+
+    def observation(self, *, before=None, after=None, entries=None):
+        before = self.info() if before is None else before
+        after = self.info() if after is None else after
+        entries = [self.item()] if entries is None else entries
+        fake = mock.Mock()
+        fake.get.side_effect = [(before, ""), (entries, ""),
+                                after if isinstance(after, Exception) else (after, "")]
+        return census.observe_hf_repo(fake, "models", "SZLHOLDINGS/a"), fake
+
+    def test_mask_is_never_a_digest_or_pointer_substitution(self):
+        row = census.hf_file_rows([self.item()], allow_redacted=True)[0]
+        self.assertEqual(row["oid"], BLOB)
+        self.assertIsNone(row["lfs_oid"])
+        self.assertEqual(row["lfs_identity_state"], "REDACTED")
+
+    def test_mask_requires_explicit_gated_context(self):
+        for allowed in (False, None, 0, 1, "true", [], {}):
+            with self.subTest(allowed=allowed), self.assertRaises(census.CensusError):
+                census.hf_file_rows([self.item()], allow_redacted=allowed)
+
+    def test_other_mask_and_digest_shapes_rejected(self):
+        values = ("*" * 63, "*" * 65, "*" * 63 + "a", "REDACTED", "sha256:" + "c" * 64,
+                  "c" * 63, "C" * 64, "c" * 64 + "\n", True, [], {}, 0, "")
+        for value in values:
+            with self.subTest(value=value), self.assertRaises(census.CensusError):
+                census.hf_file_rows([self.item(value)], allow_redacted=True)
+
+    def test_malformed_lfs_objects_rejected(self):
+        for lfs in ({}, {"size": 42}, {"oid": None, "size": 42}, [], "", True, 0):
+            entry = self.item()
+            entry["lfs"] = lfs
+            with self.subTest(lfs=lfs), self.assertRaises(census.CensusError):
+                census.hf_file_rows([entry], allow_redacted=True)
+
+    def test_lfs_size_must_be_typed_and_agree(self):
+        for size in (None, True, -1, 43, "42", 42.0):
+            entry = self.item()
+            entry["lfs"]["size"] = size
+            with self.subTest(size=size), self.assertRaisesRegex(census.CensusError, "HF_LFS_SIZE"):
+                census.hf_file_rows([entry], allow_redacted=True)
+
+    def test_lfs_pointer_size_must_be_positive_integer(self):
+        for size in (None, True, 0, -1, "133", 133.0):
+            entry = self.item()
+            entry["lfs"]["pointerSize"] = size
+            with self.subTest(size=size), self.assertRaisesRegex(census.CensusError, "HF_LFS_POINTER_SIZE"):
+                census.hf_file_rows([entry], allow_redacted=True)
+
+    def test_directory_cannot_declare_lfs(self):
+        entry = dict(self.item(), type="directory")
+        with self.assertRaises(census.CensusError):
+            census.hf_file_rows([entry], allow_redacted=True)
+
+    def test_regular_and_lfs_states_remain_distinct(self):
+        entry = self.item("c" * 64)
+        regular = {"path": "README.md", "type": "file", "oid": BLOB, "size": 1}
+        rows = census.hf_file_rows([entry, regular])
+        self.assertEqual(rows[0]["lfs_identity_state"], "NOT_REPORTED")
+        self.assertEqual(rows[1]["lfs_identity_state"], "OBSERVED")
+        self.assertEqual(rows[1]["lfs_oid"], "c" * 64)
+
+    def test_input_observation_not_mutated(self):
+        import copy
+        entry = self.item()
+        before = copy.deepcopy(entry)
+        census.hf_file_rows([entry], allow_redacted=True)
+        self.assertEqual(entry, before)
+
+    def test_redacted_tree_retained_but_item_stays_incomplete(self):
+        row, fake = self.observation()
+        self.assertEqual(fake.get.call_count, 3)
+        self.assertTrue(row["tree_complete"])
+        self.assertEqual(row["file_count"], 1)
+        self.assertEqual(row["redacted_lfs_file_count"], 1)
+        self.assertEqual(row["revision"], row["revision_after"])
+        self.assertIs(row["file_metadata_identity_complete"], False)
+        self.assertIs(row["complete"], False)
+        self.assertEqual(row["blockers"], ["HF_LFS_IDENTITY_REDACTED"])
+        self.assertFalse(row["content_bytes_verified"])
+        self.assertFalse(row["runtime_verified"])
+
+    def test_nongated_mask_cannot_be_admitted_as_redacted(self):
+        for gated in (False, True, None, "unknown", "AUTO", [], {}):
+            row, _ = self.observation(before=self.info(gated=gated))
+            with self.subTest(gated=gated):
+                self.assertFalse(row["complete"])
+                self.assertNotIn("entries", row)
+                self.assertIn("HF_LFS_IDENTITY", row["blockers"])
+
+    def test_manual_gate_supported_without_completion(self):
+        row, _ = self.observation(before=self.info(gated="manual"), after=self.info(gated="manual"))
+        self.assertTrue(row["tree_complete"])
+        self.assertFalse(row["complete"])
+
+    def test_partial_aggregate_retains_only_known_subtotal(self):
+        row, _ = self.observation()
+        result = census.summarize([row, {"complete": True, "file_count": 5}], True)
+        self.assertEqual(result["known_file_subtotal"], 6)
+        self.assertIsNone(result["complete_scope_file_count"])
+        self.assertFalse(result["complete"])
+        self.assertEqual(result["items_complete"], 1)
+
+    def test_final_visibility_failure_withholds_paths_and_counts(self):
+        for after in (self.info(private=True), self.info(private=None), self.info(private=0),
+                      self.info(id="OTHER/a"), {}, census.CensusError("HTTP_403")):
+            row, _ = self.observation(after=after)
+            with self.subTest(after=type(after).__name__):
+                self.assertFalse(row["complete"])
+                self.assertFalse(row["tree_complete"])
+                self.assertIsNone(row["file_count"])
+                self.assertNotIn("entries", row)
+                self.assertNotIn("redacted_lfs_file_count", row)
+                self.assertNotIn("path_signals", row)
+                self.assertNotIn("readme_present", row)
+
+    def test_ordinary_tree_also_withheld_when_final_visibility_fails(self):
+        row, _ = self.observation(entries=[self.item("c" * 64)], after=self.info(private=True))
+        self.assertNotIn("entries", row)
+        self.assertIsNone(row["file_count"])
+        self.assertIn("HF_PUBLIC_IDENTITY", row["blockers"])
+
+    def test_initial_public_identity_must_be_explicit_false(self):
+        for before in (self.info(private=None), self.info(private=0), {"id": "SZLHOLDINGS/a", "sha": BLOB}):
+            row, fake = self.observation(before=before)
+            self.assertEqual(fake.get.call_count, 1)
+            self.assertIn("HF_PUBLIC_IDENTITY", row["blockers"])
+            self.assertIsNone(row["file_count"])
+
+    def test_ref_movement_retains_observed_public_tree_not_complete(self):
+        row, _ = self.observation(after=self.info(sha="b" * 40))
+        self.assertTrue(row["tree_complete"])
+        self.assertEqual(row["file_count"], 1)
+        self.assertFalse(row["complete"])
+        self.assertIn("REF_MOVED", row["blockers"])
+        self.assertIn("HF_LFS_IDENTITY_REDACTED", row["blockers"])
+
+    def test_gate_movement_is_recorded_separately(self):
+        row, _ = self.observation(after=self.info(gated=False))
+        self.assertTrue(row["tree_complete"])
+        self.assertFalse(row["complete"])
+        self.assertIn("HF_ACCESS_POLICY_MOVED", row["blockers"])
+
+    def test_available_hash_is_not_content_execution(self):
+        row, _ = self.observation(entries=[self.item("c" * 64)])
+        self.assertTrue(row["complete"])
+        self.assertTrue(row["file_metadata_identity_complete"])
+        self.assertEqual(row["redacted_lfs_file_count"], 0)
+        self.assertFalse(row["content_bytes_verified"])
+        self.assertFalse(row["runtime_verified"])
+
+    def test_file_and_directory_counts_remain_separate(self):
+        entries = [dict(self.item(), path="adapter/model.safetensors"),
+                   {"path": "adapter", "type": "directory", "oid": BLOB, "size": 0}]
+        row, _ = self.observation(entries=entries)
+        self.assertEqual(len(row["entries"]), 2)
+        self.assertEqual(row["file_count"], 1)
+        self.assertFalse(row["complete"])
 
 
 if __name__ == "__main__":

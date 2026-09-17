@@ -101,3 +101,39 @@ Primary API contracts:
 - https://docs.github.com/en/rest/repos/repos#list-organization-repositories
 - https://huggingface.co/docs/huggingface_hub/guides/search
 - https://huggingface.co/docs/kernels/migration
+
+## Gated LFS metadata: retain observations without inventing hashes
+
+A bounded anonymous diagnostic on 2026-09-17 at 01:51:28 UTC observed
+`SZLHOLDINGS/SZL-Forge-1.5B-ReceiptAgent` at revision
+`8aa18ba91259b043a886f78ae78f4ff7c08852dd`, public with `gated=auto` before and
+after its tree request. Its 22 entries contain 20 files and two directories. Three
+LFS objects returned a 64-asterisk mask instead of the content hash: the adapter,
+model, and tokenizer. This explains the prior `HF_LFS_IDENTITY` exception for that
+revision; it does not establish corrupted weights, missing files, or permission
+to bypass model access terms. Native diagnostic:
+https://huggingface.co/jobs/SZLHOLDINGS/6aab479df76d6a098a712293
+
+The existing parser recognizes only that exact mask under explicit `auto` or
+`manual` gating. It preserves the file's path, size and Git pointer object ID,
+but emits `lfs_oid=null` and `lfs_identity_state=REDACTED`. A normal full lowercase
+SHA-256 remains `OBSERVED`; absent LFS metadata is `NOT_REPORTED`, not a claim that
+the file is definitely not LFS. Other malformed digests, malformed LFS objects,
+size disagreements and invalid pointer sizes remain errors. A pointer object's
+Git SHA must never replace an unavailable LFS content SHA.
+
+Enumeration and identity completeness are separate. A fully traversed, rechecked
+public tree may retain `tree_complete=true` and its known `file_count`, while
+`file_metadata_identity_complete=false`, `complete=false`, and
+`HF_LFS_IDENTITY_REDACTED` preserve the missing identity. The existing aggregate
+keeps complete-scope totals null and the CLI exits 2. Thus a recognized redaction
+does not turn a failed census green. A changed gate or source revision remains a
+separate blocker. Both before/after metadata reads must explicitly report
+`private=false`; an unavailable or changed final public identity withholds item
+paths, path signals and file counts. No credentials are acquired by this repair.
+
+Twenty added adversarial test methods cover these distinctions and preserve the
+original 33 methods. The 53-method suite passed locally under normal and optimized
+Python 3.13.5. This is repeated execution of the same suite, not 106 unique tests.
+The exact provider diagnosis and unit fixtures do not replace a fresh native
+whole-public-census observation or complete private/content/runtime qualification.

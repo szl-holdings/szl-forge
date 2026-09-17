@@ -416,7 +416,15 @@ def hf_members(client: Client, kind: str) -> list[str]:
     return sorted(ids)
 
 
-def hf_file_rows(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def hf_file_rows(items: list[dict[str, Any]], *, allow_redacted: bool = False) -> list[dict[str, Any]]:
+    """Retain masked gated metadata without inventing a content identity.
+
+    An exact 64-asterisk LFS oid was observed in an anonymous gated-model tree.
+    It is not a digest, and is recognized only under explicit gated metadata.
+    All other malformed identities still fail. This never downloads LFS bytes.
+    """
+    if not isinstance(items, list) or len(items) > MAX_TREE_ENTRIES:
+        raise CensusError("HF_TREE_ENTRY")
     seen, rows = set(), []
     for item in items:
         if not isinstance(item, dict):
@@ -431,44 +439,77 @@ def hf_file_rows(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 or (size is not None and (type(size) is not int or size < 0))):
             raise CensusError("HF_FILE_IDENTITY")
         lfs = item.get("lfs")
-        lfs_oid = lfs.get("oid") if isinstance(lfs, dict) else None
-        if lfs_oid is not None and (not isinstance(lfs_oid, str) or re.fullmatch(r"[0-9a-f]{64}", lfs_oid) is None):
-            raise CensusError("HF_LFS_IDENTITY")
-        rows.append(dict(path=path, type=kind, oid=oid, size=size, lfs_oid=lfs_oid))
+        lfs_oid, lfs_state = None, "NOT_REPORTED"
+        if lfs is not None:
+            if not isinstance(lfs, dict) or kind != "file":
+                raise CensusError("HF_LFS_IDENTITY")
+            declared = lfs.get("oid")
+            if isinstance(declared, str) and re.fullmatch(r"[0-9a-f]{64}", declared):
+                lfs_oid, lfs_state = declared, "OBSERVED"
+            elif declared == "*" * 64 and allow_redacted is True:
+                lfs_state = "REDACTED"
+            else:
+                raise CensusError("HF_LFS_IDENTITY")
+            lfs_size = lfs.get("size")
+            if (type(lfs_size) is not int or lfs_size < 0
+                    or (size is not None and size != lfs_size)):
+                raise CensusError("HF_LFS_SIZE")
+            pointer_size = lfs.get("pointerSize")
+            if "pointerSize" in lfs and (type(pointer_size) is not int or pointer_size <= 0):
+                raise CensusError("HF_LFS_POINTER_SIZE")
+        rows.append(dict(path=path, type=kind, oid=oid, size=size, lfs_oid=lfs_oid,
+                         lfs_identity_state=lfs_state))
     return sorted(rows, key=lambda e: e["path"])
 
 
 def observe_hf_repo(client: Client, kind: str, repo: str) -> dict[str, Any]:
     result: dict[str, Any] = {"repo_id": repo, "repo_type_endpoint": kind, "started_at": now(),
                              "complete": False, "tree_complete": False, "file_count": None,
+                             "file_metadata_identity_complete": False,
                              "content_bytes_verified": False, "runtime_verified": False, "blockers": []}
+    public_rechecked = False
     try:
         repo_id(repo, HF_ORG)
         if kind not in KINDS:
             raise CensusError("REPOSITORY_TYPE_SCOPE")
         url = f"{HF}/api/{kind}/{repo}"
         info, _ = client.get(url)
-        if not isinstance(info, dict) or info.get("id") != repo or info.get("private") is True:
+        if not isinstance(info, dict) or info.get("id") != repo or info.get("private") is not False:
             raise CensusError("HF_PUBLIC_IDENTITY")
         revision = sha(info.get("sha"))
         tree_url = f"{url}/tree/{revision}?recursive=true&expand=false&limit=100"
-        rows = hf_file_rows(hf_pages(client, tree_url))
+        allow_redacted = info.get("gated") in ("auto", "manual")
+        rows = hf_file_rows(hf_pages(client, tree_url), allow_redacted=allow_redacted)
         runtime = info.get("runtime")
         stage = runtime.get("stage") if isinstance(runtime, dict) else None
         if stage is not None and (not isinstance(stage, str) or re.fullmatch(r"[A-Z_]{1,64}", stage) is None):
             stage = None
         files = [r for r in rows if r["type"] == "file"]
+        redacted = sum(r["lfs_identity_state"] == "REDACTED" for r in files)
         result.update(revision=revision, tree_complete=True, entries=rows, file_count=len(files),
+                      file_metadata_identity_complete=redacted == 0, redacted_lfs_file_count=redacted,
                       runtime_stage_reported=stage, path_signals=path_signals(files),
                       readme_present=any(r["path"] == "README.md" for r in files))
+        if redacted:
+            result["blockers"].append("HF_LFS_IDENTITY_REDACTED")
         after, _ = client.get(url)
-        if not isinstance(after, dict) or after.get("id") != repo or after.get("private") is True:
+        if not isinstance(after, dict) or after.get("id") != repo or after.get("private") is not False:
             raise CensusError("HF_PUBLIC_IDENTITY")
+        public_rechecked = True
         result["revision_after"] = sha(after.get("sha"))
         if revision != result["revision_after"]:
             raise CensusError("REF_MOVED")
-        result["complete"] = True
+        if redacted and after.get("gated") != info.get("gated"):
+            raise CensusError("HF_ACCESS_POLICY_MOVED")
+        result["complete"] = not result["blockers"]
     except CensusError as exc:
+        if not public_rechecked:
+            # Never publish paths/counts from an item whose final public identity
+            # could not be rechecked. Preserve only fixed-code failure evidence.
+            for field in ("entries", "path_signals", "readme_present", "redacted_lfs_file_count",
+                          "runtime_stage_reported"):
+                result.pop(field, None)
+            result.update(file_count=None, tree_complete=False, file_metadata_identity_complete=False)
         result["blockers"].append(str(exc))
     finally:
         result["finished_at"] = now()
