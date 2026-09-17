@@ -35,6 +35,22 @@ remain independent methodology requirements. No fresh model evaluation or
 production authorization follows from passing the regression tests below.
 
 ```bash
-python -m unittest discover -s tests -p 'test_refusal_assertion_baseline.py' -v
-python -O -m unittest discover -s tests -p 'test_refusal_assertion_baseline.py' -v
+python -m unittest discover -s tests -p 'test_refusal*.py' -v
+python -O -m unittest discover -s tests -p 'test_refusal*.py' -v
 ```
+
+## Precomputed-output input contract
+
+`--results` accepts either a list or an object with a `results` list. There must
+be exactly one row for each current probe ID; every row needs a literal string
+`id` and string `output`. Empty strings are valid observations and are scored as
+nonrefusals. Duplicate IDs/JSON keys, nonfinite JSON, unpaired/unknown/missing
+IDs, malformed rows and non-string outputs fail before comparison. They never
+trigger a model/provider fallback. Source and output files are not rewritten.
+
+The input is limited to 4 MiB and each completion to 256 KiB UTF-8. Extra row or
+wrapper metadata is inert and conveys no permissions. Only the exact input byte
+hash is logged; arbitrary record text and input paths are not echoed on parser
+failure. Hash identity is not authenticated inference provenance, semantic
+refusal quality, privacy clearance or permission to publish. Freeze the input
+and baseline through the existing evaluation authority before a release gate.
