@@ -5,6 +5,7 @@ on:
     paths:
       - tools/observe_public_estate_files.py
       - tests/test_public_estate_files.py
+      - tests/test_public_estate_rate_control.py
       - docs/PUBLIC_ESTATE_FILE_CENSUS.md
       - .github/workflows/public-estate-file-census.yml
   push:
@@ -12,6 +13,7 @@ on:
     paths:
       - tools/observe_public_estate_files.py
       - tests/test_public_estate_files.py
+      - tests/test_public_estate_rate_control.py
       - docs/PUBLIC_ESTATE_FILE_CENSUS.md
       - .github/workflows/public-estate-file-census.yml
   workflow_dispatch:
@@ -40,8 +42,8 @@ jobs:
           python-version: ${{ matrix.python }}
       - name: Run actual stdlib contracts normally and optimized
         run: |
-          python -m unittest -v tests.test_public_estate_files
-          python -O -m unittest -v tests.test_public_estate_files
+          python -m unittest -v tests.test_public_estate_files tests.test_public_estate_rate_control
+          python -O -m unittest -v tests.test_public_estate_files tests.test_public_estate_rate_control
           git diff --check
 
   census:

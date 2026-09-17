@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 from collections import defaultdict, deque
 from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 import hashlib
 import json
 import math
@@ -132,15 +133,119 @@ class NoRedirect(HTTPRedirectHandler):
         raise CensusError("REDIRECT_REFUSED")
 
 
+# Single-reader policy. These are local bounds, not promised provider quotas.
+HF_MIN_INTERVAL_SECONDS = 1.0
+HF_MAX_ATTEMPTS = 3
+HF_MAX_RETRIES_TOTAL = 6
+HF_RETRY_WAIT_BUDGET_SECONDS = 600.0
+HF_NO_HINT_WAIT_SECONDS = 300.0
+HF_RATE_HEADER_BYTES = 1024
+
+
+def _one_rate_header(headers: Any, name: str) -> tuple[str | None, bool]:
+    """Do not retain raw headers; reject ambiguous or oversized rate hints."""
+    if headers is None:
+        return None, False
+    values = headers.get_all(name) if hasattr(headers, "get_all") else None
+    if values is None:
+        value = headers.get(name)
+        values = [] if value is None else [value]
+    if not values:
+        return None, False
+    if (len(values) != 1 or not isinstance(values[0], str)
+            or len(values[0]) > HF_RATE_HEADER_BYTES
+            or any(ord(c) < 32 or ord(c) > 126 for c in values[0])):
+        return None, True
+    return values[0].strip(), False
+
+
+def hf_rate_hint(headers: Any, wall_time: float) -> dict[str, Any]:
+    """Read documented HF API reset hints, never authorization or error text.
+
+    https://huggingface.co/docs/hub/rate-limits describes the API r/t fields.
+    Unknown/malformed 429 hints cause deferral, not a guessed early retry.
+    Retry-After HTTP dates are evaluated against local time and, when supplied,
+    the response Date, conservatively avoiding an early retry under clock skew.
+    """
+    result: dict[str, Any] = {"state": "ABSENT", "retry_after_seconds": None,
+                              "reset_seconds": None, "remaining": None}
+    retry, bad_retry = _one_rate_header(headers, "Retry-After")
+    rate, bad_rate = _one_rate_header(headers, "RateLimit")
+    if bad_retry or bad_rate:
+        result["state"] = "INVALID"
+        return result
+    if retry is not None:
+        try:
+            if re.fullmatch(r"[0-9]{1,10}", retry):
+                delay = float(int(retry))
+            else:
+                target = parsedate_to_datetime(retry)
+                if target.tzinfo is None or target.utcoffset().total_seconds() != 0:
+                    raise ValueError
+                delay = max(0.0, target.timestamp() - wall_time)
+                date, bad_date = _one_rate_header(headers, "Date")
+                if bad_date:
+                    raise ValueError
+                if date is not None:
+                    server = parsedate_to_datetime(date)
+                    if server.tzinfo is None or server.utcoffset().total_seconds() != 0:
+                        raise ValueError
+                    delay = max(delay, target.timestamp() - server.timestamp())
+            if not math.isfinite(delay):
+                raise ValueError
+            result.update(state="VALID", retry_after_seconds=delay)
+        except (ValueError, TypeError, OverflowError, AttributeError):
+            result["state"] = "INVALID"
+            return result
+    if rate is not None:
+        # Deliberately recognize only bounded literal token buckets and r/t
+        # integer parameters, in either order; no arbitrary structured-field eval.
+        policies = rate.split(",")
+        if len(policies) > 16:
+            result["state"] = "INVALID"
+            return result
+        for policy in policies:
+            match = re.fullmatch(
+                r'\s*"([a-z]+(?:\|[a-z]+)*)"\s*'
+                r'((?:;\s*[a-z]+\s*=\s*[0-9]{1,10}\s*)+)', policy)
+            if match is None:
+                result["state"] = "INVALID"
+                return result
+            params = re.findall(r";\s*([a-z]+)\s*=\s*([0-9]{1,10})", match[2])
+            if len(params) != 2 or {key for key, _ in params} != {"r", "t"}:
+                result["state"] = "INVALID"
+                return result
+            if "api" not in match[1].split("|"):
+                continue
+            values = {key: int(value) for key, value in params}
+            remaining, reset = result["remaining"], result["reset_seconds"]
+            result.update(state="VALID",
+                          remaining=values["r"] if remaining is None else min(remaining, values["r"]),
+                          reset_seconds=values["t"] if reset is None else max(reset, values["t"]))
+    return result
+
+
 class Client:
-    """Fixed-origin GET-only reader. GH credential is never sent to Hugging Face."""
-    def __init__(self, token: str | None = None):
+    """Sequential fixed-origin GET reader with bounded HF backpressure.
+
+    A circuit stop lasts for this client/run. No token/host substitution, global
+    quota promise, cross-run cache, or previously successful census reuse occurs.
+    """
+    def __init__(self, token: str | None = None, *, clock=None, sleeper=None, wall_clock=None):
         self.token = token
         self.opener = build_opener(ProxyHandler({}), NoRedirect())
-        self.started = time.monotonic()
+        self._clock = time.monotonic if clock is None else clock
+        self._sleep = time.sleep if sleeper is None else sleeper
+        self._wall_clock = time.time if wall_clock is None else wall_clock
+        self.started = self._clock()
         self.calls = 0
         self.total_bytes = 0
         self.responses: list[dict[str, Any]] = []
+        self._hf_next_launch = self.started
+        self._hf_retries = 0
+        self._hf_retry_wait = 0.0
+        self._hf_stop: str | None = None
+        self._hf_deferred_calls = 0
 
     def headers(self, url: str) -> dict[str, str]:
         host = validate_url(url)
@@ -152,47 +257,150 @@ class Client:
                 headers["Authorization"] = "Bearer " + self.token
         return headers
 
-    def get(self, url: str) -> tuple[Any, str]:
-        headers = self.headers(url)
+    def _bounds(self) -> None:
         if self.calls >= MAX_REQUESTS:
             raise CensusError("REQUEST_BOUND")
-        if time.monotonic() - self.started >= REQUEST_LAUNCH_SECONDS:
+        if self._clock() - self.started >= REQUEST_LAUNCH_SECONDS:
             raise CensusError("REQUEST_LAUNCH_DEADLINE")
         if self.total_bytes >= MAX_TOTAL_BYTES:
             raise CensusError("TOTAL_BYTE_BOUND")
-        self.calls += 1
-        receipt = {"url": url, "started_at": now(), "http_status": None, "body_sha256": None}
-        try:
-            with self.opener.open(Request(url, headers=headers, method="GET"), timeout=12) as response:
-                receipt["http_status"] = response.status
-                if response.status != 200:
-                    raise CensusError("HTTP_NON_200")
-                if response.headers.get("Content-Encoding", "identity").lower() != "identity":
-                    raise CensusError("COMPRESSED_RESPONSE_REFUSED")
-                length = response.headers.get("Content-Length")
-                if length is not None and (not str(length).isdigit() or int(length) > MAX_BODY):
-                    raise CensusError("BODY_BOUND")
-                body = response.read(min(MAX_BODY, MAX_TOTAL_BYTES - self.total_bytes) + 1)
-                self.total_bytes += len(body)
-                if len(body) > MAX_BODY or self.total_bytes > MAX_TOTAL_BYTES:
-                    raise CensusError("BODY_BOUND")
-                if length is not None and len(body) != int(length):
-                    raise CensusError("BODY_LENGTH_MISMATCH")
-                receipt["body_sha256"] = digest_bytes(body)
-                receipt["body_bytes"] = len(body)
-                link = response.headers.get("Link", "")
-                if len(link) > 8192:
-                    raise CensusError("LINK_BOUND")
-                return strict_json(body), link
-        except HTTPError as exc:
-            receipt["http_status"] = exc.code
-            raise CensusError(f"HTTP_{exc.code}") from exc
-        except (URLError, TimeoutError, OSError) as exc:
-            raise CensusError("TRANSPORT_UNAVAILABLE") from exc
-        finally:
-            receipt["finished_at"] = now()
-            self.responses.append(receipt)
 
+    def _before_launch(self, hf: bool) -> float:
+        self._bounds()
+        if not hf:
+            return 0.0
+        if self._hf_stop is not None:
+            self._hf_deferred_calls += 1
+            raise CensusError(self._hf_stop)
+        entered = self._clock()
+        # Finite clock-progress guard also keeps injected/test clocks from looping.
+        for _ in range(3):
+            current = self._clock()
+            wait = self._hf_next_launch - current
+            if wait <= 0:
+                self._bounds()
+                self._hf_next_launch = current + HF_MIN_INTERVAL_SECONDS
+                return current - entered
+            if self._hf_next_launch - self.started >= REQUEST_LAUNCH_SECONDS:
+                self._hf_stop = "HF_WAIT_EXCEEDS_LAUNCH_DEADLINE"
+                raise CensusError(self._hf_stop)
+            self._sleep(wait)
+            if self._clock() <= current:
+                self._hf_stop = "HF_WAIT_CLOCK_NOT_ADVANCING"
+                raise CensusError(self._hf_stop)
+        self._hf_stop = "HF_WAIT_CLOCK_PROGRESS_BOUND"
+        raise CensusError(self._hf_stop)
+
+    def _after_429(self, hint: dict[str, Any], attempt: int, receipt: dict[str, Any]) -> None:
+        reason = None
+        delay = max(HF_MIN_INTERVAL_SECONDS,
+                    hint["retry_after_seconds"] or 0,
+                    hint["reset_seconds"] or 0)
+        if hint["state"] == "ABSENT":
+            delay = HF_NO_HINT_WAIT_SECONDS
+        if hint["state"] == "INVALID":
+            reason = "HF_RATE_HINT_INVALID"
+        elif attempt >= HF_MAX_ATTEMPTS or self._hf_retries >= HF_MAX_RETRIES_TOTAL:
+            reason = "HF_RATE_RETRY_BOUND"
+        elif self._hf_retry_wait + delay > HF_RETRY_WAIT_BUDGET_SECONDS:
+            reason = "HF_RATE_WAIT_BUDGET"
+        elif self._clock() + delay - self.started >= REQUEST_LAUNCH_SECONDS:
+            reason = "HF_WAIT_EXCEEDS_LAUNCH_DEADLINE"
+        receipt["hf_retry"] = {"decision": "DEFER" if reason else "RETRY_SCHEDULED",
+                               "delay_seconds": delay if hint["state"] != "INVALID" else None,
+                               "reason": reason}
+        if reason:
+            self._hf_stop = reason
+            raise CensusError(reason)
+        # Never shorten an upstream reset to fit a local budget: defer instead.
+        self._hf_retries += 1
+        self._hf_retry_wait += delay
+        self._hf_next_launch = max(self._hf_next_launch, self._clock() + delay)
+
+    def _after_success(self, hint: dict[str, Any]) -> None:
+        if hint["state"] != "VALID":
+            return
+        delay = hint["retry_after_seconds"] or 0.0
+        if hint["reset_seconds"] is not None:
+            delay = max(delay, hint["reset_seconds"] / max(1, hint["remaining"]))
+        self._hf_next_launch = max(self._hf_next_launch, self._clock() + delay)
+
+    def rate_limit_receipt(self) -> dict[str, Any]:
+        return {"scope": "ONE_SEQUENTIAL_CLIENT_RUN_HF_API_ONLY",
+                "minimum_launch_interval_seconds": HF_MIN_INTERVAL_SECONDS,
+                "max_attempts_per_get": HF_MAX_ATTEMPTS,
+                "max_retries_per_run": HF_MAX_RETRIES_TOTAL,
+                "retry_wait_budget_seconds": HF_RETRY_WAIT_BUDGET_SECONDS,
+                "retries_scheduled": self._hf_retries,
+                "retry_wait_seconds_reserved": self._hf_retry_wait,
+                "deferred_calls_without_network": self._hf_deferred_calls,
+                "stop_code": self._hf_stop,
+                "resume_across_runs": False,
+                "provider_quota_guaranteed": False}
+
+    def get(self, url: str) -> tuple[Any, str]:
+        headers = self.headers(url)
+        hf = validate_url(url) == "huggingface.co"
+        for attempt in range(1, HF_MAX_ATTEMPTS + 1):
+            waited = self._before_launch(hf)
+            self.calls += 1
+            receipt = {"url": url, "started_at": now(), "http_status": None, "body_sha256": None,
+                       "attempt": attempt, "prelaunch_wait_seconds": waited}
+            rate_limited = False
+            hint: dict[str, Any] = {"state": "ABSENT", "retry_after_seconds": None,
+                                    "remaining": None, "reset_seconds": None}
+            try:
+                with self.opener.open(Request(url, headers=headers, method="GET"), timeout=12) as response:
+                    receipt["http_status"] = response.status
+                    if hf:
+                        hint = hf_rate_hint(response.headers, self._wall_clock())
+                        receipt["hf_rate_hint"] = hint
+                    if hf and response.status == 429:
+                        rate_limited = True
+                    else:
+                        if response.status != 200:
+                            raise CensusError("HTTP_NON_200")
+                        if response.headers.get("Content-Encoding", "identity").lower() != "identity":
+                            raise CensusError("COMPRESSED_RESPONSE_REFUSED")
+                        length = response.headers.get("Content-Length")
+                        if length is not None and (not str(length).isdigit() or int(length) > MAX_BODY):
+                            raise CensusError("BODY_BOUND")
+                        body = response.read(min(MAX_BODY, MAX_TOTAL_BYTES - self.total_bytes) + 1)
+                        self.total_bytes += len(body)
+                        if len(body) > MAX_BODY or self.total_bytes > MAX_TOTAL_BYTES:
+                            raise CensusError("BODY_BOUND")
+                        if length is not None and len(body) != int(length):
+                            raise CensusError("BODY_LENGTH_MISMATCH")
+                        receipt["body_sha256"] = digest_bytes(body)
+                        receipt["body_bytes"] = len(body)
+                        link = response.headers.get("Link", "")
+                        if len(link) > 8192:
+                            raise CensusError("LINK_BOUND")
+                        value = strict_json(body)
+            except HTTPError as exc:
+                receipt["http_status"] = exc.code
+                try:
+                    if hf and exc.code == 429:
+                        hint = hf_rate_hint(exc.headers, self._wall_clock())
+                        receipt["hf_rate_hint"] = hint
+                        rate_limited = True
+                    else:
+                        raise CensusError(f"HTTP_{exc.code}") from exc
+                finally:
+                    # Do not drain error bodies or carry a response into a wait.
+                    exc.close()
+            except (URLError, TimeoutError, OSError) as exc:
+                raise CensusError("TRANSPORT_UNAVAILABLE") from exc
+            finally:
+                receipt["finished_at"] = now()
+                self.responses.append(receipt)
+            if rate_limited:
+                self._after_429(hint, attempt, receipt)
+                continue
+            if hf:
+                self._after_success(hint)
+            return value, link
+        raise CensusError("HF_RATE_RETRY_BOUND")
 
 def next_page(link: str, initial: str) -> str | None:
     if not link:
@@ -555,7 +763,7 @@ def run(client: Client, lane: str, revision: str) -> dict[str, Any]:
     report["complete"] = all(p["complete"] for p in report["populations"].values())
     report["status"] = "FILE_METADATA_OBSERVED_NOT_QUALIFIED" if report["complete"] else "PARTIAL_OR_UNAVAILABLE"
     report.update(finished_at=now(), requests_attempted=client.calls, response_bytes=client.total_bytes,
-                  responses=client.responses)
+                  responses=client.responses, hf_rate_control=client.rate_limit_receipt())
     return report
 
 

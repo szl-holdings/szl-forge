@@ -11,8 +11,8 @@ existing native release acceptance in `szl-frontier#96` and `a11oy#2155`.
 From a clean Forge checkout with Git and Python 3.11 or later:
 
 ```bash
-python -m unittest -v tests.test_public_estate_files
-python -O -m unittest -v tests.test_public_estate_files
+python -m unittest -v tests.test_public_estate_files tests.test_public_estate_rate_control
+python -O -m unittest -v tests.test_public_estate_files tests.test_public_estate_rate_control
 mkdir -p reports
 python -I -B tools/observe_public_estate_files.py --lane github \
   --source-revision "$(git rev-parse HEAD)" --output reports/public-files-github.json
@@ -87,8 +87,9 @@ Bounds per lane: 256 repositories per population, 250,000 tree entries, 100 HF p
 per collection, 512 distinct subtree requests per fallback, 1,500 HTTP requests,
 8 MiB per response and 256 MiB total downloaded JSON. New request launches stop after
 900 seconds; each socket has a 12-second timeout. This is not a strict total wall-time
-limit against slow streaming; CI adds a 20-minute hard timeout. No retries or schedules
-are installed. Thirty-day Actions retention is not immutable external custody.
+limit against slow streaming; CI adds a 20-minute hard timeout. HF 429 handling is
+bounded as described below; no schedules are installed. Thirty-day Actions retention
+is not immutable external custody.
 
 After ordinary source review and exact-head checks, use this evidence in the existing
 estate audit and native release workflow. Fix qualified source first, publish through
@@ -137,3 +138,53 @@ original 33 methods. The 53-method suite passed locally under normal and optimiz
 Python 3.13.5. This is repeated execution of the same suite, not 106 unique tests.
 The exact provider diagnosis and unit fixtures do not replace a fresh native
 whole-public-census observation or complete private/content/runtime qualification.
+
+## Bounded HF request pacing and 429 handling
+
+The existing sequential `Client` now schedules HF API launches at least one second
+apart. Valid provider `RateLimit` API remaining/reset hints can lengthen that
+interval. A 429 can use `Retry-After` seconds or an HTTP date, or a documented API
+reset hint. When both are present, the longer wait wins. Missing hints reserve a
+conservative 300-second wait; malformed, duplicate, oversized, or ambiguous hints
+cause deferral instead of an invented short delay. Response dates make HTTP-date
+waiting conservative under local/server clock skew.
+
+Local policy limits are three attempts per GET, six scheduled retries per run,
+and 600 seconds of reserved retry waits, all inside the unchanged 900-second
+request-launch deadline and 1,500-request/byte limits. These are safety bounds,
+not a claimed provider quota. A delay that does not fit is never shortened to
+force another request. Once a circuit stop occurs, later HF calls in this client
+record the same bounded failure without touching the network. A subsequent run
+has no cached success, automatic resume, or persistent authorization.
+
+429 responses and raised HTTP errors are closed before any wait, without reading
+remote error bodies. Only exact fixed-origin GETs are retried. GitHub errors,
+401/403, redirects, 5xx, transport errors, bad JSON and invalid artifact identities
+are not silently retried or promoted. HF remains anonymous; no token, proxy,
+resource family, request path, or inventory predicate is substituted.
+
+Each real attempt retains status, time, body digest where available, attempt
+number, actual prelaunch wait and sanitized numeric rate hints. `hf_retry` records
+whether a retry was scheduled or deferred; `hf_rate_control` records the local
+policy, reserved wait, scheduled retries and circuit stop. A scheduled retry is
+not proof it was launched. A recovered HTTP request is not a complete census:
+all original revision, membership, public-visibility, LFS, and completeness
+checks still run. In particular, recognized gated LFS redaction stays incomplete.
+
+The existing unit matrix invokes both the retained census tests and the new
+`tests.test_public_estate_rate_control` suite. No action pin, workflow permission,
+job timeout, publisher, schedule, or failure assertion is weakened. The new cases
+use deterministic clocks and recording transports, not actual HF traffic. Both
+original LFS functions and all 53 predecessor test methods are preserved. The
+combined 110-method suite passed normally and optimized on local Python 3.13.5;
+Python 3.11/3.12 hosted execution and a paced native census remain separate gates.
+
+This is one sequential reader's backpressure, not a distributed quota coordinator.
+Other jobs sharing an address can still consume quota. Socket timeout and the
+request-launch deadline are not a hard per-body streaming deadline; the existing
+CI job timeout remains the outer limit. Reconcile the current exact branch with
+parallel work before source admission. Do not immediately loop a failed HF lane.
+
+Primary rate-hint contract: https://huggingface.co/docs/hub/rate-limits .
+The project retains its already bounded stdlib reader; no SDK or authentication
+migration is bundled into this source repair.
