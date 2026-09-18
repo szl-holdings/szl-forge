@@ -1,0 +1,2876 @@
+﻿CHASKI R2 VS R4 LOCAL PROVENANCE COMPARISON
+Generated: 2026-09-16 09:16:03 -04:00
+
+SAFETY STATUS
+This operation read local files and wrote this report only.
+No training, adapter modification, upload, publication, deployment, Git commit, Git push, or promotion occurred.
+
+R2 ROOT
+C:\Users\steph\szl-forge\chaski_r2
+
+R4 ROOT
+C:\Users\steph\szl-forge\chaski_r4
+
+FILE COMPARISON SUMMARY
+DIFFERENT | adapter_config.json
+  R2 path: chaski-r2-adapter\adapter_config.json
+  R2 SHA-256: d36472a3100231dfdf0c4aa16d3a80cb8ab53c86af33a15172b06f9d9a313193
+  R4 path: chaski-r4-adapter\adapter_config.json; outputs-r4\checkpoint-30\adapter_config.json
+  R4 SHA-256: cebfde5669b9a904fac11cf41dc0952f08729a65ab67a9a5e641e783eae55d6b; cebfde5669b9a904fac11cf41dc0952f08729a65ab67a9a5e641e783eae55d6b
+DIFFERENT | adapter_model.safetensors
+  R2 path: chaski-r2-adapter\adapter_model.safetensors
+  R2 SHA-256: a16be6dde8e721348a1dcf1f00eafb01f0272e93be30e04c73ef1443f477ea17
+  R4 path: chaski-r4-adapter\adapter_model.safetensors; outputs-r4\checkpoint-30\adapter_model.safetensors
+  R4 SHA-256: 800d261aaea824480f6a8e7089d5fb94b180bcdd10d820bcfbde59fabe54633b; 800d261aaea824480f6a8e7089d5fb94b180bcdd10d820bcfbde59fabe54633b
+DIFFERENT | bakeoff_canonical_four_way_r4.receipt.json
+  R2 path: 
+  R2 SHA-256: 
+  R4 path: bakeoff_canonical_four_way_r4.receipt.json
+  R4 SHA-256: 424f4fdd833ce5b552ed606a65c78bf751de0eb2b13c1d9fe0498c9ffbb4ccd0
+DIFFERENT | eval_chaski_r2.py
+  R2 path: eval_chaski_r2.py
+  R2 SHA-256: ed08439a70a53d312f2af67b21df9d7edbdb60754cf8099cd472e7448205d29c
+  R4 path: 
+  R4 SHA-256: 
+DIFFERENT | eval_report.json
+  R2 path: eval_report.json
+  R2 SHA-256: 326dc3abe2e9ed50c219d689ab5b3090e27107ab3b6cd0564bbd1c02a0f60955
+  R4 path: 
+  R4 SHA-256: 
+DIFFERENT | heldout_manifest.json
+  R2 path: 
+  R2 SHA-256: 
+  R4 path: heldout_manifest.json
+  R4 SHA-256: 32623adba2a8f9eb404c45950ad0bd1bcdaebccdd4728439adf72d37ef237fd8
+DIFFERENT | r4_closeout_20260916_091416.txt
+  R2 path: 
+  R2 SHA-256: 
+  R4 path: evidence\r4_closeout_20260916_091416.txt
+  R4 SHA-256: 3e201447ef297df4a8b9b1ca2a1c86c31a7c6b48ff3084cf651f0a9f128ba47a
+DIFFERENT | r4_receipt_20260916_091416.json
+  R2 path: 
+  R2 SHA-256: 
+  R4 path: evidence\r4_receipt_20260916_091416.json
+  R4 SHA-256: 424f4fdd833ce5b552ed606a65c78bf751de0eb2b13c1d9fe0498c9ffbb4ccd0
+DIFFERENT | README.md
+  R2 path: chaski-r2-adapter\README.md; README.md
+  R2 SHA-256: 739b4bb83778990af503a20bd766eb73d4a89f24813fa5cebda118086fe6c99d; e894e9792eabfee360e734516f305a037741b1e691081a6056517eb1502bf82e
+  R4 path: chaski-r4-adapter\README.md; outputs-r4\checkpoint-30\README.md; outputs-r4\README.md
+  R4 SHA-256: 153d920d316af86c61b1f1ad41d7041bee52e80f48ce293d7706132616826296; 153d920d316af86c61b1f1ad41d7041bee52e80f48ce293d7706132616826296; 5b523cdc3546616df1f585997c26f3570483a32ca8ad5e39434834a5153e61bc
+DIFFERENT | train.jsonl
+  R2 path: train.jsonl
+  R2 SHA-256: e61d64b6612571d7ae609716ee4b9e952b71c9887e3a62ef7d664384a39e79dd
+  R4 path: train.jsonl
+  R4 SHA-256: 8965f3910100d818810b4bf95832c5f1f49c95900f4bd943c5fcafa9fe645a40
+DIFFERENT | train_chaski_r2.py
+  R2 path: train_chaski_r2.py
+  R2 SHA-256: e9df871f20f6cc8282be3bdc5fdd410f3ade811cf7bbf0efe0235d2e17b64949
+  R4 path: 
+  R4 SHA-256: 
+DIFFERENT | train_chaski_r4_bf16.cpython-311.pyc
+  R2 path: 
+  R2 SHA-256: 
+  R4 path: __pycache__\train_chaski_r4_bf16.cpython-311.pyc
+  R4 SHA-256: b5dfcfa55336b229d84f715c9501f965afdf6d6b2e69c7204f2cb46018d4e89e
+DIFFERENT | train_chaski_r4_bf16.py
+  R2 path: 
+  R2 SHA-256: 
+  R4 path: train_chaski_r4_bf16.py
+  R4 SHA-256: 1bda9988470f3bf18c9b1df608dc2af8f35672307405e1187aabe32997a5bfcb
+DIFFERENT | trainer_state.json
+  R2 path: 
+  R2 SHA-256: 
+  R4 path: outputs-r4\checkpoint-30\trainer_state.json
+  R4 SHA-256: b97b28189b4f6362e268cb3d40cfe4285a4b06baec1a2dbc5df55d644b6654f5
+DIFFERENT | training_args.bin
+  R2 path: 
+  R2 SHA-256: 
+  R4 path: outputs-r4\checkpoint-30\training_args.bin
+  R4 SHA-256: 4f99b8432bf2ba44f135d425cd4f258e6e6ffd21b03eaa83834efe24ad0a8fd7
+DIFFERENT | training_plan.json
+  R2 path: 
+  R2 SHA-256: 
+  R4 path: training_plan.json
+  R4 SHA-256: 1291dca63e0deb6185a8586a561e259c7ffe86447512381f84d3dff060919c98
+DIFFERENT | training_receipt.json
+  R2 path: training_receipt.json
+  R2 SHA-256: ecdbaacede9186e87d83b5da544cd2f98d83964c573ea5e92ad6faf304073c75
+  R4 path: training_receipt.json
+  R4 SHA-256: e15f0b7da6556bc554bab42cf35bbd68d0dd13ab1c6ae2a19b6ba0182e17e654
+DIFFERENT | training_receipt.status.json
+  R2 path: training_receipt.status.json
+  R2 SHA-256: 669e91352282df3bf84c88e7706ec0be170e7866eb347fc37351e45f625ef390
+  R4 path: 
+  R4 SHA-256: 
+SAME_HASH | chat_template.jinja
+  R2 path: chaski-r2-adapter\chat_template.jinja
+  R2 SHA-256: 306abaf09cf3a6c0d14128373a72925bda3d7de2616a5642804d9768c7d2f78c
+  R4 path: chaski-r4-adapter\chat_template.jinja; outputs-r4\checkpoint-30\chat_template.jinja
+  R4 SHA-256: 306abaf09cf3a6c0d14128373a72925bda3d7de2616a5642804d9768c7d2f78c; 306abaf09cf3a6c0d14128373a72925bda3d7de2616a5642804d9768c7d2f78c
+SAME_HASH | processor_config.json
+  R2 path: chaski-r2-adapter\processor_config.json
+  R2 SHA-256: f196d5698d1771c734bb3a24bd658ba75536fc4feafc5b83c035b7693511a2db
+  R4 path: chaski-r4-adapter\processor_config.json; outputs-r4\checkpoint-30\processor_config.json
+  R4 SHA-256: f196d5698d1771c734bb3a24bd658ba75536fc4feafc5b83c035b7693511a2db; f196d5698d1771c734bb3a24bd658ba75536fc4feafc5b83c035b7693511a2db
+SAME_HASH | tokenizer.json
+  R2 path: chaski-r2-adapter\tokenizer.json
+  R2 SHA-256: 87a7830d63fcf43bf241c3c5242e96e62dd3fdc29224ca26fed8ea333db72de4
+  R4 path: chaski-r4-adapter\tokenizer.json; outputs-r4\checkpoint-30\tokenizer.json
+  R4 SHA-256: 87a7830d63fcf43bf241c3c5242e96e62dd3fdc29224ca26fed8ea333db72de4; 87a7830d63fcf43bf241c3c5242e96e62dd3fdc29224ca26fed8ea333db72de4
+SAME_HASH | tokenizer_config.json
+  R2 path: chaski-r2-adapter\tokenizer_config.json
+  R2 SHA-256: eb2fc433075d3cff8e1095d0019b6470546e50471d2b615b78063db4dfe323f4
+  R4 path: chaski-r4-adapter\tokenizer_config.json; outputs-r4\checkpoint-30\tokenizer_config.json
+  R4 SHA-256: eb2fc433075d3cff8e1095d0019b6470546e50471d2b615b78063db4dfe323f4; eb2fc433075d3cff8e1095d0019b6470546e50471d2b615b78063db4dfe323f4
+
+TEXT CONFIGURATION COMPARISONS
+
+==============================================================================
+FILE: adapter_config.json
+==============================================================================
+
+R2 PATH: C:\Users\steph\szl-forge\chaski_r2\chaski-r2-adapter\adapter_config.json
+R2 SHA-256: d36472a3100231dfdf0c4aa16d3a80cb8ab53c86af33a15172b06f9d9a313193
+R2 CONTENT:
+{
+  "alora_invocation_tokens": null,
+  "alpha_pattern": {},
+  "arrow_config": null,
+  "auto_mapping": {
+    "base_model_class": "Qwen3_5ForConditionalGeneration",
+    "parent_library": "transformers.models.qwen3_5.modeling_qwen3_5",
+    "unsloth_fixed": true
+  },
+  "base_model_name_or_path": "Qwen/Qwen3.5-0.8B",
+  "bias": "none",
+  "corda_config": null,
+  "ensure_weight_tying": false,
+  "eva_config": null,
+  "exclude_modules": null,
+  "fan_in_fan_out": false,
+  "inference_mode": true,
+  "init_lora_weights": true,
+  "layer_replication": null,
+  "layers_pattern": null,
+  "layers_to_transform": null,
+  "loftq_config": {},
+  "lora_alpha": 32,
+  "lora_bias": false,
+  "lora_dropout": 0,
+  "lora_ga_config": null,
+  "megatron_config": null,
+  "megatron_core": "megatron.core",
+  "modules_to_save": null,
+  "peft_type": "LORA",
+  "peft_version": "0.19.1",
+  "qalora_group_size": 16,
+  "r": 16,
+  "rank_pattern": {},
+  "revision": null,
+  "target_modules": "(?:.*?(?:language|text).*?(?:self_attn|attention|attn|mixer|mlp|feed_forward|ffn|dense|mixer).*?(?:q_proj|k_proj|v_proj|o_proj|gate_proj|up_proj|down_proj))|(?:\\bmodel\\.layers\\.[\\d]{1,}\\.(?:self_attn|attention|attn|mixer|mlp|feed_forward|ffn|dense|mixer)\\.(?:(?:q_proj|k_proj|v_proj|o_proj|gate_proj|up_proj|down_proj)))",
+  "target_parameters": null,
+  "task_type": "CAUSAL_LM",
+  "trainable_token_indices": null,
+  "use_bdlora": null,
+  "use_dora": false,
+  "use_qalora": false,
+  "use_rslora": false
+}
+
+R4 PATH: C:\Users\steph\szl-forge\chaski_r4\chaski-r4-adapter\adapter_config.json
+R4 SHA-256: cebfde5669b9a904fac11cf41dc0952f08729a65ab67a9a5e641e783eae55d6b
+R4 CONTENT:
+{
+  "alora_invocation_tokens": null,
+  "alpha_pattern": {},
+  "arrow_config": null,
+  "auto_mapping": {
+    "base_model_class": "Qwen3_5ForConditionalGeneration",
+    "parent_library": "transformers.models.qwen3_5.modeling_qwen3_5",
+    "unsloth_fixed": true
+  },
+  "base_model_name_or_path": "Qwen/Qwen3.5-0.8B",
+  "bias": "none",
+  "corda_config": null,
+  "ensure_weight_tying": false,
+  "eva_config": null,
+  "exclude_modules": null,
+  "fan_in_fan_out": false,
+  "inference_mode": true,
+  "init_lora_weights": true,
+  "layer_replication": null,
+  "layers_pattern": null,
+  "layers_to_transform": null,
+  "loftq_config": {},
+  "lora_alpha": 32,
+  "lora_bias": false,
+  "lora_dropout": 0,
+  "lora_ga_config": null,
+  "megatron_config": null,
+  "megatron_core": "megatron.core",
+  "modules_to_save": null,
+  "monteclora_config": null,
+  "peft_type": "LORA",
+  "peft_version": "0.20.0",
+  "qalora_group_size": 16,
+  "r": 16,
+  "rank_pattern": {},
+  "revision": null,
+  "target_modules": "(?:.*?(?:language|text).*?(?:self_attn|attention|attn|mixer|mlp|feed_forward|ffn|dense|mixer).*?(?:q_proj|k_proj|v_proj|o_proj|gate_proj|up_proj|down_proj))|(?:\\bmodel\\.layers\\.[\\d]{1,}\\.(?:self_attn|attention|attn|mixer|mlp|feed_forward|ffn|dense|mixer)\\.(?:(?:q_proj|k_proj|v_proj|o_proj|gate_proj|up_proj|down_proj)))",
+  "target_parameters": null,
+  "task_type": "CAUSAL_LM",
+  "trainable_token_indices": null,
+  "use_bdlora": null,
+  "use_dora": false,
+  "use_qalora": false,
+  "use_rslora": false,
+  "velora_config": null
+}
+
+R4 PATH: C:\Users\steph\szl-forge\chaski_r4\outputs-r4\checkpoint-30\adapter_config.json
+R4 SHA-256: cebfde5669b9a904fac11cf41dc0952f08729a65ab67a9a5e641e783eae55d6b
+R4 CONTENT:
+{
+  "alora_invocation_tokens": null,
+  "alpha_pattern": {},
+  "arrow_config": null,
+  "auto_mapping": {
+    "base_model_class": "Qwen3_5ForConditionalGeneration",
+    "parent_library": "transformers.models.qwen3_5.modeling_qwen3_5",
+    "unsloth_fixed": true
+  },
+  "base_model_name_or_path": "Qwen/Qwen3.5-0.8B",
+  "bias": "none",
+  "corda_config": null,
+  "ensure_weight_tying": false,
+  "eva_config": null,
+  "exclude_modules": null,
+  "fan_in_fan_out": false,
+  "inference_mode": true,
+  "init_lora_weights": true,
+  "layer_replication": null,
+  "layers_pattern": null,
+  "layers_to_transform": null,
+  "loftq_config": {},
+  "lora_alpha": 32,
+  "lora_bias": false,
+  "lora_dropout": 0,
+  "lora_ga_config": null,
+  "megatron_config": null,
+  "megatron_core": "megatron.core",
+  "modules_to_save": null,
+  "monteclora_config": null,
+  "peft_type": "LORA",
+  "peft_version": "0.20.0",
+  "qalora_group_size": 16,
+  "r": 16,
+  "rank_pattern": {},
+  "revision": null,
+  "target_modules": "(?:.*?(?:language|text).*?(?:self_attn|attention|attn|mixer|mlp|feed_forward|ffn|dense|mixer).*?(?:q_proj|k_proj|v_proj|o_proj|gate_proj|up_proj|down_proj))|(?:\\bmodel\\.layers\\.[\\d]{1,}\\.(?:self_attn|attention|attn|mixer|mlp|feed_forward|ffn|dense|mixer)\\.(?:(?:q_proj|k_proj|v_proj|o_proj|gate_proj|up_proj|down_proj)))",
+  "target_parameters": null,
+  "task_type": "CAUSAL_LM",
+  "trainable_token_indices": null,
+  "use_bdlora": null,
+  "use_dora": false,
+  "use_qalora": false,
+  "use_rslora": false,
+  "velora_config": null
+}
+
+==============================================================================
+FILE: tokenizer_config.json
+==============================================================================
+
+R2 PATH: C:\Users\steph\szl-forge\chaski_r2\chaski-r2-adapter\tokenizer_config.json
+R2 SHA-256: eb2fc433075d3cff8e1095d0019b6470546e50471d2b615b78063db4dfe323f4
+R2 CONTENT:
+{
+  "add_prefix_space": false,
+  "audio_bos_token": "<|audio_start|>",
+  "audio_eos_token": "<|audio_end|>",
+  "audio_token": "<|audio_pad|>",
+  "backend": "tokenizers",
+  "bos_token": null,
+  "clean_up_tokenization_spaces": false,
+  "eos_token": "<|im_end|>",
+  "errors": "replace",
+  "image_token": "<|image_pad|>",
+  "is_local": false,
+  "model_max_length": 262144,
+  "model_specific_special_tokens": {
+    "audio_bos_token": "<|audio_start|>",
+    "audio_eos_token": "<|audio_end|>",
+    "audio_token": "<|audio_pad|>",
+    "image_token": "<|image_pad|>",
+    "video_token": "<|video_pad|>",
+    "vision_bos_token": "<|vision_start|>",
+    "vision_eos_token": "<|vision_end|>"
+  },
+  "pad_token": "<|endoftext|>",
+  "padding_side": "right",
+  "pretokenize_regex": "(?i:'s|'t|'re|'ve|'m|'ll|'d)|[^\\r\\n\\p{L}\\p{N}]?[\\p{L}\\p{M}]+|\\p{N}| ?[^\\s\\p{L}\\p{M}\\p{N}]+[\\r\\n]*|\\s*[\\r\\n]+|\\s+(?!\\S)|\\s+",
+  "processor_class": "Qwen3VLProcessor",
+  "split_special_tokens": false,
+  "tokenizer_class": "TokenizersBackend",
+  "unk_token": null,
+  "video_token": "<|video_pad|>",
+  "vision_bos_token": "<|vision_start|>",
+  "vision_eos_token": "<|vision_end|>",
+  "added_tokens_decoder": {
+    "248044": {
+      "content": "<|endoftext|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248045": {
+      "content": "<|im_start|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248046": {
+      "content": "<|im_end|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248047": {
+      "content": "<|object_ref_start|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248048": {
+      "content": "<|object_ref_end|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248049": {
+      "content": "<|box_start|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248050": {
+      "content": "<|box_end|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248051": {
+      "content": "<|quad_start|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248052": {
+      "content": "<|quad_end|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248053": {
+      "content": "<|vision_start|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248054": {
+      "content": "<|vision_end|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248055": {
+      "content": "<|vision_pad|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248056": {
+      "content": "<|image_pad|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248057": {
+      "content": "<|video_pad|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248058": {
+      "content": "<tool_call>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    "248059": {
+      "content": "</tool_call>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    "248060": {
+      "content": "<|fim_prefix|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    "248061": {
+      "content": "<|fim_middle|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    "248062": {
+      "content": "<|fim_suffix|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    "248063": {
+      "content": "<|fim_pad|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    "248064": {
+      "content": "<|repo_name|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    "248065": {
+      "content": "<|file_sep|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    "248066": {
+      "content": "<tool_response>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    "248067": {
+      "content": "</tool_response>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    "248068": {
+      "content": "<think>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    "248069": {
+      "content": "</think>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    "248070": {
+      "content": "<|audio_start|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248071": {
+      "content": "<|audio_end|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248072": {
+      "content": "<tts_pad>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248073": {
+      "content": "<tts_text_bos>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248074": {
+      "content": "<tts_text_eod>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248075": {
+      "content": "<tts_text_bos_single>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248076": {
+      "content": "<|audio_pad|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    }
+  }
+}
+
+
+R4 PATH: C:\Users\steph\szl-forge\chaski_r4\chaski-r4-adapter\tokenizer_config.json
+R4 SHA-256: eb2fc433075d3cff8e1095d0019b6470546e50471d2b615b78063db4dfe323f4
+R4 CONTENT:
+{
+  "add_prefix_space": false,
+  "audio_bos_token": "<|audio_start|>",
+  "audio_eos_token": "<|audio_end|>",
+  "audio_token": "<|audio_pad|>",
+  "backend": "tokenizers",
+  "bos_token": null,
+  "clean_up_tokenization_spaces": false,
+  "eos_token": "<|im_end|>",
+  "errors": "replace",
+  "image_token": "<|image_pad|>",
+  "is_local": false,
+  "model_max_length": 262144,
+  "model_specific_special_tokens": {
+    "audio_bos_token": "<|audio_start|>",
+    "audio_eos_token": "<|audio_end|>",
+    "audio_token": "<|audio_pad|>",
+    "image_token": "<|image_pad|>",
+    "video_token": "<|video_pad|>",
+    "vision_bos_token": "<|vision_start|>",
+    "vision_eos_token": "<|vision_end|>"
+  },
+  "pad_token": "<|endoftext|>",
+  "padding_side": "right",
+  "pretokenize_regex": "(?i:'s|'t|'re|'ve|'m|'ll|'d)|[^\\r\\n\\p{L}\\p{N}]?[\\p{L}\\p{M}]+|\\p{N}| ?[^\\s\\p{L}\\p{M}\\p{N}]+[\\r\\n]*|\\s*[\\r\\n]+|\\s+(?!\\S)|\\s+",
+  "processor_class": "Qwen3VLProcessor",
+  "split_special_tokens": false,
+  "tokenizer_class": "TokenizersBackend",
+  "unk_token": null,
+  "video_token": "<|video_pad|>",
+  "vision_bos_token": "<|vision_start|>",
+  "vision_eos_token": "<|vision_end|>",
+  "added_tokens_decoder": {
+    "248044": {
+      "content": "<|endoftext|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248045": {
+      "content": "<|im_start|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248046": {
+      "content": "<|im_end|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248047": {
+      "content": "<|object_ref_start|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248048": {
+      "content": "<|object_ref_end|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248049": {
+      "content": "<|box_start|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248050": {
+      "content": "<|box_end|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248051": {
+      "content": "<|quad_start|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248052": {
+      "content": "<|quad_end|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248053": {
+      "content": "<|vision_start|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248054": {
+      "content": "<|vision_end|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248055": {
+      "content": "<|vision_pad|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248056": {
+      "content": "<|image_pad|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248057": {
+      "content": "<|video_pad|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248058": {
+      "content": "<tool_call>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    "248059": {
+      "content": "</tool_call>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    "248060": {
+      "content": "<|fim_prefix|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    "248061": {
+      "content": "<|fim_middle|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    "248062": {
+      "content": "<|fim_suffix|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    "248063": {
+      "content": "<|fim_pad|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    "248064": {
+      "content": "<|repo_name|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    "248065": {
+      "content": "<|file_sep|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    "248066": {
+      "content": "<tool_response>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    "248067": {
+      "content": "</tool_response>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    "248068": {
+      "content": "<think>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    "248069": {
+      "content": "</think>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    "248070": {
+      "content": "<|audio_start|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248071": {
+      "content": "<|audio_end|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248072": {
+      "content": "<tts_pad>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248073": {
+      "content": "<tts_text_bos>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248074": {
+      "content": "<tts_text_eod>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248075": {
+      "content": "<tts_text_bos_single>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248076": {
+      "content": "<|audio_pad|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    }
+  }
+}
+
+
+R4 PATH: C:\Users\steph\szl-forge\chaski_r4\outputs-r4\checkpoint-30\tokenizer_config.json
+R4 SHA-256: eb2fc433075d3cff8e1095d0019b6470546e50471d2b615b78063db4dfe323f4
+R4 CONTENT:
+{
+  "add_prefix_space": false,
+  "audio_bos_token": "<|audio_start|>",
+  "audio_eos_token": "<|audio_end|>",
+  "audio_token": "<|audio_pad|>",
+  "backend": "tokenizers",
+  "bos_token": null,
+  "clean_up_tokenization_spaces": false,
+  "eos_token": "<|im_end|>",
+  "errors": "replace",
+  "image_token": "<|image_pad|>",
+  "is_local": false,
+  "model_max_length": 262144,
+  "model_specific_special_tokens": {
+    "audio_bos_token": "<|audio_start|>",
+    "audio_eos_token": "<|audio_end|>",
+    "audio_token": "<|audio_pad|>",
+    "image_token": "<|image_pad|>",
+    "video_token": "<|video_pad|>",
+    "vision_bos_token": "<|vision_start|>",
+    "vision_eos_token": "<|vision_end|>"
+  },
+  "pad_token": "<|endoftext|>",
+  "padding_side": "right",
+  "pretokenize_regex": "(?i:'s|'t|'re|'ve|'m|'ll|'d)|[^\\r\\n\\p{L}\\p{N}]?[\\p{L}\\p{M}]+|\\p{N}| ?[^\\s\\p{L}\\p{M}\\p{N}]+[\\r\\n]*|\\s*[\\r\\n]+|\\s+(?!\\S)|\\s+",
+  "processor_class": "Qwen3VLProcessor",
+  "split_special_tokens": false,
+  "tokenizer_class": "TokenizersBackend",
+  "unk_token": null,
+  "video_token": "<|video_pad|>",
+  "vision_bos_token": "<|vision_start|>",
+  "vision_eos_token": "<|vision_end|>",
+  "added_tokens_decoder": {
+    "248044": {
+      "content": "<|endoftext|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248045": {
+      "content": "<|im_start|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248046": {
+      "content": "<|im_end|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248047": {
+      "content": "<|object_ref_start|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248048": {
+      "content": "<|object_ref_end|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248049": {
+      "content": "<|box_start|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248050": {
+      "content": "<|box_end|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248051": {
+      "content": "<|quad_start|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248052": {
+      "content": "<|quad_end|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248053": {
+      "content": "<|vision_start|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248054": {
+      "content": "<|vision_end|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248055": {
+      "content": "<|vision_pad|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248056": {
+      "content": "<|image_pad|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248057": {
+      "content": "<|video_pad|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248058": {
+      "content": "<tool_call>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    "248059": {
+      "content": "</tool_call>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    "248060": {
+      "content": "<|fim_prefix|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    "248061": {
+      "content": "<|fim_middle|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    "248062": {
+      "content": "<|fim_suffix|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    "248063": {
+      "content": "<|fim_pad|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    "248064": {
+      "content": "<|repo_name|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    "248065": {
+      "content": "<|file_sep|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    "248066": {
+      "content": "<tool_response>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    "248067": {
+      "content": "</tool_response>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    "248068": {
+      "content": "<think>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    "248069": {
+      "content": "</think>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    "248070": {
+      "content": "<|audio_start|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248071": {
+      "content": "<|audio_end|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248072": {
+      "content": "<tts_pad>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248073": {
+      "content": "<tts_text_bos>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248074": {
+      "content": "<tts_text_eod>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248075": {
+      "content": "<tts_text_bos_single>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    "248076": {
+      "content": "<|audio_pad|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    }
+  }
+}
+
+
+==============================================================================
+FILE: chat_template.jinja
+==============================================================================
+
+R2 PATH: C:\Users\steph\szl-forge\chaski_r2\chaski-r2-adapter\chat_template.jinja
+R2 SHA-256: 306abaf09cf3a6c0d14128373a72925bda3d7de2616a5642804d9768c7d2f78c
+R2 CONTENT:
+{%- set image_count = namespace(value=0) %}
+{%- set video_count = namespace(value=0) %}
+{%- macro render_content(content, do_vision_count, is_system_content=false) %}
+    {%- if content is string %}
+        {{- content }}
+    {%- elif content is iterable and content is not mapping %}
+        {%- for item in content %}
+            {%- if 'image' in item or 'image_url' in item or item.type == 'image' %}
+                {%- if is_system_content %}
+                    {{- raise_exception('System message cannot contain images.') }}
+                {%- endif %}
+                {%- if do_vision_count %}
+                    {%- set image_count.value = image_count.value + 1 %}
+                {%- endif %}
+                {%- if add_vision_id %}
+                    {{- 'Picture ' ~ image_count.value ~ ': ' }}
+                {%- endif %}
+                {{- '<|vision_start|><|image_pad|><|vision_end|>' }}
+            {%- elif 'video' in item or item.type == 'video' %}
+                {%- if is_system_content %}
+                    {{- raise_exception('System message cannot contain videos.') }}
+                {%- endif %}
+                {%- if do_vision_count %}
+                    {%- set video_count.value = video_count.value + 1 %}
+                {%- endif %}
+                {%- if add_vision_id %}
+                    {{- 'Video ' ~ video_count.value ~ ': ' }}
+                {%- endif %}
+                {{- '<|vision_start|><|video_pad|><|vision_end|>' }}
+            {%- elif 'text' in item %}
+                {{- item.text }}
+            {%- else %}
+                {{- raise_exception('Unexpected item type in content.') }}
+            {%- endif %}
+        {%- endfor %}
+    {%- elif content is none or content is undefined %}
+        {{- '' }}
+    {%- else %}
+        {{- raise_exception('Unexpected content type.') }}
+    {%- endif %}
+{%- endmacro %}
+{%- if not messages %}
+    {{- raise_exception('No messages provided.') }}
+{%- endif %}
+{%- if tools and tools is iterable and tools is not mapping %}
+    {{- '<|im_start|>system\n' }}
+    {{- "# Tools\n\nYou have access to the following functions:\n\n<tools>" }}
+    {%- for tool in tools %}
+        {{- "\n" }}
+        {{- tool | tojson }}
+    {%- endfor %}
+    {{- "\n</tools>" }}
+    {{- '\n\nIf you choose to call a function ONLY reply in the following format with NO suffix:\n\n<tool_call>\n<function=example_function_name>\n<parameter=example_parameter_1>\nvalue_1\n</parameter>\n<parameter=example_parameter_2>\nThis is the value for the second parameter\nthat can span\nmultiple lines\n</parameter>\n</function>\n</tool_call>\n\n<IMPORTANT>\nReminder:\n- Function calls MUST follow the specified format: an inner <function=...></function> block must be nested within <tool_call></tool_call> XML tags\n- Required parameters MUST be specified\n- You may provide optional reasoning for your function call in natural language BEFORE the function call, but NOT after\n- If there is no function call available, answer the question like normal with your current knowledge and do not tell the user about function calls\n</IMPORTANT>' }}
+    {%- if messages[0].role == 'system' %}
+        {%- set content = render_content(messages[0].content, false, true)|trim %}
+        {%- if content %}
+            {{- '\n\n' + content }}
+        {%- endif %}
+    {%- endif %}
+    {{- '<|im_end|>\n' }}
+{%- else %}
+    {%- if messages[0].role == 'system' %}
+        {%- set content = render_content(messages[0].content, false, true)|trim %}
+        {{- '<|im_start|>system\n' + content + '<|im_end|>\n' }}
+    {%- endif %}
+{%- endif %}
+{%- set ns = namespace(multi_step_tool=true, last_query_index=messages|length - 1) %}
+{%- for message in messages[::-1] %}
+    {%- set index = (messages|length - 1) - loop.index0 %}
+    {%- if ns.multi_step_tool and message.role == "user" %}
+        {%- set content = render_content(message.content, false)|trim %}
+        {%- if not(content.startswith('<tool_response>') and content.endswith('</tool_response>')) %}
+            {%- set ns.multi_step_tool = false %}
+            {%- set ns.last_query_index = index %}
+        {%- endif %}
+    {%- endif %}
+{%- endfor %}
+{%- if ns.multi_step_tool %}
+    {{- raise_exception('No user query found in messages.') }}
+{%- endif %}
+{%- for message in messages %}
+    {%- set content = render_content(message.content, true)|trim %}
+    {%- if message.role == "system" %}
+        {%- if not loop.first %}
+            {{- raise_exception('System message must be at the beginning.') }}
+        {%- endif %}
+    {%- elif message.role == "user" %}
+        {{- '<|im_start|>' + message.role + '\n' + content + '<|im_end|>' + '\n' }}
+    {%- elif message.role == "assistant" %}
+        {%- set reasoning_content = '' %}
+        {%- if message.reasoning_content is string %}
+            {%- set reasoning_content = message.reasoning_content %}
+        {%- else %}
+            {%- if '</think>' in content %}
+                {%- set reasoning_content = content.split('</think>')[0].rstrip('\n').split('<think>')[-1].lstrip('\n') %}
+                {%- set content = content.split('</think>')[-1].lstrip('\n') %}
+            {%- endif %}
+        {%- endif %}
+        {%- set reasoning_content = reasoning_content|trim %}
+        {%- if loop.index0 > ns.last_query_index %}
+            {{- '<|im_start|>' + message.role + '\n<think>\n' + reasoning_content + '\n</think>\n\n' + content }}
+        {%- else %}
+            {{- '<|im_start|>' + message.role + '\n' + content }}
+        {%- endif %}
+        {%- if message.tool_calls and message.tool_calls is iterable and message.tool_calls is not mapping %}
+            {%- for tool_call in message.tool_calls %}
+                {%- if tool_call.function is defined %}
+                    {%- set tool_call = tool_call.function %}
+                {%- endif %}
+                {%- if loop.first %}
+                    {%- if content|trim %}
+                        {{- '\n\n<tool_call>\n<function=' + tool_call.name + '>\n' }}
+                    {%- else %}
+                        {{- '<tool_call>\n<function=' + tool_call.name + '>\n' }}
+                    {%- endif %}
+                {%- else %}
+                    {{- '\n<tool_call>\n<function=' + tool_call.name + '>\n' }}
+                {%- endif %}
+                {%- if tool_call.arguments is defined %}
+                    {%- for args_name, args_value in tool_call.arguments|items %}
+                        {{- '<parameter=' + args_name + '>\n' }}
+                        {%- set args_value = args_value | tojson | safe if args_value is mapping or (args_value is sequence and args_value is not string) else args_value | string %}
+                        {{- args_value }}
+                        {{- '\n</parameter>\n' }}
+                    {%- endfor %}
+                {%- endif %}
+                {{- '</function>\n</tool_call>' }}
+            {%- endfor %}
+        {%- endif %}
+        {{- '<|im_end|>\n' }}
+    {%- elif message.role == "tool" %}
+        {%- if loop.previtem and loop.previtem.role != "tool" %}
+            {{- '<|im_start|>user' }}
+        {%- endif %}
+        {{- '\n<tool_response>\n' }}
+        {{- content }}
+        {{- '\n</tool_response>' }}
+        {%- if not loop.last and loop.nextitem.role != "tool" %}
+            {{- '<|im_end|>\n' }}
+        {%- elif loop.last %}
+            {{- '<|im_end|>\n' }}
+        {%- endif %}
+    {%- else %}
+        {{- raise_exception('Unexpected message role.') }}
+    {%- endif %}
+{%- endfor %}
+{%- if add_generation_prompt %}
+    {{- '<|im_start|>assistant\n' }}
+    {%- if enable_thinking is defined and enable_thinking is true %}
+        {{- '<think>\n' }}
+    {%- else %}
+        {{- '<think>\n\n</think>\n\n' }}
+    {%- endif %}
+{%- endif %}
+
+R4 PATH: C:\Users\steph\szl-forge\chaski_r4\chaski-r4-adapter\chat_template.jinja
+R4 SHA-256: 306abaf09cf3a6c0d14128373a72925bda3d7de2616a5642804d9768c7d2f78c
+R4 CONTENT:
+{%- set image_count = namespace(value=0) %}
+{%- set video_count = namespace(value=0) %}
+{%- macro render_content(content, do_vision_count, is_system_content=false) %}
+    {%- if content is string %}
+        {{- content }}
+    {%- elif content is iterable and content is not mapping %}
+        {%- for item in content %}
+            {%- if 'image' in item or 'image_url' in item or item.type == 'image' %}
+                {%- if is_system_content %}
+                    {{- raise_exception('System message cannot contain images.') }}
+                {%- endif %}
+                {%- if do_vision_count %}
+                    {%- set image_count.value = image_count.value + 1 %}
+                {%- endif %}
+                {%- if add_vision_id %}
+                    {{- 'Picture ' ~ image_count.value ~ ': ' }}
+                {%- endif %}
+                {{- '<|vision_start|><|image_pad|><|vision_end|>' }}
+            {%- elif 'video' in item or item.type == 'video' %}
+                {%- if is_system_content %}
+                    {{- raise_exception('System message cannot contain videos.') }}
+                {%- endif %}
+                {%- if do_vision_count %}
+                    {%- set video_count.value = video_count.value + 1 %}
+                {%- endif %}
+                {%- if add_vision_id %}
+                    {{- 'Video ' ~ video_count.value ~ ': ' }}
+                {%- endif %}
+                {{- '<|vision_start|><|video_pad|><|vision_end|>' }}
+            {%- elif 'text' in item %}
+                {{- item.text }}
+            {%- else %}
+                {{- raise_exception('Unexpected item type in content.') }}
+            {%- endif %}
+        {%- endfor %}
+    {%- elif content is none or content is undefined %}
+        {{- '' }}
+    {%- else %}
+        {{- raise_exception('Unexpected content type.') }}
+    {%- endif %}
+{%- endmacro %}
+{%- if not messages %}
+    {{- raise_exception('No messages provided.') }}
+{%- endif %}
+{%- if tools and tools is iterable and tools is not mapping %}
+    {{- '<|im_start|>system\n' }}
+    {{- "# Tools\n\nYou have access to the following functions:\n\n<tools>" }}
+    {%- for tool in tools %}
+        {{- "\n" }}
+        {{- tool | tojson }}
+    {%- endfor %}
+    {{- "\n</tools>" }}
+    {{- '\n\nIf you choose to call a function ONLY reply in the following format with NO suffix:\n\n<tool_call>\n<function=example_function_name>\n<parameter=example_parameter_1>\nvalue_1\n</parameter>\n<parameter=example_parameter_2>\nThis is the value for the second parameter\nthat can span\nmultiple lines\n</parameter>\n</function>\n</tool_call>\n\n<IMPORTANT>\nReminder:\n- Function calls MUST follow the specified format: an inner <function=...></function> block must be nested within <tool_call></tool_call> XML tags\n- Required parameters MUST be specified\n- You may provide optional reasoning for your function call in natural language BEFORE the function call, but NOT after\n- If there is no function call available, answer the question like normal with your current knowledge and do not tell the user about function calls\n</IMPORTANT>' }}
+    {%- if messages[0].role == 'system' %}
+        {%- set content = render_content(messages[0].content, false, true)|trim %}
+        {%- if content %}
+            {{- '\n\n' + content }}
+        {%- endif %}
+    {%- endif %}
+    {{- '<|im_end|>\n' }}
+{%- else %}
+    {%- if messages[0].role == 'system' %}
+        {%- set content = render_content(messages[0].content, false, true)|trim %}
+        {{- '<|im_start|>system\n' + content + '<|im_end|>\n' }}
+    {%- endif %}
+{%- endif %}
+{%- set ns = namespace(multi_step_tool=true, last_query_index=messages|length - 1) %}
+{%- for message in messages[::-1] %}
+    {%- set index = (messages|length - 1) - loop.index0 %}
+    {%- if ns.multi_step_tool and message.role == "user" %}
+        {%- set content = render_content(message.content, false)|trim %}
+        {%- if not(content.startswith('<tool_response>') and content.endswith('</tool_response>')) %}
+            {%- set ns.multi_step_tool = false %}
+            {%- set ns.last_query_index = index %}
+        {%- endif %}
+    {%- endif %}
+{%- endfor %}
+{%- if ns.multi_step_tool %}
+    {{- raise_exception('No user query found in messages.') }}
+{%- endif %}
+{%- for message in messages %}
+    {%- set content = render_content(message.content, true)|trim %}
+    {%- if message.role == "system" %}
+        {%- if not loop.first %}
+            {{- raise_exception('System message must be at the beginning.') }}
+        {%- endif %}
+    {%- elif message.role == "user" %}
+        {{- '<|im_start|>' + message.role + '\n' + content + '<|im_end|>' + '\n' }}
+    {%- elif message.role == "assistant" %}
+        {%- set reasoning_content = '' %}
+        {%- if message.reasoning_content is string %}
+            {%- set reasoning_content = message.reasoning_content %}
+        {%- else %}
+            {%- if '</think>' in content %}
+                {%- set reasoning_content = content.split('</think>')[0].rstrip('\n').split('<think>')[-1].lstrip('\n') %}
+                {%- set content = content.split('</think>')[-1].lstrip('\n') %}
+            {%- endif %}
+        {%- endif %}
+        {%- set reasoning_content = reasoning_content|trim %}
+        {%- if loop.index0 > ns.last_query_index %}
+            {{- '<|im_start|>' + message.role + '\n<think>\n' + reasoning_content + '\n</think>\n\n' + content }}
+        {%- else %}
+            {{- '<|im_start|>' + message.role + '\n' + content }}
+        {%- endif %}
+        {%- if message.tool_calls and message.tool_calls is iterable and message.tool_calls is not mapping %}
+            {%- for tool_call in message.tool_calls %}
+                {%- if tool_call.function is defined %}
+                    {%- set tool_call = tool_call.function %}
+                {%- endif %}
+                {%- if loop.first %}
+                    {%- if content|trim %}
+                        {{- '\n\n<tool_call>\n<function=' + tool_call.name + '>\n' }}
+                    {%- else %}
+                        {{- '<tool_call>\n<function=' + tool_call.name + '>\n' }}
+                    {%- endif %}
+                {%- else %}
+                    {{- '\n<tool_call>\n<function=' + tool_call.name + '>\n' }}
+                {%- endif %}
+                {%- if tool_call.arguments is defined %}
+                    {%- for args_name, args_value in tool_call.arguments|items %}
+                        {{- '<parameter=' + args_name + '>\n' }}
+                        {%- set args_value = args_value | tojson | safe if args_value is mapping or (args_value is sequence and args_value is not string) else args_value | string %}
+                        {{- args_value }}
+                        {{- '\n</parameter>\n' }}
+                    {%- endfor %}
+                {%- endif %}
+                {{- '</function>\n</tool_call>' }}
+            {%- endfor %}
+        {%- endif %}
+        {{- '<|im_end|>\n' }}
+    {%- elif message.role == "tool" %}
+        {%- if loop.previtem and loop.previtem.role != "tool" %}
+            {{- '<|im_start|>user' }}
+        {%- endif %}
+        {{- '\n<tool_response>\n' }}
+        {{- content }}
+        {{- '\n</tool_response>' }}
+        {%- if not loop.last and loop.nextitem.role != "tool" %}
+            {{- '<|im_end|>\n' }}
+        {%- elif loop.last %}
+            {{- '<|im_end|>\n' }}
+        {%- endif %}
+    {%- else %}
+        {{- raise_exception('Unexpected message role.') }}
+    {%- endif %}
+{%- endfor %}
+{%- if add_generation_prompt %}
+    {{- '<|im_start|>assistant\n' }}
+    {%- if enable_thinking is defined and enable_thinking is true %}
+        {{- '<think>\n' }}
+    {%- else %}
+        {{- '<think>\n\n</think>\n\n' }}
+    {%- endif %}
+{%- endif %}
+
+R4 PATH: C:\Users\steph\szl-forge\chaski_r4\outputs-r4\checkpoint-30\chat_template.jinja
+R4 SHA-256: 306abaf09cf3a6c0d14128373a72925bda3d7de2616a5642804d9768c7d2f78c
+R4 CONTENT:
+{%- set image_count = namespace(value=0) %}
+{%- set video_count = namespace(value=0) %}
+{%- macro render_content(content, do_vision_count, is_system_content=false) %}
+    {%- if content is string %}
+        {{- content }}
+    {%- elif content is iterable and content is not mapping %}
+        {%- for item in content %}
+            {%- if 'image' in item or 'image_url' in item or item.type == 'image' %}
+                {%- if is_system_content %}
+                    {{- raise_exception('System message cannot contain images.') }}
+                {%- endif %}
+                {%- if do_vision_count %}
+                    {%- set image_count.value = image_count.value + 1 %}
+                {%- endif %}
+                {%- if add_vision_id %}
+                    {{- 'Picture ' ~ image_count.value ~ ': ' }}
+                {%- endif %}
+                {{- '<|vision_start|><|image_pad|><|vision_end|>' }}
+            {%- elif 'video' in item or item.type == 'video' %}
+                {%- if is_system_content %}
+                    {{- raise_exception('System message cannot contain videos.') }}
+                {%- endif %}
+                {%- if do_vision_count %}
+                    {%- set video_count.value = video_count.value + 1 %}
+                {%- endif %}
+                {%- if add_vision_id %}
+                    {{- 'Video ' ~ video_count.value ~ ': ' }}
+                {%- endif %}
+                {{- '<|vision_start|><|video_pad|><|vision_end|>' }}
+            {%- elif 'text' in item %}
+                {{- item.text }}
+            {%- else %}
+                {{- raise_exception('Unexpected item type in content.') }}
+            {%- endif %}
+        {%- endfor %}
+    {%- elif content is none or content is undefined %}
+        {{- '' }}
+    {%- else %}
+        {{- raise_exception('Unexpected content type.') }}
+    {%- endif %}
+{%- endmacro %}
+{%- if not messages %}
+    {{- raise_exception('No messages provided.') }}
+{%- endif %}
+{%- if tools and tools is iterable and tools is not mapping %}
+    {{- '<|im_start|>system\n' }}
+    {{- "# Tools\n\nYou have access to the following functions:\n\n<tools>" }}
+    {%- for tool in tools %}
+        {{- "\n" }}
+        {{- tool | tojson }}
+    {%- endfor %}
+    {{- "\n</tools>" }}
+    {{- '\n\nIf you choose to call a function ONLY reply in the following format with NO suffix:\n\n<tool_call>\n<function=example_function_name>\n<parameter=example_parameter_1>\nvalue_1\n</parameter>\n<parameter=example_parameter_2>\nThis is the value for the second parameter\nthat can span\nmultiple lines\n</parameter>\n</function>\n</tool_call>\n\n<IMPORTANT>\nReminder:\n- Function calls MUST follow the specified format: an inner <function=...></function> block must be nested within <tool_call></tool_call> XML tags\n- Required parameters MUST be specified\n- You may provide optional reasoning for your function call in natural language BEFORE the function call, but NOT after\n- If there is no function call available, answer the question like normal with your current knowledge and do not tell the user about function calls\n</IMPORTANT>' }}
+    {%- if messages[0].role == 'system' %}
+        {%- set content = render_content(messages[0].content, false, true)|trim %}
+        {%- if content %}
+            {{- '\n\n' + content }}
+        {%- endif %}
+    {%- endif %}
+    {{- '<|im_end|>\n' }}
+{%- else %}
+    {%- if messages[0].role == 'system' %}
+        {%- set content = render_content(messages[0].content, false, true)|trim %}
+        {{- '<|im_start|>system\n' + content + '<|im_end|>\n' }}
+    {%- endif %}
+{%- endif %}
+{%- set ns = namespace(multi_step_tool=true, last_query_index=messages|length - 1) %}
+{%- for message in messages[::-1] %}
+    {%- set index = (messages|length - 1) - loop.index0 %}
+    {%- if ns.multi_step_tool and message.role == "user" %}
+        {%- set content = render_content(message.content, false)|trim %}
+        {%- if not(content.startswith('<tool_response>') and content.endswith('</tool_response>')) %}
+            {%- set ns.multi_step_tool = false %}
+            {%- set ns.last_query_index = index %}
+        {%- endif %}
+    {%- endif %}
+{%- endfor %}
+{%- if ns.multi_step_tool %}
+    {{- raise_exception('No user query found in messages.') }}
+{%- endif %}
+{%- for message in messages %}
+    {%- set content = render_content(message.content, true)|trim %}
+    {%- if message.role == "system" %}
+        {%- if not loop.first %}
+            {{- raise_exception('System message must be at the beginning.') }}
+        {%- endif %}
+    {%- elif message.role == "user" %}
+        {{- '<|im_start|>' + message.role + '\n' + content + '<|im_end|>' + '\n' }}
+    {%- elif message.role == "assistant" %}
+        {%- set reasoning_content = '' %}
+        {%- if message.reasoning_content is string %}
+            {%- set reasoning_content = message.reasoning_content %}
+        {%- else %}
+            {%- if '</think>' in content %}
+                {%- set reasoning_content = content.split('</think>')[0].rstrip('\n').split('<think>')[-1].lstrip('\n') %}
+                {%- set content = content.split('</think>')[-1].lstrip('\n') %}
+            {%- endif %}
+        {%- endif %}
+        {%- set reasoning_content = reasoning_content|trim %}
+        {%- if loop.index0 > ns.last_query_index %}
+            {{- '<|im_start|>' + message.role + '\n<think>\n' + reasoning_content + '\n</think>\n\n' + content }}
+        {%- else %}
+            {{- '<|im_start|>' + message.role + '\n' + content }}
+        {%- endif %}
+        {%- if message.tool_calls and message.tool_calls is iterable and message.tool_calls is not mapping %}
+            {%- for tool_call in message.tool_calls %}
+                {%- if tool_call.function is defined %}
+                    {%- set tool_call = tool_call.function %}
+                {%- endif %}
+                {%- if loop.first %}
+                    {%- if content|trim %}
+                        {{- '\n\n<tool_call>\n<function=' + tool_call.name + '>\n' }}
+                    {%- else %}
+                        {{- '<tool_call>\n<function=' + tool_call.name + '>\n' }}
+                    {%- endif %}
+                {%- else %}
+                    {{- '\n<tool_call>\n<function=' + tool_call.name + '>\n' }}
+                {%- endif %}
+                {%- if tool_call.arguments is defined %}
+                    {%- for args_name, args_value in tool_call.arguments|items %}
+                        {{- '<parameter=' + args_name + '>\n' }}
+                        {%- set args_value = args_value | tojson | safe if args_value is mapping or (args_value is sequence and args_value is not string) else args_value | string %}
+                        {{- args_value }}
+                        {{- '\n</parameter>\n' }}
+                    {%- endfor %}
+                {%- endif %}
+                {{- '</function>\n</tool_call>' }}
+            {%- endfor %}
+        {%- endif %}
+        {{- '<|im_end|>\n' }}
+    {%- elif message.role == "tool" %}
+        {%- if loop.previtem and loop.previtem.role != "tool" %}
+            {{- '<|im_start|>user' }}
+        {%- endif %}
+        {{- '\n<tool_response>\n' }}
+        {{- content }}
+        {{- '\n</tool_response>' }}
+        {%- if not loop.last and loop.nextitem.role != "tool" %}
+            {{- '<|im_end|>\n' }}
+        {%- elif loop.last %}
+            {{- '<|im_end|>\n' }}
+        {%- endif %}
+    {%- else %}
+        {{- raise_exception('Unexpected message role.') }}
+    {%- endif %}
+{%- endfor %}
+{%- if add_generation_prompt %}
+    {{- '<|im_start|>assistant\n' }}
+    {%- if enable_thinking is defined and enable_thinking is true %}
+        {{- '<think>\n' }}
+    {%- else %}
+        {{- '<think>\n\n</think>\n\n' }}
+    {%- endif %}
+{%- endif %}
+
+==============================================================================
+FILE: trainer_state.json
+==============================================================================
+R2: [NOT PRESENT]
+
+R4 PATH: C:\Users\steph\szl-forge\chaski_r4\outputs-r4\checkpoint-30\trainer_state.json
+R4 SHA-256: b97b28189b4f6362e268cb3d40cfe4285a4b06baec1a2dbc5df55d644b6654f5
+R4 CONTENT:
+{
+  "best_global_step": null,
+  "best_metric": null,
+  "best_model_checkpoint": null,
+  "epoch": 3.0,
+  "eval_steps": 500,
+  "global_step": 30,
+  "is_hyper_param_search": false,
+  "is_local_process_zero": true,
+  "is_world_process_zero": true,
+  "log_history": [
+    {
+      "epoch": 0.1,
+      "grad_norm": 5.631289005279541,
+      "learning_rate": 0.0,
+      "loss": 1.4102646112442017,
+      "step": 1
+    },
+    {
+      "epoch": 0.2,
+      "grad_norm": 6.716855049133301,
+      "learning_rate": 3.3333333333333335e-05,
+      "loss": 1.8095086812973022,
+      "step": 2
+    },
+    {
+      "epoch": 0.3,
+      "grad_norm": 7.065722942352295,
+      "learning_rate": 6.666666666666667e-05,
+      "loss": 1.8210844993591309,
+      "step": 3
+    },
+    {
+      "epoch": 0.4,
+      "grad_norm": 3.9370057582855225,
+      "learning_rate": 0.0001,
+      "loss": 1.0680298805236816,
+      "step": 4
+    },
+    {
+      "epoch": 0.5,
+      "grad_norm": 2.8096914291381836,
+      "learning_rate": 0.00013333333333333334,
+      "loss": 0.6292282342910767,
+      "step": 5
+    },
+    {
+      "epoch": 0.6,
+      "grad_norm": 3.6632497310638428,
+      "learning_rate": 0.0001666666666666667,
+      "loss": 0.956973135471344,
+      "step": 6
+    },
+    {
+      "epoch": 0.7,
+      "grad_norm": 3.0241992473602295,
+      "learning_rate": 0.0002,
+      "loss": 0.8292104005813599,
+      "step": 7
+    },
+    {
+      "epoch": 0.8,
+      "grad_norm": 3.6443707942962646,
+      "learning_rate": 0.0002,
+      "loss": 0.9643014669418335,
+      "step": 8
+    },
+    {
+      "epoch": 0.9,
+      "grad_norm": 2.4578402042388916,
+      "learning_rate": 0.0002,
+      "loss": 0.7118086814880371,
+      "step": 9
+    },
+    {
+      "epoch": 1.0,
+      "grad_norm": 2.207193613052368,
+      "learning_rate": 0.0002,
+      "loss": 0.6066733002662659,
+      "step": 10
+    },
+    {
+      "epoch": 1.1,
+      "grad_norm": 1.9074289798736572,
+      "learning_rate": 0.0002,
+      "loss": 0.5367280840873718,
+      "step": 11
+    },
+    {
+      "epoch": 1.2,
+      "grad_norm": 2.3711421489715576,
+      "learning_rate": 0.0002,
+      "loss": 0.5538296103477478,
+      "step": 12
+    },
+    {
+      "epoch": 1.3,
+      "grad_norm": 2.376106023788452,
+      "learning_rate": 0.0002,
+      "loss": 0.44123637676239014,
+      "step": 13
+    },
+    {
+      "epoch": 1.4,
+      "grad_norm": 2.094730854034424,
+      "learning_rate": 0.0002,
+      "loss": 0.5395002365112305,
+      "step": 14
+    },
+    {
+      "epoch": 1.5,
+      "grad_norm": 2.2279694080352783,
+      "learning_rate": 0.0002,
+      "loss": 0.4224188029766083,
+      "step": 15
+    },
+    {
+      "epoch": 1.6,
+      "grad_norm": 2.612936496734619,
+      "learning_rate": 0.0002,
+      "loss": 0.5152101516723633,
+      "step": 16
+    },
+    {
+      "epoch": 1.7,
+      "grad_norm": 2.8185696601867676,
+      "learning_rate": 0.0002,
+      "loss": 0.44550037384033203,
+      "step": 17
+    },
+    {
+      "epoch": 1.8,
+      "grad_norm": 2.727027177810669,
+      "learning_rate": 0.0002,
+      "loss": 0.546291708946228,
+      "step": 18
+    },
+    {
+      "epoch": 1.9,
+      "grad_norm": 3.464078664779663,
+      "learning_rate": 0.0002,
+      "loss": 0.4929637014865875,
+      "step": 19
+    },
+    {
+      "epoch": 2.0,
+      "grad_norm": 2.3188531398773193,
+      "learning_rate": 0.0002,
+      "loss": 0.41290566325187683,
+      "step": 20
+    },
+    {
+      "epoch": 2.1,
+      "grad_norm": 2.362422466278076,
+      "learning_rate": 0.0002,
+      "loss": 0.2934953272342682,
+      "step": 21
+    },
+    {
+      "epoch": 2.2,
+      "grad_norm": 1.8599659204483032,
+      "learning_rate": 0.0002,
+      "loss": 0.23721669614315033,
+      "step": 22
+    },
+    {
+      "epoch": 2.3,
+      "grad_norm": 1.5777595043182373,
+      "learning_rate": 0.0002,
+      "loss": 0.2324952781200409,
+      "step": 23
+    },
+    {
+      "epoch": 2.4,
+      "grad_norm": 2.1946659088134766,
+      "learning_rate": 0.0002,
+      "loss": 0.28822019696235657,
+      "step": 24
+    },
+    {
+      "epoch": 2.5,
+      "grad_norm": 2.0468502044677734,
+      "learning_rate": 0.0002,
+      "loss": 0.22936107218265533,
+      "step": 25
+    },
+    {
+      "epoch": 2.6,
+      "grad_norm": 1.50850248336792,
+      "learning_rate": 0.0002,
+      "loss": 0.1371934413909912,
+      "step": 26
+    },
+    {
+      "epoch": 2.7,
+      "grad_norm": 1.8860459327697754,
+      "learning_rate": 0.0002,
+      "loss": 0.17619852721691132,
+      "step": 27
+    },
+    {
+      "epoch": 2.8,
+      "grad_norm": 1.934030294418335,
+      "learning_rate": 0.0002,
+      "loss": 0.1667153686285019,
+      "step": 28
+    },
+    {
+      "epoch": 2.9,
+      "grad_norm": 2.0659947395324707,
+      "learning_rate": 0.0002,
+      "loss": 0.13849949836730957,
+      "step": 29
+    },
+    {
+      "epoch": 3.0,
+      "grad_norm": 2.182042360305786,
+      "learning_rate": 0.0002,
+      "loss": 0.1827872395515442,
+      "step": 30
+    }
+  ],
+  "logging_steps": 1,
+  "max_steps": 30,
+  "num_input_tokens_seen": 0,
+  "num_train_epochs": 3,
+  "save_steps": 500,
+  "stateful_callbacks": {
+    "TrainerControl": {
+      "args": {
+        "should_epoch_stop": false,
+        "should_evaluate": false,
+        "should_log": false,
+        "should_save": true,
+        "should_training_stop": true
+      },
+      "attributes": {}
+    }
+  },
+  "total_flos": 85000261223808.0,
+  "train_batch_size": 1,
+  "trial_name": null,
+  "trial_params": null
+}
+
+
+==============================================================================
+FILE: README.md
+==============================================================================
+
+R2 PATH: C:\Users\steph\szl-forge\chaski_r2\chaski-r2-adapter\README.md
+R2 SHA-256: 739b4bb83778990af503a20bd766eb73d4a89f24813fa5cebda118086fe6c99d
+R2 CONTENT:
+---
+base_model: Qwen/Qwen3.5-0.8B
+library_name: peft
+pipeline_tag: text-generation
+tags:
+- base_model:adapter:Qwen/Qwen3.5-0.8B
+- lora
+- sft
+- transformers
+- trl
+- unsloth
+---
+
+# Model Card for Model ID
+
+<!-- Provide a quick summary of what the model is/does. -->
+
+
+
+## Model Details
+
+### Model Description
+
+<!-- Provide a longer summary of what this model is. -->
+
+
+
+- **Developed by:** [More Information Needed]
+- **Funded by [optional]:** [More Information Needed]
+- **Shared by [optional]:** [More Information Needed]
+- **Model type:** [More Information Needed]
+- **Language(s) (NLP):** [More Information Needed]
+- **License:** [More Information Needed]
+- **Finetuned from model [optional]:** [More Information Needed]
+
+### Model Sources [optional]
+
+<!-- Provide the basic links for the model. -->
+
+- **Repository:** [More Information Needed]
+- **Paper [optional]:** [More Information Needed]
+- **Demo [optional]:** [More Information Needed]
+
+## Uses
+
+<!-- Address questions around how the model is intended to be used, including the foreseeable users of the model and those affected by the model. -->
+
+### Direct Use
+
+<!-- This section is for the model use without fine-tuning or plugging into a larger ecosystem/app. -->
+
+[More Information Needed]
+
+### Downstream Use [optional]
+
+<!-- This section is for the model use when fine-tuned for a task, or when plugged into a larger ecosystem/app -->
+
+[More Information Needed]
+
+### Out-of-Scope Use
+
+<!-- This section addresses misuse, malicious use, and uses that the model will not work well for. -->
+
+[More Information Needed]
+
+## Bias, Risks, and Limitations
+
+<!-- This section is meant to convey both technical and sociotechnical limitations. -->
+
+[More Information Needed]
+
+### Recommendations
+
+<!-- This section is meant to convey recommendations with respect to the bias, risk, and technical limitations. -->
+
+Users (both direct and downstream) should be made aware of the risks, biases and limitations of the model. More information needed for further recommendations.
+
+## How to Get Started with the Model
+
+Use the code below to get started with the model.
+
+[More Information Needed]
+
+## Training Details
+
+### Training Data
+
+<!-- This should link to a Dataset Card, perhaps with a short stub of information on what the training data is all about as well as documentation related to data pre-processing or additional filtering. -->
+
+[More Information Needed]
+
+### Training Procedure
+
+<!-- This relates heavily to the Technical Specifications. Content here should link to that section when it is relevant to the training procedure. -->
+
+#### Preprocessing [optional]
+
+[More Information Needed]
+
+
+#### Training Hyperparameters
+
+- **Training regime:** [More Information Needed] <!--fp32, fp16 mixed precision, bf16 mixed precision, bf16 non-mixed precision, fp16 non-mixed precision, fp8 mixed precision -->
+
+#### Speeds, Sizes, Times [optional]
+
+<!-- This section provides information about throughput, start/end time, checkpoint size if relevant, etc. -->
+
+[More Information Needed]
+
+## Evaluation
+
+<!-- This section describes the evaluation protocols and provides the results. -->
+
+### Testing Data, Factors & Metrics
+
+#### Testing Data
+
+<!-- This should link to a Dataset Card if possible. -->
+
+[More Information Needed]
+
+#### Factors
+
+<!-- These are the things the evaluation is disaggregating by, e.g., subpopulations or domains. -->
+
+[More Information Needed]
+
+#### Metrics
+
+<!-- These are the evaluation metrics being used, ideally with a description of why. -->
+
+[More Information Needed]
+
+### Results
+
+[More Information Needed]
+
+#### Summary
+
+
+
+## Model Examination [optional]
+
+<!-- Relevant interpretability work for the model goes here -->
+
+[More Information Needed]
+
+## Environmental Impact
+
+<!-- Total emissions (in grams of CO2eq) and additional considerations, such as electricity usage, go here. Edit the suggested text below accordingly -->
+
+Carbon emissions can be estimated using the [Machine Learning Impact calculator](https://mlco2.github.io/impact#compute) presented in [Lacoste et al. (2019)](https://arxiv.org/abs/1910.09700).
+
+- **Hardware Type:** [More Information Needed]
+- **Hours used:** [More Information Needed]
+- **Cloud Provider:** [More Information Needed]
+- **Compute Region:** [More Information Needed]
+- **Carbon Emitted:** [More Information Needed]
+
+## Technical Specifications [optional]
+
+### Model Architecture and Objective
+
+[More Information Needed]
+
+### Compute Infrastructure
+
+[More Information Needed]
+
+#### Hardware
+
+[More Information Needed]
+
+#### Software
+
+[More Information Needed]
+
+## Citation [optional]
+
+<!-- If there is a paper or blog post introducing the model, the APA and Bibtex information for that should go in this section. -->
+
+**BibTeX:**
+
+[More Information Needed]
+
+**APA:**
+
+[More Information Needed]
+
+## Glossary [optional]
+
+<!-- If relevant, include terms and calculations in this section that can help readers understand the model or model card. -->
+
+[More Information Needed]
+
+## More Information [optional]
+
+[More Information Needed]
+
+## Model Card Authors [optional]
+
+[More Information Needed]
+
+## Model Card Contact
+
+[More Information Needed]
+### Framework versions
+
+- PEFT 0.19.1
+
+R2 PATH: C:\Users\steph\szl-forge\chaski_r2\README.md
+R2 SHA-256: e894e9792eabfee360e734516f305a037741b1e691081a6056517eb1502bf82e
+R2 CONTENT:
+# CHASKI-R2
+
+**Separate SKU. CHAWPI silhouette. ATELIER lock.**
+
+This is a GitHub recipe, not a Hub card. The reserved Hub id is
+`SZLHOLDINGS/chaski-r2`. Do **not** costume a README-only Hub ID: this checkout
+does not PUT Hub and does not claim a live Hub page.
+
+Base in prose: **Qwen/Qwen3.5-0.8B** (Apache-2.0). Disclose that silhouette.
+Never overwrite live `SZLHOLDINGS/chaski`. Not `SZLHOLDINGS/chaski-5050`.
+Not the owner-metal sixteen-alpha kit.
+
+Unsloth 2026-08: QLoRA is **not recommended** on Qwen3.5. This kit is
+**bf16 LoRA** (r=16 Î±=32). It ships one Unsloth trainer, an honest eval stamp
+that **reuses** the PR 63 named-N gates **after train**, a Python serve path,
+and a Jobs launcher that **refuses to fire**.
+
+| | |
+|---|---|
+| **SKU** | `CHASKI-R2` â€” reserved Hub id `SZLHOLDINGS/chaski-r2` (declared, not a Hub page) |
+| **Base** | Qwen/Qwen3.5-0.8B (Apache-2.0). Disclosed in prose. |
+| **Runtime train** | `Qwen/Qwen3.5-0.8B` bf16 LoRA (`load_in_4bit=False`) |
+| **LoRA** | r=16 Î±=32, seed 11, response-only CE |
+| **Not** | live `SZLHOLDINGS/chaski`, `SZLHOLDINGS/chaski-5050`, QLoRA, owner-metal sixteen-alpha |
+| **ATELIER lock** | GitHub recipe only. No Hub YAML card. No README-only Hub costume. |
+| **Status** | GPU honesty **MEASURED** or **UNAVAILABLE**. **No ROADMAP parking.** |
+| **HF Jobs** | **UNAVAILABLE** â€” this PR does not fire a job |
+| **Weights** | **UNAVAILABLE** this checkout |
+| **Evals** | PR 63 named-N after train; **none-this-run** until that generate |
+| **publication_eligible** | **false** until MEASURED generate |
+| **Hub PUT** | **false** |
+| **Lab** | House CPU lab stays **Khipu GGUF** |
+| **A11OY-MINI** | PR #61 stays **scripts-only** of live Chaski. Not this SKU. |
+| **Doctrine** | v11 LOCKED (749 / 14 / 163). Î› = Conjecture 1 |
+
+## What this is
+
+A governed courier silhouette: **new** train turns that emit JSON with
+`decision`, `approvalRequired`, `executed`, `artifact`, `base_model`, `claim`,
+`label`, plus a REFUSE/ABSTAIN line. Eval **after train** reuses
+`chaski/gate/json_drafts.n5.jsonl` and `chaski/gate/adversarial_refusals.n6.jsonl`
+(eval-only named-N files from PR 63). Those files never enter gradients.
+Evals stay **none-this-run** until that generate actually runs.
+
+`train_chaski_r2.py` **refuses** `--hub SZLHOLDINGS/chaski` and
+`--hub SZLHOLDINGS/chaski-5050`. It **refuses** `--dataset-file` pointing at
+`chaski/gate/*.jsonl`.
+
+## What this is NOT
+
+- Not a replacement for live `SZLHOLDINGS/chaski`
+- Not `SZLHOLDINGS/chaski-5050` and not the sixteen-alpha owner-metal kit
+- Not a publication of a passing JSON-draft or refusal gate
+- Not a Hub overwrite, merge, Hub card, or Jobs launch from this checkout
+- Not a costumed README-only Hub ID
+- Not a Khipu lab pin and not an A11OY-MINI GGUF
+- Not an autonomous agent
+
+## Commands (local, no Hub write)
+
+```bash
+python chaski_r2/train_chaski_r2.py
+python chaski_r2/eval_chaski_r2.py
+python chaski/bakeoff_named_n.py --check
+python chaski_r2/serve_chaski_r2.py --check
+python chaski_r2/jobs/launch_chaski_r2_job.py
+```
+
+SKU `eval_chaski_r2.py` stays **none-this-run**. The parent named-N
+bake-off (`chaski/bakeoff_named_n.py`) is a separate owner-metal
+generate against held-out PR 63 files. `publication_eligible` stays
+false.
+
+`--train` runs Unsloth on the owner's metal and writes a **local** adapter
+under `chaski_r2/chaski-r2-adapter/`. Train loss may be MEASURED as a train
+metric, not an eval. It still does not PUT Hub and still leaves
+`publication_eligible` false.
+
+`--run-job` on the launcher exits 2 (`refusing`).
+
+
+R4 PATH: C:\Users\steph\szl-forge\chaski_r4\chaski-r4-adapter\README.md
+R4 SHA-256: 153d920d316af86c61b1f1ad41d7041bee52e80f48ce293d7706132616826296
+R4 CONTENT:
+---
+base_model: Qwen/Qwen3.5-0.8B
+library_name: peft
+pipeline_tag: text-generation
+tags:
+- base_model:adapter:Qwen/Qwen3.5-0.8B
+- lora
+- sft
+- transformers
+- trl
+- unsloth
+---
+
+# Model Card for Model ID
+
+<!-- Provide a quick summary of what the model is/does. -->
+
+
+
+## Model Details
+
+### Model Description
+
+<!-- Provide a longer summary of what this model is. -->
+
+
+
+- **Developed by:** [More Information Needed]
+- **Funded by [optional]:** [More Information Needed]
+- **Shared by [optional]:** [More Information Needed]
+- **Model type:** [More Information Needed]
+- **Language(s) (NLP):** [More Information Needed]
+- **License:** [More Information Needed]
+- **Finetuned from model [optional]:** [More Information Needed]
+
+### Model Sources [optional]
+
+<!-- Provide the basic links for the model. -->
+
+- **Repository:** [More Information Needed]
+- **Paper [optional]:** [More Information Needed]
+- **Demo [optional]:** [More Information Needed]
+
+## Uses
+
+<!-- Address questions around how the model is intended to be used, including the foreseeable users of the model and those affected by the model. -->
+
+### Direct Use
+
+<!-- This section is for the model use without fine-tuning or plugging into a larger ecosystem/app. -->
+
+[More Information Needed]
+
+### Downstream Use [optional]
+
+<!-- This section is for the model use when fine-tuned for a task, or when plugged into a larger ecosystem/app -->
+
+[More Information Needed]
+
+### Out-of-Scope Use
+
+<!-- This section addresses misuse, malicious use, and uses that the model will not work well for. -->
+
+[More Information Needed]
+
+## Bias, Risks, and Limitations
+
+<!-- This section is meant to convey both technical and sociotechnical limitations. -->
+
+[More Information Needed]
+
+### Recommendations
+
+<!-- This section is meant to convey recommendations with respect to the bias, risk, and technical limitations. -->
+
+Users (both direct and downstream) should be made aware of the risks, biases and limitations of the model. More information needed for further recommendations.
+
+## How to Get Started with the Model
+
+Use the code below to get started with the model.
+
+[More Information Needed]
+
+## Training Details
+
+### Training Data
+
+<!-- This should link to a Dataset Card, perhaps with a short stub of information on what the training data is all about as well as documentation related to data pre-processing or additional filtering. -->
+
+[More Information Needed]
+
+### Training Procedure
+
+<!-- This relates heavily to the Technical Specifications. Content here should link to that section when it is relevant to the training procedure. -->
+
+#### Preprocessing [optional]
+
+[More Information Needed]
+
+
+#### Training Hyperparameters
+
+- **Training regime:** [More Information Needed] <!--fp32, fp16 mixed precision, bf16 mixed precision, bf16 non-mixed precision, fp16 non-mixed precision, fp8 mixed precision -->
+
+#### Speeds, Sizes, Times [optional]
+
+<!-- This section provides information about throughput, start/end time, checkpoint size if relevant, etc. -->
+
+[More Information Needed]
+
+## Evaluation
+
+<!-- This section describes the evaluation protocols and provides the results. -->
+
+### Testing Data, Factors & Metrics
+
+#### Testing Data
+
+<!-- This should link to a Dataset Card if possible. -->
+
+[More Information Needed]
+
+#### Factors
+
+<!-- These are the things the evaluation is disaggregating by, e.g., subpopulations or domains. -->
+
+[More Information Needed]
+
+#### Metrics
+
+<!-- These are the evaluation metrics being used, ideally with a description of why. -->
+
+[More Information Needed]
+
+### Results
+
+[More Information Needed]
+
+#### Summary
+
+
+
+## Model Examination [optional]
+
+<!-- Relevant interpretability work for the model goes here -->
+
+[More Information Needed]
+
+## Environmental Impact
+
+<!-- Total emissions (in grams of CO2eq) and additional considerations, such as electricity usage, go here. Edit the suggested text below accordingly -->
+
+Carbon emissions can be estimated using the [Machine Learning Impact calculator](https://mlco2.github.io/impact#compute) presented in [Lacoste et al. (2019)](https://arxiv.org/abs/1910.09700).
+
+- **Hardware Type:** [More Information Needed]
+- **Hours used:** [More Information Needed]
+- **Cloud Provider:** [More Information Needed]
+- **Compute Region:** [More Information Needed]
+- **Carbon Emitted:** [More Information Needed]
+
+## Technical Specifications [optional]
+
+### Model Architecture and Objective
+
+[More Information Needed]
+
+### Compute Infrastructure
+
+[More Information Needed]
+
+#### Hardware
+
+[More Information Needed]
+
+#### Software
+
+[More Information Needed]
+
+## Citation [optional]
+
+<!-- If there is a paper or blog post introducing the model, the APA and Bibtex information for that should go in this section. -->
+
+**BibTeX:**
+
+[More Information Needed]
+
+**APA:**
+
+[More Information Needed]
+
+## Glossary [optional]
+
+<!-- If relevant, include terms and calculations in this section that can help readers understand the model or model card. -->
+
+[More Information Needed]
+
+## More Information [optional]
+
+[More Information Needed]
+
+## Model Card Authors [optional]
+
+[More Information Needed]
+
+## Model Card Contact
+
+[More Information Needed]
+### Framework versions
+
+- PEFT 0.20.0
+
+R4 PATH: C:\Users\steph\szl-forge\chaski_r4\outputs-r4\checkpoint-30\README.md
+R4 SHA-256: 153d920d316af86c61b1f1ad41d7041bee52e80f48ce293d7706132616826296
+R4 CONTENT:
+---
+base_model: Qwen/Qwen3.5-0.8B
+library_name: peft
+pipeline_tag: text-generation
+tags:
+- base_model:adapter:Qwen/Qwen3.5-0.8B
+- lora
+- sft
+- transformers
+- trl
+- unsloth
+---
+
+# Model Card for Model ID
+
+<!-- Provide a quick summary of what the model is/does. -->
+
+
+
+## Model Details
+
+### Model Description
+
+<!-- Provide a longer summary of what this model is. -->
+
+
+
+- **Developed by:** [More Information Needed]
+- **Funded by [optional]:** [More Information Needed]
+- **Shared by [optional]:** [More Information Needed]
+- **Model type:** [More Information Needed]
+- **Language(s) (NLP):** [More Information Needed]
+- **License:** [More Information Needed]
+- **Finetuned from model [optional]:** [More Information Needed]
+
+### Model Sources [optional]
+
+<!-- Provide the basic links for the model. -->
+
+- **Repository:** [More Information Needed]
+- **Paper [optional]:** [More Information Needed]
+- **Demo [optional]:** [More Information Needed]
+
+## Uses
+
+<!-- Address questions around how the model is intended to be used, including the foreseeable users of the model and those affected by the model. -->
+
+### Direct Use
+
+<!-- This section is for the model use without fine-tuning or plugging into a larger ecosystem/app. -->
+
+[More Information Needed]
+
+### Downstream Use [optional]
+
+<!-- This section is for the model use when fine-tuned for a task, or when plugged into a larger ecosystem/app -->
+
+[More Information Needed]
+
+### Out-of-Scope Use
+
+<!-- This section addresses misuse, malicious use, and uses that the model will not work well for. -->
+
+[More Information Needed]
+
+## Bias, Risks, and Limitations
+
+<!-- This section is meant to convey both technical and sociotechnical limitations. -->
+
+[More Information Needed]
+
+### Recommendations
+
+<!-- This section is meant to convey recommendations with respect to the bias, risk, and technical limitations. -->
+
+Users (both direct and downstream) should be made aware of the risks, biases and limitations of the model. More information needed for further recommendations.
+
+## How to Get Started with the Model
+
+Use the code below to get started with the model.
+
+[More Information Needed]
+
+## Training Details
+
+### Training Data
+
+<!-- This should link to a Dataset Card, perhaps with a short stub of information on what the training data is all about as well as documentation related to data pre-processing or additional filtering. -->
+
+[More Information Needed]
+
+### Training Procedure
+
+<!-- This relates heavily to the Technical Specifications. Content here should link to that section when it is relevant to the training procedure. -->
+
+#### Preprocessing [optional]
+
+[More Information Needed]
+
+
+#### Training Hyperparameters
+
+- **Training regime:** [More Information Needed] <!--fp32, fp16 mixed precision, bf16 mixed precision, bf16 non-mixed precision, fp16 non-mixed precision, fp8 mixed precision -->
+
+#### Speeds, Sizes, Times [optional]
+
+<!-- This section provides information about throughput, start/end time, checkpoint size if relevant, etc. -->
+
+[More Information Needed]
+
+## Evaluation
+
+<!-- This section describes the evaluation protocols and provides the results. -->
+
+### Testing Data, Factors & Metrics
+
+#### Testing Data
+
+<!-- This should link to a Dataset Card if possible. -->
+
+[More Information Needed]
+
+#### Factors
+
+<!-- These are the things the evaluation is disaggregating by, e.g., subpopulations or domains. -->
+
+[More Information Needed]
+
+#### Metrics
+
+<!-- These are the evaluation metrics being used, ideally with a description of why. -->
+
+[More Information Needed]
+
+### Results
+
+[More Information Needed]
+
+#### Summary
+
+
+
+## Model Examination [optional]
+
+<!-- Relevant interpretability work for the model goes here -->
+
+[More Information Needed]
+
+## Environmental Impact
+
+<!-- Total emissions (in grams of CO2eq) and additional considerations, such as electricity usage, go here. Edit the suggested text below accordingly -->
+
+Carbon emissions can be estimated using the [Machine Learning Impact calculator](https://mlco2.github.io/impact#compute) presented in [Lacoste et al. (2019)](https://arxiv.org/abs/1910.09700).
+
+- **Hardware Type:** [More Information Needed]
+- **Hours used:** [More Information Needed]
+- **Cloud Provider:** [More Information Needed]
+- **Compute Region:** [More Information Needed]
+- **Carbon Emitted:** [More Information Needed]
+
+## Technical Specifications [optional]
+
+### Model Architecture and Objective
+
+[More Information Needed]
+
+### Compute Infrastructure
+
+[More Information Needed]
+
+#### Hardware
+
+[More Information Needed]
+
+#### Software
+
+[More Information Needed]
+
+## Citation [optional]
+
+<!-- If there is a paper or blog post introducing the model, the APA and Bibtex information for that should go in this section. -->
+
+**BibTeX:**
+
+[More Information Needed]
+
+**APA:**
+
+[More Information Needed]
+
+## Glossary [optional]
+
+<!-- If relevant, include terms and calculations in this section that can help readers understand the model or model card. -->
+
+[More Information Needed]
+
+## More Information [optional]
+
+[More Information Needed]
+
+## Model Card Authors [optional]
+
+[More Information Needed]
+
+## Model Card Contact
+
+[More Information Needed]
+### Framework versions
+
+- PEFT 0.20.0
+
+R4 PATH: C:\Users\steph\szl-forge\chaski_r4\outputs-r4\README.md
+R4 SHA-256: 5b523cdc3546616df1f585997c26f3570483a32ca8ad5e39434834a5153e61bc
+R4 CONTENT:
+---
+base_model: Qwen/Qwen3.5-0.8B
+library_name: transformers
+model_name: outputs-r4
+tags:
+- generated_from_trainer
+- unsloth
+- trl
+- sft
+licence: license
+---
+
+# Model Card for outputs-r4
+
+This model is a fine-tuned version of [Qwen/Qwen3.5-0.8B](https://huggingface.co/Qwen/Qwen3.5-0.8B).
+It has been trained using [TRL](https://github.com/huggingface/trl).
+
+## Quick start
+
+```python
+from transformers import pipeline
+
+question = "If you had a time machine, but could only go to the past or the future once and never return, which would you choose and why?"
+generator = pipeline("text-generation", model="None", device="cuda")
+output = generator([{"role": "user", "content": question}], max_new_tokens=128, return_full_text=False)[0]
+print(output["generated_text"])
+```
+
+## Training procedure
+
+ 
+
+
+This model was trained with SFT.
+
+### Framework versions
+
+- TRL: 0.24.0
+- Transformers: 5.5.0
+- Pytorch: 2.11.0+cu128
+- Datasets: 4.3.0
+- Tokenizers: 0.22.2
+
+## Citations
+
+
+
+Cite TRL as:
+    
+```bibtex
+@misc{vonwerra2022trl,
+	title        = {{TRL: Transformer Reinforcement Learning}},
+	author       = {Leandro von Werra and Younes Belkada and Lewis Tunstall and Edward Beeching and Tristan Thrush and Nathan Lambert and Shengyi Huang and Kashif Rasul and Quentin Gallou{\'e}dec},
+	year         = 2020,
+	journal      = {GitHub repository},
+	publisher    = {GitHub},
+	howpublished = {\url{https://github.com/huggingface/trl}}
+}
+```
+
+==============================================================================
+FILE: training_receipt.json
+==============================================================================
+
+R2 PATH: C:\Users\steph\szl-forge\chaski_r2\training_receipt.json
+R2 SHA-256: ecdbaacede9186e87d83b5da544cd2f98d83964c573ea5e92ad6faf304073c75
+R2 CONTENT:
+{
+  "kind": "szl-chaski-r2-training-receipt",
+  "schema": "szl.frontier-training-run/v1",
+  "v": 1,
+  "artifact": "SZLHOLDINGS/chaski-r2",
+  "sku": "CHASKI-R2",
+  "silhouette": "CHAWPI",
+  "atelier_lock": true,
+  "hub_id_declared_only": true,
+  "hub_page": false,
+  "separate_sku": true,
+  "canonical_base": "Qwen/Qwen3.5-0.8B",
+  "base_model": "Qwen/Qwen3.5-0.8B",
+  "baseModel": "Qwen/Qwen3.5-0.8B",
+  "base_model_relation": "adapter",
+  "base_model_runtime": "Qwen/Qwen3.5-0.8B",
+  "does_not_overwrite": "SZLHOLDINGS/chaski",
+  "forbidden_5050": "SZLHOLDINGS/chaski-5050",
+  "not_5050": true,
+  "not_bf16_5050": true,
+  "qlora": false,
+  "load_in_4bit": false,
+  "load_in_16bit": true,
+  "quant": "bf16-lora",
+  "dataset_file": "chaski_r2/train.jsonl",
+  "dataset_sha256": "b8c3d73a392a4cfeb06f49e204fdab1d517071597eb1305fd319e7466160a017",
+  "held_out_in_gradients": false,
+  "held_out": {
+    "chaski/gate/json_drafts.n5.jsonl": 5,
+    "chaski/gate/adversarial_refusals.n6.jsonl": 6
+  },
+  "seed": 11,
+  "num_train_epochs": 3,
+  "warmup_steps": 6,
+  "lora_r": 16,
+  "lora_alpha": 32,
+  "learning_rate": 0.0002,
+  "lr_scheduler_type": "constant_with_warmup",
+  "optim": "adamw_8bit",
+  "response_only_loss": true,
+  "trackio": false,
+  "report_to": "none",
+  "push_to_hub": false,
+  "jobs": "UNAVAILABLE",
+  "weights": "LOCAL",
+  "adapterSha256": "e311f2b1bcb7a41362b040e618be68e6777149ce03a54b6d0df0dcab5bcf7157",
+  "finalTrainLoss": "0.7738",
+  "train_loss_label": "MEASURED",
+  "evals": "none-this-run",
+  "quality": "UNAVAILABLE",
+  "lambda": "Conjecture 1",
+  "doctrine": "v11 LOCKED 749/14/163",
+  "proposal_only": true,
+  "publication_eligible": false,
+  "autonomy_eligible": false,
+  "serve_pin": false,
+  "khipu_lab_pin": false,
+  "a11oy_mini_scripts_only": true,
+  "hub_put": false,
+  "training_rows": 24,
+  "claim_boundary": "ATELIER lock. Separate SKU id SZLHOLDINGS/chaski-r2 is declared only \u2014 do not costume a README-only Hub ID. Does not overwrite SZLHOLDINGS/chaski. Not SZLHOLDINGS/chaski-5050. Base in prose: Qwen/Qwen3.5-0.8B. GPU honesty is MEASURED or UNAVAILABLE. No ROADMAP parking. QLoRA is not recommended on Qwen3.5; this SKU is bf16 LoRA r=16 \u03b1=32 (not the 5050 sixteen-alpha kit). Jobs this checkout UNAVAILABLE (not fired). Eval is PR 63 named-N after train; none-this-run until that generate. publication_eligible false until MEASURED generate. Lab stays Khipu. A11OY-MINI stays scripts-only. Doctrine v11. This checkout does not PUT Hub.",
+  "computed_at": "2026-09-14T00:53:00.911529+00:00",
+  "source": "local-train",
+  "gpu": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.12.10",
+    "nvidia_smi": "NVIDIA GeForce RTX 5050 Laptop GPU, 8151 MiB, 7787 MiB, 610.47",
+    "torch": "2.10.0+cu130",
+    "cuda": true,
+    "gpu_name": "NVIDIA GeForce RTX 5050 Laptop GPU",
+    "gpu_mem_gb": 7.96
+  }
+}
+
+
+R4 PATH: C:\Users\steph\szl-forge\chaski_r4\training_receipt.json
+R4 SHA-256: e15f0b7da6556bc554bab42cf35bbd68d0dd13ab1c6ae2a19b6ba0182e17e654
+R4 CONTENT:
+{
+  "kind": "szl-chaski-r4-training-receipt",
+  "schema": "szl.frontier-training-run/v1",
+  "v": 1,
+  "artifact": "SZLHOLDINGS/chaski-r4",
+  "canonical_gate_artifact": "SZLHOLDINGS/chaski",
+  "canonical_base": "Qwen/Qwen3.5-0.8B",
+  "base_model": "Qwen/Qwen3.5-0.8B",
+  "base_model_relation": "adapter",
+  "base_model_license": "Apache-2.0",
+  "quant": "bf16-lora",
+  "load_in_4bit": false,
+  "load_in_16bit": true,
+  "dataset_file": "chaski_r4/train.jsonl",
+  "dataset_sha256": "8965f3910100d818810b4bf95832c5f1f49c95900f4bd943c5fcafa9fe645a40",
+  "training_rows": 40,
+  "held_out_in_gradients": false,
+  "held_out": {
+    "chaski/gate/json_drafts.n5.jsonl": 5,
+    "chaski/gate/adversarial_refusals.n6.jsonl": 6
+  },
+  "seed": 11,
+  "max_seq_length": 2048,
+  "per_device_train_batch_size": 1,
+  "gradient_accumulation_steps": 4,
+  "num_train_epochs": 3,
+  "warmup_steps": 6,
+  "learning_rate": 0.0002,
+  "lora_r": 16,
+  "lora_alpha": 32,
+  "optim": "adamw_8bit",
+  "lr_scheduler_type": "constant_with_warmup",
+  "response_only_loss": true,
+  "push_to_hub": false,
+  "hub_put": false,
+  "weights": "LOCAL",
+  "publication_eligible": false,
+  "autonomy_eligible": false,
+  "productionAuthorization": false,
+  "train_loss_label": "MEASURED_NOT_EVALUATION",
+  "evals": "none-this-run",
+  "quality": "UNAVAILABLE",
+  "computed_at": "2026-09-15T19:06:59.173778+00:00",
+  "gpu": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.12.10",
+    "nvidia_smi": "NVIDIA GeForce RTX 5050 Laptop GPU, 8151 MiB, 610.47"
+  },
+  "finalTrainLoss": 0.5931950082381566,
+  "metrics": {
+    "train_runtime": 68.6008,
+    "train_samples_per_second": 1.749,
+    "train_steps_per_second": 0.437,
+    "total_flos": 85000261223808.0,
+    "train_loss": 0.5931950082381566,
+    "epoch": 3.0
+  },
+  "adapter_config_sha256": "cebfde5669b9a904fac11cf41dc0952f08729a65ab67a9a5e641e783eae55d6b",
+  "adapter_weights_sha256": "800d261aaea824480f6a8e7089d5fb94b180bcdd10d820bcfbde59fabe54633b",
+  "adapter_weights_bytes": 25587104
+}
+
+
+TRAINING / BAKEOFF / DATASET ARTIFACT DISCOVERY
+
+INTERPRETATION CHECKLIST
+1. Compare adapter_config.json: base model, PEFT type, rank, alpha, target modules, inference mode.
+2. Compare tokenizer_config.json and chat_template.jinja: chat framing, assistant generation prompt, EOS/PAD behavior.
+3. Locate trainer_state.json, training_args.bin, all_results.json, JSONL/JSON manifests, and historical receipts.
+4. Determine whether r2 used a materially different target format, system message, prompt serialization, or generation policy.
+5. Do not create r5 until the r2 success mechanism is documented from local evidence.

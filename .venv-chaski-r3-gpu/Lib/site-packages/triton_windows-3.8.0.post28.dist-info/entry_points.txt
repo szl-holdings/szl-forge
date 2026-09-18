@@ -1,0 +1,3 @@
+[triton.backends]
+amd = triton.backends.amd
+nvidia = triton.backends.nvidia

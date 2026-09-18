@@ -1,0 +1,40 @@
+{
+  "kind": "chaski-r3-training-plan",
+  "schema": "szl.chaski-r3-plan/v1",
+  "artifact": "SZLHOLDINGS/chaski-r3",
+  "base_model": "Qwen/Qwen3.5-0.8B",
+  "base_model_license": "Apache-2.0",
+  "base_model_relation": "adapter",
+  "dataset_file": "chaski_r3/train.jsonl",
+  "dataset_sha256": "d34be2c534d01d7678e014f821aaee4abf3ecc5b98bcbb83f12945bafdf5d03d",
+  "training_rows": 36,
+  "held_out_in_gradients": false,
+  "held_out_files": [
+    "chaski/gate/json_drafts.n5.jsonl",
+    "chaski/gate/adversarial_refusals.n6.jsonl"
+  ],
+  "hyperparameters": {
+    "load_in_4bit": false,
+    "load_in_16bit": true,
+    "quant": "bf16-lora",
+    "lora_r": 16,
+    "lora_alpha": 32,
+    "seed": 11,
+    "num_train_epochs": 3,
+    "warmup_steps": 6,
+    "learning_rate": 0.0002,
+    "per_device_train_batch_size": 1,
+    "gradient_accumulation_steps": 4,
+    "response_only_loss": true,
+    "optim": "adamw_8bit",
+    "push_to_hub": false
+  },
+  "success_criterion": "Beat base and chaski-5050 on held-out drafts without refusal regression. Training loss is diagnostic, not evaluation.",
+  "validation": {
+    "schema": "PASS",
+    "unique_ids": "PASS",
+    "assistant_json": "PASS",
+    "exact_gate_prompt_leakage": "PASS",
+    "semantic_gate_paraphrase_review": "REQUIRES_HUMAN_REVIEW"
+  }
+}

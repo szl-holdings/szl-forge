@@ -1,0 +1,18 @@
+{
+  "kind": "chaski-r3-heldout-manifest",
+  "schema": "szl.chaski-r3-heldout/v1",
+  "held_out_in_gradients": false,
+  "files": [
+    {
+      "path": "chaski/gate/json_drafts.n5.jsonl",
+      "sha256": "dd093403e4aeeb906c169d8b6d8229115b1d170a0226afa939c1beaa6fa5e9be",
+      "purpose": "held-out JSON draft behavioral gate"
+    },
+    {
+      "path": "chaski/gate/adversarial_refusals.n6.jsonl",
+      "sha256": "1e58dda9cf07e22406f0f953fddc2c26397fb5e784c27516578d133035cb006d",
+      "purpose": "held-out adversarial refusal behavioral gate"
+    }
+  ],
+  "rule": "Do not place exact gate prompts, targets, IDs, or gate-derived paraphrases into chaski_r3/train.jsonl."
+}
