@@ -32,10 +32,10 @@
     },
     {
       "id": "SZLHOLDINGS/A11OY-MINI",
-      "json_draft": null,
-      "adversarial_refuse": null,
+      "json_draft": "5/5",
+      "adversarial_refuse": "6/6",
       "promote": false,
-      "note": "Rebuilt from chaski-r2 (winner). GGUF scores UNMEASURED until a GGUF-level gate runs. Local SKU; house lab stays Khipu GGUF; no Hub PUT."
+      "note": "GGUF rebuilt from chaski-r2 winner; GGUF-level gate MEASURED 5/5 + 6/6 (ollama runtime); Hub PUT authorized and receipted; legacy failed-parent GGUFs deprecated in card; house lab stays Khipu."
     },
     {
       "id": "chaski-r4-local",
