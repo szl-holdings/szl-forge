@@ -4,80 +4,62 @@ library_name: numpy
 tags:
 - governed-ai
 - szl-holdings
-- doctrine-v11
 - nano
 - synthetic
-- needs-loader
 - test-fixture
 ---
 
-> ### How to actually load this — the weights alone are not enough
->
-> `tiny_khipu.npz` is a real, honest 4-6-2 MLP produced by a real training run, and the card
-> below does not overstate it. But it is a bare NumPy archive with **no
-> `config.json` and no loader in this repo**, so `from_pretrained` and the Hub
-> inference widget cannot touch it. Nothing here tells you the array names or the
-> forward pass.
->
-> ```python
-> import numpy as np
-> from huggingface_hub import hf_hub_download
->
-> path = hf_hub_download("SZLHOLDINGS/TinyKhipu-Nano", "tiny_khipu.npz")
-> w = np.load(path)
-> print(sorted(w.files))   # array names are the de-facto interface
-> ```
->
-> The forward pass this was trained against lives in the `szl_khipu` package, in
-> [SZLHOLDINGS/szl-khipu-kernels](https://huggingface.co/SZLHOLDINGS/szl-khipu-kernels)
-> — a **different repository**. Until the loader ships alongside the weights (or a
-> `custom_code` handler is added), treat this repo as a **test fixture**, not a
-> deployable model. Evidence status: plan_valid 1.00 / abstain 1.00 (SYNTHETIC).
+# TinyKhipu-Nano
 
-> **Now loadable:** [`load.py`](https://github.com/szl-holdings/szl-forge/blob/main/TinyKhipu-Nano/load.py) ships the forward pass — resolve the layout by shape, tanh hidden layer, softmax over NAVIGATE/ABSTAIN with the abstain-leaning margin. `python load.py 0.1,0.2,0.3,0.4` prints a class.
+**Reference/test fixture, not a production navigator or a foundation model.**
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/main/tinykhipu-nano/card/holo-banner.svg" alt="TinyKhipu-Nano — holographic 4-6-2 MLP banner" width="100%"/>
-</p>
+The receipted `tiny_khipu.npz` is a query-and-handle embedding model, **not a
+4-6-2 MLP and not a model taking four numeric features**. Its actual arrays are:
 
-<h1 align="center">T I N Y K H I P U &nbsp;N A N O</h1>
+| Tensor | Shape | Purpose |
+|---|---|---|
+| E | 24 x 12 | Token embeddings |
+| W | 2 x 12 | ABSTAIN/NAVIGATE head |
+| b | 2 | Class bias |
+| Wc | 12 | Offered-handle citation scoring |
 
-<p align="center"><em>Four features in. NAVIGATE or ABSTAIN out. Abstain is the default class, not a post-hoc filter.</em></p>
+The standalone [load.py](./load.py) implements the canonical tokenizer,
+mean embeddings, two-class softmax and offered-ID citation filter from
+[szl-khipu](https://github.com/szl-holdings/szl-khipu/blob/7d7ead17e509d11dd9d715510e0bf8f0839e2930/szl_khipu/train/tiny_khipu.py).
+Class order is **ABSTAIN=0, NAVIGATE=1**. The trained tokenizer uses ordered
+substring matching; changing that behavior would change the model contract.
 
-<p align="center">
-  <img alt="Params: 4-6-2 MLP on numpy" src="https://img.shields.io/badge/params-4--6--2%20MLP%20%C2%B7%20numpy-9f1239?style=flat-square"/>
-  <img alt="Downloads" src="https://img.shields.io/huggingface/dt/SZLHOLDINGS/TinyKhipu-Nano?style=flat-square&color=fb7185&label=downloads"/>
-  <img alt="Evidence: SYNTHETIC — design fact, not field claim" src="https://img.shields.io/badge/evidence-SYNTHETIC%20%C2%B7%20design%20fact-b45309?style=flat-square"/>
-  <img alt="Needs loader: test fixture" src="https://img.shields.io/badge/needs%20loader-test%20fixture-991b1b?style=flat-square"/>
-  <img alt="Not 1.5B, not Qwen" src="https://img.shields.io/badge/not%201.5B-not%20Qwen-334155?style=flat-square"/>
-  <img alt="License: Apache-2.0" src="https://img.shields.io/badge/License-Apache--2.0-7e8aa3?style=flat-square"/>
-</p>
+## Local use
 
-<p align="center">
-  <strong>Family.</strong> nano · <strong>Evidence.</strong> SYNTHETIC · <strong>Weights.</strong> numpy · <strong>Params.</strong> 4-6-2 · <strong>Not 1.5B.</strong>
-</p>
+Requires Python 3.11+ and NumPy 2.4.6. Obtain the public weights from the
+[immutable Hub revision](https://huggingface.co/SZLHOLDINGS/TinyKhipu-Nano/tree/e67149f9c583cd159a4e95ee9e49746b57dd055d)
+and verify the digest below. No Hugging Face credential is needed for these
+public bytes. The GitHub loader and Hub weights are separate artifacts; this
+card does not assert that a loader has been uploaded to the Hub.
 
-## The cut
+```sh
+python load.py '{"query":"ask about F18","handles":[{"id":"h.a","note":"F18 knot"}]}' --weights tiny_khipu.npz
+```
 
-Leaders train models to answer. We train a silhouette to shut up when overlap is thin or the lure is adversarial. This nano is the 4-6-2 silhouette of that cut. Not 1.5B.
+`load()` returns the named tensors; `forward()` returns probabilities, the
+numeric decision, citation scores and cited IDs; `infer()` returns the label.
+Malformed inputs/tensors, non-finite values, unsupported layouts, and arithmetic
+overflow raise `ValueError`. NPZ loading never enables pickle.
 
-A navigator that has never seen document text — only handles — and still knows when to refuse the walk.
+## Safety and evidence boundary
 
-### Silhouette → leave → SZL
+The model's raw output is **advisory, not authorization or a valid navigation
+receipt**. It can predict NAVIGATE on unrelated or empty queries, including with
+no offered handles. The loader preserves the trained computation; it does not
+hide that limitation behind an invented confidence margin. Do not use this
+fixture as the decision authority for navigation, policy, or production safety.
 
-| Leader | Take, then tweak |
-|---|---|
-| Anthropic | Refusal as a typed output, not a polite paragraph. |
-| NVIDIA | Guardrail inside the head, not a sidecar. |
-| Unsloth | The 1.5B QLoRA is the grown form of this MLP. |
+The reported training metrics below are preserved, not independently reproduced
+by loader tests or local inference. Those tests establish executable-contract
+behavior only. Not Qwen. Not 1.5B. The signed 1.5B abstain line is a separate
+model and separate evidence; this fixture cannot improve that result by proxy.
 
-Nobody else ships this combination. That is the point of a one-of-one.
-
-## Intended use
-
-Unit-test the NAVIGATE|ABSTAIN schema before GPU spend.
-
-## Bench (this tree)
+## Bench (reported receipt)
 
 `TRAINING_RECEIPT.json` seed `20260721` · steps 280 · honesty **REPORTED**
 
@@ -88,13 +70,6 @@ Unit-test the NAVIGATE|ABSTAIN schema before GPU spend.
 | hallucinated | 0 |
 | weights | `tiny_khipu.npz` sha256 `cc8d0385b2c75079669df809d7e4823f1ad8d9d535aec511446347490b11dff9` |
 
-Infers on `POST /api/infer {"kind":"tiny_khipu"}`. Hard ID filter. **Not Qwen. Not 1.5B.**
-
-## Limitations
-
-- Synthetic features. Perfect holdout is a design fact, not a field claim.
-- The signed 1.5B abstain line is 3/6 (owner-metal receipt 2026-09-08; earlier line 2/6) — this nano does not wash that.
-
 ## Honesty
 
 | Claim | Label |
@@ -104,12 +79,4 @@ Infers on `POST /api/infer {"kind":"tiny_khipu"}`. Hard ID filter. **Not Qwen. N
 | Λ uniqueness | Conjecture 1 OPEN — not a theorem |
 | GGUF as the signed object | FALSE |
 
-Doctrine v11 LOCKED · 749 declarations · 14 axioms · 163 sorries · locked-proven 8.
-
-Apache-2.0. Copyright 2026 SZL Holdings · Stephen P. Lutar Jr. · ORCID [0009-0001-0110-4173](https://orcid.org/0009-0001-0110-4173).
-
----
-
-<p align="center">
-  Hub: <a href="https://huggingface.co/SZLHOLDINGS/TinyKhipu-Nano">SZLHOLDINGS/TinyKhipu-Nano</a>
-</p>
+Apache-2.0. Copyright 2026 SZL Holdings.
