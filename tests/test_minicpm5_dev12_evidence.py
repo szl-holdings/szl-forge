@@ -5,6 +5,7 @@ import shutil
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location("dev12_verifier", ROOT / "inference/verify_minicpm5_dev12.py")
@@ -86,6 +87,34 @@ class Dev12EvidenceTests(unittest.TestCase):
         (self.bundle / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
         with self.assertRaises(d.v.ReportError):
             d.verify(self.bundle)
+
+    def test_rehashed_archived_patch_and_verifiers_cannot_change(self):
+        for name in ("minicpm5-explicit-lookup-v2.patch",
+                     "source/baseline/inference/verify_minicpm5_report.py",
+                     "source/candidate/inference/verify_minicpm5_report.py"):
+            path = self.bundle / name
+            original = path.read_bytes()
+            path.write_bytes(original + b"\n# rewritten historical artifact\n")
+            manifest = d.read_json(d.BUNDLE / "manifest.json")
+            manifest["files"][name] = d.sha(path)
+            (self.bundle / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+            try:
+                with self.subTest(name=name), self.assertRaisesRegex(
+                        d.v.ReportError, "historical manifest identity changed"):
+                    d.verify(self.bundle)
+            finally:
+                path.write_bytes(original)
+
+    def test_elapsed_claim_is_fixed_even_with_a_rehashed_manifest(self):
+        for elapsed in (-1, 0, 163.907, "163.906", True):
+            comparison = d.read_json(d.BUNDLE / "comparison.json")
+            comparison["elapsedSeconds"] = elapsed
+            self.update("comparison.json", comparison)
+            # Exercise the elapsed-time guard independently of the outer pin.
+            with self.subTest(elapsed=elapsed), patch.object(
+                    d, "MANIFEST_SHA256", d.sha(self.bundle / "manifest.json")):
+                with self.assertRaisesRegex(d.v.ReportError, "elapsedSeconds"):
+                    d.verify(self.bundle)
 
 
 if __name__ == "__main__":

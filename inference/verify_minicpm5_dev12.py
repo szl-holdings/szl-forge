@@ -15,6 +15,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 BUNDLE = ROOT / "frontier/minicpm5/evidence/2026-09-08-rtx5050-dev12"
 SOURCE = "3f12d5078fe058ca66c41afb3fedbecd96ee9468"
+MANIFEST_SHA256 = "87e1e0832ba2bb82db9084e1a19ec6131fe1ed939d8f6612555dddf2da6d3ac2"
 RECORDS = {
     "baseline": "2c964479fc7bf0136d40a0430b994cda991d438632df691e3253f9766694b29b",
     "candidate": "e02ae339d8ef35c361302f59684c71086c0c4303ae4bfe608175afe86ccb33b4",
@@ -53,6 +54,10 @@ def syntax(path: Path, function: str | None = None) -> str:
 
 
 def verify(bundle: Path = BUNDLE) -> dict:
+    # Pin every historical artifact through an independently fixed manifest.
+    # Updating a file and its adjacent digest must not rewrite the archive.
+    v.require(sha(bundle / "manifest.json") == MANIFEST_SHA256,
+              "historical manifest identity changed")
     manifest = read_json(bundle / "manifest.json")
     files = manifest.get("files")
     expected_files = {
@@ -122,7 +127,8 @@ def verify(bundle: Path = BUNDLE) -> dict:
              "constrainedDecoding": False, "weightsChanged": False, "trainingExecuted": False,
              "toolExecuted": False, "providerMutation": False, "independentWitness": False,
              "productionDisposition": "HOLD", "promotionEffect": "NONE", "timedOut": False,
-             "exitCode": 0, "maxGenerationSeconds": 300, "hardProcessTimeoutSeconds": 480,
+             "exitCode": 0, "elapsedSeconds": 163.906,
+             "maxGenerationSeconds": 300, "hardProcessTimeoutSeconds": 480,
              "candidateStatus": candidate["status"], "p50GenerationMs": candidate["p50GenerationMs"],
              "p95GenerationMs": candidate["p95GenerationMs"],
              "totalGenerationMs": round(sum(c["generationMs"] for c in candidate["cases"]), 3)}
