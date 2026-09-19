@@ -107,11 +107,27 @@ def strict_json(raw: bytes | str) -> Any:
         raise OperatorError("invalid JSON response") from exc
 
 
+def redact_output(value: Any) -> Any:
+    """Redact a JSON output copy before escaping, preserving schema field names.
+
+    Output objects use known schema keys; only their values may carry external
+    text. Rewriting keys could collapse distinct fields. Never mutate the
+    evidence used for qualification or content-address verification.
+    """
+    if isinstance(value, str):
+        return sanitize(value)
+    if isinstance(value, dict):
+        return {key: redact_output(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [redact_output(item) for item in value]
+    return value
+
+
 def write_json(path: Path, value: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     # Redact persisted strings, including unexpected provider error payloads.
-    path.write_text(sanitize(json.dumps(value, indent=2, ensure_ascii=False,
-                                        sort_keys=True, allow_nan=False)) + "\n",
+    path.write_text(json.dumps(redact_output(value), indent=2, ensure_ascii=False,
+                              sort_keys=True, allow_nan=False) + "\n",
                     encoding="utf-8")
 
 
@@ -976,7 +992,7 @@ def main(argv: list[str] | None = None) -> int:
         "report": lambda: estate_report(args.output_dir),
     }
     result = safe_measure(args.command, functions[args.command])
-    print(sanitize(json.dumps(result, indent=2, sort_keys=True, ensure_ascii=False, allow_nan=False)))
+    print(json.dumps(redact_output(result), indent=2, sort_keys=True, ensure_ascii=False, allow_nan=False))
     if result["state"] in {"UNAVAILABLE", "UNKNOWN_AFTER_ATTEMPT"}:
         return 3
     if result["state"] == "MEASURED_FAIL" or (args.command == "snapshot" and not result.get("value", {}).get("green")):
