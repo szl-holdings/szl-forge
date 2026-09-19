@@ -9,6 +9,7 @@ No credentials, package installs, upstream execution or remote writes occur.
 from __future__ import annotations
 
 import argparse
+import ast
 import datetime as dt
 import hashlib
 import json
@@ -19,10 +20,11 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, NamedTuple
 
 SHA40 = re.compile(r"[0-9a-f]{40}\Z")
 PIN_RE = re.compile(r'^SOURCE_REVISION\s*=\s*[\"\']([0-9a-f]{40})[\"\']\s*(?:#.*)?$', re.M)
+VERSION_RE = re.compile(r'^EXPECTED_VERSION\s*=\s*[\"\']([a-zA-Z0-9][a-zA-Z0-9_.:-]{0,63})[\"\']\s*(?:#.*)?$', re.M)
 MAX_BODY_BYTES = 2 * 1024 * 1024
 MAX_OBSERVATION_SECONDS = 600
 UA = {"User-Agent": "SZL-Live-Mesh/2.0", "Accept": "application/json", "Accept-Encoding": "identity"}
@@ -41,6 +43,67 @@ REPOS = {
     "frontier": "szl-holdings/szl-frontier",
 }
 Fetch = Callable[..., tuple[int, Any]]
+
+
+class MetricsResponse(NamedTuple):
+    """Transport evidence for a bounded Prometheus response, never a JSON body."""
+
+    status: int
+    raw: bytes
+    content_type: str | None
+    content_encoding: str = "identity"
+
+
+MetricsFetch = Callable[..., MetricsResponse]
+
+
+# Verbatim critical-gauge parser extracted (never executed while fetched) from:
+# https://github.com/szl-holdings/a11oy/blob/43058398fb8ea346a7bd977f1a35391aeec1bf1a/scripts/lyte_enterprise_live_contract.py
+# Upstream Git blob: 494116f65b24ea5b8a516abde31668be2248cbf4 (Apache-2.0).
+# SHA256 covers the LF-encoded constants, two blank lines, and function below,
+# including its final newline. Keep this extraction byte-for-byte upstream.
+# Extracted parser SHA256: 52e62df293baa41edfd5a80af9bc4c9a65e72d276ef900e3a447280c08f8f5a3
+MAX_METRICS_BYTES = 2_000_000
+_METRIC_NUMBER = r"[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?"
+
+
+def metrics_identity_matches(body: Any, *, revision: str, version: str) -> bool:
+    """Require the two source-owned gauges, not merely a nonempty HTTP 200.
+
+    This is deliberately a bounded critical-gauge contract, not a general
+    Prometheus parser or validation of every exported series. Other families
+    are preserved. Required gauges may not be duplicated, timestamped, renamed,
+    relabelled, replaced with comments, or populated with non-finite values.
+    Run after readiness, which performs the actual database health probe.
+    """
+    if not isinstance(body, str) or not body.endswith("\n"):
+        return False
+    if len(body) > MAX_METRICS_BYTES or len(body.encode("utf-8")) > MAX_METRICS_BYTES:
+        return False
+    if re.fullmatch(r"[0-9a-f]{40}", revision) is None:
+        return False
+    if re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_.:-]{0,63}", version) is None:
+        return False
+    lines = [line.strip() for line in body.splitlines()]
+    if len(lines) > 20_000 or any(len(line) > 4_096 for line in lines):
+        return False
+    rv, vv = re.escape(revision), re.escape(version)
+    labels = rf'(?:revision="{rv}",version="{vv}"|version="{vv}",revision="{rv}")'
+    patterns = {
+        "lyte_build_info": rf'lyte_build_info\{{{labels}\}}[ \t]+({_METRIC_NUMBER})',
+        "lyte_db_pool_healthy": rf'lyte_db_pool_healthy[ \t]+({_METRIC_NUMBER})',
+    }
+    for name, pattern in patterns.items():
+        declarations = [line for line in lines if re.match(rf"# TYPE[ \t]+{name}(?:[ \t]|$)", line)]
+        if declarations != [f"# TYPE {name} gauge"]:
+            return False
+        samples = [line for line in lines if re.match(rf"{name}(?:[{{ \t]|$)", line)]
+        if len(samples) != 1:
+            return False
+        match = re.fullmatch(pattern, samples[0])
+        if match is None or not math.isfinite(float(match[1])) or float(match[1]) != 1.0:
+            return False
+    return True
 
 
 class MeshError(ValueError):
@@ -146,6 +209,120 @@ def _get(url: str, timeout: float = 12.0, json_ok: bool = True) -> tuple[int, An
         return 0, {"error": "OBSERVATION_UNAVAILABLE"}
 
 
+def _get_metrics(url: str, timeout: float = 12.0) -> MetricsResponse:
+    """Preserve bounded raw bytes and headers; refuse redirects and proxies.
+
+    As with _get, timeout bounds socket inactivity. The caller's process/job
+    wall-clock limit must bound slow-trickle responses.
+    """
+    unavailable = MetricsResponse(0, b"", None)
+    if not _allowed_url(url):
+        return unavailable
+    if type(timeout) not in (int, float) or not math.isfinite(timeout) or not 0 < timeout <= 30:
+        return unavailable
+    headers = {**UA, "Accept": "text/plain; version=1.0.0; charset=utf-8, text/plain; version=0.0.4; charset=utf-8; q=0.9"}
+    req = urllib.request.Request(url, headers=headers, method="GET")
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), _NoRedirect())
+    try:
+        with opener.open(req, timeout=float(timeout)) as resp:
+            # Joining duplicate headers makes the strict validator reject them.
+            content_types = resp.headers.get_all("Content-Type", [])
+            encodings = resp.headers.get_all("Content-Encoding", [])
+            return MetricsResponse(
+                resp.status, resp.read(MAX_METRICS_BYTES + 1),
+                ",".join(content_types) if content_types else None,
+                ",".join(encodings) if encodings else "identity",
+            )
+    except urllib.error.HTTPError as exc:
+        exc.close()
+        return MetricsResponse(exc.code, b"", None)
+    except (MeshError, UnicodeError, ValueError, OSError, urllib.error.URLError):
+        return unavailable
+
+
+def _metrics_content_type(value: Any) -> str | None:
+    """Require the source-owned Prometheus text format and both parameters."""
+    if (type(value) is not str or len(value) > 256
+            or any(ord(char) > 126 or ord(char) < 32 and char != "\t" for char in value)):
+        return None
+    parts = [part.strip().lower() for part in value.split(";")]
+    if len(parts) != 3 or parts[0] != "text/plain":
+        return None
+    params: dict[str, str] = {}
+    for part in parts[1:]:
+        key, separator, val = part.partition("=")
+        key, val = key.strip(), val.strip()
+        if not separator or key in params:
+            return None
+        if len(val) >= 2 and val[0] == val[-1] == '"':
+            val = val[1:-1]
+        params[key] = val
+    if (set(params) != {"version", "charset"} or params["charset"] != "utf-8"
+            or params["version"] not in {"0.0.4", "1.0.0"}):
+        return None
+    return f'text/plain; version={params["version"]}; charset=utf-8'
+
+
+def _observe_metrics(
+    fetch: MetricsFetch | None, url: str, *, revision: str | None, version: str | None,
+) -> tuple[dict[str, Any], list[str]]:
+    """Export fixed metadata only; injected JSON adapters never trigger network."""
+    observation: dict[str, Any] = {
+        "status": 0, "bytes": 0, "response_sha256": None,
+        "expected_source_revision": revision, "expected_version": version,
+        "content_type": None, "content_encoding": None,
+        "content_type_valid": False, "content_encoding_valid": False,
+        "critical_gauges_match": False, "readiness_match": False,
+        "source_bookends_match": False, "all_metric_families_validated": False,
+    }
+    if fetch is None:
+        return observation, ["METRICS_ADAPTER_REQUIRED"]
+    try:
+        response = fetch(url)
+    except Exception:
+        return observation, ["FETCH_ADAPTER_UNAVAILABLE"]
+    if (not isinstance(response, MetricsResponse)
+            or type(response.status) is not int or not 0 <= response.status <= 599
+            or type(response.raw) is not bytes):
+        return observation, ["INVALID_METRICS_RESPONSE"]
+    raw = response.raw
+    observation.update(status=response.status, bytes=len(raw))
+    if len(raw) > MAX_METRICS_BYTES:
+        return observation, ["RESPONSE_TOO_LARGE"]
+    observation["response_sha256"] = hashlib.sha256(raw).hexdigest()
+    if response.status != 200:
+        return observation, ["HTTP_404" if response.status == 404 else "UNAVAILABLE_HTTP_STATUS"]
+    problems: list[str] = []
+    content_type = _metrics_content_type(response.content_type)
+    content_type_valid = content_type is not None
+    encoding_valid = type(response.content_encoding) is str and response.content_encoding.strip().lower() == "identity"
+    observation.update(
+        content_type=content_type,
+        content_encoding="identity" if encoding_valid else None,
+        content_type_valid=content_type_valid, content_encoding_valid=encoding_valid,
+    )
+    # These labels preserve actionable diagnostics without returning the body.
+    if raw.lstrip().startswith(b"<"):
+        problems.append("HTML_200_NOT_METRICS")
+    elif raw.lstrip().startswith((b"{", b"[")):
+        problems.append("JSON_200_NOT_METRICS")
+    if not content_type_valid:
+        problems.append("CONTENT_TYPE_REFUSED")
+    if not encoding_valid:
+        problems.append("ENCODING_REFUSED")
+    try:
+        text = raw.decode("utf-8", errors="strict")
+    except UnicodeError:
+        return observation, problems + ["INVALID_UTF8"]
+    if revision is None or version is None:
+        return observation, problems + ["EXPECTED_IDENTITY_UNAVAILABLE"]
+    gauges_match = metrics_identity_matches(text, revision=revision, version=version)
+    observation["critical_gauges_match"] = gauges_match
+    if not gauges_match:
+        problems.append("CRITICAL_GAUGES_MISMATCH")
+    return observation, problems
+
+
 def _path(payload: Any, keys: tuple[str, ...]) -> Any:
     cur = payload
     for key in keys:
@@ -191,7 +368,43 @@ def _observe(fetch: Fetch, url: str, *, json_ok: bool = True) -> tuple[int, Any]
         return 0, {"error": "FETCH_ADAPTER_UNAVAILABLE"}
 
 
-def probe(fetch: Fetch | None = None, clock: Callable[[], str] | None = None) -> dict[str, Any]:
+def _publisher_constant(text: str | None, name: str, pattern: re.Pattern[str]) -> str | None:
+    """Read a unique top-level literal; reject other static writes, never execute."""
+    if text is None:
+        return None
+    try:
+        module = ast.parse(text)
+    except (SyntaxError, ValueError, RecursionError):
+        return None
+    writes = [node for node in ast.walk(module)
+              if isinstance(node, ast.Name) and node.id == name
+              and isinstance(node.ctx, (ast.Store, ast.Del))]
+    assignments = [node for node in module.body if isinstance(node, ast.Assign)
+                   and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name)
+                   and node.targets[0].id == name]
+    # Import and definition bindings are writes too, without ast.Name(Store).
+    bindings = [node for node in ast.walk(module) if (
+        isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) and node.name == name
+        or isinstance(node, ast.alias) and (node.asname or node.name.split(".")[0]) == name
+        or isinstance(node, ast.ExceptHandler) and node.name == name
+        or isinstance(node, (ast.MatchAs, ast.MatchStar)) and node.name == name
+        or isinstance(node, ast.MatchMapping) and node.rest == name
+    )]
+    if len(writes) != 1 or len(assignments) != 1 or bindings:
+        return None
+    value = assignments[0].value
+    if not isinstance(value, ast.Constant) or type(value.value) is not str:
+        return None
+    matches = pattern.findall(text)
+    return value.value if matches == [value.value] else None
+
+
+def probe(
+    fetch: Fetch | None = None, clock: Callable[[], str] | None = None,
+    *, metrics_fetch: MetricsFetch | None = None,
+) -> dict[str, Any]:
+    if metrics_fetch is None and (fetch is None or fetch is _get):
+        metrics_fetch = _get_metrics
     fetch = _get if fetch is None else fetch
     clock = utc_now if clock is None else clock
     started_at = clock()
@@ -237,11 +450,13 @@ def probe(fetch: Fetch | None = None, clock: Callable[[], str] | None = None) ->
         http["publisher_pin_blob"] = status
         if status == 200 and type(text) is str:
             pin_text = text
-    matches = PIN_RE.findall(pin_text) if pin_text is not None else []
-    pin = matches[0] if len(matches) == 1 else None
+    pin = _publisher_constant(pin_text, "SOURCE_REVISION", PIN_RE)
+    expected_version = _publisher_constant(pin_text, "EXPECTED_VERSION", VERSION_RE)
     planes["lyte_publisher_pin"] = pin
     if pin is None:
         blockers.append("lyte_publisher_pin:UNAVAILABLE_OR_AMBIGUOUS")
+    if expected_version is None:
+        blockers.append("lyte_publisher_version:UNAVAILABLE_OR_AMBIGUOUS")
 
     runtime_paths = (("source_revision",), ("build", "revision"), ("git_sha",))
     endpoints = {
@@ -251,12 +466,12 @@ def probe(fetch: Fetch | None = None, clock: Callable[[], str] | None = None) ->
         "product_surfaces": f"{ORIGINS['product']}/api/a11oy/v1/frontier/surfaces",
         "a11oy_hf_space": f"{ORIGINS['hf_a11oy']}/api/build-info",
         "lyte_live_space": f"{ORIGINS['hf_lyte']}/api/build-info",
-        "lyte_metrics_alias": f"{ORIGINS['hf_lyte']}/api/lyte/v2/metrics",
     }
     for name, url in endpoints.items():
         body = observe_object(name, url)
         if name in ("a11oy_product", "a11oy_honest", "a11oy_hf_space", "lyte_live_space"):
-            identity(name, body, runtime_paths)
+            paths = runtime_paths + (("runtime_source_revision",),) if name == "lyte_live_space" else runtime_paths
+            identity(name, body, paths)
     health_status = _path(bodies.get("product_healthz"), ("status",))
     if health_status != "ok":
         blockers.append("product_healthz:STATUS_NOT_OK")
@@ -264,6 +479,34 @@ def probe(fetch: Fetch | None = None, clock: Callable[[], str] | None = None) ->
     binding = _path(bodies.get("lyte_live_space"), ("source_binding",))
     if type(binding) is not dict or binding.get("bindings_agree") is not True:
         blockers.append("lyte_live_space:BINDING_AGREEMENT_NOT_OBSERVED")
+
+    # Readiness performs the database health probe required by the gauge contract.
+    ready = observe_object("lyte_readiness", f"{ORIGINS['hf_lyte']}/readyz")
+    ready_revision, ready_identity_state = _identity(ready, runtime_paths + (("runtime_source_revision",),))
+    readiness_match = bool(
+        pin is not None and expected_version is not None
+        and ready_identity_state == "OBSERVED" and ready_revision == pin
+        and ready.get("source_revision") == pin
+        and ready.get("runtime_source_revision") == pin
+        and ready.get("source_repository") == REPOS["lyte"]
+        and ready.get("runtime_repository") == REPOS["lyte"]
+        and ready.get("effectors_enabled") is False
+        and ready.get("human_approval_required") is True
+        and ready.get("version") == expected_version and ready.get("ready") is True
+        and _path(ready, ("checks", "database")) == "READY"
+        and _path(ready, ("source_binding", "bindings_agree")) is True
+        and _path(ready, ("build", "state")) == "OBSERVED"
+        and _path(ready, ("build", "revision")) == pin
+    )
+    lyte_metrics, metrics_problems = _observe_metrics(
+        metrics_fetch, f"{ORIGINS['hf_lyte']}/api/lyte/v2/metrics",
+        revision=pin, version=expected_version,
+    )
+    lyte_metrics["readiness_match"] = readiness_match
+    http["lyte_metrics_alias"] = lyte_metrics["status"]
+    blockers.extend(f"lyte_metrics_alias:{problem}" for problem in metrics_problems)
+    if not readiness_match:
+        blockers.append("lyte_metrics_alias:READINESS_NOT_OBSERVED")
 
     def compare(label: str, names: tuple[str, ...]) -> bool:
         values = [planes.get(name) for name in names]
@@ -317,6 +560,15 @@ def probe(fetch: Fetch | None = None, clock: Callable[[], str] | None = None) ->
             blockers.append(f"{name}:END_SOURCE_UNAVAILABLE")
         elif end_sources[name] != planes[f"{name}_github"]:
             blockers.append(f"{name}:SOURCE_CHANGED_DURING_OBSERVATION")
+    lyte_metrics["source_bookends_match"] = all(
+        planes.get(f"{name}_github") is not None
+        and end_sources.get(name) == planes[f"{name}_github"]
+        for name in ("a11oy", "lyte")
+    )
+    if not lyte_metrics["source_bookends_match"]:
+        lyte_parity = False
+        blockers.append("lyte_metrics_alias:SOURCE_BOOKENDS_MISMATCH")
+        blockers.append("lyte_source_parity:INCOMPLETE")
     finished_at = clock()
     try:
         elapsed = (_utc(finished_at) - _utc(started_at)).total_seconds()
@@ -335,6 +587,7 @@ def probe(fetch: Fetch | None = None, clock: Callable[[], str] | None = None) ->
         "identity_states": identity_states, "http": http,
         "product_source_parity": product_parity,
         "lyte_source_parity": lyte_parity,
+        "lyte_metrics": lyte_metrics,
         "product_aligned": False, "p01_close": False,
         "proof_document": proof_document,
         "observation_state": "METADATA_CONSISTENT" if not blockers else "INCOMPLETE_OR_DIVERGENT",
@@ -349,7 +602,7 @@ def probe(fetch: Fetch | None = None, clock: Callable[[], str] | None = None) ->
         "issue_2010": "NOT_MUTATED_OR_ADJUDICATED",
         "kernel_hub": {"state": "NOT_ASSESSED", "mirrors_deleted": False},
         "signature": "UNSIGNED_LOCAL_OBSERVATION",
-        "note": "Source parity is metadata, proof byte parity is one static file, neither is deployment or production qualification. Existing native verifiers retain authority.",
+        "note": "Source parity is metadata, proof byte parity is one static file, and metrics validate two critical gauges after readiness. These do not establish deployment or production qualification. Existing native verifiers retain authority.",
     }
     return report
 
