@@ -56,6 +56,20 @@ class GuardIntegrationTests(unittest.TestCase):
         self.assertTrue(status["capabilities"]["identifier_guard"])
         self.assertEqual(len(status["runtime_source_sha256"]), 8)
 
+    def test_invalid_types_rejected_before_any_service_call(self):
+        for route in ("query", "query-guarded", "search", "answer-context"):
+            for question in (None, True, 5, [], [[0]], {}, "", "x" * 513):
+                with self.subTest(route=route, kind=type(question).__name__):
+                    body = {"question": question, **({"context": "passage"} if route == "answer-context" else {})}
+                    response = self.client.post("/api/" + route, json=body, headers={"X-SZL-Preview": "1"})
+                    self.assertEqual(response.status_code, 422)
+        for body in ({"question": "Which?", "k": True}, {"question": "Which?", "k": [1]}):
+            self.assertEqual(self.client.post("/api/search", json=body, headers={"X-SZL-Preview": "1"}).status_code, 422)
+        self.assertEqual(self.client.post("/api/answer-context", json={"question": "Which?", "context": []}, headers={"X-SZL-Preview": "1"}).status_code, 422)
+        self.service.query.assert_not_called()
+        self.service.search.assert_not_called()
+        self.service.answer_context.assert_not_called()
+
 
 if __name__ == "__main__":
     unittest.main()

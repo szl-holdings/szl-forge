@@ -176,6 +176,17 @@ def create_preview(service, summary, port=8766):
                       "answer-context": {"question", "context"}}[operation]
             if not isinstance(body, dict) or not set(body) <= fields or "question" not in body:
                 raise ValueError("Invalid fields")
+            question = body["question"]
+            if not isinstance(question, str) or not question.strip() or len(question) > 512:
+                raise ValueError("Invalid question")
+            if operation == "answer-context":
+                context = body.get("context")
+                if not isinstance(context, str) or not context.strip() or len(context) > 16000:
+                    raise ValueError("Invalid context")
+            if operation == "search":
+                k = body.get("k", 5)
+                if isinstance(k, bool) or not isinstance(k, int) or not 1 <= k <= 10:
+                    raise ValueError("Invalid retrieval count")
             if not service.lock.acquire(blocking=False):
                 raise HTTPException(status_code=429, detail="Local inference is busy. Wait for the current request to finish.")
             started = time.monotonic()

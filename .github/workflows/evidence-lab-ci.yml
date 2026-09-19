@@ -125,7 +125,7 @@ jobs:
           outcomes = []
           for name, folder, minimum in (
               ('baseline', 'tests', 103),
-              ('preview', 'operational/tests', 46),
+              ('preview', 'operational/tests', 47),
               ('risk', 'risk_kernel/tests', 30),
           ):
               result = subprocess.run([sys.executable, '-I', '-B', '-c', runner,
