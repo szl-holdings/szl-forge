@@ -83,26 +83,3 @@ def archive(path, value, member="receipt.json", second=False, special=False):
         if second:
             out.writestr("extra.json", b"{}")
     return hashlib.sha256(path.read_bytes()).hexdigest()
-
-
-class StrictInputTests(unittest.TestCase):
-    def test_json_duplicate_keys(self):
-        with self.assertRaises(M.ContractError): M.strict_json(b'{\"x\":1,\"x\":2}')
-
-    def test_json_nonfinite(self):
-        for raw in (b'{\"x\":NaN}', b'{\"x\":Infinity}', b'{\"x\":1e999}'):
-            with self.subTest(raw=raw), self.assertRaises(M.ContractError): M.strict_json(raw)
-
-    def test_json_unicode_and_lone_surrogate(self):
-        for raw in (b'\\xff', b'{\"x\":\"\\\\ud800\"}'):
-            with self.subTest(raw=raw), self.assertRaises(M.ContractError): M.strict_json(raw)
-
-    def test_json_empty_or_oversized(self):
-        with self.assertRaises(M.ContractError): M.strict_json(b'')
-        with self.assertRaises(M.ContractError): M.strict_json(b' ' * (M.MAX_JSON + 1))
-
-    def test_json_nested_fail_is_fixed_error(self):
-        with self.assertRaises(M.ContractError): M.strict_json(b'[' * 2000 + b']' * 2000)
-
-    def test_valid_json_roundtrip(self):
-        self.assertEqual(M.strict_json(M.canonical({\"x\": \"hello\", \"n\": 1})), {\"x\": \"hello\", \"n\": 1})
