@@ -4,7 +4,7 @@ on:
     paths:
       - 'eval/tokenizer*'
       - 'eval/TOKENIZER_QUALIFICATION.md'
-      - 'tests/test_tokenizer_qualification.py'
+      - 'tests/test_tokenizer_*.py'
       - 'tests/run_tokenizer_native_smoke.py'
       - '.github/workflows/tokenizer-qualification.yml'
   push:
@@ -12,7 +12,7 @@ on:
     paths:
       - 'eval/tokenizer*'
       - 'eval/TOKENIZER_QUALIFICATION.md'
-      - 'tests/test_tokenizer_qualification.py'
+      - 'tests/test_tokenizer_*.py'
       - 'tests/run_tokenizer_native_smoke.py'
       - '.github/workflows/tokenizer-qualification.yml'
 permissions:
@@ -35,10 +35,11 @@ jobs:
           python-version: ${{ matrix.python }}
       - name: Offline contract controls, normal and optimized
         run: |
-          python -m unittest discover -s tests -p test_tokenizer_qualification.py -v
-          python -O -m unittest discover -s tests -p test_tokenizer_qualification.py -v
+          python -m unittest discover -s tests -p "test_tokenizer_*.py" -v
+          python -O -m unittest discover -s tests -p "test_tokenizer_*.py" -v
       - name: Install only hash-bound synthetic-control wheel
-        run: python -m pip install --no-deps --only-binary=:all: --require-hashes -r eval/tokenizer-smoke-requirements.txt
+        run: |
+          python -m pip install --no-deps --only-binary=:all: --require-hashes -r eval/tokenizer-smoke-requirements.txt
       - name: Real native same-build controls; no v1, Hub, models or training
         env:
           OBSERVED_SOURCE: ${{ github.sha }}
