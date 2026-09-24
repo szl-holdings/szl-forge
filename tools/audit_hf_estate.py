@@ -461,7 +461,7 @@ def classify_repository(entry: dict[str, Any], snapshot: dict[str, Any]) -> dict
                 add("LOADABLE_METADATA_WITHOUT_ARTIFACT", "CONFLICT", "Model metadata implies loadable weights but no supported artifact is listed", readme_path)
     for item in checks.get("required_patterns", []):
         item = {"pattern": item} if isinstance(item, str) else item
-        if not re.search(item["pattern"], readme, re.I | re.M):
+        if not re.search(item["pattern"], "\n".join(prose), re.I | re.M):
             add(item.get("code", "REQUIRED_DISCLOSURE_MISSING"), "HOLD", item.get("message", f"Required disclosure is absent: {item['pattern']}"), readme_path)
     for item in checks.get("prohibited_patterns", []):
         item = {"pattern": item} if isinstance(item, str) else item
@@ -498,7 +498,7 @@ def classify_repository(entry: dict[str, Any], snapshot: dict[str, Any]) -> dict
         pattern = boundary_patterns.get(boundary)
         if pattern is None:
             add("UNKNOWN_BOUNDARY_CHECK", "HOLD", f"Unknown required boundary: {boundary}")
-        elif not re.search(pattern, readme, re.I):
+        elif not re.search(pattern, "\n".join(prose), re.I):
             add("REQUIRED_BOUNDARY_MISSING", "HOLD", f"Required explicit boundary is not visible: {boundary}", readme_path)
     binding = checks.get("artifact_binding")
     if binding:

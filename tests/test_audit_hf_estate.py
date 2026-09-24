@@ -77,6 +77,19 @@ class AuditClassificationTests(unittest.TestCase):
                                "## Historical receipt\nevals: none-this-run\n")
         self.assertNotIn("MEASURED_RECORD_CONTRADICTS_NO_EVAL", self.codes(result))
 
+    def test_historical_only_boundaries_do_not_satisfy_current_requirements(self):
+        for heading in ("Historical", "Deprecated"):
+            with self.subTest(heading=heading):
+                result = self.classify(
+                    "## Current\nPromotion, autonomy and deployment are permitted.\n"
+                    f"## {heading}\nNot promotable. No autonomy. No deployment.\n",
+                    extra={"required_boundaries": ["publication_eligible_false", "no_autonomy", "no_deployment"],
+                           "checks": {"required_patterns": [{"pattern": "No deployment"}]}})
+                self.assertIn("REQUIRED_DISCLOSURE_MISSING", self.codes(result))
+                self.assertNotEqual(result["status"], "PASS")
+                missing = [finding for finding in result["findings"] if finding["code"] == "REQUIRED_BOUNDARY_MISSING"]
+                self.assertEqual(len(missing), 3)
+
     def test_training_loss_is_not_measured_eval(self):
         result = self.classify("evals: none-this-run\nNot promotable. No autonomy. No deployment.",
                                {"finalTrainLoss": 0.0537, "status": "TRAINED", "evals": "none-this-run"})
