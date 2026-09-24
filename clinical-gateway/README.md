@@ -76,6 +76,40 @@ performance. The output contains an explicit all-false authority map and is not
 called by ingestion, MLLP ACK handling, clinical review, FHIR generation, or
 release logic.
 
+### Exact GitHub / Hugging Face alignment
+
+Reproduction and publication are separate checks. The read-only verifier below
+compares both published packages against immutable Git blobs, not the checkout.
+Use full 40-character commit hashes; branch names and shortened revisions fail.
+
+```bash
+python -I -B clinical-gateway/tools/verify_hub_alignment.py \
+  --git-revision <trusted-github-commit> \
+  --model-revision <oac-system-health-hub-commit> \
+  --dataset-revision <synthetic-dataset-hub-commit> \
+  --output oac-hub-alignment.json
+```
+
+The output path must be new. Exit zero requires every declared model and dataset
+file to match, including README, license, kernel, training snapshot and receipts.
+Only Hub's root `.gitattributes` is excluded and explicitly reported as excluded.
+The verifier also checks canonical source/trainer/receipt/data hash bindings.
+It rejects unexpected files, mutable revisions, symlinks, oversized responses,
+malformed manifests, and redirects outside the fixed HTTPS Hub origin. No Hub
+Python is imported or executed; no token, paid compute, upload or deletion is used.
+
+The OAC CI workflow optionally accepts both Hub revision inputs on manual
+dispatch and retains a success or failure receipt against that run's Git commit.
+Regular CI stays offline for these unit tests; it does not assume live Hub parity.
+The workflow never publishes or rewrites an existing Hub repository.
+
+Trust the reviewed Git source and verifier separately: this is a comparison
+receipt, not a signature verifier, independent attestation, training run, runtime
+health check, production-promotion grant, or medical authorization. A mismatched
+receipt must not be relabeled successful just because the coefficients match.
+Align approved source through a reviewed publication and rerun this check against
+the new immutable Hub revisions before making any release claim.
+
 ## Documented Roche transport profile
 
 The roche-cobas-liat-v2.0 preset is a local adapter name. It is configured
