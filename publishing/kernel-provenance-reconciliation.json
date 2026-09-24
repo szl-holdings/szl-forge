@@ -1,7 +1,7 @@
 {
   "schema": "szl.kernel-provenance-release/v1",
   "bundle": "publishing/kernel-provenance",
-  "snapshots_sha256": "fe75d4ab64141d6293e2e8c3d586af0a2116499302c7c836bdc9a5035906443e",
+  "snapshots_sha256": "6477cf724decfde793a8ae14c7264e9127bbf39ade966716268e8f6d8fe802b5",
   "entries": [
     {
       "id": "SZLHOLDINGS/szl-blocked",
@@ -10,7 +10,7 @@
       "destination": "MODEL_PROVENANCE.json",
       "source_path": "publishing/kernel-provenance/szl-blocked/MODEL_PROVENANCE.json",
       "original_sha256": "afdb5ed6666cabf443b31f8d77e84babfcad9eceb1edc73db2ba356fbd67694a",
-      "output_sha256": "ae950b48aded2f54731e710ede2a34d05a1b763f61fdbc36a1344819e1833a5a"
+      "output_sha256": "010efed43fd879b8807f4fa959e5205acae18c3c9dd51df4761ed3b18745addf"
     },
     {
       "id": "SZLHOLDINGS/szl-formulas",
@@ -19,16 +19,7 @@
       "destination": "MODEL_PROVENANCE.json",
       "source_path": "publishing/kernel-provenance/szl-formulas/MODEL_PROVENANCE.json",
       "original_sha256": "9d556d9adb7c8e3347785b7d2e9664c61d190b0ede920c64cab8f4069aaf8682",
-      "output_sha256": "188f5b910ba287fe4f5828931f8eaa4a98fe6b1a848b17eab73ba46519769d3e"
-    },
-    {
-      "id": "SZLHOLDINGS/szl-governed-norm",
-      "repository_type": "model",
-      "expected_parent": "cc5fde2296369b43652d454072b63d49fc3241ad",
-      "destination": "MODEL_PROVENANCE.json",
-      "source_path": "publishing/kernel-provenance/szl-governed-norm/MODEL_PROVENANCE.json",
-      "original_sha256": "815d090e2b7fc1119c76585646c2fafc548b4784ee7c1dfd2e0131e21bcb0b9f",
-      "output_sha256": "f238073db6569d30131319922c7a4f4fc5554efe0542409b5ebbcfa0fe84947f"
+      "output_sha256": "7745646ad5a17ca60c757753aa80aea6a16086c0c00c5eeee907d8a0a98ce6f5"
     },
     {
       "id": "SZLHOLDINGS/szl-govsign",
@@ -37,7 +28,7 @@
       "destination": "MODEL_PROVENANCE.json",
       "source_path": "publishing/kernel-provenance/szl-govsign/MODEL_PROVENANCE.json",
       "original_sha256": "ad6fedcfd255db0d109c8dc522bd107df50da25ac4174cb68c01586ad916059d",
-      "output_sha256": "cf9ca66d78010339c1ae083d793ac1904f4c4fd1b72d27e3b77d2a42523acad7"
+      "output_sha256": "6a24aa7467ee13ea7812a8f111b5105e61fb7f1fcf6a713261709b977bc53e74"
     },
     {
       "id": "SZLHOLDINGS/szl-invariants",
@@ -46,16 +37,7 @@
       "destination": "MODEL_PROVENANCE.json",
       "source_path": "publishing/kernel-provenance/szl-invariants/MODEL_PROVENANCE.json",
       "original_sha256": "61d363ab86cfb19410ecbebd4477e9cd235dfac3ee4bd49913fac2b41d0044dc",
-      "output_sha256": "c5fc3da1331b0cb7b09eb3a2b8ce167d68c1c16ad9b6a322273258a70ae9d616"
-    },
-    {
-      "id": "SZLHOLDINGS/szl-lambda-gate",
-      "repository_type": "model",
-      "expected_parent": "c9abda7882b0b4e79bbc9a50b359ff987db37494",
-      "destination": "MODEL_PROVENANCE.json",
-      "source_path": "publishing/kernel-provenance/szl-lambda-gate/MODEL_PROVENANCE.json",
-      "original_sha256": "7bff6b93c0b515cd1272f80fd76f9aadd4b7553a7be930fc3348f213eaa187a1",
-      "output_sha256": "17149cb755fc4b7bec2c2c2f2e97684b43c3daa49a4205cb8f2dcf7201aa2144"
+      "output_sha256": "dd7e8eb76cfc9d8fafb63667d09fdba26ee2acd62ed49af6cbd74c9b093750da"
     },
     {
       "id": "SZLHOLDINGS/szl-ouroboros",
@@ -64,7 +46,7 @@
       "destination": "MODEL_PROVENANCE.json",
       "source_path": "publishing/kernel-provenance/szl-ouroboros/MODEL_PROVENANCE.json",
       "original_sha256": "21d6b40206b36821aa82c493f2f706fe2e2e4206841680194e23f5fc33b43786",
-      "output_sha256": "e6a6e9e8450073a3ea0cc8d2d4319d9a19b9d1fe3fa0046614fafe93292e59fa"
+      "output_sha256": "e765ee3ca960afa316de2c916e225f16fa49913c3739e1b653044320389767bc"
     },
     {
       "id": "SZLHOLDINGS/szl-provctl",
@@ -73,7 +55,7 @@
       "destination": "MODEL_PROVENANCE.json",
       "source_path": "publishing/kernel-provenance/szl-provctl/MODEL_PROVENANCE.json",
       "original_sha256": "28bf866b757ab9238927baecdf0bf3d51d1b9df98ba2898a4a7e26c84fed07dd",
-      "output_sha256": "9f31c15f019fbabfb169ee1b691c46d77bad7d31753373fec0cebb86a316f92c"
+      "output_sha256": "6b1c65a86df3e4cb03222e295d737f17fa32da20d89add6bc2af91e1a394f9e1"
     }
   ]
 }

@@ -35,8 +35,9 @@ class ReconciliationTests(unittest.TestCase):
 
     def test_workflow_receipts_are_external_and_publication_is_explicit(self):
         workflow = (Path(__file__).resolve().parents[1] / ".github/workflows/reconcile-kernel-provenance.yml").read_text()
-        self.assertIn("EVIDENCE_DIR: ${{ runner.temp }}/kernel-provenance-", workflow)
-        self.assertIn('run: mkdir "$EVIDENCE_DIR"', workflow)
+        self.assertIn('evidence_dir="$RUNNER_TEMP/kernel-provenance-', workflow)
+        self.assertIn('mkdir "$evidence_dir"', workflow)
+        self.assertNotIn('EVIDENCE_DIR: ${{ runner.temp }}', workflow)
         self.assertIn('--receipt "$EVIDENCE_DIR/provenance-publication.jsonl"', workflow)
         self.assertIn('path: ${{ env.EVIDENCE_DIR }}/provenance-*', workflow)
         self.assertNotIn('--receipt reports/', workflow)
@@ -44,9 +45,9 @@ class ReconciliationTests(unittest.TestCase):
         self.assertIn("github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'", workflow)
         self.assertNotRegex(workflow, r'(?m)^\s+(push|pull_request_target):')
 
-    def test_eight_bound_proposals_preserve_original_bytes_and_metrics(self):
+    def test_six_bound_proposals_preserve_original_bytes_and_metrics(self):
         plan = repair.make_plan(self.snapshots)
-        self.assertEqual(repair.verify_plan(plan, self.snapshots)["targets"], 8)
+        self.assertEqual(repair.verify_plan(plan, self.snapshots)["targets"], 6)
         self.assertFalse(plan["publish_supported"])
         self.assertEqual(plan["provider_mutations"], 0)
         for row in plan["entries"]:
@@ -61,7 +62,7 @@ class ReconciliationTests(unittest.TestCase):
             self.assertEqual(history["document"]["historical_metric"]["accuracy"], 0.91)
 
     def test_missing_duplicate_and_extra_targets_fail(self):
-        for values in (self.snapshots[:-1], self.snapshots + [self.snapshots[0]], [self.snapshots[0]] * 8):
+        for values in (self.snapshots[:-1], self.snapshots + [self.snapshots[0]], [self.snapshots[0]] * 6):
             with self.assertRaises(repair.InvalidEvidence):
                 repair.make_plan(values)
 

@@ -21,11 +21,11 @@
   },
   "current_artifact_evidence": {
     "repository_revision": "c218f1a7eed7ec1b8a06a2997e49ffe9e339a71c",
-    "observation_time": "2026-09-19T13:50:07.838587+00:00",
+    "observation_time": "2026-09-24T13:44:55.967445+00:00",
     "tree_coverage": "COMPLETE_ACCESSIBLE_RESPONSE",
     "tree_entries": 25,
     "file_count": 18,
-    "tree_records_sha256": "fbc7702f840721c7fe8a1710d6744bf88cbf10821a9775078d8650bcdfe34162",
+    "tree_records_sha256": "971b73af811617fb82460540efadc3c0595c8e40007af7072b418a6860fbff1f",
     "original_provenance_sha256": "61d363ab86cfb19410ecbebd4477e9cd235dfac3ee4bd49913fac2b41d0044dc",
     "training_receipt_path": "TRAINING_RECEIPT.json",
     "training_receipt_present": true,

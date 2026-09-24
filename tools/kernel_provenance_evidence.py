@@ -17,8 +17,6 @@ from pathlib import Path, PurePosixPath
 from urllib.request import Request, urlopen
 
 TARGETS = {
-    "SZLHOLDINGS/szl-governed-norm": "model.joblib",
-    "SZLHOLDINGS/szl-lambda-gate": "model.safetensors",
     "SZLHOLDINGS/szl-blocked": "model.joblib",
     "SZLHOLDINGS/szl-govsign": "model.joblib",
     "SZLHOLDINGS/szl-provctl": "model.joblib",
@@ -190,7 +188,7 @@ def proposal_document(snapshot):
 
 
 def make_plan(snapshots):
-    require(isinstance(snapshots, list) and len(snapshots) == len(TARGETS), "all eight exact targets required")
+    require(isinstance(snapshots, list) and len(snapshots) == len(TARGETS), "all six exact targets required")
     require({item["id"] for item in snapshots} == set(TARGETS), "duplicate, missing or unapproved target")
     entries = []
     for snapshot in sorted(snapshots, key=lambda item: item["id"]):

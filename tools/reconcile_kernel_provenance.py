@@ -109,7 +109,7 @@ def validate_release(read_bytes):
     require({item["id"] for item in snapshots} == set(evidence.TARGETS), "expanded or duplicate snapshot targets")
     by_id = {item["id"]: item for item in snapshots}
     entries = manifest["entries"]
-    require(isinstance(entries, list) and len(entries) == len(evidence.TARGETS), "all eight release targets required")
+    require(isinstance(entries, list) and len(entries) == len(evidence.TARGETS), "all six release targets required")
     require({item["id"] for item in entries} == set(evidence.TARGETS), "expanded or duplicate release targets")
     targets = []
     for entry in sorted(entries, key=lambda item: item["id"]):

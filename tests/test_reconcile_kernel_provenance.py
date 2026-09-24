@@ -108,7 +108,7 @@ class ReconcilePublisherTests(unittest.TestCase):
         return [json.loads(line) for line in self.receipt.read_text().splitlines()]
 
     def test_offline_closed_bundle_preserves_history_and_disclaims_training(self):
-        self.assertEqual(len(self.release.targets), 8)
+        self.assertEqual(len(self.release.targets), len(evidence.TARGETS))
         for target in self.release.targets:
             document = evidence.parse(target.output)
             self.assertEqual(document["status"], publisher.DOCUMENT_STATUS)
@@ -155,6 +155,32 @@ class ReconcilePublisherTests(unittest.TestCase):
             with self.subTest(update_hash=update_hash), self.assertRaises(evidence.InvalidEvidence):
                 publisher.validate_release(files.__getitem__)
 
+    def test_previously_allowed_reconciled_targets_are_excluded_from_every_provider_boundary(self):
+        excluded = ("SZLHOLDINGS/szl-governed-norm", "SZLHOLDINGS/szl-lambda-gate")
+        self.assertEqual(len(evidence.TARGETS), 6)
+        for repo_id in excluded:
+            with self.subTest(repo_id=repo_id):
+                self.assertNotIn(repo_id, evidence.TARGETS)
+                files = dict(self.files)
+                manifest = evidence.parse(files[publisher.MANIFEST])
+                manifest["entries"][0]["id"] = repo_id
+                files[publisher.MANIFEST] = evidence.canonical(manifest)
+                with self.assertRaises(evidence.InvalidEvidence):
+                    publisher.validate_release(files.__getitem__)
+                backend = publisher.HubBackend.__new__(publisher.HubBackend)
+                backend.publish_enabled = True
+                backend.api = SimpleNamespace(repo_info=Mock(), auth_check=Mock(), create_commit=Mock())
+                with self.assertRaises(evidence.InvalidEvidence):
+                    backend.inspect(repo_id)
+                with self.assertRaises(evidence.InvalidEvidence):
+                    backend.authorize([repo_id, *sorted(evidence.TARGETS)[1:]])
+                target = publisher.Target(repo_id, "a" * 40, b"old", b"new", {})
+                with self.assertRaises(evidence.InvalidEvidence):
+                    backend.commit(target, "c" * 40)
+                backend.api.repo_info.assert_not_called()
+                backend.api.auth_check.assert_not_called()
+                backend.api.create_commit.assert_not_called()
+
     def test_snapshot_byte_tamper_refused(self):
         self.files[publisher.BUNDLE + "/snapshots.json"] += b" "
         with self.assertRaises(evidence.InvalidEvidence):
@@ -178,9 +204,9 @@ class ReconcilePublisherTests(unittest.TestCase):
 
         self.backend.commit = commit
         result = self.execute()
-        self.assertEqual(result["commits_verified"], 8)
-        self.assertEqual(result["write_attempts"], 8)
-        self.assertEqual(self.authority_calls, 9)
+        self.assertEqual(result["commits_verified"], len(evidence.TARGETS))
+        self.assertEqual(result["write_attempts"], len(evidence.TARGETS))
+        self.assertEqual(self.authority_calls, len(evidence.TARGETS) + 1)
         self.assertTrue(result["complete"])
         first_commit = next(i for i, event in enumerate(self.backend.events) if event[0] == "commit")
         before = self.backend.events[:first_commit]
@@ -188,9 +214,9 @@ class ReconcilePublisherTests(unittest.TestCase):
         self.assertTrue(any(event[0] == "authorize" for event in before))
         self.assertTrue(all(parent == "a" * 40 for _, parent, _ in self.backend.commits))
         self.assertEqual([row["sequence"] for row in self.events()], list(range(len(self.events()))))
-        self.assertEqual(sum(row["event"] == "FINAL_ARTIFACT_VERIFIED" for row in self.events()), 8)
+        self.assertEqual(sum(row["event"] == "FINAL_ARTIFACT_VERIFIED" for row in self.events()), len(evidence.TARGETS))
 
-    def test_stale_eighth_head_prevents_every_write(self):
+    def test_stale_last_head_prevents_every_write(self):
         last = self.release.targets[-1]
         self.backend.states[last.repo_id] = publisher.LiveState("b" * 40, last.files, last.original)
         with self.assertRaises(evidence.InvalidEvidence):
@@ -242,7 +268,7 @@ class ReconcilePublisherTests(unittest.TestCase):
         for target in self.release.targets:
             self.backend.states[target.repo_id] = publisher.LiveState("d" * 40, publisher.expected_output_files(target), target.output)
         result = self.execute()
-        self.assertEqual(result["already_applied_exact"], 8)
+        self.assertEqual(result["already_applied_exact"], len(evidence.TARGETS))
         self.assertEqual(result["commits_verified"], 0)
         self.assertEqual(self.backend.commits, [])
         target = self.release.targets[0]
@@ -269,12 +295,12 @@ class ReconcilePublisherTests(unittest.TestCase):
         self.backend.commit = commit
         result = self.execute()
         self.assertTrue(result["complete"])
-        self.assertEqual(result["write_attempts"], 8)
-        self.assertEqual(result["commits_verified"], 8)
-        self.assertEqual(len(self.backend.commits), 7)
+        self.assertEqual(result["write_attempts"], len(evidence.TARGETS))
+        self.assertEqual(result["commits_verified"], len(evidence.TARGETS))
+        self.assertEqual(len(self.backend.commits), len(evidence.TARGETS) - 1)
         self.assertFalse(result["commit_authorship_verified"])
         verified = [row for row in self.events() if row["event"] == "COMMIT_VERIFIED"]
-        self.assertEqual(len(verified), 8)
+        self.assertEqual(len(verified), len(evidence.TARGETS))
         self.assertEqual(verified[0]["revision"], preexisting_revision)
         self.assertTrue(all(row["commit_authorship_verified"] is False for row in verified))
         self.assertIn("preexisting identical state", verified[0]["attribution"])
