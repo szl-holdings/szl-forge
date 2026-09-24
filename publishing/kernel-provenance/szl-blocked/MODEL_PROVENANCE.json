@@ -1,0 +1,118 @@
+{
+  "schema": "szl.model-source-attestation/reconciliation-v2",
+  "status": "ARTIFACT_STATE_RECONCILIATION",
+  "model": {
+    "id": "SZLHOLDINGS/szl-blocked",
+    "repository_type": "model",
+    "artifact_kind": "kernel-code-and-configuration",
+    "trained_weights_present": false,
+    "surrogate": {
+      "historical_file": "model.joblib",
+      "status": "NOT_PRESENT_IN_CURRENT_REVISION",
+      "weights_published_in_this_repo": false
+    }
+  },
+  "claims": {
+    "weights_present": "NONE",
+    "trained_model": "NOT_CLAIMED",
+    "training_verified": false,
+    "runtime_measured_by_this_reconciliation": false,
+    "reproducible_build": "NOT_CLAIMED"
+  },
+  "current_artifact_evidence": {
+    "repository_revision": "c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4",
+    "observation_time": "2026-09-19T13:50:02.865699+00:00",
+    "tree_coverage": "COMPLETE_ACCESSIBLE_RESPONSE",
+    "tree_entries": 30,
+    "file_count": 23,
+    "tree_records_sha256": "8389ce112c0c44bb447502d630bfe022b1fda59657b3d323e98758b23498a853",
+    "original_provenance_sha256": "afdb5ed6666cabf443b31f8d77e84babfcad9eceb1edc73db2ba356fbd67694a",
+    "training_receipt_path": "TRAINING_RECEIPT.json",
+    "training_receipt_present": true,
+    "training_receipt_contents_or_metrics_verified": false,
+    "scan_weight_suffixes": [
+      ".joblib",
+      ".safetensors",
+      ".bin",
+      ".pt",
+      ".pth",
+      ".onnx",
+      ".gguf",
+      ".pkl",
+      ".pickle",
+      ".npz"
+    ]
+  },
+  "historical_evidence": {
+    "status": "PRESERVED_NOT_REVERIFIED",
+    "document": {
+      "schema": "szl.model-source-attestation/v1",
+      "observed_at": "2026-07-12T00:27:14Z",
+      "model": {
+        "id": "SZLHOLDINGS/szl-blocked",
+        "repository_type": "model",
+        "artifact_kind": "kernel-code-and-configuration",
+        "trained_weights_present": true,
+        "surrogate": {
+          "file": "model.joblib",
+          "sha256": "15f0537cd323aff977ff3d5abec065f1144693fe0ab99d5cbd0961fe3b8e7610",
+          "role": "BLOCK/ALLOW decision triage only — kernel policy chain remains sole ground truth",
+          "fidelity_MEASURED": {
+            "fidelity_vs_kernel_heldout": 0.9977,
+            "per_class_recall": {
+              "ALLOW": 0.9963,
+              "BLOCK_HARD": 1.0,
+              "BLOCK_ADVISORY": 0.9846
+            }
+          },
+          "receipt": "TRAINING_RECEIPT.json",
+          "reverify": "python scripts/eval.py"
+        },
+        "stdlib_only_note": "kernel package itself stays stdlib-only; the OPTIONAL surrogate needs sklearn+joblib"
+      },
+      "source_of_record": {
+        "state": "VERIFIED_HF_SOURCE_OF_RECORD",
+        "platform": "huggingface",
+        "repository": "SZLHOLDINGS/szl-blocked",
+        "artifact_base_revision": "ea595bfe2898425365cf71da5edf9901d4de525c",
+        "artifact_base_state": "MEASURED_PRE_ATTESTATION_BASE",
+        "artifact_base_url": "https://huggingface.co/SZLHOLDINGS/szl-blocked/tree/ea595bfe2898425365cf71da5edf9901d4de525c",
+        "file_count": 13,
+        "tree_sha256": "149cfe5686ffcff20fd726ba7488afaf7d652401b3a00af193077ae226b9e3bc",
+        "tree_hash_algorithm": "sha256 of UTF-8 path + NUL + per-file sha256 + LF, sorted by path; .cache excluded"
+      },
+      "public_github": {
+        "state": "NO_DIRECT_PUBLIC_IMPLEMENTATION_OBSERVED",
+        "same_name_candidate": "https://github.com/szl-holdings/szl-blocked",
+        "same_name_candidate_http_status": 404,
+        "card_references": [
+          "https://github.com/szl-holdings/governed-receipt-spec",
+          "https://github.com/szl-holdings/szl-papers/blob/main/PAPERS_INDEX.md"
+        ],
+        "card_reference_role": "SPECIFICATION_OR_RESEARCH_CONTEXT_NOT_BUILD_SOURCE"
+      },
+      "claims": {
+        "github_repository_parity": "NOT_CLAIMED",
+        "reproducible_build": "NOT_CLAIMED",
+        "trained_model": "SURROGATE_PRESENT_MEASURED_FIDELITY",
+        "serving_process_revision": "NOT_APPLICABLE_REPOSITORY_ARTIFACT"
+      },
+      "limits": [
+        "The 404 observation establishes only that no public same-name repository was reachable at the observation time; it does not make a claim about private repositories.",
+        "The attestation overlay cannot self-embed its resulting Hub commit, so the immutable artifact_base_revision is the measured pre-overlay base.",
+        "No .bin, .safetensors, .pt, .pth, .onnx, or .gguf weight artifact was present in the measured base tree."
+      ]
+    },
+    "original_bytes_base64": "ewogICJzY2hlbWEiOiAic3psLm1vZGVsLXNvdXJjZS1hdHRlc3RhdGlvbi92MSIsCiAgIm9ic2VydmVkX2F0IjogIjIwMjYtMDctMTJUMDA6Mjc6MTRaIiwKICAibW9kZWwiOiB7CiAgICAiaWQiOiAiU1pMSE9MRElOR1Mvc3psLWJsb2NrZWQiLAogICAgInJlcG9zaXRvcnlfdHlwZSI6ICJtb2RlbCIsCiAgICAiYXJ0aWZhY3Rfa2luZCI6ICJrZXJuZWwtY29kZS1hbmQtY29uZmlndXJhdGlvbiIsCiAgICAidHJhaW5lZF93ZWlnaHRzX3ByZXNlbnQiOiB0cnVlLAogICAgInN1cnJvZ2F0ZSI6IHsKICAgICAgImZpbGUiOiAibW9kZWwuam9ibGliIiwKICAgICAgInNoYTI1NiI6ICIxNWYwNTM3Y2QzMjNhZmY5NzdmZjNkNWFiZWMwNjVmMTE0NDY5M2ZlMGFiOTlkNWNiZDA5NjFmZTNiOGU3NjEwIiwKICAgICAgInJvbGUiOiAiQkxPQ0svQUxMT1cgZGVjaXNpb24gdHJpYWdlIG9ubHkgXHUyMDE0IGtlcm5lbCBwb2xpY3kgY2hhaW4gcmVtYWlucyBzb2xlIGdyb3VuZCB0cnV0aCIsCiAgICAgICJmaWRlbGl0eV9NRUFTVVJFRCI6IHsKICAgICAgICAiZmlkZWxpdHlfdnNfa2VybmVsX2hlbGRvdXQiOiAwLjk5NzcsCiAgICAgICAgInBlcl9jbGFzc19yZWNhbGwiOiB7CiAgICAgICAgICAiQUxMT1ciOiAwLjk5NjMsCiAgICAgICAgICAiQkxPQ0tfSEFSRCI6IDEuMCwKICAgICAgICAgICJCTE9DS19BRFZJU09SWSI6IDAuOTg0NgogICAgICAgIH0KICAgICAgfSwKICAgICAgInJlY2VpcHQiOiAiVFJBSU5JTkdfUkVDRUlQVC5qc29uIiwKICAgICAgInJldmVyaWZ5IjogInB5dGhvbiBzY3JpcHRzL2V2YWwucHkiCiAgICB9LAogICAgInN0ZGxpYl9vbmx5X25vdGUiOiAia2VybmVsIHBhY2thZ2UgaXRzZWxmIHN0YXlzIHN0ZGxpYi1vbmx5OyB0aGUgT1BUSU9OQUwgc3Vycm9nYXRlIG5lZWRzIHNrbGVhcm4ram9ibGliIgogIH0sCiAgInNvdXJjZV9vZl9yZWNvcmQiOiB7CiAgICAic3RhdGUiOiAiVkVSSUZJRURfSEZfU09VUkNFX09GX1JFQ09SRCIsCiAgICAicGxhdGZvcm0iOiAiaHVnZ2luZ2ZhY2UiLAogICAgInJlcG9zaXRvcnkiOiAiU1pMSE9MRElOR1Mvc3psLWJsb2NrZWQiLAogICAgImFydGlmYWN0X2Jhc2VfcmV2aXNpb24iOiAiZWE1OTViZmUyODk4NDI1MzY1Y2Y3MWRhNWVkZjk5MDFkNGRlNTI1YyIsCiAgICAiYXJ0aWZhY3RfYmFzZV9zdGF0ZSI6ICJNRUFTVVJFRF9QUkVfQVRURVNUQVRJT05fQkFTRSIsCiAgICAiYXJ0aWZhY3RfYmFzZV91cmwiOiAiaHR0cHM6Ly9odWdnaW5nZmFjZS5jby9TWkxIT0xESU5HUy9zemwtYmxvY2tlZC90cmVlL2VhNTk1YmZlMjg5ODQyNTM2NWNmNzFkYTVlZGY5OTAxZDRkZTUyNWMiLAogICAgImZpbGVfY291bnQiOiAxMywKICAgICJ0cmVlX3NoYTI1NiI6ICIxNDljZmU1Njg2ZmZjZmYyMGZkNzI2YmE3NDg4YWZhZjdkNjUyNDAxYjNhMDBhZjE5MzA3N2FlMjI2YjllM2JjIiwKICAgICJ0cmVlX2hhc2hfYWxnb3JpdGhtIjogInNoYTI1NiBvZiBVVEYtOCBwYXRoICsgTlVMICsgcGVyLWZpbGUgc2hhMjU2ICsgTEYsIHNvcnRlZCBieSBwYXRoOyAuY2FjaGUgZXhjbHVkZWQiCiAgfSwKICAicHVibGljX2dpdGh1YiI6IHsKICAgICJzdGF0ZSI6ICJOT19ESVJFQ1RfUFVCTElDX0lNUExFTUVOVEFUSU9OX09CU0VSVkVEIiwKICAgICJzYW1lX25hbWVfY2FuZGlkYXRlIjogImh0dHBzOi8vZ2l0aHViLmNvbS9zemwtaG9sZGluZ3Mvc3psLWJsb2NrZWQiLAogICAgInNhbWVfbmFtZV9jYW5kaWRhdGVfaHR0cF9zdGF0dXMiOiA0MDQsCiAgICAiY2FyZF9yZWZlcmVuY2VzIjogWwogICAgICAiaHR0cHM6Ly9naXRodWIuY29tL3N6bC1ob2xkaW5ncy9nb3Zlcm5lZC1yZWNlaXB0LXNwZWMiLAogICAgICAiaHR0cHM6Ly9naXRodWIuY29tL3N6bC1ob2xkaW5ncy9zemwtcGFwZXJzL2Jsb2IvbWFpbi9QQVBFUlNfSU5ERVgubWQiCiAgICBdLAogICAgImNhcmRfcmVmZXJlbmNlX3JvbGUiOiAiU1BFQ0lGSUNBVElPTl9PUl9SRVNFQVJDSF9DT05URVhUX05PVF9CVUlMRF9TT1VSQ0UiCiAgfSwKICAiY2xhaW1zIjogewogICAgImdpdGh1Yl9yZXBvc2l0b3J5X3Bhcml0eSI6ICJOT1RfQ0xBSU1FRCIsCiAgICAicmVwcm9kdWNpYmxlX2J1aWxkIjogIk5PVF9DTEFJTUVEIiwKICAgICJ0cmFpbmVkX21vZGVsIjogIlNVUlJPR0FURV9QUkVTRU5UX01FQVNVUkVEX0ZJREVMSVRZIiwKICAgICJzZXJ2aW5nX3Byb2Nlc3NfcmV2aXNpb24iOiAiTk9UX0FQUExJQ0FCTEVfUkVQT1NJVE9SWV9BUlRJRkFDVCIKICB9LAogICJsaW1pdHMiOiBbCiAgICAiVGhlIDQwNCBvYnNlcnZhdGlvbiBlc3RhYmxpc2hlcyBvbmx5IHRoYXQgbm8gcHVibGljIHNhbWUtbmFtZSByZXBvc2l0b3J5IHdhcyByZWFjaGFibGUgYXQgdGhlIG9ic2VydmF0aW9uIHRpbWU7IGl0IGRvZXMgbm90IG1ha2UgYSBjbGFpbSBhYm91dCBwcml2YXRlIHJlcG9zaXRvcmllcy4iLAogICAgIlRoZSBhdHRlc3RhdGlvbiBvdmVybGF5IGNhbm5vdCBzZWxmLWVtYmVkIGl0cyByZXN1bHRpbmcgSHViIGNvbW1pdCwgc28gdGhlIGltbXV0YWJsZSBhcnRpZmFjdF9iYXNlX3JldmlzaW9uIGlzIHRoZSBtZWFzdXJlZCBwcmUtb3ZlcmxheSBiYXNlLiIsCiAgICAiTm8gLmJpbiwgLnNhZmV0ZW5zb3JzLCAucHQsIC5wdGgsIC5vbm54LCBvciAuZ2d1ZiB3ZWlnaHQgYXJ0aWZhY3Qgd2FzIHByZXNlbnQgaW4gdGhlIG1lYXN1cmVkIGJhc2UgdHJlZS4iCiAgXQp9",
+    "original_sha256": "afdb5ed6666cabf443b31f8d77e84babfcad9eceb1edc73db2ba356fbd67694a",
+    "scope": "Historical claims, metrics, dependencies and source-of-record assertions are preserved verbatim, not adopted as current verification."
+  },
+  "limits": [
+    "This document reconciles artifact state; it does not establish training, evaluation or runtime readiness.",
+    "Current means the exact observed revision above; publication requires a fresh expected-parent check and reviewed source approval.",
+    "Artifact absence is checked against complete captured tree paths and recognized weight suffixes, not semantic analysis of every file.",
+    "Tree receipts are unsigned audit records; this package does not claim independent third-party attestation.",
+    "Training-receipt file presence is not verification of training, rights, metrics, independent human identity or served runtime.",
+    "No dependency, stdlib-only, cryptographic, theorem, source-authority or model-quality claim is inferred from absent weights."
+  ]
+}

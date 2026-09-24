@@ -1,0 +1,119 @@
+{
+  "schema": "szl.model-source-attestation/reconciliation-v2",
+  "status": "ARTIFACT_STATE_RECONCILIATION",
+  "model": {
+    "id": "SZLHOLDINGS/szl-ouroboros",
+    "repository_type": "model",
+    "artifact_kind": "kernel-code-and-configuration",
+    "trained_weights_present": false,
+    "surrogate": {
+      "historical_file": "model.joblib",
+      "status": "NOT_PRESENT_IN_CURRENT_REVISION",
+      "weights_published_in_this_repo": false
+    }
+  },
+  "claims": {
+    "weights_present": "NONE",
+    "trained_model": "NOT_CLAIMED",
+    "training_verified": false,
+    "runtime_measured_by_this_reconciliation": false,
+    "reproducible_build": "NOT_CLAIMED"
+  },
+  "current_artifact_evidence": {
+    "repository_revision": "40381c985b1eaebd5007626c0c58e25838d32389",
+    "observation_time": "2026-09-19T13:50:07.920110+00:00",
+    "tree_coverage": "COMPLETE_ACCESSIBLE_RESPONSE",
+    "tree_entries": 27,
+    "file_count": 20,
+    "tree_records_sha256": "b4dd951ad5751f08d1d78838a5ec7fe3804029003bc0fdc025f4966ce717920b",
+    "original_provenance_sha256": "21d6b40206b36821aa82c493f2f706fe2e2e4206841680194e23f5fc33b43786",
+    "training_receipt_path": "TRAINING_RECEIPT.json",
+    "training_receipt_present": true,
+    "training_receipt_contents_or_metrics_verified": false,
+    "scan_weight_suffixes": [
+      ".joblib",
+      ".safetensors",
+      ".bin",
+      ".pt",
+      ".pth",
+      ".onnx",
+      ".gguf",
+      ".pkl",
+      ".pickle",
+      ".npz"
+    ]
+  },
+  "historical_evidence": {
+    "status": "PRESERVED_NOT_REVERIFIED",
+    "document": {
+      "schema": "szl.model-source-attestation/v1",
+      "model": {
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "repository_type": "model",
+        "artifact_kind": "kernel-code-and-configuration + trained surrogate (model.joblib)",
+        "trained_weights_present": true,
+        "stdlib_only": false,
+        "torch_required": false,
+        "surrogate": {
+          "file": "model.joblib",
+          "sha256": "6c4067810eb508dfb61f3cfaf84b6db81cf2f7c78286f02e786205e0b014ac65",
+          "role": "loop-tax regressor (predicts kernel-derived overheadMs) — kernel remains sole ground truth",
+          "fidelity_MEASURED": {
+            "held_out_MAE_ms": 15.5853,
+            "held_out_R2": 0.9822,
+            "held_out_target_std_ms": 191.079
+          },
+          "receipt": "TRAINING_RECEIPT.json",
+          "reverify": "python scripts/eval.py"
+        },
+        "stdlib_only_note": "kernel package itself stays stdlib-only; the OPTIONAL surrogate needs sklearn+joblib"
+      },
+      "source_of_record": {
+        "state": "VERIFIED_HF_SOURCE_OF_RECORD",
+        "platform": "huggingface",
+        "repository": "SZLHOLDINGS/szl-ouroboros"
+      },
+      "mirrors": {
+        "live_surface": "a11oy backbone loop tax (artifacts/api-server/src/lib/backbone.ts buildLoopTrace/sumAttemptMs/peakAttemptMs/deadHopMs)",
+        "timing_basis": "LOOP_TIMING_BASIS carried verbatim from backbone.ts",
+        "lean_repo": "szl-holdings/lutar-lean",
+        "doi_lutar_lean": "10.5281/zenodo.20434308"
+      },
+      "verification": {
+        "tests": "13/13 passed",
+        "tests_basis": "MEASURED local python3 -m pytest run, stdlib-only, offline",
+        "falsifiability": "arithmetic is falsifiable (a wrong split flips the asserts); an unmeasured wall yields overheadMs=None (UNAVAILABLE, not fabricated); a missing latency raises; a budget violation is surfaced"
+      },
+      "lambda": {
+        "status": "Conjecture 1 (open) — uniqueness unproven",
+        "touched_by_this_artifact": false
+      },
+      "claims": {
+        "trained_model": "CLAIMED — sklearn HistGradientBoostingRegressor, MEASURED, receipted",
+        "reproducible_build": "NOT_CLAIMED",
+        "weights_present": "model.joblib (sklearn surrogate; kernel stays weightless)"
+      },
+      "limits": [
+        "The trained surrogate APPROXIMATES the kernel's DERIVED overheadMs from trace shape; it does NOT replace the kernel's exact arithmetic, which remains authoritative.",
+        "Runs with an unmeasured wall (overheadMs=None / UNAVAILABLE) are dropped from training — never fabricated.",
+        "modelMs and peakAttemptMs are MEASURED (upstream wall windows); overheadMs, serializationTaxMs and deadHopMs are DERIVED arithmetic on those measurements — never new claims.",
+        "serializationTaxMs is a COUNTERFACTUAL (what a perfectly-parallel loop could save), never a realized saving — Alloy's loop is strictly sequential.",
+        "deadHopMs is an upper bound only — Alloy does not prefetch.",
+        "overheadMs is UNAVAILABLE (None) when the run wall was not measured — never fabricated.",
+        "No .bin, .safetensors, .pt, .pth, .onnx, or .gguf weight artifact is present.",
+        "Loop-tax accounting does not prove or upgrade Λ, which remains Conjecture 1 (open)."
+      ]
+    },
+    "original_bytes_base64": "ewogICJzY2hlbWEiOiAic3psLm1vZGVsLXNvdXJjZS1hdHRlc3RhdGlvbi92MSIsCiAgIm1vZGVsIjogewogICAgImlkIjogIlNaTEhPTERJTkdTL3N6bC1vdXJvYm9yb3MiLAogICAgInJlcG9zaXRvcnlfdHlwZSI6ICJtb2RlbCIsCiAgICAiYXJ0aWZhY3Rfa2luZCI6ICJrZXJuZWwtY29kZS1hbmQtY29uZmlndXJhdGlvbiArIHRyYWluZWQgc3Vycm9nYXRlIChtb2RlbC5qb2JsaWIpIiwKICAgICJ0cmFpbmVkX3dlaWdodHNfcHJlc2VudCI6IHRydWUsCiAgICAic3RkbGliX29ubHkiOiBmYWxzZSwKICAgICJ0b3JjaF9yZXF1aXJlZCI6IGZhbHNlLAogICAgInN1cnJvZ2F0ZSI6IHsKICAgICAgImZpbGUiOiAibW9kZWwuam9ibGliIiwKICAgICAgInNoYTI1NiI6ICI2YzQwNjc4MTBlYjUwOGRmYjYxZjNjZmFmODRiNmRiODFjZjJmN2M3ODI4NmYwMmU3ODYyMDVlMGIwMTRhYzY1IiwKICAgICAgInJvbGUiOiAibG9vcC10YXggcmVncmVzc29yIChwcmVkaWN0cyBrZXJuZWwtZGVyaXZlZCBvdmVyaGVhZE1zKSBcdTIwMTQga2VybmVsIHJlbWFpbnMgc29sZSBncm91bmQgdHJ1dGgiLAogICAgICAiZmlkZWxpdHlfTUVBU1VSRUQiOiB7CiAgICAgICAgImhlbGRfb3V0X01BRV9tcyI6IDE1LjU4NTMsCiAgICAgICAgImhlbGRfb3V0X1IyIjogMC45ODIyLAogICAgICAgICJoZWxkX291dF90YXJnZXRfc3RkX21zIjogMTkxLjA3OQogICAgICB9LAogICAgICAicmVjZWlwdCI6ICJUUkFJTklOR19SRUNFSVBULmpzb24iLAogICAgICAicmV2ZXJpZnkiOiAicHl0aG9uIHNjcmlwdHMvZXZhbC5weSIKICAgIH0sCiAgICAic3RkbGliX29ubHlfbm90ZSI6ICJrZXJuZWwgcGFja2FnZSBpdHNlbGYgc3RheXMgc3RkbGliLW9ubHk7IHRoZSBPUFRJT05BTCBzdXJyb2dhdGUgbmVlZHMgc2tsZWFybitqb2JsaWIiCiAgfSwKICAic291cmNlX29mX3JlY29yZCI6IHsKICAgICJzdGF0ZSI6ICJWRVJJRklFRF9IRl9TT1VSQ0VfT0ZfUkVDT1JEIiwKICAgICJwbGF0Zm9ybSI6ICJodWdnaW5nZmFjZSIsCiAgICAicmVwb3NpdG9yeSI6ICJTWkxIT0xESU5HUy9zemwtb3Vyb2Jvcm9zIgogIH0sCiAgIm1pcnJvcnMiOiB7CiAgICAibGl2ZV9zdXJmYWNlIjogImExMW95IGJhY2tib25lIGxvb3AgdGF4IChhcnRpZmFjdHMvYXBpLXNlcnZlci9zcmMvbGliL2JhY2tib25lLnRzIGJ1aWxkTG9vcFRyYWNlL3N1bUF0dGVtcHRNcy9wZWFrQXR0ZW1wdE1zL2RlYWRIb3BNcykiLAogICAgInRpbWluZ19iYXNpcyI6ICJMT09QX1RJTUlOR19CQVNJUyBjYXJyaWVkIHZlcmJhdGltIGZyb20gYmFja2JvbmUudHMiLAogICAgImxlYW5fcmVwbyI6ICJzemwtaG9sZGluZ3MvbHV0YXItbGVhbiIsCiAgICAiZG9pX2x1dGFyX2xlYW4iOiAiMTAuNTI4MS96ZW5vZG8uMjA0MzQzMDgiCiAgfSwKICAidmVyaWZpY2F0aW9uIjogewogICAgInRlc3RzIjogIjEzLzEzIHBhc3NlZCIsCiAgICAidGVzdHNfYmFzaXMiOiAiTUVBU1VSRUQgbG9jYWwgcHl0aG9uMyAtbSBweXRlc3QgcnVuLCBzdGRsaWItb25seSwgb2ZmbGluZSIsCiAgICAiZmFsc2lmaWFiaWxpdHkiOiAiYXJpdGhtZXRpYyBpcyBmYWxzaWZpYWJsZSAoYSB3cm9uZyBzcGxpdCBmbGlwcyB0aGUgYXNzZXJ0cyk7IGFuIHVubWVhc3VyZWQgd2FsbCB5aWVsZHMgb3ZlcmhlYWRNcz1Ob25lIChVTkFWQUlMQUJMRSwgbm90IGZhYnJpY2F0ZWQpOyBhIG1pc3NpbmcgbGF0ZW5jeSByYWlzZXM7IGEgYnVkZ2V0IHZpb2xhdGlvbiBpcyBzdXJmYWNlZCIKICB9LAogICJsYW1iZGEiOiB7CiAgICAic3RhdHVzIjogIkNvbmplY3R1cmUgMSAob3BlbikgXHUyMDE0IHVuaXF1ZW5lc3MgdW5wcm92ZW4iLAogICAgInRvdWNoZWRfYnlfdGhpc19hcnRpZmFjdCI6IGZhbHNlCiAgfSwKICAiY2xhaW1zIjogewogICAgInRyYWluZWRfbW9kZWwiOiAiQ0xBSU1FRCBcdTIwMTQgc2tsZWFybiBIaXN0R3JhZGllbnRCb29zdGluZ1JlZ3Jlc3NvciwgTUVBU1VSRUQsIHJlY2VpcHRlZCIsCiAgICAicmVwcm9kdWNpYmxlX2J1aWxkIjogIk5PVF9DTEFJTUVEIiwKICAgICJ3ZWlnaHRzX3ByZXNlbnQiOiAibW9kZWwuam9ibGliIChza2xlYXJuIHN1cnJvZ2F0ZTsga2VybmVsIHN0YXlzIHdlaWdodGxlc3MpIgogIH0sCiAgImxpbWl0cyI6IFsKICAgICJUaGUgdHJhaW5lZCBzdXJyb2dhdGUgQVBQUk9YSU1BVEVTIHRoZSBrZXJuZWwncyBERVJJVkVEIG92ZXJoZWFkTXMgZnJvbSB0cmFjZSBzaGFwZTsgaXQgZG9lcyBOT1QgcmVwbGFjZSB0aGUga2VybmVsJ3MgZXhhY3QgYXJpdGhtZXRpYywgd2hpY2ggcmVtYWlucyBhdXRob3JpdGF0aXZlLiIsCiAgICAiUnVucyB3aXRoIGFuIHVubWVhc3VyZWQgd2FsbCAob3ZlcmhlYWRNcz1Ob25lIC8gVU5BVkFJTEFCTEUpIGFyZSBkcm9wcGVkIGZyb20gdHJhaW5pbmcgXHUyMDE0IG5ldmVyIGZhYnJpY2F0ZWQuIiwKICAgICJtb2RlbE1zIGFuZCBwZWFrQXR0ZW1wdE1zIGFyZSBNRUFTVVJFRCAodXBzdHJlYW0gd2FsbCB3aW5kb3dzKTsgb3ZlcmhlYWRNcywgc2VyaWFsaXphdGlvblRheE1zIGFuZCBkZWFkSG9wTXMgYXJlIERFUklWRUQgYXJpdGhtZXRpYyBvbiB0aG9zZSBtZWFzdXJlbWVudHMgXHUyMDE0IG5ldmVyIG5ldyBjbGFpbXMuIiwKICAgICJzZXJpYWxpemF0aW9uVGF4TXMgaXMgYSBDT1VOVEVSRkFDVFVBTCAod2hhdCBhIHBlcmZlY3RseS1wYXJhbGxlbCBsb29wIGNvdWxkIHNhdmUpLCBuZXZlciBhIHJlYWxpemVkIHNhdmluZyBcdTIwMTQgQWxsb3kncyBsb29wIGlzIHN0cmljdGx5IHNlcXVlbnRpYWwuIiwKICAgICJkZWFkSG9wTXMgaXMgYW4gdXBwZXIgYm91bmQgb25seSBcdTIwMTQgQWxsb3kgZG9lcyBub3QgcHJlZmV0Y2guIiwKICAgICJvdmVyaGVhZE1zIGlzIFVOQVZBSUxBQkxFIChOb25lKSB3aGVuIHRoZSBydW4gd2FsbCB3YXMgbm90IG1lYXN1cmVkIFx1MjAxNCBuZXZlciBmYWJyaWNhdGVkLiIsCiAgICAiTm8gLmJpbiwgLnNhZmV0ZW5zb3JzLCAucHQsIC5wdGgsIC5vbm54LCBvciAuZ2d1ZiB3ZWlnaHQgYXJ0aWZhY3QgaXMgcHJlc2VudC4iLAogICAgIkxvb3AtdGF4IGFjY291bnRpbmcgZG9lcyBub3QgcHJvdmUgb3IgdXBncmFkZSBcdTAzOWIsIHdoaWNoIHJlbWFpbnMgQ29uamVjdHVyZSAxIChvcGVuKS4iCiAgXQp9",
+    "original_sha256": "21d6b40206b36821aa82c493f2f706fe2e2e4206841680194e23f5fc33b43786",
+    "scope": "Historical claims, metrics, dependencies and source-of-record assertions are preserved verbatim, not adopted as current verification."
+  },
+  "limits": [
+    "This document reconciles artifact state; it does not establish training, evaluation or runtime readiness.",
+    "Current means the exact observed revision above; publication requires a fresh expected-parent check and reviewed source approval.",
+    "Artifact absence is checked against complete captured tree paths and recognized weight suffixes, not semantic analysis of every file.",
+    "Tree receipts are unsigned audit records; this package does not claim independent third-party attestation.",
+    "Training-receipt file presence is not verification of training, rights, metrics, independent human identity or served runtime.",
+    "No dependency, stdlib-only, cryptographic, theorem, source-authority or model-quality claim is inferred from absent weights."
+  ]
+}

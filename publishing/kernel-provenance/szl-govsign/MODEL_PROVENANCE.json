@@ -1,0 +1,117 @@
+{
+  "schema": "szl.model-source-attestation/reconciliation-v2",
+  "status": "ARTIFACT_STATE_RECONCILIATION",
+  "model": {
+    "id": "SZLHOLDINGS/szl-govsign",
+    "repository_type": "model",
+    "artifact_kind": "kernel-code-and-configuration",
+    "trained_weights_present": false,
+    "surrogate": {
+      "historical_file": "model.joblib",
+      "status": "NOT_PRESENT_IN_CURRENT_REVISION",
+      "weights_published_in_this_repo": false
+    }
+  },
+  "claims": {
+    "weights_present": "NONE",
+    "trained_model": "NOT_CLAIMED",
+    "training_verified": false,
+    "runtime_measured_by_this_reconciliation": false,
+    "reproducible_build": "NOT_CLAIMED"
+  },
+  "current_artifact_evidence": {
+    "repository_revision": "3b63e1fa4a84369cd83fb1f5d155575e5710a447",
+    "observation_time": "2026-09-19T13:50:02.974231+00:00",
+    "tree_coverage": "COMPLETE_ACCESSIBLE_RESPONSE",
+    "tree_entries": 26,
+    "file_count": 20,
+    "tree_records_sha256": "8b1e2fc927c657f36a6230d9a96619b87c855f19ccafafece98a01856444c367",
+    "original_provenance_sha256": "ad6fedcfd255db0d109c8dc522bd107df50da25ac4174cb68c01586ad916059d",
+    "training_receipt_path": "TRAINING_RECEIPT.json",
+    "training_receipt_present": true,
+    "training_receipt_contents_or_metrics_verified": false,
+    "scan_weight_suffixes": [
+      ".joblib",
+      ".safetensors",
+      ".bin",
+      ".pt",
+      ".pth",
+      ".onnx",
+      ".gguf",
+      ".pkl",
+      ".pickle",
+      ".npz"
+    ]
+  },
+  "historical_evidence": {
+    "status": "PRESERVED_NOT_REVERIFIED",
+    "document": {
+      "schema": "szl.model-source-attestation/v1",
+      "observed_at": "2026-07-12T00:27:14Z",
+      "model": {
+        "id": "SZLHOLDINGS/szl-govsign",
+        "repository_type": "model",
+        "artifact_kind": "kernel-code-and-configuration + trained structural pre-filter (model.joblib)",
+        "trained_weights_present": true,
+        "surrogate": {
+          "file": "model.joblib",
+          "sha256": "d8e91c01adcf4b661860ecbce8029527fd8819e3951aab8b2fe48e84f8112a10",
+          "role": "STRUCTURAL validity PRE-FILTER ONLY — NEVER replaces cryptographic verification; a pre-filter PASS is NOT verified. The kernel's ECDSA-P256 verify() is the sole authority.",
+          "fidelity_MEASURED": {
+            "test_accuracy_all_classes": 0.8888,
+            "test_accuracy_structural_only": 1.0,
+            "crypto_blind_spot_sig_tamper_recall": 0.0111
+          },
+          "receipt": "TRAINING_RECEIPT.json",
+          "reverify": "python scripts/eval.py",
+          "honesty_note": "kernel stays stdlib+cryptography (crypto verification unchanged); the OPTIONAL surrogate needs sklearn+joblib and performs NO cryptographic verification."
+        }
+      },
+      "source_of_record": {
+        "state": "VERIFIED_HF_SOURCE_OF_RECORD",
+        "platform": "huggingface",
+        "repository": "SZLHOLDINGS/szl-govsign",
+        "artifact_base_revision": "7da2da8fe5db425609af0fddc4e93b00c05b8f74",
+        "artifact_base_state": "MEASURED_PRE_ATTESTATION_BASE",
+        "artifact_base_url": "https://huggingface.co/SZLHOLDINGS/szl-govsign/tree/7da2da8fe5db425609af0fddc4e93b00c05b8f74",
+        "file_count": 11,
+        "tree_sha256": "8ce4e93033e11e22b051c0ad38198cb0c787ad375627ee7bf8a3b3b172ed75f2",
+        "tree_hash_algorithm": "sha256 of UTF-8 path + NUL + per-file sha256 + LF, sorted by path; .cache excluded"
+      },
+      "public_github": {
+        "state": "NO_DIRECT_PUBLIC_IMPLEMENTATION_OBSERVED",
+        "same_name_candidate": "https://github.com/szl-holdings/szl-govsign",
+        "same_name_candidate_http_status": 404,
+        "card_references": [
+          "https://github.com/szl-holdings/governed-receipt-spec",
+          "https://github.com/szl-holdings/szl-papers/blob/main/PAPERS_INDEX.md"
+        ],
+        "card_reference_role": "SPECIFICATION_OR_RESEARCH_CONTEXT_NOT_BUILD_SOURCE"
+      },
+      "claims": {
+        "github_repository_parity": "NOT_CLAIMED",
+        "reproducible_build": "NOT_CLAIMED",
+        "trained_model": "CLAIMED — sklearn HistGradientBoostingClassifier structural pre-filter, MEASURED, receipted (does NOT perform or replace cryptographic verification)",
+        "serving_process_revision": "NOT_APPLICABLE_REPOSITORY_ARTIFACT"
+      },
+      "limits": [
+        "The trained surrogate is a STRUCTURAL PRE-FILTER ONLY. Passing it is NOT cryptographic verification; only the kernel's ECDSA-P256 verify() establishes validity.",
+        "MEASURED crypto blind spot: sig-tamper recall ≈ chance — a byte-flipped signature is structurally identical to a valid envelope and is invisible to the pre-filter (by design).",
+        "The 404 observation establishes only that no public same-name repository was reachable at the observation time; it does not make a claim about private repositories.",
+        "The attestation overlay cannot self-embed its resulting Hub commit, so the immutable artifact_base_revision is the measured pre-overlay base.",
+        "No .bin, .safetensors, .pt, .pth, .onnx, or .gguf weight artifact was present in the measured base tree."
+      ]
+    },
+    "original_bytes_base64": "ewogICJzY2hlbWEiOiAic3psLm1vZGVsLXNvdXJjZS1hdHRlc3RhdGlvbi92MSIsCiAgIm9ic2VydmVkX2F0IjogIjIwMjYtMDctMTJUMDA6Mjc6MTRaIiwKICAibW9kZWwiOiB7CiAgICAiaWQiOiAiU1pMSE9MRElOR1Mvc3psLWdvdnNpZ24iLAogICAgInJlcG9zaXRvcnlfdHlwZSI6ICJtb2RlbCIsCiAgICAiYXJ0aWZhY3Rfa2luZCI6ICJrZXJuZWwtY29kZS1hbmQtY29uZmlndXJhdGlvbiArIHRyYWluZWQgc3RydWN0dXJhbCBwcmUtZmlsdGVyIChtb2RlbC5qb2JsaWIpIiwKICAgICJ0cmFpbmVkX3dlaWdodHNfcHJlc2VudCI6IHRydWUsCiAgICAic3Vycm9nYXRlIjogewogICAgICAiZmlsZSI6ICJtb2RlbC5qb2JsaWIiLAogICAgICAic2hhMjU2IjogImQ4ZTkxYzAxYWRjZjRiNjYxODYwZWNiY2U4MDI5NTI3ZmQ4ODE5ZTM5NTFhYWI4YjJmZTQ4ZTg0ZjgxMTJhMTAiLAogICAgICAicm9sZSI6ICJTVFJVQ1RVUkFMIHZhbGlkaXR5IFBSRS1GSUxURVIgT05MWSBcdTIwMTQgTkVWRVIgcmVwbGFjZXMgY3J5cHRvZ3JhcGhpYyB2ZXJpZmljYXRpb247IGEgcHJlLWZpbHRlciBQQVNTIGlzIE5PVCB2ZXJpZmllZC4gVGhlIGtlcm5lbCdzIEVDRFNBLVAyNTYgdmVyaWZ5KCkgaXMgdGhlIHNvbGUgYXV0aG9yaXR5LiIsCiAgICAgICJmaWRlbGl0eV9NRUFTVVJFRCI6IHsKICAgICAgICAidGVzdF9hY2N1cmFjeV9hbGxfY2xhc3NlcyI6IDAuODg4OCwKICAgICAgICAidGVzdF9hY2N1cmFjeV9zdHJ1Y3R1cmFsX29ubHkiOiAxLjAsCiAgICAgICAgImNyeXB0b19ibGluZF9zcG90X3NpZ190YW1wZXJfcmVjYWxsIjogMC4wMTExCiAgICAgIH0sCiAgICAgICJyZWNlaXB0IjogIlRSQUlOSU5HX1JFQ0VJUFQuanNvbiIsCiAgICAgICJyZXZlcmlmeSI6ICJweXRob24gc2NyaXB0cy9ldmFsLnB5IiwKICAgICAgImhvbmVzdHlfbm90ZSI6ICJrZXJuZWwgc3RheXMgc3RkbGliK2NyeXB0b2dyYXBoeSAoY3J5cHRvIHZlcmlmaWNhdGlvbiB1bmNoYW5nZWQpOyB0aGUgT1BUSU9OQUwgc3Vycm9nYXRlIG5lZWRzIHNrbGVhcm4ram9ibGliIGFuZCBwZXJmb3JtcyBOTyBjcnlwdG9ncmFwaGljIHZlcmlmaWNhdGlvbi4iCiAgICB9CiAgfSwKICAic291cmNlX29mX3JlY29yZCI6IHsKICAgICJzdGF0ZSI6ICJWRVJJRklFRF9IRl9TT1VSQ0VfT0ZfUkVDT1JEIiwKICAgICJwbGF0Zm9ybSI6ICJodWdnaW5nZmFjZSIsCiAgICAicmVwb3NpdG9yeSI6ICJTWkxIT0xESU5HUy9zemwtZ292c2lnbiIsCiAgICAiYXJ0aWZhY3RfYmFzZV9yZXZpc2lvbiI6ICI3ZGEyZGE4ZmU1ZGI0MjU2MDlhZjBmZGRjNGU5M2IwMGMwNWI4Zjc0IiwKICAgICJhcnRpZmFjdF9iYXNlX3N0YXRlIjogIk1FQVNVUkVEX1BSRV9BVFRFU1RBVElPTl9CQVNFIiwKICAgICJhcnRpZmFjdF9iYXNlX3VybCI6ICJodHRwczovL2h1Z2dpbmdmYWNlLmNvL1NaTEhPTERJTkdTL3N6bC1nb3ZzaWduL3RyZWUvN2RhMmRhOGZlNWRiNDI1NjA5YWYwZmRkYzRlOTNiMDBjMDViOGY3NCIsCiAgICAiZmlsZV9jb3VudCI6IDExLAogICAgInRyZWVfc2hhMjU2IjogIjhjZTRlOTMwMzNlMTFlMjJiMDUxYzBhZDM4MTk4Y2IwYzc4N2FkMzc1NjI3ZWU3YmY4YTNiM2IxNzJlZDc1ZjIiLAogICAgInRyZWVfaGFzaF9hbGdvcml0aG0iOiAic2hhMjU2IG9mIFVURi04IHBhdGggKyBOVUwgKyBwZXItZmlsZSBzaGEyNTYgKyBMRiwgc29ydGVkIGJ5IHBhdGg7IC5jYWNoZSBleGNsdWRlZCIKICB9LAogICJwdWJsaWNfZ2l0aHViIjogewogICAgInN0YXRlIjogIk5PX0RJUkVDVF9QVUJMSUNfSU1QTEVNRU5UQVRJT05fT0JTRVJWRUQiLAogICAgInNhbWVfbmFtZV9jYW5kaWRhdGUiOiAiaHR0cHM6Ly9naXRodWIuY29tL3N6bC1ob2xkaW5ncy9zemwtZ292c2lnbiIsCiAgICAic2FtZV9uYW1lX2NhbmRpZGF0ZV9odHRwX3N0YXR1cyI6IDQwNCwKICAgICJjYXJkX3JlZmVyZW5jZXMiOiBbCiAgICAgICJodHRwczovL2dpdGh1Yi5jb20vc3psLWhvbGRpbmdzL2dvdmVybmVkLXJlY2VpcHQtc3BlYyIsCiAgICAgICJodHRwczovL2dpdGh1Yi5jb20vc3psLWhvbGRpbmdzL3N6bC1wYXBlcnMvYmxvYi9tYWluL1BBUEVSU19JTkRFWC5tZCIKICAgIF0sCiAgICAiY2FyZF9yZWZlcmVuY2Vfcm9sZSI6ICJTUEVDSUZJQ0FUSU9OX09SX1JFU0VBUkNIX0NPTlRFWFRfTk9UX0JVSUxEX1NPVVJDRSIKICB9LAogICJjbGFpbXMiOiB7CiAgICAiZ2l0aHViX3JlcG9zaXRvcnlfcGFyaXR5IjogIk5PVF9DTEFJTUVEIiwKICAgICJyZXByb2R1Y2libGVfYnVpbGQiOiAiTk9UX0NMQUlNRUQiLAogICAgInRyYWluZWRfbW9kZWwiOiAiQ0xBSU1FRCBcdTIwMTQgc2tsZWFybiBIaXN0R3JhZGllbnRCb29zdGluZ0NsYXNzaWZpZXIgc3RydWN0dXJhbCBwcmUtZmlsdGVyLCBNRUFTVVJFRCwgcmVjZWlwdGVkIChkb2VzIE5PVCBwZXJmb3JtIG9yIHJlcGxhY2UgY3J5cHRvZ3JhcGhpYyB2ZXJpZmljYXRpb24pIiwKICAgICJzZXJ2aW5nX3Byb2Nlc3NfcmV2aXNpb24iOiAiTk9UX0FQUExJQ0FCTEVfUkVQT1NJVE9SWV9BUlRJRkFDVCIKICB9LAogICJsaW1pdHMiOiBbCiAgICAiVGhlIHRyYWluZWQgc3Vycm9nYXRlIGlzIGEgU1RSVUNUVVJBTCBQUkUtRklMVEVSIE9OTFkuIFBhc3NpbmcgaXQgaXMgTk9UIGNyeXB0b2dyYXBoaWMgdmVyaWZpY2F0aW9uOyBvbmx5IHRoZSBrZXJuZWwncyBFQ0RTQS1QMjU2IHZlcmlmeSgpIGVzdGFibGlzaGVzIHZhbGlkaXR5LiIsCiAgICAiTUVBU1VSRUQgY3J5cHRvIGJsaW5kIHNwb3Q6IHNpZy10YW1wZXIgcmVjYWxsIFx1MjI0OCBjaGFuY2UgXHUyMDE0IGEgYnl0ZS1mbGlwcGVkIHNpZ25hdHVyZSBpcyBzdHJ1Y3R1cmFsbHkgaWRlbnRpY2FsIHRvIGEgdmFsaWQgZW52ZWxvcGUgYW5kIGlzIGludmlzaWJsZSB0byB0aGUgcHJlLWZpbHRlciAoYnkgZGVzaWduKS4iLAogICAgIlRoZSA0MDQgb2JzZXJ2YXRpb24gZXN0YWJsaXNoZXMgb25seSB0aGF0IG5vIHB1YmxpYyBzYW1lLW5hbWUgcmVwb3NpdG9yeSB3YXMgcmVhY2hhYmxlIGF0IHRoZSBvYnNlcnZhdGlvbiB0aW1lOyBpdCBkb2VzIG5vdCBtYWtlIGEgY2xhaW0gYWJvdXQgcHJpdmF0ZSByZXBvc2l0b3JpZXMuIiwKICAgICJUaGUgYXR0ZXN0YXRpb24gb3ZlcmxheSBjYW5ub3Qgc2VsZi1lbWJlZCBpdHMgcmVzdWx0aW5nIEh1YiBjb21taXQsIHNvIHRoZSBpbW11dGFibGUgYXJ0aWZhY3RfYmFzZV9yZXZpc2lvbiBpcyB0aGUgbWVhc3VyZWQgcHJlLW92ZXJsYXkgYmFzZS4iLAogICAgIk5vIC5iaW4sIC5zYWZldGVuc29ycywgLnB0LCAucHRoLCAub25ueCwgb3IgLmdndWYgd2VpZ2h0IGFydGlmYWN0IHdhcyBwcmVzZW50IGluIHRoZSBtZWFzdXJlZCBiYXNlIHRyZWUuIgogIF0KfQ==",
+    "original_sha256": "ad6fedcfd255db0d109c8dc522bd107df50da25ac4174cb68c01586ad916059d",
+    "scope": "Historical claims, metrics, dependencies and source-of-record assertions are preserved verbatim, not adopted as current verification."
+  },
+  "limits": [
+    "This document reconciles artifact state; it does not establish training, evaluation or runtime readiness.",
+    "Current means the exact observed revision above; publication requires a fresh expected-parent check and reviewed source approval.",
+    "Artifact absence is checked against complete captured tree paths and recognized weight suffixes, not semantic analysis of every file.",
+    "Tree receipts are unsigned audit records; this package does not claim independent third-party attestation.",
+    "Training-receipt file presence is not verification of training, rights, metrics, independent human identity or served runtime.",
+    "No dependency, stdlib-only, cryptographic, theorem, source-authority or model-quality claim is inferred from absent weights."
+  ]
+}

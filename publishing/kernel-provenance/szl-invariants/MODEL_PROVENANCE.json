@@ -1,0 +1,115 @@
+{
+  "schema": "szl.model-source-attestation/reconciliation-v2",
+  "status": "ARTIFACT_STATE_RECONCILIATION",
+  "model": {
+    "id": "SZLHOLDINGS/szl-invariants",
+    "repository_type": "model",
+    "artifact_kind": "kernel-code-and-configuration",
+    "trained_weights_present": false,
+    "surrogate": {
+      "historical_file": "model.joblib",
+      "status": "NOT_PRESENT_IN_CURRENT_REVISION",
+      "weights_published_in_this_repo": false
+    }
+  },
+  "claims": {
+    "weights_present": "NONE",
+    "trained_model": "NOT_CLAIMED",
+    "training_verified": false,
+    "runtime_measured_by_this_reconciliation": false,
+    "reproducible_build": "NOT_CLAIMED"
+  },
+  "current_artifact_evidence": {
+    "repository_revision": "c218f1a7eed7ec1b8a06a2997e49ffe9e339a71c",
+    "observation_time": "2026-09-19T13:50:07.838587+00:00",
+    "tree_coverage": "COMPLETE_ACCESSIBLE_RESPONSE",
+    "tree_entries": 25,
+    "file_count": 18,
+    "tree_records_sha256": "fbc7702f840721c7fe8a1710d6744bf88cbf10821a9775078d8650bcdfe34162",
+    "original_provenance_sha256": "61d363ab86cfb19410ecbebd4477e9cd235dfac3ee4bd49913fac2b41d0044dc",
+    "training_receipt_path": "TRAINING_RECEIPT.json",
+    "training_receipt_present": true,
+    "training_receipt_contents_or_metrics_verified": false,
+    "scan_weight_suffixes": [
+      ".joblib",
+      ".safetensors",
+      ".bin",
+      ".pt",
+      ".pth",
+      ".onnx",
+      ".gguf",
+      ".pkl",
+      ".pickle",
+      ".npz"
+    ]
+  },
+  "historical_evidence": {
+    "status": "PRESERVED_NOT_REVERIFIED",
+    "document": {
+      "schema": "szl.model-source-attestation/v1",
+      "model": {
+        "id": "SZLHOLDINGS/szl-invariants",
+        "repository_type": "model",
+        "artifact_kind": "kernel-code-and-configuration + trained surrogate (model.joblib)",
+        "trained_weights_present": true,
+        "stdlib_only": false,
+        "torch_required": false,
+        "surrogate": {
+          "file": "model.joblib",
+          "sha256": "24fa1ef67b28e9c20f8197bf321dd7c93087465ec2ce9efa7f8fb9dae7bfc14b",
+          "role": "structural triage only — kernel remains sole ground truth",
+          "fidelity_MEASURED": {
+            "test_accuracy_all_classes": 0.9803,
+            "structural_recall": 1.0,
+            "crypto_blind_spot_sig_tamper_recall": 0.0636
+          },
+          "receipt": "TRAINING_RECEIPT.json",
+          "reverify": "python scripts/eval.py"
+        },
+        "stdlib_only_note": "kernel package itself stays stdlib-only; the OPTIONAL surrogate needs sklearn+joblib"
+      },
+      "source_of_record": {
+        "state": "VERIFIED_HF_SOURCE_OF_RECORD",
+        "platform": "huggingface",
+        "repository": "SZLHOLDINGS/szl-invariants"
+      },
+      "mirrors": {
+        "live_surface": "a11oy backbone /api/invariants (artifacts/api-server/src/routes/invariants.ts)",
+        "chain_hashing": "artifacts/api-server/src/lib/runLedger.ts + receipts.ts (sha256 canonical, ed25519/SPKI keyId)",
+        "lean_repo": "szl-holdings/lutar-lean",
+        "doi_lutar_lean": "10.5281/zenodo.20434308"
+      },
+      "verification": {
+        "tests": "14/14 passed",
+        "tests_basis": "MEASURED local python3 -m pytest run, stdlib-only, offline",
+        "falsifiability": "each invariant demonstrated to flip HOLDS -> VIOLATED under real corruption/tamper; missing capabilities stay UNAVAILABLE (never coerced to a pass)"
+      },
+      "lambda": {
+        "status": "Conjecture 1 (open) — uniqueness unproven",
+        "touched_by_this_artifact": false
+      },
+      "claims": {
+        "trained_model": "NOT_CLAIMED",
+        "reproducible_build": "NOT_CLAIMED",
+        "weights_present": "NONE"
+      },
+      "limits": [
+        "This artifact is a pure-Python offline replay of the live Alloy invariants surface — it verifies the shape and cryptographic self-consistency of a ledger export you supply, NOT the runtime correctness of any served answer.",
+        "No .bin, .safetensors, .pt, .pth, .onnx, or .gguf weight artifact is present.",
+        "Invariant #6 (ed25519) and latentVerification are UNAVAILABLE without a supplied public key; invariant #8 is UNAVAILABLE without a samples export. These are honest indeterminate states, not passes.",
+        "None of these invariants prove or upgrade Λ, which remains Conjecture 1 (open)."
+      ]
+    },
+    "original_bytes_base64": "ewogICJzY2hlbWEiOiAic3psLm1vZGVsLXNvdXJjZS1hdHRlc3RhdGlvbi92MSIsCiAgIm1vZGVsIjogewogICAgImlkIjogIlNaTEhPTERJTkdTL3N6bC1pbnZhcmlhbnRzIiwKICAgICJyZXBvc2l0b3J5X3R5cGUiOiAibW9kZWwiLAogICAgImFydGlmYWN0X2tpbmQiOiAia2VybmVsLWNvZGUtYW5kLWNvbmZpZ3VyYXRpb24gKyB0cmFpbmVkIHN1cnJvZ2F0ZSAobW9kZWwuam9ibGliKSIsCiAgICAidHJhaW5lZF93ZWlnaHRzX3ByZXNlbnQiOiB0cnVlLAogICAgInN0ZGxpYl9vbmx5IjogZmFsc2UsCiAgICAidG9yY2hfcmVxdWlyZWQiOiBmYWxzZSwKICAgICJzdXJyb2dhdGUiOiB7CiAgICAgICJmaWxlIjogIm1vZGVsLmpvYmxpYiIsCiAgICAgICJzaGEyNTYiOiAiMjRmYTFlZjY3YjI4ZTljMjBmODE5N2JmMzIxZGQ3YzkzMDg3NDY1ZWMyY2U5ZWZhN2Y4ZmI5ZGFlN2JmYzE0YiIsCiAgICAgICJyb2xlIjogInN0cnVjdHVyYWwgdHJpYWdlIG9ubHkg4oCUIGtlcm5lbCByZW1haW5zIHNvbGUgZ3JvdW5kIHRydXRoIiwKICAgICAgImZpZGVsaXR5X01FQVNVUkVEIjogewogICAgICAgICJ0ZXN0X2FjY3VyYWN5X2FsbF9jbGFzc2VzIjogMC45ODAzLAogICAgICAgICJzdHJ1Y3R1cmFsX3JlY2FsbCI6IDEuMCwKICAgICAgICAiY3J5cHRvX2JsaW5kX3Nwb3Rfc2lnX3RhbXBlcl9yZWNhbGwiOiAwLjA2MzYKICAgICAgfSwKICAgICAgInJlY2VpcHQiOiAiVFJBSU5JTkdfUkVDRUlQVC5qc29uIiwKICAgICAgInJldmVyaWZ5IjogInB5dGhvbiBzY3JpcHRzL2V2YWwucHkiCiAgICB9LAogICAgInN0ZGxpYl9vbmx5X25vdGUiOiAia2VybmVsIHBhY2thZ2UgaXRzZWxmIHN0YXlzIHN0ZGxpYi1vbmx5OyB0aGUgT1BUSU9OQUwgc3Vycm9nYXRlIG5lZWRzIHNrbGVhcm4ram9ibGliIgogIH0sCiAgInNvdXJjZV9vZl9yZWNvcmQiOiB7CiAgICAic3RhdGUiOiAiVkVSSUZJRURfSEZfU09VUkNFX09GX1JFQ09SRCIsCiAgICAicGxhdGZvcm0iOiAiaHVnZ2luZ2ZhY2UiLAogICAgInJlcG9zaXRvcnkiOiAiU1pMSE9MRElOR1Mvc3psLWludmFyaWFudHMiCiAgfSwKICAibWlycm9ycyI6IHsKICAgICJsaXZlX3N1cmZhY2UiOiAiYTExb3kgYmFja2JvbmUgL2FwaS9pbnZhcmlhbnRzIChhcnRpZmFjdHMvYXBpLXNlcnZlci9zcmMvcm91dGVzL2ludmFyaWFudHMudHMpIiwKICAgICJjaGFpbl9oYXNoaW5nIjogImFydGlmYWN0cy9hcGktc2VydmVyL3NyYy9saWIvcnVuTGVkZ2VyLnRzICsgcmVjZWlwdHMudHMgKHNoYTI1NiBjYW5vbmljYWwsIGVkMjU1MTkvU1BLSSBrZXlJZCkiLAogICAgImxlYW5fcmVwbyI6ICJzemwtaG9sZGluZ3MvbHV0YXItbGVhbiIsCiAgICAiZG9pX2x1dGFyX2xlYW4iOiAiMTAuNTI4MS96ZW5vZG8uMjA0MzQzMDgiCiAgfSwKICAidmVyaWZpY2F0aW9uIjogewogICAgInRlc3RzIjogIjE0LzE0IHBhc3NlZCIsCiAgICAidGVzdHNfYmFzaXMiOiAiTUVBU1VSRUQgbG9jYWwgcHl0aG9uMyAtbSBweXRlc3QgcnVuLCBzdGRsaWItb25seSwgb2ZmbGluZSIsCiAgICAiZmFsc2lmaWFiaWxpdHkiOiAiZWFjaCBpbnZhcmlhbnQgZGVtb25zdHJhdGVkIHRvIGZsaXAgSE9MRFMgLT4gVklPTEFURUQgdW5kZXIgcmVhbCBjb3JydXB0aW9uL3RhbXBlcjsgbWlzc2luZyBjYXBhYmlsaXRpZXMgc3RheSBVTkFWQUlMQUJMRSAobmV2ZXIgY29lcmNlZCB0byBhIHBhc3MpIgogIH0sCiAgImxhbWJkYSI6IHsKICAgICJzdGF0dXMiOiAiQ29uamVjdHVyZSAxIChvcGVuKSDigJQgdW5pcXVlbmVzcyB1bnByb3ZlbiIsCiAgICAidG91Y2hlZF9ieV90aGlzX2FydGlmYWN0IjogZmFsc2UKICB9LAogICJjbGFpbXMiOiB7CiAgICAidHJhaW5lZF9tb2RlbCI6ICJOT1RfQ0xBSU1FRCIsCiAgICAicmVwcm9kdWNpYmxlX2J1aWxkIjogIk5PVF9DTEFJTUVEIiwKICAgICJ3ZWlnaHRzX3ByZXNlbnQiOiAiTk9ORSIKICB9LAogICJsaW1pdHMiOiBbCiAgICAiVGhpcyBhcnRpZmFjdCBpcyBhIHB1cmUtUHl0aG9uIG9mZmxpbmUgcmVwbGF5IG9mIHRoZSBsaXZlIEFsbG95IGludmFyaWFudHMgc3VyZmFjZSDigJQgaXQgdmVyaWZpZXMgdGhlIHNoYXBlIGFuZCBjcnlwdG9ncmFwaGljIHNlbGYtY29uc2lzdGVuY3kgb2YgYSBsZWRnZXIgZXhwb3J0IHlvdSBzdXBwbHksIE5PVCB0aGUgcnVudGltZSBjb3JyZWN0bmVzcyBvZiBhbnkgc2VydmVkIGFuc3dlci4iLAogICAgIk5vIC5iaW4sIC5zYWZldGVuc29ycywgLnB0LCAucHRoLCAub25ueCwgb3IgLmdndWYgd2VpZ2h0IGFydGlmYWN0IGlzIHByZXNlbnQuIiwKICAgICJJbnZhcmlhbnQgIzYgKGVkMjU1MTkpIGFuZCBsYXRlbnRWZXJpZmljYXRpb24gYXJlIFVOQVZBSUxBQkxFIHdpdGhvdXQgYSBzdXBwbGllZCBwdWJsaWMga2V5OyBpbnZhcmlhbnQgIzggaXMgVU5BVkFJTEFCTEUgd2l0aG91dCBhIHNhbXBsZXMgZXhwb3J0LiBUaGVzZSBhcmUgaG9uZXN0IGluZGV0ZXJtaW5hdGUgc3RhdGVzLCBub3QgcGFzc2VzLiIsCiAgICAiTm9uZSBvZiB0aGVzZSBpbnZhcmlhbnRzIHByb3ZlIG9yIHVwZ3JhZGUgzpssIHdoaWNoIHJlbWFpbnMgQ29uamVjdHVyZSAxIChvcGVuKS4iCiAgXQp9",
+    "original_sha256": "61d363ab86cfb19410ecbebd4477e9cd235dfac3ee4bd49913fac2b41d0044dc",
+    "scope": "Historical claims, metrics, dependencies and source-of-record assertions are preserved verbatim, not adopted as current verification."
+  },
+  "limits": [
+    "This document reconciles artifact state; it does not establish training, evaluation or runtime readiness.",
+    "Current means the exact observed revision above; publication requires a fresh expected-parent check and reviewed source approval.",
+    "Artifact absence is checked against complete captured tree paths and recognized weight suffixes, not semantic analysis of every file.",
+    "Tree receipts are unsigned audit records; this package does not claim independent third-party attestation.",
+    "Training-receipt file presence is not verification of training, rights, metrics, independent human identity or served runtime.",
+    "No dependency, stdlib-only, cryptographic, theorem, source-authority or model-quality claim is inferred from absent weights."
+  ]
+}
