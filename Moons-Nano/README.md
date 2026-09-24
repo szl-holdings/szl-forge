@@ -20,7 +20,7 @@ implementation lives in the canonical `szl_khipu` package; no packaged Hub
 loader or `config.json` is shipped alongside these weights. Treat this as a
 software fixture until its complete inference contract is independently verified.
 
-> **Now loadable:** [`load.py`](https://github.com/szl-holdings/szl-forge/blob/main/Moons-Nano/load.py) ships the forward pass against the documented `W1/b1/W2/b2` arrays — tanh hidden layer, softmax over two moons, shape-drift guard. `python load.py 0.2 0.3` prints the moon and its confidence.
+> **Local loader:** [`load.py`](./load.py) implements the documented `W1/b1/W2/b2` tanh-softmax computation, rejecting invalid layouts, non-finite inputs or weights, and arithmetic overflow. `python load.py 0.2 0.3 --weights moons.npz` prints the moon and its confidence. Python 3.11+ and NumPy 2.4.6 are required. This GitHub source does not establish Hub loader deployment, training reproduction, or production readiness.
 
 # Moons-Nano
 
