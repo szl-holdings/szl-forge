@@ -10,12 +10,15 @@ SPEC = importlib.util.spec_from_file_location("policy_verifier", ROOT / "inferen
 v = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(v)
 q = v.p
+PROMPT_RUNNER = q.file_digest(Path(q.__file__))
+BASELINE_RUNNER = q.file_digest(Path(q.base.__file__))
 
 
 def record(policy="explicit-lookup-v2"):
     result = {"schema": "szl.forge.minicpm5-qualification.v1", "cases": [],
               "plan": q.plan(policy), "sourceRepository": q.SOURCE,
-              "sourceRevision": "a" * 40, "runnerSha256": "b" * 64,
+              "sourceRevision": "a" * 40, "runnerSha256": PROMPT_RUNNER,
+              "sourceDependencySha256": {"minicpm5_qualification.py": BASELINE_RUNNER},
               "modelLoaded": False, "imageDigestVerified": False}
     return q.finalize(result)
 
@@ -79,10 +82,10 @@ class PromptBoundaryTests(unittest.TestCase):
             result = record()
             result["plan"][key] = value
             with self.subTest(key=key), self.assertRaises(v.ReportError):
-                v.verify(rehash(result), "a" * 40, "b" * 64)
+                v.verify(rehash(result), "a" * 40, PROMPT_RUNNER)
 
     def test_development_label_survives_projection(self):
-        projections = v.projections(record(), "a" * 40, "b" * 64)
+        projections = v.projections(record(), "a" * 40, PROMPT_RUNNER)
         for surface in projections.values():
             self.assertEqual(surface["suiteUse"], "DEVELOPMENT_NOT_HELD_OUT")
             self.assertEqual(surface["promptPolicy"], "explicit-lookup-v2")
@@ -93,16 +96,55 @@ class PromptBoundaryTests(unittest.TestCase):
         result = record()
         result['sourceDependencySha256'] = {'minicpm5_qualification.py': 'c' * 64}
         with self.assertRaises(v.ReportError):
-            v.verify(rehash(result), 'a' * 40, 'b' * 64)
+            v.verify(rehash(result), 'a' * 40, PROMPT_RUNNER)
 
     def test_current_prompt_runner_requires_its_baseline_dependency(self):
         result = record()
-        result['runnerSha256'] = q.file_digest(Path(q.__file__))
+        result.pop('sourceDependencySha256')
         with self.assertRaises(v.ReportError):
             v.verify(rehash(result), 'a' * 40, result['runnerSha256'])
         result['sourceDependencySha256'] = {
             'minicpm5_qualification.py': q.file_digest(Path(q.base.__file__))}
         v.verify(rehash(result), 'a' * 40, result['runnerSha256'])
+
+    def test_explicit_policy_rejects_baseline_and_unknown_runners(self):
+        for runner in (BASELINE_RUNNER, 'b' * 64):
+            for dependency in (None, {'minicpm5_qualification.py': BASELINE_RUNNER}):
+                result = record()
+                result['runnerSha256'] = runner
+                if dependency is None:
+                    result.pop('sourceDependencySha256')
+                else:
+                    result['sourceDependencySha256'] = dependency
+                rehash(result)
+                for verify in (v.verify, v.projections):
+                    with self.subTest(runner=runner, dependency=dependency, verify=verify.__name__):
+                        with self.assertRaisesRegex(v.ReportError, 'not implemented'):
+                            verify(result, 'a' * 40, runner)
+
+    def test_prompt_runner_dependency_is_required_for_both_policies(self):
+        for policy in q.PROMPT_POLICIES:
+            result = record(policy)
+            v.verify(result, 'a' * 40, PROMPT_RUNNER)
+            for dependency in (None, {}, {'minicpm5_qualification.py': 'c' * 64},
+                               {'minicpm5_qualification.py': BASELINE_RUNNER, 'extra.py': 'c' * 64}):
+                result['sourceDependencySha256'] = dependency
+                with self.subTest(policy=policy, dependency=dependency):
+                    with self.assertRaisesRegex(v.ReportError, 'baseline dependency'):
+                        v.verify(rehash(result), 'a' * 40, PROMPT_RUNNER)
+
+    def test_archived_monolithic_runner_supports_both_policies(self):
+        for policy in q.PROMPT_POLICIES:
+            result = record(policy)
+            result['runnerSha256'] = v.ARCHIVED_EXPLICIT_RUNNER_SHA256
+            result.pop('sourceDependencySha256')
+            v.verify(rehash(result), 'a' * 40, result['runnerSha256'])
+
+    def test_original_baseline_plan_remains_compatible(self):
+        result = record('baseline-v1')
+        result['runnerSha256'] = BASELINE_RUNNER
+        result.pop('sourceDependencySha256')
+        v.verify(rehash(result), 'a' * 40, BASELINE_RUNNER)
 
 
 if __name__ == "__main__":

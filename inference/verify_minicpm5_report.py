@@ -24,6 +24,10 @@ assert _PROMPT_SPEC is not None and _PROMPT_SPEC.loader is not None
 p = importlib.util.module_from_spec(_PROMPT_SPEC)
 _PROMPT_SPEC.loader.exec_module(p)
 
+# This monolithic runner produced the archived development experiment before
+# the prompt policy was split into a module that imports the baseline runner.
+ARCHIVED_EXPLICIT_RUNNER_SHA256 = '69274d8c2f0a1c96deac844c61e09662a683df6cbc3fcd374669562f1c4dac88'
+
 
 class ReportError(ValueError):
     """Inconsistent records cannot become a product or proof projection."""
@@ -50,7 +54,11 @@ def verify(report: dict[str, Any], source: str, runner_hash: str) -> dict[str, A
     prompt_policy = observed_plan.get('promptPolicy', 'baseline-v1')
     require(prompt_policy in p.PROMPT_POLICIES, 'unknown prompt policy')
     require(observed_plan == p.plan(prompt_policy), 'model pin, suite, prompt or limits differ')
-    if runner_hash == q.file_digest(Path(p.__file__)) or 'sourceDependencySha256' in value:
+    prompt_runner_hash = q.file_digest(Path(p.__file__))
+    if prompt_policy == 'explicit-lookup-v2':
+        require(runner_hash in (prompt_runner_hash, ARCHIVED_EXPLICIT_RUNNER_SHA256),
+                'prompt policy is not implemented by the executed runner')
+    if runner_hash == prompt_runner_hash or 'sourceDependencySha256' in value:
         require(value.get('sourceDependencySha256') == {
             'minicpm5_qualification.py': q.file_digest(Path(q.__file__))},
             'baseline dependency source mismatch')
