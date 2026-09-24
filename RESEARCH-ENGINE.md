@@ -37,6 +37,9 @@ Unknown tools, unread citations, invented quotations, malformed responses, and
 exceeded turn budgets stop the cycle. The callback is application code and must
 be trusted; this is not a hostile-code sandbox or a general prompt-injection
 defense. Quotation matching does not establish semantic support or source truth.
+The last model turn is reserved for synthesis: search and read are closed, and
+only a checked proposal or abstention is accepted. This is enforced by the
+controller as well as stated in the final-turn prompt.
 
 Each JSONL source row must have exactly `id`, `text`, `source`, `revision`,
 `visibility` (`public` or `private`), and `content_sha256` (UTF-8 text SHA256).

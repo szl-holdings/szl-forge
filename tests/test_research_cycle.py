@@ -128,8 +128,9 @@ def test_callback_failure_has_no_error_message_leak(corpus):
 def test_turn_budget_is_enforced(corpus):
     result = run_cycle("question", corpus, scripted({"tool": "search", "query": "evaluation"}),
                        execution_place="local", max_turns=1)
-    assert result["state"] == "TURN_LIMIT"
+    assert result["state"] == "INVALID_MODEL_OUTPUT"
     assert len(result["trace"]) == 1
+    assert "result" not in result["trace"][0]
 
 
 @pytest.mark.parametrize("turns", [0, 13, True])
@@ -159,8 +160,20 @@ def test_model_can_see_remaining_turn_budget(corpus):
     result = run_cycle("question", corpus, generate, execution_place="local", max_turns=2)
     assert "turn 1 of 2" in seen[0]
     assert "turn 2 of 2" in seen[1]
-    assert result["state"] == "TURN_LIMIT"
+    assert result["state"] == "INVALID_MODEL_OUTPUT"
     assert result["max_turns"] == 2
+
+
+def test_last_turn_is_explicit_synthesis_with_checked_citations(corpus):
+    actions = iter(valid_actions())
+    seen = []
+    def generate(messages):
+        seen.append(messages)
+        return json.dumps(next(actions))
+    result = run_cycle("question", corpus, generate, execution_place="local", max_turns=3)
+    assert "research phase is CLOSED" in seen[-1][0]["content"]
+    assert result["state"] == "PROPOSAL_REQUIRES_REVIEW"
+    assert result["trace"][-1]["phase"] == "synthesis"
 
 
 def test_deeply_nested_output_is_a_recorded_failure(corpus):
