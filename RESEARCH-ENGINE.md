@@ -72,7 +72,10 @@ HF router and local HF authentication. Specify `--model repository:provider`
 and `--public-inputs-reviewed` explicitly, along with the same corpus, question,
 output and turn bound. Review both the corpus and question before transmission.
 There is no automatic provider fallback: at most six calls with 1,536 generated
-tokens each and a 90-second timeout per call. The adapter disables redirects and
+tokens each by default and a 90-second timeout per call. The explicit
+`--max-output-tokens` setting is capped at 4,096, allowing room for models whose
+reasoning consumes the completion allowance. Incomplete answers are rejected;
+the finish status and requested budget are retained. The adapter disables redirects and
 inherited proxies. Reports retain token usage when supplied, but cost is not
 measured and the provider's actual serving revision remains unverified.
 

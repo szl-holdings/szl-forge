@@ -64,3 +64,18 @@ def test_redirects_disabled():
     from benchmark_ollama import NoRedirects
     value = runner.HFGenerator("owner/model:provider", "synthetic")
     assert any(isinstance(handler, NoRedirects) for handler in value.opener.handlers)
+
+
+@pytest.mark.parametrize("budget", [0, 4097, True])
+def test_unbounded_token_settings_rejected(budget):
+    with pytest.raises(ValueError, match="token budget"):
+        runner.HFGenerator("owner/model:provider", "synthetic", budget)
+
+
+def test_reasoning_model_budget_is_explicit_and_incomplete_status_retained():
+    value = runner.HFGenerator("owner/model:provider", "synthetic", 4096)
+    value.opener = FakeOpener({"choices": [{"finish_reason": "length"}]})
+    with pytest.raises(runner.GenerationIncomplete):
+        value([{"role": "user", "content": "q"}])
+    assert json.loads(value.opener.calls[0][0].data)["max_tokens"] == 4096
+    assert value.completion_status == ["length"]

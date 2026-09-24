@@ -9,7 +9,7 @@ import sys
 from datetime import datetime, timezone
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from inference.research_cycle import Corpus, run_cycle, sha256, strict_object
+from inference.research_cycle import Corpus, GenerationIncomplete, run_cycle, sha256, strict_object
 from benchmark_ollama import LocalClient, admit_model
 
 
@@ -38,7 +38,7 @@ def run(client: LocalClient, model: str, corpus_path: Path, question: str, outpu
         response = client.call("/api/chat", {"model": model, "messages": messages,
             "stream": False, "think": False, "format": "json", "keep_alive": 0, "options": options})
         if response.get("done") is not True or response.get("done_reason") != "stop":
-            raise ValueError("incomplete generation")
+            raise GenerationIncomplete("incomplete generation")
         content = response.get("message", {}).get("content")
         if not isinstance(content, str):
             raise ValueError("generation text missing")
