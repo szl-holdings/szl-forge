@@ -1,0 +1,37 @@
+{
+  "schema": "szl.artifact-identity-binding/v1",
+  "repository": "SZLHOLDINGS/A11OY-MINI",
+  "pinned_revision": "0619dd65b92a135501af35b3c4e3b4e762be1d7d",
+  "generated_at_utc": "2026-09-24T21:10:47+00:00",
+  "files": [
+    {
+      "path": "a11oy-mini-r2-Q4_K_M.gguf",
+      "size": 541903328,
+      "hub_lfs_sha256": "6d42341c932a76e91b2c04a859a4248e7d2c77308f998a32771f43802f097b62",
+      "local_sha256": "6d42341c932a76e91b2c04a859a4248e7d2c77308f998a32771f43802f097b62",
+      "status": "LOCAL_REHASH_MATCHES_HUB_LFS"
+    },
+    {
+      "path": "a11oy-mini-r2-BF16-mmproj.gguf",
+      "size": 207346048,
+      "hub_lfs_sha256": "4855efe034435b9b3b289b2c07d09b263c088749d1f85c43c1cf4672bc7fcbf2",
+      "local_sha256": "4855efe034435b9b3b289b2c07d09b263c088749d1f85c43c1cf4672bc7fcbf2",
+      "status": "LOCAL_REHASH_MATCHES_HUB_LFS"
+    },
+    {
+      "path": "gguf_gate_receipt.json",
+      "size": 636,
+      "hub_lfs_sha256": null,
+      "local_sha256": "7b3aba65a18adb8135c9ca2ca4d2dfbd47964bc03aa594d21a81eee8cb86054e",
+      "status": "LOCAL_REHASH_NON_LFS"
+    }
+  ],
+  "identity_binding": "ESTABLISHED_FOR_LISTED_FILES_AT_PINNED_REVISION",
+  "evaluation_binding": "NOT_CLOSED_REQUIRES_EVALUATION_RECEIPT_REFERENCING_THESE_HASHES",
+  "publication_eligible": false,
+  "autonomy_eligible": false,
+  "production_disposition": "HOLD",
+  "promotion_effect": "NONE",
+  "signature_status": "UNSIGNED_HONEST",
+  "boundary": "Byte identity is not quality, qualification, or authorization."
+}
