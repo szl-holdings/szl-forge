@@ -1,0 +1,40 @@
+{
+  "kind": "szl-chaski-named-n-bakeoff-receipt",
+  "schema": "szl.chaski-named-n-bakeoff/v1",
+  "label": "UNAVAILABLE",
+  "gate_ran": false,
+  "evals": "none-this-run",
+  "quality": "UNAVAILABLE",
+  "publication_eligible": false,
+  "autonomy_eligible": false,
+  "hub_put": false,
+  "held_out_in_gradients": false,
+  "artifact": "SZLHOLDINGS/chaski",
+  "base_model": "Qwen/Qwen3.5-0.8B",
+  "json_draft_gate": "chaski/gate/json_drafts.n5.jsonl",
+  "json_draft_n": 5,
+  "adversarial_refusal_gate": "chaski/gate/adversarial_refusals.n6.jsonl",
+  "adversarial_refusal_n": 6,
+  "dataset_hashes": {
+    "chaski/gate/json_drafts.n5.jsonl": "dd093403e4aeeb906c169d8b6d8229115b1d170a0226afa939c1beaa6fa5e9be",
+    "chaski/gate/adversarial_refusals.n6.jsonl": "1e58dda9cf07e22406f0f953fddc2c26397fb5e784c27516578d133035cb006d",
+    "chaski/gate/json_draft.schema.json": "eacb37bf0a29ca3f79903f32c23c76bce01c83c1cfe554630b36e26bb10b622a"
+  },
+  "candidates": [],
+  "reason": "ImportError: \nQwen2VLImageProcessor requires the Torchvision library but it was not found in your environment. Check out the instructions on the\ninstallation page: https://pytorch.org/get-started/locally/ and follow the ones that match your environment.\nPlease note that you may need to restart your runtime after installation.\n\nQwen2VLImageProcessor requires the PIL library but it was not found in your environment. You can install it with pip:\n`pip install pillow`. Please note that you may need to restart your runtime after installation.\n",
+  "claim_boundary": "Named-N bake-off did not generate. Do not fabricate k/n. Do not claim 5/5 or 6/6. publication_eligible stays false. Gate files stay held-out. No Hub PUT.",
+  "computed_at": "2026-09-24T22:08:19.870619+00:00",
+  "gpu": {
+    "name": "NVIDIA GeForce RTX 5050 Laptop GPU",
+    "total_bytes": 8546484224,
+    "free_bytes_before_load": 7413432320,
+    "temperature_c": 51,
+    "torch": "2.14.0+cu130",
+    "cuda": true,
+    "host": "betterwithage",
+    "python": "3.11.9",
+    "platform": "Windows-10-10.0.26200-SP0"
+  },
+  "base_runtime": "huggingface:Qwen/Qwen3.5-0.8B@2fc06364715b967f1860aea9cf38778875588b17",
+  "report_sha256": "50f80ac5663dc30804c5f1506d12a2c020709fcf986393890da9ea5ae0e6a7b3"
+}
