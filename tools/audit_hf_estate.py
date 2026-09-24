@@ -461,7 +461,12 @@ def classify_repository(entry: dict[str, Any], snapshot: dict[str, Any]) -> dict
                 add("LOADABLE_METADATA_WITHOUT_ARTIFACT", "CONFLICT", "Model metadata implies loadable weights but no supported artifact is listed", readme_path)
     for item in checks.get("required_patterns", []):
         item = {"pattern": item} if isinstance(item, str) else item
-        if not re.search(item["pattern"], "\n".join(prose), re.I | re.M):
+        scope = item.get("scope", "current")
+        if scope not in {"current", "document"}:
+            add("UNKNOWN_PATTERN_SCOPE", "HOLD", f"Unknown required-pattern scope: {scope}", readme_path)
+            continue
+        searched = readme if scope == "document" else "\n".join(prose)
+        if not re.search(item["pattern"], searched, re.I | re.M):
             add(item.get("code", "REQUIRED_DISCLOSURE_MISSING"), "HOLD", item.get("message", f"Required disclosure is absent: {item['pattern']}"), readme_path)
     for item in checks.get("prohibited_patterns", []):
         item = {"pattern": item} if isinstance(item, str) else item

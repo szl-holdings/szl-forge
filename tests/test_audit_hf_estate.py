@@ -90,6 +90,15 @@ class AuditClassificationTests(unittest.TestCase):
                 missing = [finding for finding in result["findings"] if finding["code"] == "REQUIRED_BOUNDARY_MISSING"]
                 self.assertEqual(len(missing), 3)
 
+    def test_explicit_document_scope_can_require_a_history_label_only(self):
+        body = "Not promotable. No autonomy. No deployment.\n## Historical examples\nOld instructions."
+        result = self.classify(body, extra={"checks": {"required_patterns": [
+            {"pattern": "^## Historical examples", "scope": "document"}]}})
+        self.assertEqual(result["status"], "PASS")
+        invalid = self.classify(body, extra={"checks": {"required_patterns": [
+            {"pattern": "No autonomy", "scope": "unknown"}]}})
+        self.assertIn("UNKNOWN_PATTERN_SCOPE", self.codes(invalid))
+
     def test_training_loss_is_not_measured_eval(self):
         result = self.classify("evals: none-this-run\nNot promotable. No autonomy. No deployment.",
                                {"finalTrainLoss": 0.0537, "status": "TRAINED", "evals": "none-this-run"})

@@ -558,7 +558,8 @@
         "required_patterns": [
           {
             "pattern": "(?i)historical.*?(?:install|example)|(?:install|example).*?historical",
-            "message": "Historical installation/examples need visible labels."
+            "message": "Historical installation/examples need visible labels.",
+            "scope": "document"
           }
         ]
       }
