@@ -30,7 +30,7 @@ This module introduces no competing publisher or automatic deployment writer.
 
 ## Implemented Interface
 
-`inference.research_cycle.run_cycle` accepts a question, an in-memory SQLite FTS5
+`inference.research_investigator.run_cycle` accepts a question, an in-memory SQLite FTS5
 corpus, and a trusted generator callback taking chat messages and returning JSON.
 The model can search, read discovered records, finish a proposal, or abstain.
 Unknown tools, unread citations, invented quotations, malformed responses, and
@@ -108,7 +108,16 @@ direction, not an established scientific first or a proven new model architectur
 
 ## Verification
 
-`python -m pytest -q tests/test_research_cycle.py tests/test_research_ollama.py tests/test_research_hf.py`
+`python -m pytest -q tests/test_research_investigator.py tests/test_research_ollama.py tests/test_research_hf.py`
 
 The public tests use scripted generators to check control flow and boundaries.
 They are neither model intelligence evaluations nor hidden promotion gates.
+
+## Relationship to the Existing Evaluator
+
+The separately merged `inference.research_cycle` evaluates typed retrieval
+recipes with a fixed synthetic evaluator. This source investigator does not
+replace or alter it. The investigator formulates hypotheses from pinned sources;
+the existing evaluator tests its specific three-parameter recipe contract.
+No automatic conversion from a free-text experiment to executable evaluation is
+implemented. Any future bridge must preserve that typed admission boundary.

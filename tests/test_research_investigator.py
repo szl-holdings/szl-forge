@@ -1,10 +1,10 @@
-"""Public development checks; not hidden model evaluations or training data."""
+"""Source-investigation checks; not hidden model evaluations or training data."""
 import copy
 import json
 
 import pytest
 
-from inference.research_cycle import Corpus, run_cycle, sha256
+from inference.research_investigator import Corpus, run_cycle, sha256
 
 
 def document(**updates):

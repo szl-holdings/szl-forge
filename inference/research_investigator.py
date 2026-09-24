@@ -1,4 +1,4 @@
-"""Bounded, read-only research proposals over a caller-supplied source snapshot.
+"""Bounded, read-only source investigation over a caller-supplied snapshot.
 
 This checks protocol and quotation provenance, not truth, novelty, or quality.
 The generator is trusted application code, not a sandboxed model executable.

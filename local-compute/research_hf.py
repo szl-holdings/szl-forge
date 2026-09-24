@@ -11,7 +11,7 @@ import sys
 from urllib.request import Request, ProxyHandler, build_opener
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from inference.research_cycle import Corpus, GenerationIncomplete, canonical, run_cycle, sha256, strict_object
+from inference.research_investigator import Corpus, GenerationIncomplete, canonical, run_cycle, sha256, strict_object
 from benchmark_ollama import NoRedirects
 
 ROUTER = "https://router.huggingface.co/v1/chat/completions"
@@ -81,7 +81,7 @@ def main() -> int:
                   started_at=started, finished_at=datetime.now(timezone.utc).isoformat(),
                   corpus_file_sha256=sha256(raw), trained=False, provider_cost_usd="NOT_MEASURED",
                   runner_sha256=sha256(Path(__file__).read_bytes()),
-                  engine_sha256=sha256((Path(__file__).resolve().parents[1] / "inference/research_cycle.py").read_bytes()),
+                  engine_sha256=sha256((Path(__file__).resolve().parents[1] / "inference/research_investigator.py").read_bytes()),
                   max_turns=args.max_turns, max_output_tokens_per_turn=args.max_output_tokens,
                   completion_status=generator.completion_status)
     args.output.parent.mkdir(parents=True, exist_ok=True)

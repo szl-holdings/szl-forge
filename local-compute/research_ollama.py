@@ -9,7 +9,7 @@ import sys
 from datetime import datetime, timezone
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from inference.research_cycle import Corpus, GenerationIncomplete, run_cycle, sha256, strict_object
+from inference.research_investigator import Corpus, GenerationIncomplete, run_cycle, sha256, strict_object
 from benchmark_ollama import LocalClient, admit_model
 
 
@@ -52,7 +52,7 @@ def run(client: LocalClient, model: str, corpus_path: Path, question: str, outpu
                   finished_at=datetime.now(timezone.utc).isoformat(), generation=options,
                   corpus_file_sha256=sha256(raw), provider_cost_usd=0, trained=False,
                   electricity_cost="NOT_MEASURED", runner_sha256=sha256(Path(__file__).read_bytes()),
-                  engine_sha256=sha256((Path(__file__).resolve().parents[1] / "inference/research_cycle.py").read_bytes()))
+                  engine_sha256=sha256((Path(__file__).resolve().parents[1] / "inference/research_investigator.py").read_bytes()))
     try:
         latest = {m["name"]: m for m in client.call("/api/tags").get("models", [])}
         report["model_digest_stable"] = latest.get(model, {}).get("digest") == model_digest

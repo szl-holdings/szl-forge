@@ -5,7 +5,7 @@ import sys
 
 import pytest
 
-from inference.research_cycle import sha256
+from inference.research_investigator import sha256
 
 
 ROOT = Path(__file__).resolve().parents[1]
