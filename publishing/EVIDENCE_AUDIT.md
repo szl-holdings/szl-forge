@@ -17,7 +17,18 @@ python tools/audit_hf_estate.py --inventory publishing/evidence-audit-inventory.
 ```
 
 The manual **Hugging Face evidence audit** Actions workflow runs the same live
-command on `main`, using the existing organization credential for gated reads.
+command on `main`. Before the audit, it checks the existing `HF_ORG_TOKEN`,
+`HF_TOKEN`, and `HF_ORG_TOKEN1` secrets in that order using metadata-only HEAD
+reads of `MODEL_PROVENANCE.json` at the explicitly recorded Lambda revision.
+The first credential with confirmed read access is passed to the auditor's
+child process. The other credential variables are removed from that child.
+Tokens are never printed, written to reports, or persisted as workflow outputs.
+`credential-read-preflight.json` records only the fixed probe identity, attempted
+secret names, access results, and selected secret name. This credential probe
+does not qualify a model or replace the audit's immutable source snapshots.
+If no candidate succeeds, the workflow retains a HOLD access record, still
+audits public sources anonymously, and exits nonzero even if those checks pass.
+No gate, secret, or repository permission is changed.
 Its GitHub permission is `contents: read`; the implementation calls Hub read
 APIs only. It does not schedule itself, publish, merge, train or deploy anything.
 Reports and replayable snapshots are retained even when findings fail the run.
