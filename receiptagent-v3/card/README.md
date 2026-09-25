@@ -46,7 +46,7 @@ Separate SKU from v2. **Does not overwrite**
 | Training rows | 180 (committed v3 `train.jsonl`) |
 | Dataset SHA256 | `ad30ce9b478eff50d78064f387143b750be3f746b459f98f7961784b9ce1081f` |
 | Adapter SHA256 | `339efa6ea0ed0719db0dede26ee836f290048deb1b6ce68403ab07cb255b28d0` |
-| Held-out generate / 1024 eval | DEV n=12 MEASURED 12/12 (4 draft / 4 recovery / 4 refuse). `test.jsonl` never opened |
+| Owner-run development generation | DEV n=12: 11/12 correct (draft 4/4, recovery 3/4, refusal 4/4; one recovery output unparseable). This is development evidence, not held-out TEST qualification. |
 | QLoRA | forbidden on Qwen3.5; this SKU is bf16 LoRA (`load_in_4bit=false`) |
 | Rosie WSL 4bit supervised launch | not this card |
 | publication_eligible | false |
@@ -59,9 +59,19 @@ Separate SKU from v2. **Does not overwrite**
 |---|---|
 | Artifact | Trained LoRA adapter weights for `Qwen/Qwen3.5-0.8B`, not a from-scratch model. |
 | Value | Proposal-only receipt drafts. Validation, approval, execution, and minting stay outside the weights. |
-| Evidence | Train loss MEASURED on the 180-row committed split. No held-out eval on this card. |
+| Evidence | Reported train loss on the 180-row committed split; owner-run DEV generation 11/12 in the pinned evaluation below. No independent held-out TEST qualification is established by this card. |
 | Limits | Small synthetic curriculum. No broad capability, factuality, safety, or third-party benchmark claim. |
 | Runtime | Drafts only. Not an autonomous agent. |
+
+### Development evidence binding
+
+The development result above refers to
+[`eval_dev_named_n.json` at Hub revision `fe7564886100316d0843d147abd38da39beb3a4f`](https://huggingface.co/SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3/blob/fe7564886100316d0843d147abd38da39beb3a4f/eval_dev_named_n.json).
+That artifact reports `n=12`, `correct=11`, and one unparseable recovery case.
+The earlier 12/12 card summary did not match this artifact. This correction
+does not rerun evaluation, alter historical outputs, establish independent
+verification, or qualify another adapter revision. Publication and autonomy
+remain ineligible.
 
 ---
 
