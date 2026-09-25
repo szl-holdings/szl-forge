@@ -1,0 +1,8 @@
+{
+  "schema": "szl.evaluation-comparator/v1",
+  "candidate": "chaski-5050",
+  "provenance_from_receipt": {},
+  "hub_revision_pinned": false,
+  "boundary": "Comparator provenance is copied from the receipt. If no Hub revision is recorded, the chaski-5050 comparison is informational only.",
+  "promotion_effect": "NONE"
+}

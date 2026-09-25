@@ -1,0 +1,43 @@
+{
+  "schema": "szl.artifact-identity-binding/v1",
+  "repository": "SZLHOLDINGS/brain-navigator-r2",
+  "pinned_revision": "7fe3872fcb78ec8f5cc2f0c7464538b50b34e4b2",
+  "generated_at_utc": "2026-09-24T21:10:26+00:00",
+  "files": [
+    {
+      "path": "adapter_model.safetensors",
+      "size": 25587104,
+      "hub_lfs_sha256": "24936b2969914793fdda2889f4358fd88031b95d86aeb45c1db63de11b82e673",
+      "local_sha256": "24936b2969914793fdda2889f4358fd88031b95d86aeb45c1db63de11b82e673",
+      "status": "LOCAL_REHASH_MATCHES_HUB_LFS"
+    },
+    {
+      "path": "adapter_config.json",
+      "size": 1511,
+      "hub_lfs_sha256": null,
+      "local_sha256": "d36472a3100231dfdf0c4aa16d3a80cb8ab53c86af33a15172b06f9d9a313193",
+      "status": "LOCAL_REHASH_NON_LFS"
+    },
+    {
+      "path": "model.safetensors",
+      "size": 3009613624,
+      "hub_lfs_sha256": "1b825de2e632001c97e4e1edba56b1baf56c0676775a4ede5e654cebb06176ce",
+      "status": "HUB_LFS_METADATA_ONLY"
+    },
+    {
+      "path": "eval_report.json",
+      "size": 7174,
+      "hub_lfs_sha256": null,
+      "local_sha256": "b2b79d062ee052b67ce4ae70b18963f8e9a61aa80885ca3d33c53bbd17a948c9",
+      "status": "LOCAL_REHASH_NON_LFS"
+    }
+  ],
+  "identity_binding": "ESTABLISHED_FOR_LISTED_FILES_AT_PINNED_REVISION",
+  "evaluation_binding": "NOT_CLOSED_REQUIRES_EVALUATION_RECEIPT_REFERENCING_THESE_HASHES",
+  "publication_eligible": false,
+  "autonomy_eligible": false,
+  "production_disposition": "HOLD",
+  "promotion_effect": "NONE",
+  "signature_status": "UNSIGNED_HONEST",
+  "boundary": "Byte identity is not quality, qualification, or authorization."
+}

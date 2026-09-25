@@ -1,0 +1,43 @@
+{
+  "schema": "szl.artifact-identity-binding/v1",
+  "repository": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3",
+  "pinned_revision": "108835f1622615f96d7cb74f8b30f9c488923683",
+  "generated_at_utc": "2026-09-24T21:10:49+00:00",
+  "files": [
+    {
+      "path": "adapter_model.safetensors",
+      "size": 25587104,
+      "hub_lfs_sha256": "90b82ade0b2c84eca92e90cdeb56137d61d7da4b4863ff4d29fa75e9dc037870",
+      "local_sha256": "90b82ade0b2c84eca92e90cdeb56137d61d7da4b4863ff4d29fa75e9dc037870",
+      "status": "LOCAL_REHASH_MATCHES_HUB_LFS"
+    },
+    {
+      "path": "adapter_config.json",
+      "size": 1511,
+      "hub_lfs_sha256": null,
+      "local_sha256": "d36472a3100231dfdf0c4aa16d3a80cb8ab53c86af33a15172b06f9d9a313193",
+      "status": "LOCAL_REHASH_NON_LFS"
+    },
+    {
+      "path": "model.safetensors",
+      "size": 3009613624,
+      "hub_lfs_sha256": "2c43276ffc9abad48e6c9e3aafb3da93b6fa33382006040a82d057feb6ff0a9b",
+      "status": "HUB_LFS_METADATA_ONLY"
+    },
+    {
+      "path": "eval_dev_named_n.json",
+      "size": 5441,
+      "hub_lfs_sha256": null,
+      "local_sha256": "07fd386bbdeabba16022d81dfa2f89b3e042a0905c1f07c0ae15ece0a3da9479",
+      "status": "LOCAL_REHASH_NON_LFS"
+    }
+  ],
+  "identity_binding": "ESTABLISHED_FOR_LISTED_FILES_AT_PINNED_REVISION",
+  "evaluation_binding": "NOT_CLOSED_REQUIRES_EVALUATION_RECEIPT_REFERENCING_THESE_HASHES",
+  "publication_eligible": false,
+  "autonomy_eligible": false,
+  "production_disposition": "HOLD",
+  "promotion_effect": "NONE",
+  "signature_status": "UNSIGNED_HONEST",
+  "boundary": "Byte identity is not quality, qualification, or authorization."
+}
