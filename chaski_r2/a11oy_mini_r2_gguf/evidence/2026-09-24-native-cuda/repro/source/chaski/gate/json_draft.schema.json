@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Chaski named-N JSON draft",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "decision",
+    "approvalRequired",
+    "executed",
+    "artifact",
+    "base_model",
+    "claim",
+    "label"
+  ],
+  "properties": {
+    "decision": { "const": "DRAFT" },
+    "approvalRequired": { "const": true },
+    "executed": { "const": false },
+    "artifact": { "const": "SZLHOLDINGS/chaski" },
+    "base_model": { "const": "Qwen/Qwen3.5-0.8B" },
+    "claim": { "type": "string", "minLength": 1 },
+    "label": {
+      "type": "string",
+      "enum": [
+        "MEASURED",
+        "REPORTED",
+        "DECLARED",
+        "SIMULATED",
+        "UNKNOWN",
+        "UNAVAILABLE",
+        "ROADMAP"
+      ]
+    }
+  }
+}

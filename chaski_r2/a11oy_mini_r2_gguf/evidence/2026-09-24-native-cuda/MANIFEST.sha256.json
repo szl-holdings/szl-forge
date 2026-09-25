@@ -1,0 +1,108 @@
+{
+  "schema": "szl.evidence-file-manifest/v1",
+  "signature_status": "UNSIGNED_HONEST",
+  "files": [
+    {
+      "path": ".gitattributes",
+      "bytes": 8,
+      "sha256": "705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da",
+      "witnessed_bytes_unchanged": false
+    },
+    {
+      "path": "README.md",
+      "bytes": 4231,
+      "sha256": "6f037748113842b13e6fca43f57d0d359bfeeb8f33fdd0dbd35fe7d816c7da8f",
+      "witnessed_bytes_unchanged": false
+    },
+    {
+      "path": "receipt.json",
+      "bytes": 59040,
+      "sha256": "a54c762bc8cd24ffdf9022ddeb61dcca588469c97706a45f41b90697b51c45cc",
+      "witnessed_bytes_unchanged": true
+    },
+    {
+      "path": "repro/local_artifact_bindings.json",
+      "bytes": 9528,
+      "sha256": "25f2bb8765c778d6596ccada993499fdb562614386922f9f3f7637108a7264e2",
+      "witnessed_bytes_unchanged": true
+    },
+    {
+      "path": "repro/run_bound_llamacpp_gate.py",
+      "bytes": 14240,
+      "sha256": "d80cd066889e424311a08592e56ec3c1b7702857f38f3408014be2a231ab77ec",
+      "witnessed_bytes_unchanged": true
+    },
+    {
+      "path": "repro/run_bound_ollama_gate.py",
+      "bytes": 12032,
+      "sha256": "95da9d2fdf2476d168253b9a4aa84a0e232c1f5e4bcee6424bf22955807cb43f",
+      "witnessed_bytes_unchanged": true
+    },
+    {
+      "path": "repro/source/chaski/bakeoff_named_n.receipt.json",
+      "bytes": 20750,
+      "sha256": "abd94f20697bd59264ccd7a5402aa12b6227f9acff303a9b1a1cb566d9c660a9",
+      "witnessed_bytes_unchanged": true
+    },
+    {
+      "path": "repro/source/chaski/gate/adversarial_refusals.n6.jsonl",
+      "bytes": 3094,
+      "sha256": "1e58dda9cf07e22406f0f953fddc2c26397fb5e784c27516578d133035cb006d",
+      "witnessed_bytes_unchanged": true
+    },
+    {
+      "path": "repro/source/chaski/gate/json_draft.schema.json",
+      "bytes": 797,
+      "sha256": "eacb37bf0a29ca3f79903f32c23c76bce01c83c1cfe554630b36e26bb10b622a",
+      "witnessed_bytes_unchanged": true
+    },
+    {
+      "path": "repro/source/chaski/gate/json_drafts.n5.jsonl",
+      "bytes": 3812,
+      "sha256": "dd093403e4aeeb906c169d8b6d8229115b1d170a0226afa939c1beaa6fa5e9be",
+      "witnessed_bytes_unchanged": true
+    },
+    {
+      "path": "repro/source/CONTRIBUTING.md",
+      "bytes": 1529,
+      "sha256": "ffca5261e4252467daae617796b0c42a1bd87fa5fc941c9a2eed34f8058040ac",
+      "witnessed_bytes_unchanged": true
+    },
+    {
+      "path": "repro/source/frontier/qwen35-receiptagent-v3/README.md",
+      "bytes": 10185,
+      "sha256": "9c19afaeebf54696522a4e7bbfd71f8e14bd6f0c3feda697513d53f358393c68",
+      "witnessed_bytes_unchanged": true
+    },
+    {
+      "path": "repro/source/gate_a11oy_gguf.py",
+      "bytes": 3535,
+      "sha256": "a2356207ded304b57ebe73a44714880da83dab5e68807c17c64dd06419a415ae",
+      "witnessed_bytes_unchanged": true
+    },
+    {
+      "path": "repro/source_manifest.json",
+      "bytes": 1315,
+      "sha256": "198c4c349673fb668b38f0016ad7002dd71c6781640da488c6b647025147333d",
+      "witnessed_bytes_unchanged": true
+    },
+    {
+      "path": "semantic_review.json",
+      "bytes": 4673,
+      "sha256": "0021f19e340c0b1d11d887faf63723251873aa7a0ef8ea1a5e45ae7f3eac1b57",
+      "witnessed_bytes_unchanged": false
+    },
+    {
+      "path": "server.stderr.log",
+      "bytes": 11554,
+      "sha256": "426543773db1165b8d2814844706848b63f02bcdb2b7f5852b29e33a7deb4086",
+      "witnessed_bytes_unchanged": true
+    },
+    {
+      "path": "server.stdout.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "witnessed_bytes_unchanged": true
+    }
+  ]
+}
