@@ -79,6 +79,18 @@ No retries, downloads, installs, daemon restarts, provider configuration changes
 or public listeners. A socket timeout is not a hard process-runtime deadline.
 At most three candidate generations are allowed; the default is one.
 
+Failed local attempts retain a fixed `failure_phase`: `inventory_before`,
+`generation`, or `inventory_after`. `elapsed_seconds` measures that failed
+phase using a monotonic clock, not the whole cycle or server compute time.
+Response validation is part of its phase, so a changed post-generation model
+identity is still unavailable, even when generation returned text. The original
+`error_type` is preserved; exception text and response bodies are not recorded.
+Generic callbacks cannot supply these adapter-specific diagnostic fields.
+An observation is reset at the start of every call. This distinguishes where a
+failure was detected; it does **not** establish a server root cause, model
+quality, runtime confinement, or successful recovery. No automatic retry or
+timeout increase is introduced.
+
 The local daemon is a trusted dependency, **not an isolated process**. Model
 names containing `cloud` and declared remote models are refused; this does not
 prove the daemon cannot contact another service. A local digest readback is

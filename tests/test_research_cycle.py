@@ -250,3 +250,103 @@ def test_existing_witness_can_stop_research_proposals(decision):
 def test_generic_callback_cannot_claim_governed_mode():
     with pytest.raises(rc.CycleError, match="adapter"):
         rc.run_cycle(suite(), lambda _: response(GOOD), mode="GOVERNED_PROPOSAL")
+
+
+def local_run(proposer, attempts=3):
+    return rc.run_cycle(suite(), proposer, mode="LOCAL_MODEL_PROPOSAL", attempts=attempts,
+                        identity={"model": "local:test", "reported_digest": "a" * 64})
+
+
+def local_reply(path):
+    if path == "/api/tags":
+        return {"models": [{"name": "local:test", "digest": "a" * 64}]}
+    return {"model": "local:test", "done": True,
+            "message": {"role": "assistant", "content": response(GOOD)}}
+
+
+@pytest.mark.parametrize("phase, failed_call", [
+    ("inventory_before", 1), ("generation", 2), ("inventory_after", 3),
+])
+def test_local_failure_phase_preserves_timeout_and_never_retries(monkeypatch, phase, failed_call):
+    proposer = rc.OllamaProposer("local:test", "a" * 64)
+    calls = []
+
+    def request(path, body=None):
+        calls.append(path)
+        if len(calls) == failed_call:
+            raise TimeoutError("private exception text must not persist")
+        return local_reply(path)
+
+    monkeypatch.setattr(proposer, "_request", request)
+    # Each successful phase consumes one clock tick, a failing phase two.
+    ticks = iter(range(10))
+    monkeypatch.setattr(rc.time, "monotonic", lambda: next(ticks))
+    result = local_run(proposer)
+    assert result["decision"] == "MODEL_UNAVAILABLE"
+    assert len(calls) == failed_call
+    assert len(result["attempts"]) == 1
+    row = result["attempts"][0]
+    assert row["error_type"] == "TimeoutError"
+    assert row["failure_phase"] == phase
+    assert row["elapsed_seconds"] == 1
+    assert "private exception" not in json.dumps(result)
+    assert result["receipt_sha256"] == rc.digest({k: v for k, v in result.items() if k != "receipt_sha256"})
+    assert result["production_disposition"] == "HOLD"
+
+
+def test_phase_resets_on_adapter_reuse_and_success_adds_no_failure(monkeypatch):
+    proposer = rc.OllamaProposer("local:test", "a" * 64)
+    monkeypatch.setattr(proposer, "_request", lambda *args: {"models": []})
+    failed = local_run(proposer)
+    assert failed["attempts"][0]["failure_phase"] == "inventory_before"
+    assert failed["attempts"][0]["error_type"] == "CycleError"
+    monkeypatch.setattr(proposer, "_request", lambda path, body=None: local_reply(path))
+    result = local_run(proposer, attempts=1)
+    assert result["decision"] == "DEVELOPMENT_IMPROVEMENT_REVIEW_REQUIRED"
+    assert "failure_phase" not in result["attempts"][0]
+    assert proposer.failure_observation is None
+
+
+def test_post_generation_identity_mismatch_cannot_become_success(monkeypatch):
+    proposer = rc.OllamaProposer("local:test", "a" * 64)
+    calls = []
+
+    def request(path, body=None):
+        calls.append(path)
+        return {"models": []} if len(calls) == 3 else local_reply(path)
+
+    monkeypatch.setattr(proposer, "_request", request)
+    result = local_run(proposer)
+    assert result["decision"] == "MODEL_UNAVAILABLE"
+    assert result["selected_recipe"] is None
+    assert result["attempts"][0]["failure_phase"] == "inventory_after"
+
+
+def test_generic_callback_cannot_inject_phase_diagnostics():
+    def callback(_):
+        raise TimeoutError("not retained")
+
+    callback.failure_observation = {"failure_phase": "private injected text", "elapsed_seconds": 1}
+    result = run(callback)
+    assert "failure_phase" not in result["attempts"][0]
+    assert "private injected text" not in json.dumps(result)
+
+
+@pytest.mark.parametrize("diagnostic", [
+    {"failure_phase": "private injected text", "elapsed_seconds": 1},
+    {"failure_phase": "generation", "elapsed_seconds": float("nan")},
+    {"failure_phase": "generation", "elapsed_seconds": float("inf")},
+    {"failure_phase": "generation", "elapsed_seconds": True},
+    {"failure_phase": "generation", "elapsed_seconds": -1},
+    {"failure_phase": "generation", "elapsed_seconds": 1, "secret": "not admitted"},
+])
+def test_modified_adapter_metadata_cannot_inject_unbounded_diagnostics(monkeypatch, diagnostic):
+    proposer = rc.OllamaProposer("local:test", "a" * 64)
+
+    def observe(*args):
+        proposer.failure_observation = diagnostic
+        raise TimeoutError("not retained")
+
+    monkeypatch.setattr(proposer, "_observe", observe)
+    result = local_run(proposer)
+    assert "failure_phase" not in result["attempts"][0]
