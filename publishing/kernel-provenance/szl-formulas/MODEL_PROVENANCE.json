@@ -1,0 +1,140 @@
+{
+  "schema": "szl.model-source-attestation/reconciliation-v2",
+  "status": "ARTIFACT_STATE_RECONCILIATION",
+  "model": {
+    "id": "SZLHOLDINGS/szl-formulas",
+    "repository_type": "model",
+    "artifact_kind": "kernel-code-and-configuration",
+    "trained_weights_present": false,
+    "surrogate": {
+      "historical_file": "model.joblib",
+      "status": "NOT_PRESENT_IN_CURRENT_REVISION",
+      "weights_published_in_this_repo": false
+    }
+  },
+  "claims": {
+    "weights_present": "NONE",
+    "trained_model": "NOT_CLAIMED",
+    "training_verified": false,
+    "runtime_measured_by_this_reconciliation": false,
+    "reproducible_build": "NOT_CLAIMED"
+  },
+  "current_artifact_evidence": {
+    "repository_revision": "1edee3ad6aca1e5489d4e7dfd87ed2b2c7b1443f",
+    "observation_time": "2026-09-24T13:44:54.552386+00:00",
+    "tree_coverage": "COMPLETE_ACCESSIBLE_RESPONSE",
+    "tree_entries": 27,
+    "file_count": 20,
+    "tree_records_sha256": "226ddb9c07eefbf3bf921546536b7c1226e12e827a8a7b142c8d5a2e0fbde0ed",
+    "original_provenance_sha256": "9d556d9adb7c8e3347785b7d2e9664c61d190b0ede920c64cab8f4069aaf8682",
+    "training_receipt_path": "TRAINING_RECEIPT.json",
+    "training_receipt_present": true,
+    "training_receipt_contents_or_metrics_verified": false,
+    "scan_weight_suffixes": [
+      ".joblib",
+      ".safetensors",
+      ".bin",
+      ".pt",
+      ".pth",
+      ".onnx",
+      ".gguf",
+      ".pkl",
+      ".pickle",
+      ".npz"
+    ]
+  },
+  "historical_evidence": {
+    "status": "PRESERVED_NOT_REVERIFIED",
+    "document": {
+      "schema": "szl.model-source-attestation/v1",
+      "model": {
+        "id": "SZLHOLDINGS/szl-formulas",
+        "repository_type": "model",
+        "artifact_kind": "kernel-code-and-configuration + trained surrogate (model.joblib)",
+        "trained_weights_present": true,
+        "stdlib_only": false,
+        "torch_required": false,
+        "surrogate": {
+          "file": "model.joblib",
+          "sha256": "94cca70dc950fa957c0931ee80240c4369cab0ff8446ffbfedb483c3e2907698",
+          "role": "21-class formula identifier from call-trace observables — kernel remains sole ground truth",
+          "fidelity_MEASURED": {
+            "test_accuracy_21_class": 0.9709,
+            "mean_per_class_recall": 0.9709,
+            "blind_spot_classes_recall_lt_0.90": {
+              "bohr_complementarity_floor": 0.7778,
+              "fisher_rao_distance": 0.8889,
+              "pinsker_kl_bound": 0.8833,
+              "schur_concave_lambda_two_axis": 0.85
+            }
+          },
+          "receipt": "TRAINING_RECEIPT.json",
+          "reverify": "python scripts/eval.py"
+        },
+        "stdlib_only_note": "kernel package itself stays stdlib-only; the OPTIONAL surrogate needs sklearn+joblib"
+      },
+      "source_of_record": {
+        "state": "VERIFIED_HF_SOURCE_OF_RECORD",
+        "platform": "huggingface",
+        "repository": "SZLHOLDINGS/szl-formulas"
+      },
+      "mirrors": {
+        "canonical_dataset": "SZLHOLDINGS/canonical-formulas-v1 (code/python/formulas.py + composer.py)",
+        "lean_repo": "szl-holdings/lutar-lean",
+        "doi_lutar_lean": "10.5281/zenodo.20434308",
+        "doi_concept": "10.5281/zenodo.19944926"
+      },
+      "verification": {
+        "tests": "17/17 passed",
+        "tests_basis": "MEASURED local python3 -m pytest run, stdlib-only, offline",
+        "falsifiability": "registry must be exactly 21; locked-proven set must be exactly 8; PROOF_STATUS must match the dataset verbatim and raises on unknown names; Λ zero-pins on a zero axis; a tampered receipt fails verify_chain; a sub-floor Λ halts the governed loop"
+      },
+      "proof_status": {
+        "policy": "mirrored VERBATIM from SZLHOLDINGS/canonical-formulas-v1 (PROVEN/AXIOM/SORRY/CONJECTURE)",
+        "obligation_vs_locked": "a per-formula PROVEN(...) tag is an obligation-level label, NOT membership in the locked-proven canonical set",
+        "locked_proven_count": 8,
+        "locked_proven_ids": [
+          "F1",
+          "F4",
+          "F7",
+          "F11",
+          "F12",
+          "F18",
+          "F19",
+          "F22"
+        ],
+        "locked_count_theorem": "locked_count_eight (no-axiom, szl-holdings/lutar-lean PROVEN_FORMULAS.md)",
+        "f_number_to_registry_mapping": "UNKNOWN — lutar-lean corpus (>=22 formulas) is a separate numbering; mapping onto these 21 registry entries is NOT asserted here (never fabricated)"
+      },
+      "lambda": {
+        "status": "Conjecture 1 (open) — uniqueness unproven (Uniqueness.lean:120 sorry)",
+        "definition": "weighted geometric mean (D2)",
+        "composer_role": "ADVISORY only — non-compensatory roll-up, NOT proven trust"
+      },
+      "claims": {
+        "trained_model": "CLAIMED — sklearn HistGradientBoostingClassifier, MEASURED, receipted",
+        "reproducible_build": "NOT_CLAIMED",
+        "weights_present": "model.joblib (sklearn surrogate; kernel stays weightless)"
+      },
+      "limits": [
+        "The trained surrogate is a fast formula IDENTIFIER from trace shape; it does NOT replace the kernel's real evaluators, which remain authoritative for formula identity.",
+        "Some formulas share an argument+output observable signature and are confusable from trace shape alone; these blind spots are MEASURED and stated in TRAINING_RECEIPT.json.",
+        "The 21 formulas are pure/no-I/O; the composer performs no network access.",
+        "PROOF_STATUS labels are the dataset's obligation-level declarations, not upgraded here.",
+        "Locked-proven canonical set is fixed at exactly 8 and never inflated.",
+        "The composer's Λ roll-up does not prove or upgrade Λ, which stays Conjecture 1 (open)."
+      ]
+    },
+    "original_bytes_base64": "ewogICJzY2hlbWEiOiAic3psLm1vZGVsLXNvdXJjZS1hdHRlc3RhdGlvbi92MSIsCiAgIm1vZGVsIjogewogICAgImlkIjogIlNaTEhPTERJTkdTL3N6bC1mb3JtdWxhcyIsCiAgICAicmVwb3NpdG9yeV90eXBlIjogIm1vZGVsIiwKICAgICJhcnRpZmFjdF9raW5kIjogImtlcm5lbC1jb2RlLWFuZC1jb25maWd1cmF0aW9uICsgdHJhaW5lZCBzdXJyb2dhdGUgKG1vZGVsLmpvYmxpYikiLAogICAgInRyYWluZWRfd2VpZ2h0c19wcmVzZW50IjogdHJ1ZSwKICAgICJzdGRsaWJfb25seSI6IGZhbHNlLAogICAgInRvcmNoX3JlcXVpcmVkIjogZmFsc2UsCiAgICAic3Vycm9nYXRlIjogewogICAgICAiZmlsZSI6ICJtb2RlbC5qb2JsaWIiLAogICAgICAic2hhMjU2IjogIjk0Y2NhNzBkYzk1MGZhOTU3YzA5MzFlZTgwMjQwYzQzNjljYWIwZmY4NDQ2ZmZiZmVkYjQ4M2MzZTI5MDc2OTgiLAogICAgICAicm9sZSI6ICIyMS1jbGFzcyBmb3JtdWxhIGlkZW50aWZpZXIgZnJvbSBjYWxsLXRyYWNlIG9ic2VydmFibGVzIFx1MjAxNCBrZXJuZWwgcmVtYWlucyBzb2xlIGdyb3VuZCB0cnV0aCIsCiAgICAgICJmaWRlbGl0eV9NRUFTVVJFRCI6IHsKICAgICAgICAidGVzdF9hY2N1cmFjeV8yMV9jbGFzcyI6IDAuOTcwOSwKICAgICAgICAibWVhbl9wZXJfY2xhc3NfcmVjYWxsIjogMC45NzA5LAogICAgICAgICJibGluZF9zcG90X2NsYXNzZXNfcmVjYWxsX2x0XzAuOTAiOiB7CiAgICAgICAgICAiYm9ocl9jb21wbGVtZW50YXJpdHlfZmxvb3IiOiAwLjc3NzgsCiAgICAgICAgICAiZmlzaGVyX3Jhb19kaXN0YW5jZSI6IDAuODg4OSwKICAgICAgICAgICJwaW5za2VyX2tsX2JvdW5kIjogMC44ODMzLAogICAgICAgICAgInNjaHVyX2NvbmNhdmVfbGFtYmRhX3R3b19heGlzIjogMC44NQogICAgICAgIH0KICAgICAgfSwKICAgICAgInJlY2VpcHQiOiAiVFJBSU5JTkdfUkVDRUlQVC5qc29uIiwKICAgICAgInJldmVyaWZ5IjogInB5dGhvbiBzY3JpcHRzL2V2YWwucHkiCiAgICB9LAogICAgInN0ZGxpYl9vbmx5X25vdGUiOiAia2VybmVsIHBhY2thZ2UgaXRzZWxmIHN0YXlzIHN0ZGxpYi1vbmx5OyB0aGUgT1BUSU9OQUwgc3Vycm9nYXRlIG5lZWRzIHNrbGVhcm4ram9ibGliIgogIH0sCiAgInNvdXJjZV9vZl9yZWNvcmQiOiB7CiAgICAic3RhdGUiOiAiVkVSSUZJRURfSEZfU09VUkNFX09GX1JFQ09SRCIsCiAgICAicGxhdGZvcm0iOiAiaHVnZ2luZ2ZhY2UiLAogICAgInJlcG9zaXRvcnkiOiAiU1pMSE9MRElOR1Mvc3psLWZvcm11bGFzIgogIH0sCiAgIm1pcnJvcnMiOiB7CiAgICAiY2Fub25pY2FsX2RhdGFzZXQiOiAiU1pMSE9MRElOR1MvY2Fub25pY2FsLWZvcm11bGFzLXYxIChjb2RlL3B5dGhvbi9mb3JtdWxhcy5weSArIGNvbXBvc2VyLnB5KSIsCiAgICAibGVhbl9yZXBvIjogInN6bC1ob2xkaW5ncy9sdXRhci1sZWFuIiwKICAgICJkb2lfbHV0YXJfbGVhbiI6ICIxMC41MjgxL3plbm9kby4yMDQzNDMwOCIsCiAgICAiZG9pX2NvbmNlcHQiOiAiMTAuNTI4MS96ZW5vZG8uMTk5NDQ5MjYiCiAgfSwKICAidmVyaWZpY2F0aW9uIjogewogICAgInRlc3RzIjogIjE3LzE3IHBhc3NlZCIsCiAgICAidGVzdHNfYmFzaXMiOiAiTUVBU1VSRUQgbG9jYWwgcHl0aG9uMyAtbSBweXRlc3QgcnVuLCBzdGRsaWItb25seSwgb2ZmbGluZSIsCiAgICAiZmFsc2lmaWFiaWxpdHkiOiAicmVnaXN0cnkgbXVzdCBiZSBleGFjdGx5IDIxOyBsb2NrZWQtcHJvdmVuIHNldCBtdXN0IGJlIGV4YWN0bHkgODsgUFJPT0ZfU1RBVFVTIG11c3QgbWF0Y2ggdGhlIGRhdGFzZXQgdmVyYmF0aW0gYW5kIHJhaXNlcyBvbiB1bmtub3duIG5hbWVzOyBcdTAzOWIgemVyby1waW5zIG9uIGEgemVybyBheGlzOyBhIHRhbXBlcmVkIHJlY2VpcHQgZmFpbHMgdmVyaWZ5X2NoYWluOyBhIHN1Yi1mbG9vciBcdTAzOWIgaGFsdHMgdGhlIGdvdmVybmVkIGxvb3AiCiAgfSwKICAicHJvb2Zfc3RhdHVzIjogewogICAgInBvbGljeSI6ICJtaXJyb3JlZCBWRVJCQVRJTSBmcm9tIFNaTEhPTERJTkdTL2Nhbm9uaWNhbC1mb3JtdWxhcy12MSAoUFJPVkVOL0FYSU9NL1NPUlJZL0NPTkpFQ1RVUkUpIiwKICAgICJvYmxpZ2F0aW9uX3ZzX2xvY2tlZCI6ICJhIHBlci1mb3JtdWxhIFBST1ZFTiguLi4pIHRhZyBpcyBhbiBvYmxpZ2F0aW9uLWxldmVsIGxhYmVsLCBOT1QgbWVtYmVyc2hpcCBpbiB0aGUgbG9ja2VkLXByb3ZlbiBjYW5vbmljYWwgc2V0IiwKICAgICJsb2NrZWRfcHJvdmVuX2NvdW50IjogOCwKICAgICJsb2NrZWRfcHJvdmVuX2lkcyI6IFsKICAgICAgIkYxIiwKICAgICAgIkY0IiwKICAgICAgIkY3IiwKICAgICAgIkYxMSIsCiAgICAgICJGMTIiLAogICAgICAiRjE4IiwKICAgICAgIkYxOSIsCiAgICAgICJGMjIiCiAgICBdLAogICAgImxvY2tlZF9jb3VudF90aGVvcmVtIjogImxvY2tlZF9jb3VudF9laWdodCAobm8tYXhpb20sIHN6bC1ob2xkaW5ncy9sdXRhci1sZWFuIFBST1ZFTl9GT1JNVUxBUy5tZCkiLAogICAgImZfbnVtYmVyX3RvX3JlZ2lzdHJ5X21hcHBpbmciOiAiVU5LTk9XTiBcdTIwMTQgbHV0YXItbGVhbiBjb3JwdXMgKD49MjIgZm9ybXVsYXMpIGlzIGEgc2VwYXJhdGUgbnVtYmVyaW5nOyBtYXBwaW5nIG9udG8gdGhlc2UgMjEgcmVnaXN0cnkgZW50cmllcyBpcyBOT1QgYXNzZXJ0ZWQgaGVyZSAobmV2ZXIgZmFicmljYXRlZCkiCiAgfSwKICAibGFtYmRhIjogewogICAgInN0YXR1cyI6ICJDb25qZWN0dXJlIDEgKG9wZW4pIFx1MjAxNCB1bmlxdWVuZXNzIHVucHJvdmVuIChVbmlxdWVuZXNzLmxlYW46MTIwIHNvcnJ5KSIsCiAgICAiZGVmaW5pdGlvbiI6ICJ3ZWlnaHRlZCBnZW9tZXRyaWMgbWVhbiAoRDIpIiwKICAgICJjb21wb3Nlcl9yb2xlIjogIkFEVklTT1JZIG9ubHkgXHUyMDE0IG5vbi1jb21wZW5zYXRvcnkgcm9sbC11cCwgTk9UIHByb3ZlbiB0cnVzdCIKICB9LAogICJjbGFpbXMiOiB7CiAgICAidHJhaW5lZF9tb2RlbCI6ICJDTEFJTUVEIFx1MjAxNCBza2xlYXJuIEhpc3RHcmFkaWVudEJvb3N0aW5nQ2xhc3NpZmllciwgTUVBU1VSRUQsIHJlY2VpcHRlZCIsCiAgICAicmVwcm9kdWNpYmxlX2J1aWxkIjogIk5PVF9DTEFJTUVEIiwKICAgICJ3ZWlnaHRzX3ByZXNlbnQiOiAibW9kZWwuam9ibGliIChza2xlYXJuIHN1cnJvZ2F0ZTsga2VybmVsIHN0YXlzIHdlaWdodGxlc3MpIgogIH0sCiAgImxpbWl0cyI6IFsKICAgICJUaGUgdHJhaW5lZCBzdXJyb2dhdGUgaXMgYSBmYXN0IGZvcm11bGEgSURFTlRJRklFUiBmcm9tIHRyYWNlIHNoYXBlOyBpdCBkb2VzIE5PVCByZXBsYWNlIHRoZSBrZXJuZWwncyByZWFsIGV2YWx1YXRvcnMsIHdoaWNoIHJlbWFpbiBhdXRob3JpdGF0aXZlIGZvciBmb3JtdWxhIGlkZW50aXR5LiIsCiAgICAiU29tZSBmb3JtdWxhcyBzaGFyZSBhbiBhcmd1bWVudCtvdXRwdXQgb2JzZXJ2YWJsZSBzaWduYXR1cmUgYW5kIGFyZSBjb25mdXNhYmxlIGZyb20gdHJhY2Ugc2hhcGUgYWxvbmU7IHRoZXNlIGJsaW5kIHNwb3RzIGFyZSBNRUFTVVJFRCBhbmQgc3RhdGVkIGluIFRSQUlOSU5HX1JFQ0VJUFQuanNvbi4iLAogICAgIlRoZSAyMSBmb3JtdWxhcyBhcmUgcHVyZS9uby1JL087IHRoZSBjb21wb3NlciBwZXJmb3JtcyBubyBuZXR3b3JrIGFjY2Vzcy4iLAogICAgIlBST09GX1NUQVRVUyBsYWJlbHMgYXJlIHRoZSBkYXRhc2V0J3Mgb2JsaWdhdGlvbi1sZXZlbCBkZWNsYXJhdGlvbnMsIG5vdCB1cGdyYWRlZCBoZXJlLiIsCiAgICAiTG9ja2VkLXByb3ZlbiBjYW5vbmljYWwgc2V0IGlzIGZpeGVkIGF0IGV4YWN0bHkgOCBhbmQgbmV2ZXIgaW5mbGF0ZWQuIiwKICAgICJUaGUgY29tcG9zZXIncyBcdTAzOWIgcm9sbC11cCBkb2VzIG5vdCBwcm92ZSBvciB1cGdyYWRlIFx1MDM5Yiwgd2hpY2ggc3RheXMgQ29uamVjdHVyZSAxIChvcGVuKS4iCiAgXQp9",
+    "original_sha256": "9d556d9adb7c8e3347785b7d2e9664c61d190b0ede920c64cab8f4069aaf8682",
+    "scope": "Historical claims, metrics, dependencies and source-of-record assertions are preserved verbatim, not adopted as current verification."
+  },
+  "limits": [
+    "This document reconciles artifact state; it does not establish training, evaluation or runtime readiness.",
+    "Current means the exact observed revision above; publication requires a fresh expected-parent check and reviewed source approval.",
+    "Artifact absence is checked against complete captured tree paths and recognized weight suffixes, not semantic analysis of every file.",
+    "Tree receipts are unsigned audit records; this package does not claim independent third-party attestation.",
+    "Training-receipt file presence is not verification of training, rights, metrics, independent human identity or served runtime.",
+    "No dependency, stdlib-only, cryptographic, theorem, source-authority or model-quality claim is inferred from absent weights."
+  ]
+}
