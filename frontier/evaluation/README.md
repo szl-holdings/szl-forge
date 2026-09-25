@@ -49,6 +49,15 @@ Each completed run emits:
 - `summary.json`: comparison metrics and the persistent HOLD disposition;
 - `publication.json`: Hub dataset commit identity when publication is enabled.
 
+The published card explicitly configures the default Dataset Viewer split to
+select only `runs/**/summary.json`. It contains one row per evaluation run;
+`train` is an archive indexing label, not a training curriculum. Receipts,
+response bundles, logs, and `SEALED_COUNT.json` retain their original files and
+schemas outside that table. Automatic discovery of all JSON files would mix
+these incompatible schemas and fail dataset conversion. Each summary retains
+the digest of its unsigned receipt; this indexing choice changes no metrics,
+raw evidence, or HOLD/no-promotion boundary.
+
 The source attestation pins the GLM-5.3 Flash model revision and the SHA-256 values of its license, card, configuration, generation configuration, and tokenizer configuration. No candidate weight shard is downloaded. No repository Python file is executed.
 
 ## Local contract test

@@ -1,0 +1,50 @@
+{
+  "schema": "szl.artifact-identity-binding/v1",
+  "repository": "SZLHOLDINGS/chaski-r2",
+  "pinned_revision": "661f8ee9ff6ab8b11dda6e7a9d42c14d3124c6dd",
+  "generated_at_utc": "2026-09-24T21:10:28+00:00",
+  "files": [
+    {
+      "path": "adapter_model.safetensors",
+      "size": 25587104,
+      "hub_lfs_sha256": "6f12981ea5df5e22d3493eefb20d75db75c1c88961ba6621a35af09edd0cdde6",
+      "local_sha256": "6f12981ea5df5e22d3493eefb20d75db75c1c88961ba6621a35af09edd0cdde6",
+      "status": "LOCAL_REHASH_MATCHES_HUB_LFS"
+    },
+    {
+      "path": "adapter_config.json",
+      "size": 1511,
+      "hub_lfs_sha256": null,
+      "local_sha256": "d36472a3100231dfdf0c4aa16d3a80cb8ab53c86af33a15172b06f9d9a313193",
+      "status": "LOCAL_REHASH_NON_LFS"
+    },
+    {
+      "path": "model.safetensors",
+      "size": 3009613624,
+      "hub_lfs_sha256": "f3b3130117711c670ce7979bdea165ddd06e00c2d307637d54ce62177a9d941d",
+      "status": "HUB_LFS_METADATA_ONLY"
+    },
+    {
+      "path": "eval_named_n_generate.json",
+      "size": 3678,
+      "hub_lfs_sha256": null,
+      "local_sha256": "c688bbcdfa40508c148233e93e4676028d559d3492d3649d5435a154401f272e",
+      "status": "LOCAL_REHASH_NON_LFS"
+    },
+    {
+      "path": "eval_merged_measured.json",
+      "size": 3851,
+      "hub_lfs_sha256": null,
+      "local_sha256": "4351df066e5078ebf9a496a148173df7f3e6b1fa7d9bf7db7ace1afeea5eb866",
+      "status": "LOCAL_REHASH_NON_LFS"
+    }
+  ],
+  "identity_binding": "ESTABLISHED_FOR_LISTED_FILES_AT_PINNED_REVISION",
+  "evaluation_binding": "NOT_CLOSED_REQUIRES_EVALUATION_RECEIPT_REFERENCING_THESE_HASHES",
+  "publication_eligible": false,
+  "autonomy_eligible": false,
+  "production_disposition": "HOLD",
+  "promotion_effect": "NONE",
+  "signature_status": "UNSIGNED_HONEST",
+  "boundary": "Byte identity is not quality, qualification, or authorization."
+}
