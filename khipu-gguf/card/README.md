@@ -74,7 +74,7 @@ Edge navigation that still fails closed, with a card that refuses to launder a q
 | NVIDIA | TensorRT-LLM is their derived path. GGUF is ours. Same idea, smaller church. |
 | Unsloth | Unsloth's GGUF export, labeled derived. |
 
-Nobody else ships this combination. That is the point of a one-of-one.
+No equivalent public combination was found among the leaders surveyed above (a snapshot, not an ecosystem-wide novelty claim).
 
 ## Intended use
 

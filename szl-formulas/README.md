@@ -57,9 +57,6 @@ Canonical GitHub source: https://github.com/szl-holdings/szl-formulas
 Hub package: https://huggingface.co/kernels/SZLHOLDINGS/szl-formulas  
 This model-type repo is the publish / card mirror. Apache-2.0.
 
-```python
-
-
 <!-- SZL-ATELIER-CUT:v1:START -->
 ## The cut
 
@@ -75,7 +72,7 @@ A formula registry that cannot drift from the Lean tree.
 | NVIDIA | Recipe as code. |
 | Unsloth | No. |
 
-Nobody else ships this combination. That is the point of a one-of-one.
+No equivalent public combination was found among the leaders surveyed above (a snapshot, not an ecosystem-wide novelty claim).
 
 ## Intended use
 
@@ -88,6 +85,7 @@ Import formulas. Check proof-status before citing.
 Canonical GitHub: [`szl-holdings/szl-formulas`](https://github.com/szl-holdings/szl-formulas/blob/main/README.md)
 <!-- SZL-ATELIER-CUT:v1:END -->
 
+```python
 from kernels import get_kernel
 fx = get_kernel("SZLHOLDINGS/szl-formulas", revision="main", trust_remote_code=True)
 print(fx.registry_count())                   # 21

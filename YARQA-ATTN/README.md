@@ -80,7 +80,7 @@ An attention op whose softmax support is reconstructable from a signed log.
 | NVIDIA | cuDNN / FlashAttention silhouette — then we add the receipt. |
 | Unsloth | Unrelated. Don't wrap this in FastLanguageModel. |
 
-Nobody else ships this combination. That is the point of a one-of-one.
+No equivalent public combination was found among the leaders surveyed above (a snapshot, not an ecosystem-wide novelty claim).
 
 ## Intended use
 

@@ -66,7 +66,7 @@ A model that cannot attend to what it is not allowed to see.
 | NVIDIA | Fused kernel, NVIDIA-shaped, SZL-cut. |
 | Unsloth | No. |
 
-Nobody else ships this combination. That is the point of a one-of-one.
+No equivalent public combination was found among the leaders surveyed above (a snapshot, not an ecosystem-wide novelty claim).
 
 ## Intended use
 

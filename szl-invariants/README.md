@@ -51,14 +51,11 @@ Eight falsifiable receipt/ledger invariants, offline. **Not a model. No weights.
 
 **IS:** a pure-Python, stdlib-only governance kernel that replays the same eight checks the a11oy backbone runs at `/api/invariants` over a ledger JSONL you already hold. Public API: `run_invariants`, `load_jsonl`, `verify_ed25519`, `selfcheck`. Statuses `HOLDS / VIOLATED / KEY_ROTATED / NO_DATA / UNAVAILABLE` are first-class.
 
-**IS NOT:** trained weights or a LoRA. Not a CUDA bench. Passing `selfcheck` is not an eval leaderboard. Hub `model.joblib` is **QUARANTINED** executable serialization — do not `joblib.load` it. These checks do not prove the export is complete.
+**IS NOT:** trained weights or a LoRA. Not a CUDA bench. Passing `selfcheck` is not an eval leaderboard. No `model.joblib` is published in this repo (OBSERVED 2026-09-25); any executable serialization would be **QUARANTINED** — never `joblib.load` an artifact from a card mirror. These checks do not prove the export is complete.
 
 Canonical GitHub source: https://github.com/szl-holdings/szl-invariants  
 Hub package: https://huggingface.co/kernels/SZLHOLDINGS/szl-invariants  
 This model-type repo is the publish / card mirror. Apache-2.0.
-
-```python
-
 
 <!-- SZL-ATELIER-CUT:v1:START -->
 ## The cut
@@ -75,7 +72,7 @@ Weights that are invalid if unsigned — at load time, not at audit time.
 | NVIDIA | Supply-chain (signed containers) applied to tensors. |
 | Unsloth | After merge, sign. Not during QLoRA. |
 
-Nobody else ships this combination. That is the point of a one-of-one.
+No equivalent public combination was found among the leaders surveyed above (a snapshot, not an ecosystem-wide novelty claim).
 
 ## Intended use
 
@@ -88,6 +85,7 @@ Load-time invariant check.
 Canonical GitHub: [`szl-holdings/szl-invariants`](https://github.com/szl-holdings/szl-invariants/blob/main/README.md)
 <!-- SZL-ATELIER-CUT:v1:END -->
 
+```python
 from kernels import get_kernel
 inv = get_kernel("SZLHOLDINGS/szl-invariants", revision="main", trust_remote_code=True)
 report = inv.run_invariants(inv.load_jsonl("runs_export.jsonl"),

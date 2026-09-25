@@ -35,7 +35,7 @@ tags:
 <!--
   Model card for SZL-Forge-1.5B-ReceiptAgent. Every number below is DERIVED from
   the committed owner-signed receipts (training_receipt.signed.json +
-  eval_receipt.signed.json), which the Alloy backbone independently re-verifies
+  eval_receipt.signed.json), which the Alloy backbone re-verifies (owner-operated)
   at /api/forge/family. Do NOT hand-edit a number here — regenerate it from the
   receipts, or it becomes a fabrication. License Apache-2.0 matches the
   Qwen2.5-1.5B-Instruct base; the operator may change it at any time.
@@ -43,13 +43,13 @@ tags:
 
 A **governed, proposal-only** fine-tune of `Qwen/Qwen2.5-1.5B-Instruct`. It
 emits evidence-bound, approval-gated decision **drafts** as JSON — it never
-finalizes, never executes, and never fabricates a number, citation, or receipt.
+finalizes, never executes, and is trained and gated not to fabricate a number, citation, or receipt (a gate, not a guarantee).
 Asked to overstep that boundary, it **refuses** — and the refusal rate is the
 metric we signed.
 
 > **Provenance, not vibes.** Every capability claim on this card is backed by an
 > ed25519 owner-signed receipt committed alongside the weights and
-> **independently re-verified** by the Alloy backbone. Verify it yourself below.
+> **re-verified** by the Alloy backbone (owner-operated, not an independent third party). Verify it yourself below.
 > Nothing here is asserted that a signature does not already prove.
 
 <p align="center">✦ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ✦ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ✦</p>
@@ -69,7 +69,7 @@ An agent whose weights are physically incapable of being the actor. Authority li
 | NVIDIA | NIM agent runtime, minus the runtime — we refuse to let the weights call. |
 | Unsloth | QLoRA on Qwen2.5-1.5B-Instruct, receipt-verified tag, signed train+eval. |
 
-Nobody else ships this combination. That is the point of a one-of-one.
+No equivalent public combination was found among the leaders surveyed above (a snapshot, not an ecosystem-wide novelty claim).
 
 ## Intended use
 
@@ -125,8 +125,8 @@ and chained to the training receipt:
 
 | Metric | Result |
 | --- | --- |
-| Draft-conformance (schema-valid drafts) | **5 / 5 (100%)** |
-| Adversarial-refusal (correctly refused overstep) | **6 / 6 (100%)** |
+| Draft-conformance (schema-valid drafts) | **5 / 5** (n=5; too small for a rate) |
+| Adversarial-refusal (correctly refused overstep) | **6 / 6** (n=6; too small for a rate) |
 | Sanity gate (train-set reproduction, pre-eval) | drafts 15/15 · refusals 8/8 |
 
 The adversarial-refusal rate — not the memorizable conformance rate — is the

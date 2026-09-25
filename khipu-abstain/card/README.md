@@ -13,14 +13,13 @@ tags:
 - szl-holdings
 - khipu
 - abstain-retrain
-- no-weights
-- curriculum-only
+- weights-unreceipted
 szl:
   doctrine: v11-LOCKED
   lean: 749/14/163
   lambda: Conjecture 1 — advisory, never a theorem
   artifact_class: ADAPTER
-  weights: UNAVAILABLE
+  weights: PRESENT_UNRECEIPTED
   jobs: UNAVAILABLE
   evals: none-this-run
   publication_eligible: false
@@ -29,52 +28,49 @@ szl:
   successor_with_weights: SZLHOLDINGS/KHIPU-R2
 ---
 
-> **EXPERIMENT. Adapter bytes missing or unverified.**
-> Evaluators use `SZLHOLDINGS/SZL-Khipu-1.5B` until a receipted adapter exists.
+> **EXPERIMENT. Adapter bytes present but unreceipted.**
+> Evaluators use `SZLHOLDINGS/SZL-Khipu-1.5B` until a receipt binds the bytes on this ID.
 
-> **NO WEIGHTS IN THIS REPO — metadata corrected.** The card already said
-> "WEIGHTS UNAVAILABLE", but the front matter simultaneously declared
-> `library_name: peft`, `base_model_relation: adapter` and
-> `pipeline_tag: text-generation`, plus `peft`/`qlora` tags. Together those tell
-> the Hub this is a loadable PEFT adapter. There is no
-> `adapter_model.safetensors` here, so it is not. Those four declarations have
-> been removed; the prose was already honest and is unchanged.
+> **WEIGHTS ARE PRESENT ON THIS ID — card corrected 2026-09-25.** Earlier versions of
+> this card said "NO WEIGHTS IN THIS REPO". That is no longer true. Observed on
+> 2026-09-25 (authenticated Hub tree read):
 >
-> What *is* here is a complete, runnable training curriculum: `train.jsonl`,
-> `train.abstain.jsonl`, `adversarial.jsonl`, `eval.jsonl`, a 23 KB training
-> script, and a manifest. Everything needed to produce the adapter is present —
-> it has simply not been run. The trained successor is
-> [KHIPU-R2](https://huggingface.co/SZLHOLDINGS/KHIPU-R2) (abstain 3/6 MEASURED,
-> declared not a pass).
+> | File | Bytes | SHA-256 (LFS) |
+> |---|---:|---|
+> | `khipu-abstain-adapter/adapter_model.safetensors` | 147,770,496 | `da0f948b7a6b555cbd50026eafcbb38ae8187b66be450fd1c3ed27f7eff9bef1` |
+> | `khipu-f16.gguf` | 3,093,668,832 | `0df16da8dc6d5865370b90880080dfefda028a5e4c0f758825bf40cdcfb93bd2` |
+>
+> `training_receipt.signed.json` on this ID (Ed25519 keyId `89540347a69b789e`,
+> `trainedAt` 2026-09-08T18:44:18Z, finalTrainLoss 0.0250) binds
+> `adapterSha256 = bd5a1a92…9f1db` and `weightsArtifactSha256 = 86c33222…3476`.
+> **Neither hash matches the bytes above.** The receipt therefore does not
+> attest these files. Until a receipt binds them, the weights are
+> **PRESENT_UNRECEIPTED**: loadable, not evidence. `khipu-abstain-adapter/README.md`
+> is an untouched PEFT template and carries no provenance.
+>
+> What *is* receipted is the curriculum: `train.jsonl`, `train.abstain.jsonl`,
+> `adversarial.jsonl`, `eval.jsonl`, `khipu.schema.json` (hashes in
+> `manifest.json` and in the receipt match) and the 23 KB training script.
 
-<p align="center">
-  <img src="holo-banner.svg" alt="SZL-Khipu-1.5B-abstain — holographic closed-gate banner" width="100%"/>
-</p>
+# SZL-Khipu-1.5B-abstain
 
-<h1 align="center">K H I P U &nbsp;A B S T A I N</h1>
-
-<p align="center"><em>A specialist in silence. Capability is someone else's LoRA.</em></p>
-
-<p align="center">
-  <img alt="Base: Qwen2.5-1.5B-Instruct" src="https://img.shields.io/badge/base-Qwen2.5--1.5B--Instruct-334155?style=flat-square"/>
-  <img alt="Downloads" src="https://img.shields.io/huggingface/dt/SZLHOLDINGS/SZL-Khipu-1.5B-abstain?style=flat-square&color=fb7185&label=downloads"/>
-  <img alt="Weights: UNAVAILABLE — curriculum only" src="https://img.shields.io/badge/weights-UNAVAILABLE%20%C2%B7%20curriculum%20only-991b1b?style=flat-square"/>
-  <img alt="Eval: not yet run — no fabricated k/n" src="https://img.shields.io/badge/eval-not%20yet%20run%20%C2%B7%20no%20fabricated%20k%2Fn-b45309?style=flat-square"/>
-  <img alt="Prior abstain: 2 of 6 blocker" src="https://img.shields.io/badge/prior%20abstain-2%20of%206%20blocker-9f1239?style=flat-square"/>
-  <img alt="License: Apache-2.0" src="https://img.shields.io/badge/License-Apache--2.0-7e8aa3?style=flat-square"/>
-</p>
-
-**WEIGHTS UNAVAILABLE.** No `adapter_model.safetensors` on this ID. Successor adapter with weights is [`SZLHOLDINGS/KHIPU-R2`](https://huggingface.co/SZLHOLDINGS/KHIPU-R2).
+**WEIGHTS: PRESENT_UNRECEIPTED.** Bytes exist on this ID; no receipt binds them. Successor adapter with a receipted evaluation is [`SZLHOLDINGS/KHIPU-R2`](https://huggingface.co/SZLHOLDINGS/KHIPU-R2).
 
 QLoRA **adapter** retrain recipe of the existing Khipu line. Raises in-memory
 `ABSTAIN_OVERSAMPLE` from 2 to 4 (8×4=32 abstain vs 15 navigate). Proposal-only.
 Λ = Conjecture 1. Doctrine v11 LOCKED 749/14/163.
 
-This ID currently holds curriculum + script only. It is **not** a loadable PEFT adapter.
-
 | | |
 |---|---|
-| **Weights** | **UNAVAILABLE** |
+| **Weights** | **PRESENT_UNRECEIPTED** (adapter 147.8 MB + f16 GGUF 3.09 GB; hashes above; no binding receipt) |
+| **Jobs** | **UNAVAILABLE** |
+| **Base (canonical)** | [`Qwen/Qwen2.5-1.5B-Instruct`](https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct) |
+| **Runtime train** | `unsloth/Qwen2.5-1.5B-Instruct-bnb-4bit` (same Qwen2.5-1.5B weights, 4-bit) — matches `adapter_config.json` |
+| **Relation** | `adapter` (LoRA r=32, α=64, q/k/v/o/gate/up/down; PEFT 0.20.0) |
+| **License** | Apache-2.0 |
+| **Does NOT overwrite** | [`SZLHOLDINGS/SZL-Khipu-1.5B`](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B) signed weights |
+| **Successor with weights** | [`SZLHOLDINGS/KHIPU-R2`](https://huggingface.co/SZLHOLDINGS/KHIPU-R2) (MEASURED abstain 3/6, not a pass) |
+| **This is NOT** | the Chaski Qwen3.5 lock |
 
 <!-- SZL-ATELIER-CUT:v1:START -->
 ## The cut
@@ -91,7 +87,7 @@ A specialist in silence. Capability is someone else's LoRA.
 | NVIDIA | A guardrail as weights, not as Colang. |
 | Unsloth | QLoRA adapter, proposal-only, research-only tag. |
 
-Nobody else ships this combination. That is the point of a one-of-one.
+No equivalent public combination was found among the leaders surveyed above (a snapshot, not an ecosystem-wide novelty claim).
 
 ## Intended use
 
@@ -102,23 +98,16 @@ Stack on the navigator. Measure abstain. Do not ship on hope.
 - research-only
 - proposal-only
 - Does not magically fix 2/6 until a signed eval says so.
+- The adapter bytes on this ID are not bound by any receipt; treat them as unverified.
 
-Canonical GitHub: [`szl-holdings/szl-forge`](https://github.com/szl-holdings/szl-forge/blob/main/khipu/)
+Canonical GitHub: [`szl-holdings/szl-forge`](https://github.com/szl-holdings/szl-forge/blob/main/khipu-abstain/)
 <!-- SZL-ATELIER-CUT:v1:END -->
-
-| **Jobs** | **UNAVAILABLE** |
-| **Base (canonical)** | [`Qwen/Qwen2.5-1.5B-Instruct`](https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct) |
-| **Runtime train** | `unsloth/Qwen2.5-1.5B-Instruct-bnb-4bit` (same Qwen2.5-1.5B weights, 4-bit) |
-| **Relation** | `adapter` (declared; files not present) |
-| **License** | Apache-2.0 |
-| **Does NOT overwrite** | [`SZLHOLDINGS/SZL-Khipu-1.5B`](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B) signed weights |
-| **Successor with weights** | [`SZLHOLDINGS/KHIPU-R2`](https://huggingface.co/SZLHOLDINGS/KHIPU-R2) (MEASURED abstain 3/6, not a pass) |
-| **This is NOT** | the Chaski Qwen3.5 lock |
 
 ## Evaluation
 
 **Status: NOT YET RUN.** No fabricated k/n. `publication_eligible` is false until
-the held-out eval in `train_khipu_abstain.py` actually executes after training.
+the held-out eval in `train_khipu_abstain.py` actually executes after training
+and its receipt binds the adapter hash above.
 
 Prior original MEASURED abstain on `SZLHOLDINGS/SZL-Khipu-1.5B` is **2/6** (blocker).
 Eval protocol: `eval.jsonl` 5 navigate + `adversarial.jsonl` 6 abstain. Report k/n only.
@@ -136,9 +125,3 @@ Eval protocol: `eval.jsonl` 5 navigate + `adversarial.jsonl` 6 abstain. Report k
 Proposal-only JSON retrieval plans (`NAVIGATE` / `ABSTAIN`) over synthetic Brain
 node handles. A controller outside the weights validates and resolves content.
 Not autonomous. Not a replacement for the signed original weights.
-
----
-
-<p align="center">
-  Hub: <a href="https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B-abstain">SZLHOLDINGS/SZL-Khipu-1.5B-abstain</a>
-</p>
