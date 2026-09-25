@@ -1,0 +1,145 @@
+name: Evidence Lab offline source contracts
+
+on:
+  pull_request:
+    paths: ['operational/evidence_lab/**', '.github/workflows/evidence-lab-ci.yml']
+  push:
+    branches: [main]
+    paths: ['operational/evidence_lab/**', '.github/workflows/evidence-lab-ci.yml']
+  merge_group:
+    types: [checks_requested]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: evidence-lab-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  offline-contract:
+    name: Evidence Lab offline contracts (Python ${{ matrix.python }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.11', '3.12']
+    env:
+      HF_HUB_OFFLINE: '1'
+      TRANSFORMERS_OFFLINE: '1'
+      HF_HUB_DISABLE_IMPLICIT_TOKEN: '1'
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24.8.0'
+
+      - name: Install isolated CPU contract dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports/evidence-lab
+          python -m venv .evidence-lab-venv
+          .evidence-lab-venv/bin/python -m pip --version > reports/evidence-lab/pip.txt
+          .evidence-lab-venv/bin/python -m pip install 'torch==2.11.0' --index-url https://download.pytorch.org/whl/cpu --report reports/evidence-lab/torch-install.json
+          .evidence-lab-venv/bin/python -m pip install 'numpy==2.4.6' 'fastapi==0.140.13' 'httpx==0.28.1' --report reports/evidence-lab/api-install.json
+          .evidence-lab-venv/bin/python -m pip check
+          .evidence-lab-venv/bin/python -m pip freeze > reports/evidence-lab/environment.txt
+          node --version > reports/evidence-lab/node.txt
+          .evidence-lab-venv/bin/python -I -B - <<'PY'
+          import shutil
+          import torch
+          assert torch.__version__.split('+', 1)[0] == '2.11.0', torch.__version__
+          assert torch.version.cuda is None, 'The offline contract job requires the CPU wheel'
+          assert shutil.which('node'), 'Node is required; the UI test must not skip'
+          print('CPU-only tensor fixtures and Node available; no model weights are loaded')
+          PY
+
+      - name: Verify package manifest and compile source without model imports
+        shell: bash
+        run: |
+          set -euo pipefail
+          .evidence-lab-venv/bin/python -I -B - <<'PY'
+          import importlib.util
+          import json
+          from pathlib import Path
+          root = Path('operational/evidence_lab').resolve()
+          spec = importlib.util.spec_from_file_location('evidence_lab_operator', root / 'frontier.py')
+          assert spec is not None and spec.loader is not None
+          operator = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(operator)
+          manifest = operator.verify_source()
+          actual = {path.relative_to(root).as_posix() for path in root.rglob('*')
+                    if path.is_file() and '__pycache__' not in path.parts and path.suffix != '.pyc'}
+          expected = set(manifest['files']) | {'source-manifest.json'}
+          if actual != expected:
+              raise RuntimeError(f'Package file-set drift: added={sorted(actual - expected)}, missing={sorted(expected - actual)}')
+          for name in sorted(manifest['files']):
+              if name.endswith('.py'):
+                  compile((root / name).read_bytes(), name, 'exec')
+          receipt = {'status': 'SOURCE_MANIFEST_VERIFIED', 'files': len(actual),
+                     'model_inference_performed': False, 'network_evaluation_performed': False}
+          Path('reports/evidence-lab/source.json').write_text(json.dumps(receipt, indent=2) + '\n', encoding='utf-8')
+          print(json.dumps(receipt))
+          PY
+
+      - name: Run complete baseline, preview and risk contract suites without skips
+        shell: bash
+        run: |
+          set -euo pipefail
+          .evidence-lab-venv/bin/python -I -B - <<'PY'
+          import subprocess
+          import sys
+          from pathlib import Path
+          root = Path('operational/evidence_lab').resolve()
+          reports = Path('reports/evidence-lab').resolve()
+          runner = r'''
+          import json
+          from pathlib import Path
+          import sys
+          import unittest
+          folder, destination, minimum = Path(sys.argv[1]), Path(sys.argv[2]), int(sys.argv[3])
+          suite = unittest.TestLoader().discover(str(folder), pattern='test_*.py')
+          result = unittest.TextTestRunner(verbosity=2).run(suite)
+          counts = {'tests_run': result.testsRun, 'failures': len(result.failures),
+                    'errors': len(result.errors), 'skipped': len(result.skipped),
+                    'expected_failures': len(result.expectedFailures),
+                    'unexpected_successes': len(result.unexpectedSuccesses),
+                    'minimum_required': minimum, 'model_inference_performed': False}
+          passed = (result.wasSuccessful() and result.testsRun >= minimum
+                    and not result.skipped and not result.expectedFailures and not result.unexpectedSuccesses)
+          counts['status'] = 'OFFLINE_CONTRACT_PASSED' if passed else 'OFFLINE_CONTRACT_FAILED'
+          destination.write_text(json.dumps(counts, indent=2) + '\n', encoding='utf-8')
+          print(json.dumps(counts))
+          raise SystemExit(0 if passed else 1)
+          '''
+          outcomes = []
+          for name, folder, minimum in (
+              ('baseline', 'tests', 103),
+              ('preview', 'operational/tests', 47),
+              ('risk', 'risk_kernel/tests', 30),
+          ):
+              result = subprocess.run([sys.executable, '-I', '-B', '-c', runner,
+                                       str(root / folder), str(reports / f'{name}.json'), str(minimum)], cwd=root)
+              outcomes.append(result.returncode)
+          if any(outcomes):
+              raise SystemExit('One or more complete offline suites failed or skipped a check')
+          PY
+
+      - name: Preserve source and offline test evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: evidence-lab-offline-${{ matrix.python }}-${{ github.run_id }}
+          path: reports/evidence-lab/
+          if-no-files-found: error
+          retention-days: 30
