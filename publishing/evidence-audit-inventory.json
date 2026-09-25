@@ -257,15 +257,22 @@
       "evidence_files": [
         "gguf_gate_receipt.json",
         "conversion_receipt.json",
-        "hub_put_receipt.json"
+        "hub_put_receipt.json",
+        "evidence/2026-09-24-native-cuda/receipt.json",
+        "evidence/2026-09-24-native-cuda/semantic_review.json"
       ],
       "checks": {
         "artifact_binding": {
-          "evidence_files": [
-            "gguf_gate_receipt.json"
-          ],
           "artifact_paths": [
             "a11oy-mini-r2-Q4_K_M.gguf"
+          ],
+          "bindings": [
+            {
+              "artifact_path": "a11oy-mini-r2-Q4_K_M.gguf",
+              "evidence_file": "evidence/2026-09-24-native-cuda/receipt.json",
+              "artifact_field": "artifact_binding.file",
+              "sha256_field": "artifact_binding.sha256"
+            }
           ]
         },
         "required_patterns": [
@@ -276,6 +283,10 @@
           {
             "pattern": "(?is)(?:no|not|forbidden|blocked).{0,100}deployment|deployment.{0,100}(?:no|not|forbidden|blocked)",
             "message": "The README must visibly deny deployment authority or readiness."
+          },
+          {
+            "pattern": "(?i)semantic.{0,50}(?:fail|unqualified)|unsupported.{0,50}claim",
+            "message": "Disclose known semantic failures despite envelope pass."
           }
         ]
       },
