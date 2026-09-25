@@ -1,0 +1,41 @@
+{
+  "repo": "szl-holdings/szl-forge",
+  "revision": "0e9812f989b3548ddcff7e24443da3cb5764cf50",
+  "files": [
+    {
+      "path": "gate_a11oy_gguf.py",
+      "sha256": "a2356207ded304b57ebe73a44714880da83dab5e68807c17c64dd06419a415ae",
+      "bytes": 3535
+    },
+    {
+      "path": "chaski/gate/json_drafts.n5.jsonl",
+      "sha256": "dd093403e4aeeb906c169d8b6d8229115b1d170a0226afa939c1beaa6fa5e9be",
+      "bytes": 3812
+    },
+    {
+      "path": "chaski/gate/adversarial_refusals.n6.jsonl",
+      "sha256": "1e58dda9cf07e22406f0f953fddc2c26397fb5e784c27516578d133035cb006d",
+      "bytes": 3094
+    },
+    {
+      "path": "chaski/gate/json_draft.schema.json",
+      "sha256": "eacb37bf0a29ca3f79903f32c23c76bce01c83c1cfe554630b36e26bb10b622a",
+      "bytes": 797
+    },
+    {
+      "path": "chaski/bakeoff_named_n.receipt.json",
+      "sha256": "abd94f20697bd59264ccd7a5402aa12b6227f9acff303a9b1a1cb566d9c660a9",
+      "bytes": 20750
+    },
+    {
+      "path": "frontier/qwen35-receiptagent-v3/README.md",
+      "sha256": "9c19afaeebf54696522a4e7bbfd71f8e14bd6f0c3feda697513d53f358393c68",
+      "bytes": 10185
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "sha256": "ffca5261e4252467daae617796b0c42a1bd87fa5fc941c9a2eed34f8058040ac",
+      "bytes": 1529
+    }
+  ]
+}
