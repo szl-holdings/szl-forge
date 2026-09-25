@@ -1,0 +1,591 @@
+{
+  "schema_version": 1,
+  "scope": "Twelve prioritized evidence remediation repositories; no promotion verdict. Other handoff preserve-only surfaces are not claimed audited.",
+  "repositories": [
+    {
+      "repo": "SZLHOLDINGS/brain-navigator-r2",
+      "type": "model",
+      "class": "measured_research_candidate",
+      "revision": "main",
+      "readme": "README.md",
+      "canonical_source": "szl-holdings/szl-forge",
+      "evidence_files": [
+        "eval_report.json",
+        "training_receipt.json",
+        "merge_receipt.json",
+        "provenance.json"
+      ],
+      "checks": {
+        "source_disclosures": [
+          {
+            "evidence_file": "canonical/frontier/evaluation/gate_runs/brain-navigator-r2_ad510c4b0542_20260915T040842Z_receipt.json",
+            "field": "status",
+            "value": "FAIL",
+            "readme_pattern": "(?is)(?:later|canonical|post.publication|held.out).*?FAIL",
+            "message": "The canonical post-publication gate FAIL must be visible."
+          }
+        ],
+        "required_patterns": [
+          {
+            "pattern": "(?i)not promotable|not.promotable",
+            "message": "Research-only non-promotion boundary required."
+          },
+          {
+            "pattern": "(?is)(?:no|not|forbidden|blocked).{0,100}deployment|deployment.{0,100}(?:no|not|forbidden|blocked)",
+            "message": "The README must visibly deny deployment authority or readiness."
+          }
+        ],
+        "artifact_binding": {
+          "evidence_files": [
+            "eval_report.json"
+          ],
+          "artifact_paths": [
+            "adapter_model.safetensors"
+          ]
+        }
+      },
+      "external_evidence": [
+        {
+          "path": "canonical/frontier/evaluation/gate_runs/brain-navigator-r2_ad510c4b0542_20260915T031652Z_receipt.json",
+          "url": "https://raw.githubusercontent.com/szl-holdings/szl-forge/a6b58f623185820eddfb0b279d21b7d81b87137c/frontier/evaluation/gate_runs/brain-navigator-r2_ad510c4b0542_20260915T031652Z_receipt.json",
+          "revision": "a6b58f623185820eddfb0b279d21b7d81b87137c",
+          "sha256": "13cef097a7f5307c487d69be74016ddaead7e2fb0a8b9e9f5357b33070597841"
+        },
+        {
+          "path": "canonical/frontier/evaluation/gate_runs/brain-navigator-r2_ad510c4b0542_20260915T034822Z_receipt.json",
+          "url": "https://raw.githubusercontent.com/szl-holdings/szl-forge/a6b58f623185820eddfb0b279d21b7d81b87137c/frontier/evaluation/gate_runs/brain-navigator-r2_ad510c4b0542_20260915T034822Z_receipt.json",
+          "revision": "a6b58f623185820eddfb0b279d21b7d81b87137c",
+          "sha256": "092d5202977ef9e0a729d76367b078ee432cee3b3913c63e3a0d67b9a7153d25"
+        },
+        {
+          "path": "canonical/frontier/evaluation/gate_runs/brain-navigator-r2_ad510c4b0542_20260915T035351Z_receipt.json",
+          "url": "https://raw.githubusercontent.com/szl-holdings/szl-forge/a6b58f623185820eddfb0b279d21b7d81b87137c/frontier/evaluation/gate_runs/brain-navigator-r2_ad510c4b0542_20260915T035351Z_receipt.json",
+          "revision": "a6b58f623185820eddfb0b279d21b7d81b87137c",
+          "sha256": "fec767ee6e218319bac250557c62efec8be8905160bfe5579dc8e35c28bad550"
+        },
+        {
+          "path": "canonical/frontier/evaluation/gate_runs/brain-navigator-r2_ad510c4b0542_20260915T040318Z_heldout.json",
+          "url": "https://raw.githubusercontent.com/szl-holdings/szl-forge/a6b58f623185820eddfb0b279d21b7d81b87137c/frontier/evaluation/gate_runs/brain-navigator-r2_ad510c4b0542_20260915T040318Z_heldout.json",
+          "revision": "a6b58f623185820eddfb0b279d21b7d81b87137c",
+          "sha256": "3859aa5d913582e9fc16ce691afd8b7ea441ab847b814a80d46060f4ebc13296"
+        },
+        {
+          "path": "canonical/frontier/evaluation/gate_runs/brain-navigator-r2_ad510c4b0542_20260915T040318Z_receipt.json",
+          "url": "https://raw.githubusercontent.com/szl-holdings/szl-forge/a6b58f623185820eddfb0b279d21b7d81b87137c/frontier/evaluation/gate_runs/brain-navigator-r2_ad510c4b0542_20260915T040318Z_receipt.json",
+          "revision": "a6b58f623185820eddfb0b279d21b7d81b87137c",
+          "sha256": "855571e4dc6b65e1273baffc4b1d0e9356991377d8365a3b390ddec0941673a6"
+        },
+        {
+          "path": "canonical/frontier/evaluation/gate_runs/brain-navigator-r2_ad510c4b0542_20260915T040842Z_heldout.json",
+          "url": "https://raw.githubusercontent.com/szl-holdings/szl-forge/a6b58f623185820eddfb0b279d21b7d81b87137c/frontier/evaluation/gate_runs/brain-navigator-r2_ad510c4b0542_20260915T040842Z_heldout.json",
+          "revision": "a6b58f623185820eddfb0b279d21b7d81b87137c",
+          "sha256": "3859aa5d913582e9fc16ce691afd8b7ea441ab847b814a80d46060f4ebc13296"
+        },
+        {
+          "path": "canonical/frontier/evaluation/gate_runs/brain-navigator-r2_ad510c4b0542_20260915T040842Z_receipt.json",
+          "url": "https://raw.githubusercontent.com/szl-holdings/szl-forge/a6b58f623185820eddfb0b279d21b7d81b87137c/frontier/evaluation/gate_runs/brain-navigator-r2_ad510c4b0542_20260915T040842Z_receipt.json",
+          "revision": "a6b58f623185820eddfb0b279d21b7d81b87137c",
+          "sha256": "e014642995b6461330cae8e98835394e1689c25a2c7ec13b6dd575be30eda336"
+        }
+      ],
+      "required_boundaries": [
+        "publication_eligible_false",
+        "no_autonomy"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/chaski-r2",
+      "type": "model",
+      "class": "measured_research_candidate",
+      "revision": "main",
+      "readme": "README.md",
+      "canonical_source": "szl-holdings/szl-forge",
+      "evidence_files": [
+        "eval_named_n_generate.json",
+        "eval_merged_measured.json",
+        "merge_receipt.json",
+        "training_receipt.json",
+        "training_receipt.local.json",
+        "adapter-unsloth/training_receipt.json",
+        "szl-source-binding.json",
+        "provenance.json",
+        "evidence/2026-09-25-adapter-binding/source_publication_binding.json",
+        "evidence/2026-09-25-adapter-binding/receipt.json",
+        "evidence/2026-09-25-adapter-binding/identity.json"
+      ],
+      "checks": {
+        "source_disclosures": [
+          {
+            "evidence_file": "canonical/frontier/evaluation/gate_runs/chaski-r2_4ef29684c56d_20260915T093042Z_receipt.json",
+            "field": "status",
+            "value": "FAIL",
+            "readme_pattern": "(?is)(?:later|canonical|post.publication|held.out).*?FAIL",
+            "message": "The canonical post-publication gate FAIL must be visible."
+          }
+        ],
+        "required_patterns": [
+          {
+            "pattern": "(?i)not promotable|not.promotable",
+            "message": "Research-only non-promotion boundary required."
+          },
+          {
+            "pattern": "(?is)(?:no|not|forbidden|blocked).{0,100}deployment|deployment.{0,100}(?:no|not|forbidden|blocked)",
+            "message": "The README must visibly deny deployment authority or readiness."
+          },
+          {
+            "pattern": "(?i)adapter.specific|adapter.only|adapter.scoped",
+            "message": "Scope the new evaluation binding to the adapter only."
+          }
+        ],
+        "artifact_binding": {
+          "artifact_paths": [
+            "adapter_model.safetensors"
+          ],
+          "bindings": [
+            {
+              "artifact_path": "adapter_model.safetensors",
+              "evidence_file": "evidence/2026-09-25-adapter-binding/source_publication_binding.json",
+              "artifact_field": "evaluated_files[1].path",
+              "sha256_field": "evaluated_files[1].sha256"
+            }
+          ]
+        }
+      },
+      "external_evidence": [
+        {
+          "path": "canonical/frontier/evaluation/gate_runs/chaski-r2_4ef29684c56d_20260915T093042Z_heldout.json",
+          "url": "https://raw.githubusercontent.com/szl-holdings/szl-forge/a6b58f623185820eddfb0b279d21b7d81b87137c/frontier/evaluation/gate_runs/chaski-r2_4ef29684c56d_20260915T093042Z_heldout.json",
+          "revision": "a6b58f623185820eddfb0b279d21b7d81b87137c",
+          "sha256": "6002cb77c61adb7e65b3051057cbca59fdcf9056d313202811dedc1452b708fe"
+        },
+        {
+          "path": "canonical/frontier/evaluation/gate_runs/chaski-r2_4ef29684c56d_20260915T093042Z_receipt.json",
+          "url": "https://raw.githubusercontent.com/szl-holdings/szl-forge/a6b58f623185820eddfb0b279d21b7d81b87137c/frontier/evaluation/gate_runs/chaski-r2_4ef29684c56d_20260915T093042Z_receipt.json",
+          "revision": "a6b58f623185820eddfb0b279d21b7d81b87137c",
+          "sha256": "76c348b73c762de78422558af93538e37a22eae28ca34c2b80650f8d22bd57c4"
+        }
+      ],
+      "required_boundaries": [
+        "publication_eligible_false",
+        "no_autonomy"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/khipu-r3",
+      "type": "model",
+      "class": "measured_research_candidate",
+      "revision": "main",
+      "readme": "README.md",
+      "canonical_source": "szl-holdings/szl-forge",
+      "evidence_files": [
+        "training_receipt.laptop-blackwell.json",
+        "merge_receipt.json",
+        "provenance.json"
+      ],
+      "checks": {
+        "source_disclosures": [
+          {
+            "evidence_file": "canonical/frontier/evaluation/gate_runs/khipu-r3_89807a2680e2_20260915T040737Z_receipt.json",
+            "field": "status",
+            "value": "FAIL",
+            "readme_pattern": "(?is)(?:later|canonical|post.publication|held.out).*?FAIL",
+            "message": "The canonical post-publication gate FAIL must be visible."
+          }
+        ],
+        "required_patterns": [
+          {
+            "pattern": "(?i)not promotable|not.promotable",
+            "message": "Research-only non-promotion boundary required."
+          },
+          {
+            "pattern": "(?is)(?:no|not|forbidden|blocked).{0,100}deployment|deployment.{0,100}(?:no|not|forbidden|blocked)",
+            "message": "The README must visibly deny deployment authority or readiness."
+          }
+        ]
+      },
+      "external_evidence": [
+        {
+          "path": "canonical/frontier/evaluation/gate_runs/khipu-r3_89807a2680e2_20260915T031556Z_receipt.json",
+          "url": "https://raw.githubusercontent.com/szl-holdings/szl-forge/a6b58f623185820eddfb0b279d21b7d81b87137c/frontier/evaluation/gate_runs/khipu-r3_89807a2680e2_20260915T031556Z_receipt.json",
+          "revision": "a6b58f623185820eddfb0b279d21b7d81b87137c",
+          "sha256": "7b7a34cd33ccda0c8c65b9ab889708bc0703267dad15bf188069cbfc5d8405a9"
+        },
+        {
+          "path": "canonical/frontier/evaluation/gate_runs/khipu-r3_89807a2680e2_20260915T034629Z_receipt.json",
+          "url": "https://raw.githubusercontent.com/szl-holdings/szl-forge/a6b58f623185820eddfb0b279d21b7d81b87137c/frontier/evaluation/gate_runs/khipu-r3_89807a2680e2_20260915T034629Z_receipt.json",
+          "revision": "a6b58f623185820eddfb0b279d21b7d81b87137c",
+          "sha256": "ffefccc7c971069f5f556a9744ab4736dd0f181a5ae127d3047d9f63ad80cff7"
+        },
+        {
+          "path": "canonical/frontier/evaluation/gate_runs/khipu-r3_89807a2680e2_20260915T034813Z_receipt.json",
+          "url": "https://raw.githubusercontent.com/szl-holdings/szl-forge/a6b58f623185820eddfb0b279d21b7d81b87137c/frontier/evaluation/gate_runs/khipu-r3_89807a2680e2_20260915T034813Z_receipt.json",
+          "revision": "a6b58f623185820eddfb0b279d21b7d81b87137c",
+          "sha256": "ffefccc7c971069f5f556a9744ab4736dd0f181a5ae127d3047d9f63ad80cff7"
+        },
+        {
+          "path": "canonical/frontier/evaluation/gate_runs/khipu-r3_89807a2680e2_20260915T035344Z_receipt.json",
+          "url": "https://raw.githubusercontent.com/szl-holdings/szl-forge/a6b58f623185820eddfb0b279d21b7d81b87137c/frontier/evaluation/gate_runs/khipu-r3_89807a2680e2_20260915T035344Z_receipt.json",
+          "revision": "a6b58f623185820eddfb0b279d21b7d81b87137c",
+          "sha256": "9c0b5aec4a91bbabf6dfe80ea83fb1d52a0bce8802c600eeaaf7c23218db881c"
+        },
+        {
+          "path": "canonical/frontier/evaluation/gate_runs/khipu-r3_89807a2680e2_20260915T040223Z_heldout.json",
+          "url": "https://raw.githubusercontent.com/szl-holdings/szl-forge/a6b58f623185820eddfb0b279d21b7d81b87137c/frontier/evaluation/gate_runs/khipu-r3_89807a2680e2_20260915T040223Z_heldout.json",
+          "revision": "a6b58f623185820eddfb0b279d21b7d81b87137c",
+          "sha256": "245a54bf4c6244314effd56b2fded88eef3c0f8e83a80fa3048c1da0d8da1e22"
+        },
+        {
+          "path": "canonical/frontier/evaluation/gate_runs/khipu-r3_89807a2680e2_20260915T040223Z_receipt.json",
+          "url": "https://raw.githubusercontent.com/szl-holdings/szl-forge/a6b58f623185820eddfb0b279d21b7d81b87137c/frontier/evaluation/gate_runs/khipu-r3_89807a2680e2_20260915T040223Z_receipt.json",
+          "revision": "a6b58f623185820eddfb0b279d21b7d81b87137c",
+          "sha256": "e3972ca1b7bb8ad5863b8f9d6e1cba18642705334a2549ce66c0154ded3e6b01"
+        },
+        {
+          "path": "canonical/frontier/evaluation/gate_runs/khipu-r3_89807a2680e2_20260915T040737Z_heldout.json",
+          "url": "https://raw.githubusercontent.com/szl-holdings/szl-forge/a6b58f623185820eddfb0b279d21b7d81b87137c/frontier/evaluation/gate_runs/khipu-r3_89807a2680e2_20260915T040737Z_heldout.json",
+          "revision": "a6b58f623185820eddfb0b279d21b7d81b87137c",
+          "sha256": "245a54bf4c6244314effd56b2fded88eef3c0f8e83a80fa3048c1da0d8da1e22"
+        },
+        {
+          "path": "canonical/frontier/evaluation/gate_runs/khipu-r3_89807a2680e2_20260915T040737Z_receipt.json",
+          "url": "https://raw.githubusercontent.com/szl-holdings/szl-forge/a6b58f623185820eddfb0b279d21b7d81b87137c/frontier/evaluation/gate_runs/khipu-r3_89807a2680e2_20260915T040737Z_receipt.json",
+          "revision": "a6b58f623185820eddfb0b279d21b7d81b87137c",
+          "sha256": "8f99277690c5282c76eeb76ee501d0bb85140991e5cfd49547a668d67c4dd4ea"
+        }
+      ],
+      "required_boundaries": [
+        "publication_eligible_false",
+        "no_autonomy"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/A11OY-MINI",
+      "type": "model",
+      "class": "derived_runtime_quantization",
+      "revision": "main",
+      "readme": "README.md",
+      "canonical_source": "szl-holdings/szl-forge",
+      "evidence_files": [
+        "gguf_gate_receipt.json",
+        "conversion_receipt.json",
+        "hub_put_receipt.json",
+        "evidence/2026-09-24-native-cuda/receipt.json",
+        "evidence/2026-09-24-native-cuda/semantic_review.json"
+      ],
+      "checks": {
+        "artifact_binding": {
+          "artifact_paths": [
+            "a11oy-mini-r2-Q4_K_M.gguf"
+          ],
+          "bindings": [
+            {
+              "artifact_path": "a11oy-mini-r2-Q4_K_M.gguf",
+              "evidence_file": "evidence/2026-09-24-native-cuda/receipt.json",
+              "artifact_field": "artifact_binding.file",
+              "sha256_field": "artifact_binding.sha256"
+            }
+          ]
+        },
+        "required_patterns": [
+          {
+            "pattern": "(?i)legacy.*?deprecated|deprecated.*?legacy",
+            "message": "Legacy GGUF deprecation required."
+          },
+          {
+            "pattern": "(?is)(?:no|not|forbidden|blocked).{0,100}deployment|deployment.{0,100}(?:no|not|forbidden|blocked)",
+            "message": "The README must visibly deny deployment authority or readiness."
+          },
+          {
+            "pattern": "(?i)semantic.{0,50}(?:fail|unqualified)|unsupported.{0,50}claim",
+            "message": "Disclose known semantic failures despite envelope pass."
+          }
+        ]
+      },
+      "external_evidence": [
+        {
+          "path": "canonical/chaski_r2/a11oy_mini_r2_gguf/gguf_gate_receipt.json",
+          "url": "https://raw.githubusercontent.com/szl-holdings/szl-forge/a6b58f623185820eddfb0b279d21b7d81b87137c/chaski_r2/a11oy_mini_r2_gguf/gguf_gate_receipt.json",
+          "revision": "a6b58f623185820eddfb0b279d21b7d81b87137c",
+          "sha256": "7b3aba65a18adb8135c9ca2ca4d2dfbd47964bc03aa594d21a81eee8cb86054e"
+        },
+        {
+          "path": "canonical/chaski_r2/a11oy_mini_r2_gguf/gguf_receipt.json",
+          "url": "https://raw.githubusercontent.com/szl-holdings/szl-forge/a6b58f623185820eddfb0b279d21b7d81b87137c/chaski_r2/a11oy_mini_r2_gguf/gguf_receipt.json",
+          "revision": "a6b58f623185820eddfb0b279d21b7d81b87137c",
+          "sha256": "b1346696cbf3cf6b8289809bc2ec4cc63e431910aadeed39b0b220c0de728bcd"
+        },
+        {
+          "path": "canonical/chaski_r2/a11oy_mini_r2_gguf/hub_put_receipt.json",
+          "url": "https://raw.githubusercontent.com/szl-holdings/szl-forge/a6b58f623185820eddfb0b279d21b7d81b87137c/chaski_r2/a11oy_mini_r2_gguf/hub_put_receipt.json",
+          "revision": "a6b58f623185820eddfb0b279d21b7d81b87137c",
+          "sha256": "8e4a8b7133549e4533315ec237cac3dd2445ac40487d164c3e1be2de1ef65a39"
+        }
+      ],
+      "required_boundaries": [
+        "publication_eligible_false",
+        "no_autonomy"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2-merged",
+      "type": "model",
+      "class": "derived_runtime_quantization",
+      "revision": "main",
+      "readme": "README.md",
+      "canonical_source": "szl-holdings/szl-forge",
+      "evidence_files": [],
+      "checks": {
+        "publication_record": {
+          "path": "canonical/frontier/qwen35-receiptagent-v2-merged/publication.json",
+          "field": "publication.hub_write",
+          "value": true
+        },
+        "required_patterns": [
+          {
+            "pattern": "(?i)5/5",
+            "message": "Equivalence claim needs named denominator."
+          },
+          {
+            "pattern": "(?i)proposal.only",
+            "message": "Proposal-only authority boundary required."
+          }
+        ]
+      },
+      "external_evidence": [
+        {
+          "path": "canonical/frontier/qwen35-receiptagent-v2-merged/publication.json",
+          "url": "https://raw.githubusercontent.com/szl-holdings/szl-forge/a6b58f623185820eddfb0b279d21b7d81b87137c/frontier/qwen35-receiptagent-v2-merged/publication.json",
+          "revision": "a6b58f623185820eddfb0b279d21b7d81b87137c",
+          "sha256": "f75ed343c6f9f0a98b154501f68daa5a77a0bc6f90f71197e6084fd5af059373"
+        },
+        {
+          "path": "canonical/receiptagent-v2/qual_v2_salvage_receipt.20260913.json",
+          "url": "https://raw.githubusercontent.com/szl-holdings/szl-forge/a6b58f623185820eddfb0b279d21b7d81b87137c/receiptagent-v2/qual_v2_salvage_receipt.20260913.json",
+          "revision": "a6b58f623185820eddfb0b279d21b7d81b87137c",
+          "sha256": "46e0f82e0952fe80d20bf501e9eb51065a88824074c5af847e1997a657a97531"
+        },
+        {
+          "path": "canonical/receiptagent-v2/salvage_receipt.20260913.json",
+          "url": "https://raw.githubusercontent.com/szl-holdings/szl-forge/a6b58f623185820eddfb0b279d21b7d81b87137c/receiptagent-v2/salvage_receipt.20260913.json",
+          "revision": "a6b58f623185820eddfb0b279d21b7d81b87137c",
+          "sha256": "2d0d617304a1fc392759342f0f9ebd15e718bf5444b8c9300468bf187775279b"
+        }
+      ],
+      "required_boundaries": [
+        "proposal_only"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3",
+      "type": "model",
+      "class": "non_release_placeholder",
+      "revision": "main",
+      "readme": "README.md",
+      "canonical_source": "szl-holdings/szl-forge",
+      "evidence_files": [
+        "eval_dev_named_n.json",
+        "training_receipt.laptop-blackwell.json",
+        "merge_receipt.json",
+        "status.json"
+      ],
+      "checks": {
+        "artifact_binding": {
+          "evidence_files": [
+            "eval_dev_named_n.json"
+          ],
+          "artifact_paths": [
+            "adapter_model.safetensors"
+          ]
+        },
+        "numeric_claims": [
+          {
+            "pattern": "(?i)(?:MEASURED\\s+|Total\\s*\\|\\s*\\*\\*)(\\d+)\\s*/\\s*(\\d+)",
+            "evidence_file": "eval_dev_named_n.json",
+            "numerator_field": "correct",
+            "denominator_field": "n",
+            "message": "DEV correct/n must match the committed evaluation."
+          }
+        ],
+        "required_patterns": [
+          {
+            "pattern": "(?i)unparseable",
+            "message": "The development failure must remain visible."
+          },
+          {
+            "pattern": "(?is)(?:no|not|forbidden|blocked).{0,100}deployment|deployment.{0,100}(?:no|not|forbidden|blocked)",
+            "message": "The README must visibly deny deployment authority or readiness."
+          }
+        ]
+      },
+      "required_boundaries": [
+        "publication_eligible_false",
+        "no_autonomy"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-triage-qwen3.5-0.8b-lora-study5",
+      "type": "model",
+      "class": "measured_research_candidate",
+      "revision": "main",
+      "readme": "README.md",
+      "canonical_source": "szl-holdings/szl-typesafe-triage",
+      "evidence_files": [
+        "evidence/frozen/experiment_manifest.json",
+        "evidence/evaluation/aggregate_metrics.json",
+        "evidence/huggingface-publication.json",
+        "evidence/adapter-index.json",
+        "gate_report.json"
+      ],
+      "checks": {
+        "source_disclosures": [
+          {
+            "evidence_file": "evidence/huggingface-publication.json",
+            "field": "release_status",
+            "value": "BLOCKED",
+            "readme_pattern": "BLOCKED",
+            "message": "Five-seed release remains blocked."
+          }
+        ],
+        "required_patterns": [
+          {
+            "pattern": "(?s)66.*?PROMOTABLE|PROMOTABLE.*?66",
+            "message": "Scope the legacy 66-row PROMOTABLE gate separately.",
+            "scope": "document"
+          }
+        ]
+      }
+    },
+    {
+      "repo": "SZLHOLDINGS/SZL-Khipu-1.5B",
+      "type": "model",
+      "class": "qualified_bounded_research",
+      "revision": "main",
+      "readme": "README.md",
+      "canonical_source": "szl-holdings/szl-forge",
+      "evidence_files": [
+        "training_receipt.signed.json",
+        "eval_receipt.signed.json",
+        "szl-source-binding.json",
+        "publication.json"
+      ],
+      "checks": {
+        "prohibited_patterns": [
+          {
+            "pattern": "(?s)signed artifact pins.{0,350}served GGUF",
+            "message": "Signed safetensors directory digest must not be described as served GGUF."
+          }
+        ]
+      }
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-frontier-evaluation-receipts",
+      "type": "dataset",
+      "class": "file_backed_evidence_archive",
+      "revision": "main",
+      "readme": "README.md",
+      "canonical_source": "szl-holdings/szl-forge",
+      "evidence_files": [
+        "runs/2026/09/20/github-35494755227-1-7a5b1d428631/glm-5-3-flash/bundle.json",
+        "runs/2026/09/20/github-35494755227-1-7a5b1d428631/glm-5-3-flash/receipt.json",
+        "runs/2026/09/20/github-35494755227-1-7a5b1d428631/glm-5-3-flash/summary.json"
+      ],
+      "checks": {
+        "required_patterns": [
+          {
+            "pattern": "(?i)receipt_sha256",
+            "message": "Expose summary-to-receipt integrity link."
+          },
+          {
+            "pattern": "(?i)promotion_effect=NONE",
+            "message": "Retain no-promotion boundary."
+          }
+        ],
+        "frontmatter_equals": [
+          {
+            "field": "configs",
+            "value": [
+              {
+                "config_name": "default",
+                "data_files": [
+                  {
+                    "split": "train",
+                    "path": "runs/**/summary.json"
+                  }
+                ]
+              }
+            ],
+            "message": "Index only run summaries; mixed evidence schemas cannot share the Viewer table."
+          }
+        ]
+      },
+      "required_boundaries": [
+        "hold",
+        "unsigned"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-governed-norm",
+      "type": "model",
+      "class": "software_kernel_reference",
+      "revision": "main",
+      "readme": "README.md",
+      "canonical_source": "szl-holdings/szl-forge",
+      "evidence_files": [
+        "MODEL_PROVENANCE.json",
+        "TRAINING_RECEIPT.json",
+        "OPERATIONAL.json",
+        "BENCH.laptop-blackwell.json"
+      ],
+      "checks": {
+        "prohibited_patterns": [
+          {
+            "pattern": "joblib\\.load\\(",
+            "message": "Do not offer current loading of absent model.joblib."
+          }
+        ]
+      }
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-lambda-gate",
+      "type": "model",
+      "class": "software_kernel_reference",
+      "revision": "main",
+      "readme": "README.md",
+      "canonical_source": "szl-holdings/szl-forge",
+      "evidence_files": [
+        "MODEL_PROVENANCE.json",
+        "TRAINING_RECEIPT.json",
+        "OPERATIONAL.json",
+        "BENCH.laptop-blackwell.json"
+      ],
+      "checks": {
+        "prohibited_patterns": [
+          {
+            "pattern": "(?:load_file|load_model)\\([\\\"\\x27]model\\.safetensors",
+            "message": "Do not offer current loading of absent model.safetensors."
+          }
+        ]
+      }
+    },
+    {
+      "repo": "SZLHOLDINGS/governed-inference-meter",
+      "type": "model",
+      "class": "historical_stub",
+      "revision": "main",
+      "readme": "README.md",
+      "canonical_source": "szl-holdings/szl-forge",
+      "evidence_files": [
+        "AGENTS.md"
+      ],
+      "checks": {
+        "required_patterns": [
+          {
+            "pattern": "(?i)historical.*?(?:install|example)|(?:install|example).*?historical",
+            "message": "Historical installation/examples need visible labels.",
+            "scope": "document"
+          }
+        ]
+      }
+    }
+  ]
+}
