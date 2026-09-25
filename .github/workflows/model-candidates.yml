@@ -1,0 +1,82 @@
+name: Model candidate source contracts
+on:
+  pull_request:
+    paths:
+      - 'model_candidates/**'
+      - 'candidate-tests/**'
+      - 'scripts/merge_lora_hardened.py'
+      - 'tests/test_lora_ci_ownership.py'
+      - 'model-lab/src/szl_model_lab/catalog.py'
+      - 'pyproject.toml'
+      - '.gitattributes'
+      - '.github/workflows/model-candidates.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'model_candidates/**'
+      - 'candidate-tests/**'
+      - 'scripts/merge_lora_hardened.py'
+      - 'tests/test_lora_ci_ownership.py'
+      - 'model-lab/src/szl_model_lab/catalog.py'
+      - 'pyproject.toml'
+      - '.gitattributes'
+      - '.github/workflows/model-candidates.yml'
+permissions:
+  contents: read
+jobs:
+  cpu-contracts:
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python: '3.11'
+          - os: windows-latest
+            python: '3.12'
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install isolated CPU test dependencies
+        run: |
+          python -m pip install torch==2.10.0 --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -r candidate-tests/requirements.txt
+      - name: Synthetic architecture and local HTTP contracts, not model qualification
+        run: python -m pytest -q candidate-tests --junitxml=reports/model-candidate-tests.xml
+      - name: Build and verify exact-source archives, no Hub writes or weights
+        shell: python
+        run: |
+          import hashlib
+          import json
+          import subprocess
+          import sys
+          from pathlib import Path
+          sys.path.insert(0, str(Path.cwd()))
+          from model_candidates.blueprint import build_blueprint, verify_projection, write_archive
+          revision = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+          output = Path("candidate-source-archives")
+          output.mkdir(exist_ok=False)
+          for key in ("router", "invariant-risk", "yarqa-causal"):
+              files = build_blueprint(Path("."), revision, key)
+              digest = hashlib.sha256(files["blueprint-manifest.json"]).hexdigest()
+              result = verify_projection(files, digest)
+              write_archive(output / (key + ".zip"), files)
+              print(json.dumps({"candidate": key, "manifest_sha256": digest, **result}))
+      - name: Preserve code-only review artifacts, not model releases
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: candidate-source-${{ matrix.os }}-${{ matrix.python }}
+          path: candidate-source-archives/*.zip
+          if-no-files-found: error
+          retention-days: 14
+      - name: Preserve actual CPU test results, including failures
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: candidate-tests-${{ matrix.os }}-${{ matrix.python }}-${{ github.run_id }}
+          path: reports/model-candidate-tests.xml
+          if-no-files-found: error
+          retention-days: 14

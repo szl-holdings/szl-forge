@@ -14,3 +14,8 @@ clinical-gateway/dist-model-test/
 clinical-gateway/src/*.egg-info/
 clinical-gateway/site-config/
 .runtime/
+
+.venv-ra-v2/
+.venv-ra-v3/
+khipu/.venv/
+khipu-v2/

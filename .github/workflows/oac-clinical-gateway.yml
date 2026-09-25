@@ -12,7 +12,16 @@ on:
       - "clinical-gateway/**"
       - ".github/workflows/oac-clinical-gateway.yml"
       - "README.md"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      model_revision:
+        description: "Optional full HF commit for OAC System Health readback (requires dataset revision)"
+        required: false
+        type: string
+      dataset_revision:
+        description: "Optional full HF commit for OAC synthetic dataset readback (requires model revision)"
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -22,6 +31,45 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  hub-alignment:
+    name: Pinned OAC Hub byte parity (not readiness)
+    if: github.event_name == 'workflow_dispatch' && (inputs.model_revision != '' || inputs.dataset_revision != '')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+      - name: Checkout exact source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Verify public Hub against immutable Git blobs
+        env:
+          SOURCE_REVISION: ${{ github.sha }}
+          MODEL_REVISION: ${{ inputs.model_revision }}
+          DATASET_REVISION: ${{ inputs.dataset_revision }}
+        run: |
+          python -I -B clinical-gateway/tools/verify_hub_alignment.py \
+            --git-revision "$SOURCE_REVISION" \
+            --model-revision "$MODEL_REVISION" \
+            --dataset-revision "$DATASET_REVISION" \
+            --output oac-hub-alignment.json
+      - name: Retain success or failure receipt
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: oac-hub-alignment-${{ github.run_id }}
+          path: oac-hub-alignment.json
+          if-no-files-found: error
+          retention-days: 30
+
   portable-contracts:
     name: Clinical contracts (Python ${{ matrix.python }})
     runs-on: ubuntu-latest
@@ -106,6 +154,7 @@ jobs:
             --model clinical-gateway/operational-model/artifacts/model.json \
             --receipt clinical-gateway/operational-model/artifacts/model-receipt.json \
             --input clinical-gateway/operational-model/example-input.json
+          /tmp/oac-clinical-wheel-test/bin/python -I -B clinical-gateway/tools/verify_installed_workspace.py
 
       - name: Upload wheel
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -147,8 +196,15 @@ jobs:
         shell: pwsh
         run: |
           python -m venv .venv-oac-clinical-ci
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           .\.venv-oac-clinical-ci\Scripts\python.exe -m pip install --disable-pip-version-check --requirement clinical-gateway/requirements.lock
-          $wheel = Get-ChildItem wheelhouse\szl_oac_clinical_gateway-2.5.0-py3-none-any.whl -ErrorAction Stop
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $wheel = Get-ChildItem wheelhouse\szl_oac_clinical_gateway-2.5.1-py3-none-any.whl -ErrorAction Stop
           .\.venv-oac-clinical-ci\Scripts\python.exe -m pip install --disable-pip-version-check --no-deps $wheel.FullName
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           .\.venv-oac-clinical-ci\Scripts\python.exe -m pip check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           .\.venv-oac-clinical-ci\Scripts\python.exe -m unittest discover -s clinical-gateway/tests -v
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          .\.venv-oac-clinical-ci\Scripts\python.exe -I -B clinical-gateway/tools/verify_installed_workspace.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

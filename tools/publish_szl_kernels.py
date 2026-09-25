@@ -8,10 +8,13 @@ import base64
 import hashlib
 import io
 import json
+import math
 import os
 import re
 import shutil
+import struct
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 from typing import Any, Callable, Iterable
@@ -21,7 +24,7 @@ from huggingface_hub import CommitOperationAdd, HfApi, hf_hub_download
 EXPECTED_REPO_ID = "SZLHOLDINGS/szl-kernels"
 EXPECTED_SOURCE_REPOSITORY = "szl-holdings/szl-kernels"
 EXPECTED_PUBLISHER_REPOSITORY = "szl-holdings/szl-forge"
-EXPECTED_KERNEL_PACKAGE_VERSION = "0.1.1"
+EXPECTED_KERNEL_PACKAGE_VERSION = "0.2.0"
 KERNEL_RUNTIME_CLIENT_VERSION = "0.16.0"
 KERNEL_RUNTIME_IMAGE = f"szl-kernel-runtime:{KERNEL_RUNTIME_CLIENT_VERSION}"
 KERNEL_RUNTIME_TIMEOUT_SECONDS = 300
@@ -57,8 +60,9 @@ SENSITIVE_ENV_MARKERS = (
     "PRIVATE_KEY",
     "SIGNING_KEY",
 )
+FIRST_CLASS_README_SOURCE = "KERNEL_HUB.md"
 FIRST_CLASS_KERNEL_FILES = {
-    "build/torch-universal/szl_kernels/__init__.py": (
+    "build/torch-universal/szl_kernels/_kernel_api.py": (
         f"build/{KERNEL_VARIANT}/__init__.py"
     ),
     "build/torch-universal/szl_kernels/_chain.py": (
@@ -67,7 +71,11 @@ FIRST_CLASS_KERNEL_FILES = {
     "build/torch-universal/szl_kernels/_ops.py": (
         f"build/{KERNEL_VARIANT}/_ops.py"
     ),
+    "build/torch-universal/szl_kernels/retrieval.py": (
+        f"build/{KERNEL_VARIANT}/retrieval.py"
+    ),
 }
+# These are pre-update checks: an existing v1 need not contain the new operation.
 KERNEL_EXISTING_REQUIRED_FILES = {
     ".gitattributes",
     "LICENSE",
@@ -87,9 +95,19 @@ KERNEL_REQUIRED_FILES_BY_BRANCH = {
     },
 }
 FIRST_CLASS_REQUIRED_SOURCE_FILES = {
-    "README.md",
+    FIRST_CLASS_README_SOURCE,
     *FIRST_CLASS_KERNEL_FILES.keys(),
 }
+KERNEL_REQUIRED_EXPORTS = (
+    "UnifiedReceiptChain", "tensor_digest", "GENESIS", "governed_rms_norm",
+    "governed_layer_norm", "governed_lambda_gate", "governed_measure_energy",
+    "GovernedBlock", "list_kernels", "list_series", "get_member", "selfcheck",
+    "DOCTRINE_FOOTER", "PROVENANCE", "__version__", "governed_cosine_topk",
+)
+RETRIEVAL_SMOKE_QUERY = [1.0, 0.0]
+RETRIEVAL_SMOKE_DOCUMENTS = [[0.0, 1.0], [1.0, 0.0], [1.0, 0.0], [-1.0, 0.0]]
+RETRIEVAL_SMOKE_INDICES = [[1, 2, 0, 3]]
+RETRIEVAL_SMOKE_SCORES = [[1.0, 1.0, 0.0, -1.0]]
 
 
 class PublicationError(RuntimeError):
@@ -425,10 +443,10 @@ def verify_legacy_readback(
 def kernel_file_evidence(
     source_root: Path,
 ) -> list[dict[str, Any]]:
-    readme = safe_file(source_root, "README.md")
+    readme = safe_file(source_root, FIRST_CLASS_README_SOURCE)
     evidence = [
         {
-            "source_path": "README.md",
+            "source_path": FIRST_CLASS_README_SOURCE,
             "kernel_path": "README.md",
             "bytes": readme.stat().st_size,
             "sha256": file_sha256(readme),
@@ -469,7 +487,7 @@ def stage_first_class_kernel(
 
     expected: dict[str, dict[str, bytes]] = {
         "main": {
-            "README.md": safe_file(source_root, "README.md").read_bytes(),
+            "README.md": safe_file(source_root, FIRST_CLASS_README_SOURCE).read_bytes(),
         },
         "v1": {},
     }
@@ -616,11 +634,138 @@ def revalidate_kernel_branch_parents(
     return current
 
 
+def raw_values_sha256(values: list[Any], kind: str, byte_order: str) -> str:
+    if byte_order not in {"little", "big"}:
+        raise PublicationError("retrieval evidence has an unsupported byte order")
+    prefix = "<" if byte_order == "little" else ">"
+    return hashlib.sha256(
+        struct.pack(f"{prefix}{len(values)}{kind}", *values)
+    ).hexdigest()
+
+
+def same_json_value(observed: Any, expected: Any) -> bool:
+    """Require the fixed JSON schema as well as values (True is not integer 1)."""
+    if type(observed) is not type(expected):
+        return False
+    if isinstance(expected, list):
+        return len(observed) == len(expected) and all(
+            same_json_value(actual, wanted)
+            for actual, wanted in zip(observed, expected)
+        )
+    if isinstance(expected, dict):
+        return observed.keys() == expected.keys() and all(
+            same_json_value(observed[key], value) for key, value in expected.items()
+        )
+    return observed == expected
+
+
+def retrieval_smoke_attributes(byte_order: str) -> dict[str, Any]:
+    """Compute raw-byte reference hashes without importing the published kernel."""
+    return {
+        "schema": "szl.governed-cosine-topk/v1",
+        "query_shape": [2],
+        "documents_shape": [4, 2],
+        "output_shape": [1, 4],
+        "dtype": "float32",
+        "index_dtype": "int64",
+        "device": "cpu",
+        "byte_order": byte_order,
+        "input_hash_format": "logical_c_order_raw_bytes",
+        "hash_algorithm": "sha256",
+        "query_sha256": raw_values_sha256(RETRIEVAL_SMOKE_QUERY, "f", byte_order),
+        "documents_sha256": raw_values_sha256(
+            [value for row in RETRIEVAL_SMOKE_DOCUMENTS for value in row], "f", byte_order
+        ),
+        "scores_sha256": raw_values_sha256(RETRIEVAL_SMOKE_SCORES[0], "f", byte_order),
+        "indices_sha256": raw_values_sha256(RETRIEVAL_SMOKE_INDICES[0], "q", byte_order),
+        "k": 4,
+        "block_rows": 1,
+        "actual_block_rows": 1,
+        "max_similarity_elements": 1,
+        "zero_document_count": 0,
+        "zero_document_policy": "score_zero",
+        "tie_break": "ascending_document_index",
+        "implementation": "pytorch_float32_blocked_reference",
+        "cuda_tf32_allowed": None,
+        "receipt_authenticity": "UNSIGNED",
+        "retrieval_quality": "NOT_MEASURED",
+        "acceleration_claim": False,
+    }
+
+
+def validate_retrieval_runtime_evidence(evidence: Any) -> None:
+    """Recheck retrieval values, raw hashes and receipt body in trusted code.
+
+    This establishes consistency of the reported CPU smoke run. The hash chain
+    has no signing key and is not evidence of authorship or retrieval quality.
+    """
+    try:
+        if (
+            type(evidence) is not dict
+            or evidence.keys() != {
+                "indices", "scores", "receipt", "receipt_depth", "chain_verified"
+            }
+            or not same_json_value(evidence.get("indices"), RETRIEVAL_SMOKE_INDICES)
+            or not same_json_value(evidence.get("scores"), RETRIEVAL_SMOKE_SCORES)
+            or evidence.get("chain_verified") is not True
+            or type(evidence.get("receipt_depth")) is not int
+            or evidence["receipt_depth"] != 1
+        ):
+            raise ValueError("values or chain depth")
+        receipt = evidence["receipt"]
+        if type(receipt) is not dict or receipt.keys() != {
+            "seq", "kernel", "op", "attrs", "prev", "digest", "ts"
+        }:
+            raise ValueError("receipt object schema")
+        attrs = receipt["attrs"]
+        if type(attrs) is not dict:
+            raise ValueError("receipt object schema")
+        # The kernel runs in a separate, credentialless container. Its reported
+        # byte order cannot select the trusted host's reference tensor hashes.
+        byte_order = sys.byteorder
+        if not same_json_value(attrs.get("byte_order"), byte_order):
+            raise ValueError("receipt byte order differs from trusted host")
+        expected = retrieval_smoke_attributes(byte_order)
+        if (
+            attrs.keys() != expected.keys() | {"torch_version", "matmul_precision"}
+            or type(attrs.get("torch_version")) is not str
+            or not attrs["torch_version"]
+            or type(attrs.get("matmul_precision")) is not str
+            or attrs["matmul_precision"] not in {"highest", "high", "medium"}
+            or type(receipt["ts"]) is not float
+            or not math.isfinite(receipt["ts"])
+            or type(receipt.get("seq")) is not int
+            or receipt["seq"] != 0
+            or receipt.get("prev") != "0" * 64
+            or receipt.get("kernel") != "governed_retrieval"
+            or receipt.get("op") != "cosine_topk"
+            or any(not same_json_value(attrs.get(key), value) for key, value in expected.items())
+        ):
+            raise ValueError("receipt contract")
+        # The producer uses time.time(); ts has a finite-float shape but is
+        # deliberately outside the digest. It proves neither freshness nor
+        # timestamp authenticity, and is never used as a freshness gate.
+        # Python equality treats -0.0 as +0.0. Bind the reported output values
+        # themselves to the exact float32/int64 bytes recorded in the receipt.
+        for field, kind in (("scores", "f"), ("indices", "q")):
+            if raw_values_sha256(evidence[field][0], kind, byte_order) != attrs[f"{field}_sha256"]:
+                raise ValueError("reported output raw hash")
+        body = {key: receipt[key] for key in ("seq", "kernel", "op", "attrs", "prev")}
+        digest = hashlib.sha3_256(
+            json.dumps(body, sort_keys=True, separators=(",", ":"), allow_nan=False)
+            .encode("utf-8")
+        ).hexdigest()
+        if receipt.get("digest") != digest:
+            raise ValueError("receipt digest")
+    except (AttributeError, KeyError, TypeError, ValueError, PublicationError) as exc:
+        raise PublicationError("retrieval runtime evidence failed validation") from exc
+
+
 def verify_stable_kernel_runtime(
     *,
     revision: str,
     get_kernel_fn: Callable[..., Any] | None = None,
-    tensor_fn: Callable[[list[float]], Any] | None = None,
+    tensor_fn: Callable[[list[Any]], Any] | None = None,
     client_version: str | None = None,
 ) -> dict[str, Any]:
     if get_kernel_fn is None:
@@ -647,10 +792,18 @@ def verify_stable_kernel_runtime(
         backend="cpu",
         trust_remote_code=True,
     )
+    missing_exports = [
+        name for name in KERNEL_REQUIRED_EXPORTS if not hasattr(module, name)
+    ]
+    if missing_exports:
+        raise PublicationError(f"stable get_kernel is missing public exports: {missing_exports}")
     selfcheck = module.selfcheck()
     if selfcheck.get("ok") is not True:
         raise PublicationError("stable get_kernel selfcheck did not pass")
-    if selfcheck.get("version") != EXPECTED_KERNEL_PACKAGE_VERSION:
+    if (
+        selfcheck.get("version") != EXPECTED_KERNEL_PACKAGE_VERSION
+        or module.__version__ != EXPECTED_KERNEL_PACKAGE_VERSION
+    ):
         raise PublicationError("stable get_kernel returned an unexpected package version")
 
     invalid_thresholds = (-0.01, 1.01, float("nan"), float("inf"))
@@ -693,14 +846,44 @@ def verify_stable_kernel_runtime(
             "receipt_depth": depth,
         }
 
+    chain = module.UnifiedReceiptChain()
+    result = module.governed_cosine_topk(
+        chain,
+        tensor_fn(RETRIEVAL_SMOKE_QUERY),
+        tensor_fn(RETRIEVAL_SMOKE_DOCUMENTS),
+        k=4,
+        block_rows=1,
+    )
+    if (
+        str(result["indices"].dtype) != "torch.int64"
+        or str(result["scores"].dtype) != "torch.float32"
+        or str(result["indices"].device) != "cpu"
+        or str(result["scores"].device) != "cpu"
+        or chain.verify() != (True, 1, -1)
+        or json.loads(chain.to_json()) != [result["receipt"]]
+        or chain.head() != result["receipt"].get("digest")
+        or result["receipt"].get("attrs", {}).get("byte_order") != sys.byteorder
+    ):
+        raise PublicationError("retrieval output or receipt chain contract failed")
+    retrieval = {
+        "indices": result["indices"].tolist(),
+        "scores": result["scores"].tolist(),
+        "receipt": result["receipt"],
+        "receipt_depth": 1,
+        "chain_verified": True,
+    }
+    validate_retrieval_runtime_evidence(retrieval)
+
     return {
         "status": "STABLE_GET_KERNEL_VERIFIED",
         "client_version": client_version,
         "revision": revision,
         "package_version": selfcheck["version"],
         "selfcheck_ok": True,
+        "verified_exports": list(KERNEL_REQUIRED_EXPORTS),
         "invalid_thresholds_rejected_before_receipt": len(invalid_thresholds),
         "inclusive_boundaries": boundaries,
+        "retrieval": retrieval,
     }
 
 
@@ -954,27 +1137,40 @@ def verify_stable_kernel_runtime_isolated(*, revision: str) -> dict[str, Any]:
             )
         except subprocess.TimeoutExpired:
             cleanup_timed_out = True
-    boundaries = evidence.get("inclusive_boundaries", {})
-    if (
-        evidence.get("status") != "STABLE_GET_KERNEL_VERIFIED"
-        or evidence.get("client_version") != KERNEL_RUNTIME_CLIENT_VERSION
-        or evidence.get("revision") != revision
-        or evidence.get("package_version") != EXPECTED_KERNEL_PACKAGE_VERSION
-        or evidence.get("selfcheck_ok") is not True
-        or evidence.get("invalid_thresholds_rejected_before_receipt") != 4
-        or boundaries.get("0", {}).get("passed") is not True
-        or boundaries.get("0", {}).get("receipt_depth") != 1
-        or boundaries.get("1", {}).get("passed") is not False
-        or boundaries.get("1", {}).get("receipt_depth") != 1
-    ):
-        raise PublicationError(
-            "isolated stable Kernel runtime evidence failed validation"
-        )
+    validate_stable_kernel_runtime_evidence(evidence, revision=revision)
     if cleanup_timed_out:
         raise PublicationError(
             "isolated stable Kernel runtime cleanup timed out"
         )
     return evidence
+
+
+def validate_stable_kernel_runtime_evidence(
+    evidence: Any, *, revision: str
+) -> None:
+    if type(evidence) is not dict:
+        raise PublicationError("isolated stable Kernel runtime evidence failed validation")
+    expected = {
+        "status": "STABLE_GET_KERNEL_VERIFIED",
+        "client_version": KERNEL_RUNTIME_CLIENT_VERSION,
+        "revision": revision,
+        "package_version": EXPECTED_KERNEL_PACKAGE_VERSION,
+        "selfcheck_ok": True,
+        "verified_exports": list(KERNEL_REQUIRED_EXPORTS),
+        "invalid_thresholds_rejected_before_receipt": 4,
+        "inclusive_boundaries": {
+            "0": {"passed": True, "receipt_depth": 1},
+            "1": {"passed": False, "receipt_depth": 1},
+        },
+    }
+    if (
+        evidence.keys() != expected.keys() | {"retrieval"}
+        or any(not same_json_value(evidence.get(key), value) for key, value in expected.items())
+    ):
+        raise PublicationError(
+            "isolated stable Kernel runtime evidence failed validation"
+        )
+    validate_retrieval_runtime_evidence(evidence.get("retrieval"))
 
 
 def verify_kernel_readback(
@@ -1180,6 +1376,9 @@ def run(
 
             try:
                 runtime = kernel_runtime_fn(revision=branch_targets["v1"])
+                validate_stable_kernel_runtime_evidence(
+                    runtime, revision=branch_targets["v1"]
+                )
             except Exception as exc:
                 result["targets"]["first_class_kernel"]["runtime"] = {
                     "status": "FAILED",

@@ -1,0 +1,38 @@
+{
+  "model": "SZLHOLDINGS/chaski-5050",
+  "model_revision": "63ea80915ccb663b4aa589cbf2ce52a1dec574fe",
+  "config": "C:\\Users\\steph\\szl-forge\\eval\\heldout_generate.yaml",
+  "mode": "transformers-cpu",
+  "n_total": 5,
+  "n_passed": 1,
+  "pass_rate": 0.2,
+  "heldout_passed": false,
+  "refusal_no_regression": false,
+  "results": [
+    {
+      "id": "ho-001",
+      "passed": false,
+      "output_head": "\n\n1. **Definition of a measured model** \u2013 A model is considered measured when its performance is obtained from actual data (e.g., inference on a test set). \n2. "
+    },
+    {
+      "id": "ho-002",
+      "passed": false,
+      "output_head": "\n\nThe canonical DSSE pre-auth encoding length prefix for the payload type 'application/json' is '0x000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "ho-003",
+      "passed": true,
+      "output_head": "\n\nThe verifier must recompute the hash of the new receipt and compare it to the prev_hash. If they match, the receipt is valid; otherwise, the verifier rejects "
+    },
+    {
+      "id": "ho-004",
+      "passed": false,
+      "output_head": "\n\nThe SZL model publish pipeline consists of six gates:\n\n1. **Gate 1** \u2013 The first gate in the pipeline. \n2. **Gate 2** \u2013 The second gate in the pipeline. \n3. *"
+    },
+    {
+      "id": "ho-005",
+      "passed": false,
+      "output_head": "\n\nA. A short summary of the system prompt, e.g., \"The model is an AI assistant that answers questions about the user's knowledge base.\"\nB. The full system promp"
+    }
+  ]
+}

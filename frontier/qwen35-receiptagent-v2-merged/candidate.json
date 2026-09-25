@@ -1,0 +1,45 @@
+{
+  "schema": "szl.forge.receiptagent-merged-candidate.v1",
+  "repo_id": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2-merged",
+  "kind": "merged_full_model",
+  "status": "PUBLISHED",
+  "proposal_only": true,
+  "base": {
+    "repo_id": "unsloth/Qwen3.5-0.8B",
+    "revision": "23c69c53358a07516b5827588b3fdb12ae78fd65",
+    "architecture": "multimodal wrapper (AutoModelForImageTextToText, language_model.linear_attn)"
+  },
+  "predecessor": {
+    "repo_id": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2",
+    "release_revision": "7a0d9efdebe92ea3b5b26b97cc722c6b5afde621",
+    "adapter_model_sha256": "885fc29fcb4cf55c280dc085fdb0a40f40d6b946fee400dd5e4ed3459fe6334f",
+    "role": "FROZEN_COMPARATOR_NEVER_OVERWRITTEN"
+  },
+  "merge_evidence": {
+    "method": "multimodal base load; .default key rename; verified key map; merge_and_unload; non-zero delta gate",
+    "key_map": { "checkpoint_lora_keys": 372, "expected": 372, "unmatched": 0, "missing": 0 },
+    "merge_max_weight_delta": 0.00422266,
+    "merge_tensors_touched": 186,
+    "merged_params": 852985920,
+    "local_output": "C:/Users/steph/szl/merged/szl-receiptagent-qwen35-0.8b-v2-salvaged",
+    "receipts": [
+      "receiptagent-v2/salvage_receipt.20260913.json",
+      "receiptagent-v2/qual_v2_salvage_receipt.20260913.json"
+    ]
+  },
+  "qualification": {
+    "test": "merged-vs-adapter greedy equivalence (chat-template prompts from receiptagent/eval.jsonl)",
+    "label": "MEASURED",
+    "prompts": 5,
+    "exact_matches": 5,
+    "rate": 1.0
+  },
+  "publication": {
+    "status": "PUBLISHED",
+    "url": "https://huggingface.co/SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2-merged",
+    "hub_write": true,
+    "executed_by": "owner (org admin) after lane admission (forge PR #308)",
+    "evidence": "frontier/qwen35-receiptagent-v2-merged/publication.json (dual readback verified, intendedFileCount 8, intendedBytes 3432006714)"
+  },
+  "honesty_boundary": "Proposal-only merged SKU. Does not overwrite the frozen v2 comparator repo or any immutable release binding. No production route, default, or inference authority changes."
+}

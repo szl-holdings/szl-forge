@@ -1,0 +1,104 @@
+name: vLLM-Omni pinned wheel acquisition
+
+"on":
+  pull_request:
+    paths:
+      - tools/evaluate_vllm_omni_wheel.py
+      - tests/test_vllm_omni_wheel.py
+      - frontier/vllm_omni_029rc1_contract.py
+      - tests/test_vllm_omni_029rc1_contract.py
+      - frontier/vllm-omni-029rc1/**
+      - .github/workflows/vllm-omni-wheel-acquisition.yml
+  push:
+    branches: [main]
+    paths:
+      - tools/evaluate_vllm_omni_wheel.py
+      - tests/test_vllm_omni_wheel.py
+      - frontier/vllm_omni_029rc1_contract.py
+      - tests/test_vllm_omni_029rc1_contract.py
+      - frontier/vllm-omni-029rc1/**
+      - .github/workflows/vllm-omni-wheel-acquisition.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omni-wheel-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  acquire:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12"]
+    defaults:
+      run:
+        shell: bash
+        working-directory: forge
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+      - name: Checkout exact Forge source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          path: forge
+          persist-credentials: false
+      - name: Checkout admitted upstream tree without executing it
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: vllm-project/vllm-omni
+          ref: aff7d64948f6c0e81e9b3272234623044e215967
+          path: upstream-vllm-omni
+          persist-credentials: false
+          submodules: false
+          lfs: false
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install test harness without the upstream runtime
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          python -m pip install --only-binary=:all: 'pytest==9.0.3'
+          python -m pip check
+          python -m pip freeze --all > reports/omni-wheel-test-environment.txt
+      - name: Execute offline contracts and verify admitted source pins
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          python -m pytest -q tests/test_vllm_omni_029rc1_contract.py tests/test_vllm_omni_wheel.py 2>&1 | tee reports/omni-wheel-contracts.log
+          python -O -m unittest discover -s tests -p 'test_vllm_omni_wheel.py' -v 2>&1 | tee reports/omni-wheel-contracts-optimized.log
+          python - <<'PY'
+          from frontier.vllm_omni_029rc1_contract import (
+              VLLM_OMNI_REVISION, FRONTIER_ADMISSION_MERGE,
+          )
+          from tools.evaluate_vllm_omni_wheel import UPSTREAM, ADMISSION, require
+          require(UPSTREAM == VLLM_OMNI_REVISION, 'upstream pin drift')
+          require(ADMISSION == FRONTIER_ADMISSION_MERGE, 'admission pin drift')
+          PY
+          git diff --check
+      - name: Acquire pinned public bytes and inspect source correspondence
+        run: |
+          set -euo pipefail
+          python -m tools.evaluate_vllm_omni_wheel --acquire 2>&1 | tee reports/omni-wheel-acquisition.log
+      - name: Retain observations, never the upstream wheel
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: omni-wheel-${{ github.run_id }}-${{ github.run_attempt }}-py${{ matrix.python }}
+          path: |
+            forge/reports/vllm-omni-wheel-acquisition.json
+            forge/reports/omni-wheel-contracts.log
+            forge/reports/omni-wheel-contracts-optimized.log
+            forge/reports/omni-wheel-acquisition.log
+            forge/reports/omni-wheel-test-environment.txt
+          if-no-files-found: error
+          retention-days: 90

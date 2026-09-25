@@ -1,0 +1,2819 @@
+[
+  {
+    "id": "SZLHOLDINGS/szl-blocked",
+    "repository_type": "model",
+    "revision": "c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4",
+    "repository_record": {
+      "id": "SZLHOLDINGS/szl-blocked",
+      "kind": "models",
+      "revision": "c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4",
+      "metadata": {
+        "_id": "6a3c0995570ae39aea59f960",
+        "id": "SZLHOLDINGS/szl-blocked",
+        "private": false,
+        "library_name": "kernels",
+        "tags": [
+          "kernels",
+          "kernel",
+          "eu-ai-act",
+          "compliance",
+          "annex-iv",
+          "governance",
+          "doi:10.5281/zenodo.19944926",
+          "license:apache-2.0",
+          "region:us"
+        ],
+        "downloads": 0,
+        "likes": 1,
+        "modelId": "SZLHOLDINGS/szl-blocked",
+        "author": "SZLHOLDINGS",
+        "sha": "c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4",
+        "lastModified": "2026-09-08T11:41:48.000Z",
+        "gated": false,
+        "disabled": false,
+        "model-index": null,
+        "config": {},
+        "cardData": {
+          "library_name": "kernels",
+          "license": "apache-2.0",
+          "tags": [
+            "kernel",
+            "eu-ai-act",
+            "compliance",
+            "annex-iv",
+            "governance",
+            "doi:10.5281/zenodo.19944926"
+          ],
+          "szl-governance": {
+            "verdict": "HONEST-BLOCKED",
+            "doctrine": "hard DENY dominates; advisory Λ can only tighten, never override; a BLOCKED op never executes — no fake-green",
+            "lambda": "Conjecture 1 (open) — a recorded ALLOW is never proven trust",
+            "energy": "MEASURED-only",
+            "honest_blocked": "BLOCKED is a first-class governed state; fn is NEVER called on block",
+            "annex_iv": "DRAFT skeleton auto-derived from provenance — NOT legal advice, NOT a conformity guarantee"
+          }
+        },
+        "siblings": [
+          {
+            "rfilename": ".gitattributes"
+          },
+          {
+            "rfilename": "BENCH.laptop-blackwell.json"
+          },
+          {
+            "rfilename": "LICENSE"
+          },
+          {
+            "rfilename": "MODEL_PROVENANCE.json"
+          },
+          {
+            "rfilename": "OPERATIONAL.json"
+          },
+          {
+            "rfilename": "PROMOTION_READINESS_AUDIT.json"
+          },
+          {
+            "rfilename": "README.md"
+          },
+          {
+            "rfilename": "SECURITY.md"
+          },
+          {
+            "rfilename": "SZL_ESTATE_MANAGED.json"
+          },
+          {
+            "rfilename": "TRAINING_RECEIPT.json"
+          },
+          {
+            "rfilename": "bom/model-bom.cdx.json"
+          },
+          {
+            "rfilename": "build.toml"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_blocked/__init__.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_blocked/_chain.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_blocked/_gate.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_blocked/_rules.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_blocked/metadata.json"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_euaiact/__init__.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_euaiact/_annex_iv.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_euaiact/metadata.json"
+          },
+          {
+            "rfilename": "card/holo-banner.svg"
+          },
+          {
+            "rfilename": "scripts/eval.py"
+          },
+          {
+            "rfilename": "scripts/forge.py"
+          }
+        ],
+        "spaces": [
+          "SZLHOLDINGS/vertical-services"
+        ],
+        "createdAt": "2026-06-24T16:45:09.000Z",
+        "usedStorage": 448832
+      },
+      "metadata_receipt": {
+        "requested_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-blocked",
+        "final_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-blocked",
+        "status": 200,
+        "observed_at": "2026-09-24T13:44:54.115868+00:00",
+        "response_bytes": 2232,
+        "response_sha256": "cb88b776e333a8c092df33dd0e38423242dd5c5df053e5302d974ac46a262ee3",
+        "response_bytes_base64": "eyJfaWQiOiI2YTNjMDk5NTU3MGFlMzlhZWE1OWY5NjAiLCJpZCI6IlNaTEhPTERJTkdTL3N6bC1ibG9ja2VkIiwicHJpdmF0ZSI6ZmFsc2UsImxpYnJhcnlfbmFtZSI6Imtlcm5lbHMiLCJ0YWdzIjpbImtlcm5lbHMiLCJrZXJuZWwiLCJldS1haS1hY3QiLCJjb21wbGlhbmNlIiwiYW5uZXgtaXYiLCJnb3Zlcm5hbmNlIiwiZG9pOjEwLjUyODEvemVub2RvLjE5OTQ0OTI2IiwibGljZW5zZTphcGFjaGUtMi4wIiwicmVnaW9uOnVzIl0sImRvd25sb2FkcyI6MCwibGlrZXMiOjEsIm1vZGVsSWQiOiJTWkxIT0xESU5HUy9zemwtYmxvY2tlZCIsImF1dGhvciI6IlNaTEhPTERJTkdTIiwic2hhIjoiYzVmMmMwM2YyYWJmYzFiNjNhMmQ2NmQyYjc3MTVmM2IxNjdhY2ZiNCIsImxhc3RNb2RpZmllZCI6IjIwMjYtMDktMDhUMTE6NDE6NDguMDAwWiIsImdhdGVkIjpmYWxzZSwiZGlzYWJsZWQiOmZhbHNlLCJtb2RlbC1pbmRleCI6bnVsbCwiY29uZmlnIjp7fSwiY2FyZERhdGEiOnsibGlicmFyeV9uYW1lIjoia2VybmVscyIsImxpY2Vuc2UiOiJhcGFjaGUtMi4wIiwidGFncyI6WyJrZXJuZWwiLCJldS1haS1hY3QiLCJjb21wbGlhbmNlIiwiYW5uZXgtaXYiLCJnb3Zlcm5hbmNlIiwiZG9pOjEwLjUyODEvemVub2RvLjE5OTQ0OTI2Il0sInN6bC1nb3Zlcm5hbmNlIjp7InZlcmRpY3QiOiJIT05FU1QtQkxPQ0tFRCIsImRvY3RyaW5lIjoiaGFyZCBERU5ZIGRvbWluYXRlczsgYWR2aXNvcnkgzpsgY2FuIG9ubHkgdGlnaHRlbiwgbmV2ZXIgb3ZlcnJpZGU7IGEgQkxPQ0tFRCBvcCBuZXZlciBleGVjdXRlcyDigJQgbm8gZmFrZS1ncmVlbiIsImxhbWJkYSI6IkNvbmplY3R1cmUgMSAob3Blbikg4oCUIGEgcmVjb3JkZWQgQUxMT1cgaXMgbmV2ZXIgcHJvdmVuIHRydXN0IiwiZW5lcmd5IjoiTUVBU1VSRUQtb25seSIsImhvbmVzdF9ibG9ja2VkIjoiQkxPQ0tFRCBpcyBhIGZpcnN0LWNsYXNzIGdvdmVybmVkIHN0YXRlOyBmbiBpcyBORVZFUiBjYWxsZWQgb24gYmxvY2siLCJhbm5leF9pdiI6IkRSQUZUIHNrZWxldG9uIGF1dG8tZGVyaXZlZCBmcm9tIHByb3ZlbmFuY2Ug4oCUIE5PVCBsZWdhbCBhZHZpY2UsIE5PVCBhIGNvbmZvcm1pdHkgZ3VhcmFudGVlIn19LCJzaWJsaW5ncyI6W3sicmZpbGVuYW1lIjoiLmdpdGF0dHJpYnV0ZXMifSx7InJmaWxlbmFtZSI6IkJFTkNILmxhcHRvcC1ibGFja3dlbGwuanNvbiJ9LHsicmZpbGVuYW1lIjoiTElDRU5TRSJ9LHsicmZpbGVuYW1lIjoiTU9ERUxfUFJPVkVOQU5DRS5qc29uIn0seyJyZmlsZW5hbWUiOiJPUEVSQVRJT05BTC5qc29uIn0seyJyZmlsZW5hbWUiOiJQUk9NT1RJT05fUkVBRElORVNTX0FVRElULmpzb24ifSx7InJmaWxlbmFtZSI6IlJFQURNRS5tZCJ9LHsicmZpbGVuYW1lIjoiU0VDVVJJVFkubWQifSx7InJmaWxlbmFtZSI6IlNaTF9FU1RBVEVfTUFOQUdFRC5qc29uIn0seyJyZmlsZW5hbWUiOiJUUkFJTklOR19SRUNFSVBULmpzb24ifSx7InJmaWxlbmFtZSI6ImJvbS9tb2RlbC1ib20uY2R4Lmpzb24ifSx7InJmaWxlbmFtZSI6ImJ1aWxkLnRvbWwifSx7InJmaWxlbmFtZSI6ImJ1aWxkL3RvcmNoLXVuaXZlcnNhbC9zemxfYmxvY2tlZC9fX2luaXRfXy5weSJ9LHsicmZpbGVuYW1lIjoiYnVpbGQvdG9yY2gtdW5pdmVyc2FsL3N6bF9ibG9ja2VkL19jaGFpbi5weSJ9LHsicmZpbGVuYW1lIjoiYnVpbGQvdG9yY2gtdW5pdmVyc2FsL3N6bF9ibG9ja2VkL19nYXRlLnB5In0seyJyZmlsZW5hbWUiOiJidWlsZC90b3JjaC11bml2ZXJzYWwvc3psX2Jsb2NrZWQvX3J1bGVzLnB5In0seyJyZmlsZW5hbWUiOiJidWlsZC90b3JjaC11bml2ZXJzYWwvc3psX2Jsb2NrZWQvbWV0YWRhdGEuanNvbiJ9LHsicmZpbGVuYW1lIjoiYnVpbGQvdG9yY2gtdW5pdmVyc2FsL3N6bF9ldWFpYWN0L19faW5pdF9fLnB5In0seyJyZmlsZW5hbWUiOiJidWlsZC90b3JjaC11bml2ZXJzYWwvc3psX2V1YWlhY3QvX2FubmV4X2l2LnB5In0seyJyZmlsZW5hbWUiOiJidWlsZC90b3JjaC11bml2ZXJzYWwvc3psX2V1YWlhY3QvbWV0YWRhdGEuanNvbiJ9LHsicmZpbGVuYW1lIjoiY2FyZC9ob2xvLWJhbm5lci5zdmcifSx7InJmaWxlbmFtZSI6InNjcmlwdHMvZXZhbC5weSJ9LHsicmZpbGVuYW1lIjoic2NyaXB0cy9mb3JnZS5weSJ9XSwic3BhY2VzIjpbIlNaTEhPTERJTkdTL3ZlcnRpY2FsLXNlcnZpY2VzIl0sImNyZWF0ZWRBdCI6IjIwMjYtMDYtMjRUMTY6NDU6MDkuMDAwWiIsInVzZWRTdG9yYWdlIjo0NDg4MzJ9"
+      },
+      "tree_pages": [
+        {
+          "requested_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-blocked/tree/c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4?recursive=true&expand=false&limit=100",
+          "final_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-blocked/tree/c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4?recursive=true&expand=false&limit=100",
+          "status": 200,
+          "observed_at": "2026-09-24T13:44:54.215317+00:00",
+          "response_bytes": 3348,
+          "response_sha256": "f47b048f272ec1b1bf2f59d77ea637b9741b5415b5ba00c79c4694a126895f4b",
+          "response_bytes_base64": "W3sidHlwZSI6ImRpcmVjdG9yeSIsIm9pZCI6IjQ4ZGRkNzgwMTQ2ZjU3MWRhMTUzN2IwNWJiYWFjNWQ4YWY1ODlhOWIiLCJzaXplIjowLCJwYXRoIjoiYm9tIn0seyJ0eXBlIjoiZGlyZWN0b3J5Iiwib2lkIjoiNTg5Y2RjMjJkOWQ0NDUxZWY3NDY5MWU2MDUxYTU1NjM2YTM3NmE1MyIsInNpemUiOjAsInBhdGgiOiJidWlsZCJ9LHsidHlwZSI6ImRpcmVjdG9yeSIsIm9pZCI6ImIyOTczOWRhYTNlMGQ1ZDMzNzY0MWMwY2VkZGYyYTI0YzYxYzNkNGMiLCJzaXplIjowLCJwYXRoIjoiYnVpbGQvdG9yY2gtdW5pdmVyc2FsIn0seyJ0eXBlIjoiZGlyZWN0b3J5Iiwib2lkIjoiY2RkNTliOGFjYjc4NWNkMmMzNGU2M2I4MWNlNGNiNDVkYTJhNjdiNSIsInNpemUiOjAsInBhdGgiOiJidWlsZC90b3JjaC11bml2ZXJzYWwvc3psX2Jsb2NrZWQifSx7InR5cGUiOiJkaXJlY3RvcnkiLCJvaWQiOiI3ZjRlNWVkY2M0ZGQ4YWEyYjM3YTE5Nzc4NmNhOGI1MmM1MzFjZDFmIiwic2l6ZSI6MCwicGF0aCI6ImJ1aWxkL3RvcmNoLXVuaXZlcnNhbC9zemxfZXVhaWFjdCJ9LHsidHlwZSI6ImRpcmVjdG9yeSIsIm9pZCI6IjA1ZmI4OWQ1OWRlMTZjNmI2NzkwNDcxMWVhOWIxZmIwNmVjODQzYWYiLCJzaXplIjowLCJwYXRoIjoiY2FyZCJ9LHsidHlwZSI6ImRpcmVjdG9yeSIsIm9pZCI6IjliMzc5YWRkZDkxZGQ4MzdjYzE1MzE1OTMwMWUzNTRjZGRjMjEzZjkiLCJzaXplIjowLCJwYXRoIjoic2NyaXB0cyJ9LHsidHlwZSI6ImZpbGUiLCJvaWQiOiJhNjM0NGFhYzhjMDkyNTNiM2I2MzBmYjc3NmFlOTQ0NzhhYTAyNzViIiwic2l6ZSI6MTUxOSwicGF0aCI6Ii5naXRhdHRyaWJ1dGVzIn0seyJ0eXBlIjoiZmlsZSIsIm9pZCI6IjcxZjk4NWFjYTBlNjY2MmI2NTFkOGVmOGFmYjJjMDI5ZTEzMjA0YjkiLCJzaXplIjo1NDc3LCJwYXRoIjoiQkVOQ0gubGFwdG9wLWJsYWNrd2VsbC5qc29uIn0seyJ0eXBlIjoiZmlsZSIsIm9pZCI6ImYwMjEyMmVhNzljYmFkNGQwMTM3ZGZkNzFjN2ZiYTY1NGVjMTIzM2UiLCJzaXplIjo4MDksInBhdGgiOiJMSUNFTlNFIn0seyJ0eXBlIjoiZmlsZSIsIm9pZCI6IjdmM2E3OWNjYzA1YWFmNTAwODhkZTJkNjIxZWQ1NzFkNTE2OGE5NzkiLCJzaXplIjoyNjg4LCJwYXRoIjoiTU9ERUxfUFJPVkVOQU5DRS5qc29uIn0seyJ0eXBlIjoiZmlsZSIsIm9pZCI6ImExOTY1NmYyMzYzMWYwMzFkNzgyZGYyNzg1ZDBiOGJlZTQzNTI1NzUiLCJzaXplIjoxOTI0LCJwYXRoIjoiT1BFUkFUSU9OQUwuanNvbiJ9LHsidHlwZSI6ImZpbGUiLCJvaWQiOiIxOGY3M2Q1NDE0MDBlNmFiYzc4MjZjZjQ1OWU1MGU0YTZmMTFmMzAwIiwic2l6ZSI6MTI2MjMsInBhdGgiOiJQUk9NT1RJT05fUkVBRElORVNTX0FVRElULmpzb24ifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiYmQwMWFkMWE5MjcxZmNhYjdiOTNmNjY3MDAxN2QyMDAxYWUwNWNkNCIsInNpemUiOjU0NzAsInBhdGgiOiJSRUFETUUubWQifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiNTUwMjk2ZjFlNDkxMGViMjVmYzc3MDNjNWI4OWE1OGY5MzA1NzIwYiIsInNpemUiOjEyNTYsInBhdGgiOiJTRUNVUklUWS5tZCJ9LHsidHlwZSI6ImZpbGUiLCJvaWQiOiI3ZjUyNmI2MDI3ZjViODVmMThkM2VkYTkyMTQyOTczYjNiYWU3NzhhIiwic2l6ZSI6Njc3LCJwYXRoIjoiU1pMX0VTVEFURV9NQU5BR0VELmpzb24ifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiOGNiYWRhMjQxYzg4OTU4YzNjMTg3ODBhZjc4MDhhNDg3YWZlM2UxYyIsInNpemUiOjIxMTIsInBhdGgiOiJUUkFJTklOR19SRUNFSVBULmpzb24ifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiOTUyYTFlNzcwNTMwNzA1MTdhZDg2ZjkxMzAyZDc4OWMzMDNmZWE2MyIsInNpemUiOjc5ODAsInBhdGgiOiJib20vbW9kZWwtYm9tLmNkeC5qc29uIn0seyJ0eXBlIjoiZmlsZSIsIm9pZCI6ImFmMjJlZDkzZWFiZmY2ODQzOGUyNzRhMDlhZjk1MTUxNDFlZjc1ZDIiLCJzaXplIjo1NywicGF0aCI6ImJ1aWxkLnRvbWwifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiYTBiOTNhOGY1MjI1MGM3N2QyMjlkYmFkNjMwY2FjMzUwNjgyYWM5ZCIsInNpemUiOjI4NzMsInBhdGgiOiJidWlsZC90b3JjaC11bml2ZXJzYWwvc3psX2Jsb2NrZWQvX19pbml0X18ucHkifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiYWMzOTVmYTM3NGM0ZjhjNTU0NzAwMGQ3ZjdkNWVjZDQ4MjA2OTg1NyIsInNpemUiOjY2ODUsInBhdGgiOiJidWlsZC90b3JjaC11bml2ZXJzYWwvc3psX2Jsb2NrZWQvX2NoYWluLnB5In0seyJ0eXBlIjoiZmlsZSIsIm9pZCI6ImE3ODRjYzE3NDUwMjliMDJkZGI3Mzc3Nzg3ZTkwZWM3ZTI3MTFkYzYiLCJzaXplIjoxODI2MSwicGF0aCI6ImJ1aWxkL3RvcmNoLXVuaXZlcnNhbC9zemxfYmxvY2tlZC9fZ2F0ZS5weSJ9LHsidHlwZSI6ImZpbGUiLCJvaWQiOiIzYjU4OGQ2YTczZGNiYzU4MmFkMjA3MDk0ZTc4MzgzNDM1MWU0OTYwIiwic2l6ZSI6Mjk3OSwicGF0aCI6ImJ1aWxkL3RvcmNoLXVuaXZlcnNhbC9zemxfYmxvY2tlZC9fcnVsZXMucHkifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiNDhmY2Y4OTE4N2I0MzI0YTk4NDdiNDY0ZDhiYTAxMWI1YmM1ZGQxNSIsInNpemUiOjUyOCwicGF0aCI6ImJ1aWxkL3RvcmNoLXVuaXZlcnNhbC9zemxfYmxvY2tlZC9tZXRhZGF0YS5qc29uIn0seyJ0eXBlIjoiZmlsZSIsIm9pZCI6IjMxZTE1MTFlMTQ3YjcxNzVjMzJlMTM5YzcyZTRmNjVlYTA0YzQ2NjUiLCJzaXplIjoxNTc3LCJwYXRoIjoiYnVpbGQvdG9yY2gtdW5pdmVyc2FsL3N6bF9ldWFpYWN0L19faW5pdF9fLnB5In0seyJ0eXBlIjoiZmlsZSIsIm9pZCI6ImVmMjcxMmI2YzMwMzA1NDNhYWFmMmY1NDk5ZjA1MGEwMWU3ZjM0MjMiLCJzaXplIjoyMTA0NywicGF0aCI6ImJ1aWxkL3RvcmNoLXVuaXZlcnNhbC9zemxfZXVhaWFjdC9fYW5uZXhfaXYucHkifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiYmIwNDNlMmU2NDhlNGQ5NjU5NDljNzJiMjY5ZGY1N2RhNDMyMDExOSIsInNpemUiOjc3OSwicGF0aCI6ImJ1aWxkL3RvcmNoLXVuaXZlcnNhbC9zemxfZXVhaWFjdC9tZXRhZGF0YS5qc29uIn0seyJ0eXBlIjoiZmlsZSIsIm9pZCI6IjhmMGJiMzc4MDM1NTQzMTJiYTc0ZGYwYTU3ODZkYTAzODRjNTRkNGYiLCJzaXplIjoyMzY3LCJwYXRoIjoiY2FyZC9ob2xvLWJhbm5lci5zdmcifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiODQyNjg3M2ZkN2IyYjgxM2RjMjcxMjdmMTMxMTQxZjUwMWM5NGFmMiIsInNpemUiOjE0NzIsInBhdGgiOiJzY3JpcHRzL2V2YWwucHkifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiOGVmMWM2Mjg1ZWQ3NTc5NjE1YjcwYWMwM2M0NWI5NTczYWMxMjA1MSIsInNpemUiOjgyNjEsInBhdGgiOiJzY3JpcHRzL2ZvcmdlLnB5In1d",
+          "next_url": null
+        }
+      ],
+      "tree_coverage": "COMPLETE_ACCESSIBLE_RESPONSE",
+      "tree_entries": 30,
+      "file_count": 23
+    },
+    "tree": [
+      {
+        "type": "file",
+        "oid": "a6344aac8c09253b3b630fb776ae94478aa0275b",
+        "size": 1519,
+        "path": ".gitattributes",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-blocked",
+        "revision": "c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4"
+      },
+      {
+        "type": "file",
+        "oid": "71f985aca0e6662b651d8ef8afb2c029e13204b9",
+        "size": 5477,
+        "path": "BENCH.laptop-blackwell.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-blocked",
+        "revision": "c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4"
+      },
+      {
+        "type": "file",
+        "oid": "f02122ea79cbad4d0137dfd71c7fba654ec1233e",
+        "size": 809,
+        "path": "LICENSE",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-blocked",
+        "revision": "c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4"
+      },
+      {
+        "type": "file",
+        "oid": "7f3a79ccc05aaf50088de2d621ed571d5168a979",
+        "size": 2688,
+        "path": "MODEL_PROVENANCE.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-blocked",
+        "revision": "c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4"
+      },
+      {
+        "type": "file",
+        "oid": "a19656f23631f031d782df2785d0b8bee4352575",
+        "size": 1924,
+        "path": "OPERATIONAL.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-blocked",
+        "revision": "c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4"
+      },
+      {
+        "type": "file",
+        "oid": "18f73d541400e6abc7826cf459e50e4a6f11f300",
+        "size": 12623,
+        "path": "PROMOTION_READINESS_AUDIT.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-blocked",
+        "revision": "c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4"
+      },
+      {
+        "type": "file",
+        "oid": "bd01ad1a9271fcab7b93f6670017d2001ae05cd4",
+        "size": 5470,
+        "path": "README.md",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-blocked",
+        "revision": "c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4"
+      },
+      {
+        "type": "file",
+        "oid": "550296f1e4910eb25fc7703c5b89a58f9305720b",
+        "size": 1256,
+        "path": "SECURITY.md",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-blocked",
+        "revision": "c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4"
+      },
+      {
+        "type": "file",
+        "oid": "7f526b6027f5b85f18d3eda92142973b3bae778a",
+        "size": 677,
+        "path": "SZL_ESTATE_MANAGED.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-blocked",
+        "revision": "c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4"
+      },
+      {
+        "type": "file",
+        "oid": "8cbada241c88958c3c18780af7808a487afe3e1c",
+        "size": 2112,
+        "path": "TRAINING_RECEIPT.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-blocked",
+        "revision": "c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4"
+      },
+      {
+        "type": "directory",
+        "oid": "48ddd780146f571da1537b05bbaac5d8af589a9b",
+        "size": 0,
+        "path": "bom",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-blocked",
+        "revision": "c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4"
+      },
+      {
+        "type": "file",
+        "oid": "952a1e77053070517ad86f91302d789c303fea63",
+        "size": 7980,
+        "path": "bom/model-bom.cdx.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-blocked",
+        "revision": "c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4"
+      },
+      {
+        "type": "directory",
+        "oid": "589cdc22d9d4451ef74691e6051a55636a376a53",
+        "size": 0,
+        "path": "build",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-blocked",
+        "revision": "c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4"
+      },
+      {
+        "type": "file",
+        "oid": "af22ed93eabff68438e274a09af9515141ef75d2",
+        "size": 57,
+        "path": "build.toml",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-blocked",
+        "revision": "c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4"
+      },
+      {
+        "type": "directory",
+        "oid": "b29739daa3e0d5d337641c0ceddf2a24c61c3d4c",
+        "size": 0,
+        "path": "build/torch-universal",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-blocked",
+        "revision": "c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4"
+      },
+      {
+        "type": "directory",
+        "oid": "cdd59b8acb785cd2c34e63b81ce4cb45da2a67b5",
+        "size": 0,
+        "path": "build/torch-universal/szl_blocked",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-blocked",
+        "revision": "c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4"
+      },
+      {
+        "type": "file",
+        "oid": "a0b93a8f52250c77d229dbad630cac350682ac9d",
+        "size": 2873,
+        "path": "build/torch-universal/szl_blocked/__init__.py",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-blocked",
+        "revision": "c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4"
+      },
+      {
+        "type": "file",
+        "oid": "ac395fa374c4f8c5547000d7f7d5ecd482069857",
+        "size": 6685,
+        "path": "build/torch-universal/szl_blocked/_chain.py",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-blocked",
+        "revision": "c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4"
+      },
+      {
+        "type": "file",
+        "oid": "a784cc1745029b02ddb7377787e90ec7e2711dc6",
+        "size": 18261,
+        "path": "build/torch-universal/szl_blocked/_gate.py",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-blocked",
+        "revision": "c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4"
+      },
+      {
+        "type": "file",
+        "oid": "3b588d6a73dcbc582ad207094e783834351e4960",
+        "size": 2979,
+        "path": "build/torch-universal/szl_blocked/_rules.py",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-blocked",
+        "revision": "c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4"
+      },
+      {
+        "type": "file",
+        "oid": "48fcf89187b4324a9847b464d8ba011b5bc5dd15",
+        "size": 528,
+        "path": "build/torch-universal/szl_blocked/metadata.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-blocked",
+        "revision": "c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4"
+      },
+      {
+        "type": "directory",
+        "oid": "7f4e5edcc4dd8aa2b37a197786ca8b52c531cd1f",
+        "size": 0,
+        "path": "build/torch-universal/szl_euaiact",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-blocked",
+        "revision": "c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4"
+      },
+      {
+        "type": "file",
+        "oid": "31e1511e147b7175c32e139c72e4f65ea04c4665",
+        "size": 1577,
+        "path": "build/torch-universal/szl_euaiact/__init__.py",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-blocked",
+        "revision": "c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4"
+      },
+      {
+        "type": "file",
+        "oid": "ef2712b6c3030543aaaf2f5499f050a01e7f3423",
+        "size": 21047,
+        "path": "build/torch-universal/szl_euaiact/_annex_iv.py",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-blocked",
+        "revision": "c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4"
+      },
+      {
+        "type": "file",
+        "oid": "bb043e2e648e4d965949c72b269df57da4320119",
+        "size": 779,
+        "path": "build/torch-universal/szl_euaiact/metadata.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-blocked",
+        "revision": "c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4"
+      },
+      {
+        "type": "directory",
+        "oid": "05fb89d59de16c6b67904711ea9b1fb06ec843af",
+        "size": 0,
+        "path": "card",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-blocked",
+        "revision": "c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4"
+      },
+      {
+        "type": "file",
+        "oid": "8f0bb37803554312ba74df0a5786da0384c54d4f",
+        "size": 2367,
+        "path": "card/holo-banner.svg",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-blocked",
+        "revision": "c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4"
+      },
+      {
+        "type": "directory",
+        "oid": "9b379addd91dd837cc153159301e354cddc213f9",
+        "size": 0,
+        "path": "scripts",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-blocked",
+        "revision": "c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4"
+      },
+      {
+        "type": "file",
+        "oid": "8426873fd7b2b813dc27127f131141f501c94af2",
+        "size": 1472,
+        "path": "scripts/eval.py",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-blocked",
+        "revision": "c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4"
+      },
+      {
+        "type": "file",
+        "oid": "8ef1c6285ed7579615b70ac03c45b9573ac12051",
+        "size": 8261,
+        "path": "scripts/forge.py",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-blocked",
+        "revision": "c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4"
+      }
+    ],
+    "text_record": {
+      "id": "SZLHOLDINGS/szl-blocked",
+      "kind": "models",
+      "revision": "c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4",
+      "path": "MODEL_PROVENANCE.json",
+      "receipt": {
+        "requested_url": "https://huggingface.co/SZLHOLDINGS/szl-blocked/resolve/c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4/MODEL_PROVENANCE.json",
+        "final_url": "https://huggingface.co/api/resolve-cache/models/SZLHOLDINGS/szl-blocked/c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4/MODEL_PROVENANCE.json?%2FSZLHOLDINGS%2Fszl-blocked%2Fresolve%2Fc5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4%2FMODEL_PROVENANCE.json=&etag=%227f3a79ccc05aaf50088de2d621ed571d5168a979%22",
+        "status": 200,
+        "observed_at": "2026-09-24T13:44:54.326014+00:00",
+        "response_bytes": 2688,
+        "response_sha256": "afdb5ed6666cabf443b31f8d77e84babfcad9eceb1edc73db2ba356fbd67694a",
+        "response_bytes_base64": "ewogICJzY2hlbWEiOiAic3psLm1vZGVsLXNvdXJjZS1hdHRlc3RhdGlvbi92MSIsCiAgIm9ic2VydmVkX2F0IjogIjIwMjYtMDctMTJUMDA6Mjc6MTRaIiwKICAibW9kZWwiOiB7CiAgICAiaWQiOiAiU1pMSE9MRElOR1Mvc3psLWJsb2NrZWQiLAogICAgInJlcG9zaXRvcnlfdHlwZSI6ICJtb2RlbCIsCiAgICAiYXJ0aWZhY3Rfa2luZCI6ICJrZXJuZWwtY29kZS1hbmQtY29uZmlndXJhdGlvbiIsCiAgICAidHJhaW5lZF93ZWlnaHRzX3ByZXNlbnQiOiB0cnVlLAogICAgInN1cnJvZ2F0ZSI6IHsKICAgICAgImZpbGUiOiAibW9kZWwuam9ibGliIiwKICAgICAgInNoYTI1NiI6ICIxNWYwNTM3Y2QzMjNhZmY5NzdmZjNkNWFiZWMwNjVmMTE0NDY5M2ZlMGFiOTlkNWNiZDA5NjFmZTNiOGU3NjEwIiwKICAgICAgInJvbGUiOiAiQkxPQ0svQUxMT1cgZGVjaXNpb24gdHJpYWdlIG9ubHkgXHUyMDE0IGtlcm5lbCBwb2xpY3kgY2hhaW4gcmVtYWlucyBzb2xlIGdyb3VuZCB0cnV0aCIsCiAgICAgICJmaWRlbGl0eV9NRUFTVVJFRCI6IHsKICAgICAgICAiZmlkZWxpdHlfdnNfa2VybmVsX2hlbGRvdXQiOiAwLjk5NzcsCiAgICAgICAgInBlcl9jbGFzc19yZWNhbGwiOiB7CiAgICAgICAgICAiQUxMT1ciOiAwLjk5NjMsCiAgICAgICAgICAiQkxPQ0tfSEFSRCI6IDEuMCwKICAgICAgICAgICJCTE9DS19BRFZJU09SWSI6IDAuOTg0NgogICAgICAgIH0KICAgICAgfSwKICAgICAgInJlY2VpcHQiOiAiVFJBSU5JTkdfUkVDRUlQVC5qc29uIiwKICAgICAgInJldmVyaWZ5IjogInB5dGhvbiBzY3JpcHRzL2V2YWwucHkiCiAgICB9LAogICAgInN0ZGxpYl9vbmx5X25vdGUiOiAia2VybmVsIHBhY2thZ2UgaXRzZWxmIHN0YXlzIHN0ZGxpYi1vbmx5OyB0aGUgT1BUSU9OQUwgc3Vycm9nYXRlIG5lZWRzIHNrbGVhcm4ram9ibGliIgogIH0sCiAgInNvdXJjZV9vZl9yZWNvcmQiOiB7CiAgICAic3RhdGUiOiAiVkVSSUZJRURfSEZfU09VUkNFX09GX1JFQ09SRCIsCiAgICAicGxhdGZvcm0iOiAiaHVnZ2luZ2ZhY2UiLAogICAgInJlcG9zaXRvcnkiOiAiU1pMSE9MRElOR1Mvc3psLWJsb2NrZWQiLAogICAgImFydGlmYWN0X2Jhc2VfcmV2aXNpb24iOiAiZWE1OTViZmUyODk4NDI1MzY1Y2Y3MWRhNWVkZjk5MDFkNGRlNTI1YyIsCiAgICAiYXJ0aWZhY3RfYmFzZV9zdGF0ZSI6ICJNRUFTVVJFRF9QUkVfQVRURVNUQVRJT05fQkFTRSIsCiAgICAiYXJ0aWZhY3RfYmFzZV91cmwiOiAiaHR0cHM6Ly9odWdnaW5nZmFjZS5jby9TWkxIT0xESU5HUy9zemwtYmxvY2tlZC90cmVlL2VhNTk1YmZlMjg5ODQyNTM2NWNmNzFkYTVlZGY5OTAxZDRkZTUyNWMiLAogICAgImZpbGVfY291bnQiOiAxMywKICAgICJ0cmVlX3NoYTI1NiI6ICIxNDljZmU1Njg2ZmZjZmYyMGZkNzI2YmE3NDg4YWZhZjdkNjUyNDAxYjNhMDBhZjE5MzA3N2FlMjI2YjllM2JjIiwKICAgICJ0cmVlX2hhc2hfYWxnb3JpdGhtIjogInNoYTI1NiBvZiBVVEYtOCBwYXRoICsgTlVMICsgcGVyLWZpbGUgc2hhMjU2ICsgTEYsIHNvcnRlZCBieSBwYXRoOyAuY2FjaGUgZXhjbHVkZWQiCiAgfSwKICAicHVibGljX2dpdGh1YiI6IHsKICAgICJzdGF0ZSI6ICJOT19ESVJFQ1RfUFVCTElDX0lNUExFTUVOVEFUSU9OX09CU0VSVkVEIiwKICAgICJzYW1lX25hbWVfY2FuZGlkYXRlIjogImh0dHBzOi8vZ2l0aHViLmNvbS9zemwtaG9sZGluZ3Mvc3psLWJsb2NrZWQiLAogICAgInNhbWVfbmFtZV9jYW5kaWRhdGVfaHR0cF9zdGF0dXMiOiA0MDQsCiAgICAiY2FyZF9yZWZlcmVuY2VzIjogWwogICAgICAiaHR0cHM6Ly9naXRodWIuY29tL3N6bC1ob2xkaW5ncy9nb3Zlcm5lZC1yZWNlaXB0LXNwZWMiLAogICAgICAiaHR0cHM6Ly9naXRodWIuY29tL3N6bC1ob2xkaW5ncy9zemwtcGFwZXJzL2Jsb2IvbWFpbi9QQVBFUlNfSU5ERVgubWQiCiAgICBdLAogICAgImNhcmRfcmVmZXJlbmNlX3JvbGUiOiAiU1BFQ0lGSUNBVElPTl9PUl9SRVNFQVJDSF9DT05URVhUX05PVF9CVUlMRF9TT1VSQ0UiCiAgfSwKICAiY2xhaW1zIjogewogICAgImdpdGh1Yl9yZXBvc2l0b3J5X3Bhcml0eSI6ICJOT1RfQ0xBSU1FRCIsCiAgICAicmVwcm9kdWNpYmxlX2J1aWxkIjogIk5PVF9DTEFJTUVEIiwKICAgICJ0cmFpbmVkX21vZGVsIjogIlNVUlJPR0FURV9QUkVTRU5UX01FQVNVUkVEX0ZJREVMSVRZIiwKICAgICJzZXJ2aW5nX3Byb2Nlc3NfcmV2aXNpb24iOiAiTk9UX0FQUExJQ0FCTEVfUkVQT1NJVE9SWV9BUlRJRkFDVCIKICB9LAogICJsaW1pdHMiOiBbCiAgICAiVGhlIDQwNCBvYnNlcnZhdGlvbiBlc3RhYmxpc2hlcyBvbmx5IHRoYXQgbm8gcHVibGljIHNhbWUtbmFtZSByZXBvc2l0b3J5IHdhcyByZWFjaGFibGUgYXQgdGhlIG9ic2VydmF0aW9uIHRpbWU7IGl0IGRvZXMgbm90IG1ha2UgYSBjbGFpbSBhYm91dCBwcml2YXRlIHJlcG9zaXRvcmllcy4iLAogICAgIlRoZSBhdHRlc3RhdGlvbiBvdmVybGF5IGNhbm5vdCBzZWxmLWVtYmVkIGl0cyByZXN1bHRpbmcgSHViIGNvbW1pdCwgc28gdGhlIGltbXV0YWJsZSBhcnRpZmFjdF9iYXNlX3JldmlzaW9uIGlzIHRoZSBtZWFzdXJlZCBwcmUtb3ZlcmxheSBiYXNlLiIsCiAgICAiTm8gLmJpbiwgLnNhZmV0ZW5zb3JzLCAucHQsIC5wdGgsIC5vbm54LCBvciAuZ2d1ZiB3ZWlnaHQgYXJ0aWZhY3Qgd2FzIHByZXNlbnQgaW4gdGhlIG1lYXN1cmVkIGJhc2UgdHJlZS4iCiAgXQp9"
+      },
+      "content": {
+        "schema": "szl.model-source-attestation/v1",
+        "observed_at": "2026-07-12T00:27:14Z",
+        "model": {
+          "id": "SZLHOLDINGS/szl-blocked",
+          "repository_type": "model",
+          "artifact_kind": "kernel-code-and-configuration",
+          "trained_weights_present": true,
+          "surrogate": {
+            "file": "model.joblib",
+            "sha256": "15f0537cd323aff977ff3d5abec065f1144693fe0ab99d5cbd0961fe3b8e7610",
+            "role": "BLOCK/ALLOW decision triage only — kernel policy chain remains sole ground truth",
+            "fidelity_MEASURED": {
+              "fidelity_vs_kernel_heldout": 0.9977,
+              "per_class_recall": {
+                "ALLOW": 0.9963,
+                "BLOCK_HARD": 1.0,
+                "BLOCK_ADVISORY": 0.9846
+              }
+            },
+            "receipt": "TRAINING_RECEIPT.json",
+            "reverify": "python scripts/eval.py"
+          },
+          "stdlib_only_note": "kernel package itself stays stdlib-only; the OPTIONAL surrogate needs sklearn+joblib"
+        },
+        "source_of_record": {
+          "state": "VERIFIED_HF_SOURCE_OF_RECORD",
+          "platform": "huggingface",
+          "repository": "SZLHOLDINGS/szl-blocked",
+          "artifact_base_revision": "ea595bfe2898425365cf71da5edf9901d4de525c",
+          "artifact_base_state": "MEASURED_PRE_ATTESTATION_BASE",
+          "artifact_base_url": "https://huggingface.co/SZLHOLDINGS/szl-blocked/tree/ea595bfe2898425365cf71da5edf9901d4de525c",
+          "file_count": 13,
+          "tree_sha256": "149cfe5686ffcff20fd726ba7488afaf7d652401b3a00af193077ae226b9e3bc",
+          "tree_hash_algorithm": "sha256 of UTF-8 path + NUL + per-file sha256 + LF, sorted by path; .cache excluded"
+        },
+        "public_github": {
+          "state": "NO_DIRECT_PUBLIC_IMPLEMENTATION_OBSERVED",
+          "same_name_candidate": "https://github.com/szl-holdings/szl-blocked",
+          "same_name_candidate_http_status": 404,
+          "card_references": [
+            "https://github.com/szl-holdings/governed-receipt-spec",
+            "https://github.com/szl-holdings/szl-papers/blob/main/PAPERS_INDEX.md"
+          ],
+          "card_reference_role": "SPECIFICATION_OR_RESEARCH_CONTEXT_NOT_BUILD_SOURCE"
+        },
+        "claims": {
+          "github_repository_parity": "NOT_CLAIMED",
+          "reproducible_build": "NOT_CLAIMED",
+          "trained_model": "SURROGATE_PRESENT_MEASURED_FIDELITY",
+          "serving_process_revision": "NOT_APPLICABLE_REPOSITORY_ARTIFACT"
+        },
+        "limits": [
+          "The 404 observation establishes only that no public same-name repository was reachable at the observation time; it does not make a claim about private repositories.",
+          "The attestation overlay cannot self-embed its resulting Hub commit, so the immutable artifact_base_revision is the measured pre-overlay base.",
+          "No .bin, .safetensors, .pt, .pth, .onnx, or .gguf weight artifact was present in the measured base tree."
+        ]
+      }
+    },
+    "original_bytes_base64": "ewogICJzY2hlbWEiOiAic3psLm1vZGVsLXNvdXJjZS1hdHRlc3RhdGlvbi92MSIsCiAgIm9ic2VydmVkX2F0IjogIjIwMjYtMDctMTJUMDA6Mjc6MTRaIiwKICAibW9kZWwiOiB7CiAgICAiaWQiOiAiU1pMSE9MRElOR1Mvc3psLWJsb2NrZWQiLAogICAgInJlcG9zaXRvcnlfdHlwZSI6ICJtb2RlbCIsCiAgICAiYXJ0aWZhY3Rfa2luZCI6ICJrZXJuZWwtY29kZS1hbmQtY29uZmlndXJhdGlvbiIsCiAgICAidHJhaW5lZF93ZWlnaHRzX3ByZXNlbnQiOiB0cnVlLAogICAgInN1cnJvZ2F0ZSI6IHsKICAgICAgImZpbGUiOiAibW9kZWwuam9ibGliIiwKICAgICAgInNoYTI1NiI6ICIxNWYwNTM3Y2QzMjNhZmY5NzdmZjNkNWFiZWMwNjVmMTE0NDY5M2ZlMGFiOTlkNWNiZDA5NjFmZTNiOGU3NjEwIiwKICAgICAgInJvbGUiOiAiQkxPQ0svQUxMT1cgZGVjaXNpb24gdHJpYWdlIG9ubHkgXHUyMDE0IGtlcm5lbCBwb2xpY3kgY2hhaW4gcmVtYWlucyBzb2xlIGdyb3VuZCB0cnV0aCIsCiAgICAgICJmaWRlbGl0eV9NRUFTVVJFRCI6IHsKICAgICAgICAiZmlkZWxpdHlfdnNfa2VybmVsX2hlbGRvdXQiOiAwLjk5NzcsCiAgICAgICAgInBlcl9jbGFzc19yZWNhbGwiOiB7CiAgICAgICAgICAiQUxMT1ciOiAwLjk5NjMsCiAgICAgICAgICAiQkxPQ0tfSEFSRCI6IDEuMCwKICAgICAgICAgICJCTE9DS19BRFZJU09SWSI6IDAuOTg0NgogICAgICAgIH0KICAgICAgfSwKICAgICAgInJlY2VpcHQiOiAiVFJBSU5JTkdfUkVDRUlQVC5qc29uIiwKICAgICAgInJldmVyaWZ5IjogInB5dGhvbiBzY3JpcHRzL2V2YWwucHkiCiAgICB9LAogICAgInN0ZGxpYl9vbmx5X25vdGUiOiAia2VybmVsIHBhY2thZ2UgaXRzZWxmIHN0YXlzIHN0ZGxpYi1vbmx5OyB0aGUgT1BUSU9OQUwgc3Vycm9nYXRlIG5lZWRzIHNrbGVhcm4ram9ibGliIgogIH0sCiAgInNvdXJjZV9vZl9yZWNvcmQiOiB7CiAgICAic3RhdGUiOiAiVkVSSUZJRURfSEZfU09VUkNFX09GX1JFQ09SRCIsCiAgICAicGxhdGZvcm0iOiAiaHVnZ2luZ2ZhY2UiLAogICAgInJlcG9zaXRvcnkiOiAiU1pMSE9MRElOR1Mvc3psLWJsb2NrZWQiLAogICAgImFydGlmYWN0X2Jhc2VfcmV2aXNpb24iOiAiZWE1OTViZmUyODk4NDI1MzY1Y2Y3MWRhNWVkZjk5MDFkNGRlNTI1YyIsCiAgICAiYXJ0aWZhY3RfYmFzZV9zdGF0ZSI6ICJNRUFTVVJFRF9QUkVfQVRURVNUQVRJT05fQkFTRSIsCiAgICAiYXJ0aWZhY3RfYmFzZV91cmwiOiAiaHR0cHM6Ly9odWdnaW5nZmFjZS5jby9TWkxIT0xESU5HUy9zemwtYmxvY2tlZC90cmVlL2VhNTk1YmZlMjg5ODQyNTM2NWNmNzFkYTVlZGY5OTAxZDRkZTUyNWMiLAogICAgImZpbGVfY291bnQiOiAxMywKICAgICJ0cmVlX3NoYTI1NiI6ICIxNDljZmU1Njg2ZmZjZmYyMGZkNzI2YmE3NDg4YWZhZjdkNjUyNDAxYjNhMDBhZjE5MzA3N2FlMjI2YjllM2JjIiwKICAgICJ0cmVlX2hhc2hfYWxnb3JpdGhtIjogInNoYTI1NiBvZiBVVEYtOCBwYXRoICsgTlVMICsgcGVyLWZpbGUgc2hhMjU2ICsgTEYsIHNvcnRlZCBieSBwYXRoOyAuY2FjaGUgZXhjbHVkZWQiCiAgfSwKICAicHVibGljX2dpdGh1YiI6IHsKICAgICJzdGF0ZSI6ICJOT19ESVJFQ1RfUFVCTElDX0lNUExFTUVOVEFUSU9OX09CU0VSVkVEIiwKICAgICJzYW1lX25hbWVfY2FuZGlkYXRlIjogImh0dHBzOi8vZ2l0aHViLmNvbS9zemwtaG9sZGluZ3Mvc3psLWJsb2NrZWQiLAogICAgInNhbWVfbmFtZV9jYW5kaWRhdGVfaHR0cF9zdGF0dXMiOiA0MDQsCiAgICAiY2FyZF9yZWZlcmVuY2VzIjogWwogICAgICAiaHR0cHM6Ly9naXRodWIuY29tL3N6bC1ob2xkaW5ncy9nb3Zlcm5lZC1yZWNlaXB0LXNwZWMiLAogICAgICAiaHR0cHM6Ly9naXRodWIuY29tL3N6bC1ob2xkaW5ncy9zemwtcGFwZXJzL2Jsb2IvbWFpbi9QQVBFUlNfSU5ERVgubWQiCiAgICBdLAogICAgImNhcmRfcmVmZXJlbmNlX3JvbGUiOiAiU1BFQ0lGSUNBVElPTl9PUl9SRVNFQVJDSF9DT05URVhUX05PVF9CVUlMRF9TT1VSQ0UiCiAgfSwKICAiY2xhaW1zIjogewogICAgImdpdGh1Yl9yZXBvc2l0b3J5X3Bhcml0eSI6ICJOT1RfQ0xBSU1FRCIsCiAgICAicmVwcm9kdWNpYmxlX2J1aWxkIjogIk5PVF9DTEFJTUVEIiwKICAgICJ0cmFpbmVkX21vZGVsIjogIlNVUlJPR0FURV9QUkVTRU5UX01FQVNVUkVEX0ZJREVMSVRZIiwKICAgICJzZXJ2aW5nX3Byb2Nlc3NfcmV2aXNpb24iOiAiTk9UX0FQUExJQ0FCTEVfUkVQT1NJVE9SWV9BUlRJRkFDVCIKICB9LAogICJsaW1pdHMiOiBbCiAgICAiVGhlIDQwNCBvYnNlcnZhdGlvbiBlc3RhYmxpc2hlcyBvbmx5IHRoYXQgbm8gcHVibGljIHNhbWUtbmFtZSByZXBvc2l0b3J5IHdhcyByZWFjaGFibGUgYXQgdGhlIG9ic2VydmF0aW9uIHRpbWU7IGl0IGRvZXMgbm90IG1ha2UgYSBjbGFpbSBhYm91dCBwcml2YXRlIHJlcG9zaXRvcmllcy4iLAogICAgIlRoZSBhdHRlc3RhdGlvbiBvdmVybGF5IGNhbm5vdCBzZWxmLWVtYmVkIGl0cyByZXN1bHRpbmcgSHViIGNvbW1pdCwgc28gdGhlIGltbXV0YWJsZSBhcnRpZmFjdF9iYXNlX3JldmlzaW9uIGlzIHRoZSBtZWFzdXJlZCBwcmUtb3ZlcmxheSBiYXNlLiIsCiAgICAiTm8gLmJpbiwgLnNhZmV0ZW5zb3JzLCAucHQsIC5wdGgsIC5vbm54LCBvciAuZ2d1ZiB3ZWlnaHQgYXJ0aWZhY3Qgd2FzIHByZXNlbnQgaW4gdGhlIG1lYXN1cmVkIGJhc2UgdHJlZS4iCiAgXQp9"
+  },
+  {
+    "id": "SZLHOLDINGS/szl-formulas",
+    "repository_type": "model",
+    "revision": "1edee3ad6aca1e5489d4e7dfd87ed2b2c7b1443f",
+    "repository_record": {
+      "id": "SZLHOLDINGS/szl-formulas",
+      "kind": "models",
+      "revision": "1edee3ad6aca1e5489d4e7dfd87ed2b2c7b1443f",
+      "metadata": {
+        "_id": "6a53809b3df3832415431ca2",
+        "id": "SZLHOLDINGS/szl-formulas",
+        "private": false,
+        "library_name": "kernels",
+        "tags": [
+          "kernels",
+          "kernel",
+          "governance",
+          "formulas",
+          "proof-status",
+          "lean4",
+          "lambda-aggregate",
+          "doi:10.5281/zenodo.19944926",
+          "license:apache-2.0",
+          "region:us"
+        ],
+        "downloads": 0,
+        "likes": 0,
+        "modelId": "SZLHOLDINGS/szl-formulas",
+        "author": "SZLHOLDINGS",
+        "sha": "1edee3ad6aca1e5489d4e7dfd87ed2b2c7b1443f",
+        "lastModified": "2026-09-08T11:42:15.000Z",
+        "gated": false,
+        "disabled": false,
+        "model-index": null,
+        "config": {},
+        "cardData": {
+          "library_name": "kernels",
+          "license": "apache-2.0",
+          "tags": [
+            "kernel",
+            "governance",
+            "formulas",
+            "proof-status",
+            "lean4",
+            "lambda-aggregate",
+            "doi:10.5281/zenodo.19944926"
+          ],
+          "szl-governance": {
+            "verdict": "ADVISORY",
+            "lambda": "Conjecture 1 (open) — uniqueness unproven; composer Λ roll-up is ADVISORY only, never proven trust",
+            "provenance": "offline replay of SZLHOLDINGS/canonical-formulas-v1 — 21 pure formulas + the governed-loop composer",
+            "honest_blocked": "PROOF_STATUS is mirrored verbatim; locked-proven canonical set is EXACTLY 8 (machine-enforced) — never inflated"
+          }
+        },
+        "siblings": [
+          {
+            "rfilename": ".gitattributes"
+          },
+          {
+            "rfilename": "BENCH.laptop-blackwell.json"
+          },
+          {
+            "rfilename": "LICENSE"
+          },
+          {
+            "rfilename": "MODEL_PROVENANCE.json"
+          },
+          {
+            "rfilename": "OPERATIONAL.json"
+          },
+          {
+            "rfilename": "PROMOTION_READINESS_AUDIT.json"
+          },
+          {
+            "rfilename": "README.md"
+          },
+          {
+            "rfilename": "SECURITY.md"
+          },
+          {
+            "rfilename": "SZL_ESTATE_MANAGED.json"
+          },
+          {
+            "rfilename": "TRAINING_RECEIPT.json"
+          },
+          {
+            "rfilename": "bom/model-bom.cdx.json"
+          },
+          {
+            "rfilename": "build.toml"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_formulas/__init__.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_formulas/_composer.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_formulas/_formulas.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_formulas/metadata.json"
+          },
+          {
+            "rfilename": "card/holo-banner.svg"
+          },
+          {
+            "rfilename": "scripts/eval.py"
+          },
+          {
+            "rfilename": "scripts/forge.py"
+          },
+          {
+            "rfilename": "tests/test_formulas.py"
+          }
+        ],
+        "spaces": [],
+        "createdAt": "2026-07-12T11:55:07.000Z",
+        "usedStorage": 3403360
+      },
+      "metadata_receipt": {
+        "requested_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-formulas",
+        "final_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-formulas",
+        "status": 200,
+        "observed_at": "2026-09-24T13:44:54.552386+00:00",
+        "response_bytes": 1977,
+        "response_sha256": "ee7c13eeb0650be7d8b32f323d1d7fd5d15211c2a16aa3099fc706ca99c12b36",
+        "response_bytes_base64": "eyJfaWQiOiI2YTUzODA5YjNkZjM4MzI0MTU0MzFjYTIiLCJpZCI6IlNaTEhPTERJTkdTL3N6bC1mb3JtdWxhcyIsInByaXZhdGUiOmZhbHNlLCJsaWJyYXJ5X25hbWUiOiJrZXJuZWxzIiwidGFncyI6WyJrZXJuZWxzIiwia2VybmVsIiwiZ292ZXJuYW5jZSIsImZvcm11bGFzIiwicHJvb2Ytc3RhdHVzIiwibGVhbjQiLCJsYW1iZGEtYWdncmVnYXRlIiwiZG9pOjEwLjUyODEvemVub2RvLjE5OTQ0OTI2IiwibGljZW5zZTphcGFjaGUtMi4wIiwicmVnaW9uOnVzIl0sImRvd25sb2FkcyI6MCwibGlrZXMiOjAsIm1vZGVsSWQiOiJTWkxIT0xESU5HUy9zemwtZm9ybXVsYXMiLCJhdXRob3IiOiJTWkxIT0xESU5HUyIsInNoYSI6IjFlZGVlM2FkNmFjYTFlNTQ4OWQ0ZTdkZmQ4N2VkMmIyYzdiMTQ0M2YiLCJsYXN0TW9kaWZpZWQiOiIyMDI2LTA5LTA4VDExOjQyOjE1LjAwMFoiLCJnYXRlZCI6ZmFsc2UsImRpc2FibGVkIjpmYWxzZSwibW9kZWwtaW5kZXgiOm51bGwsImNvbmZpZyI6e30sImNhcmREYXRhIjp7ImxpYnJhcnlfbmFtZSI6Imtlcm5lbHMiLCJsaWNlbnNlIjoiYXBhY2hlLTIuMCIsInRhZ3MiOlsia2VybmVsIiwiZ292ZXJuYW5jZSIsImZvcm11bGFzIiwicHJvb2Ytc3RhdHVzIiwibGVhbjQiLCJsYW1iZGEtYWdncmVnYXRlIiwiZG9pOjEwLjUyODEvemVub2RvLjE5OTQ0OTI2Il0sInN6bC1nb3Zlcm5hbmNlIjp7InZlcmRpY3QiOiJBRFZJU09SWSIsImxhbWJkYSI6IkNvbmplY3R1cmUgMSAob3Blbikg4oCUIHVuaXF1ZW5lc3MgdW5wcm92ZW47IGNvbXBvc2VyIM6bIHJvbGwtdXAgaXMgQURWSVNPUlkgb25seSwgbmV2ZXIgcHJvdmVuIHRydXN0IiwicHJvdmVuYW5jZSI6Im9mZmxpbmUgcmVwbGF5IG9mIFNaTEhPTERJTkdTL2Nhbm9uaWNhbC1mb3JtdWxhcy12MSDigJQgMjEgcHVyZSBmb3JtdWxhcyArIHRoZSBnb3Zlcm5lZC1sb29wIGNvbXBvc2VyIiwiaG9uZXN0X2Jsb2NrZWQiOiJQUk9PRl9TVEFUVVMgaXMgbWlycm9yZWQgdmVyYmF0aW07IGxvY2tlZC1wcm92ZW4gY2Fub25pY2FsIHNldCBpcyBFWEFDVExZIDggKG1hY2hpbmUtZW5mb3JjZWQpIOKAlCBuZXZlciBpbmZsYXRlZCJ9fSwic2libGluZ3MiOlt7InJmaWxlbmFtZSI6Ii5naXRhdHRyaWJ1dGVzIn0seyJyZmlsZW5hbWUiOiJCRU5DSC5sYXB0b3AtYmxhY2t3ZWxsLmpzb24ifSx7InJmaWxlbmFtZSI6IkxJQ0VOU0UifSx7InJmaWxlbmFtZSI6Ik1PREVMX1BST1ZFTkFOQ0UuanNvbiJ9LHsicmZpbGVuYW1lIjoiT1BFUkFUSU9OQUwuanNvbiJ9LHsicmZpbGVuYW1lIjoiUFJPTU9USU9OX1JFQURJTkVTU19BVURJVC5qc29uIn0seyJyZmlsZW5hbWUiOiJSRUFETUUubWQifSx7InJmaWxlbmFtZSI6IlNFQ1VSSVRZLm1kIn0seyJyZmlsZW5hbWUiOiJTWkxfRVNUQVRFX01BTkFHRUQuanNvbiJ9LHsicmZpbGVuYW1lIjoiVFJBSU5JTkdfUkVDRUlQVC5qc29uIn0seyJyZmlsZW5hbWUiOiJib20vbW9kZWwtYm9tLmNkeC5qc29uIn0seyJyZmlsZW5hbWUiOiJidWlsZC50b21sIn0seyJyZmlsZW5hbWUiOiJidWlsZC90b3JjaC11bml2ZXJzYWwvc3psX2Zvcm11bGFzL19faW5pdF9fLnB5In0seyJyZmlsZW5hbWUiOiJidWlsZC90b3JjaC11bml2ZXJzYWwvc3psX2Zvcm11bGFzL19jb21wb3Nlci5weSJ9LHsicmZpbGVuYW1lIjoiYnVpbGQvdG9yY2gtdW5pdmVyc2FsL3N6bF9mb3JtdWxhcy9fZm9ybXVsYXMucHkifSx7InJmaWxlbmFtZSI6ImJ1aWxkL3RvcmNoLXVuaXZlcnNhbC9zemxfZm9ybXVsYXMvbWV0YWRhdGEuanNvbiJ9LHsicmZpbGVuYW1lIjoiY2FyZC9ob2xvLWJhbm5lci5zdmcifSx7InJmaWxlbmFtZSI6InNjcmlwdHMvZXZhbC5weSJ9LHsicmZpbGVuYW1lIjoic2NyaXB0cy9mb3JnZS5weSJ9LHsicmZpbGVuYW1lIjoidGVzdHMvdGVzdF9mb3JtdWxhcy5weSJ9XSwic3BhY2VzIjpbXSwiY3JlYXRlZEF0IjoiMjAyNi0wNy0xMlQxMTo1NTowNy4wMDBaIiwidXNlZFN0b3JhZ2UiOjM0MDMzNjB9"
+      },
+      "tree_pages": [
+        {
+          "requested_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-formulas/tree/1edee3ad6aca1e5489d4e7dfd87ed2b2c7b1443f?recursive=true&expand=false&limit=100",
+          "final_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-formulas/tree/1edee3ad6aca1e5489d4e7dfd87ed2b2c7b1443f?recursive=true&expand=false&limit=100",
+          "status": 200,
+          "observed_at": "2026-09-24T13:44:54.651274+00:00",
+          "response_bytes": 2914,
+          "response_sha256": "1066f7b2c391a8c63a033d6e1231defe012bd8dce47ec2992b8c3bef3661503b",
+          "response_bytes_base64": "W3sidHlwZSI6ImRpcmVjdG9yeSIsIm9pZCI6IjU5MzZlZDkzNTVjZDNmNmJlZGNjZmRkNDY0ZmNlMDE4MGE5OTgxODEiLCJzaXplIjowLCJwYXRoIjoiYm9tIn0seyJ0eXBlIjoiZGlyZWN0b3J5Iiwib2lkIjoiYWZlYTY0ZGQwODRlZWQwYmUwNjM3NzExZWZmOWZlZDIwODUwZWVjYSIsInNpemUiOjAsInBhdGgiOiJidWlsZCJ9LHsidHlwZSI6ImRpcmVjdG9yeSIsIm9pZCI6Ijg5MmZhOWQzOTBmOTYwYjBlMWFiMjMxOTAwN2RhOTNiYTE0N2EwNzEiLCJzaXplIjowLCJwYXRoIjoiYnVpbGQvdG9yY2gtdW5pdmVyc2FsIn0seyJ0eXBlIjoiZGlyZWN0b3J5Iiwib2lkIjoiNWU4NGQ1YzllZTU2MTUyYTQwMjBmNzkwNDgwMGZiOWEwNWM4M2Q4ZSIsInNpemUiOjAsInBhdGgiOiJidWlsZC90b3JjaC11bml2ZXJzYWwvc3psX2Zvcm11bGFzIn0seyJ0eXBlIjoiZGlyZWN0b3J5Iiwib2lkIjoiNmJhYWVhNjdhZTZmZWU1ZTllYTdkOWEyN2Y5Y2Q2ZmM2MmIyN2Q4ZCIsInNpemUiOjAsInBhdGgiOiJjYXJkIn0seyJ0eXBlIjoiZGlyZWN0b3J5Iiwib2lkIjoiNWUzMjgxMmUzNTlhYTBmNDkxNDQ1ZjhjODdkNzMxYjBjYWRiM2RkNSIsInNpemUiOjAsInBhdGgiOiJzY3JpcHRzIn0seyJ0eXBlIjoiZGlyZWN0b3J5Iiwib2lkIjoiMTg3ZWE5NjQ3NjE2OWJmYzBjNWJjOGI1YzM0ZTU5NTBkNDY3NDU0ZSIsInNpemUiOjAsInBhdGgiOiJ0ZXN0cyJ9LHsidHlwZSI6ImZpbGUiLCJvaWQiOiJhNjM0NGFhYzhjMDkyNTNiM2I2MzBmYjc3NmFlOTQ0NzhhYTAyNzViIiwic2l6ZSI6MTUxOSwicGF0aCI6Ii5naXRhdHRyaWJ1dGVzIn0seyJ0eXBlIjoiZmlsZSIsIm9pZCI6ImM2MWY0YWFiOThhY2JkNWY2Y2QwZjM4MmRjMzFkMzNjMGIxZWMxY2IiLCJzaXplIjo2OTUyLCJwYXRoIjoiQkVOQ0gubGFwdG9wLWJsYWNrd2VsbC5qc29uIn0seyJ0eXBlIjoiZmlsZSIsIm9pZCI6IjdjMzE3YmEzNzM5MzJiZjdmNTZhYjk2OWEzNjk4YWEzNDY4ODExYmUiLCJzaXplIjo3NzYsInBhdGgiOiJMSUNFTlNFIn0seyJ0eXBlIjoiZmlsZSIsIm9pZCI6IjI2MGY4Y2U1NzlkMTMyZTFiOWVjYmI1MGI0NTJmY2YyYzJiNWE3MmIiLCJzaXplIjozODk0LCJwYXRoIjoiTU9ERUxfUFJPVkVOQU5DRS5qc29uIn0seyJ0eXBlIjoiZmlsZSIsIm9pZCI6IjgzNTk5ZjdhMzRiZjgyNjViM2YzYTVkMzg2YmY5YWZmYmQ3MTgzMGYiLCJzaXplIjoxOTI3LCJwYXRoIjoiT1BFUkFUSU9OQUwuanNvbiJ9LHsidHlwZSI6ImZpbGUiLCJvaWQiOiIyZmEyY2M4YzEyMjZkNGQ4NTVkZWFmZjM4NDljYTJkNDFkMjUyOGNiIiwic2l6ZSI6MTMzMTksInBhdGgiOiJQUk9NT1RJT05fUkVBRElORVNTX0FVRElULmpzb24ifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiNmE3MWJkNTVhM2RlOTBjZTI2ZmZhYjk2ZTRhZDQ1YzAwMzVjOGYxMSIsInNpemUiOjU2NTQsInBhdGgiOiJSRUFETUUubWQifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiY2U5YWU5NTdlODM3NjkwNGFlMWUxODM4MzgwNDY0MGMyODZkY2Q3NCIsInNpemUiOjE4MjksInBhdGgiOiJTRUNVUklUWS5tZCJ9LHsidHlwZSI6ImZpbGUiLCJvaWQiOiI0NGU3YzBhMDA0ZDRiZjhhMWYxMjQ1NTYxYzg1NWU3YTBiYWE5ODA0Iiwic2l6ZSI6Njc4LCJwYXRoIjoiU1pMX0VTVEFURV9NQU5BR0VELmpzb24ifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiMTc1NzZkMDk0M2U4Mzc5N2FlMDdiYWVjOTkxODFjMDczNDRjZDFkOSIsInNpemUiOjUwNzIsInBhdGgiOiJUUkFJTklOR19SRUNFSVBULmpzb24ifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiMmJhNjI4NGFkM2QyZDRlMGEzYzFiMDM4YmVlZmI5OWEwMjdlZTBlZSIsInNpemUiOjY4NDYsInBhdGgiOiJib20vbW9kZWwtYm9tLmNkeC5qc29uIn0seyJ0eXBlIjoiZmlsZSIsIm9pZCI6IjVjMjgzNjY0NDgwMjEyYzg0MTY4MTlkM2E3NzYxOTA0OWY4YzAxZGIiLCJzaXplIjo1OCwicGF0aCI6ImJ1aWxkLnRvbWwifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiMWRkYmUwZjU0YTM1ZGM2NGMyZjUyZGJiZTc4ZGI5NGVjYTk4YzUzOCIsInNpemUiOjkzMTUsInBhdGgiOiJidWlsZC90b3JjaC11bml2ZXJzYWwvc3psX2Zvcm11bGFzL19faW5pdF9fLnB5In0seyJ0eXBlIjoiZmlsZSIsIm9pZCI6ImEwMzdhMTZjMjVkOGY0YTk1MTE3ZDk5MTY4ZWFmNmJiZDczYzZjZGEiLCJzaXplIjo2NTk4LCJwYXRoIjoiYnVpbGQvdG9yY2gtdW5pdmVyc2FsL3N6bF9mb3JtdWxhcy9fY29tcG9zZXIucHkifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiNmRhYjc5ODI0YmEyZGM1ZTY1ZjQ0YmMwZjM0ZWUwMmMyZTZiYmFkMSIsInNpemUiOjE0NDA0LCJwYXRoIjoiYnVpbGQvdG9yY2gtdW5pdmVyc2FsL3N6bF9mb3JtdWxhcy9fZm9ybXVsYXMucHkifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiMWZjZDgxNTYyODU2YTg4NGM4ZDBiZWE5NWVlNzZkNTE0ODNiODg0MiIsInNpemUiOjEwMTUsInBhdGgiOiJidWlsZC90b3JjaC11bml2ZXJzYWwvc3psX2Zvcm11bGFzL21ldGFkYXRhLmpzb24ifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiMGQ5ZDUzMjM1YTg0NGMyZGNhZjQ3NzE0NjY1MTgwYzQ4ZTlmZmI1MyIsInNpemUiOjQxMTMsInBhdGgiOiJjYXJkL2hvbG8tYmFubmVyLnN2ZyJ9LHsidHlwZSI6ImZpbGUiLCJvaWQiOiJiY2VlZDU3NWVjOGVkMDdiOTAwMTg4NTNmNTlmMjJhNjljYzMxYWZkIiwic2l6ZSI6MTU2OCwicGF0aCI6InNjcmlwdHMvZXZhbC5weSJ9LHsidHlwZSI6ImZpbGUiLCJvaWQiOiI0ODBlYmQyYmRlZWM1ZTM5Yzc2ZjMyODhhMGI0ZTg1ODA0OTVlYTlkIiwic2l6ZSI6MTMxMzcsInBhdGgiOiJzY3JpcHRzL2ZvcmdlLnB5In0seyJ0eXBlIjoiZmlsZSIsIm9pZCI6IjUwOTI0ODg5NWZmODI2YjBhMmViZjZlZTQ1NmM1OThmMzQwMTkxNmIiLCJzaXplIjo2NjI2LCJwYXRoIjoidGVzdHMvdGVzdF9mb3JtdWxhcy5weSJ9XQ==",
+          "next_url": null
+        }
+      ],
+      "tree_coverage": "COMPLETE_ACCESSIBLE_RESPONSE",
+      "tree_entries": 27,
+      "file_count": 20
+    },
+    "tree": [
+      {
+        "type": "file",
+        "oid": "a6344aac8c09253b3b630fb776ae94478aa0275b",
+        "size": 1519,
+        "path": ".gitattributes",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-formulas",
+        "revision": "1edee3ad6aca1e5489d4e7dfd87ed2b2c7b1443f"
+      },
+      {
+        "type": "file",
+        "oid": "c61f4aab98acbd5f6cd0f382dc31d33c0b1ec1cb",
+        "size": 6952,
+        "path": "BENCH.laptop-blackwell.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-formulas",
+        "revision": "1edee3ad6aca1e5489d4e7dfd87ed2b2c7b1443f"
+      },
+      {
+        "type": "file",
+        "oid": "7c317ba373932bf7f56ab969a3698aa3468811be",
+        "size": 776,
+        "path": "LICENSE",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-formulas",
+        "revision": "1edee3ad6aca1e5489d4e7dfd87ed2b2c7b1443f"
+      },
+      {
+        "type": "file",
+        "oid": "260f8ce579d132e1b9ecbb50b452fcf2c2b5a72b",
+        "size": 3894,
+        "path": "MODEL_PROVENANCE.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-formulas",
+        "revision": "1edee3ad6aca1e5489d4e7dfd87ed2b2c7b1443f"
+      },
+      {
+        "type": "file",
+        "oid": "83599f7a34bf8265b3f3a5d386bf9affbd71830f",
+        "size": 1927,
+        "path": "OPERATIONAL.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-formulas",
+        "revision": "1edee3ad6aca1e5489d4e7dfd87ed2b2c7b1443f"
+      },
+      {
+        "type": "file",
+        "oid": "2fa2cc8c1226d4d855deaff3849ca2d41d2528cb",
+        "size": 13319,
+        "path": "PROMOTION_READINESS_AUDIT.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-formulas",
+        "revision": "1edee3ad6aca1e5489d4e7dfd87ed2b2c7b1443f"
+      },
+      {
+        "type": "file",
+        "oid": "6a71bd55a3de90ce26ffab96e4ad45c0035c8f11",
+        "size": 5654,
+        "path": "README.md",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-formulas",
+        "revision": "1edee3ad6aca1e5489d4e7dfd87ed2b2c7b1443f"
+      },
+      {
+        "type": "file",
+        "oid": "ce9ae957e8376904ae1e18383804640c286dcd74",
+        "size": 1829,
+        "path": "SECURITY.md",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-formulas",
+        "revision": "1edee3ad6aca1e5489d4e7dfd87ed2b2c7b1443f"
+      },
+      {
+        "type": "file",
+        "oid": "44e7c0a004d4bf8a1f1245561c855e7a0baa9804",
+        "size": 678,
+        "path": "SZL_ESTATE_MANAGED.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-formulas",
+        "revision": "1edee3ad6aca1e5489d4e7dfd87ed2b2c7b1443f"
+      },
+      {
+        "type": "file",
+        "oid": "17576d0943e83797ae07baec99181c07344cd1d9",
+        "size": 5072,
+        "path": "TRAINING_RECEIPT.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-formulas",
+        "revision": "1edee3ad6aca1e5489d4e7dfd87ed2b2c7b1443f"
+      },
+      {
+        "type": "directory",
+        "oid": "5936ed9355cd3f6bedccfdd464fce0180a998181",
+        "size": 0,
+        "path": "bom",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-formulas",
+        "revision": "1edee3ad6aca1e5489d4e7dfd87ed2b2c7b1443f"
+      },
+      {
+        "type": "file",
+        "oid": "2ba6284ad3d2d4e0a3c1b038beefb99a027ee0ee",
+        "size": 6846,
+        "path": "bom/model-bom.cdx.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-formulas",
+        "revision": "1edee3ad6aca1e5489d4e7dfd87ed2b2c7b1443f"
+      },
+      {
+        "type": "directory",
+        "oid": "afea64dd084eed0be0637711eff9fed20850eeca",
+        "size": 0,
+        "path": "build",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-formulas",
+        "revision": "1edee3ad6aca1e5489d4e7dfd87ed2b2c7b1443f"
+      },
+      {
+        "type": "file",
+        "oid": "5c283664480212c8416819d3a77619049f8c01db",
+        "size": 58,
+        "path": "build.toml",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-formulas",
+        "revision": "1edee3ad6aca1e5489d4e7dfd87ed2b2c7b1443f"
+      },
+      {
+        "type": "directory",
+        "oid": "892fa9d390f960b0e1ab2319007da93ba147a071",
+        "size": 0,
+        "path": "build/torch-universal",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-formulas",
+        "revision": "1edee3ad6aca1e5489d4e7dfd87ed2b2c7b1443f"
+      },
+      {
+        "type": "directory",
+        "oid": "5e84d5c9ee56152a4020f7904800fb9a05c83d8e",
+        "size": 0,
+        "path": "build/torch-universal/szl_formulas",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-formulas",
+        "revision": "1edee3ad6aca1e5489d4e7dfd87ed2b2c7b1443f"
+      },
+      {
+        "type": "file",
+        "oid": "1ddbe0f54a35dc64c2f52dbbe78db94eca98c538",
+        "size": 9315,
+        "path": "build/torch-universal/szl_formulas/__init__.py",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-formulas",
+        "revision": "1edee3ad6aca1e5489d4e7dfd87ed2b2c7b1443f"
+      },
+      {
+        "type": "file",
+        "oid": "a037a16c25d8f4a95117d99168eaf6bbd73c6cda",
+        "size": 6598,
+        "path": "build/torch-universal/szl_formulas/_composer.py",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-formulas",
+        "revision": "1edee3ad6aca1e5489d4e7dfd87ed2b2c7b1443f"
+      },
+      {
+        "type": "file",
+        "oid": "6dab79824ba2dc5e65f44bc0f34ee02c2e6bbad1",
+        "size": 14404,
+        "path": "build/torch-universal/szl_formulas/_formulas.py",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-formulas",
+        "revision": "1edee3ad6aca1e5489d4e7dfd87ed2b2c7b1443f"
+      },
+      {
+        "type": "file",
+        "oid": "1fcd81562856a884c8d0bea95ee76d51483b8842",
+        "size": 1015,
+        "path": "build/torch-universal/szl_formulas/metadata.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-formulas",
+        "revision": "1edee3ad6aca1e5489d4e7dfd87ed2b2c7b1443f"
+      },
+      {
+        "type": "directory",
+        "oid": "6baaea67ae6fee5e9ea7d9a27f9cd6fc62b27d8d",
+        "size": 0,
+        "path": "card",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-formulas",
+        "revision": "1edee3ad6aca1e5489d4e7dfd87ed2b2c7b1443f"
+      },
+      {
+        "type": "file",
+        "oid": "0d9d53235a844c2dcaf47714665180c48e9ffb53",
+        "size": 4113,
+        "path": "card/holo-banner.svg",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-formulas",
+        "revision": "1edee3ad6aca1e5489d4e7dfd87ed2b2c7b1443f"
+      },
+      {
+        "type": "directory",
+        "oid": "5e32812e359aa0f491445f8c87d731b0cadb3dd5",
+        "size": 0,
+        "path": "scripts",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-formulas",
+        "revision": "1edee3ad6aca1e5489d4e7dfd87ed2b2c7b1443f"
+      },
+      {
+        "type": "file",
+        "oid": "bceed575ec8ed07b90018853f59f22a69cc31afd",
+        "size": 1568,
+        "path": "scripts/eval.py",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-formulas",
+        "revision": "1edee3ad6aca1e5489d4e7dfd87ed2b2c7b1443f"
+      },
+      {
+        "type": "file",
+        "oid": "480ebd2bdeec5e39c76f3288a0b4e8580495ea9d",
+        "size": 13137,
+        "path": "scripts/forge.py",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-formulas",
+        "revision": "1edee3ad6aca1e5489d4e7dfd87ed2b2c7b1443f"
+      },
+      {
+        "type": "directory",
+        "oid": "187ea96476169bfc0c5bc8b5c34e5950d467454e",
+        "size": 0,
+        "path": "tests",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-formulas",
+        "revision": "1edee3ad6aca1e5489d4e7dfd87ed2b2c7b1443f"
+      },
+      {
+        "type": "file",
+        "oid": "509248895ff826b0a2ebf6ee456c598f3401916b",
+        "size": 6626,
+        "path": "tests/test_formulas.py",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-formulas",
+        "revision": "1edee3ad6aca1e5489d4e7dfd87ed2b2c7b1443f"
+      }
+    ],
+    "text_record": {
+      "id": "SZLHOLDINGS/szl-formulas",
+      "kind": "models",
+      "revision": "1edee3ad6aca1e5489d4e7dfd87ed2b2c7b1443f",
+      "path": "MODEL_PROVENANCE.json",
+      "receipt": {
+        "requested_url": "https://huggingface.co/SZLHOLDINGS/szl-formulas/resolve/1edee3ad6aca1e5489d4e7dfd87ed2b2c7b1443f/MODEL_PROVENANCE.json",
+        "final_url": "https://huggingface.co/api/resolve-cache/models/SZLHOLDINGS/szl-formulas/1edee3ad6aca1e5489d4e7dfd87ed2b2c7b1443f/MODEL_PROVENANCE.json?%2FSZLHOLDINGS%2Fszl-formulas%2Fresolve%2F1edee3ad6aca1e5489d4e7dfd87ed2b2c7b1443f%2FMODEL_PROVENANCE.json=&etag=%22260f8ce579d132e1b9ecbb50b452fcf2c2b5a72b%22",
+        "status": 200,
+        "observed_at": "2026-09-24T13:44:54.786044+00:00",
+        "response_bytes": 3894,
+        "response_sha256": "9d556d9adb7c8e3347785b7d2e9664c61d190b0ede920c64cab8f4069aaf8682",
+        "response_bytes_base64": "ewogICJzY2hlbWEiOiAic3psLm1vZGVsLXNvdXJjZS1hdHRlc3RhdGlvbi92MSIsCiAgIm1vZGVsIjogewogICAgImlkIjogIlNaTEhPTERJTkdTL3N6bC1mb3JtdWxhcyIsCiAgICAicmVwb3NpdG9yeV90eXBlIjogIm1vZGVsIiwKICAgICJhcnRpZmFjdF9raW5kIjogImtlcm5lbC1jb2RlLWFuZC1jb25maWd1cmF0aW9uICsgdHJhaW5lZCBzdXJyb2dhdGUgKG1vZGVsLmpvYmxpYikiLAogICAgInRyYWluZWRfd2VpZ2h0c19wcmVzZW50IjogdHJ1ZSwKICAgICJzdGRsaWJfb25seSI6IGZhbHNlLAogICAgInRvcmNoX3JlcXVpcmVkIjogZmFsc2UsCiAgICAic3Vycm9nYXRlIjogewogICAgICAiZmlsZSI6ICJtb2RlbC5qb2JsaWIiLAogICAgICAic2hhMjU2IjogIjk0Y2NhNzBkYzk1MGZhOTU3YzA5MzFlZTgwMjQwYzQzNjljYWIwZmY4NDQ2ZmZiZmVkYjQ4M2MzZTI5MDc2OTgiLAogICAgICAicm9sZSI6ICIyMS1jbGFzcyBmb3JtdWxhIGlkZW50aWZpZXIgZnJvbSBjYWxsLXRyYWNlIG9ic2VydmFibGVzIFx1MjAxNCBrZXJuZWwgcmVtYWlucyBzb2xlIGdyb3VuZCB0cnV0aCIsCiAgICAgICJmaWRlbGl0eV9NRUFTVVJFRCI6IHsKICAgICAgICAidGVzdF9hY2N1cmFjeV8yMV9jbGFzcyI6IDAuOTcwOSwKICAgICAgICAibWVhbl9wZXJfY2xhc3NfcmVjYWxsIjogMC45NzA5LAogICAgICAgICJibGluZF9zcG90X2NsYXNzZXNfcmVjYWxsX2x0XzAuOTAiOiB7CiAgICAgICAgICAiYm9ocl9jb21wbGVtZW50YXJpdHlfZmxvb3IiOiAwLjc3NzgsCiAgICAgICAgICAiZmlzaGVyX3Jhb19kaXN0YW5jZSI6IDAuODg4OSwKICAgICAgICAgICJwaW5za2VyX2tsX2JvdW5kIjogMC44ODMzLAogICAgICAgICAgInNjaHVyX2NvbmNhdmVfbGFtYmRhX3R3b19heGlzIjogMC44NQogICAgICAgIH0KICAgICAgfSwKICAgICAgInJlY2VpcHQiOiAiVFJBSU5JTkdfUkVDRUlQVC5qc29uIiwKICAgICAgInJldmVyaWZ5IjogInB5dGhvbiBzY3JpcHRzL2V2YWwucHkiCiAgICB9LAogICAgInN0ZGxpYl9vbmx5X25vdGUiOiAia2VybmVsIHBhY2thZ2UgaXRzZWxmIHN0YXlzIHN0ZGxpYi1vbmx5OyB0aGUgT1BUSU9OQUwgc3Vycm9nYXRlIG5lZWRzIHNrbGVhcm4ram9ibGliIgogIH0sCiAgInNvdXJjZV9vZl9yZWNvcmQiOiB7CiAgICAic3RhdGUiOiAiVkVSSUZJRURfSEZfU09VUkNFX09GX1JFQ09SRCIsCiAgICAicGxhdGZvcm0iOiAiaHVnZ2luZ2ZhY2UiLAogICAgInJlcG9zaXRvcnkiOiAiU1pMSE9MRElOR1Mvc3psLWZvcm11bGFzIgogIH0sCiAgIm1pcnJvcnMiOiB7CiAgICAiY2Fub25pY2FsX2RhdGFzZXQiOiAiU1pMSE9MRElOR1MvY2Fub25pY2FsLWZvcm11bGFzLXYxIChjb2RlL3B5dGhvbi9mb3JtdWxhcy5weSArIGNvbXBvc2VyLnB5KSIsCiAgICAibGVhbl9yZXBvIjogInN6bC1ob2xkaW5ncy9sdXRhci1sZWFuIiwKICAgICJkb2lfbHV0YXJfbGVhbiI6ICIxMC41MjgxL3plbm9kby4yMDQzNDMwOCIsCiAgICAiZG9pX2NvbmNlcHQiOiAiMTAuNTI4MS96ZW5vZG8uMTk5NDQ5MjYiCiAgfSwKICAidmVyaWZpY2F0aW9uIjogewogICAgInRlc3RzIjogIjE3LzE3IHBhc3NlZCIsCiAgICAidGVzdHNfYmFzaXMiOiAiTUVBU1VSRUQgbG9jYWwgcHl0aG9uMyAtbSBweXRlc3QgcnVuLCBzdGRsaWItb25seSwgb2ZmbGluZSIsCiAgICAiZmFsc2lmaWFiaWxpdHkiOiAicmVnaXN0cnkgbXVzdCBiZSBleGFjdGx5IDIxOyBsb2NrZWQtcHJvdmVuIHNldCBtdXN0IGJlIGV4YWN0bHkgODsgUFJPT0ZfU1RBVFVTIG11c3QgbWF0Y2ggdGhlIGRhdGFzZXQgdmVyYmF0aW0gYW5kIHJhaXNlcyBvbiB1bmtub3duIG5hbWVzOyBcdTAzOWIgemVyby1waW5zIG9uIGEgemVybyBheGlzOyBhIHRhbXBlcmVkIHJlY2VpcHQgZmFpbHMgdmVyaWZ5X2NoYWluOyBhIHN1Yi1mbG9vciBcdTAzOWIgaGFsdHMgdGhlIGdvdmVybmVkIGxvb3AiCiAgfSwKICAicHJvb2Zfc3RhdHVzIjogewogICAgInBvbGljeSI6ICJtaXJyb3JlZCBWRVJCQVRJTSBmcm9tIFNaTEhPTERJTkdTL2Nhbm9uaWNhbC1mb3JtdWxhcy12MSAoUFJPVkVOL0FYSU9NL1NPUlJZL0NPTkpFQ1RVUkUpIiwKICAgICJvYmxpZ2F0aW9uX3ZzX2xvY2tlZCI6ICJhIHBlci1mb3JtdWxhIFBST1ZFTiguLi4pIHRhZyBpcyBhbiBvYmxpZ2F0aW9uLWxldmVsIGxhYmVsLCBOT1QgbWVtYmVyc2hpcCBpbiB0aGUgbG9ja2VkLXByb3ZlbiBjYW5vbmljYWwgc2V0IiwKICAgICJsb2NrZWRfcHJvdmVuX2NvdW50IjogOCwKICAgICJsb2NrZWRfcHJvdmVuX2lkcyI6IFsKICAgICAgIkYxIiwKICAgICAgIkY0IiwKICAgICAgIkY3IiwKICAgICAgIkYxMSIsCiAgICAgICJGMTIiLAogICAgICAiRjE4IiwKICAgICAgIkYxOSIsCiAgICAgICJGMjIiCiAgICBdLAogICAgImxvY2tlZF9jb3VudF90aGVvcmVtIjogImxvY2tlZF9jb3VudF9laWdodCAobm8tYXhpb20sIHN6bC1ob2xkaW5ncy9sdXRhci1sZWFuIFBST1ZFTl9GT1JNVUxBUy5tZCkiLAogICAgImZfbnVtYmVyX3RvX3JlZ2lzdHJ5X21hcHBpbmciOiAiVU5LTk9XTiBcdTIwMTQgbHV0YXItbGVhbiBjb3JwdXMgKD49MjIgZm9ybXVsYXMpIGlzIGEgc2VwYXJhdGUgbnVtYmVyaW5nOyBtYXBwaW5nIG9udG8gdGhlc2UgMjEgcmVnaXN0cnkgZW50cmllcyBpcyBOT1QgYXNzZXJ0ZWQgaGVyZSAobmV2ZXIgZmFicmljYXRlZCkiCiAgfSwKICAibGFtYmRhIjogewogICAgInN0YXR1cyI6ICJDb25qZWN0dXJlIDEgKG9wZW4pIFx1MjAxNCB1bmlxdWVuZXNzIHVucHJvdmVuIChVbmlxdWVuZXNzLmxlYW46MTIwIHNvcnJ5KSIsCiAgICAiZGVmaW5pdGlvbiI6ICJ3ZWlnaHRlZCBnZW9tZXRyaWMgbWVhbiAoRDIpIiwKICAgICJjb21wb3Nlcl9yb2xlIjogIkFEVklTT1JZIG9ubHkgXHUyMDE0IG5vbi1jb21wZW5zYXRvcnkgcm9sbC11cCwgTk9UIHByb3ZlbiB0cnVzdCIKICB9LAogICJjbGFpbXMiOiB7CiAgICAidHJhaW5lZF9tb2RlbCI6ICJDTEFJTUVEIFx1MjAxNCBza2xlYXJuIEhpc3RHcmFkaWVudEJvb3N0aW5nQ2xhc3NpZmllciwgTUVBU1VSRUQsIHJlY2VpcHRlZCIsCiAgICAicmVwcm9kdWNpYmxlX2J1aWxkIjogIk5PVF9DTEFJTUVEIiwKICAgICJ3ZWlnaHRzX3ByZXNlbnQiOiAibW9kZWwuam9ibGliIChza2xlYXJuIHN1cnJvZ2F0ZTsga2VybmVsIHN0YXlzIHdlaWdodGxlc3MpIgogIH0sCiAgImxpbWl0cyI6IFsKICAgICJUaGUgdHJhaW5lZCBzdXJyb2dhdGUgaXMgYSBmYXN0IGZvcm11bGEgSURFTlRJRklFUiBmcm9tIHRyYWNlIHNoYXBlOyBpdCBkb2VzIE5PVCByZXBsYWNlIHRoZSBrZXJuZWwncyByZWFsIGV2YWx1YXRvcnMsIHdoaWNoIHJlbWFpbiBhdXRob3JpdGF0aXZlIGZvciBmb3JtdWxhIGlkZW50aXR5LiIsCiAgICAiU29tZSBmb3JtdWxhcyBzaGFyZSBhbiBhcmd1bWVudCtvdXRwdXQgb2JzZXJ2YWJsZSBzaWduYXR1cmUgYW5kIGFyZSBjb25mdXNhYmxlIGZyb20gdHJhY2Ugc2hhcGUgYWxvbmU7IHRoZXNlIGJsaW5kIHNwb3RzIGFyZSBNRUFTVVJFRCBhbmQgc3RhdGVkIGluIFRSQUlOSU5HX1JFQ0VJUFQuanNvbi4iLAogICAgIlRoZSAyMSBmb3JtdWxhcyBhcmUgcHVyZS9uby1JL087IHRoZSBjb21wb3NlciBwZXJmb3JtcyBubyBuZXR3b3JrIGFjY2Vzcy4iLAogICAgIlBST09GX1NUQVRVUyBsYWJlbHMgYXJlIHRoZSBkYXRhc2V0J3Mgb2JsaWdhdGlvbi1sZXZlbCBkZWNsYXJhdGlvbnMsIG5vdCB1cGdyYWRlZCBoZXJlLiIsCiAgICAiTG9ja2VkLXByb3ZlbiBjYW5vbmljYWwgc2V0IGlzIGZpeGVkIGF0IGV4YWN0bHkgOCBhbmQgbmV2ZXIgaW5mbGF0ZWQuIiwKICAgICJUaGUgY29tcG9zZXIncyBcdTAzOWIgcm9sbC11cCBkb2VzIG5vdCBwcm92ZSBvciB1cGdyYWRlIFx1MDM5Yiwgd2hpY2ggc3RheXMgQ29uamVjdHVyZSAxIChvcGVuKS4iCiAgXQp9"
+      },
+      "content": {
+        "schema": "szl.model-source-attestation/v1",
+        "model": {
+          "id": "SZLHOLDINGS/szl-formulas",
+          "repository_type": "model",
+          "artifact_kind": "kernel-code-and-configuration + trained surrogate (model.joblib)",
+          "trained_weights_present": true,
+          "stdlib_only": false,
+          "torch_required": false,
+          "surrogate": {
+            "file": "model.joblib",
+            "sha256": "94cca70dc950fa957c0931ee80240c4369cab0ff8446ffbfedb483c3e2907698",
+            "role": "21-class formula identifier from call-trace observables — kernel remains sole ground truth",
+            "fidelity_MEASURED": {
+              "test_accuracy_21_class": 0.9709,
+              "mean_per_class_recall": 0.9709,
+              "blind_spot_classes_recall_lt_0.90": {
+                "bohr_complementarity_floor": 0.7778,
+                "fisher_rao_distance": 0.8889,
+                "pinsker_kl_bound": 0.8833,
+                "schur_concave_lambda_two_axis": 0.85
+              }
+            },
+            "receipt": "TRAINING_RECEIPT.json",
+            "reverify": "python scripts/eval.py"
+          },
+          "stdlib_only_note": "kernel package itself stays stdlib-only; the OPTIONAL surrogate needs sklearn+joblib"
+        },
+        "source_of_record": {
+          "state": "VERIFIED_HF_SOURCE_OF_RECORD",
+          "platform": "huggingface",
+          "repository": "SZLHOLDINGS/szl-formulas"
+        },
+        "mirrors": {
+          "canonical_dataset": "SZLHOLDINGS/canonical-formulas-v1 (code/python/formulas.py + composer.py)",
+          "lean_repo": "szl-holdings/lutar-lean",
+          "doi_lutar_lean": "10.5281/zenodo.20434308",
+          "doi_concept": "10.5281/zenodo.19944926"
+        },
+        "verification": {
+          "tests": "17/17 passed",
+          "tests_basis": "MEASURED local python3 -m pytest run, stdlib-only, offline",
+          "falsifiability": "registry must be exactly 21; locked-proven set must be exactly 8; PROOF_STATUS must match the dataset verbatim and raises on unknown names; Λ zero-pins on a zero axis; a tampered receipt fails verify_chain; a sub-floor Λ halts the governed loop"
+        },
+        "proof_status": {
+          "policy": "mirrored VERBATIM from SZLHOLDINGS/canonical-formulas-v1 (PROVEN/AXIOM/SORRY/CONJECTURE)",
+          "obligation_vs_locked": "a per-formula PROVEN(...) tag is an obligation-level label, NOT membership in the locked-proven canonical set",
+          "locked_proven_count": 8,
+          "locked_proven_ids": [
+            "F1",
+            "F4",
+            "F7",
+            "F11",
+            "F12",
+            "F18",
+            "F19",
+            "F22"
+          ],
+          "locked_count_theorem": "locked_count_eight (no-axiom, szl-holdings/lutar-lean PROVEN_FORMULAS.md)",
+          "f_number_to_registry_mapping": "UNKNOWN — lutar-lean corpus (>=22 formulas) is a separate numbering; mapping onto these 21 registry entries is NOT asserted here (never fabricated)"
+        },
+        "lambda": {
+          "status": "Conjecture 1 (open) — uniqueness unproven (Uniqueness.lean:120 sorry)",
+          "definition": "weighted geometric mean (D2)",
+          "composer_role": "ADVISORY only — non-compensatory roll-up, NOT proven trust"
+        },
+        "claims": {
+          "trained_model": "CLAIMED — sklearn HistGradientBoostingClassifier, MEASURED, receipted",
+          "reproducible_build": "NOT_CLAIMED",
+          "weights_present": "model.joblib (sklearn surrogate; kernel stays weightless)"
+        },
+        "limits": [
+          "The trained surrogate is a fast formula IDENTIFIER from trace shape; it does NOT replace the kernel's real evaluators, which remain authoritative for formula identity.",
+          "Some formulas share an argument+output observable signature and are confusable from trace shape alone; these blind spots are MEASURED and stated in TRAINING_RECEIPT.json.",
+          "The 21 formulas are pure/no-I/O; the composer performs no network access.",
+          "PROOF_STATUS labels are the dataset's obligation-level declarations, not upgraded here.",
+          "Locked-proven canonical set is fixed at exactly 8 and never inflated.",
+          "The composer's Λ roll-up does not prove or upgrade Λ, which stays Conjecture 1 (open)."
+        ]
+      }
+    },
+    "original_bytes_base64": "ewogICJzY2hlbWEiOiAic3psLm1vZGVsLXNvdXJjZS1hdHRlc3RhdGlvbi92MSIsCiAgIm1vZGVsIjogewogICAgImlkIjogIlNaTEhPTERJTkdTL3N6bC1mb3JtdWxhcyIsCiAgICAicmVwb3NpdG9yeV90eXBlIjogIm1vZGVsIiwKICAgICJhcnRpZmFjdF9raW5kIjogImtlcm5lbC1jb2RlLWFuZC1jb25maWd1cmF0aW9uICsgdHJhaW5lZCBzdXJyb2dhdGUgKG1vZGVsLmpvYmxpYikiLAogICAgInRyYWluZWRfd2VpZ2h0c19wcmVzZW50IjogdHJ1ZSwKICAgICJzdGRsaWJfb25seSI6IGZhbHNlLAogICAgInRvcmNoX3JlcXVpcmVkIjogZmFsc2UsCiAgICAic3Vycm9nYXRlIjogewogICAgICAiZmlsZSI6ICJtb2RlbC5qb2JsaWIiLAogICAgICAic2hhMjU2IjogIjk0Y2NhNzBkYzk1MGZhOTU3YzA5MzFlZTgwMjQwYzQzNjljYWIwZmY4NDQ2ZmZiZmVkYjQ4M2MzZTI5MDc2OTgiLAogICAgICAicm9sZSI6ICIyMS1jbGFzcyBmb3JtdWxhIGlkZW50aWZpZXIgZnJvbSBjYWxsLXRyYWNlIG9ic2VydmFibGVzIFx1MjAxNCBrZXJuZWwgcmVtYWlucyBzb2xlIGdyb3VuZCB0cnV0aCIsCiAgICAgICJmaWRlbGl0eV9NRUFTVVJFRCI6IHsKICAgICAgICAidGVzdF9hY2N1cmFjeV8yMV9jbGFzcyI6IDAuOTcwOSwKICAgICAgICAibWVhbl9wZXJfY2xhc3NfcmVjYWxsIjogMC45NzA5LAogICAgICAgICJibGluZF9zcG90X2NsYXNzZXNfcmVjYWxsX2x0XzAuOTAiOiB7CiAgICAgICAgICAiYm9ocl9jb21wbGVtZW50YXJpdHlfZmxvb3IiOiAwLjc3NzgsCiAgICAgICAgICAiZmlzaGVyX3Jhb19kaXN0YW5jZSI6IDAuODg4OSwKICAgICAgICAgICJwaW5za2VyX2tsX2JvdW5kIjogMC44ODMzLAogICAgICAgICAgInNjaHVyX2NvbmNhdmVfbGFtYmRhX3R3b19heGlzIjogMC44NQogICAgICAgIH0KICAgICAgfSwKICAgICAgInJlY2VpcHQiOiAiVFJBSU5JTkdfUkVDRUlQVC5qc29uIiwKICAgICAgInJldmVyaWZ5IjogInB5dGhvbiBzY3JpcHRzL2V2YWwucHkiCiAgICB9LAogICAgInN0ZGxpYl9vbmx5X25vdGUiOiAia2VybmVsIHBhY2thZ2UgaXRzZWxmIHN0YXlzIHN0ZGxpYi1vbmx5OyB0aGUgT1BUSU9OQUwgc3Vycm9nYXRlIG5lZWRzIHNrbGVhcm4ram9ibGliIgogIH0sCiAgInNvdXJjZV9vZl9yZWNvcmQiOiB7CiAgICAic3RhdGUiOiAiVkVSSUZJRURfSEZfU09VUkNFX09GX1JFQ09SRCIsCiAgICAicGxhdGZvcm0iOiAiaHVnZ2luZ2ZhY2UiLAogICAgInJlcG9zaXRvcnkiOiAiU1pMSE9MRElOR1Mvc3psLWZvcm11bGFzIgogIH0sCiAgIm1pcnJvcnMiOiB7CiAgICAiY2Fub25pY2FsX2RhdGFzZXQiOiAiU1pMSE9MRElOR1MvY2Fub25pY2FsLWZvcm11bGFzLXYxIChjb2RlL3B5dGhvbi9mb3JtdWxhcy5weSArIGNvbXBvc2VyLnB5KSIsCiAgICAibGVhbl9yZXBvIjogInN6bC1ob2xkaW5ncy9sdXRhci1sZWFuIiwKICAgICJkb2lfbHV0YXJfbGVhbiI6ICIxMC41MjgxL3plbm9kby4yMDQzNDMwOCIsCiAgICAiZG9pX2NvbmNlcHQiOiAiMTAuNTI4MS96ZW5vZG8uMTk5NDQ5MjYiCiAgfSwKICAidmVyaWZpY2F0aW9uIjogewogICAgInRlc3RzIjogIjE3LzE3IHBhc3NlZCIsCiAgICAidGVzdHNfYmFzaXMiOiAiTUVBU1VSRUQgbG9jYWwgcHl0aG9uMyAtbSBweXRlc3QgcnVuLCBzdGRsaWItb25seSwgb2ZmbGluZSIsCiAgICAiZmFsc2lmaWFiaWxpdHkiOiAicmVnaXN0cnkgbXVzdCBiZSBleGFjdGx5IDIxOyBsb2NrZWQtcHJvdmVuIHNldCBtdXN0IGJlIGV4YWN0bHkgODsgUFJPT0ZfU1RBVFVTIG11c3QgbWF0Y2ggdGhlIGRhdGFzZXQgdmVyYmF0aW0gYW5kIHJhaXNlcyBvbiB1bmtub3duIG5hbWVzOyBcdTAzOWIgemVyby1waW5zIG9uIGEgemVybyBheGlzOyBhIHRhbXBlcmVkIHJlY2VpcHQgZmFpbHMgdmVyaWZ5X2NoYWluOyBhIHN1Yi1mbG9vciBcdTAzOWIgaGFsdHMgdGhlIGdvdmVybmVkIGxvb3AiCiAgfSwKICAicHJvb2Zfc3RhdHVzIjogewogICAgInBvbGljeSI6ICJtaXJyb3JlZCBWRVJCQVRJTSBmcm9tIFNaTEhPTERJTkdTL2Nhbm9uaWNhbC1mb3JtdWxhcy12MSAoUFJPVkVOL0FYSU9NL1NPUlJZL0NPTkpFQ1RVUkUpIiwKICAgICJvYmxpZ2F0aW9uX3ZzX2xvY2tlZCI6ICJhIHBlci1mb3JtdWxhIFBST1ZFTiguLi4pIHRhZyBpcyBhbiBvYmxpZ2F0aW9uLWxldmVsIGxhYmVsLCBOT1QgbWVtYmVyc2hpcCBpbiB0aGUgbG9ja2VkLXByb3ZlbiBjYW5vbmljYWwgc2V0IiwKICAgICJsb2NrZWRfcHJvdmVuX2NvdW50IjogOCwKICAgICJsb2NrZWRfcHJvdmVuX2lkcyI6IFsKICAgICAgIkYxIiwKICAgICAgIkY0IiwKICAgICAgIkY3IiwKICAgICAgIkYxMSIsCiAgICAgICJGMTIiLAogICAgICAiRjE4IiwKICAgICAgIkYxOSIsCiAgICAgICJGMjIiCiAgICBdLAogICAgImxvY2tlZF9jb3VudF90aGVvcmVtIjogImxvY2tlZF9jb3VudF9laWdodCAobm8tYXhpb20sIHN6bC1ob2xkaW5ncy9sdXRhci1sZWFuIFBST1ZFTl9GT1JNVUxBUy5tZCkiLAogICAgImZfbnVtYmVyX3RvX3JlZ2lzdHJ5X21hcHBpbmciOiAiVU5LTk9XTiBcdTIwMTQgbHV0YXItbGVhbiBjb3JwdXMgKD49MjIgZm9ybXVsYXMpIGlzIGEgc2VwYXJhdGUgbnVtYmVyaW5nOyBtYXBwaW5nIG9udG8gdGhlc2UgMjEgcmVnaXN0cnkgZW50cmllcyBpcyBOT1QgYXNzZXJ0ZWQgaGVyZSAobmV2ZXIgZmFicmljYXRlZCkiCiAgfSwKICAibGFtYmRhIjogewogICAgInN0YXR1cyI6ICJDb25qZWN0dXJlIDEgKG9wZW4pIFx1MjAxNCB1bmlxdWVuZXNzIHVucHJvdmVuIChVbmlxdWVuZXNzLmxlYW46MTIwIHNvcnJ5KSIsCiAgICAiZGVmaW5pdGlvbiI6ICJ3ZWlnaHRlZCBnZW9tZXRyaWMgbWVhbiAoRDIpIiwKICAgICJjb21wb3Nlcl9yb2xlIjogIkFEVklTT1JZIG9ubHkgXHUyMDE0IG5vbi1jb21wZW5zYXRvcnkgcm9sbC11cCwgTk9UIHByb3ZlbiB0cnVzdCIKICB9LAogICJjbGFpbXMiOiB7CiAgICAidHJhaW5lZF9tb2RlbCI6ICJDTEFJTUVEIFx1MjAxNCBza2xlYXJuIEhpc3RHcmFkaWVudEJvb3N0aW5nQ2xhc3NpZmllciwgTUVBU1VSRUQsIHJlY2VpcHRlZCIsCiAgICAicmVwcm9kdWNpYmxlX2J1aWxkIjogIk5PVF9DTEFJTUVEIiwKICAgICJ3ZWlnaHRzX3ByZXNlbnQiOiAibW9kZWwuam9ibGliIChza2xlYXJuIHN1cnJvZ2F0ZTsga2VybmVsIHN0YXlzIHdlaWdodGxlc3MpIgogIH0sCiAgImxpbWl0cyI6IFsKICAgICJUaGUgdHJhaW5lZCBzdXJyb2dhdGUgaXMgYSBmYXN0IGZvcm11bGEgSURFTlRJRklFUiBmcm9tIHRyYWNlIHNoYXBlOyBpdCBkb2VzIE5PVCByZXBsYWNlIHRoZSBrZXJuZWwncyByZWFsIGV2YWx1YXRvcnMsIHdoaWNoIHJlbWFpbiBhdXRob3JpdGF0aXZlIGZvciBmb3JtdWxhIGlkZW50aXR5LiIsCiAgICAiU29tZSBmb3JtdWxhcyBzaGFyZSBhbiBhcmd1bWVudCtvdXRwdXQgb2JzZXJ2YWJsZSBzaWduYXR1cmUgYW5kIGFyZSBjb25mdXNhYmxlIGZyb20gdHJhY2Ugc2hhcGUgYWxvbmU7IHRoZXNlIGJsaW5kIHNwb3RzIGFyZSBNRUFTVVJFRCBhbmQgc3RhdGVkIGluIFRSQUlOSU5HX1JFQ0VJUFQuanNvbi4iLAogICAgIlRoZSAyMSBmb3JtdWxhcyBhcmUgcHVyZS9uby1JL087IHRoZSBjb21wb3NlciBwZXJmb3JtcyBubyBuZXR3b3JrIGFjY2Vzcy4iLAogICAgIlBST09GX1NUQVRVUyBsYWJlbHMgYXJlIHRoZSBkYXRhc2V0J3Mgb2JsaWdhdGlvbi1sZXZlbCBkZWNsYXJhdGlvbnMsIG5vdCB1cGdyYWRlZCBoZXJlLiIsCiAgICAiTG9ja2VkLXByb3ZlbiBjYW5vbmljYWwgc2V0IGlzIGZpeGVkIGF0IGV4YWN0bHkgOCBhbmQgbmV2ZXIgaW5mbGF0ZWQuIiwKICAgICJUaGUgY29tcG9zZXIncyBcdTAzOWIgcm9sbC11cCBkb2VzIG5vdCBwcm92ZSBvciB1cGdyYWRlIFx1MDM5Yiwgd2hpY2ggc3RheXMgQ29uamVjdHVyZSAxIChvcGVuKS4iCiAgXQp9"
+  },
+  {
+    "id": "SZLHOLDINGS/szl-govsign",
+    "repository_type": "model",
+    "revision": "3b63e1fa4a84369cd83fb1f5d155575e5710a447",
+    "repository_record": {
+      "id": "SZLHOLDINGS/szl-govsign",
+      "kind": "models",
+      "revision": "3b63e1fa4a84369cd83fb1f5d155575e5710a447",
+      "metadata": {
+        "_id": "6a3c0995b8dc3a457baa8222",
+        "id": "SZLHOLDINGS/szl-govsign",
+        "private": false,
+        "library_name": "kernels",
+        "tags": [
+          "kernels",
+          "kernel",
+          "signing",
+          "attestation",
+          "dsse",
+          "in-toto",
+          "governance",
+          "doi:10.5281/zenodo.19944926",
+          "license:apache-2.0",
+          "region:us"
+        ],
+        "downloads": 0,
+        "likes": 0,
+        "modelId": "SZLHOLDINGS/szl-govsign",
+        "author": "SZLHOLDINGS",
+        "sha": "3b63e1fa4a84369cd83fb1f5d155575e5710a447",
+        "lastModified": "2026-09-08T11:43:11.000Z",
+        "gated": false,
+        "disabled": false,
+        "model-index": null,
+        "config": {},
+        "cardData": {
+          "library_name": "kernels",
+          "license": "apache-2.0",
+          "tags": [
+            "kernel",
+            "signing",
+            "attestation",
+            "dsse",
+            "in-toto",
+            "governance",
+            "doi:10.5281/zenodo.19944926"
+          ],
+          "szl-governance": {
+            "verdict": "SIGNED-ATTESTATION",
+            "predicate_type": "https://szl.holdings/governance/v1",
+            "lambda": "Conjecture 1 (open) — signature never upgrades advisory to proven trust",
+            "energy": "MEASURED-only (label constrained structurally)",
+            "honest_blocked": "a BLOCKED verdict is signed as BLOCKED — never flipped"
+          }
+        },
+        "siblings": [
+          {
+            "rfilename": ".gitattributes"
+          },
+          {
+            "rfilename": "BENCH.laptop-blackwell.json"
+          },
+          {
+            "rfilename": "LICENSE"
+          },
+          {
+            "rfilename": "MODEL_PROVENANCE.json"
+          },
+          {
+            "rfilename": "PROMOTION_READINESS_AUDIT.json"
+          },
+          {
+            "rfilename": "README.md"
+          },
+          {
+            "rfilename": "SECURITY.md"
+          },
+          {
+            "rfilename": "SZL_ESTATE_MANAGED.json"
+          },
+          {
+            "rfilename": "TRAINING_RECEIPT.json"
+          },
+          {
+            "rfilename": "bom/model-bom.cdx.json"
+          },
+          {
+            "rfilename": "build.toml"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_govsign/__init__.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_govsign/envelope.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_govsign/metadata.json"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_govsign/pae.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_govsign/predicate.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_govsign/selfcheck.py"
+          },
+          {
+            "rfilename": "card/holo-banner.svg"
+          },
+          {
+            "rfilename": "scripts/eval.py"
+          },
+          {
+            "rfilename": "scripts/forge.py"
+          }
+        ],
+        "spaces": [],
+        "createdAt": "2026-06-24T16:45:09.000Z",
+        "usedStorage": 1060512
+      },
+      "metadata_receipt": {
+        "requested_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-govsign",
+        "final_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-govsign",
+        "status": 200,
+        "observed_at": "2026-09-24T13:44:55.413698+00:00",
+        "response_bytes": 1914,
+        "response_sha256": "1432640e4122c6023111ad0df1a227900b3bfd1e21739d612d904fac44ba7446",
+        "response_bytes_base64": "eyJfaWQiOiI2YTNjMDk5NWI4ZGMzYTQ1N2JhYTgyMjIiLCJpZCI6IlNaTEhPTERJTkdTL3N6bC1nb3ZzaWduIiwicHJpdmF0ZSI6ZmFsc2UsImxpYnJhcnlfbmFtZSI6Imtlcm5lbHMiLCJ0YWdzIjpbImtlcm5lbHMiLCJrZXJuZWwiLCJzaWduaW5nIiwiYXR0ZXN0YXRpb24iLCJkc3NlIiwiaW4tdG90byIsImdvdmVybmFuY2UiLCJkb2k6MTAuNTI4MS96ZW5vZG8uMTk5NDQ5MjYiLCJsaWNlbnNlOmFwYWNoZS0yLjAiLCJyZWdpb246dXMiXSwiZG93bmxvYWRzIjowLCJsaWtlcyI6MCwibW9kZWxJZCI6IlNaTEhPTERJTkdTL3N6bC1nb3ZzaWduIiwiYXV0aG9yIjoiU1pMSE9MRElOR1MiLCJzaGEiOiIzYjYzZTFmYTRhODQzNjljZDgzZmIxZjVkMTU1NTc1ZTU3MTBhNDQ3IiwibGFzdE1vZGlmaWVkIjoiMjAyNi0wOS0wOFQxMTo0MzoxMS4wMDBaIiwiZ2F0ZWQiOmZhbHNlLCJkaXNhYmxlZCI6ZmFsc2UsIm1vZGVsLWluZGV4IjpudWxsLCJjb25maWciOnt9LCJjYXJkRGF0YSI6eyJsaWJyYXJ5X25hbWUiOiJrZXJuZWxzIiwibGljZW5zZSI6ImFwYWNoZS0yLjAiLCJ0YWdzIjpbImtlcm5lbCIsInNpZ25pbmciLCJhdHRlc3RhdGlvbiIsImRzc2UiLCJpbi10b3RvIiwiZ292ZXJuYW5jZSIsImRvaToxMC41MjgxL3plbm9kby4xOTk0NDkyNiJdLCJzemwtZ292ZXJuYW5jZSI6eyJ2ZXJkaWN0IjoiU0lHTkVELUFUVEVTVEFUSU9OIiwicHJlZGljYXRlX3R5cGUiOiJodHRwczovL3N6bC5ob2xkaW5ncy9nb3Zlcm5hbmNlL3YxIiwibGFtYmRhIjoiQ29uamVjdHVyZSAxIChvcGVuKSDigJQgc2lnbmF0dXJlIG5ldmVyIHVwZ3JhZGVzIGFkdmlzb3J5IHRvIHByb3ZlbiB0cnVzdCIsImVuZXJneSI6Ik1FQVNVUkVELW9ubHkgKGxhYmVsIGNvbnN0cmFpbmVkIHN0cnVjdHVyYWxseSkiLCJob25lc3RfYmxvY2tlZCI6ImEgQkxPQ0tFRCB2ZXJkaWN0IGlzIHNpZ25lZCBhcyBCTE9DS0VEIOKAlCBuZXZlciBmbGlwcGVkIn19LCJzaWJsaW5ncyI6W3sicmZpbGVuYW1lIjoiLmdpdGF0dHJpYnV0ZXMifSx7InJmaWxlbmFtZSI6IkJFTkNILmxhcHRvcC1ibGFja3dlbGwuanNvbiJ9LHsicmZpbGVuYW1lIjoiTElDRU5TRSJ9LHsicmZpbGVuYW1lIjoiTU9ERUxfUFJPVkVOQU5DRS5qc29uIn0seyJyZmlsZW5hbWUiOiJQUk9NT1RJT05fUkVBRElORVNTX0FVRElULmpzb24ifSx7InJmaWxlbmFtZSI6IlJFQURNRS5tZCJ9LHsicmZpbGVuYW1lIjoiU0VDVVJJVFkubWQifSx7InJmaWxlbmFtZSI6IlNaTF9FU1RBVEVfTUFOQUdFRC5qc29uIn0seyJyZmlsZW5hbWUiOiJUUkFJTklOR19SRUNFSVBULmpzb24ifSx7InJmaWxlbmFtZSI6ImJvbS9tb2RlbC1ib20uY2R4Lmpzb24ifSx7InJmaWxlbmFtZSI6ImJ1aWxkLnRvbWwifSx7InJmaWxlbmFtZSI6ImJ1aWxkL3RvcmNoLXVuaXZlcnNhbC9zemxfZ292c2lnbi9fX2luaXRfXy5weSJ9LHsicmZpbGVuYW1lIjoiYnVpbGQvdG9yY2gtdW5pdmVyc2FsL3N6bF9nb3ZzaWduL2VudmVsb3BlLnB5In0seyJyZmlsZW5hbWUiOiJidWlsZC90b3JjaC11bml2ZXJzYWwvc3psX2dvdnNpZ24vbWV0YWRhdGEuanNvbiJ9LHsicmZpbGVuYW1lIjoiYnVpbGQvdG9yY2gtdW5pdmVyc2FsL3N6bF9nb3ZzaWduL3BhZS5weSJ9LHsicmZpbGVuYW1lIjoiYnVpbGQvdG9yY2gtdW5pdmVyc2FsL3N6bF9nb3ZzaWduL3ByZWRpY2F0ZS5weSJ9LHsicmZpbGVuYW1lIjoiYnVpbGQvdG9yY2gtdW5pdmVyc2FsL3N6bF9nb3ZzaWduL3NlbGZjaGVjay5weSJ9LHsicmZpbGVuYW1lIjoiY2FyZC9ob2xvLWJhbm5lci5zdmcifSx7InJmaWxlbmFtZSI6InNjcmlwdHMvZXZhbC5weSJ9LHsicmZpbGVuYW1lIjoic2NyaXB0cy9mb3JnZS5weSJ9XSwic3BhY2VzIjpbXSwiY3JlYXRlZEF0IjoiMjAyNi0wNi0yNFQxNjo0NTowOS4wMDBaIiwidXNlZFN0b3JhZ2UiOjEwNjA1MTJ9"
+      },
+      "tree_pages": [
+        {
+          "requested_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-govsign/tree/3b63e1fa4a84369cd83fb1f5d155575e5710a447?recursive=true&expand=false&limit=100",
+          "final_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-govsign/tree/3b63e1fa4a84369cd83fb1f5d155575e5710a447?recursive=true&expand=false&limit=100",
+          "status": 200,
+          "observed_at": "2026-09-24T13:44:55.502236+00:00",
+          "response_bytes": 2860,
+          "response_sha256": "c1dc9416eb638299939e055fb3c6b9997e572168ba8a144045fa8165e3a23327",
+          "response_bytes_base64": "W3sidHlwZSI6ImRpcmVjdG9yeSIsIm9pZCI6ImQ1OWU4YzkyM2IxOWZkM2UzZjgzN2M4ZDIwZDY3N2Y0NWQ4ZGExYTQiLCJzaXplIjowLCJwYXRoIjoiYm9tIn0seyJ0eXBlIjoiZGlyZWN0b3J5Iiwib2lkIjoiNjI0NmUyYjkwMzYwZjlhNWJmMDYzMGFkYzJhZDZjMmQ5YzMzNDVjMiIsInNpemUiOjAsInBhdGgiOiJidWlsZCJ9LHsidHlwZSI6ImRpcmVjdG9yeSIsIm9pZCI6ImE2YzliZjc2YWM5Yjc5NTNmZjFiNjFlN2NmMGZlMDMzM2JkMWU5MDEiLCJzaXplIjowLCJwYXRoIjoiYnVpbGQvdG9yY2gtdW5pdmVyc2FsIn0seyJ0eXBlIjoiZGlyZWN0b3J5Iiwib2lkIjoiOThmZjNkZjAxODc3ZTRhMWZlMTBhNjFjMTViYjhiZGY5MmUyYTg0YSIsInNpemUiOjAsInBhdGgiOiJidWlsZC90b3JjaC11bml2ZXJzYWwvc3psX2dvdnNpZ24ifSx7InR5cGUiOiJkaXJlY3RvcnkiLCJvaWQiOiI2MWVjODZkNWUxOGE2N2Y2MTUyNjZjMjg3ZGE0MTA1YjIxYTA3YzgzIiwic2l6ZSI6MCwicGF0aCI6ImNhcmQifSx7InR5cGUiOiJkaXJlY3RvcnkiLCJvaWQiOiI1MmNmMDgxNGEwZDE0N2E0NzZkNTlmNmE1MmFjOTk0MzAxOGZiY2Q4Iiwic2l6ZSI6MCwicGF0aCI6InNjcmlwdHMifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiYTYzNDRhYWM4YzA5MjUzYjNiNjMwZmI3NzZhZTk0NDc4YWEwMjc1YiIsInNpemUiOjE1MTksInBhdGgiOiIuZ2l0YXR0cmlidXRlcyJ9LHsidHlwZSI6ImZpbGUiLCJvaWQiOiI2MzVmNzAyOWUxNTIwZjJmODA1MDI2MmJhM2Y1ZjQzYjRiNDU2NzEwIiwic2l6ZSI6MTg2OSwicGF0aCI6IkJFTkNILmxhcHRvcC1ibGFja3dlbGwuanNvbiJ9LHsidHlwZSI6ImZpbGUiLCJvaWQiOiJmMDIxMjJlYTc5Y2JhZDRkMDEzN2RmZDcxYzdmYmE2NTRlYzEyMzNlIiwic2l6ZSI6ODA5LCJwYXRoIjoiTElDRU5TRSJ9LHsidHlwZSI6ImZpbGUiLCJvaWQiOiJkYjdmMWU1YzhmZDlhMjg4OGI4YTE5OWIyOWI1ZDNlZGMyMTRlMjkzIiwic2l6ZSI6MzM0MCwicGF0aCI6Ik1PREVMX1BST1ZFTkFOQ0UuanNvbiJ9LHsidHlwZSI6ImZpbGUiLCJvaWQiOiJiMjJlODI0MWMyODIwOWNlYmZiMjcwZDVkNDg2YWIxNjFiNDQ1N2VhIiwic2l6ZSI6MTI1ODcsInBhdGgiOiJQUk9NT1RJT05fUkVBRElORVNTX0FVRElULmpzb24ifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiNmVkZTk5N2IzMzlkY2E3YWRiYjE3MTNkZTNhNDk3ODI4MGNiZWViOCIsInNpemUiOjI5MzUsInBhdGgiOiJSRUFETUUubWQifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiMTc5NDhiYWNjNWI5ZWI1NzdkMTVjODUxOGJjNjM3MTAyNjQ2ZTYyZCIsInNpemUiOjEyNTYsInBhdGgiOiJTRUNVUklUWS5tZCJ9LHsidHlwZSI6ImZpbGUiLCJvaWQiOiIzMTQyMWJlNmNiODdkZDZlY2ZkNDdlY2ZjY2IzM2UyYzQ3OGI5MDZiIiwic2l6ZSI6Njc3LCJwYXRoIjoiU1pMX0VTVEFURV9NQU5BR0VELmpzb24ifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiODAzNWRmZjVlM2VhMmVkMTYzYjU2ZDFjZjQwNzVmOThkYjc0YmIxNiIsInNpemUiOjM0MTEsInBhdGgiOiJUUkFJTklOR19SRUNFSVBULmpzb24ifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiZjdhMjEzY2M5OTRlYWU4Mzc3NTdkMGM3MzgxYjFiNDRjMzZjZGNjMiIsInNpemUiOjY2NTksInBhdGgiOiJib20vbW9kZWwtYm9tLmNkeC5qc29uIn0seyJ0eXBlIjoiZmlsZSIsIm9pZCI6IjUxMzk5MmIzOWM3MjZkNzBkNTZmNTRmMjM4NWYwMTJkYWZjYWIyZTUiLCJzaXplIjo1NywicGF0aCI6ImJ1aWxkLnRvbWwifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiNTRlOWM3OTM0YjA4ODU4YzZiNjgzZWY4MTA2NGE1MmRlZTE2NWZlMCIsInNpemUiOjE4NDUsInBhdGgiOiJidWlsZC90b3JjaC11bml2ZXJzYWwvc3psX2dvdnNpZ24vX19pbml0X18ucHkifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiZGVkMGZmN2MzMWRmY2Q1ZGZhZDcyYjYwZGE0MTg2OTAzM2NlNTg1NyIsInNpemUiOjUzNzUsInBhdGgiOiJidWlsZC90b3JjaC11bml2ZXJzYWwvc3psX2dvdnNpZ24vZW52ZWxvcGUucHkifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiYjdlZGIxZGEzYjdjZDdiNDc0OWIyNjkzYzVjNWU3ZjU3MjEwY2E1YiIsInNpemUiOjUyMSwicGF0aCI6ImJ1aWxkL3RvcmNoLXVuaXZlcnNhbC9zemxfZ292c2lnbi9tZXRhZGF0YS5qc29uIn0seyJ0eXBlIjoiZmlsZSIsIm9pZCI6IjRjZWUwZDY2YmYxMTEyZTlmMGI3NmQ4YTM0NzU1MzhhNTViOTA1ZjYiLCJzaXplIjoxMjA2LCJwYXRoIjoiYnVpbGQvdG9yY2gtdW5pdmVyc2FsL3N6bF9nb3ZzaWduL3BhZS5weSJ9LHsidHlwZSI6ImZpbGUiLCJvaWQiOiIzNjI3ZDVhZWIzMjI5NjkyYmYxYjg0NWM3ZTE3NjVhZmJhNmU1NzhjIiwic2l6ZSI6NTQxOSwicGF0aCI6ImJ1aWxkL3RvcmNoLXVuaXZlcnNhbC9zemxfZ292c2lnbi9wcmVkaWNhdGUucHkifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiMjA4OThlNjdkOGEzZmYyYWQ2NTcxMjkyMjJlOGNkM2Q2YjVhZmMzOCIsInNpemUiOjM5MDYsInBhdGgiOiJidWlsZC90b3JjaC11bml2ZXJzYWwvc3psX2dvdnNpZ24vc2VsZmNoZWNrLnB5In0seyJ0eXBlIjoiZmlsZSIsIm9pZCI6IjFkODA1Y2IxZDcxNzQ4ODM5M2QxOGU0NTNjMmM4YzIxNTFiZmIwY2EiLCJzaXplIjoxODM5LCJwYXRoIjoiY2FyZC9ob2xvLWJhbm5lci5zdmcifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiY2QxODc1ODYzZTJkMGE3ODI4YjMxYmIzNTJlMmM3MDc0Y2Q2NjMwMiIsInNpemUiOjE2MjIsInBhdGgiOiJzY3JpcHRzL2V2YWwucHkifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiMTliNTE0NTFhNWEwOTlkNjVkNjIzMjcyMDg0MTI0ZGFjMTlkNTJlYSIsInNpemUiOjEzMTc5LCJwYXRoIjoic2NyaXB0cy9mb3JnZS5weSJ9XQ==",
+          "next_url": null
+        }
+      ],
+      "tree_coverage": "COMPLETE_ACCESSIBLE_RESPONSE",
+      "tree_entries": 26,
+      "file_count": 20
+    },
+    "tree": [
+      {
+        "type": "file",
+        "oid": "a6344aac8c09253b3b630fb776ae94478aa0275b",
+        "size": 1519,
+        "path": ".gitattributes",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-govsign",
+        "revision": "3b63e1fa4a84369cd83fb1f5d155575e5710a447"
+      },
+      {
+        "type": "file",
+        "oid": "635f7029e1520f2f8050262ba3f5f43b4b456710",
+        "size": 1869,
+        "path": "BENCH.laptop-blackwell.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-govsign",
+        "revision": "3b63e1fa4a84369cd83fb1f5d155575e5710a447"
+      },
+      {
+        "type": "file",
+        "oid": "f02122ea79cbad4d0137dfd71c7fba654ec1233e",
+        "size": 809,
+        "path": "LICENSE",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-govsign",
+        "revision": "3b63e1fa4a84369cd83fb1f5d155575e5710a447"
+      },
+      {
+        "type": "file",
+        "oid": "db7f1e5c8fd9a2888b8a199b29b5d3edc214e293",
+        "size": 3340,
+        "path": "MODEL_PROVENANCE.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-govsign",
+        "revision": "3b63e1fa4a84369cd83fb1f5d155575e5710a447"
+      },
+      {
+        "type": "file",
+        "oid": "b22e8241c28209cebfb270d5d486ab161b4457ea",
+        "size": 12587,
+        "path": "PROMOTION_READINESS_AUDIT.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-govsign",
+        "revision": "3b63e1fa4a84369cd83fb1f5d155575e5710a447"
+      },
+      {
+        "type": "file",
+        "oid": "6ede997b339dca7adbb1713de3a4978280cbeeb8",
+        "size": 2935,
+        "path": "README.md",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-govsign",
+        "revision": "3b63e1fa4a84369cd83fb1f5d155575e5710a447"
+      },
+      {
+        "type": "file",
+        "oid": "17948bacc5b9eb577d15c8518bc637102646e62d",
+        "size": 1256,
+        "path": "SECURITY.md",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-govsign",
+        "revision": "3b63e1fa4a84369cd83fb1f5d155575e5710a447"
+      },
+      {
+        "type": "file",
+        "oid": "31421be6cb87dd6ecfd47ecfccb33e2c478b906b",
+        "size": 677,
+        "path": "SZL_ESTATE_MANAGED.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-govsign",
+        "revision": "3b63e1fa4a84369cd83fb1f5d155575e5710a447"
+      },
+      {
+        "type": "file",
+        "oid": "8035dff5e3ea2ed163b56d1cf4075f98db74bb16",
+        "size": 3411,
+        "path": "TRAINING_RECEIPT.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-govsign",
+        "revision": "3b63e1fa4a84369cd83fb1f5d155575e5710a447"
+      },
+      {
+        "type": "directory",
+        "oid": "d59e8c923b19fd3e3f837c8d20d677f45d8da1a4",
+        "size": 0,
+        "path": "bom",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-govsign",
+        "revision": "3b63e1fa4a84369cd83fb1f5d155575e5710a447"
+      },
+      {
+        "type": "file",
+        "oid": "f7a213cc994eae837757d0c7381b1b44c36cdcc2",
+        "size": 6659,
+        "path": "bom/model-bom.cdx.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-govsign",
+        "revision": "3b63e1fa4a84369cd83fb1f5d155575e5710a447"
+      },
+      {
+        "type": "directory",
+        "oid": "6246e2b90360f9a5bf0630adc2ad6c2d9c3345c2",
+        "size": 0,
+        "path": "build",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-govsign",
+        "revision": "3b63e1fa4a84369cd83fb1f5d155575e5710a447"
+      },
+      {
+        "type": "file",
+        "oid": "513992b39c726d70d56f54f2385f012dafcab2e5",
+        "size": 57,
+        "path": "build.toml",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-govsign",
+        "revision": "3b63e1fa4a84369cd83fb1f5d155575e5710a447"
+      },
+      {
+        "type": "directory",
+        "oid": "a6c9bf76ac9b7953ff1b61e7cf0fe0333bd1e901",
+        "size": 0,
+        "path": "build/torch-universal",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-govsign",
+        "revision": "3b63e1fa4a84369cd83fb1f5d155575e5710a447"
+      },
+      {
+        "type": "directory",
+        "oid": "98ff3df01877e4a1fe10a61c15bb8bdf92e2a84a",
+        "size": 0,
+        "path": "build/torch-universal/szl_govsign",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-govsign",
+        "revision": "3b63e1fa4a84369cd83fb1f5d155575e5710a447"
+      },
+      {
+        "type": "file",
+        "oid": "54e9c7934b08858c6b683ef81064a52dee165fe0",
+        "size": 1845,
+        "path": "build/torch-universal/szl_govsign/__init__.py",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-govsign",
+        "revision": "3b63e1fa4a84369cd83fb1f5d155575e5710a447"
+      },
+      {
+        "type": "file",
+        "oid": "ded0ff7c31dfcd5dfad72b60da41869033ce5857",
+        "size": 5375,
+        "path": "build/torch-universal/szl_govsign/envelope.py",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-govsign",
+        "revision": "3b63e1fa4a84369cd83fb1f5d155575e5710a447"
+      },
+      {
+        "type": "file",
+        "oid": "b7edb1da3b7cd7b4749b2693c5c5e7f57210ca5b",
+        "size": 521,
+        "path": "build/torch-universal/szl_govsign/metadata.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-govsign",
+        "revision": "3b63e1fa4a84369cd83fb1f5d155575e5710a447"
+      },
+      {
+        "type": "file",
+        "oid": "4cee0d66bf1112e9f0b76d8a3475538a55b905f6",
+        "size": 1206,
+        "path": "build/torch-universal/szl_govsign/pae.py",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-govsign",
+        "revision": "3b63e1fa4a84369cd83fb1f5d155575e5710a447"
+      },
+      {
+        "type": "file",
+        "oid": "3627d5aeb3229692bf1b845c7e1765afba6e578c",
+        "size": 5419,
+        "path": "build/torch-universal/szl_govsign/predicate.py",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-govsign",
+        "revision": "3b63e1fa4a84369cd83fb1f5d155575e5710a447"
+      },
+      {
+        "type": "file",
+        "oid": "20898e67d8a3ff2ad657129222e8cd3d6b5afc38",
+        "size": 3906,
+        "path": "build/torch-universal/szl_govsign/selfcheck.py",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-govsign",
+        "revision": "3b63e1fa4a84369cd83fb1f5d155575e5710a447"
+      },
+      {
+        "type": "directory",
+        "oid": "61ec86d5e18a67f615266c287da4105b21a07c83",
+        "size": 0,
+        "path": "card",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-govsign",
+        "revision": "3b63e1fa4a84369cd83fb1f5d155575e5710a447"
+      },
+      {
+        "type": "file",
+        "oid": "1d805cb1d717488393d18e453c2c8c2151bfb0ca",
+        "size": 1839,
+        "path": "card/holo-banner.svg",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-govsign",
+        "revision": "3b63e1fa4a84369cd83fb1f5d155575e5710a447"
+      },
+      {
+        "type": "directory",
+        "oid": "52cf0814a0d147a476d59f6a52ac9943018fbcd8",
+        "size": 0,
+        "path": "scripts",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-govsign",
+        "revision": "3b63e1fa4a84369cd83fb1f5d155575e5710a447"
+      },
+      {
+        "type": "file",
+        "oid": "cd1875863e2d0a7828b31bb352e2c7074cd66302",
+        "size": 1622,
+        "path": "scripts/eval.py",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-govsign",
+        "revision": "3b63e1fa4a84369cd83fb1f5d155575e5710a447"
+      },
+      {
+        "type": "file",
+        "oid": "19b51451a5a099d65d623272084124dac19d52ea",
+        "size": 13179,
+        "path": "scripts/forge.py",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-govsign",
+        "revision": "3b63e1fa4a84369cd83fb1f5d155575e5710a447"
+      }
+    ],
+    "text_record": {
+      "id": "SZLHOLDINGS/szl-govsign",
+      "kind": "models",
+      "revision": "3b63e1fa4a84369cd83fb1f5d155575e5710a447",
+      "path": "MODEL_PROVENANCE.json",
+      "receipt": {
+        "requested_url": "https://huggingface.co/SZLHOLDINGS/szl-govsign/resolve/3b63e1fa4a84369cd83fb1f5d155575e5710a447/MODEL_PROVENANCE.json",
+        "final_url": "https://huggingface.co/api/resolve-cache/models/SZLHOLDINGS/szl-govsign/3b63e1fa4a84369cd83fb1f5d155575e5710a447/MODEL_PROVENANCE.json?%2FSZLHOLDINGS%2Fszl-govsign%2Fresolve%2F3b63e1fa4a84369cd83fb1f5d155575e5710a447%2FMODEL_PROVENANCE.json=&etag=%22db7f1e5c8fd9a2888b8a199b29b5d3edc214e293%22",
+        "status": 200,
+        "observed_at": "2026-09-24T13:44:55.651869+00:00",
+        "response_bytes": 3340,
+        "response_sha256": "ad6fedcfd255db0d109c8dc522bd107df50da25ac4174cb68c01586ad916059d",
+        "response_bytes_base64": "ewogICJzY2hlbWEiOiAic3psLm1vZGVsLXNvdXJjZS1hdHRlc3RhdGlvbi92MSIsCiAgIm9ic2VydmVkX2F0IjogIjIwMjYtMDctMTJUMDA6Mjc6MTRaIiwKICAibW9kZWwiOiB7CiAgICAiaWQiOiAiU1pMSE9MRElOR1Mvc3psLWdvdnNpZ24iLAogICAgInJlcG9zaXRvcnlfdHlwZSI6ICJtb2RlbCIsCiAgICAiYXJ0aWZhY3Rfa2luZCI6ICJrZXJuZWwtY29kZS1hbmQtY29uZmlndXJhdGlvbiArIHRyYWluZWQgc3RydWN0dXJhbCBwcmUtZmlsdGVyIChtb2RlbC5qb2JsaWIpIiwKICAgICJ0cmFpbmVkX3dlaWdodHNfcHJlc2VudCI6IHRydWUsCiAgICAic3Vycm9nYXRlIjogewogICAgICAiZmlsZSI6ICJtb2RlbC5qb2JsaWIiLAogICAgICAic2hhMjU2IjogImQ4ZTkxYzAxYWRjZjRiNjYxODYwZWNiY2U4MDI5NTI3ZmQ4ODE5ZTM5NTFhYWI4YjJmZTQ4ZTg0ZjgxMTJhMTAiLAogICAgICAicm9sZSI6ICJTVFJVQ1RVUkFMIHZhbGlkaXR5IFBSRS1GSUxURVIgT05MWSBcdTIwMTQgTkVWRVIgcmVwbGFjZXMgY3J5cHRvZ3JhcGhpYyB2ZXJpZmljYXRpb247IGEgcHJlLWZpbHRlciBQQVNTIGlzIE5PVCB2ZXJpZmllZC4gVGhlIGtlcm5lbCdzIEVDRFNBLVAyNTYgdmVyaWZ5KCkgaXMgdGhlIHNvbGUgYXV0aG9yaXR5LiIsCiAgICAgICJmaWRlbGl0eV9NRUFTVVJFRCI6IHsKICAgICAgICAidGVzdF9hY2N1cmFjeV9hbGxfY2xhc3NlcyI6IDAuODg4OCwKICAgICAgICAidGVzdF9hY2N1cmFjeV9zdHJ1Y3R1cmFsX29ubHkiOiAxLjAsCiAgICAgICAgImNyeXB0b19ibGluZF9zcG90X3NpZ190YW1wZXJfcmVjYWxsIjogMC4wMTExCiAgICAgIH0sCiAgICAgICJyZWNlaXB0IjogIlRSQUlOSU5HX1JFQ0VJUFQuanNvbiIsCiAgICAgICJyZXZlcmlmeSI6ICJweXRob24gc2NyaXB0cy9ldmFsLnB5IiwKICAgICAgImhvbmVzdHlfbm90ZSI6ICJrZXJuZWwgc3RheXMgc3RkbGliK2NyeXB0b2dyYXBoeSAoY3J5cHRvIHZlcmlmaWNhdGlvbiB1bmNoYW5nZWQpOyB0aGUgT1BUSU9OQUwgc3Vycm9nYXRlIG5lZWRzIHNrbGVhcm4ram9ibGliIGFuZCBwZXJmb3JtcyBOTyBjcnlwdG9ncmFwaGljIHZlcmlmaWNhdGlvbi4iCiAgICB9CiAgfSwKICAic291cmNlX29mX3JlY29yZCI6IHsKICAgICJzdGF0ZSI6ICJWRVJJRklFRF9IRl9TT1VSQ0VfT0ZfUkVDT1JEIiwKICAgICJwbGF0Zm9ybSI6ICJodWdnaW5nZmFjZSIsCiAgICAicmVwb3NpdG9yeSI6ICJTWkxIT0xESU5HUy9zemwtZ292c2lnbiIsCiAgICAiYXJ0aWZhY3RfYmFzZV9yZXZpc2lvbiI6ICI3ZGEyZGE4ZmU1ZGI0MjU2MDlhZjBmZGRjNGU5M2IwMGMwNWI4Zjc0IiwKICAgICJhcnRpZmFjdF9iYXNlX3N0YXRlIjogIk1FQVNVUkVEX1BSRV9BVFRFU1RBVElPTl9CQVNFIiwKICAgICJhcnRpZmFjdF9iYXNlX3VybCI6ICJodHRwczovL2h1Z2dpbmdmYWNlLmNvL1NaTEhPTERJTkdTL3N6bC1nb3ZzaWduL3RyZWUvN2RhMmRhOGZlNWRiNDI1NjA5YWYwZmRkYzRlOTNiMDBjMDViOGY3NCIsCiAgICAiZmlsZV9jb3VudCI6IDExLAogICAgInRyZWVfc2hhMjU2IjogIjhjZTRlOTMwMzNlMTFlMjJiMDUxYzBhZDM4MTk4Y2IwYzc4N2FkMzc1NjI3ZWU3YmY4YTNiM2IxNzJlZDc1ZjIiLAogICAgInRyZWVfaGFzaF9hbGdvcml0aG0iOiAic2hhMjU2IG9mIFVURi04IHBhdGggKyBOVUwgKyBwZXItZmlsZSBzaGEyNTYgKyBMRiwgc29ydGVkIGJ5IHBhdGg7IC5jYWNoZSBleGNsdWRlZCIKICB9LAogICJwdWJsaWNfZ2l0aHViIjogewogICAgInN0YXRlIjogIk5PX0RJUkVDVF9QVUJMSUNfSU1QTEVNRU5UQVRJT05fT0JTRVJWRUQiLAogICAgInNhbWVfbmFtZV9jYW5kaWRhdGUiOiAiaHR0cHM6Ly9naXRodWIuY29tL3N6bC1ob2xkaW5ncy9zemwtZ292c2lnbiIsCiAgICAic2FtZV9uYW1lX2NhbmRpZGF0ZV9odHRwX3N0YXR1cyI6IDQwNCwKICAgICJjYXJkX3JlZmVyZW5jZXMiOiBbCiAgICAgICJodHRwczovL2dpdGh1Yi5jb20vc3psLWhvbGRpbmdzL2dvdmVybmVkLXJlY2VpcHQtc3BlYyIsCiAgICAgICJodHRwczovL2dpdGh1Yi5jb20vc3psLWhvbGRpbmdzL3N6bC1wYXBlcnMvYmxvYi9tYWluL1BBUEVSU19JTkRFWC5tZCIKICAgIF0sCiAgICAiY2FyZF9yZWZlcmVuY2Vfcm9sZSI6ICJTUEVDSUZJQ0FUSU9OX09SX1JFU0VBUkNIX0NPTlRFWFRfTk9UX0JVSUxEX1NPVVJDRSIKICB9LAogICJjbGFpbXMiOiB7CiAgICAiZ2l0aHViX3JlcG9zaXRvcnlfcGFyaXR5IjogIk5PVF9DTEFJTUVEIiwKICAgICJyZXByb2R1Y2libGVfYnVpbGQiOiAiTk9UX0NMQUlNRUQiLAogICAgInRyYWluZWRfbW9kZWwiOiAiQ0xBSU1FRCBcdTIwMTQgc2tsZWFybiBIaXN0R3JhZGllbnRCb29zdGluZ0NsYXNzaWZpZXIgc3RydWN0dXJhbCBwcmUtZmlsdGVyLCBNRUFTVVJFRCwgcmVjZWlwdGVkIChkb2VzIE5PVCBwZXJmb3JtIG9yIHJlcGxhY2UgY3J5cHRvZ3JhcGhpYyB2ZXJpZmljYXRpb24pIiwKICAgICJzZXJ2aW5nX3Byb2Nlc3NfcmV2aXNpb24iOiAiTk9UX0FQUExJQ0FCTEVfUkVQT1NJVE9SWV9BUlRJRkFDVCIKICB9LAogICJsaW1pdHMiOiBbCiAgICAiVGhlIHRyYWluZWQgc3Vycm9nYXRlIGlzIGEgU1RSVUNUVVJBTCBQUkUtRklMVEVSIE9OTFkuIFBhc3NpbmcgaXQgaXMgTk9UIGNyeXB0b2dyYXBoaWMgdmVyaWZpY2F0aW9uOyBvbmx5IHRoZSBrZXJuZWwncyBFQ0RTQS1QMjU2IHZlcmlmeSgpIGVzdGFibGlzaGVzIHZhbGlkaXR5LiIsCiAgICAiTUVBU1VSRUQgY3J5cHRvIGJsaW5kIHNwb3Q6IHNpZy10YW1wZXIgcmVjYWxsIFx1MjI0OCBjaGFuY2UgXHUyMDE0IGEgYnl0ZS1mbGlwcGVkIHNpZ25hdHVyZSBpcyBzdHJ1Y3R1cmFsbHkgaWRlbnRpY2FsIHRvIGEgdmFsaWQgZW52ZWxvcGUgYW5kIGlzIGludmlzaWJsZSB0byB0aGUgcHJlLWZpbHRlciAoYnkgZGVzaWduKS4iLAogICAgIlRoZSA0MDQgb2JzZXJ2YXRpb24gZXN0YWJsaXNoZXMgb25seSB0aGF0IG5vIHB1YmxpYyBzYW1lLW5hbWUgcmVwb3NpdG9yeSB3YXMgcmVhY2hhYmxlIGF0IHRoZSBvYnNlcnZhdGlvbiB0aW1lOyBpdCBkb2VzIG5vdCBtYWtlIGEgY2xhaW0gYWJvdXQgcHJpdmF0ZSByZXBvc2l0b3JpZXMuIiwKICAgICJUaGUgYXR0ZXN0YXRpb24gb3ZlcmxheSBjYW5ub3Qgc2VsZi1lbWJlZCBpdHMgcmVzdWx0aW5nIEh1YiBjb21taXQsIHNvIHRoZSBpbW11dGFibGUgYXJ0aWZhY3RfYmFzZV9yZXZpc2lvbiBpcyB0aGUgbWVhc3VyZWQgcHJlLW92ZXJsYXkgYmFzZS4iLAogICAgIk5vIC5iaW4sIC5zYWZldGVuc29ycywgLnB0LCAucHRoLCAub25ueCwgb3IgLmdndWYgd2VpZ2h0IGFydGlmYWN0IHdhcyBwcmVzZW50IGluIHRoZSBtZWFzdXJlZCBiYXNlIHRyZWUuIgogIF0KfQ=="
+      },
+      "content": {
+        "schema": "szl.model-source-attestation/v1",
+        "observed_at": "2026-07-12T00:27:14Z",
+        "model": {
+          "id": "SZLHOLDINGS/szl-govsign",
+          "repository_type": "model",
+          "artifact_kind": "kernel-code-and-configuration + trained structural pre-filter (model.joblib)",
+          "trained_weights_present": true,
+          "surrogate": {
+            "file": "model.joblib",
+            "sha256": "d8e91c01adcf4b661860ecbce8029527fd8819e3951aab8b2fe48e84f8112a10",
+            "role": "STRUCTURAL validity PRE-FILTER ONLY — NEVER replaces cryptographic verification; a pre-filter PASS is NOT verified. The kernel's ECDSA-P256 verify() is the sole authority.",
+            "fidelity_MEASURED": {
+              "test_accuracy_all_classes": 0.8888,
+              "test_accuracy_structural_only": 1.0,
+              "crypto_blind_spot_sig_tamper_recall": 0.0111
+            },
+            "receipt": "TRAINING_RECEIPT.json",
+            "reverify": "python scripts/eval.py",
+            "honesty_note": "kernel stays stdlib+cryptography (crypto verification unchanged); the OPTIONAL surrogate needs sklearn+joblib and performs NO cryptographic verification."
+          }
+        },
+        "source_of_record": {
+          "state": "VERIFIED_HF_SOURCE_OF_RECORD",
+          "platform": "huggingface",
+          "repository": "SZLHOLDINGS/szl-govsign",
+          "artifact_base_revision": "7da2da8fe5db425609af0fddc4e93b00c05b8f74",
+          "artifact_base_state": "MEASURED_PRE_ATTESTATION_BASE",
+          "artifact_base_url": "https://huggingface.co/SZLHOLDINGS/szl-govsign/tree/7da2da8fe5db425609af0fddc4e93b00c05b8f74",
+          "file_count": 11,
+          "tree_sha256": "8ce4e93033e11e22b051c0ad38198cb0c787ad375627ee7bf8a3b3b172ed75f2",
+          "tree_hash_algorithm": "sha256 of UTF-8 path + NUL + per-file sha256 + LF, sorted by path; .cache excluded"
+        },
+        "public_github": {
+          "state": "NO_DIRECT_PUBLIC_IMPLEMENTATION_OBSERVED",
+          "same_name_candidate": "https://github.com/szl-holdings/szl-govsign",
+          "same_name_candidate_http_status": 404,
+          "card_references": [
+            "https://github.com/szl-holdings/governed-receipt-spec",
+            "https://github.com/szl-holdings/szl-papers/blob/main/PAPERS_INDEX.md"
+          ],
+          "card_reference_role": "SPECIFICATION_OR_RESEARCH_CONTEXT_NOT_BUILD_SOURCE"
+        },
+        "claims": {
+          "github_repository_parity": "NOT_CLAIMED",
+          "reproducible_build": "NOT_CLAIMED",
+          "trained_model": "CLAIMED — sklearn HistGradientBoostingClassifier structural pre-filter, MEASURED, receipted (does NOT perform or replace cryptographic verification)",
+          "serving_process_revision": "NOT_APPLICABLE_REPOSITORY_ARTIFACT"
+        },
+        "limits": [
+          "The trained surrogate is a STRUCTURAL PRE-FILTER ONLY. Passing it is NOT cryptographic verification; only the kernel's ECDSA-P256 verify() establishes validity.",
+          "MEASURED crypto blind spot: sig-tamper recall ≈ chance — a byte-flipped signature is structurally identical to a valid envelope and is invisible to the pre-filter (by design).",
+          "The 404 observation establishes only that no public same-name repository was reachable at the observation time; it does not make a claim about private repositories.",
+          "The attestation overlay cannot self-embed its resulting Hub commit, so the immutable artifact_base_revision is the measured pre-overlay base.",
+          "No .bin, .safetensors, .pt, .pth, .onnx, or .gguf weight artifact was present in the measured base tree."
+        ]
+      }
+    },
+    "original_bytes_base64": "ewogICJzY2hlbWEiOiAic3psLm1vZGVsLXNvdXJjZS1hdHRlc3RhdGlvbi92MSIsCiAgIm9ic2VydmVkX2F0IjogIjIwMjYtMDctMTJUMDA6Mjc6MTRaIiwKICAibW9kZWwiOiB7CiAgICAiaWQiOiAiU1pMSE9MRElOR1Mvc3psLWdvdnNpZ24iLAogICAgInJlcG9zaXRvcnlfdHlwZSI6ICJtb2RlbCIsCiAgICAiYXJ0aWZhY3Rfa2luZCI6ICJrZXJuZWwtY29kZS1hbmQtY29uZmlndXJhdGlvbiArIHRyYWluZWQgc3RydWN0dXJhbCBwcmUtZmlsdGVyIChtb2RlbC5qb2JsaWIpIiwKICAgICJ0cmFpbmVkX3dlaWdodHNfcHJlc2VudCI6IHRydWUsCiAgICAic3Vycm9nYXRlIjogewogICAgICAiZmlsZSI6ICJtb2RlbC5qb2JsaWIiLAogICAgICAic2hhMjU2IjogImQ4ZTkxYzAxYWRjZjRiNjYxODYwZWNiY2U4MDI5NTI3ZmQ4ODE5ZTM5NTFhYWI4YjJmZTQ4ZTg0ZjgxMTJhMTAiLAogICAgICAicm9sZSI6ICJTVFJVQ1RVUkFMIHZhbGlkaXR5IFBSRS1GSUxURVIgT05MWSBcdTIwMTQgTkVWRVIgcmVwbGFjZXMgY3J5cHRvZ3JhcGhpYyB2ZXJpZmljYXRpb247IGEgcHJlLWZpbHRlciBQQVNTIGlzIE5PVCB2ZXJpZmllZC4gVGhlIGtlcm5lbCdzIEVDRFNBLVAyNTYgdmVyaWZ5KCkgaXMgdGhlIHNvbGUgYXV0aG9yaXR5LiIsCiAgICAgICJmaWRlbGl0eV9NRUFTVVJFRCI6IHsKICAgICAgICAidGVzdF9hY2N1cmFjeV9hbGxfY2xhc3NlcyI6IDAuODg4OCwKICAgICAgICAidGVzdF9hY2N1cmFjeV9zdHJ1Y3R1cmFsX29ubHkiOiAxLjAsCiAgICAgICAgImNyeXB0b19ibGluZF9zcG90X3NpZ190YW1wZXJfcmVjYWxsIjogMC4wMTExCiAgICAgIH0sCiAgICAgICJyZWNlaXB0IjogIlRSQUlOSU5HX1JFQ0VJUFQuanNvbiIsCiAgICAgICJyZXZlcmlmeSI6ICJweXRob24gc2NyaXB0cy9ldmFsLnB5IiwKICAgICAgImhvbmVzdHlfbm90ZSI6ICJrZXJuZWwgc3RheXMgc3RkbGliK2NyeXB0b2dyYXBoeSAoY3J5cHRvIHZlcmlmaWNhdGlvbiB1bmNoYW5nZWQpOyB0aGUgT1BUSU9OQUwgc3Vycm9nYXRlIG5lZWRzIHNrbGVhcm4ram9ibGliIGFuZCBwZXJmb3JtcyBOTyBjcnlwdG9ncmFwaGljIHZlcmlmaWNhdGlvbi4iCiAgICB9CiAgfSwKICAic291cmNlX29mX3JlY29yZCI6IHsKICAgICJzdGF0ZSI6ICJWRVJJRklFRF9IRl9TT1VSQ0VfT0ZfUkVDT1JEIiwKICAgICJwbGF0Zm9ybSI6ICJodWdnaW5nZmFjZSIsCiAgICAicmVwb3NpdG9yeSI6ICJTWkxIT0xESU5HUy9zemwtZ292c2lnbiIsCiAgICAiYXJ0aWZhY3RfYmFzZV9yZXZpc2lvbiI6ICI3ZGEyZGE4ZmU1ZGI0MjU2MDlhZjBmZGRjNGU5M2IwMGMwNWI4Zjc0IiwKICAgICJhcnRpZmFjdF9iYXNlX3N0YXRlIjogIk1FQVNVUkVEX1BSRV9BVFRFU1RBVElPTl9CQVNFIiwKICAgICJhcnRpZmFjdF9iYXNlX3VybCI6ICJodHRwczovL2h1Z2dpbmdmYWNlLmNvL1NaTEhPTERJTkdTL3N6bC1nb3ZzaWduL3RyZWUvN2RhMmRhOGZlNWRiNDI1NjA5YWYwZmRkYzRlOTNiMDBjMDViOGY3NCIsCiAgICAiZmlsZV9jb3VudCI6IDExLAogICAgInRyZWVfc2hhMjU2IjogIjhjZTRlOTMwMzNlMTFlMjJiMDUxYzBhZDM4MTk4Y2IwYzc4N2FkMzc1NjI3ZWU3YmY4YTNiM2IxNzJlZDc1ZjIiLAogICAgInRyZWVfaGFzaF9hbGdvcml0aG0iOiAic2hhMjU2IG9mIFVURi04IHBhdGggKyBOVUwgKyBwZXItZmlsZSBzaGEyNTYgKyBMRiwgc29ydGVkIGJ5IHBhdGg7IC5jYWNoZSBleGNsdWRlZCIKICB9LAogICJwdWJsaWNfZ2l0aHViIjogewogICAgInN0YXRlIjogIk5PX0RJUkVDVF9QVUJMSUNfSU1QTEVNRU5UQVRJT05fT0JTRVJWRUQiLAogICAgInNhbWVfbmFtZV9jYW5kaWRhdGUiOiAiaHR0cHM6Ly9naXRodWIuY29tL3N6bC1ob2xkaW5ncy9zemwtZ292c2lnbiIsCiAgICAic2FtZV9uYW1lX2NhbmRpZGF0ZV9odHRwX3N0YXR1cyI6IDQwNCwKICAgICJjYXJkX3JlZmVyZW5jZXMiOiBbCiAgICAgICJodHRwczovL2dpdGh1Yi5jb20vc3psLWhvbGRpbmdzL2dvdmVybmVkLXJlY2VpcHQtc3BlYyIsCiAgICAgICJodHRwczovL2dpdGh1Yi5jb20vc3psLWhvbGRpbmdzL3N6bC1wYXBlcnMvYmxvYi9tYWluL1BBUEVSU19JTkRFWC5tZCIKICAgIF0sCiAgICAiY2FyZF9yZWZlcmVuY2Vfcm9sZSI6ICJTUEVDSUZJQ0FUSU9OX09SX1JFU0VBUkNIX0NPTlRFWFRfTk9UX0JVSUxEX1NPVVJDRSIKICB9LAogICJjbGFpbXMiOiB7CiAgICAiZ2l0aHViX3JlcG9zaXRvcnlfcGFyaXR5IjogIk5PVF9DTEFJTUVEIiwKICAgICJyZXByb2R1Y2libGVfYnVpbGQiOiAiTk9UX0NMQUlNRUQiLAogICAgInRyYWluZWRfbW9kZWwiOiAiQ0xBSU1FRCBcdTIwMTQgc2tsZWFybiBIaXN0R3JhZGllbnRCb29zdGluZ0NsYXNzaWZpZXIgc3RydWN0dXJhbCBwcmUtZmlsdGVyLCBNRUFTVVJFRCwgcmVjZWlwdGVkIChkb2VzIE5PVCBwZXJmb3JtIG9yIHJlcGxhY2UgY3J5cHRvZ3JhcGhpYyB2ZXJpZmljYXRpb24pIiwKICAgICJzZXJ2aW5nX3Byb2Nlc3NfcmV2aXNpb24iOiAiTk9UX0FQUExJQ0FCTEVfUkVQT1NJVE9SWV9BUlRJRkFDVCIKICB9LAogICJsaW1pdHMiOiBbCiAgICAiVGhlIHRyYWluZWQgc3Vycm9nYXRlIGlzIGEgU1RSVUNUVVJBTCBQUkUtRklMVEVSIE9OTFkuIFBhc3NpbmcgaXQgaXMgTk9UIGNyeXB0b2dyYXBoaWMgdmVyaWZpY2F0aW9uOyBvbmx5IHRoZSBrZXJuZWwncyBFQ0RTQS1QMjU2IHZlcmlmeSgpIGVzdGFibGlzaGVzIHZhbGlkaXR5LiIsCiAgICAiTUVBU1VSRUQgY3J5cHRvIGJsaW5kIHNwb3Q6IHNpZy10YW1wZXIgcmVjYWxsIFx1MjI0OCBjaGFuY2UgXHUyMDE0IGEgYnl0ZS1mbGlwcGVkIHNpZ25hdHVyZSBpcyBzdHJ1Y3R1cmFsbHkgaWRlbnRpY2FsIHRvIGEgdmFsaWQgZW52ZWxvcGUgYW5kIGlzIGludmlzaWJsZSB0byB0aGUgcHJlLWZpbHRlciAoYnkgZGVzaWduKS4iLAogICAgIlRoZSA0MDQgb2JzZXJ2YXRpb24gZXN0YWJsaXNoZXMgb25seSB0aGF0IG5vIHB1YmxpYyBzYW1lLW5hbWUgcmVwb3NpdG9yeSB3YXMgcmVhY2hhYmxlIGF0IHRoZSBvYnNlcnZhdGlvbiB0aW1lOyBpdCBkb2VzIG5vdCBtYWtlIGEgY2xhaW0gYWJvdXQgcHJpdmF0ZSByZXBvc2l0b3JpZXMuIiwKICAgICJUaGUgYXR0ZXN0YXRpb24gb3ZlcmxheSBjYW5ub3Qgc2VsZi1lbWJlZCBpdHMgcmVzdWx0aW5nIEh1YiBjb21taXQsIHNvIHRoZSBpbW11dGFibGUgYXJ0aWZhY3RfYmFzZV9yZXZpc2lvbiBpcyB0aGUgbWVhc3VyZWQgcHJlLW92ZXJsYXkgYmFzZS4iLAogICAgIk5vIC5iaW4sIC5zYWZldGVuc29ycywgLnB0LCAucHRoLCAub25ueCwgb3IgLmdndWYgd2VpZ2h0IGFydGlmYWN0IHdhcyBwcmVzZW50IGluIHRoZSBtZWFzdXJlZCBiYXNlIHRyZWUuIgogIF0KfQ=="
+  },
+  {
+    "id": "SZLHOLDINGS/szl-invariants",
+    "repository_type": "model",
+    "revision": "c218f1a7eed7ec1b8a06a2997e49ffe9e339a71c",
+    "repository_record": {
+      "id": "SZLHOLDINGS/szl-invariants",
+      "kind": "models",
+      "revision": "c218f1a7eed7ec1b8a06a2997e49ffe9e339a71c",
+      "metadata": {
+        "_id": "6a537f7c38dd853d17b386f7",
+        "id": "SZLHOLDINGS/szl-invariants",
+        "private": false,
+        "library_name": "kernels",
+        "tags": [
+          "kernels",
+          "kernel",
+          "governance",
+          "invariants",
+          "provenance",
+          "receipts",
+          "ed25519",
+          "doi:10.5281/zenodo.19944926",
+          "license:apache-2.0",
+          "region:us"
+        ],
+        "downloads": 0,
+        "likes": 2,
+        "modelId": "SZLHOLDINGS/szl-invariants",
+        "author": "SZLHOLDINGS",
+        "sha": "c218f1a7eed7ec1b8a06a2997e49ffe9e339a71c",
+        "lastModified": "2026-09-08T11:43:32.000Z",
+        "gated": false,
+        "disabled": false,
+        "model-index": null,
+        "config": {},
+        "cardData": {
+          "library_name": "kernels",
+          "license": "apache-2.0",
+          "tags": [
+            "kernel",
+            "governance",
+            "invariants",
+            "provenance",
+            "receipts",
+            "ed25519",
+            "doi:10.5281/zenodo.19944926"
+          ],
+          "szl-governance": {
+            "verdict": "ADVISORY",
+            "lambda": "Conjecture 1 (open) — uniqueness unproven; untouched by these invariants; advisory only",
+            "provenance": "recomputes the a11oy receipt/ledger self-consistency invariants offline",
+            "honest_blocked": "a VIOLATED invariant stays VIOLATED — statuses are never coerced to a pass"
+          }
+        },
+        "siblings": [
+          {
+            "rfilename": ".gitattributes"
+          },
+          {
+            "rfilename": "BENCH.laptop-blackwell.json"
+          },
+          {
+            "rfilename": "LICENSE"
+          },
+          {
+            "rfilename": "MODEL_PROVENANCE.json"
+          },
+          {
+            "rfilename": "OPERATIONAL.json"
+          },
+          {
+            "rfilename": "PROMOTION_READINESS_AUDIT.json"
+          },
+          {
+            "rfilename": "README.md"
+          },
+          {
+            "rfilename": "SECURITY.md"
+          },
+          {
+            "rfilename": "SZL_ESTATE_MANAGED.json"
+          },
+          {
+            "rfilename": "TRAINING_RECEIPT.json"
+          },
+          {
+            "rfilename": "bom/model-bom.cdx.json"
+          },
+          {
+            "rfilename": "build.toml"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_invariants/__init__.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_invariants/metadata.json"
+          },
+          {
+            "rfilename": "card/holo-banner.svg"
+          },
+          {
+            "rfilename": "scripts/eval.py"
+          },
+          {
+            "rfilename": "scripts/forge.py"
+          },
+          {
+            "rfilename": "tests/test_invariants.py"
+          }
+        ],
+        "spaces": [
+          "betterwithage/szl-command-centre",
+          "SZLHOLDINGS/vertical-services",
+          "SZLHOLDINGS/ayllu"
+        ],
+        "createdAt": "2026-07-12T11:50:20.000Z",
+        "usedStorage": 1605928
+      },
+      "metadata_receipt": {
+        "requested_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-invariants",
+        "final_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-invariants",
+        "status": 200,
+        "observed_at": "2026-09-24T13:44:55.967445+00:00",
+        "response_bytes": 1854,
+        "response_sha256": "428dc75c019108725f3434e8204e4d7bb11c82d87262913c43d4aece448583e6",
+        "response_bytes_base64": "eyJfaWQiOiI2YTUzN2Y3YzM4ZGQ4NTNkMTdiMzg2ZjciLCJpZCI6IlNaTEhPTERJTkdTL3N6bC1pbnZhcmlhbnRzIiwicHJpdmF0ZSI6ZmFsc2UsImxpYnJhcnlfbmFtZSI6Imtlcm5lbHMiLCJ0YWdzIjpbImtlcm5lbHMiLCJrZXJuZWwiLCJnb3Zlcm5hbmNlIiwiaW52YXJpYW50cyIsInByb3ZlbmFuY2UiLCJyZWNlaXB0cyIsImVkMjU1MTkiLCJkb2k6MTAuNTI4MS96ZW5vZG8uMTk5NDQ5MjYiLCJsaWNlbnNlOmFwYWNoZS0yLjAiLCJyZWdpb246dXMiXSwiZG93bmxvYWRzIjowLCJsaWtlcyI6MiwibW9kZWxJZCI6IlNaTEhPTERJTkdTL3N6bC1pbnZhcmlhbnRzIiwiYXV0aG9yIjoiU1pMSE9MRElOR1MiLCJzaGEiOiJjMjE4ZjFhN2VlZDdlYzFiOGEwNmEyOTk3ZTQ5ZmZlOWUzMzlhNzFjIiwibGFzdE1vZGlmaWVkIjoiMjAyNi0wOS0wOFQxMTo0MzozMi4wMDBaIiwiZ2F0ZWQiOmZhbHNlLCJkaXNhYmxlZCI6ZmFsc2UsIm1vZGVsLWluZGV4IjpudWxsLCJjb25maWciOnt9LCJjYXJkRGF0YSI6eyJsaWJyYXJ5X25hbWUiOiJrZXJuZWxzIiwibGljZW5zZSI6ImFwYWNoZS0yLjAiLCJ0YWdzIjpbImtlcm5lbCIsImdvdmVybmFuY2UiLCJpbnZhcmlhbnRzIiwicHJvdmVuYW5jZSIsInJlY2VpcHRzIiwiZWQyNTUxOSIsImRvaToxMC41MjgxL3plbm9kby4xOTk0NDkyNiJdLCJzemwtZ292ZXJuYW5jZSI6eyJ2ZXJkaWN0IjoiQURWSVNPUlkiLCJsYW1iZGEiOiJDb25qZWN0dXJlIDEgKG9wZW4pIOKAlCB1bmlxdWVuZXNzIHVucHJvdmVuOyB1bnRvdWNoZWQgYnkgdGhlc2UgaW52YXJpYW50czsgYWR2aXNvcnkgb25seSIsInByb3ZlbmFuY2UiOiJyZWNvbXB1dGVzIHRoZSBhMTFveSByZWNlaXB0L2xlZGdlciBzZWxmLWNvbnNpc3RlbmN5IGludmFyaWFudHMgb2ZmbGluZSIsImhvbmVzdF9ibG9ja2VkIjoiYSBWSU9MQVRFRCBpbnZhcmlhbnQgc3RheXMgVklPTEFURUQg4oCUIHN0YXR1c2VzIGFyZSBuZXZlciBjb2VyY2VkIHRvIGEgcGFzcyJ9fSwic2libGluZ3MiOlt7InJmaWxlbmFtZSI6Ii5naXRhdHRyaWJ1dGVzIn0seyJyZmlsZW5hbWUiOiJCRU5DSC5sYXB0b3AtYmxhY2t3ZWxsLmpzb24ifSx7InJmaWxlbmFtZSI6IkxJQ0VOU0UifSx7InJmaWxlbmFtZSI6Ik1PREVMX1BST1ZFTkFOQ0UuanNvbiJ9LHsicmZpbGVuYW1lIjoiT1BFUkFUSU9OQUwuanNvbiJ9LHsicmZpbGVuYW1lIjoiUFJPTU9USU9OX1JFQURJTkVTU19BVURJVC5qc29uIn0seyJyZmlsZW5hbWUiOiJSRUFETUUubWQifSx7InJmaWxlbmFtZSI6IlNFQ1VSSVRZLm1kIn0seyJyZmlsZW5hbWUiOiJTWkxfRVNUQVRFX01BTkFHRUQuanNvbiJ9LHsicmZpbGVuYW1lIjoiVFJBSU5JTkdfUkVDRUlQVC5qc29uIn0seyJyZmlsZW5hbWUiOiJib20vbW9kZWwtYm9tLmNkeC5qc29uIn0seyJyZmlsZW5hbWUiOiJidWlsZC50b21sIn0seyJyZmlsZW5hbWUiOiJidWlsZC90b3JjaC11bml2ZXJzYWwvc3psX2ludmFyaWFudHMvX19pbml0X18ucHkifSx7InJmaWxlbmFtZSI6ImJ1aWxkL3RvcmNoLXVuaXZlcnNhbC9zemxfaW52YXJpYW50cy9tZXRhZGF0YS5qc29uIn0seyJyZmlsZW5hbWUiOiJjYXJkL2hvbG8tYmFubmVyLnN2ZyJ9LHsicmZpbGVuYW1lIjoic2NyaXB0cy9ldmFsLnB5In0seyJyZmlsZW5hbWUiOiJzY3JpcHRzL2ZvcmdlLnB5In0seyJyZmlsZW5hbWUiOiJ0ZXN0cy90ZXN0X2ludmFyaWFudHMucHkifV0sInNwYWNlcyI6WyJiZXR0ZXJ3aXRoYWdlL3N6bC1jb21tYW5kLWNlbnRyZSIsIlNaTEhPTERJTkdTL3ZlcnRpY2FsLXNlcnZpY2VzIiwiU1pMSE9MRElOR1MvYXlsbHUiXSwiY3JlYXRlZEF0IjoiMjAyNi0wNy0xMlQxMTo1MDoyMC4wMDBaIiwidXNlZFN0b3JhZ2UiOjE2MDU5Mjh9"
+      },
+      "tree_pages": [
+        {
+          "requested_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-invariants/tree/c218f1a7eed7ec1b8a06a2997e49ffe9e339a71c?recursive=true&expand=false&limit=100",
+          "final_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-invariants/tree/c218f1a7eed7ec1b8a06a2997e49ffe9e339a71c?recursive=true&expand=false&limit=100",
+          "status": 200,
+          "observed_at": "2026-09-24T13:44:56.087037+00:00",
+          "response_bytes": 2653,
+          "response_sha256": "a65d018163060d885670cac671608fa6464f7e286d3cdac4c4e7fdd946ecb412",
+          "response_bytes_base64": "W3sidHlwZSI6ImRpcmVjdG9yeSIsIm9pZCI6ImNiNmVjY2ZiNGQ0NjVhZDc0Nzg5ODgzMzE2Mjg1NjkyMGU1YmRmMTUiLCJzaXplIjowLCJwYXRoIjoiYm9tIn0seyJ0eXBlIjoiZGlyZWN0b3J5Iiwib2lkIjoiYmMyMWEyYTBhN2QzYzM5YTJjNmY2OGU3YjJkODNlMzM5YTk0Nzk2MiIsInNpemUiOjAsInBhdGgiOiJidWlsZCJ9LHsidHlwZSI6ImRpcmVjdG9yeSIsIm9pZCI6ImU5ODQ2MjFhYzk5Y2MxZGE2Yzk2MzUxY2RjOTU1OTMyOGYyZThjNWMiLCJzaXplIjowLCJwYXRoIjoiYnVpbGQvdG9yY2gtdW5pdmVyc2FsIn0seyJ0eXBlIjoiZGlyZWN0b3J5Iiwib2lkIjoiNmIyYWY3MzU1ZGM5Nzg4NWVlMjM1NzRjZTY3ZTAwODM4NjYzNDk0YiIsInNpemUiOjAsInBhdGgiOiJidWlsZC90b3JjaC11bml2ZXJzYWwvc3psX2ludmFyaWFudHMifSx7InR5cGUiOiJkaXJlY3RvcnkiLCJvaWQiOiI0OGRkYTBiMzI1M2JhZDcwZjIyMDdlN2E4ZDc0ZmFjMmE3OWU1ZDE5Iiwic2l6ZSI6MCwicGF0aCI6ImNhcmQifSx7InR5cGUiOiJkaXJlY3RvcnkiLCJvaWQiOiIzYzdjMTMwZDczYzgwNWQ4NDZhMmM2MDA3ZjNkNzAwMTRhY2E1MGEwIiwic2l6ZSI6MCwicGF0aCI6InNjcmlwdHMifSx7InR5cGUiOiJkaXJlY3RvcnkiLCJvaWQiOiI5MTQwNWZhMDVjM2EzMTRiNzA0ZjUxZTA0ZmVkNjZlMjRlMmMzOGY2Iiwic2l6ZSI6MCwicGF0aCI6InRlc3RzIn0seyJ0eXBlIjoiZmlsZSIsIm9pZCI6ImE2MzQ0YWFjOGMwOTI1M2IzYjYzMGZiNzc2YWU5NDQ3OGFhMDI3NWIiLCJzaXplIjoxNTE5LCJwYXRoIjoiLmdpdGF0dHJpYnV0ZXMifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiZjBlNzYxYTA2MTQ0ZTkyOTk0NWJjMzEwZTc0YTJhZjg1ODBkYmJlMCIsInNpemUiOjYyMjksInBhdGgiOiJCRU5DSC5sYXB0b3AtYmxhY2t3ZWxsLmpzb24ifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiN2MzMTdiYTM3MzkzMmJmN2Y1NmFiOTY5YTM2OThhYTM0Njg4MTFiZSIsInNpemUiOjc3NiwicGF0aCI6IkxJQ0VOU0UifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiZWI3YmQ3MGFhOGM3MzFhZGY5MmM2YTU1ZTBiNTQ1MWNmZWVhNzA5OCIsInNpemUiOjI1NjgsInBhdGgiOiJNT0RFTF9QUk9WRU5BTkNFLmpzb24ifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiZWMzMmJmODY0OGViYTVhNDQ1NTg5MDE1ZDNjOTM1NmU3MzQ3MzU2MCIsInNpemUiOjE5MzMsInBhdGgiOiJPUEVSQVRJT05BTC5qc29uIn0seyJ0eXBlIjoiZmlsZSIsIm9pZCI6IjlhNTgwODc3ZjY5ZWVkZGFhOGJkZjM4NjIwZjVlMDhmNjc2MGU3YzMiLCJzaXplIjoxMjYzMSwicGF0aCI6IlBST01PVElPTl9SRUFESU5FU1NfQVVESVQuanNvbiJ9LHsidHlwZSI6ImZpbGUiLCJvaWQiOiIxYjZmYmUwZjA0ODYyODQzODFhMzM4MTQ1MWYzYTMwNmY0OWIxZTgyIiwic2l6ZSI6NTMyOSwicGF0aCI6IlJFQURNRS5tZCJ9LHsidHlwZSI6ImZpbGUiLCJvaWQiOiI2ZmMzNmY5MDAwN2RjZmU1YjEwMjZkOWZjNDBjMzA5ZGUxMDFhMTM3Iiwic2l6ZSI6MTY0MiwicGF0aCI6IlNFQ1VSSVRZLm1kIn0seyJ0eXBlIjoiZmlsZSIsIm9pZCI6IjU5ZTRiMDJlOGM2MzgwYzIwZjcyODQ0NzBiMGFkMmRkMzY2NTQ4MGQiLCJzaXplIjo2ODAsInBhdGgiOiJTWkxfRVNUQVRFX01BTkFHRUQuanNvbiJ9LHsidHlwZSI6ImZpbGUiLCJvaWQiOiI1NzkyYWM1YzM4YjcyYWM3M2QyZGE3YWY4ODI4NzQ2OTE5YzFjNTlhIiwic2l6ZSI6MjU1NiwicGF0aCI6IlRSQUlOSU5HX1JFQ0VJUFQuanNvbiJ9LHsidHlwZSI6ImZpbGUiLCJvaWQiOiI5Y2M3MWIzOTgxNmJlMjdhNjdhMjNiOTUyZTAxZDQyZWJjYjg1NzZiIiwic2l6ZSI6NjEyOCwicGF0aCI6ImJvbS9tb2RlbC1ib20uY2R4Lmpzb24ifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiNjg0ZjE1ZWVhYjE0ZDQwYjQ5NWE3MmQwMTU0MzQ2YzE2NWJjYjZjYSIsInNpemUiOjYwLCJwYXRoIjoiYnVpbGQudG9tbCJ9LHsidHlwZSI6ImZpbGUiLCJvaWQiOiJlYmZjN2QwNWNmNDE3ZWYxYTdlNzVkMjA1MTg5YzczOTJlNzQ5OGE5Iiwic2l6ZSI6MzI5MTgsInBhdGgiOiJidWlsZC90b3JjaC11bml2ZXJzYWwvc3psX2ludmFyaWFudHMvX19pbml0X18ucHkifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiOGEyMGQ2MjJiN2VjY2JhYWI5MjI4OTgyY2Q2NWYxMjIwYWRkOTZlYiIsInNpemUiOjY2OCwicGF0aCI6ImJ1aWxkL3RvcmNoLXVuaXZlcnNhbC9zemxfaW52YXJpYW50cy9tZXRhZGF0YS5qc29uIn0seyJ0eXBlIjoiZmlsZSIsIm9pZCI6IjQ0NTRiZjEyYWExMTA4NDRmYWI1ZGMyMWFjMDAzY2ZjODIxYjYxNWMiLCJzaXplIjoyMTIxLCJwYXRoIjoiY2FyZC9ob2xvLWJhbm5lci5zdmcifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiOWM3NGEyMmEzZmM3MmJiNGQxODQzMGJkMzgzM2FhNjU4MDJlMjk1NyIsInNpemUiOjE0NTYsInBhdGgiOiJzY3JpcHRzL2V2YWwucHkifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiMGRmMjczYTFhZDZhYTI5NjNlMDVkZjhkOGM1Njg5NGViMTljZWNlNSIsInNpemUiOjExNzM0LCJwYXRoIjoic2NyaXB0cy9mb3JnZS5weSJ9LHsidHlwZSI6ImZpbGUiLCJvaWQiOiJkOGRkYjU3ZmIxY2MzMjI4YmU2YTM1MWE4NmJkMDkzYjI1YWJkNjZlIiwic2l6ZSI6NjY0OCwicGF0aCI6InRlc3RzL3Rlc3RfaW52YXJpYW50cy5weSJ9XQ==",
+          "next_url": null
+        }
+      ],
+      "tree_coverage": "COMPLETE_ACCESSIBLE_RESPONSE",
+      "tree_entries": 25,
+      "file_count": 18
+    },
+    "tree": [
+      {
+        "type": "file",
+        "oid": "a6344aac8c09253b3b630fb776ae94478aa0275b",
+        "size": 1519,
+        "path": ".gitattributes",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-invariants",
+        "revision": "c218f1a7eed7ec1b8a06a2997e49ffe9e339a71c"
+      },
+      {
+        "type": "file",
+        "oid": "f0e761a06144e929945bc310e74a2af8580dbbe0",
+        "size": 6229,
+        "path": "BENCH.laptop-blackwell.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-invariants",
+        "revision": "c218f1a7eed7ec1b8a06a2997e49ffe9e339a71c"
+      },
+      {
+        "type": "file",
+        "oid": "7c317ba373932bf7f56ab969a3698aa3468811be",
+        "size": 776,
+        "path": "LICENSE",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-invariants",
+        "revision": "c218f1a7eed7ec1b8a06a2997e49ffe9e339a71c"
+      },
+      {
+        "type": "file",
+        "oid": "eb7bd70aa8c731adf92c6a55e0b5451cfeea7098",
+        "size": 2568,
+        "path": "MODEL_PROVENANCE.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-invariants",
+        "revision": "c218f1a7eed7ec1b8a06a2997e49ffe9e339a71c"
+      },
+      {
+        "type": "file",
+        "oid": "ec32bf8648eba5a445589015d3c9356e73473560",
+        "size": 1933,
+        "path": "OPERATIONAL.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-invariants",
+        "revision": "c218f1a7eed7ec1b8a06a2997e49ffe9e339a71c"
+      },
+      {
+        "type": "file",
+        "oid": "9a580877f69eeddaa8bdf38620f5e08f6760e7c3",
+        "size": 12631,
+        "path": "PROMOTION_READINESS_AUDIT.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-invariants",
+        "revision": "c218f1a7eed7ec1b8a06a2997e49ffe9e339a71c"
+      },
+      {
+        "type": "file",
+        "oid": "1b6fbe0f0486284381a3381451f3a306f49b1e82",
+        "size": 5329,
+        "path": "README.md",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-invariants",
+        "revision": "c218f1a7eed7ec1b8a06a2997e49ffe9e339a71c"
+      },
+      {
+        "type": "file",
+        "oid": "6fc36f90007dcfe5b1026d9fc40c309de101a137",
+        "size": 1642,
+        "path": "SECURITY.md",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-invariants",
+        "revision": "c218f1a7eed7ec1b8a06a2997e49ffe9e339a71c"
+      },
+      {
+        "type": "file",
+        "oid": "59e4b02e8c6380c20f7284470b0ad2dd3665480d",
+        "size": 680,
+        "path": "SZL_ESTATE_MANAGED.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-invariants",
+        "revision": "c218f1a7eed7ec1b8a06a2997e49ffe9e339a71c"
+      },
+      {
+        "type": "file",
+        "oid": "5792ac5c38b72ac73d2da7af8828746919c1c59a",
+        "size": 2556,
+        "path": "TRAINING_RECEIPT.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-invariants",
+        "revision": "c218f1a7eed7ec1b8a06a2997e49ffe9e339a71c"
+      },
+      {
+        "type": "directory",
+        "oid": "cb6eccfb4d465ad747898833162856920e5bdf15",
+        "size": 0,
+        "path": "bom",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-invariants",
+        "revision": "c218f1a7eed7ec1b8a06a2997e49ffe9e339a71c"
+      },
+      {
+        "type": "file",
+        "oid": "9cc71b39816be27a67a23b952e01d42ebcb8576b",
+        "size": 6128,
+        "path": "bom/model-bom.cdx.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-invariants",
+        "revision": "c218f1a7eed7ec1b8a06a2997e49ffe9e339a71c"
+      },
+      {
+        "type": "directory",
+        "oid": "bc21a2a0a7d3c39a2c6f68e7b2d83e339a947962",
+        "size": 0,
+        "path": "build",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-invariants",
+        "revision": "c218f1a7eed7ec1b8a06a2997e49ffe9e339a71c"
+      },
+      {
+        "type": "file",
+        "oid": "684f15eeab14d40b495a72d0154346c165bcb6ca",
+        "size": 60,
+        "path": "build.toml",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-invariants",
+        "revision": "c218f1a7eed7ec1b8a06a2997e49ffe9e339a71c"
+      },
+      {
+        "type": "directory",
+        "oid": "e984621ac99cc1da6c96351cdc9559328f2e8c5c",
+        "size": 0,
+        "path": "build/torch-universal",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-invariants",
+        "revision": "c218f1a7eed7ec1b8a06a2997e49ffe9e339a71c"
+      },
+      {
+        "type": "directory",
+        "oid": "6b2af7355dc97885ee23574ce67e00838663494b",
+        "size": 0,
+        "path": "build/torch-universal/szl_invariants",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-invariants",
+        "revision": "c218f1a7eed7ec1b8a06a2997e49ffe9e339a71c"
+      },
+      {
+        "type": "file",
+        "oid": "ebfc7d05cf417ef1a7e75d205189c7392e7498a9",
+        "size": 32918,
+        "path": "build/torch-universal/szl_invariants/__init__.py",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-invariants",
+        "revision": "c218f1a7eed7ec1b8a06a2997e49ffe9e339a71c"
+      },
+      {
+        "type": "file",
+        "oid": "8a20d622b7eccbaab9228982cd65f1220add96eb",
+        "size": 668,
+        "path": "build/torch-universal/szl_invariants/metadata.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-invariants",
+        "revision": "c218f1a7eed7ec1b8a06a2997e49ffe9e339a71c"
+      },
+      {
+        "type": "directory",
+        "oid": "48dda0b3253bad70f2207e7a8d74fac2a79e5d19",
+        "size": 0,
+        "path": "card",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-invariants",
+        "revision": "c218f1a7eed7ec1b8a06a2997e49ffe9e339a71c"
+      },
+      {
+        "type": "file",
+        "oid": "4454bf12aa110844fab5dc21ac003cfc821b615c",
+        "size": 2121,
+        "path": "card/holo-banner.svg",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-invariants",
+        "revision": "c218f1a7eed7ec1b8a06a2997e49ffe9e339a71c"
+      },
+      {
+        "type": "directory",
+        "oid": "3c7c130d73c805d846a2c6007f3d70014aca50a0",
+        "size": 0,
+        "path": "scripts",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-invariants",
+        "revision": "c218f1a7eed7ec1b8a06a2997e49ffe9e339a71c"
+      },
+      {
+        "type": "file",
+        "oid": "9c74a22a3fc72bb4d18430bd3833aa65802e2957",
+        "size": 1456,
+        "path": "scripts/eval.py",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-invariants",
+        "revision": "c218f1a7eed7ec1b8a06a2997e49ffe9e339a71c"
+      },
+      {
+        "type": "file",
+        "oid": "0df273a1ad6aa2963e05df8d8c56894eb19cece5",
+        "size": 11734,
+        "path": "scripts/forge.py",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-invariants",
+        "revision": "c218f1a7eed7ec1b8a06a2997e49ffe9e339a71c"
+      },
+      {
+        "type": "directory",
+        "oid": "91405fa05c3a314b704f51e04fed66e24e2c38f6",
+        "size": 0,
+        "path": "tests",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-invariants",
+        "revision": "c218f1a7eed7ec1b8a06a2997e49ffe9e339a71c"
+      },
+      {
+        "type": "file",
+        "oid": "d8ddb57fb1cc3228be6a351a86bd093b25abd66e",
+        "size": 6648,
+        "path": "tests/test_invariants.py",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-invariants",
+        "revision": "c218f1a7eed7ec1b8a06a2997e49ffe9e339a71c"
+      }
+    ],
+    "text_record": {
+      "id": "SZLHOLDINGS/szl-invariants",
+      "kind": "models",
+      "revision": "c218f1a7eed7ec1b8a06a2997e49ffe9e339a71c",
+      "path": "MODEL_PROVENANCE.json",
+      "receipt": {
+        "requested_url": "https://huggingface.co/SZLHOLDINGS/szl-invariants/resolve/c218f1a7eed7ec1b8a06a2997e49ffe9e339a71c/MODEL_PROVENANCE.json",
+        "final_url": "https://huggingface.co/api/resolve-cache/models/SZLHOLDINGS/szl-invariants/c218f1a7eed7ec1b8a06a2997e49ffe9e339a71c/MODEL_PROVENANCE.json?%2FSZLHOLDINGS%2Fszl-invariants%2Fresolve%2Fc218f1a7eed7ec1b8a06a2997e49ffe9e339a71c%2FMODEL_PROVENANCE.json=&etag=%22eb7bd70aa8c731adf92c6a55e0b5451cfeea7098%22",
+        "status": 200,
+        "observed_at": "2026-09-24T13:44:56.195938+00:00",
+        "response_bytes": 2568,
+        "response_sha256": "61d363ab86cfb19410ecbebd4477e9cd235dfac3ee4bd49913fac2b41d0044dc",
+        "response_bytes_base64": "ewogICJzY2hlbWEiOiAic3psLm1vZGVsLXNvdXJjZS1hdHRlc3RhdGlvbi92MSIsCiAgIm1vZGVsIjogewogICAgImlkIjogIlNaTEhPTERJTkdTL3N6bC1pbnZhcmlhbnRzIiwKICAgICJyZXBvc2l0b3J5X3R5cGUiOiAibW9kZWwiLAogICAgImFydGlmYWN0X2tpbmQiOiAia2VybmVsLWNvZGUtYW5kLWNvbmZpZ3VyYXRpb24gKyB0cmFpbmVkIHN1cnJvZ2F0ZSAobW9kZWwuam9ibGliKSIsCiAgICAidHJhaW5lZF93ZWlnaHRzX3ByZXNlbnQiOiB0cnVlLAogICAgInN0ZGxpYl9vbmx5IjogZmFsc2UsCiAgICAidG9yY2hfcmVxdWlyZWQiOiBmYWxzZSwKICAgICJzdXJyb2dhdGUiOiB7CiAgICAgICJmaWxlIjogIm1vZGVsLmpvYmxpYiIsCiAgICAgICJzaGEyNTYiOiAiMjRmYTFlZjY3YjI4ZTljMjBmODE5N2JmMzIxZGQ3YzkzMDg3NDY1ZWMyY2U5ZWZhN2Y4ZmI5ZGFlN2JmYzE0YiIsCiAgICAgICJyb2xlIjogInN0cnVjdHVyYWwgdHJpYWdlIG9ubHkg4oCUIGtlcm5lbCByZW1haW5zIHNvbGUgZ3JvdW5kIHRydXRoIiwKICAgICAgImZpZGVsaXR5X01FQVNVUkVEIjogewogICAgICAgICJ0ZXN0X2FjY3VyYWN5X2FsbF9jbGFzc2VzIjogMC45ODAzLAogICAgICAgICJzdHJ1Y3R1cmFsX3JlY2FsbCI6IDEuMCwKICAgICAgICAiY3J5cHRvX2JsaW5kX3Nwb3Rfc2lnX3RhbXBlcl9yZWNhbGwiOiAwLjA2MzYKICAgICAgfSwKICAgICAgInJlY2VpcHQiOiAiVFJBSU5JTkdfUkVDRUlQVC5qc29uIiwKICAgICAgInJldmVyaWZ5IjogInB5dGhvbiBzY3JpcHRzL2V2YWwucHkiCiAgICB9LAogICAgInN0ZGxpYl9vbmx5X25vdGUiOiAia2VybmVsIHBhY2thZ2UgaXRzZWxmIHN0YXlzIHN0ZGxpYi1vbmx5OyB0aGUgT1BUSU9OQUwgc3Vycm9nYXRlIG5lZWRzIHNrbGVhcm4ram9ibGliIgogIH0sCiAgInNvdXJjZV9vZl9yZWNvcmQiOiB7CiAgICAic3RhdGUiOiAiVkVSSUZJRURfSEZfU09VUkNFX09GX1JFQ09SRCIsCiAgICAicGxhdGZvcm0iOiAiaHVnZ2luZ2ZhY2UiLAogICAgInJlcG9zaXRvcnkiOiAiU1pMSE9MRElOR1Mvc3psLWludmFyaWFudHMiCiAgfSwKICAibWlycm9ycyI6IHsKICAgICJsaXZlX3N1cmZhY2UiOiAiYTExb3kgYmFja2JvbmUgL2FwaS9pbnZhcmlhbnRzIChhcnRpZmFjdHMvYXBpLXNlcnZlci9zcmMvcm91dGVzL2ludmFyaWFudHMudHMpIiwKICAgICJjaGFpbl9oYXNoaW5nIjogImFydGlmYWN0cy9hcGktc2VydmVyL3NyYy9saWIvcnVuTGVkZ2VyLnRzICsgcmVjZWlwdHMudHMgKHNoYTI1NiBjYW5vbmljYWwsIGVkMjU1MTkvU1BLSSBrZXlJZCkiLAogICAgImxlYW5fcmVwbyI6ICJzemwtaG9sZGluZ3MvbHV0YXItbGVhbiIsCiAgICAiZG9pX2x1dGFyX2xlYW4iOiAiMTAuNTI4MS96ZW5vZG8uMjA0MzQzMDgiCiAgfSwKICAidmVyaWZpY2F0aW9uIjogewogICAgInRlc3RzIjogIjE0LzE0IHBhc3NlZCIsCiAgICAidGVzdHNfYmFzaXMiOiAiTUVBU1VSRUQgbG9jYWwgcHl0aG9uMyAtbSBweXRlc3QgcnVuLCBzdGRsaWItb25seSwgb2ZmbGluZSIsCiAgICAiZmFsc2lmaWFiaWxpdHkiOiAiZWFjaCBpbnZhcmlhbnQgZGVtb25zdHJhdGVkIHRvIGZsaXAgSE9MRFMgLT4gVklPTEFURUQgdW5kZXIgcmVhbCBjb3JydXB0aW9uL3RhbXBlcjsgbWlzc2luZyBjYXBhYmlsaXRpZXMgc3RheSBVTkFWQUlMQUJMRSAobmV2ZXIgY29lcmNlZCB0byBhIHBhc3MpIgogIH0sCiAgImxhbWJkYSI6IHsKICAgICJzdGF0dXMiOiAiQ29uamVjdHVyZSAxIChvcGVuKSDigJQgdW5pcXVlbmVzcyB1bnByb3ZlbiIsCiAgICAidG91Y2hlZF9ieV90aGlzX2FydGlmYWN0IjogZmFsc2UKICB9LAogICJjbGFpbXMiOiB7CiAgICAidHJhaW5lZF9tb2RlbCI6ICJOT1RfQ0xBSU1FRCIsCiAgICAicmVwcm9kdWNpYmxlX2J1aWxkIjogIk5PVF9DTEFJTUVEIiwKICAgICJ3ZWlnaHRzX3ByZXNlbnQiOiAiTk9ORSIKICB9LAogICJsaW1pdHMiOiBbCiAgICAiVGhpcyBhcnRpZmFjdCBpcyBhIHB1cmUtUHl0aG9uIG9mZmxpbmUgcmVwbGF5IG9mIHRoZSBsaXZlIEFsbG95IGludmFyaWFudHMgc3VyZmFjZSDigJQgaXQgdmVyaWZpZXMgdGhlIHNoYXBlIGFuZCBjcnlwdG9ncmFwaGljIHNlbGYtY29uc2lzdGVuY3kgb2YgYSBsZWRnZXIgZXhwb3J0IHlvdSBzdXBwbHksIE5PVCB0aGUgcnVudGltZSBjb3JyZWN0bmVzcyBvZiBhbnkgc2VydmVkIGFuc3dlci4iLAogICAgIk5vIC5iaW4sIC5zYWZldGVuc29ycywgLnB0LCAucHRoLCAub25ueCwgb3IgLmdndWYgd2VpZ2h0IGFydGlmYWN0IGlzIHByZXNlbnQuIiwKICAgICJJbnZhcmlhbnQgIzYgKGVkMjU1MTkpIGFuZCBsYXRlbnRWZXJpZmljYXRpb24gYXJlIFVOQVZBSUxBQkxFIHdpdGhvdXQgYSBzdXBwbGllZCBwdWJsaWMga2V5OyBpbnZhcmlhbnQgIzggaXMgVU5BVkFJTEFCTEUgd2l0aG91dCBhIHNhbXBsZXMgZXhwb3J0LiBUaGVzZSBhcmUgaG9uZXN0IGluZGV0ZXJtaW5hdGUgc3RhdGVzLCBub3QgcGFzc2VzLiIsCiAgICAiTm9uZSBvZiB0aGVzZSBpbnZhcmlhbnRzIHByb3ZlIG9yIHVwZ3JhZGUgzpssIHdoaWNoIHJlbWFpbnMgQ29uamVjdHVyZSAxIChvcGVuKS4iCiAgXQp9"
+      },
+      "content": {
+        "schema": "szl.model-source-attestation/v1",
+        "model": {
+          "id": "SZLHOLDINGS/szl-invariants",
+          "repository_type": "model",
+          "artifact_kind": "kernel-code-and-configuration + trained surrogate (model.joblib)",
+          "trained_weights_present": true,
+          "stdlib_only": false,
+          "torch_required": false,
+          "surrogate": {
+            "file": "model.joblib",
+            "sha256": "24fa1ef67b28e9c20f8197bf321dd7c93087465ec2ce9efa7f8fb9dae7bfc14b",
+            "role": "structural triage only — kernel remains sole ground truth",
+            "fidelity_MEASURED": {
+              "test_accuracy_all_classes": 0.9803,
+              "structural_recall": 1.0,
+              "crypto_blind_spot_sig_tamper_recall": 0.0636
+            },
+            "receipt": "TRAINING_RECEIPT.json",
+            "reverify": "python scripts/eval.py"
+          },
+          "stdlib_only_note": "kernel package itself stays stdlib-only; the OPTIONAL surrogate needs sklearn+joblib"
+        },
+        "source_of_record": {
+          "state": "VERIFIED_HF_SOURCE_OF_RECORD",
+          "platform": "huggingface",
+          "repository": "SZLHOLDINGS/szl-invariants"
+        },
+        "mirrors": {
+          "live_surface": "a11oy backbone /api/invariants (artifacts/api-server/src/routes/invariants.ts)",
+          "chain_hashing": "artifacts/api-server/src/lib/runLedger.ts + receipts.ts (sha256 canonical, ed25519/SPKI keyId)",
+          "lean_repo": "szl-holdings/lutar-lean",
+          "doi_lutar_lean": "10.5281/zenodo.20434308"
+        },
+        "verification": {
+          "tests": "14/14 passed",
+          "tests_basis": "MEASURED local python3 -m pytest run, stdlib-only, offline",
+          "falsifiability": "each invariant demonstrated to flip HOLDS -> VIOLATED under real corruption/tamper; missing capabilities stay UNAVAILABLE (never coerced to a pass)"
+        },
+        "lambda": {
+          "status": "Conjecture 1 (open) — uniqueness unproven",
+          "touched_by_this_artifact": false
+        },
+        "claims": {
+          "trained_model": "NOT_CLAIMED",
+          "reproducible_build": "NOT_CLAIMED",
+          "weights_present": "NONE"
+        },
+        "limits": [
+          "This artifact is a pure-Python offline replay of the live Alloy invariants surface — it verifies the shape and cryptographic self-consistency of a ledger export you supply, NOT the runtime correctness of any served answer.",
+          "No .bin, .safetensors, .pt, .pth, .onnx, or .gguf weight artifact is present.",
+          "Invariant #6 (ed25519) and latentVerification are UNAVAILABLE without a supplied public key; invariant #8 is UNAVAILABLE without a samples export. These are honest indeterminate states, not passes.",
+          "None of these invariants prove or upgrade Λ, which remains Conjecture 1 (open)."
+        ]
+      }
+    },
+    "original_bytes_base64": "ewogICJzY2hlbWEiOiAic3psLm1vZGVsLXNvdXJjZS1hdHRlc3RhdGlvbi92MSIsCiAgIm1vZGVsIjogewogICAgImlkIjogIlNaTEhPTERJTkdTL3N6bC1pbnZhcmlhbnRzIiwKICAgICJyZXBvc2l0b3J5X3R5cGUiOiAibW9kZWwiLAogICAgImFydGlmYWN0X2tpbmQiOiAia2VybmVsLWNvZGUtYW5kLWNvbmZpZ3VyYXRpb24gKyB0cmFpbmVkIHN1cnJvZ2F0ZSAobW9kZWwuam9ibGliKSIsCiAgICAidHJhaW5lZF93ZWlnaHRzX3ByZXNlbnQiOiB0cnVlLAogICAgInN0ZGxpYl9vbmx5IjogZmFsc2UsCiAgICAidG9yY2hfcmVxdWlyZWQiOiBmYWxzZSwKICAgICJzdXJyb2dhdGUiOiB7CiAgICAgICJmaWxlIjogIm1vZGVsLmpvYmxpYiIsCiAgICAgICJzaGEyNTYiOiAiMjRmYTFlZjY3YjI4ZTljMjBmODE5N2JmMzIxZGQ3YzkzMDg3NDY1ZWMyY2U5ZWZhN2Y4ZmI5ZGFlN2JmYzE0YiIsCiAgICAgICJyb2xlIjogInN0cnVjdHVyYWwgdHJpYWdlIG9ubHkg4oCUIGtlcm5lbCByZW1haW5zIHNvbGUgZ3JvdW5kIHRydXRoIiwKICAgICAgImZpZGVsaXR5X01FQVNVUkVEIjogewogICAgICAgICJ0ZXN0X2FjY3VyYWN5X2FsbF9jbGFzc2VzIjogMC45ODAzLAogICAgICAgICJzdHJ1Y3R1cmFsX3JlY2FsbCI6IDEuMCwKICAgICAgICAiY3J5cHRvX2JsaW5kX3Nwb3Rfc2lnX3RhbXBlcl9yZWNhbGwiOiAwLjA2MzYKICAgICAgfSwKICAgICAgInJlY2VpcHQiOiAiVFJBSU5JTkdfUkVDRUlQVC5qc29uIiwKICAgICAgInJldmVyaWZ5IjogInB5dGhvbiBzY3JpcHRzL2V2YWwucHkiCiAgICB9LAogICAgInN0ZGxpYl9vbmx5X25vdGUiOiAia2VybmVsIHBhY2thZ2UgaXRzZWxmIHN0YXlzIHN0ZGxpYi1vbmx5OyB0aGUgT1BUSU9OQUwgc3Vycm9nYXRlIG5lZWRzIHNrbGVhcm4ram9ibGliIgogIH0sCiAgInNvdXJjZV9vZl9yZWNvcmQiOiB7CiAgICAic3RhdGUiOiAiVkVSSUZJRURfSEZfU09VUkNFX09GX1JFQ09SRCIsCiAgICAicGxhdGZvcm0iOiAiaHVnZ2luZ2ZhY2UiLAogICAgInJlcG9zaXRvcnkiOiAiU1pMSE9MRElOR1Mvc3psLWludmFyaWFudHMiCiAgfSwKICAibWlycm9ycyI6IHsKICAgICJsaXZlX3N1cmZhY2UiOiAiYTExb3kgYmFja2JvbmUgL2FwaS9pbnZhcmlhbnRzIChhcnRpZmFjdHMvYXBpLXNlcnZlci9zcmMvcm91dGVzL2ludmFyaWFudHMudHMpIiwKICAgICJjaGFpbl9oYXNoaW5nIjogImFydGlmYWN0cy9hcGktc2VydmVyL3NyYy9saWIvcnVuTGVkZ2VyLnRzICsgcmVjZWlwdHMudHMgKHNoYTI1NiBjYW5vbmljYWwsIGVkMjU1MTkvU1BLSSBrZXlJZCkiLAogICAgImxlYW5fcmVwbyI6ICJzemwtaG9sZGluZ3MvbHV0YXItbGVhbiIsCiAgICAiZG9pX2x1dGFyX2xlYW4iOiAiMTAuNTI4MS96ZW5vZG8uMjA0MzQzMDgiCiAgfSwKICAidmVyaWZpY2F0aW9uIjogewogICAgInRlc3RzIjogIjE0LzE0IHBhc3NlZCIsCiAgICAidGVzdHNfYmFzaXMiOiAiTUVBU1VSRUQgbG9jYWwgcHl0aG9uMyAtbSBweXRlc3QgcnVuLCBzdGRsaWItb25seSwgb2ZmbGluZSIsCiAgICAiZmFsc2lmaWFiaWxpdHkiOiAiZWFjaCBpbnZhcmlhbnQgZGVtb25zdHJhdGVkIHRvIGZsaXAgSE9MRFMgLT4gVklPTEFURUQgdW5kZXIgcmVhbCBjb3JydXB0aW9uL3RhbXBlcjsgbWlzc2luZyBjYXBhYmlsaXRpZXMgc3RheSBVTkFWQUlMQUJMRSAobmV2ZXIgY29lcmNlZCB0byBhIHBhc3MpIgogIH0sCiAgImxhbWJkYSI6IHsKICAgICJzdGF0dXMiOiAiQ29uamVjdHVyZSAxIChvcGVuKSDigJQgdW5pcXVlbmVzcyB1bnByb3ZlbiIsCiAgICAidG91Y2hlZF9ieV90aGlzX2FydGlmYWN0IjogZmFsc2UKICB9LAogICJjbGFpbXMiOiB7CiAgICAidHJhaW5lZF9tb2RlbCI6ICJOT1RfQ0xBSU1FRCIsCiAgICAicmVwcm9kdWNpYmxlX2J1aWxkIjogIk5PVF9DTEFJTUVEIiwKICAgICJ3ZWlnaHRzX3ByZXNlbnQiOiAiTk9ORSIKICB9LAogICJsaW1pdHMiOiBbCiAgICAiVGhpcyBhcnRpZmFjdCBpcyBhIHB1cmUtUHl0aG9uIG9mZmxpbmUgcmVwbGF5IG9mIHRoZSBsaXZlIEFsbG95IGludmFyaWFudHMgc3VyZmFjZSDigJQgaXQgdmVyaWZpZXMgdGhlIHNoYXBlIGFuZCBjcnlwdG9ncmFwaGljIHNlbGYtY29uc2lzdGVuY3kgb2YgYSBsZWRnZXIgZXhwb3J0IHlvdSBzdXBwbHksIE5PVCB0aGUgcnVudGltZSBjb3JyZWN0bmVzcyBvZiBhbnkgc2VydmVkIGFuc3dlci4iLAogICAgIk5vIC5iaW4sIC5zYWZldGVuc29ycywgLnB0LCAucHRoLCAub25ueCwgb3IgLmdndWYgd2VpZ2h0IGFydGlmYWN0IGlzIHByZXNlbnQuIiwKICAgICJJbnZhcmlhbnQgIzYgKGVkMjU1MTkpIGFuZCBsYXRlbnRWZXJpZmljYXRpb24gYXJlIFVOQVZBSUxBQkxFIHdpdGhvdXQgYSBzdXBwbGllZCBwdWJsaWMga2V5OyBpbnZhcmlhbnQgIzggaXMgVU5BVkFJTEFCTEUgd2l0aG91dCBhIHNhbXBsZXMgZXhwb3J0LiBUaGVzZSBhcmUgaG9uZXN0IGluZGV0ZXJtaW5hdGUgc3RhdGVzLCBub3QgcGFzc2VzLiIsCiAgICAiTm9uZSBvZiB0aGVzZSBpbnZhcmlhbnRzIHByb3ZlIG9yIHVwZ3JhZGUgzpssIHdoaWNoIHJlbWFpbnMgQ29uamVjdHVyZSAxIChvcGVuKS4iCiAgXQp9"
+  },
+  {
+    "id": "SZLHOLDINGS/szl-ouroboros",
+    "repository_type": "model",
+    "revision": "40381c985b1eaebd5007626c0c58e25838d32389",
+    "repository_record": {
+      "id": "SZLHOLDINGS/szl-ouroboros",
+      "kind": "models",
+      "revision": "40381c985b1eaebd5007626c0c58e25838d32389",
+      "metadata": {
+        "_id": "6a537f7f375625ebf2044135",
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "private": false,
+        "library_name": "kernels",
+        "tags": [
+          "kernels",
+          "kernel",
+          "governance",
+          "ouroboros",
+          "loop-tax",
+          "provenance",
+          "doi:10.5281/zenodo.19944926",
+          "license:apache-2.0",
+          "region:us"
+        ],
+        "downloads": 0,
+        "likes": 0,
+        "modelId": "SZLHOLDINGS/szl-ouroboros",
+        "author": "SZLHOLDINGS",
+        "sha": "40381c985b1eaebd5007626c0c58e25838d32389",
+        "lastModified": "2026-09-08T11:43:51.000Z",
+        "gated": false,
+        "disabled": false,
+        "model-index": null,
+        "config": {},
+        "cardData": {
+          "library_name": "kernels",
+          "license": "apache-2.0",
+          "tags": [
+            "kernel",
+            "governance",
+            "ouroboros",
+            "loop-tax",
+            "provenance",
+            "doi:10.5281/zenodo.19944926"
+          ],
+          "szl-governance": {
+            "verdict": "ADVISORY",
+            "lambda": "Conjecture 1 (open) — uniqueness unproven; untouched by loop-tax accounting; advisory only",
+            "provenance": "reconstructs the a11oy bounded-loop trace + MEASURED/DERIVED loop-tax split offline",
+            "honest_blocked": "a measurement gap stays a gap — overheadMs is UNAVAILABLE when wall is unmeasured, never fabricated"
+          }
+        },
+        "siblings": [
+          {
+            "rfilename": ".gitattributes"
+          },
+          {
+            "rfilename": "BENCH.laptop-blackwell.json"
+          },
+          {
+            "rfilename": "LICENSE"
+          },
+          {
+            "rfilename": "MODEL_PROVENANCE.json"
+          },
+          {
+            "rfilename": "OPERATIONAL.json"
+          },
+          {
+            "rfilename": "PROMOTION_READINESS_AUDIT.json"
+          },
+          {
+            "rfilename": "README.md"
+          },
+          {
+            "rfilename": "SECURITY.md"
+          },
+          {
+            "rfilename": "SZL_ESTATE_MANAGED.json"
+          },
+          {
+            "rfilename": "TRAINING_RECEIPT.json"
+          },
+          {
+            "rfilename": "bom/model-bom.cdx.json"
+          },
+          {
+            "rfilename": "build.toml"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_ouroboros/__init__.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_ouroboros/metadata.json"
+          },
+          {
+            "rfilename": "card/holo-banner.svg"
+          },
+          {
+            "rfilename": "og-card.png"
+          },
+          {
+            "rfilename": "ouroboros.py"
+          },
+          {
+            "rfilename": "scripts/eval.py"
+          },
+          {
+            "rfilename": "scripts/forge.py"
+          },
+          {
+            "rfilename": "tests/test_ouroboros.py"
+          }
+        ],
+        "spaces": [],
+        "createdAt": "2026-07-12T11:50:23.000Z",
+        "usedStorage": 834152
+      },
+      "metadata_receipt": {
+        "requested_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-ouroboros",
+        "final_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-ouroboros",
+        "status": 200,
+        "observed_at": "2026-09-24T13:44:57.722244+00:00",
+        "response_bytes": 1837,
+        "response_sha256": "4d0e0122f5d376e07544cbd71e6fcf97b93f014b97059b922f013c38b97f574d",
+        "response_bytes_base64": "eyJfaWQiOiI2YTUzN2Y3ZjM3NTYyNWViZjIwNDQxMzUiLCJpZCI6IlNaTEhPTERJTkdTL3N6bC1vdXJvYm9yb3MiLCJwcml2YXRlIjpmYWxzZSwibGlicmFyeV9uYW1lIjoia2VybmVscyIsInRhZ3MiOlsia2VybmVscyIsImtlcm5lbCIsImdvdmVybmFuY2UiLCJvdXJvYm9yb3MiLCJsb29wLXRheCIsInByb3ZlbmFuY2UiLCJkb2k6MTAuNTI4MS96ZW5vZG8uMTk5NDQ5MjYiLCJsaWNlbnNlOmFwYWNoZS0yLjAiLCJyZWdpb246dXMiXSwiZG93bmxvYWRzIjowLCJsaWtlcyI6MCwibW9kZWxJZCI6IlNaTEhPTERJTkdTL3N6bC1vdXJvYm9yb3MiLCJhdXRob3IiOiJTWkxIT0xESU5HUyIsInNoYSI6IjQwMzgxYzk4NWIxZWFlYmQ1MDA3NjI2YzBjNThlMjU4MzhkMzIzODkiLCJsYXN0TW9kaWZpZWQiOiIyMDI2LTA5LTA4VDExOjQzOjUxLjAwMFoiLCJnYXRlZCI6ZmFsc2UsImRpc2FibGVkIjpmYWxzZSwibW9kZWwtaW5kZXgiOm51bGwsImNvbmZpZyI6e30sImNhcmREYXRhIjp7ImxpYnJhcnlfbmFtZSI6Imtlcm5lbHMiLCJsaWNlbnNlIjoiYXBhY2hlLTIuMCIsInRhZ3MiOlsia2VybmVsIiwiZ292ZXJuYW5jZSIsIm91cm9ib3JvcyIsImxvb3AtdGF4IiwicHJvdmVuYW5jZSIsImRvaToxMC41MjgxL3plbm9kby4xOTk0NDkyNiJdLCJzemwtZ292ZXJuYW5jZSI6eyJ2ZXJkaWN0IjoiQURWSVNPUlkiLCJsYW1iZGEiOiJDb25qZWN0dXJlIDEgKG9wZW4pIOKAlCB1bmlxdWVuZXNzIHVucHJvdmVuOyB1bnRvdWNoZWQgYnkgbG9vcC10YXggYWNjb3VudGluZzsgYWR2aXNvcnkgb25seSIsInByb3ZlbmFuY2UiOiJyZWNvbnN0cnVjdHMgdGhlIGExMW95IGJvdW5kZWQtbG9vcCB0cmFjZSArIE1FQVNVUkVEL0RFUklWRUQgbG9vcC10YXggc3BsaXQgb2ZmbGluZSIsImhvbmVzdF9ibG9ja2VkIjoiYSBtZWFzdXJlbWVudCBnYXAgc3RheXMgYSBnYXAg4oCUIG92ZXJoZWFkTXMgaXMgVU5BVkFJTEFCTEUgd2hlbiB3YWxsIGlzIHVubWVhc3VyZWQsIG5ldmVyIGZhYnJpY2F0ZWQifX0sInNpYmxpbmdzIjpbeyJyZmlsZW5hbWUiOiIuZ2l0YXR0cmlidXRlcyJ9LHsicmZpbGVuYW1lIjoiQkVOQ0gubGFwdG9wLWJsYWNrd2VsbC5qc29uIn0seyJyZmlsZW5hbWUiOiJMSUNFTlNFIn0seyJyZmlsZW5hbWUiOiJNT0RFTF9QUk9WRU5BTkNFLmpzb24ifSx7InJmaWxlbmFtZSI6Ik9QRVJBVElPTkFMLmpzb24ifSx7InJmaWxlbmFtZSI6IlBST01PVElPTl9SRUFESU5FU1NfQVVESVQuanNvbiJ9LHsicmZpbGVuYW1lIjoiUkVBRE1FLm1kIn0seyJyZmlsZW5hbWUiOiJTRUNVUklUWS5tZCJ9LHsicmZpbGVuYW1lIjoiU1pMX0VTVEFURV9NQU5BR0VELmpzb24ifSx7InJmaWxlbmFtZSI6IlRSQUlOSU5HX1JFQ0VJUFQuanNvbiJ9LHsicmZpbGVuYW1lIjoiYm9tL21vZGVsLWJvbS5jZHguanNvbiJ9LHsicmZpbGVuYW1lIjoiYnVpbGQudG9tbCJ9LHsicmZpbGVuYW1lIjoiYnVpbGQvdG9yY2gtdW5pdmVyc2FsL3N6bF9vdXJvYm9yb3MvX19pbml0X18ucHkifSx7InJmaWxlbmFtZSI6ImJ1aWxkL3RvcmNoLXVuaXZlcnNhbC9zemxfb3Vyb2Jvcm9zL21ldGFkYXRhLmpzb24ifSx7InJmaWxlbmFtZSI6ImNhcmQvaG9sby1iYW5uZXIuc3ZnIn0seyJyZmlsZW5hbWUiOiJvZy1jYXJkLnBuZyJ9LHsicmZpbGVuYW1lIjoib3Vyb2Jvcm9zLnB5In0seyJyZmlsZW5hbWUiOiJzY3JpcHRzL2V2YWwucHkifSx7InJmaWxlbmFtZSI6InNjcmlwdHMvZm9yZ2UucHkifSx7InJmaWxlbmFtZSI6InRlc3RzL3Rlc3Rfb3Vyb2Jvcm9zLnB5In1dLCJzcGFjZXMiOltdLCJjcmVhdGVkQXQiOiIyMDI2LTA3LTEyVDExOjUwOjIzLjAwMFoiLCJ1c2VkU3RvcmFnZSI6ODM0MTUyfQ=="
+      },
+      "tree_pages": [
+        {
+          "requested_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-ouroboros/tree/40381c985b1eaebd5007626c0c58e25838d32389?recursive=true&expand=false&limit=100",
+          "final_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-ouroboros/tree/40381c985b1eaebd5007626c0c58e25838d32389?recursive=true&expand=false&limit=100",
+          "status": 200,
+          "observed_at": "2026-09-24T13:44:57.797647+00:00",
+          "response_bytes": 2846,
+          "response_sha256": "03e0bca21d64dea1e538b8a7f162444be39e822d16b124ae71f74d8498d8d72f",
+          "response_bytes_base64": "W3sidHlwZSI6ImRpcmVjdG9yeSIsIm9pZCI6ImFkOGE3YzFlOTk5OGZhNzU3OWFiNTljYzgyYTUxZGEzMGQ3MDFiNjUiLCJzaXplIjowLCJwYXRoIjoiYm9tIn0seyJ0eXBlIjoiZGlyZWN0b3J5Iiwib2lkIjoiODg0MTcyMTcyOTIwNTAzNzYxZThjNTNiN2FkZGIxMDA2MTY5NTRkNCIsInNpemUiOjAsInBhdGgiOiJidWlsZCJ9LHsidHlwZSI6ImRpcmVjdG9yeSIsIm9pZCI6IjAwMmQ2YmM5YTU4ZGIxOTg0Y2NlMGQ0N2Y1OTA1YjQwZTlhNjE0ZDYiLCJzaXplIjowLCJwYXRoIjoiYnVpbGQvdG9yY2gtdW5pdmVyc2FsIn0seyJ0eXBlIjoiZGlyZWN0b3J5Iiwib2lkIjoiZGE0M2E0MWVkNzlhN2QwOTlmODgzNmRiM2FhMzMyZGMzYjIzN2FjOCIsInNpemUiOjAsInBhdGgiOiJidWlsZC90b3JjaC11bml2ZXJzYWwvc3psX291cm9ib3JvcyJ9LHsidHlwZSI6ImRpcmVjdG9yeSIsIm9pZCI6IjQyY2I5NzliOGVkMmNiODJkMTgyNDU1MGRjY2YzM2E0NDJmZTliNTAiLCJzaXplIjowLCJwYXRoIjoiY2FyZCJ9LHsidHlwZSI6ImRpcmVjdG9yeSIsIm9pZCI6IjVjMDExNmZjN2RlYjA3OTNjYzczMTRjMTVjZjJiZDQ0NWViMzkwYTEiLCJzaXplIjowLCJwYXRoIjoic2NyaXB0cyJ9LHsidHlwZSI6ImRpcmVjdG9yeSIsIm9pZCI6ImJmZDQyMGE0ZTI4YWYyNGQyYWUyNTdlNGM2ZmZjYjQxOGMzYWU4MTEiLCJzaXplIjowLCJwYXRoIjoidGVzdHMifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiYTYzNDRhYWM4YzA5MjUzYjNiNjMwZmI3NzZhZTk0NDc4YWEwMjc1YiIsInNpemUiOjE1MTksInBhdGgiOiIuZ2l0YXR0cmlidXRlcyJ9LHsidHlwZSI6ImZpbGUiLCJvaWQiOiIxYzljNjY3MDY3OTlmYjAxMTAwYzQ3NjZkNTE5YzY3YzA3MjRhM2IxIiwic2l6ZSI6NjM2NiwicGF0aCI6IkJFTkNILmxhcHRvcC1ibGFja3dlbGwuanNvbiJ9LHsidHlwZSI6ImZpbGUiLCJvaWQiOiI3YzMxN2JhMzczOTMyYmY3ZjU2YWI5NjlhMzY5OGFhMzQ2ODgxMWJlIiwic2l6ZSI6Nzc2LCJwYXRoIjoiTElDRU5TRSJ9LHsidHlwZSI6ImZpbGUiLCJvaWQiOiIwN2MwN2FmOWQ2NDliNWRlMzhhNzQyYTg0OTllYTI1M2FjMzc5OTkwIiwic2l6ZSI6MzExNCwicGF0aCI6Ik1PREVMX1BST1ZFTkFOQ0UuanNvbiJ9LHsidHlwZSI6ImZpbGUiLCJvaWQiOiJkNDg4MTY2NDI2NmZhODU1NTkzMTNiMTJlNjFjMWRlMTAwYmQ4ZDg5Iiwic2l6ZSI6MTkzMCwicGF0aCI6Ik9QRVJBVElPTkFMLmpzb24ifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiMWQxMGQ0MmVhZGQ4MzY5MGU2Yjg4YzdkOGJjMDhiOTMwMGFjNTIzZCIsInNpemUiOjEyNjE5LCJwYXRoIjoiUFJPTU9USU9OX1JFQURJTkVTU19BVURJVC5qc29uIn0seyJ0eXBlIjoiZmlsZSIsIm9pZCI6IjE5NDE4N2M5NTkxMjZhZjkxZDE3MGM3YmZhZDQzZGVkODljZmY1ZGYiLCJzaXplIjo1MzE4LCJwYXRoIjoiUkVBRE1FLm1kIn0seyJ0eXBlIjoiZmlsZSIsIm9pZCI6ImZjMWYyOWIyMzYzNzBmODY1YzE4YTZjMDQwN2VjMjgzNzJiZjVhZGIiLCJzaXplIjoxNTk4LCJwYXRoIjoiU0VDVVJJVFkubWQifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiMGM3ZmI1OGIzZTEwNTQ5NGIxMTE2MWFiNjViNDE5M2FmZDVlMTU5MiIsInNpemUiOjY3OSwicGF0aCI6IlNaTF9FU1RBVEVfTUFOQUdFRC5qc29uIn0seyJ0eXBlIjoiZmlsZSIsIm9pZCI6IjNjZGJkZDE5M2FiZDBiOGMwNDU1ZWZiMWM3NDY5YjRlMDE2NGUzNzMiLCJzaXplIjoyMzI3LCJwYXRoIjoiVFJBSU5JTkdfUkVDRUlQVC5qc29uIn0seyJ0eXBlIjoiZmlsZSIsIm9pZCI6IjJkOGM1NmI2ZmI5NjRlYWQ3NjlkYTk0NTczMDJkNmNmYTVmZDEwMjAiLCJzaXplIjo2NjQ3LCJwYXRoIjoiYm9tL21vZGVsLWJvbS5jZHguanNvbiJ9LHsidHlwZSI6ImZpbGUiLCJvaWQiOiIzNWM1ZGYzYmNiODY0NDJhZjMyY2M4NTJiYmI5N2YzOTExNzZkZDlkIiwic2l6ZSI6NTksInBhdGgiOiJidWlsZC50b21sIn0seyJ0eXBlIjoiZmlsZSIsIm9pZCI6IjNmOTNkOTFhZjhlM2QxYzIxMGI0NzJmMDNjYmQ5ZDg0YjBkNDgzNTMiLCJzaXplIjoxNDUwNiwicGF0aCI6ImJ1aWxkL3RvcmNoLXVuaXZlcnNhbC9zemxfb3Vyb2Jvcm9zL19faW5pdF9fLnB5In0seyJ0eXBlIjoiZmlsZSIsIm9pZCI6ImUyM2U4NjEwM2MyNTdmYmIyZTgwZGQzODNkZWU1Y2Q5MzY1YjAyZjgiLCJzaXplIjo2NzMsInBhdGgiOiJidWlsZC90b3JjaC11bml2ZXJzYWwvc3psX291cm9ib3Jvcy9tZXRhZGF0YS5qc29uIn0seyJ0eXBlIjoiZmlsZSIsIm9pZCI6ImQ3OGMzMTcxZDcyYzYzYjA0ZjA0ODEzNDY2OTgwOGI0MTJhYmMzOGUiLCJzaXplIjoxNzcxLCJwYXRoIjoiY2FyZC9ob2xvLWJhbm5lci5zdmcifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiMjY1M2I1OTQ0MjlkMTA5NzNmODdlZTZhN2RlMmYyYTk2NDE4ZGZlZiIsInNpemUiOjM5Mjg5LCJwYXRoIjoib2ctY2FyZC5wbmcifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiOWFjMWY5NmQ3MWM0OWExZWY4Mjg1NThlODQ1OTBhZGQyMDViYjFiZiIsInNpemUiOjE5NTUsInBhdGgiOiJvdXJvYm9yb3MucHkifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiYmEwYzdiYTY2NjU5OGIwZTg3MmQ1Y2NhMWJkNmZiZWUyNGI1NzllYyIsInNpemUiOjE0ODgsInBhdGgiOiJzY3JpcHRzL2V2YWwucHkifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiMThlZWJmMWRiMDBkNGIxYjhjNzBkOTIxM2QwNDYyOTc2YjBmNzk5ZCIsInNpemUiOjc5ODUsInBhdGgiOiJzY3JpcHRzL2ZvcmdlLnB5In0seyJ0eXBlIjoiZmlsZSIsIm9pZCI6Ijc0ZDFlNGMxYjEzNjdkYWE4MzRkNWYwYzIwMjVkYTQwMDc2MTVkYmIiLCJzaXplIjo0NTA3LCJwYXRoIjoidGVzdHMvdGVzdF9vdXJvYm9yb3MucHkifV0=",
+          "next_url": null
+        }
+      ],
+      "tree_coverage": "COMPLETE_ACCESSIBLE_RESPONSE",
+      "tree_entries": 27,
+      "file_count": 20
+    },
+    "tree": [
+      {
+        "type": "file",
+        "oid": "a6344aac8c09253b3b630fb776ae94478aa0275b",
+        "size": 1519,
+        "path": ".gitattributes",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "revision": "40381c985b1eaebd5007626c0c58e25838d32389"
+      },
+      {
+        "type": "file",
+        "oid": "1c9c66706799fb01100c4766d519c67c0724a3b1",
+        "size": 6366,
+        "path": "BENCH.laptop-blackwell.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "revision": "40381c985b1eaebd5007626c0c58e25838d32389"
+      },
+      {
+        "type": "file",
+        "oid": "7c317ba373932bf7f56ab969a3698aa3468811be",
+        "size": 776,
+        "path": "LICENSE",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "revision": "40381c985b1eaebd5007626c0c58e25838d32389"
+      },
+      {
+        "type": "file",
+        "oid": "07c07af9d649b5de38a742a8499ea253ac379990",
+        "size": 3114,
+        "path": "MODEL_PROVENANCE.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "revision": "40381c985b1eaebd5007626c0c58e25838d32389"
+      },
+      {
+        "type": "file",
+        "oid": "d4881664266fa85559313b12e61c1de100bd8d89",
+        "size": 1930,
+        "path": "OPERATIONAL.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "revision": "40381c985b1eaebd5007626c0c58e25838d32389"
+      },
+      {
+        "type": "file",
+        "oid": "1d10d42eadd83690e6b88c7d8bc08b9300ac523d",
+        "size": 12619,
+        "path": "PROMOTION_READINESS_AUDIT.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "revision": "40381c985b1eaebd5007626c0c58e25838d32389"
+      },
+      {
+        "type": "file",
+        "oid": "194187c959126af91d170c7bfad43ded89cff5df",
+        "size": 5318,
+        "path": "README.md",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "revision": "40381c985b1eaebd5007626c0c58e25838d32389"
+      },
+      {
+        "type": "file",
+        "oid": "fc1f29b236370f865c18a6c0407ec28372bf5adb",
+        "size": 1598,
+        "path": "SECURITY.md",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "revision": "40381c985b1eaebd5007626c0c58e25838d32389"
+      },
+      {
+        "type": "file",
+        "oid": "0c7fb58b3e105494b11161ab65b4193afd5e1592",
+        "size": 679,
+        "path": "SZL_ESTATE_MANAGED.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "revision": "40381c985b1eaebd5007626c0c58e25838d32389"
+      },
+      {
+        "type": "file",
+        "oid": "3cdbdd193abd0b8c0455efb1c7469b4e0164e373",
+        "size": 2327,
+        "path": "TRAINING_RECEIPT.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "revision": "40381c985b1eaebd5007626c0c58e25838d32389"
+      },
+      {
+        "type": "directory",
+        "oid": "ad8a7c1e9998fa7579ab59cc82a51da30d701b65",
+        "size": 0,
+        "path": "bom",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "revision": "40381c985b1eaebd5007626c0c58e25838d32389"
+      },
+      {
+        "type": "file",
+        "oid": "2d8c56b6fb964ead769da9457302d6cfa5fd1020",
+        "size": 6647,
+        "path": "bom/model-bom.cdx.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "revision": "40381c985b1eaebd5007626c0c58e25838d32389"
+      },
+      {
+        "type": "directory",
+        "oid": "884172172920503761e8c53b7addb100616954d4",
+        "size": 0,
+        "path": "build",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "revision": "40381c985b1eaebd5007626c0c58e25838d32389"
+      },
+      {
+        "type": "file",
+        "oid": "35c5df3bcb86442af32cc852bbb97f391176dd9d",
+        "size": 59,
+        "path": "build.toml",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "revision": "40381c985b1eaebd5007626c0c58e25838d32389"
+      },
+      {
+        "type": "directory",
+        "oid": "002d6bc9a58db1984cce0d47f5905b40e9a614d6",
+        "size": 0,
+        "path": "build/torch-universal",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "revision": "40381c985b1eaebd5007626c0c58e25838d32389"
+      },
+      {
+        "type": "directory",
+        "oid": "da43a41ed79a7d099f8836db3aa332dc3b237ac8",
+        "size": 0,
+        "path": "build/torch-universal/szl_ouroboros",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "revision": "40381c985b1eaebd5007626c0c58e25838d32389"
+      },
+      {
+        "type": "file",
+        "oid": "3f93d91af8e3d1c210b472f03cbd9d84b0d48353",
+        "size": 14506,
+        "path": "build/torch-universal/szl_ouroboros/__init__.py",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "revision": "40381c985b1eaebd5007626c0c58e25838d32389"
+      },
+      {
+        "type": "file",
+        "oid": "e23e86103c257fbb2e80dd383dee5cd9365b02f8",
+        "size": 673,
+        "path": "build/torch-universal/szl_ouroboros/metadata.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "revision": "40381c985b1eaebd5007626c0c58e25838d32389"
+      },
+      {
+        "type": "directory",
+        "oid": "42cb979b8ed2cb82d1824550dccf33a442fe9b50",
+        "size": 0,
+        "path": "card",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "revision": "40381c985b1eaebd5007626c0c58e25838d32389"
+      },
+      {
+        "type": "file",
+        "oid": "d78c3171d72c63b04f048134669808b412abc38e",
+        "size": 1771,
+        "path": "card/holo-banner.svg",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "revision": "40381c985b1eaebd5007626c0c58e25838d32389"
+      },
+      {
+        "type": "file",
+        "oid": "2653b594429d10973f87ee6a7de2f2a96418dfef",
+        "size": 39289,
+        "path": "og-card.png",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "revision": "40381c985b1eaebd5007626c0c58e25838d32389"
+      },
+      {
+        "type": "file",
+        "oid": "9ac1f96d71c49a1ef828558e84590add205bb1bf",
+        "size": 1955,
+        "path": "ouroboros.py",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "revision": "40381c985b1eaebd5007626c0c58e25838d32389"
+      },
+      {
+        "type": "directory",
+        "oid": "5c0116fc7deb0793cc7314c15cf2bd445eb390a1",
+        "size": 0,
+        "path": "scripts",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "revision": "40381c985b1eaebd5007626c0c58e25838d32389"
+      },
+      {
+        "type": "file",
+        "oid": "ba0c7ba666598b0e872d5cca1bd6fbee24b579ec",
+        "size": 1488,
+        "path": "scripts/eval.py",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "revision": "40381c985b1eaebd5007626c0c58e25838d32389"
+      },
+      {
+        "type": "file",
+        "oid": "18eebf1db00d4b1b8c70d9213d0462976b0f799d",
+        "size": 7985,
+        "path": "scripts/forge.py",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "revision": "40381c985b1eaebd5007626c0c58e25838d32389"
+      },
+      {
+        "type": "directory",
+        "oid": "bfd420a4e28af24d2ae257e4c6ffcb418c3ae811",
+        "size": 0,
+        "path": "tests",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "revision": "40381c985b1eaebd5007626c0c58e25838d32389"
+      },
+      {
+        "type": "file",
+        "oid": "74d1e4c1b1367daa834d5f0c2025da4007615dbb",
+        "size": 4507,
+        "path": "tests/test_ouroboros.py",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "revision": "40381c985b1eaebd5007626c0c58e25838d32389"
+      }
+    ],
+    "text_record": {
+      "id": "SZLHOLDINGS/szl-ouroboros",
+      "kind": "models",
+      "revision": "40381c985b1eaebd5007626c0c58e25838d32389",
+      "path": "MODEL_PROVENANCE.json",
+      "receipt": {
+        "requested_url": "https://huggingface.co/SZLHOLDINGS/szl-ouroboros/resolve/40381c985b1eaebd5007626c0c58e25838d32389/MODEL_PROVENANCE.json",
+        "final_url": "https://huggingface.co/api/resolve-cache/models/SZLHOLDINGS/szl-ouroboros/40381c985b1eaebd5007626c0c58e25838d32389/MODEL_PROVENANCE.json?%2FSZLHOLDINGS%2Fszl-ouroboros%2Fresolve%2F40381c985b1eaebd5007626c0c58e25838d32389%2FMODEL_PROVENANCE.json=&etag=%2207c07af9d649b5de38a742a8499ea253ac379990%22",
+        "status": 200,
+        "observed_at": "2026-09-24T13:44:57.949176+00:00",
+        "response_bytes": 3114,
+        "response_sha256": "21d6b40206b36821aa82c493f2f706fe2e2e4206841680194e23f5fc33b43786",
+        "response_bytes_base64": "ewogICJzY2hlbWEiOiAic3psLm1vZGVsLXNvdXJjZS1hdHRlc3RhdGlvbi92MSIsCiAgIm1vZGVsIjogewogICAgImlkIjogIlNaTEhPTERJTkdTL3N6bC1vdXJvYm9yb3MiLAogICAgInJlcG9zaXRvcnlfdHlwZSI6ICJtb2RlbCIsCiAgICAiYXJ0aWZhY3Rfa2luZCI6ICJrZXJuZWwtY29kZS1hbmQtY29uZmlndXJhdGlvbiArIHRyYWluZWQgc3Vycm9nYXRlIChtb2RlbC5qb2JsaWIpIiwKICAgICJ0cmFpbmVkX3dlaWdodHNfcHJlc2VudCI6IHRydWUsCiAgICAic3RkbGliX29ubHkiOiBmYWxzZSwKICAgICJ0b3JjaF9yZXF1aXJlZCI6IGZhbHNlLAogICAgInN1cnJvZ2F0ZSI6IHsKICAgICAgImZpbGUiOiAibW9kZWwuam9ibGliIiwKICAgICAgInNoYTI1NiI6ICI2YzQwNjc4MTBlYjUwOGRmYjYxZjNjZmFmODRiNmRiODFjZjJmN2M3ODI4NmYwMmU3ODYyMDVlMGIwMTRhYzY1IiwKICAgICAgInJvbGUiOiAibG9vcC10YXggcmVncmVzc29yIChwcmVkaWN0cyBrZXJuZWwtZGVyaXZlZCBvdmVyaGVhZE1zKSBcdTIwMTQga2VybmVsIHJlbWFpbnMgc29sZSBncm91bmQgdHJ1dGgiLAogICAgICAiZmlkZWxpdHlfTUVBU1VSRUQiOiB7CiAgICAgICAgImhlbGRfb3V0X01BRV9tcyI6IDE1LjU4NTMsCiAgICAgICAgImhlbGRfb3V0X1IyIjogMC45ODIyLAogICAgICAgICJoZWxkX291dF90YXJnZXRfc3RkX21zIjogMTkxLjA3OQogICAgICB9LAogICAgICAicmVjZWlwdCI6ICJUUkFJTklOR19SRUNFSVBULmpzb24iLAogICAgICAicmV2ZXJpZnkiOiAicHl0aG9uIHNjcmlwdHMvZXZhbC5weSIKICAgIH0sCiAgICAic3RkbGliX29ubHlfbm90ZSI6ICJrZXJuZWwgcGFja2FnZSBpdHNlbGYgc3RheXMgc3RkbGliLW9ubHk7IHRoZSBPUFRJT05BTCBzdXJyb2dhdGUgbmVlZHMgc2tsZWFybitqb2JsaWIiCiAgfSwKICAic291cmNlX29mX3JlY29yZCI6IHsKICAgICJzdGF0ZSI6ICJWRVJJRklFRF9IRl9TT1VSQ0VfT0ZfUkVDT1JEIiwKICAgICJwbGF0Zm9ybSI6ICJodWdnaW5nZmFjZSIsCiAgICAicmVwb3NpdG9yeSI6ICJTWkxIT0xESU5HUy9zemwtb3Vyb2Jvcm9zIgogIH0sCiAgIm1pcnJvcnMiOiB7CiAgICAibGl2ZV9zdXJmYWNlIjogImExMW95IGJhY2tib25lIGxvb3AgdGF4IChhcnRpZmFjdHMvYXBpLXNlcnZlci9zcmMvbGliL2JhY2tib25lLnRzIGJ1aWxkTG9vcFRyYWNlL3N1bUF0dGVtcHRNcy9wZWFrQXR0ZW1wdE1zL2RlYWRIb3BNcykiLAogICAgInRpbWluZ19iYXNpcyI6ICJMT09QX1RJTUlOR19CQVNJUyBjYXJyaWVkIHZlcmJhdGltIGZyb20gYmFja2JvbmUudHMiLAogICAgImxlYW5fcmVwbyI6ICJzemwtaG9sZGluZ3MvbHV0YXItbGVhbiIsCiAgICAiZG9pX2x1dGFyX2xlYW4iOiAiMTAuNTI4MS96ZW5vZG8uMjA0MzQzMDgiCiAgfSwKICAidmVyaWZpY2F0aW9uIjogewogICAgInRlc3RzIjogIjEzLzEzIHBhc3NlZCIsCiAgICAidGVzdHNfYmFzaXMiOiAiTUVBU1VSRUQgbG9jYWwgcHl0aG9uMyAtbSBweXRlc3QgcnVuLCBzdGRsaWItb25seSwgb2ZmbGluZSIsCiAgICAiZmFsc2lmaWFiaWxpdHkiOiAiYXJpdGhtZXRpYyBpcyBmYWxzaWZpYWJsZSAoYSB3cm9uZyBzcGxpdCBmbGlwcyB0aGUgYXNzZXJ0cyk7IGFuIHVubWVhc3VyZWQgd2FsbCB5aWVsZHMgb3ZlcmhlYWRNcz1Ob25lIChVTkFWQUlMQUJMRSwgbm90IGZhYnJpY2F0ZWQpOyBhIG1pc3NpbmcgbGF0ZW5jeSByYWlzZXM7IGEgYnVkZ2V0IHZpb2xhdGlvbiBpcyBzdXJmYWNlZCIKICB9LAogICJsYW1iZGEiOiB7CiAgICAic3RhdHVzIjogIkNvbmplY3R1cmUgMSAob3BlbikgXHUyMDE0IHVuaXF1ZW5lc3MgdW5wcm92ZW4iLAogICAgInRvdWNoZWRfYnlfdGhpc19hcnRpZmFjdCI6IGZhbHNlCiAgfSwKICAiY2xhaW1zIjogewogICAgInRyYWluZWRfbW9kZWwiOiAiQ0xBSU1FRCBcdTIwMTQgc2tsZWFybiBIaXN0R3JhZGllbnRCb29zdGluZ1JlZ3Jlc3NvciwgTUVBU1VSRUQsIHJlY2VpcHRlZCIsCiAgICAicmVwcm9kdWNpYmxlX2J1aWxkIjogIk5PVF9DTEFJTUVEIiwKICAgICJ3ZWlnaHRzX3ByZXNlbnQiOiAibW9kZWwuam9ibGliIChza2xlYXJuIHN1cnJvZ2F0ZTsga2VybmVsIHN0YXlzIHdlaWdodGxlc3MpIgogIH0sCiAgImxpbWl0cyI6IFsKICAgICJUaGUgdHJhaW5lZCBzdXJyb2dhdGUgQVBQUk9YSU1BVEVTIHRoZSBrZXJuZWwncyBERVJJVkVEIG92ZXJoZWFkTXMgZnJvbSB0cmFjZSBzaGFwZTsgaXQgZG9lcyBOT1QgcmVwbGFjZSB0aGUga2VybmVsJ3MgZXhhY3QgYXJpdGhtZXRpYywgd2hpY2ggcmVtYWlucyBhdXRob3JpdGF0aXZlLiIsCiAgICAiUnVucyB3aXRoIGFuIHVubWVhc3VyZWQgd2FsbCAob3ZlcmhlYWRNcz1Ob25lIC8gVU5BVkFJTEFCTEUpIGFyZSBkcm9wcGVkIGZyb20gdHJhaW5pbmcgXHUyMDE0IG5ldmVyIGZhYnJpY2F0ZWQuIiwKICAgICJtb2RlbE1zIGFuZCBwZWFrQXR0ZW1wdE1zIGFyZSBNRUFTVVJFRCAodXBzdHJlYW0gd2FsbCB3aW5kb3dzKTsgb3ZlcmhlYWRNcywgc2VyaWFsaXphdGlvblRheE1zIGFuZCBkZWFkSG9wTXMgYXJlIERFUklWRUQgYXJpdGhtZXRpYyBvbiB0aG9zZSBtZWFzdXJlbWVudHMgXHUyMDE0IG5ldmVyIG5ldyBjbGFpbXMuIiwKICAgICJzZXJpYWxpemF0aW9uVGF4TXMgaXMgYSBDT1VOVEVSRkFDVFVBTCAod2hhdCBhIHBlcmZlY3RseS1wYXJhbGxlbCBsb29wIGNvdWxkIHNhdmUpLCBuZXZlciBhIHJlYWxpemVkIHNhdmluZyBcdTIwMTQgQWxsb3kncyBsb29wIGlzIHN0cmljdGx5IHNlcXVlbnRpYWwuIiwKICAgICJkZWFkSG9wTXMgaXMgYW4gdXBwZXIgYm91bmQgb25seSBcdTIwMTQgQWxsb3kgZG9lcyBub3QgcHJlZmV0Y2guIiwKICAgICJvdmVyaGVhZE1zIGlzIFVOQVZBSUxBQkxFIChOb25lKSB3aGVuIHRoZSBydW4gd2FsbCB3YXMgbm90IG1lYXN1cmVkIFx1MjAxNCBuZXZlciBmYWJyaWNhdGVkLiIsCiAgICAiTm8gLmJpbiwgLnNhZmV0ZW5zb3JzLCAucHQsIC5wdGgsIC5vbm54LCBvciAuZ2d1ZiB3ZWlnaHQgYXJ0aWZhY3QgaXMgcHJlc2VudC4iLAogICAgIkxvb3AtdGF4IGFjY291bnRpbmcgZG9lcyBub3QgcHJvdmUgb3IgdXBncmFkZSBcdTAzOWIsIHdoaWNoIHJlbWFpbnMgQ29uamVjdHVyZSAxIChvcGVuKS4iCiAgXQp9"
+      },
+      "content": {
+        "schema": "szl.model-source-attestation/v1",
+        "model": {
+          "id": "SZLHOLDINGS/szl-ouroboros",
+          "repository_type": "model",
+          "artifact_kind": "kernel-code-and-configuration + trained surrogate (model.joblib)",
+          "trained_weights_present": true,
+          "stdlib_only": false,
+          "torch_required": false,
+          "surrogate": {
+            "file": "model.joblib",
+            "sha256": "6c4067810eb508dfb61f3cfaf84b6db81cf2f7c78286f02e786205e0b014ac65",
+            "role": "loop-tax regressor (predicts kernel-derived overheadMs) — kernel remains sole ground truth",
+            "fidelity_MEASURED": {
+              "held_out_MAE_ms": 15.5853,
+              "held_out_R2": 0.9822,
+              "held_out_target_std_ms": 191.079
+            },
+            "receipt": "TRAINING_RECEIPT.json",
+            "reverify": "python scripts/eval.py"
+          },
+          "stdlib_only_note": "kernel package itself stays stdlib-only; the OPTIONAL surrogate needs sklearn+joblib"
+        },
+        "source_of_record": {
+          "state": "VERIFIED_HF_SOURCE_OF_RECORD",
+          "platform": "huggingface",
+          "repository": "SZLHOLDINGS/szl-ouroboros"
+        },
+        "mirrors": {
+          "live_surface": "a11oy backbone loop tax (artifacts/api-server/src/lib/backbone.ts buildLoopTrace/sumAttemptMs/peakAttemptMs/deadHopMs)",
+          "timing_basis": "LOOP_TIMING_BASIS carried verbatim from backbone.ts",
+          "lean_repo": "szl-holdings/lutar-lean",
+          "doi_lutar_lean": "10.5281/zenodo.20434308"
+        },
+        "verification": {
+          "tests": "13/13 passed",
+          "tests_basis": "MEASURED local python3 -m pytest run, stdlib-only, offline",
+          "falsifiability": "arithmetic is falsifiable (a wrong split flips the asserts); an unmeasured wall yields overheadMs=None (UNAVAILABLE, not fabricated); a missing latency raises; a budget violation is surfaced"
+        },
+        "lambda": {
+          "status": "Conjecture 1 (open) — uniqueness unproven",
+          "touched_by_this_artifact": false
+        },
+        "claims": {
+          "trained_model": "CLAIMED — sklearn HistGradientBoostingRegressor, MEASURED, receipted",
+          "reproducible_build": "NOT_CLAIMED",
+          "weights_present": "model.joblib (sklearn surrogate; kernel stays weightless)"
+        },
+        "limits": [
+          "The trained surrogate APPROXIMATES the kernel's DERIVED overheadMs from trace shape; it does NOT replace the kernel's exact arithmetic, which remains authoritative.",
+          "Runs with an unmeasured wall (overheadMs=None / UNAVAILABLE) are dropped from training — never fabricated.",
+          "modelMs and peakAttemptMs are MEASURED (upstream wall windows); overheadMs, serializationTaxMs and deadHopMs are DERIVED arithmetic on those measurements — never new claims.",
+          "serializationTaxMs is a COUNTERFACTUAL (what a perfectly-parallel loop could save), never a realized saving — Alloy's loop is strictly sequential.",
+          "deadHopMs is an upper bound only — Alloy does not prefetch.",
+          "overheadMs is UNAVAILABLE (None) when the run wall was not measured — never fabricated.",
+          "No .bin, .safetensors, .pt, .pth, .onnx, or .gguf weight artifact is present.",
+          "Loop-tax accounting does not prove or upgrade Λ, which remains Conjecture 1 (open)."
+        ]
+      }
+    },
+    "original_bytes_base64": "ewogICJzY2hlbWEiOiAic3psLm1vZGVsLXNvdXJjZS1hdHRlc3RhdGlvbi92MSIsCiAgIm1vZGVsIjogewogICAgImlkIjogIlNaTEhPTERJTkdTL3N6bC1vdXJvYm9yb3MiLAogICAgInJlcG9zaXRvcnlfdHlwZSI6ICJtb2RlbCIsCiAgICAiYXJ0aWZhY3Rfa2luZCI6ICJrZXJuZWwtY29kZS1hbmQtY29uZmlndXJhdGlvbiArIHRyYWluZWQgc3Vycm9nYXRlIChtb2RlbC5qb2JsaWIpIiwKICAgICJ0cmFpbmVkX3dlaWdodHNfcHJlc2VudCI6IHRydWUsCiAgICAic3RkbGliX29ubHkiOiBmYWxzZSwKICAgICJ0b3JjaF9yZXF1aXJlZCI6IGZhbHNlLAogICAgInN1cnJvZ2F0ZSI6IHsKICAgICAgImZpbGUiOiAibW9kZWwuam9ibGliIiwKICAgICAgInNoYTI1NiI6ICI2YzQwNjc4MTBlYjUwOGRmYjYxZjNjZmFmODRiNmRiODFjZjJmN2M3ODI4NmYwMmU3ODYyMDVlMGIwMTRhYzY1IiwKICAgICAgInJvbGUiOiAibG9vcC10YXggcmVncmVzc29yIChwcmVkaWN0cyBrZXJuZWwtZGVyaXZlZCBvdmVyaGVhZE1zKSBcdTIwMTQga2VybmVsIHJlbWFpbnMgc29sZSBncm91bmQgdHJ1dGgiLAogICAgICAiZmlkZWxpdHlfTUVBU1VSRUQiOiB7CiAgICAgICAgImhlbGRfb3V0X01BRV9tcyI6IDE1LjU4NTMsCiAgICAgICAgImhlbGRfb3V0X1IyIjogMC45ODIyLAogICAgICAgICJoZWxkX291dF90YXJnZXRfc3RkX21zIjogMTkxLjA3OQogICAgICB9LAogICAgICAicmVjZWlwdCI6ICJUUkFJTklOR19SRUNFSVBULmpzb24iLAogICAgICAicmV2ZXJpZnkiOiAicHl0aG9uIHNjcmlwdHMvZXZhbC5weSIKICAgIH0sCiAgICAic3RkbGliX29ubHlfbm90ZSI6ICJrZXJuZWwgcGFja2FnZSBpdHNlbGYgc3RheXMgc3RkbGliLW9ubHk7IHRoZSBPUFRJT05BTCBzdXJyb2dhdGUgbmVlZHMgc2tsZWFybitqb2JsaWIiCiAgfSwKICAic291cmNlX29mX3JlY29yZCI6IHsKICAgICJzdGF0ZSI6ICJWRVJJRklFRF9IRl9TT1VSQ0VfT0ZfUkVDT1JEIiwKICAgICJwbGF0Zm9ybSI6ICJodWdnaW5nZmFjZSIsCiAgICAicmVwb3NpdG9yeSI6ICJTWkxIT0xESU5HUy9zemwtb3Vyb2Jvcm9zIgogIH0sCiAgIm1pcnJvcnMiOiB7CiAgICAibGl2ZV9zdXJmYWNlIjogImExMW95IGJhY2tib25lIGxvb3AgdGF4IChhcnRpZmFjdHMvYXBpLXNlcnZlci9zcmMvbGliL2JhY2tib25lLnRzIGJ1aWxkTG9vcFRyYWNlL3N1bUF0dGVtcHRNcy9wZWFrQXR0ZW1wdE1zL2RlYWRIb3BNcykiLAogICAgInRpbWluZ19iYXNpcyI6ICJMT09QX1RJTUlOR19CQVNJUyBjYXJyaWVkIHZlcmJhdGltIGZyb20gYmFja2JvbmUudHMiLAogICAgImxlYW5fcmVwbyI6ICJzemwtaG9sZGluZ3MvbHV0YXItbGVhbiIsCiAgICAiZG9pX2x1dGFyX2xlYW4iOiAiMTAuNTI4MS96ZW5vZG8uMjA0MzQzMDgiCiAgfSwKICAidmVyaWZpY2F0aW9uIjogewogICAgInRlc3RzIjogIjEzLzEzIHBhc3NlZCIsCiAgICAidGVzdHNfYmFzaXMiOiAiTUVBU1VSRUQgbG9jYWwgcHl0aG9uMyAtbSBweXRlc3QgcnVuLCBzdGRsaWItb25seSwgb2ZmbGluZSIsCiAgICAiZmFsc2lmaWFiaWxpdHkiOiAiYXJpdGhtZXRpYyBpcyBmYWxzaWZpYWJsZSAoYSB3cm9uZyBzcGxpdCBmbGlwcyB0aGUgYXNzZXJ0cyk7IGFuIHVubWVhc3VyZWQgd2FsbCB5aWVsZHMgb3ZlcmhlYWRNcz1Ob25lIChVTkFWQUlMQUJMRSwgbm90IGZhYnJpY2F0ZWQpOyBhIG1pc3NpbmcgbGF0ZW5jeSByYWlzZXM7IGEgYnVkZ2V0IHZpb2xhdGlvbiBpcyBzdXJmYWNlZCIKICB9LAogICJsYW1iZGEiOiB7CiAgICAic3RhdHVzIjogIkNvbmplY3R1cmUgMSAob3BlbikgXHUyMDE0IHVuaXF1ZW5lc3MgdW5wcm92ZW4iLAogICAgInRvdWNoZWRfYnlfdGhpc19hcnRpZmFjdCI6IGZhbHNlCiAgfSwKICAiY2xhaW1zIjogewogICAgInRyYWluZWRfbW9kZWwiOiAiQ0xBSU1FRCBcdTIwMTQgc2tsZWFybiBIaXN0R3JhZGllbnRCb29zdGluZ1JlZ3Jlc3NvciwgTUVBU1VSRUQsIHJlY2VpcHRlZCIsCiAgICAicmVwcm9kdWNpYmxlX2J1aWxkIjogIk5PVF9DTEFJTUVEIiwKICAgICJ3ZWlnaHRzX3ByZXNlbnQiOiAibW9kZWwuam9ibGliIChza2xlYXJuIHN1cnJvZ2F0ZTsga2VybmVsIHN0YXlzIHdlaWdodGxlc3MpIgogIH0sCiAgImxpbWl0cyI6IFsKICAgICJUaGUgdHJhaW5lZCBzdXJyb2dhdGUgQVBQUk9YSU1BVEVTIHRoZSBrZXJuZWwncyBERVJJVkVEIG92ZXJoZWFkTXMgZnJvbSB0cmFjZSBzaGFwZTsgaXQgZG9lcyBOT1QgcmVwbGFjZSB0aGUga2VybmVsJ3MgZXhhY3QgYXJpdGhtZXRpYywgd2hpY2ggcmVtYWlucyBhdXRob3JpdGF0aXZlLiIsCiAgICAiUnVucyB3aXRoIGFuIHVubWVhc3VyZWQgd2FsbCAob3ZlcmhlYWRNcz1Ob25lIC8gVU5BVkFJTEFCTEUpIGFyZSBkcm9wcGVkIGZyb20gdHJhaW5pbmcgXHUyMDE0IG5ldmVyIGZhYnJpY2F0ZWQuIiwKICAgICJtb2RlbE1zIGFuZCBwZWFrQXR0ZW1wdE1zIGFyZSBNRUFTVVJFRCAodXBzdHJlYW0gd2FsbCB3aW5kb3dzKTsgb3ZlcmhlYWRNcywgc2VyaWFsaXphdGlvblRheE1zIGFuZCBkZWFkSG9wTXMgYXJlIERFUklWRUQgYXJpdGhtZXRpYyBvbiB0aG9zZSBtZWFzdXJlbWVudHMgXHUyMDE0IG5ldmVyIG5ldyBjbGFpbXMuIiwKICAgICJzZXJpYWxpemF0aW9uVGF4TXMgaXMgYSBDT1VOVEVSRkFDVFVBTCAod2hhdCBhIHBlcmZlY3RseS1wYXJhbGxlbCBsb29wIGNvdWxkIHNhdmUpLCBuZXZlciBhIHJlYWxpemVkIHNhdmluZyBcdTIwMTQgQWxsb3kncyBsb29wIGlzIHN0cmljdGx5IHNlcXVlbnRpYWwuIiwKICAgICJkZWFkSG9wTXMgaXMgYW4gdXBwZXIgYm91bmQgb25seSBcdTIwMTQgQWxsb3kgZG9lcyBub3QgcHJlZmV0Y2guIiwKICAgICJvdmVyaGVhZE1zIGlzIFVOQVZBSUxBQkxFIChOb25lKSB3aGVuIHRoZSBydW4gd2FsbCB3YXMgbm90IG1lYXN1cmVkIFx1MjAxNCBuZXZlciBmYWJyaWNhdGVkLiIsCiAgICAiTm8gLmJpbiwgLnNhZmV0ZW5zb3JzLCAucHQsIC5wdGgsIC5vbm54LCBvciAuZ2d1ZiB3ZWlnaHQgYXJ0aWZhY3QgaXMgcHJlc2VudC4iLAogICAgIkxvb3AtdGF4IGFjY291bnRpbmcgZG9lcyBub3QgcHJvdmUgb3IgdXBncmFkZSBcdTAzOWIsIHdoaWNoIHJlbWFpbnMgQ29uamVjdHVyZSAxIChvcGVuKS4iCiAgXQp9"
+  },
+  {
+    "id": "SZLHOLDINGS/szl-provctl",
+    "repository_type": "model",
+    "revision": "c71443c62f7f03a2d1a6151d47194843843aed6a",
+    "repository_record": {
+      "id": "SZLHOLDINGS/szl-provctl",
+      "kind": "models",
+      "revision": "c71443c62f7f03a2d1a6151d47194843843aed6a",
+      "metadata": {
+        "_id": "6a3c1d301a696462b4e73758",
+        "id": "SZLHOLDINGS/szl-provctl",
+        "private": false,
+        "library_name": "kernels",
+        "tags": [
+          "kernels",
+          "kernel",
+          "provenance",
+          "supply-chain",
+          "in-toto",
+          "slsa",
+          "governance",
+          "doi:10.5281/zenodo.19944926",
+          "license:apache-2.0",
+          "region:us"
+        ],
+        "downloads": 0,
+        "likes": 0,
+        "modelId": "SZLHOLDINGS/szl-provctl",
+        "author": "SZLHOLDINGS",
+        "sha": "c71443c62f7f03a2d1a6151d47194843843aed6a",
+        "lastModified": "2026-09-08T11:44:13.000Z",
+        "gated": false,
+        "disabled": false,
+        "model-index": null,
+        "config": {},
+        "cardData": {
+          "library_name": "kernels",
+          "license": "apache-2.0",
+          "tags": [
+            "kernel",
+            "provenance",
+            "supply-chain",
+            "in-toto",
+            "slsa",
+            "governance",
+            "doi:10.5281/zenodo.19944926"
+          ],
+          "szl-governance": {
+            "verdict": "INTEROP-PROVENANCE",
+            "interop": "in-toto Statement v1 + SLSA provenance v1 shapes — repository-selfchecked; external compatibility must be tested",
+            "lambda": "Conjecture 1 (open) — proven_trust structurally locked False",
+            "energy": "MEASURED-only — real NVML per-kernel delta; None when no GPU, never fabricated",
+            "honest_blocked": "BLOCKED nodes are surfaced in the provenance DAG, never silently dropped"
+          }
+        },
+        "siblings": [
+          {
+            "rfilename": ".gitattributes"
+          },
+          {
+            "rfilename": "BENCH.laptop-blackwell.json"
+          },
+          {
+            "rfilename": "LICENSE"
+          },
+          {
+            "rfilename": "MODEL_PROVENANCE.json"
+          },
+          {
+            "rfilename": "PROMOTION_READINESS_AUDIT.json"
+          },
+          {
+            "rfilename": "README.md"
+          },
+          {
+            "rfilename": "SECURITY.md"
+          },
+          {
+            "rfilename": "SZL_ESTATE_MANAGED.json"
+          },
+          {
+            "rfilename": "TRAINING_RECEIPT.json"
+          },
+          {
+            "rfilename": "bom/model-bom.cdx.json"
+          },
+          {
+            "rfilename": "build.toml"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_provctl/__init__.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_provctl/_chain.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_provctl/_dag.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_provctl/_energy.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_provctl/_interop.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_provctl/metadata.json"
+          },
+          {
+            "rfilename": "card/holo-banner.svg"
+          },
+          {
+            "rfilename": "scripts/eval.py"
+          },
+          {
+            "rfilename": "scripts/forge.py"
+          }
+        ],
+        "spaces": [],
+        "createdAt": "2026-06-24T18:08:48.000Z",
+        "usedStorage": 222560
+      },
+      "metadata_receipt": {
+        "requested_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-provctl",
+        "final_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-provctl",
+        "status": 200,
+        "observed_at": "2026-09-24T13:44:58.210315+00:00",
+        "response_bytes": 2029,
+        "response_sha256": "6d4b5c0074fb21099750d633fe51328ba9edb087a29d29341fd1f8431ed464ec",
+        "response_bytes_base64": "eyJfaWQiOiI2YTNjMWQzMDFhNjk2NDYyYjRlNzM3NTgiLCJpZCI6IlNaTEhPTERJTkdTL3N6bC1wcm92Y3RsIiwicHJpdmF0ZSI6ZmFsc2UsImxpYnJhcnlfbmFtZSI6Imtlcm5lbHMiLCJ0YWdzIjpbImtlcm5lbHMiLCJrZXJuZWwiLCJwcm92ZW5hbmNlIiwic3VwcGx5LWNoYWluIiwiaW4tdG90byIsInNsc2EiLCJnb3Zlcm5hbmNlIiwiZG9pOjEwLjUyODEvemVub2RvLjE5OTQ0OTI2IiwibGljZW5zZTphcGFjaGUtMi4wIiwicmVnaW9uOnVzIl0sImRvd25sb2FkcyI6MCwibGlrZXMiOjAsIm1vZGVsSWQiOiJTWkxIT0xESU5HUy9zemwtcHJvdmN0bCIsImF1dGhvciI6IlNaTEhPTERJTkdTIiwic2hhIjoiYzcxNDQzYzYyZjdmMDNhMmQxYTYxNTFkNDcxOTQ4NDM4NDNhZWQ2YSIsImxhc3RNb2RpZmllZCI6IjIwMjYtMDktMDhUMTE6NDQ6MTMuMDAwWiIsImdhdGVkIjpmYWxzZSwiZGlzYWJsZWQiOmZhbHNlLCJtb2RlbC1pbmRleCI6bnVsbCwiY29uZmlnIjp7fSwiY2FyZERhdGEiOnsibGlicmFyeV9uYW1lIjoia2VybmVscyIsImxpY2Vuc2UiOiJhcGFjaGUtMi4wIiwidGFncyI6WyJrZXJuZWwiLCJwcm92ZW5hbmNlIiwic3VwcGx5LWNoYWluIiwiaW4tdG90byIsInNsc2EiLCJnb3Zlcm5hbmNlIiwiZG9pOjEwLjUyODEvemVub2RvLjE5OTQ0OTI2Il0sInN6bC1nb3Zlcm5hbmNlIjp7InZlcmRpY3QiOiJJTlRFUk9QLVBST1ZFTkFOQ0UiLCJpbnRlcm9wIjoiaW4tdG90byBTdGF0ZW1lbnQgdjEgKyBTTFNBIHByb3ZlbmFuY2UgdjEgc2hhcGVzIOKAlCByZXBvc2l0b3J5LXNlbGZjaGVja2VkOyBleHRlcm5hbCBjb21wYXRpYmlsaXR5IG11c3QgYmUgdGVzdGVkIiwibGFtYmRhIjoiQ29uamVjdHVyZSAxIChvcGVuKSDigJQgcHJvdmVuX3RydXN0IHN0cnVjdHVyYWxseSBsb2NrZWQgRmFsc2UiLCJlbmVyZ3kiOiJNRUFTVVJFRC1vbmx5IOKAlCByZWFsIE5WTUwgcGVyLWtlcm5lbCBkZWx0YTsgTm9uZSB3aGVuIG5vIEdQVSwgbmV2ZXIgZmFicmljYXRlZCIsImhvbmVzdF9ibG9ja2VkIjoiQkxPQ0tFRCBub2RlcyBhcmUgc3VyZmFjZWQgaW4gdGhlIHByb3ZlbmFuY2UgREFHLCBuZXZlciBzaWxlbnRseSBkcm9wcGVkIn19LCJzaWJsaW5ncyI6W3sicmZpbGVuYW1lIjoiLmdpdGF0dHJpYnV0ZXMifSx7InJmaWxlbmFtZSI6IkJFTkNILmxhcHRvcC1ibGFja3dlbGwuanNvbiJ9LHsicmZpbGVuYW1lIjoiTElDRU5TRSJ9LHsicmZpbGVuYW1lIjoiTU9ERUxfUFJPVkVOQU5DRS5qc29uIn0seyJyZmlsZW5hbWUiOiJQUk9NT1RJT05fUkVBRElORVNTX0FVRElULmpzb24ifSx7InJmaWxlbmFtZSI6IlJFQURNRS5tZCJ9LHsicmZpbGVuYW1lIjoiU0VDVVJJVFkubWQifSx7InJmaWxlbmFtZSI6IlNaTF9FU1RBVEVfTUFOQUdFRC5qc29uIn0seyJyZmlsZW5hbWUiOiJUUkFJTklOR19SRUNFSVBULmpzb24ifSx7InJmaWxlbmFtZSI6ImJvbS9tb2RlbC1ib20uY2R4Lmpzb24ifSx7InJmaWxlbmFtZSI6ImJ1aWxkLnRvbWwifSx7InJmaWxlbmFtZSI6ImJ1aWxkL3RvcmNoLXVuaXZlcnNhbC9zemxfcHJvdmN0bC9fX2luaXRfXy5weSJ9LHsicmZpbGVuYW1lIjoiYnVpbGQvdG9yY2gtdW5pdmVyc2FsL3N6bF9wcm92Y3RsL19jaGFpbi5weSJ9LHsicmZpbGVuYW1lIjoiYnVpbGQvdG9yY2gtdW5pdmVyc2FsL3N6bF9wcm92Y3RsL19kYWcucHkifSx7InJmaWxlbmFtZSI6ImJ1aWxkL3RvcmNoLXVuaXZlcnNhbC9zemxfcHJvdmN0bC9fZW5lcmd5LnB5In0seyJyZmlsZW5hbWUiOiJidWlsZC90b3JjaC11bml2ZXJzYWwvc3psX3Byb3ZjdGwvX2ludGVyb3AucHkifSx7InJmaWxlbmFtZSI6ImJ1aWxkL3RvcmNoLXVuaXZlcnNhbC9zemxfcHJvdmN0bC9tZXRhZGF0YS5qc29uIn0seyJyZmlsZW5hbWUiOiJjYXJkL2hvbG8tYmFubmVyLnN2ZyJ9LHsicmZpbGVuYW1lIjoic2NyaXB0cy9ldmFsLnB5In0seyJyZmlsZW5hbWUiOiJzY3JpcHRzL2ZvcmdlLnB5In1dLCJzcGFjZXMiOltdLCJjcmVhdGVkQXQiOiIyMDI2LTA2LTI0VDE4OjA4OjQ4LjAwMFoiLCJ1c2VkU3RvcmFnZSI6MjIyNTYwfQ=="
+      },
+      "tree_pages": [
+        {
+          "requested_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-provctl/tree/c71443c62f7f03a2d1a6151d47194843843aed6a?recursive=true&expand=false&limit=100",
+          "final_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-provctl/tree/c71443c62f7f03a2d1a6151d47194843843aed6a?recursive=true&expand=false&limit=100",
+          "status": 200,
+          "observed_at": "2026-09-24T13:44:58.303535+00:00",
+          "response_bytes": 2857,
+          "response_sha256": "cda59784cc89943ee330c474ac86a231ee7b05e8a175e21be2825aa182dd1aa0",
+          "response_bytes_base64": "W3sidHlwZSI6ImRpcmVjdG9yeSIsIm9pZCI6Ijc4MmQ2MTg2MjZjMzUzYTMyZDk1OTdkNGQ5ZGFlZTg1Zjc4YTlhNWEiLCJzaXplIjowLCJwYXRoIjoiYm9tIn0seyJ0eXBlIjoiZGlyZWN0b3J5Iiwib2lkIjoiOWI0YzVjYzQzODIzYjQwYjZlYjQ4OTUyZjkzOTk2NjVmZWUzMThkOSIsInNpemUiOjAsInBhdGgiOiJidWlsZCJ9LHsidHlwZSI6ImRpcmVjdG9yeSIsIm9pZCI6ImZkYjY3NTY1Nzc4ODE3NWVhZWE0NzIyMjhiYTYzOTNiOTNhZDdkNmEiLCJzaXplIjowLCJwYXRoIjoiYnVpbGQvdG9yY2gtdW5pdmVyc2FsIn0seyJ0eXBlIjoiZGlyZWN0b3J5Iiwib2lkIjoiNGQ3N2JjYWM0N2Q3Nzg5MmYyMDU1YmE3YTk3YjY3NDNmMWZjYjcwNiIsInNpemUiOjAsInBhdGgiOiJidWlsZC90b3JjaC11bml2ZXJzYWwvc3psX3Byb3ZjdGwifSx7InR5cGUiOiJkaXJlY3RvcnkiLCJvaWQiOiJmM2I0ODg0MmY5MGMxOTk1ZWE4MDk2NmJiZDIwYmVmNjIxMWQwNTgyIiwic2l6ZSI6MCwicGF0aCI6ImNhcmQifSx7InR5cGUiOiJkaXJlY3RvcnkiLCJvaWQiOiJmZjkyOWI0NjQxOWVhNGM4YjUyNmJiNThjNDBmNzExMjlkNDlmNTZkIiwic2l6ZSI6MCwicGF0aCI6InNjcmlwdHMifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiYTYzNDRhYWM4YzA5MjUzYjNiNjMwZmI3NzZhZTk0NDc4YWEwMjc1YiIsInNpemUiOjE1MTksInBhdGgiOiIuZ2l0YXR0cmlidXRlcyJ9LHsidHlwZSI6ImZpbGUiLCJvaWQiOiIyOGM3NzljOTRkNWIzMmExZWQyZjEwZDM1YjdhMzg3NDY4Mjk4NjBlIiwic2l6ZSI6MTg2OSwicGF0aCI6IkJFTkNILmxhcHRvcC1ibGFja3dlbGwuanNvbiJ9LHsidHlwZSI6ImZpbGUiLCJvaWQiOiJmMDIxMjJlYTc5Y2JhZDRkMDEzN2RmZDcxYzdmYmE2NTRlYzEyMzNlIiwic2l6ZSI6ODA5LCJwYXRoIjoiTElDRU5TRSJ9LHsidHlwZSI6ImZpbGUiLCJvaWQiOiI5MmNiMWQxOTFjNjQzM2Y1OWFkYjVjMjY3NDEzOTM3YjIyMTMxYzc3Iiwic2l6ZSI6MzAyNCwicGF0aCI6Ik1PREVMX1BST1ZFTkFOQ0UuanNvbiJ9LHsidHlwZSI6ImZpbGUiLCJvaWQiOiJiMjE0YTJiOTYzMzI1YTA3NDZjYjNkOGYzZTUxZWUwNWVkNTBjNjUxIiwic2l6ZSI6MTI2MDksInBhdGgiOiJQUk9NT1RJT05fUkVBRElORVNTX0FVRElULmpzb24ifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiZWUyZGMxZDIwZWVmYzM0NWZlNTcxM2QwMTk1Yzc1MjU1ZmE5MWExZCIsInNpemUiOjMzMzAsInBhdGgiOiJSRUFETUUubWQifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiYTg0Y2ZkYjE0MTgxZTRiNDQzNDM5NWIxMzViMzU4MTQ0ZTk0ZDU0ZCIsInNpemUiOjEyNTYsInBhdGgiOiJTRUNVUklUWS5tZCJ9LHsidHlwZSI6ImZpbGUiLCJvaWQiOiJkZDMyNmQ5YjViZDI5MDUyMTc5YjUxMGY0OThiNzc5YWRkNWUwM2Y5Iiwic2l6ZSI6Njc3LCJwYXRoIjoiU1pMX0VTVEFURV9NQU5BR0VELmpzb24ifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiODRiODRlZGVmNzEwM2MzMDM2ZDA5Mzg0ZmM4MzQ3ZmUxM2Y3MDdhMiIsInNpemUiOjIxMjMsInBhdGgiOiJUUkFJTklOR19SRUNFSVBULmpzb24ifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiMWZiMmQ0N2ZkODgyODU3Y2VkMzA2MDcxYmM0NWQ2NjM1NWY0Y2E1ZCIsInNpemUiOjY2NDcsInBhdGgiOiJib20vbW9kZWwtYm9tLmNkeC5qc29uIn0seyJ0eXBlIjoiZmlsZSIsIm9pZCI6Ijc0ZGJjOGYwYjdkMTI4ODk1ODY5ZmEwOWJhMjI3MWMxMGQ1MDI4NTIiLCJzaXplIjo3NCwicGF0aCI6ImJ1aWxkLnRvbWwifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiMzI0MDlhM2IyMWFjMjU0NWY1OTYzNThiYzJmM2FlMGZjMDIxMGI0NSIsInNpemUiOjEwMDU3LCJwYXRoIjoiYnVpbGQvdG9yY2gtdW5pdmVyc2FsL3N6bF9wcm92Y3RsL19faW5pdF9fLnB5In0seyJ0eXBlIjoiZmlsZSIsIm9pZCI6ImUxYjdhYTljYWVjMTc4OTI5NWQxZDM4MDE5YzczYzYyZmY2YzkyNTQiLCJzaXplIjo1NTY4LCJwYXRoIjoiYnVpbGQvdG9yY2gtdW5pdmVyc2FsL3N6bF9wcm92Y3RsL19jaGFpbi5weSJ9LHsidHlwZSI6ImZpbGUiLCJvaWQiOiI2YjRiMTdiN2NiMWNiYzMyM2Q0ZmUzNTcwNzFmMTQ0N2QxODgxM2NlIiwic2l6ZSI6ODY2NywicGF0aCI6ImJ1aWxkL3RvcmNoLXVuaXZlcnNhbC9zemxfcHJvdmN0bC9fZGFnLnB5In0seyJ0eXBlIjoiZmlsZSIsIm9pZCI6ImIzMGMxNjMxZTI5ODFlMGEyNjFlNzk3YTM1M2MwZjZiOTA2NWU5N2MiLCJzaXplIjozOTAyLCJwYXRoIjoiYnVpbGQvdG9yY2gtdW5pdmVyc2FsL3N6bF9wcm92Y3RsL19lbmVyZ3kucHkifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiMDAyNjk2NjAyYTFmYTgyNGM4NWFkZmQ5Mjg0MzhkNzUwNjVhNjA0YyIsInNpemUiOjk3MDYsInBhdGgiOiJidWlsZC90b3JjaC11bml2ZXJzYWwvc3psX3Byb3ZjdGwvX2ludGVyb3AucHkifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiOGYwOTYzNDNmOTFjNmVmMGI2OGRmY2QwYjUxMzcxNGNmZmQ4OTNiYiIsInNpemUiOjcyNiwicGF0aCI6ImJ1aWxkL3RvcmNoLXVuaXZlcnNhbC9zemxfcHJvdmN0bC9tZXRhZGF0YS5qc29uIn0seyJ0eXBlIjoiZmlsZSIsIm9pZCI6ImIxY2MyNjE3NjZhMzVmYzdhZjMyZTNmNTdjY2QyOGRjODhlYzMxYTMiLCJzaXplIjoyNzQwLCJwYXRoIjoiY2FyZC9ob2xvLWJhbm5lci5zdmcifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiMzc2NDBmYWFmYjY4Y2YwY2JhNDAxMmJiOGExY2ZhY2NlODAwYzlmOCIsInNpemUiOjE0NzIsInBhdGgiOiJzY3JpcHRzL2V2YWwucHkifSx7InR5cGUiOiJmaWxlIiwib2lkIjoiZjFhMGEwZDg2MTgzNjYxMTJiZDFiNzkyNGJlZGU4OWVlYTBlMTc0NSIsInNpemUiOjExMDI5LCJwYXRoIjoic2NyaXB0cy9mb3JnZS5weSJ9XQ==",
+          "next_url": null
+        }
+      ],
+      "tree_coverage": "COMPLETE_ACCESSIBLE_RESPONSE",
+      "tree_entries": 26,
+      "file_count": 20
+    },
+    "tree": [
+      {
+        "type": "file",
+        "oid": "a6344aac8c09253b3b630fb776ae94478aa0275b",
+        "size": 1519,
+        "path": ".gitattributes",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-provctl",
+        "revision": "c71443c62f7f03a2d1a6151d47194843843aed6a"
+      },
+      {
+        "type": "file",
+        "oid": "28c779c94d5b32a1ed2f10d35b7a38746829860e",
+        "size": 1869,
+        "path": "BENCH.laptop-blackwell.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-provctl",
+        "revision": "c71443c62f7f03a2d1a6151d47194843843aed6a"
+      },
+      {
+        "type": "file",
+        "oid": "f02122ea79cbad4d0137dfd71c7fba654ec1233e",
+        "size": 809,
+        "path": "LICENSE",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-provctl",
+        "revision": "c71443c62f7f03a2d1a6151d47194843843aed6a"
+      },
+      {
+        "type": "file",
+        "oid": "92cb1d191c6433f59adb5c267413937b22131c77",
+        "size": 3024,
+        "path": "MODEL_PROVENANCE.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-provctl",
+        "revision": "c71443c62f7f03a2d1a6151d47194843843aed6a"
+      },
+      {
+        "type": "file",
+        "oid": "b214a2b963325a0746cb3d8f3e51ee05ed50c651",
+        "size": 12609,
+        "path": "PROMOTION_READINESS_AUDIT.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-provctl",
+        "revision": "c71443c62f7f03a2d1a6151d47194843843aed6a"
+      },
+      {
+        "type": "file",
+        "oid": "ee2dc1d20eefc345fe5713d0195c75255fa91a1d",
+        "size": 3330,
+        "path": "README.md",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-provctl",
+        "revision": "c71443c62f7f03a2d1a6151d47194843843aed6a"
+      },
+      {
+        "type": "file",
+        "oid": "a84cfdb14181e4b4434395b135b358144e94d54d",
+        "size": 1256,
+        "path": "SECURITY.md",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-provctl",
+        "revision": "c71443c62f7f03a2d1a6151d47194843843aed6a"
+      },
+      {
+        "type": "file",
+        "oid": "dd326d9b5bd29052179b510f498b779add5e03f9",
+        "size": 677,
+        "path": "SZL_ESTATE_MANAGED.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-provctl",
+        "revision": "c71443c62f7f03a2d1a6151d47194843843aed6a"
+      },
+      {
+        "type": "file",
+        "oid": "84b84edef7103c3036d09384fc8347fe13f707a2",
+        "size": 2123,
+        "path": "TRAINING_RECEIPT.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-provctl",
+        "revision": "c71443c62f7f03a2d1a6151d47194843843aed6a"
+      },
+      {
+        "type": "directory",
+        "oid": "782d618626c353a32d9597d4d9daee85f78a9a5a",
+        "size": 0,
+        "path": "bom",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-provctl",
+        "revision": "c71443c62f7f03a2d1a6151d47194843843aed6a"
+      },
+      {
+        "type": "file",
+        "oid": "1fb2d47fd882857ced306071bc45d66355f4ca5d",
+        "size": 6647,
+        "path": "bom/model-bom.cdx.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-provctl",
+        "revision": "c71443c62f7f03a2d1a6151d47194843843aed6a"
+      },
+      {
+        "type": "directory",
+        "oid": "9b4c5cc43823b40b6eb48952f9399665fee318d9",
+        "size": 0,
+        "path": "build",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-provctl",
+        "revision": "c71443c62f7f03a2d1a6151d47194843843aed6a"
+      },
+      {
+        "type": "file",
+        "oid": "74dbc8f0b7d128895869fa09ba2271c10d502852",
+        "size": 74,
+        "path": "build.toml",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-provctl",
+        "revision": "c71443c62f7f03a2d1a6151d47194843843aed6a"
+      },
+      {
+        "type": "directory",
+        "oid": "fdb675657788175eaea472228ba6393b93ad7d6a",
+        "size": 0,
+        "path": "build/torch-universal",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-provctl",
+        "revision": "c71443c62f7f03a2d1a6151d47194843843aed6a"
+      },
+      {
+        "type": "directory",
+        "oid": "4d77bcac47d77892f2055ba7a97b6743f1fcb706",
+        "size": 0,
+        "path": "build/torch-universal/szl_provctl",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-provctl",
+        "revision": "c71443c62f7f03a2d1a6151d47194843843aed6a"
+      },
+      {
+        "type": "file",
+        "oid": "32409a3b21ac2545f596358bc2f3ae0fc0210b45",
+        "size": 10057,
+        "path": "build/torch-universal/szl_provctl/__init__.py",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-provctl",
+        "revision": "c71443c62f7f03a2d1a6151d47194843843aed6a"
+      },
+      {
+        "type": "file",
+        "oid": "e1b7aa9caec1789295d1d38019c73c62ff6c9254",
+        "size": 5568,
+        "path": "build/torch-universal/szl_provctl/_chain.py",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-provctl",
+        "revision": "c71443c62f7f03a2d1a6151d47194843843aed6a"
+      },
+      {
+        "type": "file",
+        "oid": "6b4b17b7cb1cbc323d4fe357071f1447d18813ce",
+        "size": 8667,
+        "path": "build/torch-universal/szl_provctl/_dag.py",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-provctl",
+        "revision": "c71443c62f7f03a2d1a6151d47194843843aed6a"
+      },
+      {
+        "type": "file",
+        "oid": "b30c1631e2981e0a261e797a353c0f6b9065e97c",
+        "size": 3902,
+        "path": "build/torch-universal/szl_provctl/_energy.py",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-provctl",
+        "revision": "c71443c62f7f03a2d1a6151d47194843843aed6a"
+      },
+      {
+        "type": "file",
+        "oid": "002696602a1fa824c85adfd928438d75065a604c",
+        "size": 9706,
+        "path": "build/torch-universal/szl_provctl/_interop.py",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-provctl",
+        "revision": "c71443c62f7f03a2d1a6151d47194843843aed6a"
+      },
+      {
+        "type": "file",
+        "oid": "8f096343f91c6ef0b68dfcd0b513714cffd893bb",
+        "size": 726,
+        "path": "build/torch-universal/szl_provctl/metadata.json",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-provctl",
+        "revision": "c71443c62f7f03a2d1a6151d47194843843aed6a"
+      },
+      {
+        "type": "directory",
+        "oid": "f3b48842f90c1995ea80966bbd20bef6211d0582",
+        "size": 0,
+        "path": "card",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-provctl",
+        "revision": "c71443c62f7f03a2d1a6151d47194843843aed6a"
+      },
+      {
+        "type": "file",
+        "oid": "b1cc261766a35fc7af32e3f57ccd28dc88ec31a3",
+        "size": 2740,
+        "path": "card/holo-banner.svg",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-provctl",
+        "revision": "c71443c62f7f03a2d1a6151d47194843843aed6a"
+      },
+      {
+        "type": "directory",
+        "oid": "ff929b46419ea4c8b526bb58c40f71129d49f56d",
+        "size": 0,
+        "path": "scripts",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-provctl",
+        "revision": "c71443c62f7f03a2d1a6151d47194843843aed6a"
+      },
+      {
+        "type": "file",
+        "oid": "37640faafb68cf0cba4012bb8a1cfacce800c9f8",
+        "size": 1472,
+        "path": "scripts/eval.py",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-provctl",
+        "revision": "c71443c62f7f03a2d1a6151d47194843843aed6a"
+      },
+      {
+        "type": "file",
+        "oid": "f1a0a0d8618366112bd1b7924bede89eea0e1745",
+        "size": 11029,
+        "path": "scripts/forge.py",
+        "kind": "models",
+        "id": "SZLHOLDINGS/szl-provctl",
+        "revision": "c71443c62f7f03a2d1a6151d47194843843aed6a"
+      }
+    ],
+    "text_record": {
+      "id": "SZLHOLDINGS/szl-provctl",
+      "kind": "models",
+      "revision": "c71443c62f7f03a2d1a6151d47194843843aed6a",
+      "path": "MODEL_PROVENANCE.json",
+      "receipt": {
+        "requested_url": "https://huggingface.co/SZLHOLDINGS/szl-provctl/resolve/c71443c62f7f03a2d1a6151d47194843843aed6a/MODEL_PROVENANCE.json",
+        "final_url": "https://huggingface.co/api/resolve-cache/models/SZLHOLDINGS/szl-provctl/c71443c62f7f03a2d1a6151d47194843843aed6a/MODEL_PROVENANCE.json?%2FSZLHOLDINGS%2Fszl-provctl%2Fresolve%2Fc71443c62f7f03a2d1a6151d47194843843aed6a%2FMODEL_PROVENANCE.json=&etag=%2292cb1d191c6433f59adb5c267413937b22131c77%22",
+        "status": 200,
+        "observed_at": "2026-09-24T13:44:58.471670+00:00",
+        "response_bytes": 3024,
+        "response_sha256": "28bf866b757ab9238927baecdf0bf3d51d1b9df98ba2898a4a7e26c84fed07dd",
+        "response_bytes_base64": "ewogICJzY2hlbWEiOiAic3psLm1vZGVsLXNvdXJjZS1hdHRlc3RhdGlvbi92MSIsCiAgIm9ic2VydmVkX2F0IjogIjIwMjYtMDctMTJUMDA6Mjc6MTRaIiwKICAibW9kZWwiOiB7CiAgICAiaWQiOiAiU1pMSE9MRElOR1Mvc3psLXByb3ZjdGwiLAogICAgInJlcG9zaXRvcnlfdHlwZSI6ICJtb2RlbCIsCiAgICAiYXJ0aWZhY3Rfa2luZCI6ICJrZXJuZWwtY29kZS1hbmQtY29uZmlndXJhdGlvbiIsCiAgICAidHJhaW5lZF93ZWlnaHRzX3ByZXNlbnQiOiB0cnVlLAogICAgInN1cnJvZ2F0ZSI6IHsKICAgICAgImZpbGUiOiAibW9kZWwuam9ibGliIiwKICAgICAgInNoYTI1NiI6ICI0YWUzZmQ5MTllNjViYzM3ZTZlZTRlNzAxMzYyNTRlYTA3NzM5MWIxZWE5MzhjY2Y1ZWE1NTlkOGE5MjQ5ZjE2IiwKICAgICAgInJvbGUiOiAicHJvdmVuYW5jZS1EQUcgYW5vbWFseSB0cmlhZ2Ugb25seSBcdTIwMTQga2VybmVsIHZlcmlmeV9kYWcgdHJhdmVyc2FsIHJlbWFpbnMgc29sZSBncm91bmQgdHJ1dGgiLAogICAgICAiZmlkZWxpdHlfTUVBU1VSRUQiOiB7CiAgICAgICAgImZpZGVsaXR5X3ZzX2tlcm5lbF9oZWxkb3V0IjogMS4wLAogICAgICAgICJwZXJfY2xhc3NfcmVjYWxsIjogewogICAgICAgICAgImNsZWFuIjogMS4wLAogICAgICAgICAgImN5Y2xlIjogMS4wLAogICAgICAgICAgImVkZ2UtbWlzbWF0Y2giOiAxLjAsCiAgICAgICAgICAiY2hhaW4taW50ZWdyaXR5IjogMS4wCiAgICAgICAgfQogICAgICB9LAogICAgICAicmVhY2hhYmxlX2NsYXNzZXMiOiBbCiAgICAgICAgImNsZWFuIiwKICAgICAgICAiY3ljbGUiLAogICAgICAgICJlZGdlLW1pc21hdGNoIiwKICAgICAgICAiY2hhaW4taW50ZWdyaXR5IgogICAgICBdLAogICAgICAia2VybmVsX2xpbWl0YXRpb25fbm90ZSI6ICJ0aGUga2VybmVsJ3MgYG1pc3NpbmdfZGVwZW5kZW5jeWAgdmVyZGljdCBpcyBVTlJFQUNIQUJMRSAodG9wby1zb3J0IEtleUVycm9ycyBvbiBnaG9zdCBlZGdlcyBiZWZvcmUgdGhlIGNoZWNrKTsgdGhhdCBjbGFzcyBpcyBob25lc3RseSBleGNsdWRlZCwgbm90IGZhYnJpY2F0ZWQiLAogICAgICAicmVjZWlwdCI6ICJUUkFJTklOR19SRUNFSVBULmpzb24iLAogICAgICAicmV2ZXJpZnkiOiAicHl0aG9uIHNjcmlwdHMvZXZhbC5weSIKICAgIH0sCiAgICAic3RkbGliX29ubHlfbm90ZSI6ICJrZXJuZWwgaXMgUHl0aG9uIHN0ZGxpYi1vbmx5OyB0aGUgT1BUSU9OQUwgc3Vycm9nYXRlIG5lZWRzIHNrbGVhcm4ram9ibGliIgogIH0sCiAgInNvdXJjZV9vZl9yZWNvcmQiOiB7CiAgICAic3RhdGUiOiAiVkVSSUZJRURfSEZfU09VUkNFX09GX1JFQ09SRCIsCiAgICAicGxhdGZvcm0iOiAiaHVnZ2luZ2ZhY2UiLAogICAgInJlcG9zaXRvcnkiOiAiU1pMSE9MRElOR1Mvc3psLXByb3ZjdGwiLAogICAgImFydGlmYWN0X2Jhc2VfcmV2aXNpb24iOiAiZTA2ZmEyNjc0MTgxMjMzOWM4YTAxZDk2YTZhYmNlYzJlYjllMDhhNiIsCiAgICAiYXJ0aWZhY3RfYmFzZV9zdGF0ZSI6ICJNRUFTVVJFRF9QUkVfQVRURVNUQVRJT05fQkFTRSIsCiAgICAiYXJ0aWZhY3RfYmFzZV91cmwiOiAiaHR0cHM6Ly9odWdnaW5nZmFjZS5jby9TWkxIT0xESU5HUy9zemwtcHJvdmN0bC90cmVlL2UwNmZhMjY3NDE4MTIzMzljOGEwMWQ5NmE2YWJjZWMyZWI5ZTA4YTYiLAogICAgImZpbGVfY291bnQiOiAxMSwKICAgICJ0cmVlX3NoYTI1NiI6ICI5ZTkzNDZjYTcwZTAyMjI1YjBlODYyNTM3NDc5M2RkMzI4MTEzYmMwYmRjNWVlOTYyYjBkYWI0NDBkMTVhNDg5IiwKICAgICJ0cmVlX2hhc2hfYWxnb3JpdGhtIjogInNoYTI1NiBvZiBVVEYtOCBwYXRoICsgTlVMICsgcGVyLWZpbGUgc2hhMjU2ICsgTEYsIHNvcnRlZCBieSBwYXRoOyAuY2FjaGUgZXhjbHVkZWQiCiAgfSwKICAicHVibGljX2dpdGh1YiI6IHsKICAgICJzdGF0ZSI6ICJOT19ESVJFQ1RfUFVCTElDX0lNUExFTUVOVEFUSU9OX09CU0VSVkVEIiwKICAgICJzYW1lX25hbWVfY2FuZGlkYXRlIjogImh0dHBzOi8vZ2l0aHViLmNvbS9zemwtaG9sZGluZ3Mvc3psLXByb3ZjdGwiLAogICAgInNhbWVfbmFtZV9jYW5kaWRhdGVfaHR0cF9zdGF0dXMiOiA0MDQsCiAgICAiY2FyZF9yZWZlcmVuY2VzIjogWwogICAgICAiaHR0cHM6Ly9naXRodWIuY29tL3N6bC1ob2xkaW5ncy9nb3Zlcm5lZC1yZWNlaXB0LXNwZWMiLAogICAgICAiaHR0cHM6Ly9naXRodWIuY29tL3N6bC1ob2xkaW5ncy9zemwtcGFwZXJzL2Jsb2IvbWFpbi9QQVBFUlNfSU5ERVgubWQiCiAgICBdLAogICAgImNhcmRfcmVmZXJlbmNlX3JvbGUiOiAiU1BFQ0lGSUNBVElPTl9PUl9SRVNFQVJDSF9DT05URVhUX05PVF9CVUlMRF9TT1VSQ0UiCiAgfSwKICAiY2xhaW1zIjogewogICAgImdpdGh1Yl9yZXBvc2l0b3J5X3Bhcml0eSI6ICJOT1RfQ0xBSU1FRCIsCiAgICAicmVwcm9kdWNpYmxlX2J1aWxkIjogIk5PVF9DTEFJTUVEIiwKICAgICJ0cmFpbmVkX21vZGVsIjogIlNVUlJPR0FURV9QUkVTRU5UX01FQVNVUkVEX0ZJREVMSVRZIiwKICAgICJzZXJ2aW5nX3Byb2Nlc3NfcmV2aXNpb24iOiAiTk9UX0FQUExJQ0FCTEVfUkVQT1NJVE9SWV9BUlRJRkFDVCIKICB9LAogICJsaW1pdHMiOiBbCiAgICAiVGhlIDQwNCBvYnNlcnZhdGlvbiBlc3RhYmxpc2hlcyBvbmx5IHRoYXQgbm8gcHVibGljIHNhbWUtbmFtZSByZXBvc2l0b3J5IHdhcyByZWFjaGFibGUgYXQgdGhlIG9ic2VydmF0aW9uIHRpbWU7IGl0IGRvZXMgbm90IG1ha2UgYSBjbGFpbSBhYm91dCBwcml2YXRlIHJlcG9zaXRvcmllcy4iLAogICAgIlRoZSBhdHRlc3RhdGlvbiBvdmVybGF5IGNhbm5vdCBzZWxmLWVtYmVkIGl0cyByZXN1bHRpbmcgSHViIGNvbW1pdCwgc28gdGhlIGltbXV0YWJsZSBhcnRpZmFjdF9iYXNlX3JldmlzaW9uIGlzIHRoZSBtZWFzdXJlZCBwcmUtb3ZlcmxheSBiYXNlLiIsCiAgICAiTm8gLmJpbiwgLnNhZmV0ZW5zb3JzLCAucHQsIC5wdGgsIC5vbm54LCBvciAuZ2d1ZiB3ZWlnaHQgYXJ0aWZhY3Qgd2FzIHByZXNlbnQgaW4gdGhlIG1lYXN1cmVkIGJhc2UgdHJlZS4iCiAgXQp9"
+      },
+      "content": {
+        "schema": "szl.model-source-attestation/v1",
+        "observed_at": "2026-07-12T00:27:14Z",
+        "model": {
+          "id": "SZLHOLDINGS/szl-provctl",
+          "repository_type": "model",
+          "artifact_kind": "kernel-code-and-configuration",
+          "trained_weights_present": true,
+          "surrogate": {
+            "file": "model.joblib",
+            "sha256": "4ae3fd919e65bc37e6ee4e70136254ea077391b1ea938ccf5ea559d8a9249f16",
+            "role": "provenance-DAG anomaly triage only — kernel verify_dag traversal remains sole ground truth",
+            "fidelity_MEASURED": {
+              "fidelity_vs_kernel_heldout": 1.0,
+              "per_class_recall": {
+                "clean": 1.0,
+                "cycle": 1.0,
+                "edge-mismatch": 1.0,
+                "chain-integrity": 1.0
+              }
+            },
+            "reachable_classes": [
+              "clean",
+              "cycle",
+              "edge-mismatch",
+              "chain-integrity"
+            ],
+            "kernel_limitation_note": "the kernel's `missing_dependency` verdict is UNREACHABLE (topo-sort KeyErrors on ghost edges before the check); that class is honestly excluded, not fabricated",
+            "receipt": "TRAINING_RECEIPT.json",
+            "reverify": "python scripts/eval.py"
+          },
+          "stdlib_only_note": "kernel is Python stdlib-only; the OPTIONAL surrogate needs sklearn+joblib"
+        },
+        "source_of_record": {
+          "state": "VERIFIED_HF_SOURCE_OF_RECORD",
+          "platform": "huggingface",
+          "repository": "SZLHOLDINGS/szl-provctl",
+          "artifact_base_revision": "e06fa26741812339c8a01d96a6abcec2eb9e08a6",
+          "artifact_base_state": "MEASURED_PRE_ATTESTATION_BASE",
+          "artifact_base_url": "https://huggingface.co/SZLHOLDINGS/szl-provctl/tree/e06fa26741812339c8a01d96a6abcec2eb9e08a6",
+          "file_count": 11,
+          "tree_sha256": "9e9346ca70e02225b0e8625374793dd328113bc0bdc5ee962b0dab440d15a489",
+          "tree_hash_algorithm": "sha256 of UTF-8 path + NUL + per-file sha256 + LF, sorted by path; .cache excluded"
+        },
+        "public_github": {
+          "state": "NO_DIRECT_PUBLIC_IMPLEMENTATION_OBSERVED",
+          "same_name_candidate": "https://github.com/szl-holdings/szl-provctl",
+          "same_name_candidate_http_status": 404,
+          "card_references": [
+            "https://github.com/szl-holdings/governed-receipt-spec",
+            "https://github.com/szl-holdings/szl-papers/blob/main/PAPERS_INDEX.md"
+          ],
+          "card_reference_role": "SPECIFICATION_OR_RESEARCH_CONTEXT_NOT_BUILD_SOURCE"
+        },
+        "claims": {
+          "github_repository_parity": "NOT_CLAIMED",
+          "reproducible_build": "NOT_CLAIMED",
+          "trained_model": "SURROGATE_PRESENT_MEASURED_FIDELITY",
+          "serving_process_revision": "NOT_APPLICABLE_REPOSITORY_ARTIFACT"
+        },
+        "limits": [
+          "The 404 observation establishes only that no public same-name repository was reachable at the observation time; it does not make a claim about private repositories.",
+          "The attestation overlay cannot self-embed its resulting Hub commit, so the immutable artifact_base_revision is the measured pre-overlay base.",
+          "No .bin, .safetensors, .pt, .pth, .onnx, or .gguf weight artifact was present in the measured base tree."
+        ]
+      }
+    },
+    "original_bytes_base64": "ewogICJzY2hlbWEiOiAic3psLm1vZGVsLXNvdXJjZS1hdHRlc3RhdGlvbi92MSIsCiAgIm9ic2VydmVkX2F0IjogIjIwMjYtMDctMTJUMDA6Mjc6MTRaIiwKICAibW9kZWwiOiB7CiAgICAiaWQiOiAiU1pMSE9MRElOR1Mvc3psLXByb3ZjdGwiLAogICAgInJlcG9zaXRvcnlfdHlwZSI6ICJtb2RlbCIsCiAgICAiYXJ0aWZhY3Rfa2luZCI6ICJrZXJuZWwtY29kZS1hbmQtY29uZmlndXJhdGlvbiIsCiAgICAidHJhaW5lZF93ZWlnaHRzX3ByZXNlbnQiOiB0cnVlLAogICAgInN1cnJvZ2F0ZSI6IHsKICAgICAgImZpbGUiOiAibW9kZWwuam9ibGliIiwKICAgICAgInNoYTI1NiI6ICI0YWUzZmQ5MTllNjViYzM3ZTZlZTRlNzAxMzYyNTRlYTA3NzM5MWIxZWE5MzhjY2Y1ZWE1NTlkOGE5MjQ5ZjE2IiwKICAgICAgInJvbGUiOiAicHJvdmVuYW5jZS1EQUcgYW5vbWFseSB0cmlhZ2Ugb25seSBcdTIwMTQga2VybmVsIHZlcmlmeV9kYWcgdHJhdmVyc2FsIHJlbWFpbnMgc29sZSBncm91bmQgdHJ1dGgiLAogICAgICAiZmlkZWxpdHlfTUVBU1VSRUQiOiB7CiAgICAgICAgImZpZGVsaXR5X3ZzX2tlcm5lbF9oZWxkb3V0IjogMS4wLAogICAgICAgICJwZXJfY2xhc3NfcmVjYWxsIjogewogICAgICAgICAgImNsZWFuIjogMS4wLAogICAgICAgICAgImN5Y2xlIjogMS4wLAogICAgICAgICAgImVkZ2UtbWlzbWF0Y2giOiAxLjAsCiAgICAgICAgICAiY2hhaW4taW50ZWdyaXR5IjogMS4wCiAgICAgICAgfQogICAgICB9LAogICAgICAicmVhY2hhYmxlX2NsYXNzZXMiOiBbCiAgICAgICAgImNsZWFuIiwKICAgICAgICAiY3ljbGUiLAogICAgICAgICJlZGdlLW1pc21hdGNoIiwKICAgICAgICAiY2hhaW4taW50ZWdyaXR5IgogICAgICBdLAogICAgICAia2VybmVsX2xpbWl0YXRpb25fbm90ZSI6ICJ0aGUga2VybmVsJ3MgYG1pc3NpbmdfZGVwZW5kZW5jeWAgdmVyZGljdCBpcyBVTlJFQUNIQUJMRSAodG9wby1zb3J0IEtleUVycm9ycyBvbiBnaG9zdCBlZGdlcyBiZWZvcmUgdGhlIGNoZWNrKTsgdGhhdCBjbGFzcyBpcyBob25lc3RseSBleGNsdWRlZCwgbm90IGZhYnJpY2F0ZWQiLAogICAgICAicmVjZWlwdCI6ICJUUkFJTklOR19SRUNFSVBULmpzb24iLAogICAgICAicmV2ZXJpZnkiOiAicHl0aG9uIHNjcmlwdHMvZXZhbC5weSIKICAgIH0sCiAgICAic3RkbGliX29ubHlfbm90ZSI6ICJrZXJuZWwgaXMgUHl0aG9uIHN0ZGxpYi1vbmx5OyB0aGUgT1BUSU9OQUwgc3Vycm9nYXRlIG5lZWRzIHNrbGVhcm4ram9ibGliIgogIH0sCiAgInNvdXJjZV9vZl9yZWNvcmQiOiB7CiAgICAic3RhdGUiOiAiVkVSSUZJRURfSEZfU09VUkNFX09GX1JFQ09SRCIsCiAgICAicGxhdGZvcm0iOiAiaHVnZ2luZ2ZhY2UiLAogICAgInJlcG9zaXRvcnkiOiAiU1pMSE9MRElOR1Mvc3psLXByb3ZjdGwiLAogICAgImFydGlmYWN0X2Jhc2VfcmV2aXNpb24iOiAiZTA2ZmEyNjc0MTgxMjMzOWM4YTAxZDk2YTZhYmNlYzJlYjllMDhhNiIsCiAgICAiYXJ0aWZhY3RfYmFzZV9zdGF0ZSI6ICJNRUFTVVJFRF9QUkVfQVRURVNUQVRJT05fQkFTRSIsCiAgICAiYXJ0aWZhY3RfYmFzZV91cmwiOiAiaHR0cHM6Ly9odWdnaW5nZmFjZS5jby9TWkxIT0xESU5HUy9zemwtcHJvdmN0bC90cmVlL2UwNmZhMjY3NDE4MTIzMzljOGEwMWQ5NmE2YWJjZWMyZWI5ZTA4YTYiLAogICAgImZpbGVfY291bnQiOiAxMSwKICAgICJ0cmVlX3NoYTI1NiI6ICI5ZTkzNDZjYTcwZTAyMjI1YjBlODYyNTM3NDc5M2RkMzI4MTEzYmMwYmRjNWVlOTYyYjBkYWI0NDBkMTVhNDg5IiwKICAgICJ0cmVlX2hhc2hfYWxnb3JpdGhtIjogInNoYTI1NiBvZiBVVEYtOCBwYXRoICsgTlVMICsgcGVyLWZpbGUgc2hhMjU2ICsgTEYsIHNvcnRlZCBieSBwYXRoOyAuY2FjaGUgZXhjbHVkZWQiCiAgfSwKICAicHVibGljX2dpdGh1YiI6IHsKICAgICJzdGF0ZSI6ICJOT19ESVJFQ1RfUFVCTElDX0lNUExFTUVOVEFUSU9OX09CU0VSVkVEIiwKICAgICJzYW1lX25hbWVfY2FuZGlkYXRlIjogImh0dHBzOi8vZ2l0aHViLmNvbS9zemwtaG9sZGluZ3Mvc3psLXByb3ZjdGwiLAogICAgInNhbWVfbmFtZV9jYW5kaWRhdGVfaHR0cF9zdGF0dXMiOiA0MDQsCiAgICAiY2FyZF9yZWZlcmVuY2VzIjogWwogICAgICAiaHR0cHM6Ly9naXRodWIuY29tL3N6bC1ob2xkaW5ncy9nb3Zlcm5lZC1yZWNlaXB0LXNwZWMiLAogICAgICAiaHR0cHM6Ly9naXRodWIuY29tL3N6bC1ob2xkaW5ncy9zemwtcGFwZXJzL2Jsb2IvbWFpbi9QQVBFUlNfSU5ERVgubWQiCiAgICBdLAogICAgImNhcmRfcmVmZXJlbmNlX3JvbGUiOiAiU1BFQ0lGSUNBVElPTl9PUl9SRVNFQVJDSF9DT05URVhUX05PVF9CVUlMRF9TT1VSQ0UiCiAgfSwKICAiY2xhaW1zIjogewogICAgImdpdGh1Yl9yZXBvc2l0b3J5X3Bhcml0eSI6ICJOT1RfQ0xBSU1FRCIsCiAgICAicmVwcm9kdWNpYmxlX2J1aWxkIjogIk5PVF9DTEFJTUVEIiwKICAgICJ0cmFpbmVkX21vZGVsIjogIlNVUlJPR0FURV9QUkVTRU5UX01FQVNVUkVEX0ZJREVMSVRZIiwKICAgICJzZXJ2aW5nX3Byb2Nlc3NfcmV2aXNpb24iOiAiTk9UX0FQUExJQ0FCTEVfUkVQT1NJVE9SWV9BUlRJRkFDVCIKICB9LAogICJsaW1pdHMiOiBbCiAgICAiVGhlIDQwNCBvYnNlcnZhdGlvbiBlc3RhYmxpc2hlcyBvbmx5IHRoYXQgbm8gcHVibGljIHNhbWUtbmFtZSByZXBvc2l0b3J5IHdhcyByZWFjaGFibGUgYXQgdGhlIG9ic2VydmF0aW9uIHRpbWU7IGl0IGRvZXMgbm90IG1ha2UgYSBjbGFpbSBhYm91dCBwcml2YXRlIHJlcG9zaXRvcmllcy4iLAogICAgIlRoZSBhdHRlc3RhdGlvbiBvdmVybGF5IGNhbm5vdCBzZWxmLWVtYmVkIGl0cyByZXN1bHRpbmcgSHViIGNvbW1pdCwgc28gdGhlIGltbXV0YWJsZSBhcnRpZmFjdF9iYXNlX3JldmlzaW9uIGlzIHRoZSBtZWFzdXJlZCBwcmUtb3ZlcmxheSBiYXNlLiIsCiAgICAiTm8gLmJpbiwgLnNhZmV0ZW5zb3JzLCAucHQsIC5wdGgsIC5vbm54LCBvciAuZ2d1ZiB3ZWlnaHQgYXJ0aWZhY3Qgd2FzIHByZXNlbnQgaW4gdGhlIG1lYXN1cmVkIGJhc2UgdHJlZS4iCiAgXQp9"
+  }
+]
