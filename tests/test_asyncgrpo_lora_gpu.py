@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import tempfile
 import threading
 import unittest
@@ -46,13 +47,57 @@ FAKE = {
 
 
 class _MockState:
-    def __init__(self, *, enable_lora: bool, runtime_updates: bool, max_loras: int, max_lora_rank: int = 32) -> None:
+    def __init__(
+        self,
+        *,
+        enable_lora: bool,
+        runtime_updates: bool,
+        max_loras: int,
+        max_lora_rank: int = 32,
+        adapter_root: Path | None = None,
+    ) -> None:
         self.enable_lora = enable_lora
         self.runtime_updates = runtime_updates
         self.max_loras = max_loras
         self.max_lora_rank = max_lora_rank
+        self.adapter_root = adapter_root
         self.loaded: list[str] = []
         self.served_model = "base"
+
+
+def _rank_from_contained_adapter(root: Path | None, requested: object) -> int:
+    """Read adapter rank only when the config stays inside the job root.
+
+    ``lora_path`` arrives from the request body. Paths outside the server-owned
+    root, relative escapes, and unreadable configs keep the default rank and
+    never open an arbitrary file.
+    """
+    default = 32
+    if root is None or type(requested) is not str or requested == "" or "\x00" in requested:
+        return default
+    try:
+        base = os.path.realpath(root)
+    except OSError:
+        return default
+    if not base.endswith(os.sep):
+        base = base + os.sep
+    try:
+        requested_real = os.path.realpath(requested)
+        config_path = os.path.realpath(os.path.join(requested_real, "adapter_config.json"))
+    except OSError:
+        return default
+    if not config_path.startswith(base):
+        return default
+    if not os.path.isfile(config_path):
+        return default
+    try:
+        with open(config_path, encoding="utf-8") as handle:
+            config = json.loads(handle.read())
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+        return default
+    if isinstance(config, dict) and type(config.get("r")) is int:
+        return int(config["r"])
+    return default
 
 
 class _MockHandler(BaseHTTPRequestHandler):
@@ -107,16 +152,8 @@ class _MockHandler(BaseHTTPRequestHandler):
             if not state.enable_lora:
                 self._send(400, {"error": "lora disabled"})
                 return
-            lora_path = Path(str(payload.get("lora_path") or ""))
-            rank = 32
-            config_path = lora_path / "adapter_config.json"
-            if config_path.is_file():
-                try:
-                    config = json.loads(config_path.read_text(encoding="utf-8"))
-                except (OSError, json.JSONDecodeError, UnicodeDecodeError):
-                    config = {}
-                if isinstance(config, dict) and type(config.get("r")) is int:
-                    rank = int(config["r"])
+            lora_path = payload.get("lora_path")
+            rank = _rank_from_contained_adapter(state.adapter_root, lora_path)
             if rank > state.max_lora_rank:
                 self._send(400, {"error": "rank too high"})
                 return
@@ -158,12 +195,14 @@ class MockVllm:
         runtime_updates: bool = True,
         max_loras: int = 6,
         max_lora_rank: int = 32,
+        adapter_root: Path | None = None,
     ) -> None:
         self.state = _MockState(
             enable_lora=enable_lora,
             runtime_updates=runtime_updates,
             max_loras=max_loras,
             max_lora_rank=max_lora_rank,
+            adapter_root=adapter_root,
         )
         self.server = ThreadingHTTPServer(("127.0.0.1", 0), _MockHandler)
         self.server.state = self.state  # type: ignore[attr-defined]
@@ -304,32 +343,61 @@ class GpuBackendTests(unittest.TestCase):
         self.assertNotIn("--enable-lora", bare)
 
     def test_http_client_measures_both_sync_paths(self) -> None:
-        adapter_server = MockVllm(enable_lora=True, runtime_updates=True)
-        merged_server = MockVllm(enable_lora=False, runtime_updates=False)
-        merged_server.state.served_model = "merged"
-        try:
-            with tempfile.TemporaryDirectory() as tmp:
-                artifacts = _write_artifacts(Path(tmp))
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            adapter_server = MockVllm(enable_lora=True, runtime_updates=True, adapter_root=root)
+            merged_server = MockVllm(enable_lora=False, runtime_updates=False, adapter_root=root)
+            merged_server.state.served_model = "merged"
+            try:
+                artifacts = _write_artifacts(root)
                 measured = measure_gpu_sync_paths(
                     adapter_client=adapter_server.client,
                     merged_client=merged_server.client,
                     adapter_dir=artifacts["adapter"],
                     merged_dir=artifacts["merged"],
-                    cache_root=Path(tmp),
+                    cache_root=root,
                     merged_ready_seconds=0.05,
                 )
                 self.assertTrue(Path(str(measured["stagedAdapterPath"])).is_dir())
                 self.assertIn(".vllm_lora", str(measured["stagedAdapterPath"]))
-            self.assertLess(measured["adapterOnlyTransferredBytes"], measured["mergedTransferredBytes"])
-            self.assertGreater(measured["adapterOnlyGenerationThroughput"], 0)
-            self.assertGreater(measured["mergedGenerationThroughput"], 0)
-            self.assertEqual(measured["adapterSyncMethod"], "v1/load_lora_adapter")
-            self.assertEqual(measured["mergedSyncMethod"], "process-reload-merged-weights")
-            self.assertIs(measured["gpuSyncExecuted"], True)
-            self.assertIn("policy-v3", measured["loadedAdapterIdentities"])
-        finally:
-            adapter_server.close()
-            merged_server.close()
+                self.assertLess(measured["adapterOnlyTransferredBytes"], measured["mergedTransferredBytes"])
+                self.assertGreater(measured["adapterOnlyGenerationThroughput"], 0)
+                self.assertGreater(measured["mergedGenerationThroughput"], 0)
+                self.assertEqual(measured["adapterSyncMethod"], "v1/load_lora_adapter")
+                self.assertEqual(measured["mergedSyncMethod"], "process-reload-merged-weights")
+                self.assertIs(measured["gpuSyncExecuted"], True)
+                self.assertIn("policy-v3", measured["loadedAdapterIdentities"])
+            finally:
+                adapter_server.close()
+                merged_server.close()
+
+    def test_mock_reads_rank_only_inside_job_root(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            artifacts = _write_artifacts(root)
+            (artifacts["adapter"] / "adapter_config.json").write_text('{"r": 1}\n', encoding="utf-8")
+            server = MockVllm(adapter_root=root, max_lora_rank=1)
+            try:
+                server.client.load_lora("policy-v1", artifacts["adapter"], cache_root=root)
+                self.assertEqual(server.state.loaded, ["policy-v1"])
+            finally:
+                server.close()
+
+    def test_mock_does_not_read_adapter_config_outside_job_root(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            job = Path(tmp) / "job"
+            outside = Path(tmp) / "outside"
+            job.mkdir()
+            artifacts = _write_artifacts(outside)
+            (artifacts["adapter"] / "adapter_config.json").write_text('{"r": 1}\n', encoding="utf-8")
+            server = MockVllm(adapter_root=job, max_lora_rank=1)
+            try:
+                with self.assertRaises(Exception) as caught:
+                    server.client.load_lora("policy-v1", artifacts["adapter"], cache_root=outside)
+                self.assertIn("vllm_load_lora_failed", str(caught.exception))
+                self.assertEqual(server.state.loaded, [])
+            finally:
+                server.close()
 
     def test_load_lora_rejects_symlink_and_partial_before_http(self) -> None:
         client = VllmEvalClient("127.0.0.1", 1)
@@ -356,10 +424,10 @@ class GpuBackendTests(unittest.TestCase):
         servers: list[MockVllm] = []
 
         def spawn(output_dir: Path, model: Path, python: str, **kwargs: object) -> VllmHandle:
-            del output_dir, model, python
+            del model, python
             enable = bool(kwargs.get("enable_lora", True))
             updates = bool(kwargs.get("runtime_updates", True))
-            mock = MockVllm(enable_lora=enable, runtime_updates=updates)
+            mock = MockVllm(enable_lora=enable, runtime_updates=updates, adapter_root=output_dir)
             if not enable:
                 mock.state.served_model = "merged"
             servers.append(mock)
@@ -395,7 +463,7 @@ class GpuBackendTests(unittest.TestCase):
 
     def _spawn_factory(self, servers: list[MockVllm]):
         def spawn(output_dir: Path, model: Path, python: str, **kwargs: object) -> VllmHandle:
-            del output_dir, model, python
+            del model, python
             enable = bool(kwargs.get("enable_lora", True))
             updates = bool(kwargs.get("runtime_updates", True))
             max_loras = int(kwargs.get("max_loras", 6) or 6)
@@ -405,6 +473,7 @@ class GpuBackendTests(unittest.TestCase):
                 runtime_updates=updates,
                 max_loras=max_loras,
                 max_lora_rank=max_rank,
+                adapter_root=output_dir,
             )
             if not enable:
                 mock.state.served_model = "merged"
