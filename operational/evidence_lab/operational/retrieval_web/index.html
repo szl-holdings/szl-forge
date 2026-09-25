@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow,noarchive"><meta name="description" content="Search your local evidence corpus, inspect source passages, and test passage-grounded answers with SZL Evidence Lab."><title>SZL · Evidence Lab</title><link rel="icon" href="data:,"><link rel="stylesheet" href="/app.css"><script src="/app.js" defer></script></head>
+<body>
+<a class="skip" href="#workspace">Skip to workspace</a>
+<div class="shell">
+  <aside class="rail">
+    <a class="brand" href="/" aria-label="SZL Evidence Lab home"><span class="monogram">SZL<span>·</span></span><span>HOLDINGS<br><strong>Evidence Lab</strong></span></a>
+    <div class="rail-label">LOCAL WORKSPACE</div>
+    <a class="nav active" href="#workspace"><span>01</span> Question workspace</a>
+    <a class="nav" href="#run-record"><span>02</span> Evaluation record</a>
+    <a class="nav" href="/api/notices" target="_blank" rel="noopener"><span>03</span> Sources & licenses ↗</a>
+    <div class="rail-bottom"><span class="dot"></span> Runs on your machine<p>No cloud inference.<br>No model training.</p><div class="rail-rule"></div><span class="micro">SZL FORGE / RETRIEVAL</span></div>
+  </aside>
+  <main id="workspace">
+    <header class="topbar"><span class="breadcrumb">Research workspace <span>/</span> Evidence retrieval</span><span class="health" id="health" role="status">Connecting to local runtime</span></header>
+    <section class="intro"><div><span class="eyebrow">EVIDENCE BEFORE ANSWERS</span><h1>Ask. Retrieve. Inspect.</h1><p>Search a frozen corpus or check a passage you provide.<br class="desktop"> Every extracted answer stays attached to its source.</p></div><div class="corpus-badge"><strong id="document-count">—</strong><span>indexed passages</span><small>Human-annotated evaluation corpus</small></div></section>
+    <div class="workspace-grid">
+      <section class="composer" aria-label="Question input">
+        <div class="tabs" role="tablist" aria-label="Evidence source"><button type="button" class="tab selected" role="tab" id="corpus-tab" aria-selected="true" aria-controls="question-panel">Search corpus</button><button type="button" class="tab" role="tab" id="context-tab" aria-selected="false" aria-controls="question-panel" tabindex="-1">Check a passage</button></div>
+        <form id="question-form" aria-busy="false"><div id="question-panel" role="tabpanel" aria-labelledby="corpus-tab">
+          <label for="question">Your question</label><textarea id="question" name="question" rows="4" maxlength="512" required placeholder="What would you like to find evidence for?"></textarea><div class="input-meta"><span>Use a specific, factual question.</span><span id="question-count">0 / 512</span></div>
+          <div id="context-fields" hidden><label for="context">Source passage</label><textarea id="context" name="context" rows="7" maxlength="16000" placeholder="Paste the evidence to check against. It stays on this machine."></textarea><div class="input-meta">Up to 16,000 characters; the reader also enforces a token limit.</div></div>
+          <div class="examples"><span>Try a recorded example</span><div><button type="button" class="example" id="example-positive" disabled>Answerable question ↗</button><button type="button" class="example" id="example-negative" disabled>Missing evidence ↗</button></div><small id="example-note">Examples replay public evaluation cases; they are not new test evidence.</small></div>
+          <div class="action-row"><button id="submit" class="primary" type="submit" disabled><span id="submit-label">Retrieve & answer</span><span aria-hidden="true">↗</span></button><button id="search-only" class="secondary" type="button" disabled>Find passages only</button></div>
+          <div id="guard-fields" class="guard-fields"><label for="identifier-guard"><input id="identifier-guard" type="checkbox"> Enable experimental identifier guard</label><p class="privacy">Abstains on long identifier-like tokens absent from the corpus. This checks spelling and presence; it does not verify meaning.</p></div>
+          <p class="privacy">Inputs are processed locally. Nothing is sent to a model provider.</p>
+        </div></form>
+        <div id="request-status" class="request-status" role="status" aria-live="polite">Waiting for the runtime connection.</div>
+      </section>
+      <section class="result-panel" aria-label="Answer and evidence" aria-live="polite">
+        <div class="section-heading"><span class="eyebrow">ANSWER & EVIDENCE</span><span id="elapsed" class="micro"></span></div>
+        <div id="empty-result" class="empty-result"><span class="evidence-icon" aria-hidden="true">[ ↗ ]</span><h2>Start with a question.</h2><p>Your answer, source passages, and evidence scope will appear here. The reader can abstain when the passage does not support an answer.</p><div class="steps"><span>01 <b>Retrieve passages</b></span><span>02 <b>Extract or abstain</b></span><span>03 <b>Inspect the source</b></span></div></div>
+        <div id="answer-result" hidden><span id="answer-status" class="answer-status"></span><h2 id="answer-text"></h2><p id="answer-scope" class="scope"></p><div id="margin-row" class="margin-row" hidden></div><div class="evidence-heading"><h3>Source passages</h3><span id="passage-count" class="micro"></span></div><div id="passages"></div><details class="receipt-details"><summary>Inspect response receipt</summary><pre id="response-receipt"></pre></details></div>
+      </section>
+    </div>
+    <section id="run-record" class="run-record" aria-labelledby="record-title"><div class="record-heading"><div><span class="eyebrow">MEASURED, NOT ASSUMED</span><h2 id="record-title">The current evaluation record</h2></div><span class="record-state">Frozen local baseline</span></div><div class="metrics"><article><span>Hybrid retrieval · top 10</span><strong id="metric-retrieval">—</strong><p>Annotated passage found · 120 queries</p></article><article><span>Qwen · both supports in top 5</span><strong id="metric-multihop">—</strong><p>HotpotQA distractor pools · 60 cases</p></article><article><span>Reader false answers</span><strong id="metric-false">—</strong><p>Given-context negatives · not corpus-wide</p></article></div><p class="record-limits" id="record-limits">Loading the exact frozen result and its evidence boundaries.</p><details><summary>Model and run provenance</summary><dl id="provenance"></dl></details></section>
+    <footer><span>Local preview · external benchmark evaluation only</span><span>No global-unanswerability or production-readiness claim.</span></footer>
+  </main>
+</div>
+</body></html>
