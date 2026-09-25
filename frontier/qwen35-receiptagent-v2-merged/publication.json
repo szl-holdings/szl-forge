@@ -1,0 +1,45 @@
+{
+  "state": "MEASURED_HF_READBACK_VERIFIED",
+  "label": "MEASURED",
+  "repository": {
+    "repoId": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2-merged",
+    "url": "https://huggingface.co/SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2-merged",
+    "intendedFileCount": 8,
+    "platformManagedFileCount": 1,
+    "intendedBytes": 3432006714
+  },
+  "files": [
+    { "name": ".gitattributes", "size": 1570, "role": "platform-managed" },
+    { "name": "README.md", "size": 1239, "role": "admission-draft model card from forge PR #308" },
+    { "name": "chat_template.jinja", "size": 8149, "role": "model file" },
+    { "name": "config.json", "size": 2874, "role": "model file" },
+    { "name": "generation_config.json", "size": 122, "role": "model file" },
+    { "name": "model.safetensors", "size": 3412002208, "role": "merged weights (lfs)" },
+    { "name": "tokenizer.json", "size": 19989325, "role": "model file (lfs)" },
+    { "name": "tokenizer_config.json", "size": 1227, "role": "model file" }
+  ],
+  "readback": {
+    "method": "two independent readbacks: owner via huggingface_hub model_info(files_metadata=true), and Hub connector listing",
+    "local_total_bytes": 3432003905,
+    "hub_total_bytes": 3432006714,
+    "difference_bytes": 2809,
+    "difference_explained": "README.md card (1239) + platform .gitattributes (1570); all six model files byte-size identical to the local qualified merge",
+    "hub_metadata": {
+      "parameters": 853000000,
+      "architecture": "qwen3_5",
+      "modelClass": "AutoModelForMultimodalLM",
+      "license": "apache-2.0",
+      "lastModified": "2026-09-14"
+    }
+  },
+  "publication": {
+    "executed_by": "owner (org admin) after lane admission (forge PR #308, merge 115f5038)",
+    "hub_write": true,
+    "upstream_evidence": [
+      "receiptagent-v2/salvage_receipt.20260913.json (merge: 372/372 key map, delta 0.00422266, 186 tensors)",
+      "receiptagent-v2/qual_v2_salvage_receipt.20260913.json (equivalence: 5/5, 100%)"
+    ],
+    "follow_up": "capture the Hub release revision SHA in this receipt on the next owner-side readback; portfolio/model_portfolio.json and publishing/model-source-bindings.json entries follow in their own reviewed PR"
+  },
+  "honesty_boundary": "Publication of the qualified merge only. Does not overwrite the frozen v2 comparator repo. No production route, default, or inference authority changes. Proposal-only SKU."
+}

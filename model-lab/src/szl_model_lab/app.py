@@ -18,6 +18,7 @@ from .catalog import TRACKS, catalog, track_for
 from .probes import inspect_node, node_config
 from .pool_view import load_pool_snapshot, unavailable_pool
 from .safeio import strict_json
+from .corpus_view import load_report, unavailable_report
 
 @dataclass(frozen=True)
 class Settings:
@@ -26,6 +27,8 @@ class Settings:
     artifacts: dict[str, Path]
     pool_snapshot: Path | None = None
     pool_snapshot_sha256: str | None = None
+    corpus_report: Path | None = None
+    corpus_report_sha256: str | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.access_token, str) or len(self.access_token) < 32:
@@ -43,6 +46,15 @@ class Settings:
             if not isinstance(self.pool_snapshot_sha256, str) or not re.fullmatch(r"[0-9a-f]{64}", self.pool_snapshot_sha256):
                 raise ValueError("invalid_pool_snapshot_digest")
 
+        if (self.corpus_report is None) != (self.corpus_report_sha256 is None):
+            raise ValueError("corpus_report_and_external_digest_required_together")
+        if self.corpus_report is not None and not isinstance(self.corpus_report, Path):
+            raise ValueError("corpus_report_path_required")
+        if self.corpus_report_sha256 is not None:
+            import re
+            if not isinstance(self.corpus_report_sha256, str) or not re.fullmatch(r"[0-9a-f]{64}", self.corpus_report_sha256):
+                raise ValueError("invalid_corpus_report_digest")
+
     @classmethod
     def from_env(cls) -> "Settings":
         artifacts = {slug: Path(value) for slug in TRACKS
@@ -50,7 +62,9 @@ class Settings:
         return cls(os.environ.get("SZL_LAB_ACCESS_TOKEN", ""),
                    node_config(os.environ.get("SZL_LAB_OLLAMA_ENDPOINTS_JSON", "{}")), artifacts,
                    Path(pool_path) if (pool_path := os.environ.get("SZL_LAB_POOL_SNAPSHOT")) else None,
-                   os.environ.get("SZL_LAB_POOL_SNAPSHOT_SHA256") or None)
+                   os.environ.get("SZL_LAB_POOL_SNAPSHOT_SHA256") or None,
+                   Path(corpus_path) if (corpus_path := os.environ.get("SZL_LAB_CORPUS_REPORT")) else None,
+                   os.environ.get("SZL_LAB_CORPUS_REPORT_SHA256") or None)
 
 class ScoreRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
@@ -151,6 +165,19 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def api_pool() -> dict:
         return pool_state()
 
+    def corpus_state() -> dict:
+        if settings.corpus_report is None:
+            return unavailable_report()
+        try:
+            return load_report(settings.corpus_report, settings.corpus_report_sha256)
+        except (ValueError, OSError, TypeError, KeyError):
+            return unavailable_report("INVALID_OR_UNAVAILABLE_REPORT")
+
+    @app.get("/api/corpus-review", dependencies=[Depends(authorize)])
+    def api_corpus_review() -> JSONResponse:
+        result = corpus_state()
+        return JSONResponse(result, status_code=200 if result["counts"] is not None else 503)
+
     async def node_rows() -> list[dict]:
         return list(await asyncio.gather(*(inspect_node(name, url) for name, url in settings.nodes.items())))
 
@@ -167,16 +194,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return {"nodes": await node_rows(), "source": "EXPLICIT_READ_ONLY_OLLAMA_PROBE",
                 "pool_qualification_verified": False, "ready": False}
 
+    @app.get("/corpus-review", response_class=HTMLResponse, dependencies=[Depends(authorize)])
     @app.get("/pool", response_class=HTMLResponse, dependencies=[Depends(authorize)])
     @app.get("/", response_class=HTMLResponse, dependencies=[Depends(authorize)])
     def home() -> HTMLResponse:
         return HTMLResponse(env.get_template("index.html").render(tracks=state(), nodes=None,
-                            configured_nodes=len(settings.nodes), pool=pool_state()))
+                            configured_nodes=len(settings.nodes), pool=pool_state(), corpus=corpus_state()))
 
     @app.get("/compute", response_class=HTMLResponse, dependencies=[Depends(authorize)])
     async def compute() -> HTMLResponse:
         return HTMLResponse(env.get_template("index.html").render(tracks=state(), nodes=await node_rows(),
-                            configured_nodes=len(settings.nodes), pool=pool_state()))
+                            configured_nodes=len(settings.nodes), pool=pool_state(), corpus=corpus_state()))
 
     @app.post("/api/score/{track}", dependencies=[Depends(authorize)])
     def score(track: str, body: ScoreRequest) -> dict:
@@ -199,4 +227,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 "action_authorized": False, "execution_performed": False,
                 "publication_eligible": False}
 
+    from .storage_web import register_storage
+    register_storage(app, authorize, env)
     return app

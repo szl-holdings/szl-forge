@@ -21,6 +21,8 @@ from .safeio import canonical_bytes, read_regular, strict_json, write_new
 REPOSITORY = "szl-holdings/szl-forge"
 SCHEMA = "szl.model-lab.blueprint/v1"
 SOURCE_FILES = (
+    "src/szl_model_lab/storage.py", "src/szl_model_lab/storage_web.py",
+    "src/szl_model_lab/templates/storage.html", "docs/STORAGE_AWARE_RESEARCH.md",
     "pyproject.toml", "LICENSE", "README.md", "constraints-test.txt",
     "docs/DATA_CONTRACT.md", "docs/THREAT_MODEL.md", "docs/POOL_VIEW.md",
     "src/szl_model_lab/__init__.py", "src/szl_model_lab/catalog.py",
@@ -28,6 +30,7 @@ SOURCE_FILES = (
     "src/szl_model_lab/safeio.py", "src/szl_model_lab/artifacts.py",
     "src/szl_model_lab/training.py", "src/szl_model_lab/probes.py",
     "src/szl_model_lab/pool_view.py",
+    "src/szl_model_lab/corpus_view.py", "docs/CORPUS_VIEW.md",
     "src/szl_model_lab/app.py", "src/szl_model_lab/cli.py",
     "src/szl_model_lab/blueprints.py", "src/szl_model_lab/templates/index.html",
 )

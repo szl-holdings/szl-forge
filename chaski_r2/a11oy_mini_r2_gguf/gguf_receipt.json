@@ -1,0 +1,27 @@
+﻿{
+    "schema":  "szl.a11oy-mini-gguf/v2",
+    "parent":  "chaski-r2 (winner; json_draft 5/5, adversarial_refuse 6/6, MEASURED)",
+    "source_adapter":  "chaski_r2/chaski-r2-adapter",
+    "base_model":  "Qwen/Qwen3.5-0.8B",
+    "merge_method":  "unsloth merge with PEFT attach verified (adapter attached, merged to 16-bit); llama.cpp conversion produced text Q4_K_M plus BF16 mmproj",
+    "gguf_files":  [
+                       {
+                           "file":  "a11oy-mini-r2-BF16-mmproj.gguf",
+                           "sha256":  "4855efe034435b9b3b289b2c07d09b263c088749d1f85c43c1cf4672bc7fcbf2",
+                           "bytes":  207346048
+                       },
+                       {
+                           "file":  "a11oy-mini-r2-Q4_K_M.gguf",
+                           "sha256":  "6d42341c932a76e91b2c04a859a4248e7d2c77308f998a32771f43802f097b62",
+                           "bytes":  541903328
+                       },
+                       {
+                           "file":  "Modelfile.a11oy-r2.gguf",
+                           "sha256":  "aa7ab103e74d9a85b58b662c20acf7407e8554723af11f4c1cdee9f85691e43f",
+                           "bytes":  142
+                       }
+                   ],
+    "gguf_scores":  "UNMEASURED",
+    "claim_boundary":  "Quantized rebuild of the r2 winner. Adapter scores do not transfer. publication_eligible=false. No Hub PUT. House CPU lab stays pinned to Khipu GGUF; this is a local SKU rebuild, not a lab retarget.",
+    "baked_utc":  "2026-09-17T16:16:37Z"
+}

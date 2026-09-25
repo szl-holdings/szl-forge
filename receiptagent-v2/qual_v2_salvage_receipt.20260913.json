@@ -1,0 +1,12 @@
+{
+  "label": "MEASURED",
+  "test": "merged-vs-adapter greedy equivalence (chat-template prompts)",
+  "prompts": 5,
+  "exact_matches": 5,
+  "rate": 1.0,
+  "eval_source": "C:\\Users\\steph\\szl-forge\\receiptagent\\eval.jsonl",
+  "merged_model": "merged\\szl-receiptagent-qwen35-0.8b-v2-salvaged",
+  "publication_eligible": true,
+  "hub_write": false,
+  "note": "adapter behavior was previously qualified; this tests merge fidelity"
+}

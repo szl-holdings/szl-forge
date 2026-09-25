@@ -1,0 +1,112 @@
+name: Kernel 0.16.1 source execution and provider observation
+on:
+  pull_request:
+    paths:
+      - tools/qualify_kernel_0161.py
+      - tools/test_qualify_kernel_0161.py
+      - tools/kernel-0161-qualification.Dockerfile
+      - tools/publish_szl_kernels.py
+      - .github/workflows/kernel-0161-qualification.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: kernel-0161-qualification-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  cpu-observation:
+    name: CPU ${{ matrix.lane }} observation (not production)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        lane: [source, provider]
+    env:
+      CONTAINER_NAME: szl-k0161-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.lane }}
+      LANE: ${{ matrix.lane }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Install pinned SDK for typed offline tree regressions
+        run: python -m pip install --disable-pip-version-check 'huggingface-hub==1.26.0'
+      - name: Run offline control regressions
+        env:
+          PYTHONPATH: tools
+        run: python -m unittest -v tools.test_qualify_kernel_0161
+      - name: Checkout admitted kernel source, not moving main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: szl-holdings/szl-kernels
+          ref: 13668fd1b22890d6a3b92d3cd9ee516ec5a267c9
+          path: source-candidate
+          persist-credentials: false
+      - name: Bind source and build disposable client image
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C source-candidate rev-parse HEAD)" = 13668fd1b22890d6a3b92d3cd9ee516ec5a267c9
+          git rev-parse HEAD > forge-source.txt
+          git -C source-candidate rev-parse HEAD > kernel-source.txt
+          docker build --iidfile kernel-image.txt -f tools/kernel-0161-qualification.Dockerfile .
+          image=$(cat kernel-image.txt)
+          [[ "$image" =~ ^sha256:[0-9a-f]{64}$ ]]
+          docker image inspect "$image" > kernel-image-inspect.json
+          docker run --rm --network=none --read-only --cap-drop=ALL \
+            --security-opt=no-new-privileges --entrypoint=cat "$image" \
+            /dependency-install-report.json > dependency-install-report.json
+          docker run --rm --network=none --read-only --cap-drop=ALL \
+            --security-opt=no-new-privileges --entrypoint=cat "$image" \
+            /torch-install-report.json > torch-install-report.json
+      - name: Execute isolated observation with real installed client
+        shell: bash
+        run: |
+          set -euo pipefail
+          image=$(cat kernel-image.txt)
+          network=none
+          if [[ "$LANE" == provider ]]; then network=bridge; fi
+          timeout --foreground 240s docker run --name "$CONTAINER_NAME" --rm \
+            --network="$network" --read-only --cap-drop=ALL --security-opt=no-new-privileges \
+            --pids-limit=128 --memory=3g --cpus=2 --user=65532:65532 \
+            --tmpfs=/tmp:rw,nosuid,nodev,noexec,size=128m \
+            --tmpfs=/cache:rw,nosuid,nodev,noexec,size=256m \
+            "$image" --lane "$LANE" > kernel-observation.json 2> kernel-observation.stderr
+      - name: Independently validate fixed receipt schema and numerical values
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/qualify_kernel_0161.py --lane "$LANE" \
+            --validate kernel-observation.json \
+            --source-root source-candidate/build/torch-universal/szl_kernels
+          cat kernel-observation.json
+      - name: Verify no observation container remains
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          ids=$(docker container ls -aq --filter "name=^/${CONTAINER_NAME}$")
+          if [[ -n "$ids" ]]; then docker rm --force "$CONTAINER_NAME"; fi
+          remaining=$(docker container ls -aq --filter "name=^/${CONTAINER_NAME}$")
+          test -z "$remaining"
+          printf '{"container_absent":true}\n' > cleanup.json
+      - name: Retain actual observations, including blocked or failed outcomes
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: kernel-0161-${{ matrix.lane }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            kernel-observation.json
+            kernel-observation.stderr
+            forge-source.txt
+            kernel-source.txt
+            kernel-image.txt
+            kernel-image-inspect.json
+            dependency-install-report.json
+            torch-install-report.json
+            cleanup.json
+          if-no-files-found: error
+          retention-days: 30

@@ -12,6 +12,12 @@ def parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="szl-model-lab")
     s = p.add_subparsers(dest="command", required=True)
     s.add_parser("plan", help="Print research tracks; no side effects")
+    resource = s.add_parser("storage-plan", help="Offline Spark KV calculation; never dispatch")
+    resource.add_argument("--tokens", type=int, default=32768)
+    resource.add_argument("--batch", type=int, default=1)
+    resource.add_argument("--config", type=Path)
+    resource.add_argument("--config-sha256")
+    resource.add_argument("--model-revision")
     v = s.add_parser("validate", help="Validate a local, split-labeled dataset")
     v.add_argument("--track", choices=TRACKS, required=True)
     v.add_argument("--data", type=Path, required=True)
@@ -39,6 +45,19 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.command == "plan":
             result = {"tracks": catalog(), "training_started": False, "hf_publication": False}
+        elif args.command == "storage-plan":
+            from .storage import SparkShape, memory_plan, reference_plan
+            from .safeio import read_regular
+            supplied = (args.config is not None, args.config_sha256 is not None, args.model_revision is not None)
+            if any(supplied) and not all(supplied):
+                raise ValueError("config_digest_and_revision_required_together")
+            if args.config is None:
+                result = reference_plan(args.tokens, args.batch)
+            else:
+                raw = read_regular(args.config, 65536)
+                shape = SparkShape.from_config(raw, args.config_sha256)
+                result = memory_plan(shape, tokens=args.tokens, batch=args.batch,
+                                     model_revision=args.model_revision, config_sha256=args.config_sha256)
         elif args.command == "validate":
             from .data import Dataset
             result = Dataset.read(args.data, args.track).summary()

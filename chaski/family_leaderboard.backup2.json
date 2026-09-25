@@ -1,0 +1,15 @@
+{
+  "schema": "szl.chaski-family-leaderboard/v1",
+  "collection": "research-only",
+  "winner": null,
+  "publication_eligible": false,
+  "gate": "named-n-bakeoff",
+  "receipt": "chaski/bakeoff_named_n.receipt.json",
+  "rows": [
+    {"id": "base-qwen35-0.8b", "json_draft": "0/5", "adversarial_refuse": "6/6", "promote": false},
+    {"id": "chaski-r2", "json_draft": "3/5", "adversarial_refuse": "6/6", "promote": false},
+    {"id": "chaski-5050", "json_draft": "0/5", "adversarial_refuse": "0/6", "promote": false},
+    {"id": "SZLHOLDINGS/chaski", "json_draft": "0/5", "adversarial_refuse": "6/6", "promote": false},
+    {"id": "SZLHOLDINGS/A11OY-MINI", "json_draft": null, "adversarial_refuse": null, "promote": false, "note": "GGUF of failed parent. Unpin or rebuild after a winning parent exists."}
+  ]
+}
