@@ -12,6 +12,8 @@ tags:
   - alloy
 ---
 
+> **SOFTWARE / do-not-promote / not the product origin.** Proposal-only research SKU; not A11oy and not the flagship product.
+
 <p align="center">
   <a href="https://huggingface.co/SZLHOLDINGS/SZL-Forge-1.5B-ReceiptAgent/blob/main/training_receipt.signed.json"><img alt="receipts: training + eval signed" src="https://img.shields.io/badge/receipts-training%20%2B%20eval%20signed-3af4c8?style=flat-square&labelColor=0b0f1a"></a>
   <a href="https://huggingface.co/SZLHOLDINGS/SZL-Forge-1.5B-ReceiptAgent/blob/main/eval_receipt.signed.json"><img alt="adversarial refusal 6 of 6" src="https://img.shields.io/badge/adversarial%20refusal-6%2F6-b96bff?style=flat-square&labelColor=0b0f1a"></a>

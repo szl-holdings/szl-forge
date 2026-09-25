@@ -1,0 +1,107 @@
+name: Hugging Face evidence audit
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - name: Install read-only audit dependencies
+        run: python -m pip install 'PyYAML==6.0.3' 'huggingface-hub==1.26.0'
+      - name: Observe immutable Hub revisions and retain findings
+        env:
+          AUDIT_HF_ORG_TOKEN: ${{ secrets.HF_ORG_TOKEN }}
+          AUDIT_HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          AUDIT_HF_ORG_TOKEN1: ${{ secrets.HF_ORG_TOKEN1 }}
+          HF_HUB_DISABLE_TELEMETRY: '1'
+        run: |
+          mkdir -p reports/hf-evidence-audit
+          cp publishing/evidence-audit-inventory.json reports/hf-evidence-audit/inventory.json
+          python - <<'PY'
+          import hashlib, json, os, subprocess, sys
+          from datetime import datetime, timezone
+          from pathlib import Path
+          from huggingface_hub import get_hf_file_metadata, hf_hub_url
+          root = Path('reports/hf-evidence-audit')
+          record = {key: os.environ[key] for key in ('GITHUB_SHA', 'GITHUB_RUN_ID', 'GITHUB_RUN_ATTEMPT')}
+          record['inventory_sha256'] = hashlib.sha256((root / 'inventory.json').read_bytes()).hexdigest()
+          (root / 'execution.json').write_text(json.dumps(record, indent=2) + '\n', encoding='utf-8')
+
+          # A fixed, small gated file tests read access without fetching weights.
+          # This probe revision is independent of the audit's current-main reads.
+          probe = {
+              'repository': 'SZLHOLDINGS/szl-lambda-gate',
+              'revision': 'e304321776a21fa4d573e814b9f4e005052eaf84',
+              'path': 'MODEL_PROVENANCE.json',
+          }
+          credentials = ('HF_ORG_TOKEN', 'HF_TOKEN', 'HF_ORG_TOKEN1')
+          access = {
+              'observed_at': datetime.now(timezone.utc).isoformat(),
+              'probe': probe, 'attempts': [], 'selected_secret': None,
+              'status': 'HOLD',
+          }
+          selected = None
+          for name in credentials:
+              token = os.environ.get('AUDIT_' + name, '')
+              attempt = {'secret': name, 'result': 'NOT_CONFIGURED'}
+              if token:
+                  try:
+                      metadata = get_hf_file_metadata(
+                          hf_hub_url(probe['repository'], probe['path'],
+                                     revision=probe['revision'], endpoint='https://huggingface.co'),
+                          token=token, timeout=10,
+                      )
+                      attempt['result'] = ('READ_ACCESS_OBSERVED'
+                          if metadata.commit_hash == probe['revision'] else 'REVISION_MISMATCH')
+                  except Exception as exc:
+                      # Do not serialize exceptions, request headers, or tokens.
+                      response = getattr(exc, 'response', None)
+                      code = getattr(response, 'status_code', None)
+                      attempt['result'] = 'HTTP_' + str(code) if isinstance(code, int) else 'READ_FAILED'
+              access['attempts'].append(attempt)
+              if attempt['result'] == 'READ_ACCESS_OBSERVED':
+                  selected = token
+                  access['selected_secret'] = name
+                  access['status'] = 'READ_ACCESS_OBSERVED'
+                  break
+          (root / 'credential-read-preflight.json').write_text(
+              json.dumps(access, indent=2) + '\n', encoding='utf-8')
+
+          # Keep credentials in memory only; the child receives only the selected
+          # token, never the alternate candidates or a token persisted to disk.
+          child_env = dict(os.environ)
+          for name in credentials:
+              child_env.pop('AUDIT_' + name, None)
+          child_env.pop('HUGGING_FACE_HUB_TOKEN', None)
+          child_env['HF_TOKEN'] = selected or ''
+          child_env['HF_HUB_DISABLE_IMPLICIT_TOKEN'] = '0' if selected else '1'
+          result = subprocess.run([
+              sys.executable, 'tools/audit_hf_estate.py',
+              '--inventory', 'publishing/evidence-audit-inventory.json',
+              '--output', str(root / 'audit.md'),
+              '--snapshot-dir', str(root / 'snapshots'), '--fail-on-findings',
+          ], env=child_env, check=False)
+          # Still collect public findings when no candidate can read the gated
+          # source, but lack of gated access must keep this run non-green.
+          raise SystemExit(result.returncode or (1 if selected is None else 0))
+          PY
+      - name: Retain reports and replayable source snapshots
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: hf-evidence-audit-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: reports/hf-evidence-audit
+          if-no-files-found: error
+          retention-days: 30
