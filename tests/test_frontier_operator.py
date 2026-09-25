@@ -8,6 +8,7 @@ import json
 import os
 from pathlib import Path
 import sys
+import tempfile
 import unittest
 from unittest.mock import patch
 
@@ -524,7 +525,39 @@ class ResourceAndTruthGuards(unittest.TestCase):
 
     def test_redaction_preserves_distinct_public_hf_json_keys(self):
         value = {"hf_revision": SHA, "hf_publication_revision": BASE}
-        self.assertEqual(op.strict_json(op.sanitize(json.dumps(value))), value)
+        self.assertEqual(op.strict_json(json.dumps(op.redact_output(value))), value)
+
+    def test_json_file_redacts_unescaped_values_without_mutating_evidence(self):
+        secret = 'synthetic\\"secret\nvalue'
+        value = {"paths": ['password=abc"def', {"detail": f"prefix {secret} suffix"}],
+                 "count": 2, "available": True, "missing": None,
+                 "hf_revision": SHA, "hf_publication_revision": BASE}
+        original = copy.deepcopy(value)
+        original_digest = op.digest(value)
+        with tempfile.TemporaryDirectory() as directory, \
+             patch.dict(os.environ, {"TEST_API_TOKEN": secret}):
+            destination = Path(directory) / "report.json"
+            op.write_json(destination, value)
+            decoded = op.strict_json(destination.read_bytes())
+        self.assertEqual(decoded["paths"], ['[REDACTED]"def', {"detail": "prefix [REDACTED] suffix"}])
+        self.assertEqual({key: decoded[key] for key in value if key != "paths"},
+                         {key: value[key] for key in value if key != "paths"})
+        self.assertEqual(value, original)
+        self.assertEqual(op.digest(value), original_digest)
+
+    def test_cli_json_redacts_quoted_backslash_secret_before_serialization(self):
+        secret = 'synthetic\\"cli-secret'
+        value = {"dataset_id": "a/b", "revision": SHA,
+                 "paths": ['Bearer abc"def', f"prefix {secret} suffix"]}
+        original = copy.deepcopy(value)
+        output = io.StringIO()
+        with patch.object(op, "hf_dataset_snapshot", return_value=value), \
+             patch.dict(os.environ, {"TEST_API_TOKEN": secret}), patch("sys.stdout", output):
+            status = op.main(["hf-dataset"])
+        decoded = op.strict_json(output.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(decoded["value"]["paths"], ['[REDACTED]"def', "prefix [REDACTED] suffix"])
+        self.assertEqual(value, original)
 
     def test_output_and_timeout_are_bounded_without_raw_files(self):
         with self.assertRaises(op.Unavailable):
