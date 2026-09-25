@@ -111,7 +111,12 @@ class ClassifyTests(unittest.TestCase):
         self.assertTrue(row["evaluator"]["independent"])
         self.assertEqual(row["altk"]["consistency_gap"], 0.5)
         self.assertIn("hub_module_present", row["pacing"]["holds"])
-        self.assertEqual(len(row["pacing"]["reportable_today"]), 5)
+        today = row["pacing"]["reportable_today"]
+        self.assertEqual(len(today), 6)
+        self.assertEqual(today[5]["question"], "Is HAL (2p-1)^2 kept off the ALTK and Λ axes?")
+        self.assertEqual(today[5]["answer"], "YES")
+        self.assertFalse(row["pacing"]["production_authorized"])
+        self.assertFalse(row["pacing"]["agi_claim"])
 
 
 if __name__ == "__main__":
