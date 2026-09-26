@@ -36,11 +36,16 @@
           }
         ],
         "artifact_binding": {
-          "evidence_files": [
-            "eval_report.json"
-          ],
           "artifact_paths": [
             "adapter_model.safetensors"
+          ],
+          "bindings": [
+            {
+              "artifact_path": "adapter_model.safetensors",
+              "evidence_file": "canonical/frontier/evaluation/identity_bindings/evals/brain-navigator-r2_7fe3872fcb78_evaluation_binding_20260926-165438.json",
+              "artifact_field": "evaluated_files[1].path",
+              "sha256_field": "evaluated_files[1].sha256"
+            }
           ]
         }
       },
@@ -86,6 +91,18 @@
           "url": "https://raw.githubusercontent.com/szl-holdings/szl-forge/a6b58f623185820eddfb0b279d21b7d81b87137c/frontier/evaluation/gate_runs/brain-navigator-r2_ad510c4b0542_20260915T040842Z_receipt.json",
           "revision": "a6b58f623185820eddfb0b279d21b7d81b87137c",
           "sha256": "e014642995b6461330cae8e98835394e1689c25a2c7ec13b6dd575be30eda336"
+        },
+        {
+          "path": "canonical/frontier/evaluation/identity_bindings/evals/brain-navigator-r2_7fe3872fcb78_evaluation_binding_20260926-165438.json",
+          "url": "https://raw.githubusercontent.com/szl-holdings/szl-forge/f6cc04dc584e91056a949351330224d3dcdd30ff/frontier/evaluation/identity_bindings/evals/brain-navigator-r2_7fe3872fcb78_evaluation_binding_20260926-165438.json",
+          "revision": "f6cc04dc584e91056a949351330224d3dcdd30ff",
+          "sha256": "c20e08ab920b2c8d2c00bdb4113b887e10738862506acebd6ce27a07593db926"
+        },
+        {
+          "path": "canonical/frontier/evaluation/identity_bindings/evals/brain-navigator-r2_7fe3872fcb78_lane-l2_20260926-165438.receipt.json",
+          "url": "https://raw.githubusercontent.com/szl-holdings/szl-forge/f6cc04dc584e91056a949351330224d3dcdd30ff/frontier/evaluation/identity_bindings/evals/brain-navigator-r2_7fe3872fcb78_lane-l2_20260926-165438.receipt.json",
+          "revision": "f6cc04dc584e91056a949351330224d3dcdd30ff",
+          "sha256": "41ca680a7bc1d1b16f132129de8c613760845109c7606ab62011515705501342"
         }
       ],
       "required_boundaries": [
