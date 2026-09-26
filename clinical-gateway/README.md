@@ -76,6 +76,25 @@ performance. The output contains an explicit all-false authority map and is not
 called by ingestion, MLLP ACK handling, clinical review, FHIR generation, or
 release logic.
 
+### Descriptive evaluation and the next data gate
+
+Run the fixed model against the existing public synthetic test split without
+training, changing weights, or choosing another threshold:
+
+```bash
+python -I -B clinical-gateway/tools/evaluate_operational_health_model.py \
+  --output oac-operational-evaluation.json
+```
+
+The new output contains source hashes, individual observation hashes, confusion
+counts, precision/recall intervals, Brier score and descriptive calibration bins.
+Replaying a public synthetic test is not new blind-test evidence. The evaluator
+does not grant deployment or clinical authority and does not accept real patient
+data. An optional admission declaration is checked for shape, not independently
+verified or accepted as a real training corpus. See
+[the evaluation contract](docs/operational-health-evaluation.md) for the limits
+and the evidence required before a future operational-data study.
+
 ### Exact GitHub / Hugging Face alignment
 
 Reproduction and publication are separate checks. The read-only verifier below
