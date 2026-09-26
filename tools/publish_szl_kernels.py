@@ -24,6 +24,20 @@ from huggingface_hub import CommitOperationAdd, HfApi, hf_hub_download
 EXPECTED_REPO_ID = "SZLHOLDINGS/szl-kernels"
 EXPECTED_SOURCE_REPOSITORY = "szl-holdings/szl-kernels"
 EXPECTED_PUBLISHER_REPOSITORY = "szl-holdings/szl-forge"
+EXPECTED_SOURCE_CHECKS = frozenset(
+    {
+        "Kernel contract",
+        "MiniEmbed artifact replay",
+        "Source binding dry run (no publication)",
+    }
+)
+GITHUB_ACTIONS_APP_ID = 15368
+EXPECTED_PUBLISHER_WORKFLOW = ".github/workflows/publish-szl-kernels.yml"
+EXPECTED_PUBLISHER_WORKFLOW_REF = (
+    f"{EXPECTED_PUBLISHER_REPOSITORY}/{EXPECTED_PUBLISHER_WORKFLOW}"
+    "@refs/heads/main"
+)
+EXPECTED_SIGNER_IDENTITY = f"https://github.com/{EXPECTED_PUBLISHER_WORKFLOW_REF}"
 EXPECTED_KERNEL_PACKAGE_VERSION = "0.2.0"
 KERNEL_RUNTIME_CLIENT_VERSION = "0.16.0"
 KERNEL_RUNTIME_IMAGE = f"szl-kernel-runtime:{KERNEL_RUNTIME_CLIENT_VERSION}"
@@ -49,6 +63,32 @@ KERNEL_BUILDER_SOURCE_REVISION = (
     "633246310320d85def0c67d62c7912fd444a842f"
 )
 KERNEL_BINDING_FILENAME = "source-binding.json"
+KERNEL_SIGNATURE_FILENAME = "metadata.json.sigstore"
+KERNEL_IMMUTABLE_ROOT_FILES = frozenset({".gitattributes", "LICENSE", "README.md"})
+KERNEL_SIGNATURE_MANIFEST_SCHEMA = "szl.kernel-signature-transfer/v1"
+COSIGN_VERSION = "v3.1.3"
+SIGSTORE_OIDC_ISSUER = "https://token.actions.githubusercontent.com"
+EXPECTED_WORKFLOW_REF = "refs/heads/main"
+EXPECTED_WORKFLOW_TRIGGER = "workflow_dispatch"
+COSIGN_TIMEOUT_SECONDS = 120
+COSIGN_BUNDLE_MAX_BYTES = 1024 * 1024
+SIGNATURE_MANIFEST_MAX_BYTES = 64 * 1024
+SUBPROCESS_BASE_ENV_ALLOWLIST = (
+    "CI",
+    "GITHUB_ACTIONS",
+    "HOME",
+    "PATH",
+    "RUNNER_TEMP",
+    "SSL_CERT_DIR",
+    "SSL_CERT_FILE",
+    "TEMP",
+    "TMP",
+    "TMPDIR",
+)
+OIDC_ENV_ALLOWLIST = (
+    "ACTIONS_ID_TOKEN_REQUEST_TOKEN",
+    "ACTIONS_ID_TOKEN_REQUEST_URL",
+)
 SENSITIVE_ENV_MARKERS = (
     "TOKEN",
     "SECRET",
@@ -75,6 +115,21 @@ FIRST_CLASS_KERNEL_FILES = {
         f"build/{KERNEL_VARIANT}/retrieval.py"
     ),
 }
+KERNEL_V1_DECLARED_BUILD_FILES = frozenset(
+    {
+        f"build/{KERNEL_VARIANT}/{Path(kernel_path).name}"
+        for kernel_path in FIRST_CLASS_KERNEL_FILES.values()
+    }
+    | {
+        f"build/{KERNEL_VARIANT}/szl_kernels/{Path(kernel_path).name}"
+        for kernel_path in FIRST_CLASS_KERNEL_FILES.values()
+    }
+    | {
+        f"build/{KERNEL_VARIANT}/{KERNEL_BINDING_FILENAME}",
+        f"build/{KERNEL_VARIANT}/{KERNEL_SIGNATURE_FILENAME}",
+        f"build/{KERNEL_VARIANT}/metadata.json",
+    }
+)
 # These are pre-update checks: an existing v1 need not contain the new operation.
 KERNEL_EXISTING_REQUIRED_FILES = {
     ".gitattributes",
@@ -87,12 +142,7 @@ KERNEL_EXISTING_REQUIRED_FILES = {
 }
 KERNEL_REQUIRED_FILES_BY_BRANCH = {
     "main": {"README.md"},
-    "v1": {
-        f"build/{KERNEL_VARIANT}/szl_kernels/__init__.py",
-        f"build/{KERNEL_VARIANT}/szl_kernels/_chain.py",
-        f"build/{KERNEL_VARIANT}/szl_kernels/_ops.py",
-        f"build/{KERNEL_VARIANT}/metadata.json",
-    },
+    "v1": set(KERNEL_EXISTING_REQUIRED_FILES),
 }
 FIRST_CLASS_REQUIRED_SOURCE_FILES = {
     FIRST_CLASS_README_SOURCE,
@@ -116,6 +166,37 @@ class PublicationError(RuntimeError):
 
 def canonical_json(payload: Any) -> str:
     return json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+
+
+def bounded_error_type(exc: BaseException) -> str:
+    """Return a bounded identifier without serializing an exception message."""
+    value = re.sub(r"[^A-Za-z0-9_.]", "_", type(exc).__name__)[:128]
+    if not value or not (value[0].isalpha() or value[0] == "_"):
+        value = f"_{value}"[:128]
+    return value
+
+
+def record_publication_failure(
+    result: dict[str, Any],
+    report_path: Path,
+    *,
+    stage: str,
+    exc: BaseException,
+    provider_write_attempted: bool,
+) -> None:
+    """Persist a terminal bounded failure state before propagating an error."""
+    result["status"] = (
+        "PUBLICATION_FAILED_AFTER_PROVIDER_WRITE_ATTEMPT"
+        if provider_write_attempted
+        else "PUBLICATION_FAILED_NO_PROVIDER_WRITE"
+    )
+    result["failure"] = {
+        "stage": stage,
+        "error_type": bounded_error_type(exc),
+        "provider_write_attempted": provider_write_attempted,
+    }
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.write_text(canonical_json(result), encoding="utf-8")
 
 
 def runtime_evidence_from_logs(output: str) -> dict[str, Any] | None:
@@ -206,6 +287,7 @@ def load_authorization(
         source.get("repository") != EXPECTED_SOURCE_REPOSITORY
         or source.get("revision") != source_revision
         or source.get("protected_main") != source_revision
+        or source.get("branch_protection_observed") is not True
         or source.get("signature_verified") is not True
     ):
         raise PublicationError("source authorization does not bind the requested revision")
@@ -213,9 +295,62 @@ def load_authorization(
         publisher.get("repository") != EXPECTED_PUBLISHER_REPOSITORY
         or publisher.get("revision") != publisher_revision
         or publisher.get("protected_main") != publisher_revision
+        or publisher.get("branch_protection_observed") is not True
     ):
         raise PublicationError("publisher authorization does not bind this Forge revision")
+    checks = source.get("checks")
+    if (
+        type(checks) is not list
+        or len(checks) != len(EXPECTED_SOURCE_CHECKS)
+        or any(
+            type(item) is not dict or type(item.get("name")) is not str
+            for item in checks
+        )
+        or {item["name"] for item in checks} != EXPECTED_SOURCE_CHECKS
+    ):
+        raise PublicationError("source authorization required checks are incomplete")
+    if any(
+        type(item) is not dict
+        or item.get("app_id") != GITHUB_ACTIONS_APP_ID
+        or item.get("status") != "completed"
+        or item.get("conclusion") != "success"
+        for item in checks
+    ):
+        raise PublicationError("source authorization checks are not successful")
     return payload
+
+
+def authorization_binding(payload: dict[str, Any]) -> dict[str, Any]:
+    """Project fresh authorization into deterministic exact-head facts."""
+    source = payload["source"]
+    publisher = payload["publisher"]
+    checks = sorted(source["checks"], key=lambda item: item["name"])
+    return {
+        "schema": "szl.kernels-release-authorization-binding/v1",
+        "status": payload["status"],
+        "source": {
+            "repository": source["repository"],
+            "revision": source["revision"],
+            "protected_main": source["protected_main"],
+            "branch_protection_observed": True,
+            "signature_verified": True,
+            "required_checks": [
+                {
+                    "name": item["name"],
+                    "app_id": item["app_id"],
+                    "status": item["status"],
+                    "conclusion": item["conclusion"],
+                }
+                for item in checks
+            ],
+        },
+        "publisher": {
+            "repository": publisher["repository"],
+            "revision": publisher["revision"],
+            "protected_main": publisher["protected_main"],
+            "branch_protection_observed": True,
+        },
+    }
 
 
 def local_evidence(
@@ -331,22 +466,27 @@ def first_class_kernel_before(
     for branch in KERNEL_BRANCHES:
         expected_paths = KERNEL_REQUIRED_FILES_BY_BRANCH[branch]
         target = branches[branch]
-        observed_files = {
-            entry.path
-            for entry in api.list_repo_tree(
+        observed_files = set(
+            api.list_repo_files(
                 EXPECTED_REPO_ID,
                 repo_type=KERNEL_REPO_TYPE,
                 revision=target,
-                recursive=True,
                 token=token,
             )
-            if getattr(entry, "path", None)
-        }
+        )
         missing = sorted(expected_paths - observed_files)
         if missing:
             raise PublicationError(
                 f"first-class Kernel {branch} is missing package files: {missing}"
             )
+        if branch == "v1":
+            allowed_files = KERNEL_IMMUTABLE_ROOT_FILES | KERNEL_V1_DECLARED_BUILD_FILES
+            undeclared_files = sorted(observed_files - allowed_files)
+            if undeclared_files:
+                raise PublicationError(
+                    "first-class Kernel v1 contains undeclared immutable files before "
+                    f"publication: {undeclared_files}"
+                )
         branch_evidence[branch] = {
             "revision": target,
             "package_files_present": len(expected_paths & observed_files),
@@ -393,16 +533,15 @@ def publisher_identity(
         raise PublicationError("publisher revision must be an exact Git SHA")
     if not run_id.isdigit() or not run_attempt.isdigit():
         raise PublicationError("publisher run identity is malformed")
-    workflow_path = ".github/workflows/publish-szl-kernels.yml"
-    if not workflow_ref.startswith(
-        f"{EXPECTED_PUBLISHER_REPOSITORY}/{workflow_path}@"
-    ):
-        raise PublicationError("publisher workflow reference is malformed")
+    workflow_path = EXPECTED_PUBLISHER_WORKFLOW
+    if workflow_ref != EXPECTED_PUBLISHER_WORKFLOW_REF:
+        raise PublicationError("publisher workflow must run from protected main")
     return {
         "repository": repository,
         "revision": revision,
         "workflow_path": workflow_path,
         "workflow_ref": workflow_ref,
+        "certificate_identity": EXPECTED_SIGNER_IDENTITY,
         "workflow_url": (
             f"https://github.com/{repository}/blob/{revision}/{workflow_path}"
         ),
@@ -532,6 +671,321 @@ def stage_first_class_kernel(
     return expected
 
 
+def _subprocess_base_environment() -> dict[str, str]:
+    """Return a credentialless environment for pinned helper processes."""
+    return {
+        key: os.environ[key]
+        for key in SUBPROCESS_BASE_ENV_ALLOWLIST
+        if key in os.environ
+    }
+
+
+def _cosign_signing_environment() -> dict[str, str]:
+    """Add GitHub OIDC authority only for the single signing subprocess."""
+    environment = _subprocess_base_environment()
+    missing = [key for key in OIDC_ENV_ALLOWLIST if not os.environ.get(key)]
+    if missing:
+        raise PublicationError("GitHub OIDC signing authority is unavailable")
+    environment.update({key: os.environ[key] for key in OIDC_ENV_ALLOWLIST})
+    return environment
+
+
+def require_cosign_executable() -> str:
+    executable = shutil.which("cosign")
+    if executable is None:
+        raise PublicationError("pinned cosign is not installed")
+    try:
+        observed = subprocess.run(
+            [executable, "version", "--json"],
+            check=False,
+            capture_output=True,
+            text=True,
+            env=_subprocess_base_environment(),
+            timeout=COSIGN_TIMEOUT_SECONDS,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise PublicationError("unable to verify the pinned cosign version") from exc
+    try:
+        payload = json.loads(observed.stdout)
+    except json.JSONDecodeError as exc:
+        raise PublicationError("cosign returned malformed version evidence") from exc
+    version = payload.get("gitVersion") if isinstance(payload, dict) else None
+    if observed.returncode != 0 or version != COSIGN_VERSION:
+        raise PublicationError(
+            f"cosign version drifted (expected {COSIGN_VERSION!r}, "
+            f"observed {version!r})"
+        )
+    return executable
+
+
+def _kernel_signature_evidence(
+    staging_root: Path,
+    *,
+    certificate_identity: str,
+) -> tuple[dict[str, Any], bytes]:
+    variant_root = staging_root / "build" / KERNEL_VARIANT
+    metadata_path = variant_root / "metadata.json"
+    bundle_path = variant_root / KERNEL_SIGNATURE_FILENAME
+    try:
+        bundle_size = bundle_path.stat().st_size
+        if bundle_path.is_symlink() or not (0 < bundle_size <= COSIGN_BUNDLE_MAX_BYTES):
+            raise PublicationError("kernel signature bundle failed local validation")
+        bundle_bytes = bundle_path.read_bytes()
+        bundle = json.loads(bundle_bytes)
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise PublicationError("kernel signature bundle failed local validation") from exc
+    if (
+        certificate_identity != EXPECTED_SIGNER_IDENTITY
+        or not metadata_path.is_file()
+        or not isinstance(bundle, dict)
+        or len(bundle_bytes) != bundle_size
+    ):
+        raise PublicationError("kernel signature bundle failed local validation")
+    return (
+        {
+            "status": "SIGNED_AND_IDENTITY_VERIFIED",
+            "tool": "cosign",
+            "tool_version": COSIGN_VERSION,
+            "certificate_identity": certificate_identity,
+            "oidc_issuer": SIGSTORE_OIDC_ISSUER,
+            "metadata_sha256": file_sha256(metadata_path),
+            "bundle_path": f"build/{KERNEL_VARIANT}/{KERNEL_SIGNATURE_FILENAME}",
+            "bundle_sha256": hashlib.sha256(bundle_bytes).hexdigest(),
+            "bundle_bytes": len(bundle_bytes),
+        },
+        bundle_bytes,
+    )
+
+
+def sign_kernel_metadata(
+    staging_root: Path,
+    *,
+    certificate_identity: str,
+    publisher_revision: str,
+) -> dict[str, Any]:
+    """Keylessly sign staged metadata and verify the exact workflow identity."""
+    if certificate_identity != EXPECTED_SIGNER_IDENTITY:
+        raise PublicationError("kernel signer identity is not the protected publisher workflow")
+    variant_root = staging_root / "build" / KERNEL_VARIANT
+    metadata_path = variant_root / "metadata.json"
+    bundle_path = variant_root / KERNEL_SIGNATURE_FILENAME
+    if not metadata_path.is_file():
+        raise PublicationError("staged kernel metadata is missing")
+    if bundle_path.exists():
+        raise PublicationError("staged kernel signature bundle already exists")
+
+    if FULL_SHA_RE.fullmatch(publisher_revision) is None:
+        raise PublicationError("kernel signer revision is not an exact Git SHA")
+    executable = require_cosign_executable()
+    signing_environment = _cosign_signing_environment()
+    try:
+        signed = subprocess.run(
+            [
+                executable,
+                "sign-blob",
+                "--yes",
+                "--bundle",
+                str(bundle_path),
+                str(metadata_path),
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+            env=signing_environment,
+            timeout=COSIGN_TIMEOUT_SECONDS,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise PublicationError("kernel metadata signing did not complete") from exc
+    if signed.returncode != 0:
+        # Cosign diagnostics are intentionally not propagated: they are outside
+        # this publisher's schema and could contain ambient runner details.
+        raise PublicationError("kernel metadata signing failed")
+    verify_kernel_metadata_signature(
+        staging_root,
+        certificate_identity=certificate_identity,
+        publisher_revision=publisher_revision,
+        executable=executable,
+    )
+    evidence, _ = _kernel_signature_evidence(
+        staging_root,
+        certificate_identity=certificate_identity,
+    )
+    evidence["publisher_revision"] = publisher_revision
+    return evidence
+
+
+def verify_kernel_metadata_signature(
+    staging_root: Path,
+    *,
+    certificate_identity: str,
+    publisher_revision: str,
+    executable: str | None = None,
+) -> None:
+    """Verify the bundle without giving Cosign OIDC or provider credentials."""
+    if certificate_identity != EXPECTED_SIGNER_IDENTITY:
+        raise PublicationError("kernel signer identity is not the protected publisher workflow")
+    if FULL_SHA_RE.fullmatch(publisher_revision) is None:
+        raise PublicationError("kernel signer revision is not an exact Git SHA")
+    variant_root = staging_root / "build" / KERNEL_VARIANT
+    metadata_path = variant_root / "metadata.json"
+    bundle_path = variant_root / KERNEL_SIGNATURE_FILENAME
+    executable = executable or require_cosign_executable()
+
+    try:
+        verified = subprocess.run(
+            [
+                executable,
+                "verify-blob",
+                str(metadata_path),
+                "--bundle",
+                str(bundle_path),
+                "--certificate-identity",
+                certificate_identity,
+                "--certificate-oidc-issuer",
+                SIGSTORE_OIDC_ISSUER,
+                "--certificate-github-workflow-repository",
+                EXPECTED_PUBLISHER_REPOSITORY,
+                "--certificate-github-workflow-ref",
+                EXPECTED_WORKFLOW_REF,
+                "--certificate-github-workflow-sha",
+                publisher_revision,
+                "--certificate-github-workflow-trigger",
+                EXPECTED_WORKFLOW_TRIGGER,
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+            env=_subprocess_base_environment(),
+            timeout=COSIGN_TIMEOUT_SECONDS,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise PublicationError("kernel metadata signature verification did not complete") from exc
+    if verified.returncode != 0:
+        raise PublicationError("kernel metadata signature verification failed")
+
+
+def validate_kernel_signature_evidence(
+    evidence: Any,
+    *,
+    staging_root: Path,
+    certificate_identity: str,
+    publisher_revision: str,
+) -> bytes:
+    """Bind reported signature evidence to the staged files before upload."""
+    expected, bundle_bytes = _kernel_signature_evidence(
+        staging_root,
+        certificate_identity=certificate_identity,
+    )
+    expected["publisher_revision"] = publisher_revision
+    if type(evidence) is not dict or evidence != expected:
+        raise PublicationError("kernel signature evidence failed validation")
+    return bundle_bytes
+
+
+def write_kernel_signature_transfer(
+    *,
+    staging_root: Path,
+    signature: dict[str, Any],
+    bundle_output: Path,
+    manifest_output: Path,
+    source_revision: str,
+    publisher_revision: str,
+    binding_sha256: str,
+) -> dict[str, Any]:
+    """Write the only data allowed to cross from the OIDC job to publish."""
+    bundle_bytes = validate_kernel_signature_evidence(
+        signature,
+        staging_root=staging_root,
+        certificate_identity=EXPECTED_SIGNER_IDENTITY,
+        publisher_revision=publisher_revision,
+    )
+    manifest = {
+        "schema": KERNEL_SIGNATURE_MANIFEST_SCHEMA,
+        "source_revision": source_revision,
+        "publisher_revision": publisher_revision,
+        "binding_sha256": binding_sha256,
+        "signature": signature,
+    }
+    bundle_output.parent.mkdir(parents=True, exist_ok=True)
+    manifest_output.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with bundle_output.open("xb") as stream:
+            stream.write(bundle_bytes)
+        with manifest_output.open("x", encoding="utf-8", newline="\n") as stream:
+            stream.write(canonical_json(manifest))
+    except FileExistsError as exc:
+        raise PublicationError("kernel signature transfer output already exists") from exc
+    return manifest
+
+
+def consume_kernel_signature_transfer(
+    *,
+    staging_root: Path,
+    bundle_input: Path,
+    manifest_input: Path,
+    source_revision: str,
+    publisher_revision: str,
+    binding_sha256: str,
+    verify_fn: Callable[..., None] = verify_kernel_metadata_signature,
+) -> dict[str, Any]:
+    """Validate and consume a signed bundle in the credential-only job."""
+    try:
+        bundle_size = bundle_input.stat().st_size
+        manifest_size = manifest_input.stat().st_size
+        if (
+            bundle_input.is_symlink()
+            or manifest_input.is_symlink()
+            or not (0 < bundle_size <= COSIGN_BUNDLE_MAX_BYTES)
+            or not (0 < manifest_size <= SIGNATURE_MANIFEST_MAX_BYTES)
+        ):
+            raise PublicationError("kernel signature transfer is invalid")
+        bundle_bytes = bundle_input.read_bytes()
+        manifest_bytes = manifest_input.read_bytes()
+        manifest = json.loads(manifest_bytes)
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise PublicationError("kernel signature transfer is unreadable") from exc
+    if (
+        type(manifest) is not dict
+        or set(manifest)
+        != {
+            "schema",
+            "source_revision",
+            "publisher_revision",
+            "binding_sha256",
+            "signature",
+        }
+        or manifest["schema"] != KERNEL_SIGNATURE_MANIFEST_SCHEMA
+        or manifest["source_revision"] != source_revision
+        or manifest["publisher_revision"] != publisher_revision
+        or manifest["binding_sha256"] != binding_sha256
+        or len(bundle_bytes) != bundle_size
+        or len(manifest_bytes) != manifest_size
+    ):
+        raise PublicationError("kernel signature transfer failed binding validation")
+    bundle_target = (
+        staging_root
+        / "build"
+        / KERNEL_VARIANT
+        / KERNEL_SIGNATURE_FILENAME
+    )
+    if bundle_target.exists():
+        raise PublicationError("staged kernel signature bundle already exists")
+    bundle_target.write_bytes(bundle_bytes)
+    signature = manifest["signature"]
+    validate_kernel_signature_evidence(
+        signature,
+        staging_root=staging_root,
+        certificate_identity=EXPECTED_SIGNER_IDENTITY,
+        publisher_revision=publisher_revision,
+    )
+    verify_fn(
+        staging_root,
+        certificate_identity=EXPECTED_SIGNER_IDENTITY,
+        publisher_revision=publisher_revision,
+    )
+    return signature
+
+
 def require_kernel_builder_executable() -> str:
     executable = shutil.which("kernel-builder")
     if executable is None:
@@ -541,6 +995,7 @@ def require_kernel_builder_executable() -> str:
         check=False,
         capture_output=True,
         text=True,
+        env=_subprocess_base_environment(),
     )
     observed_version = (version.stdout or version.stderr).strip()
     if version.returncode != 0 or observed_version != KERNEL_BUILDER_VERSION_OUTPUT:
@@ -554,7 +1009,7 @@ def require_kernel_builder_executable() -> str:
 
 def upload_first_class_kernel(staging_root: Path, token: str) -> None:
     output_path = staging_root / "kernel-upload.json"
-    environment = os.environ.copy()
+    environment = _subprocess_base_environment()
     environment["HF_TOKEN"] = token
     executable = require_kernel_builder_executable()
     command = [
@@ -1180,7 +1635,25 @@ def verify_kernel_readback(
     revision: str,
     token: str,
     download_fn: Callable[..., str],
+    list_files_fn: Callable[..., list[str]],
 ) -> None:
+    observed_files = set(
+        list_files_fn(
+            EXPECTED_REPO_ID,
+            repo_type=KERNEL_REPO_TYPE,
+            revision=revision,
+            token=token,
+        )
+    )
+    if branch == "v1":
+        expected_immutable_files = set(expected_files) | KERNEL_IMMUTABLE_ROOT_FILES
+        if observed_files != expected_immutable_files:
+            missing = sorted(expected_immutable_files - observed_files)
+            unexpected = sorted(observed_files - expected_immutable_files)
+            raise PublicationError(
+                "first-class Kernel v1 immutable file-set mismatch "
+                f"(missing={missing}, unexpected={unexpected})"
+            )
     for kernel_path, expected in expected_files.items():
         downloaded = Path(
             download_fn(
@@ -1206,21 +1679,35 @@ def run(
     publisher: dict[str, Any],
     publish: bool,
     token: str | None,
+    prepare_signature: bool = False,
+    signature_bundle_output: Path | None = None,
+    signature_manifest_output: Path | None = None,
+    signature_bundle_input: Path | None = None,
+    signature_manifest_input: Path | None = None,
     api: HfApi | None = None,
     download_fn: Callable[..., str] = hf_hub_download,
+    kernel_sign_fn: Callable[..., dict[str, Any]] | None = None,
+    signature_verify_fn: Callable[..., None] = verify_kernel_metadata_signature,
     kernel_upload_fn: Callable[[Path, str], None] = upload_first_class_kernel,
     kernel_runtime_fn: Callable[..., dict[str, Any]] = (
         verify_stable_kernel_runtime_isolated
     ),
 ) -> dict[str, Any]:
+    if prepare_signature and publish:
+        raise PublicationError("signature preparation and publication are separate modes")
+    if prepare_signature and token:
+        raise PublicationError("HF_TOKEN must be absent from the signature preparation job")
+    if publish and any(os.environ.get(key) for key in OIDC_ENV_ALLOWLIST):
+        raise PublicationError("GitHub OIDC authority must be absent from the publication job")
     source_revision = source_revision.strip().lower()
     if FULL_SHA_RE.fullmatch(source_revision) is None:
         raise PublicationError("source revision must be an exact Git SHA")
-    authorization = load_authorization(
+    authorization_observation = load_authorization(
         authorization_path,
         source_revision=source_revision,
         publisher_revision=publisher["revision"],
     )
+    authorization = authorization_binding(authorization_observation)
     contract = load_contract(source_root)
     files = local_evidence(source_root, contract)
     api = api or HfApi(token=token)
@@ -1247,7 +1734,7 @@ def run(
             "files": files,
         },
         "publisher": publisher,
-        "authorization": authorization,
+        "authorization": authorization_observation,
         "observed_hub_before_publication": observed_before["legacy_model"],
         "claims": contract["claims"],
         "limitations": contract["limitations"],
@@ -1255,7 +1742,7 @@ def run(
     legacy_publication_bytes = canonical_json(legacy_publication).encode("utf-8")
     kernel_files = kernel_file_evidence(source_root)
     kernel_binding = {
-        "schema": "szl.hf-first-class-kernel-binding/v1",
+        "schema": "szl.hf-first-class-kernel-binding/v2",
         "artifact": {
             "repo_id": EXPECTED_REPO_ID,
             "repo_type": KERNEL_REPO_TYPE,
@@ -1277,18 +1764,37 @@ def run(
             "kernel_files": kernel_files,
         },
         "publisher": publisher,
-        "authorization": authorization,
+        "signature_policy": {
+            "scheme": "sigstore-keyless",
+            "signed_path": f"build/{KERNEL_VARIANT}/metadata.json",
+            "bundle_path": f"build/{KERNEL_VARIANT}/{KERNEL_SIGNATURE_FILENAME}",
+            "certificate_identity": publisher["certificate_identity"],
+            "oidc_issuer": SIGSTORE_OIDC_ISSUER,
+            "publisher_revision": publisher["revision"],
+            "workflow_ref": EXPECTED_WORKFLOW_REF,
+            "workflow_trigger": EXPECTED_WORKFLOW_TRIGGER,
+            "authority_separation": "OIDC_SIGN_JOB_TO_HF_ONLY_PUBLISH_JOB",
+            "verification": (
+                "PREUPLOAD_IDENTITY_REVISION_AND_EXACT_POSTUPLOAD_READBACK"
+            ),
+        },
+        "authorization_binding": authorization,
         "observed_hub_before_publication": observed_before["first_class_kernel"],
         "claims": contract["claims"],
         "limitations": contract["limitations"],
     }
     kernel_binding_bytes = canonical_json(kernel_binding).encode("utf-8")
     result: dict[str, Any] = {
-        "schema": "szl.kernel-source-binding-report/v3",
-        "mode": "PUBLISH" if publish else "DRY_RUN",
+        "schema": "szl.kernel-source-binding-report/v4",
+        "mode": (
+            "SIGNATURE_PREPARE"
+            if prepare_signature
+            else "PUBLISH" if publish else "DRY_RUN"
+        ),
         "repo_id": EXPECTED_REPO_ID,
         "source_revision": source_revision,
         "publisher": publisher,
+        "authorization_observation": authorization_observation,
         "artifact_tree_sha256": tree_sha256(files),
         "declared_file_count": len(files),
         "targets": {
@@ -1309,10 +1815,65 @@ def run(
                     "status": "NOT_RUN",
                     "client_version": KERNEL_RUNTIME_CLIENT_VERSION,
                 },
+                "signature": {
+                    "status": "NOT_RUN",
+                    "tool": "cosign",
+                    "tool_version": COSIGN_VERSION,
+                },
             },
         },
         "status": "VERIFIED_DRY_RUN",
     }
+    if prepare_signature:
+        if signature_bundle_output is None or signature_manifest_output is None:
+            raise PublicationError("signature transfer output paths are required")
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        result["status"] = "SIGNATURE_PREPARATION_IN_PROGRESS"
+        result["targets"]["first_class_kernel"]["signature"] = {
+            "status": "PENDING",
+            "tool": "cosign",
+            "tool_version": COSIGN_VERSION,
+        }
+        report_path.write_text(canonical_json(result), encoding="utf-8")
+        try:
+            with tempfile.TemporaryDirectory(prefix="szl-kernel-sign-") as temporary:
+                staging_root = Path(temporary)
+                stage_first_class_kernel(
+                    source_root,
+                    kernel_binding_bytes,
+                    staging_root,
+                )
+                signer = kernel_sign_fn or sign_kernel_metadata
+                signature = signer(
+                    staging_root,
+                    certificate_identity=publisher["certificate_identity"],
+                    publisher_revision=publisher["revision"],
+                )
+                write_kernel_signature_transfer(
+                    staging_root=staging_root,
+                    signature=signature,
+                    bundle_output=signature_bundle_output,
+                    manifest_output=signature_manifest_output,
+                    source_revision=source_revision,
+                    publisher_revision=publisher["revision"],
+                    binding_sha256=hashlib.sha256(
+                        kernel_binding_bytes
+                    ).hexdigest(),
+                )
+        except Exception as exc:
+            result["targets"]["first_class_kernel"]["signature"] = {
+                "status": "FAILED",
+                "tool": "cosign",
+                "tool_version": COSIGN_VERSION,
+                "error_type": bounded_error_type(exc),
+            }
+            result["status"] = "SIGNATURE_PREPARATION_FAILED"
+            report_path.write_text(canonical_json(result), encoding="utf-8")
+            raise
+        result["targets"]["first_class_kernel"]["signature"] = signature
+        result["status"] = "SIGNATURE_PREPARED_NO_PROVIDER_WRITE"
+        report_path.write_text(canonical_json(result), encoding="utf-8")
+        return result
     if publish:
         if not token:
             raise PublicationError("HF_TOKEN is required when --publish is used")
@@ -1328,6 +1889,11 @@ def run(
             "status": "PENDING",
             "client_version": KERNEL_RUNTIME_CLIENT_VERSION,
         }
+        result["targets"]["first_class_kernel"]["signature"] = {
+            "status": "PENDING",
+            "tool": "cosign",
+            "tool_version": COSIGN_VERSION,
+        }
         report_path.write_text(canonical_json(result), encoding="utf-8")
 
         with tempfile.TemporaryDirectory(prefix="szl-kernel-upload-") as temporary:
@@ -1337,11 +1903,67 @@ def run(
                 kernel_binding_bytes,
                 staging_root,
             )
-            revalidated_parents = revalidate_kernel_branch_parents(
-                api,
-                observed_before["first_class_kernel"]["branches"],
-                token=token,
-            )
+            try:
+                if kernel_sign_fn is not None:
+                    signature = kernel_sign_fn(
+                        staging_root,
+                        certificate_identity=publisher["certificate_identity"],
+                        publisher_revision=publisher["revision"],
+                    )
+                else:
+                    if (
+                        signature_bundle_input is None
+                        or signature_manifest_input is None
+                    ):
+                        raise PublicationError(
+                            "prepared signature transfer inputs are required"
+                        )
+                    signature = consume_kernel_signature_transfer(
+                        staging_root=staging_root,
+                        bundle_input=signature_bundle_input,
+                        manifest_input=signature_manifest_input,
+                        source_revision=source_revision,
+                        publisher_revision=publisher["revision"],
+                        binding_sha256=hashlib.sha256(
+                            kernel_binding_bytes
+                        ).hexdigest(),
+                        verify_fn=signature_verify_fn,
+                    )
+                bundle_bytes = validate_kernel_signature_evidence(
+                    signature,
+                    staging_root=staging_root,
+                    certificate_identity=publisher["certificate_identity"],
+                    publisher_revision=publisher["revision"],
+                )
+            except Exception as exc:
+                result["targets"]["first_class_kernel"]["signature"] = {
+                    "status": "FAILED",
+                    "tool": "cosign",
+                    "tool_version": COSIGN_VERSION,
+                    "error_type": bounded_error_type(exc),
+                }
+                result["status"] = "SIGNATURE_VALIDATION_FAILED_NO_PROVIDER_WRITE"
+                report_path.write_text(canonical_json(result), encoding="utf-8")
+                raise
+            signature_path = f"build/{KERNEL_VARIANT}/{KERNEL_SIGNATURE_FILENAME}"
+            expected_kernel_files["v1"][signature_path] = bundle_bytes
+            result["targets"]["first_class_kernel"]["signature"] = signature
+            report_path.write_text(canonical_json(result), encoding="utf-8")
+            try:
+                revalidated_parents = revalidate_kernel_branch_parents(
+                    api,
+                    observed_before["first_class_kernel"]["branches"],
+                    token=token,
+                )
+            except Exception as exc:
+                record_publication_failure(
+                    result,
+                    report_path,
+                    stage="KERNEL_PARENT_REVALIDATION",
+                    exc=exc,
+                    provider_write_attempted=False,
+                )
+                raise
             result["targets"]["first_class_kernel"][
                 "parents_revalidated_before_upload"
             ] = revalidated_parents
@@ -1351,7 +1973,23 @@ def run(
                 kernel_upload_fn(staging_root, token)
             except Exception as exc:  # preserve branch state after partial upload
                 upload_error = exc
-            branch_targets = kernel_branch_targets(api, token=token)
+            try:
+                branch_targets = kernel_branch_targets(api, token=token)
+            except Exception as exc:
+                record_publication_failure(
+                    result,
+                    report_path,
+                    stage=(
+                        "KERNEL_UPLOAD"
+                        if upload_error is not None
+                        else "KERNEL_BRANCH_DISCOVERY"
+                    ),
+                    exc=upload_error if upload_error is not None else exc,
+                    provider_write_attempted=True,
+                )
+                if upload_error is not None:
+                    raise upload_error
+                raise
             result["targets"]["first_class_kernel"]["branches_after"] = (
                 branch_targets
             )
@@ -1360,15 +1998,33 @@ def run(
             }
             report_path.write_text(canonical_json(result), encoding="utf-8")
             if upload_error is not None:
+                record_publication_failure(
+                    result,
+                    report_path,
+                    stage="KERNEL_UPLOAD",
+                    exc=upload_error,
+                    provider_write_attempted=True,
+                )
                 raise upload_error
             for branch in KERNEL_BRANCHES:
-                verify_kernel_readback(
-                    expected_kernel_files[branch],
-                    branch=branch,
-                    revision=branch_targets[branch],
-                    token=token,
-                    download_fn=download_fn,
-                )
+                try:
+                    verify_kernel_readback(
+                        expected_kernel_files[branch],
+                        branch=branch,
+                        revision=branch_targets[branch],
+                        token=token,
+                        download_fn=download_fn,
+                        list_files_fn=api.list_repo_files,
+                    )
+                except Exception as exc:
+                    record_publication_failure(
+                        result,
+                        report_path,
+                        stage=f"KERNEL_READBACK_{branch.upper()}",
+                        exc=exc,
+                        provider_write_attempted=True,
+                    )
+                    raise
                 result["targets"]["first_class_kernel"]["readback"][branch] = (
                     "EXACT_BYTES_VERIFIED"
                 )
@@ -1383,9 +2039,15 @@ def run(
                 result["targets"]["first_class_kernel"]["runtime"] = {
                     "status": "FAILED",
                     "client_version": KERNEL_RUNTIME_CLIENT_VERSION,
-                    "error": f"{type(exc).__name__}: {exc}"[:2000],
+                    "error_type": bounded_error_type(exc),
                 }
-                report_path.write_text(canonical_json(result), encoding="utf-8")
+                record_publication_failure(
+                    result,
+                    report_path,
+                    stage="KERNEL_RUNTIME",
+                    exc=exc,
+                    provider_write_attempted=True,
+                )
                 raise
             result["targets"]["first_class_kernel"]["runtime"] = runtime
             report_path.write_text(canonical_json(result), encoding="utf-8")
@@ -1403,28 +2065,48 @@ def run(
                 path_or_fileobj=io.BytesIO(legacy_publication_bytes),
             )
         )
-        legacy_commit = api.create_commit(
-            repo_id=EXPECTED_REPO_ID,
-            repo_type=LEGACY_REPO_TYPE,
-            parent_commit=observed_before["legacy_model"]["revision"],
-            operations=legacy_operations,
-            commit_message=f"Publish authorized source {source_revision[:12]}",
-            token=token,
-        )
-        legacy_revision = getattr(legacy_commit, "oid", None)
-        if not legacy_revision:
-            legacy_revision = api.model_info(EXPECTED_REPO_ID, token=token).sha
+        try:
+            legacy_commit = api.create_commit(
+                repo_id=EXPECTED_REPO_ID,
+                repo_type=LEGACY_REPO_TYPE,
+                parent_commit=observed_before["legacy_model"]["revision"],
+                operations=legacy_operations,
+                commit_message=f"Publish authorized source {source_revision[:12]}",
+                token=token,
+            )
+            legacy_revision = getattr(legacy_commit, "oid", None)
+            if not legacy_revision:
+                legacy_revision = api.model_info(EXPECTED_REPO_ID, token=token).sha
+        except Exception as exc:
+            record_publication_failure(
+                result,
+                report_path,
+                stage="LEGACY_COMMIT",
+                exc=exc,
+                provider_write_attempted=True,
+            )
+            raise
         result["targets"]["legacy_model"]["revision_after"] = legacy_revision
         result["targets"]["legacy_model"]["readback"] = "PENDING"
         report_path.write_text(canonical_json(result), encoding="utf-8")
-        verify_legacy_readback(
-            source_root,
-            contract,
-            legacy_publication_bytes,
-            revision=legacy_revision,
-            token=token,
-            download_fn=download_fn,
-        )
+        try:
+            verify_legacy_readback(
+                source_root,
+                contract,
+                legacy_publication_bytes,
+                revision=legacy_revision,
+                token=token,
+                download_fn=download_fn,
+            )
+        except Exception as exc:
+            record_publication_failure(
+                result,
+                report_path,
+                stage="LEGACY_READBACK",
+                exc=exc,
+                provider_write_attempted=True,
+            )
+            raise
         result["targets"]["legacy_model"]["readback"] = "EXACT_BYTES_VERIFIED"
         result["status"] = "PUBLISHED_AND_EXACT_READBACK_VERIFIED"
     report_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1442,7 +2124,13 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--publisher-workflow-ref", required=True)
     parser.add_argument("--publisher-run-id", required=True)
     parser.add_argument("--publisher-run-attempt", required=True)
-    parser.add_argument("--publish", action="store_true")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--prepare-signature", action="store_true")
+    mode.add_argument("--publish", action="store_true")
+    parser.add_argument("--signature-bundle-output", type=Path)
+    parser.add_argument("--signature-manifest-output", type=Path)
+    parser.add_argument("--signature-bundle-input", type=Path)
+    parser.add_argument("--signature-manifest-input", type=Path)
     parser.add_argument(
         "--report",
         type=Path,
@@ -1468,6 +2156,11 @@ def main(argv: Iterable[str] | None = None) -> int:
         publisher=publisher,
         publish=args.publish,
         token=os.getenv("HF_TOKEN"),
+        prepare_signature=args.prepare_signature,
+        signature_bundle_output=args.signature_bundle_output,
+        signature_manifest_output=args.signature_manifest_output,
+        signature_bundle_input=args.signature_bundle_input,
+        signature_manifest_input=args.signature_manifest_input,
     )
     print(canonical_json(result), end="")
     return 0
