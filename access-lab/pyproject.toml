@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools==83.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "szl-access-lab"
+version = "0.1.0"
+description = "Local, evidence-labelled form-label repair benchmark and review workbench"
+readme = "README.md"
+requires-python = ">=3.11,<3.14"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [{name = "SZL Holdings"}]
+dependencies = []
+
+[project.scripts]
+szl-access = "szl_access.api:main"
+szl-access-benchmark = "szl_access.benchmark:main"
+
+[tool.setuptools]
+include-package-data = false
+package-dir = {"" = "src"}
+packages = ["szl_access"]
+
+[tool.setuptools.package-data]
+szl_access = ["static/index.html"]

@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="referrer" content="no-referrer">
+  <title>SZL Access Lab — evidence-led form repair</title>
+  <style>
+    :root {
+      --paper: #f6f5ef;
+      --surface: #ffffff;
+      --ink: #17332f;
+      --muted: #526561;
+      --line: #c9d3cc;
+      --accent: #075e4e;
+      --accent-hover: #034638;
+      --wash: #e7f0e9;
+      --warm: #f5edda;
+      --warning: #75531c;
+      --error: #8b292c;
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.55; }
+    button, input, select, textarea { font: inherit; }
+    a { color: var(--accent); text-underline-offset: 3px; }
+    button, select { cursor: pointer; }
+    button { min-height: 44px; padding: 10px 16px; border: 1px solid var(--line); border-radius: 9px; color: var(--ink); background: var(--surface); font-weight: 650; }
+    button:hover:not(:disabled) { border-color: var(--accent); background: var(--wash); }
+    button.primary { color: #fff; background: var(--accent); border-color: var(--accent); }
+    button.primary:hover:not(:disabled) { background: var(--accent-hover); }
+    button:disabled, select:disabled { cursor: not-allowed; opacity: .56; }
+    :focus-visible { outline: 3px solid #a04613; outline-offset: 4px; }
+    input, select, textarea { width: 100%; min-width: 0; border: 1px solid #849b91; background: #fff; border-radius: 8px; color: var(--ink); padding: 11px 12px; }
+    input, select { min-height: 46px; }
+    textarea { resize: vertical; tab-size: 2; }
+    label { display: block; font-size: .9rem; font-weight: 650; margin-bottom: 7px; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { max-width: 900px; font-size: clamp(2.25rem, 5.2vw, 4.1rem); line-height: 1.08; font-weight: 600; letter-spacing: -.05em; margin-bottom: 20px; }
+    h2 { font-size: 1.18rem; letter-spacing: -.02em; margin-bottom: 8px; }
+    h3 { font-size: 1rem; margin-bottom: 10px; }
+    p:last-child { margin-bottom: 0; }
+    code, pre, textarea.code { font-family: ui-monospace, "Cascadia Code", "SFMono-Regular", Consolas, monospace; font-size: .86rem; }
+    pre { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; }
+    details > summary { cursor: pointer; font-weight: 650; padding: 12px 0; }
+    details > summary::marker { color: var(--accent); }
+    .skip { position: fixed; top: -100px; left: 20px; z-index: 20; padding: 12px 18px; background: #fff; border: 2px solid var(--accent); border-radius: 8px; }
+    .skip:focus { top: 12px; }
+    .shell { max-width: 1360px; padding: 0 40px; margin: 0 auto; }
+    .masthead { display: flex; justify-content: space-between; align-items: center; gap: 20px; min-height: 100px; border-bottom: 1px solid var(--line); }
+    .brand { display: flex; align-items: center; gap: 12px; font-size: 1rem; font-weight: 700; letter-spacing: .015em; }
+    .mark { display: grid; place-items: center; width: 38px; height: 38px; border: 1px solid var(--accent); border-radius: 11px; font-family: Georgia, serif; font-size: 1.45rem; color: var(--accent); }
+    .brand span:last-child { font-weight: 450; color: var(--muted); }
+    .service { display: inline-flex; align-items: center; gap: 8px; font-size: .83rem; color: var(--muted); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #8d958f; flex-shrink: 0; }
+    .service[data-status="ready"] .dot { background: var(--accent); }
+    .service[data-status="error"] .dot { background: var(--error); }
+    .hero { padding: 48px 0 30px; }
+    .eyebrow { font-size: .75rem; text-transform: uppercase; letter-spacing: .15em; font-weight: 750; color: var(--accent); margin-bottom: 18px; }
+    .lede { color: var(--muted); max-width: 780px; font-size: 1.06rem; margin-bottom: 22px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip { border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; font-size: .77rem; color: var(--muted); background: #ffffff70; }
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+    .connection { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 24px; margin-bottom: 24px; }
+    .help { font-size: .8rem; color: var(--muted); margin: 8px 0 0; }
+    .row { display: flex; align-items: center; gap: 10px; }
+    .row > input { flex: 1; }
+    .connection button { white-space: nowrap; }
+    .toolbar { display: flex; align-items: end; flex-wrap: wrap; gap: 12px; padding: 20px 24px; border-bottom: 1px solid var(--line); }
+    .example-field { flex: 1; min-width: 200px; max-width: 460px; }
+    .toolbar-note { margin: 0 0 9px auto; color: var(--muted); font-size: .8rem; }
+    .editors { display: grid; grid-template-columns: 1fr 1fr; }
+    .editor { min-width: 0; padding: 24px; }
+    .editor + .editor { border-left: 1px solid var(--line); background: #fbfcf9; border-bottom-right-radius: var(--radius); }
+    .section-heading { display: flex; align-items: baseline; gap: 10px; margin-bottom: 9px; }
+    .step { font-size: .72rem; color: var(--accent); border: 1px solid var(--line); border-radius: 6px; padding: 2px 6px; font-weight: 700; }
+    .editor-description { color: var(--muted); min-height: 44px; font-size: .84rem; margin-bottom: 14px; }
+    .editor textarea { min-height: 330px; line-height: 1.65; background: #fff; }
+    .editor textarea[readonly] { background: #f3f6f1; }
+    .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 16px; }
+    .actions .help { flex: 1; min-width: 150px; margin: 0; }
+    .message { padding: 13px 16px; border-radius: 9px; margin: 16px 0 0; font-size: .88rem; background: var(--wash); }
+    .message:empty { display: none; }
+    .message.error { background: #f9eeee; border: 1px solid #cd9294; color: var(--error); }
+    .result-strip { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px; }
+    .result-strip .state { padding: 4px 9px; font-size: .75rem; font-weight: 750; border-radius: 6px; background: var(--warm); color: var(--warning); overflow-wrap: anywhere; }
+    .result-strip .help { margin: 0; }
+    .evidence-layout { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, .75fr); gap: 24px; margin: 24px 0; align-items: start; }
+    .evidence, .review, .history { padding: 24px; }
+    .muted { color: var(--muted); }
+    .small { font-size: .86rem; }
+    .empty { padding: 24px 0 8px; color: var(--muted); font-size: .9rem; }
+    .facts { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 8px 14px; font-size: .8rem; margin: 18px 0; }
+    .facts dt { color: var(--muted); }
+    .facts dd { margin: 0; overflow-wrap: anywhere; }
+    .code-block { padding: 15px; background: #f3f6f1; border: 1px solid #d6dfd7; border-radius: 9px; max-height: 300px; overflow: auto; }
+    .review { background: var(--warm); border-color: #dbd1ba; }
+    .review ol { margin: 18px 0; padding-left: 22px; }
+    .review li { margin-bottom: 12px; font-size: .89rem; }
+    .review li::marker { color: var(--warning); font-weight: 700; }
+    .rule { border: 0; border-top: 1px solid #dbd1ba; margin: 20px 0; }
+    .history-heading { display: flex; justify-content: space-between; gap: 14px; align-items: center; }
+    .history-heading h2 { margin: 0; }
+    .history-list { padding: 0; margin: 18px 0 0; list-style: none; }
+    .history-list li + li { border-top: 1px solid var(--line); }
+    .history-item { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 14px 0; }
+    .history-copy { flex: 1; min-width: 160px; }
+    .history-copy p { margin: 0; }
+    .history-id { overflow-wrap: anywhere; font-family: ui-monospace, Consolas, monospace; font-size: .75rem; color: var(--muted); }
+    .history-meta { font-size: .8rem; color: var(--muted); }
+    footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; color: var(--muted); font-size: .78rem; padding: 30px 0 36px; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+    @media (max-width: 900px) {
+      .shell { padding: 0 22px; }
+      .connection { gap: 20px; }
+      .editors, .evidence-layout { grid-template-columns: 1fr; }
+      .editor + .editor { border-left: 0; border-top: 1px solid var(--line); border-bottom-left-radius: var(--radius); }
+      .editor-description { min-height: 0; }
+      .toolbar-note { display: none; }
+    }
+    @media (max-width: 600px) {
+      .shell { padding: 0 16px; }
+      .masthead { min-height: 84px; align-items: flex-start; justify-content: center; flex-direction: column; gap: 8px; padding: 16px 0; }
+      .hero { padding-top: 32px; }
+      .connection { grid-template-columns: 1fr; padding: 18px; }
+      .toolbar, .editor, .evidence, .review, .history { padding: 18px; }
+      .toolbar .example-field { max-width: none; flex-basis: 100%; }
+      .editor textarea { min-height: 280px; }
+      .row { align-items: stretch; }
+      .row button { padding-right: 11px; padding-left: 11px; }
+      .facts { grid-template-columns: 1fr; gap: 3px; }
+      .facts dd { margin-bottom: 9px; }
+      .history-heading { align-items: flex-start; }
+      .history-heading button { font-size: .82rem; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; } }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to repair workbench</a>
+  <div class="shell">
+    <header class="masthead">
+      <div class="brand"><span class="mark" aria-hidden="true">A</span><span>SZL <span>/ Access Lab</span></span></div>
+      <div class="service" id="service-status" data-status="checking"><span class="dot" aria-hidden="true"></span><span id="service-text">Checking local service</span></div>
+    </header>
+    <main id="main" tabindex="-1">
+      <section class="hero" aria-labelledby="page-title">
+        <p class="eyebrow">Small repairs. More people included.</p>
+        <h1 id="page-title">Make the next form<br>easier to use.</h1>
+        <p class="lede">Review a narrowly scoped label repair, inspect the evidence, and decide what to test next. Your source stays text throughout this workbench: it is never rendered or executed.</p>
+        <div class="chips" aria-label="Workbench boundaries"><span class="chip">Source-only review</span><span class="chip">Local-first execution</span><span class="chip">Human judgment required</span></div>
+      </section>
+
+      <section class="card connection" aria-label="Local connection and repair mode">
+        <div>
+          <label for="token">Local API token</label>
+          <div class="row"><input id="token" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="token-help" placeholder="Enter your server token"><button type="button" id="forget-token">Clear token</button></div>
+          <p class="help" id="token-help">Sent only to this origin. Not saved by this application; clear it when you finish.</p>
+        </div>
+        <div>
+          <label for="mode">Repair method</label>
+          <select id="mode" aria-describedby="mode-help"><option value="deterministic">Deterministic baseline — no model</option><option id="ollama-option" value="ollama" disabled>Local model proposal — unavailable</option></select>
+          <p class="help" id="mode-help">The baseline repairs only supported explicit label bindings. No trained specialist model is claimed.</p>
+        </div>
+      </section>
+
+      <section class="card" aria-label="Label repair workbench">
+        <div class="toolbar">
+          <div class="example-field"><label for="examples">Synthetic example</label><select id="examples" disabled><option value="">Load examples to begin</option></select></div>
+          <button type="button" id="load-examples">Load examples</button>
+          <button type="button" id="use-example" disabled>Use example</button>
+          <p class="toolbar-note">Start with a small, de-identified snippet.</p>
+        </div>
+        <div class="editors">
+          <form class="editor" id="repair-form">
+            <div class="section-heading"><span class="step" aria-hidden="true">01</span><h2>Source to inspect</h2></div>
+            <p class="editor-description" id="source-help">Paste a small HTML form snippet or use a synthetic example. Do not include personal data, secrets, or patient information.</p>
+            <label class="sr-only" for="source">HTML source to inspect</label>
+            <textarea class="code" id="source" rows="16" spellcheck="false" autocapitalize="off" autocomplete="off" aria-describedby="source-help" placeholder="Load a synthetic example, or paste a form snippet here." required></textarea>
+            <div class="actions"><button type="submit" class="primary" id="run">Run checked repair</button><button type="button" id="retry" hidden>Retry same request</button><p class="help">Proposals are never applied to a website automatically.</p></div>
+          </form>
+          <section class="editor" aria-labelledby="output-heading">
+            <div class="section-heading"><span class="step" aria-hidden="true">02</span><h2 id="output-heading" tabindex="-1">Reviewable output</h2></div>
+            <p class="editor-description" id="output-help">A checked proposal will appear as plain source text. A passing narrow check is not an accessibility or compliance certification.</p>
+            <div class="result-strip" id="result-strip" hidden><span class="state" id="result-state"></span><span class="help" id="result-method"></span></div>
+            <label class="sr-only" for="output">Output HTML as plain text, not rendered</label>
+            <textarea class="code" id="output" rows="16" readonly spellcheck="false" aria-describedby="output-help" placeholder="No run yet. Output will appear here without executing it."></textarea>
+          </section>
+        </div>
+      </section>
+
+      <p class="message" id="status" role="status" aria-live="polite" aria-atomic="true"></p>
+      <p class="message error" id="error" role="alert" aria-atomic="true"></p>
+
+      <div class="evidence-layout">
+        <section class="card evidence" aria-labelledby="evidence-heading">
+          <div class="section-heading"><span class="step" aria-hidden="true">03</span><h2 id="evidence-heading">Evidence, not a badge</h2></div>
+          <p class="small muted">Inspect the checks and provenance attached to this run.</p>
+          <p class="empty" id="evidence-empty">Run a repair or open a previous receipt to inspect its evidence.</p>
+          <div id="evidence-content" hidden>
+            <dl class="facts"><dt>Run identifier</dt><dd><code id="run-id"></code></dd><dt>Created</dt><dd id="created"></dd><dt>Source SHA-256</dt><dd><code id="source-hash"></code></dd><dt>Output SHA-256</dt><dd><code id="output-hash"></code></dd><dt>Receipt SHA-256</dt><dd><code id="receipt-hash"></code></dd></dl>
+            <details open><summary>Checks and applied bindings</summary><pre class="code-block" id="checks"></pre></details>
+            <details><summary>Model provenance</summary><pre class="code-block" id="model-evidence"></pre></details>
+            <details open><summary>Known limits</summary><ul class="small muted" id="limitations"></ul></details>
+            <div class="actions"><button type="button" id="export-summary" disabled>Download source-free summary</button></div>
+            <p class="help" id="export-help">Exports hashes, state, and run metadata only, not your HTML, binding text, or model details. Review before sharing: hashes can still identify a known document. Keep the full local receipt for review.</p>
+          </div>
+        </section>
+        <aside class="card review" aria-labelledby="human-heading">
+          <h2 id="human-heading">A person still needs to try it.</h2>
+          <p class="small">This is a review guide, not a sign-off or an automated approval.</p>
+          <ol><li><strong>Read the label in context.</strong> Does it describe the field correctly, without adding an unintended meaning?</li><li><strong>Try the complete task by keyboard.</strong> Check focus order, visible focus, errors, and the route to completion.</li><li><strong>Test with assistive technology.</strong> Confirm what is announced and involve people with disabilities in realistic usability testing.</li><li><strong>Check for regressions.</strong> Review the patch and run the application’s own tests before deployment.</li></ol>
+          <hr class="rule">
+          <p class="small muted">This first lab is limited to explicit form-label bindings. It does not establish complete WCAG conformance, legal compliance, or clinical readiness.</p>
+        </aside>
+      </div>
+
+      <section class="card history" aria-labelledby="history-heading">
+        <div class="history-heading"><h2 id="history-heading">Recent local receipts</h2><button type="button" id="refresh-history">Refresh history</button></div>
+        <p class="help">Stored by the configured backend. Opening a receipt does not rerun it or replace your current source editor.</p>
+        <p class="empty" id="history-empty">Authenticate and refresh to inspect saved runs.</p>
+        <ul class="history-list" id="history-list"></ul>
+      </section>
+    </main>
+    <footer><span>SZL Access Lab · Built for review, not automatic authority.</span><span>No external fonts, scripts, or analytics.</span></footer>
+  </div>
+  <script>
+    "use strict";
+    const byId = (id) => document.getElementById(id);
+    const tokenInput = byId("token");
+    const sourceInput = byId("source");
+    const modeInput = byId("mode");
+    const statusNode = byId("status");
+    const errorNode = byId("error");
+    let examples = [];
+    let busy = false;
+    let retryRequest = null;
+    let modelAvailable = false;
+    let currentReceipt = null;
+
+    function announce(message) {
+      statusNode.textContent = message;
+    }
+
+    function showError(error) {
+      let message = error instanceof Error ? error.message : "The request could not be completed.";
+      if (tokenInput.value) message = message.split(tokenInput.value).join("[redacted]");
+      errorNode.textContent = message.slice(0, 700);
+    }
+
+    function clearError() {
+      errorNode.textContent = "";
+    }
+
+    function setBusy(value) {
+      busy = value;
+      for (const id of ["run", "load-examples", "refresh-history", "retry"]) byId(id).disabled = value;
+      modeInput.disabled = value;
+      sourceInput.readOnly = value;
+      byId("use-example").disabled = value || !examples.length;
+      byId("examples").disabled = value || !examples.length;
+      byId("export-summary").disabled = value || !currentReceipt;
+      document.querySelectorAll(".history-open").forEach((button) => { button.disabled = value; });
+      byId("repair-form").setAttribute("aria-busy", String(value));
+      byId("run").textContent = value ? "Working…" : "Run checked repair";
+    }
+
+    async function api(path, options = {}) {
+      const headers = { Accept: "application/json" };
+      if (!options.public) {
+        const token = tokenInput.value.trim();
+        if (!token) throw new Error("Enter your local API token first. It is not saved by this application.");
+        headers.Authorization = "Bearer " + token;
+      }
+      if (options.body !== undefined) headers["Content-Type"] = "application/json";
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 150000);
+      try {
+        const response = await fetch(path, {
+          method: options.method || "GET",
+          headers,
+          body: options.body === undefined ? undefined : JSON.stringify(options.body),
+          credentials: "omit",
+          cache: "no-store",
+          redirect: "error",
+          signal: controller.signal
+        });
+        let data;
+        try { data = await response.json(); }
+        catch { throw new Error("The local service returned an unreadable response. Check server logs and refresh history before repeating a run."); }
+        if (!response.ok) {
+          const detail = typeof data.error === "string" ? data.error : (data.error && (data.error.message || data.error.code)) || data.message;
+          const problem = new Error("Request failed (" + response.status + "). " + (detail || "Review the input and local service configuration."));
+          problem.status = response.status;
+          throw problem;
+        }
+        return data;
+      } catch (error) {
+        if (error.name === "AbortError") throw new Error("The request timed out. A run may still be recorded; refresh history or retry the same request before starting a new one.");
+        if (error instanceof TypeError) throw new Error("Could not reach the local service. A submitted run may still be recorded; refresh history or retry the same request after reconnecting.");
+        throw error;
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    async function checkHealth() {
+      try {
+        const health = await api("/api/health", { public: true });
+        if (health.ok !== true) throw new Error("The local service is not ready.");
+        byId("service-status").dataset.status = "ready";
+        byId("service-text").textContent = "Local service reachable";
+        modelAvailable = health.model && health.model.enabled === true;
+        byId("ollama-option").disabled = !modelAvailable;
+        byId("ollama-option").textContent = modelAvailable ? "Local model proposal — " + (health.model.name || "configured model") : "Local model proposal — unavailable";
+      } catch (error) {
+        byId("service-status").dataset.status = "error";
+        byId("service-text").textContent = "Local service unavailable";
+        modelAvailable = false;
+        byId("ollama-option").disabled = true;
+        modeInput.value = "deterministic";
+        showError(error);
+      }
+    }
+
+    function setText(id, value) {
+      byId(id).textContent = value === null || value === undefined || value === "" ? "Not recorded" : String(value);
+    }
+
+    function renderResult(result, historical = false) {
+      if (!result || typeof result.run_id !== "string") throw new Error("The service returned an incomplete receipt. Inspect server logs; no success is inferred.");
+      const noOutput = typeof result.output_html !== "string" && ["RUNNING", "INTERRUPTED"].includes(result.state);
+      if (typeof result.output_html !== "string" && !noOutput) throw new Error("The service returned an incomplete receipt. Inspect server logs; no success is inferred.");
+      currentReceipt = { run_id: result.run_id, receipt_sha256: result.receipt_sha256 };
+      byId("output").value = noOutput ? "" : result.output_html;
+      byId("output").placeholder = noOutput ? "No output was recorded for this run. There is no repair result to copy or approve." : "";
+      byId("output-heading").textContent = noOutput ? "No repair output recorded" : "Reviewable output";
+      byId("output-help").textContent = noOutput
+        ? (result.state === "INTERRUPTED" ? "The process ended before a repair result was recorded. " : "This run is still recorded as in progress. ") + "Inspect its available evidence below; no successful repair is inferred."
+        : "A checked proposal appears as plain source text. A passing narrow check is not an accessibility or compliance certification.";
+      setText("result-state", result.state);
+      const method = result.mode === "ollama" ? "Local model proposal · inspect checks" : "Deterministic baseline · no model";
+      setText("result-method", (historical ? "Saved receipt; source editor unchanged. " : "") + method);
+      byId("result-strip").hidden = false;
+      setText("run-id", result.run_id);
+      setText("created", result.created_at);
+      setText("source-hash", result.source_sha256);
+      setText("output-hash", result.output_sha256);
+      setText("receipt-hash", result.receipt_sha256);
+      byId("checks").textContent = JSON.stringify({ checks: result.checks ?? null, applied_bindings: result.applied_bindings ?? null }, null, 2);
+      byId("model-evidence").textContent = JSON.stringify(result.model ?? { status: "NOT_RECORDED", note: "No model evidence recorded; invocation is not inferred." }, null, 2);
+      const limits = byId("limitations");
+      limits.replaceChildren();
+      const values = Array.isArray(result.limitations) ? result.limitations : [result.limitations || "No limitations field was recorded; this does not imply complete accessibility."];
+      for (const value of values) {
+        const item = document.createElement("li");
+        item.textContent = typeof value === "string" ? value : JSON.stringify(value);
+        limits.append(item);
+      }
+      byId("evidence-empty").hidden = true;
+      byId("evidence-content").hidden = false;
+      byId("output-heading").focus();
+    }
+
+    async function loadExamples() {
+      if (busy) return;
+      clearError();
+      setBusy(true);
+      try {
+        const data = await api("/api/examples");
+        if (!Array.isArray(data.examples)) throw new Error("The service returned no valid example list.");
+        examples = data.examples.filter((example) => typeof example.id === "string" && typeof example.title === "string" && typeof example.source === "string");
+        const select = byId("examples");
+        select.replaceChildren();
+        for (const example of examples) {
+          const option = document.createElement("option");
+          option.value = example.id;
+          option.textContent = example.title;
+          select.append(option);
+        }
+        if (!examples.length) {
+          const option = document.createElement("option");
+          option.textContent = "No examples available";
+          select.append(option);
+        }
+        announce(examples.length + " synthetic examples loaded. Choose one and select Use example to replace the source editor.");
+      } catch (error) { showError(error); }
+      finally { setBusy(false); }
+    }
+
+    function clearRetry() {
+      retryRequest = null;
+      byId("retry").hidden = true;
+    }
+
+    async function performRun(request) {
+      if (busy) return;
+      clearError();
+      setBusy(true);
+      announce(request.mode === "ollama" ? "Requesting a local model proposal and narrow checks. No changes are deployed." : "Running the deterministic label-binding baseline. No model is involved.");
+      try {
+        const result = await api("/api/runs", { method: "POST", body: request });
+        renderResult(result);
+        clearRetry();
+        announce("Run recorded with state " + String(result.state) + ". Review the output, checks, and limitations; no complete accessibility claim is made.");
+        await refreshHistory(false);
+      } catch (error) {
+        showError(error);
+        announce("No new successful result is confirmed. Any earlier output remains visible.");
+        if (!error.status || error.status >= 500) {
+          retryRequest = request;
+          byId("retry").hidden = false;
+        } else { clearRetry(); }
+      } finally { setBusy(false); }
+    }
+
+    async function refreshHistory(manageState = true) {
+      if (manageState && busy) return;
+      if (manageState) { clearError(); setBusy(true); }
+      try {
+        const data = await api("/api/runs");
+        if (!Array.isArray(data.runs)) throw new Error("The service returned no valid receipt list.");
+        const list = byId("history-list");
+        list.replaceChildren();
+        for (const run of data.runs) {
+          if (typeof run.run_id !== "string") continue;
+          const item = document.createElement("li");
+          item.className = "history-item";
+          const copy = document.createElement("div");
+          copy.className = "history-copy";
+          const title = document.createElement("p");
+          title.className = "small";
+          title.textContent = String(run.state || "State not recorded") + " · " + String(run.mode || "Mode not recorded");
+          const id = document.createElement("p");
+          id.className = "history-id";
+          id.textContent = run.run_id;
+          const date = document.createElement("p");
+          date.className = "history-meta";
+          date.textContent = String(run.created_at || "Time not recorded");
+          copy.append(title, id, date);
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "history-open";
+          button.textContent = "Open receipt";
+          button.setAttribute("aria-label", "Open receipt " + run.run_id);
+          button.disabled = busy;
+          button.addEventListener("click", () => openRun(run.run_id));
+          item.append(copy, button);
+          list.append(item);
+        }
+        byId("history-empty").hidden = list.children.length > 0;
+        byId("history-empty").textContent = "No saved runs were returned by this backend.";
+        if (manageState) announce(list.children.length + " saved receipts loaded. Opening a receipt does not execute a new run.");
+      } catch (error) { showError(error); }
+      finally { if (manageState) setBusy(false); }
+    }
+
+    async function openRun(runId) {
+      if (busy) return;
+      clearError();
+      setBusy(true);
+      try {
+        const result = await api("/api/runs/" + encodeURIComponent(runId));
+        renderResult(result, true);
+        announce("Saved receipt loaded. Your source editor was not changed, and this result was not rerun. Compare the recorded source hash before using the output.");
+      } catch (error) { showError(error); }
+      finally { setBusy(false); }
+    }
+
+    async function exportSummary() {
+      if (busy || !currentReceipt) return;
+      clearError();
+      setBusy(true);
+      try {
+        const summary = await api("/api/runs/" + encodeURIComponent(currentReceipt.run_id) + "/summary");
+        if (summary.schema !== "szl-access-receipt-summary-v1" || summary.contains_source !== false
+            || summary.run_id !== currentReceipt.run_id || summary.receipt_sha256 !== currentReceipt.receipt_sha256) {
+          throw new Error("The saved receipt changed or its export contract was not recognized. Refresh and reopen it before exporting.");
+        }
+        const url = URL.createObjectURL(new Blob([JSON.stringify(summary, null, 2) + "\n"], { type: "application/json" }));
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "szl-access-" + currentReceipt.run_id + "-summary.json";
+        link.hidden = true;
+        document.body.append(link);
+        try { link.click(); }
+        finally { link.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000); }
+        announce("Source-free summary prepared for download. Confirm the file in your browser and review it before sharing. It is not the complete receipt or accessibility certification.");
+      } catch (error) { showError(error); }
+      finally { setBusy(false); }
+    }
+
+    byId("load-examples").addEventListener("click", loadExamples);
+    byId("refresh-history").addEventListener("click", () => refreshHistory());
+    byId("export-summary").addEventListener("click", exportSummary);
+    byId("use-example").addEventListener("click", () => {
+      const example = examples.find((item) => item.id === byId("examples").value);
+      if (!example || busy) return;
+      sourceInput.value = example.source;
+      clearRetry();
+      clearError();
+      announce("Synthetic example loaded into the editor. No repair has run yet.");
+      sourceInput.focus();
+    });
+    byId("forget-token").addEventListener("click", () => {
+      tokenInput.value = "";
+      clearError();
+      announce("Token cleared from the input. Already submitted requests are not cancelled, and existing results remain visible.");
+      tokenInput.focus();
+    });
+    sourceInput.addEventListener("input", clearRetry);
+    modeInput.addEventListener("change", () => {
+      clearRetry();
+      byId("mode-help").textContent = modeInput.value === "ollama" ? "The configured local model proposes bindings. Deterministic checks still constrain the output; this is not a trained-specialist claim." : "The baseline repairs only supported explicit label bindings. No trained specialist model is claimed.";
+    });
+    byId("retry").addEventListener("click", () => { if (retryRequest) performRun(retryRequest); });
+    byId("repair-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      if (busy) return;
+      clearError();
+      if (!sourceInput.value.trim()) { showError(new Error("Add a source snippet or load a synthetic example first.")); sourceInput.focus(); return; }
+      if (modeInput.value === "ollama" && !modelAvailable) { showError(new Error("No local model is currently configured. Select the deterministic baseline.")); return; }
+      if (!globalThis.crypto || typeof globalThis.crypto.randomUUID !== "function") { showError(new Error("Secure request identifiers are unavailable. Open this application on localhost or an approved secure origin.")); return; }
+      const request = { source: sourceInput.value, mode: modeInput.value, request_id: crypto.randomUUID() };
+      clearRetry();
+      performRun(request);
+    });
+    checkHealth();
+  </script>
+</body>
+</html>
