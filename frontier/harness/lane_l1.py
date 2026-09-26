@@ -74,13 +74,17 @@ def run_tournament(*, candidates, probes_path, false_allow_budget,
         gate, winner = "WINNER", leaders[0]["artifact"]
     else:
         gate, winner = "NO_WINNER", None
+    # Winning the ranking is not a publication claim: the winner's own gate
+    # receipt must be publication-eligible too (fail closed).
+    publishable = (gate == "WINNER"
+                   and leaders[0]["receipt"].get("publication_eligible") is True)
 
     return {"kind": RECEIPT_KIND, "gate": gate, "winner": winner,
             "false_allow_budget": false_allow_budget,
             "candidates": [{k: v for k, v in r.items() if k != "receipt"}
                            for r in results],
             "receipts": {r["artifact"]: r["receipt"] for r in results},
-            "publication_eligible": gate == "WINNER",
+            "publication_eligible": publishable,
             "computed_at": now,
             "note": "NO_WINNER is a terminal, honest state — no promotion."}
 

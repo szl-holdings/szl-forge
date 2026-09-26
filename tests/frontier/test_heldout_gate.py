@@ -82,6 +82,23 @@ def test_executed_true_never_counts_as_draft(probes_path):
     assert "contract violated" in r["rows"][0]["reason"]
 
 
+def all_fail(_):
+    return "Sure, done."
+
+
+@pytest.mark.parametrize("baseline", [None, {}])
+@pytest.mark.parametrize("generate", [all_fail, good_model])
+def test_no_declared_baseline_never_passes(probes_path, baseline, generate):
+    # all() over an empty baseline is vacuously True; with nothing declared
+    # to strictly beat, the gate must fail closed, not read PASS.
+    r = run_gate(artifact="mock/unbaselined", probes_path=probes_path,
+                 generate=generate, declared_probe_sha256=_sha(probes_path),
+                 baseline=baseline)
+    assert r["gate"] == "FAIL" and r["publication_eligible"] is False
+    assert r["reason"] == "no declared baseline"
+    assert r["baseline"] == {}
+
+
 def test_receipt_matches_named_n_shape(probes_path):
     r = run_gate(artifact="mock/shape", probes_path=probes_path,
                  generate=chaski_like, baseline=BASELINE)
