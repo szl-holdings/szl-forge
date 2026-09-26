@@ -108,6 +108,18 @@ jobs:
           python -I -B clinical-gateway/tools/train_operational_health_model.py --verify
           python -m unittest discover -s clinical-gateway/tests -v
 
+      - name: Evaluate fixed advisory model without retuning
+        run: python -I -B clinical-gateway/tools/evaluate_operational_health_model.py --output oac-operational-evaluation.json
+
+      - name: Retain descriptive synthetic evaluation
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: oac-operational-evaluation-python-${{ matrix.python }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: oac-operational-evaluation.json
+          if-no-files-found: warn
+          retention-days: 30
+
   wheel:
     name: Build and install wheel
     runs-on: ubuntu-latest
