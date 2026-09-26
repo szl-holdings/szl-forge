@@ -83,11 +83,107 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
-  publish:
-    name: Publish with trusted Forge code and verify readback
+  sign:
+    name: Sign exact staged metadata without provider credential
     needs: authorize
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout trusted Forge signer
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Checkout authorized kernels source as signing input
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: szl-holdings/szl-kernels
+          ref: ${{ inputs.source_revision }}
+          path: source
+          persist-credentials: false
+          lfs: true
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install exact Hub read client without provider credential
+        run: >-
+          python -m pip install --disable-pip-version-check
+          "huggingface-hub==1.26.0"
+
+      - name: Install pinned keyless signing client
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        with:
+          cosign-release: v3.1.3
+
+      - name: Re-authorize exact source before signing
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PUBLISHER_REVISION: ${{ github.sha }}
+          SOURCE_REVISION: ${{ inputs.source_revision }}
+        run: >-
+          python tools/authorize_kernels_release.py
+          --source-revision "${SOURCE_REVISION}"
+          --publisher-revision "${PUBLISHER_REVISION}"
+          --wait-seconds 0
+          --report reports/kernels-release-authorization.json
+
+      - name: Prepare exact-revision signature transfer without HF token
+        env:
+          SOURCE_REVISION: ${{ inputs.source_revision }}
+        run: >-
+          python tools/publish_szl_kernels.py
+          --source-dir source
+          --source-revision "${SOURCE_REVISION}"
+          --authorization-report reports/kernels-release-authorization.json
+          --publisher-repository "${GITHUB_REPOSITORY}"
+          --publisher-revision "${GITHUB_SHA}"
+          --publisher-workflow-ref "${GITHUB_WORKFLOW_REF}"
+          --publisher-run-id "${GITHUB_RUN_ID}"
+          --publisher-run-attempt "${GITHUB_RUN_ATTEMPT}"
+          --prepare-signature
+          --signature-bundle-output
+          reports/kernel-signature-transfer/metadata.json.sigstore
+          --signature-manifest-output
+          reports/kernel-signature-transfer/manifest.json
+          --report reports/kernel-signature-prepared.json
+
+      - name: Transfer only the signature bundle and its bound manifest
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: kernel-signature-${{ github.run_id }}-${{ github.run_attempt }}
+          path: reports/kernel-signature-transfer
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Upload non-secret signing evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: kernel-signature-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            reports/kernels-release-authorization.json
+            reports/kernel-signature-prepared.json
+          if-no-files-found: error
+          retention-days: 90
+
+  publish:
+    name: Publish without OIDC authority and verify readback
+    needs: sign
+    runs-on: ubuntu-latest
     timeout-minutes: 25
+    permissions:
+      contents: read
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
@@ -124,6 +220,17 @@ jobs:
             hf-kernel-builder
           test "$(kernel-builder --version)" = "hf-kernel-builder 0.17.0-dev0"
 
+      - name: Install pinned credentialless signature verifier
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        with:
+          cosign-release: v3.1.3
+
+      - name: Download exact signature transfer
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: kernel-signature-${{ github.run_id }}-${{ github.run_attempt }}
+          path: reports/kernel-signature-transfer
+
       - name: Build credentialless stable runtime sandbox
         run: >-
           docker build --pull
@@ -158,6 +265,10 @@ jobs:
           --publisher-run-id "${GITHUB_RUN_ID}"
           --publisher-run-attempt "${GITHUB_RUN_ATTEMPT}"
           --publish
+          --signature-bundle-input
+          reports/kernel-signature-transfer/metadata.json.sigstore
+          --signature-manifest-input
+          reports/kernel-signature-transfer/manifest.json
           --report reports/source-binding-published.json
 
       - name: Upload immutable publication evidence
