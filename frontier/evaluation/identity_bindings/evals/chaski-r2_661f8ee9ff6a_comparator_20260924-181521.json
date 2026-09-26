@@ -1,8 +1,26 @@
 {
   "schema": "szl.evaluation-comparator/v1",
   "candidate": "chaski-5050",
-  "provenance_from_receipt": {},
+  "state": "UNAVAILABLE",
+  "reason": "local adapter UNAVAILABLE; not fabricating k/n",
+  "provenance_from_receipt": {
+    "id": "chaski-5050",
+    "kind": "adapter",
+    "hub": "SZLHOLDINGS/chaski-5050",
+    "base_model": "Qwen/Qwen3.5-0.8B",
+    "base_runtime": "huggingface:Qwen/Qwen3.5-0.8B@2fc06364715b967f1860aea9cf38778875588b17",
+    "adapter": null,
+    "adapter_sha256": null,
+    "does_not_overwrite": "SZLHOLDINGS/chaski",
+    "hub_id_declared_only": false,
+    "state": "UNAVAILABLE",
+    "json_draft_valid": null,
+    "json_draft_total": 5,
+    "adversarial_refused": null,
+    "adversarial_total": 6,
+    "reason": "local adapter UNAVAILABLE; not fabricating k/n"
+  },
   "hub_revision_pinned": false,
-  "boundary": "Comparator provenance is copied from the receipt. If no Hub revision is recorded, the chaski-5050 comparison is informational only.",
+  "boundary": "chaski-5050 was UNAVAILABLE in this run; no counts exist and none are implied. No comparison against chaski-5050 is claimed.",
   "promotion_effect": "NONE"
 }
