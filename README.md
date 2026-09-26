@@ -181,6 +181,50 @@ Publication is performed only from protected `main` by the dependent
 after that same workflow verifies the exact live Space revision and using the
 repository's encrypted Hugging Face organization credential.
 
+## First-class kernel publication and signature
+
+`.github/workflows/publish-szl-kernels.yml` is the sole publication gateway for
+`SZLHOLDINGS/szl-kernels`. It authorizes exact protected-main revisions of both
+the source and this publisher before the Hugging Face credential is exposed.
+The trusted publisher stages the Kernel Hub package, embeds a digest covering
+every executable and source-binding file, and signs `metadata.json` with
+Sigstore keyless signing. Authority is split across jobs: the signing job has
+GitHub OIDC but is required to have no Hugging Face token, while the publication
+job has the Hugging Face token but no OIDC minting authority. Only `cosign
+sign-blob` receives the OIDC request variables among subprocesses launched by
+the publisher code; version and verification probes are credentialless, and the
+kernel uploader receives only the provider token plus a small operating-system
+environment allowlist. GitHub grants OIDC at job scope, so the entire signing
+job is deliberately treated as the trusted OIDC boundary even though it has no
+provider credential.
+
+Before upload, Forge verifies the signature against exactly
+`szl-holdings/szl-forge/.github/workflows/publish-szl-kernels.yml@refs/heads/main`
+and the GitHub Actions OIDC issuer, repository, `refs/heads/main`,
+`workflow_dispatch` trigger, and exact publisher commit SHA. A bound signature
+bundle is the only signing output transferred between jobs. Both jobs rebuild
+the same deterministic authorization projection and staged metadata; any source,
+publisher, authorization fact, or observed Hub-parent drift invalidates the
+transfer before a provider write. Forge then rechecks both mutable Hub branch
+parents, uploads, reads the signed bundle and all declared bytes back from the
+new immutable revisions, and runs the existing credentialless runtime witness.
+The `v1` readback also closes the complete provider file inventory to
+`.gitattributes`, `LICENSE`, `README.md`, and the staged package files; an
+undeclared root payload or competing compatible `build/*` variant is terminal.
+The signed first-class source binding is explicitly versioned as
+`szl.hf-first-class-kernel-binding/v2`; its `authorization_binding` is the
+deterministic exact-head projection used across the two jobs. The legacy model
+publication retains the established `szl.hf-kernel-source-binding/v2`
+`authorization` observation contract.
+
+This source contract does not assert that an older Hub revision is signed or
+that a new revision has been published. The `kernels` client does not yet make
+signature verification a load-time guarantee, and its default verification
+policy curates upstream publishers rather than automatically trusting this SZL
+workflow. Forge therefore enforces the exact Cosign identity itself. The
+detached bundle is additional integrity and publisher-identity evidence, not a
+performance, safety, or production-authorization claim.
+
 ## Doctrine gate (dataset content)
 
 `tools/validate_sft_dataset.py` proves a dataset is well-formed;

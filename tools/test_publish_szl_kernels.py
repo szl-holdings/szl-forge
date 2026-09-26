@@ -4,6 +4,7 @@ import copy
 import hashlib
 import io
 import json
+import os
 import struct
 import sys
 import tempfile
@@ -121,6 +122,30 @@ def runtime_evidence(revision: str = "2" * 40) -> dict[str, object]:
     }
 
 
+def fake_sign_kernel_metadata(
+    staging_root: Path,
+    *,
+    certificate_identity: str,
+    publisher_revision: str,
+) -> dict[str, object]:
+    bundle_path = (
+        staging_root
+        / "build"
+        / publisher.KERNEL_VARIANT
+        / publisher.KERNEL_SIGNATURE_FILENAME
+    )
+    bundle_path.write_text(
+        json.dumps({"mediaType": "application/vnd.dev.sigstore.bundle.v0.3+json"}),
+        encoding="utf-8",
+    )
+    evidence, _ = publisher._kernel_signature_evidence(
+        staging_root,
+        certificate_identity=certificate_identity,
+    )
+    evidence["publisher_revision"] = publisher_revision
+    return evidence
+
+
 class FakeApi:
     model_revision = "d" * 40
     kernel_revision = "e" * 40
@@ -210,6 +235,23 @@ class FakeApi:
             for path in self.kernel_branch_files[branch]
         ]
 
+    def list_repo_files(
+        self,
+        repo_id: str,
+        *,
+        repo_type: str,
+        revision: str,
+        **_: object,
+    ) -> list[str]:
+        del repo_id
+        self._assert_kernel(repo_type)
+        branch = next(
+            branch
+            for branch, target in self.kernel_revisions.items()
+            if target == revision
+        )
+        return sorted(self.kernel_branch_files[branch])
+
     def create_commit(
         self,
         repo_id: str,
@@ -245,7 +287,10 @@ class FakeApi:
         self.remote[(publisher.KERNEL_REPO_TYPE, main_revision)] = {
             "README.md": (staging_root / "build/CARD.md").read_bytes(),
         }
-        version_remote = {}
+        version_remote = {
+            path: b"preserved-root"
+            for path in publisher.KERNEL_IMMUTABLE_ROOT_FILES
+        }
         for path in (staging_root / "build" / publisher.KERNEL_VARIANT).rglob("*"):
             if path.is_file():
                 relative = path.relative_to(staging_root).as_posix()
@@ -884,6 +929,30 @@ class PublishSzlKernelsTests(unittest.TestCase):
                 token=None,
             )
 
+    def test_first_class_before_rejects_foreign_build_variant(self) -> None:
+        api = FakeApi({})
+        api.kernel_revisions = {
+            "main": "1" * 40,
+            "v1": "2" * 40,
+        }
+        api.kernel_branch_files = {
+            branch: set(paths)
+            for branch, paths in publisher.KERNEL_REQUIRED_FILES_BY_BRANCH.items()
+        }
+        api.kernel_branch_files["v1"].add(
+            "build/torch29-cpu-x86_64-linux/foreign_kernel/__init__.py"
+        )
+
+        with self.assertRaisesRegex(
+            publisher.PublicationError,
+            r"undeclared immutable files.*torch29-cpu-x86_64-linux",
+        ):
+            publisher.first_class_kernel_before(
+                api,
+                {"artifact_files": sorted(publisher.FIRST_CLASS_KERNEL_FILES)},
+                token=None,
+            )
+
     def test_stable_runtime_verifies_exact_load_and_threshold_contract(self) -> None:
         def get_kernel(repo_id: str, **kwargs: object) -> SimpleNamespace:
             self.assertEqual(repo_id, publisher.EXPECTED_REPO_ID)
@@ -1162,7 +1231,12 @@ class PublishSzlKernelsTests(unittest.TestCase):
             stdout="hf-kernel-builder 0.17.0-dev0\n",
             stderr="",
         )
-        with patch.object(
+        inherited = {
+            "PATH": "trusted-path",
+            "HF_TOKEN": "provider-secret",
+            "ACTIONS_ID_TOKEN_REQUEST_TOKEN": "oidc-secret",
+        }
+        with patch.dict(os.environ, inherited, clear=True), patch.object(
             publisher.shutil,
             "which",
             return_value="/trusted/kernel-builder",
@@ -1175,6 +1249,7 @@ class PublishSzlKernelsTests(unittest.TestCase):
             check=False,
             capture_output=True,
             text=True,
+            env={"PATH": "trusted-path"},
         )
 
     def test_supported_builder_rejects_executable_name_as_identity(self) -> None:
@@ -1194,6 +1269,68 @@ class PublishSzlKernelsTests(unittest.TestCase):
             ):
                 publisher.require_kernel_builder_executable()
 
+    def test_kernel_uploader_receives_only_provider_token_and_base_environment(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            staging_root = Path(temporary)
+            observed_environment: dict[str, str] = {}
+
+            def upload(command: list[str], **kwargs: object) -> SimpleNamespace:
+                observed_environment.update(kwargs["env"])
+                output_path = Path(command[command.index("--output-json") + 1])
+                output_path.write_text(
+                    json.dumps(
+                        {
+                            "status": "uploaded",
+                            "repo_id": publisher.EXPECTED_REPO_ID,
+                            "branch": "v1",
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+            inherited = {
+                "PATH": "trusted-path",
+                "HF_TOKEN": "ambient-provider-secret",
+                "GITHUB_TOKEN": "github-secret",
+                "ACTIONS_ID_TOKEN_REQUEST_TOKEN": "oidc-secret",
+                "ACTIONS_ID_TOKEN_REQUEST_URL": "https://example.invalid/oidc",
+                "SERVICE_API_KEY": "api-secret",
+            }
+            with patch.dict(os.environ, inherited, clear=True), patch.object(
+                publisher,
+                "require_kernel_builder_executable",
+                return_value="/trusted/kernel-builder",
+            ), patch.object(publisher.subprocess, "run", side_effect=upload):
+                publisher.upload_first_class_kernel(
+                    staging_root,
+                    "explicit-provider-secret",
+                )
+
+            self.assertEqual(
+                observed_environment,
+                {
+                    "PATH": "trusted-path",
+                    "HF_TOKEN": "explicit-provider-secret",
+                },
+            )
+
+    def test_publisher_identity_requires_the_protected_main_workflow_ref(self) -> None:
+        with self.assertRaisesRegex(
+            publisher.PublicationError,
+            "protected main",
+        ):
+            publisher.publisher_identity(
+                repository=publisher.EXPECTED_PUBLISHER_REPOSITORY,
+                revision="b" * 40,
+                workflow_ref=(
+                    f"{publisher.EXPECTED_PUBLISHER_REPOSITORY}/"
+                    f"{publisher.EXPECTED_PUBLISHER_WORKFLOW}@refs/tags/v1"
+                ),
+                run_id="123",
+                run_attempt="1",
+            )
+
     def test_gateway_installs_hub_client_before_authorization_tests(self) -> None:
         workflow = (
             Path(__file__).parents[1]
@@ -1207,25 +1344,59 @@ class PublishSzlKernelsTests(unittest.TestCase):
         install = workflow.index("Install trusted gateway test dependency")
         tests = workflow.index("Test trusted gateway contracts")
         dependency = workflow.index('"huggingface-hub==1.26.0"', install)
-        uploader = workflow.index(
+        self.assertLess(install, dependency)
+        self.assertLess(dependency, tests)
+
+        sign_start = workflow.index("  sign:")
+        publish_start = workflow.index("  publish:")
+        sign_job = workflow[sign_start:publish_start]
+        publish_job = workflow[publish_start:]
+        self.assertIn("id-token: write", sign_job)
+        self.assertNotIn("HF_ORG_TOKEN", sign_job)
+        self.assertIn("--prepare-signature", sign_job)
+        self.assertIn("kernel-signature-transfer", sign_job)
+        self.assertNotIn("id-token: write", publish_job)
+        self.assertIn("HF_ORG_TOKEN", publish_job)
+        self.assertIn("--signature-bundle-input", publish_job)
+        self.assertIn("--signature-manifest-input", publish_job)
+        self.assertIn(
+            "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c",
+            publish_job,
+        )
+        uploader = publish_job.index(
             "Install exact publication client without publisher secret"
         )
-        upstream_pin = workflow.index(
+        upstream_pin = publish_job.index(
             "633246310320d85def0c67d62c7912fd444a842f",
             uploader,
         )
-        publish = workflow.index(
+        verifier = publish_job.index(
+            "Install pinned credentialless signature verifier",
+            uploader,
+        )
+        publish = publish_job.index(
             "Publish declared data with trusted code and verify exact readback"
         )
-        sandbox = workflow.index(
+        sandbox = publish_job.index(
             "Build credentialless stable runtime sandbox",
             uploader,
         )
-        self.assertLess(install, dependency)
-        self.assertLess(dependency, tests)
         self.assertLess(uploader, upstream_pin)
-        self.assertLess(upstream_pin, publish)
+        self.assertLess(upstream_pin, verifier)
+        self.assertLess(verifier, publish)
         self.assertLess(sandbox, publish)
+        self.assertIn(
+            "sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6",
+            sign_job,
+        )
+        self.assertIn(
+            f"cosign-release: {publisher.COSIGN_VERSION}",
+            sign_job,
+        )
+        self.assertIn(
+            "sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6",
+            publish_job[verifier:publish],
+        )
         self.assertIn('"torch==2.9.1"', dockerfile)
         self.assertIn('"kernels==0.16.0"', dockerfile)
         self.assertIn(
@@ -1234,12 +1405,12 @@ class PublishSzlKernelsTests(unittest.TestCase):
         )
         self.assertIn(
             "--file tools/kernel-runtime.Dockerfile",
-            workflow[sandbox:publish],
+            publish_job[sandbox:publish],
         )
         self.assertIn(
             'test "$(kernel-builder --version)" = '
             f'"{publisher.KERNEL_BUILDER_VERSION_OUTPUT}"',
-            workflow[uploader:publish],
+            publish_job[uploader:publish],
         )
 
     source_revision = "a" * 40
@@ -1324,13 +1495,28 @@ class PublishSzlKernelsTests(unittest.TestCase):
                         "repository": publisher.EXPECTED_SOURCE_REPOSITORY,
                         "revision": self.source_revision,
                         "protected_main": self.source_revision,
+                        "branch_protection_observed": True,
                         "signature_verified": True,
-                        "checks": [],
+                        "checks": [
+                            {
+                                "name": name,
+                                "check_run_id": index,
+                                "app_id": publisher.GITHUB_ACTIONS_APP_ID,
+                                "status": "completed",
+                                "conclusion": "success",
+                                "details_url": f"https://example.invalid/check/{index}",
+                            }
+                            for index, name in enumerate(
+                                sorted(publisher.EXPECTED_SOURCE_CHECKS),
+                                start=1,
+                            )
+                        ],
                     },
                     "publisher": {
                         "repository": publisher.EXPECTED_PUBLISHER_REPOSITORY,
                         "revision": self.publisher_revision,
                         "protected_main": self.publisher_revision,
+                        "branch_protection_observed": True,
                     },
                 }
             ),
@@ -1369,6 +1555,326 @@ class PublishSzlKernelsTests(unittest.TestCase):
                     if target == "__init__.py":
                         self.assertNotIn(b"import numpy", expected["v1"][relative])
 
+    def test_keyless_signing_scrubs_hf_token_and_verifies_exact_identity(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self._fixture(root)
+            staged = root / "staged"
+            publisher.stage_first_class_kernel(root, b"binding", staged)
+            calls: list[tuple[list[str], dict[str, str]]] = []
+
+            def run_cosign(command: list[str], **kwargs: object) -> SimpleNamespace:
+                environment = kwargs["env"]
+                self.assertIsInstance(environment, dict)
+                calls.append((command, dict(environment)))
+                if command[1:] == ["version", "--json"]:
+                    return SimpleNamespace(
+                        returncode=0,
+                        stdout=json.dumps({"gitVersion": publisher.COSIGN_VERSION}),
+                        stderr="",
+                    )
+                if command[1] == "sign-blob":
+                    bundle_path = Path(command[command.index("--bundle") + 1])
+                    bundle_path.write_text(
+                        json.dumps({"mediaType": "sigstore-test-bundle"}),
+                        encoding="utf-8",
+                    )
+                    return SimpleNamespace(returncode=0, stdout="signed", stderr="")
+                if command[1] == "verify-blob":
+                    return SimpleNamespace(returncode=0, stdout="verified", stderr="")
+                raise AssertionError(command)
+
+            environment = {
+                "PATH": "trusted-path",
+                "HOME": str(root),
+                "HF_TOKEN": "must-not-reach-cosign",
+                "ACTIONS_ID_TOKEN_REQUEST_TOKEN": "oidc-token",
+                "ACTIONS_ID_TOKEN_REQUEST_URL": "https://example.invalid/oidc",
+            }
+            with patch.dict(os.environ, environment, clear=True), patch.object(
+                publisher.shutil,
+                "which",
+                return_value="/trusted/cosign",
+            ), patch.object(
+                publisher.subprocess,
+                "run",
+                side_effect=run_cosign,
+            ):
+                evidence = publisher.sign_kernel_metadata(
+                    staged,
+                    certificate_identity=publisher.EXPECTED_SIGNER_IDENTITY,
+                    publisher_revision=self.publisher_revision,
+                )
+
+            self.assertEqual(evidence["status"], "SIGNED_AND_IDENTITY_VERIFIED")
+            self.assertEqual(
+                evidence["publisher_revision"],
+                self.publisher_revision,
+            )
+            self.assertEqual(len(calls), 3)
+            for _, child_environment in calls:
+                self.assertNotIn("HF_TOKEN", child_environment)
+            self.assertNotIn("ACTIONS_ID_TOKEN_REQUEST_TOKEN", calls[0][1])
+            self.assertEqual(
+                calls[1][1]["ACTIONS_ID_TOKEN_REQUEST_TOKEN"],
+                "oidc-token",
+            )
+            self.assertNotIn("ACTIONS_ID_TOKEN_REQUEST_TOKEN", calls[2][1])
+            verify_command = calls[-1][0]
+            self.assertEqual(
+                verify_command[verify_command.index("--certificate-identity") + 1],
+                publisher.EXPECTED_SIGNER_IDENTITY,
+            )
+            self.assertEqual(
+                verify_command[verify_command.index("--certificate-oidc-issuer") + 1],
+                publisher.SIGSTORE_OIDC_ISSUER,
+            )
+            self.assertEqual(
+                verify_command[
+                    verify_command.index("--certificate-github-workflow-repository")
+                    + 1
+                ],
+                publisher.EXPECTED_PUBLISHER_REPOSITORY,
+            )
+            self.assertEqual(
+                verify_command[
+                    verify_command.index("--certificate-github-workflow-ref") + 1
+                ],
+                publisher.EXPECTED_WORKFLOW_REF,
+            )
+            self.assertEqual(
+                verify_command[
+                    verify_command.index("--certificate-github-workflow-sha") + 1
+                ],
+                self.publisher_revision,
+            )
+            self.assertEqual(
+                verify_command[
+                    verify_command.index("--certificate-github-workflow-trigger")
+                    + 1
+                ],
+                publisher.EXPECTED_WORKFLOW_TRIGGER,
+            )
+
+    def test_signature_evidence_rejects_bundle_tampering(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self._fixture(root)
+            staged = root / "staged"
+            publisher.stage_first_class_kernel(root, b"binding", staged)
+            evidence = fake_sign_kernel_metadata(
+                staged,
+                certificate_identity=publisher.EXPECTED_SIGNER_IDENTITY,
+                publisher_revision=self.publisher_revision,
+            )
+            bundle_path = (
+                staged
+                / "build"
+                / publisher.KERNEL_VARIANT
+                / publisher.KERNEL_SIGNATURE_FILENAME
+            )
+            bundle_path.write_text(json.dumps({"tampered": True}), encoding="utf-8")
+            with self.assertRaisesRegex(
+                publisher.PublicationError,
+                "signature evidence failed",
+            ):
+                publisher.validate_kernel_signature_evidence(
+                    evidence,
+                    staging_root=staged,
+                    certificate_identity=publisher.EXPECTED_SIGNER_IDENTITY,
+                    publisher_revision=self.publisher_revision,
+                )
+
+    def test_keyless_signing_failure_does_not_echo_cosign_output(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self._fixture(root)
+            staged = root / "staged"
+            publisher.stage_first_class_kernel(root, b"binding", staged)
+
+            def run_cosign(command: list[str], **_kwargs: object) -> SimpleNamespace:
+                if command[1:] == ["version", "--json"]:
+                    return SimpleNamespace(
+                        returncode=0,
+                        stdout=json.dumps({"gitVersion": publisher.COSIGN_VERSION}),
+                        stderr="",
+                    )
+                return SimpleNamespace(
+                    returncode=1,
+                    stdout="",
+                    stderr="UNTRUSTED_COSIGN_DIAGNOSTIC",
+                )
+
+            signing_environment = {
+                "ACTIONS_ID_TOKEN_REQUEST_TOKEN": "oidc-token",
+                "ACTIONS_ID_TOKEN_REQUEST_URL": "https://example.invalid/oidc",
+            }
+            with patch.dict(os.environ, signing_environment), patch.object(
+                publisher.shutil,
+                "which",
+                return_value="/trusted/cosign",
+            ), patch.object(
+                publisher.subprocess,
+                "run",
+                side_effect=run_cosign,
+            ):
+                with self.assertRaises(publisher.PublicationError) as raised:
+                    publisher.sign_kernel_metadata(
+                        staged,
+                        certificate_identity=publisher.EXPECTED_SIGNER_IDENTITY,
+                        publisher_revision=self.publisher_revision,
+                    )
+            self.assertEqual(str(raised.exception), "kernel metadata signing failed")
+            self.assertNotIn("UNTRUSTED_COSIGN_DIAGNOSTIC", str(raised.exception))
+
+    def test_signature_transfer_separates_signing_from_provider_write(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            authorization, artifacts = self._fixture(root)
+            api = FakeApi(artifacts)
+            api.download_root = root / "downloads"
+            identity = publisher.publisher_identity(
+                repository=publisher.EXPECTED_PUBLISHER_REPOSITORY,
+                revision=self.publisher_revision,
+                workflow_ref=publisher.EXPECTED_PUBLISHER_WORKFLOW_REF,
+                run_id="123",
+                run_attempt="1",
+            )
+
+            bundle = root / "transfer" / "metadata.json.sigstore"
+            manifest = root / "transfer" / "manifest.json"
+
+            prepared = publisher.run(
+                source_root=root,
+                report_path=root / "signature-report.json",
+                authorization_path=authorization,
+                source_revision=self.source_revision,
+                publisher=identity,
+                publish=False,
+                prepare_signature=True,
+                signature_bundle_output=bundle,
+                signature_manifest_output=manifest,
+                token=None,
+                api=api,
+                download_fn=api.download,
+                kernel_sign_fn=fake_sign_kernel_metadata,
+            )
+            self.assertEqual(
+                prepared["status"],
+                "SIGNATURE_PREPARED_NO_PROVIDER_WRITE",
+            )
+            self.assertEqual(api.commits, [])
+            self.assertTrue(bundle.is_file())
+            self.assertTrue(manifest.is_file())
+
+            # The second job performs a fresh authorization observation. Its
+            # timestamp, check-run identities, and URLs are intentionally not
+            # part of the deterministic bytes signed by the first job.
+            refreshed = json.loads(authorization.read_text(encoding="utf-8"))
+            refreshed["authorized_at"] = "2026-09-24T13:00:00+00:00"
+            for index, check in enumerate(refreshed["source"]["checks"], start=100):
+                check["check_run_id"] = index
+                check["details_url"] = f"https://example.invalid/refreshed/{index}"
+            authorization.write_text(json.dumps(refreshed), encoding="utf-8")
+
+            verification_calls: list[dict[str, object]] = []
+
+            def verify_transfer(_staging_root: Path, **kwargs: object) -> None:
+                verification_calls.append(kwargs)
+
+            published = publisher.run(
+                source_root=root,
+                report_path=root / "publication-report.json",
+                authorization_path=authorization,
+                source_revision=self.source_revision,
+                publisher=identity,
+                publish=True,
+                token="test-token",
+                signature_bundle_input=bundle,
+                signature_manifest_input=manifest,
+                api=api,
+                download_fn=api.download,
+                signature_verify_fn=verify_transfer,
+                kernel_upload_fn=api.upload_kernel,
+                kernel_runtime_fn=lambda *, revision: runtime_evidence(revision),
+            )
+            self.assertEqual(
+                published["status"],
+                "PUBLISHED_AND_EXACT_READBACK_VERIFIED",
+            )
+            self.assertEqual(len(verification_calls), 1)
+            self.assertEqual(
+                verification_calls[0]["publisher_revision"],
+                self.publisher_revision,
+            )
+
+    def test_runtime_rejects_co_resident_oidc_and_provider_authority(self) -> None:
+        common = {
+            "source_root": Path("unused"),
+            "report_path": Path("unused-report"),
+            "authorization_path": Path("unused-authorization"),
+            "source_revision": "a" * 40,
+            "publisher": {},
+        }
+        with self.assertRaisesRegex(publisher.PublicationError, "HF_TOKEN must be absent"):
+            publisher.run(
+                **common,
+                publish=False,
+                prepare_signature=True,
+                token="provider-secret",
+            )
+        oidc = {
+            "ACTIONS_ID_TOKEN_REQUEST_TOKEN": "oidc-secret",
+            "ACTIONS_ID_TOKEN_REQUEST_URL": "https://example.invalid/oidc",
+        }
+        with patch.dict(os.environ, oidc), self.assertRaisesRegex(
+            publisher.PublicationError,
+            "OIDC authority must be absent",
+        ):
+            publisher.run(
+                **common,
+                publish=True,
+                token="provider-secret",
+            )
+
+    def test_signature_transfer_rejects_revision_rebinding_before_provider_write(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self._fixture(root)
+            staged = root / "staged"
+            publisher.stage_first_class_kernel(root, b"binding", staged)
+            signature = fake_sign_kernel_metadata(
+                staged,
+                certificate_identity=publisher.EXPECTED_SIGNER_IDENTITY,
+                publisher_revision=self.publisher_revision,
+            )
+            bundle = root / "transfer" / "metadata.json.sigstore"
+            manifest = root / "transfer" / "manifest.json"
+            publisher.write_kernel_signature_transfer(
+                staging_root=staged,
+                signature=signature,
+                bundle_output=bundle,
+                manifest_output=manifest,
+                source_revision=self.source_revision,
+                publisher_revision=self.publisher_revision,
+                binding_sha256="c" * 64,
+            )
+            consume_staging = root / "consume"
+            publisher.stage_first_class_kernel(root, b"binding", consume_staging)
+            with self.assertRaisesRegex(
+                publisher.PublicationError,
+                "binding validation",
+            ):
+                publisher.consume_kernel_signature_transfer(
+                    staging_root=consume_staging,
+                    bundle_input=bundle,
+                    manifest_input=manifest,
+                    source_revision=self.source_revision,
+                    publisher_revision="d" * 40,
+                    binding_sha256="c" * 64,
+                    verify_fn=lambda *_args, **_kwargs: None,
+                )
+
     def test_readback_rejects_drift_in_card_or_either_four_module_layout(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -1389,7 +1895,75 @@ class PublishSzlKernelsTests(unittest.TestCase):
                             publisher.verify_kernel_readback(
                                 files, branch=branch, revision="2" * 40,
                                 token="test-token", download_fn=download,
+                                list_files_fn=lambda *_args, **_kwargs: [
+                                    *files,
+                                    *publisher.KERNEL_IMMUTABLE_ROOT_FILES,
+                                ],
                             )
+
+    def test_v1_readback_rejects_unsigned_compatible_build_variant(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self._fixture(root)
+            expected = publisher.stage_first_class_kernel(
+                root, b"binding", root / "staged"
+            )["v1"]
+            download_path = root / "downloaded"
+
+            def download(_repo, relative, **_kwargs):
+                download_path.write_bytes(expected[relative])
+                return str(download_path)
+
+            foreign = (
+                "build/torch29-cpu-x86_64-linux/foreign_kernel/__init__.py"
+            )
+            observed = [*expected, foreign]
+            with self.assertRaisesRegex(
+                publisher.PublicationError,
+                r"immutable file-set mismatch.*torch29-cpu-x86_64-linux",
+            ):
+                publisher.verify_kernel_readback(
+                    expected,
+                    branch="v1",
+                    revision="2" * 40,
+                    token="test-token",
+                    download_fn=download,
+                    list_files_fn=lambda *_args, **_kwargs: [
+                        *observed,
+                        *publisher.KERNEL_IMMUTABLE_ROOT_FILES,
+                    ],
+                )
+
+    def test_v1_readback_rejects_undeclared_root_payload(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self._fixture(root)
+            expected = publisher.stage_first_class_kernel(
+                root, b"binding", root / "staged"
+            )["v1"]
+            download_path = root / "downloaded"
+
+            def download(_repo, relative, **_kwargs):
+                download_path.write_bytes(expected[relative])
+                return str(download_path)
+
+            observed = [
+                *expected,
+                *publisher.KERNEL_IMMUTABLE_ROOT_FILES,
+                "UNDECLARED_ROOT_PAYLOAD.py",
+            ]
+            with self.assertRaisesRegex(
+                publisher.PublicationError,
+                r"immutable file-set mismatch.*UNDECLARED_ROOT_PAYLOAD\.py",
+            ):
+                publisher.verify_kernel_readback(
+                    expected,
+                    branch="v1",
+                    revision="2" * 40,
+                    token="test-token",
+                    download_fn=download,
+                    list_files_fn=lambda *_args, **_kwargs: observed,
+                )
 
     def test_dry_run_uses_authorized_data_and_immutable_publisher(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -1427,6 +2001,9 @@ class PublishSzlKernelsTests(unittest.TestCase):
             )
             binding = result["targets"]["first_class_kernel"]["binding"]
             self.assertEqual(
+                result["schema"], "szl.kernel-source-binding-report/v4"
+            )
+            self.assertEqual(
                 len(binding["source"]["kernel_files"]),
                 1 + 2 * len(publisher.FIRST_CLASS_KERNEL_FILES),
             )
@@ -1441,9 +2018,11 @@ class PublishSzlKernelsTests(unittest.TestCase):
             )
             self.assertEqual(
                 binding["schema"],
-                "szl.hf-first-class-kernel-binding/v1",
+                "szl.hf-first-class-kernel-binding/v2",
             )
             self.assertEqual(binding["source_revision"], self.source_revision)
+            self.assertIn("authorization_binding", binding)
+            self.assertNotIn("authorization", binding)
             self.assertIn(self.publisher_revision, identity["workflow_url"])
 
     def test_publish_updates_kernel_main_and_v1_then_legacy_model(self) -> None:
@@ -1477,6 +2056,7 @@ class PublishSzlKernelsTests(unittest.TestCase):
                 token="test-token",
                 api=api,
                 download_fn=api.download,
+                kernel_sign_fn=fake_sign_kernel_metadata,
                 kernel_upload_fn=api.upload_kernel,
                 kernel_runtime_fn=verify_runtime,
             )
@@ -1505,9 +2085,38 @@ class PublishSzlKernelsTests(unittest.TestCase):
                 result["targets"]["legacy_model"]["readback"],
                 "EXACT_BYTES_VERIFIED",
             )
+            legacy_revision = result["targets"]["legacy_model"]["revision_after"]
+            legacy_publication = json.loads(
+                api.remote[(publisher.LEGACY_REPO_TYPE, legacy_revision)][
+                    "publication.json"
+                ]
+            )
+            self.assertEqual(
+                legacy_publication["authorization"]["schema"],
+                "szl.kernels-release-authorization/v1",
+            )
+            self.assertTrue(
+                all(
+                    "check_run_id" in check
+                    for check in legacy_publication["authorization"]["source"][
+                        "checks"
+                    ]
+                )
+            )
             self.assertEqual(
                 result["targets"]["first_class_kernel"]["runtime"]["status"],
                 "STABLE_GET_KERNEL_VERIFIED",
+            )
+            signature = result["targets"]["first_class_kernel"]["signature"]
+            self.assertEqual(signature["status"], "SIGNED_AND_IDENTITY_VERIFIED")
+            self.assertEqual(
+                signature["certificate_identity"],
+                publisher.EXPECTED_SIGNER_IDENTITY,
+            )
+            binding = result["targets"]["first_class_kernel"]["binding"]
+            self.assertEqual(
+                binding["signature_policy"]["certificate_identity"],
+                publisher.EXPECTED_SIGNER_IDENTITY,
             )
             metadata = json.loads(
                 api.remote[
@@ -1520,6 +2129,12 @@ class PublishSzlKernelsTests(unittest.TestCase):
             self.assertIn(
                 "szl_kernels/__init__.py",
                 metadata["digest"]["files"],
+            )
+            self.assertIn(
+                f"build/{publisher.KERNEL_VARIANT}/{publisher.KERNEL_SIGNATURE_FILENAME}",
+                api.remote[
+                    (publisher.KERNEL_REPO_TYPE, branches_after["v1"])
+                ],
             )
 
     def test_extra_runtime_claim_is_not_persisted_or_promoted_to_legacy(self) -> None:
@@ -1550,19 +2165,124 @@ class PublishSzlKernelsTests(unittest.TestCase):
                         source_root=root, report_path=report,
                         authorization_path=authorization, source_revision=self.source_revision,
                         publisher=identity, publish=True, token="test-token", api=api,
-                        download_fn=api.download, kernel_upload_fn=api.upload_kernel,
+                        download_fn=api.download,
+                        kernel_sign_fn=fake_sign_kernel_metadata,
+                        kernel_upload_fn=api.upload_kernel,
                         kernel_runtime_fn=invalid_runtime,
                     )
                 partial = json.loads(report.read_text(encoding="utf-8"))
-                self.assertEqual(partial["status"], "PUBLICATION_IN_PROGRESS")
+                self.assertEqual(
+                    partial["status"],
+                    "PUBLICATION_FAILED_AFTER_PROVIDER_WRITE_ATTEMPT",
+                )
+                self.assertEqual(
+                    partial["failure"],
+                    {
+                        "stage": "KERNEL_RUNTIME",
+                        "error_type": "PublicationError",
+                        "provider_write_attempted": True,
+                    },
+                )
                 observed = partial["targets"]["first_class_kernel"]["runtime"]
                 self.assertEqual(observed["status"], "FAILED")
-                self.assertEqual(set(observed), {"status", "client_version", "error"})
+                self.assertEqual(
+                    set(observed), {"status", "client_version", "error_type"}
+                )
                 self.assertNotIn("UNTRUSTED_ERROR_MARKER", report.read_text(encoding="utf-8"))
                 self.assertEqual(api.commits, [
                     {"repo_type": "kernel", "revision": "main"},
                     {"repo_type": "kernel", "revision": "v1"},
                 ])
+
+    def test_signature_failure_prevents_every_provider_write(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            authorization, artifacts = self._fixture(root)
+            api = FakeApi(artifacts)
+            api.download_root = root / "downloads"
+            identity = publisher.publisher_identity(
+                repository=publisher.EXPECTED_PUBLISHER_REPOSITORY,
+                revision=self.publisher_revision,
+                workflow_ref=publisher.EXPECTED_PUBLISHER_WORKFLOW_REF,
+                run_id="123",
+                run_attempt="1",
+            )
+
+            def fail_signing(*_args: object, **_kwargs: object) -> dict[str, object]:
+                raise publisher.PublicationError("signing unavailable")
+
+            report = root / "report.json"
+            with self.assertRaisesRegex(publisher.PublicationError, "signing unavailable"):
+                publisher.run(
+                    source_root=root,
+                    report_path=report,
+                    authorization_path=authorization,
+                    source_revision=self.source_revision,
+                    publisher=identity,
+                    publish=True,
+                    token="test-token",
+                    api=api,
+                    download_fn=api.download,
+                    kernel_sign_fn=fail_signing,
+                    kernel_upload_fn=api.upload_kernel,
+                )
+            partial = json.loads(report.read_text(encoding="utf-8"))
+            self.assertEqual(api.commits, [])
+            self.assertEqual(
+                partial["status"],
+                "SIGNATURE_VALIDATION_FAILED_NO_PROVIDER_WRITE",
+            )
+            self.assertEqual(
+                partial["targets"]["first_class_kernel"]["signature"],
+                {
+                    "status": "FAILED",
+                    "tool": "cosign",
+                    "tool_version": publisher.COSIGN_VERSION,
+                    "error_type": "PublicationError",
+                },
+            )
+
+    def test_signature_prepare_failure_records_terminal_state(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            authorization, artifacts = self._fixture(root)
+            api = FakeApi(artifacts)
+            api.download_root = root / "downloads"
+            identity = publisher.publisher_identity(
+                repository=publisher.EXPECTED_PUBLISHER_REPOSITORY,
+                revision=self.publisher_revision,
+                workflow_ref=publisher.EXPECTED_PUBLISHER_WORKFLOW_REF,
+                run_id="123",
+                run_attempt="1",
+            )
+
+            def fail_signing(*_args: object, **_kwargs: object) -> dict[str, object]:
+                raise publisher.PublicationError("signing unavailable")
+
+            report = root / "signature-report.json"
+            with self.assertRaisesRegex(publisher.PublicationError, "signing unavailable"):
+                publisher.run(
+                    source_root=root,
+                    report_path=report,
+                    authorization_path=authorization,
+                    source_revision=self.source_revision,
+                    publisher=identity,
+                    publish=False,
+                    prepare_signature=True,
+                    signature_bundle_output=root / "transfer" / "bundle.sigstore",
+                    signature_manifest_output=root / "transfer" / "manifest.json",
+                    token=None,
+                    api=api,
+                    download_fn=api.download,
+                    kernel_sign_fn=fail_signing,
+                )
+            partial = json.loads(report.read_text(encoding="utf-8"))
+            self.assertEqual(partial["status"], "SIGNATURE_PREPARATION_FAILED")
+            self.assertEqual(
+                partial["targets"]["first_class_kernel"]["signature"]["status"],
+                "FAILED",
+            )
+            self.assertEqual(api.commits, [])
 
     def test_failed_readback_preserves_the_created_kernel_revision(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -1606,10 +2326,22 @@ class PublishSzlKernelsTests(unittest.TestCase):
                     token="test-token",
                     api=api,
                     download_fn=fail_main_readback,
+                    kernel_sign_fn=fake_sign_kernel_metadata,
                     kernel_upload_fn=api.upload_kernel,
                 )
             partial = json.loads(report.read_text(encoding="utf-8"))
-            self.assertEqual(partial["status"], "PUBLICATION_IN_PROGRESS")
+            self.assertEqual(
+                partial["status"],
+                "PUBLICATION_FAILED_AFTER_PROVIDER_WRITE_ATTEMPT",
+            )
+            self.assertEqual(
+                partial["failure"],
+                {
+                    "stage": "KERNEL_READBACK_MAIN",
+                    "error_type": "PublicationError",
+                    "provider_write_attempted": True,
+                },
+            )
             self.assertEqual(
                 partial["targets"]["first_class_kernel"]["branches_after"],
                 {"main": "1" * 40, "v1": "2" * 40},
