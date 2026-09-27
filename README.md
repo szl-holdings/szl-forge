@@ -153,7 +153,7 @@ Future full `forge.ps1` runs birth via this GGUF path automatically (step 6).
 | `Modelfile` | Legacy direct-import recipe (`FROM ./szl-model`). **Superseded** — direct safetensors import corrupted SZL-1's voice (MEASURED 2026-07-12: `@` spam at temperature 0). Kept for provenance. |
 | [`RUNBOOK-NEMO.md`](./RUNBOOK-NEMO.md) | One-command-per-step runbook to put **SZL-Nemo** (doctrine-wrapped NVIDIA Nemotron 3 Nano 4B) on the tower. |
 | `Modelfile.nemo` | Ollama recipe for SZL-Nemo (`FROM nemotron-3-nano:4b` + SZL doctrine system prompt — a wrapper, not an SZL fine-tune). |
-| `conjecture_machine.py` | **Conjecture Machine** — points the sovereign model at the formula corpus, asking each formula for an *advisory* proof sketch / lemma decomposition / counterexample search. Stdlib-only. NEVER claims proven. |
+| `conjecture_machine.py` | **Conjecture Machine** — points the owner-controlled model at the formula corpus, asking each formula for an *advisory* proof sketch / lemma decomposition / counterexample search. Stdlib-only. NEVER claims proven. |
 | [`RUNBOOK-CONJECTURE.md`](./RUNBOOK-CONJECTURE.md) | One-command-per-step runbook to run the Conjecture Machine against the sovereign endpoint. |
 | `thesis_formula_index.json` | Local snapshot of the estate's `thesis-formula-index` (80 entries) so the Conjecture Machine runs offline. |
 | `chaski/bakeoff_named_n.py` | Owner-metal named-N JSON-draft (n=5) + refusal (n=6) bake-off: base `Qwen/Qwen3.5-0.8B` vs local chaski-5050 and chaski-r2 adapters. Writes a MEASURED receipt. Gate files stay held-out. `publication_eligible` stays false. |
