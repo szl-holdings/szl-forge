@@ -5,6 +5,7 @@ on:
     paths:
       - ".github/workflows/frontier-evaluation-runner.yml"
       - "frontier/evaluation/**"
+      - "!frontier/evaluation/identity_bindings/**"
       - "tools/acquire_hf_inference_token.py"
       - "tests/test_frontier_evaluation_runner.py"
       - "tests/test_frontier_provider_unavailable_receipt.py"
@@ -15,6 +16,7 @@ on:
     paths:
       - ".github/workflows/frontier-evaluation-runner.yml"
       - "frontier/evaluation/**"
+      - "!frontier/evaluation/identity_bindings/**"
       - "tools/acquire_hf_inference_token.py"
       - "tests/test_frontier_evaluation_runner.py"
       - "tests/test_frontier_provider_unavailable_receipt.py"
