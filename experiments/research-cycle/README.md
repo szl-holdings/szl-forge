@@ -79,6 +79,15 @@ No retries, downloads, installs, daemon restarts, provider configuration changes
 or public listeners. A socket timeout is not a hard process-runtime deadline.
 At most three candidate generations are allowed; the default is one.
 
+The local request supplies a closed three-field JSON schema in `format` and
+the same schema in the system prompt. Weight values are enumerated from 0 to 4;
+the normalization flag is boolean. This constrains response shape rather than
+asking for arbitrary JSON. Server schema enforcement is not trusted as
+validation: the independent parser and recipe checks still reject truncated
+JSON, extra fields, bool weights, and the all-zero recipe. There is no output
+repair, automatic retry, or substitution of a canned successful recipe.
+See Ollama's [structured-output protocol](https://docs.ollama.com/capabilities/structured-outputs).
+
 Failed local attempts retain a fixed `failure_phase`: `inventory_before`,
 `generation`, or `inventory_after`. `elapsed_seconds` measures that failed
 phase using a monotonic clock, not the whole cycle or server compute time.
