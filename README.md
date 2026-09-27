@@ -153,7 +153,7 @@ Future full `forge.ps1` runs birth via this GGUF path automatically (step 6).
 | `Modelfile` | Legacy direct-import recipe (`FROM ./szl-model`). **Superseded** — direct safetensors import corrupted SZL-1's voice (MEASURED 2026-07-12: `@` spam at temperature 0). Kept for provenance. |
 | [`RUNBOOK-NEMO.md`](./RUNBOOK-NEMO.md) | One-command-per-step runbook to put **SZL-Nemo** (doctrine-wrapped NVIDIA Nemotron 3 Nano 4B) on the tower. |
 | `Modelfile.nemo` | Ollama recipe for SZL-Nemo (`FROM nemotron-3-nano:4b` + SZL doctrine system prompt — a wrapper, not an SZL fine-tune). |
-| `conjecture_machine.py` | **Conjecture Machine** — points the sovereign model at the formula corpus, asking each formula for an *advisory* proof sketch / lemma decomposition / counterexample search. Stdlib-only. NEVER claims proven. |
+| `conjecture_machine.py` | **Conjecture Machine** — points the owner-controlled model at the formula corpus, asking each formula for an *advisory* proof sketch / lemma decomposition / counterexample search. Stdlib-only. NEVER claims proven. |
 | [`RUNBOOK-CONJECTURE.md`](./RUNBOOK-CONJECTURE.md) | One-command-per-step runbook to run the Conjecture Machine against the sovereign endpoint. |
 | `thesis_formula_index.json` | Local snapshot of the estate's `thesis-formula-index` (80 entries) so the Conjecture Machine runs offline. |
 | `chaski/bakeoff_named_n.py` | Owner-metal named-N JSON-draft (n=5) + refusal (n=6) bake-off: base `Qwen/Qwen3.5-0.8B` vs local chaski-5050 and chaski-r2 adapters. Writes a MEASURED receipt. Gate files stay held-out. `publication_eligible` stays false. |
@@ -180,6 +180,50 @@ Publication is performed only from protected `main` by the dependent
 `publish-bindings` job in `.github/workflows/publish-model-inference-lab.yml`,
 after that same workflow verifies the exact live Space revision and using the
 repository's encrypted Hugging Face organization credential.
+
+## First-class kernel publication and signature
+
+`.github/workflows/publish-szl-kernels.yml` is the sole publication gateway for
+`SZLHOLDINGS/szl-kernels`. It authorizes exact protected-main revisions of both
+the source and this publisher before the Hugging Face credential is exposed.
+The trusted publisher stages the Kernel Hub package, embeds a digest covering
+every executable and source-binding file, and signs `metadata.json` with
+Sigstore keyless signing. Authority is split across jobs: the signing job has
+GitHub OIDC but is required to have no Hugging Face token, while the publication
+job has the Hugging Face token but no OIDC minting authority. Only `cosign
+sign-blob` receives the OIDC request variables among subprocesses launched by
+the publisher code; version and verification probes are credentialless, and the
+kernel uploader receives only the provider token plus a small operating-system
+environment allowlist. GitHub grants OIDC at job scope, so the entire signing
+job is deliberately treated as the trusted OIDC boundary even though it has no
+provider credential.
+
+Before upload, Forge verifies the signature against exactly
+`szl-holdings/szl-forge/.github/workflows/publish-szl-kernels.yml@refs/heads/main`
+and the GitHub Actions OIDC issuer, repository, `refs/heads/main`,
+`workflow_dispatch` trigger, and exact publisher commit SHA. A bound signature
+bundle is the only signing output transferred between jobs. Both jobs rebuild
+the same deterministic authorization projection and staged metadata; any source,
+publisher, authorization fact, or observed Hub-parent drift invalidates the
+transfer before a provider write. Forge then rechecks both mutable Hub branch
+parents, uploads, reads the signed bundle and all declared bytes back from the
+new immutable revisions, and runs the existing credentialless runtime witness.
+The `v1` readback also closes the complete provider file inventory to
+`.gitattributes`, `LICENSE`, `README.md`, and the staged package files; an
+undeclared root payload or competing compatible `build/*` variant is terminal.
+The signed first-class source binding is explicitly versioned as
+`szl.hf-first-class-kernel-binding/v2`; its `authorization_binding` is the
+deterministic exact-head projection used across the two jobs. The legacy model
+publication retains the established `szl.hf-kernel-source-binding/v2`
+`authorization` observation contract.
+
+This source contract does not assert that an older Hub revision is signed or
+that a new revision has been published. The `kernels` client does not yet make
+signature verification a load-time guarantee, and its default verification
+policy curates upstream publishers rather than automatically trusting this SZL
+workflow. Forge therefore enforces the exact Cosign identity itself. The
+detached bundle is additional integrity and publisher-identity evidence, not a
+performance, safety, or production-authorization claim.
 
 ## Doctrine gate (dataset content)
 
