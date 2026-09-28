@@ -1,0 +1,62 @@
+{
+  "schema": "szl.evaluation-binding/v1",
+  "repository": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3",
+  "pinned_revision": "108835f1622615f96d7cb74f8b30f9c488923683",
+  "identity_manifest": "szl-receiptagent-qwen35-0.8b-v3_108835f16226.json",
+  "identity_manifest_path": "frontier/evaluation/identity_bindings/szl-receiptagent-qwen35-0.8b-v3_108835f16226.json",
+  "identity_manifest_sha256": "206e9ca2a258973f1b6e06621dd282c7552ededacba742fe09d968139461d379",
+  "identity_manifest_hash_basis": "git blob bytes at HEAD (LF), not Windows working-copy bytes",
+  "evaluated_files": [
+    {
+      "path": "adapter_model.safetensors",
+      "sha256": "90b82ade0b2c84eca92e90cdeb56137d61d7da4b4863ff4d29fa75e9dc037870",
+      "hash_source": "identity manifest"
+    },
+    {
+      "path": "adapter_config.json",
+      "sha256": "d36472a3100231dfdf0c4aa16d3a80cb8ab53c86af33a15172b06f9d9a313193",
+      "hash_source": "identity manifest"
+    }
+  ],
+  "evaluated_files_binding": "CO_LOCATED_AT_PINNED_REVISION_NOT_HASH_BOUND_BY_RECEIPT",
+  "evaluator": "eval_dev_named_n.json as published at the pinned revision (schema szl.receiptagent-v3.laptop-dev-named-n/v1); not re-run",
+  "evaluation_receipt": "szl-receiptagent-qwen35-0.8b-v3_108835f16226_dev_named_n.receipt.json",
+  "evaluation_receipt_path": "frontier/evaluation/identity_bindings/evals/szl-receiptagent-qwen35-0.8b-v3_108835f16226_dev_named_n.receipt.json",
+  "evaluation_receipt_sha256": "07fd386bbdeabba16022d81dfa2f89b3e042a0905c1f07c0ae15ece0a3da9479",
+  "evaluation_receipt_storage": "byte-for-byte under .gitattributes -text (original bytes contain CRLF)",
+  "evaluation_receipt_source": {
+    "hub_repo": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3",
+    "revision": "108835f1622615f96d7cb74f8b30f9c488923683",
+    "filename": "eval_dev_named_n.json",
+    "sha256": "07fd386bbdeabba16022d81dfa2f89b3e042a0905c1f07c0ae15ece0a3da9479",
+    "matches_identity_manifest": true
+  },
+  "evaluation_receipt_kind": "szl.receiptagent-v3.laptop-dev-named-n/v1",
+  "evidence_class": "DEV",
+  "held_out": false,
+  "split": "DEV",
+  "opened_test_jsonl": false,
+  "receipt_label": "MEASURED",
+  "counts": {
+    "n": 12,
+    "correct": 11,
+    "draft": "4/4",
+    "recovery": "3/4",
+    "refuse": "4/4"
+  },
+  "computed_at": "2026-08-29T14:12:47.339237+00:00",
+  "limitations": [
+    "DEV split only; not a held-out gate and not lane evidence under LANE_CONTRACT invariant 3.",
+    "The receipt records no weight hashes; the adapter link is co-location at the pinned revision, not hash-bound.",
+    "n=12; development signal only."
+  ],
+  "run_exit_code": null,
+  "receipt_check_exit_code": null,
+  "bound_at_utc": "2026-09-28T00:38:58+00:00",
+  "boundary": "Evidence-only binding of existing dev evidence to exact pinned identity. Not qualification, promotion, or authorization.",
+  "publication_eligible": false,
+  "autonomy_eligible": false,
+  "production_disposition": "HOLD",
+  "promotion_effect": "NONE",
+  "signature_status": "UNSIGNED_HONEST"
+}
