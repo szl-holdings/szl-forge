@@ -68,7 +68,7 @@ jobs:
           python -I -m frontier.rlt.reporting --evaluation "$RUNNER_TEMP/rlt-training/evaluation.json" --output "$RUNNER_TEMP/rlt-training/index.html"
       - name: Retain synthetic weights and sanitized evidence (not private state)
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: rlt-synthetic-evidence-${{ matrix.python }}
           path: |
