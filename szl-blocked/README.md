@@ -52,14 +52,11 @@ Honest-BLOCKED as a first-class governed state. **Not a model. No weights.**
 
 **IS:** a fail-closed Python governance kernel. On deny the guarded `fn` never runs (`BlockedResult.output is None`) and a BLOCK receipt is written. Public API: `governed_call`, `GovernedGate`, `deny_by_default` / `deny_if_flag` / `deny_if_action_in`, `UnifiedReceiptChain`. Sibling package `szl_euaiact` can emit an Annex IV-style **DRAFT skeleton**.
 
-**IS NOT:** trained weights. Not FlashAttention. Not a drop-in blocker library. Not legal advice and **not** a declaration of conformity. No MEASURED latency or CUDA benches here. Hub `model.joblib` is **QUARANTINED** executable serialization — do not `joblib.load` it.
+**IS NOT:** trained weights. Not FlashAttention. Not a drop-in blocker library. Not legal advice and **not** a declaration of conformity. No MEASURED latency or CUDA benches here. No `model.joblib` is published in this repo (OBSERVED 2026-09-25); any executable serialization would be **QUARANTINED** — never `joblib.load` an artifact from a card mirror.
 
 Canonical GitHub source: https://github.com/szl-holdings/szl-blocked  
 Hub package: https://huggingface.co/kernels/SZLHOLDINGS/szl-blocked  
 This model-type repo is the publish / card mirror. Apache-2.0.
-
-```python
-
 
 <!-- SZL-ATELIER-CUT:v1:START -->
 ## The cut
@@ -76,7 +73,7 @@ A blocked publish — the name is the feature.
 | NVIDIA | Enterprise compliance packs. |
 | Unsloth | No. |
 
-Nobody else ships this combination. That is the point of a one-of-one.
+No equivalent public combination was found among the leaders surveyed above (a snapshot, not an ecosystem-wide novelty claim).
 
 ## Intended use
 
@@ -89,6 +86,7 @@ Block publish when annex fields are missing.
 Canonical GitHub: [`szl-holdings/szl-blocked`](https://github.com/szl-holdings/szl-blocked/blob/main/README.md)
 <!-- SZL-ATELIER-CUT:v1:END -->
 
+```python
 from kernels import get_kernel
 blk = get_kernel("SZLHOLDINGS/szl-blocked", revision="main", trust_remote_code=True)
 

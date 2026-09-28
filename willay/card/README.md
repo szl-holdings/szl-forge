@@ -50,7 +50,7 @@ A tiny speaker that refuses marketing. Trained on the honesty set, not a brand b
 | NVIDIA | System-prompt as weights. |
 | Unsloth | TRL SFT on Qwen2.5-0.5B-Instruct via HF Jobs. |
 
-Nobody else ships this combination. That is the point of a one-of-one.
+No equivalent public combination was found among the leaders surveyed above (a snapshot, not an ecosystem-wide novelty claim).
 
 ## Intended use
 

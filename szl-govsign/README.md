@@ -29,14 +29,11 @@ Signed governance provenance. **Not a model. No weights.**
 
 **IS:** a software kernel that builds in-toto / DSSE envelopes over an SZL governance predicate (Λ advisory, MEASURED energy, honest-BLOCKED, allow/block) and signs them with ECDSA P-256. Public API: `attest`, `verify`, `build_governance_predicate`, `generate_ephemeral_keypair`, `selfcheck`.
 
-**IS NOT:** trained weights. Not a CUDA bench. A signature proves integrity and key possession only — it does **not** prove Λ uniqueness and does **not** upgrade advisory to proven trust (`proven_trust` stays locked False). Hub `model.joblib` is **QUARANTINED** executable serialization — do not `joblib.load` it. GitHub is the approved source.
+**IS NOT:** trained weights. Not a CUDA bench. A signature proves integrity and key possession only — it does **not** prove Λ uniqueness and does **not** upgrade advisory to proven trust (`proven_trust` stays locked False). No `model.joblib` is published in this repo (OBSERVED 2026-09-25); any executable serialization would be **QUARANTINED** — never `joblib.load` an artifact from a card mirror. GitHub is the approved source.
 
 Canonical GitHub source: https://github.com/szl-holdings/szl-govsign  
 Hub package: https://huggingface.co/kernels/SZLHOLDINGS/szl-govsign  
 This model-type repo is the publish / card mirror. Apache-2.0.
-
-```python
-
 
 <!-- SZL-ATELIER-CUT:v1:START -->
 ## The cut
@@ -53,7 +50,7 @@ Every organ speaks DSSE.
 | NVIDIA | Signed containers / in-toto in supply chain. |
 | Unsloth | No. |
 
-Nobody else ships this combination. That is the point of a one-of-one.
+No equivalent public combination was found among the leaders surveyed above (a snapshot, not an ecosystem-wide novelty claim).
 
 ## Intended use
 
@@ -66,6 +63,7 @@ Sign receipts. Verify offline.
 Canonical GitHub: [`szl-holdings/szl-govsign`](https://github.com/szl-holdings/szl-govsign/blob/main/README.md)
 <!-- SZL-ATELIER-CUT:v1:END -->
 
+```python
 from kernels import get_kernel
 gs = get_kernel("SZLHOLDINGS/szl-govsign", revision="main", trust_remote_code=True)
 print(gs.selfcheck())
