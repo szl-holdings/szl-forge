@@ -29,14 +29,11 @@ Provenance-DAG control + in-toto / SLSA interop. **Not a model. No weights.**
 
 **IS:** a software kernel that (1) emits declared in-toto Statement v1 and SLSA provenance v1 shapes from a `UnifiedReceiptChain`, (2) walks a provenance DAG edge-by-edge, (3) can bind a per-kernel NVML energy delta when a GPU is present. Public API: `statement_from_chain`, `slsa_statement`, `ProvenanceDAG` / `verify_dag`, `measure_kernel_energy`, `selfcheck`.
 
-**IS NOT:** trained weights. Not a complete signing product (signing is `szl-govsign`). Not a CUDA speedup. A hash-chain digest is an integrity fingerprint, not a signature. External verifier compatibility must be tested. Hub `model.joblib` is **QUARANTINED** executable serialization — do not `joblib.load` it.
+**IS NOT:** trained weights. Not a complete signing product (signing is `szl-govsign`). Not a CUDA speedup. A hash-chain digest is an integrity fingerprint, not a signature. External verifier compatibility must be tested. No `model.joblib` is published in this repo (OBSERVED 2026-09-25); any executable serialization would be **QUARANTINED** — never `joblib.load` an artifact from a card mirror.
 
 Canonical GitHub source: https://github.com/szl-holdings/szl-provctl  
 Hub package: https://huggingface.co/kernels/SZLHOLDINGS/szl-provctl  
 This model-type repo is the publish / card mirror. Apache-2.0.
-
-```python
-
 
 <!-- SZL-ATELIER-CUT:v1:START -->
 ## The cut
@@ -53,7 +50,7 @@ A weight that is invalid without its provenance predicate.
 | NVIDIA | NGC signed images — take, then apply to LoRAs. |
 | Unsloth | After the job, attach SLSA. Unsloth does not. |
 
-Nobody else ships this combination. That is the point of a one-of-one.
+No equivalent public combination was found among the leaders surveyed above (a snapshot, not an ecosystem-wide novelty claim).
 
 ## Intended use
 
@@ -66,6 +63,7 @@ CI predicate for every publish.
 Canonical GitHub: [`szl-holdings/szl-provctl`](https://github.com/szl-holdings/szl-provctl/blob/main/README.md)
 <!-- SZL-ATELIER-CUT:v1:END -->
 
+```python
 from kernels import get_kernel
 pc = get_kernel("SZLHOLDINGS/szl-provctl", revision="main", trust_remote_code=True)
 print(pc.selfcheck()["ok"])

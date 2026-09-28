@@ -66,7 +66,7 @@ A cache that cannot be subpoenaed for what it was never allowed to hold.
 | NVIDIA | PagedAttention / blocked KV — then we spend it on governance. |
 | Unsloth | No. |
 
-Nobody else ships this combination. That is the point of a one-of-one.
+No equivalent public combination was found among the leaders surveyed above (a snapshot, not an ecosystem-wide novelty claim).
 
 ## Intended use
 

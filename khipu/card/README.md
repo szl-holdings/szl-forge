@@ -80,7 +80,7 @@ Retrieval that cannot hallucinate a citation. Grounding is structural.
 | NVIDIA | NeMo retriever sees passages. Khipu sees handles only. |
 | Unsloth | QLoRA SFT, response-only loss, abstain oversampling. House loop. |
 
-Nobody else ships this combination. That is the point of a one-of-one.
+No equivalent public combination was found among the leaders surveyed above (a snapshot, not an ecosystem-wide novelty claim).
 
 Canonical GitHub: [`szl-holdings/szl-forge`](https://github.com/szl-holdings/szl-forge/blob/main/khipu/)
 <!-- SZL-ATELIER-CUT:v1:END -->
