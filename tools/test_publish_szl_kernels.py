@@ -15,6 +15,18 @@ from unittest.mock import patch
 
 import publish_szl_kernels as publisher
 import verify_szl_kernel_runtime as runtime_verifier
+import kernels_keyless_credentials as credentials
+
+MODEL_TOKEN = "hf_jwt_model_fixture"
+KERNEL_TOKEN = "hf_jwt_kernel_fixture"
+
+
+def keyless_grants() -> dict[str, object]:
+    return {
+        "token": MODEL_TOKEN,
+        "kernel_token": KERNEL_TOKEN,
+        "publisher_authority": publisher.authority_policy("b" * 40),
+    }
 
 
 def retrieval_evidence() -> dict[str, object]:
@@ -151,6 +163,7 @@ class FakeApi:
     kernel_revision = "e" * 40
 
     def __init__(self, artifacts: dict[str, Path]) -> None:
+        self.tokens: list[tuple[str, object]] = []
         self.files = list(artifacts)
         self.commits: list[dict[str, object]] = []
         self.kernel_revisions = {
@@ -176,7 +189,8 @@ class FakeApi:
         files_metadata: bool = False,
         token: str | None = None,
     ) -> SimpleNamespace:
-        del repo_id, files_metadata, token
+        del repo_id, files_metadata
+        self.tokens.append(("model", token))
         return SimpleNamespace(
             sha=self.model_revision,
             siblings=[SimpleNamespace(rfilename=path) for path in self.files],
@@ -191,6 +205,7 @@ class FakeApi:
         **_: object,
     ) -> SimpleNamespace:
         del repo_id
+        self.tokens.append((repo_type, _.get("token")))
         self._assert_kernel(repo_type)
         return SimpleNamespace(
             sha=self.kernel_revisions[revision or publisher.KERNEL_BRANCHES[0]]
@@ -204,6 +219,7 @@ class FakeApi:
         **_: object,
     ) -> SimpleNamespace:
         del repo_id
+        self.tokens.append((repo_type, _.get("token")))
         self._assert_kernel(repo_type)
         return SimpleNamespace(
             branches=[
@@ -224,6 +240,7 @@ class FakeApi:
         **_: object,
     ) -> list[SimpleNamespace]:
         del repo_id
+        self.tokens.append((repo_type, _.get("token")))
         self._assert_kernel(repo_type)
         branch = next(
             branch
@@ -244,6 +261,7 @@ class FakeApi:
         **_: object,
     ) -> list[str]:
         del repo_id
+        self.tokens.append((repo_type, _.get("token")))
         self._assert_kernel(repo_type)
         branch = next(
             branch
@@ -263,6 +281,7 @@ class FakeApi:
         **_: object,
     ) -> SimpleNamespace:
         del repo_id
+        self.tokens.append((repo_type, _.get("token")))
         self.assert_parent(repo_type, parent_commit)
         self.commits.append({"repo_type": repo_type, "revision": revision})
         oid = f"{len(self.commits)}" * 40
@@ -280,7 +299,7 @@ class FakeApi:
         return SimpleNamespace(oid=oid)
 
     def upload_kernel(self, staging_root: Path, token: str) -> None:
-        if token != "test-token":
+        if token != KERNEL_TOKEN:
             raise AssertionError(token)
         main_revision = "1" * 40
         version_revision = "2" * 40
@@ -322,6 +341,7 @@ class FakeApi:
     ) -> str:
         if repo_id != publisher.EXPECTED_REPO_ID:
             raise AssertionError(repo_id)
+        self.tokens.append((repo_type, _.get("token")))
         payload = self.remote[(repo_type, revision)][filename]
         destination = self.download_root / repo_type / revision / filename
         destination.parent.mkdir(parents=True, exist_ok=True)
@@ -344,6 +364,67 @@ class FakeApi:
 
 
 class PublishSzlKernelsTests(unittest.TestCase):
+    def test_main_drops_exchange_authority_before_provider_publication(self) -> None:
+        argv = [
+            "--source-dir", "unused", "--source-revision", "a" * 40,
+            "--authorization-report", "unused.json",
+            "--publisher-repository", publisher.EXPECTED_PUBLISHER_REPOSITORY,
+            "--publisher-revision", "b" * 40,
+            "--publisher-workflow-ref", publisher.EXPECTED_PUBLISHER_WORKFLOW_REF,
+            "--publisher-run-id", "123", "--publisher-run-attempt", "1",
+        ]
+        oidc = {key: "fixture" for key in publisher.OIDC_ENV_ALLOWLIST}
+
+        def publish(**kwargs: object) -> dict[str, object]:
+            self.assertEqual(kwargs["token"], MODEL_TOKEN)
+            self.assertEqual(kwargs["kernel_token"], KERNEL_TOKEN)
+            self.assertEqual(kwargs["publisher_authority"], publisher.authority_policy("b" * 40))
+            self.assertTrue(all(key not in os.environ for key in publisher.OIDC_ENV_ALLOWLIST))
+            return {"status": "mocked-boundary-only"}
+
+        with patch.dict(os.environ, oidc, clear=True), patch.object(
+            credentials, "acquire_pair",
+            return_value=credentials.KernelPublisherCredentials(MODEL_TOKEN, KERNEL_TOKEN),
+        ) as acquire, patch.object(
+            credentials, "authority_evidence", return_value=publisher.authority_policy("b" * 40),
+        ), patch.object(publisher, "run", side_effect=publish), patch("builtins.print"):
+            self.assertEqual(publisher.main([*argv, "--publish"]), 0)
+            acquire.assert_called_once_with()
+
+        with patch.object(credentials, "acquire_pair") as acquire, patch.object(
+            publisher, "run", return_value={"status": "mocked-dry-run-only"},
+        ) as run, patch("builtins.print"):
+            self.assertEqual(publisher.main(argv), 0)
+            acquire.assert_not_called()
+            self.assertIsNone(run.call_args.kwargs["token"])
+            self.assertIsNone(run.call_args.kwargs["kernel_token"])
+
+    def test_missing_reused_or_rebound_grants_fail_before_any_provider_read(self) -> None:
+        identity = {"revision": "b" * 40}
+        for mutation in (
+            {"token": None}, {"kernel_token": None},
+            {"kernel_token": MODEL_TOKEN}, {"publisher_authority": None},
+            {"publisher_authority": publisher.authority_policy("c" * 40)},
+        ):
+            with self.subTest(mutation=mutation), self.assertRaises(publisher.PublicationError):
+                publisher.run(
+                    source_root=Path("unused"), report_path=Path("unused-report"),
+                    authorization_path=Path("unused-authorization"),
+                    source_revision="a" * 40, publisher=identity, publish=True,
+                    **{**keyless_grants(), **mutation},
+                )
+
+    def test_uploader_error_does_not_echo_provider_output(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary, patch.object(
+            publisher, "require_kernel_builder_executable", return_value="kernel-builder",
+        ), patch.object(
+            publisher.subprocess, "run",
+            side_effect=publisher.subprocess.CalledProcessError(
+                1, ["kernel-builder"], output=KERNEL_TOKEN, stderr=KERNEL_TOKEN,
+            ),
+        ), self.assertRaisesRegex(publisher.PublicationError, "^kernel-builder upload failed$"):
+            publisher.upload_first_class_kernel(Path(temporary), KERNEL_TOKEN)
+
     def test_kernel_parent_revalidation_rejects_branch_drift(self) -> None:
         api = FakeApi({})
         observed = {
@@ -1307,13 +1388,13 @@ class PublishSzlKernelsTests(unittest.TestCase):
                     "explicit-provider-secret",
                 )
 
-            self.assertEqual(
-                observed_environment,
-                {
-                    "PATH": "trusted-path",
-                    "HF_TOKEN": "explicit-provider-secret",
-                },
-            )
+            self.assertEqual(observed_environment["PATH"], "trusted-path")
+            self.assertEqual(observed_environment["HF_TOKEN"], "explicit-provider-secret")
+            self.assertFalse(Path(observed_environment["HF_HOME"]).exists())
+            self.assertNotIn("HF_HUB_DISABLE_IMPLICIT_TOKEN", observed_environment)
+            for key in ("GITHUB_TOKEN", "ACTIONS_ID_TOKEN_REQUEST_TOKEN",
+                        "ACTIONS_ID_TOKEN_REQUEST_URL", "SERVICE_API_KEY"):
+                self.assertNotIn(key, observed_environment)
 
     def test_publisher_identity_requires_the_protected_main_workflow_ref(self) -> None:
         with self.assertRaisesRegex(
@@ -1355,8 +1436,10 @@ class PublishSzlKernelsTests(unittest.TestCase):
         self.assertNotIn("HF_ORG_TOKEN", sign_job)
         self.assertIn("--prepare-signature", sign_job)
         self.assertIn("kernel-signature-transfer", sign_job)
-        self.assertNotIn("id-token: write", publish_job)
-        self.assertIn("HF_ORG_TOKEN", publish_job)
+        self.assertIn("id-token: write", publish_job)
+        self.assertNotIn("HF_ORG_TOKEN", workflow)
+        self.assertNotIn("HF_TOKEN:", workflow)
+        self.assertIn("tools/test_kernels_keyless_credentials.py", workflow)
         self.assertIn("--signature-bundle-input", publish_job)
         self.assertIn("--signature-manifest-input", publish_job)
         self.assertIn(
@@ -1789,7 +1872,7 @@ class PublishSzlKernelsTests(unittest.TestCase):
                 source_revision=self.source_revision,
                 publisher=identity,
                 publish=True,
-                token="test-token",
+                **keyless_grants(),
                 signature_bundle_input=bundle,
                 signature_manifest_input=manifest,
                 api=api,
@@ -1995,6 +2078,8 @@ class PublishSzlKernelsTests(unittest.TestCase):
                 download_fn=api.download,
             )
             self.assertEqual(result["status"], "VERIFIED_DRY_RUN")
+            self.assertTrue(api.tokens)
+            self.assertTrue(all(token is False for _, token in api.tokens))
             self.assertEqual(
                 result["targets"]["first_class_kernel"]["mapped_file_count"],
                 1 + 2 * len(publisher.FIRST_CLASS_KERNEL_FILES),
@@ -2053,7 +2138,7 @@ class PublishSzlKernelsTests(unittest.TestCase):
                 source_revision=self.source_revision,
                 publisher=identity,
                 publish=True,
-                token="test-token",
+                **keyless_grants(),
                 api=api,
                 download_fn=api.download,
                 kernel_sign_fn=fake_sign_kernel_metadata,
@@ -2063,6 +2148,12 @@ class PublishSzlKernelsTests(unittest.TestCase):
             self.assertEqual(
                 result["status"], "PUBLISHED_AND_EXACT_READBACK_VERIFIED"
             )
+            self.assertTrue(api.tokens)
+            for repo_type, token in api.tokens:
+                self.assertEqual(token, MODEL_TOKEN if repo_type == "model" else KERNEL_TOKEN)
+            serialized = json.dumps(result)
+            self.assertNotIn(MODEL_TOKEN, serialized)
+            self.assertNotIn(KERNEL_TOKEN, serialized)
             self.assertEqual(
                 api.commits,
                 [
@@ -2164,7 +2255,7 @@ class PublishSzlKernelsTests(unittest.TestCase):
                     publisher.run(
                         source_root=root, report_path=report,
                         authorization_path=authorization, source_revision=self.source_revision,
-                        publisher=identity, publish=True, token="test-token", api=api,
+                        publisher=identity, publish=True, **keyless_grants(), api=api,
                         download_fn=api.download,
                         kernel_sign_fn=fake_sign_kernel_metadata,
                         kernel_upload_fn=api.upload_kernel,
@@ -2220,7 +2311,7 @@ class PublishSzlKernelsTests(unittest.TestCase):
                     source_revision=self.source_revision,
                     publisher=identity,
                     publish=True,
-                    token="test-token",
+                    **keyless_grants(),
                     api=api,
                     download_fn=api.download,
                     kernel_sign_fn=fail_signing,
@@ -2323,7 +2414,7 @@ class PublishSzlKernelsTests(unittest.TestCase):
                     source_revision=self.source_revision,
                     publisher=identity,
                     publish=True,
-                    token="test-token",
+                    **keyless_grants(),
                     api=api,
                     download_fn=fail_main_readback,
                     kernel_sign_fn=fake_sign_kernel_metadata,
