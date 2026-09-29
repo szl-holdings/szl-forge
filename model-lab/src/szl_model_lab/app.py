@@ -20,18 +20,16 @@ from .pool_view import load_pool_snapshot, unavailable_pool
 from .safeio import strict_json
 from .corpus_view import load_report, unavailable_report
 
-# Vendored SZL Kanchay v1.0.0 design-system export (static/kanchay/, byte-for-byte,
-# digests in its SOURCE.json). Explicit allowlist of URL path -> (file, media type):
-# no request value reaches the filesystem, there is no directory mount or listing,
-# and every other /kanchay/... path is the application's normal 404.
-KANCHAY_ASSETS = {
-    "/kanchay/kanchay.css": ("kanchay.css", "text/css; charset=utf-8"),
-    "/kanchay/fonts/SpaceGrotesk-latin.woff2": ("fonts/SpaceGrotesk-latin.woff2", "font/woff2"),
-    "/kanchay/fonts/Inter-latin.woff2": ("fonts/Inter-latin.woff2", "font/woff2"),
-    "/kanchay/fonts/JetBrainsMono-latin.woff2": ("fonts/JetBrainsMono-latin.woff2", "font/woff2"),
+# Vendored SZL KANCHAY v1.1.0 design system (static/szl/, byte-for-byte, digests in
+# its SOURCE.json). Explicit allowlist of URL path -> (file, media type): no request
+# value reaches the filesystem, there is no directory mount or listing, and every
+# other /szl/... path is the application's normal 404. No fonts: system stacks only.
+SZL_ASSETS = {
+    "/szl/szl-design-system.css": ("szl-design-system.css", "text/css; charset=utf-8"),
+    "/szl/szl-console.css": ("szl-console.css", "text/css; charset=utf-8"),
 }
-# Only 'self' is added for the stylesheet and fonts above; every other directive is unchanged.
-CONTENT_SECURITY_POLICY = ("default-src 'none'; style-src 'self' 'unsafe-inline'; font-src 'self'; "
+# Only 'self' is added to style-src for the two stylesheets; every other directive is unchanged.
+CONTENT_SECURITY_POLICY = ("default-src 'none'; style-src 'self' 'unsafe-inline'; "
                            "form-action 'self'; frame-ancestors 'none'; base-uri 'none'")
 
 @dataclass(frozen=True)
@@ -160,12 +158,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     # Read-only design-system assets for the HTML pages, admitted exactly like them
     # (same Basic dependency, host allowlist and headers). Browsers resend the Basic
-    # credentials to these same-origin stylesheet and font subresources.
-    kanchay_root = Path(__file__).parent / "static" / "kanchay"
-    for path, (name, media_type) in KANCHAY_ASSETS.items():
-        app.add_api_route(path, static_asset((kanchay_root / name).read_bytes(), media_type),
+    # credentials to these same-origin stylesheet subresources.
+    szl_root = Path(__file__).parent / "static" / "szl"
+    for path, (name, media_type) in SZL_ASSETS.items():
+        app.add_api_route(path, static_asset((szl_root / name).read_bytes(), media_type),
                           methods=["GET"], dependencies=[Depends(authorize)],
-                          include_in_schema=False, name=f"kanchay:{name}")
+                          include_in_schema=False, name=f"szl:{name}")
 
     def state() -> list[dict]:
         rows = catalog()

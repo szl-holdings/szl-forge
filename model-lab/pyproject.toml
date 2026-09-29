@@ -27,8 +27,8 @@ where = ["src"]
 [tool.setuptools.package-data]
 szl_model_lab = [
   "templates/*.html",
-  # Vendored SZL Kanchay export served by the allowlisted /kanchay/ routes.
-  "static/kanchay/kanchay.css", "static/kanchay/SOURCE.json", "static/kanchay/fonts/*.woff2",
+  # Vendored SZL KANCHAY design system served by the allowlisted /szl/ routes.
+  "static/szl/szl-design-system.css", "static/szl/szl-console.css", "static/szl/SOURCE.json",
 ]
 
 [tool.pytest.ini_options]
