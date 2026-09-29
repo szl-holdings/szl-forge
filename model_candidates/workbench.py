@@ -46,8 +46,7 @@ select option{color:var(--text);background:var(--surface)}
 form .btn{min-block-size:var(--target-size-coarse);max-inline-size:100%}
 summary{cursor:pointer;min-block-size:var(--target-size-coarse);padding:var(--space-3) 0;
 font-weight:var(--weight-medium);color:var(--text)}
-summary:focus-visible{outline:var(--border-focus) solid transparent;box-shadow:var(--shadow-focus);
-border-radius:var(--radius-sm)}
+:where(a,button,select,summary):focus-visible{outline:var(--border-focus) solid var(--focus);outline-offset:2px}
 .journey{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--space-3);margin-bottom:var(--space-4)}
 .journey div{padding:var(--space-3);overflow-wrap:anywhere;background:var(--surface-alt);
 border:var(--border-hairline) solid var(--border);border-radius:var(--radius-md)}
