@@ -1,0 +1,7 @@
+
+[test]
+pytest<10,>=8
+build<2,>=1.2
+PyYAML<7,>=6.0
+huggingface-hub==2.0.0
+numpy==2.4.6

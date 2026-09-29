@@ -1,7 +1,7 @@
 # Linux CPU test closure; exact versions, not an artifact hash lock.
 # HF Hub 1.23 requires click>=8.4.2; verified by the first hosted resolver.
 # Production platform and supply-chain qualification remain separate.
-torch==2.14.0
+torch==2.14.0+cpu
 safetensors==0.8.0
 # Required by Safetensors' PyTorch serialization path, not just by tests.
 numpy==2.4.6
