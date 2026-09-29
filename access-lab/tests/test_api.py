@@ -1,3 +1,4 @@
+import base64
 import hashlib
 from email.message import Message
 import http.client
@@ -309,3 +310,11 @@ def test_weak_key_is_rejected_before_state_creation(tmp_path):
     with pytest.raises(ValueError):
         api.AccessServer(0, directory, "short")
     assert not directory.exists()
+
+
+def test_csp_hashes_cover_every_inline_block_regardless_of_tag_spelling():
+    document = (b"<STYLE>a{}</Style ><script type=module>one()</SCRIPT>"
+                b"<script>two()</script\n data-x><scripts>no()</scripts><script>three()</script>")
+    assert api.inline_blocks(document, b"script") == [b"one()", b"two()", b"three()"]
+    assert api.inline_blocks(document, b"style") == [b"a{}"]
+    assert api.csp_hashes(document, b"style") == ["'sha256-" + base64.b64encode(hashlib.sha256(b"a{}").digest()).decode() + "'"]

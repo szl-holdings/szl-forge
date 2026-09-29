@@ -95,7 +95,7 @@ def run_verification():
                 csp = headers.get("Content-Security-Policy", "")
                 require("'unsafe-inline'" not in csp and "frame-ancestors 'none'" in csp, "UI CSP scope failed")
                 for tag in (b"script", b"style"):
-                    blocks = re.findall(b"<" + tag + rb"\b[^>]*>(.*?)</" + tag + b">", ui, re.S)
+                    blocks = re.findall(b"<" + tag + rb"(?=[\s/>])[^>]*>(.*?)</" + tag + rb"(?=[\s/>])[^>]*>", ui, re.S | re.I)
                     require(bool(blocks), "UI needs an actual packaged script and stylesheet")
                     for block in blocks:
                         token = "'sha256-" + base64.b64encode(hashlib.sha256(block).digest()).decode() + "'"

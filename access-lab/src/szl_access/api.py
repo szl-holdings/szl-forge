@@ -104,6 +104,21 @@ def receipt_summary(result):
     return summary
 
 
+def inline_blocks(document, tag):
+    """Exact bytes of every inline <tag> element body, ended the way an HTML tokenizer ends it.
+
+    Tag names are ASCII case-insensitive and an end tag closes at the tag name followed by
+    whitespace, "/" or ">", so an uppercase or attribute-bearing tag cannot hide a block
+    from the CSP hash list (an unhashed block would be silently refused by the browser).
+    """
+    return re.findall(rb"<" + tag + rb"(?=[\s/>])[^>]*>(.*?)</" + tag + rb"(?=[\s/>])[^>]*>", document, re.S | re.I)
+
+
+def csp_hashes(document, tag):
+    return ["'sha256-" + base64.b64encode(hashlib.sha256(block).digest()).decode() + "'"
+            for block in inline_blocks(document, tag)]
+
+
 def trusted_directory(value):
     """Trusted local parent is a precondition, not protection against a hostile owner."""
     raw = os.fspath(value)
@@ -236,10 +251,8 @@ class AccessServer(ThreadingHTTPServer):
         self.work_lock = threading.Lock()
         self.connection_slots = threading.BoundedSemaphore(16)
         self.ui = resources.files("szl_access").joinpath("static/index.html").read_bytes()
-        script_hashes = ["'sha256-" + base64.b64encode(hashlib.sha256(block).digest()).decode() + "'"
-                         for block in re.findall(rb"<script\b[^>]*>(.*?)</script>", self.ui, re.S)]
-        style_hashes = ["'sha256-" + base64.b64encode(hashlib.sha256(block).digest()).decode() + "'"
-                        for block in re.findall(rb"<style\b[^>]*>(.*?)</style>", self.ui, re.S)]
+        script_hashes = csp_hashes(self.ui, b"script")
+        style_hashes = csp_hashes(self.ui, b"style")
         self.csp = ("default-src 'none'; connect-src 'self'; img-src 'none'; frame-src 'none'; frame-ancestors 'none'; "
                     "base-uri 'none'; form-action 'none'; script-src " + " ".join(script_hashes or ["'none'"]) +
                     "; style-src " + " ".join(style_hashes or ["'none'"]))
