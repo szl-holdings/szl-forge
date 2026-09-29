@@ -142,3 +142,32 @@ metrics:
 
 These intervals resample the already-public test split. They quantify sampling
 variation on these 240 rows, not performance on new data or any real transport.
+
+## Fresh-seed and distribution-shift lanes
+
+`--fresh-seed-lanes` adds a `fresh_seed_lanes` block (opt-in; the default receipt is
+unchanged). Each lane draws 2000 new rows from the hash-verified trainer's own
+`_generate_features` and label rule, with a seed disjoint from the development seed 2500,
+and scores the fixed model at the fixed threshold. Nothing is retrained or re-thresholded.
+Every lane reports its own oracle (the lane's true label probability), so
+`roc_auc_headroom` is loss attributable to the model rather than to label noise.
+
+| lane | shift | prevalence | balanced accuracy [95%] | ROC AUC | lane oracle | AUC headroom [95%] |
+|---|---|---:|---|---:|---:|---|
+| fresh_seed_in_distribution | none | 0.189 | 0.753 [0.731, 0.779] | 0.821 | 0.828 | +0.007 [+0.003, +0.010] |
+| covariate_queue_saturation | queue + 0.5 | 0.495 | **0.500 [0.500, 0.500]** | 0.782 | 0.783 | +0.001 [−0.002, +0.004] |
+| covariate_long_outage_tail | outage age × 24 | 0.241 | 0.715 [0.693, 0.740] | 0.809 | 0.840 | **+0.031 [+0.020, +0.043]** |
+| covariate_fault_heavy | more failures, config faults | 0.311 | 0.768 [0.752, 0.785] | 0.883 | 0.890 | +0.007 [+0.003, +0.010] |
+| concept_tls_weight_tripled | label rule changed | 0.211 | 0.775 [0.755, 0.798] | 0.847 | 0.879 | **+0.032 [+0.024, +0.042]** |
+
+Readings (bootstrap B=400 per lane):
+
+- The published v1 metrics hold on fresh in-distribution draws.
+- Under queue saturation the ranking survives but the fixed threshold does not: every row
+  is flagged, and balanced accuracy is exactly 0.5.
+- Under long outages the model loses ~0.031 AUC because it learned a weight of 0.054 on
+  `seconds_since_last_success`, while the generator uses 2.2. In-distribution outage ages
+  rarely reach the range where that weight matters, so the training data never taught it.
+- A concept shift on TLS costs ~0.032 AUC, as expected for fixed weights.
+
+The fresh seeds are public once published. Tuning against them would burn them.
