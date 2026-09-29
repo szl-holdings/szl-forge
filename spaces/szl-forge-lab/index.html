@@ -4,139 +4,129 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark">
-<link rel="icon" type="image/svg+xml" href="kanchay/marks/szl-mark-gold.svg">
+<link rel="icon" type="image/svg+xml" href="szl/logos/szl_favicon.svg">
 <meta name="description" content="SZL Forge Lab — a provenance-first evidence console. Every packaged artifact is re-hashed and every receipt re-verified in your browser.">
 <title>SZL Forge Lab — evidence kernel</title>
-<link rel="stylesheet" href="kanchay/kanchay.css">
-<link rel="stylesheet" href="kanchay/kanchay-components.css">
+<link rel="stylesheet" href="szl/szl-design-system.css">
+<link rel="stylesheet" href="szl/szl-console.css">
 <style>
-/* SZL Forge Lab on SZL Kanchay v1.0.0: every color, face, radius and space below is a kanchay.css token. */
-*{box-sizing:border-box}
-html{background:var(--color-a11oy-bg);scroll-padding-top:var(--space-4)}
-body{font-family:var(--font-sans);font-size:15px;line-height:1.6;color:var(--color-a11oy-text-sub);background:var(--color-a11oy-bg)}
-a{color:var(--color-ink-signal);text-decoration-thickness:1px;text-underline-offset:3px}
-a:hover{color:var(--color-a11oy-text)}
-:focus-visible,.kc-input:focus-visible,.kc-select:focus-visible{outline:var(--border-focus) solid var(--color-focus);outline-offset:2px}
-b,strong{font-weight:600;color:var(--color-a11oy-text)}
-code,pre{font-family:var(--font-mono)}
-code{font-size:.88em;overflow-wrap:anywhere}
+/* SZL Forge Lab on SZL KANCHAY v1.1.0 (founder direction), dark operator surface.
+   Every color, face, size, space and radius is a token from szl/szl-design-system.css or szl/szl-console.css.
+   The single coral moment is the hero node. */
+b,strong{font-weight:var(--weight-semibold);color:var(--text)}
+code{overflow-wrap:anywhere}
+.skip-link{display:inline-flex;align-items:center;min-block-size:var(--target-size-coarse)}
 
-.skip-link{position:absolute;top:var(--space-2);left:var(--space-4);z-index:var(--z-toast);display:inline-flex;align-items:center;min-height:var(--szl-touch-target);padding:0 var(--space-4);border-radius:var(--radius-sm);background:var(--color-a11oy-gold);color:var(--color-on-accent);font-weight:600;text-decoration:none;transform:translateY(-200%)}
-.skip-link:focus,.skip-link:hover{transform:none;background:var(--gold-bright);color:var(--color-on-accent)}
+.nav{padding-inline:max(var(--space-6),calc((100% - var(--container)) / 2 + var(--space-6)))}
+.nav__brand{min-block-size:var(--target-size-coarse)}
+.nav__links{gap:var(--space-1);margin-right:calc(-1 * var(--space-3))}
+.nav__link{display:inline-flex;align-items:center;min-block-size:var(--target-size-coarse);padding-inline:var(--space-3);border-radius:var(--radius-md)}
+.nav__link:hover{background:color-mix(in srgb,var(--text) 7%,transparent)}
+@media (max-width:767px){
+.nav{position:static;flex-wrap:wrap;gap:0 var(--space-4);height:auto;padding-block:var(--space-2)}
+.nav__links{flex-wrap:wrap;margin:0 0 0 calc(-1 * var(--space-3))}
+}
+@media (min-width:768px){html{scroll-padding-top:calc(64px + var(--space-4))}}
 
-.site-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0 var(--space-4);max-width:72rem;min-height:56px;margin:0 auto;padding:var(--space-1) var(--szl-theatre-gutter)}
-.kc-site-brand{min-height:var(--szl-touch-target)}
-.kc-site-brand .kc-mark{width:20px;height:20px}
-.kc-site-name{font-size:15px;font-weight:600}
-.toplinks{display:flex;flex-wrap:wrap;margin:0 calc(-1 * var(--space-3))}
-.toplinks a{display:inline-flex;align-items:center;min-height:var(--szl-touch-target);padding:0 var(--space-3);border-radius:var(--radius-md);color:var(--color-a11oy-text-sub);font-family:var(--font-sans);font-size:13px;font-weight:500;line-height:20px;text-decoration:none;transition:background-color var(--duration-fast) var(--ease-standard),color var(--duration-fast) var(--ease-standard)}
-.toplinks a:hover{background:var(--color-a11oy-overlay);color:var(--color-a11oy-text)}
-@media (max-width:767px){.kc-site-header{position:static}}
-@media (min-width:768px){html{scroll-padding-top:calc(56px + var(--space-4))}}
+.hero{padding-block:clamp(3.5rem,9vw,7rem) clamp(2rem,5vw,3.5rem)}
+.hero__title span{color:var(--text-sub)}
+.hero__sub{margin-bottom:0}
+@media (max-width:640px){.hero__node{top:var(--space-6)}}
 
-main{max-width:72rem;margin:0 auto;padding:0 var(--szl-theatre-gutter) var(--space-16)}
-main section{margin:var(--space-12) 0}
-main section:first-child{margin-top:0}
-.hero{position:relative;isolation:isolate;padding:var(--space-10) 0 var(--space-2)}
-.hero::before{content:"";position:absolute;z-index:-1;inset:0 calc(-1 * var(--szl-theatre-gutter));pointer-events:none;background-image:linear-gradient(to right,color-mix(in srgb,var(--color-a11oy-text) 2.5%,transparent) 1px,transparent 1px),linear-gradient(to bottom,color-mix(in srgb,var(--color-a11oy-text) 2.5%,transparent) 1px,transparent 1px);background-size:56px 56px;-webkit-mask-image:radial-gradient(ellipse at 50% 45%,var(--color-a11oy-text) 0%,transparent 72%);mask-image:radial-gradient(ellipse at 50% 45%,var(--color-a11oy-text) 0%,transparent 72%)}
-.hero .kc-eyebrow{max-width:100%;margin:0 0 var(--space-5)}
-h1{margin:0 0 var(--space-4);font-family:var(--font-display);font-size:clamp(2.1rem,5.2vw,3.6rem);font-weight:300;line-height:1.04;letter-spacing:-.035em;color:var(--color-a11oy-text);text-wrap:balance}
-h1 span{color:var(--color-a11oy-gold)}
-.lede{max-width:var(--szl-readable-measure);margin:0 0 var(--space-6);font-size:17px;line-height:1.65;color:var(--color-a11oy-text-sub);text-wrap:pretty}
+.page{padding-bottom:var(--space-16)}
+.page>section{margin-block:var(--space-12)}
+.page>section:first-child{margin-top:var(--space-6)}
+h2{font-size:clamp(var(--text-xl),3vw,var(--text-2xl));text-wrap:balance}
+.eyebrow{margin:0 0 var(--space-2)}
 
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));gap:var(--szl-fluid-gap);margin:0 0 var(--space-5)}
-.stats>div{min-width:0;padding:var(--space-4);background:var(--color-a11oy-surface);border:var(--border-hairline) solid var(--color-a11oy-border-subtle);border-top:var(--border-thick) solid color-mix(in srgb,var(--color-a11oy-gold) 15%,transparent);border-radius:var(--radius-md);transition:border-color var(--duration-fast) var(--ease-standard)}
-.stats>div:hover{border-color:var(--color-a11oy-border);border-top-color:color-mix(in srgb,var(--color-a11oy-gold) 35%,transparent)}
-.stats strong{display:block;font-size:20px;font-weight:300;line-height:28px;font-variant-numeric:tabular-nums;color:var(--color-a11oy-text);overflow-wrap:anywhere}
-.stats span{display:block;margin-top:var(--space-1);font-family:var(--font-mono);font-size:11px;font-weight:500;line-height:16px;letter-spacing:.15em;text-transform:uppercase;color:var(--color-a11oy-text-sub)}
-@media (min-width:768px){#metrics{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(11rem,1fr));gap:var(--space-3);margin:0 0 var(--space-5)}
+@media (min-width:768px){#metrics{grid-template-columns:repeat(3,minmax(0,1fr))}#portfolio-metrics{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.stats>div{display:grid;gap:var(--space-1);align-content:start;min-width:0;padding:var(--space-4);background:var(--surface);border:var(--border-hairline) solid var(--border);border-radius:var(--radius-md)}
+.stats strong{font-family:var(--font-mono);font-size:var(--text-xl);font-weight:var(--weight-semibold);line-height:var(--leading-snug);font-variant-numeric:tabular-nums lining-nums;color:var(--text);overflow-wrap:anywhere}
+.stats span{font-size:var(--text-xs);font-weight:var(--weight-semibold);letter-spacing:var(--tracking-caps);text-transform:uppercase;color:var(--text-sub)}
 
-.note{margin:var(--space-3) 0;padding:var(--space-3) var(--space-4);background:var(--color-a11oy-deep);border:var(--border-hairline) solid var(--gold-line);border-radius:var(--radius-md);font-size:14px;color:var(--color-a11oy-text-sub);text-wrap:pretty}
-.note b:first-child{color:var(--color-a11oy-gold)}
+.note{max-width:none;margin:var(--space-3) 0;padding:var(--space-4) var(--space-5);background:var(--surface-alt);border:var(--border-hairline) solid var(--border);border-radius:var(--radius-md);color:var(--text-sub);text-wrap:pretty}
+.note a,footer a,.fw a{text-decoration:underline}
 
-.kicker{margin:0 0 var(--space-2);font-family:var(--font-mono);font-size:11px;line-height:16px;letter-spacing:.25em;text-transform:uppercase;color:var(--color-a11oy-gold)}
-h2{margin:0 0 var(--space-5);font-family:var(--font-display);font-size:clamp(1.375rem,2.6vw,1.875rem);font-weight:300;line-height:1.2;letter-spacing:-.025em;color:var(--color-a11oy-text);text-wrap:balance}
-.panel{padding:var(--space-4);background:var(--color-a11oy-deep);border:var(--border-hairline) solid var(--color-a11oy-border-subtle);border-radius:var(--radius-md)}
+.panel{padding:var(--space-4);background:var(--surface);border:var(--border-hairline) solid var(--border);border-radius:var(--radius-lg)}
 @media (min-width:768px){.panel{padding:var(--space-5)}}
 .stack-top{margin-top:var(--space-3)}
-.panel-lede{margin:0 0 var(--space-3);font-size:14px;color:var(--color-a11oy-text-sub)}
-.panel-note{margin:var(--space-3) 0 0;font-size:13px;color:var(--color-a11oy-text-ghost)}
+.panel-lede{max-width:none;margin:0 0 var(--space-3)}
+.panel-note{max-width:none;margin:var(--space-3) 0 0;font-size:var(--text-sm)}
 .scroll{overflow-x:auto}
-pre{margin:0;max-height:420px;padding:var(--space-4);overflow:auto;background:var(--color-a11oy-deep);border:var(--border-hairline) solid var(--gold-line);border-radius:var(--radius-md);font-size:12px;line-height:1.65;color:var(--color-a11oy-text-sub)}
+.table{font-variant-numeric:tabular-nums lining-nums}
+.table th,.table td{padding:var(--space-2) var(--space-3);vertical-align:top}
+.table td{color:var(--text-sub)}
+.table td a{display:inline-flex;align-items:center;min-block-size:var(--target-size-coarse)}
+.table code{color:var(--text)}
+pre.code{max-height:420px;overflow:auto}
 
-table{width:100%;border-collapse:collapse;font-size:13px;line-height:1.5;font-variant-numeric:tabular-nums}
-td,th{padding:var(--space-2);border-bottom:var(--border-hairline) solid var(--color-a11oy-border-subtle);text-align:left;vertical-align:top}
-th{font-family:var(--font-mono);font-size:11px;font-weight:500;line-height:16px;letter-spacing:.15em;text-transform:uppercase;color:var(--color-a11oy-text-ghost)}
-td{color:var(--color-a11oy-text-sub)}
-td a{display:inline-flex;align-items:center;min-height:var(--szl-touch-target)}
-.st{font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:.15em;text-transform:uppercase}
-.st.pass{color:var(--color-ink-signal)}
-.st.fail{color:var(--color-ink-danger)}
-.st.warn{color:var(--color-ink-caution)}
-.st.wait{color:var(--color-a11oy-text-sub)}
+.st{display:inline-flex;align-items:center;gap:var(--space-2);padding:.2rem .55rem;font-family:var(--font-mono);font-size:var(--text-xs);font-weight:var(--weight-semibold);line-height:1.4;letter-spacing:.04em;text-transform:uppercase;font-variant-numeric:tabular-nums lining-nums;color:var(--text-sub);background:var(--surface-alt);border:var(--border-hairline) solid var(--border);border-radius:var(--radius-sm)}
+.st::before{content:"";flex:0 0 auto;width:.5rem;height:.5rem;border-radius:var(--radius-full);background:currentColor}
+.st.pass{color:var(--ink-good)}
+.st.fail{color:var(--ink-bad)}
+.st.warn{color:var(--ink-warn)}
+.st.wait{color:var(--text-sub)}
 
-.vband{display:grid;grid-template-columns:repeat(auto-fit,minmax(14rem,1fr));gap:var(--szl-fluid-gap)}
-.vcheck{min-width:0;padding:var(--space-4);background:var(--color-a11oy-surface);border:var(--border-hairline) solid var(--color-a11oy-border-subtle);border-radius:var(--radius-md);font-size:14px;color:var(--color-a11oy-text-sub)}
+.vband{display:grid;grid-template-columns:repeat(auto-fit,minmax(14rem,1fr));gap:var(--space-3)}
+.vcheck{min-width:0;padding:var(--space-4);background:var(--surface);border:var(--border-hairline) solid var(--border);border-radius:var(--radius-md);font-size:var(--text-sm);color:var(--text-sub)}
 
-.portfolio{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:var(--szl-fluid-gap)}
-.asset{min-width:0;padding:var(--space-5);background:var(--color-a11oy-surface);border:var(--border-hairline) solid var(--color-a11oy-border-subtle);border-radius:var(--radius-md);transition:border-color var(--duration-fast) var(--ease-standard),box-shadow var(--duration-fast) var(--ease-standard),transform var(--duration-fast) var(--ease-standard)}
-.asset:hover{border-color:color-mix(in srgb,var(--color-a11oy-gold) 20%,transparent);box-shadow:var(--shadow-lg);transform:translateY(-1px)}
-.asset h3{margin:var(--space-2) 0 0;font-family:var(--font-display);font-size:16px;font-weight:600;line-height:1.3;letter-spacing:-.01em;overflow-wrap:anywhere}
-.asset h3 a{display:inline-flex;align-items:center;min-height:var(--szl-touch-target);color:var(--color-a11oy-gold);text-decoration:none}
-.asset h3 a:hover{color:var(--gold-bright);text-decoration:underline}
-.asset p{margin:var(--space-1) 0;font-size:13px;color:var(--color-a11oy-text-sub)}
-.asset p b{font-family:var(--font-mono);font-size:11px;font-weight:500;letter-spacing:.12em;overflow-wrap:anywhere}
-.badge{--tone:var(--color-a11oy-text-ghost);display:inline-flex;align-items:center;gap:var(--space-2);padding:2px var(--space-2);border:var(--border-hairline) solid color-mix(in srgb,var(--tone) 40%,transparent);border-radius:var(--radius-sm);background:color-mix(in srgb,var(--tone) 12%,transparent);font-family:var(--font-mono);font-size:10px;font-weight:500;line-height:16px;letter-spacing:.15em;text-transform:uppercase;color:var(--color-a11oy-text-sub)}
-.badge::before{content:"";flex:none;width:6px;height:6px;border-radius:var(--radius-full);background:var(--tone)}
-.badge.model{--tone:var(--color-a11oy-gold)}
-.badge.bound{--tone:var(--color-ink-signal)}
+.portfolio{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:var(--space-4)}
+.asset{min-width:0;padding:var(--space-5);background:var(--surface);border:var(--border-hairline) solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);transition:border-color var(--duration-base) var(--ease-standard),box-shadow var(--duration-base) var(--ease-standard)}
+.asset:hover{border-color:var(--border-subtle);box-shadow:var(--shadow-md)}
+.asset h3{margin:var(--space-2) 0 0;font-size:var(--text-lg);overflow-wrap:anywhere}
+.asset h3 a{display:inline-flex;align-items:center;min-block-size:var(--target-size-coarse);color:var(--text);text-decoration:underline;text-decoration-color:var(--border)}
+.asset h3 a:hover{color:var(--link-hover);text-decoration-color:currentColor}
+.asset p{margin:var(--space-1) 0;font-size:var(--text-sm)}
+.asset p b{font-family:var(--font-mono);font-size:var(--text-xs);letter-spacing:.04em;overflow-wrap:anywhere}
+.badge{text-transform:uppercase;letter-spacing:var(--tracking-caps)}
+.badge.model{color:var(--text);border-color:var(--text-ghost)}
 
-.controls{display:flex;flex-wrap:wrap;gap:var(--space-2)}
-.kc-input,.kc-select{min-height:var(--szl-touch-target);font-size:16px}
-.controls .kc-input{flex:1 1 16rem;width:auto;min-width:0}
-.controls .kc-select{flex:0 1 auto;width:auto;max-width:100%}
+.toolbar{margin-block-end:0}
+.toolbar .input,.toolbar .select{min-block-size:var(--target-size-coarse);font-size:var(--text-base)}
+.toolbar .input{flex:1 1 16rem;inline-size:auto;min-inline-size:0}
+.toolbar .select{flex:0 1 auto;inline-size:auto;max-inline-size:100%}
 
-footer{max-width:72rem;margin:0 auto;padding:var(--space-6) var(--szl-theatre-gutter);border-top:var(--border-hairline) solid var(--color-a11oy-border);font-size:13px;color:var(--color-a11oy-text-ghost)}
-footer b{color:var(--color-a11oy-text-sub)}
-footer .links a{display:inline-flex;align-items:center;min-height:var(--szl-touch-target)}
+footer{max-width:var(--container);margin:0 auto;padding:var(--space-6);border-top:var(--border-hairline) solid var(--hairline);font-size:var(--text-sm)}
+footer p{color:var(--text-ghost)}
+footer b{color:var(--text-sub)}
+footer .links a{display:inline-flex;align-items:center;min-block-size:var(--target-size-coarse)}
 
-.fw{padding:var(--space-4) var(--szl-theatre-gutter);background:var(--color-a11oy-bg);border-top:var(--border-hairline) solid var(--gold-line);font-family:var(--font-mono);font-size:12px;line-height:1.7;color:var(--color-a11oy-text-sub)}
-.fw-inner{max-width:calc(72rem - 2 * var(--szl-theatre-gutter));margin:0 auto}
-.fw-tag{letter-spacing:.15em;color:var(--color-a11oy-gold)}
-.fw .kc-btn{min-height:var(--szl-touch-target);margin:var(--space-1) 0 var(--space-1) var(--space-2)}
-.fw-out{color:var(--color-ink-signal);word-break:break-all}
+.fw{padding:var(--space-4) var(--space-6);background:var(--bg-deep);border-top:var(--border-hairline) solid var(--hairline);font-family:var(--font-mono);font-size:var(--text-xs);line-height:1.7;color:var(--text-sub)}
+.fw-inner{max-width:calc(var(--container) - 2 * var(--space-6));margin:0 auto}
+.fw-tag{letter-spacing:var(--tracking-caps);color:var(--text)}
+.fw .btn{min-block-size:var(--target-size-coarse);margin:var(--space-1) 0 var(--space-1) var(--space-2)}
+.fw-out{color:var(--text);word-break:break-all}
 .fw-row{margin-top:var(--space-2)}
-.fw code{padding:1px var(--space-2);background:var(--color-a11oy-deep);border:var(--border-hairline) solid var(--color-a11oy-border-subtle);border-radius:var(--radius-sm);color:var(--color-a11oy-text)}
-.fw-fine{margin-top:var(--space-1);color:var(--color-a11oy-text-ghost)}
+.fw code{padding:1px var(--space-2);background:var(--surface-alt);border:var(--border-hairline) solid var(--border);border-radius:var(--radius-sm);color:var(--text)}
+.fw-fine{margin-top:var(--space-1);color:var(--text-ghost)}
 
-@media (prefers-reduced-motion: reduce){.kc-eyebrow-dot{animation:none}.asset:hover{transform:none}}
-@media (forced-colors: active){
-.hero::before{display:none}
-.kc-eyebrow-dot,.badge::before{forced-color-adjust:none;background:CanvasText}
-.skip-link{border:var(--border-hairline) solid ButtonText}
-}
+@media (forced-colors: active){.st::before{border:1px solid currentColor}.hero__orbit{display:none}}
 </style>
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
-<header class="kc-site-header">
-  <div class="site-bar">
-    <a class="kc-site-brand" href="./"><img class="kc-mark" src="kanchay/marks/szl-mark-gold.svg" alt="" width="20" height="20"><span class="kc-site-name">SZL Forge Lab</span></a>
-    <nav class="toplinks" aria-label="Forge links">
-      <a href="foundation/index.html">Confirmation explorer</a>
-      <a href="https://github.com/szl-holdings/szl-forge" target="_blank" rel="noopener">Forge program</a>
-      <a href="https://huggingface.co/spaces/SZLHOLDINGS/szl-forge-lab/tree/main" target="_blank" rel="noopener">Evidence files</a>
-      <a href="https://huggingface.co/SZLHOLDINGS" target="_blank" rel="noopener">SZLHOLDINGS</a>
-    </nav>
-  </div>
+<header class="nav">
+  <a class="nav__brand" href="./">SZL Forge Lab</a>
+  <nav class="nav__links" aria-label="Forge links">
+    <a class="nav__link" href="foundation/index.html">Confirmation explorer</a>
+    <a class="nav__link" href="https://github.com/szl-holdings/szl-forge" target="_blank" rel="noopener">Forge program</a>
+    <a class="nav__link" href="https://huggingface.co/spaces/SZLHOLDINGS/szl-forge-lab/tree/main" target="_blank" rel="noopener">Evidence files</a>
+    <a class="nav__link" href="https://huggingface.co/SZLHOLDINGS" target="_blank" rel="noopener">SZLHOLDINGS</a>
+  </nav>
 </header>
 <main id="main">
-<section>
-  <div class="hero">
-    <p class="kc-eyebrow"><span class="kc-eyebrow-dot" aria-hidden="true"></span><span class="kc-eyebrow-text">EVIDENCE KERNEL · READ-ONLY SNAPSHOT</span></p>
-    <h1>Don&rsquo;t read the claims.<br><span>Re-hash the evidence.</span></h1>
-    <p class="lede">A provenance-first console over the SZL Forge snapshot: run manifest, deterministic evaluation receipts, formula registry, governed source ledger, and curriculum. Your browser fetches the packaged artifacts, <b>recomputes their SHA-256 against the manifest declarations</b>, and re-verifies each receipt&rsquo;s canonical hash — live, on every load.</p>
+<section class="hero">
+  <div class="hero__orbit" aria-hidden="true"></div>
+  <span class="hero__node" aria-hidden="true"></span>
+  <div class="hero__inner">
+    <p class="eyebrow">EVIDENCE KERNEL · READ-ONLY SNAPSHOT</p>
+    <h1 class="hero__title">Don&rsquo;t read the claims.<br><span>Re-hash the evidence.</span></h1>
+    <p class="hero__sub">A provenance-first console over the SZL Forge snapshot: run manifest, deterministic evaluation receipts, formula registry, governed source ledger, and curriculum. Your browser fetches the packaged artifacts, <b>recomputes their SHA-256 against the manifest declarations</b>, and re-verifies each receipt&rsquo;s canonical hash — live, on every load.</p>
   </div>
+</section>
+<div class="container page">
+<section>
   <div class="stats" id="metrics"></div>
   <p class="note"><b>Source-aware confirmation.</b> When is another observation worth buying? <a href="foundation/index.html">Replay 5,184 recorded runs</a>, compare seven policies and explore fixed-trace costs. Synthetic research: shared-bias comparison passed; clean-sensor guard failed; overall registered gate FAILED.</p>
   <p class="note"><b>Evidence boundary.</b> Two published fine-tunes, one GGUF derivative, and one learned kernel contain weight bytes. Eleven additional Hub entries are software kernels, recipes, or cards—not trained models. Signed receipts prove declared-key integrity; they do not establish independent quality, safety, or authorship.</p>
@@ -144,72 +134,73 @@ footer .links a{display:inline-flex;align-items:center;min-height:var(--szl-touc
 </section>
 
 <section>
-  <p class="kicker">01 · MODEL / KERNEL PORTFOLIO</p>
+  <p class="eyebrow">01 · MODEL / KERNEL PORTFOLIO</p>
   <h2>What is weighted, what is software, and what is still bounded</h2>
   <div class="stats" id="portfolio-metrics"></div>
   <div class="portfolio" id="portfolio"></div>
 </section>
 
 <section>
-  <p class="kicker">02 · INTEGRITY — RECOMPUTED HERE</p>
+  <p class="eyebrow">02 · INTEGRITY — RECOMPUTED HERE</p>
   <h2>Manifest-to-Space byte checks</h2>
   <div class="vband" id="rband">
     <div class="vcheck"><span class="st wait" id="r-man">WAITING</span> — <code>run_manifest.json</code> receipt hash (SHA-256 over canonical JSON minus <code>receipt_sha256</code>)</div>
     <div class="vcheck"><span class="st wait" id="r-eval">WAITING</span> — <code>eval_receipt.json</code> receipt hash, same rule</div>
     <div class="vcheck"><span class="st wait" id="r-files">WAITING</span> — packaged artifacts re-hashed vs manifest declarations</div>
   </div>
-  <div class="panel scroll stack-top" tabindex="0" role="region" aria-label="Integrity table"><table id="integrity"><tr><th>Declared input</th><th>Packaged here as</th><th>State</th><th>Expected SHA-256</th><th>Recomputed in this browser</th></tr></table>
+  <div class="panel scroll stack-top" tabindex="0" role="region" aria-label="Integrity table"><table class="table" id="integrity"><tr><th>Declared input</th><th>Packaged here as</th><th>State</th><th>Expected SHA-256</th><th>Recomputed in this browser</th></tr></table>
   <p class="panel-note">A matching hash proves byte identity only. Inputs marked NOT&nbsp;PACKAGED live on the owner&rsquo;s training host and are intentionally not shipped (e.g. training data) — their absence is stated, not hidden.</p></div>
 </section>
 
 <section>
-  <p class="kicker">03 · EVALUATION</p>
+  <p class="eyebrow">03 · EVALUATION</p>
   <h2>Deterministic fixture checks — scoped, not a benchmark</h2>
   <div class="panel scroll" tabindex="0" role="region" aria-label="Evaluation table">
     <p class="panel-lede" id="eval-summary">loading…</p>
-    <table id="eval"><tr><th>Case</th><th>Category</th><th>Result</th><th>Response SHA-256</th></tr></table>
+    <table class="table" id="eval"><tr><th>Case</th><th>Category</th><th>Result</th><th>Response SHA-256</th></tr></table>
   </div>
 </section>
 
 <section>
-  <p class="kicker">04 · FORMULA REGISTRY</p>
+  <p class="eyebrow">04 · FORMULA REGISTRY</p>
   <h2>Search the packaged formula index</h2>
   <div class="panel">
-    <div class="controls">
-      <input id="fq" class="kc-input" placeholder="search id / title / theorem…" aria-label="Search the formula index">
-      <select id="fs" class="kc-select" aria-label="Filter by declared status"><option value="ALL">ALL statuses</option></select>
+    <div class="toolbar">
+      <input id="fq" class="input" placeholder="search id / title / theorem…" aria-label="Search the formula index">
+      <select id="fs" class="select" aria-label="Filter by declared status"><option value="ALL">ALL statuses</option></select>
     </div>
-    <div class="scroll stack-top" tabindex="0" role="region" aria-label="Formula table"><table id="formulas"></table></div>
+    <div class="scroll stack-top" tabindex="0" role="region" aria-label="Formula table"><table class="table" id="formulas"></table></div>
     <p class="panel-note">Statuses are declarations from the packaged registry. This page does not execute Lean and never elevates a formula to proven.</p>
   </div>
 </section>
 
 <section>
-  <p class="kicker">05 · SOURCE LEDGER</p>
+  <p class="eyebrow">05 · SOURCE LEDGER</p>
   <h2>Default-deny scientific source governance</h2>
   <div class="panel">
-    <div class="controls">
-      <select id="sd" class="kc-select" aria-label="Filter by domain"><option value="ALL">ALL domains</option></select>
-      <select id="sdec" class="kc-select" aria-label="Filter by decision"><option value="ALL">ALL decisions</option></select>
+    <div class="toolbar">
+      <select id="sd" class="select" aria-label="Filter by domain"><option value="ALL">ALL domains</option></select>
+      <select id="sdec" class="select" aria-label="Filter by decision"><option value="ALL">ALL decisions</option></select>
     </div>
-    <div class="scroll stack-top" tabindex="0" role="region" aria-label="Source ledger table"><table id="sources"></table></div>
+    <div class="scroll stack-top" tabindex="0" role="region" aria-label="Source ledger table"><table class="table" id="sources"></table></div>
   </div>
 </section>
 
 <section>
-  <p class="kicker">06 · CURRICULUM</p>
+  <p class="eyebrow">06 · CURRICULUM</p>
   <h2>Governed curriculum blueprint — not a training claim</h2>
-  <div class="panel scroll" tabindex="0" role="region" aria-label="Curriculum table"><table id="curr"></table></div>
+  <div class="panel scroll" tabindex="0" role="region" aria-label="Curriculum table"><table class="table" id="curr"></table></div>
 </section>
 
 <section>
-  <p class="kicker">07 · RAW EVIDENCE</p>
+  <p class="eyebrow">07 · RAW EVIDENCE</p>
   <h2>Verify from outside this page</h2>
-  <pre tabindex="0" aria-label="Shell commands to hash the evidence files"># every artifact this page rendered, hash it yourself:
+  <pre class="code" tabindex="0" aria-label="Shell commands to hash the evidence files"># every artifact this page rendered, hash it yourself:
 for f in run_manifest.json eval_receipt.json training_summary.json thesis_formula_index.json science_source_ledger.json curriculum.json; do
   curl -sL https://huggingface.co/spaces/SZLHOLDINGS/szl-forge-lab/resolve/main/$f | sha256sum
 done</pre>
 </section>
+</div>
 </main>
 <footer>
   <p><b>Doctrine:</b> configuration is not evidence of completed training. Formula analysis is advisory unless an independent formal checker passes. Λ = Conjecture 1 — never a theorem. A hash match proves byte identity, not truth.</p>
@@ -222,7 +213,7 @@ done</pre>
   <div class="fw-inner">
     <span class="fw-tag">⟨ 4TH WALL ⟩</span>
     <span> You are reading rendered bytes. Don&rsquo;t trust them — hash them:</span>
-    <button id="fw-hash-btn" type="button" class="kc-btn kc-btn--outline kc-btn--sm">Hash this page</button>
+    <button id="fw-hash-btn" type="button" class="btn btn-secondary btn-sm">Hash this page</button>
     <span id="fw-hash-out" class="fw-out"></span>
     <div class="fw-row">canonical source: <a href="https://huggingface.co/spaces/SZLHOLDINGS/szl-forge-lab/tree/main">SZLHOLDINGS/szl-forge-lab</a><span id="fw-rev"></span> · verify from outside:
       <code>curl -sL https://huggingface.co/spaces/SZLHOLDINGS/szl-forge-lab/resolve/main/index.html | sha256sum</code>
