@@ -2,7 +2,6 @@
 SPDX-License-Identifier: Apache-2.0
 No downloads, dependency installation, model execution, or remote publication.
 """
-import argparse
 from datetime import datetime, timezone
 import hashlib
 import inspect

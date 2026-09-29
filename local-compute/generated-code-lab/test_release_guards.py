@@ -28,7 +28,7 @@ class SmokeAbortTests(unittest.TestCase):
         for path in self.paths:
             path.write_text("{}", encoding="utf-8")
         self.stack.enter_context(mock.patch.object(lab, "ROOT", self.root))
-        self.stack.enter_context(mock.patch.object(lab.sys, "argv", ["lab.py", "smoke"]))
+        self.stack.enter_context(mock.patch("sys.argv", ["lab.py", "smoke"]))
         self.stdout = self.stack.enter_context(mock.patch("sys.stdout", new=io.StringIO()))
         self.stack.enter_context(mock.patch.object(lab.subprocess, "run", side_effect=AssertionError("No processes allowed")))
         self.stack.enter_context(mock.patch.object(lab.subprocess, "Popen", side_effect=AssertionError("No processes allowed")))
