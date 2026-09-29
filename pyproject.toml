@@ -17,6 +17,7 @@ test = ["pytest>=8,<9", "build>=1.2,<2", "PyYAML>=6.0,<7", "huggingface-hub==1.2
 
 [tool.setuptools]
 packages = ["inference", "model_candidates"]
+include-package-data = false
 
 [tool.setuptools.package-data]
 inference = ["*.json"]
