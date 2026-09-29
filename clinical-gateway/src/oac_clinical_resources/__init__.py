@@ -21,6 +21,10 @@ from typing import Any, Sequence
 ASSET_PATHS = (
     "clinical-gateway/fixtures/assay_map.json",
     "clinical-gateway/frontend/index.html",
+    "clinical-gateway/frontend/szl/SOURCE.json",
+    "clinical-gateway/frontend/szl/logos/szl_favicon_square.svg",
+    "clinical-gateway/frontend/szl/szl-console.css",
+    "clinical-gateway/frontend/szl/szl-design-system.css",
     "clinical-gateway/operational-model/artifacts/model-receipt.json",
     "clinical-gateway/operational-model/artifacts/model.json",
     "clinical-gateway/operational-model/example-input.json",
