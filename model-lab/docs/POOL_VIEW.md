@@ -56,8 +56,8 @@ an authenticated operator view, not a public inventory or telemetry publication.
 The existing `blueprints.py` explicit source allowlist includes this document and
 `pool_view.py`, so its code-only projection does not ship an app with a missing
 import. Snapshot files, node configuration and credentials are not added to that
-allowlist. The current protected-main, explicit-dispatch publisher remains the
-only blueprint write path; this view neither invokes nor relaxes its controls.
+allowlist. No committed workflow publishes blueprints (both proposed ids are
+`hub_state: NOT_PUBLISHED`); this view neither invokes nor relaxes publisher controls.
 No learned model identity, target, parameter shape or existing weights are changed.
 
 ## Verification and remaining gates
