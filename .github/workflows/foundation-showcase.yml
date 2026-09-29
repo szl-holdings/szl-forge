@@ -1,0 +1,34 @@
+name: Foundation confirmation showcase
+
+on:
+  pull_request:
+    paths: ['foundation-confirmation/**', 'spaces/szl-forge-lab/foundation/**', '.github/workflows/foundation-showcase.yml', '.github/workflows/publish-forge-lab.yml']
+  push:
+    branches: [main]
+    paths: ['foundation-confirmation/**', 'spaces/szl-forge-lab/foundation/**', '.github/workflows/foundation-showcase.yml', '.github/workflows/publish-forge-lab.yml']
+  merge_group:
+    types: [checks_requested]
+
+permissions:
+  contents: read
+
+jobs:
+  evidence:
+    name: Frozen release and complete replay parity
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Exercise archive admission and tamper rejection
+        run: python -B -m unittest discover -s foundation-confirmation -p 'test_*.py' -v
+      - name: Rebuild every public evidence file from the sealed archive
+        run: |
+          python foundation-confirmation/build_showcase.py --archive spaces/szl-forge-lab/foundation/data/release.zip --output /tmp/confirmation-showcase
+          diff -qr /tmp/confirmation-showcase/data spaces/szl-forge-lab/foundation/data
+          git diff --exit-code
