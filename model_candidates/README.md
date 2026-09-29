@@ -51,6 +51,10 @@ existing inference Space remain unchanged.
 `GET /api/candidates`, `/api/candidates/{key}`, `/api/blueprints/{key}` and
 `/api/mesh` are source declarations, not live inventory or serving qualification.
 The compact delivery view shows a sequence, not verified remote completion.
+The page uses the vendored SZL Kanchay v1.0.0 design system: `assets/kanchay/`
+is a byte-for-byte copy (see its `SOURCE.json`), served from a fixed allowlist of
+four read-only routes (`/assets/kanchay/kanchay.css` and three `fonts/*.woff2`)
+behind the same loopback boundary and headers. Do not edit the vendored files.
 
 ## Test and package source
 

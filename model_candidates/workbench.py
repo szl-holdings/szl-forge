@@ -11,6 +11,7 @@ import ipaddress
 import json
 import re
 from html import escape
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, Response
@@ -18,26 +19,70 @@ from fastapi.responses import HTMLResponse, JSONResponse, Response
 from .specs import candidate_spec, candidate_specs, mesh_declaration
 from .blueprint import blueprint_plan
 
+KANCHAY_DIR = Path(__file__).resolve().parent / "assets" / "kanchay"
+# Vendored SZL Kanchay v1.0.0 (byte-for-byte, see SOURCE.json). Fixed allowlist:
+# no path parameter reaches the filesystem, no directory mount, no listing.
+KANCHAY_ASSETS = {
+    "/assets/kanchay/kanchay.css": ("kanchay.css", "text/css; charset=utf-8"),
+    "/assets/kanchay/fonts/SpaceGrotesk-latin.woff2": ("fonts/SpaceGrotesk-latin.woff2", "font/woff2"),
+    "/assets/kanchay/fonts/Inter-latin.woff2": ("fonts/Inter-latin.woff2", "font/woff2"),
+    "/assets/kanchay/fonts/JetBrainsMono-latin.woff2": ("fonts/JetBrainsMono-latin.woff2", "font/woff2"),
+}
+
 CSS = """
-:root{color-scheme:dark;font-family:system-ui,sans-serif;background:#080e18;color:#ecf6ff}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(at 80% 0%,#173344,transparent 65%)}
-main{max-width:1120px;margin:auto;padding:clamp(16px,4vw,48px)}
-h1{font-size:clamp(2rem,5vw,3.5rem);line-height:1.1}h2{font-size:1.2rem;overflow-wrap:anywhere}
-p{line-height:1.65;max-width:76ch}.muted{color:#bbc9d8}.badge{color:#81f1dc;font-weight:700}
-.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
-article,section{border:1px solid #3b596c;border-radius:16px;padding:22px;background:#0a1524dd}
-section{margin-top:22px}a{color:#9bdcff}article a{display:inline-block;padding:12px 0;min-height:44px}
-pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:.9rem;line-height:1.5}
-select,button{font:inherit;color:inherit;background:#152a3b;border:1px solid #7898ac;
-min-height:44px;padding:10px;border-radius:8px;max-width:100%}button{cursor:pointer}
-:focus-visible{outline:3px solid #81f1dc;outline-offset:4px}
-summary{cursor:pointer;min-height:44px;padding:12px 0}
-.journey{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
-.journey div{border-left:2px solid #81f1dc;padding:12px;overflow-wrap:anywhere}
+:root{font-family:var(--font-sans);background:var(--color-a11oy-bg);color:var(--color-a11oy-text)}
+*{box-sizing:border-box}body{margin:0;background:var(--color-a11oy-bg);-webkit-font-smoothing:antialiased}
+main{max-width:1120px;margin:auto;padding:clamp(var(--space-4),4vw,var(--space-12))}
+h1,h2{font-family:var(--font-display);color:var(--color-a11oy-text);text-wrap:balance}
+h1{font-size:clamp(2rem,5vw,3.5rem);line-height:1.1;font-weight:300;letter-spacing:-.035em}
+h2{font-size:1.2rem;line-height:1.3;font-weight:600;letter-spacing:-.02em;overflow-wrap:anywhere}
+article h2{color:var(--color-a11oy-gold)}
+p{line-height:1.65;max-width:76ch;color:var(--color-a11oy-text-sub);text-wrap:pretty}
+.muted{color:var(--color-a11oy-text-sub)}footer.muted{color:var(--color-a11oy-text-ghost);font-size:.875rem}
+.badge{display:flex;align-items:center;gap:var(--space-2);width:fit-content;max-width:100%;
+padding:var(--space-1) var(--space-3);border-radius:var(--radius-full);
+border:var(--border-hairline) solid color-mix(in srgb,var(--color-ink-caution) 28%,transparent);
+background:color-mix(in srgb,var(--color-ink-caution) 12%,transparent);color:var(--color-a11oy-text-sub);
+font-family:var(--font-mono);font-size:.75rem;font-weight:500;line-height:1.4;letter-spacing:.15em}
+.badge::before{content:"";flex:none;width:6px;height:6px;border-radius:var(--radius-full);background:var(--color-warning)}
+header .badge{padding:0;border:0;background:none;color:var(--color-a11oy-gold);letter-spacing:.3em}
+header .badge::before{content:none}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-4)}
+article,section{border:var(--border-hairline) solid var(--color-a11oy-border-subtle);border-radius:var(--radius-md);
+padding:var(--space-6)}article{background:var(--color-a11oy-surface)}
+section{margin-top:var(--space-6);background:var(--color-a11oy-deep)}
+a{color:var(--color-a11oy-gold);text-underline-offset:4px}a:hover{color:var(--gold-bright)}
+article a{display:inline-block;padding:var(--space-3) 0;min-height:var(--szl-touch-target)}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;font-family:var(--font-mono);font-size:.8125rem;line-height:1.6;
+margin:0 0 var(--space-4);padding:var(--space-4);color:var(--color-a11oy-text-sub);background:var(--color-a11oy-bg);
+border:var(--border-hairline) solid var(--color-a11oy-border-subtle);border-radius:var(--radius-md)}
+label{font-family:var(--font-mono);font-size:.75rem;font-weight:500;letter-spacing:.15em;text-transform:uppercase;
+color:var(--color-a11oy-text-sub)}
+select,button{font:inherit;min-height:var(--szl-touch-target);padding:var(--space-2) var(--space-3);
+border-radius:var(--radius-sm);max-width:100%}
+select{color:var(--color-a11oy-text);background:var(--color-a11oy-bg);
+border:var(--border-hairline) solid var(--color-control-border)}
+select option{color:var(--color-a11oy-text);background:var(--color-a11oy-surface)}
+button{cursor:pointer;padding-inline:var(--space-6);font-weight:600;color:var(--color-on-accent);
+background:var(--color-a11oy-gold);border:var(--border-hairline) solid var(--color-a11oy-gold)}
+button:hover{background:var(--gold-bright);border-color:var(--gold-bright)}
+:focus-visible{outline:var(--border-focus) solid var(--color-focus);outline-offset:2px}
+summary{cursor:pointer;min-height:var(--szl-touch-target);padding:var(--space-3) 0;font-weight:500;
+color:var(--color-a11oy-text)}
+.journey{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--space-3)}
+.journey div{border:var(--border-hairline) solid var(--color-a11oy-border-subtle);border-radius:var(--radius-md);
+padding:var(--space-3);overflow-wrap:anywhere;background:var(--color-a11oy-surface)}
+.journey strong{display:block;font-family:var(--font-mono);font-size:.75rem;font-weight:500;letter-spacing:.15em;
+text-transform:uppercase;font-variant-numeric:tabular-nums;color:var(--color-a11oy-text)}
+.journey p{margin:var(--space-2) 0 0}
 @media(max-width:720px){.journey{grid-template-columns:repeat(2,minmax(0,1fr))}}
-form{display:flex;flex-wrap:wrap;gap:12px;align-items:center}footer{margin-top:28px}
-@media(max-width:720px){.grid{grid-template-columns:1fr}section,article{padding:16px}}
-@media(prefers-contrast:more){article,section,select,button{border-color:white}}
+form{display:flex;flex-wrap:wrap;gap:var(--space-3);align-items:center}footer{margin-top:var(--space-8)}
+.skip{position:absolute;left:var(--space-4);top:var(--space-4);z-index:var(--z-overlay);
+padding:var(--space-3) var(--space-4);min-height:var(--szl-touch-target);border-radius:var(--radius-sm);
+font-weight:600;color:var(--color-on-accent);background:var(--color-a11oy-gold);transform:translateY(-200%)}
+.skip:focus,.skip:focus-visible{transform:none;color:var(--color-on-accent)}
+@media(max-width:720px){.grid{grid-template-columns:1fr}section,article{padding:var(--space-4)}}
+@media(prefers-contrast:more){article,section,select,button,.journey div{border-color:var(--color-a11oy-text)}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 """
 
@@ -60,8 +105,9 @@ def render_page(key: str) -> str:
     delivery = escape(json.dumps(blueprint_plan(key), indent=2, allow_nan=False))
     return f'''<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SZL model candidates</title><link rel="stylesheet" href="/assets/workbench.css">
-</head><body><main><header><p class="badge">SZL FORGE / LOCAL RESEARCH</p>
+<title>SZL model candidates</title><link rel="stylesheet" href="/assets/kanchay/kanchay.css">
+<link rel="stylesheet" href="/assets/workbench.css">
+</head><body><a class="skip" href="#main">Skip to content</a><main id="main"><header><p class="badge">SZL FORGE / LOCAL RESEARCH</p>
 <h1>Kernels to learned models.</h1>
 <p>Three trainable architectures. No trained release is claimed. This local workbench
 inspects source recipes; it does not control your hardware or change Hugging Face.
@@ -107,6 +153,12 @@ def _local_request(request: Request) -> bool:
     return request.headers.get("sec-fetch-site") != "cross-site"
 
 
+def _static_asset(body: bytes, media_type: str):
+    async def asset() -> Response:
+        return Response(body, media_type=media_type)
+    return asset
+
+
 def create_app() -> FastAPI:
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 
@@ -121,7 +173,7 @@ def create_app() -> FastAPI:
             "X-Content-Type-Options": "nosniff",
             "Referrer-Policy": "no-referrer",
             "Content-Security-Policy": (
-                "default-src 'none'; style-src 'self'; form-action 'self'; "
+                "default-src 'none'; style-src 'self'; font-src 'self'; form-action 'self'; "
                 "frame-ancestors 'none'; base-uri 'none'"
             ),
         })
@@ -137,6 +189,13 @@ def create_app() -> FastAPI:
     @app.get("/assets/workbench.css")
     async def stylesheet():
         return Response(CSS, media_type="text/css")
+
+    for route, (relative, media_type) in KANCHAY_ASSETS.items():
+        path = KANCHAY_DIR / relative
+        # Bytes are bound at startup. Absent from the source-only projection: normal 404.
+        if path.is_file() and not path.is_symlink():
+            app.add_api_route(route, _static_asset(path.read_bytes(), media_type),
+                              methods=["GET"], include_in_schema=False)
 
     @app.get("/healthz")
     async def health():
