@@ -220,6 +220,264 @@ def calculate_metrics(labels: Sequence[int], scores: Sequence[float], threshold:
     }
 
 
+BOOTSTRAP_REPLICATES = 2000
+BOOTSTRAP_SEED = 20260926
+COMPARISON_METRICS = ("accuracy", "balanced_accuracy", "precision", "recall", "specificity", "f1", "roc_auc")
+
+
+def _point_metrics(labels: Sequence[int], predicted: Sequence[bool], ranking: Sequence[float]) -> dict[str, Any]:
+    tp = sum(1 for y, p in zip(labels, predicted, strict=True) if y and p)
+    fp = sum(1 for y, p in zip(labels, predicted, strict=True) if not y and p)
+    fn = sum(1 for y, p in zip(labels, predicted, strict=True) if y and not p)
+    tn = len(labels) - tp - fp - fn
+    positive, negative = tp + fn, tn + fp
+    rank_sum, start = 0.0, 0
+    ordered = sorted(zip(ranking, labels, strict=True))
+    while start < len(ordered):
+        end = start + 1
+        while end < len(ordered) and ordered[end][0] == ordered[start][0]:
+            end += 1
+        rank_sum += ((start + 1 + end) / 2) * sum(label for _, label in ordered[start:end])
+        start = end
+    return {
+        "accuracy": (tp + tn) / len(labels),
+        "balanced_accuracy": (tp / positive + tn / negative) / 2 if positive and negative else None,
+        "precision": tp / (tp + fp) if tp + fp else None,
+        "recall": tp / positive if positive else None,
+        "specificity": tn / negative if negative else None,
+        "f1": 2 * tp / (2 * tp + fp + fn) if 2 * tp + fp + fn else None,
+        "roc_auc": (rank_sum - positive * (positive + 1) / 2) / (positive * negative) if positive and negative else None,
+        "confusion": {"true_positive": tp, "false_positive": fp, "false_negative": fn, "true_negative": tn},
+    }
+
+
+def _percentile_interval(values: Sequence[float]) -> dict[str, Any] | None:
+    ordered = sorted(values)
+    if not ordered:
+        return None
+    lower = ordered[max(0, math.floor(0.025 * (len(ordered) - 1)))]
+    upper = ordered[min(len(ordered) - 1, math.ceil(0.975 * (len(ordered) - 1)))]
+    return {"lower": round(lower, 12), "upper": round(upper, 12), "defined_replicates": len(ordered),
+            "excludes_zero": lower > 0 or upper < 0}
+
+
+def compare_against_references(labels: Sequence[int], scores: Sequence[float], threshold: float,
+                               consecutive_failures: Sequence[float], oracle_probability: Sequence[float],
+                               train_majority_positive: bool) -> dict[str, Any]:
+    """Place the fixed model between two floors and the generator's Bayes-optimal ceiling.
+
+    Floors: the training-majority constant and the rule ``consecutive_failures > 0``.
+    Ceiling: the published generator's own label probability, which is the Bayes-optimal
+    scorer for this synthetic distribution. The ceiling is reported threshold-free only
+    (ROC AUC, Brier), so no threshold is ever selected on the test split.
+    Intervals are paired percentile bootstrap over test rows with a fixed seed.
+    """
+    import random
+
+    rows = len(labels)
+    if not (rows == len(scores) == len(consecutive_failures) == len(oracle_probability)) or not 0 < sum(labels) < rows:
+        raise EvaluationError("INVALID_COMPARISON_INPUTS")
+    constant = 1.0 if train_majority_positive else 0.0
+    predictors = {
+        "train_majority_constant": ([bool(constant)] * rows, [constant] * rows),
+        "rule_consecutive_failures_gt_0": ([value > 0 for value in consecutive_failures],
+                                           [1.0 if value > 0 else 0.0 for value in consecutive_failures]),
+        "fixed_model": ([score >= threshold for score in scores], list(scores)),
+    }
+    rng = random.Random(BOOTSTRAP_SEED)
+    samples = {name: {metric: [] for metric in COMPARISON_METRICS} for name in predictors}
+    differences = {f"fixed_model_minus_{name}": {metric: [] for metric in COMPARISON_METRICS}
+                   for name in predictors if name != "fixed_model"}
+    ceiling_gap: list[float] = []
+    usable = 0
+    for _ in range(BOOTSTRAP_REPLICATES):
+        index = [rng.randrange(rows) for _ in range(rows)]
+        resampled = [labels[i] for i in index]
+        if not 0 < sum(resampled) < rows:
+            continue
+        usable += 1
+        replicate = {name: _point_metrics(resampled, [pred[i] for i in index], [rank[i] for i in index])
+                     for name, (pred, rank) in predictors.items()}
+        for name, values in replicate.items():
+            for metric in COMPARISON_METRICS:
+                if values[metric] is not None:
+                    samples[name][metric].append(values[metric])
+        for key, bucket in differences.items():
+            other = replicate[key.removeprefix("fixed_model_minus_")]
+            for metric in COMPARISON_METRICS:
+                if replicate["fixed_model"][metric] is not None and other[metric] is not None:
+                    bucket[metric].append(replicate["fixed_model"][metric] - other[metric])
+        oracle_auc = _point_metrics(resampled, [False] * rows, [oracle_probability[i] for i in index])["roc_auc"]
+        ceiling_gap.append(oracle_auc - replicate["fixed_model"]["roc_auc"])
+    point = {name: _point_metrics(labels, pred, rank) for name, (pred, rank) in predictors.items()}
+    oracle_point_auc = _point_metrics(labels, [False] * rows, oracle_probability)["roc_auc"]
+    model_point_auc = point["fixed_model"]["roc_auc"]
+
+    def rounded(value: float | None) -> float | None:
+        return round(value, 12) if value is not None else None
+
+    return {
+        "method": "paired_percentile_bootstrap_over_fixed_public_test_rows",
+        "bootstrap_replicates": BOOTSTRAP_REPLICATES, "usable_replicates": usable,
+        "bootstrap_seed": BOOTSTRAP_SEED, "decision_threshold": threshold,
+        "predictors": {
+            name: {"confusion": point[name]["confusion"],
+                   "metrics": {metric: {"value": rounded(point[name][metric]),
+                                        "interval_95": _percentile_interval(samples[name][metric])}
+                               for metric in COMPARISON_METRICS}}
+            for name in predictors
+        },
+        "paired_differences": {
+            key: {metric: {"value": rounded(point["fixed_model"][metric] - point[key.removeprefix("fixed_model_minus_")][metric])
+                           if point["fixed_model"][metric] is not None
+                           and point[key.removeprefix("fixed_model_minus_")][metric] is not None else None,
+                           "interval_95": _percentile_interval(bucket[metric])}
+                  for metric in COMPARISON_METRICS}
+            for key, bucket in differences.items()
+        },
+        "generator_bayes_optimal_ceiling": {
+            "source": "hash_verified_trainer_synthetic_label_probability",
+            "roc_auc": rounded(oracle_point_auc),
+            "brier_score": rounded(sum((p - y) ** 2 for p, y in zip(oracle_probability, labels, strict=True)) / rows),
+            "fixed_model_roc_auc": rounded(model_point_auc),
+            "roc_auc_headroom": rounded(oracle_point_auc - model_point_auc),
+            "roc_auc_headroom_interval_95": _percentile_interval(ceiling_gap),
+            "scope": "reported_threshold_free_only_no_threshold_selected_on_test",
+        },
+    }
+
+
+def _trainer_namespace(trainer_source: bytes) -> dict[str, Any]:
+    """Execute the hash-verified trainer bytes (not a re-read) in an isolated namespace."""
+    namespace: dict[str, Any] = {"__name__": "oac_operational_trainer_snapshot",
+                                 "__file__": str(PROJECT_ROOT / TRAINER_FILE)}
+    try:
+        exec(compile(trainer_source, TRAINER_FILE, "exec"), namespace)  # noqa: S102 - verified local bytes
+    except (SyntaxError, ImportError) as exc:
+        raise EvaluationError("GENERATOR_LABEL_RULE_UNAVAILABLE") from exc
+    return namespace
+
+
+def _generator_label_probability(trainer_source: bytes):
+    """Return the trainer's label rule from the hash-verified trainer bytes."""
+    rule = _trainer_namespace(trainer_source).get("_synthetic_label_probability")
+    if not callable(rule):
+        raise EvaluationError("GENERATOR_LABEL_RULE_UNAVAILABLE")
+    return rule
+
+
+FRESH_SEED = 7500
+FRESH_ROWS = 2000
+FRESH_BOOTSTRAP_REPLICATES = 400
+
+
+def _logit(probability: float) -> float:
+    return math.log(probability / (1.0 - probability))
+
+
+def _shift_lanes() -> dict[str, Any]:
+    """Each lane maps (features, rng) -> features and (features, base probability) -> probability.
+
+    Covariate lanes move the feature distribution and keep the generator's P(label | features);
+    the concept lane keeps features and changes P(label | features). All values stay in range.
+    """
+    def same(features, rng):
+        return features
+
+    def queue_saturation(features, rng):
+        return {**features, "queue_utilization": round(min(1.0, 0.5 + features["queue_utilization"]), 6)}
+
+    def long_outage_tail(features, rng):
+        return {**features, "seconds_since_last_success":
+                round(min(86400.0, 24.0 * features["seconds_since_last_success"]), 6)}
+
+    def fault_heavy(features, rng):
+        failures = min(20, 3 * features["consecutive_failures"] + (2 if rng.random() < 0.3 else 0))
+        valid = 0 if rng.random() < 0.2 else features["configuration_valid"]
+        return {**features, "consecutive_failures": failures, "configuration_valid": valid}
+
+    def base_rule(features, probability):
+        return probability
+
+    def tls_weight_tripled(features, probability):
+        extra = 2 * 1.15 * (1 - features["tls_enabled"])
+        return 1.0 / (1.0 + math.exp(-(_logit(probability) + extra)))
+
+    return {
+        "fresh_seed_in_distribution": ("none", same, base_rule),
+        "covariate_queue_saturation": ("covariate", queue_saturation, base_rule),
+        "covariate_long_outage_tail": ("covariate", long_outage_tail, base_rule),
+        "covariate_fault_heavy": ("covariate", fault_heavy, base_rule),
+        "concept_tls_weight_tripled": ("concept", same, tls_weight_tripled),
+    }
+
+
+def fresh_seed_lanes(trainer_source: bytes, kernel: Any, threshold: float, rows: int = FRESH_ROWS,
+                     replicates: int = FRESH_BOOTSTRAP_REPLICATES) -> dict[str, Any]:
+    """Score the fixed model on rows drawn from the verified generator with a seed never used in development.
+
+    The fixed model, threshold and weights are not changed. The oracle in every lane is that lane's own
+    label probability, so ``roc_auc_headroom`` is the loss attributable to the model rather than to noise.
+    """
+    import random
+
+    namespace = _trainer_namespace(trainer_source)
+    generate, rule = namespace.get("_generate_features"), namespace.get("_synthetic_label_probability")
+    if not callable(generate) or not callable(rule):
+        raise EvaluationError("GENERATOR_LABEL_RULE_UNAVAILABLE")
+    lanes: dict[str, Any] = {}
+    for offset, (name, (kind, move, relabel)) in enumerate(_shift_lanes().items()):
+        rng = random.Random(FRESH_SEED + offset)
+        features, labels, oracle = [], [], []
+        for _ in range(rows):
+            row = move(generate(rng), rng)
+            probability = relabel(row, rule(row))
+            features.append(row)
+            oracle.append(probability)
+            labels.append(int(rng.random() < probability))
+        try:
+            scores = [kernel.score(row)["operator_attention_score"] for row in features]
+        except (OperationalModelError, ValueError, OverflowError) as exc:
+            raise EvaluationError("FRESH_LANE_SCORING_FAILED") from exc
+        if not 0 < sum(labels) < rows:
+            raise EvaluationError("FRESH_LANE_SINGLE_CLASS")
+        predicted = [score >= threshold for score in scores]
+        point = _point_metrics(labels, predicted, scores)
+        oracle_auc = _point_metrics(labels, [False] * rows, oracle)["roc_auc"]
+        boot_rng = random.Random(BOOTSTRAP_SEED + offset)
+        auc_samples, balanced_samples, gap_samples = [], [], []
+        for _ in range(replicates):
+            index = [boot_rng.randrange(rows) for _ in range(rows)]
+            resampled = [labels[i] for i in index]
+            if not 0 < sum(resampled) < rows:
+                continue
+            replicate = _point_metrics(resampled, [predicted[i] for i in index], [scores[i] for i in index])
+            auc_samples.append(replicate["roc_auc"])
+            balanced_samples.append(replicate["balanced_accuracy"])
+            gap_samples.append(_point_metrics(resampled, [False] * rows, [oracle[i] for i in index])["roc_auc"]
+                               - replicate["roc_auc"])
+        prevalence = sum(labels) / rows
+        lanes[name] = {
+            "shift_kind": kind, "seed": FRESH_SEED + offset, "rows": rows,
+            "positive_rows": sum(labels), "prevalence": round(prevalence, 12),
+            "confusion": point["confusion"],
+            "accuracy": round(point["accuracy"], 12),
+            "negative_constant_accuracy": round(1 - prevalence, 12),
+            "balanced_accuracy": {"value": round(point["balanced_accuracy"], 12),
+                                  "interval_95": _percentile_interval(balanced_samples)},
+            "roc_auc": {"value": round(point["roc_auc"], 12), "interval_95": _percentile_interval(auc_samples)},
+            "lane_oracle_roc_auc": round(oracle_auc, 12),
+            "roc_auc_headroom": {"value": round(oracle_auc - point["roc_auc"], 12),
+                                 "interval_95": _percentile_interval(gap_samples)},
+        }
+    return {
+        "method": "fresh_rows_from_hash_verified_generator_seed_never_used_for_training_or_selection",
+        "bootstrap_replicates": replicates, "decision_threshold": threshold,
+        "lanes": lanes,
+        "scope": "synthetic_only_fresh_seed_is_public_once_published_do_not_tune_against_it",
+    }
+
+
 def verify_receipt_metrics(receipt_metrics: Any, metrics: dict[str, Any]) -> None:
     """Recompute rather than trust existing published summary metrics.
 
@@ -273,7 +531,7 @@ def boundary() -> dict[str, Any]:
     }
 
 
-def evaluate(admission_path: Path | None = None) -> dict[str, Any]:
+def evaluate(admission_path: Path | None = None, fresh_lanes: bool = False) -> dict[str, Any]:
     relative_paths = [MODEL_FILE, MODEL_RECEIPT_FILE, DATASET_RECEIPT_FILE, KERNEL_FILE,
                       TRAINER_FILE, SCHEMA_FILE, "tools/evaluate_operational_health_model.py"]
     relative_paths += [f"operational-model/data/{split}.jsonl" for split in SPLIT_ROWS]
@@ -344,6 +602,16 @@ def evaluate(admission_path: Path | None = None) -> dict[str, Any]:
     prevalence = sum(row["label"]["operator_attention_required"] for row in splits["train"]) / SPLIT_ROWS["train"]
     metrics = calculate_metrics(labels, scores, 0.16, prevalence)
     verify_receipt_metrics(receipt["metrics"], metrics)
+    label_rule = _generator_label_probability(snapshots[TRAINER_FILE])
+    try:
+        oracle = [float(label_rule(row["features"])) for row in splits["test"]]
+    except (OperationalModelError, ValueError, OverflowError, TypeError) as exc:
+        raise EvaluationError("GENERATOR_LABEL_RULE_UNAVAILABLE") from exc
+    if any(not (0.0 <= value <= 1.0 and math.isfinite(value)) for value in oracle):
+        raise EvaluationError("GENERATOR_LABEL_RULE_UNAVAILABLE")
+    comparisons = compare_against_references(
+        labels, scores, 0.16, [row["features"]["consecutive_failures"] for row in splits["test"]], oracle,
+        2 * sum(row["label"]["operator_attention_required"] for row in splits["train"]) > SPLIT_ROWS["train"])
     observations = [
         {"sample_id": row["sample_id"], "observation_sha256": digest(line),
          "features_sha256": digest(canonical_bytes(row["features"])), "label": bool(label),
@@ -351,6 +619,7 @@ def evaluate(admission_path: Path | None = None) -> dict[str, Any]:
         for row, line, label, score in zip(splits["test"], snapshots["operational-model/data/test.jsonl"].splitlines(),
                                             labels, scores, strict=True)
     ]
+    fresh = fresh_seed_lanes(snapshots[TRAINER_FILE], kernel, 0.16) if fresh_lanes else None
     if any(read_bounded(PROJECT_ROOT / relative) != raw for relative, raw in snapshots.items()):
         raise EvaluationError("INPUT_CHANGED_DURING_EVALUATION")
     return {
@@ -364,13 +633,17 @@ def evaluate(admission_path: Path | None = None) -> dict[str, Any]:
             "validation": len(feature_hashes["test"] & feature_hashes["validation"]),
             "scope": "exact_numeric_feature_matches_only_not_semantic_or_temporal_leakage_detection",
         },
-        "metrics": metrics, "observations": observations, "external_corpus_admission": admission,
+        "metrics": metrics, "comparisons": comparisons, "observations": observations,
+        **({"fresh_seed_lanes": fresh} if fresh is not None else {}),
+        "external_corpus_admission": admission,
         "limitations": [
             "public_synthetic_test_already_used_for_development_not_new_blind_evaluation",
             "wilson_intervals_assume_independent_bernoulli_trials_not_real_world_guarantees",
             "calibration_bins_and_brier_are_descriptive_not_calibration_certification",
             "hash_receipt_is_not_an_independent_signed_attestation",
             "no_external_corpus_training_or_qualification_performed",
+            "bootstrap_intervals_resample_the_fixed_public_test_split_not_new_data",
+            "generator_ceiling_is_bayes_optimal_only_for_this_synthetic_distribution",
         ],
     }
 
@@ -379,9 +652,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, help="new JSON receipt file; existing files are never overwritten")
     parser.add_argument("--admission-manifest", type=Path, help="optional declaration contract; not external data")
+    parser.add_argument("--fresh-seed-lanes", action="store_true",
+                        help="also score fresh-seed and distribution-shift synthetic lanes (slower)")
     args = parser.parse_args(argv)
     try:
-        report = evaluate(args.admission_manifest)
+        report = evaluate(args.admission_manifest, fresh_lanes=args.fresh_seed_lanes)
         exit_code = 0
     except (EvaluationError, OSError, UnicodeError, RecursionError) as exc:
         report = {**boundary(), "complete": False, "status": "EVALUATION_FAILED",
