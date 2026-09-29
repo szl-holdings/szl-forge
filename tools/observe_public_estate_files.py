@@ -234,7 +234,9 @@ class Client:
     def __init__(self, token: str | None = None, *, clock=None, sleeper=None, wall_clock=None):
         self.token = token
         self.opener = build_opener(ProxyHandler({}), NoRedirect())
-        self._clock = time.monotonic if clock is None else clock
+        # perf_counter remains monotonic but resolves sub-tick residual waits on
+        # older Windows Python runtimes whose monotonic clock is coarse.
+        self._clock = time.perf_counter if clock is None else clock
         self._sleep = time.sleep if sleeper is None else sleeper
         self._wall_clock = time.time if wall_clock is None else wall_clock
         self.started = self._clock()
