@@ -3,3 +3,4 @@ tools/publish_receiptagent_v3.py text eol=lf
 clinical-gateway/** text eol=lf
 model_candidates/** text eol=lf
 candidate-tests/** text eol=lf
+access-lab/** text eol=lf
