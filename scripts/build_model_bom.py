@@ -14,7 +14,7 @@ be written. Stdlib only.
 Usage:
   python scripts/build_model_bom.py \
     --model-dir artifacts/model \
-    [--base-model SZLHOLDINGS/SZL-1-base] \
+    [--base-model <hub-owner>/<base-model-id>] \
     [--dataset-manifest data/dataset-manifest.json] \
     [--eval release/heldout-eval.json] \
     [--materials git://<sha>]... \
