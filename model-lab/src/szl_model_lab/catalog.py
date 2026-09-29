@@ -2,6 +2,10 @@
 
 The existing Forge publishing/model-source-bindings.json remains authoritative.
 No catalog entry here asserts that a Hugging Face repository or weights exist.
+Every proposed id carries hub_state NOT_PUBLISHED: none was created on the Hub
+(HF estate inventory 2026-09-29) and no committed workflow holds a write path to
+one. Publishing a track later means adding one deliberate writer and changing
+this state in the same change.
 """
 from __future__ import annotations
 from dataclasses import asdict, dataclass
@@ -42,9 +46,14 @@ DEFERRED_TRACKS = (
      "proposed_hf_id": None},
 )
 
+HUB_STATE_NOT_PUBLISHED = "NOT_PUBLISHED"
+
+
 def catalog() -> list[dict]:
-    return [dict(asdict(t), state="BLUEPRINT_NOT_TRAINED", publication_eligible=False)
-            for t in TRACKS.values()] + [dict(t, publication_eligible=False) for t in DEFERRED_TRACKS]
+    return [dict(asdict(t), state="BLUEPRINT_NOT_TRAINED", publication_eligible=False,
+                 hub_state=HUB_STATE_NOT_PUBLISHED)
+            for t in TRACKS.values()] + [dict(t, publication_eligible=False, hub_state=HUB_STATE_NOT_PUBLISHED)
+                                         for t in DEFERRED_TRACKS]
 
 def track_for(slug: str) -> Track:
     try:
