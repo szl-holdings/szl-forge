@@ -9,6 +9,7 @@ from importlib.metadata import PackageNotFoundError
 import io
 import json
 from pathlib import Path
+import re
 import sys
 import threading
 import unittest
@@ -18,6 +19,14 @@ from fastapi.testclient import TestClient
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import external_retrieval_preview as preview
+
+# The vendored SZL Kanchay files the page loads: exact route -> file under retrieval_web.
+KANCHAY_ROUTES = {
+    "/kanchay/kanchay.css": "kanchay/kanchay.css",
+    "/kanchay/fonts/SpaceGrotesk-latin.woff2": "kanchay/fonts/SpaceGrotesk-latin.woff2",
+    "/kanchay/fonts/Inter-latin.woff2": "kanchay/fonts/Inter-latin.woff2",
+    "/kanchay/fonts/JetBrainsMono-latin.woff2": "kanchay/fonts/JetBrainsMono-latin.woff2",
+}
 
 
 class StubService:
@@ -171,7 +180,7 @@ class PreviewTests(unittest.TestCase):
         self.assertEqual(200, self.post().status_code)
 
     def test_guard_applies_to_static_status_and_preflight(self):
-        for route in ("/", "/app.js", "/app.css", "/api/status", "/api/notices"):
+        for route in ("/", "/app.js", "/app.css", *KANCHAY_ROUTES, "/api/status", "/api/notices"):
             for headers, status in (({"host": "evil.example"}, 400),
                                     ({"origin": "https://evil.example"}, 403),
                                     ({"sec-fetch-site": "cross-site"}, 403)):
@@ -403,7 +412,8 @@ class PreviewTests(unittest.TestCase):
             self.assertEqual(value, body[key])
         self.assertEqual(preview.digest(preview.__file__), body["preview_sha256"])
         self.assertEqual({name: preview.digest(preview.HERE / "retrieval_web" / name)
-                          for name in ("index.html", "app.js", "app.css")}, body["asset_sha256"])
+                          for name in ("index.html", "app.js", "app.css", *KANCHAY_ROUTES.values())},
+                         body["asset_sha256"])
         self.service.query.assert_not_called()
         self.service.search.assert_not_called()
         self.service.answer_context.assert_not_called()
@@ -420,8 +430,69 @@ class PreviewTests(unittest.TestCase):
                 self.assertIn(mime, response.headers["content-type"])
                 self.assert_security_headers(response)
 
+    def test_vendored_kanchay_assets_are_served_exactly_with_security_headers(self):
+        for route, name in KANCHAY_ROUTES.items():
+            with self.subTest(route=route):
+                response = self.client.get(route)
+                self.assertEqual(200, response.status_code, response.text[:200])
+                self.assertEqual((preview.HERE / "retrieval_web" / name).read_bytes(), response.content)
+                self.assertEqual("text/css; charset=utf-8" if name.endswith(".css") else "font/woff2",
+                                 response.headers["content-type"])
+                self.assert_security_headers(response)
+                self.assertIn("font-src 'self'", response.headers["content-security-policy"])
+        self.assertEqual(KANCHAY_ROUTES, {route: name for route, (name, _) in preview.KANCHAY_ROUTES.items()})
+
+    def test_vendored_kanchay_files_match_the_export_manifest(self):
+        folder = preview.HERE / "retrieval_web" / "kanchay"
+        source = json.loads((folder / "SOURCE.json").read_text(encoding="utf-8"))
+        self.assertEqual("1.0.0", source["version"])
+        for name in KANCHAY_ROUTES.values():
+            relative = name.removeprefix("kanchay/")
+            with self.subTest(name=relative):
+                self.assertEqual(source["sha256"][relative],
+                                 hashlib.sha256((folder / relative).read_bytes()).hexdigest())
+
+    def test_page_links_kanchay_before_app_css_and_every_font_url_is_routed(self):
+        page = (preview.HERE / "retrieval_web" / "index.html").read_text(encoding="utf-8")
+        self.assertLess(page.index('href="/kanchay/kanchay.css"'), page.index('href="/app.css"'))
+        self.assertIn('data-theme="light"', page)
+        css = (preview.HERE / "retrieval_web" / "kanchay" / "kanchay.css").read_text(encoding="utf-8")
+        fonts = {"/kanchay/" + url.removeprefix("./") for url in re.findall(r"url\('([^']+)'\)", css)}
+        self.assertEqual({route for route in KANCHAY_ROUTES if route.endswith(".woff2")}, fonts)
+        for route in fonts:
+            self.assertEqual(200, self.client.get(route).status_code)
+
+    def test_unlisted_kanchay_paths_and_methods_are_not_exposed(self):
+        for route in ("/kanchay", "/kanchay/", "/kanchay/fonts", "/kanchay/fonts/", "/kanchay/SOURCE.json",
+                      "/kanchay/kanchay-components.css", "/kanchay/fonts/Syncopate-400.woff2",
+                      "/kanchay/KANCHAY.CSS", "/kanchay/fonts/Inter-latin.woff2/x",
+                      "/kanchay/%2e%2e/app.css", "/kanchay/fonts/%2e%2e/kanchay.css",
+                      "/kanchay/%2e%2e/%2e%2e/external_retrieval_preview.py"):
+            with self.subTest(route=route):
+                response = self.client.get(route)
+                self.assertEqual(404, response.status_code)
+                self.assert_security_headers(response)
+        for route in KANCHAY_ROUTES:
+            for method in ("POST", "PUT", "DELETE"):
+                with self.subTest(route=route, method=method):
+                    response = self.client.request(method, route)
+                    self.assertEqual(405, response.status_code)
+                    self.assert_security_headers(response)
+
+    def test_changed_vendored_kanchay_file_fails_closed_without_editing_real_assets(self):
+        real = preview.digest
+        for route, name in KANCHAY_ROUTES.items():
+            target = preview.HERE / "retrieval_web" / name
+            with self.subTest(route=route), mock.patch.object(
+                    preview, "digest", side_effect=lambda path: "0" * 64 if Path(path) == target else real(path)):
+                response = self.client.get(route)
+                self.assertEqual(503, response.status_code, response.text)
+                self.assertEqual({"detail": "Preview assets changed; restart required"}, response.json())
+                self.assert_security_headers(response)
+                self.assertEqual(200, self.client.get("/app.css").status_code)
+
     def test_asset_hash_mismatch_fails_closed_without_editing_real_assets(self):
-        for route in ("/", "/app.js", "/app.css"):
+        for route in ("/", "/app.js", "/app.css", *KANCHAY_ROUTES):
             with self.subTest(route=route), mock.patch.object(preview, "digest", return_value="0" * 64):
                 response = self.client.get(route)
                 self.assertEqual(503, response.status_code, response.text)
