@@ -71,7 +71,7 @@ A navigator that has never seen document text — only handles — and still kno
 | NVIDIA | Guardrail inside the head, not a sidecar. |
 | Unsloth | The 1.5B QLoRA is the grown form of this MLP. |
 
-Nobody else ships this combination. That is the point of a one-of-one.
+No equivalent public combination was found among the leaders surveyed above (a snapshot, not an ecosystem-wide novelty claim).
 
 ## Intended use
 

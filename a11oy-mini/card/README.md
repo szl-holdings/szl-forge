@@ -77,7 +77,7 @@ A governed command voice that fits in llama.cpp.
 | NVIDIA | A NIM-less local runtime. |
 | Unsloth | GGUF path. |
 
-Nobody else ships this combination. That is the point of a one-of-one.
+No equivalent public combination was found among the leaders surveyed above (a snapshot, not an ecosystem-wide novelty claim).
 
 ## Intended use
 

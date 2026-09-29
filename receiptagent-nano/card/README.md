@@ -69,7 +69,7 @@ A policy head that cannot silently succeed. Every output is one of four named ga
 | NVIDIA | NeMo Guardrails flow → four-way head. |
 | Unsloth | Grown form is SZL-Forge-1.5B-ReceiptAgent. |
 
-Nobody else ships this combination. That is the point of a one-of-one.
+No equivalent public combination was found among the leaders surveyed above (a snapshot, not an ecosystem-wide novelty claim).
 
 ## Intended use
 

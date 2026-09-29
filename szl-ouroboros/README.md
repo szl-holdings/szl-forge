@@ -50,14 +50,11 @@ Bounded-loop trace + loop-tax accounting. **Not a model. No weights.** **Not** t
 
 **IS:** a pure-Python, stdlib-only governance kernel. It rebuilds a run's attempt windows into labeled fields (`modelMs` MEASURED, `overheadMs` DERIVED, `serializationTaxMs` a counterfactual, never a realized saving). Public API: `build_loop_trace`, `loop_tax`, `selfcheck`.
 
-**IS NOT:** trained weights. Not a CUDA bench. Hub `model.joblib` is **QUARANTINED** executable serialization — do not `joblib.load` it. When `wall_ms` is missing, `overheadMs` is **UNAVAILABLE**, never fabricated.
+**IS NOT:** trained weights. Not a CUDA bench. No `model.joblib` is published in this repo (OBSERVED 2026-09-25); any executable serialization would be **QUARANTINED** — never `joblib.load` an artifact from a card mirror. When `wall_ms` is missing, `overheadMs` is **UNAVAILABLE**, never fabricated.
 
 Canonical GitHub source: https://github.com/szl-holdings/szl-ouroboros  
 Hub package: https://huggingface.co/kernels/SZLHOLDINGS/szl-ouroboros  
 This model-type repo is the publish / card mirror. Apache-2.0.
-
-```python
-
 
 <!-- SZL-ATELIER-CUT:v1:START -->
 ## The cut
@@ -74,7 +71,7 @@ A runtime that cannot grind a gate into dust.
 | NVIDIA | Scheduler quota, but for authority. |
 | Unsloth | No. |
 
-Nobody else ships this combination. That is the point of a one-of-one.
+No equivalent public combination was found among the leaders surveyed above (a snapshot, not an ecosystem-wide novelty claim).
 
 ## Intended use
 
@@ -87,6 +84,7 @@ Wrap agent retries.
 Canonical GitHub: [`szl-holdings/szl-khipu`](https://github.com/szl-holdings/szl-khipu/blob/main/szl_khipu/ouroboros.py)
 <!-- SZL-ATELIER-CUT:v1:END -->
 
+```python
 from kernels import get_kernel
 ou = get_kernel("SZLHOLDINGS/szl-ouroboros", revision="main", trust_remote_code=True)
 attempts = [
