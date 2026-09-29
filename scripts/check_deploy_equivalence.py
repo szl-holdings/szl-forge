@@ -28,7 +28,7 @@ def die(msg: str) -> "SystemExit":
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--space", required=True, help="HF space id, e.g. SZLHOLDINGS/prove-it")
+    ap.add_argument("--space", required=True, help="HF space id, e.g. SZLHOLDINGS/szl-model-inference-lab")
     ap.add_argument("--weights", required=True, help="release/weights.sha256 (sha256sum format)")
     ap.add_argument("--dry-run", action="store_true",
                     help="Print intended requests and exit 0. REQUIRED — live "
