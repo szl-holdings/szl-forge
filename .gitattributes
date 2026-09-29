@@ -2,5 +2,4 @@ frontier/qwen35-receiptagent-v3/** text eol=lf
 tools/publish_receiptagent_v3.py text eol=lf
 clinical-gateway/** text eol=lf
 model_candidates/** text eol=lf
-model_candidates/**/*.woff2 binary
 candidate-tests/** text eol=lf

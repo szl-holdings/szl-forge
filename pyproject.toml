@@ -21,7 +21,7 @@ include-package-data = false
 
 [tool.setuptools.package-data]
 inference = ["*.json"]
-model_candidates = ["assets/kanchay/kanchay.css", "assets/kanchay/SOURCE.json", "assets/kanchay/fonts/*.woff2"]
+model_candidates = ["assets/szl/szl-design-system.css", "assets/szl/SOURCE.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
