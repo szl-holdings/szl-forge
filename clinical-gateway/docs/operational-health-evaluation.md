@@ -114,3 +114,31 @@ scope, a defined labeling protocol, device/site/time-aware isolation, duplicate
 checks, frozen acceptance criteria, and an untouched evaluation set. Collecting
 those materials, training a successor, and running a prospective pilot are
 separate work. No real patient records or clinical results belong in this path.
+
+## Reference comparisons
+
+The receipt's `comparisons` block places the fixed model between two floors and a
+ceiling on the same 240 held-out synthetic rows:
+
+- `train_majority_constant`: always predicts the training-majority class (negative).
+- `rule_consecutive_failures_gt_0`: the one-line rule `consecutive_failures > 0`.
+- `generator_bayes_optimal_ceiling`: the published trainer's own
+  `_synthetic_label_probability`, executed from the hash-verified trainer bytes. The
+  synthetic labels are Bernoulli draws from that function of the same eight features,
+  so it is the Bayes-optimal scorer for this distribution. It is reported
+  threshold-free only (ROC AUC, Brier), so no threshold is selected on the test split.
+
+Every predictor metric and every model-minus-floor difference carries a paired
+percentile-bootstrap 95% interval (`BOOTSTRAP_REPLICATES = 2000`, fixed seed, resampling
+test rows). Two readings follow from the fixed split and should travel with the headline
+metrics:
+
+- The model beats both floors on balanced accuracy, recall, F1 and ROC AUC (intervals
+  exclude zero), but **not on accuracy**: the constant scores 0.7875 against the model's
+  0.716667, and the paired difference interval includes zero.
+- The ceiling ROC AUC is 0.841477 against the model's 0.830169. With at most ~0.024 of
+  AUC headroom (upper interval bound), this split can no longer discriminate between
+  modelling changes; the lower bound sits at zero and moves with the Monte Carlo seed.
+
+These intervals resample the already-public test split. They quantify sampling
+variation on these 240 rows, not performance on new data or any real transport.
