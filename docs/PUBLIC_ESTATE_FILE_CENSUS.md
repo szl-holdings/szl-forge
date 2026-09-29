@@ -25,6 +25,13 @@ before network reads; existing files are never overwritten. A killed process can
 an incomplete output file, which is not a valid receipt. The dedicated read-only CI
 runs both lanes separately and preserves their reports even when a lane fails.
 
+Elapsed pacing and launch deadlines use Python's monotonic, high-resolution
+`perf_counter` by default. On older Windows Python runtimes, `monotonic` can have
+coarser resolution than a fractional rate-hint residual wait: a real successful
+sleep could leave that clock unchanged and falsely trip the stalled-clock guard.
+The default clock avoids that false stop; injected-clock progress guards, the
+minimum HF launch interval, retry budgets and launch deadline remain enforced.
+
 The GitHub lane uses the existing `GITHUB_TOKEN` environment variable, when available,
 only for requests to the fixed GitHub API. Contents-read is sufficient for public
 repo trees; no organization-administration or repo-write credential is requested.
