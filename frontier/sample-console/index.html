@@ -5,77 +5,74 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>a11oy Frontier SAMPLE — operator console</title>
   <meta name="description" content="SAMPLE public baseline. Refuses to mint alignment from missing evidence. Not a live a-11-oy.com deployment. Signer ABSENT. Lambda Conjecture 1." />
-  <link rel="stylesheet" href="kanchay/kanchay.css" />
-  <link rel="stylesheet" href="kanchay/kanchay-components.css" />
+  <link rel="icon" type="image/svg+xml" href="szl/logos/szl_favicon.svg" />
+  <link rel="stylesheet" href="szl/szl-design-system.css" />
+  <link rel="stylesheet" href="szl/szl-console.css" />
   <style>
-    /* SZL Kanchay v1.0.0 (vendored in ./kanchay/). Every color, face, radius and space is a token. */
-    * { box-sizing: border-box }
-    html, body { margin: 0; background: var(--color-a11oy-bg); color: var(--color-a11oy-text); font-family: var(--font-sans); font-size: 15px; line-height: 1.55 }
-    a { color: var(--color-ink-signal) }
-    :where(a, button, textarea):focus-visible { outline: var(--border-focus) solid var(--color-focus); outline-offset: 2px }
-    header, main { max-width: 1100px; margin: 0 auto; padding: var(--space-4) }
+    /* SZL KANCHAY v1.1.0, founder direction (vendored in ./szl/). Dark operator surface.
+       Every color, face, radius and space is a founder token. One coral moment per view. */
+    :where(a, button):focus-visible { outline: var(--border-focus) solid var(--focus); outline-offset: 2px }
+    header, main { max-width: var(--container); margin-inline: auto; padding: var(--space-4) }
     header { padding-top: var(--space-6) }
     main > :first-child { margin-top: var(--space-2) }
 
-    .skip-link { position: absolute; left: var(--space-4); top: calc(-1 * var(--space-16)); z-index: var(--z-overlay); display: inline-flex; align-items: center; min-height: var(--szl-touch-target); padding: 0 var(--space-4); border-radius: var(--radius-sm); background: var(--color-a11oy-gold); color: var(--color-on-accent); font-size: 14px; font-weight: 600; text-decoration: none }
-    .skip-link:focus { top: var(--space-2) }
-
-    .chips { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0 0 var(--space-4) }
-    h1 { margin: 0 0 var(--space-2); font-family: var(--font-display); font-size: 30px; line-height: 36px; font-weight: 300; letter-spacing: -.025em; text-wrap: balance }
-    h2 { margin: var(--space-6) 0 var(--space-2); font-family: var(--font-display); font-size: 20px; line-height: 28px; font-weight: 600; letter-spacing: -.02em; text-wrap: balance }
+    .chips { display: flex; flex-wrap: wrap; gap: var(--space-2); max-width: none; margin: 0 0 var(--space-4) }
+    /* Small chip text sits on --bg-deep, where --text-ghost passes (5.29:1; 4.37:1 on --surface-alt). */
+    .chips .chip { background: var(--bg-deep) }
+    h1.page-head__title { margin: 0 0 var(--space-2) }
+    main h2 { margin: var(--space-6) 0 var(--space-2); font-size: var(--text-xl) }
     p { text-wrap: pretty }
-    .note { color: var(--color-a11oy-text-sub); font-size: 14px; line-height: 1.625 }
-    p.note { max-width: var(--szl-readable-measure) }
-    code { font-family: var(--font-mono); font-size: .9em; color: var(--color-ink-signal) }
+    .note { color: var(--text-sub) }
+    code { color: var(--text) }
 
-    .kc-btn { min-height: var(--szl-touch-target) }
-    .dock { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); padding-bottom: var(--space-4); border-bottom: var(--border-hairline) solid var(--color-a11oy-border) }
-    .dock .kc-btn.on { background: var(--color-a11oy-surface); color: var(--color-a11oy-gold); border-color: color-mix(in srgb, var(--color-a11oy-gold) 35%, transparent) }
+    .btn { min-block-size: var(--target-size-coarse) }
+    .dock { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); padding-bottom: var(--space-4); border-bottom: var(--border-hairline) solid var(--hairline) }
+    .dock .btn.on { color: var(--text); background: var(--surface-raised); border-color: var(--border) }
+    /* The active-nav dot is the view's one coral moment, except where a .btn-primary (loom Submit) is. */
+    .dock .btn.on::after { content: ""; inline-size: 6px; block-size: 6px; flex: none; border-radius: var(--radius-full); background: var(--accent) }
+    body:has(.btn-primary) .dock .btn.on::after { content: none }
     .actions { display: flex; flex-wrap: wrap; gap: var(--space-2) }
-    .case-btn { height: auto; padding: var(--space-2) var(--space-3); white-space: normal; text-align: left; justify-content: flex-start }
+    .case-btn { white-space: normal; text-align: left; justify-content: flex-start; line-height: var(--leading-snug) }
     .palette { margin: var(--space-4) 0 0 }
 
-    .table-wrap { overflow-x: auto; margin: var(--space-3) 0; border: var(--border-hairline) solid var(--color-a11oy-border-subtle); border-radius: var(--radius-md) }
-    table { width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.5; font-variant-numeric: tabular-nums }
-    th, td { text-align: left; padding: var(--space-3); border-bottom: var(--border-hairline) solid var(--color-a11oy-border-subtle); vertical-align: top }
-    th { background: var(--color-a11oy-deep); color: var(--color-a11oy-text-ghost); font-family: var(--font-mono); font-size: 11px; font-weight: 500; letter-spacing: .15em; text-transform: uppercase }
-    tbody tr:last-child td { border-bottom: 0 }
-    td { color: var(--color-a11oy-text-sub) }
-    td:first-child { color: var(--color-a11oy-text) }
-    td:last-child { overflow-wrap: anywhere }
-    td:nth-child(2) { font-family: var(--font-mono); font-size: 12px; letter-spacing: .05em; white-space: nowrap }
-    td .note { display: block; margin-top: var(--space-1); color: var(--color-a11oy-text-ghost); font-family: var(--font-mono); font-size: 11px; letter-spacing: .15em; text-transform: uppercase }
+    .table-wrap { overflow-x: auto; margin: var(--space-3) 0 var(--space-4); border: var(--border-hairline) solid var(--border); border-radius: var(--radius-md) }
+    .table { font-variant-numeric: tabular-nums lining-nums }
+    .table th { background: var(--surface-alt) }
+    .table th, .table td { vertical-align: top }
+    .table tbody tr:last-child td { border-bottom: 0 }
+    .table td:last-child { color: var(--text-sub); overflow-wrap: anywhere }
+    .table td:nth-child(2) { white-space: nowrap }
+    .table td .note { display: block; margin-top: var(--space-1); color: var(--text-ghost); font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: var(--tracking-caps); text-transform: uppercase }
     @media (max-width: 560px) {
-      table, tbody { display: block }
-      thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap }
-      tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--space-3); padding: var(--space-3); border-bottom: var(--border-hairline) solid var(--color-a11oy-border-subtle) }
-      tbody tr:last-child { border-bottom: 0 }
-      td { padding: 0; border-bottom: 0 }
-      td:nth-child(2) { text-align: right }
-      td:last-child { grid-column: 1 / -1; margin-top: var(--space-2) }
+      .table, .table tbody { display: block }
+      .table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap }
+      .table tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--space-3); padding: var(--space-3) var(--space-4); border-bottom: var(--border-hairline) solid var(--border-subtle) }
+      .table tbody tr:last-child { border-bottom: 0 }
+      .table td { padding: 0; border-bottom: 0 }
+      .table td:nth-child(2) { text-align: right }
+      .table td:last-child { grid-column: 1 / -1; margin-top: var(--space-2) }
     }
 
-    /* Status is always the word; the ink only reinforces it. */
-    .INCOMPLETE, .DIVERGENT, .SMOKE_FAIL, .UNAVAILABLE { color: var(--color-ink-danger) }
-    .HOLD, .UNRUN { color: var(--color-ink-caution) }
-    .PASS, .MEASURED { color: var(--color-ink-signal) }
+    /* Status is always the word (a .chip in tables); the ink only reinforces it. */
+    .INCOMPLETE, .DIVERGENT, .SMOKE_FAIL, .UNAVAILABLE,
+    :is(.INCOMPLETE, .DIVERGENT, .SMOKE_FAIL, .UNAVAILABLE) > .chip { color: var(--ink-bad) }
+    .HOLD, .UNRUN, :is(.HOLD, .UNRUN) > .chip { color: var(--ink-warn) }
+    .PASS, .MEASURED, :is(.PASS, .MEASURED) > .chip { color: var(--ink-good) }
 
-    .ribbon { display: block; width: 100%; height: auto; background: var(--color-a11oy-deep); border: var(--border-hairline) solid var(--color-a11oy-border-subtle); border-radius: var(--radius-md) }
-    .ribbon-band { fill: color-mix(in srgb, var(--color-a11oy-gold) 20%, transparent) }
-    .ribbon-line { fill: none; stroke: var(--color-a11oy-gold); stroke-width: 2 }
-    .ribbon-cut { stroke: var(--color-a11oy-text-ghost); stroke-dasharray: 4 4 }
+    .ribbon { display: block; width: 100%; height: auto; margin-bottom: var(--space-3); background: var(--bg-deep); border: var(--border-hairline) solid var(--border); border-radius: var(--radius-md) }
+    .ribbon-band { fill: color-mix(in srgb, var(--color-silver-300) 22%, transparent) }
+    .ribbon-line { fill: none; stroke: var(--color-silver-300); stroke-width: 2 }
+    .ribbon-cut { stroke: var(--color-silver-500); stroke-dasharray: 4 4 }
 
-    #loom-in { display: block; width: 100%; min-height: 72px; padding: var(--space-2) var(--space-3); background: transparent; color: var(--color-a11oy-text); border: var(--border-hairline) solid var(--color-control-border); border-radius: var(--radius-sm); font-family: var(--font-sans); font-size: 14px; line-height: 1.5; resize: vertical }
-    #loom-in::placeholder { color: var(--color-a11oy-text-ghost) }
-    #loom-in:focus-visible { border-color: var(--color-focus) }
-    #loom-msg { font-family: var(--font-mono); font-size: 13px; overflow-wrap: anywhere }
+    #loom-in { display: block; min-block-size: 72px; margin-bottom: var(--space-3); resize: vertical }
+    #loom-msg { font-family: var(--font-mono); font-size: var(--text-sm); font-variant-numeric: tabular-nums lining-nums; overflow-wrap: anywhere }
   </style>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
   <header>
-    <p class="chips"><span class="kc-badge">SAMPLE</span><span class="kc-badge">signer ABSENT</span><span class="kc-badge">Λ Conjecture 1</span><span class="kc-badge">production authorized false</span></p>
-    <h1>a11oy Frontier</h1>
+    <p class="chips"><span class="chip chip-sample">SAMPLE</span><span class="chip chip-unavailable">signer ABSENT</span><span class="chip chip-conjecture">Λ Conjecture 1</span><span class="chip">production authorized false</span></p>
+    <h1 class="page-head__title">a11oy Frontier</h1>
     <p class="note">Operator console that refuses to mint alignment from missing evidence. Not a live a-11-oy.com deployment. Not production admission. ⌘K jumps any surface.</p>
     <nav class="dock" id="dock" aria-label="Surfaces"></nav>
   </header>
@@ -151,32 +148,32 @@
     }
 
     function table(rows) {
-      return `<div class="table-wrap"><table><thead><tr><th>Item</th><th>Status</th><th>Note</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+      return `<div class="table-wrap"><table class="table"><thead><tr><th>Item</th><th>Status</th><th>Note</th></tr></thead><tbody>${rows}</tbody></table></div>`;
     }
 
     function render() {
       const dock = document.getElementById("dock");
-      dock.innerHTML = APPS.map((id) => `<button type="button" class="kc-btn kc-btn--ghost${surface===id?" on":""}"${surface===id?' aria-current="true"':""} data-go="${id}">${id}</button>`).join("");
+      dock.innerHTML = APPS.map((id) => `<button type="button" class="btn btn-ghost${surface===id?" on":""}"${surface===id?' aria-current="true"':""} data-go="${id}">${id}</button>`).join("");
       let body = "";
       if (surface === "command") {
-        body = `<h2>Command</h2><p class="note">Work-package board. No ALL_DONE.</p>` + table(PACKAGES.map((p) => `<tr><td>${p.title}</td><td class="${p.status}">${p.status}</td><td>${p.note}</td></tr>`).join(""));
+        body = `<h2>Command</h2><p class="note">Work-package board. No ALL_DONE.</p>` + table(PACKAGES.map((p) => `<tr><td>${p.title}</td><td class="${p.status}"><span class="chip">${p.status}</span></td><td>${p.note}</td></tr>`).join(""));
       } else if (surface === "lyte") {
         body = `<h2>Lyte Forecast Loom</h2>${ribbon()}
           <p>Submit is CALLER_SUPPLIED, not MEASURED. Paste <code>true</code> fails closed.</p>
-          <textarea id="loom-in" placeholder="paste envelope or true"></textarea>
-          <p class="actions"><button type="button" id="loom-submit" class="kc-btn kc-btn--default">Submit SAMPLE</button> <button type="button" id="loom-export" class="kc-btn kc-btn--outline">Export canonical JSON</button></p>
+          <textarea id="loom-in" class="input" placeholder="paste envelope or true"></textarea>
+          <p class="actions"><button type="button" id="loom-submit" class="btn btn-primary">Submit SAMPLE</button> <button type="button" id="loom-export" class="btn btn-secondary">Export canonical JSON</button></p>
           <p class="${loomMsg.includes("rejected")?"INCOMPLETE":"note"}" id="loom-msg">${loomMsg}</p>`;
       } else if (surface === "mesh") {
         const detail = meshCase ? DOUBLES.find((d) => d.id === meshCase) : null;
-        body = `<h2>Mesh</h2><p class="note">Seven Forge #239 false ALIGNED doubles. A skipped sibling cannot ride a green parent.</p>` + table(DOUBLES.map((d) => `<tr><td><button type="button" class="kc-btn kc-btn--secondary case-btn" data-case="${d.id}">${d.title}</button></td><td class="${d.verdict}">${d.verdict}</td><td>${d.detail}</td></tr>`).join(""));
+        body = `<h2>Mesh</h2><p class="note">Seven Forge #239 false ALIGNED doubles. A skipped sibling cannot ride a green parent.</p>` + table(DOUBLES.map((d) => `<tr><td><button type="button" class="btn btn-secondary case-btn" data-case="${d.id}">${d.title}</button></td><td class="${d.verdict}"><span class="chip">${d.verdict}</span></td><td>${d.detail}</td></tr>`).join(""));
         if (detail) body += `<p class="${detail.verdict}"><strong>Selected: ${detail.title}</strong> — ${detail.detail} observation_state INCOMPLETE_OR_DIVERGENT. production_authorization false.</p>`;
       } else if (surface === "frontier") {
-        body = `<h2>Frontier lanes</h2>` + table(LANES.map((p) => `<tr><td>${p.title}</td><td class="${p.status}">${p.status}</td><td>${p.note}</td></tr>`).join(""));
+        body = `<h2>Frontier lanes</h2>` + table(LANES.map((p) => `<tr><td>${p.title}</td><td class="${p.status}"><span class="chip">${p.status}</span></td><td>${p.note}</td></tr>`).join(""));
       } else {
-        body = `<h2>Kernels</h2><p class="note">Native vs model-mirror kept distinct. No deletions.</p>` + table(KERNELS.map((p) => `<tr><td>${p.name} <span class="note">${p.kind}</span></td><td class="${p.status}">${p.status}</td><td>${p.note}</td></tr>`).join(""));
+        body = `<h2>Kernels</h2><p class="note">Native vs model-mirror kept distinct. No deletions.</p>` + table(KERNELS.map((p) => `<tr><td>${p.name} <span class="note">${p.kind}</span></td><td class="${p.status}"><span class="chip">${p.status}</span></td><td>${p.note}</td></tr>`).join(""));
       }
       if (palette) {
-        body = `<div class="palette kc-toolbar">${[...APPS, ...PACKAGES.map((p)=>p.id), ...DOUBLES.map((d)=>d.id)].map((id) => `<button type="button" class="kc-btn kc-btn--secondary" data-jump="${id}">${id}</button>`).join("")}</div>` + body;
+        body = `<div class="palette toolbar">${[...APPS, ...PACKAGES.map((p)=>p.id), ...DOUBLES.map((d)=>d.id)].map((id) => `<button type="button" class="btn btn-secondary" data-jump="${id}">${id}</button>`).join("")}</div>` + body;
       }
       document.getElementById("main").innerHTML = body;
       dock.querySelectorAll("[data-go]").forEach((n) => n.onclick = () => { surface = n.dataset.go; palette = false; render(); });
