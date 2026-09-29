@@ -37,6 +37,11 @@ site_validated=false.
   inference kernel for synthetic operational transport signals.
 - frontend/index.html: control/configuration UI. It has no
   raw-message, patient, order, specimen, observation, or result input.
+- frontend/kanchay/: byte-for-byte copy of the SZL Kanchay v1.0.0 design
+  system export (`kanchay.css`, three WOFF2 fonts, `SOURCE.json` digests).
+  The API serves only `/kanchay/kanchay.css` and the three
+  `/kanchay/fonts/*.woff2` files, from a fixed allowlist, with the same
+  admission and security headers as the UI page.
 - fixtures/assay_map.json: exact MOCK mapping accepted by the core.
 - fixtures/assay_map.live-shadow.example.json: non-production site mapping
   placeholder.
@@ -206,8 +211,9 @@ it is not a durable crash-recovery or exactly-once-after-restart guarantee.
 
 ### Portable installed-wheel workspace (distribution 2.5.1)
 
-The wheel now contains a closed, build-derived bundle of the browser shell,
-fixed synthetic assay map, operational advisory model/receipt, and example.
+The wheel now contains a closed, build-derived bundle of the browser shell
+and its vendored Kanchay stylesheet and fonts, fixed synthetic assay map,
+operational advisory model/receipt, and example.
 The existing control engine remains version 2.5.0; 2.5.1 changes packaging and
 workspace preparation only, not diagnostic, result, or transport behavior.
 No site bindings, keys, clinical data, live configuration or training splits
@@ -234,7 +240,7 @@ Open `http://127.0.0.1:8010/` and enter the bearer token. The default UI and
 hash-verified advisory model are now available under the prepared `data_root`.
 The initialization command is also available as
 `python -I -B -m oac_clinical_resources --directory <new-directory>`.
-The five copied asset hashes are recorded in `portable-assets.json`; this is
+The ten copied asset hashes are recorded in `portable-assets.json`; this is
 a package-integrity record, not independent provenance or clinical approval.
 The installed Python environment is trusted; an attacker able to replace both
 code and its integrity module is outside this integrity boundary. The trusted

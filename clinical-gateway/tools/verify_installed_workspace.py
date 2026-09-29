@@ -19,6 +19,14 @@ import oac_stack_api
 import owned_agent_clinical_control
 
 
+UI_ASSET_MEDIA_TYPES = {
+    "/kanchay/kanchay.css": "text/css; charset=utf-8",
+    "/kanchay/fonts/Inter-latin.woff2": "font/woff2",
+    "/kanchay/fonts/JetBrainsMono-latin.woff2": "font/woff2",
+    "/kanchay/fonts/SpaceGrotesk-latin.woff2": "font/woff2",
+}
+
+
 def require(condition, message):
     if not condition:
         raise RuntimeError(message)
@@ -49,6 +57,8 @@ def main():
     installation = Path(distribution.locate_file("")).resolve()
     for module in (oac_clinical_resources, oac_operational_health, oac_stack_api, owned_agent_clinical_control):
         require(Path(module.__file__).resolve().is_relative_to(installation), "test imported source instead of installed module")
+    require({route: media for route, (_, media) in oac_stack_api.UI_ASSET_ROUTES.items()} == UI_ASSET_MEDIA_TYPES,
+            "installed UI asset allowlist mismatch")
     with temporary_workspace() as temp:
         root = Path(temp).resolve()
         target = root / "workspace"
@@ -107,6 +117,23 @@ def main():
                 require(health.get(key) is False, "health claimed clinical authority")
             content_type, html = request("/", authorized=False)
             require(content_type == "text/html" and html == (target / "clinical-gateway/frontend/index.html").read_bytes(), "installed UI bytes mismatch")
+            # The page's Kanchay stylesheet and fonts are fetched without the
+            # bearer token, exactly as a browser does, and must be the prepared bytes.
+            for route, media_type in UI_ASSET_MEDIA_TYPES.items():
+                req = Request(origin + route, headers={"Origin": origin})
+                with opener.open(req, timeout=3) as response:
+                    served_type = response.headers.get("Content-Type")
+                    served_nosniff = response.headers.get("X-Content-Type-Options")
+                    served = response.read()
+                expected = (target / "clinical-gateway/frontend" / route.lstrip("/")).read_bytes()
+                require(served_type == media_type and served_nosniff == "nosniff" and served == expected,
+                        f"installed UI asset mismatch: {route}")
+            try:
+                request("/kanchay/SOURCE.json", authorized=False)
+            except HTTPError as exc:
+                require(exc.code == 401, "unlisted UI asset status mismatch")
+            else:
+                raise RuntimeError("unlisted UI asset was served without authentication")
             try:
                 request("/api/operational-health", authorized=False)
             except HTTPError as exc:
@@ -131,7 +158,8 @@ def main():
                 raise RuntimeError("advisory allowed a non-operational field")
             result = {"state": "INSTALLED_WHEEL_WORKSPACE_API_VERIFIED", "distribution_version": distribution.version,
                       "asset_count": len(receipt["files"]), "manifest_sha256": receipt["manifest_sha256"],
-                      "ui": "BYTE_MATCHED", "advisory": "AUTHENTICATED_SYNTHETIC_ONLY",
+                      "ui": "BYTE_MATCHED", "ui_assets": "BYTE_MATCHED",
+                      "advisory": "AUTHENTICATED_SYNTHETIC_ONLY",
                       "clinical_use_authorized": False, "real_phi_authorized": False, "site_validated": False}
         finally:
             if os.name == "nt":

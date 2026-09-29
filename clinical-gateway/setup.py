@@ -10,6 +10,11 @@ from setuptools.command.build_py import build_py
 SOURCE_ASSETS = (
     "fixtures/assay_map.json",
     "frontend/index.html",
+    "frontend/kanchay/SOURCE.json",
+    "frontend/kanchay/fonts/Inter-latin.woff2",
+    "frontend/kanchay/fonts/JetBrainsMono-latin.woff2",
+    "frontend/kanchay/fonts/SpaceGrotesk-latin.woff2",
+    "frontend/kanchay/kanchay.css",
     "operational-model/artifacts/model-receipt.json",
     "operational-model/artifacts/model.json",
     "operational-model/example-input.json",
