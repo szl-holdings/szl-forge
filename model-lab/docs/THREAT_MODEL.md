@@ -13,7 +13,10 @@ liveness. The CLI offers no public-bind switch. Hostnames are allowlisted, proxy
 headers are disabled, responses have no-store/no-referrer/CSP headers, and
 cross-origin POSTs are refused. POST/PUT/PATCH bodies are bounded to 16KiB before
 application parsing. HTML is escaped by Jinja; there is no client script and no
-raw provider response rendering.
+raw provider response rendering. The only static responses are four vendored SZL
+Kanchay design-system files (one stylesheet, three fonts) at fixed /kanchay/ paths,
+behind the same Basic authentication, host allowlist and headers; there is no
+directory mount, and the CSP adds only 'self' for style and font sources.
 
 Only two fixed upstream GET paths exist: /api/tags and /api/ps. An operator-configured
 literal loopback or tailnet IPv4 plus port 11434 is mandatory. Configuration is

@@ -1,25 +1,30 @@
 <!doctype html>
 <html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
 <title>SZL Model Lab · Research workbench</title>
+<link rel="stylesheet" href="/kanchay/kanchay.css">
 <style>
-:root{color-scheme:dark;--ink:#edf3f7;--muted:#b3c1cd;--line:#394654;--accent:#98f2d2}
-*{box-sizing:border-box}body{margin:0;background:#0b1016;color:var(--ink);font:16px/1.55 system-ui,sans-serif}
-main{max-width:1100px;margin:auto;padding:clamp(16px,4vw,52px)}a{color:var(--accent);text-underline-offset:4px}
-a:focus-visible{outline:3px solid #fff;outline-offset:5px}header{border-bottom:1px solid var(--line);padding-bottom:24px;margin-bottom:24px}
-h1{font-size:clamp(32px,6vw,56px);line-height:1.08;margin:12px 0}h2{font-size:22px}h3{font-size:18px;margin:0 0 10px}
-p{max-width:76ch;color:var(--muted)}.eyebrow{letter-spacing:.12em;font-size:12px;color:var(--accent);text-transform:uppercase}
-.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
-.card{border:1px solid var(--line);border-radius:14px;padding:22px;background:linear-gradient(140deg,#142028,#10161d)}
-.state{font:12px/1.5 ui-monospace,monospace;display:inline-block;background:#20312e;padding:6px 9px;border-radius:5px;color:var(--accent);overflow-wrap:anywhere}
-code,td{overflow-wrap:anywhere}table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:14px}th,td{text-align:left;padding:10px 4px;border-bottom:1px solid var(--line);vertical-align:top}
-.note{border-left:3px solid var(--accent);padding:12px 18px;margin:24px 0;background:#111d23}.meta{font-size:13px}
-nav{display:flex;gap:24px;flex-wrap:wrap;min-height:44px;align-items:center}nav a{padding:10px 0}footer{margin-top:32px;border-top:1px solid var(--line);padding-top:16px;font-size:13px;color:var(--muted)}
+*{box-sizing:border-box}body{margin:0;background:var(--color-a11oy-bg);color:var(--color-a11oy-text);font:400 16px/1.55 var(--font-sans);-webkit-font-smoothing:antialiased}
+main{max-width:1100px;margin:auto;padding:clamp(var(--space-4),4vw,var(--space-12))}a{color:var(--color-a11oy-gold);text-underline-offset:4px}a:hover{color:var(--gold-bright)}
+:focus-visible{outline:var(--border-focus) solid var(--color-focus);outline-offset:2px}header{border-bottom:1px solid var(--color-a11oy-border);padding-bottom:var(--space-6);margin-bottom:var(--space-6)}
+.skip{position:absolute;left:var(--space-4);top:var(--space-4);z-index:var(--z-overlay);display:inline-flex;align-items:center;min-height:var(--szl-touch-target);padding:0 var(--space-4);border-radius:var(--radius-sm);background:var(--color-a11oy-gold);color:var(--color-on-accent);font-weight:600;text-decoration:none}.skip:not(:focus){clip-path:inset(50%);width:1px;height:1px;min-height:0;padding:0;overflow:hidden}
+h1,h2,h3{font-family:var(--font-display);color:var(--color-a11oy-text);text-wrap:balance}h1{font-size:clamp(32px,6vw,56px);font-weight:300;letter-spacing:-.035em;line-height:1.08;margin:var(--space-3) 0}
+h2{font-size:22px;font-weight:600;letter-spacing:-.02em;margin:var(--space-8) 0 var(--space-4)}h3{font-size:18px;font-weight:600;letter-spacing:-.02em;margin:0 0 var(--space-3)}.card h3{color:var(--color-a11oy-gold)}
+p{max-width:var(--szl-readable-measure);color:var(--color-a11oy-text-sub);text-wrap:pretty}.eyebrow{font:400 12px/1.4 var(--font-mono);letter-spacing:.2em;color:var(--color-a11oy-gold);text-transform:uppercase}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-4)}
+.card{border:1px solid var(--color-a11oy-border-subtle);border-radius:var(--radius-md);padding:var(--space-5);background:var(--color-a11oy-surface);min-width:0}section>.card{margin-top:var(--space-4)}
+.state{font:500 12px/1.5 var(--font-mono);letter-spacing:.05em;display:inline-block;background:var(--color-a11oy-deep);border:1px solid var(--color-a11oy-border);padding:var(--space-1) var(--space-2);border-radius:var(--radius-sm);color:var(--color-a11oy-text);overflow-wrap:anywhere}
+code,td{overflow-wrap:anywhere}code{font-family:var(--font-mono);font-size:.875em;color:var(--color-a11oy-text)}table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:14px;font-variant-numeric:tabular-nums}caption{text-align:left;color:var(--color-a11oy-text-sub);padding-bottom:var(--space-2)}
+th,td{text-align:left;padding:var(--space-3) var(--space-1);border-bottom:1px solid var(--color-a11oy-border-subtle);vertical-align:top}th{font:500 12px/1.4 var(--font-mono);letter-spacing:.15em;text-transform:uppercase;color:var(--color-a11oy-text-sub);border-bottom-color:var(--color-a11oy-border)}
+.note{border:1px solid var(--color-a11oy-border-subtle);border-radius:var(--radius-md);padding:var(--space-4) var(--space-5);margin:var(--space-6) 0;background:var(--color-a11oy-deep)}.note strong{color:var(--color-a11oy-text)}.meta{font-size:13px}
+nav{display:flex;gap:var(--space-1);flex-wrap:wrap;min-height:var(--szl-touch-target);align-items:center;margin-left:calc(-1*var(--space-3))}nav a{display:inline-flex;align-items:center;min-height:var(--szl-touch-target);padding:0 var(--space-3);border-radius:var(--radius-md);color:var(--color-a11oy-text-sub);font-size:14px;font-weight:500;text-decoration:none}nav a:hover{background:var(--color-a11oy-overlay);color:var(--color-a11oy-text)}
+footer{margin-top:var(--space-8);border-top:1px solid var(--color-a11oy-border);padding-top:var(--space-4);font-size:14px;color:var(--color-a11oy-text-ghost)}
 @media(max-width:600px){.grid{grid-template-columns:minmax(0,1fr)}}
-@media(prefers-contrast:more){:root{--line:#fff;--muted:#fff;--accent:#fff}.card{background:#000}}
+@media(prefers-contrast:more){p,caption,th,nav a,footer{color:var(--color-a11oy-text)}header,footer,.card,.note,.state,th,td{border-color:var(--color-a11oy-text-sub)}.card,.note{background:var(--color-a11oy-bg)}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style></head>
-<body><main>
+<body><a class="skip" href="#tracks">Skip to model tracks</a><main>
 <header><span class="eyebrow">SZL Holdings / Forge / Research</span><h1>Models, with boundaries.</h1>
 <p>Two advisory model recipes. Your existing pool remains in control. No training, remote generation, or publication runs from this interface.</p>
 <nav aria-label="Workbench"><a href="/">Model tracks</a><a href="/compute">Inspect configured compute</a><a href="/pool#pool">Canonical pool snapshot</a><a href="/corpus-review#corpus">Corpus review</a><a href="/storage">Storage-aware research</a><a href="/api/catalog">Catalog JSON</a></nav></header>

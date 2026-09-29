@@ -25,7 +25,11 @@ szl-model-lab = "szl_model_lab.cli:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-szl_model_lab = ["templates/*.html"]
+szl_model_lab = [
+  "templates/*.html",
+  # Vendored SZL Kanchay export served by the allowlisted /kanchay/ routes.
+  "static/kanchay/kanchay.css", "static/kanchay/SOURCE.json", "static/kanchay/fonts/*.woff2",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
