@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import base64
 import hashlib
+import hmac
 import io
 import json
 import math
@@ -20,6 +21,8 @@ from pathlib import Path
 from typing import Any, Callable, Iterable
 
 from huggingface_hub import CommitOperationAdd, HfApi, hf_hub_download
+
+from kernels_keyless_credentials import authority_policy
 
 EXPECTED_REPO_ID = "SZLHOLDINGS/szl-kernels"
 EXPECTED_SOURCE_REPOSITORY = "szl-holdings/szl-kernels"
@@ -501,7 +504,8 @@ def hub_before(
     api: HfApi,
     contract: dict[str, Any],
     *,
-    token: str | None,
+    token: str | bool,
+    kernel_token: str | bool,
     download_fn: Callable[..., str],
 ) -> dict[str, Any]:
     return {
@@ -514,7 +518,7 @@ def hub_before(
         "first_class_kernel": first_class_kernel_before(
             api,
             contract,
-            token=token,
+            token=kernel_token,
         ),
     }
 
@@ -1010,7 +1014,6 @@ def require_kernel_builder_executable() -> str:
 def upload_first_class_kernel(staging_root: Path, token: str) -> None:
     output_path = staging_root / "kernel-upload.json"
     environment = _subprocess_base_environment()
-    environment["HF_TOKEN"] = token
     executable = require_kernel_builder_executable()
     command = [
         executable,
@@ -1026,19 +1029,31 @@ def upload_first_class_kernel(staging_root: Path, token: str) -> None:
         str(output_path),
         "--quiet",
     ]
-    try:
-        subprocess.run(
-            command,
-            check=True,
-            capture_output=True,
-            text=True,
-            env=environment,
-        )
-    except FileNotFoundError as exc:
-        raise PublicationError("pinned kernel-builder is not installed") from exc
-    except subprocess.CalledProcessError as exc:
-        detail = (exc.stderr or exc.stdout or "unknown uploader error").strip()
-        raise PublicationError(f"kernel-builder upload failed: {detail[-2000:]}") from exc
+    with tempfile.TemporaryDirectory(prefix="szl-kernel-uploader-home-") as home:
+        environment.update({
+            "HF_TOKEN": token,
+            "HOME": home,
+            "USERPROFILE": home,
+            "HF_HOME": str(Path(home) / "huggingface"),
+            "XDG_CACHE_HOME": str(Path(home) / ".cache"),
+        })
+        # The pinned Rust hf-hub client also disables explicit HF_TOKEN lookup
+        # when HF_HUB_DISABLE_IMPLICIT_TOKEN is set. The empty home and strict
+        # environment allowlist instead exclude all ambient credentials here.
+        environment.pop("HF_HUB_DISABLE_IMPLICIT_TOKEN", None)
+        try:
+            subprocess.run(
+                command,
+                check=True,
+                capture_output=True,
+                text=True,
+                env=environment,
+                timeout=600,
+            )
+        except FileNotFoundError:
+            raise PublicationError("pinned kernel-builder is not installed") from None
+        except (OSError, subprocess.SubprocessError):
+            raise PublicationError("kernel-builder upload failed") from None
 
     try:
         outcome = json.loads(output_path.read_text(encoding="utf-8"))
@@ -1679,6 +1694,8 @@ def run(
     publisher: dict[str, Any],
     publish: bool,
     token: str | None,
+    kernel_token: str | None = None,
+    publisher_authority: dict[str, Any] | None = None,
     prepare_signature: bool = False,
     signature_bundle_output: Path | None = None,
     signature_manifest_output: Path | None = None,
@@ -1695,10 +1712,22 @@ def run(
 ) -> dict[str, Any]:
     if prepare_signature and publish:
         raise PublicationError("signature preparation and publication are separate modes")
-    if prepare_signature and token:
+    if prepare_signature and (token or kernel_token):
         raise PublicationError("HF_TOKEN must be absent from the signature preparation job")
     if publish and any(os.environ.get(key) for key in OIDC_ENV_ALLOWLIST):
         raise PublicationError("GitHub OIDC authority must be absent from the publication job")
+    required_authority = authority_policy(publisher["revision"])
+    if publish:
+        if not isinstance(token, str) or not token or not isinstance(kernel_token, str) or not kernel_token:
+            raise PublicationError("two scoped Hub grants are required for publication")
+        if hmac.compare_digest(token, kernel_token):
+            raise PublicationError("model and kernel grants must be distinct")
+        if publisher_authority != required_authority:
+            raise PublicationError("publisher authority does not match this release")
+    else:
+        # Explicit False prevents the Hub client from consulting ambient cache.
+        token = False
+        kernel_token = False
     source_revision = source_revision.strip().lower()
     if FULL_SHA_RE.fullmatch(source_revision) is None:
         raise PublicationError("source revision must be an exact Git SHA")
@@ -1710,11 +1739,12 @@ def run(
     authorization = authorization_binding(authorization_observation)
     contract = load_contract(source_root)
     files = local_evidence(source_root, contract)
-    api = api or HfApi(token=token)
+    api = api or HfApi(endpoint="https://huggingface.co", token=False)
     observed_before = hub_before(
         api,
         contract,
         token=token,
+        kernel_token=kernel_token,
         download_fn=download_fn,
     )
     legacy_publication = {
@@ -1734,6 +1764,7 @@ def run(
             "files": files,
         },
         "publisher": publisher,
+        "publisher_authority": required_authority,
         "authorization": authorization_observation,
         "observed_hub_before_publication": observed_before["legacy_model"],
         "claims": contract["claims"],
@@ -1764,6 +1795,7 @@ def run(
             "kernel_files": kernel_files,
         },
         "publisher": publisher,
+        "publisher_authority": required_authority,
         "signature_policy": {
             "scheme": "sigstore-keyless",
             "signed_path": f"build/{KERNEL_VARIANT}/metadata.json",
@@ -1773,7 +1805,7 @@ def run(
             "publisher_revision": publisher["revision"],
             "workflow_ref": EXPECTED_WORKFLOW_REF,
             "workflow_trigger": EXPECTED_WORKFLOW_TRIGGER,
-            "authority_separation": "OIDC_SIGN_JOB_TO_HF_ONLY_PUBLISH_JOB",
+            "authority_separation": "OIDC_SIGN_JOB_TO_SCOPED_HUB_GRANTS_ONLY_PUBLICATION",
             "verification": (
                 "PREUPLOAD_IDENTITY_REVISION_AND_EXACT_POSTUPLOAD_READBACK"
             ),
@@ -1794,6 +1826,7 @@ def run(
         "repo_id": EXPECTED_REPO_ID,
         "source_revision": source_revision,
         "publisher": publisher,
+        "publisher_authority": required_authority,
         "authorization_observation": authorization_observation,
         "artifact_tree_sha256": tree_sha256(files),
         "declared_file_count": len(files),
@@ -1875,9 +1908,6 @@ def run(
         report_path.write_text(canonical_json(result), encoding="utf-8")
         return result
     if publish:
-        if not token:
-            raise PublicationError("HF_TOKEN is required when --publish is used")
-
         report_path.parent.mkdir(parents=True, exist_ok=True)
         result["status"] = "PUBLICATION_IN_PROGRESS"
         result["targets"]["first_class_kernel"]["branches_after"] = {}
@@ -1953,7 +1983,7 @@ def run(
                 revalidated_parents = revalidate_kernel_branch_parents(
                     api,
                     observed_before["first_class_kernel"]["branches"],
-                    token=token,
+                    token=kernel_token,
                 )
             except Exception as exc:
                 record_publication_failure(
@@ -1970,11 +2000,11 @@ def run(
             report_path.write_text(canonical_json(result), encoding="utf-8")
             upload_error: Exception | None = None
             try:
-                kernel_upload_fn(staging_root, token)
+                kernel_upload_fn(staging_root, kernel_token)
             except Exception as exc:  # preserve branch state after partial upload
                 upload_error = exc
             try:
-                branch_targets = kernel_branch_targets(api, token=token)
+                branch_targets = kernel_branch_targets(api, token=kernel_token)
             except Exception as exc:
                 record_publication_failure(
                     result,
@@ -2012,7 +2042,7 @@ def run(
                         expected_kernel_files[branch],
                         branch=branch,
                         revision=branch_targets[branch],
-                        token=token,
+                        token=kernel_token,
                         download_fn=download_fn,
                         list_files_fn=api.list_repo_files,
                     )
@@ -2148,20 +2178,49 @@ def main(argv: Iterable[str] | None = None) -> int:
         run_id=args.publisher_run_id,
         run_attempt=args.publisher_run_attempt,
     )
-    result = run(
-        source_root=args.source_dir,
-        report_path=args.report,
-        authorization_path=args.authorization_report,
-        source_revision=args.source_revision,
-        publisher=publisher,
-        publish=args.publish,
-        token=os.getenv("HF_TOKEN"),
-        prepare_signature=args.prepare_signature,
-        signature_bundle_output=args.signature_bundle_output,
-        signature_manifest_output=args.signature_manifest_output,
-        signature_bundle_input=args.signature_bundle_input,
-        signature_manifest_input=args.signature_manifest_input,
-    )
+    token = None
+    kernel_token = None
+    authority = None
+    credentials = None
+    try:
+        if args.publish:
+            from kernels_keyless_credentials import acquire_pair, authority_evidence
+
+            try:
+                authority = authority_evidence()
+                if authority != authority_policy(publisher["revision"]):
+                    raise PublicationError("publisher authority does not match this release")
+                credentials = acquire_pair()
+                token = credentials.model
+                kernel_token = credentials.kernel
+            finally:
+                for key in OIDC_ENV_ALLOWLIST:
+                    os.environ.pop(key, None)
+        result = run(
+            source_root=args.source_dir,
+            report_path=args.report,
+            authorization_path=args.authorization_report,
+            source_revision=args.source_revision,
+            publisher=publisher,
+            publish=args.publish,
+            token=token,
+            kernel_token=kernel_token,
+            publisher_authority=authority,
+            prepare_signature=args.prepare_signature,
+            signature_bundle_output=args.signature_bundle_output,
+            signature_manifest_output=args.signature_manifest_output,
+            signature_bundle_input=args.signature_bundle_input,
+            signature_manifest_input=args.signature_manifest_input,
+        )
+    except Exception as exc:
+        # Provider exceptions can contain authorization headers or response
+        # bodies. Receipts retain stage and bounded error type, never secrets.
+        print(f"kernel publication failed ({bounded_error_type(exc)})", file=sys.stderr)
+        return 1
+    finally:
+        token = None
+        kernel_token = None
+        credentials = None
     print(canonical_json(result), end="")
     return 0
 
