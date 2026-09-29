@@ -946,42 +946,42 @@ class AppContractTests(unittest.TestCase):
         self.assertEqual(sent[0]["status"], 408)
 
 
-class KanchayAssetRouteTests(unittest.TestCase):
-    """The landing page's design-system files: exact allowlist, exact bytes."""
+class SzlAssetRouteTests(unittest.TestCase):
+    """The landing page's SZL KANCHAY files: exact allowlist, exact bytes."""
 
-    STYLESHEET = "/kanchay/kanchay.css"
-    FONTS = {
-        "/kanchay/fonts/SpaceGrotesk-latin.woff2",
-        "/kanchay/fonts/Inter-latin.woff2",
-        "/kanchay/fonts/JetBrainsMono-latin.woff2",
-    }
+    STYLESHEET = "/szl/szl-design-system.css"
+    FAVICON = "/szl/logos/szl_favicon.svg"
 
     def setUp(self):
         self.client = TestClient(app.app)
         self.export = json.loads(
-            (app.KANCHAY_ROOT / "SOURCE.json").read_text(encoding="utf-8")
+            (app.SZL_ROOT / "SOURCE.json").read_text(encoding="utf-8")
         )
 
-    def test_allowlist_is_exactly_the_stylesheet_and_its_three_faces(self):
-        self.assertEqual({self.STYLESHEET, *self.FONTS}, set(app.KANCHAY_ASSETS))
-        stylesheet = (app.KANCHAY_ROOT / "kanchay.css").read_text(encoding="utf-8")
-        referenced = {
-            "/kanchay/" + relative
-            for relative in re.findall(r"url\('\./([^']+)'\)", stylesheet)
+    def test_allowlist_is_exactly_the_stylesheet_and_the_favicon(self):
+        self.assertEqual({self.STYLESHEET, self.FAVICON}, set(app.SZL_ASSETS))
+        self.assertEqual("1.1.0", self.export["version"])
+        vendored = {
+            path.relative_to(app.SZL_ROOT).as_posix()
+            for path in app.SZL_ROOT.rglob("*")
+            if path.is_file()
         }
-        self.assertEqual(self.FONTS, referenced)
-        self.assertEqual("1.0.0", self.export["version"])
+        self.assertEqual(
+            {"SOURCE.json", "szl-design-system.css", "logos/szl_favicon.svg"},
+            vendored,
+        )
+        self.assertFalse((app.SOURCE_ROOT / "kanchay").exists())
 
     def test_each_asset_is_served_byte_exact_with_page_headers(self):
         page = self.client.get("/")
         self.assertEqual(200, page.status_code)
-        for url_path, (relative, media_type) in app.KANCHAY_ASSETS.items():
+        for url_path, (relative, media_type) in app.SZL_ASSETS.items():
             with self.subTest(path=url_path):
                 response = self.client.get(url_path)
                 self.assertEqual(200, response.status_code)
                 self.assertEqual(media_type, response.headers["content-type"])
                 self.assertEqual(
-                    (app.KANCHAY_ROOT / relative).read_bytes(), response.content
+                    (app.SZL_ROOT / relative).read_bytes(), response.content
                 )
                 self.assertEqual(
                     self.export["sha256"][relative],
@@ -993,22 +993,23 @@ class KanchayAssetRouteTests(unittest.TestCase):
             "text/css; charset=utf-8",
             self.client.get(self.STYLESHEET).headers["content-type"],
         )
-        for font in self.FONTS:
-            self.assertEqual(
-                "font/woff2", self.client.get(font).headers["content-type"]
-            )
+        self.assertEqual(
+            "image/svg+xml", self.client.get(self.FAVICON).headers["content-type"]
+        )
 
-    def test_unknown_kanchay_paths_are_the_normal_404(self):
+    def test_unknown_and_withdrawn_paths_are_the_normal_404(self):
         for path in (
-            "/kanchay",
-            "/kanchay/",
-            "/kanchay/SOURCE.json",
-            "/kanchay/kanchay-components.css",
-            "/kanchay/fonts/",
-            "/kanchay/fonts/Syncopate-400.woff2",
-            "/kanchay/fonts/Inter-latin.woff2/extra",
-            "/kanchay/%2e%2e/app.py",
-            "/kanchay/fonts/%2e%2e/kanchay.css",
+            "/szl",
+            "/szl/",
+            "/szl/SOURCE.json",
+            "/szl/szl-console.css",
+            "/szl/logos/",
+            "/szl/logos/szl_logo_horizontal.svg",
+            "/szl/logos/szl_favicon.svg/extra",
+            "/szl/%2e%2e/app.py",
+            "/szl/logos/%2e%2e/szl-design-system.css",
+            "/kanchay/kanchay.css",
+            "/kanchay/fonts/Inter-latin.woff2",
         ):
             with self.subTest(path=path):
                 response = self.client.get(path)
@@ -1017,37 +1018,52 @@ class KanchayAssetRouteTests(unittest.TestCase):
 
     def test_asset_routes_stay_out_of_the_public_api_schema(self):
         paths = self.client.get("/api/openapi.json").json()["paths"]
-        self.assertFalse([path for path in paths if path.startswith("/kanchay")])
+        self.assertFalse(
+            [path for path in paths if path.startswith(("/szl", "/kanchay"))]
+        )
 
-    def test_release_manifest_binds_every_vendored_kanchay_file(self):
+    def test_release_manifest_binds_every_vendored_szl_file(self):
         manifest = app.load_release_manifest()
         for relative in (
             "SOURCE.json",
-            "kanchay.css",
-            "fonts/SpaceGrotesk-latin.woff2",
-            "fonts/Inter-latin.woff2",
-            "fonts/JetBrainsMono-latin.woff2",
+            "szl-design-system.css",
+            "logos/szl_favicon.svg",
         ):
-            self.assertIn("kanchay/" + relative, manifest["source_files"])
+            self.assertIn("szl/" + relative, manifest["source_files"])
+        self.assertFalse(
+            [path for path in manifest["source_files"] if path.startswith("kanchay/")]
+        )
 
-    def test_root_links_local_kanchay_before_its_own_tokens_only_style(self):
+    def test_root_links_local_szl_before_its_own_tokens_only_style(self):
         html = app.index()
-        link = '<link rel="stylesheet" href="/kanchay/kanchay.css">'
+        link = '<link rel="stylesheet" href="/szl/szl-design-system.css">'
         self.assertIn(link, html)
+        self.assertIn(
+            '<link rel="icon" type="image/svg+xml" href="/szl/logos/szl_favicon.svg">',
+            html,
+        )
         self.assertLess(html.index(link), html.index("<style>"))
         style = html[html.index("<style>") : html.index("</style>")]
         self.assertIsNone(re.search(r"#[0-9a-fA-F]{3,8}\b|rgba?\(|hsla?\(", style))
-        self.assertNotIn("Georgia", style)
-        self.assertNotIn("ui-monospace", style)
+        for retired in ("Georgia", "ui-monospace", "@font-face", ".woff2", "kanchay"):
+            self.assertNotIn(retired, html)
         defined = set(
             re.findall(
                 r"(--[A-Za-z0-9_-]+)\s*:",
-                (app.KANCHAY_ROOT / "kanchay.css").read_text(encoding="utf-8"),
+                (app.SZL_ROOT / "szl-design-system.css").read_text(encoding="utf-8"),
             )
         )
         self.assertEqual(set(), set(re.findall(r"var\((--[A-Za-z0-9_-]+)", style)) - defined)
         for external in ("fonts.googleapis", "fonts.gstatic", "cdn", "http://"):
             self.assertNotIn(external, html)
+
+    def test_root_has_one_coral_moment_the_run_action(self):
+        html = app.index()
+        self.assertEqual(1, html.count("btn-primary"))
+        self.assertIn('class="btn btn-primary btn-lg" id="run"', html)
+        style = html[html.index("<style>") : html.index("</style>")]
+        self.assertNotIn("--accent", style)
+        self.assertNotIn("--premium", style)
 
 
 if __name__ == "__main__":

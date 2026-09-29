@@ -64,10 +64,11 @@ instrument that keeps the source thread, immutable model pin, receipt boundary,
 runtime state, and unsigned-output limitation visible beside the bounded
 inference controls. It uses no external scripts, fonts, trackers, or UI assets,
 and exposes a deterministic `data-screenshot-ready` signal only after the
-runtime reaches `READY`. It is styled with the SZL Kanchay design system
-v1.0.0, vendored byte for byte in `kanchay/` (one stylesheet and three local
-WOFF2 faces) and served read-only by four fixed `GET /kanchay/...` routes;
-`release.json` binds those files like the rest of the source bundle.
+runtime reaches `READY`. It is styled with SZL KANCHAY v1.1.0 (the
+founder-approved design system from `szl-holdings/szl-brand`), vendored byte
+for byte in `szl/` (the design-system stylesheet and the orbit favicon) and
+served read-only by two fixed `GET /szl/...` routes; it downloads no webfonts,
+and `release.json` binds those files like the rest of the source bundle.
 
 An isolated image-build stage fetches only the exact GGUF and three receipt
 files from the immutable model revision, without a token, and verifies them
