@@ -347,18 +347,135 @@ def compare_against_references(labels: Sequence[int], scores: Sequence[float], t
     }
 
 
-def _generator_label_probability(trainer_source: bytes):
-    """Execute the hash-verified trainer bytes (not a re-read) and return its label rule."""
+def _trainer_namespace(trainer_source: bytes) -> dict[str, Any]:
+    """Execute the hash-verified trainer bytes (not a re-read) in an isolated namespace."""
     namespace: dict[str, Any] = {"__name__": "oac_operational_trainer_snapshot",
                                  "__file__": str(PROJECT_ROOT / TRAINER_FILE)}
     try:
         exec(compile(trainer_source, TRAINER_FILE, "exec"), namespace)  # noqa: S102 - verified local bytes
-        rule = namespace["_synthetic_label_probability"]
-    except (KeyError, SyntaxError, ImportError) as exc:
+    except (SyntaxError, ImportError) as exc:
         raise EvaluationError("GENERATOR_LABEL_RULE_UNAVAILABLE") from exc
+    return namespace
+
+
+def _generator_label_probability(trainer_source: bytes):
+    """Return the trainer's label rule from the hash-verified trainer bytes."""
+    rule = _trainer_namespace(trainer_source).get("_synthetic_label_probability")
     if not callable(rule):
         raise EvaluationError("GENERATOR_LABEL_RULE_UNAVAILABLE")
     return rule
+
+
+FRESH_SEED = 7500
+FRESH_ROWS = 2000
+FRESH_BOOTSTRAP_REPLICATES = 400
+
+
+def _logit(probability: float) -> float:
+    return math.log(probability / (1.0 - probability))
+
+
+def _shift_lanes() -> dict[str, Any]:
+    """Each lane maps (features, rng) -> features and (features, base probability) -> probability.
+
+    Covariate lanes move the feature distribution and keep the generator's P(label | features);
+    the concept lane keeps features and changes P(label | features). All values stay in range.
+    """
+    def same(features, rng):
+        return features
+
+    def queue_saturation(features, rng):
+        return {**features, "queue_utilization": round(min(1.0, 0.5 + features["queue_utilization"]), 6)}
+
+    def long_outage_tail(features, rng):
+        return {**features, "seconds_since_last_success":
+                round(min(86400.0, 24.0 * features["seconds_since_last_success"]), 6)}
+
+    def fault_heavy(features, rng):
+        failures = min(20, 3 * features["consecutive_failures"] + (2 if rng.random() < 0.3 else 0))
+        valid = 0 if rng.random() < 0.2 else features["configuration_valid"]
+        return {**features, "consecutive_failures": failures, "configuration_valid": valid}
+
+    def base_rule(features, probability):
+        return probability
+
+    def tls_weight_tripled(features, probability):
+        extra = 2 * 1.15 * (1 - features["tls_enabled"])
+        return 1.0 / (1.0 + math.exp(-(_logit(probability) + extra)))
+
+    return {
+        "fresh_seed_in_distribution": ("none", same, base_rule),
+        "covariate_queue_saturation": ("covariate", queue_saturation, base_rule),
+        "covariate_long_outage_tail": ("covariate", long_outage_tail, base_rule),
+        "covariate_fault_heavy": ("covariate", fault_heavy, base_rule),
+        "concept_tls_weight_tripled": ("concept", same, tls_weight_tripled),
+    }
+
+
+def fresh_seed_lanes(trainer_source: bytes, kernel: Any, threshold: float, rows: int = FRESH_ROWS,
+                     replicates: int = FRESH_BOOTSTRAP_REPLICATES) -> dict[str, Any]:
+    """Score the fixed model on rows drawn from the verified generator with a seed never used in development.
+
+    The fixed model, threshold and weights are not changed. The oracle in every lane is that lane's own
+    label probability, so ``roc_auc_headroom`` is the loss attributable to the model rather than to noise.
+    """
+    import random
+
+    namespace = _trainer_namespace(trainer_source)
+    generate, rule = namespace.get("_generate_features"), namespace.get("_synthetic_label_probability")
+    if not callable(generate) or not callable(rule):
+        raise EvaluationError("GENERATOR_LABEL_RULE_UNAVAILABLE")
+    lanes: dict[str, Any] = {}
+    for offset, (name, (kind, move, relabel)) in enumerate(_shift_lanes().items()):
+        rng = random.Random(FRESH_SEED + offset)
+        features, labels, oracle = [], [], []
+        for _ in range(rows):
+            row = move(generate(rng), rng)
+            probability = relabel(row, rule(row))
+            features.append(row)
+            oracle.append(probability)
+            labels.append(int(rng.random() < probability))
+        try:
+            scores = [kernel.score(row)["operator_attention_score"] for row in features]
+        except (OperationalModelError, ValueError, OverflowError) as exc:
+            raise EvaluationError("FRESH_LANE_SCORING_FAILED") from exc
+        if not 0 < sum(labels) < rows:
+            raise EvaluationError("FRESH_LANE_SINGLE_CLASS")
+        predicted = [score >= threshold for score in scores]
+        point = _point_metrics(labels, predicted, scores)
+        oracle_auc = _point_metrics(labels, [False] * rows, oracle)["roc_auc"]
+        boot_rng = random.Random(BOOTSTRAP_SEED + offset)
+        auc_samples, balanced_samples, gap_samples = [], [], []
+        for _ in range(replicates):
+            index = [boot_rng.randrange(rows) for _ in range(rows)]
+            resampled = [labels[i] for i in index]
+            if not 0 < sum(resampled) < rows:
+                continue
+            replicate = _point_metrics(resampled, [predicted[i] for i in index], [scores[i] for i in index])
+            auc_samples.append(replicate["roc_auc"])
+            balanced_samples.append(replicate["balanced_accuracy"])
+            gap_samples.append(_point_metrics(resampled, [False] * rows, [oracle[i] for i in index])["roc_auc"]
+                               - replicate["roc_auc"])
+        prevalence = sum(labels) / rows
+        lanes[name] = {
+            "shift_kind": kind, "seed": FRESH_SEED + offset, "rows": rows,
+            "positive_rows": sum(labels), "prevalence": round(prevalence, 12),
+            "confusion": point["confusion"],
+            "accuracy": round(point["accuracy"], 12),
+            "negative_constant_accuracy": round(1 - prevalence, 12),
+            "balanced_accuracy": {"value": round(point["balanced_accuracy"], 12),
+                                  "interval_95": _percentile_interval(balanced_samples)},
+            "roc_auc": {"value": round(point["roc_auc"], 12), "interval_95": _percentile_interval(auc_samples)},
+            "lane_oracle_roc_auc": round(oracle_auc, 12),
+            "roc_auc_headroom": {"value": round(oracle_auc - point["roc_auc"], 12),
+                                 "interval_95": _percentile_interval(gap_samples)},
+        }
+    return {
+        "method": "fresh_rows_from_hash_verified_generator_seed_never_used_for_training_or_selection",
+        "bootstrap_replicates": replicates, "decision_threshold": threshold,
+        "lanes": lanes,
+        "scope": "synthetic_only_fresh_seed_is_public_once_published_do_not_tune_against_it",
+    }
 
 
 def verify_receipt_metrics(receipt_metrics: Any, metrics: dict[str, Any]) -> None:
@@ -414,7 +531,7 @@ def boundary() -> dict[str, Any]:
     }
 
 
-def evaluate(admission_path: Path | None = None) -> dict[str, Any]:
+def evaluate(admission_path: Path | None = None, fresh_lanes: bool = False) -> dict[str, Any]:
     relative_paths = [MODEL_FILE, MODEL_RECEIPT_FILE, DATASET_RECEIPT_FILE, KERNEL_FILE,
                       TRAINER_FILE, SCHEMA_FILE, "tools/evaluate_operational_health_model.py"]
     relative_paths += [f"operational-model/data/{split}.jsonl" for split in SPLIT_ROWS]
@@ -502,6 +619,7 @@ def evaluate(admission_path: Path | None = None) -> dict[str, Any]:
         for row, line, label, score in zip(splits["test"], snapshots["operational-model/data/test.jsonl"].splitlines(),
                                             labels, scores, strict=True)
     ]
+    fresh = fresh_seed_lanes(snapshots[TRAINER_FILE], kernel, 0.16) if fresh_lanes else None
     if any(read_bounded(PROJECT_ROOT / relative) != raw for relative, raw in snapshots.items()):
         raise EvaluationError("INPUT_CHANGED_DURING_EVALUATION")
     return {
@@ -516,6 +634,7 @@ def evaluate(admission_path: Path | None = None) -> dict[str, Any]:
             "scope": "exact_numeric_feature_matches_only_not_semantic_or_temporal_leakage_detection",
         },
         "metrics": metrics, "comparisons": comparisons, "observations": observations,
+        **({"fresh_seed_lanes": fresh} if fresh is not None else {}),
         "external_corpus_admission": admission,
         "limitations": [
             "public_synthetic_test_already_used_for_development_not_new_blind_evaluation",
@@ -533,9 +652,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, help="new JSON receipt file; existing files are never overwritten")
     parser.add_argument("--admission-manifest", type=Path, help="optional declaration contract; not external data")
+    parser.add_argument("--fresh-seed-lanes", action="store_true",
+                        help="also score fresh-seed and distribution-shift synthetic lanes (slower)")
     args = parser.parse_args(argv)
     try:
-        report = evaluate(args.admission_manifest)
+        report = evaluate(args.admission_manifest, fresh_lanes=args.fresh_seed_lanes)
         exit_code = 0
     except (EvaluationError, OSError, UnicodeError, RecursionError) as exc:
         report = {**boundary(), "complete": False, "status": "EVALUATION_FAILED",
