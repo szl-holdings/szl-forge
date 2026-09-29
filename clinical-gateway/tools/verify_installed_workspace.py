@@ -20,10 +20,9 @@ import owned_agent_clinical_control
 
 
 UI_ASSET_MEDIA_TYPES = {
-    "/kanchay/kanchay.css": "text/css; charset=utf-8",
-    "/kanchay/fonts/Inter-latin.woff2": "font/woff2",
-    "/kanchay/fonts/JetBrainsMono-latin.woff2": "font/woff2",
-    "/kanchay/fonts/SpaceGrotesk-latin.woff2": "font/woff2",
+    "/szl/szl-design-system.css": "text/css; charset=utf-8",
+    "/szl/szl-console.css": "text/css; charset=utf-8",
+    "/szl/logos/szl_favicon_square.svg": "image/svg+xml",
 }
 
 
@@ -117,8 +116,8 @@ def main():
                 require(health.get(key) is False, "health claimed clinical authority")
             content_type, html = request("/", authorized=False)
             require(content_type == "text/html" and html == (target / "clinical-gateway/frontend/index.html").read_bytes(), "installed UI bytes mismatch")
-            # The page's Kanchay stylesheet and fonts are fetched without the
-            # bearer token, exactly as a browser does, and must be the prepared bytes.
+            # The page's SZL KANCHAY stylesheets and favicon are fetched without
+            # the bearer token, exactly as a browser does, and must be the prepared bytes.
             for route, media_type in UI_ASSET_MEDIA_TYPES.items():
                 req = Request(origin + route, headers={"Origin": origin})
                 with opener.open(req, timeout=3) as response:
@@ -129,7 +128,7 @@ def main():
                 require(served_type == media_type and served_nosniff == "nosniff" and served == expected,
                         f"installed UI asset mismatch: {route}")
             try:
-                request("/kanchay/SOURCE.json", authorized=False)
+                request("/szl/SOURCE.json", authorized=False)
             except HTTPError as exc:
                 require(exc.code == 401, "unlisted UI asset status mismatch")
             else:

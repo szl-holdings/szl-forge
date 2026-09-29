@@ -24,11 +24,10 @@ from oac_stack_integration import ClinicalKernel  # noqa: E402
 
 
 FRONTEND = Path(__file__).resolve().parents[1] / "frontend"
-KANCHAY_ROUTE_MEDIA_TYPES = {
-    "/kanchay/kanchay.css": "text/css; charset=utf-8",
-    "/kanchay/fonts/Inter-latin.woff2": "font/woff2",
-    "/kanchay/fonts/JetBrainsMono-latin.woff2": "font/woff2",
-    "/kanchay/fonts/SpaceGrotesk-latin.woff2": "font/woff2",
+SZL_ROUTE_MEDIA_TYPES = {
+    "/szl/szl-design-system.css": "text/css; charset=utf-8",
+    "/szl/szl-console.css": "text/css; charset=utf-8",
+    "/szl/logos/szl_favicon_square.svg": "image/svg+xml",
 }
 
 
@@ -290,20 +289,20 @@ class HandlerBoundaryTests(unittest.TestCase):
         self.assertEqual(escaped_statuses, [401])
         self.assertNotEqual(escaped.wfile.getvalue(), ui.read_bytes())
 
-    def _stage_ui_with_kanchay(self) -> Path:
+    def _stage_ui_with_szl(self) -> Path:
         ui = self.root / "frontend" / "index.html"
-        (ui.parent / "kanchay" / "fonts").mkdir(parents=True)
+        (ui.parent / "szl" / "logos").mkdir(parents=True)
         ui.write_text("<html>safe console</html>", encoding="utf-8")
-        for relative in ("kanchay/SOURCE.json", *KANCHAY_ROUTE_MEDIA_TYPES):
+        for relative in ("szl/SOURCE.json", *SZL_ROUTE_MEDIA_TYPES):
             relative = relative.lstrip("/")
             (ui.parent / relative).write_bytes((FRONTEND / relative).read_bytes())
         api.OACStackHandler.ui_file = ui
         return ui
 
-    def test_kanchay_asset_routes_serve_exact_vendored_bytes_with_ui_headers(self) -> None:
-        self._stage_ui_with_kanchay()
+    def test_szl_asset_routes_serve_exact_vendored_bytes_with_ui_headers(self) -> None:
+        self._stage_ui_with_szl()
         # No bearer token is configured or sent: browsers do not attach one to
-        # stylesheet or font requests, so admission must match the UI page.
+        # stylesheet or icon requests, so admission must match the UI page.
         api.OACStackHandler.api_key = ""
         page, page_headers, page_statuses = _bare_handler("/")
         page.do_GET()
@@ -311,9 +310,9 @@ class HandlerBoundaryTests(unittest.TestCase):
         page_map = dict(page_headers)
         self.assertEqual(
             {route: media for route, (_, media) in api.UI_ASSET_ROUTES.items()},
-            KANCHAY_ROUTE_MEDIA_TYPES,
+            SZL_ROUTE_MEDIA_TYPES,
         )
-        for route, media_type in KANCHAY_ROUTE_MEDIA_TYPES.items():
+        for route, media_type in SZL_ROUTE_MEDIA_TYPES.items():
             with self.subTest(route=route):
                 handler, headers, statuses = _bare_handler(route)
                 handler.do_GET()
@@ -334,33 +333,36 @@ class HandlerBoundaryTests(unittest.TestCase):
                     self.assertEqual(header_map[name], page_map[name], name)
                 self.assertEqual(header_map["X-Content-Type-Options"], "nosniff")
 
-    def test_kanchay_asset_routes_keep_origin_admission_and_cors(self) -> None:
-        self._stage_ui_with_kanchay()
-        allowed, headers, statuses = _bare_handler("/kanchay/kanchay.css")
+    def test_szl_asset_routes_keep_origin_admission_and_cors(self) -> None:
+        self._stage_ui_with_szl()
+        allowed, headers, statuses = _bare_handler("/szl/szl-design-system.css")
         allowed.headers = {"Origin": "https://console.example"}  # type: ignore[assignment]
         allowed.do_GET()
         self.assertEqual(statuses, [200])
         self.assertIn(("Access-Control-Allow-Origin", "https://console.example"), headers)
 
-        denied, _headers, denied_statuses = _bare_handler("/kanchay/fonts/Inter-latin.woff2")
+        denied, _headers, denied_statuses = _bare_handler("/szl/logos/szl_favicon_square.svg")
         denied.headers = {"Origin": "https://attacker.example"}  # type: ignore[assignment]
         denied.do_GET()
         self.assertEqual(denied_statuses, [403])
         self.assertEqual(json.loads(denied.wfile.getvalue())["code"], "ORIGIN_DENIED")
 
-    def test_unlisted_kanchay_paths_keep_normal_authentication_and_404(self) -> None:
-        self._stage_ui_with_kanchay()
+    def test_unlisted_szl_and_withdrawn_paths_keep_normal_authentication_and_404(self) -> None:
+        self._stage_ui_with_szl()
         unlisted = (
-            "/kanchay",
-            "/kanchay/fonts",
-            "/kanchay/SOURCE.json",
-            "/kanchay/KANCHAY.CSS",
-            "/kanchay/kanchay-components.css",
-            "/kanchay/fonts/Syncopate-400.woff2",
-            "/kanchay/../index.html",
-            "/kanchay/fonts/../kanchay.css",
-            "/kanchay/%2e%2e/index.html",
-            "/frontend/kanchay/kanchay.css",
+            "/szl",
+            "/szl/logos",
+            "/szl/SOURCE.json",
+            "/szl/SZL-DESIGN-SYSTEM.CSS",
+            "/szl/logos/szl_favicon.svg",
+            "/szl/logos/szl_logo_horizontal.svg",
+            "/szl/../index.html",
+            "/szl/logos/../szl-console.css",
+            "/szl/%2e%2e/index.html",
+            "/frontend/szl/szl-design-system.css",
+            # The withdrawn v1.0.0 export and its webfonts are no longer routed.
+            "/kanchay/kanchay.css",
+            "/kanchay/fonts/Inter-latin.woff2",
         )
         for path in unlisted:
             with self.subTest(path=path, authorized=False):
@@ -377,33 +379,33 @@ class HandlerBoundaryTests(unittest.TestCase):
                     {"ok": False, "error": "unknown GET route"},
                 )
 
-    def test_kanchay_asset_routes_fail_closed_without_ui_or_file(self) -> None:
+    def test_szl_asset_routes_fail_closed_without_ui_or_file(self) -> None:
         api.OACStackHandler.ui_file = None
-        handler, _headers, statuses = _bare_handler("/kanchay/kanchay.css")
+        handler, _headers, statuses = _bare_handler("/szl/szl-design-system.css")
         handler.do_GET()
         self.assertEqual(statuses, [404])
         self.assertEqual(json.loads(handler.wfile.getvalue())["error"], "UI_NOT_CONFIGURED")
 
-        ui = self._stage_ui_with_kanchay()
-        (ui.parent / "kanchay" / "fonts" / "Inter-latin.woff2").unlink()
-        missing, _headers, missing_statuses = _bare_handler("/kanchay/fonts/Inter-latin.woff2")
+        ui = self._stage_ui_with_szl()
+        (ui.parent / "szl" / "szl-console.css").unlink()
+        missing, _headers, missing_statuses = _bare_handler("/szl/szl-console.css")
         missing.do_GET()
         self.assertEqual(missing_statuses, [404])
         self.assertEqual(json.loads(missing.wfile.getvalue())["error"], "UI_ASSET_UNAVAILABLE")
 
-    def test_kanchay_asset_directory_link_outside_data_root_is_not_followed(self) -> None:
+    def test_szl_asset_directory_link_outside_data_root_is_not_followed(self) -> None:
         outside = tempfile.TemporaryDirectory(prefix="oac-outside-assets-")
         self.addCleanup(outside.cleanup)
-        (Path(outside.name) / "kanchay.css").write_bytes(b"body{}")
+        (Path(outside.name) / "szl-design-system.css").write_bytes(b"body{}")
         ui = self.root / "frontend" / "index.html"
         ui.parent.mkdir(parents=True)
         ui.write_text("<html></html>", encoding="utf-8")
         try:
-            (ui.parent / "kanchay").symlink_to(Path(outside.name), target_is_directory=True)
+            (ui.parent / "szl").symlink_to(Path(outside.name), target_is_directory=True)
         except OSError as exc:
             self.skipTest(f"symlink creation is unavailable: {exc}")
         api.OACStackHandler.ui_file = ui
-        handler, _headers, statuses = _bare_handler("/kanchay/kanchay.css")
+        handler, _headers, statuses = _bare_handler("/szl/szl-design-system.css")
         handler.do_GET()
         self.assertEqual(statuses, [404])
         self.assertNotIn(b"body{}", handler.wfile.getvalue())
@@ -451,34 +453,49 @@ class IntegrationNormalizationTests(unittest.TestCase):
         for forbidden_id in ("patient", "result", "specimen", "order", "hl7", "fhir"):
             self.assertNotIn(f'id="{forbidden_id}', html.lower())
 
-    def test_ui_loads_only_the_vendored_kanchay_stylesheet(self) -> None:
+    def test_ui_loads_only_the_vendored_szl_stylesheets(self) -> None:
         html = (FRONTEND / "index.html").read_text(encoding="utf-8")
-        self.assertIn('<html lang="en" data-theme="light">', html)
-        self.assertIn('<link rel="stylesheet" href="kanchay/kanchay.css" />', html)
-        self.assertEqual(html.count("<link "), 1)
-        for external in ("fonts.googleapis", "fonts.gstatic", "@import", "@font-face", 'src="http'):
-            self.assertNotIn(external, html)
+        self.assertIn('<html lang="en" data-surface="light">', html)
+        self.assertNotIn("data-theme", html)
+        links = [
+            '<link rel="icon" type="image/svg+xml" href="szl/logos/szl_favicon_square.svg" />',
+            '<link rel="stylesheet" href="szl/szl-design-system.css" />',
+            '<link rel="stylesheet" href="szl/szl-console.css" />',
+        ]
+        for link in links:
+            self.assertIn(link, html)
+        self.assertEqual(html.count("<link "), len(links))
+        self.assertLess(html.index(links[1]), html.index(links[2]))
+        self.assertLess(html.index(links[2]), html.index("<style>"))
+        for withdrawn in (
+            "fonts.googleapis", "fonts.gstatic", "@import", "@font-face", 'src="http',
+            "kanchay", ".woff2", "--color-a11oy-",
+        ):
+            self.assertNotIn(withdrawn, html)
+        # One coral moment per view: exactly one primary action on the page.
+        self.assertEqual(html.count('class="btn btn-primary"'), 1)
 
-    def test_vendored_kanchay_bytes_match_export_and_are_packaged(self) -> None:
-        kanchay = FRONTEND / "kanchay"
-        source = json.loads((kanchay / "SOURCE.json").read_text(encoding="utf-8"))
-        self.assertEqual((source["name"], source["version"]), ("szl-kanchay", "1.0.0"))
+    def test_vendored_szl_bytes_match_export_and_are_packaged(self) -> None:
+        szl = FRONTEND / "szl"
+        source = json.loads((szl / "SOURCE.json").read_text(encoding="utf-8"))
+        self.assertEqual((source["name"], source["version"]), ("szl-kanchay", "1.1.0"))
         vendored = sorted(
-            path.relative_to(kanchay).as_posix()
-            for path in kanchay.rglob("*")
+            path.relative_to(szl).as_posix()
+            for path in szl.rglob("*")
             if path.is_file() and path.name != "SOURCE.json"
         )
-        served = sorted(route[len("/kanchay/"):] for route in api.UI_ASSET_ROUTES)
+        served = sorted(route[len("/szl/"):] for route in api.UI_ASSET_ROUTES)
         self.assertEqual(vendored, served)
         for relative in vendored:
             with self.subTest(relative=relative):
-                # Byte equality with the export also proves Git did not apply
-                # text/EOL conversion to the fonts on this checkout.
-                digest = hashlib.sha256((kanchay / relative).read_bytes()).hexdigest()
+                # Byte equality with the export also proves Git applied no
+                # text/EOL conversion on this checkout (szl/** is -text).
+                digest = hashlib.sha256((szl / relative).read_bytes()).hexdigest()
                 self.assertEqual(digest, source["sha256"][relative])
         packaged = set(oac_clinical_resources.ASSET_PATHS)
         for relative in ("SOURCE.json", *vendored):
-            self.assertIn(f"clinical-gateway/frontend/kanchay/{relative}", packaged)
+            self.assertIn(f"clinical-gateway/frontend/szl/{relative}", packaged)
+        self.assertFalse(any("kanchay" in asset for asset in packaged))
 
     def test_import_has_no_runtime_filesystem_side_effect(self) -> None:
         module_dir = Path(api.__file__).resolve().parent

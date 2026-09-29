@@ -98,25 +98,21 @@ FHIR_RESOURCE_TYPES = frozenset(
     }
 )
 HL7_MARKERS = ("MSH|", "PID|", "OBR|", "OBX|")
-# Read-only SZL Kanchay design-system files vendored beside the UI file in
-# frontend/kanchay/. Closed allowlist: exact URL path -> (path parts relative to
+# Read-only SZL KANCHAY design-system files vendored beside the UI file in
+# frontend/szl/. Closed allowlist: exact URL path -> (path parts relative to
 # the UI file's directory, media type). No path parameter reaches the
 # filesystem, there is no directory mount or listing, and any other path keeps
 # the normal admission and "unknown GET route" handling.
 UI_ASSET_ROUTES: Mapping[str, tuple[tuple[str, ...], str]] = MappingProxyType(
     {
-        "/kanchay/kanchay.css": (("kanchay", "kanchay.css"), "text/css; charset=utf-8"),
-        "/kanchay/fonts/Inter-latin.woff2": (
-            ("kanchay", "fonts", "Inter-latin.woff2"),
-            "font/woff2",
+        "/szl/szl-design-system.css": (
+            ("szl", "szl-design-system.css"),
+            "text/css; charset=utf-8",
         ),
-        "/kanchay/fonts/JetBrainsMono-latin.woff2": (
-            ("kanchay", "fonts", "JetBrainsMono-latin.woff2"),
-            "font/woff2",
-        ),
-        "/kanchay/fonts/SpaceGrotesk-latin.woff2": (
-            ("kanchay", "fonts", "SpaceGrotesk-latin.woff2"),
-            "font/woff2",
+        "/szl/szl-console.css": (("szl", "szl-console.css"), "text/css; charset=utf-8"),
+        "/szl/logos/szl_favicon_square.svg": (
+            ("szl", "logos", "szl_favicon_square.svg"),
+            "image/svg+xml",
         ),
     }
 )

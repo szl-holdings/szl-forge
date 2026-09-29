@@ -1,74 +1,35 @@
 <!doctype html>
-<html lang="en" data-theme="light">
+<html lang="en" data-surface="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="referrer" content="no-referrer" />
     <title>Owned Agent Clinical Control</title>
-    <link rel="stylesheet" href="kanchay/kanchay.css" />
+    <link rel="icon" type="image/svg+xml" href="szl/logos/szl_favicon_square.svg" />
+    <link rel="stylesheet" href="szl/szl-design-system.css" />
+    <link rel="stylesheet" href="szl/szl-console.css" />
     <style>
-      /* SZL Kanchay light theme: every color, face and radius below is a token
-         from kanchay/kanchay.css (vendored v1.0.0). No local color literals. */
-      * { box-sizing: border-box; }
-
-      body {
-        margin: 0;
-        min-height: 100vh;
-        background: var(--color-a11oy-bg);
-        color: var(--color-a11oy-text);
-        font-family: var(--font-sans);
-      }
-
-      button, input, select, textarea { font: inherit; }
-      a { color: var(--color-ink-signal); text-underline-offset: 3px; }
-      a:hover { text-decoration-thickness: 2px; }
-      :where(a, button, input, select, textarea):focus-visible {
-        outline: var(--border-focus) solid var(--color-focus);
-        outline-offset: 2px;
-      }
-      code {
-        padding: 0.12em 0.35em;
-        border-radius: var(--radius-sm);
-        background: color-mix(in srgb, var(--color-ink-signal) 8%, transparent);
-        color: var(--color-ink-signal);
-        font-family: var(--font-mono);
-        font-size: 0.92em;
-      }
-
-      .skip-link {
-        position: absolute;
-        top: var(--space-2);
-        left: var(--space-2);
-        z-index: var(--z-overlay);
-        display: inline-flex;
-        align-items: center;
-        min-height: var(--szl-touch-target);
-        padding: 0 var(--space-4);
-        border-radius: var(--radius-sm);
-        background: var(--color-a11oy-gold);
-        color: var(--color-on-accent);
-        font-weight: 600;
-        text-decoration: none;
-        transform: translateY(-200%);
-      }
-      .skip-link:focus { transform: none; }
+      /* SZL KANCHAY v1.1.0 (founder direction), light document surface. Every
+         color, face, size and radius below is a token from szl/szl-design-system.css
+         or szl/szl-console.css; there are no local color literals. Focus rings and
+         the coral primary action are the founder's own (kit 1.1.1 brings the solid
+         focus outline); this page does not restyle them. */
 
       .topline {
         padding: var(--space-2) var(--space-5);
-        border-bottom: 1px solid var(--color-a11oy-border);
-        background: var(--color-a11oy-deep);
-        color: var(--color-ink-caution);
-        font-family: var(--font-mono);
-        font-size: 11px;
-        font-weight: 500;
-        line-height: 16px;
-        letter-spacing: 0.15em;
+        border-bottom: var(--border-hairline) solid var(--border);
+        background: var(--bg-deep);
+        color: var(--ink-warn);
+        font-size: var(--text-xs);
+        font-weight: var(--weight-semibold);
+        line-height: var(--leading-snug);
+        letter-spacing: var(--tracking-caps);
         text-align: center;
         text-transform: uppercase;
       }
 
       .shell {
-        width: min(1180px, calc(100% - var(--space-8)));
+        width: min(var(--container), calc(100% - var(--space-8)));
         margin: 0 auto;
         padding: var(--space-8) 0 var(--space-12);
       }
@@ -78,61 +39,30 @@
         grid-template-columns: minmax(0, 1fr) auto;
         gap: var(--space-6);
         align-items: end;
-        margin-bottom: var(--space-6);
+        margin-bottom: var(--space-8);
       }
+      header .eyebrow { margin-bottom: var(--space-2); }
 
       h1 {
         max-width: 780px;
-        margin: var(--space-2) 0 var(--space-3);
-        font-family: var(--font-display);
-        font-size: clamp(2rem, 5vw, 4.25rem);
-        font-weight: 300;
-        line-height: 1.02;
-        letter-spacing: -0.035em;
+        margin-bottom: var(--space-4);
+        font-size: clamp(var(--text-2xl), 5vw, var(--text-4xl));
         text-wrap: balance;
       }
 
-      h2, h3, p { margin-top: 0; }
-      h2 {
-        margin-bottom: var(--space-2);
-        color: var(--color-a11oy-gold);
-        font-family: var(--font-display);
-        font-size: 1.25rem;
-        font-weight: 600;
-        letter-spacing: -0.02em;
-      }
-      h3 { margin-bottom: var(--space-2); font-size: 0.95rem; }
-
-      .eyebrow {
-        color: var(--color-a11oy-gold);
-        font-family: var(--font-mono);
-        font-size: 11px;
-        font-weight: 500;
-        line-height: 16px;
-        letter-spacing: 0.3em;
-        text-transform: uppercase;
-      }
-
-      .lede {
-        max-width: 790px;
-        margin-bottom: 0;
-        color: var(--color-a11oy-text-sub);
-        font-size: 1.0625rem;
-        line-height: 1.65;
-      }
+      .lede { margin-bottom: 0; font-size: var(--text-lg); }
 
       .truth-badge {
         min-width: 235px;
         padding: var(--space-3) var(--space-4);
-        border: 1px solid color-mix(in srgb, var(--color-warning) 55%, transparent);
+        border: var(--border-hairline) solid color-mix(in srgb, var(--ink-warn) 45%, transparent);
         border-radius: var(--radius-md);
-        background: color-mix(in srgb, var(--color-warning) 10%, transparent);
-        color: var(--color-ink-caution);
-        font-family: var(--font-mono);
-        font-size: 11px;
-        font-weight: 500;
-        line-height: 1.7;
-        letter-spacing: 0.15em;
+        background: color-mix(in srgb, var(--ink-warn) 8%, transparent);
+        color: var(--ink-warn);
+        font-size: var(--text-xs);
+        font-weight: var(--weight-semibold);
+        line-height: var(--leading-normal);
+        letter-spacing: var(--tracking-caps);
         text-transform: uppercase;
       }
 
@@ -142,181 +72,124 @@
         gap: var(--space-4);
       }
 
-      .card {
-        grid-column: span 12;
-        padding: var(--space-5);
-        border: 1px solid var(--color-a11oy-border-subtle);
-        border-radius: var(--radius-md);
-        background: var(--color-a11oy-surface);
-      }
-
+      .card { grid-column: span 12; min-width: 0; }
       .card.connection, .card.source { grid-column: span 6; }
 
       .card-head {
         display: flex;
-        gap: var(--space-4);
+        flex-wrap: wrap;
+        gap: var(--space-3) var(--space-4);
         align-items: flex-start;
         justify-content: space-between;
         margin-bottom: var(--space-5);
       }
+      .card-head > div { flex: 1 1 10rem; min-width: 0; }
+      .card-head p { margin-bottom: 0; }
 
-      .card-head p, .note, .field-note {
-        color: var(--color-a11oy-text-sub);
-        line-height: 1.5;
-      }
-
-      .card-head p { max-width: 730px; margin-bottom: 0; font-size: 0.875rem; }
-
+      /* Mirrors the founder .chip (the page script owns this element's class list). */
       .status-pill {
-        --pill-tone: var(--color-a11oy-text-ghost);
         display: inline-flex;
         flex: 0 0 auto;
         gap: var(--space-2);
         align-items: center;
         padding: var(--space-1) var(--space-3);
-        border: 1px solid color-mix(in srgb, var(--pill-tone) 45%, transparent);
-        border-radius: var(--radius-full);
-        background: color-mix(in srgb, var(--pill-tone) 10%, transparent);
-        color: var(--color-a11oy-text-sub);
+        border: var(--border-hairline) solid var(--border);
+        border-radius: var(--radius-sm);
+        background: var(--surface-alt);
+        color: var(--text-sub);
         font-family: var(--font-mono);
-        font-size: 11px;
-        font-weight: 500;
-        line-height: 16px;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
+        font-size: var(--text-xs);
+        line-height: var(--leading-snug);
+        font-variant-numeric: tabular-nums lining-nums;
       }
       .status-pill::before {
-        width: 6px;
-        height: 6px;
+        width: 0.5rem;
+        height: 0.5rem;
         flex: none;
         border-radius: var(--radius-full);
-        background: var(--pill-tone);
+        background: currentColor;
         content: "";
       }
-
-      .status-pill.good { --pill-tone: var(--color-success); color: var(--color-a11oy-text); }
-      .status-pill.warn { --pill-tone: var(--color-warning); color: var(--color-ink-caution); }
-      .status-pill.bad { --pill-tone: var(--color-error); color: var(--color-ink-danger); }
+      .status-pill.good { color: var(--ink-good); }
+      .status-pill.warn { color: var(--ink-warn); }
+      .status-pill.bad { color: var(--ink-bad); }
 
       .fields {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: var(--space-3);
+        gap: var(--space-4) var(--space-3);
       }
-
       .field.full { grid-column: 1 / -1; }
+      .field-note { margin: 0; font-size: var(--text-sm); }
 
-      label {
-        display: block;
-        margin-bottom: var(--space-2);
-        color: var(--color-a11oy-text);
-        font-size: 0.8125rem;
-        font-weight: 600;
-      }
-
-      input, select, textarea {
-        width: 100%;
-        min-height: var(--szl-touch-target);
-        padding: var(--space-2) var(--space-3);
-        border: 1px solid var(--color-control-border);
-        border-radius: var(--radius-sm);
-        background: var(--color-a11oy-surface);
-        color: var(--color-a11oy-text);
-      }
-      input[spellcheck="false"]:not([type="password"]), textarea[spellcheck="false"] {
-        font-family: var(--font-mono);
-        font-size: 0.8125rem;
-      }
-      input[type="number"] { font-variant-numeric: tabular-nums; }
-      input::placeholder, textarea::placeholder { color: var(--color-a11oy-text-ghost); opacity: 1; }
-
-      textarea { min-height: 76px; resize: vertical; }
-      input:focus-visible, select:focus-visible, textarea:focus-visible { border-color: var(--color-focus); }
-      input[readonly] { background: var(--color-a11oy-deep); color: var(--color-a11oy-text-sub); }
-      .field-note, .note { margin: var(--space-2) 0 0; font-size: 0.78rem; }
+      .input, .select { min-block-size: var(--target-size-coarse); }
+      textarea.input { min-block-size: 5rem; resize: vertical; }
+      .input[readonly] { background: var(--bg-deep); color: var(--text-sub); }
 
       .check {
         display: flex;
-        min-height: var(--szl-touch-target);
+        min-block-size: var(--target-size-coarse);
         gap: var(--space-3);
         align-items: center;
         padding: 0 var(--space-3);
-        border: 1px solid var(--color-a11oy-border);
-        border-radius: var(--radius-sm);
-        background: var(--color-a11oy-bg);
+        border: var(--border-hairline) solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        background: var(--surface-alt);
       }
       .check input {
         flex: none;
-        width: 18px;
-        height: 18px;
-        min-height: 0;
+        width: 1.125rem;
+        height: 1.125rem;
         margin: 0;
-        accent-color: var(--color-a11oy-text);
+        accent-color: var(--text);
       }
       .check label {
         display: flex;
         flex: 1;
         align-items: center;
         align-self: stretch;
-        margin: 0;
-        font-weight: 500;
+        color: var(--text);
+        font-size: var(--text-sm);
+        font-weight: var(--weight-medium);
         cursor: pointer;
       }
 
-      .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
-      button {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-height: var(--szl-touch-target);
-        padding: var(--space-2) var(--space-4);
-        border: 1px solid var(--color-a11oy-gold);
-        border-radius: var(--radius-sm);
-        background: var(--color-a11oy-surface);
-        color: var(--color-a11oy-gold);
-        font-weight: 600;
-        cursor: pointer;
-        transition:
-          background-color var(--duration-fast) var(--ease-standard),
-          border-color var(--duration-fast) var(--ease-standard),
-          color var(--duration-fast) var(--ease-standard);
-      }
-      button:hover { background: color-mix(in srgb, var(--color-a11oy-gold) 8%, transparent); color: var(--gold-bright); }
-      button.secondary {
-        border-color: var(--color-control-border);
-        background: var(--color-a11oy-deep);
-        color: var(--color-a11oy-text);
-      }
-      button.secondary:hover { background: var(--color-a11oy-overlay); color: var(--color-a11oy-text); }
-      button.danger {
+      .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-5); }
+      .actions .btn { min-block-size: var(--target-size-coarse); }
+      .actions .btn:disabled { cursor: wait; }
+      .btn-danger { border-color: var(--color-error); color: var(--ink-bad); }
+      .btn-danger:hover {
         border-color: var(--color-error);
-        background: var(--color-a11oy-surface);
-        color: var(--color-ink-danger);
+        background: color-mix(in srgb, var(--color-error) 8%, transparent);
+        color: var(--ink-bad);
       }
-      button.danger:hover { background: color-mix(in srgb, var(--color-error) 8%, transparent); color: var(--color-ink-danger); }
-      button:disabled { cursor: wait; opacity: 0.58; }
 
       .boundary {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
-        gap: 1px;
+        gap: var(--space-px);
         overflow: hidden;
         margin: var(--space-5) 0;
-        border: 1px solid var(--color-a11oy-border);
+        border: var(--border-hairline) solid var(--border);
         border-radius: var(--radius-md);
-        background: var(--color-a11oy-border);
+        background: var(--border);
       }
-      .boundary div { min-height: 96px; padding: var(--space-3); background: var(--color-a11oy-bg); }
+      .boundary div { min-height: 96px; padding: var(--space-3); background: var(--surface-alt); }
       .boundary strong, .boundary span { display: block; }
       .boundary strong {
         margin-bottom: var(--space-1);
-        font-family: var(--font-mono);
-        font-size: 11px;
-        font-weight: 500;
-        letter-spacing: 0.15em;
+        color: var(--text);
+        font-size: var(--text-xs);
+        letter-spacing: var(--tracking-caps);
         text-transform: uppercase;
       }
-      .boundary span { color: var(--color-a11oy-text-sub); font-size: 0.8125rem; line-height: 1.5; }
+      .boundary span { color: var(--text-sub); font-size: var(--text-sm); }
+      .boundary code {
+        padding: 0.1em 0.35em;
+        border-radius: var(--radius-sm);
+        background: var(--bg-deep);
+        color: var(--text);
+      }
 
       .transport-layout {
         display: grid;
@@ -326,16 +199,17 @@
 
       .protocol {
         padding: var(--space-4);
-        border: 1px solid var(--color-a11oy-border);
+        border: var(--border-hairline) solid var(--border-subtle);
         border-radius: var(--radius-md);
-        background: var(--color-a11oy-deep);
+        background: var(--bg-deep);
       }
-      .protocol h3 {
+      .protocol h3, .output h3 {
         margin-bottom: var(--space-3);
-        font-family: var(--font-mono);
-        font-size: 11px;
-        font-weight: 500;
-        letter-spacing: 0.15em;
+        font-family: var(--font-body);
+        font-size: var(--text-xs);
+        font-weight: var(--weight-semibold);
+        line-height: var(--leading-snug);
+        letter-spacing: var(--tracking-caps);
         text-transform: uppercase;
       }
       .protocol dl {
@@ -343,56 +217,55 @@
         grid-template-columns: 92px 1fr;
         gap: var(--space-2);
         margin: 0;
-        font-size: 0.8125rem;
+        font-size: var(--text-sm);
       }
-      .protocol dt { color: var(--color-a11oy-text); font-weight: 600; }
-      .protocol dd { margin: 0; color: var(--color-a11oy-text-sub); line-height: 1.45; }
+      .protocol dt { color: var(--text); font-weight: var(--weight-semibold); }
+      .protocol dd { margin: 0; color: var(--text-sub); line-height: var(--leading-snug); }
 
       .outputs {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: var(--space-3);
       }
+      /* Machine output stays dark on the light surface (founder rule: code
+         blocks are dark on both), so these wells use the dark scale steps
+         directly instead of the light surface roles. */
       .output {
         min-height: 170px;
         padding: var(--space-4);
-        border: 1px solid var(--color-a11oy-border);
+        border: var(--border-hairline) solid var(--color-gray-700);
         border-radius: var(--radius-md);
-        background: var(--color-a11oy-deep);
-        color: var(--color-a11oy-text);
+        background: var(--color-space-900);
+        color: var(--color-gray-50);
+        color-scheme: dark;
       }
-      .output h3 {
-        margin-bottom: var(--space-3);
-        color: var(--color-a11oy-text-sub);
-        font-family: var(--font-mono);
-        font-size: 11px;
-        font-weight: 500;
-        letter-spacing: 0.15em;
-        text-transform: uppercase;
-      }
+      .output h3 { color: var(--color-gray-200); }
+      .output--advisory { min-height: 130px; margin-top: var(--space-4); }
       pre {
         max-height: 330px;
         margin: 0;
         overflow: auto;
+        color: inherit;
+        font-family: var(--font-mono);
+        font-size: var(--text-xs);
+        line-height: var(--leading-mono);
+        font-variant-numeric: tabular-nums lining-nums;
         white-space: pre-wrap;
         word-break: break-word;
-        font-family: var(--font-mono);
-        font-size: 0.75rem;
-        line-height: 1.6;
-        font-variant-numeric: tabular-nums;
       }
 
       .privacy {
+        max-width: none;
         margin: var(--space-5) 0 0;
         padding: var(--space-3) var(--space-4);
-        border: 1px solid color-mix(in srgb, var(--color-error) 40%, transparent);
+        border: var(--border-hairline) solid color-mix(in srgb, var(--ink-warn) 40%, transparent);
         border-radius: var(--radius-md);
-        background: color-mix(in srgb, var(--color-error) 6%, transparent);
-        color: var(--color-ink-danger);
-        font-size: 0.8125rem;
-        line-height: 1.55;
+        background: color-mix(in srgb, var(--ink-warn) 6%, transparent);
+        color: var(--text);
       }
-      footer { margin-top: var(--space-5); color: var(--color-a11oy-text-sub); font-size: 0.75rem; line-height: 1.55; }
+
+      footer { margin-top: var(--space-6); color: var(--text-sub); font-size: var(--text-sm); }
+      footer a { text-decoration: underline; }
 
       @media (max-width: 850px) {
         header, .transport-layout { grid-template-columns: 1fr; }
@@ -404,6 +277,9 @@
         .shell { padding-top: var(--space-6); }
         .fields { grid-template-columns: 1fr; }
         .field.full { grid-column: auto; }
+      }
+      @media (forced-colors: active) {
+        .status-pill::before { border: 1px solid currentColor; }
       }
     </style>
   </head>
@@ -432,80 +308,80 @@
         <article class="card connection">
           <div class="card-head">
             <div>
-              <h2>Local API</h2>
+              <h2 class="card-title">Local API</h2>
               <p>Loopback control connection. The token is held only in this page session.</p>
             </div>
             <span class="status-pill" id="healthPill">Not checked</span>
           </div>
           <div class="fields">
             <div class="field full">
-              <label for="backend">Backend URL</label>
-              <input id="backend" type="url" value="http://127.0.0.1:8010" spellcheck="false" />
+              <label class="field__label" for="backend">Backend URL</label>
+              <input class="input input--mono" id="backend" type="url" value="http://127.0.0.1:8010" spellcheck="false" />
             </div>
             <div class="field full">
-              <label for="apiToken">API bearer token</label>
-              <input id="apiToken" type="password" minlength="32" autocomplete="off"
+              <label class="field__label" for="apiToken">API bearer token</label>
+              <input class="input" id="apiToken" type="password" minlength="32" autocomplete="off"
                 placeholder="OAC_API_KEY value" spellcheck="false" />
               <p class="field-note">At least 32 characters; never written to localStorage, cookies, logs, or status output.</p>
             </div>
             <div class="field full">
-              <label for="stateDir">Backend state directory</label>
-              <input id="stateDir" value="Server configured (locked)" readonly />
+              <label class="field__label" for="stateDir">Backend state directory</label>
+              <input class="input" id="stateDir" value="Server configured (locked)" readonly />
             </div>
           </div>
           <div class="actions">
-            <button id="checkHealth" class="secondary" type="button">Check health</button>
-            <button id="loadCapabilities" class="secondary" type="button">Load capabilities</button>
+            <button id="checkHealth" class="btn btn-secondary" type="button">Check health</button>
+            <button id="loadCapabilities" class="btn btn-secondary" type="button">Load capabilities</button>
           </div>
         </article>
 
         <article class="card source">
           <div class="card-head">
             <div>
-              <h2>Source profile</h2>
+              <h2 class="card-title">Source profile</h2>
               <p id="modeDescription">Synthetic, offline fixture processing only.</p>
             </div>
             <span class="status-pill warn" id="modePill">MOCK</span>
           </div>
           <div class="fields">
             <div class="field full">
-              <label for="mode">Operating mode</label>
-              <select id="mode">
+              <label class="field__label" for="mode">Operating mode</label>
+              <select class="select" id="mode">
                 <option value="MOCK">MOCK · synthetic only</option>
                 <option value="LIVE_SHADOW">LIVE_SHADOW · deidentified only</option>
               </select>
             </div>
             <div class="field">
-              <label for="sourceId">Source ID</label>
-              <input id="sourceId" spellcheck="false" />
+              <label class="field__label" for="sourceId">Source ID</label>
+              <input class="input input--mono" id="sourceId" spellcheck="false" />
             </div>
             <div class="field">
-              <label for="assayMap">Assay map path</label>
-              <input id="assayMap" spellcheck="false" />
+              <label class="field__label" for="assayMap">Assay map path</label>
+              <input class="input input--mono" id="assayMap" spellcheck="false" />
             </div>
             <div class="field full">
-              <label for="profileId">Pinned profile ID</label>
-              <input id="profileId" readonly spellcheck="false" />
+              <label class="field__label" for="profileId">Pinned profile ID</label>
+              <input class="input input--mono" id="profileId" readonly spellcheck="false" />
             </div>
             <div class="field">
-              <label for="senderApplication">Expected MSH-3</label>
-              <input id="senderApplication" spellcheck="false" />
+              <label class="field__label" for="senderApplication">Expected MSH-3</label>
+              <input class="input input--mono" id="senderApplication" spellcheck="false" />
             </div>
             <div class="field">
-              <label for="senderFacility">Expected MSH-4</label>
-              <input id="senderFacility" spellcheck="false" />
+              <label class="field__label" for="senderFacility">Expected MSH-4</label>
+              <input class="input input--mono" id="senderFacility" spellcheck="false" />
             </div>
           </div>
           <div class="actions">
-            <button id="initialize" class="secondary" type="button">Initialize state</button>
-            <button id="registerSource" type="button">Register source</button>
+            <button id="initialize" class="btn btn-secondary" type="button">Initialize state</button>
+            <button id="registerSource" class="btn btn-primary" type="button">Register source</button>
           </div>
         </article>
 
         <article class="card">
           <div class="card-head">
             <div>
-              <h2>Operational transport-health advisory</h2>
+              <h2 class="card-title">Operational transport-health advisory</h2>
               <p>
                 Score eight bounded infrastructure signals with the verified
                 synthetic model. This advisory has no ACK, device-control,
@@ -521,23 +397,23 @@
             <div class="field"><div class="check"><input id="modelLedgerIntegrity" type="checkbox" checked /><label for="modelLedgerIntegrity">Local ledger integrity check passed</label></div></div>
             <div class="field"><div class="check"><input id="modelConfigurationValid" type="checkbox" checked /><label for="modelConfigurationValid">Configuration validation passed</label></div></div>
             <div class="field">
-              <label for="modelQueueUtilization">Queue utilization (0-1)</label>
-              <input id="modelQueueUtilization" type="number" min="0" max="1" step="0.01" value="0.05" />
+              <label class="field__label" for="modelQueueUtilization">Queue utilization (0-1)</label>
+              <input class="input input--mono" id="modelQueueUtilization" type="number" min="0" max="1" step="0.01" value="0.05" />
             </div>
             <div class="field">
-              <label for="modelConsecutiveFailures">Consecutive operational failures (0-20)</label>
-              <input id="modelConsecutiveFailures" type="number" min="0" max="20" step="1" value="0" />
+              <label class="field__label" for="modelConsecutiveFailures">Consecutive operational failures (0-20)</label>
+              <input class="input input--mono" id="modelConsecutiveFailures" type="number" min="0" max="20" step="1" value="0" />
             </div>
             <div class="field">
-              <label for="modelSecondsSinceSuccess">Seconds since last operational success (0-86400)</label>
-              <input id="modelSecondsSinceSuccess" type="number" min="0" max="86400" step="1" value="10" />
+              <label class="field__label" for="modelSecondsSinceSuccess">Seconds since last operational success (0-86400)</label>
+              <input class="input input--mono" id="modelSecondsSinceSuccess" type="number" min="0" max="86400" step="1" value="10" />
             </div>
           </div>
           <div class="actions">
-            <button id="checkModel" class="secondary" type="button">Check model</button>
-            <button id="scoreModel" type="button">Evaluate advisory</button>
+            <button id="checkModel" class="btn btn-secondary" type="button">Check model</button>
+            <button id="scoreModel" class="btn btn-secondary" type="button">Evaluate advisory</button>
           </div>
-          <div class="output" style="margin-top: 16px; min-height: 130px;"><h3>Advisory</h3><pre id="modelOutput">Not evaluated.</pre></div>
+          <div class="output output--advisory"><h3>Advisory</h3><pre id="modelOutput">Not evaluated.</pre></div>
           <p class="privacy">
             Enter operational counters only. The endpoint rejects extra,
             identity-like, HL7, FHIR, patient, order, specimen, and result fields.
@@ -548,7 +424,7 @@
         <article class="card">
           <div class="card-head">
             <div>
-              <h2>Roche cobas Liat TLS listener preset</h2>
+              <h2 class="card-title">Roche cobas Liat TLS listener preset</h2>
               <p>
                 Configured from Roche Host Interface Manual v11.3 for software
                 3.4/3.5. Exact device, software, region, certificate, network,
@@ -580,42 +456,42 @@
           <div class="transport-layout">
             <div class="fields">
               <div class="field">
-                <label for="transportId">Transport ID</label>
-                <input id="transportId" value="roche-liat-live-shadow" spellcheck="false" />
+                <label class="field__label" for="transportId">Transport ID</label>
+                <input class="input input--mono" id="transportId" value="roche-liat-live-shadow" spellcheck="false" />
               </div>
               <div class="field">
-                <label for="transportKind">Adapter profile</label>
-                <input id="transportKind" value="roche-cobas-liat-v2.0" readonly />
+                <label class="field__label" for="transportKind">Adapter profile</label>
+                <input class="input input--mono" id="transportKind" value="roche-cobas-liat-v2.0" readonly />
               </div>
               <div class="field">
-                <label for="bindHost">Bind host</label>
-                <input id="bindHost" value="127.0.0.1" spellcheck="false" />
+                <label class="field__label" for="bindHost">Bind host</label>
+                <input class="input input--mono" id="bindHost" value="127.0.0.1" spellcheck="false" />
               </div>
               <div class="field">
-                <label for="bindPort">Bind port</label>
-                <input id="bindPort" type="number" min="1" max="65535" value="2100" />
+                <label class="field__label" for="bindPort">Bind port</label>
+                <input class="input input--mono" id="bindPort" type="number" min="1" max="65535" value="2100" />
               </div>
               <div class="field full">
-                <label for="allowedPeers">Allowed analyzer peer IPs</label>
-                <textarea id="allowedPeers" spellcheck="false">127.0.0.1</textarea>
+                <label class="field__label" for="allowedPeers">Allowed analyzer peer IPs</label>
+                <textarea class="input input--mono" id="allowedPeers" spellcheck="false">127.0.0.1</textarea>
                 <p class="field-note">Literal IPv4/IPv6 addresses only, separated by lines or commas.</p>
               </div>
               <div class="field full">
-                <label for="bindingDir">Deidentified binding registry directory</label>
-                <input id="bindingDir" value="clinical-gateway/fixtures/live-shadow-bindings" spellcheck="false" />
+                <label class="field__label" for="bindingDir">Deidentified binding registry directory</label>
+                <input class="input input--mono" id="bindingDir" value="clinical-gateway/fixtures/live-shadow-bindings" spellcheck="false" />
                 <p class="field-note">Existing server-side directory. Hashed binding files never enter this page.</p>
               </div>
               <div class="field">
-                <label for="tlsCert">TLS server certificate path</label>
-                <input id="tlsCert" value="clinical-gateway/site-config/tls/server.crt" spellcheck="false" />
+                <label class="field__label" for="tlsCert">TLS server certificate path</label>
+                <input class="input input--mono" id="tlsCert" value="clinical-gateway/site-config/tls/server.crt" spellcheck="false" />
               </div>
               <div class="field">
-                <label for="tlsKey">TLS server private-key path</label>
-                <input id="tlsKey" value="clinical-gateway/site-config/tls/server.key" spellcheck="false" />
+                <label class="field__label" for="tlsKey">TLS server private-key path</label>
+                <input class="input input--mono" id="tlsKey" value="clinical-gateway/site-config/tls/server.key" spellcheck="false" />
               </div>
               <div class="field full">
-                <label for="tlsCa">Optional client-certificate CA path</label>
-                <input id="tlsCa" placeholder="Leave empty unless the site validates mTLS" spellcheck="false" />
+                <label class="field__label" for="tlsCa">Optional client-certificate CA path</label>
+                <input class="input input--mono" id="tlsCa" placeholder="Leave empty unless the site validates mTLS" spellcheck="false" />
               </div>
               <div class="field">
                 <div class="check">
@@ -646,10 +522,10 @@
           </div>
 
           <div class="actions">
-            <button id="startTransport" type="button">Start listener</button>
-            <button id="transportStatus" class="secondary" type="button">Refresh status</button>
-            <button id="listTransports" class="secondary" type="button">List transports</button>
-            <button id="stopTransport" class="danger" type="button">Stop listener</button>
+            <button id="startTransport" class="btn btn-secondary" type="button">Start listener</button>
+            <button id="transportStatus" class="btn btn-secondary" type="button">Refresh status</button>
+            <button id="listTransports" class="btn btn-secondary" type="button">List transports</button>
+            <button id="stopTransport" class="btn btn-secondary btn-danger" type="button">Stop listener</button>
           </div>
 
           <p class="privacy">
@@ -664,7 +540,7 @@
         <article class="card">
           <div class="card-head">
             <div>
-              <h2>Operational evidence</h2>
+              <h2 class="card-title">Operational evidence</h2>
               <p>Only bounded control metadata is rendered; clinical-content keys are withheld.</p>
             </div>
           </div>
