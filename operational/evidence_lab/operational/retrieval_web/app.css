@@ -5,10 +5,8 @@ button,textarea,input{font:inherit}
 button,a{touch-action:manipulation}
 button{cursor:pointer}
 button:disabled{cursor:not-allowed;opacity:.55}
+/* Focus is the founder base ring (summary joins it here); kit 1.1.1 brings the solid outline. */
 summary:focus-visible{outline:var(--border-focus) solid transparent;box-shadow:var(--shadow-focus);border-radius:var(--radius-sm)}
-/* The base ring (--shadow-focus, --focus at 55%) composites to about 2.2-2.4:1 on these light
-   grounds; a solid --focus outline over it keeps the ring at 4.8:1 or better. */
-[data-surface="light"] :where(a,button,input,textarea,summary):focus-visible{outline-color:var(--focus)}
 [hidden]{display:none!important}
 p{margin:0}
 .skip-link{display:inline-flex;align-items:center;min-height:var(--target-size-coarse);font-weight:var(--weight-semibold);text-decoration:none}
@@ -100,6 +98,9 @@ textarea:focus{border-color:var(--focus)}
 .receipt-details{margin-top:var(--space-5)}
 summary{cursor:pointer;color:var(--text-sub);font-size:var(--text-sm);font-weight:var(--weight-medium);padding:var(--space-2) 0}
 pre.code{font-size:var(--text-xs);white-space:pre-wrap;overflow-wrap:anywhere;max-height:260px;overflow:auto;margin:var(--space-2) 0 0}
+/* Code stays dark on both surfaces (founder rule). The light .code ground is the light --bg-deep,
+   so the receipt well takes the dark operator values from the shared scales. */
+[data-surface="light"] .code{background:var(--color-space-900);color:var(--color-gray-50);border-color:var(--color-gray-600)}
 .run-record{margin-top:var(--space-8);border-top:var(--border-hairline) solid var(--border);padding-top:var(--space-8);scroll-margin-top:var(--space-5)}
 .record-heading{display:flex;justify-content:space-between;align-items:center;gap:var(--space-4)}
 .record-heading h2{font-size:var(--text-xl);margin:var(--space-2) 0 var(--space-5)}
@@ -122,5 +123,5 @@ footer{display:flex;justify-content:space-between;gap:var(--space-4);flex-wrap:w
 .topbar>*{min-width:0}
 .health{overflow-wrap:anywhere}
 .breadcrumb{overflow-wrap:anywhere}
-@media(forced-colors:active){.tab.selected,.answer-status,.rail-link.active{outline:2px solid Highlight}.passage mark{outline:2px solid Highlight}[data-surface="light"] :where(a,button,input,textarea,summary):focus-visible{outline-color:Highlight}.health:before,.dot,.answer-status:before{border:1px solid currentColor}}
+@media(forced-colors:active){.tab.selected,.answer-status,.rail-link.active{outline:2px solid Highlight}.passage mark{outline:2px solid Highlight}.health:before,.dot,.answer-status:before{border:1px solid currentColor}}
 @media(max-width:380px){.topbar{align-items:flex-start;padding:var(--space-3) 0;height:auto}.health{max-width:95px}.tabs{gap:var(--space-4)}.action-row{flex-direction:column}.primary{width:100%}}

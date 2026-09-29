@@ -13,7 +13,7 @@
     "operational/external_retrieval_preview.py": "a3ce4b6c6f7c3cd660274eecb22374c13e4ff04b103f553710aae2c993a19ab6",
     "operational/external_retrieval_reader.py": "eb8918d65b3237c06e0794f9e299267904b268aff823c0241a65afcf48c50900",
     "operational/retrieval_web/.gitattributes": "c3eac0608db80eba0170282b91c86bd2e80520b558487b9a83204e88335f3a17",
-    "operational/retrieval_web/app.css": "16caaad480f287bed4b78aa92fe313a36a65ebede3f70566cd39f36bcbebec5a",
+    "operational/retrieval_web/app.css": "ada35fd3094ad5d174afad2140529236afcfc692d0a8991d2a2a55d350d162f8",
     "operational/retrieval_web/app.js": "fc00f97d4b81a52fb213f3de7c6b6db98a5ef3ddcbfa2495e428e960e3a419a7",
     "operational/retrieval_web/index.html": "5c766d0afbd226b8866673ecc94480fcf29ac2eb448a2fa42802d23b1210280f",
     "operational/retrieval_web/szl/SOURCE.json": "5cfe994c4ea5060aec217f250bf049b57f2063bbd2cf74ef67d16b086e1965b3",
