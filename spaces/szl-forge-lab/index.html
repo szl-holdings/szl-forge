@@ -3,71 +3,140 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%23070f20'/%3E%3Cpath d='M14 16h36v32H14z' fill='none' stroke='%232cf5c4' stroke-width='4'/%3E%3Ctext x='32' y='39' text-anchor='middle' font-family='monospace' font-size='18' font-weight='700' fill='%232cf5c4'%3ESZL%3C/text%3E%3C/svg%3E">
+<meta name="color-scheme" content="dark">
+<link rel="icon" type="image/svg+xml" href="kanchay/marks/szl-mark-gold.svg">
 <meta name="description" content="SZL Forge Lab — a provenance-first evidence console. Every packaged artifact is re-hashed and every receipt re-verified in your browser.">
 <title>SZL Forge Lab — evidence kernel</title>
+<link rel="stylesheet" href="kanchay/kanchay.css">
+<link rel="stylesheet" href="kanchay/kanchay-components.css">
 <style>
-:root{--bg:#060D1F;--panel:#0B1F3A;--panel2:#0A1830;--teal:#3AF4C8;--gold:#C9B787;--ink:#E8D9AE;--txt:#DCE7F5;--muted:#8FA3BF;--red:#F46A6A;--line:rgba(58,244,200,.18)}
+/* SZL Forge Lab on SZL Kanchay v1.0.0: every color, face, radius and space below is a kanchay.css token. */
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-a{color:var(--teal)}
-main{max-width:1160px;margin:0 auto;padding:0 20px 60px}
-.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;max-width:1160px;margin:0 auto;padding:18px 20px;border-bottom:1px solid var(--line)}
-.wordmark{color:var(--ink);text-decoration:none;font-weight:700;letter-spacing:.12em}
-.wordmark .mark{color:var(--teal);border:1px solid var(--teal);padding:2px 7px;border-radius:4px;margin-right:8px}
-.toplinks a{color:var(--muted);text-decoration:none;margin-left:16px;font-size:13px}
-.toplinks a:hover{color:var(--teal)}
-.eyebrow{color:var(--gold);letter-spacing:.22em;font-size:11px;margin:42px 0 10px;text-transform:uppercase}
-.eyebrow .pulse{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--teal);box-shadow:0 0 12px var(--teal);margin-right:8px;animation:p 2s infinite}
-@keyframes p{50%{opacity:.35}}
-h1{font-size:clamp(1.9rem,4.5vw,3rem);line-height:1.08;letter-spacing:-.03em;color:#F3FFFC;margin:0 0 12px}
-h1 span{color:var(--teal)}
-.lede{color:var(--muted);max-width:800px;margin:0 0 22px}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin:0 0 20px}
-.stats div{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:14px}
-.stats strong{display:block;font-size:19px;color:var(--teal);overflow-wrap:anywhere}
-.stats span{font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
-section{margin:36px 0}
-.kicker{color:var(--gold);font-size:11px;letter-spacing:.2em;text-transform:uppercase;margin:0 0 6px}
-h2{color:#F3FFFC;font-size:1.25rem;margin:0 0 14px}
-.panel{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:18px}
-pre{background:#050B18;border:1px solid var(--line);border-radius:8px;padding:14px;overflow:auto;font-size:12px;color:#BFE8DC;max-height:420px}
-table{width:100%;border-collapse:collapse;font-size:12.5px}
-td,th{border-bottom:1px solid rgba(143,163,191,.15);padding:7px 8px;text-align:left;vertical-align:top}
-th{color:var(--gold);font-size:11px;letter-spacing:.12em;text-transform:uppercase}
-.st{font-weight:700;letter-spacing:.08em;font-size:12px}
-.st.pass{color:var(--teal)} .st.fail{color:var(--red)} .st.warn{color:var(--gold)} .st.wait{color:var(--muted)}
-.note{border-left:3px solid var(--gold);background:rgba(201,183,135,.06);color:var(--ink);padding:10px 14px;font-size:13px;margin:14px 0}
-input,select{background:#050B18;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:9px 12px;font:inherit;margin:0 8px 8px 0}
-input:focus,select:focus{outline:1px solid var(--teal)}
-.vband{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:6px}
-.vcheck{border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--panel2);font-size:13px}
-.portfolio{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:10px}
-.asset{border:1px solid var(--line);border-radius:10px;padding:14px;background:var(--panel2);min-width:0}
-.asset h3{font-size:13px;margin:0 0 6px;color:#F3FFFC;overflow-wrap:anywhere}
-.asset p{font-size:12px;color:var(--muted);margin:4px 0}
-.badge{display:inline-block;border:1px solid currentColor;border-radius:999px;padding:2px 7px;font-size:10px;letter-spacing:.08em;text-transform:uppercase}
-.badge.model{color:var(--teal)}.badge.kernel{color:var(--gold)}.badge.bound{color:#8fb8ff}
-code{overflow-wrap:anywhere}
-footer{border-top:1px solid var(--line);color:var(--muted);font-size:12.5px;padding:22px 20px;max-width:1160px;margin:40px auto 0}
+html{background:var(--color-a11oy-bg);scroll-padding-top:var(--space-4)}
+body{font-family:var(--font-sans);font-size:15px;line-height:1.6;color:var(--color-a11oy-text-sub);background:var(--color-a11oy-bg)}
+a{color:var(--color-ink-signal);text-decoration-thickness:1px;text-underline-offset:3px}
+a:hover{color:var(--color-a11oy-text)}
+:focus-visible,.kc-input:focus-visible,.kc-select:focus-visible{outline:var(--border-focus) solid var(--color-focus);outline-offset:2px}
+b,strong{font-weight:600;color:var(--color-a11oy-text)}
+code,pre{font-family:var(--font-mono)}
+code{font-size:.88em;overflow-wrap:anywhere}
+
+.skip-link{position:absolute;top:var(--space-2);left:var(--space-4);z-index:var(--z-toast);display:inline-flex;align-items:center;min-height:var(--szl-touch-target);padding:0 var(--space-4);border-radius:var(--radius-sm);background:var(--color-a11oy-gold);color:var(--color-on-accent);font-weight:600;text-decoration:none;transform:translateY(-200%)}
+.skip-link:focus,.skip-link:hover{transform:none;background:var(--gold-bright);color:var(--color-on-accent)}
+
+.site-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0 var(--space-4);max-width:72rem;min-height:56px;margin:0 auto;padding:var(--space-1) var(--szl-theatre-gutter)}
+.kc-site-brand{min-height:var(--szl-touch-target)}
+.kc-site-brand .kc-mark{width:20px;height:20px}
+.kc-site-name{font-size:15px;font-weight:600}
+.toplinks{display:flex;flex-wrap:wrap;margin:0 calc(-1 * var(--space-3))}
+.toplinks a{display:inline-flex;align-items:center;min-height:var(--szl-touch-target);padding:0 var(--space-3);border-radius:var(--radius-md);color:var(--color-a11oy-text-sub);font-family:var(--font-sans);font-size:13px;font-weight:500;line-height:20px;text-decoration:none;transition:background-color var(--duration-fast) var(--ease-standard),color var(--duration-fast) var(--ease-standard)}
+.toplinks a:hover{background:var(--color-a11oy-overlay);color:var(--color-a11oy-text)}
+@media (max-width:767px){.kc-site-header{position:static}}
+@media (min-width:768px){html{scroll-padding-top:calc(56px + var(--space-4))}}
+
+main{max-width:72rem;margin:0 auto;padding:0 var(--szl-theatre-gutter) var(--space-16)}
+main section{margin:var(--space-12) 0}
+main section:first-child{margin-top:0}
+.hero{position:relative;isolation:isolate;padding:var(--space-10) 0 var(--space-2)}
+.hero::before{content:"";position:absolute;z-index:-1;inset:0 calc(-1 * var(--szl-theatre-gutter));pointer-events:none;background-image:linear-gradient(to right,color-mix(in srgb,var(--color-a11oy-text) 2.5%,transparent) 1px,transparent 1px),linear-gradient(to bottom,color-mix(in srgb,var(--color-a11oy-text) 2.5%,transparent) 1px,transparent 1px);background-size:56px 56px;-webkit-mask-image:radial-gradient(ellipse at 50% 45%,var(--color-a11oy-text) 0%,transparent 72%);mask-image:radial-gradient(ellipse at 50% 45%,var(--color-a11oy-text) 0%,transparent 72%)}
+.hero .kc-eyebrow{max-width:100%;margin:0 0 var(--space-5)}
+h1{margin:0 0 var(--space-4);font-family:var(--font-display);font-size:clamp(2.1rem,5.2vw,3.6rem);font-weight:300;line-height:1.04;letter-spacing:-.035em;color:var(--color-a11oy-text);text-wrap:balance}
+h1 span{color:var(--color-a11oy-gold)}
+.lede{max-width:var(--szl-readable-measure);margin:0 0 var(--space-6);font-size:17px;line-height:1.65;color:var(--color-a11oy-text-sub);text-wrap:pretty}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));gap:var(--szl-fluid-gap);margin:0 0 var(--space-5)}
+.stats>div{min-width:0;padding:var(--space-4);background:var(--color-a11oy-surface);border:var(--border-hairline) solid var(--color-a11oy-border-subtle);border-top:var(--border-thick) solid color-mix(in srgb,var(--color-a11oy-gold) 15%,transparent);border-radius:var(--radius-md);transition:border-color var(--duration-fast) var(--ease-standard)}
+.stats>div:hover{border-color:var(--color-a11oy-border);border-top-color:color-mix(in srgb,var(--color-a11oy-gold) 35%,transparent)}
+.stats strong{display:block;font-size:20px;font-weight:300;line-height:28px;font-variant-numeric:tabular-nums;color:var(--color-a11oy-text);overflow-wrap:anywhere}
+.stats span{display:block;margin-top:var(--space-1);font-family:var(--font-mono);font-size:11px;font-weight:500;line-height:16px;letter-spacing:.15em;text-transform:uppercase;color:var(--color-a11oy-text-sub)}
+@media (min-width:768px){#metrics{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+.note{margin:var(--space-3) 0;padding:var(--space-3) var(--space-4);background:var(--color-a11oy-deep);border:var(--border-hairline) solid var(--gold-line);border-radius:var(--radius-md);font-size:14px;color:var(--color-a11oy-text-sub);text-wrap:pretty}
+.note b:first-child{color:var(--color-a11oy-gold)}
+
+.kicker{margin:0 0 var(--space-2);font-family:var(--font-mono);font-size:11px;line-height:16px;letter-spacing:.25em;text-transform:uppercase;color:var(--color-a11oy-gold)}
+h2{margin:0 0 var(--space-5);font-family:var(--font-display);font-size:clamp(1.375rem,2.6vw,1.875rem);font-weight:300;line-height:1.2;letter-spacing:-.025em;color:var(--color-a11oy-text);text-wrap:balance}
+.panel{padding:var(--space-4);background:var(--color-a11oy-deep);border:var(--border-hairline) solid var(--color-a11oy-border-subtle);border-radius:var(--radius-md)}
+@media (min-width:768px){.panel{padding:var(--space-5)}}
+.stack-top{margin-top:var(--space-3)}
+.panel-lede{margin:0 0 var(--space-3);font-size:14px;color:var(--color-a11oy-text-sub)}
+.panel-note{margin:var(--space-3) 0 0;font-size:13px;color:var(--color-a11oy-text-ghost)}
 .scroll{overflow-x:auto}
+pre{margin:0;max-height:420px;padding:var(--space-4);overflow:auto;background:var(--color-a11oy-deep);border:var(--border-hairline) solid var(--gold-line);border-radius:var(--radius-md);font-size:12px;line-height:1.65;color:var(--color-a11oy-text-sub)}
+
+table{width:100%;border-collapse:collapse;font-size:13px;line-height:1.5;font-variant-numeric:tabular-nums}
+td,th{padding:var(--space-2);border-bottom:var(--border-hairline) solid var(--color-a11oy-border-subtle);text-align:left;vertical-align:top}
+th{font-family:var(--font-mono);font-size:11px;font-weight:500;line-height:16px;letter-spacing:.15em;text-transform:uppercase;color:var(--color-a11oy-text-ghost)}
+td{color:var(--color-a11oy-text-sub)}
+td a{display:inline-flex;align-items:center;min-height:var(--szl-touch-target)}
+.st{font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:.15em;text-transform:uppercase}
+.st.pass{color:var(--color-ink-signal)}
+.st.fail{color:var(--color-ink-danger)}
+.st.warn{color:var(--color-ink-caution)}
+.st.wait{color:var(--color-a11oy-text-sub)}
+
+.vband{display:grid;grid-template-columns:repeat(auto-fit,minmax(14rem,1fr));gap:var(--szl-fluid-gap)}
+.vcheck{min-width:0;padding:var(--space-4);background:var(--color-a11oy-surface);border:var(--border-hairline) solid var(--color-a11oy-border-subtle);border-radius:var(--radius-md);font-size:14px;color:var(--color-a11oy-text-sub)}
+
+.portfolio{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:var(--szl-fluid-gap)}
+.asset{min-width:0;padding:var(--space-5);background:var(--color-a11oy-surface);border:var(--border-hairline) solid var(--color-a11oy-border-subtle);border-radius:var(--radius-md);transition:border-color var(--duration-fast) var(--ease-standard),box-shadow var(--duration-fast) var(--ease-standard),transform var(--duration-fast) var(--ease-standard)}
+.asset:hover{border-color:color-mix(in srgb,var(--color-a11oy-gold) 20%,transparent);box-shadow:var(--shadow-lg);transform:translateY(-1px)}
+.asset h3{margin:var(--space-2) 0 0;font-family:var(--font-display);font-size:16px;font-weight:600;line-height:1.3;letter-spacing:-.01em;overflow-wrap:anywhere}
+.asset h3 a{display:inline-flex;align-items:center;min-height:var(--szl-touch-target);color:var(--color-a11oy-gold);text-decoration:none}
+.asset h3 a:hover{color:var(--gold-bright);text-decoration:underline}
+.asset p{margin:var(--space-1) 0;font-size:13px;color:var(--color-a11oy-text-sub)}
+.asset p b{font-family:var(--font-mono);font-size:11px;font-weight:500;letter-spacing:.12em;overflow-wrap:anywhere}
+.badge{--tone:var(--color-a11oy-text-ghost);display:inline-flex;align-items:center;gap:var(--space-2);padding:2px var(--space-2);border:var(--border-hairline) solid color-mix(in srgb,var(--tone) 40%,transparent);border-radius:var(--radius-sm);background:color-mix(in srgb,var(--tone) 12%,transparent);font-family:var(--font-mono);font-size:10px;font-weight:500;line-height:16px;letter-spacing:.15em;text-transform:uppercase;color:var(--color-a11oy-text-sub)}
+.badge::before{content:"";flex:none;width:6px;height:6px;border-radius:var(--radius-full);background:var(--tone)}
+.badge.model{--tone:var(--color-a11oy-gold)}
+.badge.bound{--tone:var(--color-ink-signal)}
+
+.controls{display:flex;flex-wrap:wrap;gap:var(--space-2)}
+.kc-input,.kc-select{min-height:var(--szl-touch-target);font-size:16px}
+.controls .kc-input{flex:1 1 16rem;width:auto;min-width:0}
+.controls .kc-select{flex:0 1 auto;width:auto;max-width:100%}
+
+footer{max-width:72rem;margin:0 auto;padding:var(--space-6) var(--szl-theatre-gutter);border-top:var(--border-hairline) solid var(--color-a11oy-border);font-size:13px;color:var(--color-a11oy-text-ghost)}
+footer b{color:var(--color-a11oy-text-sub)}
+footer .links a{display:inline-flex;align-items:center;min-height:var(--szl-touch-target)}
+
+.fw{padding:var(--space-4) var(--szl-theatre-gutter);background:var(--color-a11oy-bg);border-top:var(--border-hairline) solid var(--gold-line);font-family:var(--font-mono);font-size:12px;line-height:1.7;color:var(--color-a11oy-text-sub)}
+.fw-inner{max-width:calc(72rem - 2 * var(--szl-theatre-gutter));margin:0 auto}
+.fw-tag{letter-spacing:.15em;color:var(--color-a11oy-gold)}
+.fw .kc-btn{min-height:var(--szl-touch-target);margin:var(--space-1) 0 var(--space-1) var(--space-2)}
+.fw-out{color:var(--color-ink-signal);word-break:break-all}
+.fw-row{margin-top:var(--space-2)}
+.fw code{padding:1px var(--space-2);background:var(--color-a11oy-deep);border:var(--border-hairline) solid var(--color-a11oy-border-subtle);border-radius:var(--radius-sm);color:var(--color-a11oy-text)}
+.fw-fine{margin-top:var(--space-1);color:var(--color-a11oy-text-ghost)}
+
+@media (prefers-reduced-motion: reduce){.kc-eyebrow-dot{animation:none}.asset:hover{transform:none}}
+@media (forced-colors: active){
+.hero::before{display:none}
+.kc-eyebrow-dot,.badge::before{forced-color-adjust:none;background:CanvasText}
+.skip-link{border:var(--border-hairline) solid ButtonText}
+}
 </style>
 </head>
 <body>
-<header class="topbar">
-  <a class="wordmark" href="./"><span class="mark">SZL</span>FORGE LAB</a>
-  <nav class="toplinks">
-    <a href="foundation/index.html">Confirmation explorer</a>
-    <a href="https://github.com/szl-holdings/szl-forge" target="_blank" rel="noopener">Forge program</a>
-    <a href="https://huggingface.co/spaces/SZLHOLDINGS/szl-forge-lab/tree/main" target="_blank" rel="noopener">Evidence files</a>
-    <a href="https://huggingface.co/SZLHOLDINGS" target="_blank" rel="noopener">SZLHOLDINGS</a>
-  </nav>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="kc-site-header">
+  <div class="site-bar">
+    <a class="kc-site-brand" href="./"><img class="kc-mark" src="kanchay/marks/szl-mark-gold.svg" alt="" width="20" height="20"><span class="kc-site-name">SZL Forge Lab</span></a>
+    <nav class="toplinks" aria-label="Forge links">
+      <a href="foundation/index.html">Confirmation explorer</a>
+      <a href="https://github.com/szl-holdings/szl-forge" target="_blank" rel="noopener">Forge program</a>
+      <a href="https://huggingface.co/spaces/SZLHOLDINGS/szl-forge-lab/tree/main" target="_blank" rel="noopener">Evidence files</a>
+      <a href="https://huggingface.co/SZLHOLDINGS" target="_blank" rel="noopener">SZLHOLDINGS</a>
+    </nav>
+  </div>
 </header>
-<main>
+<main id="main">
 <section>
-  <p class="eyebrow"><span class="pulse"></span> EVIDENCE KERNEL · READ-ONLY SNAPSHOT</p>
-  <h1>Don&rsquo;t read the claims.<br><span>Re-hash the evidence.</span></h1>
-  <p class="lede">A provenance-first console over the SZL Forge snapshot: run manifest, deterministic evaluation receipts, formula registry, governed source ledger, and curriculum. Your browser fetches the packaged artifacts, <b>recomputes their SHA-256 against the manifest declarations</b>, and re-verifies each receipt&rsquo;s canonical hash — live, on every load.</p>
+  <div class="hero">
+    <p class="kc-eyebrow"><span class="kc-eyebrow-dot" aria-hidden="true"></span><span class="kc-eyebrow-text">EVIDENCE KERNEL · READ-ONLY SNAPSHOT</span></p>
+    <h1>Don&rsquo;t read the claims.<br><span>Re-hash the evidence.</span></h1>
+    <p class="lede">A provenance-first console over the SZL Forge snapshot: run manifest, deterministic evaluation receipts, formula registry, governed source ledger, and curriculum. Your browser fetches the packaged artifacts, <b>recomputes their SHA-256 against the manifest declarations</b>, and re-verifies each receipt&rsquo;s canonical hash — live, on every load.</p>
+  </div>
   <div class="stats" id="metrics"></div>
   <p class="note"><b>Source-aware confirmation.</b> When is another observation worth buying? <a href="foundation/index.html">Replay 5,184 recorded runs</a>, compare seven policies and explore fixed-trace costs. Synthetic research: shared-bias comparison passed; clean-sensor guard failed; overall registered gate FAILED.</p>
   <p class="note"><b>Evidence boundary.</b> Two published fine-tunes, one GGUF derivative, and one learned kernel contain weight bytes. Eleven additional Hub entries are software kernels, recipes, or cards—not trained models. Signed receipts prove declared-key integrity; they do not establish independent quality, safety, or authorship.</p>
@@ -89,15 +158,15 @@ footer{border-top:1px solid var(--line);color:var(--muted);font-size:12.5px;padd
     <div class="vcheck"><span class="st wait" id="r-eval">WAITING</span> — <code>eval_receipt.json</code> receipt hash, same rule</div>
     <div class="vcheck"><span class="st wait" id="r-files">WAITING</span> — packaged artifacts re-hashed vs manifest declarations</div>
   </div>
-  <div class="panel scroll" style="margin-top:12px"><table id="integrity"><tr><th>Declared input</th><th>Packaged here as</th><th>State</th><th>Expected SHA-256</th><th>Recomputed in this browser</th></tr></table>
-  <p style="font-size:12.5px;color:var(--muted);margin:10px 0 0">A matching hash proves byte identity only. Inputs marked NOT&nbsp;PACKAGED live on the owner&rsquo;s training host and are intentionally not shipped (e.g. training data) — their absence is stated, not hidden.</p></div>
+  <div class="panel scroll stack-top" tabindex="0" role="region" aria-label="Integrity table"><table id="integrity"><tr><th>Declared input</th><th>Packaged here as</th><th>State</th><th>Expected SHA-256</th><th>Recomputed in this browser</th></tr></table>
+  <p class="panel-note">A matching hash proves byte identity only. Inputs marked NOT&nbsp;PACKAGED live on the owner&rsquo;s training host and are intentionally not shipped (e.g. training data) — their absence is stated, not hidden.</p></div>
 </section>
 
 <section>
   <p class="kicker">03 · EVALUATION</p>
   <h2>Deterministic fixture checks — scoped, not a benchmark</h2>
-  <div class="panel scroll">
-    <p style="font-size:13px;color:var(--muted);margin:0 0 10px" id="eval-summary">loading…</p>
+  <div class="panel scroll" tabindex="0" role="region" aria-label="Evaluation table">
+    <p class="panel-lede" id="eval-summary">loading…</p>
     <table id="eval"><tr><th>Case</th><th>Category</th><th>Result</th><th>Response SHA-256</th></tr></table>
   </div>
 </section>
@@ -106,10 +175,12 @@ footer{border-top:1px solid var(--line);color:var(--muted);font-size:12.5px;padd
   <p class="kicker">04 · FORMULA REGISTRY</p>
   <h2>Search the packaged formula index</h2>
   <div class="panel">
-    <input id="fq" placeholder="search id / title / theorem…" style="min-width:260px">
-    <select id="fs"><option value="ALL">ALL statuses</option></select>
-    <div class="scroll" style="margin-top:8px"><table id="formulas"></table></div>
-    <p style="font-size:12.5px;color:var(--muted);margin:10px 0 0">Statuses are declarations from the packaged registry. This page does not execute Lean and never elevates a formula to proven.</p>
+    <div class="controls">
+      <input id="fq" class="kc-input" placeholder="search id / title / theorem…" aria-label="Search the formula index">
+      <select id="fs" class="kc-select" aria-label="Filter by declared status"><option value="ALL">ALL statuses</option></select>
+    </div>
+    <div class="scroll stack-top" tabindex="0" role="region" aria-label="Formula table"><table id="formulas"></table></div>
+    <p class="panel-note">Statuses are declarations from the packaged registry. This page does not execute Lean and never elevates a formula to proven.</p>
   </div>
 </section>
 
@@ -117,22 +188,24 @@ footer{border-top:1px solid var(--line);color:var(--muted);font-size:12.5px;padd
   <p class="kicker">05 · SOURCE LEDGER</p>
   <h2>Default-deny scientific source governance</h2>
   <div class="panel">
-    <select id="sd"><option value="ALL">ALL domains</option></select>
-    <select id="sdec"><option value="ALL">ALL decisions</option></select>
-    <div class="scroll" style="margin-top:8px"><table id="sources"></table></div>
+    <div class="controls">
+      <select id="sd" class="kc-select" aria-label="Filter by domain"><option value="ALL">ALL domains</option></select>
+      <select id="sdec" class="kc-select" aria-label="Filter by decision"><option value="ALL">ALL decisions</option></select>
+    </div>
+    <div class="scroll stack-top" tabindex="0" role="region" aria-label="Source ledger table"><table id="sources"></table></div>
   </div>
 </section>
 
 <section>
   <p class="kicker">06 · CURRICULUM</p>
   <h2>Governed curriculum blueprint — not a training claim</h2>
-  <div class="panel scroll"><table id="curr"></table></div>
+  <div class="panel scroll" tabindex="0" role="region" aria-label="Curriculum table"><table id="curr"></table></div>
 </section>
 
 <section>
   <p class="kicker">07 · RAW EVIDENCE</p>
   <h2>Verify from outside this page</h2>
-  <pre># every artifact this page rendered, hash it yourself:
+  <pre tabindex="0" aria-label="Shell commands to hash the evidence files"># every artifact this page rendered, hash it yourself:
 for f in run_manifest.json eval_receipt.json training_summary.json thesis_formula_index.json science_source_ledger.json curriculum.json; do
   curl -sL https://huggingface.co/spaces/SZLHOLDINGS/szl-forge-lab/resolve/main/$f | sha256sum
 done</pre>
@@ -141,20 +214,20 @@ done</pre>
 <footer>
   <p><b>Doctrine:</b> configuration is not evidence of completed training. Formula analysis is advisory unless an independent formal checker passes. Λ = Conjecture 1 — never a theorem. A hash match proves byte identity, not truth.</p>
   <p><b>ATELIER lock:</b> SNAPSHOT only · <code>BLUEPRINT_NOT_TRAINED</code> · no Unsloth Studio · no Jobs launcher · serve = <a href="https://szlholdings-szl-model-inference-lab.hf.space">szl-model-inference-lab</a> · energy 8/8 = SIMULATED · Ask &amp; Act is not a control plane.</p>
-  <p><a href="https://github.com/szl-holdings/szl-forge">szl-forge</a> · <a href="https://a-11-oy.com">a-11-oy.com</a> · <a href="https://huggingface.co/SZLHOLDINGS">SZLHOLDINGS</a> · Apache-2.0</p>
+  <p class="links"><a href="https://github.com/szl-holdings/szl-forge">szl-forge</a> · <a href="https://a-11-oy.com">a-11-oy.com</a> · <a href="https://huggingface.co/SZLHOLDINGS">SZLHOLDINGS</a> · Apache-2.0</p>
 </footer>
 
 <!-- SZL-FOURTH-WALL:v1:START — this page proves itself to the visitor. Integrity & origin only. -->
-<section id="fourth-wall" style="background:#060D1F;border-top:1px solid #C9B787;padding:14px 20px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:#8FA3BF;line-height:1.7">
-  <div style="max-width:960px;margin:0 auto">
-    <span style="color:#C9B787;letter-spacing:2px">⟨ 4TH WALL ⟩</span>
+<section id="fourth-wall" class="fw">
+  <div class="fw-inner">
+    <span class="fw-tag">⟨ 4TH WALL ⟩</span>
     <span> You are reading rendered bytes. Don&rsquo;t trust them — hash them:</span>
-    <button id="fw-hash-btn" style="margin-left:8px;background:transparent;border:1px solid #3AF4C8;color:#3AF4C8;padding:2px 10px;border-radius:3px;font:inherit;cursor:pointer">hash this page</button>
-    <span id="fw-hash-out" style="color:#3AF4C8;word-break:break-all"></span>
-    <div style="margin-top:6px">canonical source: <a href="https://huggingface.co/spaces/SZLHOLDINGS/szl-forge-lab/tree/main" style="color:#C9B787">SZLHOLDINGS/szl-forge-lab</a><span id="fw-rev"></span> · verify from outside:
-      <code style="color:#E8D9AE;background:#0B1F3A;padding:1px 6px;border-radius:3px">curl -sL https://huggingface.co/spaces/SZLHOLDINGS/szl-forge-lab/resolve/main/index.html | sha256sum</code>
+    <button id="fw-hash-btn" type="button" class="kc-btn kc-btn--outline kc-btn--sm">Hash this page</button>
+    <span id="fw-hash-out" class="fw-out"></span>
+    <div class="fw-row">canonical source: <a href="https://huggingface.co/spaces/SZLHOLDINGS/szl-forge-lab/tree/main">SZLHOLDINGS/szl-forge-lab</a><span id="fw-rev"></span> · verify from outside:
+      <code>curl -sL https://huggingface.co/spaces/SZLHOLDINGS/szl-forge-lab/resolve/main/index.html | sha256sum</code>
     </div>
-    <div style="margin-top:4px;color:#5c6f8a">Integrity &amp; origin of this page only — never the accuracy of anything on it. Hugging Face may inject one <code>window.huggingface</code> <code>&lt;script&gt;</code> into <code>&lt;head&gt;</code>, so the in-browser hash can differ from the source hash by exactly that banner. Doctrine v11.</div>
+    <div class="fw-fine">Integrity &amp; origin of this page only — never the accuracy of anything on it. Hugging Face may inject one <code>window.huggingface</code> <code>&lt;script&gt;</code> into <code>&lt;head&gt;</code>, so the in-browser hash can differ from the source hash by exactly that banner. Doctrine v11.</div>
   </div>
 </section>
 <!-- SZL-FOURTH-WALL:v1:END -->
