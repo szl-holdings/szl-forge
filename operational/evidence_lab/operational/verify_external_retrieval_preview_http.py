@@ -25,13 +25,11 @@ MAX_RESPONSE_BYTES = 8 * 1024 * 1024
 SOURCE_NAMES = ("external_retrieval_core.py", "external_retrieval_data.py",
                 "external_retrieval_lab.py", "external_retrieval_reader.py")
 ARTIFACT_NAMES = ("freeze.json", "payload.json", "result.json", "calibration.json", "documents.npy")
-KANCHAY_FONTS = ("SpaceGrotesk-latin.woff2", "Inter-latin.woff2", "JetBrainsMono-latin.woff2")
-ASSET_NAMES = ("index.html", "app.css", "app.js", "kanchay/kanchay.css",
-               *("kanchay/fonts/" + font for font in KANCHAY_FONTS))
-# Text assets fetched and compared byte-for-byte; the binary fonts are bound through
-# the status asset digests only, because receipts record response bodies as text.
-SERVED_TEXT_ASSETS = (("index.html", "/"), ("app.css", "/app.css"), ("app.js", "/app.js"),
-                      ("kanchay/kanchay.css", "/kanchay/kanchay.css"))
+# Every status-bound asset and the route that serves it; each is fetched and compared.
+SERVED_ASSETS = (("index.html", "/"), ("app.css", "/app.css"), ("app.js", "/app.js"),
+                 ("szl/szl-design-system.css", "/szl/szl-design-system.css"),
+                 ("szl/logos/szl_favicon.svg", "/szl/logos/szl_favicon.svg"))
+ASSET_NAMES = tuple(name for name, _ in SERVED_ASSETS)
 
 
 def require(condition, message):
@@ -212,7 +210,7 @@ def verify(url, lab_root, run_id, receipt):
     require(before.get("documents") == len(documents), "Preview document count mismatch")
     check("readiness_current_source_and_runtime_binding", "Live status matches current wrapper, assets, frozen result and runtime versions.")
 
-    for name, route in SERVED_TEXT_ASSETS:
+    for name, route in SERVED_ASSETS:
         response = request(route)
         require(response["status_code"] == 200, "Static asset request failed")
         security_headers(response)

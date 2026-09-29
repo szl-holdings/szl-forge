@@ -48,8 +48,8 @@ authentication. Local programs can call the API. Do not tunnel it to the interne
 Exact loopback Host/port and same-origin checks; cross-site Fetch Metadata
 denial; 64 KiB request cap; duplicate/non-finite JSON rejection; field validation;
 single-GPU concurrency; immutable static-asset hashes, including the vendored
-SZL Kanchay stylesheet and three fonts served from fixed `/kanchay/` paths;
-no external scripts, fonts or model requests; CSP, no framing, no-store and
+SZL KANCHAY stylesheet and favicon served from fixed `/szl/` paths; no
+external scripts, fonts or model requests; CSP, no framing, no-store and
 noindex headers. Artifact
 hashes are checked before/after model startup. Changes require a restart.
 

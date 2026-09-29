@@ -18,12 +18,11 @@ from external_retrieval_lab import LocalService, load_json, digest, paths, CONFI
 sys.path.insert(0, str(HERE.parent / "risk_kernel"))
 from unresolved_identifier_gate_v3 import corpus_vocabulary, gate_decision
 
-# Vendored SZL Kanchay stylesheet and the three fonts it references, served read-only
-# from fixed paths: explicit URL -> (file under retrieval_web, media type), no mount.
-KANCHAY_ROUTES = {
-    "/kanchay/kanchay.css": ("kanchay/kanchay.css", "text/css; charset=utf-8"),
-    **{f"/kanchay/fonts/{font}": (f"kanchay/fonts/{font}", "font/woff2") for font in (
-        "SpaceGrotesk-latin.woff2", "Inter-latin.woff2", "JetBrainsMono-latin.woff2")},
+# Vendored SZL KANCHAY design-system stylesheet and favicon, served read-only from fixed
+# paths: explicit URL -> (file under retrieval_web, media type), no mount or listing.
+SZL_ASSET_ROUTES = {
+    "/szl/szl-design-system.css": ("szl/szl-design-system.css", "text/css; charset=utf-8"),
+    "/szl/logos/szl_favicon.svg": ("szl/logos/szl_favicon.svg", "image/svg+xml"),
 }
 
 
@@ -93,7 +92,7 @@ def create_preview(service, summary, port=8766):
     hosts = {f"127.0.0.1:{port}", f"localhost:{port}"}
     assets = HERE / "retrieval_web"
     bound = {name: digest(assets / name) for name in (
-        "index.html", "app.css", "app.js", *(name for name, _ in KANCHAY_ROUTES.values()))}
+        "index.html", "app.css", "app.js", *(name for name, _ in SZL_ASSET_ROUTES.values()))}
     preview_sha = digest(__file__)
     code_paths = {"preview": Path(__file__)}
     code_paths.update({name: HERE / name for name in (
@@ -147,11 +146,11 @@ def create_preview(service, summary, port=8766):
         return static("app.js")
 
     def vendored(name, media_type):
-        def kanchay_asset():
+        def szl_asset():
             return static(name, media_type)
-        return kanchay_asset
+        return szl_asset
 
-    for route, (name, media_type) in KANCHAY_ROUTES.items():
+    for route, (name, media_type) in SZL_ASSET_ROUTES.items():
         app.add_api_route(route, vendored(name, media_type), methods=["GET"])
 
     @app.get("/api/status")
