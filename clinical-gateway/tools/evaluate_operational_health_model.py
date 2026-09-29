@@ -220,6 +220,147 @@ def calculate_metrics(labels: Sequence[int], scores: Sequence[float], threshold:
     }
 
 
+BOOTSTRAP_REPLICATES = 2000
+BOOTSTRAP_SEED = 20260926
+COMPARISON_METRICS = ("accuracy", "balanced_accuracy", "precision", "recall", "specificity", "f1", "roc_auc")
+
+
+def _point_metrics(labels: Sequence[int], predicted: Sequence[bool], ranking: Sequence[float]) -> dict[str, Any]:
+    tp = sum(1 for y, p in zip(labels, predicted, strict=True) if y and p)
+    fp = sum(1 for y, p in zip(labels, predicted, strict=True) if not y and p)
+    fn = sum(1 for y, p in zip(labels, predicted, strict=True) if y and not p)
+    tn = len(labels) - tp - fp - fn
+    positive, negative = tp + fn, tn + fp
+    rank_sum, start = 0.0, 0
+    ordered = sorted(zip(ranking, labels, strict=True))
+    while start < len(ordered):
+        end = start + 1
+        while end < len(ordered) and ordered[end][0] == ordered[start][0]:
+            end += 1
+        rank_sum += ((start + 1 + end) / 2) * sum(label for _, label in ordered[start:end])
+        start = end
+    return {
+        "accuracy": (tp + tn) / len(labels),
+        "balanced_accuracy": (tp / positive + tn / negative) / 2 if positive and negative else None,
+        "precision": tp / (tp + fp) if tp + fp else None,
+        "recall": tp / positive if positive else None,
+        "specificity": tn / negative if negative else None,
+        "f1": 2 * tp / (2 * tp + fp + fn) if 2 * tp + fp + fn else None,
+        "roc_auc": (rank_sum - positive * (positive + 1) / 2) / (positive * negative) if positive and negative else None,
+        "confusion": {"true_positive": tp, "false_positive": fp, "false_negative": fn, "true_negative": tn},
+    }
+
+
+def _percentile_interval(values: Sequence[float]) -> dict[str, Any] | None:
+    ordered = sorted(values)
+    if not ordered:
+        return None
+    lower = ordered[max(0, math.floor(0.025 * (len(ordered) - 1)))]
+    upper = ordered[min(len(ordered) - 1, math.ceil(0.975 * (len(ordered) - 1)))]
+    return {"lower": round(lower, 12), "upper": round(upper, 12), "defined_replicates": len(ordered),
+            "excludes_zero": lower > 0 or upper < 0}
+
+
+def compare_against_references(labels: Sequence[int], scores: Sequence[float], threshold: float,
+                               consecutive_failures: Sequence[float], oracle_probability: Sequence[float],
+                               train_majority_positive: bool) -> dict[str, Any]:
+    """Place the fixed model between two floors and the generator's Bayes-optimal ceiling.
+
+    Floors: the training-majority constant and the rule ``consecutive_failures > 0``.
+    Ceiling: the published generator's own label probability, which is the Bayes-optimal
+    scorer for this synthetic distribution. The ceiling is reported threshold-free only
+    (ROC AUC, Brier), so no threshold is ever selected on the test split.
+    Intervals are paired percentile bootstrap over test rows with a fixed seed.
+    """
+    import random
+
+    rows = len(labels)
+    if not (rows == len(scores) == len(consecutive_failures) == len(oracle_probability)) or not 0 < sum(labels) < rows:
+        raise EvaluationError("INVALID_COMPARISON_INPUTS")
+    constant = 1.0 if train_majority_positive else 0.0
+    predictors = {
+        "train_majority_constant": ([bool(constant)] * rows, [constant] * rows),
+        "rule_consecutive_failures_gt_0": ([value > 0 for value in consecutive_failures],
+                                           [1.0 if value > 0 else 0.0 for value in consecutive_failures]),
+        "fixed_model": ([score >= threshold for score in scores], list(scores)),
+    }
+    rng = random.Random(BOOTSTRAP_SEED)
+    samples = {name: {metric: [] for metric in COMPARISON_METRICS} for name in predictors}
+    differences = {f"fixed_model_minus_{name}": {metric: [] for metric in COMPARISON_METRICS}
+                   for name in predictors if name != "fixed_model"}
+    ceiling_gap: list[float] = []
+    usable = 0
+    for _ in range(BOOTSTRAP_REPLICATES):
+        index = [rng.randrange(rows) for _ in range(rows)]
+        resampled = [labels[i] for i in index]
+        if not 0 < sum(resampled) < rows:
+            continue
+        usable += 1
+        replicate = {name: _point_metrics(resampled, [pred[i] for i in index], [rank[i] for i in index])
+                     for name, (pred, rank) in predictors.items()}
+        for name, values in replicate.items():
+            for metric in COMPARISON_METRICS:
+                if values[metric] is not None:
+                    samples[name][metric].append(values[metric])
+        for key, bucket in differences.items():
+            other = replicate[key.removeprefix("fixed_model_minus_")]
+            for metric in COMPARISON_METRICS:
+                if replicate["fixed_model"][metric] is not None and other[metric] is not None:
+                    bucket[metric].append(replicate["fixed_model"][metric] - other[metric])
+        oracle_auc = _point_metrics(resampled, [False] * rows, [oracle_probability[i] for i in index])["roc_auc"]
+        ceiling_gap.append(oracle_auc - replicate["fixed_model"]["roc_auc"])
+    point = {name: _point_metrics(labels, pred, rank) for name, (pred, rank) in predictors.items()}
+    oracle_point_auc = _point_metrics(labels, [False] * rows, oracle_probability)["roc_auc"]
+    model_point_auc = point["fixed_model"]["roc_auc"]
+
+    def rounded(value: float | None) -> float | None:
+        return round(value, 12) if value is not None else None
+
+    return {
+        "method": "paired_percentile_bootstrap_over_fixed_public_test_rows",
+        "bootstrap_replicates": BOOTSTRAP_REPLICATES, "usable_replicates": usable,
+        "bootstrap_seed": BOOTSTRAP_SEED, "decision_threshold": threshold,
+        "predictors": {
+            name: {"confusion": point[name]["confusion"],
+                   "metrics": {metric: {"value": rounded(point[name][metric]),
+                                        "interval_95": _percentile_interval(samples[name][metric])}
+                               for metric in COMPARISON_METRICS}}
+            for name in predictors
+        },
+        "paired_differences": {
+            key: {metric: {"value": rounded(point["fixed_model"][metric] - point[key.removeprefix("fixed_model_minus_")][metric])
+                           if point["fixed_model"][metric] is not None
+                           and point[key.removeprefix("fixed_model_minus_")][metric] is not None else None,
+                           "interval_95": _percentile_interval(bucket[metric])}
+                  for metric in COMPARISON_METRICS}
+            for key, bucket in differences.items()
+        },
+        "generator_bayes_optimal_ceiling": {
+            "source": "hash_verified_trainer_synthetic_label_probability",
+            "roc_auc": rounded(oracle_point_auc),
+            "brier_score": rounded(sum((p - y) ** 2 for p, y in zip(oracle_probability, labels, strict=True)) / rows),
+            "fixed_model_roc_auc": rounded(model_point_auc),
+            "roc_auc_headroom": rounded(oracle_point_auc - model_point_auc),
+            "roc_auc_headroom_interval_95": _percentile_interval(ceiling_gap),
+            "scope": "reported_threshold_free_only_no_threshold_selected_on_test",
+        },
+    }
+
+
+def _generator_label_probability(trainer_source: bytes):
+    """Execute the hash-verified trainer bytes (not a re-read) and return its label rule."""
+    namespace: dict[str, Any] = {"__name__": "oac_operational_trainer_snapshot",
+                                 "__file__": str(PROJECT_ROOT / TRAINER_FILE)}
+    try:
+        exec(compile(trainer_source, TRAINER_FILE, "exec"), namespace)  # noqa: S102 - verified local bytes
+        rule = namespace["_synthetic_label_probability"]
+    except (KeyError, SyntaxError, ImportError) as exc:
+        raise EvaluationError("GENERATOR_LABEL_RULE_UNAVAILABLE") from exc
+    if not callable(rule):
+        raise EvaluationError("GENERATOR_LABEL_RULE_UNAVAILABLE")
+    return rule
+
+
 def verify_receipt_metrics(receipt_metrics: Any, metrics: dict[str, Any]) -> None:
     """Recompute rather than trust existing published summary metrics.
 
@@ -344,6 +485,16 @@ def evaluate(admission_path: Path | None = None) -> dict[str, Any]:
     prevalence = sum(row["label"]["operator_attention_required"] for row in splits["train"]) / SPLIT_ROWS["train"]
     metrics = calculate_metrics(labels, scores, 0.16, prevalence)
     verify_receipt_metrics(receipt["metrics"], metrics)
+    label_rule = _generator_label_probability(snapshots[TRAINER_FILE])
+    try:
+        oracle = [float(label_rule(row["features"])) for row in splits["test"]]
+    except (OperationalModelError, ValueError, OverflowError, TypeError) as exc:
+        raise EvaluationError("GENERATOR_LABEL_RULE_UNAVAILABLE") from exc
+    if any(not (0.0 <= value <= 1.0 and math.isfinite(value)) for value in oracle):
+        raise EvaluationError("GENERATOR_LABEL_RULE_UNAVAILABLE")
+    comparisons = compare_against_references(
+        labels, scores, 0.16, [row["features"]["consecutive_failures"] for row in splits["test"]], oracle,
+        2 * sum(row["label"]["operator_attention_required"] for row in splits["train"]) > SPLIT_ROWS["train"])
     observations = [
         {"sample_id": row["sample_id"], "observation_sha256": digest(line),
          "features_sha256": digest(canonical_bytes(row["features"])), "label": bool(label),
@@ -364,13 +515,16 @@ def evaluate(admission_path: Path | None = None) -> dict[str, Any]:
             "validation": len(feature_hashes["test"] & feature_hashes["validation"]),
             "scope": "exact_numeric_feature_matches_only_not_semantic_or_temporal_leakage_detection",
         },
-        "metrics": metrics, "observations": observations, "external_corpus_admission": admission,
+        "metrics": metrics, "comparisons": comparisons, "observations": observations,
+        "external_corpus_admission": admission,
         "limitations": [
             "public_synthetic_test_already_used_for_development_not_new_blind_evaluation",
             "wilson_intervals_assume_independent_bernoulli_trials_not_real_world_guarantees",
             "calibration_bins_and_brier_are_descriptive_not_calibration_certification",
             "hash_receipt_is_not_an_independent_signed_attestation",
             "no_external_corpus_training_or_qualification_performed",
+            "bootstrap_intervals_resample_the_fixed_public_test_split_not_new_data",
+            "generator_ceiling_is_bayes_optimal_only_for_this_synthetic_distribution",
         ],
     }
 
