@@ -365,6 +365,18 @@ class GovernedSpaceTests(unittest.TestCase):
             self.assertIn(revision, requirements)
         self.assertNotIn("git+https://", requirements)
 
+    def test_governed_entrypoint_serves_the_landing_design_system(self):
+        from fastapi.testclient import TestClient
+
+        client = TestClient(governed.app)
+        page = client.get("/")
+        stylesheet = client.get("/kanchay/kanchay.css")
+        self.assertIn('href="/kanchay/kanchay.css"', page.text)
+        self.assertEqual(200, stylesheet.status_code)
+        self.assertEqual("text/css; charset=utf-8", stylesheet.headers["content-type"])
+        self.assertEqual("nosniff", stylesheet.headers["x-content-type-options"])
+        self.assertEqual(404, client.get("/kanchay/SOURCE.json").status_code)
+
     def test_release_manifest_covers_governed_runtime_and_live_verifier(self):
         manifest = app.load_release_manifest()
         for path in (

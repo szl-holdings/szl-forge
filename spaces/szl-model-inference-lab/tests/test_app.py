@@ -1,6 +1,8 @@
 import asyncio
+import hashlib
 import json
 import os
+import re
 import tempfile
 import unittest
 from pathlib import Path
@@ -942,6 +944,110 @@ class AppContractTests(unittest.TestCase):
         asyncio.run(limiter(scope, receive, send))
         self.assertFalse(downstream_called)
         self.assertEqual(sent[0]["status"], 408)
+
+
+class KanchayAssetRouteTests(unittest.TestCase):
+    """The landing page's design-system files: exact allowlist, exact bytes."""
+
+    STYLESHEET = "/kanchay/kanchay.css"
+    FONTS = {
+        "/kanchay/fonts/SpaceGrotesk-latin.woff2",
+        "/kanchay/fonts/Inter-latin.woff2",
+        "/kanchay/fonts/JetBrainsMono-latin.woff2",
+    }
+
+    def setUp(self):
+        self.client = TestClient(app.app)
+        self.export = json.loads(
+            (app.KANCHAY_ROOT / "SOURCE.json").read_text(encoding="utf-8")
+        )
+
+    def test_allowlist_is_exactly_the_stylesheet_and_its_three_faces(self):
+        self.assertEqual({self.STYLESHEET, *self.FONTS}, set(app.KANCHAY_ASSETS))
+        stylesheet = (app.KANCHAY_ROOT / "kanchay.css").read_text(encoding="utf-8")
+        referenced = {
+            "/kanchay/" + relative
+            for relative in re.findall(r"url\('\./([^']+)'\)", stylesheet)
+        }
+        self.assertEqual(self.FONTS, referenced)
+        self.assertEqual("1.0.0", self.export["version"])
+
+    def test_each_asset_is_served_byte_exact_with_page_headers(self):
+        page = self.client.get("/")
+        self.assertEqual(200, page.status_code)
+        for url_path, (relative, media_type) in app.KANCHAY_ASSETS.items():
+            with self.subTest(path=url_path):
+                response = self.client.get(url_path)
+                self.assertEqual(200, response.status_code)
+                self.assertEqual(media_type, response.headers["content-type"])
+                self.assertEqual(
+                    (app.KANCHAY_ROOT / relative).read_bytes(), response.content
+                )
+                self.assertEqual(
+                    self.export["sha256"][relative],
+                    hashlib.sha256(response.content).hexdigest(),
+                )
+                for header in ("x-content-type-options", "referrer-policy"):
+                    self.assertEqual(page.headers[header], response.headers[header])
+        self.assertEqual(
+            "text/css; charset=utf-8",
+            self.client.get(self.STYLESHEET).headers["content-type"],
+        )
+        for font in self.FONTS:
+            self.assertEqual(
+                "font/woff2", self.client.get(font).headers["content-type"]
+            )
+
+    def test_unknown_kanchay_paths_are_the_normal_404(self):
+        for path in (
+            "/kanchay",
+            "/kanchay/",
+            "/kanchay/SOURCE.json",
+            "/kanchay/kanchay-components.css",
+            "/kanchay/fonts/",
+            "/kanchay/fonts/Syncopate-400.woff2",
+            "/kanchay/fonts/Inter-latin.woff2/extra",
+            "/kanchay/%2e%2e/app.py",
+            "/kanchay/fonts/%2e%2e/kanchay.css",
+        ):
+            with self.subTest(path=path):
+                response = self.client.get(path)
+                self.assertEqual(404, response.status_code)
+                self.assertEqual({"detail": "Not Found"}, response.json())
+
+    def test_asset_routes_stay_out_of_the_public_api_schema(self):
+        paths = self.client.get("/api/openapi.json").json()["paths"]
+        self.assertFalse([path for path in paths if path.startswith("/kanchay")])
+
+    def test_release_manifest_binds_every_vendored_kanchay_file(self):
+        manifest = app.load_release_manifest()
+        for relative in (
+            "SOURCE.json",
+            "kanchay.css",
+            "fonts/SpaceGrotesk-latin.woff2",
+            "fonts/Inter-latin.woff2",
+            "fonts/JetBrainsMono-latin.woff2",
+        ):
+            self.assertIn("kanchay/" + relative, manifest["source_files"])
+
+    def test_root_links_local_kanchay_before_its_own_tokens_only_style(self):
+        html = app.index()
+        link = '<link rel="stylesheet" href="/kanchay/kanchay.css">'
+        self.assertIn(link, html)
+        self.assertLess(html.index(link), html.index("<style>"))
+        style = html[html.index("<style>") : html.index("</style>")]
+        self.assertIsNone(re.search(r"#[0-9a-fA-F]{3,8}\b|rgba?\(|hsla?\(", style))
+        self.assertNotIn("Georgia", style)
+        self.assertNotIn("ui-monospace", style)
+        defined = set(
+            re.findall(
+                r"(--[A-Za-z0-9_-]+)\s*:",
+                (app.KANCHAY_ROOT / "kanchay.css").read_text(encoding="utf-8"),
+            )
+        )
+        self.assertEqual(set(), set(re.findall(r"var\((--[A-Za-z0-9_-]+)", style)) - defined)
+        for external in ("fonts.googleapis", "fonts.gstatic", "cdn", "http://"):
+            self.assertNotIn(external, html)
 
 
 if __name__ == "__main__":
