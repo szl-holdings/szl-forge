@@ -318,8 +318,10 @@ def run_task(path, attempts=2):
             check_model()
             receipt["phase"] = "generate"
             receipt["generation_started"] = True
+            # Request unloading after each answer to reduce overlap with the
+            # sandbox. This is a policy request, not measured memory reclamation.
             response = api("/api/chat", {"model": MODEL, "messages": messages, "stream": False,
-                "format": SCHEMA, "keep_alive": "2m", "options": {"num_ctx": 4096, "num_predict": 1800,
+                "format": SCHEMA, "keep_alive": 0, "options": {"num_ctx": 4096, "num_predict": 1800,
                     "temperature": 0.2, "seed": 37 + attempt}})
             save(run_dir / f"generation-{attempt}.json", response)
             entry = {"attempt": attempt, "eval_count": response.get("eval_count"),
@@ -400,7 +402,7 @@ def main():
         response = api("/api/chat", {"model": MODEL, "messages": [{"role": "system", "content":
             "You are a local SZL engineering research assistant. Distinguish proposals from measurements. "
             "You do not have repository or deployment access in this chat mode."},
-            {"role": "user", "content": args.prompt}], "stream": False, "keep_alive": "2m",
+            {"role": "user", "content": args.prompt}], "stream": False, "keep_alive": 0,
             "options": {"num_ctx": 4096, "num_predict": 1200, "temperature": 0.4}})
         print(response["message"]["content"])
     elif args.command == "run":

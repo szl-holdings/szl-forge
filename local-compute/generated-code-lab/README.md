@@ -32,8 +32,13 @@ Those reviewed trajectories can later inform a real specialization experiment.
   Inference itself uses the native Windows NVIDIA GPU, not GPU-in-Docker.
 
 The process has no automatic startup registration. It can be stopped by closing
-the task-specific Ollama process after checking the PID/listener. The model's
-default keep-alive is two minutes, after which idle GPU memory can be released.
+the task-specific Ollama process after checking the PID/listener. The launcher
+sets a two-minute default keep-alive, but the lab's `ask`, `run`, and `smoke`
+requests explicitly override it with `keep_alive: 0`. This requests model unloading
+after each answer to reduce overlap with Docker testing; weights stay on disk.
+Retries may take longer because the model must reload. This is a resource policy,
+not a measurement or guarantee of reclaimed RAM/VRAM. See the
+[Ollama chat request reference](https://docs.ollama.com/api/chat).
 Other Ollama processes and their listeners are outside this lab's changes.
 
 ## Use the existing hosted model now
@@ -120,6 +125,9 @@ not a reason to run generated code on the Windows host or to mark a task solved.
 The smoke suite stops immediately after infrastructure or cleanup failure; it
 continues to later tasks after ordinary candidate-answer failures. Optional GPU
 telemetry errors are recorded separately and cannot rewrite external scoring.
+The retained `gpu_runtime_readback` is only a post-run model snapshot. It can be
+empty after an unload request and does not prove that generation used the GPU,
+that unloading completed before sandbox startup, or that memory was reclaimed.
 
 The inference wire schema constrains structure without expanding thousands of
 bounded grammar repetitions. The host still enforces 400 lines, 2,000 characters

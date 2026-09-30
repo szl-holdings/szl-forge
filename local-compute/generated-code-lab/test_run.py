@@ -171,8 +171,58 @@ class RunLifecycleTests(unittest.TestCase):
         self.assertNotIn("case-marker-not-in-prompt", json.dumps(chat_body))
         self.assertEqual(chat_body["model"], lab.MODEL)
         self.assertEqual(chat_body["format"], lab.SCHEMA)
+        self.assertIs(type(chat_body["keep_alive"]), int)
+        self.assertEqual(chat_body["keep_alive"], 0)
         self.assertEqual([call[0] for call in self.api_inputs], ["/api/chat", "/api/ps"])
         self.assertEqual(len(trajectory["messages"]), 3)
+
+    def test_every_retry_requests_unload_without_changing_generation_or_sandbox_contract(self):
+        failed = {**self.execution, "stdout": "[null,null]"}
+        self.sandbox.side_effect = [failed, self.execution]
+        _, receipt, _ = self.persisted(lab.run_task("task.json", attempts=2))
+        self.assertIs(receipt["passed"], True)
+        self.assertEqual(len(receipt["attempts"]), 2)
+        self.assertEqual(self.check_model.call_count, 3)
+        self.assertEqual(self.sandbox.call_count, 2)
+        requests = [body for path, body, _ in self.api_inputs if path == "/api/chat"]
+        self.assertEqual(len(requests), 2)
+        for index, body in enumerate(requests, start=1):
+            self.assertIs(type(body["keep_alive"]), int)
+            self.assertEqual(body["keep_alive"], 0)
+            self.assertEqual(body["model"], lab.MODEL)
+            self.assertEqual(body["format"], lab.SCHEMA)
+            self.assertIs(body["stream"], False)
+            self.assertEqual(body["options"], {"num_ctx": 4096, "num_predict": 1800,
+                                              "temperature": 0.2, "seed": 37 + index})
+        self.preflight.assert_called_once_with()
+
+    def test_empty_post_run_model_snapshot_does_not_rewrite_external_score(self):
+        self.runtime = {"models": []}
+        _, receipt, _ = self.persisted(lab.run_task("task.json"))
+        self.assertIs(receipt["passed"], True)
+        self.assertEqual(receipt["gpu_runtime_readback"], {"models": []})
+        self.assertNotIn("telemetry_error", receipt)
+        self.assertNotIn("error", receipt)
+        self.assertEqual(receipt["attempts"][0]["evaluation"]["reason"], "PASS")
+
+    def test_one_shot_ask_requests_unload_without_docker_or_execution_access(self):
+        with mock.patch("sys.argv", ["lab.py", "ask", "Suggest a testable experiment."]), \
+                mock.patch("sys.stdout", new=io.StringIO()) as output:
+            self.assertEqual(lab.main(), 0)
+        self.check_model.assert_called_once_with()
+        self.preflight.assert_not_called()
+        self.load_task.assert_not_called()
+        self.sandbox.assert_not_called()
+        self.assertEqual(len(self.api_inputs), 1)
+        path, body, _ = self.api_inputs[0]
+        self.assertEqual(path, "/api/chat")
+        self.assertIs(type(body["keep_alive"]), int)
+        self.assertEqual(body["keep_alive"], 0)
+        self.assertEqual(body["model"], lab.MODEL)
+        self.assertIs(body["stream"], False)
+        self.assertEqual(body["options"], {"num_ctx": 4096, "num_predict": 1200, "temperature": 0.4})
+        self.assertEqual(body["messages"][-1], {"role": "user", "content": "Suggest a testable experiment."})
+        self.assertEqual(output.getvalue(), self.response["message"]["content"] + "\n")
 
     def test_telemetry_failure_does_not_rewrite_a_passed_external_score(self):
         prior = self.api.side_effect
