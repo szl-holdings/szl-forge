@@ -166,7 +166,27 @@ Sandbox evidence (throwaway key `211daec220c02193`, pub `b755d706…435d`):
 Chain head `bdb60e93…0890`; `szl_geh_verify.py --evidence …` → 5 receipts, 0 failures; pytest
 11 passed; harness sha256 `475c1643…ab63`; guard sha256 `6ed9fb91…2709`.
 
+### A.6 Added after the first pass (2026-09-30 evening)
+
+* **Hub vs. local control:** `SZLHOLDINGS/chaski-r2` (modified 2026-09-30 21:54Z) publishes
+  `adapter_model.safetensors` with LFS sha256 `6f12981e…cdde6` (25,587,104 bytes). The local r2
+  control's weights hash recorded in the thread was `a16be6dd…ea17` — same size, different bytes.
+  Either a re-serialization or different weights; the runbook now reports
+  `r2_local_matches_hub_published` so you can tell which. Until then, "the Hub r2 is the control"
+  is an unverified claim.
+* **Margin probe shipped:** `tools/chaski_margin_probe.py` replays the held-out prompts through
+  the pristine runner's own prompt path and scorers and records, per case, the top-2 logit margin
+  at every generated token, the environment (torch/transformers/peft versions, model class,
+  `config.architectures`, dtype, chat-template hash) and whether generation ended on EOS. It writes
+  a DIAGNOSTIC receipt, never the canonical one. Smoke-tested on CPU with a tiny model and a LoRA
+  adapter; the base-model CPU replay result is recorded in Part C when available.
+
 ## Part D — Limits, stated plainly
+
+* **Pantograph toolchain mismatch:** PyPantograph 0.3.15 pins `leanprover/Pantograph` @ `842c0fe6`,
+  whose `lean-toolchain` is `leanprover/lean4:v4.29.1`. It cannot import a v4.18.0 `geh-lean`
+  build. A Pantograph lane therefore needs either a second guard build under 4.29.1 or an older
+  Pantograph pinned to 4.18 — a separate, bounded task, not a flag flip.
 
 * Pantograph and LeanDojo transports are API-corrected but **not kernel-exercised** in this build;
   their receipts carry `transport_verified_here=false` and the verifier treats only evidence, not

@@ -9,6 +9,7 @@ DSSE proof receipt in an append-only chain. Verified end-to-end before shipping 
 ```
 szl_geh_v8.py            harness (CLI + library)
 szl_geh_verify.py        zero-dependency offline verifier (pure-Python ed25519, recomputes the gate)
+chaski_margin_probe.py   DIAGNOSTIC receipt upgrade for the chaski named-N bake-off (per-token logit margins + environment)
 geh_v8_runbook.ps1       Windows one-paste runbook (PowerShell 5.1)
 tests/test_geh_v8.py     pytest (structural + kernel tests)
 geh-lean/                Lake project: GEH/Compliance/GehGuard.lean, SelfTest.lean, RedTests/, lakefile.toml (requires REPL @ v4.18.0)

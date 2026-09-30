@@ -85,8 +85,9 @@ if ($Bundle -ne "") {
 $Manifest = @{
     "szl_geh_v8.py" = "475c1643b21fdb4cda5c8f7c4ac67acbc19384bda613b027da9934833da2ab63"
     "szl_geh_verify.py" = "6647ef7fb207cbf01e4c69275735fc632009a0558625208899bcdef2e2787040"
+    "chaski_margin_probe.py" = "18a1dbe6a24211048535fdffd16064e76650fb811b6d459afae21dbfed036120"
     "tests\test_geh_v8.py" = "c5a601f482da7e605ee02171c633ab931b082a90a24ec5f5f2f270b5fec47b6b"
-    "README.md" = "7c1f48b470bad1442d9210587a83d98da168d80fee65f87db8bfd735be2d5ff6"
+    "README.md" = "c45f15347da292fcd6970fb996b4360ee83d101eadea9f1a77bf8f40718c4602"
     "geh-lean\lakefile.toml" = "60b374e3ac39ecf8e9f8bf79c7ffee008c9fcbb0bfafab5530cd7d8bec373cb8"
     "geh-lean\lean-toolchain" = "692487121da24843c4cc39e8225d0e016615914dc602328195691014cc98c526"
     "geh-lean\GEH.lean" = "f74c2fc9e4eac1557049738948f0138ceb49b664ddd5c6b5a8cb08941691f64f"
@@ -160,6 +161,7 @@ $TrainW   = "f1a2cdc313795775966280bc8648367005700327dd28010da8d2f88d2a5e2a02"  
 $DsPlan   = "8965f3910100d818810b4bf95832c5f1f49c95900f4bd943c5fcafa9fe645a40"  # training_plan.json dataset_sha256 (original curriculum)
 $DsRcpt   = "0fea0d85f2ca4cd55d7ce51b8399a409d7046d2cd77ffc131945ee20c706535a"  # training_receipt.json dataset_sha256 (fixed curriculum)
 $RunnerOk = "f4ca282a29e2fa2f0246ebcb6e3298b7b3f023d686ba883d948459bcaf56dadb"  # pristine canonical runner
+$HubR2W   = "6f12981ea5df5e22d3493eefb20d75db75c1c88961ba6621a35af09edd0cdde6"  # SZLHOLDINGS/chaski-r2 adapter_model.safetensors LFS sha256 (Hub, 2026-09-30)
 $R4Dir    = Join-Path $Root "chaski_r4\chaski-r4-adapter"
 $R2Dir    = Join-Path $Root "chaski_r2\chaski-r2-adapter"
 $Runner   = Join-Path $Root "chaski_r4\bakeoff_canonical_four_way_r4.py"
@@ -184,6 +186,7 @@ if ($Recon.Contains("r4_runner_dirhash")) {
     $Recon.r4_on_disk_is = $which
     $Recon.r4_weights_match_training_receipt = ($Recon.r4_weights_sha256 -eq $TrainW)
 }
+if ($Recon.Contains("r2_weights_sha256")) { $Recon.r2_local_matches_hub_published = ($Recon.r2_weights_sha256 -eq $HubR2W) }
 $Recon | ConvertTo-Json -Depth 4 | Write-Host
 
 Write-Host ""
