@@ -1,0 +1,433 @@
+{
+  "schema": "szl.curated-card-observation/v1",
+  "repo_type": "model",
+  "repo_id": "SZLHOLDINGS/WILLAY",
+  "revision": "e04bd728f20857c75e7c831d19d7190affd29133",
+  "observed_at_utc": "2026-09-30T14:40:14.203079+00:00",
+  "inventory_complete": true,
+  "files": [
+    {
+      "repo_type": "model",
+      "path": ".gitattributes",
+      "revision": "e04bd728f20857c75e7c831d19d7190affd29133",
+      "size": 1570,
+      "git_blob_sha1": "52373fe24473b1aa44333d318f578ae6bf04b49b",
+      "lfs_sha256": null,
+      "lfs_digest_scope": "DECLARED_METADATA_ONLY"
+    },
+    {
+      "repo_type": "model",
+      "path": "LICENSE",
+      "revision": "e04bd728f20857c75e7c831d19d7190affd29133",
+      "size": 11357,
+      "git_blob_sha1": "261eeb9e9f8b2b4b0d119366dda99c6fd7d35c64",
+      "lfs_sha256": null,
+      "lfs_digest_scope": "DECLARED_METADATA_ONLY"
+    },
+    {
+      "repo_type": "model",
+      "path": "README.md",
+      "revision": "e04bd728f20857c75e7c831d19d7190affd29133",
+      "size": 5701,
+      "git_blob_sha1": "7481aaa55cd0c06a0eea60900f0ad2abcded335f",
+      "lfs_sha256": null,
+      "lfs_digest_scope": "DECLARED_METADATA_ONLY"
+    },
+    {
+      "repo_type": "model",
+      "path": "adapter-unsloth/README.md",
+      "revision": "e04bd728f20857c75e7c831d19d7190affd29133",
+      "size": 5268,
+      "git_blob_sha1": "0d985fc18917051c251ea629ac3a8a4f52627fec",
+      "lfs_sha256": null,
+      "lfs_digest_scope": "DECLARED_METADATA_ONLY"
+    },
+    {
+      "repo_type": "model",
+      "path": "adapter-unsloth/adapter_config.json",
+      "revision": "e04bd728f20857c75e7c831d19d7190affd29133",
+      "size": 1311,
+      "git_blob_sha1": "8defd0b4f51d7df1048a103f47988be434330eec",
+      "lfs_sha256": null,
+      "lfs_digest_scope": "DECLARED_METADATA_ONLY"
+    },
+    {
+      "repo_type": "model",
+      "path": "adapter-unsloth/adapter_model.safetensors",
+      "revision": "e04bd728f20857c75e7c831d19d7190affd29133",
+      "size": 17640136,
+      "git_blob_sha1": "7ec0f574ab9a2e6c9bf22dd236ce011fc7b52991",
+      "lfs_sha256": "be65c81dbc7e26db1d76d3677022d3d5bc496c43ef80d122afdf8777f61011a3",
+      "lfs_digest_scope": "DECLARED_METADATA_ONLY"
+    },
+    {
+      "repo_type": "model",
+      "path": "adapter-unsloth/chat_template.jinja",
+      "revision": "e04bd728f20857c75e7c831d19d7190affd29133",
+      "size": 2507,
+      "git_blob_sha1": "bdf7919a96cfe43d50914a007b9c0877bd0ec27e",
+      "lfs_sha256": null,
+      "lfs_digest_scope": "DECLARED_METADATA_ONLY"
+    },
+    {
+      "repo_type": "model",
+      "path": "adapter-unsloth/tokenizer.json",
+      "revision": "e04bd728f20857c75e7c831d19d7190affd29133",
+      "size": 11422166,
+      "git_blob_sha1": "d73428d91463b495bc017fb6a2fb3a656646482b",
+      "lfs_sha256": "6b4360dd6a184650ffc48056c2569bc603f896c5adfe94b10f1c79f809638aa5",
+      "lfs_digest_scope": "DECLARED_METADATA_ONLY"
+    },
+    {
+      "repo_type": "model",
+      "path": "adapter-unsloth/tokenizer_config.json",
+      "revision": "e04bd728f20857c75e7c831d19d7190affd29133",
+      "size": 4383,
+      "git_blob_sha1": "3bac7e4d72c518c293bfba1a54ad04eec61d74fc",
+      "lfs_sha256": null,
+      "lfs_digest_scope": "DECLARED_METADATA_ONLY"
+    },
+    {
+      "repo_type": "model",
+      "path": "adapter-unsloth/training_receipt.json",
+      "revision": "e04bd728f20857c75e7c831d19d7190affd29133",
+      "size": 1641,
+      "git_blob_sha1": "77841707fe74e2179068a5afe209e136ae4c1f1a",
+      "lfs_sha256": null,
+      "lfs_digest_scope": "DECLARED_METADATA_ONLY"
+    },
+    {
+      "repo_type": "model",
+      "path": "adapter_config.json",
+      "revision": "e04bd728f20857c75e7c831d19d7190affd29133",
+      "size": 1082,
+      "git_blob_sha1": "757247c2c87675371403c62e3902bc7929e55d8a",
+      "lfs_sha256": null,
+      "lfs_digest_scope": "DECLARED_METADATA_ONLY"
+    },
+    {
+      "repo_type": "model",
+      "path": "adapter_model.safetensors",
+      "revision": "e04bd728f20857c75e7c831d19d7190affd29133",
+      "size": 4338000,
+      "git_blob_sha1": "129c30d8094f2076431e066ec1c311374276f238",
+      "lfs_sha256": "4666467176ae8772701bdf31eef6d536fcb472014eeb543a014cc48f96d08491",
+      "lfs_digest_scope": "DECLARED_METADATA_ONLY"
+    },
+    {
+      "repo_type": "model",
+      "path": "bom/model-bom.cdx.json",
+      "revision": "e04bd728f20857c75e7c831d19d7190affd29133",
+      "size": 6895,
+      "git_blob_sha1": "2402a2235ad4b2d762c1302b7077eb48447559b7",
+      "lfs_sha256": null,
+      "lfs_digest_scope": "DECLARED_METADATA_ONLY"
+    },
+    {
+      "repo_type": "model",
+      "path": "chat_template.jinja",
+      "revision": "e04bd728f20857c75e7c831d19d7190affd29133",
+      "size": 2561,
+      "git_blob_sha1": "9840d40f49842423ad9d3c92bbedac488564c088",
+      "lfs_sha256": null,
+      "lfs_digest_scope": "DECLARED_METADATA_ONLY"
+    },
+    {
+      "repo_type": "model",
+      "path": "config.json",
+      "revision": "e04bd728f20857c75e7c831d19d7190affd29133",
+      "size": 1340,
+      "git_blob_sha1": "cf8bc5a125a81994e4ddf49dbace129c4dd7dd5f",
+      "lfs_sha256": null,
+      "lfs_digest_scope": "DECLARED_METADATA_ONLY"
+    },
+    {
+      "repo_type": "model",
+      "path": "generation_config.json",
+      "revision": "e04bd728f20857c75e7c831d19d7190affd29133",
+      "size": 256,
+      "git_blob_sha1": "235f62fa17d60e22e6bc36b9f26462534e04fe97",
+      "lfs_sha256": null,
+      "lfs_digest_scope": "DECLARED_METADATA_ONLY"
+    },
+    {
+      "repo_type": "model",
+      "path": "merge_receipt.json",
+      "revision": "e04bd728f20857c75e7c831d19d7190affd29133",
+      "size": 273,
+      "git_blob_sha1": "fc9ac7177b8eec5ea512585e4bdd7fda81f535eb",
+      "lfs_sha256": null,
+      "lfs_digest_scope": "DECLARED_METADATA_ONLY"
+    },
+    {
+      "repo_type": "model",
+      "path": "model.safetensors",
+      "revision": "e04bd728f20857c75e7c831d19d7190affd29133",
+      "size": 1976163472,
+      "git_blob_sha1": "57073a3f3463628a0b635668a2f5fc8d0cc85055",
+      "lfs_sha256": "aa15071b6041fd4bb829009b463ef6351bd1213fc2dbe911484ae5c5528c82cb",
+      "lfs_digest_scope": "DECLARED_METADATA_ONLY"
+    },
+    {
+      "repo_type": "model",
+      "path": "provenance.json",
+      "revision": "e04bd728f20857c75e7c831d19d7190affd29133",
+      "size": 1741,
+      "git_blob_sha1": "7550dda01a612a4f0f7e7efd3cb3d1a0ee872ee6",
+      "lfs_sha256": null,
+      "lfs_digest_scope": "DECLARED_METADATA_ONLY"
+    },
+    {
+      "repo_type": "model",
+      "path": "status.json",
+      "revision": "e04bd728f20857c75e7c831d19d7190affd29133",
+      "size": 1380,
+      "git_blob_sha1": "e3c941ad3668effb033e2260fdab0dd8b8acde21",
+      "lfs_sha256": null,
+      "lfs_digest_scope": "DECLARED_METADATA_ONLY"
+    },
+    {
+      "repo_type": "model",
+      "path": "tokenizer.json",
+      "revision": "e04bd728f20857c75e7c831d19d7190affd29133",
+      "size": 11421892,
+      "git_blob_sha1": "34510ff0037cd50428af467a17ead5a96140a32c",
+      "lfs_sha256": "3fd169731d2cbde95e10bf356d66d5997fd885dd8dbb6fb4684da3f23b2585d8",
+      "lfs_digest_scope": "DECLARED_METADATA_ONLY"
+    },
+    {
+      "repo_type": "model",
+      "path": "tokenizer_config.json",
+      "revision": "e04bd728f20857c75e7c831d19d7190affd29133",
+      "size": 724,
+      "git_blob_sha1": "df142d09fac6de7e48490cc3d551122ee4ef4098",
+      "lfs_sha256": null,
+      "lfs_digest_scope": "DECLARED_METADATA_ONLY"
+    },
+    {
+      "repo_type": "model",
+      "path": "train_receipted_unsloth.py",
+      "revision": "e04bd728f20857c75e7c831d19d7190affd29133",
+      "size": 12431,
+      "git_blob_sha1": "5adcf1a4f971371b406e35976857a28f4a3a3fdf",
+      "lfs_sha256": null,
+      "lfs_digest_scope": "DECLARED_METADATA_ONLY"
+    },
+    {
+      "repo_type": "model",
+      "path": "training_args.json",
+      "revision": "e04bd728f20857c75e7c831d19d7190affd29133",
+      "size": 1163,
+      "git_blob_sha1": "76181fa1a645f66f2062a91bd8d8b9b550fb869a",
+      "lfs_sha256": null,
+      "lfs_digest_scope": "DECLARED_METADATA_ONLY"
+    },
+    {
+      "repo_type": "model",
+      "path": "willay.npz",
+      "revision": "e04bd728f20857c75e7c831d19d7190affd29133",
+      "size": 1666,
+      "git_blob_sha1": "0be6250f2867678a6e2d6bac90117c37ee939ba2",
+      "lfs_sha256": "3d52bb6ea0e620c989bd28bb51149fa3a4a89427cfb159cab728eda5bb6e218f",
+      "lfs_digest_scope": "DECLARED_METADATA_ONLY"
+    }
+  ],
+  "classification": {
+    "scope": "principal-weight package metadata closure only",
+    "revision": "e04bd728f20857c75e7c831d19d7190affd29133",
+    "inventory_complete": true,
+    "absence_supported": true,
+    "status": "COMPLETE_STRUCTURE",
+    "issues": [],
+    "file_roles": [
+      {
+        "path": ".gitattributes",
+        "role": "OTHER"
+      },
+      {
+        "path": "LICENSE",
+        "role": "OTHER"
+      },
+      {
+        "path": "README.md",
+        "role": "OTHER"
+      },
+      {
+        "path": "adapter-unsloth/README.md",
+        "role": "OTHER"
+      },
+      {
+        "path": "adapter-unsloth/adapter_config.json",
+        "role": "CONFIG_METADATA"
+      },
+      {
+        "path": "adapter-unsloth/adapter_model.safetensors",
+        "role": "WEIGHT_PAYLOAD_FILENAME"
+      },
+      {
+        "path": "adapter-unsloth/chat_template.jinja",
+        "role": "OTHER"
+      },
+      {
+        "path": "adapter-unsloth/tokenizer.json",
+        "role": "OTHER"
+      },
+      {
+        "path": "adapter-unsloth/tokenizer_config.json",
+        "role": "OTHER"
+      },
+      {
+        "path": "adapter-unsloth/training_receipt.json",
+        "role": "OTHER"
+      },
+      {
+        "path": "adapter_config.json",
+        "role": "CONFIG_METADATA"
+      },
+      {
+        "path": "adapter_model.safetensors",
+        "role": "WEIGHT_PAYLOAD_FILENAME"
+      },
+      {
+        "path": "bom/model-bom.cdx.json",
+        "role": "OTHER"
+      },
+      {
+        "path": "chat_template.jinja",
+        "role": "OTHER"
+      },
+      {
+        "path": "config.json",
+        "role": "CONFIG_METADATA"
+      },
+      {
+        "path": "generation_config.json",
+        "role": "OTHER"
+      },
+      {
+        "path": "merge_receipt.json",
+        "role": "OTHER"
+      },
+      {
+        "path": "model.safetensors",
+        "role": "WEIGHT_PAYLOAD_FILENAME"
+      },
+      {
+        "path": "provenance.json",
+        "role": "OTHER"
+      },
+      {
+        "path": "status.json",
+        "role": "OTHER"
+      },
+      {
+        "path": "tokenizer.json",
+        "role": "OTHER"
+      },
+      {
+        "path": "tokenizer_config.json",
+        "role": "OTHER"
+      },
+      {
+        "path": "train_receipted_unsloth.py",
+        "role": "OTHER"
+      },
+      {
+        "path": "training_args.json",
+        "role": "OTHER"
+      },
+      {
+        "path": "willay.npz",
+        "role": "OTHER"
+      }
+    ],
+    "packages": [
+      {
+        "directory": "",
+        "kind": "ADAPTER",
+        "payloads": [
+          "adapter_model.safetensors"
+        ],
+        "indexes": [],
+        "config": "adapter_config.json",
+        "referenced_shards": [],
+        "status": "COMPLETE_STRUCTURE",
+        "issues": []
+      },
+      {
+        "directory": "",
+        "kind": "MODEL",
+        "payloads": [
+          "model.safetensors"
+        ],
+        "indexes": [],
+        "config": "config.json",
+        "referenced_shards": [],
+        "status": "COMPLETE_STRUCTURE",
+        "issues": []
+      },
+      {
+        "directory": "adapter-unsloth",
+        "kind": "ADAPTER",
+        "payloads": [
+          "adapter-unsloth/adapter_model.safetensors"
+        ],
+        "indexes": [],
+        "config": "adapter-unsloth/adapter_config.json",
+        "referenced_shards": [],
+        "status": "COMPLETE_STRUCTURE",
+        "issues": []
+      }
+    ],
+    "adapter_groups": [
+      {
+        "directory": "",
+        "config": "adapter_config.json",
+        "payloads": [
+          "adapter_model.safetensors"
+        ],
+        "base_model_name_or_path": "Qwen/Qwen2.5-0.5B-Instruct",
+        "base_revision": null,
+        "base_status": "RECORDED",
+        "base_revision_status": "UNKNOWN",
+        "lineage_status": "UNKNOWN",
+        "compatibility": "NOT_EVALUATED",
+        "structure_status": "COMPLETE_STRUCTURE"
+      },
+      {
+        "directory": "adapter-unsloth",
+        "config": "adapter-unsloth/adapter_config.json",
+        "payloads": [
+          "adapter-unsloth/adapter_model.safetensors"
+        ],
+        "base_model_name_or_path": "unsloth/qwen2.5-0.5b-instruct-unsloth-bnb-4bit",
+        "base_revision": null,
+        "base_status": "RECORDED",
+        "base_revision_status": "UNKNOWN",
+        "lineage_status": "UNKNOWN",
+        "compatibility": "NOT_EVALUATED",
+        "structure_status": "COMPLETE_STRUCTURE"
+      }
+    ],
+    "mixed_adapter_bases": true,
+    "gguf_quantization": [],
+    "artifact_validity": "NOT_EVALUATED",
+    "runtime_validity": "NOT_EVALUATED",
+    "limits": "No tensor integrity, index tensor coverage, config/load compatibility, training, evaluation, rights or release qualification assessed."
+  },
+  "original_metadata_structure": "UNKNOWN_STRUCTURE",
+  "supplemental_json_fidelity_inherited_paths": [
+    "adapter-unsloth/adapter_config.json",
+    "adapter-unsloth/tokenizer_config.json"
+  ],
+  "evidence": {
+    "source_pass_sha256": "c4bafa3c3a836093a4a1d856a4490259408a5ada54493789a3c141de56e3ad1d",
+    "classification_receipt_sha256": "85167ab733d2683db89c0e8ea1693de97c551542c4599072bc154d27b4a15bd2",
+    "classifier_sha256": "bddcdf0dd168412115e3844428f7aab0f2332296b09835338a6a14e7b49aa430",
+    "classifier_source_pr": "https://github.com/szl-holdings/szl-forge/pull/434",
+    "classifier_reviewed_head": "61929e5ef59af4609db1b9b9a0b65194d2bee1a6",
+    "library_evidence_id": "libfile_e03d5fe2445881918c4dd8b352935af1",
+    "weight_bodies_read": false,
+    "scope": "Reviewed metadata observation only; not release qualification or model/runtime validity."
+  }
+}
