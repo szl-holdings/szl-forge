@@ -24,6 +24,7 @@ ORG_LOCK = "hf-write/org/SZLHOLDINGS"
 
 # (workflow file, job id) -> expected lock group; matrix jobs resolve per leg.
 LOCKED_WRITERS = {
+    ("foundation-runtime.yml", "publish"): "hf-write/space/SZLHOLDINGS/szl-foundation-confirmation",
     ("publish-forge-lab.yml", "deploy"): "hf-write/space/SZLHOLDINGS/szl-forge-lab",
     ("publish-model-inference-lab.yml", "deploy"): "hf-write/space/SZLHOLDINGS/szl-model-inference-lab",
     ("publish-model-inference-lab.yml", "publish-bindings"): ORG_LOCK,
