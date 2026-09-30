@@ -7846,7 +7846,19 @@ def clinical_self_test_workspace():
                     "temporary synthetic state cleanup failed",
                     EXIT_INTERNAL,
                 ) from exc
-        if os.path.lexists(temporary.name):
+        # Existence predicates suppress OSError, so False can mean unreadable.
+        # Only an explicit not-found result proves our disposable state is gone.
+        try:
+            os.lstat(temporary.name)
+        except FileNotFoundError:
+            pass
+        except OSError as exc:
+            raise ControlError(
+                "CLINICAL_SELF_TEST_CLEANUP_FAILED",
+                "temporary synthetic state removal could not be verified",
+                EXIT_INTERNAL,
+            ) from exc
+        else:
             raise ControlError(
                 "CLINICAL_SELF_TEST_CLEANUP_FAILED",
                 "temporary synthetic state still exists after cleanup",
