@@ -98,8 +98,7 @@ CREDENTIAL_FAILURE_CODES = frozenset({
     "INVALID_PUBLISHER_REVISION", "UNDECLARED_OIDC_RESOURCE",
     "OIDC_EXCHANGE_UNAVAILABLE", "OIDC_EXCHANGE_REJECTED",
     "INVALID_OIDC_TOKEN_RESPONSE", "AMBIENT_HUB_CREDENTIAL_REJECTED",
-    "CROSS_TARGET_TOKEN_REUSE_REJECTED", "INVALID_KERNEL_REFS",
-    "MODEL_WRITE_ACCESS_VALIDATION_FAILED", "KERNEL_REFS_VALIDATION_FAILED",
+    "CROSS_TARGET_TOKEN_REUSE_REJECTED",
 })
 SENSITIVE_ENV_MARKERS = (
     "TOKEN",
@@ -198,7 +197,7 @@ def record_credential_failure(
     """Retain a pre-run failure without replacing existing publication evidence.
 
     The no-write claim covers this invocation's artifact publication only:
-    token exchange and access checks may already have reached the provider.
+    exact-resource token exchange may already have reached the provider.
     """
     failure: dict[str, Any] = {
         "stage": "CREDENTIAL_ACQUISITION",
@@ -214,12 +213,6 @@ def record_credential_failure(
         and exc.args[0] in CREDENTIAL_FAILURE_CODES
     ):
         failure["error_code"] = exc.args[0]
-        if exc.args[0] in {"MODEL_WRITE_ACCESS_VALIDATION_FAILED", "KERNEL_REFS_VALIDATION_FAILED"}:
-            # Revalidate the helper's additive metadata. Never serialize the
-            # provider response or coerce arbitrary status-like objects.
-            status = vars(exc).get("http_status")
-            if type(status) is int and 400 <= status <= 599:
-                failure["http_status"] = status
     result = {
         "schema": "szl.kernel-publication-preflight-failure/v1",
         "mode": "PUBLISH",
@@ -231,7 +224,7 @@ def record_credential_failure(
         "failure": failure,
         "limitations": [
             "No artifact publication was attempted by this invocation.",
-            "Token exchange or provider access checks may have occurred.",
+            "Exact-resource token exchange may have occurred.",
             "Provider repository state and source authorization were not verified here.",
         ],
     }

@@ -11,10 +11,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import Mock, patch
-
-import httpx
-from huggingface_hub.errors import HfHubHTTPError
+from unittest.mock import patch
 
 import publish_szl_kernels as publisher
 import verify_szl_kernel_runtime as runtime_verifier
@@ -386,8 +383,7 @@ class PublishSzlKernelsTests(unittest.TestCase):
             "INVALID_PUBLISHER_REVISION", "UNDECLARED_OIDC_RESOURCE",
             "OIDC_EXCHANGE_UNAVAILABLE", "OIDC_EXCHANGE_REJECTED",
             "INVALID_OIDC_TOKEN_RESPONSE", "AMBIENT_HUB_CREDENTIAL_REJECTED",
-            "CROSS_TARGET_TOKEN_REUSE_REJECTED", "INVALID_KERNEL_REFS",
-            "MODEL_WRITE_ACCESS_VALIDATION_FAILED", "KERNEL_REFS_VALIDATION_FAILED",
+            "CROSS_TARGET_TOKEN_REUSE_REJECTED",
         }
         for code in sorted(codes):
             with self.subTest(code=code), tempfile.TemporaryDirectory() as temporary:
@@ -417,7 +413,7 @@ class PublishSzlKernelsTests(unittest.TestCase):
                 self.assertNotIn("publisher_authority", observed)
                 self.assertNotIn("oidc-secret", report.read_text(encoding="utf-8"))
 
-    def test_main_reports_model_and_kernel_http_failures_without_credentials(self) -> None:
+    def test_main_does_not_route_repo_grants_through_user_token_auth_check(self) -> None:
         environment = {
             "GITHUB_ACTIONS": "true",
             "GITHUB_REPOSITORY": credentials.REPOSITORY,
@@ -431,41 +427,27 @@ class PublishSzlKernelsTests(unittest.TestCase):
             ),
             "ACTIONS_ID_TOKEN_REQUEST_TOKEN": "github-oidc-request-fixture",
         }
-        for target, method, code in (
-            ("model", "auth_check", "MODEL_WRITE_ACCESS_VALIDATION_FAILED"),
-            ("kernel", "list_repo_refs", "KERNEL_REFS_VALIDATION_FAILED"),
-        ):
-            for status in (401, 403, 404):
-                with self.subTest(target=target, status=status), tempfile.TemporaryDirectory() as temporary:
-                    report = Path(temporary) / "failure.json"
-                    api = Mock()
-                    request = httpx.Request(
-                        "GET", "https://huggingface.co/api/private",
-                        headers={"Authorization": "Bearer " + MODEL_TOKEN + KERNEL_TOKEN},
-                    )
-                    getattr(api, method).side_effect = HfHubHTTPError(
-                        "provider-secret-" + MODEL_TOKEN + KERNEL_TOKEN,
-                        response=httpx.Response(status, request=request),
-                    )
-                    with patch.dict(os.environ, environment, clear=True), patch.object(
-                        credentials, "exchange", side_effect=[MODEL_TOKEN, KERNEL_TOKEN]
-                    ), patch("huggingface_hub.HfApi", return_value=api), patch.object(
-                        publisher, "run"
-                    ) as run, patch("sys.stderr", io.StringIO()) as stderr:
-                        self.assertEqual(publisher.main(self.publication_argv(report)), 1)
-                        run.assert_not_called()
-                    observed = json.loads(report.read_text(encoding="utf-8"))
-                    self.assertEqual(observed["status"], "PUBLICATION_FAILED_NO_PROVIDER_WRITE")
-                    self.assertEqual(observed["failure"], {
-                        "stage": "CREDENTIAL_ACQUISITION",
-                        "error_type": "KeylessCredentialError",
-                        "error_code": code,
-                        "http_status": status,
-                        "provider_write_attempted": False,
-                    })
-                    self.assertNotIn("provider-secret", report.read_text(encoding="utf-8") + stderr.getvalue())
-                    self.assertNotIn(MODEL_TOKEN, report.read_text(encoding="utf-8") + stderr.getvalue())
-                    self.assertNotIn(KERNEL_TOKEN, report.read_text(encoding="utf-8") + stderr.getvalue())
+        report = Path("unused-by-mocked-run.json")
+
+        def publish(**kwargs: object) -> dict[str, object]:
+            self.assertEqual(kwargs["token"], MODEL_TOKEN)
+            self.assertEqual(kwargs["kernel_token"], KERNEL_TOKEN)
+            self.assertTrue(
+                all(key not in os.environ for key in publisher.OIDC_ENV_ALLOWLIST)
+            )
+            return {"status": "mocked-provider-boundary"}
+
+        with patch.dict(os.environ, environment, clear=True), patch.object(
+            credentials, "exchange", side_effect=[MODEL_TOKEN, KERNEL_TOKEN]
+        ), patch("huggingface_hub.HfApi") as api, patch.object(
+            publisher, "run", side_effect=publish
+        ) as run, patch("builtins.print"):
+            api.return_value.auth_check.side_effect = RuntimeError(
+                "user-token auth-check is incompatible with the repo grant"
+            )
+            self.assertEqual(publisher.main(self.publication_argv(report)), 0)
+        api.assert_not_called()
+        run.assert_called_once()
 
     def test_main_records_authority_failure_before_acquiring_grants(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -484,51 +466,6 @@ class PublishSzlKernelsTests(unittest.TestCase):
             failure = json.loads(report.read_text(encoding="utf-8"))["failure"]
             self.assertEqual(failure["error_code"], "UNTRUSTED_WORKFLOW_CONTEXT")
             self.assertFalse(failure["provider_write_attempted"])
-
-    def test_main_retains_only_bounded_access_failure_http_status(self) -> None:
-        for code in ("MODEL_WRITE_ACCESS_VALIDATION_FAILED", "KERNEL_REFS_VALIDATION_FAILED"):
-            for status in (400, 401, 403, 404, 429, 500, 599, None, True, "403", 403.0, 399, 600):
-                with self.subTest(code=code, status=status), tempfile.TemporaryDirectory() as temporary:
-                    report = Path(temporary) / "failure.json"
-                    exc = credentials.KeylessCredentialError(code)
-                    exc.http_status = status
-                    exc.response = "provider-secret"
-                    with patch.object(
-                        credentials, "authority_evidence",
-                        return_value=publisher.authority_policy("b" * 40),
-                    ), patch.object(credentials, "acquire_pair", side_effect=exc), patch.object(
-                        publisher, "run",
-                    ) as run, patch("sys.stderr", io.StringIO()):
-                        self.assertEqual(publisher.main(self.publication_argv(report)), 1)
-                        run.assert_not_called()
-                    text = report.read_text(encoding="utf-8")
-                    expected = {"http_status": status} if type(status) is int and 400 <= status <= 599 else {}
-                    self.assertEqual(json.loads(text)["failure"], {
-                        "stage": "CREDENTIAL_ACQUISITION",
-                        "error_type": "KeylessCredentialError",
-                        "error_code": code,
-                        "provider_write_attempted": False,
-                        **expected,
-                    })
-                    self.assertNotIn("provider-secret", text)
-
-    def test_other_credential_failures_cannot_claim_access_http_status(self) -> None:
-        class CustomCredentialError(credentials.KeylessCredentialError):
-            pass
-
-        for exc in (
-            credentials.KeylessCredentialError("OIDC_EXCHANGE_REJECTED"),
-            credentials.KeylessCredentialError("TARGET_ACCESS_VALIDATION_FAILED"),
-            CustomCredentialError("MODEL_WRITE_ACCESS_VALIDATION_FAILED"),
-        ):
-            with self.subTest(error_type=type(exc).__name__), tempfile.TemporaryDirectory() as temporary:
-                report = Path(temporary) / "failure.json"
-                exc.http_status = 403
-                publisher.record_credential_failure(
-                    report, source_revision="a" * 40, publisher={}, exc=exc,
-                )
-                failure = json.loads(report.read_text(encoding="utf-8"))["failure"]
-                self.assertNotIn("http_status", failure)
 
     def test_main_never_serializes_unknown_or_hostile_credential_errors(self) -> None:
         class HostileError(credentials.KeylessCredentialError):
