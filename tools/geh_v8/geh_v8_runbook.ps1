@@ -85,7 +85,7 @@ if ($Bundle -ne "") {
 $Manifest = @{
     "szl_geh_v8.py" = "25008681bed2563c2caa683ae342933fd1ae72e7b2c89ef0c16bb021f7a736b7"
     "szl_geh_verify.py" = "6647ef7fb207cbf01e4c69275735fc632009a0558625208899bcdef2e2787040"
-    "chaski_margin_probe.py" = "6c9a22b089150897d54d1a9a566eeefdc26179e99bc9f196853b3fb898b0d34e"
+    "chaski_margin_probe.py" = "986ebf47b1329d26f5666a5982a98f4114cab2c01b2331d765da2847f1ff953e"
     "tests\test_geh_v8.py" = "c5a601f482da7e605ee02171c633ab931b082a90a24ec5f5f2f270b5fec47b6b"
     "README.md" = "c45f15347da292fcd6970fb996b4360ee83d101eadea9f1a77bf8f40718c4602"
     "geh-lean\lakefile.toml" = "60b374e3ac39ecf8e9f8bf79c7ffee008c9fcbb0bfafab5530cd7d8bec373cb8"

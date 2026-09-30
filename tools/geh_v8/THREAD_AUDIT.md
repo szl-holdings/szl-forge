@@ -196,6 +196,13 @@ Chain head `bdb60e93…0890`; `szl_geh_verify.py --evidence …` → 5 receipts,
   owner-metal CUDA bf16 base-model outputs byte-for-byte on 11/11 held-out cases. The base model
   is not environment-sensitive on these prompts; whatever flips between receipts A and B is
   adapter-side.
+* **Control reproduced off-metal:** with the correct loader class, the Hub `chaski-r2` adapter
+  scores **5/5 drafts and 6/6 refusals on CPU fp32** (transformers 5.18, torch 2.14) through the
+  pristine runner's own prompt path and scorers — the r2 control is reproducible outside the owner
+  machine. Its structural decision after `"executed":false` is `,"` at +7.2 logits over the
+  runner-up (`}` not in the top 3): no knife edge. The free-text `claim` field has the expected
+  close word choices (min margins 0.01–0.22), which is why the flag is now restricted to structural
+  `}`-vs-`,` decisions. Receipts: `evidence_sandbox/chaski_probe/`.
 * **Margin probe shipped:** `tools/chaski_margin_probe.py` replays the held-out prompts through
   the pristine runner's own prompt path and scorers and records, per case, the top-2 logit margin
   at every generated token, the environment (torch/transformers/peft versions, model class,

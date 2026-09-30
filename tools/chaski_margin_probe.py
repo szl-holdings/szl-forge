@@ -134,7 +134,10 @@ def generate_with_margins(model, tok, prompt: str, *, max_new_tokens: int, devic
         "prompt_tokens": prompt_tokens, "ended_on_eos": ended_on_eos,
         "margin_min": argmin["margin"] if argmin else None, "margin_argmin": argmin,
         "margin_mean": round(sum(s["margin"] for s in steps) / len(steps), 4) if steps else None,
-        "structural_decisions": struct[:8], "margins": [s["margin"] for s in steps],
+        "structural_decisions": struct[:8],
+        # full per-token record (token, runner-up, margin): small, and it is the whole point of a
+        # diagnostic receipt — a reader can find the exact decision that flips a verdict.
+        "steps": steps,
     }
 
 
