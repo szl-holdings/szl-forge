@@ -17,6 +17,12 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 
 
+# Files the Hub rewrites after upload. ``.gitattributes`` gains
+# ``filter=lfs`` rules for large uploads, so exact byte parity is impossible by
+# design; the source rules must still all be present in the published copy.
+HUB_MANAGED_METADATA = frozenset({".gitattributes"})
+
+
 class PublishError(RuntimeError):
     """The Space publication or attestation contract failed."""
 
@@ -279,6 +285,47 @@ def reconcile_final_space_volumes(
     return evidence, info
 
 
+def verify_published_bytes(
+    files: dict[str, dict[str, Any]],
+    source_dir: Path,
+    fetch: Any,
+) -> dict[str, dict[str, Any]]:
+    """Require exact bytes for every payload file at the published revision.
+
+    Hub-managed metadata (``HUB_MANAGED_METADATA``) is verified by content
+    instead: every non-empty source line must appear verbatim in the published
+    copy, and any extra published lines must be Hub LFS tracking rules. The
+    relaxation is recorded in the returned receipt fragment so the publication
+    receipt never claims byte parity for those files.
+    """
+    receipt: dict[str, dict[str, Any]] = {}
+    for target, expected in files.items():
+        remote = fetch(target)
+        if target not in HUB_MANAGED_METADATA:
+            if sha256_bytes(remote) != expected["sha256"]:
+                raise PublishError(f"immutable Space byte mismatch: {target}")
+            continue
+        source_lines = [
+            line for line in (source_dir / Path(target)).read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+        remote_lines = [line for line in remote.decode("utf-8").splitlines() if line.strip()]
+        missing = [line for line in source_lines if line not in remote_lines]
+        extra = [line for line in remote_lines if line not in source_lines]
+        foreign = [line for line in extra if "filter=lfs" not in line]
+        if missing or foreign:
+            raise PublishError(
+                f"Hub-managed metadata drift: {target} missing={missing!r} foreign={foreign!r}"
+            )
+        receipt[target] = {
+            "verification": "SOURCE_LINES_PRESENT_NOT_BYTE_PARITY",
+            "source_sha256": expected["sha256"],
+            "published_sha256": sha256_bytes(remote),
+            "hub_appended_lines": extra,
+        }
+    return receipt
+
+
 def publish_and_verify(
     plan: dict[str, Any],
     *,
@@ -371,8 +418,8 @@ def publish_and_verify(
 
     from huggingface_hub import hf_hub_download
 
-    for target, expected in plan["files"].items():
-        remote = Path(
+    def fetch_published(target: str) -> bytes:
+        return Path(
             hf_hub_download(
                 repo_id=repo_id,
                 repo_type="space",
@@ -381,9 +428,11 @@ def publish_and_verify(
                 token=token,
                 force_download=True,
             )
-        )
-        if sha256_bytes(remote.read_bytes()) != expected["sha256"]:
-            raise PublishError(f"immutable Space byte mismatch: {target}")
+        ).read_bytes()
+
+    plan["hub_managed_metadata"] = verify_published_bytes(
+        plan["files"], source_dir, fetch_published
+    )
 
     origin = live_origin(repo_id, static=static)
     probes: dict[str, Any] = {}
