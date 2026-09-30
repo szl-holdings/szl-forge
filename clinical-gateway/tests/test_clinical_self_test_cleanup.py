@@ -15,7 +15,7 @@ class ClinicalSelfTestCleanupTests(unittest.TestCase):
     def test_strict_cleanup_is_required_and_success_is_verified(self):
         temporary = self.temporary()
         with patch.object(oac.tempfile, "TemporaryDirectory", return_value=temporary) as create, \
-             patch.object(oac.os.path, "lexists", return_value=False):
+             patch.object(oac.os, "lstat", side_effect=FileNotFoundError):
             with oac.clinical_self_test_workspace() as directory:
                 self.assertEqual(directory, temporary.name)
             create.assert_called_once_with(prefix="owned-agent-clinical-self-test-")
@@ -26,7 +26,7 @@ class ClinicalSelfTestCleanupTests(unittest.TestCase):
         with patch.object(oac.tempfile, "TemporaryDirectory", return_value=temporary), \
              patch.object(oac.time, "monotonic", side_effect=[0.0, 0.1]), \
              patch.object(oac.time, "sleep") as sleep, \
-             patch.object(oac.os.path, "lexists", return_value=False):
+             patch.object(oac.os, "lstat", side_effect=FileNotFoundError):
             with oac.clinical_self_test_workspace():
                 pass
             self.assertEqual(temporary.cleanup.call_count, 2)
@@ -58,7 +58,25 @@ class ClinicalSelfTestCleanupTests(unittest.TestCase):
     def test_cleanup_return_does_not_prove_the_directory_was_removed(self):
         temporary = self.temporary()
         with patch.object(oac.tempfile, "TemporaryDirectory", return_value=temporary), \
-             patch.object(oac.os.path, "lexists", return_value=True):
+             patch.object(oac.os, "lstat", return_value=object()):
+            with self.assertRaises(oac.ControlError) as error:
+                with oac.clinical_self_test_workspace():
+                    pass
+            self.assertEqual(error.exception.code, "CLINICAL_SELF_TEST_CLEANUP_FAILED")
+
+    def test_unreadable_path_is_not_proof_of_removal(self):
+        temporary = self.temporary()
+        with patch.object(oac.tempfile, "TemporaryDirectory", return_value=temporary), \
+             patch.object(oac.os, "lstat", side_effect=PermissionError("fixture unreadable")):
+            with self.assertRaises(oac.ControlError) as error:
+                with oac.clinical_self_test_workspace():
+                    pass
+            self.assertEqual(error.exception.code, "CLINICAL_SELF_TEST_CLEANUP_FAILED")
+
+    def test_other_path_readback_error_is_not_proof_of_removal(self):
+        temporary = self.temporary()
+        with patch.object(oac.tempfile, "TemporaryDirectory", return_value=temporary), \
+             patch.object(oac.os, "lstat", side_effect=OSError("fixture unavailable")):
             with self.assertRaises(oac.ControlError) as error:
                 with oac.clinical_self_test_workspace():
                     pass
@@ -67,7 +85,7 @@ class ClinicalSelfTestCleanupTests(unittest.TestCase):
     def test_original_test_failure_is_preserved_when_cleanup_succeeds(self):
         temporary = self.temporary()
         with patch.object(oac.tempfile, "TemporaryDirectory", return_value=temporary), \
-             patch.object(oac.os.path, "lexists", return_value=False):
+             patch.object(oac.os, "lstat", side_effect=FileNotFoundError):
             with self.assertRaisesRegex(ValueError, "original fixture failure"):
                 with oac.clinical_self_test_workspace():
                     raise ValueError("original fixture failure")
@@ -90,7 +108,8 @@ class ClinicalSelfTestCleanupTests(unittest.TestCase):
         self.assertIs(result["clinical_use_authorized"], False)
         self.assertIs(result["direct_device_transport"], False)
         self.assertEqual(len(observed), 1)
-        self.assertFalse(observed[0].exists())
+        with self.assertRaises(FileNotFoundError):
+            observed[0].lstat()
 
 
 if __name__ == "__main__":

@@ -383,8 +383,7 @@ class PublishSzlKernelsTests(unittest.TestCase):
             "INVALID_PUBLISHER_REVISION", "UNDECLARED_OIDC_RESOURCE",
             "OIDC_EXCHANGE_UNAVAILABLE", "OIDC_EXCHANGE_REJECTED",
             "INVALID_OIDC_TOKEN_RESPONSE", "AMBIENT_HUB_CREDENTIAL_REJECTED",
-            "CROSS_TARGET_TOKEN_REUSE_REJECTED", "INVALID_KERNEL_REFS",
-            "TARGET_ACCESS_VALIDATION_FAILED",
+            "CROSS_TARGET_TOKEN_REUSE_REJECTED",
         }
         for code in sorted(codes):
             with self.subTest(code=code), tempfile.TemporaryDirectory() as temporary:
@@ -413,6 +412,42 @@ class PublishSzlKernelsTests(unittest.TestCase):
                 })
                 self.assertNotIn("publisher_authority", observed)
                 self.assertNotIn("oidc-secret", report.read_text(encoding="utf-8"))
+
+    def test_main_does_not_route_repo_grants_through_user_token_auth_check(self) -> None:
+        environment = {
+            "GITHUB_ACTIONS": "true",
+            "GITHUB_REPOSITORY": credentials.REPOSITORY,
+            "GITHUB_REF": "refs/heads/main",
+            "GITHUB_REF_PROTECTED": "true",
+            "GITHUB_WORKFLOW_REF": credentials.WORKFLOW_REF,
+            "GITHUB_EVENT_NAME": "workflow_dispatch",
+            "GITHUB_SHA": "b" * 40,
+            "ACTIONS_ID_TOKEN_REQUEST_URL": (
+                "https://pipelines.actions.githubusercontent.com/oidc/token"
+            ),
+            "ACTIONS_ID_TOKEN_REQUEST_TOKEN": "github-oidc-request-fixture",
+        }
+        report = Path("unused-by-mocked-run.json")
+
+        def publish(**kwargs: object) -> dict[str, object]:
+            self.assertEqual(kwargs["token"], MODEL_TOKEN)
+            self.assertEqual(kwargs["kernel_token"], KERNEL_TOKEN)
+            self.assertTrue(
+                all(key not in os.environ for key in publisher.OIDC_ENV_ALLOWLIST)
+            )
+            return {"status": "mocked-provider-boundary"}
+
+        with patch.dict(os.environ, environment, clear=True), patch.object(
+            credentials, "exchange", side_effect=[MODEL_TOKEN, KERNEL_TOKEN]
+        ), patch("huggingface_hub.HfApi") as api, patch.object(
+            publisher, "run", side_effect=publish
+        ) as run, patch("builtins.print"):
+            api.return_value.auth_check.side_effect = RuntimeError(
+                "user-token auth-check is incompatible with the repo grant"
+            )
+            self.assertEqual(publisher.main(self.publication_argv(report)), 0)
+        api.assert_not_called()
+        run.assert_called_once()
 
     def test_main_records_authority_failure_before_acquiring_grants(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
