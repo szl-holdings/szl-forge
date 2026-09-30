@@ -21,8 +21,9 @@ Subcommands
   merge         merge the eight Tier-3 adapters into standalone checkpoints (unchanged)
   dpo           on-policy DPO challenger for the khipu abstain lane (CUDA only)
   eval-abstain  held-out MEASURED counts, baseline vs challenger (CUDA only)
-  cards         WO1 card reconciliation for repos that hold a merged root checkpoint
-                (dry-run by default; --apply opens Hub PRs unless --direct)
+  cards         WO1 artifact-identity note for repos that hold a merged root checkpoint
+                (additive by default; --relabel flips frontmatter; dry-run unless --apply;
+                publisher-managed cards are refused Hub-side and route through szl-forge)
   publish       gated upload of a merged/ folder (never a challenger)
 
 Every stage writes a *_receipt.json with pinned revisions and byte digests.
@@ -491,12 +492,26 @@ def cmd_eval(challenger: pathlib.Path, out: pathlib.Path) -> int:
 
 # ---------------- cards (WO1 reconciliation) ----------------
 
-CARD_REPOS = [job[0] for job in MERGE_JOBS]
+# Where each card is actually managed. Hub-side edits to publisher-managed cards are overwritten by the
+# next szl-forge main-push fanout, so those route through a szl-forge PR on the source card instead.
+CARD_MANAGEMENT = {
+    "SZLHOLDINGS/khipu-r3": "hub-pr",
+    "SZLHOLDINGS/brain-navigator-r2": "hub-pr",
+    "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3": "hub-pr",
+    "SZLHOLDINGS/chaski-r2": "szl-forge:chaski-r2/card/README.md (publish-chaski-card.yml)",
+    "SZLHOLDINGS/chaski-5050": "szl-forge:chaski-5050/card/README.md (publish-chaski-card.yml)",
+    "SZLHOLDINGS/KHIPU-R2": "szl-forge:khipu-r2/card/README.md (publish-khipu-card.yml)",
+    "SZLHOLDINGS/WILLAY": "szl-forge:willay/card/README.md (closed curated pipeline, pinned source sha)",
+    "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2": "adapter-only root; out of scope",
+}
+CARD_REPOS_DEFAULT = [r for r, m in CARD_MANAGEMENT.items() if m == "hub-pr"]
+CARD_REPOS_ALL = [job[0] for job in MERGE_JOBS]
 NOTE_MARKER = "<!-- szl:artifact-identity-reconciled -->"
 
 
-def reconcile_card(text: str, files: set[str], today: str) -> tuple[str, list[str]]:
-    """Return (new_text, changes). Exact-match edits inside the YAML frontmatter only."""
+def reconcile_card(text: str, files: set[str], today: str, relabel: bool = False) -> tuple[str, list[str]]:
+    """Return (new_text, changes). Default is ADDITIVE (identity note only). relabel=True also flips the
+    frontmatter to transformers/finetune, which the publisher contracts for chaski-*/KHIPU-R2 forbid."""
     m = re.match(r"^---\n(.*?)\n---\n", text, re.S)
     if not m:
         return text, ["SKIP: no YAML frontmatter"]
@@ -504,25 +519,26 @@ def reconcile_card(text: str, files: set[str], today: str) -> tuple[str, list[st
     changes: list[str] = []
     if not ({"config.json", "model.safetensors"} <= files):
         return text, ["SKIP: root is adapter-only (no config.json + model.safetensors at root)"]
-    if re.search(r"^library_name: peft$", fm, re.M):
+    if relabel and re.search(r"^library_name: peft$", fm, re.M):
         fm = re.sub(r"^library_name: peft$", "library_name: transformers", fm, flags=re.M)
         changes.append("library_name: peft -> transformers")
-    if re.search(r"^base_model_relation: adapter$", fm, re.M):
+    if relabel and re.search(r"^base_model_relation: adapter$", fm, re.M):
         fm = re.sub(r"^base_model_relation: adapter$", "base_model_relation: finetune", fm, flags=re.M)
         changes.append("base_model_relation: adapter -> finetune")
-    for tag in ("peft", "lora"):
+    for tag in (("peft", "lora") if relabel else ()):
         if re.search(rf"^- {tag}$", fm, re.M):
             fm = re.sub(rf"^- {tag}\n", "", fm, flags=re.M)
             changes.append(f"tags: removed '{tag}'")
-    if re.search(r"^- base_model:adapter:", fm, re.M):
+    if relabel and re.search(r"^- base_model:adapter:", fm, re.M):
         fm = re.sub(r"^- base_model:adapter:", "- base_model:finetune:", fm, flags=re.M)
         changes.append("tags: base_model:adapter:* -> base_model:finetune:*")
     if NOTE_MARKER not in body:
-        note = (f"{NOTE_MARKER}\n> **Artifact identity (reconciled {today}).** Root `model.safetensors` + `config.json` are the "
-                "merged full-precision checkpoint and load with `transformers`. The LoRA adapter "
-                "(`adapter_config.json`, `adapter_model.safetensors`) is retained at root for PEFT users. "
-                "This note changes metadata only: no evaluation, energy, or readiness claim is added, and "
-                "`publication_eligible` is unchanged.\n\n")
+        merge_ref = " (`merge_receipt.json`)" if "merge_receipt.json" in files else ""
+        note = (f"{NOTE_MARKER}\n> **Artifact identity (noted {today}).** Besides the LoRA adapter, this repository's root carries a "
+                "merged full-precision checkpoint (`model.safetensors` + `config.json`, loadable with `transformers`) produced by "
+                f"the receipted CPU merge of this adapter into its declared base{merge_ref}. The adapter remains the artifact of "
+                "record for every figure on this card; the merged bytes carry no separate held-out receipt and add no claim. "
+                "Metadata-only note.\n\n")
         body = note + body.lstrip("\n")
         changes.append("note: artifact-identity blockquote inserted after frontmatter")
     if not changes:
@@ -530,7 +546,7 @@ def reconcile_card(text: str, files: set[str], today: str) -> tuple[str, list[st
     return f"---\n{fm}\n---\n{body}", changes
 
 
-def cmd_cards(apply: bool, direct: bool, owner_confirmed: bool, out: pathlib.Path) -> int:
+def cmd_cards(apply: bool, direct: bool, owner_confirmed: bool, out: pathlib.Path, relabel: bool = False, all_repos: bool = False) -> int:
     from huggingface_hub import HfApi, hf_hub_download
 
     receipt_path = out / "cards_receipt.json"
@@ -542,34 +558,39 @@ def cmd_cards(apply: bool, direct: bool, owner_confirmed: bool, out: pathlib.Pat
     today = utcnow()[:10]
     items = []
     out.mkdir(parents=True, exist_ok=True)
-    for repo in CARD_REPOS:
+    for repo in (CARD_REPOS_ALL if all_repos else CARD_REPOS_DEFAULT):
+        managed = CARD_MANAGEMENT.get(repo, "unknown")
         info = api.repo_info(repo)
         rev = info.sha
         files = {s.rfilename for s in info.siblings}
         local = pathlib.Path(hf_hub_download(repo, "README.md", revision=rev))
         before = local.read_text(encoding="utf-8")
-        after, changes = reconcile_card(before, files, today)
-        item = {"repo": repo, "revision": rev, "before_sha256": sha256_text(before), "after_sha256": sha256_text(after),
+        after, changes = reconcile_card(before, files, today, relabel=relabel)
+        if managed != "hub-pr" and after != before:
+            changes = changes + [f"WARNING: card is managed by {managed}; a Hub-side edit is overwritten on the next fanout"]
+        item = {"repo": repo, "revision": rev, "managed_by": managed, "before_sha256": sha256_text(before), "after_sha256": sha256_text(after),
                 "changes": changes, "mode": "dry-run"}
         if after != before:
             diff = "".join(difflib.unified_diff(before.splitlines(True), after.splitlines(True), "README.md@" + rev[:10], "README.md (reconciled)"))
             (out / f"{repo.split('/')[1]}.README.diff").write_text(diff, encoding="utf-8")
             (out / f"{repo.split('/')[1]}.README.md").write_text(after, encoding="utf-8")
-            if apply:
+            if apply and managed != "hub-pr":
+                item["mode"] = "refused: publisher-managed; route through szl-forge"
+            elif apply:
                 from huggingface_hub import CommitOperationAdd
 
                 res = api.create_commit(
                     repo_id=repo, operations=[CommitOperationAdd("README.md", after.encode("utf-8"))],
-                    commit_message="card: reconcile artifact identity (merged root checkpoint -> transformers/finetune)",
-                    commit_description="Metadata-only reconciliation per SZL-HF-FRONTIER-1 WO1. No evaluation claim added.",
+                    commit_message="card: note the merged root checkpoint alongside the adapter (metadata only)",
+                    commit_description="Additive artifact-identity note per SZL-HF-FRONTIER-1 WO1. No evaluation claim added; frontmatter unchanged unless --relabel was used.",
                     parent_commit=rev, create_pr=not direct,
                 )
                 item["mode"] = "commit" if direct else "pull-request"
                 item["result_url"] = getattr(res, "pr_url", None) or getattr(res, "commit_url", None)
         print(f"--- {repo}@{rev[:10]}: {'; '.join(changes)}" + (f" -> {item.get('result_url')}" if item.get("result_url") else ""))
         items.append(item)
-    receipt = {"stage": "cards", "status": "DONE" if apply else "DRY-RUN", "items": items,
-               "publication_eligible": False, "note": "Metadata reconciliation only; v2 (adapter-only root) is skipped by rule.", **env_block()}
+    receipt = {"stage": "cards", "status": "DONE" if apply else "DRY-RUN", "relabel": relabel, "items": items,
+               "publication_eligible": False, "note": "Additive identity note by default; publisher-managed cards are refused Hub-side and route through szl-forge; v2 (adapter-only root) is skipped by rule.", **env_block()}
     write_json(receipt_path, receipt)
     print(f"    receipt -> {receipt_path}")
     return 0
@@ -637,7 +658,7 @@ def main() -> int:
     m = sub.add_parser("merge"); m.add_argument("--out", default="merged")
     d = sub.add_parser("dpo"); d.add_argument("--out", default=CHALLENGER_ID); d.add_argument("--epochs", type=int, default=2); d.add_argument("--max-pairs", type=int, default=64)
     e = sub.add_parser("eval-abstain"); e.add_argument("--challenger", default=CHALLENGER_ID); e.add_argument("--out", default=None)
-    c = sub.add_parser("cards"); c.add_argument("--apply", action="store_true"); c.add_argument("--direct", action="store_true", help="commit directly instead of opening Hub PRs"); c.add_argument("--owner-confirmed-wo6", action="store_true"); c.add_argument("--out", default="cards-reconcile")
+    c = sub.add_parser("cards"); c.add_argument("--apply", action="store_true"); c.add_argument("--direct", action="store_true", help="commit directly instead of opening Hub PRs"); c.add_argument("--owner-confirmed-wo6", action="store_true"); c.add_argument("--out", default="cards-reconcile"); c.add_argument("--relabel", action="store_true", help="also flip frontmatter to transformers/finetune (publisher contracts forbid this for chaski-*/KHIPU-R2)"); c.add_argument("--all", action="store_true", help="include publisher-managed cards in the dry-run")
     p = sub.add_parser("publish"); p.add_argument("--folder", default="merged"); p.add_argument("--only", default=None); p.add_argument("--owner-confirmed-wo6", action="store_true")
     args = ap.parse_args()
     if args.cmd == "merge":
@@ -648,7 +669,7 @@ def main() -> int:
         ch = pathlib.Path(args.challenger)
         return cmd_eval(ch, pathlib.Path(args.out) if args.out else ch / "eval")
     if args.cmd == "cards":
-        return cmd_cards(args.apply, args.direct, args.owner_confirmed_wo6, pathlib.Path(args.out))
+        return cmd_cards(args.apply, args.direct, args.owner_confirmed_wo6, pathlib.Path(args.out), args.relabel, args.all)
     return cmd_publish(pathlib.Path(args.folder), args.only, args.owner_confirmed_wo6)
 
 
