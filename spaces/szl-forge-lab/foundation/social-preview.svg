@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Source-aware confirmation — SZL Foundation</title>
+  <desc id="desc">More agreement. Or better evidence? Explore 5,184 recorded policy runs. Synthetic research, with gains and failures visible.</desc>
+  <rect width="1200" height="630" fill="#f4f2e9"/>
+  <path d="M64 110H1136M64 512H1136" stroke="#cbd3cb"/>
+  <g fill="#152e30" font-family="Arial,Helvetica,sans-serif">
+    <text x="64" y="77" font-size="34" font-weight="700">SZL</text>
+    <text x="152" y="74" font-size="14" letter-spacing="4">FOUNDATION</text>
+    <text x="64" y="177" font-size="13" letter-spacing="3" fill="#196c70">SOURCE-AWARE CONFIRMATION</text>
+    <text x="64" y="275" font-size="70">More agreement.</text>
+    <text x="64" y="360" font-size="70" font-family="Georgia,serif" font-style="italic">Or better evidence?</text>
+    <text x="66" y="422" font-size="23" fill="#566b6a">When is another observation worth buying?</text>
+    <text x="64" y="557" font-size="20">5,184 recorded runs · 576 worlds · 7 policies</text>
+    <text x="64" y="591" font-size="16" fill="#566b6a">Synthetic research · Shared-bias gain passed · Clean guard failed</text>
+  </g>
+  <g stroke="#196c70" fill="none" stroke-width="3">
+    <circle cx="995" cy="248" r="55"/>
+    <path d="M940 248H886M995 303V352M1050 248H1104"/>
+    <circle cx="875" cy="248" r="9"/><circle cx="995" cy="363" r="9"/><circle cx="1115" cy="248" r="9"/>
+  </g>
+  <text x="974" y="259" font-size="28" fill="#196c70" font-family="Arial,Helvetica,sans-serif">A</text>
+</svg>

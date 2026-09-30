@@ -15,6 +15,18 @@ from unittest.mock import patch
 
 import publish_szl_kernels as publisher
 import verify_szl_kernel_runtime as runtime_verifier
+import kernels_keyless_credentials as credentials
+
+MODEL_TOKEN = "hf_jwt_model_fixture"
+KERNEL_TOKEN = "hf_jwt_kernel_fixture"
+
+
+def keyless_grants() -> dict[str, object]:
+    return {
+        "token": MODEL_TOKEN,
+        "kernel_token": KERNEL_TOKEN,
+        "publisher_authority": publisher.authority_policy("b" * 40),
+    }
 
 
 def retrieval_evidence() -> dict[str, object]:
@@ -151,6 +163,7 @@ class FakeApi:
     kernel_revision = "e" * 40
 
     def __init__(self, artifacts: dict[str, Path]) -> None:
+        self.tokens: list[tuple[str, object]] = []
         self.files = list(artifacts)
         self.commits: list[dict[str, object]] = []
         self.kernel_revisions = {
@@ -176,7 +189,8 @@ class FakeApi:
         files_metadata: bool = False,
         token: str | None = None,
     ) -> SimpleNamespace:
-        del repo_id, files_metadata, token
+        del repo_id, files_metadata
+        self.tokens.append(("model", token))
         return SimpleNamespace(
             sha=self.model_revision,
             siblings=[SimpleNamespace(rfilename=path) for path in self.files],
@@ -191,6 +205,7 @@ class FakeApi:
         **_: object,
     ) -> SimpleNamespace:
         del repo_id
+        self.tokens.append((repo_type, _.get("token")))
         self._assert_kernel(repo_type)
         return SimpleNamespace(
             sha=self.kernel_revisions[revision or publisher.KERNEL_BRANCHES[0]]
@@ -204,6 +219,7 @@ class FakeApi:
         **_: object,
     ) -> SimpleNamespace:
         del repo_id
+        self.tokens.append((repo_type, _.get("token")))
         self._assert_kernel(repo_type)
         return SimpleNamespace(
             branches=[
@@ -224,6 +240,7 @@ class FakeApi:
         **_: object,
     ) -> list[SimpleNamespace]:
         del repo_id
+        self.tokens.append((repo_type, _.get("token")))
         self._assert_kernel(repo_type)
         branch = next(
             branch
@@ -244,6 +261,7 @@ class FakeApi:
         **_: object,
     ) -> list[str]:
         del repo_id
+        self.tokens.append((repo_type, _.get("token")))
         self._assert_kernel(repo_type)
         branch = next(
             branch
@@ -263,6 +281,7 @@ class FakeApi:
         **_: object,
     ) -> SimpleNamespace:
         del repo_id
+        self.tokens.append((repo_type, _.get("token")))
         self.assert_parent(repo_type, parent_commit)
         self.commits.append({"repo_type": repo_type, "revision": revision})
         oid = f"{len(self.commits)}" * 40
@@ -280,7 +299,7 @@ class FakeApi:
         return SimpleNamespace(oid=oid)
 
     def upload_kernel(self, staging_root: Path, token: str) -> None:
-        if token != "test-token":
+        if token != KERNEL_TOKEN:
             raise AssertionError(token)
         main_revision = "1" * 40
         version_revision = "2" * 40
@@ -322,6 +341,7 @@ class FakeApi:
     ) -> str:
         if repo_id != publisher.EXPECTED_REPO_ID:
             raise AssertionError(repo_id)
+        self.tokens.append((repo_type, _.get("token")))
         payload = self.remote[(repo_type, revision)][filename]
         destination = self.download_root / repo_type / revision / filename
         destination.parent.mkdir(parents=True, exist_ok=True)
@@ -344,6 +364,278 @@ class FakeApi:
 
 
 class PublishSzlKernelsTests(unittest.TestCase):
+    @staticmethod
+    def publication_argv(report: Path) -> list[str]:
+        return [
+            "--source-dir", "unused", "--source-revision", "a" * 40,
+            "--authorization-report", "unused.json",
+            "--publisher-repository", publisher.EXPECTED_PUBLISHER_REPOSITORY,
+            "--publisher-revision", "b" * 40,
+            "--publisher-workflow-ref", publisher.EXPECTED_PUBLISHER_WORKFLOW_REF,
+            "--publisher-run-id", "123", "--publisher-run-attempt", "1",
+            "--report", str(report), "--publish",
+        ]
+
+    def test_main_retains_only_allowlisted_credential_failure_codes(self) -> None:
+        codes = {
+            "INVALID_GITHUB_OIDC_ENDPOINT", "MISSING_GITHUB_OIDC_REQUEST_TOKEN",
+            "UNTRUSTED_WORKFLOW_CONTEXT", "PULL_REQUEST_CONTEXT_REJECTED",
+            "INVALID_PUBLISHER_REVISION", "UNDECLARED_OIDC_RESOURCE",
+            "OIDC_EXCHANGE_UNAVAILABLE", "OIDC_EXCHANGE_REJECTED",
+            "INVALID_OIDC_TOKEN_RESPONSE", "AMBIENT_HUB_CREDENTIAL_REJECTED",
+            "CROSS_TARGET_TOKEN_REUSE_REJECTED",
+        }
+        for code in sorted(codes):
+            with self.subTest(code=code), tempfile.TemporaryDirectory() as temporary:
+                report = Path(temporary) / "reports" / "failure.json"
+                oidc = {key: "oidc-secret" for key in publisher.OIDC_ENV_ALLOWLIST}
+                with patch.dict(os.environ, oidc, clear=True), patch.object(
+                    credentials, "authority_evidence",
+                    return_value=publisher.authority_policy("b" * 40),
+                ), patch.object(
+                    credentials, "acquire_pair",
+                    side_effect=credentials.KeylessCredentialError(code),
+                ), patch.object(publisher, "run") as run, patch("sys.stderr", io.StringIO()):
+                    self.assertEqual(publisher.main(self.publication_argv(report)), 1)
+                    self.assertTrue(all(key not in os.environ for key in oidc))
+                    run.assert_not_called()
+                observed = json.loads(report.read_text(encoding="utf-8"))
+                self.assertEqual(observed["schema"], "szl.kernel-publication-preflight-failure/v1")
+                self.assertEqual(observed["status"], "PUBLICATION_FAILED_NO_PROVIDER_WRITE")
+                self.assertEqual(observed["source_revision"], "a" * 40)
+                self.assertEqual(observed["publisher"]["revision"], "b" * 40)
+                self.assertEqual(observed["failure"], {
+                    "stage": "CREDENTIAL_ACQUISITION",
+                    "error_type": "KeylessCredentialError",
+                    "error_code": code,
+                    "provider_write_attempted": False,
+                })
+                self.assertNotIn("publisher_authority", observed)
+                self.assertNotIn("oidc-secret", report.read_text(encoding="utf-8"))
+
+    def test_main_does_not_route_repo_grants_through_user_token_auth_check(self) -> None:
+        environment = {
+            "GITHUB_ACTIONS": "true",
+            "GITHUB_REPOSITORY": credentials.REPOSITORY,
+            "GITHUB_REF": "refs/heads/main",
+            "GITHUB_REF_PROTECTED": "true",
+            "GITHUB_WORKFLOW_REF": credentials.WORKFLOW_REF,
+            "GITHUB_EVENT_NAME": "workflow_dispatch",
+            "GITHUB_SHA": "b" * 40,
+            "ACTIONS_ID_TOKEN_REQUEST_URL": (
+                "https://pipelines.actions.githubusercontent.com/oidc/token"
+            ),
+            "ACTIONS_ID_TOKEN_REQUEST_TOKEN": "github-oidc-request-fixture",
+        }
+        report = Path("unused-by-mocked-run.json")
+
+        def publish(**kwargs: object) -> dict[str, object]:
+            self.assertEqual(kwargs["token"], MODEL_TOKEN)
+            self.assertEqual(kwargs["kernel_token"], KERNEL_TOKEN)
+            self.assertTrue(
+                all(key not in os.environ for key in publisher.OIDC_ENV_ALLOWLIST)
+            )
+            return {"status": "mocked-provider-boundary"}
+
+        with patch.dict(os.environ, environment, clear=True), patch.object(
+            credentials, "exchange", side_effect=[MODEL_TOKEN, KERNEL_TOKEN]
+        ), patch("huggingface_hub.HfApi") as api, patch.object(
+            publisher, "run", side_effect=publish
+        ) as run, patch("builtins.print"):
+            api.return_value.auth_check.side_effect = RuntimeError(
+                "user-token auth-check is incompatible with the repo grant"
+            )
+            self.assertEqual(publisher.main(self.publication_argv(report)), 0)
+        api.assert_not_called()
+        run.assert_called_once()
+
+    def test_main_records_authority_failure_before_acquiring_grants(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            report = Path(temporary) / "failure.json"
+            oidc = {key: "oidc-secret" for key in publisher.OIDC_ENV_ALLOWLIST}
+            with patch.dict(os.environ, oidc, clear=True), patch.object(
+                credentials, "authority_evidence",
+                side_effect=credentials.KeylessCredentialError("UNTRUSTED_WORKFLOW_CONTEXT"),
+            ), patch.object(credentials, "acquire_pair") as acquire, patch.object(
+                publisher, "run",
+            ) as run, patch("sys.stderr", io.StringIO()):
+                self.assertEqual(publisher.main(self.publication_argv(report)), 1)
+                self.assertTrue(all(key not in os.environ for key in oidc))
+                acquire.assert_not_called()
+                run.assert_not_called()
+            failure = json.loads(report.read_text(encoding="utf-8"))["failure"]
+            self.assertEqual(failure["error_code"], "UNTRUSTED_WORKFLOW_CONTEXT")
+            self.assertFalse(failure["provider_write_attempted"])
+
+    def test_main_never_serializes_unknown_or_hostile_credential_errors(self) -> None:
+        class HostileError(credentials.KeylessCredentialError):
+            def __str__(self) -> str:
+                raise AssertionError("exception text must not be requested")
+
+        exceptions = [
+            RuntimeError("provider-secret"),
+            credentials.KeylessCredentialError("provider-secret"),
+            credentials.KeylessCredentialError("OIDC_EXCHANGE_REJECTED", "provider-secret"),
+            HostileError("OIDC_EXCHANGE_REJECTED"),
+        ]
+        for exc in exceptions:
+            with self.subTest(error_type=type(exc).__name__), tempfile.TemporaryDirectory() as temporary:
+                report = Path(temporary) / "failure.json"
+                stderr = io.StringIO()
+                with patch.object(
+                    credentials, "authority_evidence",
+                    return_value=publisher.authority_policy("b" * 40),
+                ), patch.object(credentials, "acquire_pair", side_effect=exc), patch.object(
+                    publisher, "run",
+                ) as run, patch("sys.stderr", stderr):
+                    self.assertEqual(publisher.main(self.publication_argv(report)), 1)
+                    run.assert_not_called()
+                text = report.read_text(encoding="utf-8")
+                self.assertNotIn("error_code", json.loads(text)["failure"])
+                self.assertNotIn("provider-secret", text + stderr.getvalue())
+
+    def test_main_early_failure_preserves_existing_report_bytes(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            report = Path(temporary) / "failure.json"
+            original = b'{"status":"PUBLICATION_FAILED_AFTER_PROVIDER_WRITE_ATTEMPT"}\n'
+            report.write_bytes(original)
+            with patch.object(
+                credentials, "authority_evidence",
+                side_effect=credentials.KeylessCredentialError("OIDC_EXCHANGE_REJECTED"),
+            ), patch.object(publisher, "run") as run, patch("sys.stderr", io.StringIO()):
+                self.assertEqual(publisher.main(self.publication_argv(report)), 1)
+                run.assert_not_called()
+            self.assertEqual(report.read_bytes(), original)
+
+    def test_main_never_relabels_a_run_failure_as_no_provider_write(self) -> None:
+        for existing_report in (False, True):
+            with self.subTest(existing_report=existing_report), tempfile.TemporaryDirectory() as temporary:
+                report = Path(temporary) / "failure.json"
+                original = b'{"status":"PUBLICATION_FAILED_AFTER_PROVIDER_WRITE_ATTEMPT"}\n'
+
+                def fail_run(**_: object) -> None:
+                    if existing_report:
+                        report.write_bytes(original)
+                    raise credentials.KeylessCredentialError("OIDC_EXCHANGE_REJECTED")
+
+                with patch.object(
+                    credentials, "authority_evidence",
+                    return_value=publisher.authority_policy("b" * 40),
+                ), patch.object(
+                    credentials, "acquire_pair",
+                    return_value=credentials.KernelPublisherCredentials(MODEL_TOKEN, KERNEL_TOKEN),
+                ), patch.object(publisher, "run", side_effect=fail_run), patch("sys.stderr", io.StringIO()):
+                    self.assertEqual(publisher.main(self.publication_argv(report)), 1)
+                if existing_report:
+                    self.assertEqual(report.read_bytes(), original)
+                else:
+                    self.assertFalse(report.exists())
+
+    def test_main_invalid_identity_fails_before_exchange_and_scrubs_oidc(self) -> None:
+        for argument in ("--source-revision", "--publisher-revision", "--publisher-repository"):
+            with self.subTest(argument=argument), tempfile.TemporaryDirectory() as temporary:
+                report = Path(temporary) / "failure.json"
+                argv = self.publication_argv(report)
+                argv[argv.index(argument) + 1] = "invalid-secret-marker"
+                stderr = io.StringIO()
+                oidc = {key: "oidc-secret" for key in publisher.OIDC_ENV_ALLOWLIST}
+                with patch.dict(os.environ, oidc, clear=True), patch.object(
+                    credentials, "authority_evidence",
+                ) as authority, patch.object(credentials, "acquire_pair") as acquire, patch.object(
+                    publisher, "run",
+                ) as run, patch("sys.stderr", stderr):
+                    self.assertEqual(publisher.main(argv), 1)
+                    self.assertTrue(all(key not in os.environ for key in oidc))
+                    authority.assert_not_called()
+                    acquire.assert_not_called()
+                    run.assert_not_called()
+                self.assertFalse(report.exists())
+                self.assertNotIn("invalid-secret-marker", stderr.getvalue())
+
+    def test_main_report_io_failure_cannot_echo_secrets_or_escape_failure(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            report = Path(temporary) / "failure.json"
+            stderr = io.StringIO()
+            with patch.object(
+                credentials, "authority_evidence",
+                side_effect=credentials.KeylessCredentialError("OIDC_EXCHANGE_REJECTED"),
+            ), patch.object(Path, "open", side_effect=OSError("disk-provider-secret")), patch(
+                "sys.stderr", stderr,
+            ):
+                self.assertEqual(publisher.main(self.publication_argv(report)), 1)
+            self.assertFalse(report.exists())
+            self.assertIn("receipt unavailable (OSError)", stderr.getvalue())
+            self.assertNotIn("disk-provider-secret", stderr.getvalue())
+
+    def test_main_argument_rejection_also_scrubs_oidc(self) -> None:
+        oidc = {key: "oidc-secret" for key in publisher.OIDC_ENV_ALLOWLIST}
+        with patch.dict(os.environ, oidc, clear=True), patch("sys.stderr", io.StringIO()):
+            with self.assertRaises(SystemExit) as caught:
+                publisher.main([])
+            self.assertEqual(caught.exception.code, 2)
+            self.assertTrue(all(key not in os.environ for key in oidc))
+
+    def test_main_drops_exchange_authority_before_provider_publication(self) -> None:
+        argv = [
+            "--source-dir", "unused", "--source-revision", "a" * 40,
+            "--authorization-report", "unused.json",
+            "--publisher-repository", publisher.EXPECTED_PUBLISHER_REPOSITORY,
+            "--publisher-revision", "b" * 40,
+            "--publisher-workflow-ref", publisher.EXPECTED_PUBLISHER_WORKFLOW_REF,
+            "--publisher-run-id", "123", "--publisher-run-attempt", "1",
+        ]
+        oidc = {key: "fixture" for key in publisher.OIDC_ENV_ALLOWLIST}
+
+        def publish(**kwargs: object) -> dict[str, object]:
+            self.assertEqual(kwargs["token"], MODEL_TOKEN)
+            self.assertEqual(kwargs["kernel_token"], KERNEL_TOKEN)
+            self.assertEqual(kwargs["publisher_authority"], publisher.authority_policy("b" * 40))
+            self.assertTrue(all(key not in os.environ for key in publisher.OIDC_ENV_ALLOWLIST))
+            return {"status": "mocked-boundary-only"}
+
+        with patch.dict(os.environ, oidc, clear=True), patch.object(
+            credentials, "acquire_pair",
+            return_value=credentials.KernelPublisherCredentials(MODEL_TOKEN, KERNEL_TOKEN),
+        ) as acquire, patch.object(
+            credentials, "authority_evidence", return_value=publisher.authority_policy("b" * 40),
+        ), patch.object(publisher, "run", side_effect=publish), patch("builtins.print"):
+            self.assertEqual(publisher.main([*argv, "--publish"]), 0)
+            acquire.assert_called_once_with()
+
+        with patch.object(credentials, "acquire_pair") as acquire, patch.object(
+            publisher, "run", return_value={"status": "mocked-dry-run-only"},
+        ) as run, patch("builtins.print"):
+            self.assertEqual(publisher.main(argv), 0)
+            acquire.assert_not_called()
+            self.assertIsNone(run.call_args.kwargs["token"])
+            self.assertIsNone(run.call_args.kwargs["kernel_token"])
+
+    def test_missing_reused_or_rebound_grants_fail_before_any_provider_read(self) -> None:
+        identity = {"revision": "b" * 40}
+        for mutation in (
+            {"token": None}, {"kernel_token": None},
+            {"kernel_token": MODEL_TOKEN}, {"publisher_authority": None},
+            {"publisher_authority": publisher.authority_policy("c" * 40)},
+        ):
+            with self.subTest(mutation=mutation), self.assertRaises(publisher.PublicationError):
+                publisher.run(
+                    source_root=Path("unused"), report_path=Path("unused-report"),
+                    authorization_path=Path("unused-authorization"),
+                    source_revision="a" * 40, publisher=identity, publish=True,
+                    **{**keyless_grants(), **mutation},
+                )
+
+    def test_uploader_error_does_not_echo_provider_output(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary, patch.object(
+            publisher, "require_kernel_builder_executable", return_value="kernel-builder",
+        ), patch.object(
+            publisher.subprocess, "run",
+            side_effect=publisher.subprocess.CalledProcessError(
+                1, ["kernel-builder"], output=KERNEL_TOKEN, stderr=KERNEL_TOKEN,
+            ),
+        ), self.assertRaisesRegex(publisher.PublicationError, "^kernel-builder upload failed$"):
+            publisher.upload_first_class_kernel(Path(temporary), KERNEL_TOKEN)
+
     def test_kernel_parent_revalidation_rejects_branch_drift(self) -> None:
         api = FakeApi({})
         observed = {
@@ -1307,13 +1599,13 @@ class PublishSzlKernelsTests(unittest.TestCase):
                     "explicit-provider-secret",
                 )
 
-            self.assertEqual(
-                observed_environment,
-                {
-                    "PATH": "trusted-path",
-                    "HF_TOKEN": "explicit-provider-secret",
-                },
-            )
+            self.assertEqual(observed_environment["PATH"], "trusted-path")
+            self.assertEqual(observed_environment["HF_TOKEN"], "explicit-provider-secret")
+            self.assertFalse(Path(observed_environment["HF_HOME"]).exists())
+            self.assertNotIn("HF_HUB_DISABLE_IMPLICIT_TOKEN", observed_environment)
+            for key in ("GITHUB_TOKEN", "ACTIONS_ID_TOKEN_REQUEST_TOKEN",
+                        "ACTIONS_ID_TOKEN_REQUEST_URL", "SERVICE_API_KEY"):
+                self.assertNotIn(key, observed_environment)
 
     def test_publisher_identity_requires_the_protected_main_workflow_ref(self) -> None:
         with self.assertRaisesRegex(
@@ -1355,8 +1647,10 @@ class PublishSzlKernelsTests(unittest.TestCase):
         self.assertNotIn("HF_ORG_TOKEN", sign_job)
         self.assertIn("--prepare-signature", sign_job)
         self.assertIn("kernel-signature-transfer", sign_job)
-        self.assertNotIn("id-token: write", publish_job)
-        self.assertIn("HF_ORG_TOKEN", publish_job)
+        self.assertIn("id-token: write", publish_job)
+        self.assertNotIn("HF_ORG_TOKEN", workflow)
+        self.assertNotIn("HF_TOKEN:", workflow)
+        self.assertIn("tools/test_kernels_keyless_credentials.py", workflow)
         self.assertIn("--signature-bundle-input", publish_job)
         self.assertIn("--signature-manifest-input", publish_job)
         self.assertIn(
@@ -1789,7 +2083,7 @@ class PublishSzlKernelsTests(unittest.TestCase):
                 source_revision=self.source_revision,
                 publisher=identity,
                 publish=True,
-                token="test-token",
+                **keyless_grants(),
                 signature_bundle_input=bundle,
                 signature_manifest_input=manifest,
                 api=api,
@@ -1995,6 +2289,8 @@ class PublishSzlKernelsTests(unittest.TestCase):
                 download_fn=api.download,
             )
             self.assertEqual(result["status"], "VERIFIED_DRY_RUN")
+            self.assertTrue(api.tokens)
+            self.assertTrue(all(token is False for _, token in api.tokens))
             self.assertEqual(
                 result["targets"]["first_class_kernel"]["mapped_file_count"],
                 1 + 2 * len(publisher.FIRST_CLASS_KERNEL_FILES),
@@ -2053,7 +2349,7 @@ class PublishSzlKernelsTests(unittest.TestCase):
                 source_revision=self.source_revision,
                 publisher=identity,
                 publish=True,
-                token="test-token",
+                **keyless_grants(),
                 api=api,
                 download_fn=api.download,
                 kernel_sign_fn=fake_sign_kernel_metadata,
@@ -2063,6 +2359,12 @@ class PublishSzlKernelsTests(unittest.TestCase):
             self.assertEqual(
                 result["status"], "PUBLISHED_AND_EXACT_READBACK_VERIFIED"
             )
+            self.assertTrue(api.tokens)
+            for repo_type, token in api.tokens:
+                self.assertEqual(token, MODEL_TOKEN if repo_type == "model" else KERNEL_TOKEN)
+            serialized = json.dumps(result)
+            self.assertNotIn(MODEL_TOKEN, serialized)
+            self.assertNotIn(KERNEL_TOKEN, serialized)
             self.assertEqual(
                 api.commits,
                 [
@@ -2164,7 +2466,7 @@ class PublishSzlKernelsTests(unittest.TestCase):
                     publisher.run(
                         source_root=root, report_path=report,
                         authorization_path=authorization, source_revision=self.source_revision,
-                        publisher=identity, publish=True, token="test-token", api=api,
+                        publisher=identity, publish=True, **keyless_grants(), api=api,
                         download_fn=api.download,
                         kernel_sign_fn=fake_sign_kernel_metadata,
                         kernel_upload_fn=api.upload_kernel,
@@ -2220,7 +2522,7 @@ class PublishSzlKernelsTests(unittest.TestCase):
                     source_revision=self.source_revision,
                     publisher=identity,
                     publish=True,
-                    token="test-token",
+                    **keyless_grants(),
                     api=api,
                     download_fn=api.download,
                     kernel_sign_fn=fail_signing,
@@ -2323,7 +2625,7 @@ class PublishSzlKernelsTests(unittest.TestCase):
                     source_revision=self.source_revision,
                     publisher=identity,
                     publish=True,
-                    token="test-token",
+                    **keyless_grants(),
                     api=api,
                     download_fn=fail_main_readback,
                     kernel_sign_fn=fake_sign_kernel_metadata,

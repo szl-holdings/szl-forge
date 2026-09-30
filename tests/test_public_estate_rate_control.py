@@ -181,6 +181,35 @@ class HeaderHints(unittest.TestCase):
 
 
 class Backpressure(unittest.TestCase):
+    def test_default_clock_completes_fractional_wait_with_coarse_monotonic(self):
+        clock = Clock()
+        # A Windows coarse timer can repeat after a sub-tick residual sleep.
+        coarse = lambda: int(clock.value * 64) / 64
+        with mock.patch.object(census.time, "monotonic", coarse), \
+             mock.patch.object(census.time, "perf_counter", clock.monotonic):
+            c = census.Client(sleeper=clock.sleep, wall_clock=clock.wall)
+        c.opener = RecordingOpener([
+            Reply(fields={"RateLimit": '"api";r=3;t=7'}), Reply(),
+        ], clock)
+        c.get(HF)
+        c.get(HF)
+        self.assertEqual(len(c.opener.calls), 2)
+        self.assertAlmostEqual(c.opener.calls[1]["time"], 7 / 3)
+        self.assertEqual(clock.waits, [7 / 3])
+        self.assertIsNone(c.rate_limit_receipt()["stop_code"])
+
+    def test_default_clock_preserves_launch_deadline_with_coarse_monotonic(self):
+        clock = Clock()
+        with mock.patch.object(census.time, "monotonic", lambda: 0), \
+             mock.patch.object(census.time, "perf_counter", clock.monotonic):
+            c = census.Client(sleeper=clock.sleep, wall_clock=clock.wall)
+        c.opener = RecordingOpener([Reply()], clock)
+        c.get(GH)
+        clock.value = census.REQUEST_LAUNCH_SECONDS
+        with self.assertRaisesRegex(census.CensusError, "REQUEST_LAUNCH_DEADLINE"):
+            c.get(GH)
+        self.assertEqual(len(c.opener.calls), 1)
+
     def test_serial_hf_launches_are_paced(self):
         c, clock = reader([Reply(), Reply()])
         c.get(HF); c.get(HF)
