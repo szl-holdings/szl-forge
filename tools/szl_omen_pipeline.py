@@ -41,7 +41,6 @@ import os
 import pathlib
 import platform
 import re
-import sys
 
 SCHEMA = "szl.omen-pipeline/v2"
 SEED = 11
