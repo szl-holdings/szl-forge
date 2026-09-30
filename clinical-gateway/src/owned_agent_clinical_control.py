@@ -28,6 +28,7 @@ import argparse
 import base64
 import copy
 import ctypes
+from contextlib import contextmanager
 from ctypes import wintypes
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
@@ -7817,12 +7818,58 @@ def synthetic_binding(
     }
 
 
+@contextmanager
+def clinical_self_test_workspace():
+    """Require removal of our disposable synthetic state before returning success."""
+    temporary = tempfile.TemporaryDirectory(prefix="owned-agent-clinical-self-test-")
+    try:
+        yield temporary.name
+    finally:
+        # Windows can briefly retain a file handle after its owning connection
+        # closes. Retry only PermissionError, and keep permanent failures fatal.
+        deadline = time.monotonic() + 5.0
+        while True:
+            try:
+                temporary.cleanup()
+                break
+            except PermissionError as exc:
+                if time.monotonic() >= deadline:
+                    raise ControlError(
+                        "CLINICAL_SELF_TEST_CLEANUP_FAILED",
+                        "temporary synthetic state cleanup did not complete",
+                        EXIT_INTERNAL,
+                    ) from exc
+                time.sleep(0.1)
+            except OSError as exc:
+                raise ControlError(
+                    "CLINICAL_SELF_TEST_CLEANUP_FAILED",
+                    "temporary synthetic state cleanup failed",
+                    EXIT_INTERNAL,
+                ) from exc
+        # Existence predicates suppress OSError, so False can mean unreadable.
+        # Only an explicit not-found result proves our disposable state is gone.
+        try:
+            os.lstat(temporary.name)
+        except FileNotFoundError:
+            pass
+        except OSError as exc:
+            raise ControlError(
+                "CLINICAL_SELF_TEST_CLEANUP_FAILED",
+                "temporary synthetic state removal could not be verified",
+                EXIT_INTERNAL,
+            ) from exc
+        else:
+            raise ControlError(
+                "CLINICAL_SELF_TEST_CLEANUP_FAILED",
+                "temporary synthetic state still exists after cleanup",
+                EXIT_INTERNAL,
+            )
+
+
 def clinical_self_test() -> dict[str, Any]:
     require_cryptography()
     checks: dict[str, Any] = {}
-    with tempfile.TemporaryDirectory(
-        prefix="owned-agent-clinical-self-test-", ignore_cleanup_errors=True
-    ) as directory:
+    with clinical_self_test_workspace() as directory:
         paths = state_paths(Path(directory).resolve())
         clinical_initialize(paths)
         assay_map_path = paths.root / "assay-map.json"
@@ -8027,6 +8074,7 @@ def clinical_self_test() -> dict[str, Any]:
         "clinical_use_authorized": False,
         "device_control": False,
         "direct_device_transport": False,
+        "disposable_state_removed": True,
         "ok": True,
         "operation": "clinical-self-test",
         "operation_status": "VERIFIED_SYNTHETIC_OFFLINE_CLINICAL_PATH",
