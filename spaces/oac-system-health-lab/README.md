@@ -11,7 +11,7 @@ models:
   - SZLHOLDINGS/oac-system-health-v1
 datasets:
   - SZLHOLDINGS/oac-clinical-transport-observability-synthetic
-short_description: Fixed synthetic telemetry scoring with source-bound readiness.
+short_description: Synthetic telemetry scoring with verified source binding.
 ---
 
 # OAC System Health Lab
