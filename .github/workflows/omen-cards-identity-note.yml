@@ -1,0 +1,139 @@
+name: Omen cards identity note (Hub PRs)
+
+# Owner-directed WO1 finisher for the three Hub-PR-managed model cards
+# (khipu-r3, brain-navigator-r2, szl-receiptagent-qwen35-0.8b-v3).
+#
+# dry-run       -> diffs + receipt only, no credential is even acquired.
+# pull-request  -> acquires the validated estate publisher credential the same way
+#                  hub-honesty-banners-via-token1.yml does, then runs
+#                  `cards --apply --owner-authorized`, which can ONLY open Hub pull
+#                  requests. Nothing changes on any card until a human merges on
+#                  the Hub. Direct commits are impossible from this workflow.
+#
+# The pipeline is fetched at an exact commit and its bytes are verified against the
+# supplied SHA-256 before anything runs. Publisher-managed cards (chaski-*, KHIPU-R2,
+# WILLAY) are refused by the tool itself and route through their source cards.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "dry-run (diffs only) or pull-request (open Hub PRs)"
+        required: true
+        default: dry-run
+        type: choice
+        options:
+          - dry-run
+          - pull-request
+      pipeline_sha:
+        description: "szl-forge commit holding tools/szl_omen_pipeline.py (huggingface lineage)"
+        required: true
+        default: "6c35dbca7966cedd948ca2fd755e94cdb3ea3fbe"
+      pipeline_sha256:
+        description: "Expected SHA-256 of tools/szl_omen_pipeline.py at that commit"
+        required: true
+        default: "31d5d1bb33f81d9b4ab20f9ba9054741bec8183e45788a99f0e77fe50f58d1ca"
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: omen-cards-identity-note
+  cancel-in-progress: false
+
+jobs:
+  cards:
+    name: Identity-note diffs, then Hub PRs only when requested
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      MODE: ${{ inputs.mode }}
+      PIPELINE_SHA: ${{ inputs.pipeline_sha }}
+      PIPELINE_SHA256: ${{ inputs.pipeline_sha256 }}
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install Hub client
+        run: >-
+          python -m pip install --disable-pip-version-check
+          "huggingface-hub==1.23.0"
+
+      - name: Fetch the pinned pipeline and verify its bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$PIPELINE_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::pipeline_sha must be a 40-hex commit"; exit 1; }
+          [[ "$PIPELINE_SHA256" =~ ^[0-9a-f]{64}$ ]] || { echo "::error::pipeline_sha256 must be 64 hex"; exit 1; }
+          git fetch --depth 1 origin "$PIPELINE_SHA"
+          mkdir -p reports
+          git show "$PIPELINE_SHA:tools/szl_omen_pipeline.py" > reports/szl_omen_pipeline.py
+          echo "$PIPELINE_SHA256  reports/szl_omen_pipeline.py" | sha256sum --check
+          echo "pipeline bytes verified at $PIPELINE_SHA"
+
+      - name: Dry-run diffs and receipt (always)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python reports/szl_omen_pipeline.py cards --all --out reports/cards-dry-run
+          python - <<'PY'
+          import json
+          receipt = json.load(open("reports/cards-dry-run/cards_receipt.json", encoding="utf-8"))
+          for item in receipt["items"]:
+              print(item["repo"], "@", item["revision"][:10], "|", item["managed_by"], "|", "; ".join(item["changes"]))
+          PY
+
+      - name: Acquire validated publisher credential
+        if: env.MODE == 'pull-request'
+        env:
+          HF_ORG_TOKEN_CANDIDATE: ${{ secrets.HF_ORG_TOKEN }}
+          HF_ORG_TOKEN1_CANDIDATE: ${{ secrets.HF_ORG_TOKEN1 }}
+          HF_WRITE_TOKEN_CANDIDATE: ${{ secrets.HF_WRITE_TOKEN }}
+          HF_TOKEN_CANDIDATE: ${{ secrets.HF_TOKEN }}
+          HUGGINGFACE_TOKEN_CANDIDATE: ${{ secrets.HUGGINGFACE_TOKEN }}
+          HUGGING_FACE_HUB_TOKEN_CANDIDATE: ${{ secrets.HUGGING_FACE_HUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/acquire_hf_publisher_token.py \
+            --target-repo SZLHOLDINGS/khipu-r3 \
+            --target-type model \
+            --github-env "${GITHUB_ENV}" \
+            --report reports/cards-publisher-credential.json
+
+      - name: Open Hub pull requests (owner-authorized; never direct commits)
+        if: env.MODE == 'pull-request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python reports/szl_omen_pipeline.py cards --apply --owner-authorized --out reports/cards-pull-requests
+          python - <<'PY'
+          import json
+          receipt = json.load(open("reports/cards-pull-requests/cards_receipt.json", encoding="utf-8"))
+          print("wo6_status:", receipt["wo6_status"])
+          for item in receipt["items"]:
+              print(item["repo"], "|", item["mode"], "|", item.get("result_url", "-"))
+          PY
+
+      - name: Upload sanitized receipts and diffs
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: omen-cards-identity-note-${{ github.run_id }}
+          path: reports/
+          if-no-files-found: warn
+          retention-days: 30
