@@ -128,6 +128,14 @@ telemetry errors are recorded separately and cannot rewrite external scoring.
 The retained `gpu_runtime_readback` is only a post-run model snapshot. It can be
 empty after an unload request and does not prove that generation used the GPU,
 that unloading completed before sandbox startup, or that memory was reclaimed.
+Docker automatic removal can race the explicit cleanup request. A removal error
+is recovered only when the same local engine successfully reports no matching
+container across all states. Removal and readback share a ten-second deadline;
+an unavailable engine, remaining container or ambiguous response keeps cleanup unconfirmed and
+stops the suite. Cleanup receipts retain how removal was confirmed.
+An absence readback is only a point-in-time observation after execution output
+or a successful run exit; it cannot certify an unknown pre-start lifecycle. An
+unsuccessful removal without that execution evidence stays unconfirmed.
 
 The inference wire schema constrains structure without expanding thousands of
 bounded grammar repetitions. The host still enforces 400 lines, 2,000 characters

@@ -222,6 +222,110 @@ class DockerCommandTests(unittest.TestCase):
         self.assertEqual(clean, {"PATH": "retained"})
 
 
+class ContainerCleanupTests(unittest.TestCase):
+    name = "szl-local-" + "a" * 32
+
+    def result(self, returncode=0, stdout=b"", stderr=b""):
+        return lab.subprocess.CompletedProcess([], returncode, stdout, stderr)
+
+    def run_cleanup(self, responses):
+        with mock.patch.object(lab.subprocess, "run", side_effect=responses) as run, \
+                mock.patch.object(lab.time, "sleep") as sleep, \
+                mock.patch.object(lab.time, "monotonic", side_effect=[0, 1, 2, 4, 5, 7, 8, 10]), \
+                mock.patch.dict(lab.os.environ, {"DOCKER_HOST": "tcp://remote.example:2376"}, clear=True):
+            evidence = lab.cleanup_container(self.name, execution_observed=True)
+        for call in run.call_args_list:
+            self.assertEqual(call.args[0][:3], lab.DOCKER)
+            self.assertEqual(call.kwargs["env"], {})
+            self.assertTrue(call.kwargs["capture_output"])
+        return evidence, run, sleep
+
+    def test_successful_removal_needs_no_fallback(self):
+        evidence, run, sleep = self.run_cleanup([self.result()])
+        self.assertTrue(evidence["confirmed"])
+        self.assertEqual(evidence["method"], "remove_acknowledged")
+        run.assert_called_once_with([*lab.DOCKER, "rm", "--force", self.name],
+                                    capture_output=True, timeout=10, env={})
+        sleep.assert_not_called()
+
+    def test_auto_remove_conflict_requires_successful_all_state_absence_readback(self):
+        evidence, run, sleep = self.run_cleanup([self.result(1, stderr=b"removal already in progress"), self.result()])
+        self.assertTrue(evidence["confirmed"])
+        self.assertEqual(evidence["method"], "engine_absence_readback")
+        self.assertEqual(evidence["remove_returncode"], 1)
+        self.assertEqual(run.call_args_list[-1], mock.call(
+            [*lab.DOCKER, "container", "ls", "--all", "--filter", "name=" + self.name, "--format", "{{.Names}}"],
+            capture_output=True, timeout=3, env={}))
+        sleep.assert_not_called()
+
+    def test_removing_container_is_rechecked_before_absence_is_confirmed(self):
+        evidence, run, sleep = self.run_cleanup([self.result(1), self.result(stdout=self.name.encode()), self.result()])
+        self.assertTrue(evidence["confirmed"])
+        self.assertEqual(len(evidence["readbacks"]), 2)
+        sleep.assert_called_once_with(0.1)
+        self.assertEqual(run.call_count, 3)
+
+    def test_present_or_ambiguous_match_never_confirms_cleanup(self):
+        for output in (self.name.encode(), b"unexpected-output"):
+            with self.subTest(output=output):
+                evidence, run, sleep = self.run_cleanup([self.result(1)] + [self.result(stdout=output)] * 3)
+                self.assertFalse(evidence["confirmed"])
+                self.assertEqual(run.call_count, 4)
+                self.assertEqual(sleep.call_count, 3)
+                self.assertTrue(evidence["deadline_exceeded"])
+
+    def test_query_failure_or_stderr_cannot_be_interpreted_as_empty_success(self):
+        for query in (self.result(1), self.result(stderr=b"engine warning")):
+            with self.subTest(query=query):
+                evidence, run, sleep = self.run_cleanup([self.result(1), query])
+                self.assertFalse(evidence["confirmed"])
+                self.assertEqual(run.call_count, 2)
+                sleep.assert_not_called()
+
+    def test_readback_exception_stays_unconfirmed(self):
+        for error in (OSError("engine unavailable"), lab.subprocess.TimeoutExpired("query", 3)):
+            with self.subTest(error=type(error).__name__):
+                evidence, _, _ = self.run_cleanup([self.result(1), error])
+                self.assertFalse(evidence["confirmed"])
+                self.assertEqual(evidence["readbacks"], [{"error_type": type(error).__name__}])
+
+    def test_remove_timeout_can_only_be_recovered_by_engine_absence(self):
+        evidence, _, _ = self.run_cleanup([lab.subprocess.TimeoutExpired("rm", 10), self.result()])
+        self.assertTrue(evidence["confirmed"])
+        self.assertEqual(evidence["remove_error_type"], "TimeoutExpired")
+        self.assertEqual(evidence["method"], "engine_absence_readback")
+
+    def test_no_such_container_error_text_alone_is_not_evidence(self):
+        evidence, _, _ = self.run_cleanup([self.result(1, stderr=b"No such container"), self.result(1)])
+        self.assertFalse(evidence["confirmed"])
+
+    def test_invalid_names_are_rejected_before_any_process_access(self):
+        for name in (None, "", "user-container", "szl-local-test", self.name + "extra", "--all"):
+            with self.subTest(name=name), mock.patch.object(lab.subprocess, "run") as run, \
+                    self.assertRaises(ValueError):
+                lab.cleanup_container(name)
+            run.assert_not_called()
+
+    def test_unknown_startup_lifecycle_cannot_be_certified_by_an_empty_list(self):
+        for observed in (False, None, 1, "yes"):
+            with self.subTest(observed=observed), mock.patch.object(
+                    lab.subprocess, "run", return_value=self.result(1)) as run:
+                evidence = lab.cleanup_container(self.name, execution_observed=observed)
+            self.assertFalse(evidence["confirmed"])
+            self.assertEqual(evidence["absence_readback_blocked"], "EXECUTION_NOT_OBSERVED")
+            self.assertEqual(evidence["readbacks"], [])
+            self.assertEqual(run.call_count, 1)
+
+    def test_remove_timeout_does_not_extend_the_total_cleanup_deadline(self):
+        with mock.patch.object(lab.subprocess, "run", side_effect=lab.subprocess.TimeoutExpired("rm", 10)) as run, \
+                mock.patch.object(lab.time, "monotonic", side_effect=[0, 10]):
+            evidence = lab.cleanup_container(self.name, execution_observed=True)
+        self.assertFalse(evidence["confirmed"])
+        self.assertTrue(evidence["deadline_exceeded"])
+        self.assertEqual(run.call_count, 1)
+        self.assertEqual(evidence["readbacks"], [])
+
+
 class DockerPreflightTests(unittest.TestCase):
     def result(self, stdout, returncode=0):
         return lab.subprocess.CompletedProcess(args=[], returncode=returncode,

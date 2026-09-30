@@ -180,6 +180,53 @@ def docker_command(name, folder):
         "--workdir=/tmp", IMAGE, "python", "-I", "-B", "/candidate/worker.py"]
 
 
+def cleanup_container(name, *, execution_observed=False):
+    """Confirm removal of one generated name, including an auto-remove race."""
+    if not isinstance(name, str) or not re.fullmatch(r"szl-local-[0-9a-f]{32}", name):
+        raise ValueError("Refusing cleanup outside the generated container namespace")
+    evidence = {"confirmed": False, "method": None, "readbacks": []}
+    deadline = time.monotonic() + 10
+    try:
+        removed = subprocess.run([*DOCKER, "rm", "--force", name], capture_output=True,
+                                 timeout=10, env=docker_environment())
+        evidence["remove_returncode"] = removed.returncode
+        if removed.returncode == 0:
+            evidence.update(confirmed=True, method="remove_acknowledged")
+            return evidence
+        evidence["remove_stderr"] = removed.stderr.decode("utf-8", "replace")[:500]
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        evidence["remove_error_type"] = type(exc).__name__
+    if execution_observed is not True:
+        # A killed pre-start CLI can leave an in-flight create request. A
+        # point-in-time empty list must not certify that unknown lifecycle.
+        evidence["absence_readback_blocked"] = "EXECUTION_NOT_OBSERVED"
+        return evidence
+    # --rm can remove a container while the explicit rm reports a conflict.
+    # An error string is not proof of absence: ask the same pinned local engine
+    # for all states. This substring filter is conservative: any match holds.
+    while True:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            evidence["deadline_exceeded"] = True
+            return evidence
+        try:
+            observed = subprocess.run([*DOCKER, "container", "ls", "--all", "--filter",
+                                       "name=" + name, "--format", "{{.Names}}"],
+                                      capture_output=True, timeout=min(3, remaining), env=docker_environment())
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            evidence["readbacks"].append({"error_type": type(exc).__name__})
+            return evidence
+        observation = {"returncode": observed.returncode, "has_output": bool(observed.stdout.strip()),
+                       "has_stderr": bool(observed.stderr.strip())}
+        evidence["readbacks"].append(observation)
+        if observed.returncode != 0 or observation["has_stderr"]:
+            return evidence
+        if not observation["has_output"]:
+            evidence.update(confirmed=True, method="engine_absence_readback")
+            return evidence
+        time.sleep(min(0.1, max(0, deadline - time.monotonic())))
+
+
 def sandbox(folder, inputs, timeout=25):
     """Only a fresh task-specific directory is mounted; tests stay on the host."""
     name = "szl-local-" + uuid.uuid4().hex
@@ -220,6 +267,7 @@ def sandbox(folder, inputs, timeout=25):
         reader.start()
     failure = None
     cleanup_error = None
+    cleanup_evidence = None
     start = time.monotonic()
     writer = threading.Thread(target=write_input, daemon=True)
     writer.start()
@@ -243,9 +291,9 @@ def sandbox(folder, inputs, timeout=25):
         finally:
             # Remove only the generated, exact container name; never user containers.
             try:
-                cleanup = subprocess.run([*DOCKER, "rm", "--force", name], capture_output=True, timeout=10,
-                                         env=docker_environment())
-                if cleanup.returncode and b"No such container" not in cleanup.stderr:
+                cleanup_evidence = cleanup_container(name, execution_observed=(
+                    bool(buffers["stdout"]) or process.returncode == 0))
+                if not cleanup_evidence["confirmed"]:
                     cleanup_error = "Container cleanup not confirmed"
             except Exception as exc:
                 cleanup_error = type(exc).__name__ + ": " + str(exc)[:300]
@@ -259,6 +307,7 @@ def sandbox(folder, inputs, timeout=25):
     result = {"exit_code": process.returncode, "failure": failure,
               "seconds": round(time.monotonic() - start, 3), "container_image": IMAGE,
               "container_name": name, "cleanup_confirmed": cleanup_error is None,
+              "cleanup_evidence": cleanup_evidence,
               "stdout": stdout, "stderr": bytes(buffers["stderr"]).decode("utf-8", "replace")}
     if cleanup_error is not None:
         result["execution_failure"] = failure
