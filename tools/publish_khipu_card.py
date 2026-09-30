@@ -15,6 +15,7 @@ import hashlib
 import json
 import os
 import re
+import subprocess
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -357,8 +358,9 @@ def _current_target_matches(
     token: str,
     profile: CardProfile,
     target_assets: Mapping[str, bytes],
-) -> tuple[str, dict[str, bytes]] | None:
-    info = api.repo_info(repo_id=profile.repo_id, repo_type="model")
+) -> tuple[str, dict[str, bytes] | None]:
+    """Keep the inspected Hub parent even when controlled files differ."""
+    info = api.repo_info(repo_id=profile.repo_id, repo_type="model", revision="main")
     revision = str(getattr(info, "sha", "") or "").strip().lower()
     if not FULL_SHA.fullmatch(revision):
         raise PublicationError("Hub repository did not expose an exact revision")
@@ -370,7 +372,7 @@ def _current_target_matches(
         )
     )
     if not set(target_assets).issubset(files):
-        return None
+        return revision, None
     observed = _readback_bytes(
         repo_id=profile.repo_id,
         revision=revision,
@@ -378,8 +380,46 @@ def _current_target_matches(
         paths=target_assets,
     )
     if observed != dict(target_assets):
-        return None
+        return revision, None
     return revision, observed
+
+
+def assert_current_main(source_revision: str) -> None:
+    """Check the exact checkout against freshly queried canonical main.
+
+    This runs only for publication, before Hub initialization and again before
+    each write attempt. It does not make GitHub and Hub one atomic transaction.
+    """
+    if not FULL_SHA.fullmatch(source_revision):
+        raise PublicationError("fresh-main guard requires an exact source revision")
+    commands = (
+        ["git", "rev-parse", "--verify", "HEAD"],
+        ["git", "ls-remote", "--exit-code",
+         "https://github.com/szl-holdings/szl-forge.git", "refs/heads/main"],
+    )
+    outputs = []
+    for command in commands:
+        try:
+            result = subprocess.run(
+                command, cwd=ROOT, capture_output=True, text=True,
+                encoding="utf-8", timeout=30, check=False,
+            )
+        except (OSError, subprocess.TimeoutExpired) as error:
+            raise PublicationError("fresh-main lookup failed") from error
+        if result.returncode:
+            raise PublicationError("fresh-main lookup failed")
+        outputs.append(result.stdout.strip())
+        if len(outputs) == 1 and outputs[0] != source_revision:
+            raise PublicationError("checkout does not match the exact source revision")
+    remote_lines = outputs[1].splitlines()
+    if len(remote_lines) != 1:
+        raise PublicationError("canonical main did not expose one exact revision")
+    fields = remote_lines[0].split()
+    if (len(fields) != 2 or fields[1] != "refs/heads/main"
+            or not FULL_SHA.fullmatch(fields[0])):
+        raise PublicationError("canonical main did not expose one exact revision")
+    if fields[0] != source_revision:
+        raise PublicationError("publication source no longer owns current main")
 
 
 def publish(
@@ -389,7 +429,11 @@ def publish(
     assets: Mapping[str, bytes],
     profile: str | CardProfile | None = None,
 ) -> tuple[str, dict[str, dict[str, Any]], str, bool]:
-    from huggingface_hub import CommitOperationAdd, HfApi
+    assert_current_main(source_revision)
+    from huggingface_hub import CommitOperationAdd, HfApi, __version__ as hub_version
+
+    if hub_version != "1.23.0":
+        raise PublicationError("publication requires the reviewed huggingface_hub 1.23.0 client")
 
     selected = resolve_profile(profile)
     source_evidence = validate_assets(assets, selected)
@@ -407,24 +451,37 @@ def publish(
     if not publisher:
         raise PublicationError("publisher identity is unavailable")
 
-    current = _current_target_matches(
+    expected_parent, observed = _current_target_matches(
         api=api,
         token=token,
         profile=selected,
         target_assets=target_assets,
     )
-    if current is not None:
-        revision, observed = current
-        return revision, evidence_for(observed), publisher, False
+    if observed is not None:
+        current_info = api.repo_info(repo_id=selected.repo_id, repo_type="model", revision="main")
+        current_parent = str(getattr(current_info, "sha", "") or "").strip().lower()
+        if current_parent != expected_parent:
+            raise PublicationError("Hub parent changed during no-op verification")
+        assert_current_main(source_revision)
+        return expected_parent, evidence_for(observed), publisher, False
 
     operations = [
         CommitOperationAdd(path_in_repo=target, path_or_fileobj=value)
         for target, value in sorted(target_assets.items())
     ]
-    commit = publish_with_bounded_retry(
-        lambda: api.create_commit(
+    # Pinned 1.23.0 marks additions only after a successful server commit.
+    # Reject missing client support before any write.
+    if any(getattr(operation, "_is_committed", None) is not False for operation in operations):
+        raise PublicationError("reviewed client commit-origin contract is unavailable")
+
+    def commit_at_inspected_parent() -> Any:
+        assert_current_main(source_revision)
+        return api.create_commit(
             repo_id=selected.repo_id,
             repo_type="model",
+            revision="main",
+            create_pr=False,
+            parent_commit=expected_parent,
             operations=operations,
             commit_message=(
                 f"docs: publish {selected.display_name} card from "
@@ -432,7 +489,13 @@ def publish(
             ),
             commit_description=selected.commit_description,
         )
-    )
+
+    # A 429 retry keeps this exact parent; a stale-parent 412 propagates.
+    commit = publish_with_bounded_retry(commit_at_inspected_parent)
+    # The SDK can return a current head without sending CAS when every add
+    # becomes a no-op. Do not turn that ambiguous concurrent result into success.
+    if not all(getattr(operation, "_is_committed", None) is True for operation in operations):
+        raise PublicationError("Hub client returned without an expected-parent server commit")
     revision = str(getattr(commit, "oid", "") or "").strip().lower()
     if not FULL_SHA.fullmatch(revision):
         raise PublicationError("Hub commit did not return an exact revision")

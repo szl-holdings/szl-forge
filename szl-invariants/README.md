@@ -9,91 +9,83 @@ tags:
 - receipts
 - ed25519
 - doi:10.5281/zenodo.19944926
-szl-governance:
-  verdict: ADVISORY
-  lambda: Conjecture 1 (open) — uniqueness unproven; untouched by these invariants; advisory only
-  provenance: recomputes the a11oy receipt/ledger self-consistency invariants offline
-  honest_blocked: a VIOLATED invariant stays VIOLATED — statuses are never coerced to a pass
+szl-review:
+  artifact_class: SOFTWARE_KERNEL
+  maturity: SOFTWARE_LIMITED
+  trained_weights_present: false
+  evaluation: HISTORICAL_RECORDS_NOT_RERUN
+  source_mirror_parity: NOT_VERIFIED_THIS_REVIEW
+  reviewed_at: "2026-09-30"
 ---
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/main/szl-invariants/card/holo-banner.svg" alt="szl-invariants — the eight invariants as a hologram: eight interlocked links" width="100%"/>
-</p>
-
-<!-- SZL-KERNEL-OPERATIONAL:START -->
-## Operational (MEASURED laptop-Blackwell)
-
-> **STATUS:** tests **PASS**. `get_kernel` **import-LIVE**. Unsloth/LoRA is the wrong tool. Receipted kernels, not silent CUDA.
-
-| Thing | Label | Method / N / date / what-NOT |
-|---|---|---|
-| tests (`PYTHONPATH=torch-ext`) | **PASS** | MEASURED 2026-08-29T15:54:00Z host `betterwithage` Windows-10-10.0.26200-SP0. torch `2.10.0+cu128`. GPU `NVIDIA GeForce RTX 5050 Laptop GPU` arch `Blackwell`. pytest `16 passed in 0.07s`. Failed nodes: `none`. What-NOT: not a leaderboard. torch.compile fullgraph failures on Windows Blackwell (`cl is not found`) are MEASURED, not hidden. |
-| Kernel Hub `get_kernel` | **import-LIVE** | kernels `0.16.1`. Default: `get_kernel("SZLHOLDINGS/szl-invariants", revision="main", trust_remote_code=True)` → `True`. `backend="cpu"` → `True`. trust_remote_code=False → `ValueError` (SZLHOLDINGS is not a trusted publisher). repo_type=kernel required (kernels 0.16). What-NOT: not a weight load; do not pickle/joblib.load. |
-| formula-tax | **ADVISORY** | locked-8 `F1 F4 F7 F11 F12 F18 F19 F22`. registry_count=21. Λ geomean `1.0`. uniqueness **Conjecture 1** (never a theorem). |
-| I1–I8 | **catalog** | `I1 receipt-chain-continuity; I2 ledger-failure-shape; I3 served-run-has-model; I4 signed-columns-atomic; I5 loop-steps-positive; I6 receipt-ed25519-verify; I7 receipt-columns-consistent; I8 flywheel-lineage`. Executed by `SZLHOLDINGS/szl-invariants`. Statuses never coerced. Λ untouched. |
-| CUDA speedup / tokens/s / joules | **UNAVAILABLE** | Not claimed. Receipted kernels, not silent CUDA. |
-
-GitHub source: [`szl-holdings/szl-invariants`](https://github.com/szl-holdings/szl-invariants) @ `0a1e6bdeaf4d7515bbbf4ca37c3c838a4f293542`. Artifacts: [`BENCH.laptop-blackwell.json`](./BENCH.laptop-blackwell.json), [`OPERATIONAL.json`](./OPERATIONAL.json).
-
-```python
-from kernels import get_kernel
-k = get_kernel("SZLHOLDINGS/szl-invariants", revision="main", trust_remote_code=True)
-```
-
-<!-- SZL-KERNEL-OPERATIONAL:END -->
-
+<p align="center"><img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/main/szl-invariants/card/holo-banner.svg" alt="szl-invariants software provenance illustration" width="100%"/></p>
 
 # szl-invariants
 
-**The cut, in one line:** a violated check stays violated — the card you cannot sweet-talk.
+**Replay receipt and ledger checks without hiding missing evidence**
 
-Eight falsifiable receipt/ledger invariants, offline. **Not a model. No weights.**
+**Software kernel · limited maturity · Apache-2.0 declared · no trained weights in the reviewed tree**
 
-**IS:** a pure-Python, stdlib-only governance kernel that replays the same eight checks the a11oy backbone runs at `/api/invariants` over a ledger JSONL you already hold. Public API: `run_invariants`, `load_jsonl`, `verify_ed25519`, `selfcheck`. Statuses `HOLDS / VIOLATED / KEY_ROTATED / NO_DATA / UNAVAILABLE` are first-class.
+A Python package that checks a supplied receipt/ledger export and optional sample lineage against eight named self-consistency checks. It represents missing evidence and verification failures explicitly.
 
-**IS NOT:** trained weights or a LoRA. Not a CUDA bench. Passing `selfcheck` is not an eval leaderboard. No `model.joblib` is published in this repo (OBSERVED 2026-09-25); any executable serialization would be **QUARANTINED** — never `joblib.load` an artifact from a card mirror. These checks do not prove the export is complete.
+## Artifact and source identity
 
-Canonical GitHub source: https://github.com/szl-holdings/szl-invariants  
-Hub package: https://huggingface.co/kernels/SZLHOLDINGS/szl-invariants  
-This model-type repo is the publish / card mirror. Apache-2.0.
+- Model-type card mirror: [reviewed tree](https://huggingface.co/SZLHOLDINGS/szl-invariants/tree/4ba2b95956cb8a836e7c9f5886b3da778c667f1a), revision `4ba2b95956cb8a836e7c9f5886b3da778c667f1a`
+- First-class kernel package: [reviewed tree](https://huggingface.co/kernels/SZLHOLDINGS/szl-invariants/tree/78d04afef253e526326d6b0f4e944fa3d4b1990c), revision `78d04afef253e526326d6b0f4e944fa3d4b1990c`
+- Declared canonical GitHub source: [observed source tree](https://github.com/szl-holdings/szl-invariants/tree/e9621c5d95e1b6a336981346e473980cfe2d037b), revision `e9621c5d95e1b6a336981346e473980cfe2d037b`
+- Source paths: `torch-ext/szl_invariants/` and `build/torch-universal/szl_invariants/` in the canonical repository
+- Inspection date: 2026-09-30 UTC
 
-<!-- SZL-ATELIER-CUT:v1:START -->
-## The cut
+These are distinct repository revisions. The source repository is reachable; this review does not establish byte-for-byte parity, a reproducible build, approved publication, or the identity of a deployed process. Use the release's source binding and publication receipt to establish that chain.
 
-Checksums are optional. Ours are the product. If the signature fails, the model is not the model.
-
-Weights that are invalid if unsigned — at load time, not at audit time.
-
-### Silhouette → leave → SZL
-
-| Leader | Take, then tweak |
-|---|---|
-| Anthropic | Trust, but here we verify. |
-| NVIDIA | Supply-chain (signed containers) applied to tensors. |
-| Unsloth | After merge, sign. Not during QLoRA. |
-
-No equivalent public combination was found among the leaders surveyed above (a snapshot, not an ecosystem-wide novelty claim).
+The reviewed mirror contains Python source, build metadata and historical evidence records. Its listed tree contains no `model.joblib`, `.safetensors`, `.gguf`, `.onnx`, `.pt`, `.pth` or `.bin` model artifact. Historical surrogate descriptions in [MODEL_PROVENANCE.json](https://huggingface.co/SZLHOLDINGS/szl-invariants/blob/4ba2b95956cb8a836e7c9f5886b3da778c667f1a/MODEL_PROVENANCE.json) and [TRAINING_RECEIPT.json](https://huggingface.co/SZLHOLDINGS/szl-invariants/blob/4ba2b95956cb8a836e7c9f5886b3da778c667f1a/TRAINING_RECEIPT.json) do not establish present downloadable weights. Surrogate replay is blocked by the missing artifact. Do not load executable pickle/joblib artifacts from this card mirror.
 
 ## Intended use
 
-Load-time invariant check.
+Offline inspection of software-run exports you are authorized to inspect. Supply the correct public key and optional lineage samples; retain the original export alongside the report.
+
+## Public interface
+
+run_invariants; load_jsonl; verify_ed25519; list_checks; selfcheck
+
+## Usage after publication verification
+
+The example below is source-informed and was **not executed in this card review**. Install the client and dependencies qualified by the relevant release. Loading remote kernel Python is code execution. Review the exact package and use the immutable **kernel-package** revision from verified publication evidence. Do not substitute the model-mirror SHA or GitHub source SHA.
+
+```python
+import os
+import re
+from kernels import get_kernel
+
+revision = os.environ.get("SZL_VERIFIED_KERNEL_REVISION", "")
+if re.fullmatch(r"[0-9a-f]{40}", revision) is None:
+    raise ValueError("Set the kernel revision from verified publication evidence")
+
+kernel = get_kernel(
+    "SZLHOLDINGS/szl-invariants", revision=revision, trust_remote_code=True
+)
+rows = kernel.load_jsonl("runs_export.jsonl")
+report = kernel.run_invariants(rows, samples=None, pubkey=None)
+print(report["summary"])
+# Missing key or sample evidence must not be displayed as a pass.
+```
+
+The revision-format check is input validation only. It does not verify signatures, provenance, dependencies or runtime compatibility. A self-check exercises its programmed assertions; it is not product qualification.
+
+## Evidence and evaluation limits
+
+[BENCH.laptop-blackwell.json](https://huggingface.co/SZLHOLDINGS/szl-invariants/blob/4ba2b95956cb8a836e7c9f5886b3da778c667f1a/BENCH.laptop-blackwell.json), [TRAINING_RECEIPT.json](https://huggingface.co/SZLHOLDINGS/szl-invariants/blob/4ba2b95956cb8a836e7c9f5886b3da778c667f1a/TRAINING_RECEIPT.json), and [PROMOTION_READINESS_AUDIT.json](https://huggingface.co/SZLHOLDINGS/szl-invariants/blob/4ba2b95956cb8a836e7c9f5886b3da778c667f1a/PROMOTION_READINESS_AUDIT.json) retain owner-produced historical records. Each result applies only to its stated artifact, inputs, environment and date. This review did not rerun those tests, import the kernel, verify signatures, download weights, or benchmark throughput, energy or end-to-end behavior. Historical surrogate fidelity must not be presented as current kernel quality or current model availability.
 
 ## Limitations
 
-- Proves integrity and origin, never accuracy.
+The checks do not prove export completeness, source-system honesty, or answer accuracy. Missing key or sample evidence must remain indeterminate. Preserve HOLDS, VIOLATED, KEY_ROTATED, NO_DATA and UNAVAILABLE distinctly. It is not a load-time tensor-signature enforcement product. A recent GitHub source commit is not proof that its fixes were published to the Hub; use the authorized publication workflow and immutable provider-byte evidence.
 
-Canonical GitHub: [`szl-holdings/szl-invariants`](https://github.com/szl-holdings/szl-invariants/blob/main/README.md)
-<!-- SZL-ATELIER-CUT:v1:END -->
+Lambda uniqueness remains Conjecture 1, open and advisory. Receipt consistency, signatures and proof labels do not establish model accuracy, system safety, or certification. Preserve missing, failed, historical, and unverified states in downstream displays.
 
-```python
-from kernels import get_kernel
-inv = get_kernel("SZLHOLDINGS/szl-invariants", revision="main", trust_remote_code=True)
-report = inv.run_invariants(inv.load_jsonl("runs_export.jsonl"),
-    samples=inv.load_jsonl("training_samples.jsonl"), pubkey="<SPKI base64>")
-print(report["summary"])
-print(inv.selfcheck())
-```
+## License
 
-The eight ids: `receipt-chain-continuity`, `ledger-failure-shape`, `served-run-has-model`, `signed-columns-atomic`, `loop-steps-positive`, `receipt-ed25519-verify`, `receipt-columns-consistent`, `flywheel-lineage`. Missing pubkey → #6 UNAVAILABLE; missing samples → #8 UNAVAILABLE.
+The reviewed [LICENSE](https://huggingface.co/SZLHOLDINGS/szl-invariants/blob/4ba2b95956cb8a836e7c9f5886b3da778c667f1a/LICENSE) contains the Apache License 2.0 text, matching the card declaration. This observation does not independently establish rights to every artifact, training-data permission, or downstream-use clearance. Preserve upstream notices and check dependency licenses separately.
 
-Λ is not touched here and stays Conjecture 1. Doctrine v11. Copyright 2026 SZL Holdings · Stephen P. Lutar · ORCID [0009-0001-0110-4173](https://orcid.org/0009-0001-0110-4173).
+## Citation and verification
+
+Cite the exact artifact URL, revision, evidence file, date, and test scope relevant to the claim. Prefer immutable links above over branch links or a live status badge. Report an evidence gap as an evidence gap.

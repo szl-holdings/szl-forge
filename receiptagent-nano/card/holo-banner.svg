@@ -1,4 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" width="1200" height="360">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" width="1200" height="360" role="img" aria-labelledby="card-title card-description">
+  <title id="card-title">ReceiptAgent-Nano: synthetic advisory four-class archive</title>
+  <desc id="card-description">Decorative neural-style schematic, not an array layout. The prior archive report describes a 24-16-8-4 MLP. The reviewed current source maps 0=ALLOW, 1=WARN, 2=BLOCKED, 3=ESCALATE, without recovering the historical training contract. Predictions are advisory; no runtime retry guarantee is established.</desc>
   <defs>
     <linearGradient id="gate4" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0" stop-color="#334155"/>
@@ -34,4 +36,5 @@
   <rect x="732" y="260" width="16" height="20" rx="3" fill="none" stroke="#e2e8f0" stroke-width="6" opacity="0.3" filter="url(#glow)"/>
   <path d="M0 336 L 1200 336" fill="none" stroke="url(#gate4)" stroke-width="4" opacity="0.22" filter="url(#glow)"/>
   <path d="M0 336 L 1200 336" fill="none" stroke="url(#gate4)" stroke-width="0.9" opacity="0.5"/>
+<text x="600" y="352" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#e2e8f0">Illustration only; reported array layout: 24 to 16 to 8 to 4</text>
 </svg>
