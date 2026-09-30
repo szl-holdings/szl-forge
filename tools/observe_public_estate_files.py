@@ -38,6 +38,7 @@ MAX_TREE_ENTRIES = 250000
 MAX_SUBTREES = 512
 REQUEST_LAUNCH_SECONDS = 900
 SHA = re.compile(r"[0-9a-f]{40}\Z")
+HF_USER_TOKEN = re.compile(r"hf_oauth_[A-Za-z0-9._-]{8,16370}\Z")
 NAME = r"[A-Za-z0-9_.-]{1,100}"
 
 
@@ -231,8 +232,12 @@ class Client:
     A circuit stop lasts for this client/run. No token/host substitution, global
     quota promise, cross-run cache, or previously successful census reuse occurs.
     """
-    def __init__(self, token: str | None = None, *, clock=None, sleeper=None, wall_clock=None):
-        self.token = token
+    def __init__(self, token: str | None = None, *, hf_token: str | None = None,
+                 clock=None, sleeper=None, wall_clock=None):
+        if hf_token is not None and HF_USER_TOKEN.fullmatch(hf_token) is None:
+            raise CensusError("HF_CREDENTIAL_SHAPE")
+        self.github_token = token
+        self.hf_token = hf_token
         self.opener = build_opener(ProxyHandler({}), NoRedirect())
         # perf_counter remains monotonic but resolves sub-tick residual waits on
         # older Windows Python runtimes whose monotonic clock is coarse.
@@ -255,9 +260,31 @@ class Client:
                    "User-Agent": "szl-public-file-census/1"}
         if host == "api.github.com":
             headers["X-GitHub-Api-Version"] = "2022-11-28"
-            if self.token:
-                headers["Authorization"] = "Bearer " + self.token
+            if self.github_token:
+                headers["Authorization"] = "Bearer " + self.github_token
+        elif self.hf_token:
+            headers["Authorization"] = "Bearer " + self.hf_token
         return headers
+
+    def authentication_receipt(self, lane: str) -> dict[str, Any]:
+        if lane == "github":
+            return {
+                "origin": "api.github.com",
+                "mode": "GITHUB_ACTIONS_REPOSITORY_TOKEN" if self.github_token else "ANONYMOUS",
+                "credential_logged": False,
+                "credential_persisted": False,
+            }
+        if lane == "huggingface":
+            return {
+                "origin": "huggingface.co",
+                "mode": "HF_USER_SCOPED_OIDC_READ_ONLY" if self.hf_token else "ANONYMOUS",
+                "provider_scope": "gated-repos" if self.hf_token else None,
+                "private_repositories": False if self.hf_token else None,
+                "write": False if self.hf_token else None,
+                "credential_logged": False,
+                "credential_persisted": False,
+            }
+        raise CensusError("LANE_SCOPE")
 
     def _bounds(self) -> None:
         if self.calls >= MAX_REQUESTS:
@@ -618,7 +645,7 @@ def hf_members(client: Client, kind: str) -> list[str]:
     rows = hf_pages(client, f"{HF}/api/{kind}?author={HF_ORG}&limit=100")
     ids = []
     for row in rows:
-        if row.get("private") is True:
+        if row.get("private") is not False:
             raise CensusError("PUBLIC_SCOPE_VIOLATION")
         ids.append(repo_id(row.get("id"), HF_ORG))
     if len(ids) > MAX_REPOS or len(ids) != len(set(ids)):
@@ -746,6 +773,7 @@ def base_report(lane: str, revision: str) -> dict[str, Any]:
 
 def run(client: Client, lane: str, revision: str) -> dict[str, Any]:
     report = base_report(lane, revision)
+    report["request_authentication"] = client.authentication_receipt(lane)
     kinds = ("github",) if lane == "github" else KINDS
     for kind in kinds:
         pop: dict[str, Any] = {"items": [], "complete": False, "complete_scope_file_count": None, "blockers": []}
@@ -781,13 +809,22 @@ def main(argv=None) -> int:
         # Verify actual executing bytes, not only an operator-declared SHA.
         head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, capture_output=True,
                               check=True, timeout=10).stdout.decode().strip()
-        committed = subprocess.run(["git", "show", f"{revision}:tools/observe_public_estate_files.py"],
-                                   cwd=root, capture_output=True, check=True, timeout=10).stdout
-        if head != revision or committed != Path(__file__).read_bytes():
+        committed = subprocess.run(
+            ["git", "rev-parse", f"{revision}:tools/observe_public_estate_files.py"],
+            cwd=root, capture_output=True, check=True, timeout=10,
+        ).stdout.decode("ascii").strip()
+        working = subprocess.run(
+            ["git", "hash-object", "--", "tools/observe_public_estate_files.py"],
+            cwd=root, capture_output=True, check=True, timeout=10,
+        ).stdout.decode("ascii").strip()
+        if head != revision or SHA.fullmatch(committed) is None or committed != working:
             raise CensusError("OBSERVER_SOURCE_MISMATCH")
         # Reserve a new output before any observation; never overwrite evidence.
         with args.output.open("x", encoding="utf-8") as handle:
-            client = Client(token=os.environ.get("GITHUB_TOKEN") if args.lane == "github" else None)
+            client = Client(
+                token=os.environ.get("GITHUB_TOKEN") if args.lane == "github" else None,
+                hf_token=os.environ.get("HF_CENSUS_TOKEN") if args.lane == "huggingface" else None,
+            )
             report = run(client, args.lane, revision)
             json.dump(report, handle, indent=2, sort_keys=True, ensure_ascii=True, allow_nan=False)
             handle.write("\n")
