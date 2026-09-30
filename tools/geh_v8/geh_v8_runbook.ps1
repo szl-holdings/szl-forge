@@ -83,9 +83,9 @@ if ($Bundle -ne "") {
     Expand-Archive -LiteralPath $Bundle -DestinationPath $Tools -Force
 }
 $Manifest = @{
-    "szl_geh_v8.py" = "475c1643b21fdb4cda5c8f7c4ac67acbc19384bda613b027da9934833da2ab63"
+    "szl_geh_v8.py" = "25008681bed2563c2caa683ae342933fd1ae72e7b2c89ef0c16bb021f7a736b7"
     "szl_geh_verify.py" = "6647ef7fb207cbf01e4c69275735fc632009a0558625208899bcdef2e2787040"
-    "chaski_margin_probe.py" = "0f6f68cc5e6b5abfcbee7c223e4449b4b80d7ff61859a853702ed238c7d64513"
+    "chaski_margin_probe.py" = "6c9a22b089150897d54d1a9a566eeefdc26179e99bc9f196853b3fb898b0d34e"
     "tests\test_geh_v8.py" = "c5a601f482da7e605ee02171c633ab931b082a90a24ec5f5f2f270b5fec47b6b"
     "README.md" = "c45f15347da292fcd6970fb996b4360ee83d101eadea9f1a77bf8f40718c4602"
     "geh-lean\lakefile.toml" = "60b374e3ac39ecf8e9f8bf79c7ffee008c9fcbb0bfafab5530cd7d8bec373cb8"

@@ -1127,7 +1127,7 @@ def kernel_selfcheck(paths: Paths) -> dict:
         out["kernel_backtracking_from_immutable_state"] = r5["done"] is True and r5["stats"]["dead"] == 1
         # timeout discipline: a runaway tactic becomes a dead branch and the REPL is respawned
         old, before = t.timeout, t.respawns
-        t.timeout = 0.001                       # every RPC times out -> respawn path exercised
+        t.timeout = 0.0                         # deadline already elapsed: deterministic timeout regardless of machine speed
         r6 = prove(t, "True", ScriptedProver(["trivial"]), name="geh_k_to")
         t.timeout = old
         out["kernel_timeout_is_dead_branch_not_hang"] = (r6["done"] is False) and t.respawns > before and t.proc is not None and t.proc.poll() is None

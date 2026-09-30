@@ -120,7 +120,14 @@ def generate_with_margins(model, tok, prompt: str, *, max_new_tokens: int, devic
     eos_set = set(eos_ids if isinstance(eos_ids, (list, tuple)) else [eos_ids]) if eos_ids is not None else set()
     ended_on_eos = bool(len(new_ids) and int(new_ids[-1]) in eos_set)
     text = tok.decode(new_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False).strip()
-    struct = [s for s in steps if {s["token"].strip(), s["runner_up"].strip()} <= {"}", ",", "},", ",\"", "}\n"} and s["token"].strip() != s["runner_up"].strip()]
+    def _kind(tok_text: str) -> str | None:
+        x = tok_text.strip()
+        if x.startswith("}"):
+            return "close"
+        if x.startswith(","):
+            return "continue"
+        return None
+    struct = [s for s in steps if {_kind(s["token"]), _kind(s["runner_up"])} == {"close", "continue"}]
     argmin = min(steps, key=lambda s: s["margin"]) if steps else None
     return {
         "output": text, "output_sha256": sha256_text(text), "new_tokens": int(len(new_ids)), "seconds": round(seconds, 6),
@@ -192,13 +199,19 @@ def probe_candidate(mod, *, base: str, adapter: Path | None, drafts, refusals, d
                 draft_valid += int(ok)
             else:
                 refused += int(ok)
-            flag = g["margin_min"] is not None and g["margin_min"] < threshold
+            # knife_edge = a STRUCTURAL decision (`}` vs `,`: close the object or add a key) below the
+            # threshold; free-text word choices inside `claim` are naturally close and are reported
+            # separately as margin_min / margin_argmin.
+            struct_min = min((s_["margin"] for s_ in g["structural_decisions"]), default=None)
+            g["structural_margin_min"] = struct_min
+            flag = struct_min is not None and struct_min < threshold
             knife += int(flag)
             cases.append({"kind": kind, "id": item.get("id"), "index": index, "prompt_mode": mode,
                           "prompt_sha256": sha256_text(prompt), **g, "contract_valid" if kind == "draft" else "refused": ok,
                           "error": error, "knife_edge": flag})
             print(f"  {kind:11} {item.get('id')}: ok={ok} tokens={g['new_tokens']} eos={g['ended_on_eos']} "
-                  f"min_margin={g['margin_min']} at t={g['margin_argmin']['t'] if g['margin_argmin'] else None} knife_edge={flag}")
+                  f"min_margin={g['margin_min']} at t={g['margin_argmin']['t'] if g['margin_argmin'] else None} "
+                  f"structural_min={struct_min} knife_edge={flag}")
     del model
     if device.startswith("cuda"):
         torch.cuda.empty_cache()
