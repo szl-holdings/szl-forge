@@ -174,13 +174,14 @@ jobs:
       - name: Negative gates (SIMULATED never PASSes; QUARANTINED artifact audits VOID)
         working-directory: tools/geh_v8
         run: |
+          # The default shell is `bash -e`; capture the expected nonzero exits without tripping errexit.
           set -uo pipefail
-          python szl_geh_v8.py --root "$GEH_ROOT" --lean-project "$GEH_LEAN" --transport sim \
-            --run-id "ci$(printf '%.12s' "${GITHUB_SHA}")s3" --bench-crypto 4 | tee /tmp/sim.log; rc=${PIPESTATUS[0]}
+          rc=0; python szl_geh_v8.py --root "$GEH_ROOT" --lean-project "$GEH_LEAN" --transport sim \
+            --run-id "ci$(printf '%.12s' "${GITHUB_SHA}")s3" --bench-crypto 4 | tee /tmp/sim.log || rc=$?
           [ "$rc" -eq 3 ] || { echo "::error::simulated bench exit $rc (expected 3 = VOID)"; exit 1; }
           grep -q "TRACE_SIGNED_KERNEL_UNVERIFIED" /tmp/sim.log
-          python szl_geh_v8.py --root "$GEH_ROOT" --lean-project "$GEH_LEAN" --transport repl \
-            --run-id "ci$(printf '%.12s' "${GITHUB_SHA}")r4" --audit-file "$GEH_LEAN/GEH/RedTests/Red_NativeDecide.lean" | tee /tmp/red.log; rc=${PIPESTATUS[0]}
+          rc=0; python szl_geh_v8.py --root "$GEH_ROOT" --lean-project "$GEH_LEAN" --transport repl \
+            --run-id "ci$(printf '%.12s' "${GITHUB_SHA}")r4" --audit-file "$GEH_LEAN/GEH/RedTests/Red_NativeDecide.lean" | tee /tmp/red.log || rc=$?
           [ "$rc" -eq 3 ] || { echo "::error::red audit exit $rc (expected 3 = VOID)"; exit 1; }
           grep -q "VERDICT=VOID" /tmp/red.log
 
