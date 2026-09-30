@@ -1,0 +1,87 @@
+{
+  "authority": "advisory_only_no_ack_release_or_clinical_authority",
+  "decision_threshold": 0.16,
+  "feature_manifest": [
+    {
+      "kind": "binary",
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "name": "listener_running",
+      "transform": "identity"
+    },
+    {
+      "kind": "binary",
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "name": "tls_enabled",
+      "transform": "identity"
+    },
+    {
+      "kind": "binary",
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "name": "peer_allowlist_configured",
+      "transform": "identity"
+    },
+    {
+      "kind": "continuous",
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "name": "queue_utilization",
+      "transform": "min_max"
+    },
+    {
+      "kind": "continuous",
+      "maximum": 20.0,
+      "minimum": 0.0,
+      "name": "consecutive_failures",
+      "transform": "min_max"
+    },
+    {
+      "kind": "continuous",
+      "maximum": 86400.0,
+      "minimum": 0.0,
+      "name": "seconds_since_last_success",
+      "transform": "min_max"
+    },
+    {
+      "kind": "binary",
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "name": "ledger_integrity_ok",
+      "transform": "identity"
+    },
+    {
+      "kind": "binary",
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "name": "configuration_valid",
+      "transform": "identity"
+    }
+  ],
+  "intercept": 2.966862310261,
+  "model_type": "binary_logistic_regression_standard_library",
+  "purpose": "synthetic_operational_transport_attention_only",
+  "schema": "szl-oac/transport-health-logistic-model/v1",
+  "score_semantics": "synthetic_attention_score_not_production_calibrated",
+  "synthetic_training_data": true,
+  "training": {
+    "algorithm": "batch_gradient_descent_logistic_regression",
+    "epochs": 2400,
+    "l2_penalty": 0.01,
+    "learning_rate": 0.42,
+    "seed": 2500,
+    "threshold_selection": "validation_balanced_accuracy_then_f1",
+    "training_rows": 768
+  },
+  "weights": {
+    "configuration_valid": -1.461266877987,
+    "consecutive_failures": 0.863860283722,
+    "ledger_integrity_ok": -1.128984575692,
+    "listener_running": -1.61910172338,
+    "peer_allowlist_configured": -0.527177146666,
+    "queue_utilization": 0.908924629176,
+    "seconds_since_last_success": 0.053938998373,
+    "tls_enabled": -0.262108043211
+  }
+}
