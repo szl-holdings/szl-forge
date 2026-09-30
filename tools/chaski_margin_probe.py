@@ -132,9 +132,12 @@ def generate_with_margins(model, tok, prompt: str, *, max_new_tokens: int, devic
 
 
 def probe_candidate(mod, *, base: str, adapter: Path | None, drafts, refusals, device: str, dtype_name: str,
-                    draft_max_new_tokens: int, refusal_max_new_tokens: int, allow_missing_template: bool, threshold: float) -> dict[str, Any]:
+                    draft_max_new_tokens: int, refusal_max_new_tokens: int, allow_missing_template: bool, threshold: float,
+                    model_class_name: str = "AutoModelForCausalLM") -> dict[str, Any]:
     import torch
-    from transformers import AutoModelForCausalLM, AutoTokenizer
+    import transformers
+    from transformers import AutoTokenizer
+    AutoModelForCausalLM = getattr(transformers, model_class_name)
 
     dtype = {"bfloat16": torch.bfloat16, "float16": torch.float16, "float32": torch.float32}[dtype_name]
     tok = AutoTokenizer.from_pretrained(base, local_files_only=("/" in base and not Path(base).exists() and device != "cpu"))
@@ -144,9 +147,27 @@ def probe_candidate(mod, *, base: str, adapter: Path | None, drafts, refusals, d
         tok.chat_template = CHATML_FALLBACK
     model = AutoModelForCausalLM.from_pretrained(base, dtype=dtype, device_map=device, local_files_only=tok.init_kwargs.get("local_files_only", False))
     model_class = type(model).__name__
+    adapter_keys = None
     if adapter is not None:
         from peft import PeftModel
+        from safetensors import safe_open
         model = PeftModel.from_pretrained(model, str(adapter), is_trainable=False)
+        # FAIL-CLOSED: PEFT only *warns* when checkpoint keys do not exist in the model (e.g. an
+        # adapter trained on the multimodal layout `model.language_model.layers.*` loaded into the
+        # text-only class whose modules are `model.layers.*`). A silently unapplied adapter makes
+        # the "adapter" candidate the bare base model. Verify every checkpoint tensor landed.
+        with safe_open(str(Path(adapter) / "adapter_model.safetensors"), "pt") as f:
+            ckpt_keys = list(f.keys())
+        live = {n.replace(".default.", ".") for n, _ in model.named_parameters() if "lora_" in n}
+        unapplied = [k for k in ckpt_keys if k not in live]
+        adapter_keys = {"checkpoint_tensors": len(ckpt_keys), "applied": len(ckpt_keys) - len(unapplied),
+                        "unapplied": len(unapplied), "unapplied_sample": unapplied[:3],
+                        "checkpoint_layout": "language_model" if any(".language_model." in k for k in ckpt_keys) else "text"}
+        if unapplied:
+            raise SystemExit(f"FAIL-CLOSED: ADAPTER_NOT_APPLIED — {len(unapplied)}/{len(ckpt_keys)} adapter tensors have no target in "
+                             f"{model_class} (checkpoint layout: {adapter_keys['checkpoint_layout']}; sample {unapplied[:2]}). "
+                             f"Load the class the adapter was trained against (e.g. AutoModelForImageTextToText for "
+                             f"`model.language_model.layers.*` keys) or re-key the adapter. Refusing to score the base model as an adapter.")
     model.eval()
     if tok.pad_token_id is None:
         tok.pad_token = tok.eos_token
@@ -157,6 +178,7 @@ def probe_candidate(mod, *, base: str, adapter: Path | None, drafts, refusals, d
         "chat_template_sha256": sha256_text(tok.chat_template or ""), "tokenizer_class": type(tok).__name__,
         "eos_token_id": model.generation_config.eos_token_id, "pad_token_id": tok.pad_token_id,
         "active_adapter": getattr(model, "active_adapter", None) if adapter is not None else None,
+        "adapter_keys": adapter_keys,
     }
     cases, draft_valid, refused, knife = [], 0, 0, 0
     for kind, rows, budget, scorer in (("draft", drafts["rows"], draft_max_new_tokens, mod.score_draft),
@@ -193,7 +215,10 @@ def main() -> int:
     ap.add_argument("--gate-dir", type=Path, default=None, help="default ROOT/chaski/gate")
     ap.add_argument("--base", default=None, help="default: runner CANONICAL_BASE")
     ap.add_argument("--adapter", type=Path, action="append", default=[], help="adapter dir (repeatable); none = base only")
+    ap.add_argument("--include-base", action="store_true", help="also probe the bare base model when adapters are given")
     ap.add_argument("--device", default="cuda")
+    ap.add_argument("--model-class", default="AutoModelForCausalLM", choices=["AutoModelForCausalLM", "AutoModelForImageTextToText"],
+                    help="loader class; the canonical runner uses AutoModelForCausalLM, the archived 2026-09-16 runner used AutoModelForImageTextToText")
     ap.add_argument("--dtype", default="bfloat16", choices=["bfloat16", "float16", "float32"])
     ap.add_argument("--draft-max-new-tokens", type=int, default=256)
     ap.add_argument("--refusal-max-new-tokens", type=int, default=96)
@@ -226,19 +251,21 @@ def main() -> int:
         raise SystemExit("FAIL-CLOSED: --device cuda but CUDA unavailable")
 
     candidates = []
-    targets = [None] + list(a.adapter) if not a.adapter else list(a.adapter)
+    targets = list(a.adapter) if a.adapter else [None]
+    if a.adapter and a.include_base:
+        targets = [None] + targets
     for adapter in targets:
         label = "base" if adapter is None else adapter.name
         print(f"[margin-probe] {label}")
         candidates.append({"id": label, **probe_candidate(
             mod, base=base, adapter=adapter, drafts=drafts, refusals=refusals, device=a.device, dtype_name=a.dtype,
             draft_max_new_tokens=a.draft_max_new_tokens, refusal_max_new_tokens=a.refusal_max_new_tokens,
-            allow_missing_template=a.allow_missing_template, threshold=a.margin_threshold)})
+            allow_missing_template=a.allow_missing_template, threshold=a.margin_threshold, model_class_name=a.model_class)})
 
     payload = {
         "kind": KIND, "schema": SCHEMA, "label": "DIAGNOSTIC", "is_canonical_receipt": False,
         "publication_eligible": False, "autonomy_eligible": False, "hub_put": False,
-        "base_model": base, "runner": str(runner), "runner_sha256": runner_sha, "runner_pristine": runner_sha == RUNNER_PRISTINE_SHA256,
+        "base_model": base, "loader_class": a.model_class, "runner": str(runner), "runner_sha256": runner_sha, "runner_pristine": runner_sha == RUNNER_PRISTINE_SHA256,
         "gate_hashes": {"json_drafts.n5.jsonl": sha256_file(gate_dir / "json_drafts.n5.jsonl"),
                         "adversarial_refusals.n6.jsonl": sha256_file(gate_dir / "adversarial_refusals.n6.jsonl")},
         "environment": {"python": platform.python_version(), "platform": platform.platform(), "torch": torch.__version__,

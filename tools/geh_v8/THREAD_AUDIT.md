@@ -174,6 +174,28 @@ Chain head `bdb60e93…0890`; `szl_geh_verify.py --evidence …` → 5 receipts,
   Either a re-serialization or different weights; the runbook now reports
   `r2_local_matches_hub_published` so you can tell which. Until then, "the Hub r2 is the control"
   is an unverified claim.
+* **Silent adapter no-op hazard (found by the probe, mechanism verified):** the published
+  `SZLHOLDINGS/chaski-r2` adapter is keyed for the multimodal module layout
+  (`base_model.model.model.language_model.layers.*`). Under transformers 5.18,
+  `AutoModelForCausalLM.from_pretrained("Qwen/Qwen3.5-0.8B")` returns `Qwen3_5ForCausalLM`
+  (`model_type qwen3_5_text`, modules `model.layers.*`); PEFT then applies **0 of 192** adapter
+  tensors and only emits a `UserWarning`. In that configuration the "chaski-r2" candidate
+  reproduced the committed **base-model** outputs byte-for-byte on all 11 held-out cases
+  (sha256-equal to the `base-qwen35-0.8b` rows of receipts A and B: 0/5 drafts, 6/6 five-token
+  `REFUSE`). Loading the same adapter through `AutoModelForImageTextToText`
+  (`Qwen3_5ForConditionalGeneration`, modules `model.language_model.layers.*`) applies 192/192 and
+  yields the seven-key compact drafts that are the r2 signature. Two consequences: (1) the pristine
+  canonical runner uses `AutoModelForCausalLM`, so which class it instantiates — and therefore
+  whether any adapter is applied at all — depends on the installed transformers version, and a
+  no-op adapter would be recorded as a MEASURED 0/5 with no error; (2) anyone following the
+  standard PEFT recipe on current transformers evaluates the base model and believes it is
+  chaski-r2. `tools/chaski_margin_probe.py` now fails closed (`ADAPTER_NOT_APPLIED`) unless every
+  checkpoint tensor lands, and records `adapter_keys` and `loader_class` in the receipt. The same
+  assertion belongs in the canonical runner and in every model card's loading snippet.
+* **Cross-environment determinism datapoint:** CPU fp32 + transformers 5.18 reproduced the
+  owner-metal CUDA bf16 base-model outputs byte-for-byte on 11/11 held-out cases. The base model
+  is not environment-sensitive on these prompts; whatever flips between receipts A and B is
+  adapter-side.
 * **Margin probe shipped:** `tools/chaski_margin_probe.py` replays the held-out prompts through
   the pristine runner's own prompt path and scorers and records, per case, the top-2 logit margin
   at every generated token, the environment (torch/transformers/peft versions, model class,
