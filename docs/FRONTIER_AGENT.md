@@ -29,10 +29,14 @@ tests. `allowed_paths` lists 1..12 unique explicit relative filenames;
 failure; `check_files` binds 1..12 absolute independent acceptance files and
 their SHA-256 values. Every expected baseline result must reproduce.
 
-Mission, evidence, and edit-proposal intake reject duplicate object keys at any
+Mission, evidence, edit-proposal, and model-event intake reject duplicate object keys at any
 depth, including escaped-equivalent keys, and non-finite numbers (`NaN`,
 infinities, and floating-point overflow). Valid JSON content is preserved;
 evidence digests remain bound to original file bytes, not reserialized JSON.
+Every model-event record must be a JSON object. Corrupt or non-object records
+produce a sanitized `INCOMPLETE` receipt, even after an apparent completion,
+before any proposal application or candidate check. The original event stream
+is retained; unknown well-formed event types remain compatible.
 
 Optional `source_paths` supplies at most twelve relative repository files as
 revision-verified source context, each capped at 128 KiB. This lets research
