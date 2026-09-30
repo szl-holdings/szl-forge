@@ -5,6 +5,10 @@ from pathlib import Path
 import base64
 import hashlib
 import json
+import shlex
+import shutil
+import subprocess
+import sys
 import tempfile
 from types import ModuleType, SimpleNamespace
 import unittest
@@ -23,6 +27,27 @@ def blocked_report():
 
 
 class ControlTests(unittest.TestCase):
+    def test_container_packages_importable_publisher_dependency_closure(self):
+        tools = Path(__file__).resolve().parent
+        dockerfile = (tools / "kernel-0161-qualification.Dockerfile").read_text(encoding="utf-8")
+        runtime_sources = []
+        for line in dockerfile.replace("\\\n", " ").splitlines():
+            fields = shlex.split(line, comments=True)
+            if fields[:1] == ["COPY"] and fields[-1:] == ["./"]:
+                runtime_sources.extend(fields[1:-1])
+        required = {"tools/qualify_kernel_0161.py", "tools/publish_szl_kernels.py",
+                    "tools/kernels_keyless_credentials.py"}
+        self.assertTrue(required.issubset(runtime_sources))
+        with tempfile.TemporaryDirectory() as directory:
+            for name in runtime_sources:
+                shutil.copyfile(tools.parent / name, Path(directory) / Path(name).name)
+            result = subprocess.run(
+                [sys.executable, "-I", "-B", "-c",
+                 "import sys; sys.path.insert(0, sys.argv[1]); "
+                 "import qualify_kernel_0161, publish_szl_kernels, kernels_keyless_credentials",
+                 directory], capture_output=True, text=True, timeout=30, check=False)
+            self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_source_and_hub_identity_are_distinct(self):
         self.assertNotEqual(q.SOURCE_REVISION, q.HUB_REVISION)
         self.assertEqual(q.CLIENT_VERSION, "0.16.1")
