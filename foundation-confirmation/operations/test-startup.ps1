@@ -65,6 +65,29 @@ try {
     $task = New-TaskFixture $receipt
     Assert-FoundationTask $task $receipt
     $checks.Add('NATIVE_CURRENT_USER_TASK_DEFINITION_ADMITTED_WITHOUT_REGISTRATION')
+    $accountName = [Security.Principal.SecurityIdentifier]::new($paths.Sid).Translate([Security.Principal.NTAccount]).Value
+    $task = New-TaskFixture $receipt
+    $task.Triggers[0].UserId = $accountName
+    Assert-FoundationTask $task $receipt
+    $checks.Add('REGISTERED_LOGON_TRIGGER_ACCOUNT_NORMALIZATION_ADMITTED')
+    $task.Principal.UserId = $accountName
+    Assert-FoundationTask $task $receipt
+    $checks.Add('REGISTERED_PRINCIPAL_AND_TRIGGER_ACCOUNT_NORMALIZATION_ADMITTED')
+    $task = New-TaskFixture $receipt
+    $task.Triggers[0].UserId = 'S-1-5-18'
+    Confirm-Rejection 'FOREIGN_LOGON_TRIGGER_SID_REJECTED' { Assert-FoundationTask $task $receipt } 'conflicting task definition'
+    $task = New-TaskFixture $receipt
+    $task.Triggers[0].UserId = [Security.Principal.SecurityIdentifier]::new('S-1-5-18').Translate([Security.Principal.NTAccount]).Value
+    Confirm-Rejection 'FOREIGN_LOGON_TRIGGER_ACCOUNT_REJECTED' { Assert-FoundationTask $task $receipt } 'conflicting task definition'
+    $task = New-TaskFixture $receipt
+    $task.Triggers[0].UserId = ''
+    Confirm-Rejection 'EMPTY_LOGON_TRIGGER_IDENTITY_REJECTED' { Assert-FoundationTask $task $receipt } 'conflicting task definition'
+    $task = New-TaskFixture $receipt
+    $task.Triggers[0].UserId = $env:COMPUTERNAME + '\SZL-Missing-' + [guid]::NewGuid().ToString('N')
+    Confirm-Rejection 'UNKNOWN_LOGON_TRIGGER_ACCOUNT_REJECTED' { Assert-FoundationTask $task $receipt } 'conflicting task definition'
+    $task = New-TaskFixture $receipt
+    $task.Triggers[0].UserId = 'S-1-invalid'
+    Confirm-Rejection 'MALFORMED_LOGON_TRIGGER_SID_REJECTED' { Assert-FoundationTask $task $receipt } 'conflicting task definition'
     $task = New-TaskFixture $receipt
     $task.Actions = @($task.Actions[0], $task.Actions[0])
     Confirm-Rejection 'ADDITIONAL_TASK_ACTION_REJECTED' { Assert-FoundationTask $task $receipt } 'conflicting task definition'
