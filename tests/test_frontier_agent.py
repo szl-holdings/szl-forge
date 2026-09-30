@@ -41,6 +41,55 @@ class AgentTests(unittest.TestCase):
         with self.assertRaisesRegex(agent.MissionError, "independent checks"):
             agent.load_mission(self.path)
 
+    def test_mission_rejects_duplicate_keys_at_every_depth(self):
+        good = json.dumps(self.mission)
+        for addition in ('"mode":"build","mode":"research"',
+                         '"nested":{"value":1,"value":2}',
+                         '"nested":[{"value":1,"val\\u0075e":2}]'):
+            with self.subTest(addition=addition):
+                self.path.write_text("{" + addition + "," + good[1:], encoding="utf-8")
+                with self.assertRaisesRegex(agent.MissionError, "Duplicate JSON key"):
+                    agent.load_mission(self.path)
+
+    def test_mission_rejects_non_finite_values_in_unknown_metadata(self):
+        good = json.dumps(self.mission)
+        for value in ("NaN", "Infinity", "-Infinity", "1e999", "-1e999"):
+            with self.subTest(value=value):
+                self.path.write_text('{"metadata":{"values":[' + value + ']},' + good[1:], encoding="utf-8")
+                with self.assertRaisesRegex(agent.MissionError, "Non-finite JSON number"):
+                    agent.load_mission(self.path)
+
+    def test_evidence_rejects_ambiguous_and_non_finite_json_with_valid_digest(self):
+        for raw in ('{"secret":1,"secret":2}', '{"nested":{"x":1,"x":2}}',
+                    '{"nested":[{"x":1,"\\u0078":2}]}', '{"x":NaN}',
+                    '{"x":Infinity}', '{"x":-Infinity}', '{"x":1e999}', '{"x":-1e999}'):
+            with self.subTest(raw=raw):
+                self.evidence.write_text(raw, encoding="utf-8")
+                self.mission["evidence"][0]["sha256"] = agent.digest(self.evidence.read_bytes())
+                with self.assertRaises(agent.MissionError) as caught:
+                    agent.bound_evidence(self.mission)
+                self.assertNotIn("secret", str(caught.exception))
+
+    def test_valid_json_preserves_content_and_raw_evidence_digest(self):
+        raw = b' {"nested":[{"x":1.25}],"integer":12345678901234567890,"tiny":1e-999}\n'
+        self.evidence.write_bytes(raw)
+        self.mission["evidence"][0]["sha256"] = agent.digest(raw)
+        self.mission["metadata"] = {"nested": [1.25, True, None], "integer": 12345678901234567890}
+        self.save()
+        self.assertEqual(agent.load_mission(self.path), self.mission)
+        evidence = agent.bound_evidence(self.mission)[0]
+        self.assertEqual(evidence["sha256"], agent.digest(raw))
+        self.assertEqual(evidence["content"], json.loads(raw))
+
+    def test_malformed_json_remains_rejected(self):
+        self.path.write_bytes(b'{"schema":')
+        with self.assertRaises(ValueError):
+            agent.load_mission(self.path)
+        self.evidence.write_bytes(b'{"observation":')
+        self.mission["evidence"][0]["sha256"] = agent.digest(self.evidence.read_bytes())
+        with self.assertRaises(ValueError):
+            agent.bound_evidence(self.mission)
+
     def test_command_uses_sandbox_and_stdin_without_permission_bypass(self):
         command = agent.codex_command("codex.exe", self.root, "build")
         self.assertIn("workspace-write", command)
@@ -49,6 +98,40 @@ class AgentTests(unittest.TestCase):
         self.assertEqual(command[-1], "-")
         self.assertFalse(any("bypass" in part for part in command))
         self.assertIn("read-only", agent.codex_command("codex.exe", self.root, "research"))
+
+    def test_windows_command_explicitly_selects_prepared_native_sandbox(self):
+        with patch.object(agent.os, "name", "nt"):
+            command = agent.codex_command("codex.exe", self.root, "build")
+        self.assertIn('windows.sandbox="elevated"', command)
+        self.assertIn("--ignore-user-config", command)
+        self.assertIn("workspace-write", command)
+        self.assertIn('approval_policy="never"', command)
+        self.assertFalse(any("bypass" in part or "unelevated" in part for part in command))
+
+    def test_other_platform_command_does_not_request_windows_sandbox(self):
+        with patch.object(agent.os, "name", "posix"):
+            command = agent.codex_command("codex", self.root, "build")
+        self.assertFalse(any("windows.sandbox" in part for part in command))
+
+    def test_windows_resolves_native_executable_before_command_wrapper(self):
+        def locate(name):
+            return "codex.exe" if name == "codex.exe" else "codex.CMD"
+        with patch.object(agent.os, "name", "nt"), \
+             patch.object(agent.shutil, "which", side_effect=locate) as which:
+            self.assertEqual(agent.native_codex_executable(), "codex.exe")
+        which.assert_called_once_with("codex.exe")
+
+    def test_missing_native_executable_is_refused_without_wrapper_fallback(self):
+        with patch.object(agent.os, "name", "nt"), \
+             patch.object(agent.shutil, "which", return_value=None):
+            with self.assertRaisesRegex(agent.MissionError, "Native Codex executable"):
+                agent.native_codex_executable()
+
+    def test_other_platform_keeps_native_cli_lookup(self):
+        with patch.object(agent.os, "name", "posix"), \
+             patch.object(agent.shutil, "which", return_value="/usr/bin/codex") as which:
+            self.assertEqual(agent.native_codex_executable(), "/usr/bin/codex")
+        which.assert_called_once_with("codex")
 
     def test_shell_text_and_unbounded_deadline_are_rejected(self):
         for update in ({"checks": ["python -m unittest"]}, {"timeout_seconds": 999999}):

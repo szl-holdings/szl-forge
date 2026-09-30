@@ -11,6 +11,7 @@ import argparse
 from datetime import datetime, timezone
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -37,6 +38,27 @@ def digest(raw):
     return hashlib.sha256(raw).hexdigest()
 
 
+def load_json(raw):
+    """Reject ambiguous keys and non-finite numbers without echoing input."""
+    def unique_object(pairs):
+        result = {}
+        for key, value in pairs:
+            require(key not in result, "Duplicate JSON key")
+            result[key] = value
+        return result
+
+    def finite_float(value):
+        number = float(value)
+        require(math.isfinite(number), "Non-finite JSON number")
+        return number
+
+    def reject_constant(_value):
+        raise MissionError("Non-finite JSON number")
+
+    return json.loads(raw, object_pairs_hook=unique_object,
+                      parse_float=finite_float, parse_constant=reject_constant)
+
+
 def write_json(path, value):
     path.write_text(json.dumps(value, indent=2, sort_keys=True, allow_nan=False) + "\n", encoding="utf-8")
 
@@ -50,7 +72,7 @@ def git(repo, *args):
 def load_mission(path):
     raw = path.read_bytes()
     require(len(raw) <= MAX_INPUT, "Mission exceeds size limit")
-    mission = json.loads(raw)
+    mission = load_json(raw)
     require(type(mission) is dict and mission.get("schema") == SCHEMA, "Unsupported mission schema")
     require(mission.get("mode") in ("research", "build"), "Mode must be research or build")
     require(type(mission.get("objective")) is str and 1 <= len(mission["objective"]) <= 12000,
@@ -88,7 +110,7 @@ def bound_evidence(mission):
         path = Path(item["path"]).resolve(strict=True)
         raw = path.read_bytes()
         require(len(raw) <= MAX_INPUT and digest(raw) == item["sha256"], "Evidence changed or exceeds bound")
-        result.append({"id": f"E{index}", "sha256": item["sha256"], "content": json.loads(raw)})
+        result.append({"id": f"E{index}", "sha256": item["sha256"], "content": load_json(raw)})
     return result
 
 
@@ -128,10 +150,23 @@ def prompt_for(mission, evidence, sources=None):
     )
 
 
+def native_codex_executable():
+    # Windows PATHEXT resolution can prefer an npm .CMD shim to codex.exe.
+    executable = shutil.which("codex.exe" if os.name == "nt" else "codex")
+    require(executable and os.path.splitext(executable)[1].lower() not in (".cmd", ".bat"),
+            "Native Codex executable required")
+    return executable
+
+
 def codex_command(executable, workspace, mode):
-    return [executable, "exec", "--ignore-user-config", "--ephemeral", "--json",
+    command = [executable, "exec", "--ignore-user-config", "--ephemeral", "--json",
             "--color", "never", "--sandbox", "read-only" if mode == "research" else "workspace-write",
-            "-c", 'approval_policy="never"', "--cd", str(workspace), "-"]
+            "-c", 'approval_policy="never"']
+    # Ignoring user config also removes its native Windows sandbox selection.
+    # Select the prepared stronger implementation explicitly, retaining policy.
+    if os.name == "nt":
+        command.extend(["-c", 'windows.sandbox="elevated"'])
+    return command + ["--cd", str(workspace), "-"]
 
 
 def stop_tree(process):
@@ -187,8 +222,7 @@ def run_mission(mission_path, run_dir, execute=False):
     origin = git(repository, "remote", "get-url", "origin")
     require(re.fullmatch(r"(?:https://github\.com/|git@github\.com:)szl-holdings/[A-Za-z0-9_.-]+(?:\.git)?", origin),
             "Mission repository must belong to szl-holdings")
-    executable = shutil.which("codex")
-    require(executable and Path(executable).suffix.lower() not in (".cmd", ".bat"), "Native Codex executable required")
+    executable = native_codex_executable()
     run_dir = run_dir.resolve()
     require(not run_dir.exists(), "Run directory must be new; previous runs cannot be overwritten")
     run_dir.mkdir(parents=True)

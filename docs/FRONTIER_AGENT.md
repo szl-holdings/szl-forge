@@ -4,6 +4,8 @@
 installed, authenticated Codex CLI. It uses the CLI's default model without
 storing an API key. Research uses its read-only sandbox; engineering uses
 workspace-write in a new detached worktree. Each invocation terminates.
+Windows resolves `codex.exe` directly so an npm `codex.CMD` earlier on PATH
+cannot shadow the native executable. A missing native executable is refused.
 
 The intended cycle is observe, propose, experiment, implement, verify, and review.
 This entry point supplies the model execution and local verification steps.
@@ -18,6 +20,10 @@ Provide a JSON object with schema `szl.frontier-agent-mission/v1`, `mode`
 absolute `path` and `sha256`. Evidence files contain JSON. Build missions also
 require `checks`, a list of trusted command argument arrays. Commands are
 operator input, never extracted from the model response.
+Mission and evidence intake reject duplicate object keys at any depth, including
+escaped-equivalent keys, and non-finite numbers (`NaN`, infinities, and floating
+point overflow). Valid JSON content is preserved; evidence digests remain bound
+to the original file bytes, not reserialized JSON.
 
 Optional `source_paths` supplies at most twelve relative repository files as
 revision-verified source context, each capped at 128 KiB. This lets research
@@ -50,6 +56,13 @@ prompts, so supply only evidence appropriate for that account and protect the
 run directory. Token-like environment variables are removed from child
 environments; existing filesystem credentials are not an isolation boundary.
 User configuration is ignored to avoid inheriting custom MCP servers or hooks.
+On native Windows the launcher explicitly requests `windows.sandbox="elevated"`
+because ignoring user configuration also discards that setting. Use an already
+prepared native sandbox; the launcher does not select the weaker implementation
+or full access if setup or enforced policy prevents execution. A requested
+sandbox in the retained command is configuration evidence; successful commands
+and edits require separate runtime observations. See the official
+[Windows sandbox documentation](https://learn.chatgpt.com/docs/windows/windows-sandbox).
 CLI sandbox enforcement still depends on the local runtime. This wrapper is
 not a hostile-code sandbox, and operator check commands execute as the user.
 
