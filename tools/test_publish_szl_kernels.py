@@ -14,6 +14,7 @@ from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 import httpx
+from huggingface_hub.errors import HfHubHTTPError
 
 import publish_szl_kernels as publisher
 import verify_szl_kernel_runtime as runtime_verifier
@@ -442,9 +443,8 @@ class PublishSzlKernelsTests(unittest.TestCase):
                         "GET", "https://huggingface.co/api/private",
                         headers={"Authorization": "Bearer " + MODEL_TOKEN + KERNEL_TOKEN},
                     )
-                    getattr(api, method).side_effect = httpx.HTTPStatusError(
+                    getattr(api, method).side_effect = HfHubHTTPError(
                         "provider-secret-" + MODEL_TOKEN + KERNEL_TOKEN,
-                        request=request,
                         response=httpx.Response(status, request=request),
                     )
                     with patch.dict(os.environ, environment, clear=True), patch.object(
@@ -460,6 +460,7 @@ class PublishSzlKernelsTests(unittest.TestCase):
                         "stage": "CREDENTIAL_ACQUISITION",
                         "error_type": "KeylessCredentialError",
                         "error_code": code,
+                        "http_status": status,
                         "provider_write_attempted": False,
                     })
                     self.assertNotIn("provider-secret", report.read_text(encoding="utf-8") + stderr.getvalue())
@@ -483,6 +484,51 @@ class PublishSzlKernelsTests(unittest.TestCase):
             failure = json.loads(report.read_text(encoding="utf-8"))["failure"]
             self.assertEqual(failure["error_code"], "UNTRUSTED_WORKFLOW_CONTEXT")
             self.assertFalse(failure["provider_write_attempted"])
+
+    def test_main_retains_only_bounded_access_failure_http_status(self) -> None:
+        for code in ("MODEL_WRITE_ACCESS_VALIDATION_FAILED", "KERNEL_REFS_VALIDATION_FAILED"):
+            for status in (400, 401, 403, 404, 429, 500, 599, None, True, "403", 403.0, 399, 600):
+                with self.subTest(code=code, status=status), tempfile.TemporaryDirectory() as temporary:
+                    report = Path(temporary) / "failure.json"
+                    exc = credentials.KeylessCredentialError(code)
+                    exc.http_status = status
+                    exc.response = "provider-secret"
+                    with patch.object(
+                        credentials, "authority_evidence",
+                        return_value=publisher.authority_policy("b" * 40),
+                    ), patch.object(credentials, "acquire_pair", side_effect=exc), patch.object(
+                        publisher, "run",
+                    ) as run, patch("sys.stderr", io.StringIO()):
+                        self.assertEqual(publisher.main(self.publication_argv(report)), 1)
+                        run.assert_not_called()
+                    text = report.read_text(encoding="utf-8")
+                    expected = {"http_status": status} if type(status) is int and 400 <= status <= 599 else {}
+                    self.assertEqual(json.loads(text)["failure"], {
+                        "stage": "CREDENTIAL_ACQUISITION",
+                        "error_type": "KeylessCredentialError",
+                        "error_code": code,
+                        "provider_write_attempted": False,
+                        **expected,
+                    })
+                    self.assertNotIn("provider-secret", text)
+
+    def test_other_credential_failures_cannot_claim_access_http_status(self) -> None:
+        class CustomCredentialError(credentials.KeylessCredentialError):
+            pass
+
+        for exc in (
+            credentials.KeylessCredentialError("OIDC_EXCHANGE_REJECTED"),
+            credentials.KeylessCredentialError("TARGET_ACCESS_VALIDATION_FAILED"),
+            CustomCredentialError("MODEL_WRITE_ACCESS_VALIDATION_FAILED"),
+        ):
+            with self.subTest(error_type=type(exc).__name__), tempfile.TemporaryDirectory() as temporary:
+                report = Path(temporary) / "failure.json"
+                exc.http_status = 403
+                publisher.record_credential_failure(
+                    report, source_revision="a" * 40, publisher={}, exc=exc,
+                )
+                failure = json.loads(report.read_text(encoding="utf-8"))["failure"]
+                self.assertNotIn("http_status", failure)
 
     def test_main_never_serializes_unknown_or_hostile_credential_errors(self) -> None:
         class HostileError(credentials.KeylessCredentialError):

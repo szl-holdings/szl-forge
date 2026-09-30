@@ -50,6 +50,24 @@ class KeylessCredentialError(RuntimeError):
     """A fixed non-secret failure code; provider response text is discarded."""
 
 
+def _access_validation_failure(code: str, cause: Exception) -> KeylessCredentialError:
+    """Retain only a bounded HTTP status from the pinned client's response."""
+    from httpx import Response
+    from huggingface_hub.errors import HfHubHTTPError
+
+    failure = KeylessCredentialError(code)
+    failure.http_status = None
+    if isinstance(cause, HfHubHTTPError):
+        # Do not consult arbitrary exception properties, headers, URLs, or
+        # bodies. Only the pinned Hub client's concrete response is admitted.
+        response = vars(cause).get("response")
+        if type(response) is Response:
+            status = vars(response).get("status_code")
+            if type(status) is int and 400 <= status <= 599:
+                failure.http_status = status
+    return failure
+
+
 @dataclass(frozen=True)
 class KernelPublisherCredentials:
     model: str = field(repr=False)
@@ -197,8 +215,8 @@ def acquire_pair(
         api = HfApi(endpoint="https://huggingface.co", token=False)
     try:
         api.auth_check(repo_id=TARGET, repo_type="model", token=model, write=True)
-    except Exception:
-        raise KeylessCredentialError("MODEL_WRITE_ACCESS_VALIDATION_FAILED") from None
+    except Exception as exc:
+        raise _access_validation_failure("MODEL_WRITE_ACCESS_VALIDATION_FAILED", exc) from None
     try:
         refs = api.list_repo_refs(TARGET, repo_type="kernel", token=kernel)
         branches = {
@@ -216,7 +234,7 @@ def acquire_pair(
             raise KeylessCredentialError("INVALID_KERNEL_REFS")
     except KeylessCredentialError:
         raise
-    except Exception:
-        raise KeylessCredentialError("KERNEL_REFS_VALIDATION_FAILED") from None
+    except Exception as exc:
+        raise _access_validation_failure("KERNEL_REFS_VALIDATION_FAILED", exc) from None
     return KernelPublisherCredentials(model=model, kernel=kernel)
 
