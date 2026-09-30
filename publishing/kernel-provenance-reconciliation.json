@@ -1,61 +1,61 @@
 {
   "schema": "szl.kernel-provenance-release/v1",
   "bundle": "publishing/kernel-provenance",
-  "snapshots_sha256": "6477cf724decfde793a8ae14c7264e9127bbf39ade966716268e8f6d8fe802b5",
+  "snapshots_sha256": "5b64b07e47259f85fffd5ed6f1cc9f3f7746cf224025f89aee3cbef66a050352",
   "entries": [
     {
       "id": "SZLHOLDINGS/szl-blocked",
       "repository_type": "model",
-      "expected_parent": "c5f2c03f2abfc1b63a2d66d2b7715f3b167acfb4",
+      "expected_parent": "730a238648ac69aa2a69c11428e06354c48d09e2",
       "destination": "MODEL_PROVENANCE.json",
       "source_path": "publishing/kernel-provenance/szl-blocked/MODEL_PROVENANCE.json",
       "original_sha256": "afdb5ed6666cabf443b31f8d77e84babfcad9eceb1edc73db2ba356fbd67694a",
-      "output_sha256": "010efed43fd879b8807f4fa959e5205acae18c3c9dd51df4761ed3b18745addf"
+      "output_sha256": "bb008ad2896daf4d3b536020222abb798029def2c4955868f426bef9ba0e9c34"
     },
     {
       "id": "SZLHOLDINGS/szl-formulas",
       "repository_type": "model",
-      "expected_parent": "1edee3ad6aca1e5489d4e7dfd87ed2b2c7b1443f",
+      "expected_parent": "5e4519bb648c47bc7eb4aea4ba5fe80d92570883",
       "destination": "MODEL_PROVENANCE.json",
       "source_path": "publishing/kernel-provenance/szl-formulas/MODEL_PROVENANCE.json",
       "original_sha256": "9d556d9adb7c8e3347785b7d2e9664c61d190b0ede920c64cab8f4069aaf8682",
-      "output_sha256": "7745646ad5a17ca60c757753aa80aea6a16086c0c00c5eeee907d8a0a98ce6f5"
+      "output_sha256": "d80b79c56cad3f3e07f069dd0369dccbfd1c2209023732fd4865ee52f7bb142b"
     },
     {
       "id": "SZLHOLDINGS/szl-govsign",
       "repository_type": "model",
-      "expected_parent": "3b63e1fa4a84369cd83fb1f5d155575e5710a447",
+      "expected_parent": "13ce04b3b3e490e9bee6453df7f83fdcf0f3b5c9",
       "destination": "MODEL_PROVENANCE.json",
       "source_path": "publishing/kernel-provenance/szl-govsign/MODEL_PROVENANCE.json",
       "original_sha256": "ad6fedcfd255db0d109c8dc522bd107df50da25ac4174cb68c01586ad916059d",
-      "output_sha256": "6a24aa7467ee13ea7812a8f111b5105e61fb7f1fcf6a713261709b977bc53e74"
+      "output_sha256": "59754e8b41b3aaac10e12ca33452fd9e2970ed5b454043d460a92a4c065378cf"
     },
     {
       "id": "SZLHOLDINGS/szl-invariants",
       "repository_type": "model",
-      "expected_parent": "c218f1a7eed7ec1b8a06a2997e49ffe9e339a71c",
+      "expected_parent": "4ba2b95956cb8a836e7c9f5886b3da778c667f1a",
       "destination": "MODEL_PROVENANCE.json",
       "source_path": "publishing/kernel-provenance/szl-invariants/MODEL_PROVENANCE.json",
       "original_sha256": "61d363ab86cfb19410ecbebd4477e9cd235dfac3ee4bd49913fac2b41d0044dc",
-      "output_sha256": "dd7e8eb76cfc9d8fafb63667d09fdba26ee2acd62ed49af6cbd74c9b093750da"
+      "output_sha256": "fddd03db7c9e33b7f8c186c5e2f7411afcaa18f09df147d37830755f21719fcd"
     },
     {
       "id": "SZLHOLDINGS/szl-ouroboros",
       "repository_type": "model",
-      "expected_parent": "40381c985b1eaebd5007626c0c58e25838d32389",
+      "expected_parent": "91e68d606a6273dd46db600f83938e61322b2b37",
       "destination": "MODEL_PROVENANCE.json",
       "source_path": "publishing/kernel-provenance/szl-ouroboros/MODEL_PROVENANCE.json",
       "original_sha256": "21d6b40206b36821aa82c493f2f706fe2e2e4206841680194e23f5fc33b43786",
-      "output_sha256": "e765ee3ca960afa316de2c916e225f16fa49913c3739e1b653044320389767bc"
+      "output_sha256": "20b1c94b43f7257b1a2efd492270b7c2b1a1219b25beb33609fe0a073066ff63"
     },
     {
       "id": "SZLHOLDINGS/szl-provctl",
       "repository_type": "model",
-      "expected_parent": "c71443c62f7f03a2d1a6151d47194843843aed6a",
+      "expected_parent": "8d2082d4b9901b1b92c9efd86113fb760a64bf1e",
       "destination": "MODEL_PROVENANCE.json",
       "source_path": "publishing/kernel-provenance/szl-provctl/MODEL_PROVENANCE.json",
       "original_sha256": "28bf866b757ab9238927baecdf0bf3d51d1b9df98ba2898a4a7e26c84fed07dd",
-      "output_sha256": "6b1c65a86df3e4cb03222e295d737f17fa32da20d89add6bc2af91e1a394f9e1"
+      "output_sha256": "e2d6ce6480bd1e9c997cb4d5a92fa5a242263ebd7187286097ad354b80e87539"
     }
   ]
 }

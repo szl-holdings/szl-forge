@@ -20,12 +20,12 @@
     "reproducible_build": "NOT_CLAIMED"
   },
   "current_artifact_evidence": {
-    "repository_revision": "3b63e1fa4a84369cd83fb1f5d155575e5710a447",
-    "observation_time": "2026-09-24T13:44:55.413698+00:00",
+    "repository_revision": "13ce04b3b3e490e9bee6453df7f83fdcf0f3b5c9",
+    "observation_time": "2026-09-30T02:25:26.636855+00:00",
     "tree_coverage": "COMPLETE_ACCESSIBLE_RESPONSE",
     "tree_entries": 26,
     "file_count": 20,
-    "tree_records_sha256": "fd4c5143be99e12e0718001137808d6d2cd79f2a30bd1b538ae586b107cda60a",
+    "tree_records_sha256": "090d6e5dcbe0617fd547605e592702548b75a60548fd468892cd2020a7bdfccc",
     "original_provenance_sha256": "ad6fedcfd255db0d109c8dc522bd107df50da25ac4174cb68c01586ad916059d",
     "training_receipt_path": "TRAINING_RECEIPT.json",
     "training_receipt_present": true,
