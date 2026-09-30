@@ -2,6 +2,7 @@
 """Bounded-claim contracts for the two source-owned Chaski model cards."""
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 
@@ -22,20 +23,26 @@ def test_chaski_cards_make_no_unverified_uniqueness_or_leadership_claim() -> Non
         assert "state-of-the-art" not in lowered
         assert "best-in-class" not in lowered
     assert "No uniqueness claim is made." in chaski
-    assert "The differentiator is inspectability" in chaski_5050
+    assert "Lineage and evaluation applicability were not independently" in chaski_5050
 
 
 def test_chaski_cards_point_to_their_own_canonical_source() -> None:
     chaski = _card("chaski/card/README.md")
     chaski_5050 = _card("chaski-5050/card/README.md")
     assert "szl-holdings/szl-forge/tree/main/chaski/card" in chaski
-    assert "szl-holdings/szl-forge/blob/main/chaski/README_5050.md" in chaski_5050
+    assert re.search(
+        r"https://github\.com/szl-holdings/szl-forge/blob/"
+        r"[0-9a-f]{40}/chaski-5050/card/README\.md",
+        chaski_5050,
+    )
+    assert "Canonical card authoring source: [chaski-5050/card/README.md]" in chaski_5050
     assert "tree/main/chaski/card" not in chaski_5050
 
 
 def test_negative_evidence_and_quarantine_cannot_be_rewritten_as_promotion() -> None:
     chaski = _card("chaski/card/README.md")
     chaski_5050 = _card("chaski-5050/card/README.md")
+    flattened_5050 = " ".join(chaski_5050.split())
 
     assert "Named-N: MEASURED FAIL" in chaski
     assert "json_draft: 0/5" in chaski
@@ -44,10 +51,12 @@ def test_negative_evidence_and_quarantine_cannot_be_rewritten_as_promotion() -> 
     assert "autonomy_eligible: false" in chaski
     assert "Not evidence that a later SKU inherits this evaluation." in chaski
 
-    assert "Status: none-this-run." in chaski_5050
+    assert "evals: HISTORICAL_TRAINING_NONE_SEPARATE_GATE_FAIL" in chaski_5050
+    assert "`evals=none-this-run`: no JSON/refusal gate ran in that training step." in chaski_5050
+    assert "**1/5 held-out and overall FAIL**" in chaski_5050
     assert "publication_eligible: false" in chaski_5050
     assert "autonomy_eligible: false" in chaski_5050
     assert "never_overwrite: SZLHOLDINGS/chaski" in chaski_5050
     assert "copied_live_chaski_weights: false" in chaski_5050
-    assert "Do not load this ID into the Khipu lab." in chaski_5050
-    assert "documentation update, not model promotion" in chaski_5050
+    assert "Lab load is forbidden." in chaski_5050
+    assert "The card does not authorize artifact changes or model promotion." in flattened_5050

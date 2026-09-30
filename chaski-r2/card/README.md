@@ -14,6 +14,7 @@ tags:
 - trl
 - unsloth
 - proposal-only
+- research-only
 szl:
   doctrine: v11-LOCKED
   lean: 749/14/163
@@ -24,86 +25,82 @@ szl:
   quant: bf16-lora
   qlora: false
   weights: AVAILABLE
-  evals: none-this-run
+  evals: HISTORICAL_OWNER_RECORDS_UNQUALIFIED
   publication_eligible: false
   autonomy_eligible: false
   never_overwrite: SZLHOLDINGS/chaski
 ---
 
-<p align="center">
-  <img src="holo-banner.svg" alt="Chaski-R2 — holographic knot banner" width="100%"/>
-</p>
+# Chaski-R2
 
-<h1 align="center">C H A S K I · R 2</h1>
+**Research adapter · dated owner-run evidence · HOLD**
 
-<p align="center"><em>A lineage you can walk. R1 stays up. R2 is the next knot.</em></p>
+Chaski-R2 is a bf16 LoRA research recut of `Qwen/Qwen3.5-0.8B`.
+It is separate from `SZLHOLDINGS/chaski` and the r=16, α=16
+`SZLHOLDINGS/chaski-5050` experiment. Publication and autonomy eligibility
+remain **false**. Lab load remains forbidden.
 
-<p align="center">
-  <img alt="Base: Qwen3.5-0.8B" src="https://img.shields.io/badge/base-Qwen3.5--0.8B-334155?style=flat-square"/>
-  <img alt="Downloads" src="https://img.shields.io/huggingface/dt/SZLHOLDINGS/chaski-r2?style=flat-square&color=f472b6&label=downloads"/>
-  <img alt="Artifact: bf16 LoRA r=16 a=32" src="https://img.shields.io/badge/artifact-bf16%20LoRA%20r16%20a32-8b5cf6?style=flat-square"/>
-  <img alt="License: Apache-2.0" src="https://img.shields.io/badge/License-Apache--2.0-7e8aa3?style=flat-square"/>
-  <img alt="Evals: none this run" src="https://img.shields.io/badge/evals-none%20this%20run-b45309?style=flat-square"/>
-  <a href="https://huggingface.co/SZLHOLDINGS/chaski"><img alt="Lineage: never overwrites SZLHOLDINGS/chaski" src="https://img.shields.io/badge/lineage-never%20overwrites%20R1-fda4af?style=flat-square"/></a>
-</p>
+Card and evidence review snapshot: [a5fbffcccabcc77ae87bf3740358a02f91a7c27b](https://huggingface.co/SZLHOLDINGS/chaski-r2/tree/a5fbffcccabcc77ae87bf3740358a02f91a7c27b).
+The review read small records and metadata; it did not download weights,
+rerun inference, verify signatures, or qualify the current repository head.
 
-Owner-GPU recut on NVIDIA GeForce RTX 5050 Laptop (8GB). Original SZL cut of
-disclosed Apache `Qwen/Qwen3.5-0.8B`. **Not QLoRA.** Unsloth 2026-08 does not
-recommend QLoRA on Qwen3.5 (dense or MoE) because of higher-than-normal
-quantization differences.
+## Dated evaluation records
 
-This is a **separate SKU**. It does **not** overwrite live `SZLHOLDINGS/chaski`
-and is **not** `SZLHOLDINGS/chaski-5050` (that kit is r=16 α=16 on doctrine
-SFT). This SKU is r=16 α=32 on `chaski_r2/train.jsonl` only.
+These are separate owner-run records. Their scores and identities must not
+be combined or transferred between adapter and merged artifacts.
 
-<!-- SZL-ATELIER-CUT:v1:START -->
-## The cut
+| Record | Reported result | Scope and limit |
+|---|---|---|
+| [2026-08-29 named-N generation](https://huggingface.co/SZLHOLDINGS/chaski-r2/blob/a5fbffcccabcc77ae87bf3740358a02f91a7c27b/eval_named_n_generate.json) | 5/5 JSON drafts; 6/6 adversarial refusals | Historical owner record; current-byte applicability was not independently established here. |
+| [2026-09-14 merged-checkpoint record](https://huggingface.co/SZLHOLDINGS/chaski-r2/blob/a5fbffcccabcc77ae87bf3740358a02f91a7c27b/eval_merged_measured.json) | 5/5 JSON drafts; 6/6 adversarial refusals | Owner-reported merged checkpoint, plain Transformers fp16. Separate from the later adapter-only binding. |
+| [2026-09-15 canonical gate](https://github.com/szl-holdings/szl-forge/blob/6f4ac90ff503265cec9c0436587f086e52d6124e/frontier/evaluation/gate_runs/chaski-r2_4ef29684c56d_20260915T093042Z_receipt.json) | **1/5 held-out; overall FAIL** | Separate suite at Hub revision `4ef29684c56de07626b1cefb4b93a1b486de2aa1`; `heldout.refusal_no_regression=false`. A separate refusal command passed. Production and publication authorization are false. |
+| [2026-09-24 adapter bake-off](https://huggingface.co/SZLHOLDINGS/chaski-r2/blob/a5fbffcccabcc77ae87bf3740358a02f91a7c27b/evidence/2026-09-25-adapter-binding/receipt.json), with [2026-09-25 additive binding](https://huggingface.co/SZLHOLDINGS/chaski-r2/blob/a5fbffcccabcc77ae87bf3740358a02f91a7c27b/evidence/2026-09-25-adapter-binding/source_publication_binding.json) | 5/5 draft contracts; 6/6 refusal prefixes | Adapter at historical Hub revision `661f8ee9ff6ab8b11dda6e7a9d42c14d3124c6dd`; reused named fixtures. The unsigned owner binding performs no new inference and preserves the earlier gate failure. |
 
-Round-2 is a first-class citizen in this estate. We do not overwrite R1. We add a sibling.
+The later adapter result does not erase the earlier gate **FAIL**, qualify
+the merged checkpoint, or establish semantic truth or general safety.
+The original bake-off contains stale `keep gate_ran=false` boilerplate;
+the additive binding explicitly explains its conflict with the measured
+generated cases and the top-level `gate_ran=true`. Historical records are
+preserved rather than rewritten.
 
-A lineage you can walk. R1 stays up. R2 is the next knot.
+## Artifact identities
 
-### Silhouette → leave → SZL
+| Identity | Value | Interpretation |
+|---|---|---|
+| Historical training-era adapter digest | `440340ce29e19344c0625d0adfe820b277cdb0e24099d4e612f88ad6b3cf49c6` | Value retained from the earlier card; it is not the later adapter-file identity. |
+| Adapter raw-file SHA-256 in the additive binding | `6f12981ea5df5e22d3493eefb20d75db75c1c88961ba6621a35af09edd0cdde6` | `adapter_model.safetensors` at historical Hub revision `661f8ee9ff6ab8b11dda6e7a9d42c14d3124c6dd`; reported by the binding, not rehashed in this review. |
+| Adapter directory digest in the additive binding | `078ec09fb3e8e215d1b6a98bb7164a94c7bb332d847c8e1d66f565e767171107` | SHA-256 of sorted safetensor filenames encoded UTF-8, a NUL delimiter, then file bytes; distinct from a raw-file digest. |
+| Merged checkpoint | Separately distributed runtime form | Its historical report is separate; the adapter-only binding does not establish merged-model evaluation identity. |
+| `adapter-unsloth/` | Additional adapter residue | Presence does not transfer any other artifact's evaluation or qualification. |
 
-| Leader | Take, then tweak |
-|---|---|
-| Anthropic | Versioned constitutions. |
-| NVIDIA | Recipe rerun. |
-| Unsloth | Another FastLanguageModel job. |
+The 2026-09-25 binding also records the older sidecar's Windows CRLF hashes
+and the published Git LF bytes separately. Those differing receipt-byte
+domains are explained in the additive record; neither original is replaced.
+Base weights and equality of current-head payloads to historically evaluated
+bytes were not independently rehashed in this review.
 
-This adapter remains a research proposal artifact; no qualification pass is claimed.
+## Historical training
 
-## Intended use
+The earlier owner-local RTX 5050 Laptop recipe used bf16 LoRA, r=16,
+α=32, seed 11, response-only cross entropy, 32 training rows in
+`chaski_r2/train.jsonl`, three epochs, batch size 1 and accumulation 2.
+The reported train loss **0.7656** is a training metric, not an evaluation.
+The training step itself reported no evaluation; the dated records above
+were added later. PEFT 0.19.1 is the version recorded by the earlier card.
 
-Lineage walk. Compare, do not silently replace.
+## Use and release boundary
 
-## Limitations
+Use only for controlled research on proposal outputs. Validate outputs
+outside the model. No deployment, production route, autonomy, or promotion
+is authorized by these records. The later binding states **HOLD** and
+`promotion_effect=NONE`. No throughput or currently working loader is
+claimed; selecting a runtime form requires a compatible loader and verified
+base and artifact revisions.
 
-- proposal-only
+Apache-2.0 is declared, and a standalone `LICENSE` is listed in the reviewed
+Hub tree. This observation does not independently establish ownership or
+downstream artifact license coverage.
 
-Canonical GitHub: [`chaski-r2/card/README.md`](https://github.com/szl-holdings/szl-forge/blob/main/chaski-r2/card/README.md)
-<!-- SZL-ATELIER-CUT:v1:END -->
-
-## Honest status
-
-| | |
-|---|---|
-| **Base** | `Qwen/Qwen3.5-0.8B` |
-| **Method** | Unsloth bf16 LoRA (`load_in_4bit=False`, `load_in_16bit=True`) |
-| **LoRA** | r=16, α=32, seed 11, response-only CE |
-| **Dataset** | `chaski_r2/train.jsonl` (32 rows). Named-N gates held out of gradients. |
-| **Epochs / steps** | 3 epochs, batch 1, grad accum 2 |
-| **Train loss** | MEASURED `0.7656` — train metric, **not an eval** |
-| **Train runtime** | MEASURED on RTX 5050 Laptop 8GB |
-| **Adapter sha256** | `440340ce29e19344c0625d0adfe820b277cdb0e24099d4e612f88ad6b3cf49c6` |
-| **Evals** | none-this-run; train loss is not a JSON-draft/refusal evaluation |
-| **publication_eligible** | false; published adapter bytes do not establish qualification |
-| **Jobs** | local-5050 owner metal; HF Jobs not fired from the GitHub kit |
-| **Ollama / llama-server** | `llama-server` is missing. No tok/s claimed. |
-
-Train loss is not a JSON-draft or refusal gate. Not 5/5 or 6/6. Lab load
-forbidden. House CPU lab stays signed Khipu GGUF.
-
-### Framework versions
-
-- PEFT 0.19.1
+Canonical authoring source: [chaski-r2/card/README.md](https://github.com/szl-holdings/szl-forge/blob/6f4ac90ff503265cec9c0436587f086e52d6124e/chaski-r2/card/README.md).
+An observed source revision identifies the reviewed file; it is not release
+approval. Doctrine v11 LOCKED. Λ = Conjecture 1, advisory, never a theorem.
