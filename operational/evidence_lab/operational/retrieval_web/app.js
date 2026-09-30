@@ -48,7 +48,7 @@ function renderPassages(data) {
     const citation = document.createElement("div"); citation.className = "citation";
     if (doc.citation && typeof doc.citation === "object") {
       const url = safeSource(doc.citation.publisher_url);
-      if (url) { const link = addText(citation, "a", `${doc.citation.dataset_id} ↗`); link.href = url; link.target = "_blank"; link.rel = "noopener noreferrer"; }
+      if (url) { const link = addText(citation, "a", `${doc.citation.dataset_id} →`); link.href = url; link.target = "_blank"; link.rel = "noopener noreferrer"; }
       else addText(citation, "span", doc.citation.dataset_id || "Dataset source");
       addText(citation, "span", ` · ${doc.citation.license} · ${doc.citation.attribution}`);
     } else { citation.textContent = String(doc.citation || "Source not supplied"); }
