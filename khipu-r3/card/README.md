@@ -11,38 +11,36 @@ tags:
   - khipu
 ---
 
-<p align="center">
-  <img src="holo-banner.svg" alt="khipu-r3 — holographic cord banner, four knots held and one frayed" width="100%"/>
-</p>
+> **SEPARATE RESEARCH ADAPTER · TRAINING RECORD · CANONICAL HELD-OUT GATE FAIL · NOT PROMOTABLE**
 
-<h1 align="center">K H I P U &nbsp;R 3</h1>
+# SZLHOLDINGS/khipu-r3
 
-<p align="center"><em>The knot that reports its own slipping — abstain 0/6, on the card.</em></p>
+## What this is
 
-<p align="center">
-  <img alt="Base: Qwen3.5-0.8B" src="https://img.shields.io/badge/base-Qwen3.5--0.8B-334155?style=flat-square"/>
-  <img alt="Downloads" src="https://img.shields.io/huggingface/dt/SZLHOLDINGS/khipu-r3?style=flat-square&color=fb7185&label=downloads"/>
-  <img alt="Recipe: bf16 LoRA r16 a32" src="https://img.shields.io/badge/recipe-bf16%20LoRA%20r16%20%CE%B132-9f1239?style=flat-square"/>
-  <img alt="Abstain gate: 0 of 6 MEASURED" src="https://img.shields.io/badge/abstain%20gate-0%20of%206%20MEASURED-991b1b?style=flat-square"/>
-  <img alt="Publication: false" src="https://img.shields.io/badge/publication-false-b45309?style=flat-square"/>
-  <img alt="License: Apache-2.0" src="https://img.shields.io/badge/License-Apache--2.0-7e8aa3?style=flat-square"/>
-</p>
+A laptop Blackwell research adapter, with a separate derived merged checkpoint also distributed, based on `Qwen/Qwen3.5-0.8B`. The [training_receipt.laptop-blackwell.json](https://huggingface.co/SZLHOLDINGS/khipu-r3/blob/89807a2680e2400bbbc7523772aa6ff4b86a7988/training_receipt.laptop-blackwell.json) records bf16 LoRA with r=16 and alpha=32, **23 training rows** from `train.jsonl` and `train.abstain.jsonl`, and **train loss 0.4397**. That loss is a training metric, not an evaluation.
 
-Laptop Blackwell Unsloth **bf16 LoRA** (r=16 α=32) of the forge `khipu/` curriculum
-(`train.jsonl` + `train.abstain.jsonl`, 23 rows) on `Qwen/Qwen3.5-0.8B`.
+## Evidence and artifact identity
 
-| Claim | Status |
-|---|---|
-| Train loss 0.4397 | MEASURED (train metric, not eval) |
-| Held-out generate | MEASURED grounding 4/5, abstain 0/6 (NAVIGATE instead of ABSTAIN) |
-| publication_eligible | false |
-| Overwrites 1.5B / KHIPU-R2 / brain-navigator-r2 | never |
-| QLoRA | forbidden on Qwen3.5; this SKU is bf16 LoRA |
-| Λ uniqueness | Conjecture 1, never a theorem |
+Card evidence reviewed on 2026-09-30 UTC at Hub revision [`90af1d3c2d3e79e60d8e1c82fa99a723e6888b90`](https://huggingface.co/SZLHOLDINGS/khipu-r3/tree/90af1d3c2d3e79e60d8e1c82fa99a723e6888b90). The historical artifact/evaluation snapshot below is `89807a2680e2400bbbc7523772aa6ff4b86a7988`. The repository contains [adapter_model.safetensors](https://huggingface.co/SZLHOLDINGS/khipu-r3/blob/89807a2680e2400bbbc7523772aa6ff4b86a7988/adapter_model.safetensors) and [model.safetensors](https://huggingface.co/SZLHOLDINGS/khipu-r3/blob/89807a2680e2400bbbc7523772aa6ff4b86a7988/model.safetensors); the historical training receipt's `weights=LOCAL` and `push_to_hub=false` describe that training step, not current file absence.
 
----
+There is **no `eval_report.json` in this Hub snapshot**, and no committed Hub held-out receipt supporting the former README claim “grounding 4/5, abstain 0/6.” That unsupported claim is withdrawn.
 
-<p align="center">
-  GitHub source: <a href="https://github.com/szl-holdings/szl-forge/tree/main/khipu">szl-holdings/szl-forge · khipu/</a><br/>
-  Hub: <a href="https://huggingface.co/SZLHOLDINGS/khipu-r3">SZLHOLDINGS/khipu-r3</a>
-</p>
+The separate [post-publication gate receipt](https://github.com/szl-holdings/szl-forge/blob/a6b58f623185820eddfb0b279d21b7d81b87137c/frontier/evaluation/gate_runs/khipu-r3_89807a2680e2_20260915T040737Z_receipt.json) names Hub revision `89807a2680e2400bbbc7523772aa6ff4b86a7988` and reports **1/5** on the canonical held-out suite in `transformers-cpu` mode, with overall **FAIL**, `heldout_passed=false`, `productionAuthorization=false`, and `publicationAuthorization=false`. This recorded canonical result does not substantiate the former 4/5 + 0/6 claim. It records `refusalPassed=false` and a refusal regression: rate 0.2 against baseline 0.4. The receipt retains runtime warnings, and earlier execution failures remain in the [canonical gate archive](https://github.com/szl-holdings/szl-forge/tree/a6b58f623185820eddfb0b279d21b7d81b87137c/frontier/evaluation/gate_runs). Therefore “no held-out evaluation exists anywhere” would also be inaccurate: the canonical source contains this later failed evaluation.
+
+The [merge_receipt.json](https://huggingface.co/SZLHOLDINGS/khipu-r3/blob/89807a2680e2400bbbc7523772aa6ff4b86a7988/merge_receipt.json) reports a 2026-09-14 repair of a prior empty base-copy merge: 96/96 adapter modules applied, maximum weight delta `0.0013806568458676338`. A nonzero merge delta does not establish behavioral quality.
+
+## What the evidence does and does not establish
+
+The [training_receipt.laptop-blackwell.json](https://huggingface.co/SZLHOLDINGS/khipu-r3/blob/89807a2680e2400bbbc7523772aa6ff4b86a7988/training_receipt.laptop-blackwell.json) retains `evals=none-this-run`, `publication_eligible=false`, and `autonomy_eligible=false`. Its training-run adapter digest is receipt-reported and is not asserted as a direct hash of the currently published adapter file. Exact current artifact qualification does not follow from a training receipt, a merge receipt, or file presence. The later canonical gate names the reviewed Hub revision and returns FAIL. The [provenance.json](https://huggingface.co/SZLHOLDINGS/khipu-r3/blob/89807a2680e2400bbbc7523772aa6ff4b86a7988/provenance.json) also retains blocked artifact-lineage, consent, privacy-review, deployment, and served-revision boundaries.
+
+## Release, autonomy, and deployment boundary
+
+**Not promotable.** `publication_eligible=false` and `autonomy_eligible=false` remain unchanged. No production, deployment authorization, autonomous action, approval authority, or house-lab pin follows from these records. Lambda uniqueness remains **Conjecture 1: open and advisory, never a theorem**.
+
+## Relationship and source of truth
+
+This SKU does not overwrite [SZL-Khipu-1.5B](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B), [SZL-Khipu-1.5B-GGUF](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B-GGUF), [KHIPU-R2](https://huggingface.co/SZLHOLDINGS/KHIPU-R2), [brain-navigator-r2](https://huggingface.co/SZLHOLDINGS/brain-navigator-r2), or [SZL-Khipu-1.5B-BrainNavigator](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B-BrainNavigator).
+
+Use the immutable Hub training and merge receipts and the [canonical failed evaluation receipt](https://github.com/szl-holdings/szl-forge/blob/a6b58f623185820eddfb0b279d21b7d81b87137c/frontier/evaluation/gate_runs/khipu-r3_89807a2680e2_20260915T040737Z_receipt.json) above. The [historical source card](https://github.com/szl-holdings/szl-forge/blob/a6b58f623185820eddfb0b279d21b7d81b87137c/khipu-r3/card/README.md) and [Khipu curriculum source](https://github.com/szl-holdings/szl-forge/tree/a6b58f623185820eddfb0b279d21b7d81b87137c/khipu) provide context; their prose is not a substitute for an artifact-scoped evaluation receipt.
+
+Canonical card authoring path: `khipu-r3/card/README.md` in `szl-holdings/szl-forge`. This source correction preserves the stronger dated published evidence; it changes no receipt, model file, release gate or deployed service.

@@ -9,6 +9,7 @@ from importlib.metadata import PackageNotFoundError
 import io
 import json
 from pathlib import Path
+import re
 import sys
 import threading
 import unittest
@@ -18,6 +19,12 @@ from fastapi.testclient import TestClient
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import external_retrieval_preview as preview
+
+# The vendored SZL KANCHAY files the page loads: exact route -> file under retrieval_web.
+SZL_ASSET_ROUTES = {
+    "/szl/szl-design-system.css": "szl/szl-design-system.css",
+    "/szl/logos/szl_favicon.svg": "szl/logos/szl_favicon.svg",
+}
 
 
 class StubService:
@@ -171,7 +178,7 @@ class PreviewTests(unittest.TestCase):
         self.assertEqual(200, self.post().status_code)
 
     def test_guard_applies_to_static_status_and_preflight(self):
-        for route in ("/", "/app.js", "/app.css", "/api/status", "/api/notices"):
+        for route in ("/", "/app.js", "/app.css", *SZL_ASSET_ROUTES, "/api/status", "/api/notices"):
             for headers, status in (({"host": "evil.example"}, 400),
                                     ({"origin": "https://evil.example"}, 403),
                                     ({"sec-fetch-site": "cross-site"}, 403)):
@@ -403,7 +410,8 @@ class PreviewTests(unittest.TestCase):
             self.assertEqual(value, body[key])
         self.assertEqual(preview.digest(preview.__file__), body["preview_sha256"])
         self.assertEqual({name: preview.digest(preview.HERE / "retrieval_web" / name)
-                          for name in ("index.html", "app.js", "app.css")}, body["asset_sha256"])
+                          for name in ("index.html", "app.js", "app.css", *SZL_ASSET_ROUTES.values())},
+                         body["asset_sha256"])
         self.service.query.assert_not_called()
         self.service.search.assert_not_called()
         self.service.answer_context.assert_not_called()
@@ -420,8 +428,69 @@ class PreviewTests(unittest.TestCase):
                 self.assertIn(mime, response.headers["content-type"])
                 self.assert_security_headers(response)
 
+    def test_vendored_szl_assets_are_served_exactly_with_security_headers(self):
+        for route, name in SZL_ASSET_ROUTES.items():
+            with self.subTest(route=route):
+                response = self.client.get(route)
+                self.assertEqual(200, response.status_code, response.text[:200])
+                self.assertEqual((preview.HERE / "retrieval_web" / name).read_bytes(), response.content)
+                self.assertEqual("text/css; charset=utf-8" if name.endswith(".css") else "image/svg+xml",
+                                 response.headers["content-type"])
+                self.assert_security_headers(response)
+        self.assertEqual(SZL_ASSET_ROUTES, {route: name for route, (name, _) in preview.SZL_ASSET_ROUTES.items()})
+
+    def test_vendored_szl_files_match_the_export_manifest(self):
+        folder = preview.HERE / "retrieval_web" / "szl"
+        source = json.loads((folder / "SOURCE.json").read_text(encoding="utf-8"))
+        self.assertEqual("1.1.0", source["version"])
+        for name in SZL_ASSET_ROUTES.values():
+            relative = name.removeprefix("szl/")
+            with self.subTest(name=relative):
+                self.assertEqual(source["sha256"][relative],
+                                 hashlib.sha256((folder / relative).read_bytes()).hexdigest())
+
+    def test_page_links_the_design_system_before_app_css_and_every_asset_is_routed(self):
+        page = (preview.HERE / "retrieval_web" / "index.html").read_text(encoding="utf-8")
+        self.assertLess(page.index('href="/szl/szl-design-system.css"'), page.index('href="/app.css"'))
+        self.assertIn('<html lang="en" data-surface="light">', page)
+        self.assertEqual({"/szl/szl-design-system.css", "/szl/logos/szl_favicon.svg"},
+                         set(re.findall(r'href="(/szl/[^"]+)"', page)))
+        css = (preview.HERE / "retrieval_web" / "szl" / "szl-design-system.css").read_text(encoding="utf-8")
+        self.assertNotIn("url(", css)
+        self.assertNotIn("@font-face", css)
+
+    def test_unlisted_szl_paths_withdrawn_assets_and_methods_are_not_exposed(self):
+        for route in ("/szl", "/szl/", "/szl/logos", "/szl/logos/", "/szl/SOURCE.json",
+                      "/szl/szl-console.css", "/szl/logos/szl_logo_horizontal.svg", "/szl/logos/LOGO_USAGE.md",
+                      "/szl/SZL-DESIGN-SYSTEM.CSS", "/szl/logos/szl_favicon.svg/x",
+                      "/szl/%2e%2e/app.css", "/szl/logos/%2e%2e/szl-design-system.css",
+                      "/szl/%2e%2e/%2e%2e/external_retrieval_preview.py",
+                      "/kanchay/kanchay.css", "/kanchay/fonts/Inter-latin.woff2"):
+            with self.subTest(route=route):
+                response = self.client.get(route)
+                self.assertEqual(404, response.status_code)
+                self.assert_security_headers(response)
+        for route in SZL_ASSET_ROUTES:
+            for method in ("POST", "PUT", "DELETE"):
+                with self.subTest(route=route, method=method):
+                    response = self.client.request(method, route)
+                    self.assertEqual(405, response.status_code)
+                    self.assert_security_headers(response)
+
+    def test_changed_vendored_szl_file_fails_closed_without_editing_real_assets(self):
+        real = preview.digest
+        for route, name in SZL_ASSET_ROUTES.items():
+            target = preview.HERE / "retrieval_web" / name
+            with self.subTest(route=route), mock.patch.object(
+                    preview, "digest", side_effect=lambda path: "0" * 64 if Path(path) == target else real(path)):
+                response = self.client.get(route)
+                self.assertEqual(503, response.status_code, response.text)
+                self.assertEqual({"detail": "Preview assets changed; restart required"}, response.json())
+                self.assert_security_headers(response)
+                self.assertEqual(200, self.client.get("/app.css").status_code)
+
     def test_asset_hash_mismatch_fails_closed_without_editing_real_assets(self):
-        for route in ("/", "/app.js", "/app.css"):
+        for route in ("/", "/app.js", "/app.css", *SZL_ASSET_ROUTES):
             with self.subTest(route=route), mock.patch.object(preview, "digest", return_value="0" * 64):
                 response = self.client.get(route)
                 self.assertEqual(503, response.status_code, response.text)
