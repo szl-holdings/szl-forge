@@ -2,6 +2,7 @@
 import importlib.util
 import json
 from pathlib import Path
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -43,7 +44,7 @@ class AgentTests(unittest.TestCase):
 
     def test_command_uses_sandbox_and_stdin_without_permission_bypass(self):
         command = agent.codex_command("codex.exe", self.root, "build")
-        self.assertIn("workspace-write", command)
+        self.assertIn("read-only", command)
         self.assertIn('approval_policy="never"', command)
         self.assertIn("--ignore-user-config", command)
         self.assertEqual(command[-1], "-")
@@ -67,8 +68,8 @@ class AgentTests(unittest.TestCase):
             return "a" * 40
         if args[0] == "remote":
             return "https://github.com/szl-holdings/example.git"
-        if args[0] == "worktree":
-            Path(args[3]).mkdir()
+        if "worktree" in args:
+            Path(args[-2]).mkdir()
         return ""
 
     def test_prepare_never_launches_model_or_creates_worktree(self):
@@ -79,7 +80,7 @@ class AgentTests(unittest.TestCase):
         self.assertEqual(receipt["state"], "PREPARED")
         self.assertFalse(receipt["model_execution_observed"])
         self.assertFalse(receipt["production_authorized"])
-        self.assertFalse(any(call.args[1] == "worktree" for call in git.call_args_list))
+        self.assertFalse(any("worktree" in call.args for call in git.call_args_list))
         run.assert_not_called()
 
     def test_exit_zero_without_model_completion_is_incomplete(self):
@@ -88,6 +89,7 @@ class AgentTests(unittest.TestCase):
             return {"exit_code": 0, "stopped": None}
         with patch.object(agent, "git", side_effect=self.fake_git), \
              patch.object(agent.shutil, "which", return_value="codex.exe"), \
+             patch.object(agent.subprocess, "check_output", return_value=b""), \
              patch.object(agent, "bounded_run", side_effect=fake_run):
             receipt = agent.run_mission(self.path, self.root / "no-completion", True)
         self.assertEqual(receipt["state"], "INCOMPLETE")
@@ -101,6 +103,7 @@ class AgentTests(unittest.TestCase):
             return {"exit_code": 0, "stopped": None}
         with patch.object(agent, "git", side_effect=self.fake_git), \
              patch.object(agent.shutil, "which", return_value="codex.exe"), \
+             patch.object(agent.subprocess, "check_output", return_value=b""), \
              patch.object(agent, "bounded_run", side_effect=fake_run):
             receipt = agent.run_mission(self.path, self.root / "research", True)
         self.assertEqual(receipt["state"], "MODEL_RESPONSE_OBSERVED")
@@ -134,6 +137,146 @@ class AgentTests(unittest.TestCase):
                                    self.root, self.root, "timeout", 0.3)
         self.assertEqual(result["stopped"], "TIMEOUT")
         self.assertNotEqual(result["exit_code"], 0)
+
+    def test_fast_process_output_overflow_is_not_success(self):
+        with patch.object(agent, "MAX_LOG", 10):
+            result = agent.bounded_run([sys.executable, "-c", "print('x' * 100)"],
+                                       self.root, self.root, "overflow", 10)
+        self.assertEqual(result["stopped"], "OUTPUT_LIMIT")
+
+    def test_windows_path_aliases_are_rejected(self):
+        for path in ("C:/private", "file:stream", ".GIT/config", "a/../b", "a./b", "a /b"):
+            self.assertFalse(agent.relative_file(path), path)
+
+
+class BuildGateTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.repo = self.root / "repo"
+        self.repo.mkdir()
+        self.git("init")
+        self.git("config", "core.autocrlf", "false")
+        self.git("remote", "add", "origin", "https://github.com/szl-holdings/test-fixture.git")
+        (self.repo / "value.py").write_bytes(b"VALUE = 0\n")
+        (self.repo / "guard.py").write_bytes(b"protected\n")
+        self.git("add", ".")
+        self.git("-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid",
+                 "-c", "commit.gpgsign=false", "commit", "-m", "fixture")
+        self.check = self.root / "check.py"
+        self.check.write_text("from pathlib import Path\nraise SystemExit(0 if Path('value.py').read_text() == 'VALUE = 1\\n' else 1)\n", encoding="utf-8")
+        evidence = self.root / "evidence.json"
+        evidence.write_text('{"kind":"synthetic-unit-fixture"}', encoding="utf-8")
+        self.mission = {
+            "schema": agent.SCHEMA, "mode": "build", "objective": "Repair fixture",
+            "repository": str(self.repo), "source_revision": self.git("rev-parse", "HEAD").strip(),
+            "timeout_seconds": 30, "allowed_paths": ["value.py"], "baseline_exit_codes": [1],
+            "checks": [[sys.executable, "-I", str(self.check)]],
+            "check_files": [{"path": str(self.check), "sha256": agent.digest(self.check.read_bytes())}],
+            "evidence": [{"path": str(evidence), "sha256": agent.digest(evidence.read_bytes())}],
+        }
+
+    def git(self, *args):
+        return subprocess.check_output(["git", "-C", str(self.repo), *args], text=True,
+                                       stderr=subprocess.DEVNULL)
+
+    def execute(self, mutate):
+        path = self.root / "mission.json"
+        path.write_text(json.dumps(self.mission), encoding="utf-8")
+        real_run = agent.bounded_run
+
+        def model_or_check(argv, cwd, folder, label, seconds, incoming=""):
+            if label != "model":
+                return real_run(argv, cwd, folder, label, seconds, incoming)
+            proposal = mutate(cwd)
+            events = [{"type": "item.completed", "item": {"type": "agent_message", "text": json.dumps(proposal)}},
+                      {"type": "turn.completed"}]
+            (folder / "model.jsonl").write_text("\n".join(map(json.dumps, events)), encoding="utf-8")
+            return {"exit_code": 0, "stopped": None}
+
+        with patch.object(agent.shutil, "which", return_value="codex.exe"), \
+             patch.object(agent, "bounded_run", side_effect=model_or_check):
+            return agent.run_mission(path, self.root / "run", True)
+
+    def proposal(self, after="VALUE = 1\n", path="value.py"):
+        return {"summary": "Unit fixture", "edits": [{"path": path, "before": "VALUE = 0\n", "after": after}]}
+
+    def test_real_baseline_and_checks_are_required_for_verified_repair(self):
+        result = self.execute(lambda cwd: self.proposal())
+        self.assertEqual(result["state"], "REPAIR_VERIFIED")
+        self.assertEqual(result["baseline_checks"][0]["exit_code"], 1)
+        self.assertEqual(result["checks"][0]["exit_code"], 0)
+        self.assertEqual(len(result["patch_sha256"]), 64)
+        self.assertFalse(result["production_authorized"])
+        self.assertFalse(result["training_admitted"])
+
+    def test_no_op_is_not_a_verified_build(self):
+        result = self.execute(lambda cwd: self.proposal("VALUE = 0\n"))
+        self.assertEqual(result["state"], "INCOMPLETE")
+        self.assertEqual(result["error"], "No-op edit")
+
+    def test_out_of_scope_change_blocks_checks(self):
+        result = self.execute(lambda cwd: self.proposal(path="guard.py"))
+        self.assertEqual(result["state"], "INCOMPLETE")
+        self.assertEqual(result["error"], "Change outside assigned files")
+        self.assertEqual(result["checks"], [])
+
+    def test_changed_independent_check_is_rejected(self):
+        def mutate(cwd):
+            self.check.write_text("raise SystemExit(0)\n")
+            return self.proposal()
+        result = self.execute(mutate)
+        self.assertEqual(result["state"], "INCOMPLETE")
+        self.assertEqual(result["error"], "Independent check file changed")
+
+    def test_failed_candidate_check_is_not_verified(self):
+        result = self.execute(lambda cwd: self.proposal("VALUE = 2\n"))
+        self.assertEqual(result["state"], "INCOMPLETE")
+        self.assertEqual(result["checks"][0]["exit_code"], 1)
+
+    def test_unexpected_baseline_blocks_model_execution(self):
+        self.mission["baseline_exit_codes"] = [0, 1]
+        self.mission["checks"] *= 2
+        called = []
+        result = self.execute(lambda cwd: called.append(True))
+        self.assertEqual(result["state"], "INCOMPLETE")
+        self.assertFalse(called)
+        self.assertFalse(result["model_execution_observed"])
+
+    def test_direct_model_write_is_rejected_before_application(self):
+        def mutate(cwd):
+            (cwd / "value.py").write_bytes(b"VALUE = 1\n")
+            return self.proposal()
+        result = self.execute(mutate)
+        self.assertEqual(result["state"], "INCOMPLETE")
+        self.assertEqual(result["error"], "Model modified source before proposal validation")
+
+    def test_invalid_later_edit_does_not_apply_earlier_edit(self):
+        self.mission["allowed_paths"].append("guard.py")
+        proposal = self.proposal()
+        proposal["edits"].append({"path": "guard.py", "before": "not present", "after": "bad"})
+        result = self.execute(lambda cwd: proposal)
+        self.assertEqual(result["state"], "INCOMPLETE")
+        self.assertEqual((Path(result["workspace"]) / "value.py").read_bytes(), b"VALUE = 0\n")
+
+    def test_new_file_proposal_is_retained_with_content_digest(self):
+        self.mission["allowed_paths"].append("tests/new.py")
+        proposal = self.proposal()
+        proposal["edits"].append({"path": "tests/new.py", "before": "", "after": "# regression\n"})
+        result = self.execute(lambda cwd: proposal)
+        self.assertEqual(result["state"], "REPAIR_VERIFIED")
+        self.assertEqual({row["path"] for row in result["changed_files"]}, {"value.py", "tests/new.py"})
+
+    def test_duplicate_or_ambiguous_edits_are_rejected(self):
+        for proposal in (
+            {"summary": "fixture", "edits": [self.proposal()["edits"][0]] * 2},
+            {"summary": "fixture", "edits": [{"path": "value.py", "before": "absent", "after": "bad"}]},
+        ):
+            with self.subTest(proposal=proposal):
+                with self.assertRaises(agent.MissionError):
+                    agent.apply_proposal(self.repo, proposal, ["value.py"])
+        self.assertEqual((self.repo / "value.py").read_bytes(), b"VALUE = 0\n")
 
 
 if __name__ == "__main__":
