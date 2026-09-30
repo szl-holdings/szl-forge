@@ -441,6 +441,14 @@ authorization.
 
 ## Development verification
 
+`clinical-self-test` uses a fresh synthetic workspace and reports success only
+after that workspace has been removed. Its `disposable_state_removed=true`
+field is emitted after successful cleanup. Temporary Windows file locks receive
+bounded retries; a persistent permission error, another filesystem failure, or
+a remaining directory fails with `CLINICAL_SELF_TEST_CLEANUP_FAILED`. A passing
+self-test remains synthetic offline QA and grants no clinical-use or delivery
+authority.
+
 From the repository root with the runtime requirements installed:
 
     $env:PYTHONPATH = (Resolve-Path .\clinical-gateway\src).Path

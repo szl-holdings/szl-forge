@@ -7,6 +7,8 @@ from types import SimpleNamespace
 import unittest
 from unittest import mock
 
+import httpx
+
 import kernels_keyless_credentials as credentials
 
 
@@ -221,17 +223,42 @@ class KernelKeylessCredentialTests(unittest.TestCase):
                     api=api,
                 )
 
-    def test_access_errors_are_fixed_codes_without_token_material(self) -> None:
-        api = valid_api()
-        api.auth_check.side_effect = RuntimeError("private-response-" + MODEL)
-        with self.assertRaises(credentials.KeylessCredentialError) as caught:
-            credentials.acquire_pair(
-                environment=ENV,
-                supplier=mock.Mock(side_effect=[MODEL, KERNEL]),
-                api=api,
-            )
-        self.assertEqual(str(caught.exception), "TARGET_ACCESS_VALIDATION_FAILED")
-        self.assertNotIn(MODEL, str(caught.exception))
+    def test_model_and_kernel_access_errors_have_distinct_fixed_codes(self) -> None:
+        for target, method, code in (
+            ("model", "auth_check", "MODEL_WRITE_ACCESS_VALIDATION_FAILED"),
+            ("kernel", "list_repo_refs", "KERNEL_REFS_VALIDATION_FAILED"),
+        ):
+            for status in (401, 403, 404, None):
+                with self.subTest(target=target, status=status):
+                    api = valid_api()
+                    if status is None:
+                        error = RuntimeError("private-response-" + MODEL + KERNEL)
+                    else:
+                        request = httpx.Request(
+                            "GET", "https://huggingface.co/api/private",
+                            headers={"Authorization": "Bearer " + MODEL + KERNEL},
+                        )
+                        error = httpx.HTTPStatusError(
+                            "private-response-" + MODEL + KERNEL,
+                            request=request,
+                            response=httpx.Response(status, request=request),
+                        )
+                    getattr(api, method).side_effect = error
+                    with self.assertRaises(credentials.KeylessCredentialError) as caught:
+                        credentials.acquire_pair(
+                            environment=ENV,
+                            supplier=mock.Mock(side_effect=[MODEL, KERNEL]),
+                            api=api,
+                        )
+                    self.assertEqual(caught.exception.args, (code,))
+                    self.assertTrue(caught.exception.__suppress_context__)
+                    self.assertNotIn("private-response", repr(caught.exception))
+                    self.assertNotIn(MODEL, repr(caught.exception))
+                    self.assertNotIn(KERNEL, repr(caught.exception))
+                    if target == "model":
+                        api.list_repo_refs.assert_not_called()
+                    else:
+                        api.auth_check.assert_called_once()
 
     def test_authority_evidence_is_closed_and_contains_no_credential(self) -> None:
         evidence = credentials.authority_evidence(ENV)

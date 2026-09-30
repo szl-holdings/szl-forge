@@ -197,6 +197,9 @@ def acquire_pair(
         api = HfApi(endpoint="https://huggingface.co", token=False)
     try:
         api.auth_check(repo_id=TARGET, repo_type="model", token=model, write=True)
+    except Exception:
+        raise KeylessCredentialError("MODEL_WRITE_ACCESS_VALIDATION_FAILED") from None
+    try:
         refs = api.list_repo_refs(TARGET, repo_type="kernel", token=kernel)
         branches = {
             ref.name: ref.target_commit
@@ -214,6 +217,6 @@ def acquire_pair(
     except KeylessCredentialError:
         raise
     except Exception:
-        raise KeylessCredentialError("TARGET_ACCESS_VALIDATION_FAILED") from None
+        raise KeylessCredentialError("KERNEL_REFS_VALIDATION_FAILED") from None
     return KernelPublisherCredentials(model=model, kernel=kernel)
 
