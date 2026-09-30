@@ -241,6 +241,9 @@ def main() -> int:
     ap.add_argument("--margin-threshold", type=float, default=1.0, help="logit gap below which a token decision is flagged knife-edge")
     ap.add_argument("--allow-missing-template", action="store_true", help="tests only: inject a ChatML template if the tokenizer has none")
     ap.add_argument("--out", type=Path, default=None)
+    ap.add_argument("--coverage-only", action="store_true",
+                    help="preflight: load base + each adapter with --model-class, verify every checkpoint tensor landed, "
+                         "print one line per adapter and exit 0/4 — no generation, no receipt")
     a = ap.parse_args()
 
     root = a.root.resolve()
@@ -265,6 +268,37 @@ def main() -> int:
         acc_v = None
     if a.device.startswith("cuda") and not torch.cuda.is_available():
         raise SystemExit("FAIL-CLOSED: --device cuda but CUDA unavailable")
+
+    if a.coverage_only:
+        if not a.adapter:
+            raise SystemExit("--coverage-only needs at least one --adapter")
+        from safetensors import safe_open
+        from peft import PeftModel
+        cls = getattr(transformers, a.model_class)
+        dtype = {"bfloat16": torch.bfloat16, "float16": torch.float16, "float32": torch.float32}[a.dtype]
+        failures = 0
+        for adapter in a.adapter:
+            model = cls.from_pretrained(base, dtype=dtype, device_map=a.device)
+            model = PeftModel.from_pretrained(model, str(adapter), is_trainable=False)
+            with safe_open(str(adapter / "adapter_model.safetensors"), "pt") as f:
+                ckpt = list(f.keys())
+            live = {n.replace(".default.", ".") for n, _ in model.named_parameters() if "lora_" in n}
+            unapplied = [k for k in ckpt if k not in live]
+            layout = "language_model" if any(".language_model." in k for k in ckpt) else "text"
+            verdict = "APPLIED" if not unapplied and ckpt else "ADAPTER_NOT_APPLIED"
+            failures += verdict != "APPLIED"
+            print(f"[coverage] {adapter.name}: {verdict} {len(ckpt) - len(unapplied)}/{len(ckpt)} tensors "
+                  f"class={type(model.base_model.model).__name__} checkpoint_layout={layout} "
+                  f"transformers={transformers.__version__} peft={peft_v}")
+            del model
+        if failures:
+            print("[coverage] FAIL-CLOSED: at least one adapter does not land in this loader class under the installed "
+                  "transformers; a canonical run here would score the base model as that adapter. Fix the environment "
+                  "(the class the adapter was trained against is AutoModelForImageTextToText for language_model layouts) "
+                  "before any gate run.")
+            return 4
+        print("[coverage] OK: every adapter tensor landed")
+        return 0
 
     candidates = []
     targets = list(a.adapter) if a.adapter else [None]
