@@ -80,6 +80,18 @@ class BundleTests(unittest.TestCase):
         (self.root / "unrelated.txt").write_text("not exported")
         self.assertEqual(set(bundle.collect(self.root)), set(bundle.NAMES))
 
+    def test_hosted_link_is_explicit_and_outside_the_installer(self):
+        markdown = bundle.payload(self.files)
+        introduction, source = markdown.split("~~~~python\n", 1)
+        self.assertIn("https://szlholdings-szl-model-inference-lab.hf.space/#run-lab", introduction)
+        self.assertIn("separate hosted Khipu 1.5B demonstration", introduction)
+        self.assertIn("not this local Qwen3-4B lab", introduction)
+        self.assertIn("do not submit credentials or sensitive data", introduction)
+        self.assertIn("32 generated tokens", introduction)
+        self.assertIn("do not contact it or fall back to remote inference", introduction)
+        self.assertNotIn("https://szlholdings-szl-model-inference-lab.hf.space", source)
+        self.assertEqual(markdown.count("~~~~python\n"), 1)
+
     def test_missing_allowlisted_source_fails_closed(self):
         with self.assertRaises(FileNotFoundError):
             bundle.collect(self.root)

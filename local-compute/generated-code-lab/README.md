@@ -36,7 +36,25 @@ the task-specific Ollama process after checking the PID/listener. The model's
 default keep-alive is two minutes, after which idle GPU memory can be released.
 Other Ollama processes and their listeners are outside this lab's changes.
 
-## Use it
+## Use the existing hosted model now
+
+[Open the SZL Khipu model interface](https://szlholdings-szl-model-inference-lab.hf.space/#run-lab)
+and select **Run bounded inference** after entering a short prompt.
+
+This is a **separate hosted Khipu 1.5B demonstration**, not this local Qwen3-4B
+lab or a deployment of this source package. No API token is required; do not
+submit credentials or sensitive data. The public CPU service permits one request
+at a time and at most 32 generated tokens, with best-effort availability and no
+SLA. It has no tools, repository access or deployment authority.
+
+Opening that link is an explicit choice. This installer and the local commands
+do not contact the hosted service or fall back to remote inference. Its
+[live contract](https://szlholdings-szl-model-inference-lab.hf.space/.well-known/szl-inference-contract.json)
+and [build information](https://szlholdings-szl-model-inference-lab.hf.space/api/build-info)
+describe its own source/model identity and limits. Check them independently of
+this lab's local runtime qualification.
+
+## Use the local model
 
 Run these commands from PowerShell:
 
