@@ -14,8 +14,9 @@ remains a separate protected repository operation.
 
 The source checkout must be clean, have a `szl-holdings` GitHub origin, and
 match the mission's exact revision. Python 3.11+, Git, and an authenticated
-native Codex executable are required. Shell shims are rejected; on Windows,
-pass the native executable with `--codex-path` when necessary.
+native Codex executable are required. Shell shims are rejected. On Windows,
+`codex.exe` is resolved directly so an earlier npm `.CMD` wrapper cannot shadow
+it. An explicit native executable can still be selected with `--codex-path`.
 
 Provide a JSON object with schema `szl.frontier-agent-mission/v1`, `mode`
 (`research` or `build`), `objective`, absolute local `repository`, exact
@@ -27,6 +28,11 @@ tests. `allowed_paths` lists 1..12 unique explicit relative filenames;
 `baseline_exit_codes` gives one expected 0/1 result per check with at least one
 failure; `check_files` binds 1..12 absolute independent acceptance files and
 their SHA-256 values. Every expected baseline result must reproduce.
+
+Mission, evidence, and edit-proposal intake reject duplicate object keys at any
+depth, including escaped-equivalent keys, and non-finite numbers (`NaN`,
+infinities, and floating-point overflow). Valid JSON content is preserved;
+evidence digests remain bound to original file bytes, not reserialized JSON.
 
 Optional `source_paths` supplies at most twelve relative repository files as
 revision-verified source context, each capped at 128 KiB. This lets research
@@ -81,6 +87,13 @@ prompts, so supply only evidence appropriate for that account and protect the
 run directory. Token-like environment variables are removed from child
 environments; existing filesystem credentials are not an isolation boundary.
 User configuration is ignored to avoid inheriting custom MCP servers or hooks.
+On native Windows the launcher explicitly requests `windows.sandbox="elevated"`
+because ignoring user configuration also discards that setting. Use an already
+prepared native sandbox; no weaker or full-access fallback is selected when
+setup or enforced policy prevents execution. The model remains read-only in
+both mission modes. Sandbox configuration does not prove successful commands;
+model proposals and local executor checks are observed separately. See the
+official [Windows sandbox documentation](https://learn.chatgpt.com/docs/windows/windows-sandbox).
 CLI sandbox enforcement still depends on the local runtime. This wrapper is
 not a hostile-code sandbox, and operator check commands execute as the user.
 
