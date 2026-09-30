@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, Response
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from pydantic import BaseModel, ConfigDict, Field
@@ -19,6 +19,18 @@ from .probes import inspect_node, node_config
 from .pool_view import load_pool_snapshot, unavailable_pool
 from .safeio import strict_json
 from .corpus_view import load_report, unavailable_report
+
+# Vendored SZL KANCHAY v1.1.0 design system (static/szl/, byte-for-byte, digests in
+# its SOURCE.json). Explicit allowlist of URL path -> (file, media type): no request
+# value reaches the filesystem, there is no directory mount or listing, and every
+# other /szl/... path is the application's normal 404. No fonts: system stacks only.
+SZL_ASSETS = {
+    "/szl/szl-design-system.css": ("szl-design-system.css", "text/css; charset=utf-8"),
+    "/szl/szl-console.css": ("szl-console.css", "text/css; charset=utf-8"),
+}
+# Only 'self' is added to style-src for the two stylesheets; every other directive is unchanged.
+CONTENT_SECURITY_POLICY = ("default-src 'none'; style-src 'self' 'unsafe-inline'; "
+                           "form-action 'self'; frame-ancestors 'none'; base-uri 'none'")
 
 @dataclass(frozen=True)
 class Settings:
@@ -136,8 +148,22 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         response = await call_next(request)
         response.headers.update({"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff",
                                  "Referrer-Policy": "no-referrer",
-                                 "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'"})
+                                 "Content-Security-Policy": CONTENT_SECURITY_POLICY})
         return response
+
+    def static_asset(body: bytes, media_type: str):
+        def asset() -> Response:
+            return Response(body, media_type=media_type)
+        return asset
+
+    # Read-only design-system assets for the HTML pages, admitted exactly like them
+    # (same Basic dependency, host allowlist and headers). Browsers resend the Basic
+    # credentials to these same-origin stylesheet subresources.
+    szl_root = Path(__file__).parent / "static" / "szl"
+    for path, (name, media_type) in SZL_ASSETS.items():
+        app.add_api_route(path, static_asset((szl_root / name).read_bytes(), media_type),
+                          methods=["GET"], dependencies=[Depends(authorize)],
+                          include_in_schema=False, name=f"szl:{name}")
 
     def state() -> list[dict]:
         rows = catalog()

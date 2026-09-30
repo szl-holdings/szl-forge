@@ -33,6 +33,8 @@ SOURCE_FILES = (
     "src/szl_model_lab/corpus_view.py", "docs/CORPUS_VIEW.md",
     "src/szl_model_lab/app.py", "src/szl_model_lab/cli.py",
     "src/szl_model_lab/blueprints.py", "src/szl_model_lab/templates/index.html",
+    "src/szl_model_lab/static/szl/szl-design-system.css",
+    "src/szl_model_lab/static/szl/szl-console.css", "src/szl_model_lab/static/szl/SOURCE.json",
 )
 
 
