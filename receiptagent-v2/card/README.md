@@ -1,82 +1,73 @@
 ---
+license: apache-2.0
+library_name: peft
 base_model: Qwen/Qwen3.5-0.8B
 base_model_relation: adapter
-library_name: peft
-license: apache-2.0
 pipeline_tag: text-generation
 tags:
-- qwen3.5
-- peft
-- lora
-- unsloth
-- governed-ai
-- receipt-agent
+  - governed-ai
+  - szl-holdings
+  - doctrine-v11
+  - receipt
+  - hub
 ---
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/main/receiptagent-v2/card/holo-banner.svg" alt="SZL ReceiptAgent Qwen3.5 0.8B v2 — holographic house banner" width="100%"/>
-</p>
+<p align="center"><img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/main/receiptagent-v2/card/holo-banner.svg" alt="ReceiptAgent v2 proposal-only adapter with historical owner-signed contract evidence" width="100%"/></p>
 
-<h1 align="center">R E C E I P T A G E N T · 0 . 8 B</h1>
+# szl-receiptagent-qwen35-0.8b-v2
 
-<p align="center"><em>A receipt agent you can retrain between coffee and lunch.</em></p>
+**Proposal-only ReceiptAgent adapter with historical signed contract evidence and separate derived-merge limits.**
 
-<p align="center">
-  <img alt="Base: Qwen3.5-0.8B" src="https://img.shields.io/badge/base-Qwen3.5--0.8B-334155?style=flat-square"/>
-  <img alt="Downloads" src="https://img.shields.io/huggingface/dt/SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2?style=flat-square&color=6ee7b7&label=downloads"/>
-  <img alt="Artifact: PEFT LoRA adapter" src="https://img.shields.io/badge/artifact-PEFT%20LoRA%20adapter-818cf8?style=flat-square"/>
-  <img alt="License: Apache-2.0" src="https://img.shields.io/badge/License-Apache--2.0-7e8aa3?style=flat-square"/>
-  <img alt="JSON contract drafts 5/5" src="https://img.shields.io/badge/drafts-5%2F5-16a34a?style=flat-square"/>
-  <img alt="Adversarial refusals 6/6" src="https://img.shields.io/badge/adversarial%20refusals-6%2F6-16a34a?style=flat-square"/>
-  <img alt="Evidence: Ed25519 owner-signed chain" src="https://img.shields.io/badge/evidence-Ed25519%20signed%20chain-3af4c8?style=flat-square"/>
-</p>
+Retained owner-run evidence reports 5/5 JSON-contract drafts and 6/6 refusal-prefix checks on committed held-out files. Those contract counts are bounded acceptance results, not semantic truth, factual accuracy, broad capability, or autonomy qualification.
 
-SZL ReceiptAgent Qwen3.5 0.8B v2 is a small, proposal-only adapter for drafting
-structured governance receipts and refusing requests that would fabricate
-evidence, approval, execution, or measured values.
+Review snapshot: **2026-09-30 UTC**. This is a documentation review. No new model evaluation, weight download, inference, signature verification, provider publication, runtime check, or release/client qualification was performed.
 
-<!-- SZL-ATELIER-CUT:v1:START -->
-## The cut
+## Artifact and source identity
 
-Everyone fine-tunes 8B because it looks serious. We fine-tune 0.8B because the receipt loop should be cheap enough to run every night.
+The actual card-only publisher input for this mirror is
+`receiptagent-v2/card/README.md`. The separate training/source card referenced
+below owns its historical release evidence. This edit updates documentation
+only; it does not republish the adapter or salvaged merge.
 
-A receipt agent you can retrain between coffee and lunch, with the same doctrine as the 1.5B.
 
-### Silhouette → leave → SZL
+- Reviewed [model-card snapshot](https://huggingface.co/SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2/tree/9f71de39861898e752602a2332ef7ca1e0df87a7): `9f71de39861898e752602a2332ef7ca1e0df87a7`.
+- [Canonical source-card/software snapshot](https://github.com/szl-holdings/szl-forge/blob/5b3dfdf9beafe0d6d1e6043ca005ec4b17c45204/frontier/qwen35-receiptagent-v2/MODEL_CARD.md): `szl-holdings/szl-forge@5b3dfdf9beafe0d6d1e6043ca005ec4b17c45204`. This is a source reference, not an attestation of Hub package parity or an approved runtime release.
+- Root PEFT LoRA adapter and a separate salvaged-merge/ derived runtime form.
+- The canonical training record uses Unsloth FastVisionModel; this card does not provide a qualified loader or base/client revision.
 
-| Leader | Take, then tweak |
-|---|---|
-| Anthropic | Same constitution, smaller body. |
-| NVIDIA | Small NIM-shaped thing, without NIM. |
-| Unsloth | This is the Unsloth poster: FastLanguageModel, Qwen3.5-0.8B, PEFT. |
+## Retained evidence and disposition
 
-No equivalent public combination was found among the leaders surveyed above (a snapshot, not an ecosystem-wide novelty claim).
+The retained owner-run held-out record reports **5/5 JSON-contract drafts** and **6/6 adversarial refusal-prefix checks**, with signed receipts. Contract and prefix success do not establish semantic correctness or factual accuracy.
 
-## Intended use
+[publication.json](https://huggingface.co/SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2/blob/9f71de39861898e752602a2332ef7ca1e0df87a7/publication.json) records verification on **2026-07-29** for release `7a0d9efdebe92ea3b5b26b97cc722c6b5afde621`: 26 intended files, `publicationEligible=true`, `autonomyEligible=false`. The source merge is `1973b86c3db066fd065ec974594aabfe0ac32099`. This is historical bounded publication evidence, not a claim about every later file or the current card head. Signatures, full weight readback and inference were not rerun here.
 
-Nightly receipted Unsloth loop.
+Evidence files at the reviewed immutable model revision:
 
-## Limitations
+- [publication.json](https://huggingface.co/SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2/blob/9f71de39861898e752602a2332ef7ca1e0df87a7/publication.json)
+- [receipts/eval_receipt.signed.json](https://huggingface.co/SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2/blob/9f71de39861898e752602a2332ef7ca1e0df87a7/receipts/eval_receipt.signed.json)
+- [reports/eval-report.json](https://huggingface.co/SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2/blob/9f71de39861898e752602a2332ef7ca1e0df87a7/reports/eval-report.json)
 
-- Adapter only. Load on the disclosed base.
-- No signed eval in this atelier.
+## Intended use and limits
 
-Canonical GitHub: [`szl-holdings/szl-forge`](https://github.com/szl-holdings/szl-forge/blob/main/frontier/qwen35-receiptagent-v2/)
-<!-- SZL-ATELIER-CUT:v1:END -->
+Research on proposal-only structured drafting, with external validation, human approval, execution and authoritative receipt minting.
 
-## Intended use
+- The retained publication verified 26 intended files at historical release 7a0d9efdebe92ea3b5b26b97cc722c6b5afde621 on 2026-07-29; it does not attest every later file or current head.
+- Historical publicationEligible=true remains a bounded release record; autonomyEligible=false remains controlling. This review grants no new publication eligibility.
+- Schema and refusal-prefix acceptance do not establish semantic correctness or factual accuracy.
+- The separate salvaged-merge/ runtime form has separately scoped evidence; adapter results do not automatically qualify it.
+- Signed receipts and their reported byte readback were not independently reverified in this card review.
 
-Use this adapter behind a validating controller that:
+The source, model mirror, historical release, derived artifact, and served runtime are separate identities. A public file, a card edit, a matching aggregate result, or a recorded signature is not a new deployment or eligibility decision. Follow each retained record to its named revision and scope.
 
-1. validates every draft against the published JSON schema;
-2. requires policy and human approval outside the model;
-3. executes actions outside the weights; and
-4. mints a cryptographic receipt only after approved execution.
+## Retained detailed owner-run records
 
-The adapter is not an autonomous agent, authorizer, executor, factual oracle,
-or substitute for source retrieval.
+The following fields preserve the earlier source card's exact historical
+training, qualification and runtime record. They describe their named adapter
+and July 29, 2026 release, rather than a new measurement or qualification of the
+reviewed September 30 card head. Source/card, adapter, salvaged merge and served
+runtime remain separate identities.
 
-## Exact lineage
+### Exact lineage
 
 - Canonical base: `Qwen/Qwen3.5-0.8B`
 - Base revision: `2fc06364715b967f1860aea9cf38778875588b17`
@@ -85,7 +76,7 @@ or substitute for source retrieval.
 - Runtime: Unsloth `FastVisionModel`
 - License: Apache-2.0
 
-## Training
+### Historical training report
 
 - Hardware: NVIDIA GeForce RTX 5050 Laptop GPU
 - Optimizer steps: 64
@@ -105,24 +96,25 @@ Only the repository-owned ReceiptAgent curriculum was admitted. The A11oy
 Brain corpus was excluded from gradients because row-level rights and
 provenance admission have not passed.
 
-## Held-out acceptance
+### Historical held-out acceptance
 
-The exact saved adapter was reloaded on the same GPU and evaluated against
-committed, digest-pinned held-out files:
+The retained owner-run report describes reloading the exact saved adapter on
+the same GPU against committed, digest-pinned held-out files:
 
 | Gate | Result |
 |---|---:|
 | JSON contract-valid drafts | 5 / 5 |
 | Adversarial refusals | 6 / 6 |
 
-These are raw **MEASURED** acceptance counts for a small preregistered gate.
+The original owner-run record labels these acceptance counts **MEASURED**
+for a small preregistered gate; this documentation review did not remeasure them.
 They are not a broad benchmark, do not establish factual accuracy, and do not
 make the adapter autonomy-eligible.
 
 Evaluation report SHA-256:
 `0852fe55716da7b5fddf2340a00dd632c34d551096c685bd84923eb164f2a420`.
 
-## Evidence boundary
+### Historical release evidence boundary
 
 The public, proposal-only release is available at
 [`SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2`](https://huggingface.co/SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2).
@@ -138,8 +130,9 @@ The release includes:
 - an owner-signed post-publication receipt after the Hub bytes were
   independently fetched and hashed.
 
-All 26 intended files (63,499,318 bytes) were fetched from the immutable Hub
-revision and matched their source or generated-artifact digest. The Hub-managed
+The retained publication report states that all 26 intended files
+(63,499,318 bytes) were fetched from the immutable Hub revision and matched
+their source or generated-artifact digest; this review did not repeat that readback. The Hub-managed
 `.gitattributes` file is accounted for separately. The adapter weights matched
 SHA-256
 `885fc29fcb4cf55c280dc085fdb0a40f40d6b946fee400dd5e4ed3459fe6334f`.
@@ -158,13 +151,15 @@ to:
 
 The publication receipt canonical SHA-256 is
 `51444e7a8d6a6556ec848641620fbbea6b47e8363254aaf50d4ccdd38d6210cc`.
-The evidence chain is valid and the bounded publication gate has passed.
-Autonomy eligibility remains false.
+The retained July 29, 2026 release record reports a valid owner-key evidence
+chain and a passed bounded publication gate for that historical release.
+Signatures were not independently verified here. Autonomy eligibility remains
+false; this card edit grants no new release, publication or deployment eligibility.
 
-## Immutable Hub runtime readback
+### Historical immutable Hub runtime readback
 
-The adapter was loaded from the exact Hub revision above and executed on an
-NVIDIA GeForce RTX 5050 Laptop GPU:
+The original owner-run runtime record reports loading the adapter from the
+exact historical Hub revision above on an NVIDIA GeForce RTX 5050 Laptop GPU:
 
 - 28 generated tokens in 16.274 seconds;
 - peak reserved GPU memory: 1,004,535,808 bytes;
@@ -172,10 +167,10 @@ NVIDIA GeForce RTX 5050 Laptop GPU:
   `909cfdd105fc78b9d665ba5dffd12e0a0feff554ba9d1c42415aeca29e200396`;
 - required refusal prefix observed: yes.
 
-This is one immutable-revision GPU inference receipt. It is not a broad
+This is one retained immutable-revision GPU inference receipt, not a rerun here. It is not a broad
 quality, safety, factual-accuracy, autonomy, or third-party benchmark claim.
 
-## Limitations
+### Limitations
 
 - Narrow synthetic curriculum.
 - Small held-out set.
@@ -184,3 +179,9 @@ quality, safety, factual-accuracy, autonomy, or third-party benchmark claim.
 - No ground-truth retrieval or autonomous execution.
 - English-dominant evaluation.
 - The validating controller remains mandatory.
+
+## License
+
+Apache-2.0 is declared in repository metadata. A [LICENSE file](https://huggingface.co/SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2/blob/9f71de39861898e752602a2332ef7ca1e0df87a7/LICENSE) is listed at the reviewed model revision; this review does not determine upstream or downstream license coverage.
+
+Lambda uniqueness remains Conjecture 1 (open). Historical receipts and failed outcomes are retained; this review does not upgrade them.
