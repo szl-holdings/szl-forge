@@ -40,7 +40,7 @@ def test_live_source_card_preserves_negative_evidence() -> None:
     assert "publication_eligible: true" not in card
 
 
-def test_chaski_5050_preserves_quarantine_and_no_eval_boundary() -> None:
+def test_chaski_5050_preserves_quarantine_and_dated_evidence() -> None:
     assets = publisher.load_assets("chaski-5050")
     evidence = publisher.validate_assets(assets, "chaski-5050")
     assert set(evidence) == {"README.md", "holo-banner.svg"}
@@ -48,8 +48,9 @@ def test_chaski_5050_preserves_quarantine_and_no_eval_boundary() -> None:
     assert "> **QUARANTINE.** Research residue." in card
     assert "publication_eligible: false" in card
     assert "autonomy_eligible: false" in card
-    assert "evals: none-this-run" in card
-    assert "**Status: none-this-run.** No JSON/refusal gate ran. Not 5/5. Not 6/6." in card
+    assert "evals: HISTORICAL_TRAINING_NONE_SEPARATE_GATE_FAIL" in card
+    assert "`evals=none-this-run`: no JSON/refusal gate ran in that training step." in card
+    assert "**1/5 held-out and overall FAIL**" in card
     assert "620b3488fac2ebc6518090424de5b3c6a182293cf52dfd5bd9f886f54aef0df5" in card
     assert "Nobody else ships this combination" not in card
     assert "one-of-one" not in card.casefold()
@@ -60,6 +61,7 @@ def test_chaski_r2_requires_search_tag_in_frontmatter() -> None:
     publisher.validate_assets(assets, "chaski-r2")
     # The existing prose limitation is insufficient for Hub search metadata.
     assets["README.md"] = assets["README.md"].replace(b"- proposal-only\n", b"", 1)
+    assets["README.md"] += b"\n- proposal-only\n"
     assert b"- proposal-only\n" in assets["README.md"]
     with pytest.raises(publisher.PublicationError, match="search tags missing"):
         publisher.validate_assets(assets, "chaski-r2")
@@ -74,7 +76,7 @@ def test_r2_source_binding_preserves_research_qualification() -> None:
         source_assets=publisher.validate_assets(assets, profile),
     ))
     assert binding["target"]["repo_id"] == "SZLHOLDINGS/chaski-r2"
-    assert binding["qualification"]["evaluation_state"] == "NONE_THIS_RUN"
+    assert binding["qualification"]["evaluation_state"] == "BLOCKED_LATER_GATE_FAIL"
     assert binding["qualification"]["publication_eligible"] is False
     assert binding["qualification"]["autonomy_eligible"] is False
     assert all(value is False for value in binding["authority"].values())
@@ -148,8 +150,8 @@ def test_source_binding_is_deterministic_exact_and_non_authoritative() -> None:
     assert payload["qualification"] == {
         "publication_eligible": False,
         "autonomy_eligible": False,
-        "evaluation_state": "NONE_THIS_RUN",
-        "release_blocker": "no_json_or_refusal_gate",
+        "evaluation_state": "BLOCKED_LATER_GATE_FAIL",
+        "release_blocker": "historical_gate=1/5;overall=FAIL;heldout.refusal_no_regression=false",
         "release_blocker_preserved": True,
     }
     assert all(value is False for value in payload["authority"].values())
@@ -210,7 +212,7 @@ def test_5050_dry_run_targets_only_5050_model(tmp_path: Path) -> None:
     assert payload["target"]["repo_id"] == "SZLHOLDINGS/chaski-5050"
     assert payload["qualification"]["publication_eligible"] is False
     assert payload["qualification"]["autonomy_eligible"] is False
-    assert payload["qualification"]["evaluation_state"] == "NONE_THIS_RUN"
+    assert payload["qualification"]["evaluation_state"] == "BLOCKED_LATER_GATE_FAIL"
 
 
 def test_rate_limit_retry_is_bounded_and_honors_retry_after() -> None:
@@ -256,3 +258,24 @@ def test_invalid_source_revision_fails_closed(tmp_path: Path) -> None:
                 str(tmp_path / "report.json"),
             ]
         )
+
+
+@pytest.mark.parametrize(
+    ("profile", "required_scope"),
+    [
+        ("chaski-5050", "`evals=none-this-run`: no JSON/refusal gate ran in that training step."),
+        ("chaski-5050", "**1/5 held-out and overall FAIL**"),
+        ("chaski-r2", "The training step itself reported no evaluation"),
+        ("chaski-r2", "**1/5 held-out; overall FAIL**"),
+        ("chaski-r2", "5/5 draft contracts; 6/6 refusal prefixes"),
+        ("chaski-r2", "does not erase the earlier gate **FAIL**"),
+    ],
+)
+def test_dated_evidence_scope_cannot_be_erased(profile: str, required_scope: str) -> None:
+    assets = publisher.load_assets(profile)
+    publisher.validate_assets(assets, profile)
+    assets["README.md"] = assets["README.md"].replace(
+        required_scope.encode("utf-8"), b"SCOPE_REMOVED", 1
+    )
+    with pytest.raises(publisher.PublicationError, match="required model-card boundary missing"):
+        publisher.validate_assets(assets, profile)

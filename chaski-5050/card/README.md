@@ -24,7 +24,7 @@ szl:
   jobs: local-5050
   job_id: local-5050
   weights: AVAILABLE
-  evals: none-this-run
+  evals: HISTORICAL_TRAINING_NONE_SEPARATE_GATE_FAIL
   publication_eligible: false
   autonomy_eligible: false
   never_overwrite: SZLHOLDINGS/chaski
@@ -34,106 +34,81 @@ szl:
   adapter_sha256: 620b3488fac2ebc6518090424de5b3c6a182293cf52dfd5bd9f886f54aef0df5
 ---
 
-> **QUARANTINE.** Research residue. Strip owner-machine absolute paths.
-> Not flagship. Not a production checkpoint.
+# Chaski-5050
 
-<p align="center">
-  <img src="holo-banner.svg" alt="Chaski-5050 — holographic 50/50 banner" width="100%"/>
-</p>
+> **QUARANTINE.** Research residue. Root adapter metadata contains a
+> nonportable owner-local base path. Runtime loading has not been verified.
 
-<h1 align="center">C H A S K I · 5 0 5 0</h1>
+This bf16 LoRA experiment is separate from `SZLHOLDINGS/chaski` and
+Chaski-R2. Publication and autonomy eligibility remain **false**.
+Lab load is forbidden. The card does not authorize artifact changes or
+model promotion.
 
-<p align="center"><em>Curriculum as identity. The filename is the experiment.</em></p>
+Card and metadata review snapshot: [8c9d4782b76e55377e00fba249c6938000dca423](https://huggingface.co/SZLHOLDINGS/chaski-5050/tree/8c9d4782b76e55377e00fba249c6938000dca423).
+Small source and receipt files were read; no model weights were downloaded,
+no inference or tensor comparison was performed, and no current artifact
+was qualified.
 
-<p align="center">
-  <img alt="Base: Qwen3.5-0.8B" src="https://img.shields.io/badge/base-Qwen3.5--0.8B-334155?style=flat-square"/>
-  <img alt="Downloads" src="https://img.shields.io/huggingface/dt/SZLHOLDINGS/chaski-5050?style=flat-square&color=e879a9&label=downloads"/>
-  <img alt="Artifact: bf16 LoRA r=16 a=16" src="https://img.shields.io/badge/artifact-bf16%20LoRA%20r16%20a16-22d3ee?style=flat-square"/>
-  <img alt="QUARANTINE — research residue" src="https://img.shields.io/badge/QUARANTINE-research%20residue-dc2626?style=flat-square"/>
-  <img alt="Evals: none this run" src="https://img.shields.io/badge/evals-none%20this%20run-b45309?style=flat-square"/>
-  <a href="https://huggingface.co/SZLHOLDINGS/chaski"><img alt="Lineage: never overwrites chaski" src="https://img.shields.io/badge/lineage-never%20overwrites%20chaski-fda4af?style=flat-square"/></a>
-</p>
+## Distributed forms
 
-<p align="center">
-  <code>KANCHAY</code> · Doctrine v11 · Lean <code>749/14/163</code> · Λ = Conjecture 1 (advisory) · <a href="https://a-11-oy.com">a-11-oy.com</a>
-</p>
+| Form | Observed metadata | Qualification limit |
+|---|---|---|
+| Root LoRA adapter | `adapter_model.safetensors` and `adapter_config.json`; historical card reports 25,587,104 bytes and raw-file SHA-256 `620b3488fac2ebc6518090424de5b3c6a182293cf52dfd5bd9f886f54aef0df5` | The root config embeds an owner-local absolute base path and names `Qwen3_5ForConditionalGeneration` in `auto_mapping`. Loading is unverified. |
+| `adapter-unsloth/` | Additional adapter and processor metadata are listed | Lineage and evaluation applicability were not independently established here; this is not interchangeable with the root adapter by assumption. |
+| Root merged checkpoint | `model.safetensors`, `config.json`, and `merge_receipt.json` are listed | A separate runtime form; file presence or a merge receipt does not establish behavioral qualification. |
 
-Adapters are present in the target model repository. Evaluation state: none-this-run; no evaluation score is claimed by this card. This card-only release updates documentation and an exact-source binding; it does not modify model artifacts or provider settings.
+The [2026-09-14 merge repair record](https://huggingface.co/SZLHOLDINGS/chaski-5050/blob/8c9d4782b76e55377e00fba249c6938000dca423/merge_receipt.json)
+reports replacing an earlier base-copy merge, touching 96/96 modules with
+maximum weight delta `0.0012716073542833328`. This owner-reported repair
+does not establish the quality, loading, or exact current identity of the
+merged checkpoint.
 
-Owner-GPU recut on an RTX 5050 Laptop (bf16 LoRA, not QLoRA). Original SZL cut of disclosed Apache [`Qwen/Qwen3.5-0.8B`](https://huggingface.co/Qwen/Qwen3.5-0.8B). Not a republish of Qwen tensors. Not an Unsloth-default card. CUTTING.
+## Dated training and evaluation
 
-<!-- SZL-ATELIER-CUT:v1:START -->
-## The cut
+The [2026-08-28 training receipt](https://huggingface.co/SZLHOLDINGS/chaski-5050/blob/8c9d4782b76e55377e00fba249c6938000dca423/training_receipt.json)
+records `evals=none-this-run`: no JSON/refusal gate ran in that training step.
+Its train loss **2.228136855544466** and runtime **883.2224 seconds** are
+training measurements, not held-out evaluation scores.
 
-Mix-ratio is usually a blog footnote. We named the model after the mix. 50/50 is the cut.
+A [separate 2026-09-15 canonical gate receipt](https://github.com/szl-holdings/szl-forge/blob/6f4ac90ff503265cec9c0436587f086e52d6124e/frontier/evaluation/gate_runs/chaski-5050_63ea80915ccb_20260915T041028Z_receipt.json)
+at historical Hub revision `63ea80915ccb663b4aa589cbf2ce52a1dec574fe`
+reports **1/5 held-out and overall FAIL**, with
+`heldout.refusal_no_regression=false`. Its separate refusal command passed;
+that does not change the overall failure. Production and publication
+authorization are **false**. This receipt is a distinct owner-run suite;
+its applicability to the current distributed forms was not independently
+established in this review. No 5/5 or 6/6 qualification is claimed.
 
-Curriculum as identity. The filename is the experiment.
+## Historical recipe
 
-### Silhouette → leave → SZL
+The training receipt describes an owner-local RTX 5050 Laptop run, rather
+than an HF Job: bf16 LoRA r=16, α=16, seed 11, three epochs, batch size 1,
+accumulation 4, maximum sequence length 2048, learning rate 2e-4, and
+`adamw_8bit`. The dataset is `SZLHOLDINGS/szl-1-doctrine-sft`, 41 rows,
+JSONL SHA-256 `ddc5594bfb1c78449ba40a263f5ac41d21c896c3c7ed7346341c7c080611a243`.
+The recorded stack is Unsloth 2026.7.2, Transformers 5.5.0, and Torch
+2.10.0+cu128. `copied_live_chaski_weights=false` is the receipt's declaration.
+These records are preserved; this card review reran none of them.
 
-| Leader | Take, then tweak |
-|---|---|
-| Anthropic | Balanced helpful/harmless mix, as a named checkpoint. |
-| NVIDIA | Recipe variant, published. |
-| Unsloth | LoRA on Qwen3.5-0.8B, cutting tag. |
+## Research loading boundary
 
-The differentiator is inspectability: the mix is named, the adapter digest is recorded, the evaluation gap stays visible, and the publication controller cannot promote the model.
+The former generic `AutoModelForCausalLM` example was not validated against
+the root adapter's multimodal wrapper metadata or the coexisting merged
+weights. Treat this repository as research residue rather than a runnable
+quickstart. Before loading, a source owner must select a particular form,
+verify its compatible wrapper and immutable base revision, and resolve the
+nonportable path under a separately reviewed artifact change. A card edit
+does not sanitize the configuration or qualify a replacement loader.
 
-## Intended use
+[A11OY-MINI](https://huggingface.co/SZLHOLDINGS/A11OY-MINI) has its own
+artifact-specific legacy and R2 evidence. It inherits no training score,
+gate result, or qualification from this card.
 
-Ablation sibling of chaski.
+Apache-2.0 is declared in metadata. No standalone `LICENSE` is listed at
+the reviewed revision; artifact license coverage was not independently
+verified. A license addition requires source-owner review of that coverage.
 
-## Limitations
-
-- proposal-only and research-only
-- No signed held-out evaluation receipt for this 5050 adapter is present in this source tree.
-- Publishing this card is a documentation update, not model promotion or autonomy approval.
-
-Canonical GitHub: [`chaski/README_5050.md`](https://github.com/szl-holdings/szl-forge/blob/main/chaski/README_5050.md)
-<!-- SZL-ATELIER-CUT:v1:END -->
-
-## Specification
-
-| | |
-|---|---|
-| **Artifact** | `adapter_model.safetensors` 25,587,104 bytes **AVAILABLE** (sha256 `620b3488fac2ebc6518090424de5b3c6a182293cf52dfd5bd9f886f54aef0df5`) |
-| **Job** | `local-5050` (owner metal, **not** an HF Job) |
-| **Does NOT overwrite** | [`SZLHOLDINGS/chaski`](https://huggingface.co/SZLHOLDINGS/chaski) |
-| **Dataset** | [`SZLHOLDINGS/szl-1-doctrine-sft`](https://huggingface.co/datasets/SZLHOLDINGS/szl-1-doctrine-sft) · 41 rows · jsonl sha256 `ddc5594b…0611a243` |
-| **Publication / autonomy** | false / false |
-| **Card publication** | Card, banner, and source binding only; weights, adapter, configs, evals, visibility, hardware, collection, and runtime state unchanged |
-| **License** | Apache-2.0 |
-
-## Evaluation
-
-**Status: none-this-run.** No JSON/refusal gate ran. Not 5/5. Not 6/6. Do not load this ID into the Khipu lab.
-
-`train_loss` MEASURED `2.228136855544466` is a **train metric**, not an eval (method: Unsloth trainer log, N=41 rows, 3 epochs, 33 steps, `train_runtime` 883.2224s, 2026-08-28 17:56 UTC). File: `training_receipt.json`.
-
-## Training (MEASURED this run)
-
-- Recipe: `train_chaski_bf16_5050.py` · Unsloth 2026.7.2 · transformers 5.5.0 · torch 2.10.0+cu128
-- GPU: NVIDIA GeForce RTX 5050 Laptop, 7.96 GB
-- LoRA r=16 α=16, bf16, batch 1, ga 4, lr 2e-4, adamw_8bit, seed 11, max_seq 2048
-- `copied_live_chaski_weights: false`
-
-## What this is NOT
-
-- Not live Chaski
-- Not a Qwen rehost
-- Not a GGUF of this adapter. Mini GGUFs are LIVE on [`A11OY-MINI`](https://huggingface.co/SZLHOLDINGS/A11OY-MINI) (evals none-this-run; they do not inherit this card)
-- Not production. Lab load forbidden.
-
-## Load
-
-```python
-from peft import PeftModel
-from transformers import AutoModelForCausalLM, AutoTokenizer
-
-base_id = "Qwen/Qwen3.5-0.8B"
-tok = AutoTokenizer.from_pretrained(base_id)
-base = AutoModelForCausalLM.from_pretrained(base_id)
-model = PeftModel.from_pretrained(base, "SZLHOLDINGS/chaski-5050")
-```
-
-Doctrine v11 LOCKED. Λ = Conjecture 1 (advisory, never a theorem). Owner: Stephen Lutar / SZL Holdings.
+Canonical card authoring source: [chaski-5050/card/README.md](https://github.com/szl-holdings/szl-forge/blob/6f4ac90ff503265cec9c0436587f086e52d6124e/chaski-5050/card/README.md).
+The older `chaski/README_5050.md` reference is a separate recipe document,
+not the card file selected by the canonical card publisher.
+Doctrine v11 LOCKED 749/14/163. Λ = Conjecture 1, advisory, never a theorem.

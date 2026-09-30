@@ -13,42 +13,45 @@ tags:
 - szl-holdings
 ---
 
-<p align="center">
-  <img src="holo-banner.svg" alt="BrainNavigator-R2 — holographic starfield banner" width="100%"/>
-</p>
+> **SEPARATE RESEARCH ADAPTER · MEASURED NAMED-N RECORD · LATER GATE FAIL · NOT PROMOTABLE · NOT AUTONOMOUS**
 
-<h1 align="center">B R A I N N A V I G A T O R &nbsp;R2</h1>
+# BrainNavigator-R2
 
-<p align="center"><em>575 public handles on the route. 9,464 private nodes never touched.</em></p>
+## What this is
 
-<p align="center">
-  <img alt="Base: Qwen3.5-0.8B" src="https://img.shields.io/badge/base-Qwen3.5--0.8B-334155?style=flat-square"/>
-  <img alt="Downloads" src="https://img.shields.io/huggingface/dt/SZLHOLDINGS/brain-navigator-r2?style=flat-square&color=a78bfa&label=downloads"/>
-  <img alt="Recipe: bf16 LoRA r16 a32" src="https://img.shields.io/badge/recipe-bf16%20LoRA%20r16%20%CE%B132-6366f1?style=flat-square"/>
-  <img alt="Private graph in gradients: 0 of 9464" src="https://img.shields.io/badge/private%20graph%20in%20gradients-0%20of%209464-22d3ee?style=flat-square"/>
-  <img alt="Publication: false until MEASURED generate" src="https://img.shields.io/badge/publication-false%20until%20MEASURED%20generate-b45309?style=flat-square"/>
-  <img alt="License: Apache-2.0" src="https://img.shields.io/badge/License-Apache--2.0-7e8aa3?style=flat-square"/>
-</p>
+A research LoRA adapter, with a separate derived merged checkpoint also distributed, based on `Qwen/Qwen3.5-0.8B`. The [training_receipt.json](https://huggingface.co/SZLHOLDINGS/brain-navigator-r2/blob/ad510c4b05429acb862b216718f098ace6d05af3/training_receipt.json) records bf16 LoRA with r=16 and alpha=32, a synthetic NAVIGATE/ABSTAIN curriculum over **575 public handles**, and **0 raw private-graph nodes admitted to gradients**. It is not a model of the private 9,464-node graph and confers no private-graph access or content resolution in weights.
 
-Separate 0.8B LoRA SKU. **Does not overwrite**
-[`SZLHOLDINGS/SZL-Khipu-1.5B-BrainNavigator`](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B-BrainNavigator)
-or [`SZLHOLDINGS/SZL-Khipu-1.5B`](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B).
+## Evidence and artifact identity
 
-| | |
+Card evidence reviewed on 2026-09-30 UTC at Hub revision [`7fe3872fcb78ec8f5cc2f0c7464538b50b34e4b2`](https://huggingface.co/SZLHOLDINGS/brain-navigator-r2/tree/7fe3872fcb78ec8f5cc2f0c7464538b50b34e4b2). The historical artifact/evaluation snapshot below is `ad510c4b05429acb862b216718f098ace6d05af3`. The [eval_report.json](https://huggingface.co/SZLHOLDINGS/brain-navigator-r2/blob/ad510c4b05429acb862b216718f098ace6d05af3/eval_report.json) records `maturity=MEASURED_RESEARCH_ONLY` and `publication_eligible=false`.
+
+| Owner-run named-N generate measure | Receipt-reported result |
 |---|---|
-| Base | `Qwen/Qwen3.5-0.8B` Apache-2.0 |
-| Quant | **bf16 LoRA** r=16 α=32. QLoRA forbidden on Qwen3.5. |
-| GPU | RTX 5050 Laptop 8GB **Blackwell** |
-| Curriculum | synthetic NAVIGATE/ABSTAIN over **575 public handles** |
-| Private graph | 9464 nodes admitted to gradients = **0** |
-| publication_eligible | **false** until MEASURED generate |
-| Λ | Conjecture 1 — never a theorem |
+| Retrieval hit | 5/5 |
+| Abstention | 6/6 |
+| Parse failures | 0 |
+| Hallucinated citations | 0 |
 
-Train loss is not eval. Named-N generate lives in `eval_report.json`.
+These values are from the `generate` section of [eval_report.json](https://huggingface.co/SZLHOLDINGS/brain-navigator-r2/blob/ad510c4b05429acb862b216718f098ace6d05af3/eval_report.json), computed on 2026-08-29 on a local LoRA. Its separate `software` section concerns lexical retrieval over the public projection. Neither section is a public leaderboard or an independent third-party benchmark. The generate receipt does not identify an exact public adapter-file SHA-256 or a fully specified runtime build.
 
----
+The separate [post-publication gate receipt](https://github.com/szl-holdings/szl-forge/blob/a6b58f623185820eddfb0b279d21b7d81b87137c/frontier/evaluation/gate_runs/brain-navigator-r2_ad510c4b0542_20260915T040842Z_receipt.json) names Hub revision `ad510c4b05429acb862b216718f098ace6d05af3` and reports **2/5** on the canonical held-out suite in `transformers-cpu` mode, with overall **FAIL**, `heldout_passed=false`, `productionAuthorization=false`, and `publicationAuthorization=false`. This is a different suite from the earlier named-N record; its results cannot be exchanged or combined with those earlier scores. It also records `refusalPassed=false` and a refusal regression: rate 0.2 against baseline 0.4. The linked receipt retains the execution warnings; earlier execution failures remain in the [canonical gate archive](https://github.com/szl-holdings/szl-forge/tree/a6b58f623185820eddfb0b279d21b7d81b87137c/frontier/evaluation/gate_runs).
 
-<p align="center">
-  Software retrieval hologram: <a href="https://huggingface.co/spaces/SZLHOLDINGS/second-brain">SZLHOLDINGS/second-brain</a><br/>
-  Hub: <a href="https://huggingface.co/SZLHOLDINGS/brain-navigator-r2">SZLHOLDINGS/brain-navigator-r2</a>
-</p>
+The [merge_receipt.json](https://huggingface.co/SZLHOLDINGS/brain-navigator-r2/blob/ad510c4b05429acb862b216718f098ace6d05af3/merge_receipt.json) separately records a 2026-09-14 repair after the prior merged checkpoint was an empty base copy: 96/96 adapter modules applied, maximum weight delta `0.0025102924555540085`. That merge record establishes the reported repair operation, not a new behavioral evaluation. The earlier named-N result does not automatically transfer to the repaired merged checkpoint.
+
+## What the evidence does and does not establish
+
+Published files establish that scoped measured records and a later failed gate are available for inspection. Train loss is not evaluation; file integrity is not quality. The training receipt retains `evals=none-this-run` for its training step. That historical field does not erase the later generate record. Neither the named-N record nor the merge receipt qualifies this artifact for release. The [provenance.json](https://huggingface.co/SZLHOLDINGS/brain-navigator-r2/blob/ad510c4b05429acb862b216718f098ace6d05af3/provenance.json) also retains blocked artifact-lineage, consent, privacy-review, deployment, and served-revision boundaries.
+
+## Release, autonomy, and deployment boundary
+
+`publication_eligible=false` and `autonomy_eligible=false` remain in force. Proposal only: no qualification, promotion, deployment authorization, autonomy, or house-lab pin follows from these records or from public file availability. Lambda uniqueness remains **Conjecture 1: open and advisory, never a theorem**.
+
+## Relationship to other artifacts
+
+This SKU does not overwrite [SZL-Khipu-1.5B-BrainNavigator](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B-BrainNavigator), [SZL-Khipu-1.5B](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B), or [SZL-Khipu-1.5B-GGUF](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B-GGUF). The [second-brain Space](https://huggingface.co/spaces/SZLHOLDINGS/second-brain) is a separate software retrieval surface, not proof of model or private-graph access.
+
+## Source of truth
+
+The immutable Hub evidence linked above and the [canonical post-publication receipt](https://github.com/szl-holdings/szl-forge/blob/a6b58f623185820eddfb0b279d21b7d81b87137c/frontier/evaluation/gate_runs/brain-navigator-r2_ad510c4b0542_20260915T040842Z_receipt.json) govern these claims. The [historical source card](https://github.com/szl-holdings/szl-forge/blob/a6b58f623185820eddfb0b279d21b7d81b87137c/brain-navigator-r2/card/README.md) is retained for provenance; its wording alone is not qualification evidence.
+
+Canonical card authoring path: `brain-navigator-r2/card/README.md` in `szl-holdings/szl-forge`. This source correction preserves the stronger dated published evidence; it changes no receipt, model file, release gate or deployed service.
