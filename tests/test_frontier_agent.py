@@ -210,6 +210,56 @@ class AgentTests(unittest.TestCase):
         self.assertFalse(receipt["production_authorized"])
         self.assertFalse(receipt["training_admitted"])
 
+    def research_events(self, raw, name):
+        def fake_run(argv, cwd, folder, label, seconds, incoming):
+            (folder / "model.jsonl").write_text(raw, encoding="utf-8")
+            return {"exit_code": 0, "stopped": None}
+        with patch.object(agent, "git", side_effect=self.fake_git), \
+             patch.object(agent.shutil, "which", return_value="codex.exe"), \
+             patch.object(agent.subprocess, "check_output", return_value=b""), \
+             patch.object(agent, "bounded_run", side_effect=fake_run):
+            return agent.run_mission(self.path, self.root / name, True)
+
+    def test_corrupt_research_events_cannot_certify_completion(self):
+        invalid = (
+            '{"type":"error","type":"turn.completed"}',
+            r'{"type":"error","\u0074ype":"turn.completed"}',
+            '{"type":"future.event","metadata":{"x":1,"x":2}}',
+            '{"secret_marker":broken}',
+            'false', 'null', '[]', '"secret_marker"', '',
+            '{"type":"future.event","metadata":{"value":NaN}}',
+            '{"type":"future.event","metadata":{"value":Infinity}}',
+            '{"type":"future.event","metadata":{"value":1e999}}',
+        )
+        for index, line in enumerate(invalid):
+            for placement in ("before", "after"):
+                with self.subTest(index=index, placement=placement):
+                    valid = '{"type":"turn.completed"}'
+                    raw = "\n".join((line, valid) if placement == "before" else (valid, line)) + "\n"
+                    name = f"corrupt-{index}-{placement}"
+                    receipt = self.research_events(raw, name)
+                    self.assertEqual(receipt["state"], "INCOMPLETE")
+                    self.assertFalse(receipt["model_execution_observed"])
+                    self.assertFalse(receipt["production_authorized"])
+                    self.assertFalse(receipt["training_admitted"])
+                    self.assertNotIn("secret_marker", json.dumps(receipt))
+                    self.assertEqual((self.root / name / "model.jsonl").read_text(), raw)
+                    self.assertEqual(json.loads((self.root / name / "receipt.json").read_text()), receipt)
+
+    def test_unknown_well_formed_event_types_remain_compatible(self):
+        raw = '{"type":"future.event","metadata":{"value":1.25}}\n{"type":"turn.completed"}\n'
+        receipt = self.research_events(raw, "future-event")
+        self.assertEqual(receipt["state"], "MODEL_RESPONSE_OBSERVED")
+        self.assertTrue(receipt["model_execution_observed"])
+        self.assertFalse(receipt["production_authorized"])
+
+    def test_explicit_failure_event_still_blocks_research_success(self):
+        for index, event_type in enumerate(("error", "turn.failed")):
+            raw = json.dumps({"type": event_type}) + '\n{"type":"turn.completed"}\n'
+            receipt = self.research_events(raw, f"failure-{index}")
+            self.assertEqual(receipt["state"], "INCOMPLETE")
+            self.assertFalse(receipt["production_authorized"])
+
     def test_source_bundle_uses_exact_git_revision(self):
         self.mission["source_paths"] = ["python/szl_frontier/engine.py"]
         with patch.object(agent.subprocess, "check_output", return_value=b"source\n") as read:
@@ -280,7 +330,7 @@ class BuildGateTests(unittest.TestCase):
         return subprocess.check_output(["git", "-C", str(self.repo), *args], text=True,
                                        stderr=subprocess.DEVNULL)
 
-    def execute(self, mutate):
+    def execute(self, mutate, *, event_lines=(), run_name="run"):
         path = self.root / "mission.json"
         path.write_text(json.dumps(self.mission), encoding="utf-8")
         real_run = agent.bounded_run
@@ -292,12 +342,13 @@ class BuildGateTests(unittest.TestCase):
             text = proposal if type(proposal) is str else json.dumps(proposal)
             events = [{"type": "item.completed", "item": {"type": "agent_message", "text": text}},
                       {"type": "turn.completed"}]
-            (folder / "model.jsonl").write_text("\n".join(map(json.dumps, events)), encoding="utf-8")
+            raw = "\n".join([*map(json.dumps, events), *event_lines])
+            (folder / "model.jsonl").write_text(raw, encoding="utf-8")
             return {"exit_code": 0, "stopped": None}
 
         with patch.object(agent.shutil, "which", return_value="codex.exe"), \
              patch.object(agent, "bounded_run", side_effect=model_or_check):
-            return agent.run_mission(path, self.root / "run", True)
+            return agent.run_mission(path, self.root / run_name, True)
 
     def proposal(self, after="VALUE = 1\n", path="value.py"):
         return {"summary": "Unit fixture", "edits": [{"path": path, "before": "VALUE = 0\n", "after": after}]}
@@ -310,6 +361,26 @@ class BuildGateTests(unittest.TestCase):
         self.assertEqual(len(result["patch_sha256"]), 64)
         self.assertFalse(result["production_authorized"])
         self.assertFalse(result["training_admitted"])
+
+    def test_corrupt_events_block_proposal_application_and_candidate_checks(self):
+        for index, line in enumerate((
+            '{"type":"error","type":"turn.completed"}',
+            '{"secret_marker":broken}',
+            'false',
+            '{"type":"future.event","metadata":{"x":1,"x":2}}',
+            '{"type":"future.event","metadata":{"value":NaN}}',
+            '{"type":"future.event","metadata":{"value":1e999}}',
+        )):
+            with self.subTest(index=index):
+                result = self.execute(lambda cwd: self.proposal(), event_lines=(line,),
+                                      run_name=f"corrupt-build-{index}")
+                self.assertEqual(result["state"], "INCOMPLETE")
+                self.assertFalse(result["model_execution_observed"])
+                self.assertEqual(result["checks"], [])
+                self.assertEqual(result["baseline_checks"][0]["exit_code"], 1)
+                self.assertEqual((Path(result["workspace"]) / "value.py").read_bytes(), b"VALUE = 0\n")
+                self.assertFalse((self.root / f"corrupt-build-{index}" / "proposal.json").exists())
+                self.assertNotIn("secret_marker", json.dumps(result))
 
     def test_no_op_is_not_a_verified_build(self):
         result = self.execute(lambda cwd: self.proposal("VALUE = 0\n"))
