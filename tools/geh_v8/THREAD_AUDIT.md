@@ -210,6 +210,32 @@ Chain head `bdb60e93…0890`; `szl_geh_verify.py --evidence …` → 5 receipts,
   a DIAGNOSTIC receipt, never the canonical one. Smoke-tested on CPU with a tiny model and a LoRA
   adapter; the base-model CPU replay result is recorded in Part C when available.
 
+* **Coverage preflight everywhere the gate can run:** `chaski_margin_probe.py --coverage-only`
+  loads base + adapter with the chosen loader class, verifies every checkpoint tensor landed and
+  exits 4 otherwise (verified live: text class 0/192 → exit 4; multimodal class 192/192 → exit 0).
+  The runbook's `-RunCanonicalGate` path now runs this preflight with the pristine runner's own
+  class (`AutoModelForCausalLM`) for every adapter and refuses to start the gate on failure — the
+  pristine runner itself stays byte-identical (`f4ca282a…`).
+* **Canonical runner hardened (separate branch `chaski/adapter-applied-guard`):**
+  `chaski/adapter_guard.py` + wiring in `chaski/bakeoff_named_n.py::load_runtime` raise
+  `AdapterNotApplied` unless all checkpoint tensors land, and each candidate row gains a `loader`
+  field (`wrapper_class`, `model_class`, `model_type`, `transformers`, `peft`, `adapter_keys`).
+  Six pure-Python tests; verified against the real Hub adapter on CPU (192/192 vs raise).
+* **lutar-lean locked set, kernel-checked here:** the 24 theorems carrying the locked formulas
+  {F1,F4,F7,F11,F12,F18,F19,F22} in `Lutar/Puriq/Formulas/ProvedFormulas.lean` @ main
+  `c4af7e22` pass `#geh_guard` under a bare Lean v4.18.0 core build (no Mathlib): 11 depend on no
+  axiom, 10 on `propext` only, 3 on `propext` + `Quot.sound`, 0 on `Classical.choice`; a red
+  control (`sorry`) is refused with `sorryAx`. Shipped as `tools/lean/LockedGuard.lean` + a
+  lake-build.yml step asserting exactly 24 `allowed:true` lines (branch
+  `ci/locked-8-axiom-guard`).
+* **lutar-lean drift found on the way:** `PuriqFormulaLean.lean` is listed on PROVEN_FORMULAS.md
+  as a source for the locked 8 but is **not in the build graph** (`Lutar.lean` imports only
+  `ProvedFormulas`; the file's own note says the still-open formulas live there), and it does not
+  compile standalone under v4.18.0: `f6_lmdb_durability` fails at 456:2 (`simp made no progress`)
+  and F23 is a labeled `sorry` (Conjecture 1). Its footer records a bare Lean 4.13.0 compile, so
+  this is toolchain drift on an unbuilt file, not a false locked-set claim — but the "Source" link
+  for the locked 8 should point at `ProvedFormulas.lean` alone.
+
 ## Part D — Limits, stated plainly
 
 * **Pantograph toolchain mismatch:** PyPantograph 0.3.15 pins `leanprover/Pantograph` @ `842c0fe6`,

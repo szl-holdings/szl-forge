@@ -85,7 +85,7 @@ if ($Bundle -ne "") {
 $Manifest = @{
     "szl_geh_v8.py" = "25008681bed2563c2caa683ae342933fd1ae72e7b2c89ef0c16bb021f7a736b7"
     "szl_geh_verify.py" = "6647ef7fb207cbf01e4c69275735fc632009a0558625208899bcdef2e2787040"
-    "chaski_margin_probe.py" = "986ebf47b1329d26f5666a5982a98f4114cab2c01b2331d765da2847f1ff953e"
+    "chaski_margin_probe.py" = "324e064a214973c563bca3de4d9c1ded7631b387c6f3fb142813292fc90ac668"
     "tests\test_geh_v8.py" = "c5a601f482da7e605ee02171c633ab931b082a90a24ec5f5f2f270b5fec47b6b"
     "README.md" = "c45f15347da292fcd6970fb996b4360ee83d101eadea9f1a77bf8f40718c4602"
     "geh-lean\lakefile.toml" = "60b374e3ac39ecf8e9f8bf79c7ffee008c9fcbb0bfafab5530cd7d8bec373cb8"
@@ -210,6 +210,20 @@ if ($RunCanonicalGate) {
     Require-File $Runner
     if (-not $HaveVenv) { throw "The canonical gate requires the CUDA runtime at $VenvPy (torch 2.11.0+cu128 family). Refusing to evaluate on a different interpreter." }
     if ($Recon.runner_pristine -ne $true) { throw "Runner is not the pristine f4ca282a build; refusing to run a non-canonical evaluator." }
+    # PREFLIGHT (fail-closed): the pristine runner loads the base through AutoModelForCausalLM. Under some
+    # transformers versions that class puts the modules at model.layers.* while the chaski adapters are keyed for
+    # model.language_model.layers.*; PEFT then applies 0 tensors and only warns, and the gate would score the BASE
+    # model as each adapter (observed off-metal 2026-09-30: 0/192 applied, outputs byte-identical to base).
+    $Probe = Join-Path $Tools "chaski_margin_probe.py"
+    Require-File $Probe
+    $CovArgs = @($Probe, "--root", $Root, "--device", "cuda", "--dtype", "bfloat16", "--model-class", "AutoModelForCausalLM", "--coverage-only", "--adapter", $R2Dir, "--adapter", $R4Dir)
+    $A5050pre = Join-Path $Root "chaski\chaski-5050-adapter"
+    if (-not (Test-Path -LiteralPath $A5050pre)) { $A5050pre = Join-Path $Root "chaski-5050\chaski-5050-adapter" }
+    if (Test-Path -LiteralPath $A5050pre) { $CovArgs += @("--adapter", $A5050pre) }
+    $EAP = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+    try { & $Py $CovArgs; $covRc = $LASTEXITCODE } finally { $ErrorActionPreference = $EAP }
+    if ($covRc -ne 0) { throw "ADAPTER COVERAGE PREFLIGHT FAILED (exit $covRc): under this transformers build the pristine runner's loader class does not apply at least one adapter. A canonical run now would receipt the base model as that adapter. Stop state: no gate run, no receipt written." }
+    Write-Host "  adapter coverage preflight OK: every adapter tensor lands in the pristine runner's loader class" -ForegroundColor Green
     $GateReceipt = Join-Path $Evidence ("canonical_rerun_" + $Stamp + ".receipt.json")
     $A5050 = Join-Path $Root "chaski\chaski-5050-adapter"
     if (-not (Test-Path -LiteralPath $A5050)) { $A5050 = Join-Path $Root "chaski-5050\chaski-5050-adapter" }
