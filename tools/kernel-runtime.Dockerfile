@@ -9,7 +9,7 @@ RUN python -m pip install --disable-pip-version-check --no-cache-dir \
       "kernels==0.16.0"
 
 WORKDIR /runtime
-COPY tools/publish_szl_kernels.py tools/verify_szl_kernel_runtime.py ./
+COPY tools/publish_szl_kernels.py tools/verify_szl_kernel_runtime.py tools/kernels_keyless_credentials.py ./
 
 USER 65532:65532
 ENTRYPOINT ["python", "/runtime/verify_szl_kernel_runtime.py"]

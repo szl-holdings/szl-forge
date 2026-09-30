@@ -4,3 +4,6 @@ clinical-gateway/** text eol=lf
 model_candidates/** text eol=lf
 candidate-tests/** text eol=lf
 access-lab/** text eol=lf
+foundation-confirmation/** text eol=lf
+spaces/szl-forge-lab/foundation/** -text
+spaces/oac-system-health-lab/** text eol=lf

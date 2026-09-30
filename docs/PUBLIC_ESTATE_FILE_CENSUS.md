@@ -25,12 +25,38 @@ before network reads; existing files are never overwritten. A killed process can
 an incomplete output file, which is not a valid receipt. The dedicated read-only CI
 runs both lanes separately and preserves their reports even when a lane fails.
 
+Elapsed pacing and launch deadlines use Python's monotonic, high-resolution
+`perf_counter` by default. On older Windows Python runtimes, `monotonic` can have
+coarser resolution than a fractional rate-hint residual wait: a real successful
+sleep could leave that clock unchanged and falsely trip the stalled-clock guard.
+The default clock avoids that false stop; injected-clock progress guards, the
+minimum HF launch interval, retry budgets and launch deadline remain enforced.
+
 The GitHub lane uses the existing `GITHUB_TOKEN` environment variable, when available,
 only for requests to the fixed GitHub API. Contents-read is sufficient for public
 repo trees; no organization-administration or repo-write credential is requested.
-Without it, anonymous rate limits may make the observation incomplete. The HF lane
-never reads a token or forwards the GitHub token. Neither lane inherits proxy or
-cookie configuration. No downloaded source, build hook, model, or kernel executes.
+Without it, anonymous rate limits may make the observation incomplete. On protected
+`main`, the HF CI job exchanges the exact GitHub Actions identity for the account
+CI/CD resource `betterwithage`. The resulting `hf_oauth_*` token is short-lived,
+read-only, unable to read private repositories, and used only on the exact
+`huggingface.co` origin. The GitHub token is never forwarded to HF and the HF token
+is never forwarded to GitHub. Neither observer inherits proxy or cookie
+configuration. No downloaded source, build hook, model, or kernel executes.
+
+The required external Hugging Face account binding is configured under
+**Authentication -> CI/CD Access**, with inference disabled and all claims exact:
+
+- issuer `https://token.actions.githubusercontent.com`
+- repository `szl-holdings/szl-forge`
+- branch `main`
+- workflow `public-estate-file-census.yml`
+- resource `betterwithage` (a username resource, with no slash)
+
+No wildcard or persistent Hub secret is accepted. A missing or mismatched binding
+stops before observation and preserves `hf-census-keyless-credential.json` with
+`OIDC_IDENTITY_UNAVAILABLE`; provider error text and token bytes are not retained.
+Pull requests run the offline contracts without OIDC minting authority. Direct local
+execution remains an explicitly anonymous diagnostic, not the authenticated CI lane.
 
 ## Scope and proof strength
 
@@ -51,8 +77,10 @@ not an atomic global snapshot. Movement remains visible rather than silently cha
 which revision was scanned. Submodule contents, other branches, and untracked files
 are outside scope.
 
-HF populations are separately listed anonymous public `models`, `datasets`, `spaces`,
-and first-class `kernels`, each with exact `author=SZLHOLDINGS`. The collector resolves
+HF populations are separately listed public `models`, `datasets`, `spaces`, and
+first-class `kernels`, each with exact `author=SZLHOLDINGS`. Authentication changes
+only the provider rate-limit identity; every listed and rechecked item must still
+report `private=false`. The collector resolves
 each repository to a full SHA, paginates its immutable file tree, then rechecks that
 revision and population membership. It records file/optional LFS object IDs and sizes
 without downloading weights or executable payloads. These are **provider metadata**,
@@ -160,8 +188,9 @@ has no cached success, automatic resume, or persistent authorization.
 429 responses and raised HTTP errors are closed before any wait, without reading
 remote error bodies. Only exact fixed-origin GETs are retried. GitHub errors,
 401/403, redirects, 5xx, transport errors, bad JSON and invalid artifact identities
-are not silently retried or promoted. HF remains anonymous; no token, proxy,
-resource family, request path, or inventory predicate is substituted.
+are not silently retried or promoted. HF CI uses only the dedicated user-scoped
+read-only OIDC credential described above; no persistent token, proxy, resource
+family, request path, or inventory predicate is substituted.
 
 Each real attempt retains status, time, body digest where available, attempt
 number, actual prelaunch wait and sanitized numeric rate hints. `hf_retry` records
@@ -171,13 +200,13 @@ not proof it was launched. A recovered HTTP request is not a complete census:
 all original revision, membership, public-visibility, LFS, and completeness
 checks still run. In particular, recognized gated LFS redaction stays incomplete.
 
-The existing unit matrix invokes both the retained census tests and the new
-`tests.test_public_estate_rate_control` suite. No action pin, workflow permission,
-job timeout, publisher, schedule, or failure assertion is weakened. The new cases
-use deterministic clocks and recording transports, not actual HF traffic. Both
-original LFS functions and all 53 predecessor test methods are preserved. The
-combined 110-method suite passed normally and optimized on local Python 3.13.5;
-Python 3.11/3.12 hosted execution and a paced native census remain separate gates.
+The unit matrix invokes the retained census and rate-control tests plus
+`tests.test_hf_census_keyless_credentials`. Only the protected-main HF census job
+gets `id-token: write`; the unit and GitHub jobs remain contents-read only. No action
+pin, timeout, schedule, retry bound, or failure assertion is weakened. The new cases
+use deterministic clocks and recording transports, not actual HF traffic. All 125
+targeted methods passed normally and optimized on local Python 3.11. Python 3.11/3.12
+hosted execution and an authenticated native census remain separate gates.
 
 This is one sequential reader's backpressure, not a distributed quota coordinator.
 Other jobs sharing an address can still consume quota. Socket timeout and the
@@ -185,6 +214,10 @@ request-launch deadline are not a hard per-body streaming deadline; the existing
 CI job timeout remains the outer limit. Reconcile the current exact branch with
 parallel work before source admission. Do not immediately loop a failed HF lane.
 
-Primary rate-hint contract: https://huggingface.co/docs/hub/rate-limits .
-The project retains its already bounded stdlib reader; no SDK or authentication
-migration is bundled into this source repair.
+Primary contracts:
+- https://huggingface.co/docs/hub/rate-limits
+- https://huggingface.co/docs/hub/trusted-publishers
+
+The project retains its bounded stdlib reader. The pinned official `hf` CLI performs
+only the OIDC exchange; it does not replace the fixed-origin observer or its failure
+and coverage rules.

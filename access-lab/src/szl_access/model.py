@@ -1,12 +1,14 @@
 """Bounded, opt-in local inference. Models select candidates, never supply code."""
 import hashlib
-from http.client import HTTPException
+from functools import partial
+from http.client import HTTPConnection, HTTPException, HTTPResponse
+from io import BufferedReader, RawIOBase
 import json
 import math
 import re
 import time
 from urllib.error import HTTPError, URLError
-from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
+from urllib.request import HTTPHandler, HTTPRedirectHandler, ProxyHandler, Request, build_opener
 
 
 class ModelUnavailable(RuntimeError):
@@ -30,6 +32,57 @@ def unique_object(pairs):
 class NoRedirect(HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         return None
+
+
+class _DeadlineReader(RawIOBase):
+    """Reset the socket timeout to the *remaining total* before every receive."""
+
+    def __init__(self, raw, sock, deadline):
+        self.raw = raw
+        self.sock = sock
+        self.deadline = deadline
+
+    def readable(self):
+        return True
+
+    def readinto(self, buffer):
+        remaining = self.deadline - time.monotonic()
+        if remaining <= 0:
+            raise TimeoutError("local model request deadline exhausted")
+        self.sock.settimeout(remaining)
+        return self.raw.readinto(buffer)
+
+    def fileno(self):
+        return self.raw.fileno()
+
+    def close(self):
+        try:
+            self.raw.close()
+        finally:
+            super().close()
+
+
+class _DeadlineHTTPResponse(HTTPResponse):
+    def __init__(self, sock, *args, deadline, **kwargs):
+        super().__init__(sock, *args, **kwargs)
+        # HTTPResponse has created, but not read, its socket file at this point.
+        # Guard below buffering so slow headers, chunk extensions, and trailers
+        # cannot reset an inactivity timeout inside a single read1()/readline().
+        self.fp = BufferedReader(_DeadlineReader(self.fp.detach(), sock, deadline))
+
+
+class DeadlineHTTPHandler(HTTPHandler):
+    def __init__(self, deadline):
+        super().__init__()
+        self.deadline = deadline
+
+    def http_open(self, request):
+        def connection(host, **kwargs):
+            result = HTTPConnection(host, **kwargs)
+            result.response_class = partial(_DeadlineHTTPResponse, deadline=self.deadline)
+            return result
+
+        return self.do_open(connection, request)
 
 
 def model_name(value: str) -> str:
@@ -81,9 +134,17 @@ def _request(opener, path, payload, deadline, limit):
     request = Request(_BASE + path, data=encoded, headers={"Content-Type": "application/json"},
                       method="GET" if payload is None else "POST")
     with opener.open(request, timeout=remaining) as response:
-        raw = response.read(limit + 1)
+        raw = bytearray()
+        while len(raw) <= limit:
+            if time.monotonic() >= deadline:
+                raise ModelUnavailable("local model request deadline exhausted")
+            block = response.read1(min(8192, limit + 1 - len(raw)))
+            if not block:
+                break
+            raw.extend(block)
     if len(raw) > limit or time.monotonic() > deadline:
         raise ModelUnavailable("local model response exceeded the size or time limit")
+    raw = bytes(raw)
     return _json(raw), raw, encoded
 
 
@@ -175,7 +236,7 @@ def propose(analysis: dict, name: str, *, timeout: float = 30) -> tuple[dict, di
     started = time.monotonic()
     deadline = started + timeout
     try:
-        opener = build_opener(ProxyHandler({}), NoRedirect())
+        opener = build_opener(ProxyHandler({}), NoRedirect(), DeadlineHTTPHandler(deadline))
         digest = _installed_identity(opener, name, deadline)
         identity = _local_metadata(opener, name, deadline)
         if _installed_identity(opener, name, deadline) != digest:

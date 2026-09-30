@@ -53,6 +53,8 @@ jobs:
           python -m py_compile \
             tools/authorize_kernels_release.py \
             tools/test_authorize_kernels_release.py \
+            tools/kernels_keyless_credentials.py \
+            tools/test_kernels_keyless_credentials.py \
             tools/publish_szl_kernels.py \
             tools/test_publish_szl_kernels.py \
             tools/authorize_invariants_release.py \
@@ -183,8 +185,26 @@ jobs:
             --report reports/szl-forge-lab-dry-run.json
           git diff --check
 
+      - name: Verify scoped publisher with its exact Hub dependency
+        run: |
+          set -euo pipefail
+          python -m venv "${RUNNER_TEMP}/kernel-publisher-tests"
+          "${RUNNER_TEMP}/kernel-publisher-tests/bin/python" -m pip install \
+            --disable-pip-version-check "huggingface-hub==1.26.0"
+          PYTHONPATH=tools "${RUNNER_TEMP}/kernel-publisher-tests/bin/python" -m unittest -v \
+            tools/test_authorize_kernels_release.py \
+            tools/test_publish_szl_kernels.py \
+            tools/test_kernels_keyless_credentials.py
+
       - name: Build the stable Kernel runtime image
         run: docker build --pull -t szl-kernel-runtime:0.16.0 -f tools/kernel-runtime.Dockerfile .
+
+      - name: Import the complete credentialless runtime package
+        run: >-
+          docker run --rm --network none --read-only
+          --cap-drop ALL --security-opt no-new-privileges
+          --entrypoint python szl-kernel-runtime:0.16.0
+          -B -c "import kernels_keyless_credentials, publish_szl_kernels, verify_szl_kernel_runtime"
 
       - name: Verify isolated failure evidence round trip
         env:
