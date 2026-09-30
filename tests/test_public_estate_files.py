@@ -114,6 +114,35 @@ class Transport(unittest.TestCase):
         self.assertIn("Authorization", client.headers("https://api.github.com/orgs/szl-holdings/repos"))
         self.assertNotIn("Authorization", client.headers("https://huggingface.co/api/models?author=SZLHOLDINGS"))
 
+    def test_hf_user_oidc_token_stays_on_exact_hf_origin(self):
+        client = census.Client(
+            token="fixture-only-github-token",
+            hf_token="hf_oauth_fixture-only-census-token",
+        )
+        github = client.headers("https://api.github.com/orgs/szl-holdings/repos")
+        huggingface = client.headers(
+            "https://huggingface.co/api/models?author=SZLHOLDINGS"
+        )
+        self.assertEqual(github["Authorization"], "Bearer fixture-only-github-token")
+        self.assertEqual(
+            huggingface["Authorization"],
+            "Bearer hf_oauth_fixture-only-census-token",
+        )
+        self.assertNotIn("hf_oauth_", repr(github))
+        self.assertNotIn("fixture-only-github-token", repr(huggingface))
+
+    def test_hf_credential_shape_must_be_user_scoped_oauth(self):
+        for token in (
+            "hf_jwt_repo-scoped-write",
+            "hf_static-personal-token",
+            "hf_oauth_contains whitespace",
+            "",
+        ):
+            with self.subTest(token=token), self.assertRaisesRegex(
+                census.CensusError, "HF_CREDENTIAL_SHAPE"
+            ):
+                census.Client(hf_token=token)
+
     def test_hosts_and_resources_constrained(self):
         for url in ("http://api.github.com/orgs/szl-holdings/repos",
                     "https://api.github.com.evil/repos/szl-holdings/a",
@@ -177,6 +206,15 @@ class Transport(unittest.TestCase):
 
 
 class HuggingFace(unittest.TestCase):
+    def test_membership_requires_explicit_public_false(self):
+        for private in (True, None, 0, "false"):
+            fake = mock.Mock()
+            fake.get.return_value = ([{"id": "SZLHOLDINGS/a", "private": private}], "")
+            with self.subTest(private=private), self.assertRaisesRegex(
+                census.CensusError, "PUBLIC_SCOPE_VIOLATION"
+            ):
+                census.hf_members(fake, "models")
+
     def test_missing_sha_does_not_become_zero(self):
         fake = mock.Mock()
         fake.get.return_value = ({"id": "SZLHOLDINGS/a"}, "")
@@ -247,6 +285,18 @@ class Scope(unittest.TestCase):
         for name in ("semantic_review_complete", "runtime_verified", "production_authorization"):
             self.assertIs(report[name], False)
         self.assertEqual(report["source_content_files_read"], 0)
+
+    def test_report_declares_lane_specific_credential_without_secret_material(self):
+        client = census.Client(hf_token="hf_oauth_fixture-only-census-token")
+        report = client.authentication_receipt("huggingface")
+        self.assertEqual(
+            report["mode"],
+            "HF_USER_SCOPED_OIDC_READ_ONLY",
+        )
+        self.assertEqual(report["origin"], "huggingface.co")
+        self.assertFalse(report["credential_logged"])
+        self.assertFalse(report["credential_persisted"])
+        self.assertNotIn("hf_oauth_", repr(report))
 
     def test_source_categories_are_only_path_signals(self):
         signals = census.path_signals([{"path": "src/app.tsx"}, {"path": "tests/test_api.py"},
