@@ -92,6 +92,7 @@ async function main() {
   for (const name of ["healthy", "degraded"]) {
     assert.equal(run("validateScore(candidate)", fixtures[name]), fixtures[name].advisory);
   }
+  rejectIdentity("unexpected identity field", value => {value.unexpected = "value";});
   rejectIdentity("READY requires revision", value => {value.application.revision = null;});
   rejectIdentity("missing revision", value => {delete value.application.revision;});
   rejectIdentity("malformed revision", value => {value.application.revision = "main";});
@@ -110,6 +111,15 @@ async function main() {
     }
     rejectIdentity("additional " + section + " field", value => {value[section].unexpected = "value";});
     rejectIdentity("missing " + section, value => {delete value[section];});
+  }
+  rejectScore("unexpected response field", value => {value.unexpected = "value";});
+  rejectScore("unexpected advisory promotion field", value => {value.advisory.production_promotion_allowed = true;});
+  rejectScore("unexpected advisory field", value => {value.advisory.unexpected = "value";});
+  for (const key of ["input_sha256", "output_sha256"]) {
+    rejectScore("missing " + key, value => {delete value[key];});
+    for (const malformed of [null, 0, "", "f".repeat(63), "f".repeat(65), "F".repeat(64), "not-a-hash"]) {
+      rejectScore("malformed " + key, value => {value[key] = malformed;});
+    }
   }
   rejectScore("not ok", value => {value.ok = false;});
   rejectScore("minted receipt", value => {value.receipt_minted = true;});

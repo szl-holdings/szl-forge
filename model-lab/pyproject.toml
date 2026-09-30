@@ -25,7 +25,11 @@ szl-model-lab = "szl_model_lab.cli:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-szl_model_lab = ["templates/*.html"]
+szl_model_lab = [
+  "templates/*.html",
+  # Vendored SZL KANCHAY design system served by the allowlisted /szl/ routes.
+  "static/szl/szl-design-system.css", "static/szl/szl-console.css", "static/szl/SOURCE.json",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
