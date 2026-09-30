@@ -264,6 +264,8 @@ def load_policy(device: str, adapter_rev: str):
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
     tok = AutoTokenizer.from_pretrained(DPO_ADAPTER, revision=adapter_rev)
+    if tok.pad_token is None:
+        tok.pad_token = tok.eos_token
     base = AutoModelForCausalLM.from_pretrained(DPO_BASE, torch_dtype=torch.bfloat16)
     policy = PeftModel.from_pretrained(base, DPO_ADAPTER, revision=adapter_rev).merge_and_unload()
     policy.to(device)
@@ -378,7 +380,8 @@ def cmd_dpo(out: pathlib.Path, epochs: int, max_pairs: int) -> int:
     cfg_kwargs = dict(
         output_dir=str(out / "trainer"), per_device_train_batch_size=1, gradient_accumulation_steps=4,
         num_train_epochs=epochs, learning_rate=5e-5, lr_scheduler_type="cosine", logging_steps=1,
-        save_strategy="no", bf16=True, gradient_checkpointing=True, beta=0.1, max_length=1024,
+        save_strategy="no", bf16=True, gradient_checkpointing=True,
+        gradient_checkpointing_kwargs={"use_reentrant": False}, beta=0.1, max_length=1024,
         max_prompt_length=512, seed=SEED, report_to=[],
     )
     try:
