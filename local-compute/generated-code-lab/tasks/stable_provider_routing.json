@@ -1,0 +1,20 @@
+{
+  "id": "stable_provider_routing",
+  "title": "Deterministic eligible-provider routing",
+  "instruction": "Write solution.py defining solve(value). The input is a JSON object with max_latency_ms and providers. Return the chosen provider's name as a string, or null if none qualify. max_latency_ms must be a finite nonnegative JSON number (a boolean is not a number for this contract); providers must be a list. Return null if either requirement is not met or either field is absent. A provider qualifies only if it is an object, eligible is the JSON boolean true, name is a nonempty string, and price and latency_ms are finite nonnegative JSON numbers (not booleans). Its latency_ms must be at or below max_latency_ms. Skip malformed or ineligible entries. Among qualifying providers choose the lowest price; break price ties using the lexicographically smallest name with Python string ordering, case-sensitive, without trimming or normalization. Provider order must not affect the result. Equal names produce the same returned string, so duplicate names require no extra tie-break. Do not mutate the input or use network calls. This exercise routes supplied synthetic observations; it does not measure real latency, model quality, or provider availability. Use only Python's standard library.",
+  "cases": [
+    {"input": {"max_latency_ms": 100, "providers": [{"name": "fast", "price": 3, "latency_ms": 20, "eligible": true}, {"name": "budget", "price": 1, "latency_ms": 90, "eligible": true}]}, "expected": "budget"},
+    {"input": {"max_latency_ms": 100, "providers": [{"name": "zeta", "price": 1, "latency_ms": 50, "eligible": true}, {"name": "alpha", "price": 1, "latency_ms": 99, "eligible": true}]}, "expected": "alpha"},
+    {"input": {"max_latency_ms": 100, "providers": [{"name": "alpha", "price": 1, "latency_ms": 99, "eligible": true}, {"name": "zeta", "price": 1, "latency_ms": 50, "eligible": true}]}, "expected": "alpha"},
+    {"input": {"max_latency_ms": 10, "providers": [{"name": "late", "price": 0, "latency_ms": 11, "eligible": true}, {"name": "boundary", "price": 2, "latency_ms": 10, "eligible": true}]}, "expected": "boundary"},
+    {"input": {"max_latency_ms": 0, "providers": [{"name": "zero", "price": 0, "latency_ms": 0, "eligible": true}]}, "expected": "zero"},
+    {"input": {"max_latency_ms": 100, "providers": []}, "expected": null},
+    {"input": {"max_latency_ms": 100, "providers": [{"name": "offline", "price": 0, "latency_ms": 0, "eligible": false}, {"name": "numeric-true", "price": 0, "latency_ms": 0, "eligible": 1}, {"name": "negative", "price": -1, "latency_ms": 0, "eligible": true}]}, "expected": null},
+    {"input": {"max_latency_ms": 100, "providers": [null, "not-an-object", {"name": "bool-price", "price": false, "latency_ms": 1, "eligible": true}, {"name": "bool-latency", "price": 0, "latency_ms": true, "eligible": true}, {"name": "", "price": 0, "latency_ms": 0, "eligible": true}, {"name": "valid", "price": 1.25, "latency_ms": 1.5, "eligible": true}]}, "expected": "valid"},
+    {"input": {"max_latency_ms": true, "providers": [{"name": "not-admitted", "price": 0, "latency_ms": 0, "eligible": true}]}, "expected": null},
+    {"input": {"max_latency_ms": -1, "providers": []}, "expected": null},
+    {"input": {"max_latency_ms": 100, "providers": {}}, "expected": null},
+    {"input": {"max_latency_ms": 100, "providers": [{"name": "alpha", "price": 1, "latency_ms": 0, "eligible": true}, {"name": "Zeta", "price": 1, "latency_ms": 0, "eligible": true}]}, "expected": "Zeta"},
+    {"input": {}, "expected": null}
+  ]
+}
