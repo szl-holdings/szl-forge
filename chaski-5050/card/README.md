@@ -33,6 +33,8 @@ szl:
   train_loss_label: MEASURED
   adapter_sha256: 620b3488fac2ebc6518090424de5b3c6a182293cf52dfd5bd9f886f54aef0df5
 ---
+<!-- szl:artifact-identity-reconciled -->
+> **Artifact identity (noted 2026-09-30).** Besides the LoRA adapter, this repository's root carries a merged full-precision checkpoint (`model.safetensors` + `config.json`, loadable with `transformers`) produced by the receipted CPU merge of this adapter into its declared base (`merge_receipt.json`). The adapter remains the artifact of record for every figure on this card; the merged bytes carry no separate held-out receipt and add no claim. Metadata-only note.
 
 # Chaski-5050
 
