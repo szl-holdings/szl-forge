@@ -164,15 +164,29 @@ function Read-FoundationInstallation {
     return $receipt
 }
 
+function Resolve-FoundationTaskSid {
+    param([string]$Identity)
+    try {
+        if ([string]::IsNullOrWhiteSpace($Identity)) { throw 'Missing task identity.' }
+        if ($Identity -match '^S-1-') {
+            return [Security.Principal.SecurityIdentifier]::new($Identity).Value
+        }
+        # Task Scheduler may normalize a registered SID to its account name.
+        return [Security.Principal.NTAccount]::new($Identity).Translate([Security.Principal.SecurityIdentifier]).Value
+    } catch {
+        throw 'A conflicting task definition was found; no task was changed.'
+    }
+}
+
 function Assert-FoundationTask {
     param($Task, $Receipt)
     $paths = Get-FoundationPaths
     $principalSid = $null
+    $triggerSid = $null
     if ($null -ne $Task) {
-        $principalName = [string]$Task.Principal.UserId
-        if ($principalName -match '^S-1-') { $principalSid = $principalName }
-        else {
-            $principalSid = [Security.Principal.NTAccount]::new($principalName).Translate([Security.Principal.SecurityIdentifier]).Value
+        $principalSid = Resolve-FoundationTaskSid ([string]$Task.Principal.UserId)
+        if (@($Task.Triggers).Count -eq 1) {
+            $triggerSid = Resolve-FoundationTaskSid ([string]$Task.Triggers[0].UserId)
         }
     }
     if ($null -eq $Task -or $Task.TaskName -ne $paths.Task -or $Task.TaskPath -ne '\' -or
@@ -181,7 +195,7 @@ function Assert-FoundationTask {
         $Task.Actions[0].WorkingDirectory -ne $Receipt.lab_root -or
         $principalSid -ne $paths.Sid -or [string]$Task.Principal.LogonType -ne 'Interactive' -or
         [string]$Task.Principal.RunLevel -ne 'Limited' -or @($Task.Triggers).Count -ne 1 -or
-        $Task.Triggers[0].CimClass.CimClassName -ne 'MSFT_TaskLogonTrigger' -or $Task.Triggers[0].UserId -ne $paths.Sid -or
+        $Task.Triggers[0].CimClass.CimClassName -ne 'MSFT_TaskLogonTrigger' -or $triggerSid -ne $paths.Sid -or
         $Task.Settings.RestartCount -ne 2 -or $Task.Settings.RestartInterval -ne 'PT1M' -or
         [string]$Task.Settings.MultipleInstances -ne 'IgnoreNew' -or $Task.Settings.ExecutionTimeLimit -ne 'PT0S') {
         throw 'A conflicting task definition was found; no task was changed.'

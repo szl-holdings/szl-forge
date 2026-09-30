@@ -18,6 +18,8 @@ import threading
 import unittest
 from unittest.mock import patch
 
+import yaml
+
 ROOT = Path(__file__).resolve().parents[1]
 SPACE = ROOT / "spaces" / "szl-foundation-confirmation"
 SPEC = importlib.util.spec_from_file_location("foundation_public_adapter_tests", SPACE / "app.py")
@@ -253,6 +255,19 @@ class ASGIContracts(unittest.IsolatedAsyncioTestCase):
 
 
 class StorageAndAdmission(unittest.TestCase):
+    def test_space_card_is_admitted_before_publication(self):
+        card = (SPACE / "README.md").read_text(encoding="utf-8")
+        self.assertTrue(card.startswith("---\n"))
+        metadata = yaml.safe_load(card.split("---", 2)[1])
+        self.assertEqual(metadata["sdk"], "docker")
+        self.assertIs(type(metadata["app_port"]), int)
+        self.assertEqual(metadata["app_port"], 7860)
+        description = metadata["short_description"]
+        self.assertIsInstance(description, str)
+        self.assertGreater(len(description.strip()), 0)
+        self.assertLessEqual(len(description), 60,
+                             "Hub rejects Space descriptions longer than 60 characters")
+
     def test_retention_capacity_ttl_and_integrity(self):
         now = [0.0]
         store = adapter.EphemeralReceipts(capacity=2, ttl=10, clock=lambda: now[0])
