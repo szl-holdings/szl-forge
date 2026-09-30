@@ -1,0 +1,123 @@
+name: Foundation operational workbench
+
+on:
+  pull_request:
+    paths: ['spaces/szl-foundation-confirmation/**', 'foundation-confirmation/operations/**', 'foundation-confirmation/verify_public_runtime.py', 'tests/test_foundation_public_runtime.py', 'tests/test_hf_write_locks.py', '.github/workflows/foundation-runtime.yml']
+  push:
+    branches: [main]
+    paths: ['spaces/szl-foundation-confirmation/**', 'foundation-confirmation/operations/**', 'foundation-confirmation/verify_public_runtime.py', 'tests/test_foundation_public_runtime.py', 'tests/test_hf_write_locks.py', '.github/workflows/foundation-runtime.yml']
+  merge_group:
+    types: [checks_requested]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    name: Runtime security and sealed models
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Install hash-locked Linux CPU runtime
+        run: >-
+          python -m pip install --disable-pip-version-check --require-hashes --only-binary=:all: -r spaces/szl-foundation-confirmation/requirements.txt
+      - name: Install check tools
+        run: python -m pip install 'pytest==9.1.1' 'PyYAML==6.0.3'
+      - name: Reject invalid requests and run all three original models
+        env:
+          FOUNDATION_REQUIRE_INTEGRATION: '1'
+        run: python -B -m pytest -q tests/test_foundation_public_runtime.py tests/test_hf_write_locks.py
+      - name: Build immutable non-root Linux image
+        run: docker build --tag foundation-confirmation:ci spaces/szl-foundation-confirmation
+      - name: Verify actual container startup and source binding
+        env:
+          CHECKOUT_SOURCE: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          docker run --detach --name foundation-ci --publish 127.0.0.1:17860:7860 --env SZL_GITHUB_SOURCE_REVISION="${CHECKOUT_SOURCE}" foundation-confirmation:ci
+          python foundation-confirmation/verify_public_runtime.py --origin http://127.0.0.1:17860 --expected-source "${CHECKOUT_SOURCE}" --report /tmp/foundation-container-evidence.json
+      - name: Retain container evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: foundation-container-${{ github.run_id }}
+          path: /tmp/foundation-container-evidence.json
+          if-no-files-found: warn
+          retention-days: 90
+      - name: Container logs and cleanup
+        if: always()
+        run: |
+          docker logs foundation-ci || true
+          docker rm -f foundation-ci || true
+
+  publish:
+    name: Publish and witness public Foundation inference
+    needs: qualify
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    concurrency:
+      group: hf-write/space/SZLHOLDINGS/szl-foundation-confirmation
+      cancel-in-progress: false
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Install exact publication clients
+        run: python -m pip install --disable-pip-version-check 'huggingface-hub==1.23.0' 'requests==2.32.5'
+      - name: Validate existing org publisher access
+        env:
+          HF_ORG_TOKEN_CANDIDATE: ${{ secrets.HF_ORG_TOKEN }}
+          HF_ORG_TOKEN1_CANDIDATE: ${{ secrets.HF_ORG_TOKEN1 }}
+          HF_WRITE_TOKEN_CANDIDATE: ${{ secrets.HF_WRITE_TOKEN }}
+          HF_TOKEN_CANDIDATE: ${{ secrets.HF_TOKEN }}
+          HUGGINGFACE_TOKEN_CANDIDATE: ${{ secrets.HUGGINGFACE_TOKEN }}
+          HUGGING_FACE_HUB_TOKEN_CANDIDATE: ${{ secrets.HUGGING_FACE_HUB_TOKEN }}
+        run: >-
+          python tools/acquire_hf_publisher_token.py
+          --target-repo SZLHOLDINGS/szl-foundation-confirmation --target-type space --allow-create
+          --github-env "${GITHUB_ENV}" --report reports/foundation-credential.json
+      - name: Publish exact protected source and verify Hub/runtime parity
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${GITHUB_SHA}"
+          git diff --exit-code
+          python tools/publish_hf_space.py \
+            --source-dir spaces/szl-foundation-confirmation \
+            --repo-id SZLHOLDINGS/szl-foundation-confirmation \
+            --source-revision "${GITHUB_SHA}" --publish --wait-seconds 1500 \
+            --smoke-path / --smoke-path /live --smoke-path /readyz --smoke-path /api/build-info \
+            --report reports/foundation-publication.json
+      - name: Witness three real public model trials and receipt hashes
+        run: >-
+          python foundation-confirmation/verify_public_runtime.py
+          --origin https://szlholdings-szl-foundation-confirmation.hf.space
+          --expected-source "${GITHUB_SHA}" --report reports/foundation-public-inference.json
+      - name: Retain publication and inference evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: foundation-publication-${{ github.run_id }}
+          path: reports/foundation-*.json
+          if-no-files-found: error
+          retention-days: 90

@@ -99,7 +99,7 @@ CREDENTIAL_FAILURE_CODES = frozenset({
     "OIDC_EXCHANGE_UNAVAILABLE", "OIDC_EXCHANGE_REJECTED",
     "INVALID_OIDC_TOKEN_RESPONSE", "AMBIENT_HUB_CREDENTIAL_REJECTED",
     "CROSS_TARGET_TOKEN_REUSE_REJECTED", "INVALID_KERNEL_REFS",
-    "TARGET_ACCESS_VALIDATION_FAILED",
+    "MODEL_WRITE_ACCESS_VALIDATION_FAILED", "KERNEL_REFS_VALIDATION_FAILED",
 })
 SENSITIVE_ENV_MARKERS = (
     "TOKEN",
@@ -214,6 +214,12 @@ def record_credential_failure(
         and exc.args[0] in CREDENTIAL_FAILURE_CODES
     ):
         failure["error_code"] = exc.args[0]
+        if exc.args[0] in {"MODEL_WRITE_ACCESS_VALIDATION_FAILED", "KERNEL_REFS_VALIDATION_FAILED"}:
+            # Revalidate the helper's additive metadata. Never serialize the
+            # provider response or coerce arbitrary status-like objects.
+            status = vars(exc).get("http_status")
+            if type(status) is int and 400 <= status <= 599:
+                failure["http_status"] = status
     result = {
         "schema": "szl.kernel-publication-preflight-failure/v1",
         "mode": "PUBLISH",

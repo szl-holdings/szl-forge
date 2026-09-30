@@ -15,6 +15,28 @@ visible in the explorer and the complete release.
 - [Explorer source](../spaces/szl-forge-lab/foundation/)
 - [Download the frozen v0.4 research release](../spaces/szl-forge-lab/foundation/data/release.zip)
 
+## Real exploratory inference
+
+The separate [Foundation Confirmation Workbench](https://huggingface.co/spaces/SZLHOLDINGS/szl-foundation-confirmation)
+executes the original three trained selectors on CPU. Its Python adapter wraps
+the unchanged sealed runtime, verifies the complete release, recomputes the
+failed benchmark and executes each checkpoint before admitting a trial. It
+accepts bounded structured requests, limits shared compute, and provides
+exportable unsigned execution receipts with exact request, result, source and
+checkpoint hashes. Public receipts live in bounded process memory and can be
+lost on idle sleep or restart. This is an on-demand exploratory service.
+
+The protected `foundation-runtime.yml` workflow verifies the Linux container
+and all three models before publishing exact source to the dedicated Space.
+It then witnesses three actual public inference calls and their receipt
+readbacks. Those publication records establish source and runtime consistency;
+they do not turn the failed scientific gate into a pass.
+
+[Current-user Windows startup](operations/README.md) supervises the original
+local workbench while preserving its saved trials. Registration, on-demand
+execution and owned-process restart have separate evidence. Logon startup does
+not imply a tested machine reboot or an always-on public availability promise.
+
 ## Research release and showcase version
 
 The original v0.4 ZIP contains all source, three trained selectors and their
