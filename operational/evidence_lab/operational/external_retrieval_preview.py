@@ -18,6 +18,13 @@ from external_retrieval_lab import LocalService, load_json, digest, paths, CONFI
 sys.path.insert(0, str(HERE.parent / "risk_kernel"))
 from unresolved_identifier_gate_v3 import corpus_vocabulary, gate_decision
 
+# Vendored SZL KANCHAY design-system stylesheet and favicon, served read-only from fixed
+# paths: explicit URL -> (file under retrieval_web, media type), no mount or listing.
+SZL_ASSET_ROUTES = {
+    "/szl/szl-design-system.css": ("szl/szl-design-system.css", "text/css; charset=utf-8"),
+    "/szl/logos/szl_favicon.svg": ("szl/logos/szl_favicon.svg", "image/svg+xml"),
+}
+
 
 def apply_identifier_guard(question, output, vocabulary):
     """Preserve the base result unless the optional lexical policy abstains."""
@@ -84,7 +91,8 @@ def create_preview(service, summary, port=8766):
     app = FastAPI(title="SZL Evidence Lab", docs_url=None, redoc_url=None, openapi_url=None)
     hosts = {f"127.0.0.1:{port}", f"localhost:{port}"}
     assets = HERE / "retrieval_web"
-    bound = {name: digest(assets / name) for name in ("index.html", "app.css", "app.js")}
+    bound = {name: digest(assets / name) for name in (
+        "index.html", "app.css", "app.js", *(name for name, _ in SZL_ASSET_ROUTES.values()))}
     preview_sha = digest(__file__)
     code_paths = {"preview": Path(__file__)}
     code_paths.update({name: HERE / name for name in (
@@ -120,10 +128,10 @@ def create_preview(service, summary, port=8766):
             "Permissions-Policy": "camera=(), microphone=(), geolocation=()"})
         return response
 
-    def static(name):
+    def static(name, media_type=None):
         if digest(assets / name) != bound[name]:
             raise HTTPException(status_code=503, detail="Preview assets changed; restart required")
-        return FileResponse(assets / name)
+        return FileResponse(assets / name, media_type=media_type)
 
     @app.get("/")
     def home():
@@ -136,6 +144,14 @@ def create_preview(service, summary, port=8766):
     @app.get("/app.js")
     def javascript():
         return static("app.js")
+
+    def vendored(name, media_type):
+        def szl_asset():
+            return static(name, media_type)
+        return szl_asset
+
+    for route, (name, media_type) in SZL_ASSET_ROUTES.items():
+        app.add_api_route(route, vendored(name, media_type), methods=["GET"])
 
     @app.get("/api/status")
     def status():

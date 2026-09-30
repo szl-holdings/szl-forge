@@ -27,6 +27,9 @@ SOURCE_FILES = (
     "model_candidates/networks.py",
     "model_candidates/workbench.py",
     "model_candidates/blueprint.py",
+    # The workbench links this vendored stylesheet; SOURCE.json pins its bytes.
+    "model_candidates/assets/szl/szl-design-system.css",
+    "model_candidates/assets/szl/SOURCE.json",
 )
 MAX_FILE = 512 * 1024
 _SHA = re.compile(r"[0-9a-f]{40}\Z")
@@ -83,7 +86,9 @@ def project_source(key: str, revision: str, sources: dict[str, bytes]) -> dict[s
         'description = "Source-only SZL research candidate; no trained weights"\n'
         'requires-python = ">=3.11"\nlicense = "Apache-2.0"\n'
         'readme = "README.md"\ndependencies = []\n\n'
-        '[tool.setuptools]\npackages = ["model_candidates"]\n'
+        '[tool.setuptools]\npackages = ["model_candidates"]\ninclude-package-data = false\n\n'
+        '[tool.setuptools.package-data]\n'
+        'model_candidates = ["assets/szl/szl-design-system.css", "assets/szl/SOURCE.json"]\n'
     ).encode()
     files["README.md"] = f'''---
 license: apache-2.0
@@ -103,7 +108,9 @@ Canonical source: https://github.com/{SOURCE_REPOSITORY}/tree/{revision}/model_c
 
 `architecture.json` carries the exact recipe, named features or byte vocabulary,
 configuration and limitations state from GitHub. The shared `model_candidates`
-Python source is included unchanged; the selected candidate is `{key}`. The
+Python source and the vendored SZL KANCHAY stylesheet its local workbench serves
+(`assets/szl/`, pinned by its `SOURCE.json`) are included unchanged; the selected
+candidate is `{key}`. The
 original kernel identities and existing signed model releases are untouched.
 
 ## Inspect before training
