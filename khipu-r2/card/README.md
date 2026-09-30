@@ -31,6 +31,8 @@ szl:
   evals: MEASURED
   gpu: UNAVAILABLE
 ---
+<!-- szl:artifact-identity-reconciled -->
+> **Artifact identity (noted 2026-09-30).** Besides the LoRA adapter, this repository's root carries a merged full-precision checkpoint (`model.safetensors` + `config.json`, loadable with `transformers`) produced by the receipted CPU merge of this adapter into its declared base (`merge_receipt.json`). The adapter remains the artifact of record for every figure on this card; the merged bytes carry no separate held-out receipt and add no claim. Metadata-only note.
 
 # KHIPU-R2
 
