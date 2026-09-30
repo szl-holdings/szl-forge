@@ -41,6 +41,7 @@ import os
 import pathlib
 import platform
 import re
+import sys
 
 SCHEMA = "szl.omen-pipeline/v2"
 SEED = 11
@@ -114,6 +115,15 @@ def require_cuda(stage: str, receipt_path: pathlib.Path) -> tuple[int | None, di
         "device_count": torch.cuda.device_count(),
     }
     return None, hw
+
+
+def hub_token_present() -> bool:
+    """True if huggingface_hub can find a token (HF_TOKEN env or the local token file). Never returns the value."""
+    try:
+        from huggingface_hub import get_token
+        return bool(get_token())
+    except Exception:
+        return bool(os.environ.get("HF_TOKEN"))
 
 
 def pin_revision(repo_id: str, repo_type: str = "model") -> str:
@@ -524,8 +534,8 @@ def cmd_cards(apply: bool, direct: bool, owner_confirmed: bool, out: pathlib.Pat
     receipt_path = out / "cards_receipt.json"
     if apply and not owner_confirmed:
         return fail_closed(receipt_path, "cards", "OWNER_GATE_CLOSED: --apply requires --owner-confirmed-wo6 (exposed tokens revoked)")
-    if apply and not os.environ.get("HF_TOKEN"):
-        return fail_closed(receipt_path, "cards", "HF_TOKEN_MISSING: set HF_TOKEN in this shell only; never paste it in chat or a prompt")
+    if apply and not hub_token_present():
+        return fail_closed(receipt_path, "cards", "HF_TOKEN_MISSING: set HF_TOKEN in this shell or save it via the Notepad token-file route; never paste it in chat")
     api = HfApi()
     today = utcnow()[:10]
     items = []
@@ -580,8 +590,8 @@ def cmd_publish(folder: pathlib.Path, only: str | None, owner_confirmed: bool) -
             return fail_closed(receipt_path, "publish", f"CHALLENGER_NOT_PUBLISHABLE: {rp} carries publication_eligible=false; this tool never publishes challengers")
     if not owner_confirmed:
         return fail_closed(receipt_path, "publish", "OWNER_GATE_CLOSED: publish requires --owner-confirmed-wo6 (exposed tokens revoked)")
-    if not os.environ.get("HF_TOKEN"):
-        return fail_closed(receipt_path, "publish", "HF_TOKEN_MISSING: set HF_TOKEN in this shell only; never paste it in chat or a prompt")
+    if not hub_token_present():
+        return fail_closed(receipt_path, "publish", "HF_TOKEN_MISSING: set HF_TOKEN in this shell or save it via the Notepad token-file route; never paste it in chat")
     from huggingface_hub import HfApi, upload_folder
 
     api = HfApi()
