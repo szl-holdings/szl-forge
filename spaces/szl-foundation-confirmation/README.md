@@ -6,7 +6,7 @@ colorTo: gray
 sdk: docker
 app_port: 7860
 license: apache-2.0
-short_description: Real small-model CPU trials with bounded exportable evidence.
+short_description: Real CPU model trials with exportable receipts.
 suggested_hardware: cpu-basic
 startup_duration_timeout: 30m
 tags:
@@ -30,7 +30,7 @@ Receipts are bounded and ephemeral: at most 128, each at most 64KiB, and retaine
 
 CPU Basic is an on-demand service and may sleep when idle. It is not an always-on availability promise. No GPU, paid hardware upgrade or automatic training is enabled by this build.
 
-[Read the frozen experiment and replay evidence](https://a11oy.net/experiments/confirmation/) Â· [A11oy research entry](https://a-11-oy.com/research/confirmation)
+[Read the frozen experiment and replay evidence](https://a11oy.net/experiments/confirmation/) · [A11oy research entry](https://a-11-oy.com/research/confirmation)
 
 Archive SHA-256: `869e318dd5f328205dd181ee836ef267bd2ae278f6430a9e8ddc661fbc689d03`.
 
