@@ -108,6 +108,22 @@ jobs:
             --source-revision "${GITHUB_SHA}" --publish --wait-seconds 1500 \
             --smoke-path / --smoke-path /live --smoke-path /readyz --smoke-path /api/build-info \
             --report reports/foundation-publication.json
+      - name: Expose redacted terminal publication diagnosis
+        if: failure()
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import re
+          path = Path('reports/foundation-publication.json')
+          if path.exists():
+              report = json.loads(path.read_text(encoding='utf-8'))
+              if report.get('ok') is False:
+                  message = str(report.get('fatal') or 'Publication failed without a terminal diagnosis')
+                  message = re.sub(r'hf_[A-Za-z0-9]{10,}', '[REDACTED_HF_CREDENTIAL]', message)[:1800]
+                  message = message.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+                  print('::error title=Foundation Hub publication::' + message)
+          PY
       - name: Witness three real public model trials and receipt hashes
         run: >-
           python foundation-confirmation/verify_public_runtime.py
