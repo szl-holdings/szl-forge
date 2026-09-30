@@ -228,5 +228,53 @@ class SpacePublicationPlanTests(unittest.TestCase):
         api.restart_space.assert_called_once_with(repo_id="owner/space")
 
 
+
+class PublishedByteVerificationTests(unittest.TestCase):
+    def _files(self, **contents: bytes) -> dict[str, dict[str, object]]:
+        return {
+            name: {"sha256": publisher.sha256_bytes(data), "size": len(data)}
+            for name, data in contents.items()
+        }
+
+    def test_payload_files_require_exact_bytes(self) -> None:
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory)
+            (source / "Dockerfile").write_bytes(b"FROM scratch\n")
+            files = self._files(Dockerfile=b"FROM scratch\n")
+            receipt = publisher.verify_published_bytes(
+                files, source, lambda target: b"FROM scratch\n"
+            )
+            self.assertEqual({}, receipt)
+            with self.assertRaisesRegex(publisher.PublishError, "byte mismatch: Dockerfile"):
+                publisher.verify_published_bytes(files, source, lambda target: b"FROM other\n")
+
+    def test_gitattributes_accepts_hub_appended_lfs_rules_only(self) -> None:
+        import tempfile
+        from pathlib import Path
+
+        source_text = b"* -text\nrelease.zip -filter -diff -merge -text\n"
+        published = source_text + b"release.zip filter=lfs diff=lfs merge=lfs -text\n"
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory)
+            (source / ".gitattributes").write_bytes(source_text)
+            files = self._files(**{".gitattributes": source_text})
+            receipt = publisher.verify_published_bytes(files, source, lambda target: published)
+            entry = receipt[".gitattributes"]
+            self.assertEqual("SOURCE_LINES_PRESENT_NOT_BYTE_PARITY", entry["verification"])
+            self.assertEqual(publisher.sha256_bytes(source_text), entry["source_sha256"])
+            self.assertEqual(publisher.sha256_bytes(published), entry["published_sha256"])
+            self.assertEqual(
+                ["release.zip filter=lfs diff=lfs merge=lfs -text"], entry["hub_appended_lines"]
+            )
+            with self.assertRaisesRegex(publisher.PublishError, "missing="):
+                publisher.verify_published_bytes(files, source, lambda target: b"* -text\n")
+            with self.assertRaisesRegex(publisher.PublishError, "foreign="):
+                publisher.verify_published_bytes(
+                    files, source, lambda target: source_text + b"secret.bin -text\n"
+                )
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
