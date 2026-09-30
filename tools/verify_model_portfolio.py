@@ -238,9 +238,27 @@ def audit_live_artifact(
             "software_kernel unexpectedly contains model weight files: "
             + ", ".join(item["path"] for item in weight_files)
         )
-    total_weight_bytes = sum(int(item["size"] or 0) for item in weight_files)
+    known_weight_bytes = 0
+    weight_sizes_known = True
+    for item in weight_files:
+        size = item["size"]
+        if size is None:
+            errors.append(f"{item['path']}: weight size is unknown")
+            weight_sizes_known = False
+        elif isinstance(size, bool) or not isinstance(size, int) or size < 0:
+            errors.append(f"{item['path']}: invalid weight size {size!r}")
+            weight_sizes_known = False
+        elif size == 0:
+            errors.append(f"{item['path']}: empty weight artifact")
+        else:
+            known_weight_bytes += size
+    total_weight_bytes = known_weight_bytes if weight_sizes_known else None
     maximum = artifact.get("max_total_weight_bytes")
-    if maximum is not None and total_weight_bytes > int(maximum):
+    if (
+        maximum is not None
+        and total_weight_bytes is not None
+        and total_weight_bytes > int(maximum)
+    ):
         errors.append(
             f"weight bytes {total_weight_bytes} exceed declared maximum {maximum}"
         )
@@ -263,26 +281,38 @@ def audit_live_artifact(
     receipt_parity: dict[str, Any] | None = None
     local_dir = artifact.get("local_receipt_dir")
     if local_dir:
-        local_root = ROOT / local_dir
-        receipt_parity = {}
-        for name in RECEIPT_FILES:
-            remote = Path(
-                hf_hub_download(
-                    repo_id=artifact["repo_id"],
-                    filename=name,
-                    repo_type="model",
-                    force_download=True,
+        resolved_revision = info.sha
+        valid_revision = (
+            isinstance(resolved_revision, str)
+            and len(resolved_revision) == 40
+            and all(character in "0123456789abcdef" for character in resolved_revision)
+        )
+        if not valid_revision:
+            errors.append("receipt parity requires an exact resolved Hub revision")
+        elif pinned_revision and resolved_revision != pinned_revision:
+            warnings.append("receipt parity skipped because the resolved Hub revision drifted")
+        else:
+            local_root = ROOT / local_dir
+            receipt_parity = {}
+            for name in RECEIPT_FILES:
+                remote = Path(
+                    hf_hub_download(
+                        repo_id=artifact["repo_id"],
+                        filename=name,
+                        repo_type="model",
+                        revision=resolved_revision,
+                        force_download=True,
+                    )
                 )
-            )
-            local_sha = sha256_source(local_root / name)
-            remote_sha = sha256_path(remote)
-            receipt_parity[name] = {
-                "local_sha256": local_sha,
-                "remote_sha256": remote_sha,
-                "matched": local_sha == remote_sha,
-            }
-            if local_sha != remote_sha:
-                errors.append(f"{name}: Hub bytes differ from canonical Git source")
+                local_sha = sha256_source(local_root / name)
+                remote_sha = sha256_path(remote)
+                receipt_parity[name] = {
+                    "local_sha256": local_sha,
+                    "remote_sha256": remote_sha,
+                    "matched": local_sha == remote_sha,
+                }
+                if local_sha != remote_sha:
+                    errors.append(f"{name}: Hub bytes differ from canonical Git source")
 
     return {
         "repo_id": artifact["repo_id"],
