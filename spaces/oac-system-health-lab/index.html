@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="A non-authoritative OAC synthetic operational health model preview. No patient or clinical data.">
+  <title>OAC Health Lab · SZL</title>
+  <style>
+    :root{--paper:#f6f5f0;--surface:#fff;--ink:#202d29;--muted:#58655f;--line:#d6ded6;--green:#184b3e;--green-soft:#edf4ee;--amber:#68430b;--amber-soft:#fff4df;--red:#892c2c;--red-soft:#fff0ed;--radius:20px}
+    *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.55}a{color:var(--green);text-underline-offset:4px}a:hover{text-decoration-thickness:2px}button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:wait;opacity:.65}:focus-visible{outline:3px solid #9b6000;outline-offset:4px}h1,h2,h3,p{margin:0}h1{font-size:clamp(2.2rem,5vw,4.1rem);letter-spacing:-.055em;line-height:1.08;font-weight:600}h2{font-size:1.25rem;letter-spacing:-.02em}h3{font-size:1rem}strong{font-weight:650}small{font-size:.8rem}.wrap{width:min(1200px,calc(100% - 48px));margin:auto}.masthead{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:25px 0;border-bottom:1px solid var(--line)}.brand{display:flex;align-items:center;gap:11px;font-size:1rem;font-weight:700;letter-spacing:.1em}.brand-mark{width:32px;height:32px;border:1px solid var(--green);border-radius:50%;display:grid;place-items:center;color:var(--green);font-size:.72rem;letter-spacing:-.04em}.masthead nav{display:flex;gap:22px;font-size:.83rem}.masthead a{text-decoration:none}.skip-link{position:absolute;left:16px;top:-80px;padding:12px 18px;background:var(--surface);z-index:2}.skip-link:focus{top:12px}.hero{display:grid;grid-template-columns:1.25fr .75fr;gap:48px;padding:54px 0 36px;align-items:end}.eyebrow{font-size:.71rem;letter-spacing:.15em;font-weight:700;text-transform:uppercase;color:var(--green);margin-bottom:16px}.hero-text{margin-top:20px;color:var(--muted);max-width:590px;font-size:1rem}.scope{border-left:2px solid var(--green);padding:4px 0 4px 22px;max-width:380px}.scope p{font-size:.87rem;color:var(--muted);margin-top:8px}.scope strong{font-size:.87rem}.status-line{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:.79rem;margin-bottom:20px}.dot{height:7px;width:7px;border-radius:50%;background:#75837b;flex-shrink:0}.status-line[data-state="ready"] .dot{background:var(--green)}.status-line[data-state="unavailable"] .dot{background:var(--red)}.workspace{display:grid;grid-template-columns:1fr .88fr;gap:24px;align-items:start}.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}.card-head{padding:26px 28px 20px;border-bottom:1px solid var(--line)}.card-head p{font-size:.85rem;color:var(--muted);margin-top:5px}.head-row{display:flex;justify-content:space-between;gap:16px;align-items:center}.badge{font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--line);border-radius:99px;padding:5px 9px;white-space:nowrap;color:var(--muted)}.form-body{padding:24px 28px}.preset-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:24px}.preset-row span{font-size:.75rem;color:var(--muted);margin-right:3px}.small-button{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 11px;font-size:.75rem;color:var(--ink)}.small-button:hover{border-color:var(--green);background:var(--green-soft)}fieldset{margin:0;padding:0;border:0;min-width:0}legend{padding:0;font-size:.73rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}.toggle-list{display:grid;gap:0;margin-bottom:24px}.toggle-row{display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid #ebeeea;padding:12px 0}.toggle-row:last-child{border-bottom:0}.toggle-row label{font-size:.89rem}.toggle-row label small{display:block;color:var(--muted);font-size:.75rem;margin-top:2px;font-weight:400}.toggle-row input{width:21px;height:21px;accent-color:var(--green);flex-shrink:0}.numeric-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.numeric-field label{display:block;font-size:.76rem;font-weight:600;min-height:2.4em;line-height:1.2}.numeric-field input{display:block;width:100%;padding:11px 10px;border-radius:9px;border:1px solid #bdc9bf;color:var(--ink);background:#fff;margin-top:7px;font-variant-numeric:tabular-nums}.numeric-field small{display:block;color:var(--muted);font-size:.68rem;margin-top:5px}.submit-row{display:flex;align-items:center;gap:16px;margin-top:26px}.primary-button{background:var(--green);border:1px solid var(--green);border-radius:10px;color:#fff;padding:12px 18px;font-size:.88rem;font-weight:600;min-height:46px;flex-shrink:0}.primary-button:hover{background:#103b30}.submit-row p{font-size:.73rem;color:var(--muted);line-height:1.4}.form-note{padding:15px 28px;background:#f9faf7;border-top:1px solid var(--line);font-size:.73rem;color:var(--muted)}.result-body{padding:28px}.result-state{font-size:.73rem;color:var(--muted);letter-spacing:.04em}.result-state[data-state="attention"]{color:var(--amber)}.result-state[data-state="unavailable"]{color:var(--red)}.score-row{display:flex;justify-content:space-between;align-items:flex-end;gap:15px;margin-top:12px}.score-value{font-size:clamp(3.4rem,6vw,5rem);line-height:1;letter-spacing:-.055em;font-variant-numeric:tabular-nums;font-weight:550}.score-label{font-size:.72rem;color:var(--muted);margin-top:9px}.threshold{font-size:.75rem;text-align:right;color:var(--muted);padding-bottom:5px}.threshold strong{display:block;font-size:1.15rem;color:var(--ink);font-variant-numeric:tabular-nums}.score-track{height:7px;background:#e9eeea;position:relative;border-radius:10px;margin:23px 0 14px;overflow:hidden}.score-fill{height:100%;width:0;background:var(--green);border-radius:10px;transition:width .2s}.score-track[data-state="attention"] .score-fill{background:#97621a}.score-track .threshold-marker{position:absolute;height:7px;width:2px;left:0;top:0;background:var(--ink);display:none}.decision{padding:13px 15px;border-radius:10px;background:var(--green-soft);font-size:.84rem;color:var(--green);margin-bottom:20px}.decision[data-state="attention"]{background:var(--amber-soft);color:var(--amber)}.decision[data-state="unavailable"]{background:var(--red-soft);color:var(--red)}.contribution-head{display:flex;gap:16px;justify-content:space-between;align-items:center;margin-top:24px}.contribution-head span{font-size:.68rem;color:var(--muted)}.contributions{margin:10px 0 0}.contributions div{display:flex;align-items:center;justify-content:space-between;gap:14px;border-bottom:1px solid #ebeeea;padding:8px 0;font-size:.77rem}.contributions dt{color:var(--muted)}.contributions dd{margin:0;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-variant-numeric:tabular-nums}.contribution-note{font-size:.72rem;color:var(--muted);margin-top:11px}.limits{padding:20px 28px;background:#f9faf7;border-top:1px solid var(--line)}.limits h3{font-size:.76rem}.limits ul{display:grid;grid-template-columns:1fr 1fr;gap:7px 16px;list-style:none;padding:0;margin:10px 0 0;font-size:.72rem;color:var(--muted)}.limits li::before{content:"×";font-weight:700;color:var(--red);padding-right:7px}.provenance{margin-top:28px;padding:27px 28px}.provenance-top{display:flex;align-items:center;justify-content:space-between;gap:20px}.provenance-intro{font-size:.8rem;color:var(--muted);margin-top:6px}.source-links{display:flex;flex-wrap:wrap;gap:12px 22px;margin-top:17px;font-size:.8rem}.identity-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 32px;margin:23px 0 0}.identity-grid div{padding:10px 0;border-top:1px solid #ebeeea;min-width:0}.identity-grid dt{font-size:.68rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}.identity-grid dd{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.72rem;overflow-wrap:anywhere;margin:3px 0 0;color:var(--ink)}.identity-note{font-size:.72rem;color:var(--muted);margin-top:16px}.foot{display:flex;justify-content:space-between;gap:24px;align-items:start;padding:28px 0 38px;font-size:.71rem;color:var(--muted)}.foot p{max-width:670px}.foot span{white-space:nowrap}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}[hidden]{display:none!important}
+    @media(max-width:850px){.hero{grid-template-columns:1fr;gap:28px;padding-top:38px}.scope{max-width:none}.workspace{grid-template-columns:1fr 1fr;gap:16px}.card-head,.form-body,.result-body{padding:21px}.limits,.form-note{padding-left:21px;padding-right:21px}.numeric-grid{grid-template-columns:1fr}.numeric-field label{min-height:0}.submit-row{align-items:start;flex-direction:column;gap:9px}.head-row{align-items:start;flex-direction:column;gap:8px}.limits ul{grid-template-columns:1fr}.provenance{padding:23px}.identity-grid{column-gap:20px}.score-value{font-size:3.4rem}}
+    @media(max-width:620px){.wrap{width:calc(100% - 32px)}.masthead{padding:19px 0}.masthead nav{gap:14px;font-size:.73rem}.brand{font-size:.86rem}.hero{padding-top:32px}.hero-text{font-size:.94rem}.workspace{grid-template-columns:1fr}.numeric-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.numeric-field label{min-height:2.4em;font-size:.7rem}.numeric-field input{padding:10px 7px}.numeric-field small{font-size:.64rem}.head-row{flex-direction:row;align-items:center}.submit-row{flex-direction:row;align-items:center}.identity-grid{grid-template-columns:1fr}.foot{flex-direction:column;gap:12px}.limits ul{grid-template-columns:1fr 1fr}.score-value{font-size:4.2rem}}
+    @media(max-width:370px){.numeric-grid{grid-template-columns:1fr}.numeric-field label{min-height:0}.submit-row{flex-direction:column;align-items:start}.limits ul{grid-template-columns:1fr}.masthead nav{gap:9px}.badge{font-size:.58rem}}
+    @media(prefers-reduced-motion:reduce){.score-fill{transition:none}}
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#workspace">Skip to health lab</a>
+  <div class="wrap">
+    <header class="masthead">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">SZL</span><span>OAC / HEALTH LAB</span></div>
+      <nav aria-label="Page navigation"><a href="#workspace">Preview</a><a href="#provenance">Source</a></nav>
+    </header>
+    <main>
+      <section class="hero" aria-labelledby="page-title">
+        <div><p class="eyebrow">Operational model · Synthetic preview</p><h1 id="page-title">Signals, with<br>clear boundaries.</h1><p class="hero-text">Explore how eight operational counters influence the OAC model’s operator-attention advisory. The Python service scores your input; this page does not simulate a result.</p></div>
+        <aside class="scope" aria-label="Model scope"><strong>Operational telemetry only.</strong><p>No patient, specimen, order, assay, or result data. This model is trained on synthetic examples, is not production-calibrated, and has no clinical or device authority.</p></aside>
+      </section>
+      <div class="status-line" id="service-status" data-state="checking"><span class="dot" aria-hidden="true"></span><span id="service-status-text">Checking service identity…</span></div>
+      <section class="workspace" id="workspace" aria-label="Operational advisory preview">
+        <div class="card">
+          <div class="card-head"><div class="head-row"><h2>Operational inputs</h2><span class="badge">No clinical data</span></div><p>Invented defaults. Change counters, then request an advisory.</p></div>
+          <form id="score-form">
+            <div class="form-body">
+              <div class="preset-row"><span>Synthetic presets</span><button type="button" class="small-button" id="preset-healthy">Healthy example</button><button type="button" class="small-button" id="preset-degraded">Degraded example</button></div>
+              <fieldset id="feature-fields">
+                <legend>Configuration &amp; integrity</legend>
+                <div class="toggle-list">
+                  <div class="toggle-row"><label for="listener_running">Listener running<small>Local process reports running.</small></label><input id="listener_running" name="listener_running" type="checkbox" checked></div>
+                  <div class="toggle-row"><label for="tls_enabled">TLS enabled<small>Transport encryption is configured.</small></label><input id="tls_enabled" name="tls_enabled" type="checkbox" checked></div>
+                  <div class="toggle-row"><label for="peer_allowlist_configured">Peer allowlist configured<small>Allowed transport peers are explicitly scoped.</small></label><input id="peer_allowlist_configured" name="peer_allowlist_configured" type="checkbox" checked></div>
+                  <div class="toggle-row"><label for="ledger_integrity_ok">Ledger integrity check passed<small>A local operational check, not an attestation.</small></label><input id="ledger_integrity_ok" name="ledger_integrity_ok" type="checkbox" checked></div>
+                  <div class="toggle-row"><label for="configuration_valid">Configuration valid<small>Local configuration validation passed.</small></label><input id="configuration_valid" name="configuration_valid" type="checkbox" checked></div>
+                </div>
+                <div class="numeric-grid">
+                  <div class="numeric-field"><label for="queue_utilization">Queue utilization</label><input id="queue_utilization" name="queue_utilization" type="number" min="0" max="1" step="any" value="0.08" required aria-describedby="queue-help"><small id="queue-help">Fraction, 0–1</small></div>
+                  <div class="numeric-field"><label for="consecutive_failures">Consecutive failures</label><input id="consecutive_failures" name="consecutive_failures" type="number" min="0" max="20" step="1" value="0" required aria-describedby="failures-help"><small id="failures-help">Count, 0–20</small></div>
+                  <div class="numeric-field"><label for="seconds_since_last_success">Time since success</label><input id="seconds_since_last_success" name="seconds_since_last_success" type="number" min="0" max="86400" step="1" value="20" required aria-describedby="age-help"><small id="age-help">Seconds, 0–86,400</small></div>
+                </div>
+              </fieldset>
+              <div class="submit-row"><button class="primary-button" id="score-button" type="submit" disabled>Request advisory</button><p>Sent only to this service.<br>No browser storage or automatic retries.</p></div>
+            </div>
+            <p class="form-note">The examples are invented—not live device readings. This page does not discover devices, ingest messages, or retain submitted features in browser storage.</p>
+          </form>
+        </div>
+        <section class="card" id="advisory-panel" aria-labelledby="advisory-title" aria-busy="false">
+          <div class="card-head"><div class="head-row"><h2 id="advisory-title">Operator advisory</h2><span class="badge">Non-authoritative</span></div><p>A synthetic attention score, not a clinical probability.</p></div>
+          <div class="result-body">
+            <p class="result-state" id="result-state" data-state="idle">Awaiting a request</p>
+            <div class="score-row"><div><p class="score-value" id="score-value">—</p><p class="score-label">Synthetic attention score · 0–1</p></div><p class="threshold">Advisory threshold<strong id="threshold-value">—</strong></p></div>
+            <div class="score-track" id="score-track" aria-hidden="true"><div class="score-fill" id="score-fill"></div><span class="threshold-marker" id="threshold-marker"></span></div>
+            <p class="decision" id="decision" data-state="idle">Request an advisory to see the server’s result. No score has been generated yet.</p>
+            <div class="contribution-head"><h3>Feature contributions</h3><span>Normalized logit terms</span></div>
+            <dl class="contributions" id="contributions"><div><dt>No result yet</dt><dd>—</dd></div></dl>
+            <p class="contribution-note">Positive terms raise the model’s linear score; negative terms lower it. These are not causal explanations or percentages. The intercept is not shown.</p>
+            <p class="sr-only" id="result-announcement" role="status" aria-live="polite" aria-atomic="true"></p>
+          </div>
+          <aside class="limits" aria-label="Authority prohibitions"><h3>This advisory cannot authorize</h3><ul><li>Message acknowledgement</li><li>Device control</li><li>Clinical decisions</li><li>Result interpretation</li><li>Result release</li><li>Production promotion</li></ul></aside>
+        </section>
+      </section>
+      <section class="card provenance" id="provenance" aria-labelledby="source-title">
+        <div class="provenance-top"><h2 id="source-title">Source &amp; artifact identity</h2><button class="small-button" id="refresh-identity" type="button">Refresh identity</button></div>
+        <p class="provenance-intro">Canonical Python source in GitHub. Model and synthetic dataset in Hugging Face. Revisions below are returned by the running service.</p>
+        <div class="source-links"><a href="https://github.com/szl-holdings/szl-forge/tree/main/clinical-gateway" target="_blank" rel="noopener noreferrer">Canonical GitHub source ↗</a><a href="https://huggingface.co/SZLHOLDINGS/oac-system-health-v1" target="_blank" rel="noopener noreferrer">Model &amp; kernel ↗</a><a href="https://huggingface.co/datasets/SZLHOLDINGS/oac-clinical-transport-observability-synthetic" target="_blank" rel="noopener noreferrer">Synthetic dataset ↗</a><a href="/api/v1/identity" target="_blank" rel="noopener noreferrer">Identity manifest ↗</a><a href="/readyz" target="_blank" rel="noopener noreferrer">Readiness endpoint ↗</a></div>
+        <dl class="identity-grid" id="identity-grid"><div><dt>Service identity</dt><dd>Checking…</dd></div></dl>
+        <p class="identity-note">A reported revision and a matching local artifact hash are not independent deployment attestation, clinical validation, or proof of physical device compatibility. No signed operational receipt is minted by this preview.</p>
+      </section>
+    </main>
+    <footer class="foot"><p>Synthetic examples establish implementation behavior only. Real-world performance, regulatory qualification, site acceptance, and clinical result paths require separate evidence.</p><span>SZL · OAC System Health v1</span></footer>
+  </div>
+  <noscript><p class="wrap">JavaScript is required to request a server advisory. No score is computed without it. The source and identity links remain available.</p></noscript>
+  <script>
+    "use strict";
+    const featureNames = ["listener_running", "tls_enabled", "peer_allowlist_configured", "queue_utilization", "consecutive_failures", "seconds_since_last_success", "ledger_integrity_ok", "configuration_valid"];
+    const binaryNames = ["listener_running", "tls_enabled", "peer_allowlist_configured", "ledger_integrity_ok", "configuration_valid"];
+    const authorityNames = ["acknowledgement", "clinical_decision", "device_control", "result_interpretation", "result_release"];
+    const labels = {listener_running:"Listener running",tls_enabled:"TLS enabled",peer_allowlist_configured:"Peer allowlist",queue_utilization:"Queue utilization",consecutive_failures:"Consecutive failures",seconds_since_last_success:"Time since success",ledger_integrity_ok:"Ledger integrity",configuration_valid:"Configuration valid"};
+    const el = (id) => document.getElementById(id);
+    const form = el("score-form");
+    let serviceReady = false;
+    let busy = false;
+    let identityBusy = false;
+    const isObject = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
+    const isFiniteNumber = (value) => typeof value === "number" && Number.isFinite(value);
+    const gitRevision = (value) => typeof value === "string" && /^[a-f0-9]{40}$/.test(value);
+    const exactKeys = (value, keys) => isObject(value) && Object.keys(value).length === keys.length && keys.every((key) => Object.hasOwn(value, key));
+    const pinnedIdentity = {
+      artifact_source: {repository:"szl-holdings/szl-forge",revision:"48cb7630dc5c6982cf14755da72d3d07cd45740c",directory:"clinical-gateway/huggingface/model/oac-system-health-v1"},
+      hub_model: {repo_id:"SZLHOLDINGS/oac-system-health-v1",revision:"dd7d109813abcd90c5250106dc2eabd2804e7ac3"},
+      hub_dataset: {repo_id:"SZLHOLDINGS/oac-clinical-transport-observability-synthetic",revision:"f7ab6170bf78138b187b8cb707d374a25ad85375"},
+      artifacts: {"oac_operational_health.py":"2fd8ffd3fd3ca8d0f960d4e0d471593b86e6cccb03607116390cbe9300992669","model.json":"f111b7fc65db561c80763b25e538366a19bed18526ca881915777487935d9557","artifact_receipt.json":"23239bb39b0a5b6db1e41284e6372f352cee61d7938da1e84472246dcdaf95a1"}
+    };
+    function matchesPins(value) {
+      return Object.entries(pinnedIdentity).every(([section, expected]) => exactKeys(value[section], Object.keys(expected)) && Object.entries(expected).every(([key, pin]) => value[section][key] === pin));
+    }
+    function validateIdentity(value) {
+      if (!isObject(value) || value.schema !== "szl.oac-health-space-identity/v1" || value.state !== "READY" || !exactKeys(value.application, ["repository", "revision"]) || value.application.repository !== "szl-holdings/szl-forge" || !gitRevision(value.application.revision) || !matchesPins(value) || value.synthetic_training_data !== true || value.clinical_use_authorized !== false || value.production_promotion_allowed !== false) {
+        throw new Error("The service identity is unavailable or does not match the expected preview contract.");
+      }
+      return value;
+    }
+    function validateScore(value) {
+      if (!isObject(value) || value.ok !== true || value.receipt_minted !== false || !isObject(value.advisory)) throw new Error("The service did not return a valid advisory.");
+      validateIdentity(value.identity);
+      const advisory = value.advisory;
+      if (advisory.schema !== "szl-oac/transport-health-advisory/v1" || advisory.score_semantics !== "synthetic_attention_score_not_production_calibrated" || advisory.purpose !== "synthetic_operational_transport_attention_only" || !isFiniteNumber(advisory.operator_attention_score) || advisory.operator_attention_score < 0 || advisory.operator_attention_score > 1 || !isFiniteNumber(advisory.decision_threshold) || advisory.decision_threshold < 0 || advisory.decision_threshold > 1 || typeof advisory.operator_attention_required !== "boolean" || advisory.operator_attention_required !== (advisory.operator_attention_score >= advisory.decision_threshold) || !exactKeys(advisory.authority, authorityNames) || !Object.values(advisory.authority).every((flag) => flag === false) || !exactKeys(advisory.normalized_feature_contributions, featureNames) || !Object.values(advisory.normalized_feature_contributions).every(isFiniteNumber)) {
+        throw new Error("The advisory failed score, feature, or authority checks. No result is displayed.");
+      }
+      return advisory;
+    }
+    async function requestJSON(path, options = {}) {
+      const controller = new AbortController();
+      const deadline = setTimeout(() => controller.abort(), 10000);
+      try {
+        const response = await fetch(path, {...options, signal:controller.signal, cache:"no-store", credentials:"omit", redirect:"error"});
+        if (!response.ok || !/^application\/json(?:\s*;|$)/i.test(response.headers.get("content-type") || "")) throw new Error("The service returned an unavailable or invalid response.");
+        if (!response.body) throw new Error("The service returned an empty response.");
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder("utf-8", {fatal:true});
+        let size = 0;
+        let text = "";
+        try {
+          while (true) {
+            const chunk = await reader.read();
+            if (chunk.done) break;
+            size += chunk.value.byteLength;
+            if (size > 65536) {await reader.cancel(); throw new Error("The service response exceeded the preview limit.");}
+            text += decoder.decode(chunk.value, {stream:true});
+          }
+          text += decoder.decode();
+        } finally {reader.releaseLock();}
+        return JSON.parse(text);
+      } catch (error) {
+        if (controller.signal.aborted) throw new Error("The request exceeded 10 seconds. No automatic retry was made.");
+        throw error;
+      } finally {clearTimeout(deadline);}
+    }
+    function updateControls() {
+      el("score-button").disabled = !serviceReady || busy || identityBusy;
+      el("feature-fields").disabled = busy;
+      el("preset-healthy").disabled = busy;
+      el("preset-degraded").disabled = busy;
+      el("refresh-identity").disabled = busy || identityBusy;
+      el("score-button").textContent = busy ? "Requesting…" : "Request advisory";
+      el("advisory-panel").setAttribute("aria-busy", String(busy));
+    }
+    function serviceStatus(state, text) {el("service-status").dataset.state = state; el("service-status-text").textContent = text;}
+    function addPair(container, key, value) {
+      const row = document.createElement("div");
+      const term = document.createElement("dt");
+      const description = document.createElement("dd");
+      term.textContent = key;
+      description.textContent = value;
+      row.append(term, description);
+      container.append(row);
+    }
+    function renderIdentity(identity) {
+      const grid = el("identity-grid");
+      grid.replaceChildren();
+      addPair(grid, "Application revision", identity.application.revision || "Not reported — local application source is not revision-attested");
+      addPair(grid, "Pinned artifact-source revision", identity.artifact_source.revision);
+      addPair(grid, "Artifact source directory", identity.artifact_source.directory);
+      addPair(grid, "Hugging Face model revision", identity.hub_model.revision);
+      addPair(grid, "Hugging Face dataset revision", identity.hub_dataset.revision);
+      addPair(grid, "Model SHA-256", identity.artifacts["model.json"]);
+      addPair(grid, "Kernel SHA-256", identity.artifacts["oac_operational_health.py"]);
+      addPair(grid, "Artifact receipt SHA-256", identity.artifacts["artifact_receipt.json"]);
+    }
+    function resetResult(state, message) {
+      el("result-state").dataset.state = state;
+      el("result-state").textContent = state === "unavailable" ? "Advisory unavailable" : "Awaiting a request";
+      el("score-value").textContent = "—";
+      el("threshold-value").textContent = "—";
+      el("score-fill").style.width = "0%";
+      el("threshold-marker").style.display = "none";
+      el("score-track").dataset.state = state;
+      el("decision").dataset.state = state;
+      el("decision").textContent = message;
+      el("contributions").replaceChildren();
+      addPair(el("contributions"), "No current result", "—");
+      el("result-announcement").textContent = message;
+    }
+    async function refreshIdentity() {
+      if (busy || identityBusy) return;
+      identityBusy = true;
+      serviceReady = false;
+      updateControls();
+      serviceStatus("checking", "Checking service identity…");
+      resetResult("idle", "Checking service identity. Request an advisory after the service is ready.");
+      try {
+        const identity = validateIdentity(await requestJSON("/api/v1/identity"));
+        renderIdentity(identity);
+        serviceReady = true;
+        serviceStatus("ready", "Service identity ready · synthetic, non-authoritative preview");
+        resetResult("idle", "Service identity is ready. Request an advisory to see the server’s result.");
+      } catch (error) {
+        serviceStatus("unavailable", "Service unavailable · no advisory can be requested");
+        el("identity-grid").replaceChildren();
+        addPair(el("identity-grid"), "Service identity", "Unavailable — no source revision verified by this page");
+        resetResult("unavailable", "The service identity could not be verified. Refresh identity to try again; there are no automatic retries.");
+      } finally {identityBusy = false; updateControls();}
+    }
+    function readFeatures() {
+      const features = {};
+      for (const name of featureNames) features[name] = binaryNames.includes(name) ? el(name).checked : el(name).valueAsNumber;
+      if (!isFiniteNumber(features.queue_utilization) || features.queue_utilization < 0 || features.queue_utilization > 1 || !Number.isInteger(features.consecutive_failures) || features.consecutive_failures < 0 || features.consecutive_failures > 20 || !Number.isInteger(features.seconds_since_last_success) || features.seconds_since_last_success < 0 || features.seconds_since_last_success > 86400) throw new Error("Use valid counters within the displayed ranges.");
+      return features;
+    }
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!serviceReady || busy || identityBusy || !form.reportValidity()) return;
+      let features;
+      try {features = readFeatures();} catch (error) {resetResult("unavailable", error.message); return;}
+      busy = true;
+      updateControls();
+      resetResult("idle", "Requesting a non-authoritative advisory from the Python service…");
+      el("result-state").textContent = "Request in progress";
+      try {
+        const response = await requestJSON("/api/score", {method:"POST", headers:{"Content-Type":"application/json", "X-SZL-Preview":"1"}, body:JSON.stringify({features})});
+        const advisory = validateScore(response);
+        renderIdentity(response.identity);
+        const state = advisory.operator_attention_required ? "attention" : "ready";
+        el("result-state").dataset.state = state;
+        el("result-state").textContent = "Server advisory received · synthetic telemetry";
+        el("score-value").textContent = advisory.operator_attention_score.toFixed(3);
+        el("threshold-value").textContent = advisory.decision_threshold.toFixed(3);
+        el("score-fill").style.width = String(advisory.operator_attention_score * 100) + "%";
+        el("threshold-marker").style.left = String(advisory.decision_threshold * 100) + "%";
+        el("threshold-marker").style.display = "block";
+        el("score-track").dataset.state = state;
+        el("decision").dataset.state = state;
+        const decision = advisory.operator_attention_required ? "Operator-attention advisory: the synthetic score meets the model’s threshold. This does not authorize action." : "No operator-attention advisory at this threshold. This does not establish transport health or safety.";
+        el("decision").textContent = decision;
+        el("contributions").replaceChildren();
+        for (const name of featureNames) {const value = advisory.normalized_feature_contributions[name]; addPair(el("contributions"), labels[name], (value > 0 ? "+" : "") + value.toFixed(4));}
+        el("result-announcement").textContent = "Synthetic attention score " + advisory.operator_attention_score.toFixed(3) + ". " + decision;
+      } catch (error) {
+        serviceReady = false;
+        serviceStatus("unavailable", "Advisory unavailable · refresh service identity before another request");
+        resetResult("unavailable", error instanceof Error ? error.message : "The request failed. No result is displayed.");
+      } finally {busy = false; updateControls();}
+    });
+    form.addEventListener("input", () => {if (!busy && !identityBusy) resetResult("idle", "Inputs changed. Request a new advisory; the previous result is no longer displayed.");});
+    function preset(degraded) {
+      if (busy) return;
+      for (const name of binaryNames) el(name).checked = !degraded;
+      el("queue_utilization").value = degraded ? "0.92" : "0.08";
+      el("consecutive_failures").value = degraded ? "12" : "0";
+      el("seconds_since_last_success").value = degraded ? "21600" : "20";
+      resetResult("idle", (degraded ? "Degraded" : "Healthy") + " synthetic example loaded. No live device data is used. Request an advisory to score it.");
+    }
+    el("preset-healthy").addEventListener("click", () => preset(false));
+    el("preset-degraded").addEventListener("click", () => preset(true));
+    el("refresh-identity").addEventListener("click", refreshIdentity);
+    refreshIdentity();
+  </script>
+</body>
+</html>

@@ -1,6 +1,11 @@
 import json
+import socket
+import threading
+import time
+from contextlib import contextmanager
 from copy import deepcopy
 from http.client import IncompleteRead
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from unittest.mock import patch
 
 import pytest
@@ -53,8 +58,9 @@ class Reply:
     def __exit__(self, *args):
         pass
 
-    def read(self, length):
-        return self.data[:length]
+    def read1(self, length):
+        result, self.data = self.data[:length], self.data[length:]
+        return result
 
 
 def analysis():
@@ -230,3 +236,81 @@ def test_incomplete_http_response_is_unavailable():
         with pytest.raises(model.ModelUnavailable):
             model.propose(analysis(), NAME)
         assert_no_prompt(opener)
+
+
+@contextmanager
+def loopback_reply(prefix, tail, *, delay=0.05):
+    """A real slow-drip HTTP peer; no model service or external network needed."""
+    stop = threading.Event()
+    completed = threading.Event()
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.connection.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+            try:
+                self.connection.sendall(prefix)
+                for byte in tail:
+                    if stop.wait(delay):
+                        break
+                    self.connection.sendall(bytes([byte]))
+            except OSError:
+                pass  # The deadline guard closes the connection mid-response.
+            finally:
+                completed.set()
+
+        def log_message(self, *args):
+            pass
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, kwargs={"poll_interval": 0.01})
+    thread.start()
+    try:
+        with patch.object(model, "_BASE", f"http://127.0.0.1:{server.server_port}"):
+            yield
+    finally:
+        stop.set()
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+        assert not thread.is_alive()
+        assert completed.wait(timeout=2)
+
+
+@pytest.mark.parametrize("part", ["body", "chunk_body", "chunk_header", "chunk_trailer", "headers"])
+def test_absolute_deadline_stops_real_slow_drip(part):
+    body = b'{"models":[]}' + b" " * 80
+    headers = b"HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n"
+    prefix, tail = {
+        "body": (f"HTTP/1.1 200 OK\r\nContent-Length: {len(body)}\r\n\r\n".encode(), body),
+        "chunk_body": (headers + f"{len(body):x}\r\n".encode(), body + b"\r\n0\r\n\r\n"),
+        "chunk_header": (headers, b"2;padding=" + b"x" * 80 + b"\r\n{}\r\n0\r\n\r\n"),
+        "chunk_trailer": (headers + b"2\r\n{}\r\n0\r\n", b"X-Padding: " + b"x" * 80 + b"\r\n\r\n"),
+        "headers": (b"HTTP/1.1 200 OK\r\nX-Padding: ", b"x" * 80 + b"\r\nContent-Length: 2\r\n\r\n{}"),
+    }[part]
+    with loopback_reply(prefix, tail):
+        started = time.monotonic()
+        with pytest.raises(model.ModelUnavailable):
+            model.propose(analysis(), NAME, timeout=0.2)
+        elapsed = time.monotonic() - started
+    # Generous scheduling allowance, but far below the >4s drip duration. The
+    # invariant is an absolute deadline, not a reset-on-every-byte inactivity timer.
+    assert elapsed < 1.0, f"{part} exceeded the absolute deadline: {elapsed:.3f}s"
+
+
+@pytest.mark.parametrize("chunked", [False, True])
+def test_fragmented_loopback_body_finishes_within_deadline(chunked):
+    body = b'{"models": []}'
+    if chunked:
+        prefix = b"HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n"
+        tail = (b"4;fixture=yes\r\n" + body[:4] + f"\r\n{len(body[4:]):x}\r\n".encode()
+                + body[4:] + b"\r\n0\r\nX-Fixture: yes\r\n\r\n")
+    else:
+        prefix = f"HTTP/1.1 200 OK\r\nContent-Length: {len(body)}\r\n\r\n".encode()
+        tail = body
+    with loopback_reply(prefix, tail, delay=0.001):
+        deadline = time.monotonic() + 3
+        opener = model.build_opener(model.ProxyHandler({}), model.NoRedirect(), model.DeadlineHTTPHandler(deadline))
+        parsed, raw, encoded = model._request(opener, "/fixture", None, deadline, 1024)
+    assert parsed == {"models": []}
+    assert raw == body
+    assert encoded is None

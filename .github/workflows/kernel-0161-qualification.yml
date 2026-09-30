@@ -6,6 +6,7 @@ on:
       - tools/test_qualify_kernel_0161.py
       - tools/kernel-0161-qualification.Dockerfile
       - tools/publish_szl_kernels.py
+      - tools/kernels_keyless_credentials.py
       - .github/workflows/kernel-0161-qualification.yml
   workflow_dispatch:
 permissions:
@@ -56,6 +57,9 @@ jobs:
           image=$(cat kernel-image.txt)
           [[ "$image" =~ ^sha256:[0-9a-f]{64}$ ]]
           docker image inspect "$image" > kernel-image-inspect.json
+          docker run --rm --network=none --read-only --cap-drop=ALL \
+            --security-opt=no-new-privileges --entrypoint=python "$image" \
+            -B -c "import qualify_kernel_0161, publish_szl_kernels, kernels_keyless_credentials"
           docker run --rm --network=none --read-only --cap-drop=ALL \
             --security-opt=no-new-privileges --entrypoint=cat "$image" \
             /dependency-install-report.json > dependency-install-report.json

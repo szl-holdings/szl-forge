@@ -9,6 +9,7 @@ import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import os
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any, Mapping, Sequence
 from urllib.parse import parse_qs, urlparse
 
@@ -97,6 +98,24 @@ FHIR_RESOURCE_TYPES = frozenset(
     }
 )
 HL7_MARKERS = ("MSH|", "PID|", "OBR|", "OBX|")
+# Read-only SZL KANCHAY design-system files vendored beside the UI file in
+# frontend/szl/. Closed allowlist: exact URL path -> (path parts relative to
+# the UI file's directory, media type). No path parameter reaches the
+# filesystem, there is no directory mount or listing, and any other path keeps
+# the normal admission and "unknown GET route" handling.
+UI_ASSET_ROUTES: Mapping[str, tuple[tuple[str, ...], str]] = MappingProxyType(
+    {
+        "/szl/szl-design-system.css": (
+            ("szl", "szl-design-system.css"),
+            "text/css; charset=utf-8",
+        ),
+        "/szl/szl-console.css": (("szl", "szl-console.css"), "text/css; charset=utf-8"),
+        "/szl/logos/szl_favicon_square.svg": (
+            ("szl", "logos", "szl_favicon_square.svg"),
+            "image/svg+xml",
+        ),
+    }
+)
 
 
 def _is_loopback(host: str) -> bool:
@@ -168,8 +187,18 @@ def _json_response(handler: BaseHTTPRequestHandler, payload: Any, status: int = 
 
 
 def _html_response(handler: BaseHTTPRequestHandler, body: bytes, status: int = 200) -> None:
+    _ui_response(handler, body, "text/html; charset=utf-8", status)
+
+
+def _ui_response(
+    handler: BaseHTTPRequestHandler,
+    body: bytes,
+    content_type: str,
+    status: int = 200,
+) -> None:
+    """Send the UI document or an allowlisted UI asset with the UI security headers."""
     handler.send_response(status)
-    handler.send_header("Content-Type", "text/html; charset=utf-8")
+    handler.send_header("Content-Type", content_type)
     handler.send_header("Content-Length", str(len(body)))
     handler._set_cors_headers()  # type: ignore[attr-defined]
     handler.send_header("Cache-Control", "no-store")
@@ -386,6 +415,32 @@ class OACStackHandler(BaseHTTPRequestHandler):
                 _json_response(self, {"ok": False, "error": "UI_UNAVAILABLE"}, status=503)
                 return
             _html_response(self, body)
+            return
+
+        asset = UI_ASSET_ROUTES.get(path)
+        if asset is not None:
+            # Browsers send no bearer token for stylesheet and font requests,
+            # so these read-only files use the same admission as the UI page.
+            if not self._admit_request(health=True):
+                return
+            ui_file = OACStackHandler.ui_file
+            if ui_file is None:
+                _json_response(self, {"ok": False, "error": "UI_NOT_CONFIGURED"}, status=404)
+                return
+            parts, content_type = asset
+            try:
+                asset_file = Path(
+                    _resolve_bounded_path(
+                        ui_file.parent.joinpath(*parts),
+                        OACStackHandler.data_root,
+                        "ui_asset",
+                    )
+                )
+                body = asset_file.read_bytes()
+            except (OSError, ValueError):
+                _json_response(self, {"ok": False, "error": "UI_ASSET_UNAVAILABLE"}, status=404)
+                return
+            _ui_response(self, body, content_type)
             return
 
         if path == "/api/health":

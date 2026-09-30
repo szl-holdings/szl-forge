@@ -24,7 +24,7 @@ owner workloads must not be modified to install this small CPU module.
 ```bash
 python -m venv ../szl-model-lab-venv
 # Activate the virtual environment using the command appropriate for your shell.
-python -m pip install 'torch==2.10.0+cpu' --index-url https://download.pytorch.org/whl/cpu
+python -m pip install 'torch==2.14.0+cpu' --index-url https://download.pytorch.org/whl/cpu
 python -m pip install -c model-lab/constraints-test.txt -e 'model-lab[test]'
 szl-model-lab plan
 python -m pytest -q -c model-lab/pyproject.toml model-lab/tests
