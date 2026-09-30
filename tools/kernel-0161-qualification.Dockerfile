@@ -7,7 +7,7 @@ RUN python -m pip install --disable-pip-version-check --no-cache-dir \
       --report /dependency-install-report.json \
       "huggingface-hub==1.26.0" "numpy==2.3.5" "kernels==0.16.1"
 WORKDIR /runtime
-COPY tools/qualify_kernel_0161.py tools/publish_szl_kernels.py ./
+COPY tools/qualify_kernel_0161.py tools/publish_szl_kernels.py tools/kernels_keyless_credentials.py ./
 # Deliberately exclude .git, credentials, unrelated source and business data.
 COPY source-candidate/build/torch-universal/szl_kernels/_kernel_api.py \
      source-candidate/build/torch-universal/szl_kernels/_chain.py \

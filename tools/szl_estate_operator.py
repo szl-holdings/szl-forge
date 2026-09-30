@@ -33,10 +33,12 @@ API_VERSION = '2026-03-10'
 ACTIVE_STATES = ('queued', 'in_progress', 'waiting', 'requested', 'pending')
 WRITERS = frozenset((WORKFLOW_PATH, '.github/workflows/hf-sync.yml', '.github/workflows/repair-cloudflare-product-edge.yml'))
 PINS = {
-    WORKFLOW_PATH: '57ca410488dda97af6650e162ed26334317f90dc',
-    '.github/workflows/hf-sync.yml': 'ff2f4a948f6251545f96ebb4db14a665e45e4d72',
+    WORKFLOW_PATH: 'fd4611973b1b271d9b8e2bec5d4e0e102b9d1792',
+    '.github/workflows/hf-sync.yml': 'e3913a40e9c4884eb60707a0058504ada9e142cc',
     'scripts/estate_repair_dispatch.py': '81f0e83729390ee66b633a8d45e5f1139374ba41',
     'config/estate-release-train.v1.json': '84e998eca4f2f4b6cabc992f12a1c466875be848',
+    'scripts/estate_child_completion.py': '077524c306189dd0315e07c492a49081dba17399',
+    '.github/workflows/repair-cloudflare-product-edge.yml': 'ad703a8be9601913601d1e53ff070bac87d861a6',
 }
 REQUIRED = ('a11oy', 'killinchu', 'lyte', 'vertical-services', 'terra', 'counsel', 'finance')
 VECTOR_REPOS = {'a11oy': 'a11oy', 'killinchu': 'killinchu', 'lyte': 'lyte-services', 'vertical-services': 'vertical-services', 'terra': 'a11oy', 'counsel': 'a11oy', 'finance': 'a11oy', 'proof': 'a11oy-net', 'profile': '.github'}

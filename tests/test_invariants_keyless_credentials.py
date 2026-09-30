@@ -135,7 +135,12 @@ import unittest
 from unittest import mock
 sys.path.insert(0, sys.argv[1])
 import invariants_keyless_credentials as credentials
-import httpx
+# Mock the SDK's own HTTP client: huggingface-hub 2.x re-exports httpx2 as
+# huggingface_hub.utils.httpx; 1.x uses httpx directly.
+try:
+    from huggingface_hub.utils import httpx
+except ImportError:
+    import httpx
 from huggingface_hub import HfApi
 import huggingface_hub.hf_api as hf_api
 case = unittest.TestCase()

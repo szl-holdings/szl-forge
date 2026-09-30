@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "retrieved_date": "2026-09-24",
+  "scope": "Public primary-source research for SZL Foundation Confirmation v0.4. These are design antecedents, not evidence of agency endorsement, classified access, AGI, or novel SZL capabilities.",
+  "external_code_imported": false,
+  "external_weights_imported": false,
+  "records": [
+    {
+      "id": "cia-heuer-ach-1999",
+      "organization": "CIA Center for the Study of Intelligence",
+      "title": "Psychology of Intelligence Analysis, Chapter 8: Analysis of Competing Hypotheses",
+      "author": "Richards J. Heuer, Jr.",
+      "url": "https://www.cia.gov/resources/csi/static/Pyschology-of-Intelligence-Analysis.pdf",
+      "publication_date": "1999",
+      "sections_read": "Chapter 8, especially printed pages 101-105, 108-109; publication notice on PDF page 5",
+      "source_finding": "Assess how evidence distinguishes alternatives, revisit decisive observations, and expose conclusions that depend on fragile assumptions. The method does not guarantee correctness.",
+      "proposed_adaptation": "Log observation provenance; compare stable-world and sensor-failure explanations; make a separate verification action available when one observation controls the conclusion.",
+      "adoption_status": "Recommendation; implementation and performance must be established by the v0.4 code and results.",
+      "license_observation": "The publication warns of possible copyright restrictions and prohibits commercial copying. Only a short original summary and a source link are retained; the PDF is not redistributed.",
+      "repo_revision": null,
+      "boundary": "Author's views in a public CIA-hosted publication; not a description of classified systems or a guarantee from CIA. Our probabilistic sensor model is not presented as the ACH algorithm."
+    },
+    {
+      "id": "nsa-aisc-ai-data-security-2025",
+      "organization": "NSA Artificial Intelligence Security Center and co-sealing agencies",
+      "title": "NSA's AISC Releases Joint Guidance on the Risks and Best Practices in AI Data Security",
+      "url": "https://www.nsa.gov/Press-Room/Press-Releases-Statements/Press-Release-View/Article/4192332/nsas-aisc-releases-joint-guidance-on-the-risks-and-best-practices-in-ai-data-se/",
+      "publication_date": "2025-05-22",
+      "sections_read": "Official release paragraphs describing data integrity, provenance, signatures, and drift",
+      "source_finding": "The release recommends tracing data provenance, authenticating revisions, and protecting data throughout development and operation. It identifies modification and drift as reliability risks.",
+      "proposed_adaptation": "Preserve immutable source/data/model hashes and acquisition identities; distinguish integrity of an observation record from truth of its reported value.",
+      "adoption_status": "Recommendation; existing hash receipts can be extended with channel and dependency metadata.",
+      "license_observation": "Public official press release; no software or dataset license assessed, and no external material imported.",
+      "repo_revision": null,
+      "boundary": "Press release read. Its linked full CSI PDF returned a browser retrieval error and was not used as if read. Hashes do not establish observation accuracy; this study does not claim compliance certification."
+    },
+    {
+      "id": "iarpa-reason",
+      "organization": "IARPA",
+      "title": "REASON: Rapid Explanation, Analysis and Sourcing Online",
+      "url": "https://www.iarpa.gov/research-programs/reason",
+      "publication_date": null,
+      "dated_reference": "The page lists a solicitation release date of 2023-03-20; this is not asserted to be the web page publication date.",
+      "sections_read": "Intelligence Value, Summary, solicitation dates and status",
+      "source_finding": "REASON seeks additional and contrary evidence and critiques of reasoning. Its public description calls for independent testing and evaluation of systems assisting analysts.",
+      "proposed_adaptation": "Define a falsifiable experiment before execution; expose contradictions and failed thresholds; score on fresh episodes kept separate from implementation fixtures.",
+      "adoption_status": "Recommendation; a separate agent's review is useful internal review, not institutionally independent evaluation.",
+      "license_observation": "Public program description; no code, model, or dataset license assessed; no external material imported.",
+      "repo_revision": null,
+      "boundary": "Program aims are not demonstrated SZL outcomes. Only iarpa.gov is treated as this agency's official domain; unrelated iarpa.org search results were excluded."
+    },
+    {
+      "id": "darpa-foundsci",
+      "organization": "DARPA Information Processing Techniques Office",
+      "title": "Foundation Models for Scientific Discovery (FoundSci)",
+      "url": "https://www.darpa.mil/research/programs/foundation-models-for-scientific-discovery",
+      "publication_date": null,
+      "dated_reference": "Program identifier DARPA-PA-23-04-01; the page does not state a publication date.",
+      "sections_read": "Summary and archived-program status",
+      "source_finding": "FoundSci describes skeptical reasoning, uncertainty, and iterative hypothesis/experiment refinement as scientific-discovery research objectives. The page marks the program complete and no longer maintained.",
+      "proposed_adaptation": "Make skepticism operational through a costed verification action and retained revision history, then test whether the action improves measured decisions.",
+      "adoption_status": "Recommendation; no claim that a small synthetic confirmation task meets FoundSci's objectives.",
+      "license_observation": "Public program description; no code, model, or dataset license assessed; no external material imported.",
+      "repo_revision": null,
+      "boundary": "A historical research objective, not evidence of an available autonomous scientist, AGI, or unprecedented method."
+    }
+  ],
+  "original_design_recommendations": [
+    "A repeated reading from a persistent faulty source is not new independent evidence. Track source identities and shared-error assumptions explicitly.",
+    "Use a separately modeled reference channel with a stated error rate and real cost, including a condition where it is imperfect. Calling a source independent is a model assumption that needs testing.",
+    "Choose between new coverage, repeated measurement, independent verification, and stopping using expected decision benefit minus acquisition cost.",
+    "Report raw accuracy, cost, net utility, confident-error mass, and coverage separately. Lower confidence alone does not establish better decisions.",
+    "Compare a policy assuming independent readings against a policy representing correlated faults under the same episode draws and total budget.",
+    "Preserve contrary results and protocol hashes. No improvement threshold should be changed after observing the held-out results."
+  ],
+  "recommendation_attribution": "The six design recommendations are our engineering synthesis. The official sources motivate evidence discipline but do not specify or validate this sensor model, cost function, or benchmark."
+}

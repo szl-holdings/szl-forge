@@ -43,7 +43,7 @@ jobs:
           mkdir -p reports
           python -m pip --version > reports/model-lab-bootstrap.txt
           python -m pip freeze > reports/model-lab-initial-environment.txt
-          python -m pip install 'torch==2.10.0+cpu' --index-url https://download.pytorch.org/whl/cpu --report reports/model-lab-torch-install.json
+          python -m pip install 'torch==2.14.0+cpu' --index-url https://download.pytorch.org/whl/cpu --report reports/model-lab-torch-install.json
           python -m pip install -c model-lab/constraints-test.txt -e 'model-lab[test]' --report reports/model-lab-install.json
           python -m pip check
           python -m pip freeze > reports/model-lab-environment.txt
