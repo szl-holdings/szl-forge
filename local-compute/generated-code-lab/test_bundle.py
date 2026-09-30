@@ -80,16 +80,26 @@ class BundleTests(unittest.TestCase):
         (self.root / "unrelated.txt").write_text("not exported")
         self.assertEqual(set(bundle.collect(self.root)), set(bundle.NAMES))
 
-    def test_hosted_link_is_explicit_and_outside_the_installer(self):
-        markdown = bundle.payload(self.files)
-        introduction, source = markdown.split("~~~~python\n", 1)
-        self.assertIn("https://szlholdings-szl-model-inference-lab.hf.space/#run-lab", introduction)
+    def test_hosted_link_is_explicit_and_packaged_documentation_stays_data(self):
+        url = "https://szlholdings-szl-model-inference-lab.hf.space/#run-lab"
+        files = {**self.files, "README.md": f"[Separate hosted demonstration]({url})\n"}
+        markdown = bundle.payload(files)
+        introduction, fenced_source = markdown.split("~~~~python\n", 1)
+        source = fenced_source.rsplit("~~~~\n", 1)[0]
+        self.assertIn(url, introduction)
         self.assertIn("separate hosted Khipu 1.5B demonstration", introduction)
         self.assertIn("not this local Qwen3-4B lab", introduction)
         self.assertIn("do not submit credentials or sensitive data", introduction)
         self.assertIn("32 generated tokens", introduction)
         self.assertIn("do not contact it or fall back to remote inference", introduction)
-        self.assertNotIn("https://szlholdings-szl-model-inference-lab.hf.space", source)
+        # The actual bundle includes URLs inside embedded documentation strings.
+        # Execute only the trusted installer, never the packaged source files.
+        namespace = {"__name__": "payload_test"}
+        exec(compile(source, "trusted_installer", "exec"), namespace)
+        self.assertEqual(namespace["FILES"], files)
+        destination = self.root / "hosted-link-roundtrip"
+        namespace["install_files"](destination, namespace["FILES"], namespace["HASHES"])
+        self.assertEqual((destination / "README.md").read_bytes(), files["README.md"].encode("utf-8"))
         self.assertEqual(markdown.count("~~~~python\n"), 1)
 
     def test_missing_allowlisted_source_fails_closed(self):
