@@ -1,0 +1,2 @@
+* -text
+release.zip -filter -diff -merge -text
