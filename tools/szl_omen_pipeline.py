@@ -546,12 +546,17 @@ def reconcile_card(text: str, files: set[str], today: str, relabel: bool = False
     return f"---\n{fm}\n---\n{body}", changes
 
 
-def cmd_cards(apply: bool, direct: bool, owner_confirmed: bool, out: pathlib.Path, relabel: bool = False, all_repos: bool = False) -> int:
+def cmd_cards(apply: bool, direct: bool, owner_confirmed: bool, out: pathlib.Path, relabel: bool = False, all_repos: bool = False,
+              owner_authorized: bool = False) -> int:
     from huggingface_hub import HfApi, hf_hub_download
 
     receipt_path = out / "cards_receipt.json"
-    if apply and not owner_confirmed:
-        return fail_closed(receipt_path, "cards", "OWNER_GATE_CLOSED: --apply requires --owner-confirmed-wo6 (exposed tokens revoked)")
+    if apply and not (owner_confirmed or owner_authorized):
+        return fail_closed(receipt_path, "cards", "OWNER_GATE_CLOSED: --apply requires --owner-confirmed-wo6 or --owner-authorized")
+    if apply and direct and not owner_confirmed:
+        return fail_closed(receipt_path, "cards", "OWNER_GATE_CLOSED: --direct commits require --owner-confirmed-wo6; --owner-authorized only opens Hub PRs")
+    wo6_status = ("OWNER_CONFIRMED_REVOKED" if owner_confirmed
+                  else "OWNER_AUTHORIZED_PR_MODE_REVOCATION_NOT_VERIFIED_HERE" if owner_authorized else "CLOSED")
     if apply and not hub_token_present():
         return fail_closed(receipt_path, "cards", "HF_TOKEN_MISSING: set HF_TOKEN in this shell or save it via the Notepad token-file route; never paste it in chat")
     api = HfApi()
@@ -589,7 +594,7 @@ def cmd_cards(apply: bool, direct: bool, owner_confirmed: bool, out: pathlib.Pat
                 item["result_url"] = getattr(res, "pr_url", None) or getattr(res, "commit_url", None)
         print(f"--- {repo}@{rev[:10]}: {'; '.join(changes)}" + (f" -> {item.get('result_url')}" if item.get("result_url") else ""))
         items.append(item)
-    receipt = {"stage": "cards", "status": "DONE" if apply else "DRY-RUN", "relabel": relabel, "items": items,
+    receipt = {"stage": "cards", "status": "DONE" if apply else "DRY-RUN", "relabel": relabel, "wo6_status": wo6_status, "items": items,
                "publication_eligible": False, "note": "Additive identity note by default; publisher-managed cards are refused Hub-side and route through szl-forge; v2 (adapter-only root) is skipped by rule.", **env_block()}
     write_json(receipt_path, receipt)
     print(f"    receipt -> {receipt_path}")
@@ -658,7 +663,7 @@ def main() -> int:
     m = sub.add_parser("merge"); m.add_argument("--out", default="merged")
     d = sub.add_parser("dpo"); d.add_argument("--out", default=CHALLENGER_ID); d.add_argument("--epochs", type=int, default=2); d.add_argument("--max-pairs", type=int, default=64)
     e = sub.add_parser("eval-abstain"); e.add_argument("--challenger", default=CHALLENGER_ID); e.add_argument("--out", default=None)
-    c = sub.add_parser("cards"); c.add_argument("--apply", action="store_true"); c.add_argument("--direct", action="store_true", help="commit directly instead of opening Hub PRs"); c.add_argument("--owner-confirmed-wo6", action="store_true"); c.add_argument("--out", default="cards-reconcile"); c.add_argument("--relabel", action="store_true", help="also flip frontmatter to transformers/finetune (publisher contracts forbid this for chaski-*/KHIPU-R2)"); c.add_argument("--all", action="store_true", help="include publisher-managed cards in the dry-run")
+    c = sub.add_parser("cards"); c.add_argument("--apply", action="store_true"); c.add_argument("--direct", action="store_true", help="commit directly instead of opening Hub PRs"); c.add_argument("--owner-confirmed-wo6", action="store_true"); c.add_argument("--out", default="cards-reconcile"); c.add_argument("--relabel", action="store_true", help="also flip frontmatter to transformers/finetune (publisher contracts forbid this for chaski-*/KHIPU-R2)"); c.add_argument("--all", action="store_true", help="include publisher-managed cards in the dry-run"); c.add_argument("--owner-authorized", action="store_true", help="owner-directed run with the estate publisher credential: opens Hub PRs only, never direct commits; WO6 revocation is recorded as not verified here")
     p = sub.add_parser("publish"); p.add_argument("--folder", default="merged"); p.add_argument("--only", default=None); p.add_argument("--owner-confirmed-wo6", action="store_true")
     args = ap.parse_args()
     if args.cmd == "merge":
@@ -669,7 +674,7 @@ def main() -> int:
         ch = pathlib.Path(args.challenger)
         return cmd_eval(ch, pathlib.Path(args.out) if args.out else ch / "eval")
     if args.cmd == "cards":
-        return cmd_cards(args.apply, args.direct, args.owner_confirmed_wo6, pathlib.Path(args.out), args.relabel, args.all)
+        return cmd_cards(args.apply, args.direct, args.owner_confirmed_wo6, pathlib.Path(args.out), args.relabel, args.all, args.owner_authorized)
     return cmd_publish(pathlib.Path(args.folder), args.only, args.owner_confirmed_wo6)
 
 
