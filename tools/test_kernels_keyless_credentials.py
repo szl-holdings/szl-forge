@@ -7,9 +7,6 @@ from types import SimpleNamespace
 import unittest
 from unittest import mock
 
-import httpx
-from huggingface_hub.errors import HfHubHTTPError
-
 import kernels_keyless_credentials as credentials
 
 
@@ -30,20 +27,11 @@ ENV = {
 }
 
 
-def valid_api() -> mock.Mock:
-    api = mock.Mock()
-    api.list_repo_refs.return_value = SimpleNamespace(branches=[
-        SimpleNamespace(name="main", target_commit="c" * 40),
-        SimpleNamespace(name="v1", target_commit="d" * 40),
-    ])
-    return api
-
-
 class KernelKeylessCredentialTests(unittest.TestCase):
     def test_exact_resources_use_distinct_typed_grants(self) -> None:
-        api = valid_api()
         supplier = mock.Mock(side_effect=[MODEL, KERNEL])
-        pair = credentials.acquire_pair(environment=ENV, supplier=supplier, api=api)
+        with mock.patch("huggingface_hub.HfApi") as api:
+            pair = credentials.acquire_pair(environment=ENV, supplier=supplier)
         self.assertEqual(
             [call.args[0] for call in supplier.call_args_list],
             [credentials.MODEL_RESOURCE, credentials.KERNEL_RESOURCE],
@@ -52,15 +40,7 @@ class KernelKeylessCredentialTests(unittest.TestCase):
         self.assertEqual(pair.kernel, KERNEL)
         self.assertNotIn(MODEL, repr(pair))
         self.assertNotIn(KERNEL, repr(pair))
-        api.auth_check.assert_called_once_with(
-            repo_id=credentials.TARGET,
-            repo_type="model",
-            token=MODEL,
-            write=True,
-        )
-        api.list_repo_refs.assert_called_once_with(
-            credentials.TARGET, repo_type="kernel", token=KERNEL
-        )
+        api.assert_not_called()
 
     def test_fork_pr_mutable_ref_and_other_workflow_never_exchange(self) -> None:
         mutations = {
@@ -80,7 +60,7 @@ class KernelKeylessCredentialTests(unittest.TestCase):
                 supplier = mock.Mock()
                 with self.assertRaises(credentials.KeylessCredentialError):
                     credentials.acquire_pair(
-                        environment=environment, supplier=supplier, api=mock.Mock()
+                        environment=environment, supplier=supplier
                     )
                 supplier.assert_not_called()
 
@@ -155,7 +135,6 @@ class KernelKeylessCredentialTests(unittest.TestCase):
                     credentials.acquire_pair(
                         environment={**ENV, key: "secret-fixture"},
                         supplier=supplier,
-                        api=valid_api(),
                     )
                 supplier.assert_not_called()
 
@@ -191,75 +170,39 @@ class KernelKeylessCredentialTests(unittest.TestCase):
             run.assert_not_called()
 
     def test_same_token_cannot_cross_the_model_kernel_boundary(self) -> None:
-        api = valid_api()
         with self.assertRaisesRegex(
             credentials.KeylessCredentialError, "CROSS_TARGET_TOKEN_REUSE_REJECTED"
         ):
             credentials.acquire_pair(
                 environment=ENV,
                 supplier=mock.Mock(side_effect=[MODEL, MODEL]),
-                api=api,
             )
-        api.auth_check.assert_not_called()
-        api.list_repo_refs.assert_not_called()
 
-    def test_incomplete_or_nonimmutable_kernel_refs_refuse_the_pair(self) -> None:
-        cases = (
-            [],
-            [SimpleNamespace(name="main", target_commit="c" * 40)],
-            [
-                SimpleNamespace(name="main", target_commit="c" * 40),
-                SimpleNamespace(name="v1", target_commit="main"),
-            ],
-        )
-        for branches in cases:
-            api = valid_api()
-            api.list_repo_refs.return_value = SimpleNamespace(branches=branches)
-            with self.subTest(branches=branches), self.assertRaisesRegex(
-                credentials.KeylessCredentialError, "INVALID_KERNEL_REFS"
-            ):
-                credentials.acquire_pair(
-                    environment=ENV,
-                    supplier=mock.Mock(side_effect=[MODEL, KERNEL]),
-                    api=api,
-                )
-
-    def test_model_and_kernel_access_errors_have_distinct_fixed_codes(self) -> None:
-        for target, method, code in (
-            ("model", "auth_check", "MODEL_WRITE_ACCESS_VALIDATION_FAILED"),
-            ("kernel", "list_repo_refs", "KERNEL_REFS_VALIDATION_FAILED"),
+    def test_both_exact_exchanges_must_succeed_before_pair_return(self) -> None:
+        supplier = mock.Mock(side_effect=[
+            MODEL,
+            credentials.KeylessCredentialError("OIDC_EXCHANGE_REJECTED"),
+        ])
+        with self.assertRaisesRegex(
+            credentials.KeylessCredentialError, "^OIDC_EXCHANGE_REJECTED$"
         ):
-            for status in (401, 403, 404, None):
-                with self.subTest(target=target, status=status):
-                    api = valid_api()
-                    if status is None:
-                        error = RuntimeError("private-response-" + MODEL + KERNEL)
-                    else:
-                        request = httpx.Request(
-                            "GET", "https://huggingface.co/api/private",
-                            headers={"Authorization": "Bearer " + MODEL + KERNEL},
-                        )
-                        error = httpx.HTTPStatusError(
-                            "private-response-" + MODEL + KERNEL,
-                            request=request,
-                            response=httpx.Response(status, request=request),
-                        )
-                    getattr(api, method).side_effect = error
-                    with self.assertRaises(credentials.KeylessCredentialError) as caught:
-                        credentials.acquire_pair(
-                            environment=ENV,
-                            supplier=mock.Mock(side_effect=[MODEL, KERNEL]),
-                            api=api,
-                        )
-                    self.assertEqual(caught.exception.args, (code,))
-                    self.assertTrue(caught.exception.__suppress_context__)
-                    self.assertNotIn("private-response", repr(caught.exception))
-                    self.assertNotIn(MODEL, repr(caught.exception))
-                    self.assertNotIn(KERNEL, repr(caught.exception))
-                    if target == "model":
-                        api.list_repo_refs.assert_not_called()
-                    else:
-                        api.auth_check.assert_called_once()
+            credentials.acquire_pair(environment=ENV, supplier=supplier)
+        self.assertEqual(
+            [call.args[0] for call in supplier.call_args_list],
+            [credentials.MODEL_RESOURCE, credentials.KERNEL_RESOURCE],
+        )
+
+    def test_repo_scoped_grants_do_not_call_user_token_auth_check(self) -> None:
+        with mock.patch("huggingface_hub.HfApi") as api:
+            api.return_value.auth_check.side_effect = RuntimeError(
+                "the user-token endpoint must remain outside the grant boundary"
+            )
+            pair = credentials.acquire_pair(
+                environment=ENV,
+                supplier=mock.Mock(side_effect=[MODEL, KERNEL]),
+            )
+        self.assertEqual((pair.model, pair.kernel), (MODEL, KERNEL))
+        api.assert_not_called()
 
     def test_authority_evidence_is_closed_and_contains_no_credential(self) -> None:
         evidence = credentials.authority_evidence(ENV)
@@ -275,70 +218,6 @@ class KernelKeylessCredentialTests(unittest.TestCase):
         serialized = repr(evidence)
         self.assertNotIn(MODEL, serialized)
         self.assertNotIn(KERNEL, serialized)
-
-    def test_access_errors_retain_only_a_typed_bounded_http_status(self) -> None:
-        for method, code in (
-            ("auth_check", "MODEL_WRITE_ACCESS_VALIDATION_FAILED"),
-            ("list_repo_refs", "KERNEL_REFS_VALIDATION_FAILED"),
-        ):
-            for status in (400, 401, 403, 404, 429, 500, 599, True, "403", 403.0, 399, 600):
-                with self.subTest(method=method, status=status):
-                    response = httpx.Response(
-                        403,
-                        request=httpx.Request("GET", "https://huggingface.co/private", headers={
-                            "Authorization": "Bearer " + MODEL,
-                        }),
-                        content=("private-body-" + KERNEL).encode(),
-                        headers={"x-request-id": "private-request-id"},
-                    )
-                    exc = HfHubHTTPError("private-message-" + MODEL, response=response)
-                    response.status_code = status
-                    api = valid_api()
-                    getattr(api, method).side_effect = exc
-                    with self.assertRaises(credentials.KeylessCredentialError) as caught:
-                        credentials.acquire_pair(
-                            environment=ENV,
-                            supplier=mock.Mock(side_effect=[MODEL, KERNEL]),
-                            api=api,
-                        )
-                    self.assertEqual(caught.exception.args, (code,))
-                    expected = status if type(status) is int and 400 <= status <= 599 else None
-                    self.assertEqual(caught.exception.http_status, expected)
-                    serialized = repr(caught.exception) + repr(vars(caught.exception))
-                    for secret in (MODEL, KERNEL, "private-body", "private-message", "private-request-id"):
-                        self.assertNotIn(secret, serialized)
-                    if method == "auth_check":
-                        api.list_repo_refs.assert_not_called()
-
-    def test_access_errors_do_not_trust_generic_or_custom_response_objects(self) -> None:
-        class CustomResponse(httpx.Response):
-            pass
-
-        class ResponsePropertyError(RuntimeError):
-            @property
-            def response(self) -> object:
-                raise AssertionError("untrusted response property must not be read")
-
-        response = httpx.Response(403, request=httpx.Request("GET", "https://huggingface.co/private"))
-        generic = RuntimeError(MODEL)
-        generic.response = response
-        fake_response = HfHubHTTPError(MODEL, response=response)
-        fake_response.response = SimpleNamespace(status_code=403)
-        custom_response = HfHubHTTPError(MODEL, response=CustomResponse(
-            403, request=httpx.Request("GET", "https://huggingface.co/private"),
-        ))
-        for exc in (generic, fake_response, custom_response, ResponsePropertyError(MODEL)):
-            with self.subTest(error_type=type(exc).__name__):
-                api = valid_api()
-                api.auth_check.side_effect = exc
-                with self.assertRaises(credentials.KeylessCredentialError) as caught:
-                    credentials.acquire_pair(
-                        environment=ENV,
-                        supplier=mock.Mock(side_effect=[MODEL, KERNEL]),
-                        api=api,
-                    )
-                self.assertEqual(caught.exception.args, ("MODEL_WRITE_ACCESS_VALIDATION_FAILED",))
-                self.assertIsNone(caught.exception.http_status)
 
 
 if __name__ == "__main__":
