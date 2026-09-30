@@ -172,6 +172,8 @@ class PublicationContracts(unittest.TestCase):
         drifting=False,
         drift_after=False,
         hardware="cpu-basic",
+        readme_bytes=None,
+        card_validation_error=None,
     ):
         before, after = "1" * 40, "2" * 40
         api = mock.Mock()
@@ -193,15 +195,23 @@ class PublicationContracts(unittest.TestCase):
             MODULE.SOURCE_VARIABLE: SimpleNamespace(value="3" * 40)
         }
         with tempfile.TemporaryDirectory() as directory:
-            fixture = Path(directory) / "page.html"
-            fixture.write_bytes(b"synthetic public fixture")
+            fixture = Path(directory) / "README.md"
+            fixture.write_bytes(
+                readme_bytes
+                if readme_bytes is not None
+                else (
+                    b"---\nshort_description: "
+                    + b"x" * 60
+                    + b"\n---\n\n# Synthetic fixture\n"
+                )
+            )
             digest = hashlib.sha256(fixture.read_bytes()).hexdigest()
             plan = {
                 "source_dir": "spaces/oac-system-health-lab",
                 "files": {
-                    "index.html": {
+                    "README.md": {
                         "sha256": digest,
-                        "source_path": "spaces/oac-system-health-lab/index.html",
+                        "source_path": "spaces/oac-system-health-lab/README.md",
                     }
                 },
             }
@@ -211,8 +221,13 @@ class PublicationContracts(unittest.TestCase):
                     return_value=SimpleNamespace(sha=after)
                 ),
             )
+            card = mock.Mock()
+            card.validate.side_effect = card_validation_error
+            repo_card = mock.Mock(return_value=card)
             client = SimpleNamespace(
                 CommitOperationAdd=lambda **kwargs: kwargs,
+                RepoCard=repo_card,
+                __version__="1.23.0",
                 hf_hub_download=mock.Mock(return_value=str(fixture)),
             )
             utils = SimpleNamespace(
@@ -233,50 +248,99 @@ class PublicationContracts(unittest.TestCase):
                 mock.patch.object(
                     MODULE,
                     "verify_head_and_bytes",
-                    return_value={"index.html": b"synthetic public fixture"},
+                    return_value={"README.md": fixture.read_bytes()},
                 ),
                 mock.patch.object(MODULE.sys, "path", list(MODULE.sys.path)),
             ):
                 try:
                     MODULE.publish(api, "3" * 40, result, wait_seconds=30)
                 except MODULE.PublicationRefused:
-                    return api, result, False
-            return api, result, True
+                    return api, result, False, repo_card, card
+            return api, result, True, repo_card, card
 
     def test_atomic_parent_and_verified_success(self):
-        api, report, succeeded = self.run_publication()
+        api, report, succeeded, _, _ = self.run_publication()
         self.assertTrue(succeeded)
         self.assertEqual(api.create_commit.call_args.kwargs["parent_commit"], "1" * 40)
         self.assertEqual(api.create_commit.call_args.kwargs["repo_id"], MODULE.TARGET)
         self.assertEqual(
             api.create_commit.call_args.kwargs["operations"][0]["path_or_fileobj"],
-            b"synthetic public fixture",
+            (
+                b"---\nshort_description: "
+                + b"x" * 60
+                + b"\n---\n\n# Synthetic fixture\n"
+            ),
         )
         self.assertEqual(report["hub_commit"], "2" * 40)
         self.assertTrue(report["complete"])
         self.assertEqual(report["files"][0]["matches"], True)
         api.create_repo.assert_not_called()
 
+    def test_valid_provider_card_preflight_preserves_existing_adoption(self):
+        readme = (
+            b"---\nshort_description: "
+            + b"x" * 60
+            + b"\n---\n\n# Synthetic fixture\n"
+        )
+
+        api, report, succeeded, repo_card, card = self.run_publication(
+            readme_bytes=readme
+        )
+
+        self.assertTrue(succeeded)
+        repo_card.assert_called_once_with(readme.decode("utf-8"))
+        card.validate.assert_called_once_with(repo_type="space")
+        self.assertEqual(report["card_validation"]["state"], "VALIDATED")
+        self.assertEqual(
+            report["card_validation"]["huggingface_hub_version"], "1.23.0"
+        )
+        self.assertEqual(
+            report["card_validation"]["sha256"], hashlib.sha256(readme).hexdigest()
+        )
+        api.create_repo.assert_not_called()
+
+    def test_invalid_provider_card_refused_before_repository_creation(self):
+        readme = (
+            b"---\nshort_description: "
+            + b"x" * 61
+            + b"\n---\n\n# Synthetic fixture\n"
+        )
+
+        api, _, succeeded, repo_card, card = self.run_publication(
+            readme_bytes=readme,
+            card_validation_error=ValueError(
+                "short_description must be at most 60 characters"
+            ),
+        )
+
+        self.assertFalse(succeeded)
+        repo_card.assert_called_once_with(readme.decode("utf-8"))
+        card.validate.assert_called_once_with(repo_type="space")
+        api.whoami.assert_not_called()
+        api.space_info.assert_not_called()
+        api.create_repo.assert_not_called()
+        api.create_commit.assert_not_called()
+
     def test_concurrent_drift_refused_before_write(self):
-        api, _, succeeded = self.run_publication(drifting=True)
+        api, _, succeeded, _, _ = self.run_publication(drifting=True)
         self.assertFalse(succeeded)
         api.create_commit.assert_not_called()
         api.add_space_variable.assert_not_called()
 
     def test_unexpected_files_preserved_and_refused(self):
-        api, _, succeeded = self.run_publication(
+        api, _, succeeded, _, _ = self.run_publication(
             remote_files=["someone-elses-data.json"]
         )
         self.assertFalse(succeeded)
         api.create_commit.assert_not_called()
 
     def test_paid_hardware_refused_before_write(self):
-        api, _, succeeded = self.run_publication(hardware="cpu-upgrade")
+        api, _, succeeded, _, _ = self.run_publication(hardware="cpu-upgrade")
         self.assertFalse(succeeded)
         api.create_commit.assert_not_called()
 
     def test_post_publication_drift_never_complete(self):
-        _, report, succeeded = self.run_publication(drift_after=True)
+        _, report, succeeded, _, _ = self.run_publication(drift_after=True)
         self.assertFalse(succeeded)
         self.assertNotIn("complete", report)
 

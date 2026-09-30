@@ -11,7 +11,9 @@ import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import Mock, patch
+
+import httpx
 
 import publish_szl_kernels as publisher
 import verify_szl_kernel_runtime as runtime_verifier
@@ -384,7 +386,7 @@ class PublishSzlKernelsTests(unittest.TestCase):
             "OIDC_EXCHANGE_UNAVAILABLE", "OIDC_EXCHANGE_REJECTED",
             "INVALID_OIDC_TOKEN_RESPONSE", "AMBIENT_HUB_CREDENTIAL_REJECTED",
             "CROSS_TARGET_TOKEN_REUSE_REJECTED", "INVALID_KERNEL_REFS",
-            "TARGET_ACCESS_VALIDATION_FAILED",
+            "MODEL_WRITE_ACCESS_VALIDATION_FAILED", "KERNEL_REFS_VALIDATION_FAILED",
         }
         for code in sorted(codes):
             with self.subTest(code=code), tempfile.TemporaryDirectory() as temporary:
@@ -413,6 +415,56 @@ class PublishSzlKernelsTests(unittest.TestCase):
                 })
                 self.assertNotIn("publisher_authority", observed)
                 self.assertNotIn("oidc-secret", report.read_text(encoding="utf-8"))
+
+    def test_main_reports_model_and_kernel_http_failures_without_credentials(self) -> None:
+        environment = {
+            "GITHUB_ACTIONS": "true",
+            "GITHUB_REPOSITORY": credentials.REPOSITORY,
+            "GITHUB_REF": "refs/heads/main",
+            "GITHUB_REF_PROTECTED": "true",
+            "GITHUB_WORKFLOW_REF": credentials.WORKFLOW_REF,
+            "GITHUB_EVENT_NAME": "workflow_dispatch",
+            "GITHUB_SHA": "b" * 40,
+            "ACTIONS_ID_TOKEN_REQUEST_URL": (
+                "https://pipelines.actions.githubusercontent.com/oidc/token"
+            ),
+            "ACTIONS_ID_TOKEN_REQUEST_TOKEN": "github-oidc-request-fixture",
+        }
+        for target, method, code in (
+            ("model", "auth_check", "MODEL_WRITE_ACCESS_VALIDATION_FAILED"),
+            ("kernel", "list_repo_refs", "KERNEL_REFS_VALIDATION_FAILED"),
+        ):
+            for status in (401, 403, 404):
+                with self.subTest(target=target, status=status), tempfile.TemporaryDirectory() as temporary:
+                    report = Path(temporary) / "failure.json"
+                    api = Mock()
+                    request = httpx.Request(
+                        "GET", "https://huggingface.co/api/private",
+                        headers={"Authorization": "Bearer " + MODEL_TOKEN + KERNEL_TOKEN},
+                    )
+                    getattr(api, method).side_effect = httpx.HTTPStatusError(
+                        "provider-secret-" + MODEL_TOKEN + KERNEL_TOKEN,
+                        request=request,
+                        response=httpx.Response(status, request=request),
+                    )
+                    with patch.dict(os.environ, environment, clear=True), patch.object(
+                        credentials, "exchange", side_effect=[MODEL_TOKEN, KERNEL_TOKEN]
+                    ), patch("huggingface_hub.HfApi", return_value=api), patch.object(
+                        publisher, "run"
+                    ) as run, patch("sys.stderr", io.StringIO()) as stderr:
+                        self.assertEqual(publisher.main(self.publication_argv(report)), 1)
+                        run.assert_not_called()
+                    observed = json.loads(report.read_text(encoding="utf-8"))
+                    self.assertEqual(observed["status"], "PUBLICATION_FAILED_NO_PROVIDER_WRITE")
+                    self.assertEqual(observed["failure"], {
+                        "stage": "CREDENTIAL_ACQUISITION",
+                        "error_type": "KeylessCredentialError",
+                        "error_code": code,
+                        "provider_write_attempted": False,
+                    })
+                    self.assertNotIn("provider-secret", report.read_text(encoding="utf-8") + stderr.getvalue())
+                    self.assertNotIn(MODEL_TOKEN, report.read_text(encoding="utf-8") + stderr.getvalue())
+                    self.assertNotIn(KERNEL_TOKEN, report.read_text(encoding="utf-8") + stderr.getvalue())
 
     def test_main_records_authority_failure_before_acquiring_grants(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
