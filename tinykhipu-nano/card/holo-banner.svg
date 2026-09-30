@@ -1,4 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" width="1200" height="360">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" width="1200" height="360" role="img" aria-labelledby="card-title card-description">
+  <title id="card-title">TinyKhipu-Nano: synthetic token-and-handle archive</title>
+  <desc id="card-description">Decorative neural-style schematic, not an array layout or a 4-6-2 MLP claim. The prior archive report lists E[24,12], W[2,12], b[2] and Wc[12]; this review did not inspect archive bytes or replay training.</desc>
   <defs>
     <linearGradient id="nano" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0" stop-color="#9f1239"/>
@@ -30,4 +32,5 @@
   <circle cx="720" cy="230" r="9" fill="#fb7185" opacity="0.5" filter="url(#glow)"/>
   <path d="M0 318 L 1200 318" fill="none" stroke="url(#nano)" stroke-width="4" opacity="0.22" filter="url(#glow)"/>
   <path d="M0 318 L 1200 318" fill="none" stroke="url(#nano)" stroke-width="0.9" opacity="0.5"/>
+<text x="600" y="340" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#e2e8f0">Illustration only; reported arrays: E[24,12], W[2,12], b[2], Wc[12]</text>
 </svg>

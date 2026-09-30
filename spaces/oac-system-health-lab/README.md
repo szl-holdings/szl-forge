@@ -131,6 +131,22 @@ domain integration; it does not claim either domain is already deployed or
 functionally aligned. The CSP and closed API are defense-in-depth, not an OS
 sandbox, adversarial-host certification, or a production server SLA.
 
+## Frontend design and response boundary
+
+Prism Ledger uses opaque midnight content surfaces, static iridescent card
+edges, and a decorative eight-spoke motif. The motif is not live telemetry.
+Controls have explicit labels and visible keyboard focus; small actions use
+44-pixel comfort targets. Narrow layouts stack numerical fields and long
+identities wrap rather than clip. Reduced-motion and forced-color preferences
+are respected. Static contrast/layout-token tests are not browser acceptance
+or accessibility certification.
+
+The browser refuses extra envelope, advisory, or identity fields and missing
+or malformed SHA-256 strings. Hash syntax is not cryptographic verification;
+the independent live verifier checks canonical input/output hash equality.
+All prior authority, source-pin, request-bound, no-storage, and refusal
+contracts remain unchanged.
+
 ## Local execution and tests
 
 Python 3.11–3.14, no third-party runtime packages. From this directory:

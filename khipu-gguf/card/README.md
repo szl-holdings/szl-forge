@@ -1,158 +1,81 @@
 ---
 license: apache-2.0
-language:
-  - en
+language: [en]
 base_model: SZLHOLDINGS/SZL-Khipu-1.5B
 base_model_relation: quantized
 pipeline_tag: text-generation
 library_name: llama.cpp
-tags:
-  - gguf
-  - ollama
-  - llama.cpp
-  - qwen2.5
-  - governed-agent
-  - brain-navigator
-  - szl-holdings
-  - receipts
+tags: [gguf, llama.cpp, research, proposal-only, retrieval]
 ---
 
-<!-- SZL-ESTATE-CARD:v2:START -->
-<p align="center"><a href="https://a-11-oy.com/"><img src="https://huggingface.co/spaces/SZLHOLDINGS/README/resolve/main/assets/estate-banner-v2.svg" alt="SZL Holdings — governed, receipted, verifiable" width="100%"></a></p>
-<p align="center">
-  <a href="https://github.com/szl-holdings/.github/tree/main/doctrine"><img src="https://img.shields.io/badge/doctrine-v11%20LOCKED-0B1F3A?style=flat-square" alt="doctrine v11"></a>
-  <a href="https://a-11-oy.com/"><img src="https://img.shields.io/badge/evidence%20wall-LIVE%20%C2%B7%20verify%20in%20browser-3AF4C8?style=flat-square" alt="live evidence wall"></a>
-  <a href="https://huggingface.co/datasets/SZLHOLDINGS/szl-lake"><img src="https://img.shields.io/badge/szl--lake-offline%20verifiable-C9B787?style=flat-square" alt="szl-lake offline verifiable"></a>
-  <a href="https://huggingface.co/spaces/SZLHOLDINGS/holographic"><img src="https://img.shields.io/badge/estate%20map-holographic-5B8DEE?style=flat-square" alt="holographic estate map"></a>
-</p>
-<p align="center"><sub>Part of the <a href="https://huggingface.co/SZLHOLDINGS">SZL Holdings</a> governed estate — claims are designed to carry checkable receipts. Verification proves integrity &amp; origin, never accuracy or performance.</sub></p>
-<!-- SZL-ESTATE-CARD:v2:END -->
+<p align="center"><img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/main/khipu-gguf/card/holo-banner.svg" alt="Khipu GGUF research artifact illustration" width="100%"/></p>
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/main/khipu-gguf/card/holo-banner.svg" alt="SZL-Khipu-1.5B-GGUF — holographic house banner" width="100%"/>
-</p>
+# Khipu 1.5B · GGUF
 
-<h1 align="center">K H I P U · G G U F</h1>
+**Compact, proposal-only retrieval plans over supplied handles**
 
-<p align="center"><em>Small enough for a laptop, honest enough for an audit.</em></p>
+**Derived quantizations · limited research/demo scope · production promotion blocked**
 
-<p align="center">
-  <img alt="Format: GGUF" src="https://img.shields.io/badge/format-GGUF-C9B787?style=flat-square"/>
-  <img alt="Downloads" src="https://img.shields.io/huggingface/dt/SZLHOLDINGS/SZL-Khipu-1.5B-GGUF?style=flat-square&color=fbbf24&label=downloads"/>
-  <a href="https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct"><img alt="Base: Qwen2.5-1.5B-Instruct" src="https://img.shields.io/badge/base-Qwen2.5--1.5B--Instruct-334155?style=flat-square"/></a>
-  <a href="https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B"><img alt="Receipts: signed, in base repo" src="https://img.shields.io/badge/receipts-signed%20in%20base%20repo-3af4c8?style=flat-square"/></a>
-  <a href="https://www.apache.org/licenses/LICENSE-2.0"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-7e8aa3?style=flat-square"/></a>
-  <img alt="Derived artifact — signed hash does not cover GGUF" src="https://img.shields.io/badge/derived-signed%20hash%20does%20not%20cover%20GGUF-b45309?style=flat-square"/>
-</p>
+GGUF derivatives of `SZLHOLDINGS/SZL-Khipu-1.5B`, itself a fine-tune of `Qwen/Qwen2.5-1.5B-Instruct`. The model proposes a JSON retrieval plan over candidate handles supplied by a controller. It does not contain or authorize access to a private graph, execute the plan, or issue trusted receipts.
 
-<p align="center">
-  A compact 1.5B model for governed agent navigation — quantized for everywhere.
-</p>
+## Artifact identity
 
-GGUF quantizations of [**SZL-Khipu-1.5B**](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B) — a QLoRA fine-tune of Qwen2.5-1.5B-Instruct for governed, grounded-only navigation of the SZL receipt lake.
+Reviewed Hub revision: [`7c39154b22ccb5e2151b4dd53e0d36965dfbc920`](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B-GGUF/tree/7c39154b22ccb5e2151b4dd53e0d36965dfbc920), inspected 2026-09-30 UTC.
 
-**Published provenance:** the base model ships with **owner-signed training and
-eval receipts**. They are Ed25519 signatures over canonical JSON and chain the
-evaluation receipt to the training receipt. This repo carries those receipts
-plus the repo-declared public key so you can verify repository-key continuity
-and receipt integrity *before* you load a tensor. They are not DSSE envelopes;
-the repository does not establish external key provenance, and an owner
-signature is not an independent evaluation.
+The following exact file identities are recorded in [publication.json](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B-GGUF/blob/7c39154b22ccb5e2151b4dd53e0d36965dfbc920/publication.json). File presence was checked against the reviewed tree; this review did not download or independently hash the GGUF bytes.
 
-<!-- SZL-ATELIER-CUT:v1:START -->
-## The cut
+| File | Bytes recorded | SHA-256 recorded |
+|---|---:|---|
+| `SZL-Khipu-1.5B-F16.gguf` | 3093668768 | `2348ee342efe639e100f3fb31a3dc11b8c12d8c43ecfe45e18041b9f94c71a12` |
+| `SZL-Khipu-1.5B-Q4_K_M.gguf` | 986047904 | `13c1a1993063e1dff92f7413ccf48eaca6d48efc8801ae9af35961ae3396623a` |
+| `SZL-Khipu-1.5B-Q5_K_M.gguf` | 1125049760 | `3bf460ac163c5dc952c273999c38a41349e3e6d666e4b713aed22c996860fd4c` |
+| `SZL-Khipu-1.5B-Q8_0.gguf` | 1646572448 | `6aff1087f64631679f4cdf032613aee6911dbde38cd3bac6b81bf63741a56f0d` |
 
-Leaders treat GGUF as the model. We print on the card: signed hash does not cover these files. CPU-honest, receipt-honest.
+File size does not equal peak runtime memory. This card makes no ranking of quantization quality, speed or energy efficiency because no comparative post-quantization evaluation was established.
 
-Edge navigation that still fails closed, with a card that refuses to launder a quant as a weight.
+## Evidence scope
 
-### Silhouette → leave → SZL
+The repository carries owner-signed training/evaluation receipts from the pre-quantized model and a repository-declared public key. The publication record reports that these signatures validated against that key; this review did not repeat signature verification. These are Ed25519 signatures over canonical JSON, not DSSE envelopes. External signer identity is not independently established.
 
-| Leader | Take, then tweak |
-|---|---|
-| Anthropic | No GGUF. We keep the honesty they apply to API vs weights. |
-| NVIDIA | TensorRT-LLM is their derived path. GGUF is ours. Same idea, smaller church. |
-| Unsloth | Unsloth's GGUF export, labeled derived. |
+The recorded pre-quantized held-out evaluation has plan-validity 11/11, grounding 4/5 and abstention **2/6**. Those results belong to the evaluated artifact described in the receipt. They do not establish behavioral performance for any of these GGUF files. Keep the abstention failure visible.
 
-No equivalent public combination was found among the leaders surveyed above (a snapshot, not an ecosystem-wide novelty claim).
+An unsigned publication record also describes a historical best-effort CPU service probe with two runs and a median latency of 1467.5 ms. That tiny service observation is not a current uptime assertion, an SLA, a benchmark, restart reproducibility, or a post-quantization quality test. Instrumented energy and process-peak memory are unavailable in that record. Current service operation was not tested in this card review.
 
-## Intended use
+## Source and lineage
 
-llama.cpp / Ollama / LM Studio. Still proposal-only.
+The source of this mirror's card and banner is the separate Forge publisher input
+`khipu-gguf/card/README.md`. A card-only correction does not attest the GGUF
+build, publish weights, or qualify a runtime.
 
-## Limitations
 
-- Derived. Numerics drift vs BF16.
-- Do not cite GGUF as the signed checkpoint.
+[publication.json](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B-GGUF/blob/7c39154b22ccb5e2151b4dd53e0d36965dfbc920/publication.json) identifies the source curriculum, schema and receipt tree at [`szl-forge@cddba1ad9887211d6fd87386e98bb6707f16dbf5/khipu`](https://github.com/szl-holdings/szl-forge/tree/cddba1ad9887211d6fd87386e98bb6707f16dbf5/khipu). It records upstream base revision `989aa7980e4cf806f80c7fef2b1adb7bc71aa306` and fine-tuned parent revision `759c6112b1acae67f30351ef4e652e07671a42fb`.
 
-Canonical GitHub: [`szl-holdings/szl-serve`](https://github.com/szl-holdings/szl-serve/blob/main/README.md)
-<!-- SZL-ATELIER-CUT:v1:END -->
+This identifies a source relationship; it does not establish a reproducible quantization build. No owner-signed release receipt covering these GGUF bytes is reported. A parent-model signature does not cover a derived GGUF unless that exact file digest is included in its signed subject.
 
-## Specification
+## Bounded usage
 
-| | |
-|---|---|
-| **Base model** | [`Qwen/Qwen2.5-1.5B-Instruct`](https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct) |
-| **License** | `apache-2.0` |
-| **Parameters** | 1.5B |
-| **Hardware** | Runs CPU-only via GGUF Q4_K_M (~0.99 GB); GPU optional |
-| **One command** | `ollama run hf.co/SZLHOLDINGS/SZL-Khipu-1.5B-GGUF:Q4_K_M` |
+Use a reviewed, pinned llama.cpp-compatible runtime and the exact selected file. The prompt contract is [khipu.schema.json](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B-GGUF/blob/7c39154b22ccb5e2151b4dd53e0d36965dfbc920/khipu.schema.json): a query plus candidate handles, followed by a proposed NAVIGATE or ABSTAIN plan. Validate output schema and handle membership independently. The controller retains access, approval and execution authority.
 
-## Quants
+An immutable artifact retrieval example, not an inference or deployment test:
 
-| File | Bits | Size | Uploaded-byte SHA-256 (Hub LFS OID) | Use when |
-|---|---:|---:|---|---|
-| [SZL-Khipu-1.5B-Q4_K_M.gguf](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B-GGUF/blob/main/SZL-Khipu-1.5B-Q4_K_M.gguf) | 4-bit | 0.99 GB | `13c1a1993063e1dff92f7413ccf48eaca6d48efc8801ae9af35961ae3396623a` | Default - best size/quality balance |
-| [SZL-Khipu-1.5B-Q5_K_M.gguf](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B-GGUF/blob/main/SZL-Khipu-1.5B-Q5_K_M.gguf) | 5-bit | 1.13 GB | `3bf460ac163c5dc952c273999c38a41349e3e6d666e4b713aed22c996860fd4c` | More quality headroom |
-| [SZL-Khipu-1.5B-Q8_0.gguf](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B-GGUF/blob/main/SZL-Khipu-1.5B-Q8_0.gguf) | 8-bit | 1.65 GB | `6aff1087f64631679f4cdf032613aee6911dbde38cd3bac6b81bf63741a56f0d` | Near-lossless CPU inference |
-| [SZL-Khipu-1.5B-F16.gguf](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B-GGUF/blob/main/SZL-Khipu-1.5B-F16.gguf) | 16-bit | 3.09 GB | `2348ee342efe639e100f3fb31a3dc11b8c12d8c43ecfe45e18041b9f94c71a12` | Reference / requantizing |
+```python
+from huggingface_hub import hf_hub_download
 
-Chat template (Qwen2.5 ChatML) is embedded in every file.
-
-## Run it
-
-**Ollama**
-
-```bash
-ollama run hf.co/SZLHOLDINGS/SZL-Khipu-1.5B-GGUF:Q4_K_M
+path = hf_hub_download(
+    repo_id="SZLHOLDINGS/SZL-Khipu-1.5B-GGUF",
+    filename="SZL-Khipu-1.5B-Q4_K_M.gguf",
+    revision="7c39154b22ccb5e2151b4dd53e0d36965dfbc920",
+)
+print(path)
 ```
 
-**llama.cpp**
+Retrieval may consume approximately 986 MB of storage for the selected file plus cache overhead. Hash-check against the reviewed evidence before use. This example was not executed in the review; confirm disk and runtime memory headroom before running it. A downloaded file is not a validated model.
 
-```bash
-llama-cli -hf SZLHOLDINGS/SZL-Khipu-1.5B-GGUF:Q4_K_M -p "Navigate: which receipt signed decision d-42?"
-```
+## Limitations and license
 
-**LM Studio** — search `SZLHOLDINGS/SZL-Khipu-1.5B-GGUF`, pick Q4_K_M.
-
-## Prompt contract
-
-The user turn is a single JSON object `{query, candidates:[{nodeId, nodeKind, label, note}]}`
-— handles only, never node content — and the model returns a single JSON **plan**
-(`decision=NAVIGATE` citing offered handles, or `decision=ABSTAIN` with an
-`abstainReason`) per `khipu.schema.json`. The full contract and expected output shape
-live on the [BrainNavigator card](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B#quick-start).
-
-## Verify before you trust
-
-```bash
-# The owner-signed receipts travel with the weights:
-#   training_receipt.signed.json; eval_receipt.signed.json; owner_pubkey.json
-# They are Ed25519 signatures over canonical JSON, not DSSE envelopes.
-# Verify them offline against the repo-declared public key before use.
-```
-
-Quantization: llama.cpp `convert_hf_to_gguf.py` -> `llama-quantize` (F16 -> Q4_K_M / Q5_K_M / Q8_0), 2026-07-15. Quantization changes numerics; the signed evaluation receipt covers the pre-quantized BrainNavigator evaluation artifact described by that receipt, **not** any GGUF. The LFS hashes above bind the exact uploaded GGUF bytes. No post-quantization quality evaluation or independent benchmark is claimed.
-
----
-
-<p align="center">
-  <strong>Governed AI you can prove.</strong><br/>
-  <a href="https://a-11-oy.com">a-11-oy.com</a> ·
-  <a href="https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B">base model + full card</a> ·
-  <a href="https://github.com/szl-holdings/szl-forge">source/harness</a> ·
-  <a href="https://huggingface.co/SZLHOLDINGS">SZLHOLDINGS on Hugging Face</a> ·
-  <a href="https://szlholdings-szl-estate-live.static.hf.space">Estate hub — live</a>
-</p>
-
-<p align="center"><sub>Lambda = Conjecture 1, never green; owner-signed receipts verified against a repo-declared key; no independent benchmark or post-quant evaluation claimed.<br/>SLSA: L1 honest · L2 attested · L3 roadmap. Λ = Conjecture 1 (advisory, never a theorem). Trust ceiling 0.97 — never 100%. Labels honest by default: MEASURED / REPORTED / MODELED / HEURISTIC / UNKNOWN / UNAVAILABLE. locked-proven = exactly 8 {F1,F4,F7,F11,F12,F18,F19,F22}.</sub></p>
+- Proposal-only, bounded research/demo use; no autonomous or high-stakes operation
+- No post-quantization quality result, independent certification, quantified energy result or reproducible-build claim
+- Runtime outputs are unsigned unless separately signed by an authorized external component
+- Quantized numerics can differ; do not transfer parent results without evaluation
+- Apache-2.0 is declared and [LICENSE](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B-GGUF/blob/7c39154b22ccb5e2151b4dd53e0d36965dfbc920/LICENSE) is present; preserve base-model and dependency notices
+- Lambda remains an open advisory conjecture; this card claims no SLSA level, government approval, ATO, or blanket trust percentage

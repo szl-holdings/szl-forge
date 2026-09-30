@@ -28,32 +28,40 @@ def test_card_and_canonical_kit_agree_on_bounded_observations() -> None:
         assert boundary in card
         assert boundary in canonical
 
-    assert "LoRA r=16 α=16" in card
+    assert "r=16, α=16" in card
     assert "r=16, **alpha=16**" in canonical
     assert "41 rows" in card
     assert "jsonl-only `szl_dataset.jsonl`" in canonical
-    assert "evals: none-this-run" in card
+    # The recipe's training-era no-eval stamp is not the whole card's state.
     assert "SKU eval none-this-run" in canonical
+    assert "evals: HISTORICAL_TRAINING_NONE_SEPARATE_GATE_FAIL" in card
+    assert "`evals=none-this-run`: no JSON/refusal gate ran in that training step." in card
+    assert "**1/5 held-out and overall FAIL**" in card
     assert "never_overwrite: SZLHOLDINGS/chaski" in card
     assert "never overwrite" in canonical
 
 
 def test_card_keeps_training_and_promotion_claims_separate() -> None:
     card = _read(CARD)
+    flattened = " ".join(card.split())
     lowered = card.casefold()
 
     required = (
         "autonomy_eligible: false",
-        "No signed held-out evaluation receipt for this 5050 adapter is present in this source tree.",
-        "Publishing this card is a documentation update, not model promotion",
-        "Card, banner, and source binding only; weights, adapter, configs, evals, visibility, hardware, collection, and runtime state unchanged",
+        "**1/5 held-out and overall FAIL**",
+        "heldout.refusal_no_regression=false",
+        "Production and publication authorization are **false**.",
+        "The card does not authorize artifact changes or model promotion.",
         "copied_live_chaski_weights: false",
-        "Do not load this ID into the Khipu lab.",
+        "Lab load is forbidden.",
+        "No 5/5 or 6/6 qualification is claimed.",
         "620b3488fac2ebc6518090424de5b3c6a182293cf52dfd5bd9f886f54aef0df5",
-        "Canonical GitHub: [`chaski/README_5050.md`]",
+        "Canonical card authoring source: [chaski-5050/card/README.md]",
+        "nonportable owner-local base path",
+        "Runtime loading has not been verified.",
     )
     for boundary in required:
-        assert boundary in card
+        assert boundary in flattened
 
     forbidden = (
         "nobody else ships this combination",

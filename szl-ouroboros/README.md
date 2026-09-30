@@ -8,94 +8,85 @@ tags:
 - loop-tax
 - provenance
 - doi:10.5281/zenodo.19944926
-szl-governance:
-  verdict: ADVISORY
-  lambda: Conjecture 1 (open) — uniqueness unproven; untouched by loop-tax accounting; advisory only
-  provenance: reconstructs the a11oy bounded-loop trace + MEASURED/DERIVED loop-tax split offline
-  honest_blocked: a measurement gap stays a gap — overheadMs is UNAVAILABLE when wall is unmeasured, never fabricated
+szl-review:
+  artifact_class: SOFTWARE_KERNEL
+  maturity: SOFTWARE_LIMITED
+  trained_weights_present: false
+  evaluation: HISTORICAL_RECORDS_NOT_RERUN
+  source_mirror_parity: NOT_VERIFIED_THIS_REVIEW
+  reviewed_at: "2026-09-30"
 ---
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/main/szl-ouroboros/card/holo-banner.svg" alt="szl-ouroboros — the bounded loop as a hologram: budget ticks along the arc, tail stopping short" width="100%"/>
-</p>
-
-<!-- SZL-KERNEL-OPERATIONAL:START -->
-## Operational (MEASURED laptop-Blackwell)
-
-> **STATUS:** tests **PASS**. `get_kernel` **import-LIVE**. Unsloth/LoRA is the wrong tool. Receipted kernels, not silent CUDA.
-
-| Thing | Label | Method / N / date / what-NOT |
-|---|---|---|
-| tests (`PYTHONPATH=torch-ext`) | **PASS** | MEASURED 2026-08-29T15:54:01Z host `betterwithage` Windows-10-10.0.26200-SP0. torch `2.10.0+cu128`. GPU `NVIDIA GeForce RTX 5050 Laptop GPU` arch `Blackwell`. pytest `15 passed in 0.04s`. Failed nodes: `none`. What-NOT: not a leaderboard. torch.compile fullgraph failures on Windows Blackwell (`cl is not found`) are MEASURED, not hidden. |
-| Kernel Hub `get_kernel` | **import-LIVE** | kernels `0.16.1`. Default: `get_kernel("SZLHOLDINGS/szl-ouroboros", revision="main", trust_remote_code=True)` → `True`. `backend="cpu"` → `True`. trust_remote_code=False → `ValueError` (SZLHOLDINGS is not a trusted publisher). repo_type=kernel required (kernels 0.16). What-NOT: not a weight load; do not pickle/joblib.load. |
-| formula-tax | **ADVISORY** | locked-8 `F1 F4 F7 F11 F12 F18 F19 F22`. registry_count=21. Λ geomean `1.0`. uniqueness **Conjecture 1** (never a theorem). |
-| I1–I8 | **catalog** | `I1 receipt-chain-continuity; I2 ledger-failure-shape; I3 served-run-has-model; I4 signed-columns-atomic; I5 loop-steps-positive; I6 receipt-ed25519-verify; I7 receipt-columns-consistent; I8 flywheel-lineage`. Executed by `SZLHOLDINGS/szl-invariants`. Statuses never coerced. Λ untouched. |
-| CUDA speedup / tokens/s / joules | **UNAVAILABLE** | Not claimed. Receipted kernels, not silent CUDA. |
-
-GitHub source: [`szl-holdings/szl-ouroboros`](https://github.com/szl-holdings/szl-ouroboros) @ `cdd2e8f619672f4b8835f5697d84c0850d389a33`. Artifacts: [`BENCH.laptop-blackwell.json`](./BENCH.laptop-blackwell.json), [`OPERATIONAL.json`](./OPERATIONAL.json).
-
-```python
-from kernels import get_kernel
-k = get_kernel("SZLHOLDINGS/szl-ouroboros", revision="main", trust_remote_code=True)
-```
-
-<!-- SZL-KERNEL-OPERATIONAL:END -->
-
+<p align="center"><img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/main/szl-ouroboros/card/holo-banner.svg" alt="szl-ouroboros software provenance illustration" width="100%"/></p>
 
 # szl-ouroboros
 
-**The cut, in one line:** a loop with a budget, a gap, and a receipt.
+**Account for bounded-loop timing and preserve measurement gaps**
 
-Bounded-loop trace + loop-tax accounting. **Not a model. No weights.** **Not** the TypeScript product [`szl-holdings/ouroboros`](https://github.com/szl-holdings/ouroboros).
+**Software kernel · limited maturity · Apache-2.0 declared · no trained weights in the reviewed tree**
 
-**IS:** a pure-Python, stdlib-only governance kernel. It rebuilds a run's attempt windows into labeled fields (`modelMs` MEASURED, `overheadMs` DERIVED, `serializationTaxMs` a counterfactual, never a realized saving). Public API: `build_loop_trace`, `loop_tax`, `selfcheck`.
+A Python package for reconstructing bounded-loop traces and calculating timing fields from supplied attempt windows and an optional measured wall time.
 
-**IS NOT:** trained weights. Not a CUDA bench. No `model.joblib` is published in this repo (OBSERVED 2026-09-25); any executable serialization would be **QUARANTINED** — never `joblib.load` an artifact from a card mirror. When `wall_ms` is missing, `overheadMs` is **UNAVAILABLE**, never fabricated.
+## Artifact and source identity
 
-Canonical GitHub source: https://github.com/szl-holdings/szl-ouroboros  
-Hub package: https://huggingface.co/kernels/SZLHOLDINGS/szl-ouroboros  
-This model-type repo is the publish / card mirror. Apache-2.0.
+- Model-type card mirror: [reviewed tree](https://huggingface.co/SZLHOLDINGS/szl-ouroboros/tree/91e68d606a6273dd46db600f83938e61322b2b37), revision `91e68d606a6273dd46db600f83938e61322b2b37`
+- First-class kernel package: [reviewed tree](https://huggingface.co/kernels/SZLHOLDINGS/szl-ouroboros/tree/194970667faa1292ce09c7ae5880a1918f5cddeb), revision `194970667faa1292ce09c7ae5880a1918f5cddeb`
+- Declared canonical GitHub source: [observed source tree](https://github.com/szl-holdings/szl-ouroboros/tree/f4c9df3840a84c767b7e5fa1c29aa25f00cc0457), revision `f4c9df3840a84c767b7e5fa1c29aa25f00cc0457`
+- Source paths: `torch-ext/szl_ouroboros/` and `build/torch-universal/szl_ouroboros/` in the canonical repository
+- Inspection date: 2026-09-30 UTC
 
-<!-- SZL-ATELIER-CUT:v1:START -->
-## The cut
+These are distinct repository revisions. The source repository is reachable; this review does not establish byte-for-byte parity, a reproducible build, approved publication, or the identity of a deployed process. Use the release's source binding and publication receipt to establish that chain.
 
-Agent frameworks retry until success. We tax the loop. Success that costs all remaining λ is a failure.
-
-A runtime that cannot grind a gate into dust.
-
-### Silhouette → leave → SZL
-
-| Leader | Take, then tweak |
-|---|---|
-| Anthropic | Don't jailbreak yourself by persistence. |
-| NVIDIA | Scheduler quota, but for authority. |
-| Unsloth | No. |
-
-No equivalent public combination was found among the leaders surveyed above (a snapshot, not an ecosystem-wide novelty claim).
+The reviewed mirror contains Python source, build metadata and historical evidence records. Its listed tree contains no `model.joblib`, `.safetensors`, `.gguf`, `.onnx`, `.pt`, `.pth` or `.bin` model artifact. Historical surrogate descriptions in [MODEL_PROVENANCE.json](https://huggingface.co/SZLHOLDINGS/szl-ouroboros/blob/91e68d606a6273dd46db600f83938e61322b2b37/MODEL_PROVENANCE.json) and [TRAINING_RECEIPT.json](https://huggingface.co/SZLHOLDINGS/szl-ouroboros/blob/91e68d606a6273dd46db600f83938e61322b2b37/TRAINING_RECEIPT.json) do not establish present downloadable weights. Surrogate replay is blocked by the missing artifact. Do not load executable pickle/joblib artifacts from this card mirror.
 
 ## Intended use
 
-Wrap agent retries.
+Offline performance accounting for benign software retry workflows. Keep measured inputs, derived arithmetic, and counterfactual quantities visibly separate.
+
+## Public interface
+
+build_loop_trace; loop_tax; classify_exit; explain; selfcheck
+
+## Usage after publication verification
+
+The example below is source-informed and was **not executed in this card review**. Install the client and dependencies qualified by the relevant release. Loading remote kernel Python is code execution. Review the exact package and use the immutable **kernel-package** revision from verified publication evidence. Do not substitute the model-mirror SHA or GitHub source SHA.
+
+```python
+import os
+import re
+from kernels import get_kernel
+
+revision = os.environ.get("SZL_VERIFIED_KERNEL_REVISION", "")
+if re.fullmatch(r"[0-9a-f]{40}", revision) is None:
+    raise ValueError("Set the kernel revision from verified publication evidence")
+
+kernel = get_kernel(
+    "SZLHOLDINGS/szl-ouroboros", revision=revision, trust_remote_code=True
+)
+attempts = [
+    {"ok": False, "latency_ms": 220},
+    {"ok": True, "latency_ms": 900},
+]
+trace = kernel.build_loop_trace(attempts, wall_ms=1300, max_budget=4)
+print(trace["modelMs"], trace["overheadMs"])
+```
+
+The revision-format check is input validation only. It does not verify signatures, provenance, dependencies or runtime compatibility. A self-check exercises its programmed assertions; it is not product qualification.
+
+## Evidence and evaluation limits
+
+[BENCH.laptop-blackwell.json](https://huggingface.co/SZLHOLDINGS/szl-ouroboros/blob/91e68d606a6273dd46db600f83938e61322b2b37/BENCH.laptop-blackwell.json), [TRAINING_RECEIPT.json](https://huggingface.co/SZLHOLDINGS/szl-ouroboros/blob/91e68d606a6273dd46db600f83938e61322b2b37/TRAINING_RECEIPT.json), and [PROMOTION_READINESS_AUDIT.json](https://huggingface.co/SZLHOLDINGS/szl-ouroboros/blob/91e68d606a6273dd46db600f83938e61322b2b37/PROMOTION_READINESS_AUDIT.json) retain owner-produced historical records. Each result applies only to its stated artifact, inputs, environment and date. This review did not rerun those tests, import the kernel, verify signatures, download weights, or benchmark throughput, energy or end-to-end behavior. Historical surrogate fidelity must not be presented as current kernel quality or current model availability.
 
 ## Limitations
 
-- Kernel. Pair with governed-agent-bench.
+This card covers the kernel artifact, not the separate TypeScript ouroboros product or every GitHub automation in the source repository. Accounting does not itself execute or enforce an application retry policy. When wall time is absent, overheadMs remains unavailable. serializationTaxMs is counterfactual, not a realized saving; deadHopMs is an upper-bound interpretation, not measured prefetch savings. The historical surrogate does not replace exact arithmetic.
 
-Canonical GitHub: [`szl-holdings/szl-khipu`](https://github.com/szl-holdings/szl-khipu/blob/main/szl_khipu/ouroboros.py)
-<!-- SZL-ATELIER-CUT:v1:END -->
+Lambda uniqueness remains Conjecture 1, open and advisory. Receipt consistency, signatures and proof labels do not establish model accuracy, system safety, or certification. Preserve missing, failed, historical, and unverified states in downstream displays.
 
-```python
-from kernels import get_kernel
-ou = get_kernel("SZLHOLDINGS/szl-ouroboros", revision="main", trust_remote_code=True)
-attempts = [
-    {"provider": "sovereign", "model": "own-metal", "ok": False, "latency_ms": 220, "node": "tower"},
-    {"provider": "sovereign", "model": "own-metal", "ok": True,  "latency_ms": 900, "node": "laptop"},
-]
-trace = ou.build_loop_trace(attempts, wall_ms=1300, exit="converged", max_budget=4)
-print(trace["modelMs"], trace["overheadMs"], trace["deadHopMs"])  # 1120 180 220
-print(ou.selfcheck())
-```
+## License
 
-`LOOP_DOCTRINE = "bounded, terminating, receipt-closed"`. A budget violation is reported, never clamped. Λ is not touched here and stays Conjecture 1.
+The reviewed [LICENSE](https://huggingface.co/SZLHOLDINGS/szl-ouroboros/blob/91e68d606a6273dd46db600f83938e61322b2b37/LICENSE) contains the Apache License 2.0 text, matching the card declaration. This observation does not independently establish rights to every artifact, training-data permission, or downstream-use clearance. Preserve upstream notices and check dependency licenses separately.
 
-Doctrine v11. Copyright 2026 SZL Holdings · Stephen P. Lutar · ORCID [0009-0001-0110-4173](https://orcid.org/0009-0001-0110-4173).
+## Citation and verification
+
+Cite the exact artifact URL, revision, evidence file, date, and test scope relevant to the claim. Prefer immutable links above over branch links or a live status badge. Report an evidence gap as an evidence gap.

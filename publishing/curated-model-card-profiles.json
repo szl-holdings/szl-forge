@@ -1,0 +1,16 @@
+{
+  "schema": "szl.curated-card-profiles/v1",
+  "mode": "OFFLINE_ONLY",
+  "source_repository": "szl-holdings/szl-forge",
+  "profiles": {
+    "willay": {
+      "repo_id": "SZLHOLDINGS/WILLAY",
+      "observed_hub_revision": "e04bd728f20857c75e7c831d19d7190affd29133",
+      "reviewed_source_revision": "36821b7e23199ffd37d232fed5e7855e0be0b308",
+      "source_path": "willay/card/README.md",
+      "source_sha256": "dc4c5b50c38c1d07ff6897e2042fc230a93211a06f46faeeb8245b8dcab6b7c1",
+      "observation_path": "publishing/curated-card-observations/willay-20260930.json",
+      "observation_sha256": "9c534e6697bc5346f1637ef0e1edd22cc44ccbf50abd506ccac7f5de9ebb5531"
+    }
+  }
+}
