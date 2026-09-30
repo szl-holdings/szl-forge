@@ -221,5 +221,175 @@ class PortfolioContractTests(unittest.TestCase):
         self.assertNotIn("python khipu/sanity_gate.py", card)
 
 
+class PortfolioArtifactMetadataTests(unittest.TestCase):
+    def audit_sizes(self, sizes, *, maximum=None, kind="trained_model"):
+        artifact = {
+            "repo_id": "SZLHOLDINGS/synthetic-metadata",
+            "kind": kind,
+            "maturity": "RESEARCH_ONLY",
+            "hub_revision": "a" * 40,
+            "required_files": [],
+            "github_source": "https://github.com/szl-holdings/szl-forge",
+        }
+        if maximum is not None:
+            artifact["max_total_weight_bytes"] = maximum
+        info = SimpleNamespace(
+            sha="a" * 40,
+            card_data=SimpleNamespace(license="apache-2.0"),
+            downloads=0,
+            siblings=[
+                SimpleNamespace(rfilename=f"weight-{index}.safetensors", size=size, lfs=None)
+                for index, size in enumerate(sizes)
+            ],
+        )
+        api = mock.Mock()
+        api.model_info.return_value = info
+        with (
+            mock.patch("socket.create_connection", side_effect=AssertionError("network forbidden")),
+            mock.patch("socket.socket.connect", side_effect=AssertionError("network forbidden")),
+            mock.patch("huggingface_hub.hf_hub_download") as download,
+        ):
+            result = verifier.audit_live_artifact(
+                artifact, api=api, weight_extensions=(".safetensors",)
+            )
+        download.assert_not_called()
+        api.model_info.assert_called_once_with(
+            artifact["repo_id"], files_metadata=True, revision="a" * 40
+        )
+        return result
+
+    def test_unknown_weight_size_remains_unknown_and_fails_closed(self):
+        for sizes in ([None], [10, None]):
+            with self.subTest(sizes=sizes):
+                result = self.audit_sizes(sizes, maximum=100)
+                self.assertFalse(result["ok"])
+                self.assertIsNone(result["total_weight_bytes"])
+                self.assertTrue(any("size is unknown" in error for error in result["errors"]))
+                self.assertIsNone(result["weight_files"][-1]["size"])
+
+    def test_empty_weight_payload_cannot_pass_the_artifact_gate(self):
+        for sizes in ([0], [0, 10]):
+            with self.subTest(sizes=sizes):
+                result = self.audit_sizes(sizes)
+                self.assertFalse(result["ok"])
+                self.assertTrue(any("empty weight artifact" in error for error in result["errors"]))
+
+    def test_invalid_weight_sizes_do_not_become_byte_counts(self):
+        for size in (-1, True, "100", 0.0):
+            with self.subTest(size=size):
+                result = self.audit_sizes([size])
+                self.assertFalse(result["ok"])
+                self.assertIsNone(result["total_weight_bytes"])
+                self.assertTrue(any("invalid weight size" in error for error in result["errors"]))
+
+    def test_known_sizes_keep_the_existing_total_budget_check(self):
+        within = self.audit_sizes([3, 7], maximum=10)
+        self.assertTrue(within["ok"])
+        self.assertEqual(10, within["total_weight_bytes"])
+        over = self.audit_sizes([3, 7], maximum=9)
+        self.assertFalse(over["ok"])
+        self.assertTrue(any("exceed declared maximum" in error for error in over["errors"]))
+
+    def test_small_positive_file_is_not_declared_a_placeholder(self):
+        result = self.audit_sizes([1], maximum=10)
+        self.assertTrue(result["ok"])
+        self.assertEqual(1, result["total_weight_bytes"])
+        self.assertEqual([], result["warnings"])
+
+    def test_software_kernel_classification_is_unchanged(self):
+        empty = self.audit_sizes([], kind="software_kernel")
+        self.assertTrue(empty["ok"])
+        self.assertEqual("software_kernel", empty["kind"])
+        self.assertEqual("RESEARCH_ONLY", empty["maturity"])
+        self.assertEqual(0, empty["total_weight_bytes"])
+        weighted = self.audit_sizes([10], kind="software_kernel")
+        self.assertFalse(weighted["ok"])
+        self.assertTrue(any("unexpectedly contains" in error for error in weighted["errors"]))
+
+    def audit_receipts(self, *, resolved_revision, requested_pin=None):
+        artifact = {
+            "repo_id": "SZLHOLDINGS/synthetic-receipts",
+            "kind": "software_kernel",
+            "maturity": "RESEARCH_ONLY",
+            "local_receipt_dir": "receipts",
+            "required_files": [],
+            "github_source": "https://github.com/szl-holdings/szl-forge",
+        }
+        if requested_pin is not None:
+            artifact["hub_revision"] = requested_pin
+        info = SimpleNamespace(
+            sha=resolved_revision,
+            card_data=SimpleNamespace(license="apache-2.0"),
+            downloads=0,
+            siblings=[],
+        )
+        api = mock.Mock()
+        api.model_info.return_value = info
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            receipts = root / "receipts"
+            receipts.mkdir()
+            remote_files = {}
+            for name in verifier.RECEIPT_FILES:
+                path = receipts / name
+                path.write_bytes(b"synthetic receipt parity fixture\n")
+                remote_files[name] = str(path)
+
+            def download(*, filename, revision, **kwargs):
+                self.assertIn(filename, verifier.RECEIPT_FILES)
+                self.assertEqual(resolved_revision, revision)
+                self.assertEqual("model", kwargs["repo_type"])
+                self.assertTrue(kwargs["force_download"])
+                return remote_files[filename]
+
+            with (
+                mock.patch("socket.create_connection", side_effect=AssertionError("network forbidden")),
+                mock.patch("socket.socket.connect", side_effect=AssertionError("network forbidden")),
+                mock.patch.object(verifier, "ROOT", root),
+                mock.patch.object(verifier, "sha256_source", side_effect=verifier.sha256_path),
+                mock.patch("huggingface_hub.hf_hub_download", side_effect=download) as downloader,
+            ):
+                result = verifier.audit_live_artifact(
+                    artifact, api=api, weight_extensions=(".safetensors",)
+                )
+                calls = list(downloader.call_args_list)
+        expected_arguments = {"files_metadata": True}
+        if requested_pin is not None:
+            expected_arguments["revision"] = requested_pin
+        api.model_info.assert_called_once_with(artifact["repo_id"], **expected_arguments)
+        return result, calls
+
+    def test_receipt_downloads_bind_the_valid_metadata_revision(self):
+        for pin in (None, "a" * 40):
+            with self.subTest(pin=pin):
+                result, calls = self.audit_receipts(
+                    resolved_revision="a" * 40, requested_pin=pin
+                )
+                self.assertTrue(result["ok"])
+                self.assertEqual(len(verifier.RECEIPT_FILES), len(calls))
+                for call in calls:
+                    self.assertEqual("a" * 40, call.kwargs["revision"])
+                    self.assertEqual("model", call.kwargs["repo_type"])
+                self.assertTrue(all(item["matched"] for item in result["receipt_parity"].values()))
+
+    def test_missing_or_invalid_revision_never_downloads_receipts(self):
+        for revision in (None, "main", "a" * 39, "A" * 40, "g" * 40):
+            with self.subTest(revision=revision):
+                result, calls = self.audit_receipts(resolved_revision=revision)
+                self.assertFalse(result["ok"])
+                self.assertIsNone(result["receipt_parity"])
+                self.assertEqual([], calls)
+                self.assertTrue(any("exact resolved Hub revision" in error for error in result["errors"]))
+
+    def test_stale_resolved_head_never_downloads_receipts(self):
+        result, calls = self.audit_receipts(
+            resolved_revision="b" * 40, requested_pin="a" * 40
+        )
+        self.assertFalse(result["ok"])
+        self.assertIsNone(result["receipt_parity"])
+        self.assertEqual([], calls)
+        self.assertTrue(any("differs from pin" in error for error in result["errors"]))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
