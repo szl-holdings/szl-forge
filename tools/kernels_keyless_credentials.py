@@ -6,7 +6,10 @@ resources even though they share the same visible repository ID.  A single
 credential is therefore never accepted for both targets.  The official
 ``hf auth token`` exchange performs GitHub OIDC verification at the provider;
 this module only admits the one protected workflow context and never prints,
-caches, exports, or serializes either returned token.
+caches, exports, or serializes either returned token.  A successful repository
+Trusted Publisher exchange is the provider's write-authority decision for that
+exact resource.  It is deliberately not followed by the separate user-token
+``auth-check`` endpoint.
 """
 from __future__ import annotations
 
@@ -48,24 +51,6 @@ FORBIDDEN_AMBIENT_CREDENTIALS = frozenset({
 
 class KeylessCredentialError(RuntimeError):
     """A fixed non-secret failure code; provider response text is discarded."""
-
-
-def _access_validation_failure(code: str, cause: Exception) -> KeylessCredentialError:
-    """Retain only a bounded HTTP status from the pinned client's response."""
-    from httpx import Response
-    from huggingface_hub.errors import HfHubHTTPError
-
-    failure = KeylessCredentialError(code)
-    failure.http_status = None
-    if isinstance(cause, HfHubHTTPError):
-        # Do not consult arbitrary exception properties, headers, URLs, or
-        # bodies. Only the pinned Hub client's concrete response is admitted.
-        response = vars(cause).get("response")
-        if type(response) is Response:
-            status = vars(response).get("status_code")
-            if type(status) is int and 400 <= status <= 599:
-                failure.http_status = status
-    return failure
 
 
 @dataclass(frozen=True)
@@ -184,9 +169,15 @@ def acquire_pair(
     *,
     environment: Mapping[str, str] | None = None,
     supplier: Callable[[str, Mapping[str, str]], str] | None = None,
-    api: Any = None,
 ) -> KernelPublisherCredentials:
-    """Acquire and validate both target grants without attempting a write."""
+    """Acquire both exact-resource grants before any publication operation.
+
+    Hugging Face defines a successful repository Trusted Publisher exchange as
+    issuing a short-lived token with write access to exactly that repository.
+    ``HfApi.auth_check`` is a separate user-token endpoint and is not part of
+    that exchange protocol.  Provider-supported structural reads and the real
+    transactional writes/readbacks remain in ``publish_szl_kernels.run``.
+    """
     environment = os.environ if environment is None else environment
     require_workflow_context(environment)
     if any(environment.get(key) for key in FORBIDDEN_AMBIENT_CREDENTIALS):
@@ -208,33 +199,5 @@ def acquire_pair(
             raise KeylessCredentialError("INVALID_OIDC_TOKEN_RESPONSE")
     if hmac.compare_digest(model, kernel):
         raise KeylessCredentialError("CROSS_TARGET_TOKEN_REUSE_REJECTED")
-
-    if api is None:
-        from huggingface_hub import HfApi
-
-        api = HfApi(endpoint="https://huggingface.co", token=False)
-    try:
-        api.auth_check(repo_id=TARGET, repo_type="model", token=model, write=True)
-    except Exception as exc:
-        raise _access_validation_failure("MODEL_WRITE_ACCESS_VALIDATION_FAILED", exc) from None
-    try:
-        refs = api.list_repo_refs(TARGET, repo_type="kernel", token=kernel)
-        branches = {
-            ref.name: ref.target_commit
-            for ref in refs.branches
-            if ref.name in {"main", "v1"}
-        }
-        if (
-            set(branches) != {"main", "v1"}
-            or any(
-                not isinstance(sha, str) or FULL_SHA_RE.fullmatch(sha) is None
-                for sha in branches.values()
-            )
-        ):
-            raise KeylessCredentialError("INVALID_KERNEL_REFS")
-    except KeylessCredentialError:
-        raise
-    except Exception as exc:
-        raise _access_validation_failure("KERNEL_REFS_VALIDATION_FAILED", exc) from None
     return KernelPublisherCredentials(model=model, kernel=kernel)
 
