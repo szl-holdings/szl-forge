@@ -69,7 +69,7 @@ class BrowserScriptTests(unittest.TestCase):
         report = json.loads(result.stdout)
         self.assertTrue(report["complete"])
         self.assertEqual(report["actual_backend_fixtures"], 2)
-        self.assertGreaterEqual(report["malformed_contracts_rejected"], 40)
+        self.assertGreaterEqual(report["malformed_contracts_rejected"], 81)
         self.assertGreaterEqual(report["interaction_checks"], 15)
         self.assertEqual(report["scope"], "LOCAL_SCRIPT_CONTRACT_ONLY")
         print("OAC UI contract: " + result.stdout.strip())
