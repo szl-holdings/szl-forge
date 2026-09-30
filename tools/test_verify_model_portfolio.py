@@ -391,5 +391,300 @@ class PortfolioArtifactMetadataTests(unittest.TestCase):
         self.assertTrue(any("differs from pin" in error for error in result["errors"]))
 
 
+class ArtifactCompletenessTests(unittest.TestCase):
+    """Synthetic same-commit observations; no providers, payloads or loaders."""
+
+    REVISION = "a" * 40
+
+    def classify(self, paths, *, documents=None, headers=None, complete=True, sizes=None, revision=None):
+        revision = self.REVISION if revision is None else revision
+        files = [
+            {"path": path, "revision": revision, "size": (sizes or {}).get(path, 8)}
+            for path in paths
+        ]
+        return verifier.classify_artifact_completeness(
+            revision=revision, inventory_complete=complete, files=files,
+            json_observations=documents, gguf_header_observations=headers,
+        )
+
+    def parsed(self, data, *, revision=None):
+        return {"revision": revision or self.REVISION, "state": "PARSED", "data": data}
+
+    def model_documents(self, index=None):
+        result = {"config.json": self.parsed({"model_type": "synthetic"})}
+        if index is not None:
+            result["model.safetensors.index.json"] = self.parsed({"weight_map": index})
+        return result
+
+    def test_complete_index_requires_every_referenced_shard(self):
+        paths = ["config.json", "model.safetensors.index.json", "model-1.safetensors", "model-2.safetensors"]
+        documents = self.model_documents({"a": "model-1.safetensors", "b": "model-2.safetensors", "c": "model-1.safetensors"})
+        result = self.classify(paths, documents=documents)
+        self.assertEqual("COMPLETE_STRUCTURE", result["status"])
+        self.assertEqual(["model-1.safetensors", "model-2.safetensors"], result["packages"][0]["referenced_shards"])
+        self.assertEqual("NOT_EVALUATED", result["artifact_validity"])
+        missing = self.classify(paths[:-1], documents=documents)
+        self.assertEqual("INCOMPLETE_STRUCTURE", missing["status"])
+        self.assertIn({"code": "ABSENT_AT_COMPLETE_INVENTORY", "path": "model-2.safetensors"}, missing["packages"][0]["issues"])
+
+    def test_incomplete_inventory_cannot_establish_absence(self):
+        documents = self.model_documents({"a": "missing.safetensors"})
+        for complete in (None, False):
+            with self.subTest(complete=complete):
+                result = self.classify(["config.json", "model.safetensors.index.json"], documents=documents, complete=complete)
+                self.assertEqual("UNKNOWN_STRUCTURE", result["status"])
+                self.assertIn({"code": "PRESENCE_UNKNOWN", "path": "missing.safetensors"}, result["packages"][0]["issues"])
+                self.assertNotIn("ABSENT_AT_COMPLETE_INVENTORY", str(result))
+
+    def test_nested_referenced_shards_do_not_create_an_unconfigured_variant(self):
+        paths = ["config.json", "model.safetensors.index.json", "shards/model-1.safetensors"]
+        documents = self.model_documents({"a": "shards/model-1.safetensors"})
+        result = self.classify(paths, documents=documents)
+        self.assertEqual("COMPLETE_STRUCTURE", result["status"])
+        self.assertEqual(1, len(result["packages"]))
+        self.assertEqual(["shards/model-1.safetensors"], result["packages"][0]["referenced_shards"])
+        # A directory with independent payload or config remains its own variant.
+        result = self.classify(paths + ["shards/independent.safetensors"], documents=documents)
+        self.assertEqual("INCOMPLETE_STRUCTURE", result["status"])
+        self.assertEqual(2, len(result["packages"]))
+        result = self.classify(paths + ["shards/config.json"], documents=documents)
+        self.assertEqual("UNKNOWN_STRUCTURE", result["status"])
+        self.assertEqual(2, len(result["packages"]))
+
+    def test_parsed_zero_byte_sidecars_are_conflicting_evidence(self):
+        paths = ["config.json", "model.safetensors.index.json", "model-1.safetensors"]
+        documents = self.model_documents({"a": "model-1.safetensors"})
+        for path in ("config.json", "model.safetensors.index.json"):
+            with self.subTest(path=path):
+                result = self.classify(paths, documents=documents, sizes={path: 0})
+                self.assertEqual("UNKNOWN_STRUCTURE", result["status"])
+                self.assertIn({"code": "PARSED_EMPTY_METADATA_CONFLICT", "path": path}, result["packages"][0]["issues"])
+
+    def test_index_alone_is_metadata_not_weight_payload(self):
+        documents = self.model_documents({"a": "missing.safetensors"})
+        result = self.classify(["config.json", "model.safetensors.index.json"], documents=documents)
+        self.assertEqual("INCOMPLETE_STRUCTURE", result["status"])
+        self.assertEqual([], result["packages"][0]["payloads"])
+        self.assertEqual("WEIGHT_INDEX_METADATA", result["file_roles"][1]["role"])
+
+    def test_binary_index_and_variant_config_use_their_own_directory(self):
+        documents = {
+            "config.json": self.parsed({"model_type": "synthetic"}),
+            "variant/pytorch_model.bin.index.json": self.parsed({"weight_map": {"a": "pytorch_model-1.bin"}}),
+        }
+        paths = ["config.json", "variant/pytorch_model.bin.index.json", "variant/pytorch_model-1.bin"]
+        result = self.classify(paths, documents=documents)
+        group = next(item for item in result["packages"] if item.get("directory") == "variant")
+        self.assertEqual("INCOMPLETE_STRUCTURE", group["status"])
+        self.assertIn({"code": "ABSENT_AT_COMPLETE_INVENTORY", "path": "variant/config.json"}, group["issues"])
+        paths.append("variant/config.json")
+        documents["variant/config.json"] = self.parsed({"architectures": ["SyntheticModel"]})
+        result = self.classify(paths, documents=documents)
+        self.assertEqual("COMPLETE_STRUCTURE", next(item for item in result["packages"] if item.get("directory") == "variant")["status"])
+
+    def test_unsafe_or_unsupported_index_references_stay_unknown(self):
+        for shard in ("../outside.safetensors", "/absolute.safetensors", "C:/outside.safetensors", "dir\\part.safetensors", "bad\x00.safetensors", "model.safetensors.index.json", "", None):
+            with self.subTest(shard=shard):
+                result = self.classify(["config.json", "model.safetensors.index.json"], documents=self.model_documents({"a": shard}))
+                self.assertEqual("UNKNOWN_STRUCTURE", result["status"])
+                self.assertIn("UNSAFE_OR_UNSUPPORTED_SHARD_REFERENCE", str(result))
+                self.assertEqual([], result["packages"][0]["referenced_shards"])
+
+    def test_empty_or_malformed_indexes_are_unknown_schema(self):
+        for data in ({}, {"weight_map": {}}, {"weight_map": []}, {"weight_map": "not a map"}, []):
+            with self.subTest(data=data):
+                documents = self.model_documents()
+                documents["model.safetensors.index.json"] = self.parsed(data)
+                result = self.classify(["config.json", "model.safetensors.index.json"], documents=documents)
+                self.assertEqual("UNKNOWN_STRUCTURE", result["status"])
+                self.assertIn("SCHEMA", str(result))
+
+    def test_config_only_and_missing_config_are_reported(self):
+        config_only = self.classify(["config.json"], documents=self.model_documents())
+        self.assertEqual("INCOMPLETE_STRUCTURE", config_only["status"])
+        self.assertIn("NO_PRINCIPAL_PAYLOAD", str(config_only))
+        missing_config = self.classify(["model.safetensors"])
+        self.assertEqual("INCOMPLETE_STRUCTURE", missing_config["status"])
+        self.assertIn({"code": "ABSENT_AT_COMPLETE_INVENTORY", "path": "config.json"}, missing_config["packages"][0]["issues"])
+
+    def test_empty_and_unsupported_config_objects_are_not_valid_configs(self):
+        for data in ({}, [], {"unrecognized": True}, {"model_type": ""}, {"architectures": []}):
+            with self.subTest(data=data):
+                result = self.classify(["config.json", "model.safetensors"], documents={"config.json": self.parsed(data)})
+                self.assertEqual("UNKNOWN_STRUCTURE", result["status"])
+                self.assertIn("SCHEMA", str(result))
+
+    def test_metadata_read_failures_remain_distinct_from_absence(self):
+        for state in ("ACCESS_DENIED", "FETCH_FAILED", "PARSE_FAILED", "NOT_OBSERVED", "TRUNCATED"):
+            with self.subTest(state=state):
+                result = self.classify(["config.json", "model.safetensors"], documents={"config.json": {"revision": self.REVISION, "state": state}})
+                self.assertEqual("UNKNOWN_STRUCTURE", result["status"])
+                self.assertIn({"code": state, "path": "config.json"}, result["packages"][0]["issues"])
+                self.assertNotIn("ABSENT_AT_COMPLETE_INVENTORY", str(result))
+
+    def test_every_file_and_document_requires_the_same_immutable_revision(self):
+        for revision in (None, "main", "A" * 40, "a" * 39):
+            with self.subTest(revision=revision):
+                result = verifier.classify_artifact_completeness(revision=revision, inventory_complete=True, files=[])
+                self.assertEqual("UNKNOWN_STRUCTURE", result["status"])
+                self.assertIn("INVALID_REVISION", str(result))
+        rows = [{"path": "model.gguf", "revision": "b" * 40, "size": 8}]
+        result = verifier.classify_artifact_completeness(revision=self.REVISION, inventory_complete=True, files=rows)
+        self.assertEqual("UNKNOWN_STRUCTURE", result["status"])
+        self.assertIn("FILE_REVISION_MISMATCH", str(result))
+        documents = {"config.json": self.parsed({"model_type": "synthetic"}, revision="b" * 40)}
+        result = self.classify(["config.json", "model.safetensors"], documents=documents)
+        self.assertEqual("UNKNOWN_STRUCTURE", result["status"])
+        self.assertIn("DOCUMENT_REVISION_MISMATCH", str(result))
+        result = self.classify(["model.gguf"], headers={"model.gguf": self.parsed({"quantization": "QUANTIZED"}, revision="b" * 40)})
+        self.assertEqual("UNKNOWN_STRUCTURE", result["status"])
+
+    def test_unknown_empty_and_small_payloads_keep_distinct_meanings(self):
+        for size, expected, code in ((None, "UNKNOWN_STRUCTURE", "PAYLOAD_SIZE_UNKNOWN"), (0, "INCOMPLETE_STRUCTURE", "EMPTY_PAYLOAD"), (0.0, "UNKNOWN_STRUCTURE", "INVALID_PAYLOAD_SIZE"), (-1, "UNKNOWN_STRUCTURE", "INVALID_PAYLOAD_SIZE"), (True, "UNKNOWN_STRUCTURE", "INVALID_PAYLOAD_SIZE"), (1, "COMPLETE_STRUCTURE", None)):
+            with self.subTest(size=size):
+                result = self.classify(["config.json", "model.safetensors"], documents=self.model_documents(), sizes={"model.safetensors": size})
+                self.assertEqual(expected, result["status"])
+                if code:
+                    self.assertIn(code, str(result))
+                self.assertNotIn("placeholder", str(result).lower())
+
+    def test_mmproj_is_auxiliary_and_gguf_needs_no_external_config(self):
+        for path in ("mmproj.gguf", "vision/mmproj-model-f16.gguf", "MMProj.gguf"):
+            with self.subTest(path=path):
+                result = self.classify([path])
+                self.assertEqual("INCOMPLETE_STRUCTURE", result["status"])
+                self.assertEqual([], result["packages"])
+                self.assertEqual("AUXILIARY_GGUF_FILENAME", result["file_roles"][0]["role"])
+        result = self.classify(["model-Q4_K_M.gguf", "mmproj-f16.gguf"])
+        self.assertEqual("COMPLETE_STRUCTURE", result["status"])
+        self.assertEqual(None, result["packages"][0]["config"])
+        self.assertEqual("UNKNOWN", result["gguf_quantization"][0]["status"])
+
+    def test_filenames_never_prove_gguf_quantization(self):
+        for path in ("model-F16.gguf", "model-BF16.gguf", "model-Q4_K_M.gguf", "model-Q8_0.gguf"):
+            with self.subTest(path=path):
+                result = self.classify([path])
+                self.assertEqual("UNKNOWN", result["gguf_quantization"][0]["status"])
+                self.assertEqual(None, result["gguf_quantization"][0]["precision"])
+
+    def test_supplied_headers_separate_floating_quantized_and_conflicting_evidence(self):
+        for precision in ("F16", "BF16"):
+            with self.subTest(precision=precision):
+                result = self.classify(["model.gguf"], headers={"model.gguf": self.parsed({"quantization": "UNKNOWN", "precision": precision})})
+                self.assertEqual("FLOATING", result["gguf_quantization"][0]["status"])
+                result = self.classify(["model.gguf"], headers={"model.gguf": self.parsed({"quantization": "QUANTIZED", "precision": precision})})
+                self.assertEqual("UNKNOWN", result["gguf_quantization"][0]["status"])
+                self.assertIn("CONFLICTING_HEADER_OBSERVATION", str(result))
+        result = self.classify(["model.gguf"], headers={"model.gguf": self.parsed({"quantization": "QUANTIZED"})})
+        self.assertEqual("QUANTIZED", result["gguf_quantization"][0]["status"])
+
+    def test_adapter_variants_preserve_exact_mixed_bases_and_unknown_revisions(self):
+        paths = ["adapter_model.safetensors", "adapter_config.json", "alt/adapter_model.safetensors", "alt/adapter_config.json"]
+        documents = {
+            "adapter_config.json": self.parsed({"base_model_name_or_path": "Qwen/Qwen2.5-0.5B-Instruct", "revision": None}),
+            "alt/adapter_config.json": self.parsed({"base_model_name_or_path": "unsloth/qwen2.5-0.5b-instruct-unsloth-bnb-4bit", "revision": None}),
+        }
+        result = self.classify(paths, documents=documents)
+        self.assertEqual("COMPLETE_STRUCTURE", result["status"])
+        self.assertTrue(result["mixed_adapter_bases"])
+        self.assertEqual(2, len(result["adapter_groups"]))
+        self.assertEqual({"Qwen/Qwen2.5-0.5B-Instruct", "unsloth/qwen2.5-0.5b-instruct-unsloth-bnb-4bit"}, {item["base_model_name_or_path"] for item in result["adapter_groups"]})
+        for item in result["adapter_groups"]:
+            self.assertIsNone(item["base_revision"])
+            self.assertEqual("UNKNOWN", item["lineage_status"])
+            self.assertEqual("NOT_EVALUATED", item["compatibility"])
+
+    def test_adapter_unknown_base_and_index_without_payload_remain_explicit(self):
+        for base in (None, "", " "):
+            with self.subTest(base=base):
+                documents = {"adapter_config.json": self.parsed({"peft_type": "LORA", "base_model_name_or_path": base})}
+                result = self.classify(["adapter_config.json", "adapter_model.safetensors"], documents=documents)
+                self.assertEqual("UNKNOWN", result["adapter_groups"][0]["base_status"])
+                self.assertIsNone(result["mixed_adapter_bases"])
+        documents = {
+            "adapter_config.json": self.parsed({"peft_type": "LORA", "base_model_name_or_path": "exact/base", "revision": "b" * 40}),
+            "adapter_model.safetensors.index.json": self.parsed({"weight_map": {"a": "adapter_model-1.safetensors"}}),
+        }
+        result = self.classify(["adapter_config.json", "adapter_model.safetensors.index.json"], documents=documents)
+        self.assertEqual("INCOMPLETE_STRUCTURE", result["status"])
+        self.assertEqual("RECORDED", result["adapter_groups"][0]["lineage_status"])
+        self.assertEqual([], result["packages"][0]["payloads"])
+
+    def test_adapter_index_owns_arbitrarily_named_safe_shards(self):
+        for shard in ("part-00001.safetensors", "parts/part-00001.safetensors"):
+            with self.subTest(shard=shard):
+                documents = {
+                    "adapter_config.json": self.parsed({"peft_type": "LORA", "base_model_name_or_path": "exact/base"}),
+                    "adapter_model.safetensors.index.json": self.parsed({"weight_map": {"a": shard}}),
+                }
+                result = self.classify(["adapter_config.json", "adapter_model.safetensors.index.json", shard], documents=documents)
+                self.assertEqual("COMPLETE_STRUCTURE", result["status"])
+                self.assertEqual(1, len(result["packages"]))
+                self.assertEqual("ADAPTER", result["packages"][0]["kind"])
+                self.assertEqual([shard], result["adapter_groups"][0]["payloads"])
+
+    def test_classifier_is_pure_and_does_not_modify_supplied_observations(self):
+        files = [{"path": "model.gguf", "revision": self.REVISION, "size": 1}]
+        documents = {}
+        headers = {"model.gguf": self.parsed({"quantization": "UNKNOWN"})}
+        before = copy.deepcopy((files, documents, headers))
+        import socket
+        with mock.patch.object(socket, "create_connection", side_effect=AssertionError("network forbidden")), mock.patch.object(socket.socket, "connect", side_effect=AssertionError("network forbidden")), mock.patch.object(subprocess, "run", side_effect=AssertionError("process forbidden")), mock.patch.object(Path, "open", side_effect=AssertionError("file I/O forbidden")):
+            result = verifier.classify_artifact_completeness(revision=self.REVISION, inventory_complete=True, files=files, json_observations=documents, gguf_header_observations=headers)
+        self.assertEqual(before, (files, documents, headers))
+        self.assertEqual("COMPLETE_STRUCTURE", result["status"])
+
+    def test_malformed_observation_envelopes_fail_closed_without_crashing(self):
+        for state in (None, [], {}, 7):
+            with self.subTest(state=state):
+                result = self.classify(["config.json", "model.safetensors"], documents={"config.json": {"revision": self.REVISION, "state": state}})
+                self.assertEqual("UNKNOWN_STRUCTURE", result["status"])
+                self.assertIn("UNKNOWN_OBSERVATION_STATE", str(result))
+        for data in ({"quantization": []}, {"quantization": [], "precision": "F16"}, {"precision": "BF16"}, {"quantization": "QUANTIZED", "precision": []}, {}):
+            with self.subTest(data=data):
+                result = self.classify(["model.gguf"], headers={"model.gguf": self.parsed(data)})
+                self.assertEqual("UNKNOWN", result["gguf_quantization"][0]["status"])
+                self.assertIn("SCHEMA", str(result))
+        result = self.classify(["model.gguf"], documents=[])
+        self.assertEqual("UNKNOWN_STRUCTURE", result["status"])
+        self.assertIn("INVALID_DOCUMENT_COLLECTION", str(result))
+
+    def test_unusable_inventory_cannot_assert_absence_even_when_claimed_complete(self):
+        for files in ({}, None, [{"path": "bad/../path", "revision": self.REVISION, "size": 8}], [{"path": "model.safetensors", "revision": "b" * 40, "size": 8}]):
+            with self.subTest(files=files):
+                result = verifier.classify_artifact_completeness(revision=self.REVISION, inventory_complete=True, files=files)
+                self.assertEqual("UNKNOWN_STRUCTURE", result["status"])
+                self.assertFalse(result["absence_supported"])
+                self.assertNotIn("ABSENT_AT_COMPLETE_INVENTORY", str(result))
+                self.assertNotIn("NO_PRINCIPAL_PAYLOAD", str(result))
+
+    def test_live_audit_keeps_old_ok_scope_and_makes_no_new_reads(self):
+        artifact = {"repo_id": "example/synthetic", "kind": "quantized_model", "maturity": "HELD_TEST_ONLY", "required_files": [], "github_source": "https://example.invalid/source"}
+        info = SimpleNamespace(sha=self.REVISION, siblings=[SimpleNamespace(rfilename="model.gguf", size=8, lfs=None)], card_data=SimpleNamespace(license="apache-2.0"))
+        api = SimpleNamespace(model_info=mock.Mock(return_value=info))
+        with mock.patch("huggingface_hub.hf_hub_download", side_effect=AssertionError("download forbidden")):
+            result = verifier.audit_live_artifact(artifact, api=api, weight_extensions=(".gguf", ".safetensors"))
+        api.model_info.assert_called_once_with(artifact["repo_id"], files_metadata=True)
+        self.assertTrue(result["ok"])
+        self.assertEqual("UNKNOWN_STRUCTURE", result["metadata_structure"]["status"])
+        self.assertIsNone(result["metadata_structure"]["inventory_complete"])
+        self.assertEqual("existing catalog suffix/size/pin/license/receipt checks only", result["ok_scope"])
+        self.assertEqual("NOT_EVALUATED", result["artifact_validity"])
+        self.assertEqual("NOT_EVALUATED", result["runtime_validity"])
+        self.assertEqual("HELD_TEST_ONLY", result["maturity"])
+
+    def test_live_mmproj_alone_cannot_satisfy_principal_weight_gate(self):
+        artifact = {"repo_id": "example/synthetic", "kind": "quantized_model", "maturity": "HELD_TEST_ONLY", "required_files": [], "github_source": "https://example.invalid/source"}
+        info = SimpleNamespace(sha=self.REVISION, siblings=[SimpleNamespace(rfilename="mmproj-f16.gguf", size=8, lfs=None)], card_data=SimpleNamespace(license="apache-2.0"))
+        api = SimpleNamespace(model_info=mock.Mock(return_value=info))
+        with mock.patch("huggingface_hub.hf_hub_download", side_effect=AssertionError("download forbidden")):
+            result = verifier.audit_live_artifact(artifact, api=api, weight_extensions=(".gguf",))
+        self.assertFalse(result["ok"])
+        self.assertEqual([], result["weight_files"])
+        self.assertIn("quantized_model has no weight artifact", result["errors"])
+        self.assertEqual("quantized_model", result["kind"])
+        self.assertEqual("HELD_TEST_ONLY", result["maturity"])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
