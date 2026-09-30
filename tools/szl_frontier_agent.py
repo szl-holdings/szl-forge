@@ -390,12 +390,10 @@ def run_mission(mission_path, run_dir, execute=False, codex_path=None):
         failed = False
         last_message = None
         for line in events:
-            try:
-                event = json.loads(line)
-            except ValueError:
-                continue
-            if not isinstance(event, dict):
-                continue
+            # Completion evidence must be unambiguous at every JSON depth.
+            # Keep the original stream, but never ignore corrupt event records.
+            event = load_json(line)
+            require(type(event) is dict, "Model event must be a JSON object")
             if event.get("type") == "turn.completed":
                 completed = True
                 receipt["usage"] = event.get("usage")

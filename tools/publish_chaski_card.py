@@ -117,8 +117,8 @@ PROFILES: Mapping[str, CardProfile] = {
         source_directory=ROOT / "chaski-5050" / "card",
         display_name="Chaski-5050",
         report_schema="szl.hf.chaski-5050-card-publication/v1",
-        evaluation_state="NONE_THIS_RUN",
-        release_blocker="no_json_or_refusal_gate",
+        evaluation_state="BLOCKED_LATER_GATE_FAIL",
+        release_blocker="historical_gate=1/5;overall=FAIL;heldout.refusal_no_regression=false",
         autonomy_eligible=False,
         required_card_boundaries=(
             "base_model: Qwen/Qwen3.5-0.8B",
@@ -127,7 +127,7 @@ PROFILES: Mapping[str, CardProfile] = {
             "originality: FINETUNE_DISCLOSED_BASE",
             "job_id: local-5050",
             "weights: AVAILABLE",
-            "evals: none-this-run",
+            "evals: HISTORICAL_TRAINING_NONE_SEPARATE_GATE_FAIL",
             "publication_eligible: false",
             "autonomy_eligible: false",
             "never_overwrite: SZLHOLDINGS/chaski",
@@ -135,11 +135,11 @@ PROFILES: Mapping[str, CardProfile] = {
             "train_loss: 2.228136855544466",
             "adapter_sha256: 620b3488fac2ebc6518090424de5b3c6a182293cf52dfd5bd9f886f54aef0df5",
             "> **QUARANTINE.** Research residue.",
-            "Evaluation state: none-this-run; no evaluation score is claimed by this card.",
-            "No signed held-out evaluation receipt for this 5050 adapter is present in this source tree.",
-            "**Status: none-this-run.** No JSON/refusal gate ran. Not 5/5. Not 6/6.",
-            "Card, banner, and source binding only; weights, adapter, configs, evals, visibility, hardware, collection, and runtime state unchanged",
-            "Canonical GitHub: [`chaski/README_5050.md`]",
+            "`evals=none-this-run`: no JSON/refusal gate ran in that training step.",
+            "**1/5 held-out and overall FAIL**",
+            "heldout.refusal_no_regression=false",
+            "nonportable owner-local base path",
+            "Canonical card authoring source: [chaski-5050/card/README.md]",
         ),
         forbidden_card_claims=(
             "publication_eligible: true",
@@ -162,10 +162,7 @@ PROFILES: Mapping[str, CardProfile] = {
             'stop-color="#e879a9"',
         ),
         commit_description=(
-            "Exact-source Chaski-5050 card publication. Evaluation remains "
-            "none-this-run; no JSON/refusal gate is claimed; publication_eligible "
-            "and autonomy_eligible remain false. No weights, adapter, configs, "
-            "evals, visibility, hardware, collection, or runtime state changed."
+            "Exact-source Chaski-5050 card publication. Historical training had no evaluation; the separate historical 1/5 held-out gate FAIL remains a release blocker. Publication and autonomy eligibility remain false. No weights, adapter, configs, evals, visibility, hardware, collection, or runtime state changed."
         ),
     ),
     "chaski-r2": CardProfile(
@@ -175,8 +172,8 @@ PROFILES: Mapping[str, CardProfile] = {
         display_name="Chaski-R2",
         required_card_tags=("proposal-only",),
         report_schema="szl.hf.chaski-r2-card-publication/v1",
-        evaluation_state="NONE_THIS_RUN",
-        release_blocker="no_json_or_refusal_gate",
+        evaluation_state="BLOCKED_LATER_GATE_FAIL",
+        release_blocker="historical_gate=1/5;overall=FAIL;later_adapter_fixture_pass_not_qualification",
         autonomy_eligible=False,
         required_card_boundaries=(
             "base_model: Qwen/Qwen3.5-0.8B",
@@ -186,11 +183,15 @@ PROFILES: Mapping[str, CardProfile] = {
             "quant: bf16-lora",
             "qlora: false",
             "- proposal-only\n",
-            "evals: none-this-run",
+            "evals: HISTORICAL_OWNER_RECORDS_UNQUALIFIED",
             "publication_eligible: false",
             "autonomy_eligible: false",
             "never_overwrite: SZLHOLDINGS/chaski",
-            "Train loss is not a JSON-draft or refusal gate. Not 5/5 or 6/6.",
+            "The training step itself reported no evaluation",
+            "**1/5 held-out; overall FAIL**",
+            "5/5 draft contracts; 6/6 refusal prefixes",
+            "does not erase the earlier gate **FAIL**",
+            "merged-model evaluation identity.",
         ),
         forbidden_card_claims=(
             "publication_eligible: true",
@@ -210,10 +211,7 @@ PROFILES: Mapping[str, CardProfile] = {
             'stop-color="#f472b6"',
         ),
         commit_description=(
-            "Exact-source Chaski-R2 card publication with proposal-only search "
-            "metadata. Evaluation remains none-this-run; publication_eligible "
-            "and autonomy_eligible remain false. No weights, adapter, configs, "
-            "evals, visibility, hardware, collection, or runtime state changed."
+            "Exact-source Chaski-R2 card publication. Historical training had no evaluation; the separate historical 1/5 held-out gate FAIL remains a release blocker. Later adapter-only reused-fixture results do not erase that failure or qualify the merged checkpoint. Publication and autonomy eligibility remain false. No weights, adapter, configs, evals, visibility, hardware, collection, or runtime state changed."
         ),
     ),
 }
