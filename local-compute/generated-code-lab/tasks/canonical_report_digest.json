@@ -1,0 +1,14 @@
+{
+  "id": "canonical_report_digest",
+  "title": "Canonical report digest without its self-digest",
+  "instruction": "Write solution.py defining solve(value). The input is a JSON object. Return a lowercase SHA-256 hex string for the report using this exact Python serialization contract: remove ONLY the top-level key named report_sha256, if present; preserve every other key, value, nested key, and array order; serialize the remaining object with json.dumps(report, ensure_ascii=False, sort_keys=True, separators=(',', ':'), allow_nan=False); encode that string as UTF-8; compute SHA-256. Do not normalize Unicode, trim text, remove nested report_sha256 fields, or change the input object. Inputs contain only ordinary JSON values and finite numbers. Use only Python's standard library. This is a deterministic development exercise, not signature verification or a claim that the report contents are true.",
+  "cases": [
+    {"input": {}, "expected": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"},
+    {"input": {"report_sha256": "stale"}, "expected": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"},
+    {"input": {"b": 2, "a": 1}, "expected": "43258cff783fe7036d8a43033f830adfc60ec037382473548ac742b888292777"},
+    {"input": {"text": "caf\u00e9 \u96ea", "report_sha256": "ignored"}, "expected": "d56eaf745226eb326cb8c8d77ce8553500614bb09f17a471ac9d805b0cf822ef"},
+    {"input": {"nested": {"report_sha256": "preserved", "b": [3, 2, 1]}, "ok": true, "missing": null}, "expected": "1ac2843734269cfc951d954625a8f580a694b2ff676daf76f872cb68b25f54fe"},
+    {"input": {"report_sha256": null, "empty": [], "count": 0}, "expected": "124b9156def58d290a8d59a6a2fc542a8abf12eb2ac8b8e6f52ce1ec15694f53"},
+    {"input": {"result": {"a": 1}, "REPORT_SHA256": "included"}, "expected": "d068966e6270eefc59f064050d0b5679d245a98621fb959bcf6189abe7a504ba"}
+  ]
+}
