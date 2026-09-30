@@ -1,0 +1,215 @@
+# GEH v8 — governed Lean 4 verification harness (tools/geh_v8).
+#
+# What this gate establishes, on every PR that touches the harness:
+#   1. The compliance Lean project compiles under the pinned toolchain
+#      (leanprover/lean4:v4.18.0 — the lutar-lean pin) with the REPL kernel path.
+#   2. The axiom guard FAILS THE BUILD on sorryAx / Lean.ofReduceBool / foreign axioms
+#      (three red tests must exit nonzero).
+#   3. The harness self-check (structural + kernel-grounded) passes, pytest passes,
+#      the randomized crypto-property suite is kernel-verified end to end, and the
+#      DSSE receipt chain verifies with both the harness and the zero-dependency verifier.
+#   4. SIMULATED transport can never produce PASS; a QUARANTINED artifact audits VOID.
+#
+# Claim boundary: green here means "kernel-verified in CI for this suite". It is not a
+# model result (HeuristicProver is a stand-in), not a promotion, and not legal advice.
+name: geh-v8-lean-harness
+
+on:
+  pull_request:
+    paths:
+      - "tools/geh_v8/**"
+      - ".github/workflows/geh-v8-lean-harness.yml"
+  push:
+    branches: [main]
+    paths:
+      - "tools/geh_v8/**"
+      - ".github/workflows/geh-v8-lean-harness.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: geh-v8-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  kernel-verified:
+    name: Lean 4.18.0 kernel gate + receipts
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GEH_ROOT: ${{ github.workspace }}/.geh-ci-root
+      GEH_LEAN: ${{ github.workspace }}/tools/geh_v8/geh-lean
+    steps:
+      # Org policy: every action is pinned to a full-length commit SHA.
+      - name: Harden runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install elan (SHA-pinned, v4.2.3 — same recipe as lutar-lean)
+        run: |
+          set -euo pipefail
+          ELAN_VER=v4.2.3
+          ELAN_TARBALL=elan-x86_64-unknown-linux-gnu.tar.gz
+          EXPECTED=df0b2b3a439961ffcbb3985214365ffe40f49bc871df04dff268c7d8e21ca8b2
+          curl -sSfL "https://github.com/leanprover/elan/releases/download/$ELAN_VER/$ELAN_TARBALL" -o /tmp/elan.tar.gz
+          echo "$EXPECTED  /tmp/elan.tar.gz" | sha256sum -c
+          mkdir -p /tmp/elan-init
+          tar xzf /tmp/elan.tar.gz -C /tmp/elan-init
+          /tmp/elan-init/elan-init -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Toolchain pin must be v4.18.0
+        working-directory: tools/geh_v8/geh-lean
+        run: |
+          set -euo pipefail
+          PIN=$(cat lean-toolchain)
+          echo "lean-toolchain pin: $PIN"
+          [ "$PIN" = "leanprover/lean4:v4.18.0" ] || { echo "::error::lean-toolchain is '$PIN'"; exit 1; }
+          elan toolchain install "$PIN" || true
+          elan toolchain list | grep -q "v4.18.0"
+          lean --version
+
+      - name: Restore Lake build cache (REPL + GEH oleans)
+        id: lake-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: tools/geh_v8/geh-lean/.lake
+          key: geh-v8-lake-${{ runner.os }}-${{ hashFiles('tools/geh_v8/geh-lean/lean-toolchain', 'tools/geh_v8/geh-lean/lakefile.toml', 'tools/geh_v8/geh-lean/lake-manifest.json') }}-${{ hashFiles('tools/geh_v8/geh-lean/GEH/**/*.lean') }}
+          restore-keys: |
+            geh-v8-lake-${{ runner.os }}-${{ hashFiles('tools/geh_v8/geh-lean/lean-toolchain', 'tools/geh_v8/geh-lean/lakefile.toml', 'tools/geh_v8/geh-lean/lake-manifest.json') }}-
+
+      - name: lake build (GEH.Compliance.* — guard + kernel self-tests) and REPL
+        working-directory: tools/geh_v8/geh-lean
+        run: |
+          set -euo pipefail
+          lake build 2>&1 | tee /tmp/lake-build.log
+          # SelfTest.lean must emit eight allowed=true guard lines when it is (re)built;
+          # on a warm cache the module is up to date and emits nothing — both are fine,
+          # the red tests and the harness self-check below re-exercise the guard live.
+          lake build repl
+          test -x .lake/packages/REPL/.lake/build/bin/repl
+
+      - name: Red tests must FAIL the build (foreign axiom / native_decide / sorry)
+        working-directory: tools/geh_v8/geh-lean
+        run: |
+          set -uo pipefail
+          for f in GEH/RedTests/Red_Axiom.lean GEH/RedTests/Red_NativeDecide.lean GEH/RedTests/Red_Sorry.lean; do
+            if lake env lean "$f" > /tmp/red.log 2>&1; then
+              echo "::error::$f COMPILED — the axiom guard is not enforcing"; cat /tmp/red.log; exit 1
+            fi
+            grep -q "GEH GUARD FAILED" /tmp/red.log || { echo "::error::$f failed for a reason other than the guard"; cat /tmp/red.log; exit 1; }
+            echo "ok: $f correctly failed the build -> $(grep -o '"axioms":\[[^]]*\]' /tmp/red.log | head -1)"
+          done
+
+      - name: Python dependencies (harness needs only cryptography; tests need pytest)
+        run: python -m pip install --quiet cryptography pytest ruff
+
+      - name: Ruff (blocking E9/F) + doctrine lint on the harness tree
+        run: |
+          set -euo pipefail
+          ruff check tools/geh_v8 --select E9,F --output-format github
+          python tools/doctrine_lint.py tools/geh_v8
+
+      - name: Self-check (structural + kernel-grounded)
+        working-directory: tools/geh_v8
+        run: |
+          set -euo pipefail
+          mkdir -p "$GEH_ROOT"
+          python szl_geh_v8.py --root "$GEH_ROOT" --lean-project "$GEH_LEAN" --selfcheck | tee "$GEH_ROOT/selfcheck.json"
+          python - <<'PY'
+          import json, os
+          sc = json.load(open(os.path.join(os.environ["GEH_ROOT"], "selfcheck.json")))
+          assert sc["kernel_available"] is True, "kernel self-checks did not run"
+          bad = {k: v for k, v in sc.items() if v is not True}
+          assert not bad, bad
+          print("self-check keys:", len(sc), "all true")
+          PY
+
+      - name: Pytest (structural + kernel tests)
+        working-directory: tools/geh_v8
+        env:
+          GEH_LEAN_PROJECT: ${{ github.workspace }}/tools/geh_v8/geh-lean
+        run: python -m pytest -q tests
+
+      - name: Governed proof -> DSSE receipt (must PASS)
+        working-directory: tools/geh_v8
+        run: |
+          set -euo pipefail
+          python szl_geh_v8.py --root "$GEH_ROOT" --lean-project "$GEH_LEAN" --transport repl \
+            --run-id "ci$(printf '%.12s' "${GITHUB_SHA}")p1" \
+            --prove "forall (p q : Prop), p -> (p -> q) -> q" --script "intro p q hp hpq, exact hpq hp"
+
+      - name: Randomized crypto-property suite K=10 on the kernel (must PASS, 10/10, no canary leakage)
+        working-directory: tools/geh_v8
+        run: |
+          set -euo pipefail
+          python szl_geh_v8.py --root "$GEH_ROOT" --lean-project "$GEH_LEAN" --transport repl \
+            --run-id "ci$(printf '%.12s' "${GITHUB_SHA}")b2" --salt "${GITHUB_RUN_ID}" --bench-crypto 10
+          python - <<'PY'
+          import glob, json, os
+          rf = sorted(glob.glob(os.path.join(os.environ["GEH_ROOT"], "chaski_r4/evidence/geh/geh_proof_receipt_*b2.json")))[-1]
+          p = json.loads(json.load(open(rf))["payload"])
+          b = p["proof"]["bench"]
+          assert p["decision"]["gate"] == "PASS" and b["pass"] == b["k"] == 10 and not b["contamination"]["contaminated"], b
+          assert p["harness"]["toolchain"]["toolchain_match"] is True
+          print("bench:", {k: b[k] for k in ("k", "pass", "pass_at_k", "steps_total", "dead_total")})
+          PY
+          # the generated suite must also compile standalone under the pinned toolchain
+          SUITE=$(ls "$GEH_ROOT"/chaski_r4/evidence/geh/geh_crypto_*b2.lean)
+          (cd "$GEH_LEAN" && lake env lean "$SUITE" | grep -c '"allowed":true') | grep -qx 10
+
+      - name: Negative gates (SIMULATED never PASSes; QUARANTINED artifact audits VOID)
+        working-directory: tools/geh_v8
+        run: |
+          # The default shell is `bash -e`; capture the expected nonzero exits without tripping errexit.
+          set -uo pipefail
+          rc=0; python szl_geh_v8.py --root "$GEH_ROOT" --lean-project "$GEH_LEAN" --transport sim \
+            --run-id "ci$(printf '%.12s' "${GITHUB_SHA}")s3" --bench-crypto 4 | tee /tmp/sim.log || rc=$?
+          [ "$rc" -eq 3 ] || { echo "::error::simulated bench exit $rc (expected 3 = VOID)"; exit 1; }
+          grep -q "TRACE_SIGNED_KERNEL_UNVERIFIED" /tmp/sim.log
+          rc=0; python szl_geh_v8.py --root "$GEH_ROOT" --lean-project "$GEH_LEAN" --transport repl \
+            --run-id "ci$(printf '%.12s' "${GITHUB_SHA}")r4" --audit-file "$GEH_LEAN/GEH/RedTests/Red_NativeDecide.lean" | tee /tmp/red.log || rc=$?
+          [ "$rc" -eq 3 ] || { echo "::error::red audit exit $rc (expected 3 = VOID)"; exit 1; }
+          grep -q "VERDICT=VOID" /tmp/red.log
+
+      - name: Verify the receipt chain (harness + zero-dependency verifier)
+        working-directory: tools/geh_v8
+        run: |
+          set -euo pipefail
+          python szl_geh_v8.py --root "$GEH_ROOT" --lean-project "$GEH_LEAN" --verify-chain
+          python szl_geh_verify.py --evidence "$GEH_ROOT/chaski_r4/evidence/geh"
+          # tamper test: flipping one byte of a payload must break the signature AND the recomputed gate
+          python - <<'PY'
+          import glob, json, os, subprocess, sys
+          rf = sorted(glob.glob(os.path.join(os.environ["GEH_ROOT"], "chaski_r4/evidence/geh/geh_proof_receipt_*p1.json")))[-1]
+          env = json.load(open(rf)); pl = json.loads(env["payload"]); pl["proof"]["live"]["done"] = False
+          env["payload"] = json.dumps(pl, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+          json.dump(env, open("/tmp/tampered.json", "w"))
+          r = subprocess.run([sys.executable, "szl_geh_verify.py", "--receipt", "/tmp/tampered.json"], capture_output=True, text=True)
+          assert r.returncode != 0 and "SIGNATURE INVALID" in r.stdout and "recomputed=VOID" in r.stdout, r.stdout
+          print("tamper test: rejected as expected")
+          PY
+
+      - name: Upload CI evidence (receipts, chain, Article-12 log, public key only)
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: geh-v8-ci-evidence-${{ github.run_id }}
+          path: |
+            ${{ github.workspace }}/.geh-ci-root/chaski_r4/evidence/geh/
+            !${{ github.workspace }}/.geh-ci-root/chaski_r4/evidence/geh/geh_keys/*.pem
+          if-no-files-found: warn
+          retention-days: 30

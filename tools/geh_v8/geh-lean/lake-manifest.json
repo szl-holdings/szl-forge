@@ -1,0 +1,15 @@
+{"version": "1.1.0",
+ "packagesDir": ".lake/packages",
+ "packages":
+ [{"url": "https://github.com/leanprover-community/repl",
+   "type": "git",
+   "subDir": null,
+   "scope": "",
+   "rev": "2f0a3cb876b045cc0fe550ca3a625bc479816739",
+   "name": "REPL",
+   "manifestFile": "lake-manifest.json",
+   "inputRev": "v4.18.0",
+   "inherited": false,
+   "configFile": "lakefile.toml"}],
+ "name": "geh",
+ "lakeDir": ".lake"}

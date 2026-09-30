@@ -1,0 +1,16 @@
+# GEH v8 — compliance-grade Lean project. Core Lean only (no Mathlib).
+# The compliance library compiles ONLY GEH/Compliance. GEH/Evidence is never a
+# build target: property-based "evidence" can never enter the compliance lane.
+name = "geh"
+version = "8.0.0"
+defaultTargets = ["GEH"]
+
+[[require]]
+name = "REPL"
+git = "https://github.com/leanprover-community/repl"
+rev = "v4.18.0"
+
+[[lean_lib]]
+name = "GEH"
+roots = ["GEH"]
+globs = ["GEH.Compliance.+"]
