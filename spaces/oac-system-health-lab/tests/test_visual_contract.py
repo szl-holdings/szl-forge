@@ -95,6 +95,7 @@ class VisualContractTests(unittest.TestCase):
         self.assertIn("@media(max-width:620px)", self.html)
         self.assertRegex(self.html, r"\.workspace,\.numeric-grid,\.identity-grid\s*\{\s*grid-template-columns:minmax\(0,1fr\);")
         self.assertRegex(self.html, r"\.identity-grid dd\s*\{[^}]*overflow-wrap:anywhere")
+        self.assertRegex(self.html, r"@media\(forced-colors:active\)\s*\{\s*\.signal-lens\s*\{\s*display:none;\s*\}\s*\.scope\s*\{\s*display:block;")
         self.assertNotRegex(self.html, r"overflow-x\s*:\s*hidden")
         self.assertIn('class="skip-link" href="#workspace"', self.html)
         self.assertIn('id="result-announcement" role="status" aria-live="polite"', self.html)
