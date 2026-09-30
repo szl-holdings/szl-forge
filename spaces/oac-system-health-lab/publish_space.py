@@ -101,6 +101,32 @@ def verify_head_and_bytes(revision, plan):
     return immutable_files
 
 
+def validate_space_readme(readme_bytes):
+    """Validate the exact immutable README with the pinned Hub card contract."""
+    try:
+        content = readme_bytes.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise PublicationRefused("planned README.md is not valid UTF-8") from exc
+
+    from huggingface_hub import RepoCard, __version__ as huggingface_hub_version
+
+    try:
+        RepoCard(content).validate(repo_type="space")
+    except ValueError as exc:
+        raise PublicationRefused(
+            "planned README.md failed Hugging Face Space card validation"
+        ) from exc
+    return {
+        "state": "VALIDATED",
+        "path": "README.md",
+        "repo_type": "space",
+        "interface": "huggingface_hub.RepoCard.validate",
+        "huggingface_hub_version": huggingface_hub_version,
+        "size": len(readme_bytes),
+        "sha256": hashlib.sha256(readme_bytes).hexdigest(),
+    }
+
+
 def publish(api, revision, report, *, wait_seconds=900):
     # Reuse canonical Forge source planning/runtime helpers; the write itself
     # adds a parent-commit CAS and refuses unexpected files instead of deleting.
@@ -114,6 +140,7 @@ def publish(api, revision, report, *, wait_seconds=900):
     report["source_verification"] = verify_release(SPACE_ROOT, REPOSITORY_ROOT)
     plan = build_plan(SPACE_ROOT, TARGET, revision, static=False)
     immutable_files = verify_head_and_bytes(revision, plan)
+    report["card_validation"] = validate_space_readme(immutable_files["README.md"])
     report["entitlement"] = verify_entitlement(api.whoami())
     try:
         info = api.space_info(TARGET)
