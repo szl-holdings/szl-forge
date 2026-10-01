@@ -1,0 +1,92 @@
+{
+  "advisory_challenger_improves": false,
+  "advisory_note": "Advisory only. Promotion is derived by the canonical Forge gate and an owner decision, never by this tool.",
+  "artifact": "dpo-khipu-r4-challenger",
+  "autonomy_eligible": false,
+  "challenger_adapter_sha256": {
+    "adapter_model.safetensors": "4064238281e328067690032459a844d79f32158b9ee58ced35a3d662dff3412f"
+  },
+  "challenger_dir": "C:\\Users\\steph\\szl\\dpo-khipu-r4-challenger-20261001-1527",
+  "data": {
+    "counts": {
+      "adversarial.jsonl": 6,
+      "eval.jsonl": 5,
+      "train": 23
+    },
+    "disjoint_prompts_verified": true,
+    "heldout_digests_sha256": {
+      "adversarial.jsonl": "812a23b3ed15c1df8c5e18b2365b6e7c474968f42f329a5f30b7c57c445659fd",
+      "eval.jsonl": "61ede1488e3c6e3cded81679affe258e8d03c47019424182330a94b8c505794e"
+    },
+    "repo": "model:SZLHOLDINGS/SZL-Khipu-1.5B-abstain",
+    "revision": "942c02dd4e94f2cb7cfb0432a051c2db2219ee79"
+  },
+  "datasets": "5.0.1",
+  "decode": {
+    "greedy": true,
+    "max_new_tokens": 768,
+    "seed": 11
+  },
+  "generated_at": "2026-10-01T19:34:18Z",
+  "grader": "decision + citedNodeIds subset-of-offered; integer counts; see grade()",
+  "hardware": {
+    "cuda": "12.8",
+    "device_count": 1,
+    "gpu": "NVIDIA GeForce RTX 5050 Laptop GPU",
+    "vram_bytes": 8546484224
+  },
+  "huggingface_hub": "1.33.0",
+  "peft": "0.20.0",
+  "pipeline_sha256": "ef3a9049ca8ebd9f48cfecb1c039792360d220cc101bd638f2e563ed84432da2",
+  "platform": "Windows-10-10.0.26200-SP0",
+  "policy": {
+    "adapter": "SZLHOLDINGS/khipu-r3",
+    "adapter_revision": "7e388efb6e332c8c28e94bdf266293baf437fb64",
+    "base": "Qwen/Qwen3.5-0.8B",
+    "init": "base+adapter merged"
+  },
+  "promotion": "NOT_PROMOTABLE",
+  "publication_eligible": false,
+  "python": "3.11.9",
+  "results": {
+    "adversarial.jsonl": {
+      "baseline": {
+        "correct": 6,
+        "gold_citation_matches": 6,
+        "invented_handle_rows": 0,
+        "parse_failures": 0,
+        "total": 6
+      },
+      "challenger": {
+        "correct": 0,
+        "gold_citation_matches": 0,
+        "invented_handle_rows": 0,
+        "parse_failures": 6,
+        "total": 6
+      }
+    },
+    "eval.jsonl": {
+      "baseline": {
+        "correct": 0,
+        "gold_citation_matches": 0,
+        "invented_handle_rows": 0,
+        "parse_failures": 1,
+        "total": 5
+      },
+      "challenger": {
+        "correct": 0,
+        "gold_citation_matches": 0,
+        "invented_handle_rows": 0,
+        "parse_failures": 5,
+        "total": 5
+      }
+    }
+  },
+  "schema": "szl.omen-pipeline/v2",
+  "stage": "eval-abstain",
+  "status": "MEASURED",
+  "torch": "2.10.0+cu128",
+  "transcripts_sha256": "aa65f2789371e6dad6173f011eed0fee84f5047e5ba98a283fd39838e71ea222",
+  "transformers": "5.17.0",
+  "trl": "1.13.0"
+}
