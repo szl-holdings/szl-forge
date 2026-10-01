@@ -97,6 +97,8 @@ def publicize_runtime(value: str | Path | None) -> str | None:
         return "chaski-5050-adapter"
     if trimmed.endswith("chaski-r2-adapter"):
         return "chaski_r2/chaski-r2-adapter"
+    if trimmed.endswith("chaski-r4-adapter"):
+        return "chaski_r4/chaski-r4-adapter"
     if OWNER_HOME_RE.search(norm) or (len(text) > 2 and text[1] == ":"):
         raise SystemExit(
             f"[chaski-bakeoff] refusing to record owner path {text!r}"
@@ -694,9 +696,8 @@ def print_counts(payload: dict[str, Any]) -> None:
         )
 
 
-def run_bakeoff(args: argparse.Namespace) -> dict[str, Any]:
-    drafts, refusals = load_gates()
-    base_id = resolve_base(args.base_model)
+def candidate_specs(args: argparse.Namespace) -> list[dict[str, Any]]:
+    """Base, 5050, r2 — plus the local-only r4 challenger when --chaski-r4-adapter is given."""
     specs = [
         {
             "id": "base-qwen35-0.8b",
@@ -721,6 +722,28 @@ def run_bakeoff(args: argparse.Namespace) -> dict[str, Any]:
             "hub_id_declared_only": True,
         },
     ]
+    if getattr(args, "chaski_r4_adapter", None):
+        # Local-only challenger (unpublished by design): evaluated in the same run as the r2
+        # control, with the same loader class (AutoModelForImageTextToText) that the adapters
+        # were trained against and the same fail-closed adapter guard. Never a Hub artifact.
+        specs.append(
+            {
+                "id": "chaski-r4-local",
+                "kind": "adapter",
+                "hub": "SZLHOLDINGS/chaski-r4",
+                "adapter": first_adapter([Path(args.chaski_r4_adapter)]),
+                "does_not_overwrite": PARENT_HUB,
+                "hub_id_declared_only": True,
+                "local_only": True,
+            }
+        )
+    return specs
+
+
+def run_bakeoff(args: argparse.Namespace) -> dict[str, Any]:
+    drafts, refusals = load_gates()
+    base_id = resolve_base(args.base_model)
+    specs = candidate_specs(args)
     try:
         import torch
     except Exception as exc:  # noqa: BLE001 - fail closed, no fabricated k/n
@@ -853,6 +876,11 @@ def main() -> int:
     parser.add_argument("--base-model", default=None)
     parser.add_argument("--chaski-5050-adapter", default=None)
     parser.add_argument("--chaski-r2-adapter", default=None)
+    parser.add_argument(
+        "--chaski-r4-adapter",
+        default=None,
+        help="optional local-only r4 challenger directory (unpublished); evaluated beside the r2 control",
+    )
     parser.add_argument("--receipt", type=Path, default=RECEIPT_PATH)
     parser.add_argument("--draft-max-new-tokens", type=int, default=256)
     parser.add_argument("--refusal-max-new-tokens", type=int, default=96)

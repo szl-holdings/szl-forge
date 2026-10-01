@@ -271,6 +271,23 @@ Chain head `bdb60e93…0890`; `szl_geh_verify.py --evidence …` → 5 receipts,
   receipt is now written BOM-free. Evidence: `evidence_sandbox/runbook_windows_ps51/`. Still not
   covered anywhere but the laptop: the CUDA gate with the local r4 adapter.
 
+* **Owner metal, 2026-10-01 (first real run of the one-paste):** the preflight runbook completed and
+  the gate step stopped at the adapter-coverage preflight: with the laptop's `.venv-ra-v2`
+  (transformers 5.16.1, peft 0.20.0) the f4ca282a copy's `AutoModelForCausalLM` applied **0/192**
+  tensors of the local r2, **r4** and 5050 adapters (all `language_model` layout). No gate ran, no
+  receipt was written — the fail-closed path did its job. Follow-up probes here: every transformers
+  release that knows Qwen3.5 (5.4.0 → 5.18.0) maps `AutoModelForCausalLM` to `Qwen3_5ForCausalLM`
+  (`model.layers.*`), and PEFT 0.18.1 / 0.19.1 / 0.21.1 never remap `language_model` keys, so the
+  f4ca282a copy cannot evaluate these adapter files in any environment. Consequence, stated
+  plainly: receipts A and B contain adapter rows that this evaluator cannot produce from the
+  current adapter files; how they were produced is **unresolved** and is recorded as such. The
+  canonical runner on main (`chaski/bakeoff_named_n.py`, `AutoModelForImageTextToText`) did score
+  r2 and 5050 at 5/5 + 6/6 on 2026-09-17 with the same adapter dir-hashes receipt B lists, which is
+  consistent with the loader-class explanation. Fix shipped: the canonical runner gains an optional
+  `--chaski-r4-adapter` candidate (`chaski-r4-local`, local-only, declared-only Hub id), and the
+  runbook's `-RunCanonicalGate` now uses that runner (hash-verified) with the coverage preflight
+  on `AutoModelForImageTextToText`.
+
 ## Part D — Limits, stated plainly
 
 * **Pantograph toolchain mismatch:** PyPantograph 0.3.15 pins `leanprover/Pantograph` @ `842c0fe6`,

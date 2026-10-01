@@ -88,3 +88,35 @@ class AdapterGuardTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class R4CandidateTests(unittest.TestCase):
+    """The optional --chaski-r4-adapter candidate is additive and never records an owner path."""
+
+    def test_r4_adapter_path_is_publicized_repo_relative(self) -> None:
+        import bakeoff_named_n as bakeoff
+
+        self.assertEqual(
+            bakeoff.publicize_runtime(r"C:\Users\owner\szl-forge\chaski_r4\chaski-r4-adapter"),
+            "chaski_r4/chaski-r4-adapter",
+        )
+
+    def test_r4_candidate_is_appended_only_when_requested(self) -> None:
+        import argparse
+
+        import bakeoff_named_n as bakeoff
+
+        base = argparse.Namespace(base_model=None, chaski_5050_adapter=None, chaski_r2_adapter=None, chaski_r4_adapter=None)
+        ids = [spec["id"] for spec in bakeoff.candidate_specs(base)]
+        self.assertEqual(ids, ["base-qwen35-0.8b", "chaski-5050", "chaski-r2"])
+        with tempfile.TemporaryDirectory() as tmp:
+            r4 = Path(tmp) / "chaski-r4-adapter"
+            r4.mkdir()
+            (r4 / "adapter_config.json").write_text("{}", encoding="utf-8")
+            (r4 / "adapter_model.safetensors").write_bytes(b"")
+            withr4 = argparse.Namespace(base_model=None, chaski_5050_adapter=None, chaski_r2_adapter=None, chaski_r4_adapter=str(r4))
+            specs = bakeoff.candidate_specs(withr4)
+            self.assertEqual([s["id"] for s in specs][-1], "chaski-r4-local")
+            self.assertTrue(specs[-1]["local_only"])
+            self.assertTrue(specs[-1]["hub_id_declared_only"])
+            self.assertEqual(bakeoff.publicize_runtime(specs[-1]["adapter"]), "chaski_r4/chaski-r4-adapter")
