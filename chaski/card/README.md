@@ -37,6 +37,9 @@ szl:
   autonomy_eligible: false
   gpu: UNAVAILABLE
 ---
+<!-- szl:loader-class-boundary -->
+> **Loader-class boundary (noted 2026-09-30).** The adapter tensors are keyed for the multimodal module layout (`base_model.model.model.language_model.layers.*`, the class `Qwen3_5ForConditionalGeneration` / `AutoModelForImageTextToText`). Under transformers 5.18, `AutoModelForCausalLM` instantiates `Qwen3_5ForCausalLM` (`model.layers.*`); PEFT then applies 0 of the 192 adapter tensors and emits only a warning, so the result is the bare base model (observed and receipted on the sibling `SZLHOLDINGS/chaski-r2` adapter, which shares this exact key layout: byte-identical base outputs on the held-out prompts). Any run that reports a score for this adapter must show adapter key coverage (192/192) and the loader class it used; a record without those fields does not establish that the adapter was applied. Evidence: szl-holdings/szl-forge `tools/geh_v8/evidence_sandbox/chaski_probe/` (CPU replay receipts, #444). Metadata-only note; it authorizes no load, changes no artifact, and adds no claim.
+
 
 <p align="center">
   <img src="holo-banner.svg" alt="Chaski — SZL holographic banner" width="100%"/>

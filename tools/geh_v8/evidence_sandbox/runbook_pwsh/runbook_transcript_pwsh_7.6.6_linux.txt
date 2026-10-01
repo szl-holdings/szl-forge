@@ -1,0 +1,191 @@
+START Thu Oct  1 01:03:46 UTC 2026
+
+========================================================================================
+  PREFLIGHT
+========================================================================================
+  .venv-ra-v2 missing; falling back to python3 (GEH needs no CUDA; the chaski gate does)
+Root:        /home/user/workspace/owner_sim
+Python:      /usr/local/bin/python3
+Lean tools:  /home/user/.elan/bin/lake
+Stamp:       20261001_010347
+
+========================================================================================
+  MATERIALIZE GEH v8 FILES
+========================================================================================
+Bundle SHA-256: 233689742664e468d07bb2c59364449fc5527b024539038402c4f5433fcd441a
+  ok  fa10b82adcfb15f3  geh-lean\GEH\Compliance\SelfTest.lean
+  ok  692487121da24843  geh-lean\lean-toolchain
+  ok  a0436a50dfb08b7d  geh-lean\GEH\Evidence\README.md
+  ok  60b374e3ac39ecf8  geh-lean\lakefile.toml
+  ok  324e064a214973c5  chaski_margin_probe.py
+  ok  de661cc73bae1ad3  geh-lean\GEH\RedTests\Red_Axiom.lean
+  ok  6ed9fb9146c62fde  geh-lean\GEH\Compliance\GehGuard.lean
+  ok  c45f15347da292fc  README.md
+  ok  8005c605eb2ecbe5  geh-lean\GEH\RedTests\Red_Sorry.lean
+  ok  f74c2fc9e4eac155  geh-lean\GEH.lean
+  ok  6647ef7fb207cbf0  szl_geh_verify.py
+  ok  c5a601f482da7e60  tests\test_geh_v8.py
+  ok  25008681bed2563c  szl_geh_v8.py
+  ok  fdae35f1092bbf5f  geh-lean\GEH\RedTests\Red_NativeDecide.lean
+
+========================================================================================
+  PYTHON DEPENDENCIES (venv-local only)
+========================================================================================
+cryptography 50.0.1 | pytest 9.1.1
+
+========================================================================================
+  LEAN BUILD (leanprover/lean4:v4.18.0, the lutar-lean pin)
+========================================================================================
+> lake update (clones leanprover-community/repl @ v4.18.0)
+  lake update
+info: geh: no previous manifest, creating one from scratch
+info: REPL: cloning https://github.com/leanprover-community/repl
+info: REPL: checking out revision '2f0a3cb876b045cc0fe550ca3a625bc479816739'
+info: toolchain not updated; already up-to-date
+> lake build (GEH.Compliance.*: guard + kernel self-tests)
+  lake build
+✔ [2/4] Built GEH.Compliance.GehGuard
+ℹ [3/4] Built GEH.Compliance.SelfTest
+info: ././././GEH/Compliance/SelfTest.lean:6:0: GEH_GUARD {"trust_base":["propext","Classical.choice","Quot.sound"],"tool":"lean.query_axioms","theorem":"geh_selftest_clean","axioms":[],"allowed":true}
+info: ././././GEH/Compliance/SelfTest.lean:12:0: GEH_GUARD {"trust_base":["propext","Classical.choice","Quot.sound"],"tool":"lean.query_axioms","theorem":"geh_selftest_pae","axioms":[],"allowed":true}
+info: ././././GEH/Compliance/SelfTest.lean:15:0: GEH_GUARD {"trust_base":["propext","Classical.choice","Quot.sound"],"tool":"lean.query_axioms","theorem":"geh_selftest_pae_rfl","axioms":[],"allowed":true}
+info: ././././GEH/Compliance/SelfTest.lean:18:0: GEH_GUARD {"trust_base":["propext","Classical.choice","Quot.sound"],"tool":"lean.query_axioms","theorem":"geh_selftest_disamb","axioms":[],"allowed":true}
+info: ././././GEH/Compliance/SelfTest.lean:23:0: GEH_GUARD {"trust_base":["propext","Classical.choice","Quot.sound"],"tool":"lean.query_axioms","theorem":"geh_selftest_link","axioms":[],"allowed":true}
+info: ././././GEH/Compliance/SelfTest.lean:27:0: GEH_GUARD {"trust_base":["propext","Classical.choice","Quot.sound"],"tool":"lean.query_axioms","theorem":"geh_selftest_xor","axioms":[],"allowed":true}
+info: ././././GEH/Compliance/SelfTest.lean:30:0: GEH_GUARD {"trust_base":["propext","Classical.choice","Quot.sound"],"tool":"lean.query_axioms","theorem":"geh_selftest_nodup","axioms":[],"allowed":true}
+info: ././././GEH/Compliance/SelfTest.lean:33:0: GEH_GUARD {"trust_base":["propext","Classical.choice","Quot.sound"],"tool":"lean.query_axioms","theorem":"geh_selftest_classical","axioms":["Classical.choice","Quot.sound","propext"],"allowed":true}
+Build completed successfully.
+> lake build repl
+  lake build repl
+✔ [2/22] Built REPL.Frontend
+✔ [3/22] Built REPL.Util.Path
+✔ [4/22] Built REPL.JSON
+✔ [5/22] Built REPL.Lean.ContextInfo
+✔ [6/22] Built REPL.Util.Path:c.o
+✔ [7/22] Built REPL.Frontend:c.o
+✔ [8/22] Built REPL.Lean.ContextInfo:c.o
+✔ [9/22] Built REPL.Util.Pickle
+✔ [10/22] Built REPL.Lean.InfoTree
+✔ [11/22] Built REPL.JSON:c.o
+✔ [12/22] Built REPL.Util.Pickle:c.o
+✔ [13/22] Built REPL.Lean.InfoTree:c.o
+✔ [14/22] Built REPL.Lean.Environment
+✔ [15/22] Built REPL.Snapshots
+✔ [16/22] Built REPL.Lean.Environment:c.o
+✔ [17/22] Built REPL.Lean.InfoTree.ToJson
+✔ [18/22] Built REPL.Lean.InfoTree.ToJson:c.o
+✔ [19/22] Built REPL.Snapshots:c.o
+✔ [20/22] Built REPL.Main
+✔ [21/22] Built REPL.Main:c.o
+✔ [22/22] Built repl
+Build completed successfully.
+  red test Red_Axiom.lean correctly FAILED the build (exit 1)
+  red test Red_NativeDecide.lean correctly FAILED the build (exit 1)
+  red test Red_Sorry.lean correctly FAILED the build (exit 1)
+
+========================================================================================
+  GEH v8 RUNS (fail-closed; evidence -> /home/user/workspace/owner_sim/chaski_r4/evidence/geh)
+========================================================================================
+> self-check (structural + kernel-grounded)
+  /usr/local/bin/python3 /home/user/workspace/owner_sim/tools/geh_v8/szl_geh_v8.py --root /home/user/workspace/owner_sim --lean-project /home/user/workspace/owner_sim/tools/geh_v8/geh-lean --selfcheck
+{
+  "sim_loop_closes": true,
+  "sim_never_certifies": true,
+  "branching_exercised": true,
+  "sorry_blocked_and_void": true,
+  "combinator_sorry_blocked": true,
+  "native_decide_blocked": true,
+  "plausible_isolated": true,
+  "evidence_void_in_compliance": true,
+  "exact_h_not_unregistered": true,
+  "classifier_quarantines_sorry": true,
+  "classifier_quarantines_axiom": true,
+  "classifier_ignores_comment_sorry": true,
+  "classifier_evidence_plausible": true,
+  "crypto_suite_deterministic": true,
+  "crypto_realizations_differ": true,
+  "crypto_oracle_consistent": true,
+  "contamination_scoring_detects_leak": true,
+  "contamination_scoring_clean_passes": true,
+  "leandojo_wiring_mocked": true,
+  "dsse_roundtrip": true,
+  "dsse_rejects_tamper": true,
+  "kernel_available": true,
+  "kernel_green_closes": true,
+  "kernel_green_audit_clean": true,
+  "kernel_green_axioms_in_trust_base": true,
+  "kernel_rejects_wrong_proof": true,
+  "kernel_guard_fails_on_sorry": true,
+  "kernel_guard_fails_on_native_decide": true,
+  "kernel_guard_fails_on_foreign_axiom": true,
+  "surface_variants_elaborate_identically": true,
+  "kernel_backtracking_from_immutable_state": true,
+  "kernel_timeout_is_dead_branch_not_hang": true,
+  "kernel_recovers_after_timeout": true,
+  "self_check_pass": true
+}
+> emit tool-use spec
+  /usr/local/bin/python3 /home/user/workspace/owner_sim/tools/geh_v8/szl_geh_v8.py --root /home/user/workspace/owner_sim --lean-project /home/user/workspace/owner_sim/tools/geh_v8/geh-lean --emit-toolspec
+EMITTED=/home/user/workspace/owner_sim/chaski_r4/evidence/geh/geh_tooluse_spec.v2.json
+> governed proof -> DSSE receipt
+  /usr/local/bin/python3 /home/user/workspace/owner_sim/tools/geh_v8/szl_geh_v8.py --root /home/user/workspace/owner_sim --lean-project /home/user/workspace/owner_sim/tools/geh_v8/geh-lean --transport repl --run-id owner202610010103p --prove forall (p q : Prop), p -> (p -> q) -> q --script intro p q hp hpq, exact hpq hp
+VERDICT=KERNEL_VERIFIED_AND_SIGNED TRANSPORT=LEAN_REPL GATE=PASS
+RECEIPT=/home/user/workspace/owner_sim/chaski_r4/evidence/geh/geh_proof_receipt_owner202610010103p.json
+RECEIPT_SHA256=03fa9d6166aeeaf22e16a1bbb7125e7b71c070258b04d624f3b626a407753072
+No training, adapter modification, upload, publication, deployment, or Git write occurred.
+> randomized crypto benchmark K=10 on the kernel
+  /usr/local/bin/python3 /home/user/workspace/owner_sim/tools/geh_v8/szl_geh_v8.py --root /home/user/workspace/owner_sim --lean-project /home/user/workspace/owner_sim/tools/geh_v8/geh-lean --transport repl --run-id owner202610010103b --salt 20261001 --bench-crypto 10
+VERDICT=KERNEL_VERIFIED_AND_SIGNED TRANSPORT=LEAN_REPL GATE=PASS
+RECEIPT=/home/user/workspace/owner_sim/chaski_r4/evidence/geh/geh_proof_receipt_owner202610010103b.json
+RECEIPT_SHA256=694dd59752e5065f073a27dddf7ce32578ffab6c30f7f57af2aa329b65671353
+No training, adapter modification, upload, publication, deployment, or Git write occurred.
+> pytest
+  /usr/local/bin/python3 -m pytest -q /home/user/workspace/owner_sim/tools/geh_v8/tests
+...........                                                              [100%]
+11 passed in 3.78s
+> verify chain (harness)
+  /usr/local/bin/python3 /home/user/workspace/owner_sim/tools/geh_v8/szl_geh_v8.py --root /home/user/workspace/owner_sim --lean-project /home/user/workspace/owner_sim/tools/geh_v8/geh-lean --verify-chain
+{"CHAIN_VERIFIED": {"receipts": 2, "head": "694dd59752e5065f073a27dddf7ce32578ffab6c30f7f57af2aa329b65671353"}}
+> verify chain (zero-dependency offline verifier)
+  /usr/local/bin/python3 /home/user/workspace/owner_sim/tools/geh_v8/szl_geh_verify.py --evidence /home/user/workspace/owner_sim/chaski_r4/evidence/geh
+ok   geh_proof_receipt_owner202610010103p.json dsse_signature: signature valid
+ok   geh_proof_receipt_owner202610010103p.json gate_recomputed: claimed=PASS recomputed=PASS 
+ok   geh_proof_receipt_owner202610010103p.json harness_self_check_recorded_pass: self_check_pass in receipt
+ok   geh_proof_receipt_owner202610010103b.json dsse_signature: signature valid
+ok   geh_proof_receipt_owner202610010103b.json gate_recomputed: claimed=PASS recomputed=PASS 
+ok   geh_proof_receipt_owner202610010103b.json harness_self_check_recorded_pass: self_check_pass in receipt
+CHAIN: 2 receipts, head=694dd59752e5065f073a27dddf7ce32578ffab6c30f7f57af2aa329b65671353, failures=0
+
+========================================================================================
+  CHASKI R4 EVIDENCE RECONCILIATION (read-only)
+========================================================================================
+{
+  "runner_pristine": true,
+  "r4_on_disk_is": "NOT FOUND",
+  "r4_weights_match_training_receipt": false,
+  "runner_sha256": "f4ca282a29e2fa2f0246ebcb6e3298b7b3f023d686ba883d948459bcaf56dadb",
+  "r4_adapter": "MISSING /home/user/workspace/owner_sim/chaski_r4/chaski-r4-adapter/adapter_model.safetensors",
+  "r2_weights_sha256": "6f12981ea5df5e22d3493eefb20d75db75c1c88961ba6621a35af09edd0cdde6",
+  "r2_runner_dirhash": "078ec09fb3e8e215d1b6a98bb7164a94c7bb332d847c8e1d66f565e767171107",
+  "r2_local_matches_hub_published": true
+}
+
+STATE BLOCK (model-qualification-gates)
+Artifact: chaski-r4 local adapter (NOT FOUND)
+Canonical source: szl-holdings/szl-forge chaski_r4/ @ bcdd1d85 (runner f4ca282a...dadb)
+Training: TRAINED_CHALLENGER (training_receipt.json 2026-09-17T02:36Z, weights f1a2cdc3..., dataset 0fea0d85...)
+Evaluation: MEASURED but SPLIT: receipt A (original adapter, torch 2.11.0+cu128): 0/5, 3/6 | receipt B (retrained adapter, torch 2.10.0+cu130): 5/5, 6/6
+Publication: UNPUBLISHED (chaski-r4 absent from the Hub; correct)
+Promotion: NOT_PROMOTABLE
+Blocking gate: canonical receipt path still holds receipt A; no canonical rerun of the RETRAINED adapter exists in a pinned env with r2 control in the same run
+Next bounded action: -RunCanonicalGate (writes a NEW receipt; promote to canonical only by explicit copy after review)
+Protected state: committed receipts A and B, adapters, gate files, pristine runner; none modified by this runbook
+
+========================================================================================
+  RUNBOOK RECEIPT
+========================================================================================
+RUNBOOK_RECEIPT=/home/user/workspace/owner_sim/chaski_r4/evidence/geh_v8_runbook_20261001_010347.json
+RUNBOOK_RECEIPT_SHA256=233fe1a1b5d65e6dca443f864e95b86ccf7cbe9f23aaedbd9cddc4fecc3f0177
+GEH_CHAIN_HEAD=694dd59752e5065f073a27dddf7ce32578ffab6c30f7f57af2aa329b65671353
+COMPLETE: all gates observable above. Nothing was promoted.
+RUNBOOK_EXIT=0
