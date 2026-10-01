@@ -14,6 +14,7 @@ dependencies = [
   "pydantic>=2.10,<3", "httpx>=0.28,<0.29", "uvicorn>=0.34,<0.55",
   "jinja2>=3.1.6,<4", "numpy>=2.3.5,<3"
 ]
+classifiers = ["Private :: Do Not Upload"]
 
 [project.optional-dependencies]
 test = ["pytest>=8,<10", "huggingface-hub>=1.16,<3", "PyYAML>=6,<7"]

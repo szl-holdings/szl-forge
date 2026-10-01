@@ -12,6 +12,7 @@ license = "Apache-2.0"
 license-files = ["LICENSE"]
 authors = [{name = "SZL Holdings"}]
 dependencies = []
+classifiers = ["Private :: Do Not Upload"]
 
 [project.scripts]
 szl-access = "szl_access.api:main"
