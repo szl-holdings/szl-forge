@@ -212,43 +212,52 @@ Training: TRAINED_CHALLENGER (training_receipt.json 2026-09-17T02:36Z, weights f
 Evaluation: MEASURED but SPLIT: receipt A (original adapter, torch 2.11.0+cu128): 0/5, 3/6 | receipt B (retrained adapter, torch 2.10.0+cu130): 5/5, 6/6
 Publication: UNPUBLISHED (chaski-r4 absent from the Hub; correct)
 Promotion: NOT_PROMOTABLE
-Blocking gate: canonical receipt path still holds receipt A; no canonical rerun of the RETRAINED adapter exists in a pinned env with r2 control in the same run
-Next bounded action: -RunCanonicalGate (writes a NEW receipt; promote to canonical only by explicit copy after review)
-Protected state: committed receipts A and B, adapters, gate files, pristine runner; none modified by this runbook
+Blocking gate: no receipt evaluates the RETRAINED r4 adapter beside the r2 control in one run with a loader that applies it (the f4ca282a copy's AutoModelForCausalLM applies 0/192 tensors of any language_model-layout adapter: owner metal 2026-10-01, transformers 5.16.1 / peft 0.20.0)
+Open question: receipts A and B show adapter effects that the f4ca282a copy cannot produce with the current adapter files; their provenance is recorded as unresolved, not explained away
+Next bounded action: -RunCanonicalGate (evaluator = chaski\bakeoff_named_n.py @ main; writes a NEW receipt; promote to canonical only by explicit copy after review)
+Protected state: committed receipts A and B, adapters, gate files, pristine runner copy; none modified by this runbook
 "@ | Write-Host
 
 # ------------------------------------------------------------------ OPTIONAL GATE
+# Evaluator of record for the rerun: chaski\bakeoff_named_n.py on szl-forge main (AutoModelForImageTextToText +
+# AutoProcessor, fail-closed adapter guard, `loader` receipt field, optional --chaski-r4-adapter). The local
+# chaski_r4 copy (f4ca282a) stays reconciled above for history only: its AutoModelForCausalLM loader instantiates
+# Qwen3_5ForCausalLM (model.layers.*) in every transformers release that knows Qwen3.5 (5.4-5.18, verified), so
+# it cannot apply the language_model-layout adapters at all (owner metal 2026-10-01: 0/192 for r2, r4 and 5050).
 $GateReceipt = $null
 if ($RunCanonicalGate) {
-    Banner "CANONICAL FOUR-WAY GATE (explicit; NEW receipt path)"
-    Require-File $Runner
-    if (-not $HaveVenv) { throw "The canonical gate requires the CUDA runtime at $VenvPy (torch 2.11.0+cu128 family). Refusing to evaluate on a different interpreter." }
-    if ($Recon.runner_pristine -ne $true) { throw "Runner is not the pristine f4ca282a build; refusing to run a non-canonical evaluator." }
-    # PREFLIGHT (fail-closed): the pristine runner loads the base through AutoModelForCausalLM. Under some
-    # transformers versions that class puts the modules at model.layers.* while the chaski adapters are keyed for
-    # model.language_model.layers.*; PEFT then applies 0 tensors and only warns, and the gate would score the BASE
-    # model as each adapter (observed off-metal 2026-09-30: 0/192 applied, outputs byte-identical to base).
+    Banner "CANONICAL GATE (explicit; NEW receipt path; evaluator = chaski\bakeoff_named_n.py @ main)"
+    if (-not $HaveVenv) { throw "The canonical gate requires the CUDA runtime at $VenvPy. Refusing to evaluate on a different interpreter." }
+    $CanonRunner = Join-Path $Root "chaski\bakeoff_named_n.py"
+    Require-File $CanonRunner
+    $CanonOk = "8bb415b4794a9496a5c7450c683580d44c600b4817ff2678808e0a135c89d92f"
+    $CanonHave = Sha256Text $CanonRunner
+    if ($CanonHave -ne $CanonOk) { throw "chaski\bakeoff_named_n.py is not the reviewed main build (expected $($CanonOk.Substring(0,16))..., got $($CanonHave.Substring(0,16))...). git pull origin main, then rerun. Stop state: no gate run." }
+    Write-Host "  evaluator verified: chaski\bakeoff_named_n.py $($CanonHave.Substring(0,16))..."
+    # PREFLIGHT (fail-closed): every adapter tensor must land in the evaluator's loader class (AutoModelForImageTextToText).
     $Probe = Join-Path $Tools "chaski_margin_probe.py"
     Require-File $Probe
-    $CovArgs = @($Probe, "--root", $Root, "--device", "cuda", "--dtype", "bfloat16", "--model-class", "AutoModelForCausalLM", "--coverage-only", "--adapter", $R2Dir, "--adapter", $R4Dir)
-    $A5050pre = Join-Path $Root "chaski\chaski-5050-adapter"
-    if (-not (Test-Path -LiteralPath $A5050pre)) { $A5050pre = Join-Path $Root "chaski-5050\chaski-5050-adapter" }
-    if (Test-Path -LiteralPath $A5050pre) { $CovArgs += @("--adapter", $A5050pre) }
-    $EAP = $ErrorActionPreference; $ErrorActionPreference = "Continue"
-    try { & $Py $CovArgs; $covRc = $LASTEXITCODE } finally { $ErrorActionPreference = $EAP }
-    if ($covRc -ne 0) { throw "ADAPTER COVERAGE PREFLIGHT FAILED (exit $covRc): under this transformers build the pristine runner's loader class does not apply at least one adapter. A canonical run now would receipt the base model as that adapter. Stop state: no gate run, no receipt written." }
-    Write-Host "  adapter coverage preflight OK: every adapter tensor lands in the pristine runner's loader class" -ForegroundColor Green
-    $GateReceipt = Join-Path $Evidence ("canonical_rerun_" + $Stamp + ".receipt.json")
     $A5050 = Join-Path $Root "chaski\chaski-5050-adapter"
     if (-not (Test-Path -LiteralPath $A5050)) { $A5050 = Join-Path $Root "chaski-5050\chaski-5050-adapter" }
-    $GateArgs = @($Runner, "--run", "--chaski-r2-adapter", $R2Dir, "--chaski-r4-adapter", $R4Dir, "--receipt", $GateReceipt)
+    $CovArgs = @($Probe, "--root", $Root, "--device", "cuda", "--dtype", "bfloat16", "--model-class", "AutoModelForImageTextToText", "--coverage-only", "--adapter", $R2Dir, "--adapter", $R4Dir)
+    if (Test-Path -LiteralPath $A5050) { $CovArgs += @("--adapter", $A5050) }
+    $EAP = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+    try { & $Py $CovArgs; $covRc = $LASTEXITCODE } finally { $ErrorActionPreference = $EAP }
+    if ($covRc -ne 0) { throw "ADAPTER COVERAGE PREFLIGHT FAILED (exit $covRc): at least one adapter does not land in AutoModelForImageTextToText under this transformers build. Stop state: no gate run, no receipt written." }
+    Write-Host "  adapter coverage preflight OK: every adapter tensor lands in the evaluator's loader class" -ForegroundColor Green
+    $GateReceipt = Join-Path $Evidence ("canonical_rerun_" + $Stamp + ".receipt.json")
+    $GateArgs = @($CanonRunner, "--run", "--chaski-r2-adapter", $R2Dir, "--chaski-r4-adapter", $R4Dir, "--receipt", $GateReceipt)
     if (Test-Path -LiteralPath $A5050) { $GateArgs += @("--chaski-5050-adapter", $A5050) }
     & $Py -c "import torch,transformers,peft;print('torch',torch.__version__,'transformers',transformers.__version__,'peft',peft.__version__,'cuda',torch.cuda.is_available())"
-    Run-Step "canonical runner --run" $Py $GateArgs (Join-Path $Root "chaski_r4")
+    Run-Step "canonical runner --run (base, 5050, r2 control, r4 challenger in ONE run)" $Py $GateArgs (Join-Path $Root "chaski")
     $R = Get-Content -LiteralPath $GateReceipt -Raw | ConvertFrom-Json
-    foreach ($c in $R.candidates) { Write-Host ("  {0,-18} drafts {1}/{2}  refusals {3}/{4}  adapter_sha {5}" -f $c.id, $c.json_draft_valid, $c.json_draft_total, $c.adversarial_refused, $c.adversarial_total, $c.adapter_sha256) }
+    foreach ($c in $R.candidates) {
+        $cov = ""
+        if ($null -ne $c.PSObject.Properties["loader"] -and $null -ne $c.loader) { $cov = "  applied=" + $c.loader.adapter_keys.applied + "/" + $c.loader.adapter_keys.checkpoint_tensors + "  class=" + $c.loader.model_class + "  transformers=" + $c.loader.transformers + "  peft=" + $c.loader.peft }
+        Write-Host ("  {0,-18} drafts {1}/{2}  refusals {3}/{4}  adapter_sha {5}{6}" -f $c.id, $c.json_draft_valid, $c.json_draft_total, $c.adversarial_refused, $c.adversarial_total, $c.adapter_sha256, $cov)
+    }
     Write-Host "  torch in receipt: $($R.gpu.torch)   receipt SHA-256: $(Sha256 $GateReceipt)"
-    Write-Host "  The committed canonical receipt was NOT overwritten. Promote by explicit copy only after review." -ForegroundColor Yellow
+    Write-Host "  The committed receipts were NOT overwritten. Promote by explicit copy only after review." -ForegroundColor Yellow
 }
 
 # ------------------------------------------------------------------ RECEIPT
