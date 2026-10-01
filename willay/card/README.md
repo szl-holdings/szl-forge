@@ -25,6 +25,7 @@ tags:
 
 WILLAY's training objective is to produce SZL-focused descriptions. That objective does not establish reliable doctrine adherence, refusal behavior or factual accuracy. Obtain proof counts and artifact-signing claims from pinned authoritative records, rather than assuming model output is evidence. Conjecture 1 remains OPEN and advisory, not a theorem.
 
+<!-- szl:artifact-identity-reconciled -->
 ## Exact reviewed artifacts
 
 The current reviewed Hub revision is [`e04bd728f20857c75e7c831d19d7190affd29133`](https://huggingface.co/SZLHOLDINGS/WILLAY/tree/e04bd728f20857c75e7c831d19d7190affd29133), inspected as listing and small metadata files on 2026-09-30 UTC. It contains both adapters and a derived merge; it is not an adapter-only repository without `config.json`.
