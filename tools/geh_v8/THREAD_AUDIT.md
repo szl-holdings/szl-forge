@@ -288,6 +288,17 @@ Chain head `bdb60e93…0890`; `szl_geh_verify.py --evidence …` → 5 receipts,
   runbook's `-RunCanonicalGate` now uses that runner (hash-verified) with the coverage preflight
   on `AutoModelForImageTextToText`.
 
+* **Owner metal, second run (2026-09-30 23:40 local):** the preflight pass completed again (34
+  self-checks, proof + K=10 receipts PASS, 11 tests). The gate pass then failed at `--verify-chain`
+  with `RECEIPT BYTES DRIFTED`: both passes fell in the same minute and the runbook's run id was
+  minute-granular, so the second pass overwrote the first pass's receipt file while the chain still
+  recorded the old bytes. Fixes: the harness now refuses to overwrite an existing receipt (append-only
+  evidence; article-12 event `geh.receipt_collision_refused`; test added, 12 pass); the runbook's run
+  id is second-granular plus a random suffix; an existing chain is verified before anything is
+  appended and a drifted chain is quarantined by rename (`geh_quarantined_<stamp>`), never edited.
+  Verified under pwsh: two passes in one minute → 4 receipts, chain verifies; a tampered chain →
+  quarantined, fresh chain, exit 0.
+
 ## Part D — Limits, stated plainly
 
 * **Pantograph toolchain mismatch:** PyPantograph 0.3.15 pins `leanprover/Pantograph` @ `842c0fe6`,

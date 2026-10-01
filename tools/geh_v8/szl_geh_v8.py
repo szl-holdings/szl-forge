@@ -1159,6 +1159,13 @@ def issue_receipt(paths: Paths, signer: DSSESigner, run_id: str, subject: dict, 
     if extra:
         payload.update(extra)
     rf = paths.evidence / f"geh_proof_receipt_{run_id}.json"
+    if rf.exists():
+        # Receipts are append-only evidence. Overwriting one would orphan its chain entry (the chain
+        # records the old bytes' hash) and every later --verify-chain would report RECEIPT BYTES DRIFTED.
+        # Observed on owner metal 2026-09-30 when two runbook passes shared a minute-granular run id.
+        emit_a12(paths, {"event": "geh.receipt_collision_refused", "ts": utcnow(), "run_id": run_id, "path": rf.name})
+        raise SystemExit(f"FAIL-CLOSED: receipt {rf.name} already exists; refusing to overwrite chained evidence. "
+                         f"Use a fresh --run-id.") from None
     # two-phase: link first (needs the chain head), then sign the linked payload
     head = GENESIS
     if paths.chain.exists() and paths.chain.read_text(encoding="utf-8").strip():
