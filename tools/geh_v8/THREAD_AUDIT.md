@@ -314,6 +314,25 @@ Chain head `bdb60e93…0890`; `szl_geh_verify.py --evidence …` → 5 receipts,
   either path, so the fallback changes no prompt. The runbook completes the pinned snapshot's
   config files best-effort and no longer installs anything into the venv.
 
+* **Owner metal, fourth run (2026-10-01 14:06 local) — receipt C exists.** Preflight pass complete
+  (GEH chain 12 receipts, head `344df7b4…`, 12 tests). Gate pass: evaluator `251d966b…` verified;
+  coverage **APPLIED 192/192** for r2, r4 and 5050 under `Qwen3_5ForConditionalGeneration`; the
+  canonical runner wrote `chaski_r4\evidence\canonical_rerun_20261001_140615.receipt.json`,
+  `label=MEASURED gate_ran=True publication_eligible=False` (torch 2.11.0+cu128, transformers 5.16.1,
+  peft 0.20.0, CUDA): **base 0/5 + 6/6, chaski-5050 5/5 + 6/6, chaski-r2 5/5 + 6/6, chaski-r4-local
+  5/5 + 6/6.** This is the first receipt that evaluates the RETRAINED r4 adapter (receipt B's weights,
+  `f1a2cdc3…`) beside the r2 control in one run with a loader that demonstrably applies it. It agrees
+  with receipt B's counts and with the 2026-09-17 canonical receipt's base/5050/r2 counts. The runbook
+  then crashed while printing the summary (`loader.adapter_keys` is `null` for the base row under
+  StrictMode); the receipt was already on disk and is unaffected. Fixed: null-safe printing; the state
+  block now reads the newest MEASURED canonical_rerun receipt and reports it as receipt C.
+* **What receipt C does and does not settle.** It settles the blocking gate as stated (retrained r4
+  beside the r2 control, applied adapters, pinned environment). It does not explain receipts A and B,
+  whose adapter effects the `f4ca282a` copy cannot produce with the current adapter files under any
+  tested transformers/peft pairing; that provenance stays recorded as unresolved. It does not make r4
+  promotable by itself: `publication_eligible=false` is fixed by the runner, and promotion is an owner
+  decision taken outside the gate, after the receipt is committed as an additional receipt and read.
+
 ## Part D — Limits, stated plainly
 
 * **Pantograph toolchain mismatch:** PyPantograph 0.3.15 pins `leanprover/Pantograph` @ `842c0fe6`,
