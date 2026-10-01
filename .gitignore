@@ -19,3 +19,6 @@ clinical-gateway/site-config/
 .venv-ra-v3/
 khipu/.venv/
 khipu-v2/
+
+# owner-metal stack inventories (local evidence, never committed)
+estate_evidence/

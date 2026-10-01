@@ -33,7 +33,7 @@ is `tools/chaski_margin_probe.py --coverage-only` and it fails closed (`ADAPTER_
 | Evaluator | `chaski_r4/bakeoff_canonical_four_way_r4.py` (`f4ca282a…`, `AutoModelForCausalLM`) | same | `chaski/bakeoff_named_n.py` (`AutoModelForImageTextToText`) | `chaski/bakeoff_named_n.py` + adapter guard (`251d966b…`) |
 | Torch | 2.11.0+cu128 | 2.10.0+cu130 | 2.10.0+cu130 | 2.11.0+cu128 |
 | base | 0/5, 6/6 | 0/5, 6/6 | 0/5, 6/6 | 0/5, 6/6 |
-| chaski-5050 | 0/5, 0/6 (`b077cafe…`) | 5/5, 6/6 (`fc7da61d…`) | 5/5, 6/6 (`fc7da61d…`) | 5/5, 6/6 (`fc7da61d…`) |
+| chaski-5050 | 0/5, 6/6 (`b077cafe…`) | 5/5, 6/6 (`fc7da61d…`) | 5/5, 6/6 (`fc7da61d…`) | 5/5, 6/6 (`fc7da61d…`) |
 | chaski-r2 (control, `e35df3be…`) | 5/5, 6/6 | 5/5, 6/6 | 5/5, 6/6 | 5/5, 6/6 |
 | chaski-r4 | 0/5, 3/6 (original, `b116832a…`) | 5/5, 6/6 (retrained, `e1abc37a…`) | not evaluated | 5/5, 6/6 (retrained, `e1abc37a…`) |
 
