@@ -242,10 +242,17 @@ if ($RunCanonicalGate) {
     if (-not $HaveVenv) { throw "The canonical gate requires the CUDA runtime at $VenvPy. Refusing to evaluate on a different interpreter." }
     $CanonRunner = Join-Path $Root "chaski\bakeoff_named_n.py"
     Require-File $CanonRunner
-    $CanonOk = "8bb415b4794a9496a5c7450c683580d44c600b4817ff2678808e0a135c89d92f"
+    $CanonOk = "251d966beb4ff9601de25191f12293a0d67ee2e732c9b6618a073201163998e1"
     $CanonHave = Sha256Text $CanonRunner
     if ($CanonHave -ne $CanonOk) { throw "chaski\bakeoff_named_n.py is not the reviewed main build (expected $($CanonOk.Substring(0,16))..., got $($CanonHave.Substring(0,16))...). git pull origin main, then rerun. Stop state: no gate run." }
     Write-Host "  evaluator verified: chaski\bakeoff_named_n.py $($CanonHave.Substring(0,16))..."
+    # Best effort: complete the PINNED base snapshot with its small config files so AutoProcessor can load when
+    # torchvision is present. The canonical runner falls back to AutoTokenizer (recorded in the receipt as
+    # loader.prompt_renderer) when AutoProcessor is unavailable, so this never blocks the gate. No weights here.
+    $BaseRev = "2fc06364715b967f1860aea9cf38778875588b17"
+    $EAP = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+    try { & $Py -c "from huggingface_hub import snapshot_download; p = snapshot_download('Qwen/Qwen3.5-0.8B', revision='$BaseRev', allow_patterns=['preprocessor_config.json','video_preprocessor_config.json','chat_template.jinja','config.json','tokenizer.json','tokenizer_config.json','merges.txt','vocab.json']); print('  base snapshot config files present at', p)"; $snapRc = $LASTEXITCODE } finally { $ErrorActionPreference = $EAP }
+    if ($snapRc -ne 0) { Write-Host "  base snapshot completion skipped (offline?); the runner's tokenizer renderer does not need it" -ForegroundColor Yellow }
     # PREFLIGHT (fail-closed): every adapter tensor must land in the evaluator's loader class (AutoModelForImageTextToText).
     $Probe = Join-Path $Tools "chaski_margin_probe.py"
     Require-File $Probe
