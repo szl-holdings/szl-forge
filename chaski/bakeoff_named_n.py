@@ -478,9 +478,24 @@ LAST_LOADER: dict[str, Any] | None = None
 
 def load_runtime(base_id: str, adapter: Path | None) -> tuple[Any, Any]:
     import torch
-    from transformers import AutoModelForImageTextToText, AutoProcessor
+    from transformers import AutoModelForImageTextToText
 
-    processor = AutoProcessor.from_pretrained(base_id, local_files_only=True)
+    # The gate is text-only: it needs the chat template, tokenization and decoding, which the tokenizer
+    # provides. AutoProcessor additionally needs preprocessor_config.json in the snapshot plus Pillow and
+    # torchvision for the image/video side it never uses here (owner metal 2026-10-01: "Can't load image
+    # processor" / "requires the Torchvision library"). Receipts A, B and the 2026-09-17 canonical receipt
+    # render byte-identical prompts through either path. Fall back explicitly and record which one ran.
+    try:
+        from transformers import AutoProcessor
+
+        processor = AutoProcessor.from_pretrained(base_id, local_files_only=True)
+        renderer = "AutoProcessor"
+    except Exception as exc:  # noqa: BLE001 - explicit, recorded fallback
+        from transformers import AutoTokenizer
+
+        processor = AutoTokenizer.from_pretrained(base_id, local_files_only=True)
+        renderer = f"AutoTokenizer (AutoProcessor unavailable: {type(exc).__name__})"
+        print(f"[chaski-bakeoff] prompt renderer: {renderer}", file=sys.stderr)
     model = AutoModelForImageTextToText.from_pretrained(
         base_id,
         dtype=torch.bfloat16,
@@ -501,6 +516,7 @@ def load_runtime(base_id: str, adapter: Path | None) -> tuple[Any, Any]:
     model.eval()
     global LAST_LOADER
     LAST_LOADER = describe_loader(model, report)
+    LAST_LOADER["prompt_renderer"] = renderer
     return model, processor
 
 
@@ -510,7 +526,7 @@ def generate_text(
     messages: list[dict[str, str]],
     *,
     max_new_tokens: int,
-) -> tuple[str, int, float]:
+) -> tuple[str, int, float, str]:
     import torch
 
     try:
@@ -550,7 +566,7 @@ def generate_text(
         skip_special_tokens=True,
         clean_up_tokenization_spaces=False,
     )[0].strip()
-    return output, int(new_tokens.shape[-1]), seconds
+    return output, int(new_tokens.shape[-1]), seconds, sha256_bytes(prompt.encode("utf-8"))
 
 
 def unload(model: Any) -> None:
@@ -608,7 +624,7 @@ def score_candidate(
     try:
         for index, item in enumerate(drafts["rows"], 1):
             messages = prompt_messages(item)
-            output, new_tokens, seconds = generate_text(
+            output, new_tokens, seconds, prompt_sha = generate_text(
                 model,
                 processor,
                 messages,
@@ -624,6 +640,7 @@ def score_candidate(
                     "output": output,
                     "output_sha256": sha256_bytes(output.encode("utf-8")),
                     "new_tokens": new_tokens,
+                    "prompt_sha256": prompt_sha,
                     "seconds": round(seconds, 6),
                     "contract_valid": valid,
                     "error": error,
@@ -631,7 +648,7 @@ def score_candidate(
             )
         for index, item in enumerate(refusals["rows"], 1):
             messages = prompt_messages(item)
-            output, new_tokens, seconds = generate_text(
+            output, new_tokens, seconds, prompt_sha = generate_text(
                 model,
                 processor,
                 messages,
@@ -647,6 +664,7 @@ def score_candidate(
                     "output": output,
                     "output_sha256": sha256_bytes(output.encode("utf-8")),
                     "new_tokens": new_tokens,
+                    "prompt_sha256": prompt_sha,
                     "seconds": round(seconds, 6),
                     "refused": ok,
                     "error": error,

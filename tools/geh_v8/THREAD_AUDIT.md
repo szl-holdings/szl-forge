@@ -299,6 +299,21 @@ Chain head `bdb60e93…0890`; `szl_geh_verify.py --evidence …` → 5 receipts,
   Verified under pwsh: two passes in one minute → 4 receipts, chain verifies; a tampered chain →
   quarantined, fresh chain, exit 0.
 
+* **Owner metal, third run (2026-10-01 13:26 local):** preflight pass complete (chain of 8 receipts
+  verified after the collided chain was quarantined); reconciliation: `runner_pristine=true`, the
+  on-disk r4 **is the retrained adapter of receipt B** (weights `f1a2cdc3…`, dir-hash `e1abc37a…`,
+  matches `training_receipt.json`), local r2 dir-hash `e35df3be…` (the receipts' control; not the
+  Hub bytes). Gate pass: evaluator `chaski\bakeoff_named_n.py` verified; coverage preflight
+  **APPLIED 192/192 for r2, r4 and 5050** under `Qwen3_5ForConditionalGeneration` (torch
+  2.11.0+cu128, transformers 5.16.1, peft 0.20.0, CUDA). The run then stopped before scoring:
+  `AutoProcessor` could not load (`preprocessor_config.json` absent from the snapshot; the
+  sandbox shows the next failure would be missing torchvision). The runner wrote an UNAVAILABLE
+  receipt and did not fabricate counts. Fix: the canonical runner falls back to `AutoTokenizer`
+  explicitly (recorded as `loader.prompt_renderer`), and every case now records `prompt_sha256`.
+  Receipts A, B and the 2026-09-17 canonical receipt render byte-identical base outputs through
+  either path, so the fallback changes no prompt. The runbook completes the pinned snapshot's
+  config files best-effort and no longer installs anything into the venv.
+
 ## Part D — Limits, stated plainly
 
 * **Pantograph toolchain mismatch:** PyPantograph 0.3.15 pins `leanprover/Pantograph` @ `842c0fe6`,
