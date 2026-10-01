@@ -22,7 +22,7 @@ from typing import Any, Callable, Iterable
 
 from huggingface_hub import CommitOperationAdd, HfApi, hf_hub_download
 
-from kernels_keyless_credentials import authority_policy
+from kernels_keyless_credentials import KeylessCredentialError, authority_policy
 
 EXPECTED_REPO_ID = "SZLHOLDINGS/szl-kernels"
 EXPECTED_SOURCE_REPOSITORY = "szl-holdings/szl-kernels"
@@ -92,6 +92,14 @@ OIDC_ENV_ALLOWLIST = (
     "ACTIONS_ID_TOKEN_REQUEST_TOKEN",
     "ACTIONS_ID_TOKEN_REQUEST_URL",
 )
+CREDENTIAL_FAILURE_CODES = frozenset({
+    "INVALID_GITHUB_OIDC_ENDPOINT", "MISSING_GITHUB_OIDC_REQUEST_TOKEN",
+    "UNTRUSTED_WORKFLOW_CONTEXT", "PULL_REQUEST_CONTEXT_REJECTED",
+    "INVALID_PUBLISHER_REVISION", "UNDECLARED_OIDC_RESOURCE",
+    "OIDC_EXCHANGE_UNAVAILABLE", "OIDC_EXCHANGE_REJECTED",
+    "INVALID_OIDC_TOKEN_RESPONSE", "AMBIENT_HUB_CREDENTIAL_REJECTED",
+    "CROSS_TARGET_TOKEN_REUSE_REJECTED",
+})
 SENSITIVE_ENV_MARKERS = (
     "TOKEN",
     "SECRET",
@@ -177,6 +185,57 @@ def bounded_error_type(exc: BaseException) -> str:
     if not value or not (value[0].isalpha() or value[0] == "_"):
         value = f"_{value}"[:128]
     return value
+
+
+def record_credential_failure(
+    report_path: Path,
+    *,
+    source_revision: str,
+    publisher: dict[str, Any],
+    exc: BaseException,
+) -> None:
+    """Retain a pre-run failure without replacing existing publication evidence.
+
+    The no-write claim covers this invocation's artifact publication only:
+    exact-resource token exchange may already have reached the provider.
+    """
+    failure: dict[str, Any] = {
+        "stage": "CREDENTIAL_ACQUISITION",
+        "error_type": bounded_error_type(exc),
+        "provider_write_attempted": False,
+    }
+    # Never stringify an exception, including an unrecognized/subclassed
+    # credential error. Only the helper's exact fixed codes are public data.
+    if (
+        type(exc) is KeylessCredentialError
+        and len(exc.args) == 1
+        and type(exc.args[0]) is str
+        and exc.args[0] in CREDENTIAL_FAILURE_CODES
+    ):
+        failure["error_code"] = exc.args[0]
+    result = {
+        "schema": "szl.kernel-publication-preflight-failure/v1",
+        "mode": "PUBLISH",
+        "status": "PUBLICATION_FAILED_NO_PROVIDER_WRITE",
+        "repo_id": EXPECTED_REPO_ID,
+        "source_repository": EXPECTED_SOURCE_REPOSITORY,
+        "source_revision": source_revision,
+        "publisher": publisher,
+        "failure": failure,
+        "limitations": [
+            "No artifact publication was attempted by this invocation.",
+            "Exact-resource token exchange may have occurred.",
+            "Provider repository state and source authorization were not verified here.",
+        ],
+    }
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with report_path.open("x", encoding="utf-8", newline="\n") as handle:
+            handle.write(canonical_json(result))
+    except FileExistsError:
+        # Existing partial or completed evidence is never relabeled by a
+        # later attempt, nor is an existing symlink followed for writing.
+        return
 
 
 def record_publication_failure(
@@ -2170,19 +2229,27 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
 
 
 def main(argv: Iterable[str] | None = None) -> int:
-    args = parse_args(argv)
-    publisher = publisher_identity(
-        repository=args.publisher_repository,
-        revision=args.publisher_revision,
-        workflow_ref=args.publisher_workflow_ref,
-        run_id=args.publisher_run_id,
-        run_attempt=args.publisher_run_attempt,
-    )
+    args = None
+    publisher = None
+    source_revision = None
+    entered_run = False
     token = None
     kernel_token = None
     authority = None
     credentials = None
     try:
+        args = parse_args(argv)
+        publisher = publisher_identity(
+            repository=args.publisher_repository,
+            revision=args.publisher_revision,
+            workflow_ref=args.publisher_workflow_ref,
+            run_id=args.publisher_run_id,
+            run_attempt=args.publisher_run_attempt,
+        )
+        source_revision = args.source_revision.strip().lower()
+        if FULL_SHA_RE.fullmatch(source_revision) is None:
+            source_revision = None
+            raise PublicationError("source revision must be an exact Git SHA")
         if args.publish:
             from kernels_keyless_credentials import acquire_pair, authority_evidence
 
@@ -2196,11 +2263,12 @@ def main(argv: Iterable[str] | None = None) -> int:
             finally:
                 for key in OIDC_ENV_ALLOWLIST:
                     os.environ.pop(key, None)
+        entered_run = True
         result = run(
             source_root=args.source_dir,
             report_path=args.report,
             authorization_path=args.authorization_report,
-            source_revision=args.source_revision,
+            source_revision=source_revision,
             publisher=publisher,
             publish=args.publish,
             token=token,
@@ -2215,9 +2283,31 @@ def main(argv: Iterable[str] | None = None) -> int:
     except Exception as exc:
         # Provider exceptions can contain authorization headers or response
         # bodies. Receipts retain stage and bounded error type, never secrets.
+        if (
+            args is not None
+            and args.publish
+            and not entered_run
+            and publisher is not None
+            and source_revision is not None
+        ):
+            try:
+                record_credential_failure(
+                    args.report,
+                    source_revision=source_revision,
+                    publisher=publisher,
+                    exc=exc,
+                )
+            except OSError as receipt_error:
+                print(
+                    f"kernel publication failure receipt unavailable ({bounded_error_type(receipt_error)})",
+                    file=sys.stderr,
+                )
         print(f"kernel publication failed ({bounded_error_type(exc)})", file=sys.stderr)
         return 1
     finally:
+        if args is None or args.publish:
+            for key in OIDC_ENV_ALLOWLIST:
+                os.environ.pop(key, None)
         token = None
         kernel_token = None
         credentials = None

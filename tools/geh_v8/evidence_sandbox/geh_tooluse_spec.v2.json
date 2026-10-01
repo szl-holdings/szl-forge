@@ -1,0 +1,75 @@
+{
+  "$id": "szl.gov.lean.tools/v2",
+  "state": {
+    "state_id": "string (transport-native id; REPL proofState / Pantograph stateId)",
+    "goals": [
+      {
+        "goal_id": "int",
+        "pp": "string",
+        "pp_sha256": "string"
+      }
+    ],
+    "steps_used": "int",
+    "budget": "int"
+  },
+  "tools": {
+    "lean.initialize": {
+      "args": {
+        "statement": "string"
+      },
+      "post": "state with >=0 goals; kernel elaborated the statement"
+    },
+    "lean.list_goals": {
+      "args": {
+        "state_id": "string"
+      },
+      "post": "goals with per-goal sha256"
+    },
+    "lean.run_tactic": {
+      "args": {
+        "state_id": "string",
+        "goal_id": "int",
+        "tactic": "string"
+      },
+      "pre": "goal exists AND gate(tactic) in {OK, OK_RESTRICTED} AND budget > 0",
+      "post": "ok AND new goals (possibly []) OR branch_death{KERNEL|BLOCKED|EVIDENCE_ONLY|UNREGISTERED|BUDGET}",
+      "risk": "SAFE|RESTRICTED|EVIDENCE_ONLY|BLOCKED"
+    },
+    "lean.focus_goal": {
+      "args": {
+        "state_id": "string",
+        "goal_id": "int"
+      },
+      "post": "goal_id rotated to position 0 (recorded, governed)"
+    },
+    "lean.finalize": {
+      "pre": "no goals remain",
+      "post": "tactic script reconstructed for the audit channel"
+    },
+    "lean.audit_file": {
+      "args": {
+        "file": "string"
+      },
+      "post": "kernel compiled the whole file: errors, sorries, allTactics extracted"
+    },
+    "lean.query_axioms": {
+      "args": {
+        "theorem": "string"
+      },
+      "post": "axiom set subset of ALLOWED_AXIOMS else BUILD FAILS"
+    }
+  },
+  "machine": "INIT -> GOALS -> (RUN_TACTIC -> GOALS)* -> FINALIZE -> AUDIT_FILE -> QUERY_AXIOMS -> RECEIPT; dead branches recorded, never silently retried",
+  "verdicts": [
+    "KERNEL_VERIFIED_AND_SIGNED",
+    "TRACE_SIGNED_KERNEL_UNVERIFIED",
+    "VOID"
+  ],
+  "pass_requires": [
+    "transport.certified",
+    "live: no goals",
+    "audit: 0 errors, 0 sorries",
+    "guard: allowed=true",
+    "artifact_grade=COMPLIANCE_CANDIDATE"
+  ]
+}

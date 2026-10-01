@@ -27,20 +27,11 @@ ENV = {
 }
 
 
-def valid_api() -> mock.Mock:
-    api = mock.Mock()
-    api.list_repo_refs.return_value = SimpleNamespace(branches=[
-        SimpleNamespace(name="main", target_commit="c" * 40),
-        SimpleNamespace(name="v1", target_commit="d" * 40),
-    ])
-    return api
-
-
 class KernelKeylessCredentialTests(unittest.TestCase):
     def test_exact_resources_use_distinct_typed_grants(self) -> None:
-        api = valid_api()
         supplier = mock.Mock(side_effect=[MODEL, KERNEL])
-        pair = credentials.acquire_pair(environment=ENV, supplier=supplier, api=api)
+        with mock.patch("huggingface_hub.HfApi") as api:
+            pair = credentials.acquire_pair(environment=ENV, supplier=supplier)
         self.assertEqual(
             [call.args[0] for call in supplier.call_args_list],
             [credentials.MODEL_RESOURCE, credentials.KERNEL_RESOURCE],
@@ -49,15 +40,7 @@ class KernelKeylessCredentialTests(unittest.TestCase):
         self.assertEqual(pair.kernel, KERNEL)
         self.assertNotIn(MODEL, repr(pair))
         self.assertNotIn(KERNEL, repr(pair))
-        api.auth_check.assert_called_once_with(
-            repo_id=credentials.TARGET,
-            repo_type="model",
-            token=MODEL,
-            write=True,
-        )
-        api.list_repo_refs.assert_called_once_with(
-            credentials.TARGET, repo_type="kernel", token=KERNEL
-        )
+        api.assert_not_called()
 
     def test_fork_pr_mutable_ref_and_other_workflow_never_exchange(self) -> None:
         mutations = {
@@ -77,7 +60,7 @@ class KernelKeylessCredentialTests(unittest.TestCase):
                 supplier = mock.Mock()
                 with self.assertRaises(credentials.KeylessCredentialError):
                     credentials.acquire_pair(
-                        environment=environment, supplier=supplier, api=mock.Mock()
+                        environment=environment, supplier=supplier
                     )
                 supplier.assert_not_called()
 
@@ -152,7 +135,6 @@ class KernelKeylessCredentialTests(unittest.TestCase):
                     credentials.acquire_pair(
                         environment={**ENV, key: "secret-fixture"},
                         supplier=supplier,
-                        api=valid_api(),
                     )
                 supplier.assert_not_called()
 
@@ -188,50 +170,39 @@ class KernelKeylessCredentialTests(unittest.TestCase):
             run.assert_not_called()
 
     def test_same_token_cannot_cross_the_model_kernel_boundary(self) -> None:
-        api = valid_api()
         with self.assertRaisesRegex(
             credentials.KeylessCredentialError, "CROSS_TARGET_TOKEN_REUSE_REJECTED"
         ):
             credentials.acquire_pair(
                 environment=ENV,
                 supplier=mock.Mock(side_effect=[MODEL, MODEL]),
-                api=api,
             )
-        api.auth_check.assert_not_called()
-        api.list_repo_refs.assert_not_called()
 
-    def test_incomplete_or_nonimmutable_kernel_refs_refuse_the_pair(self) -> None:
-        cases = (
-            [],
-            [SimpleNamespace(name="main", target_commit="c" * 40)],
-            [
-                SimpleNamespace(name="main", target_commit="c" * 40),
-                SimpleNamespace(name="v1", target_commit="main"),
-            ],
+    def test_both_exact_exchanges_must_succeed_before_pair_return(self) -> None:
+        supplier = mock.Mock(side_effect=[
+            MODEL,
+            credentials.KeylessCredentialError("OIDC_EXCHANGE_REJECTED"),
+        ])
+        with self.assertRaisesRegex(
+            credentials.KeylessCredentialError, "^OIDC_EXCHANGE_REJECTED$"
+        ):
+            credentials.acquire_pair(environment=ENV, supplier=supplier)
+        self.assertEqual(
+            [call.args[0] for call in supplier.call_args_list],
+            [credentials.MODEL_RESOURCE, credentials.KERNEL_RESOURCE],
         )
-        for branches in cases:
-            api = valid_api()
-            api.list_repo_refs.return_value = SimpleNamespace(branches=branches)
-            with self.subTest(branches=branches), self.assertRaisesRegex(
-                credentials.KeylessCredentialError, "INVALID_KERNEL_REFS"
-            ):
-                credentials.acquire_pair(
-                    environment=ENV,
-                    supplier=mock.Mock(side_effect=[MODEL, KERNEL]),
-                    api=api,
-                )
 
-    def test_access_errors_are_fixed_codes_without_token_material(self) -> None:
-        api = valid_api()
-        api.auth_check.side_effect = RuntimeError("private-response-" + MODEL)
-        with self.assertRaises(credentials.KeylessCredentialError) as caught:
-            credentials.acquire_pair(
+    def test_repo_scoped_grants_do_not_call_user_token_auth_check(self) -> None:
+        with mock.patch("huggingface_hub.HfApi") as api:
+            api.return_value.auth_check.side_effect = RuntimeError(
+                "the user-token endpoint must remain outside the grant boundary"
+            )
+            pair = credentials.acquire_pair(
                 environment=ENV,
                 supplier=mock.Mock(side_effect=[MODEL, KERNEL]),
-                api=api,
             )
-        self.assertEqual(str(caught.exception), "TARGET_ACCESS_VALIDATION_FAILED")
-        self.assertNotIn(MODEL, str(caught.exception))
+        self.assertEqual((pair.model, pair.kernel), (MODEL, KERNEL))
+        api.assert_not_called()
 
     def test_authority_evidence_is_closed_and_contains_no_credential(self) -> None:
         evidence = credentials.authority_evidence(ENV)

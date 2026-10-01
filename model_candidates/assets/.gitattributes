@@ -1,0 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# (c) 2026 Lutar, Stephen P. - SZL Holdings - ORCID 0009-0001-0110-4173
+# Vendored SZL KANCHAY files are byte-for-byte copies: Git must never rewrite them.
+# More specific than the root rule model_candidates/** text eol=lf, so it wins here.
+szl/** -text

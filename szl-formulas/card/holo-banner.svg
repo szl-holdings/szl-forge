@@ -1,4 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" width="1200" height="360">
+  <title>21 formula implementations</title>
+  <desc>Twenty-one stylized bars illustrate the implementation registry. Colour and glow are decorative and do not identify proven formulas. Proof labels retain their declared scope; the F-number-to-registry mapping is unknown.</desc>
   <defs>
     <linearGradient id="reg" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#22d3ee"/>
