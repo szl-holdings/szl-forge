@@ -1,0 +1,15 @@
+{
+  "executionSourceWasUnpublished": true,
+  "files": {
+    "baseline-v1.json": "7aa296623dd18b2982a742737ded532122ed0a320f8702bd8135ebfe9636d402",
+    "comparison.json": "e54649bdd01c40a0766652ca6acd2544d4bbcfd559232c8c2df9359325207199",
+    "explicit-lookup-v2.json": "a136dae188c5a322c25f80e8a6cc34f41da7cd71bcfe10742720f663b2ec6dba",
+    "minicpm5-explicit-lookup-v2.patch": "02098c9233f94955337693c2356e39a0c6e7da4d3a9abe4bc4847ac632f6df52",
+    "source/baseline/inference/minicpm5_qualification.py": "b1f750253004d43fd44ead3581245920867ee775b9388ff3eec002af80a29af7",
+    "source/baseline/inference/verify_minicpm5_report.py": "74e1e13760149d3ba9e97d3ecefc83481d7e34d2f1b15a98b9e8966637530d31",
+    "source/candidate/inference/minicpm5_qualification.py": "69274d8c2f0a1c96deac844c61e09662a683df6cbc3fcd374669562f1c4dac88",
+    "source/candidate/inference/verify_minicpm5_report.py": "6bf145b8c0bdc4ed9f1c685e366b034c15fe24afefee063847e6ab54d9538a7f"
+  },
+  "schema": "szl.minicpm5.archived-dev12-files.v1",
+  "sourceBaseRevision": "3f12d5078fe058ca66c41afb3fedbecd96ee9468"
+}

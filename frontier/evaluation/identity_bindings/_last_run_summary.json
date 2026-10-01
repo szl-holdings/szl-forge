@@ -1,0 +1,22 @@
+[
+  {
+    "repository": "SZLHOLDINGS/brain-navigator-r2",
+    "revision": "7fe3872fcb78ec8f5cc2f0c7464538b50b34e4b2",
+    "manifest": "brain-navigator-r2_7fe3872fcb78.json"
+  },
+  {
+    "repository": "SZLHOLDINGS/chaski-r2",
+    "revision": "661f8ee9ff6ab8b11dda6e7a9d42c14d3124c6dd",
+    "manifest": "chaski-r2_661f8ee9ff6a.json"
+  },
+  {
+    "repository": "SZLHOLDINGS/A11OY-MINI",
+    "revision": "0619dd65b92a135501af35b3c4e3b4e762be1d7d",
+    "manifest": "A11OY-MINI_0619dd65b92a.json"
+  },
+  {
+    "repository": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3",
+    "revision": "108835f1622615f96d7cb74f8b30f9c488923683",
+    "manifest": "szl-receiptagent-qwen35-0.8b-v3_108835f16226.json"
+  }
+]

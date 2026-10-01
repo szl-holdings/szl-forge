@@ -1,0 +1,215 @@
+{
+  "observed_utc": "2026-09-24T12:51:59.413775+00:00",
+  "files": [
+    {
+      "repo": "SZLHOLDINGS/brain-navigator-r2",
+      "revision": "7fe3872fcb78ec8f5cc2f0c7464538b50b34e4b2",
+      "file": "model.safetensors",
+      "path": "C:\\Users\\steph\\szl\\merged\\brain-navigator-r2\\model.safetensors",
+      "bytes": 3009613648,
+      "sha256": "d94b7960bc89b82edd7fdefda1ad41ec297f1ec5716df5def319cae634fe3456",
+      "hub_lfs_sha256": "1b825de2e632001c97e4e1edba56b1baf56c0676775a4ede5e654cebb06176ce",
+      "matches_hub_lfs": false
+    },
+    {
+      "repo": "SZLHOLDINGS/brain-navigator-r2",
+      "revision": "7fe3872fcb78ec8f5cc2f0c7464538b50b34e4b2",
+      "file": "config.json",
+      "path": "C:\\Users\\steph\\szl\\merged\\brain-navigator-r2\\config.json",
+      "bytes": 1864,
+      "sha256": "3c99fe1adef44efe482957540ecd2a46f1d6a6ac107ebfed4b30849148cbe950",
+      "hub_lfs_sha256": null,
+      "matches_hub_lfs": null
+    },
+    {
+      "repo": "SZLHOLDINGS/brain-navigator-r2",
+      "revision": "7fe3872fcb78ec8f5cc2f0c7464538b50b34e4b2",
+      "file": "tokenizer.json",
+      "path": "C:\\Users\\steph\\szl\\merged\\brain-navigator-r2\\tokenizer.json",
+      "bytes": 19989343,
+      "sha256": "87a7830d63fcf43bf241c3c5242e96e62dd3fdc29224ca26fed8ea333db72de4",
+      "hub_lfs_sha256": "87a7830d63fcf43bf241c3c5242e96e62dd3fdc29224ca26fed8ea333db72de4",
+      "matches_hub_lfs": true
+    },
+    {
+      "repo": "SZLHOLDINGS/brain-navigator-r2",
+      "revision": "7fe3872fcb78ec8f5cc2f0c7464538b50b34e4b2",
+      "file": "tokenizer_config.json",
+      "path": "C:\\Users\\steph\\szl\\merged\\brain-navigator-r2\\tokenizer_config.json",
+      "bytes": 1230,
+      "sha256": "772ddf95a8938e897a0f4d5e4268ce86419862b521c9df2fa46dc136bc09fd02",
+      "hub_lfs_sha256": null,
+      "matches_hub_lfs": null
+    },
+    {
+      "repo": "SZLHOLDINGS/brain-navigator-r2",
+      "revision": "7fe3872fcb78ec8f5cc2f0c7464538b50b34e4b2",
+      "file": "generation_config.json",
+      "path": "C:\\Users\\steph\\szl\\merged\\brain-navigator-r2\\generation_config.json",
+      "bytes": 122,
+      "sha256": "2bb288381005ac379cbbb8e60ce18f88054312e59432a4d8f61cbedd2e8cbabe",
+      "hub_lfs_sha256": null,
+      "matches_hub_lfs": null
+    },
+    {
+      "repo": "SZLHOLDINGS/brain-navigator-r2",
+      "revision": "7fe3872fcb78ec8f5cc2f0c7464538b50b34e4b2",
+      "file": "chat_template.jinja",
+      "path": "C:\\Users\\steph\\szl\\merged\\brain-navigator-r2\\chat_template.jinja",
+      "bytes": 7908,
+      "sha256": "306abaf09cf3a6c0d14128373a72925bda3d7de2616a5642804d9768c7d2f78c",
+      "hub_lfs_sha256": null,
+      "matches_hub_lfs": null
+    },
+    {
+      "repo": "SZLHOLDINGS/chaski-r2",
+      "revision": "661f8ee9ff6ab8b11dda6e7a9d42c14d3124c6dd",
+      "file": "model.safetensors",
+      "path": "C:\\Users\\steph\\szl\\merged\\chaski-r2\\model.safetensors",
+      "bytes": 3009613648,
+      "sha256": "d94b7960bc89b82edd7fdefda1ad41ec297f1ec5716df5def319cae634fe3456",
+      "hub_lfs_sha256": "f3b3130117711c670ce7979bdea165ddd06e00c2d307637d54ce62177a9d941d",
+      "matches_hub_lfs": false
+    },
+    {
+      "repo": "SZLHOLDINGS/chaski-r2",
+      "revision": "661f8ee9ff6ab8b11dda6e7a9d42c14d3124c6dd",
+      "file": "config.json",
+      "path": "C:\\Users\\steph\\szl\\merged\\chaski-r2\\config.json",
+      "bytes": 1864,
+      "sha256": "3c99fe1adef44efe482957540ecd2a46f1d6a6ac107ebfed4b30849148cbe950",
+      "hub_lfs_sha256": null,
+      "matches_hub_lfs": null
+    },
+    {
+      "repo": "SZLHOLDINGS/chaski-r2",
+      "revision": "661f8ee9ff6ab8b11dda6e7a9d42c14d3124c6dd",
+      "file": "tokenizer.json",
+      "path": "C:\\Users\\steph\\szl\\merged\\chaski-r2\\tokenizer.json",
+      "bytes": 19989343,
+      "sha256": "87a7830d63fcf43bf241c3c5242e96e62dd3fdc29224ca26fed8ea333db72de4",
+      "hub_lfs_sha256": "87a7830d63fcf43bf241c3c5242e96e62dd3fdc29224ca26fed8ea333db72de4",
+      "matches_hub_lfs": true
+    },
+    {
+      "repo": "SZLHOLDINGS/chaski-r2",
+      "revision": "661f8ee9ff6ab8b11dda6e7a9d42c14d3124c6dd",
+      "file": "tokenizer_config.json",
+      "path": "C:\\Users\\steph\\szl\\merged\\chaski-r2\\tokenizer_config.json",
+      "bytes": 1230,
+      "sha256": "772ddf95a8938e897a0f4d5e4268ce86419862b521c9df2fa46dc136bc09fd02",
+      "hub_lfs_sha256": null,
+      "matches_hub_lfs": null
+    },
+    {
+      "repo": "SZLHOLDINGS/chaski-r2",
+      "revision": "661f8ee9ff6ab8b11dda6e7a9d42c14d3124c6dd",
+      "file": "generation_config.json",
+      "path": "C:\\Users\\steph\\szl\\merged\\chaski-r2\\generation_config.json",
+      "bytes": 122,
+      "sha256": "2bb288381005ac379cbbb8e60ce18f88054312e59432a4d8f61cbedd2e8cbabe",
+      "hub_lfs_sha256": null,
+      "matches_hub_lfs": null
+    },
+    {
+      "repo": "SZLHOLDINGS/chaski-r2",
+      "revision": "661f8ee9ff6ab8b11dda6e7a9d42c14d3124c6dd",
+      "file": "chat_template.jinja",
+      "path": "C:\\Users\\steph\\szl\\merged\\chaski-r2\\chat_template.jinja",
+      "bytes": 7908,
+      "sha256": "306abaf09cf3a6c0d14128373a72925bda3d7de2616a5642804d9768c7d2f78c",
+      "hub_lfs_sha256": null,
+      "matches_hub_lfs": null
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3",
+      "revision": "108835f1622615f96d7cb74f8b30f9c488923683",
+      "file": "model.safetensors",
+      "path": "C:\\Users\\steph\\szl\\merged\\szl-receiptagent-qwen35-0.8b-v3\\model.safetensors",
+      "bytes": 3009613648,
+      "sha256": "d94b7960bc89b82edd7fdefda1ad41ec297f1ec5716df5def319cae634fe3456",
+      "hub_lfs_sha256": "2c43276ffc9abad48e6c9e3aafb3da93b6fa33382006040a82d057feb6ff0a9b",
+      "matches_hub_lfs": false
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3",
+      "revision": "108835f1622615f96d7cb74f8b30f9c488923683",
+      "file": "config.json",
+      "path": "C:\\Users\\steph\\szl\\merged\\szl-receiptagent-qwen35-0.8b-v3\\config.json",
+      "bytes": 1864,
+      "sha256": "3c99fe1adef44efe482957540ecd2a46f1d6a6ac107ebfed4b30849148cbe950",
+      "hub_lfs_sha256": null,
+      "matches_hub_lfs": null
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3",
+      "revision": "108835f1622615f96d7cb74f8b30f9c488923683",
+      "file": "tokenizer.json",
+      "path": "C:\\Users\\steph\\szl\\merged\\szl-receiptagent-qwen35-0.8b-v3\\tokenizer.json",
+      "bytes": 19989343,
+      "sha256": "87a7830d63fcf43bf241c3c5242e96e62dd3fdc29224ca26fed8ea333db72de4",
+      "hub_lfs_sha256": "87a7830d63fcf43bf241c3c5242e96e62dd3fdc29224ca26fed8ea333db72de4",
+      "matches_hub_lfs": true
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3",
+      "revision": "108835f1622615f96d7cb74f8b30f9c488923683",
+      "file": "tokenizer_config.json",
+      "path": "C:\\Users\\steph\\szl\\merged\\szl-receiptagent-qwen35-0.8b-v3\\tokenizer_config.json",
+      "bytes": 1230,
+      "sha256": "772ddf95a8938e897a0f4d5e4268ce86419862b521c9df2fa46dc136bc09fd02",
+      "hub_lfs_sha256": null,
+      "matches_hub_lfs": null
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3",
+      "revision": "108835f1622615f96d7cb74f8b30f9c488923683",
+      "file": "generation_config.json",
+      "path": "C:\\Users\\steph\\szl\\merged\\szl-receiptagent-qwen35-0.8b-v3\\generation_config.json",
+      "bytes": 122,
+      "sha256": "2bb288381005ac379cbbb8e60ce18f88054312e59432a4d8f61cbedd2e8cbabe",
+      "hub_lfs_sha256": null,
+      "matches_hub_lfs": null
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3",
+      "revision": "108835f1622615f96d7cb74f8b30f9c488923683",
+      "file": "chat_template.jinja",
+      "path": "C:\\Users\\steph\\szl\\merged\\szl-receiptagent-qwen35-0.8b-v3\\chat_template.jinja",
+      "bytes": 7908,
+      "sha256": "306abaf09cf3a6c0d14128373a72925bda3d7de2616a5642804d9768c7d2f78c",
+      "hub_lfs_sha256": null,
+      "matches_hub_lfs": null
+    },
+    {
+      "repo": "SZLHOLDINGS/A11OY-MINI",
+      "revision": "0619dd65b92a135501af35b3c4e3b4e762be1d7d",
+      "file": "a11oy-mini-r2-Q4_K_M.gguf",
+      "path": "C:\\Users\\steph\\szl-forge\\chaski_r2\\a11oy_mini_r2_gguf\\a11oy-mini-r2-Q4_K_M.gguf",
+      "bytes": 541903328,
+      "sha256": "6d42341c932a76e91b2c04a859a4248e7d2c77308f998a32771f43802f097b62",
+      "hub_lfs_sha256": "6d42341c932a76e91b2c04a859a4248e7d2c77308f998a32771f43802f097b62",
+      "matches_hub_lfs": true
+    },
+    {
+      "repo": "SZLHOLDINGS/A11OY-MINI",
+      "revision": "0619dd65b92a135501af35b3c4e3b4e762be1d7d",
+      "file": "a11oy-mini-r2-BF16-mmproj.gguf",
+      "path": "C:\\Users\\steph\\szl-forge\\chaski_r2\\a11oy_mini_r2_gguf\\a11oy-mini-r2-BF16-mmproj.gguf",
+      "bytes": 207346048,
+      "sha256": "4855efe034435b9b3b289b2c07d09b263c088749d1f85c43c1cf4672bc7fcbf2",
+      "hub_lfs_sha256": "4855efe034435b9b3b289b2c07d09b263c088749d1f85c43c1cf4672bc7fcbf2",
+      "matches_hub_lfs": true
+    },
+    {
+      "repo": "SZLHOLDINGS/A11OY-MINI",
+      "revision": "0619dd65b92a135501af35b3c4e3b4e762be1d7d",
+      "file": "Modelfile.a11oy-r2.gguf",
+      "path": "C:\\Users\\steph\\szl-forge\\chaski_r2\\a11oy_mini_r2_gguf\\Modelfile.a11oy-r2.gguf",
+      "bytes": 142,
+      "sha256": "aa7ab103e74d9a85b58b662c20acf7407e8554723af11f4c1cdee9f85691e43f",
+      "hub_lfs_sha256": null,
+      "matches_hub_lfs": null
+    }
+  ]
+}

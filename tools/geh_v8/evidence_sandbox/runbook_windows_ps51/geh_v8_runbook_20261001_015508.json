@@ -1,0 +1,21 @@
+﻿{
+    "kind":  "szl-geh-v8-runbook-receipt",
+    "generated":  "2026-10-01T01:55:47.6962217+00:00",
+    "root":  "D:\\a\\szl-forge\\szl-forge\\owner_sim",
+    "python":  "D:\\a\\szl-forge\\szl-forge\\owner_sim\\.venv-ra-v2\\Scripts\\python.exe",
+    "lean_toolchain":  "leanprover/lean4:v4.18.0",
+    "harness_sha256":  "720fe991bac760766b70df1796024bd1a1f17c8a632f07ee9e085c5bec67fab8",
+    "verifier_sha256":  "b3e544813b23829a5f2eea90bb3ee614fcd177ce84f126b47424cbf19824b0a8",
+    "geh_chain_head":  "dc03832defebe21f9239c95df49499eed2f2ec5ec62db2d0fe5f9f9e3727defe",
+    "geh_evidence_dir":  "D:\\a\\szl-forge\\szl-forge\\owner_sim\\chaski_r4\\evidence\\geh",
+    "chaski_reconciliation":  {
+                                  "runner_pristine":  true,
+                                  "r4_on_disk_is":  "NOT FOUND",
+                                  "r4_weights_match_training_receipt":  false,
+                                  "runner_sha256":  "f4ca282a29e2fa2f0246ebcb6e3298b7b3f023d686ba883d948459bcaf56dadb",
+                                  "r4_adapter":  "MISSING D:\\a\\szl-forge\\szl-forge\\owner_sim\\chaski_r4\\chaski-r4-adapter\\adapter_model.safetensors",
+                                  "r2_adapter":  "MISSING D:\\a\\szl-forge\\szl-forge\\owner_sim\\chaski_r2\\chaski-r2-adapter\\adapter_model.safetensors"
+                              },
+    "canonical_rerun_receipt":  null,
+    "safety":  "No training, adapter modification, merge, upload, publication, deployment, Git commit, Git push, or promotion occurred."
+}

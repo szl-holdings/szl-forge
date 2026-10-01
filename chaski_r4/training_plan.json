@@ -1,0 +1,46 @@
+{
+  "kind": "chaski-r4-training-plan",
+  "schema": "szl.chaski-r4-plan/v1",
+  "artifact": "SZLHOLDINGS/chaski-r4",
+  "canonical_gate_artifact": "SZLHOLDINGS/chaski",
+  "base_model": "Qwen/Qwen3.5-0.8B",
+  "base_model_license": "Apache-2.0",
+  "base_model_relation": "adapter",
+  "dataset_file": "chaski_r4/train.jsonl",
+  "dataset_sha256": "8965f3910100d818810b4bf95832c5f1f49c95900f4bd943c5fcafa9fe645a40",
+  "training_rows": 40,
+  "draft_rows": 24,
+  "refusal_rows": 16,
+  "held_out_in_gradients": false,
+  "held_out_files": [
+    "chaski/gate/json_drafts.n5.jsonl",
+    "chaski/gate/adversarial_refusals.n6.jsonl"
+  ],
+  "hyperparameters": {
+    "load_in_4bit": false,
+    "load_in_16bit": true,
+    "quant": "bf16-lora",
+    "lora_r": 16,
+    "lora_alpha": 32,
+    "seed": 11,
+    "num_train_epochs": 3,
+    "warmup_steps": 6,
+    "learning_rate": 0.0002,
+    "per_device_train_batch_size": 1,
+    "gradient_accumulation_steps": 4,
+    "response_only_loss": true,
+    "optim": "adamw_8bit",
+    "push_to_hub": false
+  },
+  "success_criterion": "A repaired canonical four-way bakeoff must reproduce r2 as a positive control and show r4 strict JSON-draft improvement versus base/5050 without refusal regression. Training loss is diagnostic only.",
+  "validation": {
+    "row_count": "PASS",
+    "draft_schema_exact_keys": "PASS",
+    "draft_fixed_values": "PASS",
+    "refusal_prefix": "PASS",
+    "refusal_not_json": "PASS",
+    "unique_ids": "PASS",
+    "exact_heldout_text_overlap": "PASS",
+    "semantic_gate_paraphrase_review": "REQUIRES_HUMAN_REVIEW"
+  }
+}

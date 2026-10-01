@@ -1,0 +1,47 @@
+{
+  "dataset": "SZL-Khipu-1.5B-BrainNavigator curriculum",
+  "doctrine": "SYNTHETIC/schema-generated training DATA — NOT a trained adapter, NOT an eval; nothing here changes trainingStatus/evalStatus or upgrades Λ. Every row is a retrieval PLAN safeParse'd against KhipuNavPlanSchema at generation. All candidate handles are self-evidently synthetic (node://khipu-synthetic/<hash>) with allow-listed TOPIC-tag metadata ONLY — never real Brain node text. This dataset measures routing-POLICY conformance over SYNTHETIC scenarios (route to the supporting handle, abstain when none supports), NEVER real-Brain navigation skill. Generation is deterministic, so these sha256s reproduce exactly on re-run.",
+  "contract": {
+    "capabilityProfile": "SZL-Khipu-1.5B-BrainNavigator",
+    "provenanceValues": [
+      "SYNTHETIC",
+      "MODEL_PROPOSED"
+    ],
+    "schemaFingerprintSha256": "f05e38b406b5e893e8a7dd23029a0c252b5e53994e8ac777a810b227dc2d7e64",
+    "outputSchemaFile": "khipu.schema.json",
+    "outputSchemaSha256": "b95f9927366dae7c5d36cfb7de6e229eb605524318ab642a6aa2292a212170d0"
+  },
+  "files": {
+    "train.jsonl": {
+      "kind": "navigate",
+      "rows": 15,
+      "sha256": "f0f8a9b232e8662f65eda1a58e3875ee9c1f859851ef3c2bfb28dd727cc27a75"
+    },
+    "eval.jsonl": {
+      "kind": "navigate",
+      "rows": 5,
+      "sha256": "61ede1488e3c6e3cded81679affe258e8d03c47019424182330a94b8c505794e"
+    },
+    "train.abstain.jsonl": {
+      "kind": "abstain",
+      "rows": 8,
+      "sha256": "421a6e733fda656c18b250ad5a5140f010392598750c48d672972f45a1e6c4a6"
+    },
+    "adversarial.jsonl": {
+      "kind": "abstain",
+      "rows": 6,
+      "sha256": "812a23b3ed15c1df8c5e18b2365b6e7c474968f42f329a5f30b7c57c445659fd"
+    },
+    "khipu.schema.json": {
+      "kind": "schema",
+      "rows": 0,
+      "sha256": "b95f9927366dae7c5d36cfb7de6e229eb605524318ab642a6aa2292a212170d0"
+    }
+  },
+  "totals": {
+    "navigateRows": 20,
+    "abstainRows": 14,
+    "trainRows": 23,
+    "evalRows": 11
+  }
+}

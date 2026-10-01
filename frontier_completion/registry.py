@@ -19,6 +19,12 @@ CANDIDATES = [
     Candidate("amx-architecture", "gdiamos/amx-reasoning-v1-instruct", "model", "cpu-architecture", "WATCH"),
     Candidate("ultradata-agent", "openbmb/UltraData-SFT-Agent-2609", "dataset", "rights-reviewed-post-training"),
     Candidate("ultradata-rl", "openbmb/UltraData-RL-2609", "dataset", "rights-reviewed-post-training"),
+    # Upstream metadata recapture only; first observation is not a release alert.
+    Candidate("nex-n25-mini", "nex-agi/Nex-N2.5-mini", "model", "proposal-only-agent-evaluation"),
+    Candidate("nex-n25-pro", "nex-agi/Nex-N2.5-Pro", "model", "large-agent-reference", "WATCH"),
+    Candidate("nex-n25-max", "nex-agi/Nex-N2.5-Max", "model", "large-reasoning-reference", "WATCH"),
+    Candidate("oui-1", "thesysdev/OUI-1", "model", "validated-declarative-ui"),
+    Candidate("agnes-30-flash", "Agnes-AI/Agnes-3.0-Flash", "model", "hybrid-state-isolation", "WATCH"),
 ]
 
 RELEASES = [

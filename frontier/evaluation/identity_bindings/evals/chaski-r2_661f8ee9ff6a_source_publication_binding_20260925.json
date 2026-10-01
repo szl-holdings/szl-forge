@@ -1,0 +1,119 @@
+{
+  "schema": "szl.evaluation-source-publication-binding/v1",
+  "repository": "SZLHOLDINGS/chaski-r2",
+  "pinned_revision": "661f8ee9ff6ab8b11dda6e7a9d42c14d3124c6dd",
+  "source_repository": "szl-holdings/szl-forge",
+  "source_revision": "682a67ee0ead7f7f18b13890ac7f6b34bb1200ea",
+  "original_evaluation_binding": {
+    "path": "frontier/evaluation/identity_bindings/evals/chaski-r2_661f8ee9ff6a_evaluation_binding_20260924-181521.json",
+    "bytes": 1292,
+    "sha256": "cef02a3ab325598df52e8b44e6562df42a32f7da7e643acd4cab1eb9c56c9ad0",
+    "url": "https://github.com/szl-holdings/szl-forge/blob/682a67ee0ead7f7f18b13890ac7f6b34bb1200ea/frontier/evaluation/identity_bindings/evals/chaski-r2_661f8ee9ff6a_evaluation_binding_20260924-181521.json"
+  },
+  "source_publication_identities": [
+    {
+      "path": "frontier/evaluation/identity_bindings/chaski-r2_661f8ee9ff6a.json",
+      "bytes": 1854,
+      "sha256": "6615ae95501b177855d1526753285cbe200bf039f2dbcd8b33f514c5b9505072",
+      "url": "https://github.com/szl-holdings/szl-forge/blob/682a67ee0ead7f7f18b13890ac7f6b34bb1200ea/frontier/evaluation/identity_bindings/chaski-r2_661f8ee9ff6a.json",
+      "original_sidecar_field": "identity_manifest_sha256",
+      "original_declared_sha256": "79f58f44aef753e071373dad5703f4a1fd87720180246a55e5468da085e741c7",
+      "original_declared_hash_matches": "LF_TO_CRLF_RECONSTRUCTION",
+      "canonical_git_blob_line_endings": "LF",
+      "reconstruction_sha256": "79f58f44aef753e071373dad5703f4a1fd87720180246a55e5468da085e741c7",
+      "reconstruction_bytes": 1904,
+      "interpretation": "The old sidecar recorded Windows working-tree CRLF bytes. This additive record binds the already-published LF Git blob; it does not edit or replace either original."
+    },
+    {
+      "path": "frontier/evaluation/identity_bindings/evals/chaski-r2_661f8ee9ff6a_bakeoff_20260924-181521.receipt.json",
+      "bytes": 14225,
+      "sha256": "5e1cbc555ce61ecb6e32004bbbf462777bfef0367978ccf98dfc1e309c45a0ac",
+      "url": "https://github.com/szl-holdings/szl-forge/blob/682a67ee0ead7f7f18b13890ac7f6b34bb1200ea/frontier/evaluation/identity_bindings/evals/chaski-r2_661f8ee9ff6a_bakeoff_20260924-181521.receipt.json",
+      "original_sidecar_field": "evaluation_receipt_sha256",
+      "original_declared_sha256": "3f268eacb9b84fbfe96a53b3fad4a89b12a8b8a22dac05f0de64b8ed2cbf46cb",
+      "original_declared_hash_matches": "LF_TO_CRLF_RECONSTRUCTION",
+      "canonical_git_blob_line_endings": "LF",
+      "reconstruction_sha256": "3f268eacb9b84fbfe96a53b3fad4a89b12a8b8a22dac05f0de64b8ed2cbf46cb",
+      "reconstruction_bytes": 14563,
+      "interpretation": "The old sidecar recorded Windows working-tree CRLF bytes. This additive record binds the already-published LF Git blob; it does not edit or replace either original."
+    }
+  ],
+  "evaluated_files": [
+    {
+      "path": "adapter_config.json",
+      "sha256": "d36472a3100231dfdf0c4aa16d3a80cb8ab53c86af33a15172b06f9d9a313193"
+    },
+    {
+      "path": "adapter_model.safetensors",
+      "sha256": "6f12981ea5df5e22d3493eefb20d75db75c1c88961ba6621a35af09edd0cdde6"
+    }
+  ],
+  "observed_adapter_directory_digest": {
+    "algorithm": "SHA-256 of sorted safetensor filenames encoded UTF-8, NUL delimiter, then file bytes",
+    "sha256": "078ec09fb3e8e215d1b6a98bb7164a94c7bb332d847c8e1d66f565e767171107",
+    "files": [
+      "adapter_model.safetensors"
+    ],
+    "recomputed_from_existing_pinned_Hub_cache": true,
+    "reviewed_at": "2026-09-25T12:29:10.036766+00:00"
+  },
+  "fixture_identities": [
+    {
+      "path": "chaski/gate/json_drafts.n5.jsonl",
+      "bytes": 3812,
+      "sha256": "dd093403e4aeeb906c169d8b6d8229115b1d170a0226afa939c1beaa6fa5e9be",
+      "url": "https://github.com/szl-holdings/szl-forge/blob/682a67ee0ead7f7f18b13890ac7f6b34bb1200ea/chaski/gate/json_drafts.n5.jsonl"
+    },
+    {
+      "path": "chaski/gate/adversarial_refusals.n6.jsonl",
+      "bytes": 3094,
+      "sha256": "1e58dda9cf07e22406f0f953fddc2c26397fb5e784c27516578d133035cb006d",
+      "url": "https://github.com/szl-holdings/szl-forge/blob/682a67ee0ead7f7f18b13890ac7f6b34bb1200ea/chaski/gate/adversarial_refusals.n6.jsonl"
+    },
+    {
+      "path": "chaski/gate/json_draft.schema.json",
+      "bytes": 797,
+      "sha256": "eacb37bf0a29ca3f79903f32c23c76bce01c83c1cfe554630b36e26bb10b622a",
+      "url": "https://github.com/szl-holdings/szl-forge/blob/682a67ee0ead7f7f18b13890ac7f6b34bb1200ea/chaski/gate/json_draft.schema.json"
+    }
+  ],
+  "evaluator_source_reviewed": {
+    "path": "chaski/bakeoff_named_n.py",
+    "bytes": 29766,
+    "sha256": "d17350023c21e8bdf52f5d7c3caac806292f689279ff0f77f9f239632ad7752e",
+    "url": "https://github.com/szl-holdings/szl-forge/blob/682a67ee0ead7f7f18b13890ac7f6b34bb1200ea/chaski/bakeoff_named_n.py",
+    "relationship": "Source reviewed for digest/scoring semantics. The original run receipt does not embed an evaluator source SHA; this record does not retroactively claim it does."
+  },
+  "base_runtime_declared_by_original_receipt": "huggingface:Qwen/Qwen3.5-0.8B@2fc06364715b967f1860aea9cf38778875588b17",
+  "base_model_byte_rehash_by_this_review": false,
+  "observed_result": {
+    "candidate": "chaski-r2 adapter on declared Qwen base",
+    "json_draft_contract": {
+      "passed": 5,
+      "total": 5
+    },
+    "adversarial_refusal": {
+      "passed": 6,
+      "total": 6
+    },
+    "scoring_scope": "Small reused named fixture contract and refusal-prefix scoring; no semantic truth or general safety guarantee",
+    "original_run_computed_at": "2026-09-24T22:16:09.249564+00:00",
+    "new_inference_performed_for_this_binding": false
+  },
+  "historical_gate_failure_preserved": {
+    "path": "frontier/evaluation/gate_runs/chaski-r2_4ef29684c56d_20260915T093042Z_receipt.json",
+    "bytes": 2228,
+    "sha256": "76c348b73c762de78422558af93538e37a22eae28ca34c2b80650f8d22bd57c4",
+    "url": "https://github.com/szl-holdings/szl-forge/blob/682a67ee0ead7f7f18b13890ac7f6b34bb1200ea/frontier/evaluation/gate_runs/chaski-r2_4ef29684c56d_20260915T093042Z_receipt.json",
+    "relationship": "Separate earlier gate suite/revision. New adapter-scoped scores do not erase its failure or retroactively bind older successful reports."
+  },
+  "merged_model_evaluation_binding": "NOT_ESTABLISHED_BY_THIS_ADAPTER_RUN",
+  "original_claim_boundary_boilerplate": "The original receipt says keep gate_ran=false inside claim_boundary while top-level gate_ran is true. This is retained stale boilerplate; the original run contains generated cases and is explicitly a measured run.",
+  "publication_eligible": false,
+  "autonomy_eligible": false,
+  "production_disposition": "HOLD",
+  "promotion_effect": "NONE",
+  "model_output_authority": "PROPOSAL_ONLY",
+  "signature_status": "UNSIGNED_HONEST",
+  "boundary": "Corrects published source-byte linkage only. It is not a fresh inference run, model qualification, deployment, authorization, or independent external validation. Full merged weights and historical reports are outside this adapter-specific binding."
+}

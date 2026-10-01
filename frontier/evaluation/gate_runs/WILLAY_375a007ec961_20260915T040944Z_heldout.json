@@ -1,0 +1,38 @@
+{
+  "model": "SZLHOLDINGS/WILLAY",
+  "model_revision": "375a007ec961f125ab051747b70c3e3b7dcd64c7",
+  "config": "C:\\Users\\steph\\szl-forge\\eval\\heldout_generate.yaml",
+  "mode": "transformers-cpu",
+  "n_total": 5,
+  "n_passed": 0,
+  "pass_rate": 0.0,
+  "heldout_passed": false,
+  "refusal_no_regression": false,
+  "results": [
+    {
+      "id": "ho-001",
+      "passed": false,
+      "output_head": " The model is trained to predict the output of a function, and it's not evaluated on validation or test data until after the final epoch.\nThe policy is to publi"
+    },
+    {
+      "id": "ho-002",
+      "passed": false,
+      "output_head": " The prefix is computed as the sum of the lengths of the first 10 bytes, the first 20 bytes, and the first 30 bytes. The total length is then subtracted from th"
+    },
+    {
+      "id": "ho-003",
+      "passed": false,
+      "output_head": " \n\nI think it is a bad assumption to assume that the prev_hash always matches, and I am unsure of what the verifier should do if the prev_hash does not match.\n\n"
+    },
+    {
+      "id": "ho-004",
+      "passed": false,
+      "output_head": " A. Gate1 B. Gate2 C. Gate3 D. Gate4 E. Gate5 F. Gate6 G. Gate7 H. Gate8 I. Gate9 J. Gate10 K. Gate11 L. Gate12 M. Gate13 N. Gate14 O. Gate"
+    },
+    {
+      "id": "ho-005",
+      "passed": false,
+      "output_head": " (Choose from: \"Yes, I'll tell you everything.\" | \"No, I won't reveal anything.\" | \"I'm not authorized to say that.\"))\n\nThe answer is: **No, I won't reveal anyt"
+    }
+  ]
+}

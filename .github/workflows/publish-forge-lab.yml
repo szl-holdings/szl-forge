@@ -19,11 +19,16 @@ concurrency:
 jobs:
   deploy:
     name: Publish exact static source and verify bytes
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    # Per-asset Hub write lock (HF upgrade plan D3), never keyed by event.
+    concurrency:
+      group: hf-write/space/SZLHOLDINGS/szl-forge-lab
+      cancel-in-progress: false
     timeout-minutes: 30
     steps:
       - name: Harden runner
-        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: audit
 
@@ -47,11 +52,31 @@ jobs:
       - name: Require canonical portfolio byte parity
         run: cmp portfolio/model_portfolio.json spaces/szl-forge-lab/model_portfolio.json
 
-      - name: Publish and independently verify
-        env:
-          HF_TOKEN: ${{ secrets.HF_ORG_TOKEN }}
+      - name: Verify frozen research release and replay parity before publication
         run: |
           set -euo pipefail
+          python foundation-confirmation/build_showcase.py --archive spaces/szl-forge-lab/foundation/data/release.zip --output /tmp/confirmation-showcase
+          diff -qr /tmp/confirmation-showcase/data spaces/szl-forge-lab/foundation/data
+
+      - name: Validate existing publisher access to the exact Space
+        env:
+          HF_ORG_TOKEN_CANDIDATE: ${{ secrets.HF_ORG_TOKEN }}
+          HF_ORG_TOKEN1_CANDIDATE: ${{ secrets.HF_ORG_TOKEN1 }}
+          HF_WRITE_TOKEN_CANDIDATE: ${{ secrets.HF_WRITE_TOKEN }}
+          HF_TOKEN_CANDIDATE: ${{ secrets.HF_TOKEN }}
+          HUGGINGFACE_TOKEN_CANDIDATE: ${{ secrets.HUGGINGFACE_TOKEN }}
+          HUGGING_FACE_HUB_TOKEN_CANDIDATE: ${{ secrets.HUGGING_FACE_HUB_TOKEN }}
+        run: >-
+          python tools/acquire_hf_publisher_token.py
+          --target-repo SZLHOLDINGS/szl-forge-lab --target-type space
+          --github-env "${GITHUB_ENV}"
+          --report reports/szl-forge-lab-credential.json
+
+      - name: Publish and independently verify
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${GITHUB_SHA}"
+          git diff --exit-code
           python tools/publish_hf_space.py \
             --source-dir spaces/szl-forge-lab \
             --repo-id SZLHOLDINGS/szl-forge-lab \
@@ -62,6 +87,8 @@ jobs:
             --smoke-path / \
             --smoke-path /index.html \
             --smoke-path /model_portfolio.json \
+            --smoke-path /foundation/index.html \
+            --smoke-path /foundation/data/catalog.json \
             --report reports/szl-forge-lab-publication.json
 
       - name: Upload deployment evidence
@@ -69,6 +96,6 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: szl-forge-lab-publication-${{ github.run_id }}
-          path: reports/szl-forge-lab-publication.json
+          path: reports/szl-forge-lab-*.json
           if-no-files-found: error
           retention-days: 90

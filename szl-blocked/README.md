@@ -8,99 +8,84 @@ tags:
 - annex-iv
 - governance
 - doi:10.5281/zenodo.19944926
-szl-governance:
-  verdict: HONEST-BLOCKED
-  doctrine: hard DENY dominates; advisory Λ can only tighten, never override; a BLOCKED op never executes — no fake-green
-  lambda: Conjecture 1 (open) — a recorded ALLOW is never proven trust
-  energy: MEASURED-only
-  honest_blocked: BLOCKED is a first-class governed state; fn is NEVER called on block
-  annex_iv: DRAFT skeleton auto-derived from provenance — NOT legal advice, NOT a conformity guarantee
+szl-review:
+  artifact_class: SOFTWARE_KERNEL
+  maturity: SOFTWARE_LIMITED
+  trained_weights_present: false
+  evaluation: HISTORICAL_RECORDS_NOT_RERUN
+  source_mirror_parity: NOT_VERIFIED_THIS_REVIEW
+  reviewed_at: "2026-09-30"
 ---
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/main/szl-blocked/card/holo-banner.svg" alt="szl-blocked — honest-BLOCKED as a hologram: a call path meeting a hard wall, receipt stub dropping below" width="100%"/>
-</p>
-
-<!-- SZL-KERNEL-OPERATIONAL:START -->
-## Operational (MEASURED laptop-Blackwell)
-
-> **STATUS:** tests **PASS**. `get_kernel` **import-LIVE**. Unsloth/LoRA is the wrong tool. Receipted kernels, not silent CUDA.
-
-| Thing | Label | Method / N / date / what-NOT |
-|---|---|---|
-| tests (`PYTHONPATH=torch-ext`) | **PASS** | MEASURED 2026-08-29T15:54:04Z host `betterwithage` Windows-10-10.0.26200-SP0. torch `2.10.0+cu128`. GPU `NVIDIA GeForce RTX 5050 Laptop GPU` arch `Blackwell`. pytest `3 passed in 1.57s`. Failed nodes: `none`. What-NOT: not a leaderboard. torch.compile fullgraph failures on Windows Blackwell (`cl is not found`) are MEASURED, not hidden. |
-| Kernel Hub `get_kernel` | **import-LIVE** | kernels `0.16.1`. Default: `get_kernel("SZLHOLDINGS/szl-blocked", revision="main", trust_remote_code=True)` → `True`. `backend="cpu"` → `True`. trust_remote_code=False → `ValueError` (SZLHOLDINGS is not a trusted publisher). repo_type=kernel required (kernels 0.16). What-NOT: not a weight load; do not pickle/joblib.load. |
-| formula-tax | **ADVISORY** | locked-8 `F1 F4 F7 F11 F12 F18 F19 F22`. registry_count=21. Λ geomean `1.0`. uniqueness **Conjecture 1** (never a theorem). |
-| I1–I8 | **catalog** | `I1 receipt-chain-continuity; I2 ledger-failure-shape; I3 served-run-has-model; I4 signed-columns-atomic; I5 loop-steps-positive; I6 receipt-ed25519-verify; I7 receipt-columns-consistent; I8 flywheel-lineage`. Executed by `SZLHOLDINGS/szl-invariants`. Statuses never coerced. Λ untouched. |
-| CUDA speedup / tokens/s / joules | **UNAVAILABLE** | Not claimed. Receipted kernels, not silent CUDA. |
-
-GitHub source: [`szl-holdings/szl-blocked`](https://github.com/szl-holdings/szl-blocked) @ `79f950a60debb7f1f0c6f5e2f3baa5e8b7ab6739`. Artifacts: [`BENCH.laptop-blackwell.json`](./BENCH.laptop-blackwell.json), [`OPERATIONAL.json`](./OPERATIONAL.json).
-
-```python
-from kernels import get_kernel
-k = get_kernel("SZLHOLDINGS/szl-blocked", revision="main", trust_remote_code=True)
-```
-
-<!-- SZL-KERNEL-OPERATIONAL:END -->
-
+<p align="center"><img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/main/szl-blocked/card/holo-banner.svg" alt="szl-blocked software provenance illustration" width="100%"/></p>
 
 # szl-blocked
 
-**The cut, in one line:** the deny is the deliverable.
+**Explicit policy outcomes, with blocked calls recorded**
 
-Honest-BLOCKED as a first-class governed state. **Not a model. No weights.**
+**Software kernel · limited maturity · Apache-2.0 declared · no trained weights in the reviewed tree**
 
-**IS:** a fail-closed Python governance kernel. On deny the guarded `fn` never runs (`BlockedResult.output is None`) and a BLOCK receipt is written. Public API: `governed_call`, `GovernedGate`, `deny_by_default` / `deny_if_flag` / `deny_if_action_in`, `UnifiedReceiptChain`. Sibling package `szl_euaiact` can emit an Annex IV-style **DRAFT skeleton**.
+A Python governance kernel that applies a supplied policy before calling a function and records the outcome in a receipt chain. The companion szl_euaiact package generates an Annex IV-style documentation draft.
 
-**IS NOT:** trained weights. Not FlashAttention. Not a drop-in blocker library. Not legal advice and **not** a declaration of conformity. No MEASURED latency or CUDA benches here. Hub `model.joblib` is **QUARANTINED** executable serialization — do not `joblib.load` it.
+## Artifact and source identity
 
-Canonical GitHub source: https://github.com/szl-holdings/szl-blocked  
-Hub package: https://huggingface.co/kernels/SZLHOLDINGS/szl-blocked  
-This model-type repo is the publish / card mirror. Apache-2.0.
+- Model-type card mirror: [reviewed tree](https://huggingface.co/SZLHOLDINGS/szl-blocked/tree/730a238648ac69aa2a69c11428e06354c48d09e2), revision `730a238648ac69aa2a69c11428e06354c48d09e2`
+- First-class kernel package: [reviewed tree](https://huggingface.co/kernels/SZLHOLDINGS/szl-blocked/tree/b8b15cde2d3d3d7c6ef30467d6cacc6d219a1349), revision `b8b15cde2d3d3d7c6ef30467d6cacc6d219a1349`
+- Declared canonical GitHub source: [observed source tree](https://github.com/szl-holdings/szl-blocked/tree/96d520d51ad867ec5e0f62b5063fbe85c17cef7e), revision `96d520d51ad867ec5e0f62b5063fbe85c17cef7e`
+- Source paths: `torch-ext/szl_blocked/` and `build/torch-universal/szl_blocked/` in the canonical repository
+- Inspection date: 2026-09-30 UTC
 
-```python
+These are distinct repository revisions. The source repository is reachable; this review does not establish byte-for-byte parity, a reproducible build, approved publication, or the identity of a deployed process. Use the release's source binding and publication receipt to establish that chain.
 
-
-<!-- SZL-ATELIER-CUT:v1:START -->
-## The cut
-
-People write Annex IV in Word. We keep a kernel that refuses to publish if the annex fields are empty.
-
-A blocked publish — the name is the feature.
-
-### Silhouette → leave → SZL
-
-| Leader | Take, then tweak |
-|---|---|
-| Anthropic | Policy docs. We want a gate. |
-| NVIDIA | Enterprise compliance packs. |
-| Unsloth | No. |
-
-Nobody else ships this combination. That is the point of a one-of-one.
+The reviewed mirror contains Python source, build metadata and historical evidence records. Its listed tree contains no `model.joblib`, `.safetensors`, `.gguf`, `.onnx`, `.pt`, `.pth` or `.bin` model artifact. Historical surrogate descriptions in [MODEL_PROVENANCE.json](https://huggingface.co/SZLHOLDINGS/szl-blocked/blob/730a238648ac69aa2a69c11428e06354c48d09e2/MODEL_PROVENANCE.json) and [TRAINING_RECEIPT.json](https://huggingface.co/SZLHOLDINGS/szl-blocked/blob/730a238648ac69aa2a69c11428e06354c48d09e2/TRAINING_RECEIPT.json) do not establish present downloadable weights. Surrogate replay is blocked by the missing artifact. Do not load executable pickle/joblib artifacts from this card mirror.
 
 ## Intended use
 
-Block publish when annex fields are missing.
+Research and development of local, explicitly configured software policy gates and documentation workflows. Inspect the policy and test the denial path before integration.
+
+## Public interface
+
+governed_call; GovernedGate; deny_by_default; deny_if_flag; deny_if_action_in; UnifiedReceiptChain
+
+## Usage after publication verification
+
+The example below is source-informed and was **not executed in this card review**. Install the client and dependencies qualified by the relevant release. Loading remote kernel Python is code execution. Review the exact package and use the immutable **kernel-package** revision from verified publication evidence. Do not substitute the model-mirror SHA or GitHub source SHA.
+
+```python
+import os
+import re
+from kernels import get_kernel
+
+revision = os.environ.get("SZL_VERIFIED_KERNEL_REVISION", "")
+if re.fullmatch(r"[0-9a-f]{40}", revision) is None:
+    raise ValueError("Set the kernel revision from verified publication evidence")
+
+kernel = get_kernel(
+    "SZLHOLDINGS/szl-blocked", revision=revision, trust_remote_code=True
+)
+chain = kernel.UnifiedReceiptChain()
+policy = kernel.deny_if_action_in({"write_protected"})
+result = kernel.governed_call(lambda: "example", policy, chain,
+    request={"action": "write_protected"})
+assert result.blocked is True and result.output is None
+```
+
+The revision-format check is input validation only. It does not verify signatures, provenance, dependencies or runtime compatibility. A self-check exercises its programmed assertions; it is not product qualification.
+
+## Evidence and evaluation limits
+
+[BENCH.laptop-blackwell.json](https://huggingface.co/SZLHOLDINGS/szl-blocked/blob/730a238648ac69aa2a69c11428e06354c48d09e2/BENCH.laptop-blackwell.json), [TRAINING_RECEIPT.json](https://huggingface.co/SZLHOLDINGS/szl-blocked/blob/730a238648ac69aa2a69c11428e06354c48d09e2/TRAINING_RECEIPT.json), and [PROMOTION_READINESS_AUDIT.json](https://huggingface.co/SZLHOLDINGS/szl-blocked/blob/730a238648ac69aa2a69c11428e06354c48d09e2/PROMOTION_READINESS_AUDIT.json) retain owner-produced historical records. Each result applies only to its stated artifact, inputs, environment and date. This review did not rerun those tests, import the kernel, verify signatures, download weights, or benchmark throughput, energy or end-to-end behavior. Historical surrogate fidelity must not be presented as current kernel quality or current model availability.
 
 ## Limitations
 
-- Not legal advice. A documentation gate.
+A recorded allow decision does not certify the requested action or the surrounding application. The Annex IV output is a draft skeleton requiring human completion and review; it does not establish legal compliance. This package is not identified as the A11oy production pre-action core. No throughput or CUDA acceleration claim is made.
 
-Canonical GitHub: [`szl-holdings/szl-blocked`](https://github.com/szl-holdings/szl-blocked/blob/main/README.md)
-<!-- SZL-ATELIER-CUT:v1:END -->
+Lambda uniqueness remains Conjecture 1, open and advisory. Receipt consistency, signatures and proof labels do not establish model accuracy, system safety, or certification. Preserve missing, failed, historical, and unverified states in downstream displays.
 
-from kernels import get_kernel
-blk = get_kernel("SZLHOLDINGS/szl-blocked", revision="main", trust_remote_code=True)
+## License
 
-chain = blk.UnifiedReceiptChain()
-policy = blk.deny_if_action_in({"exfiltrate", "delete_all"})
-def do_work(x): return x * 2
-ok = blk.governed_call(do_work, policy, chain, request={"action": "summarize"}, args=(21,))
-no = blk.governed_call(do_work, policy, chain, request={"action": "exfiltrate"}, args=(21,))
-assert ok.blocked is False and ok.output == 42
-assert no.blocked is True and no.output is None
-```
+The reviewed [LICENSE](https://huggingface.co/SZLHOLDINGS/szl-blocked/blob/730a238648ac69aa2a69c11428e06354c48d09e2/LICENSE) contains the Apache License 2.0 text, matching the card declaration. This observation does not independently establish rights to every artifact, training-data permission, or downstream-use clearance. Preserve upstream notices and check dependency licenses separately.
 
-Hard DENY dominates. Advisory Λ can only tighten, never loosen, and never manufactures trust. Annex IV output is a draft skeleton with explicit TODOs.
+## Citation and verification
 
-Λ = Conjecture 1 (advisory, never a theorem). Doctrine v11. Copyright 2026 SZL Holdings · Stephen P. Lutar · ORCID [0009-0001-0110-4173](https://orcid.org/0009-0001-0110-4173).
+Cite the exact artifact URL, revision, evidence file, date, and test scope relevant to the claim. Prefer immutable links above over branch links or a live status badge. Report an evidence gap as an evidence gap.

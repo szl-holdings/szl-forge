@@ -1,0 +1,90 @@
+{
+  "commands": [
+    {
+      "command": "python -m unittest discover -s tests -p 'test_peft_export_bytes.py' -v",
+      "exitCode": 0,
+      "passed": 20,
+      "skipped": 0
+    },
+    {
+      "command": "python -O -m unittest discover -s tests -p 'test_peft_export_bytes.py' -v",
+      "exitCode": 0,
+      "passed": 20,
+      "skipped": 0
+    },
+    {
+      "command": "python -m pytest -q tests/test_peft_export_bytes.py",
+      "exitCode": 0,
+      "passed": 20,
+      "skipped": 0
+    }
+  ],
+  "evidenceClass": "UNSIGNED_LOCAL_OBSERVATION_NOT_HOSTED_OR_MODEL_QUALIFICATION",
+  "hardening": "Validate complete non-overlapping payload layout before scanning any tensor value; malformed layouts must trigger zero value scans.",
+  "interoperability": {
+    "baseModelReload": "NOT_RUN",
+    "checks": [
+      {
+        "dtype": "F16",
+        "fixtureArtifactSha256": "ace4986b28441e6664032f4ac2e2bdeed669072be140f1d55bdae395bf6e03f0",
+        "fixtureDecodedByOfficialLoader": true,
+        "linearFixtureMaxAbsoluteError": 0.0,
+        "officialArtifactSha256": "ceae716d1cbda77bbccfb71ea43d58bd6720e9e96fac1c638927d0727f2b367d",
+        "officialSerializationInspected": true
+      },
+      {
+        "dtype": "BF16",
+        "fixtureArtifactSha256": "2a93d9e31b7413465274b2a9ccb6cdbf6ec6d0f0df9d3c0b45fc24544971e692",
+        "fixtureDecodedByOfficialLoader": true,
+        "linearFixtureMaxAbsoluteError": 0.0,
+        "officialArtifactSha256": "d881ee0c453e7b5a4d950501961c1b2208a222ec501e6091a29cb7e251840405",
+        "officialSerializationInspected": true
+      },
+      {
+        "dtype": "F32",
+        "fixtureArtifactSha256": "6e8fd31656988d0404d844ed18012536be2b8390af9b8efc3416be0db148f02f",
+        "fixtureDecodedByOfficialLoader": true,
+        "linearFixtureMaxAbsoluteError": 0.0,
+        "officialArtifactSha256": "a8bb0b4cdc9bc6e05561188773e076d9af8a0b1cd2b69995e45403b914c65c12",
+        "officialSerializationInspected": true
+      },
+      {
+        "dtype": "F64",
+        "fixtureArtifactSha256": "2ef9c101b05fb6518e2e9916480851303f251cbc8516b3145451fe7163932443",
+        "fixtureDecodedByOfficialLoader": true,
+        "linearFixtureMaxAbsoluteError": 0.0,
+        "officialArtifactSha256": "e9711e7a0fc50627713a4409c019696e687aaf53fd797a29fac86d68a712934a",
+        "officialSerializationInspected": true
+      }
+    ],
+    "dependencies": {
+      "numpy": "2.3.5",
+      "safetensors": "0.7.0",
+      "torch": "2.10.0+cpu"
+    },
+    "distributedGather": "NOT_RUN",
+    "evidenceClass": "LOCAL_OFFLINE_FIXTURE_INTEROPERABILITY_NOT_MODEL_QUALIFICATION",
+    "peftExecution": "NOT_RUN",
+    "productionAuthorized": false,
+    "productionDisposition": "HOLD"
+  },
+  "limitations": [
+    "Only these newly added targeted files were tested locally; full repository CI is separate.",
+    "The local interpreter is Python 3.13.5; hosted Python 3.11/3.12 gates remain separate.",
+    "PEFT package, distributed gathering, base-model reload, provider readback and model quality not executed."
+  ],
+  "observedAt": "2026-09-12T20:52:52.326525+00:00",
+  "platform": "Linux",
+  "productionAuthorized": false,
+  "productionDisposition": "HOLD",
+  "providerWrites": 0,
+  "pythonVersion": "3.13.5",
+  "schema": "szl.forge.local-evaluation-observation.v1",
+  "sourceFiles": {
+    "tests/test_peft_export_bytes.py": "97f7f4b7c4bddbe41a218c7e54a5fb0213d1ce093f792e6ac3fe373235511045",
+    "tools/evaluate_peft_export.py": "10f1e0d0e37ca53b52369d118d7bc41ca9b0b13f3b5061f306644431ac186c33",
+    "tools/evaluate_peft_export_interop.py": "be2336d43c3c58c9b3b07cb5b44d679e885653110ffd457750fc64547e5e5ae8"
+  },
+  "supersedesForCurrentSource": "local-observation.json at Forge 2b704f5751c75c18f2a9cafe2f4d79e332d9c1a2; preserved as dated predecessor evidence",
+  "upstreamRevision": "78bce7cb48f800a7ad0d352b68a46302e13e1687"
+}

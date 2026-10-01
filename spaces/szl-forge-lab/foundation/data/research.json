@@ -1,0 +1,146 @@
+{
+  "schema_version": 1,
+  "retrieved_at": "2026-09-24",
+  "scope": "Six primary research papers and two official repository inspections relevant to observation confirmation. This is a selective research map, not an institutional ranking or an exhaustive frontier survey.",
+  "access": "Public web pages, papers and unauthenticated GitHub metadata only. No upstream code executed, no model weights downloaded, no private systems accessed.",
+  "papers": [
+    {
+      "id": "qwen_prm_2025",
+      "title": "The Lessons of Developing Process Reward Models in Mathematical Reasoning",
+      "group": "Qwen Team, Alibaba Group",
+      "region": "China",
+      "published": "2025-01-13",
+      "version": "arXiv:2501.07301v1",
+      "url": "https://arxiv.org/html/2501.07301v1",
+      "evidence_sections": ["3.1", "3.2", "4", "Limitation"],
+      "finding": "A score for reaching the correct final answer is not equivalent to correctness of the current reasoning step. The paper studies consensus filtering and evaluates both answer selection and error localization.",
+      "transfer_inference": "Measure whether a confirmation corrected a specific observation separately from final accuracy and cost. A good final answer must not erase an earlier failed verification.",
+      "limitation": "Mathematical reasoning experiments with learned judges; neither universal verification nor independent evidence from the physical world. The paper reports a remaining gap to its sampling upper bound. We have not reproduced its benchmark results.",
+      "adoption": "Conceptual evaluation design only; no weights or repository code imported."
+    },
+    {
+      "id": "deepseek_math_v2_2025",
+      "title": "DeepSeekMath-V2: Towards Self-Verifiable Mathematical Reasoning",
+      "group": "DeepSeek-AI",
+      "region": "China",
+      "published": "2025-11-27",
+      "version": "arXiv:2511.22570v1",
+      "url": "https://arxiv.org/html/2511.22570v1",
+      "evidence_sections": ["2.1.2", "2.2.2", "2.3"],
+      "finding": "The verifier can predict the correct score while inventing a fault. A meta-verifier assesses whether the reported fault exists and justifies that score; generator self-assessment is trained rather than presumed reliable.",
+      "transfer_inference": "Preserve a challenge and its supporting observation as separate records; test a second channel that can disagree with the first. Reviewer agreement must not be equated with independent ground truth.",
+      "limitation": "The reported results concern theorem proving with substantial model and verification compute. A learned meta-verifier is not a formal proof checker or a guarantee against correlated error. Benchmark claims remain author-reported here.",
+      "adoption": "Independent implementation of a synthetic confirmation experiment; no DeepSeek weights or code imported."
+    },
+    {
+      "id": "ucu_ot_2026",
+      "title": "Layer-Resolved Optimal Transport for Hallucination Detection in NMT and Abstractive Summarization",
+      "group": "Faculty of Applied Sciences, Ukrainian Catholic University, Lviv",
+      "region": "Ukraine",
+      "authors": ["Mariia Onyshchuk", "Maksym-Vasyl Tarnavskyi", "Marta Sumyk"],
+      "published": "2026-06-11",
+      "version": "arXiv:2606.13216v1",
+      "url": "https://arxiv.org/html/2606.13216v1",
+      "paper_license_observed": "CC BY 4.0",
+      "evidence_sections": ["3", "4.3", "5.1", "6.1"],
+      "finding": "Attention geometry detects some source-disengagement failures, but transfers poorly to summaries that attend to relevant text while misrepresenting it. Results vary by failure type and decoder layer.",
+      "transfer_inference": "Separate bad measurements from bad interpretations. Add stress conditions in which observations look internally consistent but support a wrong explanation; do not treat a single uncertainty signal as a general truth detector.",
+      "limitation": "A 2026 preprint stating workshop acceptance, with bounded translation and summarization experiments. This review does not reproduce them or infer an institution-wide ranking.",
+      "adoption": "Failure taxonomy only; no attention detector, datasets or model weights imported."
+    },
+    {
+      "id": "wnu_entity_2024",
+      "title": "Entity Embellishment Mitigation in LLMs Output with Noisy Synthetic Dataset for Alignment",
+      "group": "West Ukrainian National University; author also affiliated with Arval Leasing Solutions BNP Paribas",
+      "region": "Ukraine / France collaboration",
+      "authors": ["Svitlana Galeshchuk"],
+      "published": "2024-05-25",
+      "version": "UNLP 2024, pages 129-134",
+      "url": "https://aclanthology.org/2024.unlp-1.15/",
+      "full_text_url": "https://aclanthology.org/2024.unlp-1.15.pdf",
+      "paper_license_observed": "CC BY-NC 4.0",
+      "evidence_sections": ["1", "4", "5"],
+      "finding": "Creates deliberately embellished summaries for preference alignment, retaining a reference summary. The paper distinguishes plausible added information from information actually supported by the source.",
+      "transfer_inference": "Generate controlled corruption with known provenance and preserve the uncorrupted counterpart. Plausibility and factual truth do not establish that a particular observation supports an inference.",
+      "limitation": "Ukrainian summarization experiment; human validation uses only 50 articles. The author explicitly notes small-sample limits and bias in automatic LLM evaluation. No claim of general robustness is supported.",
+      "adoption": "Controlled synthetic negative examples as a design idea; no paper text, datasets, models or code copied into training."
+    },
+    {
+      "id": "oxford_semantic_uncertainty_2023",
+      "title": "Semantic Uncertainty: Linguistic Invariances for Uncertainty Estimation in Natural Language Generation",
+      "group": "Oxford Applied and Theoretical Machine Learning, University of Oxford",
+      "region": "United Kingdom",
+      "authors": ["Lorenz Kuhn", "Yarin Gal", "Sebastian Farquhar"],
+      "published": "2023-02-19",
+      "version": "arXiv:2302.09664v3, 2023-04-15; ICLR 2023",
+      "url": "https://arxiv.org/abs/2302.09664",
+      "full_text_url": "https://arxiv.org/pdf/2302.09664v3",
+      "evidence_sections": ["3", "4", "6"],
+      "finding": "Clusters sampled answers by contextual semantic equivalence before estimating entropy. This distinguishes uncertainty about meaning from variation in wording.",
+      "transfer_inference": "Count distinct underlying evidence and semantic claims, not repeated strings or paraphrases. In our discrete task, repeated answers from the same channel should retain their shared provenance.",
+      "limitation": "Uncertainty estimation, not ground-truth verification. Equivalence judgments and sampling can fail; a consistently wrong source can have low semantic entropy. That last failure is a direct design inference, not a reproduced benchmark result.",
+      "adoption": "Evaluation and provenance principle only; no semantic-clustering model integrated."
+    },
+    {
+      "id": "oxford_dad_2021",
+      "title": "Deep Adaptive Design: Amortizing Sequential Bayesian Experimental Design",
+      "group": "Department of Statistics, University of Oxford",
+      "region": "United Kingdom",
+      "authors": ["Adam Foster", "Desi R. Ivanova", "Ilyas Malik", "Tom Rainforth"],
+      "published": "2021-07",
+      "version": "ICML 2021, PMLR 139, pages 3384-3395",
+      "url": "https://proceedings.mlr.press/v139/foster21a.html",
+      "full_text_url": "https://proceedings.mlr.press/v139/foster21a/foster21a.pdf",
+      "evidence_sections": ["1", "3", "4"],
+      "finding": "Trains a design policy before deployment to choose subsequent experiments from accumulated observations, amortizing sequential Bayesian design computation.",
+      "transfer_inference": "Model confirmation as a paid action and assess its expected value before buying it. Compare a learned selector to an explicit decision rule using identical budgets and observation channels.",
+      "limitation": "Its information-gain objective and model assumptions differ from our accuracy-minus-cost task. Our work is not a reproduction of DAD and adaptive experimental design is established prior art.",
+      "adoption": "Prior-art boundary and sequential-design framing; no upstream code imported."
+    }
+  ],
+  "repositories": [
+    {
+      "repo": "deepseek-ai/DeepSeek-Math-V2",
+      "url": "https://github.com/deepseek-ai/DeepSeek-Math-V2",
+      "revision": "665c840782baf7faae8a8b244ea313f3cfcc346f",
+      "committed_at": "2025-12-01T07:01:35Z",
+      "pinned_url": "https://github.com/deepseek-ai/DeepSeek-Math-V2/tree/665c840782baf7faae8a8b244ea313f3cfcc346f",
+      "license_spdx_observed": "Apache-2.0",
+      "license_url": "https://github.com/deepseek-ai/DeepSeek-Math-V2/blob/665c840782baf7faae8a8b244ea313f3cfcc346f/LICENSE",
+      "read_scope": "README, root tree and LICENSE; paper method sections read separately.",
+      "admission": "Study only. Repository license observation does not admit all dependencies, datasets or future model artifacts automatically."
+    },
+    {
+      "repo": "QwenLM/Qwen2.5-Math",
+      "url": "https://github.com/QwenLM/Qwen2.5-Math",
+      "revision": "a45202bd16f1ec06f433442dc1152d0074773465",
+      "committed_at": "2025-01-11T17:30:43Z",
+      "pinned_url": "https://github.com/QwenLM/Qwen2.5-Math/tree/a45202bd16f1ec06f433442dc1152d0074773465",
+      "license_spdx_observed": null,
+      "license_observation": "GitHub repository metadata returned null license; root tree at this revision has README.md and evaluation, with no root license file. This does not determine licenses of separately hosted models.",
+      "read_scope": "README and root tree; PRM paper method sections read separately.",
+      "admission": "Study only. No repository code copying authorized by this inspection."
+    }
+  ],
+  "recommendations": [
+    {
+      "id": "paid_confirmation",
+      "status": "research recommendation; implementation status belongs in build receipts",
+      "idea": "Offer a second observation whose independence or correlation is explicitly modeled; charge its real cost and allow the policy to stop.",
+      "test": "Compare no-confirmation, always-confirm, random and adaptive confirmation on paired episodes, including clean, independently corrupted and correlated-error conditions."
+    },
+    {
+      "id": "evidence_then_inference",
+      "status": "research recommendation; implementation status belongs in build receipts",
+      "idea": "Retain observation provenance, challenged claim and resulting prediction separately.",
+      "test": "Report final accuracy, utility, confident error, false alarms and actual corrupt-observation correction. Include a condition where all available channels agree on the same wrong answer."
+    }
+  ],
+  "claims_not_supported": [
+    "That SZL established AGI or an unprecedented architecture.",
+    "That these are the highest-ranked institutions in their countries.",
+    "That any cited paper's benchmark was independently reproduced here.",
+    "That self-consistency or multiple model votes establishes independent evidence.",
+    "That the synthetic confirmation experiment establishes real-world LLM factuality."
+  ]
+}

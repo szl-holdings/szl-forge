@@ -1,0 +1,124 @@
+name: Public estate file census
+
+on:
+  pull_request:
+    paths:
+      - tools/observe_public_estate_files.py
+      - tools/hf_census_keyless_credentials.py
+      - tests/test_public_estate_files.py
+      - tests/test_public_estate_rate_control.py
+      - tests/test_hf_census_keyless_credentials.py
+      - docs/PUBLIC_ESTATE_FILE_CENSUS.md
+      - .github/workflows/public-estate-file-census.yml
+  push:
+    branches: [main]
+    paths:
+      - tools/observe_public_estate_files.py
+      - tools/hf_census_keyless_credentials.py
+      - tests/test_public_estate_files.py
+      - tests/test_public_estate_rate_control.py
+      - tests/test_hf_census_keyless_credentials.py
+      - docs/PUBLIC_ESTATE_FILE_CENSUS.md
+      - .github/workflows/public-estate-file-census.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-estate-file-census-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.11', '3.12']
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Run actual stdlib contracts normally and optimized
+        run: |
+          python -m unittest -v tests.test_public_estate_files tests.test_public_estate_rate_control
+          python -m unittest -v tests.test_hf_census_keyless_credentials
+          python -O -m unittest -v tests.test_public_estate_files tests.test_public_estate_rate_control
+          python -O -m unittest -v tests.test_hf_census_keyless_credentials
+          git diff --check
+
+  census-github:
+    name: census (github)
+    needs: unit
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Capture source-bound public file metadata; incomplete stays nonzero
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p reports
+          python -I -B tools/observe_public_estate_files.py \
+            --lane github \
+            --source-revision "$(git rev-parse HEAD)" \
+            --output "reports/public-files-github.json"
+      - name: Preserve the public observation, including partial outcomes
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: public-files-github-${{ github.run_id }}-${{ github.run_attempt }}
+          path: reports/public-files-github.json
+          if-no-files-found: error
+          retention-days: 30
+
+  census-huggingface:
+    name: census (huggingface)
+    needs: unit
+    # Account CI/CD identities are pinned to protected main. Pull requests run
+    # the full offline contract matrix but never receive OIDC minting authority.
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Install pinned official keyless Hub client
+        run: >-
+          python -m pip install --disable-pip-version-check
+          "huggingface-hub==2.0.0"
+      - name: Exchange user-scoped read-only identity and capture public metadata
+        run: |
+          mkdir -p reports
+          python -I -B tools/hf_census_keyless_credentials.py \
+            --source-revision "$(git rev-parse HEAD)" \
+            --output reports/public-files-huggingface.json \
+            --credential-report reports/hf-census-keyless-credential.json
+      - name: Preserve credential and observation receipts, including failure
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: public-files-huggingface-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            reports/hf-census-keyless-credential.json
+            reports/public-files-huggingface.json
+          if-no-files-found: error
+          retention-days: 30

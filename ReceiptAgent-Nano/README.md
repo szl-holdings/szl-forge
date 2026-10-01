@@ -4,80 +4,58 @@ library_name: numpy
 tags:
 - governed-ai
 - szl-holdings
-- doctrine-v11
 - nano
 - synthetic
-- needs-loader
 - test-fixture
 ---
 
-> ### How to actually load this — the weights alone are not enough
->
-> `receipt_agent.npz` is a real, honest 4-10-4 MLP produced by a real training run, and the card
-> below does not overstate it. But it is a bare NumPy archive with **no
-> `config.json` and no loader in this repo**, so `from_pretrained` and the Hub
-> inference widget cannot touch it. Nothing here tells you the array names or the
-> forward pass.
->
-> ```python
-> import numpy as np
-> from huggingface_hub import hf_hub_download
->
-> path = hf_hub_download("SZLHOLDINGS/ReceiptAgent-Nano", "receipt_agent.npz")
-> w = np.load(path)
-> print(sorted(w.files))   # array names are the de-facto interface
-> ```
->
-> The forward pass this was trained against lives in the `szl_khipu` package, in
-> [SZLHOLDINGS/szl-khipu-kernels](https://huggingface.co/SZLHOLDINGS/szl-khipu-kernels)
-> — a **different repository**. Until the loader ships alongside the weights (or a
-> `custom_code` handler is added), treat this repo as a **test fixture**, not a
-> deployable model. Evidence status: see TRAINING_RECEIPT.json / BENCH.*.json (SYNTHETIC).
+# ReceiptAgent-Nano
 
-> **Now loadable:** [`load.py`](https://github.com/szl-holdings/szl-forge/blob/main/ReceiptAgent-Nano/load.py) ships the forward pass — tanh hidden layer, softmax over the four gates, and any read under 0.5 confidence returns ESCALATE. `python load.py 0.1,0.2,0.3,0.4` prints a gate.
+**Advisory reference/test fixture, not a production policy authority.**
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/main/receiptagent-nano/card/holo-banner.svg" alt="ReceiptAgent-Nano — holographic 4-10-4 four-gate banner" width="100%"/>
-</p>
+The receipted `receipt_agent.npz` is a **24-16-8-4 ReLU MLP**, not a 4-10-4
+network. Input is a finite numeric vector with exactly 24 features.
 
-<h1 align="center">R E C E I P T A G E N T &nbsp;N A N O</h1>
-
-<p align="center"><em>ALLOW · DENY · ABSTAIN · ESCALATE. Escalation is a class, not a retry loop.</em></p>
-
-<p align="center">
-  <img alt="Params: 4-10-4 MLP on numpy" src="https://img.shields.io/badge/params-4--10--4%20MLP%20%C2%B7%20numpy-334155?style=flat-square"/>
-  <img alt="Downloads" src="https://img.shields.io/huggingface/dt/SZLHOLDINGS/ReceiptAgent-Nano?style=flat-square&color=94a3b8&label=downloads"/>
-  <img alt="Held-out agree vs rule_check: 0.905 REPORTED" src="https://img.shields.io/badge/held--out%20agree%20vs%20rule__check-0.905%20REPORTED-7e8aa3?style=flat-square"/>
-  <img alt="Needs loader: test fixture" src="https://img.shields.io/badge/needs%20loader-test%20fixture-991b1b?style=flat-square"/>
-  <img alt="Kernel is truth" src="https://img.shields.io/badge/kernel%20is%20truth-four%20gates-e2e8f0?style=flat-square"/>
-  <img alt="License: Apache-2.0" src="https://img.shields.io/badge/License-Apache--2.0-7e8aa3?style=flat-square"/>
-</p>
-
-<p align="center">
-  <strong>Family.</strong> nano · <strong>Evidence.</strong> SYNTHETIC · <strong>Weights.</strong> numpy · <strong>Params.</strong> 4-10-4
-</p>
-
-## The cut
-
-Anthropic refuses. NVIDIA rails. Unsloth trains. We add a fourth way: hand the decision to a human with a receipt. Loop-tax lives here.
-
-A policy head that cannot silently succeed. Every output is one of four named gates.
-
-### Silhouette → leave → SZL
-
-| Leader | Take, then tweak |
+| Tensor | Shape |
 |---|---|
-| Anthropic | Constitutional refuse → typed DENY/ABSTAIN. |
-| NVIDIA | NeMo Guardrails flow → four-way head. |
-| Unsloth | Grown form is SZL-Forge-1.5B-ReceiptAgent. |
+| W1 / b1 | 16 x 24 / 16 |
+| W2 / b2 | 8 x 16 / 8 |
+| W3 / b3 | 4 x 8 / 4 |
 
-Nobody else ships this combination. That is the point of a one-of-one.
+[load.py](./load.py) implements the canonical computation and class order from
+[szl-khipu](https://github.com/szl-holdings/szl-khipu/blob/7d7ead17e509d11dd9d715510e0bf8f0839e2930/szl_khipu/train/receipt_agent.py):
+**ALLOW, WARN, BLOCKED, ESCALATE**. Two ReLU hidden layers feed a four-class
+softmax. Prediction is the argmax, without an invented 0.5 confidence override
+or a relabeling of WARN/BLOCKED to DENY/ABSTAIN.
 
-## Intended use
+## Local use
 
-Fail-closed unit tests for the 4-way gate.
+Requires Python 3.11+ and NumPy 2.4.6. Obtain public weights from the
+[immutable Hub revision](https://huggingface.co/SZLHOLDINGS/ReceiptAgent-Nano/tree/525149f4b5132f1b9ca09e5dc35a21e4598e240e)
+and verify the digest below. No Hugging Face credential is needed. The GitHub
+loader and Hub weights are separate artifacts; this card does not assert that
+a loader has been uploaded to the Hub.
 
-## Bench (this tree)
+```sh
+python load.py '[1,0,1,1,1,1,0,1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0]' --weights receipt_agent.npz
+```
+
+`load()` returns the six named tensors; `forward()` returns four probabilities;
+`infer()` returns the advisory class. Missing/extra/transposed tensors, non-real
+or non-finite values, invalid inputs and arithmetic overflow raise `ValueError`.
+Caller-supplied weights undergo the same validation. Pickle remains disabled.
+
+## Safety and evidence boundary
+
+The canonical **rule_check kernel remains authoritative**. An MLP prediction
+of ALLOW grants no authorization. The surrogate may disagree with the kernel;
+it is not a signed receipt, a delivery witness, or the 1.5B ReceiptAgent model.
+
+Reported metrics below are preserved, not independently reproduced by loader
+contract tests or local inference. Those tests establish executable behavior,
+not production fitness, policy correctness, or model quality.
+
+## Bench (reported receipt)
 
 `TRAINING_RECEIPT.json` seed `20260721` · honesty **REPORTED** · kernel is truth
 
@@ -85,13 +63,6 @@ Fail-closed unit tests for the 4-way gate.
 |---|---|
 | held-out agree vs rule_check | 0.905 |
 | weights | `receipt_agent.npz` sha256 `8aca4d24c90d6159cbb2bb885c7a94822d715899437f58abe69fb5c9664a1381` |
-
-Infers on `POST /api/infer {"kind":"receipt_agent"}`. Surrogate may disagree. Kernel wins. **Not 1.5B.**
-
-## Limitations
-
-- Synthetic 4-D features. Not a substitute for the 1.5B agent.
-- Hub kernel labels are ALLOW/WARN/BLOCKED/ESCALATE — kernel is truth. This atelier MLP is a 4-class silhouette, not rule_check.
 
 ## Honesty
 
@@ -102,12 +73,4 @@ Infers on `POST /api/infer {"kind":"receipt_agent"}`. Surrogate may disagree. Ke
 | Λ uniqueness | Conjecture 1 OPEN — not a theorem |
 | GGUF as the signed object | FALSE |
 
-Doctrine v11 LOCKED · 749 declarations · 14 axioms · 163 sorries · locked-proven 8.
-
-Apache-2.0. Copyright 2026 SZL Holdings · Stephen P. Lutar Jr. · ORCID [0009-0001-0110-4173](https://orcid.org/0009-0001-0110-4173).
-
----
-
-<p align="center">
-  Hub: <a href="https://huggingface.co/SZLHOLDINGS/ReceiptAgent-Nano">SZLHOLDINGS/ReceiptAgent-Nano</a>
-</p>
+Apache-2.0. Copyright 2026 SZL Holdings.

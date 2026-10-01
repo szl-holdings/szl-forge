@@ -1,0 +1,9 @@
+# Install the official platform-specific PyTorch wheel separately first.
+transformers==5.16.1
+huggingface-hub==1.29.0
+tokenizers==0.23.2
+numpy==2.4.6
+pyarrow==25.0.0
+fastapi==0.140.13
+uvicorn==0.51.0
+httpx==0.28.1

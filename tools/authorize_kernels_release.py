@@ -21,10 +21,11 @@ REQUIRED_CHECKS = frozenset(
     {
         "Kernel contract",
         "MiniEmbed artifact replay",
-        "Source binding contract",
+        "Source binding dry run (no publication)",
     }
 )
 FULL_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
+GITHUB_ACTIONS_APP_ID = 15368
 
 
 class AuthorizationError(RuntimeError):
@@ -64,7 +65,13 @@ def _full_sha(value: str, field: str) -> str:
 def _ref_sha(getter: Callable[[str], dict[str, Any]], repository: str) -> str:
     payload = getter(f"/repos/{repository}/git/ref/heads/main")
     observed = str(payload.get("object", {}).get("sha", "")).lower()
-    return _full_sha(observed, f"{repository} protected main")
+    revision = _full_sha(observed, f"{repository} protected main")
+    branch = getter(f"/repos/{repository}/branches/main")
+    if branch.get("protected") is not True:
+        raise AuthorizationError(f"{repository} main is not protected")
+    if branch.get("commit", {}).get("sha") != revision:
+        raise AuthorizationError(f"{repository} main changed during protection readback")
+    return revision
 
 
 def authorize_once(
@@ -105,7 +112,16 @@ def authorize_once(
     latest: dict[str, dict[str, Any]] = {}
     for check in check_runs:
         if isinstance(check, dict) and check.get("name") in REQUIRED_CHECKS:
-            latest[str(check["name"])] = check
+            if check.get("app", {}).get("id") != GITHUB_ACTIONS_APP_ID:
+                continue
+            if check.get("head_sha") != source_revision:
+                raise AuthorizationError("source check run does not bind the exact source revision")
+            check_id = check.get("id")
+            if type(check_id) is not int or check_id <= 0:
+                raise AuthorizationError("source check run has an invalid identity")
+            name = str(check["name"])
+            if name not in latest or check_id > latest[name]["id"]:
+                latest[name] = check
     missing = sorted(REQUIRED_CHECKS - set(latest))
     if missing:
         raise AuthorizationError(f"required source checks are missing: {missing}")
@@ -124,6 +140,15 @@ def authorize_once(
     if pending:
         raise AuthorizationError(f"required source checks are pending: {pending}")
 
+    # Authorization is a point-in-time observation, not a branch lock. Read both
+    # protected refs again after the potentially slow signature/check queries.
+    for repository, requested in (
+        (SOURCE_REPOSITORY, source_revision),
+        (PUBLISHER_REPOSITORY, publisher_revision),
+    ):
+        if _ref_sha(getter, repository) != requested:
+            raise AuthorizationError(f"{repository} main changed during authorization")
+
     return {
         "schema": "szl.kernels-release-authorization/v1",
         "status": "AUTHORIZED_PROTECTED_MAIN",
@@ -132,11 +157,14 @@ def authorize_once(
             "repository": SOURCE_REPOSITORY,
             "revision": source_revision,
             "protected_main": source_main,
+            "branch_protection_observed": True,
             "signature_verified": True,
             "signature_reason": verification.get("reason"),
             "checks": [
                 {
                     "name": name,
+                    "check_run_id": latest[name]["id"],
+                    "app_id": GITHUB_ACTIONS_APP_ID,
                     "status": latest[name]["status"],
                     "conclusion": latest[name]["conclusion"],
                     "details_url": latest[name].get("details_url"),
@@ -148,6 +176,7 @@ def authorize_once(
             "repository": PUBLISHER_REPOSITORY,
             "revision": publisher_revision,
             "protected_main": publisher_main,
+            "branch_protection_observed": True,
         },
     }
 

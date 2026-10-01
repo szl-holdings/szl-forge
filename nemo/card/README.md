@@ -1,100 +1,84 @@
 ---
 license: apache-2.0
 tags:
-- surrogate
+- software
 - recipe-conformance
+- historical
 - szl-holdings
-- doctrine-v11
 - not-a-checkpoint
 ---
 
-> **NOT A LOADABLE MODEL.** This repository contains no weight artifact — no
-> `joblib`, no `npz`, no `safetensors`. It previously declared
-> `library_name: sklearn` with `sklearn` and `joblib` tags, which told the Hub to
-> present it as a loadable scikit-learn model; nothing here can be loaded that
-> way. `get_kernel` is **UNAVAILABLE** (returns `False`), so the kernel path does
-> not resolve either. Both the sklearn declaration and the kernel path have been
-> removed from the metadata rather than left to imply a capability that is
-> absent. The surrogate rules and tests in this repo are real; the checkpoint is
-> not.
+<p align="center"><img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/main/nemo/card/holo-banner.svg" alt="Historical recipe-conformance records illustration" width="100%"/></p>
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/main/nemo/card/holo-banner.svg" alt="szl-nemo — holographic doctrine-triage banner" width="100%"/>
-</p>
+# szl-nemo
 
-<h1 align="center">S Z L &nbsp;N E M O</h1>
+**Historical recipe-conformance records; the scorer and its generator remain quarantined.**
 
-<p align="center"><em>Honesty over SEO: scripts and a receipt, no checkpoint. Do not invent the blob.</em></p>
+This model-style Hub listing is a historical scripts-and-receipt mirror. It
+contains no approved loadable checkpoint, Nemotron weights, generative model,
+or qualified kernel loading path. No `joblib.load`, retraining, or future scorer
+publication is recommended by this card.
 
-<p align="center">
-  <img alt="Artifact: surrogate scripts + receipt" src="https://img.shields.io/badge/artifact-surrogate%20scripts%20%2B%20receipt-334155?style=flat-square"/>
-  <img alt="Downloads" src="https://img.shields.io/huggingface/dt/SZLHOLDINGS/szl-nemo?style=flat-square&color=94a3b8&label=downloads"/>
-  <img alt="Loadable weights: none — UNAVAILABLE" src="https://img.shields.io/badge/loadable%20weights-none%20%C2%B7%20UNAVAILABLE-991b1b?style=flat-square"/>
-  <img alt="Not Nemotron — never was" src="https://img.shields.io/badge/not%20Nemotron-never%20was-b45309?style=flat-square"/>
-  <img alt="Fidelity vs rule checker: 1.0 REPORTED" src="https://img.shields.io/badge/fidelity%20vs%20rule%20checker-1.0%20REPORTED-34d399?style=flat-square"/>
-  <img alt="License: Apache-2.0" src="https://img.shields.io/badge/License-Apache--2.0-7e8aa3?style=flat-square"/>
-</p>
+## Artifact and source identity
 
-**STATUS: SOFTWARE · NOT TRAINED as an LLM · no Nemotron/Unsloth weights · joblib UNAVAILABLE.**
+- Reviewed [Hub snapshot](https://huggingface.co/SZLHOLDINGS/szl-nemo/tree/56c429886bf5ea98826bf99b27313626d70f01cc): `56c429886bf5ea98826bf99b27313626d70f01cc`.
+- Reviewed [canonical source](https://github.com/szl-holdings/szl-nemo/blob/3860c3cb92cf5dee7f7f15635e878713330b219c/README.md): `szl-holdings/szl-nemo@3860c3cb92cf5dee7f7f15635e878713330b219c`.
+- Card authoring for this mirror is a separate Forge publisher input: `nemo/card/README.md`. A card-only change does not ship the complete newer canonical package.
 
-Canonical GitHub source: [`szl-holdings/szl-nemo`](https://github.com/szl-holdings/szl-nemo).
-Hub ID `SZLHOLDINGS/szl-nemo` is a **sklearn recipe-conformance surrogate card**.
-It is **not** NVIDIA Nemotron. It is **not** a generative model. It is **not**
-a Triton/CUDA kernel. Tags `nemotron` and `ollama` were misleading and are **stripped**.
-Do not `from_pretrained` this as an LLM. SZL has **not** fine-tuned Nemotron and does **not** republish NVIDIA weights.
+The historical TF-IDF/logistic-regression scorer and generator are quarantined.
+Historical scripts, rule-check context, `Modelfile` prompt text, and receipt
+records remain inspectable. An upstream Ollama-tag observation in
+`BASE_MODEL_MANIFEST.json` is not a weight artifact or an immutable base binding.
 
-Approved GitHub path: `szl_nemo.rule_check` (stdlib, R1–R5). `model.joblib` is quarantined.
+Current canonical development describes deterministic R1–R5 doctrine checks
+and E1–E10 envelope witnesses. Those newer APIs, package files, and test claims
+must remain source-only until an exact source-bound Hub publication is verified.
+This older mirror does not establish complete current-package parity.
 
-## What it is / is NOT
+## Retained historical evidence
 
-- **IS:** `scripts/forge.py` + `scripts/eval.py` + `TRAINING_RECEIPT.json` describing a `Pipeline(TfidfVectorizer → LogisticRegression)` that triages whether a *text answer* conforms to five doctrine rules (R1–R5). Deterministic `rule_check()` in `scripts/forge.py` remains ground truth. Optional `Modelfile` is prompt text only.
+The unsigned [TRAINING_RECEIPT.json](https://huggingface.co/SZLHOLDINGS/szl-nemo/blob/56c429886bf5ea98826bf99b27313626d70f01cc/TRAINING_RECEIPT.json)
+reports the following historical scorer experiment:
 
-<!-- SZL-ATELIER-CUT:v1:START -->
-## The cut
-
-We took the idea of recipe-conformance from NVIDIA NeMo and built a tiny sklearn surrogate that triages answers against five doctrine rules. Then we stripped the misleading nemotron tags. Honesty over SEO.
-
-A 10-millisecond 'does this answer violate doctrine?' that CI can run on every card.
-
-### Silhouette → leave → SZL
-
-| Leader | Take, then tweak |
+| Field | Receipt-reported value and scope |
 |---|---|
-| Anthropic | Constitutional classifier, tiny. |
-| NVIDIA | Silhouette of NeMo recipe-conformance. Cut: sklearn, disclosed, not a Nemotron. |
-| Unsloth | No. |
+| Training time | `2026-07-21T02:52:42Z` |
+| Host/software | Replit 2-vCPU; scikit-learn `1.9.0` |
+| Seed | `20260721` |
+| Checker-labelled rows | `5620`: `2638` conforming and `2982` violating; 80/20 stratified split |
+| Fidelity against rule checker | `1.0`; reported recipe-conformance experiment |
+| Unseen paraphrases | `0.8333`, `N=12`; small historical sample |
+| Named scorer digest | `model.joblib`: `d3f0cd7bebbb73fedbc9a0f098148f46f5834bf9184b43cd29b07f286a77ff5b` |
+| Scorer artifact in reviewed mirror | **ABSENT / UNAVAILABLE**; the named digest does not establish a published load path |
 
-Nobody else ships this combination. That is the point of a one-of-one.
+These are preserved receipt-reported results, not newly measured model quality,
+an LLM evaluation, a Nemotron benchmark, an independent benchmark, or a current
+latency result. The scorer cannot be replayed from the reviewed Hub snapshot
+because the named artifact is absent. Its historical digest must not be
+interpreted as permission to recover, retrain, or load that quarantined scorer.
 
-## Intended use
+The [PROMOTION_READINESS_AUDIT.json](https://huggingface.co/SZLHOLDINGS/szl-nemo/blob/56c429886bf5ea98826bf99b27313626d70f01cc/PROMOTION_READINESS_AUDIT.json)
+is retained at the same reviewed revision. This documentation correction makes
+no new promotion, runtime qualification, release approval, or deployment claim.
 
-CI doctrine triage. Retrain from forge.py.
+## Intended use and limits
 
-## Limitations
+Inspect historical recipe-conformance evidence and separately reviewed canonical
+software. Keep a deterministic policy decision authoritative outside any
+historical learned scorer.
 
-- model.joblib not on Hub at snapshot.
-- Not Nemotron. Not generative.
+- No approved joblib scorer, generative checkpoint, hosted model, or `from_pretrained` path is established here.
+- No 10 ms latency, comparative capability, safety guarantee, or ecosystem-wide novelty claim is made.
+- Receipt-reported fidelity `1.0` and paraphrase result `0.8333` on `N=12` remain historical context.
+- Hashes identify records or named artifact bytes; they do not authenticate authorship, measurement, or correctness.
+- The September 30, 2026 review read immutable text and records. No weights were downloaded, no generator/scorer or inference was executed, and no signature verification or runtime test was repeated.
+- A card-only publisher changes the README and its banner; it does not publish the newer deterministic witness package or remove its release gates.
 
-Canonical GitHub: [`szl-holdings/szl-nemo`](https://github.com/szl-holdings/szl-nemo/blob/main/README.md)
-<!-- SZL-ATELIER-CUT:v1:END -->
+## License
 
-- **NOT:** NVIDIA Nemotron 3 Nano 4B. Not ollama-ready Nemotron weights. Not a chatbot. Not a fine-tune. `BASE_MODEL_MANIFEST.json` is an observation of an upstream Ollama tag (mutable); it is **not** weights in this repo.
+Apache-2.0 is declared for the repository's SZL files. A [LICENSE](https://huggingface.co/SZLHOLDINGS/szl-nemo/blob/56c429886bf5ea98826bf99b27313626d70f01cc/LICENSE)
+is present in the reviewed mirror; this review does not establish upstream or
+downstream license coverage. No NVIDIA weights are republished by this card.
 
-## Status
-
-| Thing | Label | Method / N / date / what-NOT |
-|---|---|---|
-| `model.joblib` on Hub | **UNAVAILABLE** | Hub file list 2026-08-28 ~6:56pm ET. Files on main: `.gitattributes`, `BASE_MODEL_MANIFEST.json`, `LICENSE`, `Modelfile`, `README.md`, `SZL_ESTATE_MANAGED.json`, `TRAINING_RECEIPT.json`, `scripts/eval.py`, `scripts/forge.py`. **No `model.joblib`.** Receipt names file `model.joblib` sha256 `d3f0cd7bebbb73fedbc9a0f098148f46f5834bf9184b43cd29b07f286a77ff5b` — that blob is **not published here**. Do not invent it. |
-| Receipt-bound scorer metrics | **REPORTED in `TRAINING_RECEIPT.json`** | `trained_at_utc` 2026-07-21T02:52:42Z, host replit 2-vCPU, sklearn 1.9.0, seed 20260721. N=5620 checker-labelled rows (2638 conform / 2982 violation), 80/20 stratified. `fidelity_vs_rule_checker` **1.0**; unseen paraphrases **0.8333** (N=**12**). What-NOT: not LLM quality; not a Nemotron benchmark; **cannot be replayed from Hub bytes until `model.joblib` is present**. |
-| Nemotron / generative evals | **UNAVAILABLE** | None on this card. Quality of any Nemotron run on SZL hardware: **UNAVAILABLE**. |
-| NVIDIA weights | **NOT REPUBLISHED** | Never copy upstream tensors into this ID. |
-
-When `model.joblib` is actually committed, load with `joblib.load("model.joblib")` and sha256-check against the receipt. Until then, this ID is scripts + a receipt, not a loadable sklearn artifact.
-
-Apache-2.0 for SZL files here. Upstream Nemotron, if you fetch it yourself, stays under NVIDIA's license. Λ = Conjecture 1.
-
----
-
-<p align="center">
-  Hub: <a href="https://huggingface.co/SZLHOLDINGS/szl-nemo">SZLHOLDINGS/szl-nemo</a>
-</p>
+Lambda uniqueness remains Conjecture 1, open and advisory. Historical evidence
+and failed outcomes remain intact.

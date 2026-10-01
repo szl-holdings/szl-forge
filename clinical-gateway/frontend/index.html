@@ -1,297 +1,271 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-surface="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="referrer" content="no-referrer" />
     <title>Owned Agent Clinical Control</title>
+    <link rel="icon" type="image/svg+xml" href="szl/logos/szl_favicon_square.svg" />
+    <link rel="stylesheet" href="szl/szl-design-system.css" />
+    <link rel="stylesheet" href="szl/szl-console.css" />
     <style>
-      :root {
-        color-scheme: light;
-        --canvas: #eef4f3;
-        --ink: #102a2e;
-        --muted: #536a6e;
-        --panel: #fff;
-        --line: #cddcda;
-        --brand: #006b67;
-        --brand-strong: #004d4a;
-        --blue: #164f8a;
-        --warn: #8a4b00;
-        --danger: #9b2833;
-        --good: #1c6b42;
-        --shadow: 0 18px 55px rgba(17, 48, 51, 0.1);
-      }
-
-      * { box-sizing: border-box; }
-
-      body {
-        margin: 0;
-        min-height: 100vh;
-        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        background:
-          radial-gradient(circle at 92% 5%, rgba(24, 123, 118, 0.15), transparent 33rem),
-          linear-gradient(180deg, #f9fbfb 0, var(--canvas) 100%);
-        color: var(--ink);
-      }
-
-      button, input, select, textarea { font: inherit; }
-      a { color: var(--blue); }
-      code {
-        padding: 0.12em 0.35em;
-        border-radius: 5px;
-        background: rgba(0, 107, 103, 0.08);
-      }
+      /* SZL KANCHAY v1.1.1 (founder direction), light document surface. Every
+         color, face, size and radius below is a token from szl/szl-design-system.css
+         or szl/szl-console.css; there are no local color literals. Focus rings and
+         the coral primary action are the founder's own (the vendored kit draws the
+         solid var(--focus) outline); this page does not restyle them. */
 
       .topline {
-        padding: 9px 20px;
-        background: #102a2e;
-        color: #e6fffb;
-        font-size: 0.74rem;
-        font-weight: 800;
-        letter-spacing: 0.13em;
+        padding: var(--space-2) var(--space-5);
+        border-bottom: var(--border-hairline) solid var(--border);
+        background: var(--bg-deep);
+        color: var(--ink-warn);
+        font-size: var(--text-xs);
+        font-weight: var(--weight-semibold);
+        line-height: var(--leading-snug);
+        letter-spacing: var(--tracking-caps);
         text-align: center;
         text-transform: uppercase;
       }
 
       .shell {
-        width: min(1180px, calc(100% - 32px));
+        width: min(var(--container), calc(100% - var(--space-8)));
         margin: 0 auto;
-        padding: 34px 0 54px;
+        padding: var(--space-8) 0 var(--space-12);
       }
 
       header {
         display: grid;
         grid-template-columns: minmax(0, 1fr) auto;
-        gap: 24px;
+        gap: var(--space-6);
         align-items: end;
-        margin-bottom: 22px;
+        margin-bottom: var(--space-8);
       }
+      header .eyebrow { margin-bottom: var(--space-2); }
 
       h1 {
         max-width: 780px;
-        margin: 6px 0 10px;
-        font-size: clamp(2rem, 5vw, 4.25rem);
-        line-height: 0.98;
-        letter-spacing: -0.055em;
+        margin-bottom: var(--space-4);
+        font-size: clamp(var(--text-2xl), 5vw, var(--text-4xl));
+        text-wrap: balance;
       }
 
-      h2, h3, p { margin-top: 0; }
-      h2 { margin-bottom: 6px; font-size: 1.25rem; letter-spacing: -0.02em; }
-      h3 { margin-bottom: 8px; font-size: 0.95rem; }
-
-      .eyebrow {
-        color: var(--brand);
-        font-size: 0.78rem;
-        font-weight: 800;
-        letter-spacing: 0.11em;
-        text-transform: uppercase;
-      }
-
-      .lede {
-        max-width: 790px;
-        margin-bottom: 0;
-        color: var(--muted);
-        font-size: 1rem;
-        line-height: 1.6;
-      }
+      .lede { margin-bottom: 0; font-size: var(--text-lg); }
 
       .truth-badge {
         min-width: 235px;
-        padding: 14px 16px;
-        border: 1px solid #e4b98b;
-        border-radius: 14px;
-        background: #fff7ed;
-        color: var(--warn);
-        font-size: 0.78rem;
-        font-weight: 800;
-        line-height: 1.45;
+        padding: var(--space-3) var(--space-4);
+        border: var(--border-hairline) solid color-mix(in srgb, var(--ink-warn) 45%, transparent);
+        border-radius: var(--radius-md);
+        background: color-mix(in srgb, var(--ink-warn) 8%, transparent);
+        color: var(--ink-warn);
+        font-size: var(--text-xs);
+        font-weight: var(--weight-semibold);
+        line-height: var(--leading-normal);
+        letter-spacing: var(--tracking-caps);
         text-transform: uppercase;
       }
 
       .grid {
         display: grid;
         grid-template-columns: repeat(12, minmax(0, 1fr));
-        gap: 16px;
+        gap: var(--space-4);
       }
 
-      .card {
-        grid-column: span 12;
-        padding: 20px;
-        border: 1px solid var(--line);
-        border-radius: 18px;
-        background: rgba(255, 255, 255, 0.94);
-        box-shadow: var(--shadow);
-      }
-
+      .card { grid-column: span 12; min-width: 0; }
       .card.connection, .card.source { grid-column: span 6; }
 
       .card-head {
         display: flex;
-        gap: 16px;
+        flex-wrap: wrap;
+        gap: var(--space-3) var(--space-4);
         align-items: flex-start;
         justify-content: space-between;
-        margin-bottom: 18px;
+        margin-bottom: var(--space-5);
       }
+      .card-head > div { flex: 1 1 10rem; min-width: 0; }
+      .card-head p { margin-bottom: 0; }
 
-      .card-head p, .note, .field-note {
-        color: var(--muted);
-        line-height: 1.5;
-      }
-
-      .card-head p { max-width: 730px; margin-bottom: 0; font-size: 0.88rem; }
-
+      /* Mirrors the founder .chip (the page script owns this element's class list). */
       .status-pill {
+        display: inline-flex;
         flex: 0 0 auto;
-        padding: 7px 10px;
-        border: 1px solid var(--line);
-        border-radius: 999px;
-        background: #f4f7f7;
-        color: var(--muted);
-        font-size: 0.7rem;
-        font-weight: 800;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
+        gap: var(--space-2);
+        align-items: center;
+        padding: var(--space-1) var(--space-3);
+        border: var(--border-hairline) solid var(--border);
+        border-radius: var(--radius-sm);
+        background: var(--surface-alt);
+        color: var(--text-sub);
+        font-family: var(--font-mono);
+        font-size: var(--text-xs);
+        line-height: var(--leading-snug);
+        font-variant-numeric: tabular-nums lining-nums;
       }
-
-      .status-pill.good { border-color: #a5d3bb; background: #edf9f2; color: var(--good); }
-      .status-pill.warn { border-color: #e4b98b; background: #fff7ed; color: var(--warn); }
-      .status-pill.bad { border-color: #e8aab1; background: #fff1f3; color: var(--danger); }
+      .status-pill::before {
+        width: 0.5rem;
+        height: 0.5rem;
+        flex: none;
+        border-radius: var(--radius-full);
+        background: currentColor;
+        content: "";
+      }
+      .status-pill.good { color: var(--ink-good); }
+      .status-pill.warn { color: var(--ink-warn); }
+      .status-pill.bad { color: var(--ink-bad); }
 
       .fields {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 12px;
+        gap: var(--space-4) var(--space-3);
       }
-
       .field.full { grid-column: 1 / -1; }
+      .field-note { margin: 0; font-size: var(--text-sm); }
 
-      label {
-        display: block;
-        margin-bottom: 6px;
-        color: #294448;
-        font-size: 0.78rem;
-        font-weight: 800;
-      }
-
-      input, select, textarea {
-        width: 100%;
-        min-height: 42px;
-        padding: 10px 11px;
-        border: 1px solid var(--line);
-        border-radius: 10px;
-        outline: none;
-        background: #fbfdfd;
-        color: var(--ink);
-      }
-
-      textarea { min-height: 76px; resize: vertical; }
-      input:focus, select:focus, textarea:focus {
-        border-color: var(--brand);
-        box-shadow: 0 0 0 3px rgba(0, 107, 103, 0.13);
-      }
-      input[readonly] { background: #f0f4f3; color: var(--muted); }
-      .field-note, .note { margin: 6px 0 0; font-size: 0.76rem; }
+      .input, .select { min-block-size: var(--target-size-coarse); }
+      textarea.input { min-block-size: 5rem; resize: vertical; }
+      .input[readonly] { background: var(--bg-deep); color: var(--text-sub); }
 
       .check {
         display: flex;
-        min-height: 42px;
-        gap: 9px;
+        min-block-size: var(--target-size-coarse);
+        gap: var(--space-3);
         align-items: center;
-        padding: 10px 11px;
-        border: 1px solid var(--line);
-        border-radius: 10px;
-        background: #fbfdfd;
+        padding: 0 var(--space-3);
+        border: var(--border-hairline) solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        background: var(--surface-alt);
       }
-      .check input { width: auto; min-height: 0; margin: 0; }
-      .check label { margin: 0; font-weight: 700; }
-
-      .actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 16px; }
-      button {
-        min-height: 42px;
-        padding: 10px 14px;
-        border: 1px solid var(--brand);
-        border-radius: 10px;
-        background: var(--brand);
-        color: white;
-        font-weight: 800;
+      .check input {
+        flex: none;
+        width: 1.125rem;
+        height: 1.125rem;
+        margin: 0;
+        accent-color: var(--text);
+      }
+      .check label {
+        display: flex;
+        flex: 1;
+        align-items: center;
+        align-self: stretch;
+        color: var(--text);
+        font-size: var(--text-sm);
+        font-weight: var(--weight-medium);
         cursor: pointer;
       }
-      button:hover { background: var(--brand-strong); }
-      button.secondary { background: white; color: var(--brand-strong); }
-      button.danger { border-color: #c47c83; background: white; color: var(--danger); }
-      button:disabled { cursor: wait; opacity: 0.58; }
+
+      .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-5); }
+      .actions .btn { min-block-size: var(--target-size-coarse); }
+      .actions .btn:disabled { cursor: wait; }
+      .btn-danger { border-color: var(--color-error); color: var(--ink-bad); }
+      .btn-danger:hover {
+        border-color: var(--color-error);
+        background: color-mix(in srgb, var(--color-error) 8%, transparent);
+        color: var(--ink-bad);
+      }
 
       .boundary {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
-        gap: 1px;
+        gap: var(--space-px);
         overflow: hidden;
-        margin: 18px 0;
-        border: 1px solid var(--line);
-        border-radius: 12px;
-        background: var(--line);
+        margin: var(--space-5) 0;
+        border: var(--border-hairline) solid var(--border);
+        border-radius: var(--radius-md);
+        background: var(--border);
       }
-      .boundary div { min-height: 96px; padding: 13px; background: #f8fbfa; }
+      .boundary div { min-height: 96px; padding: var(--space-3); background: var(--surface-alt); }
       .boundary strong, .boundary span { display: block; }
-      .boundary strong { margin-bottom: 5px; font-size: 0.76rem; text-transform: uppercase; }
-      .boundary span { color: var(--muted); font-size: 0.75rem; line-height: 1.45; }
+      .boundary strong {
+        margin-bottom: var(--space-1);
+        color: var(--text);
+        font-size: var(--text-xs);
+        letter-spacing: var(--tracking-caps);
+        text-transform: uppercase;
+      }
+      .boundary span { color: var(--text-sub); font-size: var(--text-sm); }
+      .boundary code {
+        padding: 0.1em 0.35em;
+        border-radius: var(--radius-sm);
+        background: var(--bg-deep);
+        color: var(--text);
+      }
 
       .transport-layout {
         display: grid;
         grid-template-columns: minmax(0, 2fr) minmax(260px, 0.9fr);
-        gap: 16px;
+        gap: var(--space-4);
       }
 
       .protocol {
-        padding: 16px;
-        border: 1px solid #bfd3e7;
-        border-radius: 14px;
-        background: #f2f7fc;
+        padding: var(--space-4);
+        border: var(--border-hairline) solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        background: var(--bg-deep);
+      }
+      .protocol h3, .output h3 {
+        margin-bottom: var(--space-3);
+        font-family: var(--font-body);
+        font-size: var(--text-xs);
+        font-weight: var(--weight-semibold);
+        line-height: var(--leading-snug);
+        letter-spacing: var(--tracking-caps);
+        text-transform: uppercase;
       }
       .protocol dl {
         display: grid;
         grid-template-columns: 92px 1fr;
-        gap: 9px;
+        gap: var(--space-2);
         margin: 0;
-        font-size: 0.78rem;
+        font-size: var(--text-sm);
       }
-      .protocol dt { color: var(--blue); font-weight: 800; }
-      .protocol dd { margin: 0; color: #34536f; line-height: 1.4; }
+      .protocol dt { color: var(--text); font-weight: var(--weight-semibold); }
+      .protocol dd { margin: 0; color: var(--text-sub); line-height: var(--leading-snug); }
 
       .outputs {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 12px;
+        gap: var(--space-3);
       }
+      /* Machine output stays dark on the light surface (founder rule: code
+         blocks are dark on both), so these wells use the dark scale steps
+         directly instead of the light surface roles. */
       .output {
         min-height: 170px;
-        padding: 14px;
-        border: 1px solid var(--line);
-        border-radius: 14px;
-        background: #102a2e;
-        color: #d8f5f1;
+        padding: var(--space-4);
+        border: var(--border-hairline) solid var(--color-gray-700);
+        border-radius: var(--radius-md);
+        background: var(--color-space-900);
+        color: var(--color-gray-50);
+        color-scheme: dark;
       }
-      .output h3 { color: #92d9d2; }
+      .output h3 { color: var(--color-gray-200); }
+      .output--advisory { min-height: 130px; margin-top: var(--space-4); }
       pre {
         max-height: 330px;
         margin: 0;
         overflow: auto;
+        color: inherit;
+        font-family: var(--font-mono);
+        font-size: var(--text-xs);
+        line-height: var(--leading-mono);
+        font-variant-numeric: tabular-nums lining-nums;
         white-space: pre-wrap;
         word-break: break-word;
-        font: 0.72rem/1.55 ui-monospace, SFMono-Regular, Consolas, monospace;
       }
 
       .privacy {
-        margin: 18px 0 0;
-        padding: 13px 15px;
-        border-left: 4px solid var(--danger);
-        border-radius: 8px;
-        background: #fff5f5;
-        color: #6f2d34;
-        font-size: 0.8rem;
-        line-height: 1.55;
+        max-width: none;
+        margin: var(--space-5) 0 0;
+        padding: var(--space-3) var(--space-4);
+        border: var(--border-hairline) solid color-mix(in srgb, var(--ink-warn) 40%, transparent);
+        border-radius: var(--radius-md);
+        background: color-mix(in srgb, var(--ink-warn) 6%, transparent);
+        color: var(--text);
       }
-      footer { margin-top: 18px; color: var(--muted); font-size: 0.75rem; line-height: 1.55; }
+
+      footer { margin-top: var(--space-6); color: var(--text-sub); font-size: var(--text-sm); }
+      footer a { text-decoration: underline; }
 
       @media (max-width: 850px) {
         header, .transport-layout { grid-template-columns: 1fr; }
@@ -300,15 +274,19 @@
         .boundary, .outputs { grid-template-columns: 1fr; }
       }
       @media (max-width: 560px) {
-        .shell { width: min(100% - 20px, 1180px); padding-top: 22px; }
+        .shell { padding-top: var(--space-6); }
         .fields { grid-template-columns: 1fr; }
         .field.full { grid-column: auto; }
+      }
+      @media (forced-colors: active) {
+        .status-pill::before { border: 1px solid currentColor; }
       }
     </style>
   </head>
   <body>
+    <a class="skip-link" href="#main">Skip to controls</a>
     <div class="topline">Control plane only · no PHI entry · not for clinical use</div>
-    <main class="shell">
+    <main class="shell" id="main">
       <header>
         <div>
           <div class="eyebrow">Owned Agent Control · Clinical shadow</div>
@@ -330,80 +308,80 @@
         <article class="card connection">
           <div class="card-head">
             <div>
-              <h2>Local API</h2>
+              <h2 class="card-title">Local API</h2>
               <p>Loopback control connection. The token is held only in this page session.</p>
             </div>
             <span class="status-pill" id="healthPill">Not checked</span>
           </div>
           <div class="fields">
             <div class="field full">
-              <label for="backend">Backend URL</label>
-              <input id="backend" type="url" value="http://127.0.0.1:8010" spellcheck="false" />
+              <label class="field__label" for="backend">Backend URL</label>
+              <input class="input input--mono" id="backend" type="url" value="http://127.0.0.1:8010" spellcheck="false" />
             </div>
             <div class="field full">
-              <label for="apiToken">API bearer token</label>
-              <input id="apiToken" type="password" minlength="32" autocomplete="off"
+              <label class="field__label" for="apiToken">API bearer token</label>
+              <input class="input" id="apiToken" type="password" minlength="32" autocomplete="off"
                 placeholder="OAC_API_KEY value" spellcheck="false" />
               <p class="field-note">At least 32 characters; never written to localStorage, cookies, logs, or status output.</p>
             </div>
             <div class="field full">
-              <label for="stateDir">Backend state directory</label>
-              <input id="stateDir" value="Server configured (locked)" readonly />
+              <label class="field__label" for="stateDir">Backend state directory</label>
+              <input class="input" id="stateDir" value="Server configured (locked)" readonly />
             </div>
           </div>
           <div class="actions">
-            <button id="checkHealth" class="secondary" type="button">Check health</button>
-            <button id="loadCapabilities" class="secondary" type="button">Load capabilities</button>
+            <button id="checkHealth" class="btn btn-secondary" type="button">Check health</button>
+            <button id="loadCapabilities" class="btn btn-secondary" type="button">Load capabilities</button>
           </div>
         </article>
 
         <article class="card source">
           <div class="card-head">
             <div>
-              <h2>Source profile</h2>
+              <h2 class="card-title">Source profile</h2>
               <p id="modeDescription">Synthetic, offline fixture processing only.</p>
             </div>
             <span class="status-pill warn" id="modePill">MOCK</span>
           </div>
           <div class="fields">
             <div class="field full">
-              <label for="mode">Operating mode</label>
-              <select id="mode">
+              <label class="field__label" for="mode">Operating mode</label>
+              <select class="select" id="mode">
                 <option value="MOCK">MOCK · synthetic only</option>
                 <option value="LIVE_SHADOW">LIVE_SHADOW · deidentified only</option>
               </select>
             </div>
             <div class="field">
-              <label for="sourceId">Source ID</label>
-              <input id="sourceId" spellcheck="false" />
+              <label class="field__label" for="sourceId">Source ID</label>
+              <input class="input input--mono" id="sourceId" spellcheck="false" />
             </div>
             <div class="field">
-              <label for="assayMap">Assay map path</label>
-              <input id="assayMap" spellcheck="false" />
+              <label class="field__label" for="assayMap">Assay map path</label>
+              <input class="input input--mono" id="assayMap" spellcheck="false" />
             </div>
             <div class="field full">
-              <label for="profileId">Pinned profile ID</label>
-              <input id="profileId" readonly spellcheck="false" />
+              <label class="field__label" for="profileId">Pinned profile ID</label>
+              <input class="input input--mono" id="profileId" readonly spellcheck="false" />
             </div>
             <div class="field">
-              <label for="senderApplication">Expected MSH-3</label>
-              <input id="senderApplication" spellcheck="false" />
+              <label class="field__label" for="senderApplication">Expected MSH-3</label>
+              <input class="input input--mono" id="senderApplication" spellcheck="false" />
             </div>
             <div class="field">
-              <label for="senderFacility">Expected MSH-4</label>
-              <input id="senderFacility" spellcheck="false" />
+              <label class="field__label" for="senderFacility">Expected MSH-4</label>
+              <input class="input input--mono" id="senderFacility" spellcheck="false" />
             </div>
           </div>
           <div class="actions">
-            <button id="initialize" class="secondary" type="button">Initialize state</button>
-            <button id="registerSource" type="button">Register source</button>
+            <button id="initialize" class="btn btn-secondary" type="button">Initialize state</button>
+            <button id="registerSource" class="btn btn-primary" type="button">Register source</button>
           </div>
         </article>
 
         <article class="card">
           <div class="card-head">
             <div>
-              <h2>Operational transport-health advisory</h2>
+              <h2 class="card-title">Operational transport-health advisory</h2>
               <p>
                 Score eight bounded infrastructure signals with the verified
                 synthetic model. This advisory has no ACK, device-control,
@@ -419,23 +397,23 @@
             <div class="field"><div class="check"><input id="modelLedgerIntegrity" type="checkbox" checked /><label for="modelLedgerIntegrity">Local ledger integrity check passed</label></div></div>
             <div class="field"><div class="check"><input id="modelConfigurationValid" type="checkbox" checked /><label for="modelConfigurationValid">Configuration validation passed</label></div></div>
             <div class="field">
-              <label for="modelQueueUtilization">Queue utilization (0-1)</label>
-              <input id="modelQueueUtilization" type="number" min="0" max="1" step="0.01" value="0.05" />
+              <label class="field__label" for="modelQueueUtilization">Queue utilization (0-1)</label>
+              <input class="input input--mono" id="modelQueueUtilization" type="number" min="0" max="1" step="0.01" value="0.05" />
             </div>
             <div class="field">
-              <label for="modelConsecutiveFailures">Consecutive operational failures (0-20)</label>
-              <input id="modelConsecutiveFailures" type="number" min="0" max="20" step="1" value="0" />
+              <label class="field__label" for="modelConsecutiveFailures">Consecutive operational failures (0-20)</label>
+              <input class="input input--mono" id="modelConsecutiveFailures" type="number" min="0" max="20" step="1" value="0" />
             </div>
             <div class="field">
-              <label for="modelSecondsSinceSuccess">Seconds since last operational success (0-86400)</label>
-              <input id="modelSecondsSinceSuccess" type="number" min="0" max="86400" step="1" value="10" />
+              <label class="field__label" for="modelSecondsSinceSuccess">Seconds since last operational success (0-86400)</label>
+              <input class="input input--mono" id="modelSecondsSinceSuccess" type="number" min="0" max="86400" step="1" value="10" />
             </div>
           </div>
           <div class="actions">
-            <button id="checkModel" class="secondary" type="button">Check model</button>
-            <button id="scoreModel" type="button">Evaluate advisory</button>
+            <button id="checkModel" class="btn btn-secondary" type="button">Check model</button>
+            <button id="scoreModel" class="btn btn-secondary" type="button">Evaluate advisory</button>
           </div>
-          <div class="output" style="margin-top: 16px; min-height: 130px;"><h3>Advisory</h3><pre id="modelOutput">Not evaluated.</pre></div>
+          <div class="output output--advisory"><h3>Advisory</h3><pre id="modelOutput">Not evaluated.</pre></div>
           <p class="privacy">
             Enter operational counters only. The endpoint rejects extra,
             identity-like, HL7, FHIR, patient, order, specimen, and result fields.
@@ -446,7 +424,7 @@
         <article class="card">
           <div class="card-head">
             <div>
-              <h2>Roche cobas Liat TLS listener preset</h2>
+              <h2 class="card-title">Roche cobas Liat TLS listener preset</h2>
               <p>
                 Configured from Roche Host Interface Manual v11.3 for software
                 3.4/3.5. Exact device, software, region, certificate, network,
@@ -478,42 +456,42 @@
           <div class="transport-layout">
             <div class="fields">
               <div class="field">
-                <label for="transportId">Transport ID</label>
-                <input id="transportId" value="roche-liat-live-shadow" spellcheck="false" />
+                <label class="field__label" for="transportId">Transport ID</label>
+                <input class="input input--mono" id="transportId" value="roche-liat-live-shadow" spellcheck="false" />
               </div>
               <div class="field">
-                <label for="transportKind">Adapter profile</label>
-                <input id="transportKind" value="roche-cobas-liat-v2.0" readonly />
+                <label class="field__label" for="transportKind">Adapter profile</label>
+                <input class="input input--mono" id="transportKind" value="roche-cobas-liat-v2.0" readonly />
               </div>
               <div class="field">
-                <label for="bindHost">Bind host</label>
-                <input id="bindHost" value="127.0.0.1" spellcheck="false" />
+                <label class="field__label" for="bindHost">Bind host</label>
+                <input class="input input--mono" id="bindHost" value="127.0.0.1" spellcheck="false" />
               </div>
               <div class="field">
-                <label for="bindPort">Bind port</label>
-                <input id="bindPort" type="number" min="1" max="65535" value="2100" />
+                <label class="field__label" for="bindPort">Bind port</label>
+                <input class="input input--mono" id="bindPort" type="number" min="1" max="65535" value="2100" />
               </div>
               <div class="field full">
-                <label for="allowedPeers">Allowed analyzer peer IPs</label>
-                <textarea id="allowedPeers" spellcheck="false">127.0.0.1</textarea>
+                <label class="field__label" for="allowedPeers">Allowed analyzer peer IPs</label>
+                <textarea class="input input--mono" id="allowedPeers" spellcheck="false">127.0.0.1</textarea>
                 <p class="field-note">Literal IPv4/IPv6 addresses only, separated by lines or commas.</p>
               </div>
               <div class="field full">
-                <label for="bindingDir">Deidentified binding registry directory</label>
-                <input id="bindingDir" value="clinical-gateway/fixtures/live-shadow-bindings" spellcheck="false" />
+                <label class="field__label" for="bindingDir">Deidentified binding registry directory</label>
+                <input class="input input--mono" id="bindingDir" value="clinical-gateway/fixtures/live-shadow-bindings" spellcheck="false" />
                 <p class="field-note">Existing server-side directory. Hashed binding files never enter this page.</p>
               </div>
               <div class="field">
-                <label for="tlsCert">TLS server certificate path</label>
-                <input id="tlsCert" value="clinical-gateway/site-config/tls/server.crt" spellcheck="false" />
+                <label class="field__label" for="tlsCert">TLS server certificate path</label>
+                <input class="input input--mono" id="tlsCert" value="clinical-gateway/site-config/tls/server.crt" spellcheck="false" />
               </div>
               <div class="field">
-                <label for="tlsKey">TLS server private-key path</label>
-                <input id="tlsKey" value="clinical-gateway/site-config/tls/server.key" spellcheck="false" />
+                <label class="field__label" for="tlsKey">TLS server private-key path</label>
+                <input class="input input--mono" id="tlsKey" value="clinical-gateway/site-config/tls/server.key" spellcheck="false" />
               </div>
               <div class="field full">
-                <label for="tlsCa">Optional client-certificate CA path</label>
-                <input id="tlsCa" placeholder="Leave empty unless the site validates mTLS" spellcheck="false" />
+                <label class="field__label" for="tlsCa">Optional client-certificate CA path</label>
+                <input class="input input--mono" id="tlsCa" placeholder="Leave empty unless the site validates mTLS" spellcheck="false" />
               </div>
               <div class="field">
                 <div class="check">
@@ -544,10 +522,10 @@
           </div>
 
           <div class="actions">
-            <button id="startTransport" type="button">Start listener</button>
-            <button id="transportStatus" class="secondary" type="button">Refresh status</button>
-            <button id="listTransports" class="secondary" type="button">List transports</button>
-            <button id="stopTransport" class="danger" type="button">Stop listener</button>
+            <button id="startTransport" class="btn btn-secondary" type="button">Start listener</button>
+            <button id="transportStatus" class="btn btn-secondary" type="button">Refresh status</button>
+            <button id="listTransports" class="btn btn-secondary" type="button">List transports</button>
+            <button id="stopTransport" class="btn btn-secondary btn-danger" type="button">Stop listener</button>
           </div>
 
           <p class="privacy">
@@ -562,7 +540,7 @@
         <article class="card">
           <div class="card-head">
             <div>
-              <h2>Operational evidence</h2>
+              <h2 class="card-title">Operational evidence</h2>
               <p>Only bounded control metadata is rendered; clinical-content keys are withheld.</p>
             </div>
           </div>

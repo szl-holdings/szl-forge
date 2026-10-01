@@ -1,0 +1,9 @@
+# CPU validation environment only, not a GPU training or production lockfile.
+# Install torch==2.10.0 separately from the official CPU index in a fresh venv.
+fastapi==0.141.1
+uvicorn==0.54.0
+httpx==0.28.1
+safetensors==0.8.0
+pytest==9.1.1
+# SafeTensors Torch serialization imports NumPy; keep the clean CI lane complete.
+numpy==2.4.6

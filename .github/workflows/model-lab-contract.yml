@@ -1,0 +1,69 @@
+name: Model Lab source and blueprint contract
+
+on:
+  pull_request:
+    paths: ['model-lab/**', '.github/workflows/model-lab-contract.yml']
+  push:
+    branches: [main]
+    paths: ['model-lab/**', '.github/workflows/model-lab-contract.yml']
+  workflow_dispatch: {}
+
+# Source and contract checks only. This workflow holds no Hugging Face write path:
+# the proposed Router and Invariant model ids were never created on the Hub
+# (catalog hub_state NOT_PUBLISHED), so the dispatch-only blueprint publisher that
+# could create them was removed. A future Hub target needs one committed writer
+# per asset (HF upgrade plan D1), added deliberately, not a latent create path.
+
+permissions:
+  contents: read
+
+concurrency:
+  group: model-lab-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Model Lab tests (${{ matrix.python }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.11', '3.12']
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install isolated CPU test dependencies
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          python -m pip --version > reports/model-lab-bootstrap.txt
+          python -m pip freeze > reports/model-lab-initial-environment.txt
+          python -m pip install 'torch==2.14.0+cpu' --index-url https://download.pytorch.org/whl/cpu --report reports/model-lab-torch-install.json
+          python -m pip install -c model-lab/constraints-test.txt -e 'model-lab[test]' --report reports/model-lab-install.json
+          python -m pip check
+          python -m pip freeze > reports/model-lab-environment.txt
+      - name: Exercise source, API, UI and negative publication contracts
+        run: python -m pytest -q -c model-lab/pyproject.toml model-lab/tests --junitxml=reports/model-lab-tests.xml
+      - name: Build code-only plans without credentials or Hub requests
+        env:
+          PYTHONPATH: model-lab/src
+        run: |
+          set -euo pipefail
+          python -m szl_model_lab.blueprints --track router --source-revision "${GITHUB_SHA}" --report reports/router-plan.json
+          python -m szl_model_lab.blueprints --track invariant --source-revision "${GITHUB_SHA}" --report reports/invariant-plan.json
+      - name: Preserve scoped test evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: model-lab-tests-${{ matrix.python }}-${{ github.run_id }}
+          path: |
+            reports/model-lab-*
+            reports/router-plan.json
+            reports/invariant-plan.json
+          if-no-files-found: error
+          retention-days: 30

@@ -80,3 +80,14 @@ shows a net gain without governance or quality regression.
 
 This is an integration contract and executable boundary, not proof that any model
 is qualified or that a live deployment has changed.
+
+## Bounded research feedback
+
+[`experiments/research-cycle/`](experiments/research-cycle/README.md) adds a
+development-only proposal/evaluation loop to this package. Its
+`GovernedProposer` reuses `governed_infer` and refuses blocked, abstaining or
+review-required output. A fixed evaluator grades three typed retrieval
+parameters, preserves unsuccessful attempts and assesses one development-selected
+candidate. Public synthetic results, unsigned integrity records and a local
+evidence page do not qualify models, admit training, authorize tools or publish
+anything. Existing model gates and A11oy admission remain unchanged.

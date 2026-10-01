@@ -1,0 +1,10 @@
+{
+  "schema": "szl.forge.postpublish-eval.v1",
+  "model": "brain-navigator-r2",
+  "repo": "SZLHOLDINGS/brain-navigator-r2",
+  "revision": "ad510c4b05429acb862b216718f098ace6d05af3",
+  "status": "HELDOUT_EXECUTION_FAIL",
+  "heldoutStderr": "::error::run_heldout: cannot execute held-out prompts (no --results; transformers run failed: Unrecognized model in Qwen/Qwen3.5-0.8B. Should have a `model_type` key in its config.json.). Fail-closed: no eval, no publication.\n",
+  "heldoutStdout": "",
+  "productionAuthorization": false
+}

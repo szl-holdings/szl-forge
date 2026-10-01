@@ -1,0 +1,11 @@
+{
+  "schema": "szl.a11oy-mini-gguf-gate/v1",
+  "model": "a11oy-mini-r2 (Q4_K_M GGUF of chaski-r2 winner)",
+  "runtime": "ollama (temp 0, num_ctx 4096, im_start/im_end stops)",
+  "held_out": "chaski/gate/json_drafts.n5.jsonl + chaski/gate/adversarial_refusals.n6.jsonl (hash-bound to canonical receipt dataset_hashes)",
+  "json_draft": "5/5",
+  "adversarial_refuse": "6/6",
+  "label": "MEASURED",
+  "claim_boundary": "GGUF-level gate via ollama, a different runtime than the adapter bakeoff; scores apply to the Q4_K_M artifact only. Chaski lineage publication_eligible stays false.",
+  "measured_utc": "2026-09-17T17:37:04Z"
+}

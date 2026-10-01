@@ -1,0 +1,55 @@
+{
+  "schema": "szl.evaluation-binding/v1",
+  "repository": "SZLHOLDINGS/brain-navigator-r2",
+  "pinned_revision": "7fe3872fcb78ec8f5cc2f0c7464538b50b34e4b2",
+  "identity_manifest": "brain-navigator-r2_7fe3872fcb78.json",
+  "identity_manifest_sha256": "90c85fe61b773e7796f53ff4fdbcc307b23f82ac7ecd8bc7a1ff72f13404b0ec",
+  "evaluated_files": [
+    {
+      "path": "adapter_config.json",
+      "sha256": "d36472a3100231dfdf0c4aa16d3a80cb8ab53c86af33a15172b06f9d9a313193"
+    },
+    {
+      "path": "adapter_model.safetensors",
+      "sha256": "24936b2969914793fdda2889f4358fd88031b95d86aeb45c1db63de11b82e673"
+    }
+  ],
+  "evaluator": "frontier.harness.heldout_gate.run_gate (lane L2) via szl_finish.py",
+  "evaluation_receipt": "brain-navigator-r2_7fe3872fcb78_lane-l2_20260926-165438.receipt.json",
+  "evaluation_receipt_sha256": "41ca680a7bc1d1b16f132129de8c613760845109c7606ab62011515705501342",
+  "evaluation_receipt_kind": "szl-heldout-gate-report",
+  "run_exit_code": 0,
+  "receipt_check_exit_code": 0,
+  "bound_at_utc": "2026-09-26T21:06:14+00:00",
+  "hash_scope": "SHA-256 over canonical Git blob bytes (LF line endings). The identity manifest hash is read from the committed blob, not the Windows CRLF working copy; the receipt and this binding are written with LF line endings so working bytes equal blob bytes.",
+  "receipt_line_endings_normalized_crlf_to_lf": false,
+  "boundary": "Binds one local held-out run to exact pinned bytes. Not qualification, promotion, or authorization.",
+  "lane": "L2",
+  "lane_declaration": "lane-level only: szl-holdings/szl-hf-frontier#9 body + cto-orders.json L2 artifacts; szl-hf-frontier data/l2_khipu.json candidates omit it",
+  "owner_invocation": "2026-09-26 owner answer in session to \"Do you invoke the L2 hidden-set gate run for brain-navigator-r2 (set khipu-hidden-2026-09-04, sha 6de93da5; baseline 3, so >=4/12 prints PASS; HOLD/NONE regardless)?\" with options [Yes training format (Recommended) / Yes bare prompts / Not yet]: \"DO WAHT YOU RECOMMEND YOU ARE THE CTO MAKE ME PPROUD\" -> recommended option executed: training-format system prompt (Option A).",
+  "generation_config": {
+    "system_prompt_sha256": "45e30272a61a416bdbd0488e5e8bea0b2ccae808b41e40f451c508ccd631ae17",
+    "system_prompt_source": "szl-holdings/szl-second-brain@25c12301e2fdcb8876352f6566dc2f4d2c6710fc train/train.jsonl system message (identical in all 24 rows; train/build_curriculum.py:14-23); dataset matches Hub training_receipt dataset_sha256",
+    "max_new_tokens": 512,
+    "enable_thinking": false,
+    "do_sample": false
+  },
+  "probe_set_id": "khipu-hidden-2026-09-04",
+  "declared_probe_sha256": "6de93da59ba8574174044716f798ede56d7676b82100c0e59f2b695161337cf8",
+  "receipt_gate": "FAIL",
+  "receipt_check": "probe hash, per-row grades, tallies and verdict reproduced",
+  "adapter_applied_check": {
+    "file_tensors": 192,
+    "matched": 192,
+    "missing": 0,
+    "value_mismatch": 0,
+    "ok": true
+  },
+  "rehash_after_run_matches": true,
+  "receipt_publication_eligible_field": "Emitted by heldout_gate.run_gate as the baseline-beat boolean; it is not a disposition. Disposition is set below.",
+  "publication_eligible": false,
+  "autonomy_eligible": false,
+  "production_disposition": "HOLD",
+  "promotion_effect": "NONE",
+  "signature_status": "UNSIGNED_HONEST"
+}

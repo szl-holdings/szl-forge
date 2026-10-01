@@ -1,0 +1,2819 @@
+[
+  {
+    "id": "SZLHOLDINGS/szl-blocked",
+    "repository_type": "model",
+    "revision": "730a238648ac69aa2a69c11428e06354c48d09e2",
+    "repository_record": {
+      "file_count": 23,
+      "id": "SZLHOLDINGS/szl-blocked",
+      "kind": "models",
+      "metadata": {
+        "_id": "6a3c0995570ae39aea59f960",
+        "author": "SZLHOLDINGS",
+        "cardData": {
+          "library_name": "kernels",
+          "license": "apache-2.0",
+          "szl-governance": {
+            "annex_iv": "DRAFT skeleton auto-derived from provenance — NOT legal advice, NOT a conformity guarantee",
+            "doctrine": "hard DENY dominates; advisory Λ can only tighten, never override; a BLOCKED op never executes — no fake-green",
+            "energy": "MEASURED-only",
+            "honest_blocked": "BLOCKED is a first-class governed state; fn is NEVER called on block",
+            "lambda": "Conjecture 1 (open) — a recorded ALLOW is never proven trust",
+            "verdict": "HONEST-BLOCKED"
+          },
+          "tags": [
+            "kernel",
+            "eu-ai-act",
+            "compliance",
+            "annex-iv",
+            "governance",
+            "doi:10.5281/zenodo.19944926"
+          ]
+        },
+        "config": {},
+        "createdAt": "2026-06-24T16:45:09.000Z",
+        "disabled": false,
+        "downloads": 0,
+        "gated": false,
+        "id": "SZLHOLDINGS/szl-blocked",
+        "lastModified": "2026-09-28T21:01:54.000Z",
+        "library_name": "kernels",
+        "likes": 1,
+        "model-index": null,
+        "modelId": "SZLHOLDINGS/szl-blocked",
+        "private": false,
+        "sha": "730a238648ac69aa2a69c11428e06354c48d09e2",
+        "siblings": [
+          {
+            "rfilename": ".gitattributes"
+          },
+          {
+            "rfilename": "BENCH.laptop-blackwell.json"
+          },
+          {
+            "rfilename": "LICENSE"
+          },
+          {
+            "rfilename": "MODEL_PROVENANCE.json"
+          },
+          {
+            "rfilename": "OPERATIONAL.json"
+          },
+          {
+            "rfilename": "PROMOTION_READINESS_AUDIT.json"
+          },
+          {
+            "rfilename": "README.md"
+          },
+          {
+            "rfilename": "SECURITY.md"
+          },
+          {
+            "rfilename": "SZL_ESTATE_MANAGED.json"
+          },
+          {
+            "rfilename": "TRAINING_RECEIPT.json"
+          },
+          {
+            "rfilename": "bom/model-bom.cdx.json"
+          },
+          {
+            "rfilename": "build.toml"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_blocked/__init__.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_blocked/_chain.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_blocked/_gate.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_blocked/_rules.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_blocked/metadata.json"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_euaiact/__init__.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_euaiact/_annex_iv.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_euaiact/metadata.json"
+          },
+          {
+            "rfilename": "card/holo-banner.svg"
+          },
+          {
+            "rfilename": "scripts/eval.py"
+          },
+          {
+            "rfilename": "scripts/forge.py"
+          }
+        ],
+        "spaces": [
+          "SZLHOLDINGS/vertical-services"
+        ],
+        "tags": [
+          "kernels",
+          "kernel",
+          "eu-ai-act",
+          "compliance",
+          "annex-iv",
+          "governance",
+          "doi:10.5281/zenodo.19944926",
+          "license:apache-2.0",
+          "region:us"
+        ],
+        "usedStorage": 448832
+      },
+      "metadata_receipt": {
+        "completed_at": "2026-09-30T02:25:25.938924+00:00",
+        "final_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-blocked/revision/730a238648ac69aa2a69c11428e06354c48d09e2",
+        "observed_at": "2026-09-30T02:25:25.869410+00:00",
+        "requested_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-blocked/revision/730a238648ac69aa2a69c11428e06354c48d09e2",
+        "response_bytes": 2232,
+        "response_sha256": "e146ea99b22f36e7ff7ddb6128d175de5ab5e0a2640aa2a2bf172fef46e0baac",
+        "status": 200
+      },
+      "revision": "730a238648ac69aa2a69c11428e06354c48d09e2",
+      "tree_coverage": "COMPLETE_ACCESSIBLE_RESPONSE",
+      "tree_entries": 30,
+      "tree_pages": [
+        {
+          "completed_at": "2026-09-30T02:25:25.999004+00:00",
+          "final_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-blocked/tree/730a238648ac69aa2a69c11428e06354c48d09e2?recursive=true&expand=false&limit=100",
+          "next_url": null,
+          "observed_at": "2026-09-30T02:25:25.938924+00:00",
+          "requested_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-blocked/tree/730a238648ac69aa2a69c11428e06354c48d09e2?recursive=true&expand=false&limit=100",
+          "response_bytes": 3348,
+          "response_sha256": "d8164d291cc385908ac24a7c71d429fd3675fe3ddf003a15473cb86e048b40f0",
+          "status": 200
+        }
+      ]
+    },
+    "tree": [
+      {
+        "id": "SZLHOLDINGS/szl-blocked",
+        "kind": "models",
+        "oid": "a6344aac8c09253b3b630fb776ae94478aa0275b",
+        "path": ".gitattributes",
+        "revision": "730a238648ac69aa2a69c11428e06354c48d09e2",
+        "size": 1519,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-blocked",
+        "kind": "models",
+        "oid": "71f985aca0e6662b651d8ef8afb2c029e13204b9",
+        "path": "BENCH.laptop-blackwell.json",
+        "revision": "730a238648ac69aa2a69c11428e06354c48d09e2",
+        "size": 5477,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-blocked",
+        "kind": "models",
+        "oid": "f02122ea79cbad4d0137dfd71c7fba654ec1233e",
+        "path": "LICENSE",
+        "revision": "730a238648ac69aa2a69c11428e06354c48d09e2",
+        "size": 809,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-blocked",
+        "kind": "models",
+        "oid": "7f3a79ccc05aaf50088de2d621ed571d5168a979",
+        "path": "MODEL_PROVENANCE.json",
+        "revision": "730a238648ac69aa2a69c11428e06354c48d09e2",
+        "size": 2688,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-blocked",
+        "kind": "models",
+        "oid": "a19656f23631f031d782df2785d0b8bee4352575",
+        "path": "OPERATIONAL.json",
+        "revision": "730a238648ac69aa2a69c11428e06354c48d09e2",
+        "size": 1924,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-blocked",
+        "kind": "models",
+        "oid": "18f73d541400e6abc7826cf459e50e4a6f11f300",
+        "path": "PROMOTION_READINESS_AUDIT.json",
+        "revision": "730a238648ac69aa2a69c11428e06354c48d09e2",
+        "size": 12623,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-blocked",
+        "kind": "models",
+        "oid": "40988906d250b2ecf74d318bb22e92bea1549b93",
+        "path": "README.md",
+        "revision": "730a238648ac69aa2a69c11428e06354c48d09e2",
+        "size": 5609,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-blocked",
+        "kind": "models",
+        "oid": "550296f1e4910eb25fc7703c5b89a58f9305720b",
+        "path": "SECURITY.md",
+        "revision": "730a238648ac69aa2a69c11428e06354c48d09e2",
+        "size": 1256,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-blocked",
+        "kind": "models",
+        "oid": "7f526b6027f5b85f18d3eda92142973b3bae778a",
+        "path": "SZL_ESTATE_MANAGED.json",
+        "revision": "730a238648ac69aa2a69c11428e06354c48d09e2",
+        "size": 677,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-blocked",
+        "kind": "models",
+        "oid": "8cbada241c88958c3c18780af7808a487afe3e1c",
+        "path": "TRAINING_RECEIPT.json",
+        "revision": "730a238648ac69aa2a69c11428e06354c48d09e2",
+        "size": 2112,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-blocked",
+        "kind": "models",
+        "oid": "48ddd780146f571da1537b05bbaac5d8af589a9b",
+        "path": "bom",
+        "revision": "730a238648ac69aa2a69c11428e06354c48d09e2",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-blocked",
+        "kind": "models",
+        "oid": "952a1e77053070517ad86f91302d789c303fea63",
+        "path": "bom/model-bom.cdx.json",
+        "revision": "730a238648ac69aa2a69c11428e06354c48d09e2",
+        "size": 7980,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-blocked",
+        "kind": "models",
+        "oid": "045784b550f8ba331d9beb7521ff42157fc6552c",
+        "path": "build",
+        "revision": "730a238648ac69aa2a69c11428e06354c48d09e2",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-blocked",
+        "kind": "models",
+        "oid": "af22ed93eabff68438e274a09af9515141ef75d2",
+        "path": "build.toml",
+        "revision": "730a238648ac69aa2a69c11428e06354c48d09e2",
+        "size": 57,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-blocked",
+        "kind": "models",
+        "oid": "2dd4a6e3291ceae25e01c4a4dd7e539bddea37cb",
+        "path": "build/torch-universal",
+        "revision": "730a238648ac69aa2a69c11428e06354c48d09e2",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-blocked",
+        "kind": "models",
+        "oid": "6082f1ecbf9b99f687b55e55d00143f0f10ccbe7",
+        "path": "build/torch-universal/szl_blocked",
+        "revision": "730a238648ac69aa2a69c11428e06354c48d09e2",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-blocked",
+        "kind": "models",
+        "oid": "a0b93a8f52250c77d229dbad630cac350682ac9d",
+        "path": "build/torch-universal/szl_blocked/__init__.py",
+        "revision": "730a238648ac69aa2a69c11428e06354c48d09e2",
+        "size": 2873,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-blocked",
+        "kind": "models",
+        "oid": "ac395fa374c4f8c5547000d7f7d5ecd482069857",
+        "path": "build/torch-universal/szl_blocked/_chain.py",
+        "revision": "730a238648ac69aa2a69c11428e06354c48d09e2",
+        "size": 6685,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-blocked",
+        "kind": "models",
+        "oid": "d3237af0d53f91445adb4513faf4af65a83a76f0",
+        "path": "build/torch-universal/szl_blocked/_gate.py",
+        "revision": "730a238648ac69aa2a69c11428e06354c48d09e2",
+        "size": 19543,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-blocked",
+        "kind": "models",
+        "oid": "3b588d6a73dcbc582ad207094e783834351e4960",
+        "path": "build/torch-universal/szl_blocked/_rules.py",
+        "revision": "730a238648ac69aa2a69c11428e06354c48d09e2",
+        "size": 2979,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-blocked",
+        "kind": "models",
+        "oid": "48fcf89187b4324a9847b464d8ba011b5bc5dd15",
+        "path": "build/torch-universal/szl_blocked/metadata.json",
+        "revision": "730a238648ac69aa2a69c11428e06354c48d09e2",
+        "size": 528,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-blocked",
+        "kind": "models",
+        "oid": "7f4e5edcc4dd8aa2b37a197786ca8b52c531cd1f",
+        "path": "build/torch-universal/szl_euaiact",
+        "revision": "730a238648ac69aa2a69c11428e06354c48d09e2",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-blocked",
+        "kind": "models",
+        "oid": "31e1511e147b7175c32e139c72e4f65ea04c4665",
+        "path": "build/torch-universal/szl_euaiact/__init__.py",
+        "revision": "730a238648ac69aa2a69c11428e06354c48d09e2",
+        "size": 1577,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-blocked",
+        "kind": "models",
+        "oid": "ef2712b6c3030543aaaf2f5499f050a01e7f3423",
+        "path": "build/torch-universal/szl_euaiact/_annex_iv.py",
+        "revision": "730a238648ac69aa2a69c11428e06354c48d09e2",
+        "size": 21047,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-blocked",
+        "kind": "models",
+        "oid": "bb043e2e648e4d965949c72b269df57da4320119",
+        "path": "build/torch-universal/szl_euaiact/metadata.json",
+        "revision": "730a238648ac69aa2a69c11428e06354c48d09e2",
+        "size": 779,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-blocked",
+        "kind": "models",
+        "oid": "05fb89d59de16c6b67904711ea9b1fb06ec843af",
+        "path": "card",
+        "revision": "730a238648ac69aa2a69c11428e06354c48d09e2",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-blocked",
+        "kind": "models",
+        "oid": "8f0bb37803554312ba74df0a5786da0384c54d4f",
+        "path": "card/holo-banner.svg",
+        "revision": "730a238648ac69aa2a69c11428e06354c48d09e2",
+        "size": 2367,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-blocked",
+        "kind": "models",
+        "oid": "9b379addd91dd837cc153159301e354cddc213f9",
+        "path": "scripts",
+        "revision": "730a238648ac69aa2a69c11428e06354c48d09e2",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-blocked",
+        "kind": "models",
+        "oid": "8426873fd7b2b813dc27127f131141f501c94af2",
+        "path": "scripts/eval.py",
+        "revision": "730a238648ac69aa2a69c11428e06354c48d09e2",
+        "size": 1472,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-blocked",
+        "kind": "models",
+        "oid": "8ef1c6285ed7579615b70ac03c45b9573ac12051",
+        "path": "scripts/forge.py",
+        "revision": "730a238648ac69aa2a69c11428e06354c48d09e2",
+        "size": 8261,
+        "type": "file"
+      }
+    ],
+    "text_record": {
+      "content": {
+        "claims": {
+          "github_repository_parity": "NOT_CLAIMED",
+          "reproducible_build": "NOT_CLAIMED",
+          "serving_process_revision": "NOT_APPLICABLE_REPOSITORY_ARTIFACT",
+          "trained_model": "SURROGATE_PRESENT_MEASURED_FIDELITY"
+        },
+        "limits": [
+          "The 404 observation establishes only that no public same-name repository was reachable at the observation time; it does not make a claim about private repositories.",
+          "The attestation overlay cannot self-embed its resulting Hub commit, so the immutable artifact_base_revision is the measured pre-overlay base.",
+          "No .bin, .safetensors, .pt, .pth, .onnx, or .gguf weight artifact was present in the measured base tree."
+        ],
+        "model": {
+          "artifact_kind": "kernel-code-and-configuration",
+          "id": "SZLHOLDINGS/szl-blocked",
+          "repository_type": "model",
+          "stdlib_only_note": "kernel package itself stays stdlib-only; the OPTIONAL surrogate needs sklearn+joblib",
+          "surrogate": {
+            "fidelity_MEASURED": {
+              "fidelity_vs_kernel_heldout": 0.9977,
+              "per_class_recall": {
+                "ALLOW": 0.9963,
+                "BLOCK_ADVISORY": 0.9846,
+                "BLOCK_HARD": 1.0
+              }
+            },
+            "file": "model.joblib",
+            "receipt": "TRAINING_RECEIPT.json",
+            "reverify": "python scripts/eval.py",
+            "role": "BLOCK/ALLOW decision triage only — kernel policy chain remains sole ground truth",
+            "sha256": "15f0537cd323aff977ff3d5abec065f1144693fe0ab99d5cbd0961fe3b8e7610"
+          },
+          "trained_weights_present": true
+        },
+        "observed_at": "2026-07-12T00:27:14Z",
+        "public_github": {
+          "card_reference_role": "SPECIFICATION_OR_RESEARCH_CONTEXT_NOT_BUILD_SOURCE",
+          "card_references": [
+            "https://github.com/szl-holdings/governed-receipt-spec",
+            "https://github.com/szl-holdings/szl-papers/blob/main/PAPERS_INDEX.md"
+          ],
+          "same_name_candidate": "https://github.com/szl-holdings/szl-blocked",
+          "same_name_candidate_http_status": 404,
+          "state": "NO_DIRECT_PUBLIC_IMPLEMENTATION_OBSERVED"
+        },
+        "schema": "szl.model-source-attestation/v1",
+        "source_of_record": {
+          "artifact_base_revision": "ea595bfe2898425365cf71da5edf9901d4de525c",
+          "artifact_base_state": "MEASURED_PRE_ATTESTATION_BASE",
+          "artifact_base_url": "https://huggingface.co/SZLHOLDINGS/szl-blocked/tree/ea595bfe2898425365cf71da5edf9901d4de525c",
+          "file_count": 13,
+          "platform": "huggingface",
+          "repository": "SZLHOLDINGS/szl-blocked",
+          "state": "VERIFIED_HF_SOURCE_OF_RECORD",
+          "tree_hash_algorithm": "sha256 of UTF-8 path + NUL + per-file sha256 + LF, sorted by path; .cache excluded",
+          "tree_sha256": "149cfe5686ffcff20fd726ba7488afaf7d652401b3a00af193077ae226b9e3bc"
+        }
+      },
+      "id": "SZLHOLDINGS/szl-blocked",
+      "kind": "models",
+      "path": "MODEL_PROVENANCE.json",
+      "receipt": {
+        "completed_at": "2026-09-30T02:25:26.107438+00:00",
+        "final_url": "https://huggingface.co/api/resolve-cache/models/SZLHOLDINGS/szl-blocked/730a238648ac69aa2a69c11428e06354c48d09e2/MODEL_PROVENANCE.json?%2FSZLHOLDINGS%2Fszl-blocked%2Fresolve%2F730a238648ac69aa2a69c11428e06354c48d09e2%2FMODEL_PROVENANCE.json=&etag=%227f3a79ccc05aaf50088de2d621ed571d5168a979%22",
+        "observed_at": "2026-09-30T02:25:25.999004+00:00",
+        "requested_url": "https://huggingface.co/SZLHOLDINGS/szl-blocked/resolve/730a238648ac69aa2a69c11428e06354c48d09e2/MODEL_PROVENANCE.json",
+        "response_bytes": 2688,
+        "response_sha256": "afdb5ed6666cabf443b31f8d77e84babfcad9eceb1edc73db2ba356fbd67694a",
+        "status": 200
+      },
+      "revision": "730a238648ac69aa2a69c11428e06354c48d09e2"
+    },
+    "original_bytes_base64": "ewogICJzY2hlbWEiOiAic3psLm1vZGVsLXNvdXJjZS1hdHRlc3RhdGlvbi92MSIsCiAgIm9ic2VydmVkX2F0IjogIjIwMjYtMDctMTJUMDA6Mjc6MTRaIiwKICAibW9kZWwiOiB7CiAgICAiaWQiOiAiU1pMSE9MRElOR1Mvc3psLWJsb2NrZWQiLAogICAgInJlcG9zaXRvcnlfdHlwZSI6ICJtb2RlbCIsCiAgICAiYXJ0aWZhY3Rfa2luZCI6ICJrZXJuZWwtY29kZS1hbmQtY29uZmlndXJhdGlvbiIsCiAgICAidHJhaW5lZF93ZWlnaHRzX3ByZXNlbnQiOiB0cnVlLAogICAgInN1cnJvZ2F0ZSI6IHsKICAgICAgImZpbGUiOiAibW9kZWwuam9ibGliIiwKICAgICAgInNoYTI1NiI6ICIxNWYwNTM3Y2QzMjNhZmY5NzdmZjNkNWFiZWMwNjVmMTE0NDY5M2ZlMGFiOTlkNWNiZDA5NjFmZTNiOGU3NjEwIiwKICAgICAgInJvbGUiOiAiQkxPQ0svQUxMT1cgZGVjaXNpb24gdHJpYWdlIG9ubHkgXHUyMDE0IGtlcm5lbCBwb2xpY3kgY2hhaW4gcmVtYWlucyBzb2xlIGdyb3VuZCB0cnV0aCIsCiAgICAgICJmaWRlbGl0eV9NRUFTVVJFRCI6IHsKICAgICAgICAiZmlkZWxpdHlfdnNfa2VybmVsX2hlbGRvdXQiOiAwLjk5NzcsCiAgICAgICAgInBlcl9jbGFzc19yZWNhbGwiOiB7CiAgICAgICAgICAiQUxMT1ciOiAwLjk5NjMsCiAgICAgICAgICAiQkxPQ0tfSEFSRCI6IDEuMCwKICAgICAgICAgICJCTE9DS19BRFZJU09SWSI6IDAuOTg0NgogICAgICAgIH0KICAgICAgfSwKICAgICAgInJlY2VpcHQiOiAiVFJBSU5JTkdfUkVDRUlQVC5qc29uIiwKICAgICAgInJldmVyaWZ5IjogInB5dGhvbiBzY3JpcHRzL2V2YWwucHkiCiAgICB9LAogICAgInN0ZGxpYl9vbmx5X25vdGUiOiAia2VybmVsIHBhY2thZ2UgaXRzZWxmIHN0YXlzIHN0ZGxpYi1vbmx5OyB0aGUgT1BUSU9OQUwgc3Vycm9nYXRlIG5lZWRzIHNrbGVhcm4ram9ibGliIgogIH0sCiAgInNvdXJjZV9vZl9yZWNvcmQiOiB7CiAgICAic3RhdGUiOiAiVkVSSUZJRURfSEZfU09VUkNFX09GX1JFQ09SRCIsCiAgICAicGxhdGZvcm0iOiAiaHVnZ2luZ2ZhY2UiLAogICAgInJlcG9zaXRvcnkiOiAiU1pMSE9MRElOR1Mvc3psLWJsb2NrZWQiLAogICAgImFydGlmYWN0X2Jhc2VfcmV2aXNpb24iOiAiZWE1OTViZmUyODk4NDI1MzY1Y2Y3MWRhNWVkZjk5MDFkNGRlNTI1YyIsCiAgICAiYXJ0aWZhY3RfYmFzZV9zdGF0ZSI6ICJNRUFTVVJFRF9QUkVfQVRURVNUQVRJT05fQkFTRSIsCiAgICAiYXJ0aWZhY3RfYmFzZV91cmwiOiAiaHR0cHM6Ly9odWdnaW5nZmFjZS5jby9TWkxIT0xESU5HUy9zemwtYmxvY2tlZC90cmVlL2VhNTk1YmZlMjg5ODQyNTM2NWNmNzFkYTVlZGY5OTAxZDRkZTUyNWMiLAogICAgImZpbGVfY291bnQiOiAxMywKICAgICJ0cmVlX3NoYTI1NiI6ICIxNDljZmU1Njg2ZmZjZmYyMGZkNzI2YmE3NDg4YWZhZjdkNjUyNDAxYjNhMDBhZjE5MzA3N2FlMjI2YjllM2JjIiwKICAgICJ0cmVlX2hhc2hfYWxnb3JpdGhtIjogInNoYTI1NiBvZiBVVEYtOCBwYXRoICsgTlVMICsgcGVyLWZpbGUgc2hhMjU2ICsgTEYsIHNvcnRlZCBieSBwYXRoOyAuY2FjaGUgZXhjbHVkZWQiCiAgfSwKICAicHVibGljX2dpdGh1YiI6IHsKICAgICJzdGF0ZSI6ICJOT19ESVJFQ1RfUFVCTElDX0lNUExFTUVOVEFUSU9OX09CU0VSVkVEIiwKICAgICJzYW1lX25hbWVfY2FuZGlkYXRlIjogImh0dHBzOi8vZ2l0aHViLmNvbS9zemwtaG9sZGluZ3Mvc3psLWJsb2NrZWQiLAogICAgInNhbWVfbmFtZV9jYW5kaWRhdGVfaHR0cF9zdGF0dXMiOiA0MDQsCiAgICAiY2FyZF9yZWZlcmVuY2VzIjogWwogICAgICAiaHR0cHM6Ly9naXRodWIuY29tL3N6bC1ob2xkaW5ncy9nb3Zlcm5lZC1yZWNlaXB0LXNwZWMiLAogICAgICAiaHR0cHM6Ly9naXRodWIuY29tL3N6bC1ob2xkaW5ncy9zemwtcGFwZXJzL2Jsb2IvbWFpbi9QQVBFUlNfSU5ERVgubWQiCiAgICBdLAogICAgImNhcmRfcmVmZXJlbmNlX3JvbGUiOiAiU1BFQ0lGSUNBVElPTl9PUl9SRVNFQVJDSF9DT05URVhUX05PVF9CVUlMRF9TT1VSQ0UiCiAgfSwKICAiY2xhaW1zIjogewogICAgImdpdGh1Yl9yZXBvc2l0b3J5X3Bhcml0eSI6ICJOT1RfQ0xBSU1FRCIsCiAgICAicmVwcm9kdWNpYmxlX2J1aWxkIjogIk5PVF9DTEFJTUVEIiwKICAgICJ0cmFpbmVkX21vZGVsIjogIlNVUlJPR0FURV9QUkVTRU5UX01FQVNVUkVEX0ZJREVMSVRZIiwKICAgICJzZXJ2aW5nX3Byb2Nlc3NfcmV2aXNpb24iOiAiTk9UX0FQUExJQ0FCTEVfUkVQT1NJVE9SWV9BUlRJRkFDVCIKICB9LAogICJsaW1pdHMiOiBbCiAgICAiVGhlIDQwNCBvYnNlcnZhdGlvbiBlc3RhYmxpc2hlcyBvbmx5IHRoYXQgbm8gcHVibGljIHNhbWUtbmFtZSByZXBvc2l0b3J5IHdhcyByZWFjaGFibGUgYXQgdGhlIG9ic2VydmF0aW9uIHRpbWU7IGl0IGRvZXMgbm90IG1ha2UgYSBjbGFpbSBhYm91dCBwcml2YXRlIHJlcG9zaXRvcmllcy4iLAogICAgIlRoZSBhdHRlc3RhdGlvbiBvdmVybGF5IGNhbm5vdCBzZWxmLWVtYmVkIGl0cyByZXN1bHRpbmcgSHViIGNvbW1pdCwgc28gdGhlIGltbXV0YWJsZSBhcnRpZmFjdF9iYXNlX3JldmlzaW9uIGlzIHRoZSBtZWFzdXJlZCBwcmUtb3ZlcmxheSBiYXNlLiIsCiAgICAiTm8gLmJpbiwgLnNhZmV0ZW5zb3JzLCAucHQsIC5wdGgsIC5vbm54LCBvciAuZ2d1ZiB3ZWlnaHQgYXJ0aWZhY3Qgd2FzIHByZXNlbnQgaW4gdGhlIG1lYXN1cmVkIGJhc2UgdHJlZS4iCiAgXQp9"
+  },
+  {
+    "id": "SZLHOLDINGS/szl-formulas",
+    "repository_type": "model",
+    "revision": "5e4519bb648c47bc7eb4aea4ba5fe80d92570883",
+    "repository_record": {
+      "file_count": 20,
+      "id": "SZLHOLDINGS/szl-formulas",
+      "kind": "models",
+      "metadata": {
+        "_id": "6a53809b3df3832415431ca2",
+        "author": "SZLHOLDINGS",
+        "cardData": {
+          "library_name": "kernels",
+          "license": "apache-2.0",
+          "szl-governance": {
+            "honest_blocked": "PROOF_STATUS is mirrored verbatim; locked-proven canonical set is EXACTLY 8 (machine-enforced) — never inflated",
+            "lambda": "Conjecture 1 (open) — uniqueness unproven; composer Λ roll-up is ADVISORY only, never proven trust",
+            "provenance": "offline replay of SZLHOLDINGS/canonical-formulas-v1 — 21 pure formulas + the governed-loop composer",
+            "verdict": "ADVISORY"
+          },
+          "tags": [
+            "kernel",
+            "governance",
+            "formulas",
+            "proof-status",
+            "lean4",
+            "lambda-aggregate",
+            "doi:10.5281/zenodo.19944926"
+          ]
+        },
+        "config": {},
+        "createdAt": "2026-07-12T11:55:07.000Z",
+        "disabled": false,
+        "downloads": 0,
+        "gated": false,
+        "id": "SZLHOLDINGS/szl-formulas",
+        "lastModified": "2026-09-28T21:02:21.000Z",
+        "library_name": "kernels",
+        "likes": 0,
+        "model-index": null,
+        "modelId": "SZLHOLDINGS/szl-formulas",
+        "private": false,
+        "sha": "5e4519bb648c47bc7eb4aea4ba5fe80d92570883",
+        "siblings": [
+          {
+            "rfilename": ".gitattributes"
+          },
+          {
+            "rfilename": "BENCH.laptop-blackwell.json"
+          },
+          {
+            "rfilename": "LICENSE"
+          },
+          {
+            "rfilename": "MODEL_PROVENANCE.json"
+          },
+          {
+            "rfilename": "OPERATIONAL.json"
+          },
+          {
+            "rfilename": "PROMOTION_READINESS_AUDIT.json"
+          },
+          {
+            "rfilename": "README.md"
+          },
+          {
+            "rfilename": "SECURITY.md"
+          },
+          {
+            "rfilename": "SZL_ESTATE_MANAGED.json"
+          },
+          {
+            "rfilename": "TRAINING_RECEIPT.json"
+          },
+          {
+            "rfilename": "bom/model-bom.cdx.json"
+          },
+          {
+            "rfilename": "build.toml"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_formulas/__init__.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_formulas/_composer.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_formulas/_formulas.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_formulas/metadata.json"
+          },
+          {
+            "rfilename": "card/holo-banner.svg"
+          },
+          {
+            "rfilename": "scripts/eval.py"
+          },
+          {
+            "rfilename": "scripts/forge.py"
+          },
+          {
+            "rfilename": "tests/test_formulas.py"
+          }
+        ],
+        "spaces": [],
+        "tags": [
+          "kernels",
+          "kernel",
+          "governance",
+          "formulas",
+          "proof-status",
+          "lean4",
+          "lambda-aggregate",
+          "doi:10.5281/zenodo.19944926",
+          "license:apache-2.0",
+          "region:us"
+        ],
+        "usedStorage": 3403360
+      },
+      "metadata_receipt": {
+        "completed_at": "2026-09-30T02:25:26.308671+00:00",
+        "final_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-formulas/revision/5e4519bb648c47bc7eb4aea4ba5fe80d92570883",
+        "observed_at": "2026-09-30T02:25:26.247272+00:00",
+        "requested_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-formulas/revision/5e4519bb648c47bc7eb4aea4ba5fe80d92570883",
+        "response_bytes": 1977,
+        "response_sha256": "1cfd9b022b29b59ddf064cb4ce55eac62fc5772bf5539e6c732d81511e0ca751",
+        "status": 200
+      },
+      "revision": "5e4519bb648c47bc7eb4aea4ba5fe80d92570883",
+      "tree_coverage": "COMPLETE_ACCESSIBLE_RESPONSE",
+      "tree_entries": 27,
+      "tree_pages": [
+        {
+          "completed_at": "2026-09-30T02:25:26.381980+00:00",
+          "final_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-formulas/tree/5e4519bb648c47bc7eb4aea4ba5fe80d92570883?recursive=true&expand=false&limit=100",
+          "next_url": null,
+          "observed_at": "2026-09-30T02:25:26.308671+00:00",
+          "requested_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-formulas/tree/5e4519bb648c47bc7eb4aea4ba5fe80d92570883?recursive=true&expand=false&limit=100",
+          "response_bytes": 2914,
+          "response_sha256": "5f62e921ddb8cb1cde2d38f687d46279c13020e15a0194cbbf3406d466d92f8a",
+          "status": 200
+        }
+      ]
+    },
+    "tree": [
+      {
+        "id": "SZLHOLDINGS/szl-formulas",
+        "kind": "models",
+        "oid": "a6344aac8c09253b3b630fb776ae94478aa0275b",
+        "path": ".gitattributes",
+        "revision": "5e4519bb648c47bc7eb4aea4ba5fe80d92570883",
+        "size": 1519,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-formulas",
+        "kind": "models",
+        "oid": "c61f4aab98acbd5f6cd0f382dc31d33c0b1ec1cb",
+        "path": "BENCH.laptop-blackwell.json",
+        "revision": "5e4519bb648c47bc7eb4aea4ba5fe80d92570883",
+        "size": 6952,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-formulas",
+        "kind": "models",
+        "oid": "7c317ba373932bf7f56ab969a3698aa3468811be",
+        "path": "LICENSE",
+        "revision": "5e4519bb648c47bc7eb4aea4ba5fe80d92570883",
+        "size": 776,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-formulas",
+        "kind": "models",
+        "oid": "260f8ce579d132e1b9ecbb50b452fcf2c2b5a72b",
+        "path": "MODEL_PROVENANCE.json",
+        "revision": "5e4519bb648c47bc7eb4aea4ba5fe80d92570883",
+        "size": 3894,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-formulas",
+        "kind": "models",
+        "oid": "83599f7a34bf8265b3f3a5d386bf9affbd71830f",
+        "path": "OPERATIONAL.json",
+        "revision": "5e4519bb648c47bc7eb4aea4ba5fe80d92570883",
+        "size": 1927,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-formulas",
+        "kind": "models",
+        "oid": "2fa2cc8c1226d4d855deaff3849ca2d41d2528cb",
+        "path": "PROMOTION_READINESS_AUDIT.json",
+        "revision": "5e4519bb648c47bc7eb4aea4ba5fe80d92570883",
+        "size": 13319,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-formulas",
+        "kind": "models",
+        "oid": "c100c1c0a39b0f70890a4ff8d310ebf22e8b41bb",
+        "path": "README.md",
+        "revision": "5e4519bb648c47bc7eb4aea4ba5fe80d92570883",
+        "size": 5708,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-formulas",
+        "kind": "models",
+        "oid": "ce9ae957e8376904ae1e18383804640c286dcd74",
+        "path": "SECURITY.md",
+        "revision": "5e4519bb648c47bc7eb4aea4ba5fe80d92570883",
+        "size": 1829,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-formulas",
+        "kind": "models",
+        "oid": "44e7c0a004d4bf8a1f1245561c855e7a0baa9804",
+        "path": "SZL_ESTATE_MANAGED.json",
+        "revision": "5e4519bb648c47bc7eb4aea4ba5fe80d92570883",
+        "size": 678,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-formulas",
+        "kind": "models",
+        "oid": "17576d0943e83797ae07baec99181c07344cd1d9",
+        "path": "TRAINING_RECEIPT.json",
+        "revision": "5e4519bb648c47bc7eb4aea4ba5fe80d92570883",
+        "size": 5072,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-formulas",
+        "kind": "models",
+        "oid": "5936ed9355cd3f6bedccfdd464fce0180a998181",
+        "path": "bom",
+        "revision": "5e4519bb648c47bc7eb4aea4ba5fe80d92570883",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-formulas",
+        "kind": "models",
+        "oid": "2ba6284ad3d2d4e0a3c1b038beefb99a027ee0ee",
+        "path": "bom/model-bom.cdx.json",
+        "revision": "5e4519bb648c47bc7eb4aea4ba5fe80d92570883",
+        "size": 6846,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-formulas",
+        "kind": "models",
+        "oid": "afea64dd084eed0be0637711eff9fed20850eeca",
+        "path": "build",
+        "revision": "5e4519bb648c47bc7eb4aea4ba5fe80d92570883",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-formulas",
+        "kind": "models",
+        "oid": "5c283664480212c8416819d3a77619049f8c01db",
+        "path": "build.toml",
+        "revision": "5e4519bb648c47bc7eb4aea4ba5fe80d92570883",
+        "size": 58,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-formulas",
+        "kind": "models",
+        "oid": "892fa9d390f960b0e1ab2319007da93ba147a071",
+        "path": "build/torch-universal",
+        "revision": "5e4519bb648c47bc7eb4aea4ba5fe80d92570883",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-formulas",
+        "kind": "models",
+        "oid": "5e84d5c9ee56152a4020f7904800fb9a05c83d8e",
+        "path": "build/torch-universal/szl_formulas",
+        "revision": "5e4519bb648c47bc7eb4aea4ba5fe80d92570883",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-formulas",
+        "kind": "models",
+        "oid": "1ddbe0f54a35dc64c2f52dbbe78db94eca98c538",
+        "path": "build/torch-universal/szl_formulas/__init__.py",
+        "revision": "5e4519bb648c47bc7eb4aea4ba5fe80d92570883",
+        "size": 9315,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-formulas",
+        "kind": "models",
+        "oid": "a037a16c25d8f4a95117d99168eaf6bbd73c6cda",
+        "path": "build/torch-universal/szl_formulas/_composer.py",
+        "revision": "5e4519bb648c47bc7eb4aea4ba5fe80d92570883",
+        "size": 6598,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-formulas",
+        "kind": "models",
+        "oid": "6dab79824ba2dc5e65f44bc0f34ee02c2e6bbad1",
+        "path": "build/torch-universal/szl_formulas/_formulas.py",
+        "revision": "5e4519bb648c47bc7eb4aea4ba5fe80d92570883",
+        "size": 14404,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-formulas",
+        "kind": "models",
+        "oid": "1fcd81562856a884c8d0bea95ee76d51483b8842",
+        "path": "build/torch-universal/szl_formulas/metadata.json",
+        "revision": "5e4519bb648c47bc7eb4aea4ba5fe80d92570883",
+        "size": 1015,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-formulas",
+        "kind": "models",
+        "oid": "6baaea67ae6fee5e9ea7d9a27f9cd6fc62b27d8d",
+        "path": "card",
+        "revision": "5e4519bb648c47bc7eb4aea4ba5fe80d92570883",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-formulas",
+        "kind": "models",
+        "oid": "0d9d53235a844c2dcaf47714665180c48e9ffb53",
+        "path": "card/holo-banner.svg",
+        "revision": "5e4519bb648c47bc7eb4aea4ba5fe80d92570883",
+        "size": 4113,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-formulas",
+        "kind": "models",
+        "oid": "5e32812e359aa0f491445f8c87d731b0cadb3dd5",
+        "path": "scripts",
+        "revision": "5e4519bb648c47bc7eb4aea4ba5fe80d92570883",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-formulas",
+        "kind": "models",
+        "oid": "bceed575ec8ed07b90018853f59f22a69cc31afd",
+        "path": "scripts/eval.py",
+        "revision": "5e4519bb648c47bc7eb4aea4ba5fe80d92570883",
+        "size": 1568,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-formulas",
+        "kind": "models",
+        "oid": "480ebd2bdeec5e39c76f3288a0b4e8580495ea9d",
+        "path": "scripts/forge.py",
+        "revision": "5e4519bb648c47bc7eb4aea4ba5fe80d92570883",
+        "size": 13137,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-formulas",
+        "kind": "models",
+        "oid": "187ea96476169bfc0c5bc8b5c34e5950d467454e",
+        "path": "tests",
+        "revision": "5e4519bb648c47bc7eb4aea4ba5fe80d92570883",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-formulas",
+        "kind": "models",
+        "oid": "509248895ff826b0a2ebf6ee456c598f3401916b",
+        "path": "tests/test_formulas.py",
+        "revision": "5e4519bb648c47bc7eb4aea4ba5fe80d92570883",
+        "size": 6626,
+        "type": "file"
+      }
+    ],
+    "text_record": {
+      "content": {
+        "claims": {
+          "reproducible_build": "NOT_CLAIMED",
+          "trained_model": "CLAIMED — sklearn HistGradientBoostingClassifier, MEASURED, receipted",
+          "weights_present": "model.joblib (sklearn surrogate; kernel stays weightless)"
+        },
+        "lambda": {
+          "composer_role": "ADVISORY only — non-compensatory roll-up, NOT proven trust",
+          "definition": "weighted geometric mean (D2)",
+          "status": "Conjecture 1 (open) — uniqueness unproven (Uniqueness.lean:120 sorry)"
+        },
+        "limits": [
+          "The trained surrogate is a fast formula IDENTIFIER from trace shape; it does NOT replace the kernel's real evaluators, which remain authoritative for formula identity.",
+          "Some formulas share an argument+output observable signature and are confusable from trace shape alone; these blind spots are MEASURED and stated in TRAINING_RECEIPT.json.",
+          "The 21 formulas are pure/no-I/O; the composer performs no network access.",
+          "PROOF_STATUS labels are the dataset's obligation-level declarations, not upgraded here.",
+          "Locked-proven canonical set is fixed at exactly 8 and never inflated.",
+          "The composer's Λ roll-up does not prove or upgrade Λ, which stays Conjecture 1 (open)."
+        ],
+        "mirrors": {
+          "canonical_dataset": "SZLHOLDINGS/canonical-formulas-v1 (code/python/formulas.py + composer.py)",
+          "doi_concept": "10.5281/zenodo.19944926",
+          "doi_lutar_lean": "10.5281/zenodo.20434308",
+          "lean_repo": "szl-holdings/lutar-lean"
+        },
+        "model": {
+          "artifact_kind": "kernel-code-and-configuration + trained surrogate (model.joblib)",
+          "id": "SZLHOLDINGS/szl-formulas",
+          "repository_type": "model",
+          "stdlib_only": false,
+          "stdlib_only_note": "kernel package itself stays stdlib-only; the OPTIONAL surrogate needs sklearn+joblib",
+          "surrogate": {
+            "fidelity_MEASURED": {
+              "blind_spot_classes_recall_lt_0.90": {
+                "bohr_complementarity_floor": 0.7778,
+                "fisher_rao_distance": 0.8889,
+                "pinsker_kl_bound": 0.8833,
+                "schur_concave_lambda_two_axis": 0.85
+              },
+              "mean_per_class_recall": 0.9709,
+              "test_accuracy_21_class": 0.9709
+            },
+            "file": "model.joblib",
+            "receipt": "TRAINING_RECEIPT.json",
+            "reverify": "python scripts/eval.py",
+            "role": "21-class formula identifier from call-trace observables — kernel remains sole ground truth",
+            "sha256": "94cca70dc950fa957c0931ee80240c4369cab0ff8446ffbfedb483c3e2907698"
+          },
+          "torch_required": false,
+          "trained_weights_present": true
+        },
+        "proof_status": {
+          "f_number_to_registry_mapping": "UNKNOWN — lutar-lean corpus (>=22 formulas) is a separate numbering; mapping onto these 21 registry entries is NOT asserted here (never fabricated)",
+          "locked_count_theorem": "locked_count_eight (no-axiom, szl-holdings/lutar-lean PROVEN_FORMULAS.md)",
+          "locked_proven_count": 8,
+          "locked_proven_ids": [
+            "F1",
+            "F4",
+            "F7",
+            "F11",
+            "F12",
+            "F18",
+            "F19",
+            "F22"
+          ],
+          "obligation_vs_locked": "a per-formula PROVEN(...) tag is an obligation-level label, NOT membership in the locked-proven canonical set",
+          "policy": "mirrored VERBATIM from SZLHOLDINGS/canonical-formulas-v1 (PROVEN/AXIOM/SORRY/CONJECTURE)"
+        },
+        "schema": "szl.model-source-attestation/v1",
+        "source_of_record": {
+          "platform": "huggingface",
+          "repository": "SZLHOLDINGS/szl-formulas",
+          "state": "VERIFIED_HF_SOURCE_OF_RECORD"
+        },
+        "verification": {
+          "falsifiability": "registry must be exactly 21; locked-proven set must be exactly 8; PROOF_STATUS must match the dataset verbatim and raises on unknown names; Λ zero-pins on a zero axis; a tampered receipt fails verify_chain; a sub-floor Λ halts the governed loop",
+          "tests": "17/17 passed",
+          "tests_basis": "MEASURED local python3 -m pytest run, stdlib-only, offline"
+        }
+      },
+      "id": "SZLHOLDINGS/szl-formulas",
+      "kind": "models",
+      "path": "MODEL_PROVENANCE.json",
+      "receipt": {
+        "completed_at": "2026-09-30T02:25:26.511775+00:00",
+        "final_url": "https://huggingface.co/api/resolve-cache/models/SZLHOLDINGS/szl-formulas/5e4519bb648c47bc7eb4aea4ba5fe80d92570883/MODEL_PROVENANCE.json?%2FSZLHOLDINGS%2Fszl-formulas%2Fresolve%2F5e4519bb648c47bc7eb4aea4ba5fe80d92570883%2FMODEL_PROVENANCE.json=&etag=%22260f8ce579d132e1b9ecbb50b452fcf2c2b5a72b%22",
+        "observed_at": "2026-09-30T02:25:26.381980+00:00",
+        "requested_url": "https://huggingface.co/SZLHOLDINGS/szl-formulas/resolve/5e4519bb648c47bc7eb4aea4ba5fe80d92570883/MODEL_PROVENANCE.json",
+        "response_bytes": 3894,
+        "response_sha256": "9d556d9adb7c8e3347785b7d2e9664c61d190b0ede920c64cab8f4069aaf8682",
+        "status": 200
+      },
+      "revision": "5e4519bb648c47bc7eb4aea4ba5fe80d92570883"
+    },
+    "original_bytes_base64": "ewogICJzY2hlbWEiOiAic3psLm1vZGVsLXNvdXJjZS1hdHRlc3RhdGlvbi92MSIsCiAgIm1vZGVsIjogewogICAgImlkIjogIlNaTEhPTERJTkdTL3N6bC1mb3JtdWxhcyIsCiAgICAicmVwb3NpdG9yeV90eXBlIjogIm1vZGVsIiwKICAgICJhcnRpZmFjdF9raW5kIjogImtlcm5lbC1jb2RlLWFuZC1jb25maWd1cmF0aW9uICsgdHJhaW5lZCBzdXJyb2dhdGUgKG1vZGVsLmpvYmxpYikiLAogICAgInRyYWluZWRfd2VpZ2h0c19wcmVzZW50IjogdHJ1ZSwKICAgICJzdGRsaWJfb25seSI6IGZhbHNlLAogICAgInRvcmNoX3JlcXVpcmVkIjogZmFsc2UsCiAgICAic3Vycm9nYXRlIjogewogICAgICAiZmlsZSI6ICJtb2RlbC5qb2JsaWIiLAogICAgICAic2hhMjU2IjogIjk0Y2NhNzBkYzk1MGZhOTU3YzA5MzFlZTgwMjQwYzQzNjljYWIwZmY4NDQ2ZmZiZmVkYjQ4M2MzZTI5MDc2OTgiLAogICAgICAicm9sZSI6ICIyMS1jbGFzcyBmb3JtdWxhIGlkZW50aWZpZXIgZnJvbSBjYWxsLXRyYWNlIG9ic2VydmFibGVzIFx1MjAxNCBrZXJuZWwgcmVtYWlucyBzb2xlIGdyb3VuZCB0cnV0aCIsCiAgICAgICJmaWRlbGl0eV9NRUFTVVJFRCI6IHsKICAgICAgICAidGVzdF9hY2N1cmFjeV8yMV9jbGFzcyI6IDAuOTcwOSwKICAgICAgICAibWVhbl9wZXJfY2xhc3NfcmVjYWxsIjogMC45NzA5LAogICAgICAgICJibGluZF9zcG90X2NsYXNzZXNfcmVjYWxsX2x0XzAuOTAiOiB7CiAgICAgICAgICAiYm9ocl9jb21wbGVtZW50YXJpdHlfZmxvb3IiOiAwLjc3NzgsCiAgICAgICAgICAiZmlzaGVyX3Jhb19kaXN0YW5jZSI6IDAuODg4OSwKICAgICAgICAgICJwaW5za2VyX2tsX2JvdW5kIjogMC44ODMzLAogICAgICAgICAgInNjaHVyX2NvbmNhdmVfbGFtYmRhX3R3b19heGlzIjogMC44NQogICAgICAgIH0KICAgICAgfSwKICAgICAgInJlY2VpcHQiOiAiVFJBSU5JTkdfUkVDRUlQVC5qc29uIiwKICAgICAgInJldmVyaWZ5IjogInB5dGhvbiBzY3JpcHRzL2V2YWwucHkiCiAgICB9LAogICAgInN0ZGxpYl9vbmx5X25vdGUiOiAia2VybmVsIHBhY2thZ2UgaXRzZWxmIHN0YXlzIHN0ZGxpYi1vbmx5OyB0aGUgT1BUSU9OQUwgc3Vycm9nYXRlIG5lZWRzIHNrbGVhcm4ram9ibGliIgogIH0sCiAgInNvdXJjZV9vZl9yZWNvcmQiOiB7CiAgICAic3RhdGUiOiAiVkVSSUZJRURfSEZfU09VUkNFX09GX1JFQ09SRCIsCiAgICAicGxhdGZvcm0iOiAiaHVnZ2luZ2ZhY2UiLAogICAgInJlcG9zaXRvcnkiOiAiU1pMSE9MRElOR1Mvc3psLWZvcm11bGFzIgogIH0sCiAgIm1pcnJvcnMiOiB7CiAgICAiY2Fub25pY2FsX2RhdGFzZXQiOiAiU1pMSE9MRElOR1MvY2Fub25pY2FsLWZvcm11bGFzLXYxIChjb2RlL3B5dGhvbi9mb3JtdWxhcy5weSArIGNvbXBvc2VyLnB5KSIsCiAgICAibGVhbl9yZXBvIjogInN6bC1ob2xkaW5ncy9sdXRhci1sZWFuIiwKICAgICJkb2lfbHV0YXJfbGVhbiI6ICIxMC41MjgxL3plbm9kby4yMDQzNDMwOCIsCiAgICAiZG9pX2NvbmNlcHQiOiAiMTAuNTI4MS96ZW5vZG8uMTk5NDQ5MjYiCiAgfSwKICAidmVyaWZpY2F0aW9uIjogewogICAgInRlc3RzIjogIjE3LzE3IHBhc3NlZCIsCiAgICAidGVzdHNfYmFzaXMiOiAiTUVBU1VSRUQgbG9jYWwgcHl0aG9uMyAtbSBweXRlc3QgcnVuLCBzdGRsaWItb25seSwgb2ZmbGluZSIsCiAgICAiZmFsc2lmaWFiaWxpdHkiOiAicmVnaXN0cnkgbXVzdCBiZSBleGFjdGx5IDIxOyBsb2NrZWQtcHJvdmVuIHNldCBtdXN0IGJlIGV4YWN0bHkgODsgUFJPT0ZfU1RBVFVTIG11c3QgbWF0Y2ggdGhlIGRhdGFzZXQgdmVyYmF0aW0gYW5kIHJhaXNlcyBvbiB1bmtub3duIG5hbWVzOyBcdTAzOWIgemVyby1waW5zIG9uIGEgemVybyBheGlzOyBhIHRhbXBlcmVkIHJlY2VpcHQgZmFpbHMgdmVyaWZ5X2NoYWluOyBhIHN1Yi1mbG9vciBcdTAzOWIgaGFsdHMgdGhlIGdvdmVybmVkIGxvb3AiCiAgfSwKICAicHJvb2Zfc3RhdHVzIjogewogICAgInBvbGljeSI6ICJtaXJyb3JlZCBWRVJCQVRJTSBmcm9tIFNaTEhPTERJTkdTL2Nhbm9uaWNhbC1mb3JtdWxhcy12MSAoUFJPVkVOL0FYSU9NL1NPUlJZL0NPTkpFQ1RVUkUpIiwKICAgICJvYmxpZ2F0aW9uX3ZzX2xvY2tlZCI6ICJhIHBlci1mb3JtdWxhIFBST1ZFTiguLi4pIHRhZyBpcyBhbiBvYmxpZ2F0aW9uLWxldmVsIGxhYmVsLCBOT1QgbWVtYmVyc2hpcCBpbiB0aGUgbG9ja2VkLXByb3ZlbiBjYW5vbmljYWwgc2V0IiwKICAgICJsb2NrZWRfcHJvdmVuX2NvdW50IjogOCwKICAgICJsb2NrZWRfcHJvdmVuX2lkcyI6IFsKICAgICAgIkYxIiwKICAgICAgIkY0IiwKICAgICAgIkY3IiwKICAgICAgIkYxMSIsCiAgICAgICJGMTIiLAogICAgICAiRjE4IiwKICAgICAgIkYxOSIsCiAgICAgICJGMjIiCiAgICBdLAogICAgImxvY2tlZF9jb3VudF90aGVvcmVtIjogImxvY2tlZF9jb3VudF9laWdodCAobm8tYXhpb20sIHN6bC1ob2xkaW5ncy9sdXRhci1sZWFuIFBST1ZFTl9GT1JNVUxBUy5tZCkiLAogICAgImZfbnVtYmVyX3RvX3JlZ2lzdHJ5X21hcHBpbmciOiAiVU5LTk9XTiBcdTIwMTQgbHV0YXItbGVhbiBjb3JwdXMgKD49MjIgZm9ybXVsYXMpIGlzIGEgc2VwYXJhdGUgbnVtYmVyaW5nOyBtYXBwaW5nIG9udG8gdGhlc2UgMjEgcmVnaXN0cnkgZW50cmllcyBpcyBOT1QgYXNzZXJ0ZWQgaGVyZSAobmV2ZXIgZmFicmljYXRlZCkiCiAgfSwKICAibGFtYmRhIjogewogICAgInN0YXR1cyI6ICJDb25qZWN0dXJlIDEgKG9wZW4pIFx1MjAxNCB1bmlxdWVuZXNzIHVucHJvdmVuIChVbmlxdWVuZXNzLmxlYW46MTIwIHNvcnJ5KSIsCiAgICAiZGVmaW5pdGlvbiI6ICJ3ZWlnaHRlZCBnZW9tZXRyaWMgbWVhbiAoRDIpIiwKICAgICJjb21wb3Nlcl9yb2xlIjogIkFEVklTT1JZIG9ubHkgXHUyMDE0IG5vbi1jb21wZW5zYXRvcnkgcm9sbC11cCwgTk9UIHByb3ZlbiB0cnVzdCIKICB9LAogICJjbGFpbXMiOiB7CiAgICAidHJhaW5lZF9tb2RlbCI6ICJDTEFJTUVEIFx1MjAxNCBza2xlYXJuIEhpc3RHcmFkaWVudEJvb3N0aW5nQ2xhc3NpZmllciwgTUVBU1VSRUQsIHJlY2VpcHRlZCIsCiAgICAicmVwcm9kdWNpYmxlX2J1aWxkIjogIk5PVF9DTEFJTUVEIiwKICAgICJ3ZWlnaHRzX3ByZXNlbnQiOiAibW9kZWwuam9ibGliIChza2xlYXJuIHN1cnJvZ2F0ZTsga2VybmVsIHN0YXlzIHdlaWdodGxlc3MpIgogIH0sCiAgImxpbWl0cyI6IFsKICAgICJUaGUgdHJhaW5lZCBzdXJyb2dhdGUgaXMgYSBmYXN0IGZvcm11bGEgSURFTlRJRklFUiBmcm9tIHRyYWNlIHNoYXBlOyBpdCBkb2VzIE5PVCByZXBsYWNlIHRoZSBrZXJuZWwncyByZWFsIGV2YWx1YXRvcnMsIHdoaWNoIHJlbWFpbiBhdXRob3JpdGF0aXZlIGZvciBmb3JtdWxhIGlkZW50aXR5LiIsCiAgICAiU29tZSBmb3JtdWxhcyBzaGFyZSBhbiBhcmd1bWVudCtvdXRwdXQgb2JzZXJ2YWJsZSBzaWduYXR1cmUgYW5kIGFyZSBjb25mdXNhYmxlIGZyb20gdHJhY2Ugc2hhcGUgYWxvbmU7IHRoZXNlIGJsaW5kIHNwb3RzIGFyZSBNRUFTVVJFRCBhbmQgc3RhdGVkIGluIFRSQUlOSU5HX1JFQ0VJUFQuanNvbi4iLAogICAgIlRoZSAyMSBmb3JtdWxhcyBhcmUgcHVyZS9uby1JL087IHRoZSBjb21wb3NlciBwZXJmb3JtcyBubyBuZXR3b3JrIGFjY2Vzcy4iLAogICAgIlBST09GX1NUQVRVUyBsYWJlbHMgYXJlIHRoZSBkYXRhc2V0J3Mgb2JsaWdhdGlvbi1sZXZlbCBkZWNsYXJhdGlvbnMsIG5vdCB1cGdyYWRlZCBoZXJlLiIsCiAgICAiTG9ja2VkLXByb3ZlbiBjYW5vbmljYWwgc2V0IGlzIGZpeGVkIGF0IGV4YWN0bHkgOCBhbmQgbmV2ZXIgaW5mbGF0ZWQuIiwKICAgICJUaGUgY29tcG9zZXIncyBcdTAzOWIgcm9sbC11cCBkb2VzIG5vdCBwcm92ZSBvciB1cGdyYWRlIFx1MDM5Yiwgd2hpY2ggc3RheXMgQ29uamVjdHVyZSAxIChvcGVuKS4iCiAgXQp9"
+  },
+  {
+    "id": "SZLHOLDINGS/szl-govsign",
+    "repository_type": "model",
+    "revision": "13ce04b3b3e490e9bee6453df7f83fdcf0f3b5c9",
+    "repository_record": {
+      "file_count": 20,
+      "id": "SZLHOLDINGS/szl-govsign",
+      "kind": "models",
+      "metadata": {
+        "_id": "6a3c0995b8dc3a457baa8222",
+        "author": "SZLHOLDINGS",
+        "cardData": {
+          "library_name": "kernels",
+          "license": "apache-2.0",
+          "szl-governance": {
+            "energy": "MEASURED-only (label constrained structurally)",
+            "honest_blocked": "a BLOCKED verdict is signed as BLOCKED — never flipped",
+            "lambda": "Conjecture 1 (open) — signature never upgrades advisory to proven trust",
+            "predicate_type": "https://szl.holdings/governance/v1",
+            "verdict": "SIGNED-ATTESTATION"
+          },
+          "tags": [
+            "kernel",
+            "signing",
+            "attestation",
+            "dsse",
+            "in-toto",
+            "governance",
+            "doi:10.5281/zenodo.19944926"
+          ]
+        },
+        "config": {},
+        "createdAt": "2026-06-24T16:45:09.000Z",
+        "disabled": false,
+        "downloads": 0,
+        "gated": false,
+        "id": "SZLHOLDINGS/szl-govsign",
+        "lastModified": "2026-09-28T21:02:47.000Z",
+        "library_name": "kernels",
+        "likes": 0,
+        "model-index": null,
+        "modelId": "SZLHOLDINGS/szl-govsign",
+        "private": false,
+        "sha": "13ce04b3b3e490e9bee6453df7f83fdcf0f3b5c9",
+        "siblings": [
+          {
+            "rfilename": ".gitattributes"
+          },
+          {
+            "rfilename": "BENCH.laptop-blackwell.json"
+          },
+          {
+            "rfilename": "LICENSE"
+          },
+          {
+            "rfilename": "MODEL_PROVENANCE.json"
+          },
+          {
+            "rfilename": "PROMOTION_READINESS_AUDIT.json"
+          },
+          {
+            "rfilename": "README.md"
+          },
+          {
+            "rfilename": "SECURITY.md"
+          },
+          {
+            "rfilename": "SZL_ESTATE_MANAGED.json"
+          },
+          {
+            "rfilename": "TRAINING_RECEIPT.json"
+          },
+          {
+            "rfilename": "bom/model-bom.cdx.json"
+          },
+          {
+            "rfilename": "build.toml"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_govsign/__init__.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_govsign/envelope.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_govsign/metadata.json"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_govsign/pae.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_govsign/predicate.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_govsign/selfcheck.py"
+          },
+          {
+            "rfilename": "card/holo-banner.svg"
+          },
+          {
+            "rfilename": "scripts/eval.py"
+          },
+          {
+            "rfilename": "scripts/forge.py"
+          }
+        ],
+        "spaces": [],
+        "tags": [
+          "kernels",
+          "kernel",
+          "signing",
+          "attestation",
+          "dsse",
+          "in-toto",
+          "governance",
+          "doi:10.5281/zenodo.19944926",
+          "license:apache-2.0",
+          "region:us"
+        ],
+        "usedStorage": 1060512
+      },
+      "metadata_receipt": {
+        "completed_at": "2026-09-30T02:25:26.722345+00:00",
+        "final_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-govsign/revision/13ce04b3b3e490e9bee6453df7f83fdcf0f3b5c9",
+        "observed_at": "2026-09-30T02:25:26.636855+00:00",
+        "requested_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-govsign/revision/13ce04b3b3e490e9bee6453df7f83fdcf0f3b5c9",
+        "response_bytes": 1914,
+        "response_sha256": "c5d5fdc2fed2eb63b51574370f14558f2df2a7dfdb3e022246ff76b55fa98dcb",
+        "status": 200
+      },
+      "revision": "13ce04b3b3e490e9bee6453df7f83fdcf0f3b5c9",
+      "tree_coverage": "COMPLETE_ACCESSIBLE_RESPONSE",
+      "tree_entries": 26,
+      "tree_pages": [
+        {
+          "completed_at": "2026-09-30T02:25:26.794314+00:00",
+          "final_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-govsign/tree/13ce04b3b3e490e9bee6453df7f83fdcf0f3b5c9?recursive=true&expand=false&limit=100",
+          "next_url": null,
+          "observed_at": "2026-09-30T02:25:26.722345+00:00",
+          "requested_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-govsign/tree/13ce04b3b3e490e9bee6453df7f83fdcf0f3b5c9?recursive=true&expand=false&limit=100",
+          "response_bytes": 2860,
+          "response_sha256": "5e8816be39ba76a01207d3ff842b4a4fa00eb12b396818569b345f4d8c564538",
+          "status": 200
+        }
+      ]
+    },
+    "tree": [
+      {
+        "id": "SZLHOLDINGS/szl-govsign",
+        "kind": "models",
+        "oid": "a6344aac8c09253b3b630fb776ae94478aa0275b",
+        "path": ".gitattributes",
+        "revision": "13ce04b3b3e490e9bee6453df7f83fdcf0f3b5c9",
+        "size": 1519,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-govsign",
+        "kind": "models",
+        "oid": "635f7029e1520f2f8050262ba3f5f43b4b456710",
+        "path": "BENCH.laptop-blackwell.json",
+        "revision": "13ce04b3b3e490e9bee6453df7f83fdcf0f3b5c9",
+        "size": 1869,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-govsign",
+        "kind": "models",
+        "oid": "f02122ea79cbad4d0137dfd71c7fba654ec1233e",
+        "path": "LICENSE",
+        "revision": "13ce04b3b3e490e9bee6453df7f83fdcf0f3b5c9",
+        "size": 809,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-govsign",
+        "kind": "models",
+        "oid": "db7f1e5c8fd9a2888b8a199b29b5d3edc214e293",
+        "path": "MODEL_PROVENANCE.json",
+        "revision": "13ce04b3b3e490e9bee6453df7f83fdcf0f3b5c9",
+        "size": 3340,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-govsign",
+        "kind": "models",
+        "oid": "b22e8241c28209cebfb270d5d486ab161b4457ea",
+        "path": "PROMOTION_READINESS_AUDIT.json",
+        "revision": "13ce04b3b3e490e9bee6453df7f83fdcf0f3b5c9",
+        "size": 12587,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-govsign",
+        "kind": "models",
+        "oid": "538a79fc274fd68212a47723972c01d6b050c537",
+        "path": "README.md",
+        "revision": "13ce04b3b3e490e9bee6453df7f83fdcf0f3b5c9",
+        "size": 3074,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-govsign",
+        "kind": "models",
+        "oid": "17948bacc5b9eb577d15c8518bc637102646e62d",
+        "path": "SECURITY.md",
+        "revision": "13ce04b3b3e490e9bee6453df7f83fdcf0f3b5c9",
+        "size": 1256,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-govsign",
+        "kind": "models",
+        "oid": "31421be6cb87dd6ecfd47ecfccb33e2c478b906b",
+        "path": "SZL_ESTATE_MANAGED.json",
+        "revision": "13ce04b3b3e490e9bee6453df7f83fdcf0f3b5c9",
+        "size": 677,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-govsign",
+        "kind": "models",
+        "oid": "8035dff5e3ea2ed163b56d1cf4075f98db74bb16",
+        "path": "TRAINING_RECEIPT.json",
+        "revision": "13ce04b3b3e490e9bee6453df7f83fdcf0f3b5c9",
+        "size": 3411,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-govsign",
+        "kind": "models",
+        "oid": "d59e8c923b19fd3e3f837c8d20d677f45d8da1a4",
+        "path": "bom",
+        "revision": "13ce04b3b3e490e9bee6453df7f83fdcf0f3b5c9",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-govsign",
+        "kind": "models",
+        "oid": "f7a213cc994eae837757d0c7381b1b44c36cdcc2",
+        "path": "bom/model-bom.cdx.json",
+        "revision": "13ce04b3b3e490e9bee6453df7f83fdcf0f3b5c9",
+        "size": 6659,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-govsign",
+        "kind": "models",
+        "oid": "6246e2b90360f9a5bf0630adc2ad6c2d9c3345c2",
+        "path": "build",
+        "revision": "13ce04b3b3e490e9bee6453df7f83fdcf0f3b5c9",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-govsign",
+        "kind": "models",
+        "oid": "513992b39c726d70d56f54f2385f012dafcab2e5",
+        "path": "build.toml",
+        "revision": "13ce04b3b3e490e9bee6453df7f83fdcf0f3b5c9",
+        "size": 57,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-govsign",
+        "kind": "models",
+        "oid": "a6c9bf76ac9b7953ff1b61e7cf0fe0333bd1e901",
+        "path": "build/torch-universal",
+        "revision": "13ce04b3b3e490e9bee6453df7f83fdcf0f3b5c9",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-govsign",
+        "kind": "models",
+        "oid": "98ff3df01877e4a1fe10a61c15bb8bdf92e2a84a",
+        "path": "build/torch-universal/szl_govsign",
+        "revision": "13ce04b3b3e490e9bee6453df7f83fdcf0f3b5c9",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-govsign",
+        "kind": "models",
+        "oid": "54e9c7934b08858c6b683ef81064a52dee165fe0",
+        "path": "build/torch-universal/szl_govsign/__init__.py",
+        "revision": "13ce04b3b3e490e9bee6453df7f83fdcf0f3b5c9",
+        "size": 1845,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-govsign",
+        "kind": "models",
+        "oid": "ded0ff7c31dfcd5dfad72b60da41869033ce5857",
+        "path": "build/torch-universal/szl_govsign/envelope.py",
+        "revision": "13ce04b3b3e490e9bee6453df7f83fdcf0f3b5c9",
+        "size": 5375,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-govsign",
+        "kind": "models",
+        "oid": "b7edb1da3b7cd7b4749b2693c5c5e7f57210ca5b",
+        "path": "build/torch-universal/szl_govsign/metadata.json",
+        "revision": "13ce04b3b3e490e9bee6453df7f83fdcf0f3b5c9",
+        "size": 521,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-govsign",
+        "kind": "models",
+        "oid": "4cee0d66bf1112e9f0b76d8a3475538a55b905f6",
+        "path": "build/torch-universal/szl_govsign/pae.py",
+        "revision": "13ce04b3b3e490e9bee6453df7f83fdcf0f3b5c9",
+        "size": 1206,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-govsign",
+        "kind": "models",
+        "oid": "3627d5aeb3229692bf1b845c7e1765afba6e578c",
+        "path": "build/torch-universal/szl_govsign/predicate.py",
+        "revision": "13ce04b3b3e490e9bee6453df7f83fdcf0f3b5c9",
+        "size": 5419,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-govsign",
+        "kind": "models",
+        "oid": "20898e67d8a3ff2ad657129222e8cd3d6b5afc38",
+        "path": "build/torch-universal/szl_govsign/selfcheck.py",
+        "revision": "13ce04b3b3e490e9bee6453df7f83fdcf0f3b5c9",
+        "size": 3906,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-govsign",
+        "kind": "models",
+        "oid": "61ec86d5e18a67f615266c287da4105b21a07c83",
+        "path": "card",
+        "revision": "13ce04b3b3e490e9bee6453df7f83fdcf0f3b5c9",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-govsign",
+        "kind": "models",
+        "oid": "1d805cb1d717488393d18e453c2c8c2151bfb0ca",
+        "path": "card/holo-banner.svg",
+        "revision": "13ce04b3b3e490e9bee6453df7f83fdcf0f3b5c9",
+        "size": 1839,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-govsign",
+        "kind": "models",
+        "oid": "52cf0814a0d147a476d59f6a52ac9943018fbcd8",
+        "path": "scripts",
+        "revision": "13ce04b3b3e490e9bee6453df7f83fdcf0f3b5c9",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-govsign",
+        "kind": "models",
+        "oid": "cd1875863e2d0a7828b31bb352e2c7074cd66302",
+        "path": "scripts/eval.py",
+        "revision": "13ce04b3b3e490e9bee6453df7f83fdcf0f3b5c9",
+        "size": 1622,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-govsign",
+        "kind": "models",
+        "oid": "19b51451a5a099d65d623272084124dac19d52ea",
+        "path": "scripts/forge.py",
+        "revision": "13ce04b3b3e490e9bee6453df7f83fdcf0f3b5c9",
+        "size": 13179,
+        "type": "file"
+      }
+    ],
+    "text_record": {
+      "content": {
+        "claims": {
+          "github_repository_parity": "NOT_CLAIMED",
+          "reproducible_build": "NOT_CLAIMED",
+          "serving_process_revision": "NOT_APPLICABLE_REPOSITORY_ARTIFACT",
+          "trained_model": "CLAIMED — sklearn HistGradientBoostingClassifier structural pre-filter, MEASURED, receipted (does NOT perform or replace cryptographic verification)"
+        },
+        "limits": [
+          "The trained surrogate is a STRUCTURAL PRE-FILTER ONLY. Passing it is NOT cryptographic verification; only the kernel's ECDSA-P256 verify() establishes validity.",
+          "MEASURED crypto blind spot: sig-tamper recall ≈ chance — a byte-flipped signature is structurally identical to a valid envelope and is invisible to the pre-filter (by design).",
+          "The 404 observation establishes only that no public same-name repository was reachable at the observation time; it does not make a claim about private repositories.",
+          "The attestation overlay cannot self-embed its resulting Hub commit, so the immutable artifact_base_revision is the measured pre-overlay base.",
+          "No .bin, .safetensors, .pt, .pth, .onnx, or .gguf weight artifact was present in the measured base tree."
+        ],
+        "model": {
+          "artifact_kind": "kernel-code-and-configuration + trained structural pre-filter (model.joblib)",
+          "id": "SZLHOLDINGS/szl-govsign",
+          "repository_type": "model",
+          "surrogate": {
+            "fidelity_MEASURED": {
+              "crypto_blind_spot_sig_tamper_recall": 0.0111,
+              "test_accuracy_all_classes": 0.8888,
+              "test_accuracy_structural_only": 1.0
+            },
+            "file": "model.joblib",
+            "honesty_note": "kernel stays stdlib+cryptography (crypto verification unchanged); the OPTIONAL surrogate needs sklearn+joblib and performs NO cryptographic verification.",
+            "receipt": "TRAINING_RECEIPT.json",
+            "reverify": "python scripts/eval.py",
+            "role": "STRUCTURAL validity PRE-FILTER ONLY — NEVER replaces cryptographic verification; a pre-filter PASS is NOT verified. The kernel's ECDSA-P256 verify() is the sole authority.",
+            "sha256": "d8e91c01adcf4b661860ecbce8029527fd8819e3951aab8b2fe48e84f8112a10"
+          },
+          "trained_weights_present": true
+        },
+        "observed_at": "2026-07-12T00:27:14Z",
+        "public_github": {
+          "card_reference_role": "SPECIFICATION_OR_RESEARCH_CONTEXT_NOT_BUILD_SOURCE",
+          "card_references": [
+            "https://github.com/szl-holdings/governed-receipt-spec",
+            "https://github.com/szl-holdings/szl-papers/blob/main/PAPERS_INDEX.md"
+          ],
+          "same_name_candidate": "https://github.com/szl-holdings/szl-govsign",
+          "same_name_candidate_http_status": 404,
+          "state": "NO_DIRECT_PUBLIC_IMPLEMENTATION_OBSERVED"
+        },
+        "schema": "szl.model-source-attestation/v1",
+        "source_of_record": {
+          "artifact_base_revision": "7da2da8fe5db425609af0fddc4e93b00c05b8f74",
+          "artifact_base_state": "MEASURED_PRE_ATTESTATION_BASE",
+          "artifact_base_url": "https://huggingface.co/SZLHOLDINGS/szl-govsign/tree/7da2da8fe5db425609af0fddc4e93b00c05b8f74",
+          "file_count": 11,
+          "platform": "huggingface",
+          "repository": "SZLHOLDINGS/szl-govsign",
+          "state": "VERIFIED_HF_SOURCE_OF_RECORD",
+          "tree_hash_algorithm": "sha256 of UTF-8 path + NUL + per-file sha256 + LF, sorted by path; .cache excluded",
+          "tree_sha256": "8ce4e93033e11e22b051c0ad38198cb0c787ad375627ee7bf8a3b3b172ed75f2"
+        }
+      },
+      "id": "SZLHOLDINGS/szl-govsign",
+      "kind": "models",
+      "path": "MODEL_PROVENANCE.json",
+      "receipt": {
+        "completed_at": "2026-09-30T02:25:26.917334+00:00",
+        "final_url": "https://huggingface.co/api/resolve-cache/models/SZLHOLDINGS/szl-govsign/13ce04b3b3e490e9bee6453df7f83fdcf0f3b5c9/MODEL_PROVENANCE.json?%2FSZLHOLDINGS%2Fszl-govsign%2Fresolve%2F13ce04b3b3e490e9bee6453df7f83fdcf0f3b5c9%2FMODEL_PROVENANCE.json=&etag=%22db7f1e5c8fd9a2888b8a199b29b5d3edc214e293%22",
+        "observed_at": "2026-09-30T02:25:26.795312+00:00",
+        "requested_url": "https://huggingface.co/SZLHOLDINGS/szl-govsign/resolve/13ce04b3b3e490e9bee6453df7f83fdcf0f3b5c9/MODEL_PROVENANCE.json",
+        "response_bytes": 3340,
+        "response_sha256": "ad6fedcfd255db0d109c8dc522bd107df50da25ac4174cb68c01586ad916059d",
+        "status": 200
+      },
+      "revision": "13ce04b3b3e490e9bee6453df7f83fdcf0f3b5c9"
+    },
+    "original_bytes_base64": "ewogICJzY2hlbWEiOiAic3psLm1vZGVsLXNvdXJjZS1hdHRlc3RhdGlvbi92MSIsCiAgIm9ic2VydmVkX2F0IjogIjIwMjYtMDctMTJUMDA6Mjc6MTRaIiwKICAibW9kZWwiOiB7CiAgICAiaWQiOiAiU1pMSE9MRElOR1Mvc3psLWdvdnNpZ24iLAogICAgInJlcG9zaXRvcnlfdHlwZSI6ICJtb2RlbCIsCiAgICAiYXJ0aWZhY3Rfa2luZCI6ICJrZXJuZWwtY29kZS1hbmQtY29uZmlndXJhdGlvbiArIHRyYWluZWQgc3RydWN0dXJhbCBwcmUtZmlsdGVyIChtb2RlbC5qb2JsaWIpIiwKICAgICJ0cmFpbmVkX3dlaWdodHNfcHJlc2VudCI6IHRydWUsCiAgICAic3Vycm9nYXRlIjogewogICAgICAiZmlsZSI6ICJtb2RlbC5qb2JsaWIiLAogICAgICAic2hhMjU2IjogImQ4ZTkxYzAxYWRjZjRiNjYxODYwZWNiY2U4MDI5NTI3ZmQ4ODE5ZTM5NTFhYWI4YjJmZTQ4ZTg0ZjgxMTJhMTAiLAogICAgICAicm9sZSI6ICJTVFJVQ1RVUkFMIHZhbGlkaXR5IFBSRS1GSUxURVIgT05MWSBcdTIwMTQgTkVWRVIgcmVwbGFjZXMgY3J5cHRvZ3JhcGhpYyB2ZXJpZmljYXRpb247IGEgcHJlLWZpbHRlciBQQVNTIGlzIE5PVCB2ZXJpZmllZC4gVGhlIGtlcm5lbCdzIEVDRFNBLVAyNTYgdmVyaWZ5KCkgaXMgdGhlIHNvbGUgYXV0aG9yaXR5LiIsCiAgICAgICJmaWRlbGl0eV9NRUFTVVJFRCI6IHsKICAgICAgICAidGVzdF9hY2N1cmFjeV9hbGxfY2xhc3NlcyI6IDAuODg4OCwKICAgICAgICAidGVzdF9hY2N1cmFjeV9zdHJ1Y3R1cmFsX29ubHkiOiAxLjAsCiAgICAgICAgImNyeXB0b19ibGluZF9zcG90X3NpZ190YW1wZXJfcmVjYWxsIjogMC4wMTExCiAgICAgIH0sCiAgICAgICJyZWNlaXB0IjogIlRSQUlOSU5HX1JFQ0VJUFQuanNvbiIsCiAgICAgICJyZXZlcmlmeSI6ICJweXRob24gc2NyaXB0cy9ldmFsLnB5IiwKICAgICAgImhvbmVzdHlfbm90ZSI6ICJrZXJuZWwgc3RheXMgc3RkbGliK2NyeXB0b2dyYXBoeSAoY3J5cHRvIHZlcmlmaWNhdGlvbiB1bmNoYW5nZWQpOyB0aGUgT1BUSU9OQUwgc3Vycm9nYXRlIG5lZWRzIHNrbGVhcm4ram9ibGliIGFuZCBwZXJmb3JtcyBOTyBjcnlwdG9ncmFwaGljIHZlcmlmaWNhdGlvbi4iCiAgICB9CiAgfSwKICAic291cmNlX29mX3JlY29yZCI6IHsKICAgICJzdGF0ZSI6ICJWRVJJRklFRF9IRl9TT1VSQ0VfT0ZfUkVDT1JEIiwKICAgICJwbGF0Zm9ybSI6ICJodWdnaW5nZmFjZSIsCiAgICAicmVwb3NpdG9yeSI6ICJTWkxIT0xESU5HUy9zemwtZ292c2lnbiIsCiAgICAiYXJ0aWZhY3RfYmFzZV9yZXZpc2lvbiI6ICI3ZGEyZGE4ZmU1ZGI0MjU2MDlhZjBmZGRjNGU5M2IwMGMwNWI4Zjc0IiwKICAgICJhcnRpZmFjdF9iYXNlX3N0YXRlIjogIk1FQVNVUkVEX1BSRV9BVFRFU1RBVElPTl9CQVNFIiwKICAgICJhcnRpZmFjdF9iYXNlX3VybCI6ICJodHRwczovL2h1Z2dpbmdmYWNlLmNvL1NaTEhPTERJTkdTL3N6bC1nb3ZzaWduL3RyZWUvN2RhMmRhOGZlNWRiNDI1NjA5YWYwZmRkYzRlOTNiMDBjMDViOGY3NCIsCiAgICAiZmlsZV9jb3VudCI6IDExLAogICAgInRyZWVfc2hhMjU2IjogIjhjZTRlOTMwMzNlMTFlMjJiMDUxYzBhZDM4MTk4Y2IwYzc4N2FkMzc1NjI3ZWU3YmY4YTNiM2IxNzJlZDc1ZjIiLAogICAgInRyZWVfaGFzaF9hbGdvcml0aG0iOiAic2hhMjU2IG9mIFVURi04IHBhdGggKyBOVUwgKyBwZXItZmlsZSBzaGEyNTYgKyBMRiwgc29ydGVkIGJ5IHBhdGg7IC5jYWNoZSBleGNsdWRlZCIKICB9LAogICJwdWJsaWNfZ2l0aHViIjogewogICAgInN0YXRlIjogIk5PX0RJUkVDVF9QVUJMSUNfSU1QTEVNRU5UQVRJT05fT0JTRVJWRUQiLAogICAgInNhbWVfbmFtZV9jYW5kaWRhdGUiOiAiaHR0cHM6Ly9naXRodWIuY29tL3N6bC1ob2xkaW5ncy9zemwtZ292c2lnbiIsCiAgICAic2FtZV9uYW1lX2NhbmRpZGF0ZV9odHRwX3N0YXR1cyI6IDQwNCwKICAgICJjYXJkX3JlZmVyZW5jZXMiOiBbCiAgICAgICJodHRwczovL2dpdGh1Yi5jb20vc3psLWhvbGRpbmdzL2dvdmVybmVkLXJlY2VpcHQtc3BlYyIsCiAgICAgICJodHRwczovL2dpdGh1Yi5jb20vc3psLWhvbGRpbmdzL3N6bC1wYXBlcnMvYmxvYi9tYWluL1BBUEVSU19JTkRFWC5tZCIKICAgIF0sCiAgICAiY2FyZF9yZWZlcmVuY2Vfcm9sZSI6ICJTUEVDSUZJQ0FUSU9OX09SX1JFU0VBUkNIX0NPTlRFWFRfTk9UX0JVSUxEX1NPVVJDRSIKICB9LAogICJjbGFpbXMiOiB7CiAgICAiZ2l0aHViX3JlcG9zaXRvcnlfcGFyaXR5IjogIk5PVF9DTEFJTUVEIiwKICAgICJyZXByb2R1Y2libGVfYnVpbGQiOiAiTk9UX0NMQUlNRUQiLAogICAgInRyYWluZWRfbW9kZWwiOiAiQ0xBSU1FRCBcdTIwMTQgc2tsZWFybiBIaXN0R3JhZGllbnRCb29zdGluZ0NsYXNzaWZpZXIgc3RydWN0dXJhbCBwcmUtZmlsdGVyLCBNRUFTVVJFRCwgcmVjZWlwdGVkIChkb2VzIE5PVCBwZXJmb3JtIG9yIHJlcGxhY2UgY3J5cHRvZ3JhcGhpYyB2ZXJpZmljYXRpb24pIiwKICAgICJzZXJ2aW5nX3Byb2Nlc3NfcmV2aXNpb24iOiAiTk9UX0FQUExJQ0FCTEVfUkVQT1NJVE9SWV9BUlRJRkFDVCIKICB9LAogICJsaW1pdHMiOiBbCiAgICAiVGhlIHRyYWluZWQgc3Vycm9nYXRlIGlzIGEgU1RSVUNUVVJBTCBQUkUtRklMVEVSIE9OTFkuIFBhc3NpbmcgaXQgaXMgTk9UIGNyeXB0b2dyYXBoaWMgdmVyaWZpY2F0aW9uOyBvbmx5IHRoZSBrZXJuZWwncyBFQ0RTQS1QMjU2IHZlcmlmeSgpIGVzdGFibGlzaGVzIHZhbGlkaXR5LiIsCiAgICAiTUVBU1VSRUQgY3J5cHRvIGJsaW5kIHNwb3Q6IHNpZy10YW1wZXIgcmVjYWxsIFx1MjI0OCBjaGFuY2UgXHUyMDE0IGEgYnl0ZS1mbGlwcGVkIHNpZ25hdHVyZSBpcyBzdHJ1Y3R1cmFsbHkgaWRlbnRpY2FsIHRvIGEgdmFsaWQgZW52ZWxvcGUgYW5kIGlzIGludmlzaWJsZSB0byB0aGUgcHJlLWZpbHRlciAoYnkgZGVzaWduKS4iLAogICAgIlRoZSA0MDQgb2JzZXJ2YXRpb24gZXN0YWJsaXNoZXMgb25seSB0aGF0IG5vIHB1YmxpYyBzYW1lLW5hbWUgcmVwb3NpdG9yeSB3YXMgcmVhY2hhYmxlIGF0IHRoZSBvYnNlcnZhdGlvbiB0aW1lOyBpdCBkb2VzIG5vdCBtYWtlIGEgY2xhaW0gYWJvdXQgcHJpdmF0ZSByZXBvc2l0b3JpZXMuIiwKICAgICJUaGUgYXR0ZXN0YXRpb24gb3ZlcmxheSBjYW5ub3Qgc2VsZi1lbWJlZCBpdHMgcmVzdWx0aW5nIEh1YiBjb21taXQsIHNvIHRoZSBpbW11dGFibGUgYXJ0aWZhY3RfYmFzZV9yZXZpc2lvbiBpcyB0aGUgbWVhc3VyZWQgcHJlLW92ZXJsYXkgYmFzZS4iLAogICAgIk5vIC5iaW4sIC5zYWZldGVuc29ycywgLnB0LCAucHRoLCAub25ueCwgb3IgLmdndWYgd2VpZ2h0IGFydGlmYWN0IHdhcyBwcmVzZW50IGluIHRoZSBtZWFzdXJlZCBiYXNlIHRyZWUuIgogIF0KfQ=="
+  },
+  {
+    "id": "SZLHOLDINGS/szl-invariants",
+    "repository_type": "model",
+    "revision": "4ba2b95956cb8a836e7c9f5886b3da778c667f1a",
+    "repository_record": {
+      "file_count": 18,
+      "id": "SZLHOLDINGS/szl-invariants",
+      "kind": "models",
+      "metadata": {
+        "_id": "6a537f7c38dd853d17b386f7",
+        "author": "SZLHOLDINGS",
+        "cardData": {
+          "library_name": "kernels",
+          "license": "apache-2.0",
+          "szl-governance": {
+            "honest_blocked": "a VIOLATED invariant stays VIOLATED — statuses are never coerced to a pass",
+            "lambda": "Conjecture 1 (open) — uniqueness unproven; untouched by these invariants; advisory only",
+            "provenance": "recomputes the a11oy receipt/ledger self-consistency invariants offline",
+            "verdict": "ADVISORY"
+          },
+          "tags": [
+            "kernel",
+            "governance",
+            "invariants",
+            "provenance",
+            "receipts",
+            "ed25519",
+            "doi:10.5281/zenodo.19944926"
+          ]
+        },
+        "config": {},
+        "createdAt": "2026-07-12T11:50:20.000Z",
+        "disabled": false,
+        "downloads": 0,
+        "gated": false,
+        "id": "SZLHOLDINGS/szl-invariants",
+        "lastModified": "2026-09-28T21:03:12.000Z",
+        "library_name": "kernels",
+        "likes": 2,
+        "model-index": null,
+        "modelId": "SZLHOLDINGS/szl-invariants",
+        "private": false,
+        "sha": "4ba2b95956cb8a836e7c9f5886b3da778c667f1a",
+        "siblings": [
+          {
+            "rfilename": ".gitattributes"
+          },
+          {
+            "rfilename": "BENCH.laptop-blackwell.json"
+          },
+          {
+            "rfilename": "LICENSE"
+          },
+          {
+            "rfilename": "MODEL_PROVENANCE.json"
+          },
+          {
+            "rfilename": "OPERATIONAL.json"
+          },
+          {
+            "rfilename": "PROMOTION_READINESS_AUDIT.json"
+          },
+          {
+            "rfilename": "README.md"
+          },
+          {
+            "rfilename": "SECURITY.md"
+          },
+          {
+            "rfilename": "SZL_ESTATE_MANAGED.json"
+          },
+          {
+            "rfilename": "TRAINING_RECEIPT.json"
+          },
+          {
+            "rfilename": "bom/model-bom.cdx.json"
+          },
+          {
+            "rfilename": "build.toml"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_invariants/__init__.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_invariants/metadata.json"
+          },
+          {
+            "rfilename": "card/holo-banner.svg"
+          },
+          {
+            "rfilename": "scripts/eval.py"
+          },
+          {
+            "rfilename": "scripts/forge.py"
+          },
+          {
+            "rfilename": "tests/test_invariants.py"
+          }
+        ],
+        "spaces": [
+          "betterwithage/szl-command-centre",
+          "SZLHOLDINGS/vertical-services",
+          "SZLHOLDINGS/ayllu"
+        ],
+        "tags": [
+          "kernels",
+          "kernel",
+          "governance",
+          "invariants",
+          "provenance",
+          "receipts",
+          "ed25519",
+          "doi:10.5281/zenodo.19944926",
+          "license:apache-2.0",
+          "region:us"
+        ],
+        "usedStorage": 1605928
+      },
+      "metadata_receipt": {
+        "completed_at": "2026-09-30T02:25:27.111766+00:00",
+        "final_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-invariants/revision/4ba2b95956cb8a836e7c9f5886b3da778c667f1a",
+        "observed_at": "2026-09-30T02:25:27.042775+00:00",
+        "requested_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-invariants/revision/4ba2b95956cb8a836e7c9f5886b3da778c667f1a",
+        "response_bytes": 1854,
+        "response_sha256": "8e4ccbc296473a941f10570e38aa945d2e1389f92d9e356862c7c48bb92239fe",
+        "status": 200
+      },
+      "revision": "4ba2b95956cb8a836e7c9f5886b3da778c667f1a",
+      "tree_coverage": "COMPLETE_ACCESSIBLE_RESPONSE",
+      "tree_entries": 25,
+      "tree_pages": [
+        {
+          "completed_at": "2026-09-30T02:25:27.403699+00:00",
+          "final_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-invariants/tree/4ba2b95956cb8a836e7c9f5886b3da778c667f1a?recursive=true&expand=false&limit=100",
+          "next_url": null,
+          "observed_at": "2026-09-30T02:25:27.111766+00:00",
+          "requested_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-invariants/tree/4ba2b95956cb8a836e7c9f5886b3da778c667f1a?recursive=true&expand=false&limit=100",
+          "response_bytes": 2653,
+          "response_sha256": "69644c7f94b5bba518b3743b0e26e0def34ebc71adbe0a69ef0bee774292de0d",
+          "status": 200
+        }
+      ]
+    },
+    "tree": [
+      {
+        "id": "SZLHOLDINGS/szl-invariants",
+        "kind": "models",
+        "oid": "a6344aac8c09253b3b630fb776ae94478aa0275b",
+        "path": ".gitattributes",
+        "revision": "4ba2b95956cb8a836e7c9f5886b3da778c667f1a",
+        "size": 1519,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-invariants",
+        "kind": "models",
+        "oid": "f0e761a06144e929945bc310e74a2af8580dbbe0",
+        "path": "BENCH.laptop-blackwell.json",
+        "revision": "4ba2b95956cb8a836e7c9f5886b3da778c667f1a",
+        "size": 6229,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-invariants",
+        "kind": "models",
+        "oid": "7c317ba373932bf7f56ab969a3698aa3468811be",
+        "path": "LICENSE",
+        "revision": "4ba2b95956cb8a836e7c9f5886b3da778c667f1a",
+        "size": 776,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-invariants",
+        "kind": "models",
+        "oid": "eb7bd70aa8c731adf92c6a55e0b5451cfeea7098",
+        "path": "MODEL_PROVENANCE.json",
+        "revision": "4ba2b95956cb8a836e7c9f5886b3da778c667f1a",
+        "size": 2568,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-invariants",
+        "kind": "models",
+        "oid": "ec32bf8648eba5a445589015d3c9356e73473560",
+        "path": "OPERATIONAL.json",
+        "revision": "4ba2b95956cb8a836e7c9f5886b3da778c667f1a",
+        "size": 1933,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-invariants",
+        "kind": "models",
+        "oid": "9a580877f69eeddaa8bdf38620f5e08f6760e7c3",
+        "path": "PROMOTION_READINESS_AUDIT.json",
+        "revision": "4ba2b95956cb8a836e7c9f5886b3da778c667f1a",
+        "size": 12631,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-invariants",
+        "kind": "models",
+        "oid": "d27122c56cb995e1bb4b74eec64daafff5e13a88",
+        "path": "README.md",
+        "revision": "4ba2b95956cb8a836e7c9f5886b3da778c667f1a",
+        "size": 5468,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-invariants",
+        "kind": "models",
+        "oid": "6fc36f90007dcfe5b1026d9fc40c309de101a137",
+        "path": "SECURITY.md",
+        "revision": "4ba2b95956cb8a836e7c9f5886b3da778c667f1a",
+        "size": 1642,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-invariants",
+        "kind": "models",
+        "oid": "59e4b02e8c6380c20f7284470b0ad2dd3665480d",
+        "path": "SZL_ESTATE_MANAGED.json",
+        "revision": "4ba2b95956cb8a836e7c9f5886b3da778c667f1a",
+        "size": 680,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-invariants",
+        "kind": "models",
+        "oid": "5792ac5c38b72ac73d2da7af8828746919c1c59a",
+        "path": "TRAINING_RECEIPT.json",
+        "revision": "4ba2b95956cb8a836e7c9f5886b3da778c667f1a",
+        "size": 2556,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-invariants",
+        "kind": "models",
+        "oid": "cb6eccfb4d465ad747898833162856920e5bdf15",
+        "path": "bom",
+        "revision": "4ba2b95956cb8a836e7c9f5886b3da778c667f1a",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-invariants",
+        "kind": "models",
+        "oid": "9cc71b39816be27a67a23b952e01d42ebcb8576b",
+        "path": "bom/model-bom.cdx.json",
+        "revision": "4ba2b95956cb8a836e7c9f5886b3da778c667f1a",
+        "size": 6128,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-invariants",
+        "kind": "models",
+        "oid": "bc21a2a0a7d3c39a2c6f68e7b2d83e339a947962",
+        "path": "build",
+        "revision": "4ba2b95956cb8a836e7c9f5886b3da778c667f1a",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-invariants",
+        "kind": "models",
+        "oid": "684f15eeab14d40b495a72d0154346c165bcb6ca",
+        "path": "build.toml",
+        "revision": "4ba2b95956cb8a836e7c9f5886b3da778c667f1a",
+        "size": 60,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-invariants",
+        "kind": "models",
+        "oid": "e984621ac99cc1da6c96351cdc9559328f2e8c5c",
+        "path": "build/torch-universal",
+        "revision": "4ba2b95956cb8a836e7c9f5886b3da778c667f1a",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-invariants",
+        "kind": "models",
+        "oid": "6b2af7355dc97885ee23574ce67e00838663494b",
+        "path": "build/torch-universal/szl_invariants",
+        "revision": "4ba2b95956cb8a836e7c9f5886b3da778c667f1a",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-invariants",
+        "kind": "models",
+        "oid": "ebfc7d05cf417ef1a7e75d205189c7392e7498a9",
+        "path": "build/torch-universal/szl_invariants/__init__.py",
+        "revision": "4ba2b95956cb8a836e7c9f5886b3da778c667f1a",
+        "size": 32918,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-invariants",
+        "kind": "models",
+        "oid": "8a20d622b7eccbaab9228982cd65f1220add96eb",
+        "path": "build/torch-universal/szl_invariants/metadata.json",
+        "revision": "4ba2b95956cb8a836e7c9f5886b3da778c667f1a",
+        "size": 668,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-invariants",
+        "kind": "models",
+        "oid": "48dda0b3253bad70f2207e7a8d74fac2a79e5d19",
+        "path": "card",
+        "revision": "4ba2b95956cb8a836e7c9f5886b3da778c667f1a",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-invariants",
+        "kind": "models",
+        "oid": "4454bf12aa110844fab5dc21ac003cfc821b615c",
+        "path": "card/holo-banner.svg",
+        "revision": "4ba2b95956cb8a836e7c9f5886b3da778c667f1a",
+        "size": 2121,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-invariants",
+        "kind": "models",
+        "oid": "3c7c130d73c805d846a2c6007f3d70014aca50a0",
+        "path": "scripts",
+        "revision": "4ba2b95956cb8a836e7c9f5886b3da778c667f1a",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-invariants",
+        "kind": "models",
+        "oid": "9c74a22a3fc72bb4d18430bd3833aa65802e2957",
+        "path": "scripts/eval.py",
+        "revision": "4ba2b95956cb8a836e7c9f5886b3da778c667f1a",
+        "size": 1456,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-invariants",
+        "kind": "models",
+        "oid": "0df273a1ad6aa2963e05df8d8c56894eb19cece5",
+        "path": "scripts/forge.py",
+        "revision": "4ba2b95956cb8a836e7c9f5886b3da778c667f1a",
+        "size": 11734,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-invariants",
+        "kind": "models",
+        "oid": "91405fa05c3a314b704f51e04fed66e24e2c38f6",
+        "path": "tests",
+        "revision": "4ba2b95956cb8a836e7c9f5886b3da778c667f1a",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-invariants",
+        "kind": "models",
+        "oid": "d8ddb57fb1cc3228be6a351a86bd093b25abd66e",
+        "path": "tests/test_invariants.py",
+        "revision": "4ba2b95956cb8a836e7c9f5886b3da778c667f1a",
+        "size": 6648,
+        "type": "file"
+      }
+    ],
+    "text_record": {
+      "content": {
+        "claims": {
+          "reproducible_build": "NOT_CLAIMED",
+          "trained_model": "NOT_CLAIMED",
+          "weights_present": "NONE"
+        },
+        "lambda": {
+          "status": "Conjecture 1 (open) — uniqueness unproven",
+          "touched_by_this_artifact": false
+        },
+        "limits": [
+          "This artifact is a pure-Python offline replay of the live Alloy invariants surface — it verifies the shape and cryptographic self-consistency of a ledger export you supply, NOT the runtime correctness of any served answer.",
+          "No .bin, .safetensors, .pt, .pth, .onnx, or .gguf weight artifact is present.",
+          "Invariant #6 (ed25519) and latentVerification are UNAVAILABLE without a supplied public key; invariant #8 is UNAVAILABLE without a samples export. These are honest indeterminate states, not passes.",
+          "None of these invariants prove or upgrade Λ, which remains Conjecture 1 (open)."
+        ],
+        "mirrors": {
+          "chain_hashing": "artifacts/api-server/src/lib/runLedger.ts + receipts.ts (sha256 canonical, ed25519/SPKI keyId)",
+          "doi_lutar_lean": "10.5281/zenodo.20434308",
+          "lean_repo": "szl-holdings/lutar-lean",
+          "live_surface": "a11oy backbone /api/invariants (artifacts/api-server/src/routes/invariants.ts)"
+        },
+        "model": {
+          "artifact_kind": "kernel-code-and-configuration + trained surrogate (model.joblib)",
+          "id": "SZLHOLDINGS/szl-invariants",
+          "repository_type": "model",
+          "stdlib_only": false,
+          "stdlib_only_note": "kernel package itself stays stdlib-only; the OPTIONAL surrogate needs sklearn+joblib",
+          "surrogate": {
+            "fidelity_MEASURED": {
+              "crypto_blind_spot_sig_tamper_recall": 0.0636,
+              "structural_recall": 1.0,
+              "test_accuracy_all_classes": 0.9803
+            },
+            "file": "model.joblib",
+            "receipt": "TRAINING_RECEIPT.json",
+            "reverify": "python scripts/eval.py",
+            "role": "structural triage only — kernel remains sole ground truth",
+            "sha256": "24fa1ef67b28e9c20f8197bf321dd7c93087465ec2ce9efa7f8fb9dae7bfc14b"
+          },
+          "torch_required": false,
+          "trained_weights_present": true
+        },
+        "schema": "szl.model-source-attestation/v1",
+        "source_of_record": {
+          "platform": "huggingface",
+          "repository": "SZLHOLDINGS/szl-invariants",
+          "state": "VERIFIED_HF_SOURCE_OF_RECORD"
+        },
+        "verification": {
+          "falsifiability": "each invariant demonstrated to flip HOLDS -> VIOLATED under real corruption/tamper; missing capabilities stay UNAVAILABLE (never coerced to a pass)",
+          "tests": "14/14 passed",
+          "tests_basis": "MEASURED local python3 -m pytest run, stdlib-only, offline"
+        }
+      },
+      "id": "SZLHOLDINGS/szl-invariants",
+      "kind": "models",
+      "path": "MODEL_PROVENANCE.json",
+      "receipt": {
+        "completed_at": "2026-09-30T02:25:27.523662+00:00",
+        "final_url": "https://huggingface.co/api/resolve-cache/models/SZLHOLDINGS/szl-invariants/4ba2b95956cb8a836e7c9f5886b3da778c667f1a/MODEL_PROVENANCE.json?%2FSZLHOLDINGS%2Fszl-invariants%2Fresolve%2F4ba2b95956cb8a836e7c9f5886b3da778c667f1a%2FMODEL_PROVENANCE.json=&etag=%22eb7bd70aa8c731adf92c6a55e0b5451cfeea7098%22",
+        "observed_at": "2026-09-30T02:25:27.403699+00:00",
+        "requested_url": "https://huggingface.co/SZLHOLDINGS/szl-invariants/resolve/4ba2b95956cb8a836e7c9f5886b3da778c667f1a/MODEL_PROVENANCE.json",
+        "response_bytes": 2568,
+        "response_sha256": "61d363ab86cfb19410ecbebd4477e9cd235dfac3ee4bd49913fac2b41d0044dc",
+        "status": 200
+      },
+      "revision": "4ba2b95956cb8a836e7c9f5886b3da778c667f1a"
+    },
+    "original_bytes_base64": "ewogICJzY2hlbWEiOiAic3psLm1vZGVsLXNvdXJjZS1hdHRlc3RhdGlvbi92MSIsCiAgIm1vZGVsIjogewogICAgImlkIjogIlNaTEhPTERJTkdTL3N6bC1pbnZhcmlhbnRzIiwKICAgICJyZXBvc2l0b3J5X3R5cGUiOiAibW9kZWwiLAogICAgImFydGlmYWN0X2tpbmQiOiAia2VybmVsLWNvZGUtYW5kLWNvbmZpZ3VyYXRpb24gKyB0cmFpbmVkIHN1cnJvZ2F0ZSAobW9kZWwuam9ibGliKSIsCiAgICAidHJhaW5lZF93ZWlnaHRzX3ByZXNlbnQiOiB0cnVlLAogICAgInN0ZGxpYl9vbmx5IjogZmFsc2UsCiAgICAidG9yY2hfcmVxdWlyZWQiOiBmYWxzZSwKICAgICJzdXJyb2dhdGUiOiB7CiAgICAgICJmaWxlIjogIm1vZGVsLmpvYmxpYiIsCiAgICAgICJzaGEyNTYiOiAiMjRmYTFlZjY3YjI4ZTljMjBmODE5N2JmMzIxZGQ3YzkzMDg3NDY1ZWMyY2U5ZWZhN2Y4ZmI5ZGFlN2JmYzE0YiIsCiAgICAgICJyb2xlIjogInN0cnVjdHVyYWwgdHJpYWdlIG9ubHkg4oCUIGtlcm5lbCByZW1haW5zIHNvbGUgZ3JvdW5kIHRydXRoIiwKICAgICAgImZpZGVsaXR5X01FQVNVUkVEIjogewogICAgICAgICJ0ZXN0X2FjY3VyYWN5X2FsbF9jbGFzc2VzIjogMC45ODAzLAogICAgICAgICJzdHJ1Y3R1cmFsX3JlY2FsbCI6IDEuMCwKICAgICAgICAiY3J5cHRvX2JsaW5kX3Nwb3Rfc2lnX3RhbXBlcl9yZWNhbGwiOiAwLjA2MzYKICAgICAgfSwKICAgICAgInJlY2VpcHQiOiAiVFJBSU5JTkdfUkVDRUlQVC5qc29uIiwKICAgICAgInJldmVyaWZ5IjogInB5dGhvbiBzY3JpcHRzL2V2YWwucHkiCiAgICB9LAogICAgInN0ZGxpYl9vbmx5X25vdGUiOiAia2VybmVsIHBhY2thZ2UgaXRzZWxmIHN0YXlzIHN0ZGxpYi1vbmx5OyB0aGUgT1BUSU9OQUwgc3Vycm9nYXRlIG5lZWRzIHNrbGVhcm4ram9ibGliIgogIH0sCiAgInNvdXJjZV9vZl9yZWNvcmQiOiB7CiAgICAic3RhdGUiOiAiVkVSSUZJRURfSEZfU09VUkNFX09GX1JFQ09SRCIsCiAgICAicGxhdGZvcm0iOiAiaHVnZ2luZ2ZhY2UiLAogICAgInJlcG9zaXRvcnkiOiAiU1pMSE9MRElOR1Mvc3psLWludmFyaWFudHMiCiAgfSwKICAibWlycm9ycyI6IHsKICAgICJsaXZlX3N1cmZhY2UiOiAiYTExb3kgYmFja2JvbmUgL2FwaS9pbnZhcmlhbnRzIChhcnRpZmFjdHMvYXBpLXNlcnZlci9zcmMvcm91dGVzL2ludmFyaWFudHMudHMpIiwKICAgICJjaGFpbl9oYXNoaW5nIjogImFydGlmYWN0cy9hcGktc2VydmVyL3NyYy9saWIvcnVuTGVkZ2VyLnRzICsgcmVjZWlwdHMudHMgKHNoYTI1NiBjYW5vbmljYWwsIGVkMjU1MTkvU1BLSSBrZXlJZCkiLAogICAgImxlYW5fcmVwbyI6ICJzemwtaG9sZGluZ3MvbHV0YXItbGVhbiIsCiAgICAiZG9pX2x1dGFyX2xlYW4iOiAiMTAuNTI4MS96ZW5vZG8uMjA0MzQzMDgiCiAgfSwKICAidmVyaWZpY2F0aW9uIjogewogICAgInRlc3RzIjogIjE0LzE0IHBhc3NlZCIsCiAgICAidGVzdHNfYmFzaXMiOiAiTUVBU1VSRUQgbG9jYWwgcHl0aG9uMyAtbSBweXRlc3QgcnVuLCBzdGRsaWItb25seSwgb2ZmbGluZSIsCiAgICAiZmFsc2lmaWFiaWxpdHkiOiAiZWFjaCBpbnZhcmlhbnQgZGVtb25zdHJhdGVkIHRvIGZsaXAgSE9MRFMgLT4gVklPTEFURUQgdW5kZXIgcmVhbCBjb3JydXB0aW9uL3RhbXBlcjsgbWlzc2luZyBjYXBhYmlsaXRpZXMgc3RheSBVTkFWQUlMQUJMRSAobmV2ZXIgY29lcmNlZCB0byBhIHBhc3MpIgogIH0sCiAgImxhbWJkYSI6IHsKICAgICJzdGF0dXMiOiAiQ29uamVjdHVyZSAxIChvcGVuKSDigJQgdW5pcXVlbmVzcyB1bnByb3ZlbiIsCiAgICAidG91Y2hlZF9ieV90aGlzX2FydGlmYWN0IjogZmFsc2UKICB9LAogICJjbGFpbXMiOiB7CiAgICAidHJhaW5lZF9tb2RlbCI6ICJOT1RfQ0xBSU1FRCIsCiAgICAicmVwcm9kdWNpYmxlX2J1aWxkIjogIk5PVF9DTEFJTUVEIiwKICAgICJ3ZWlnaHRzX3ByZXNlbnQiOiAiTk9ORSIKICB9LAogICJsaW1pdHMiOiBbCiAgICAiVGhpcyBhcnRpZmFjdCBpcyBhIHB1cmUtUHl0aG9uIG9mZmxpbmUgcmVwbGF5IG9mIHRoZSBsaXZlIEFsbG95IGludmFyaWFudHMgc3VyZmFjZSDigJQgaXQgdmVyaWZpZXMgdGhlIHNoYXBlIGFuZCBjcnlwdG9ncmFwaGljIHNlbGYtY29uc2lzdGVuY3kgb2YgYSBsZWRnZXIgZXhwb3J0IHlvdSBzdXBwbHksIE5PVCB0aGUgcnVudGltZSBjb3JyZWN0bmVzcyBvZiBhbnkgc2VydmVkIGFuc3dlci4iLAogICAgIk5vIC5iaW4sIC5zYWZldGVuc29ycywgLnB0LCAucHRoLCAub25ueCwgb3IgLmdndWYgd2VpZ2h0IGFydGlmYWN0IGlzIHByZXNlbnQuIiwKICAgICJJbnZhcmlhbnQgIzYgKGVkMjU1MTkpIGFuZCBsYXRlbnRWZXJpZmljYXRpb24gYXJlIFVOQVZBSUxBQkxFIHdpdGhvdXQgYSBzdXBwbGllZCBwdWJsaWMga2V5OyBpbnZhcmlhbnQgIzggaXMgVU5BVkFJTEFCTEUgd2l0aG91dCBhIHNhbXBsZXMgZXhwb3J0LiBUaGVzZSBhcmUgaG9uZXN0IGluZGV0ZXJtaW5hdGUgc3RhdGVzLCBub3QgcGFzc2VzLiIsCiAgICAiTm9uZSBvZiB0aGVzZSBpbnZhcmlhbnRzIHByb3ZlIG9yIHVwZ3JhZGUgzpssIHdoaWNoIHJlbWFpbnMgQ29uamVjdHVyZSAxIChvcGVuKS4iCiAgXQp9"
+  },
+  {
+    "id": "SZLHOLDINGS/szl-ouroboros",
+    "repository_type": "model",
+    "revision": "91e68d606a6273dd46db600f83938e61322b2b37",
+    "repository_record": {
+      "file_count": 20,
+      "id": "SZLHOLDINGS/szl-ouroboros",
+      "kind": "models",
+      "metadata": {
+        "_id": "6a537f7f375625ebf2044135",
+        "author": "SZLHOLDINGS",
+        "cardData": {
+          "library_name": "kernels",
+          "license": "apache-2.0",
+          "szl-governance": {
+            "honest_blocked": "a measurement gap stays a gap — overheadMs is UNAVAILABLE when wall is unmeasured, never fabricated",
+            "lambda": "Conjecture 1 (open) — uniqueness unproven; untouched by loop-tax accounting; advisory only",
+            "provenance": "reconstructs the a11oy bounded-loop trace + MEASURED/DERIVED loop-tax split offline",
+            "verdict": "ADVISORY"
+          },
+          "tags": [
+            "kernel",
+            "governance",
+            "ouroboros",
+            "loop-tax",
+            "provenance",
+            "doi:10.5281/zenodo.19944926"
+          ]
+        },
+        "config": {},
+        "createdAt": "2026-07-12T11:50:23.000Z",
+        "disabled": false,
+        "downloads": 0,
+        "gated": false,
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "lastModified": "2026-09-28T21:03:34.000Z",
+        "library_name": "kernels",
+        "likes": 0,
+        "model-index": null,
+        "modelId": "SZLHOLDINGS/szl-ouroboros",
+        "private": false,
+        "sha": "91e68d606a6273dd46db600f83938e61322b2b37",
+        "siblings": [
+          {
+            "rfilename": ".gitattributes"
+          },
+          {
+            "rfilename": "BENCH.laptop-blackwell.json"
+          },
+          {
+            "rfilename": "LICENSE"
+          },
+          {
+            "rfilename": "MODEL_PROVENANCE.json"
+          },
+          {
+            "rfilename": "OPERATIONAL.json"
+          },
+          {
+            "rfilename": "PROMOTION_READINESS_AUDIT.json"
+          },
+          {
+            "rfilename": "README.md"
+          },
+          {
+            "rfilename": "SECURITY.md"
+          },
+          {
+            "rfilename": "SZL_ESTATE_MANAGED.json"
+          },
+          {
+            "rfilename": "TRAINING_RECEIPT.json"
+          },
+          {
+            "rfilename": "bom/model-bom.cdx.json"
+          },
+          {
+            "rfilename": "build.toml"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_ouroboros/__init__.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_ouroboros/metadata.json"
+          },
+          {
+            "rfilename": "card/holo-banner.svg"
+          },
+          {
+            "rfilename": "og-card.png"
+          },
+          {
+            "rfilename": "ouroboros.py"
+          },
+          {
+            "rfilename": "scripts/eval.py"
+          },
+          {
+            "rfilename": "scripts/forge.py"
+          },
+          {
+            "rfilename": "tests/test_ouroboros.py"
+          }
+        ],
+        "spaces": [],
+        "tags": [
+          "kernels",
+          "kernel",
+          "governance",
+          "ouroboros",
+          "loop-tax",
+          "provenance",
+          "doi:10.5281/zenodo.19944926",
+          "license:apache-2.0",
+          "region:us"
+        ],
+        "usedStorage": 834152
+      },
+      "metadata_receipt": {
+        "completed_at": "2026-09-30T02:25:27.709031+00:00",
+        "final_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-ouroboros/revision/91e68d606a6273dd46db600f83938e61322b2b37",
+        "observed_at": "2026-09-30T02:25:27.640333+00:00",
+        "requested_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-ouroboros/revision/91e68d606a6273dd46db600f83938e61322b2b37",
+        "response_bytes": 1837,
+        "response_sha256": "ad3ed5f3c54a301b02d00b5799f3d8be99d9591ff4ff877990f1711f1d228697",
+        "status": 200
+      },
+      "revision": "91e68d606a6273dd46db600f83938e61322b2b37",
+      "tree_coverage": "COMPLETE_ACCESSIBLE_RESPONSE",
+      "tree_entries": 27,
+      "tree_pages": [
+        {
+          "completed_at": "2026-09-30T02:25:27.793849+00:00",
+          "final_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-ouroboros/tree/91e68d606a6273dd46db600f83938e61322b2b37?recursive=true&expand=false&limit=100",
+          "next_url": null,
+          "observed_at": "2026-09-30T02:25:27.709031+00:00",
+          "requested_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-ouroboros/tree/91e68d606a6273dd46db600f83938e61322b2b37?recursive=true&expand=false&limit=100",
+          "response_bytes": 2846,
+          "response_sha256": "0ce649f0336ae334f3bd52f42a7c66567c8b9ae0ccc317f0ffd44dc36d6c935c",
+          "status": 200
+        }
+      ]
+    },
+    "tree": [
+      {
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "kind": "models",
+        "oid": "a6344aac8c09253b3b630fb776ae94478aa0275b",
+        "path": ".gitattributes",
+        "revision": "91e68d606a6273dd46db600f83938e61322b2b37",
+        "size": 1519,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "kind": "models",
+        "oid": "1c9c66706799fb01100c4766d519c67c0724a3b1",
+        "path": "BENCH.laptop-blackwell.json",
+        "revision": "91e68d606a6273dd46db600f83938e61322b2b37",
+        "size": 6366,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "kind": "models",
+        "oid": "7c317ba373932bf7f56ab969a3698aa3468811be",
+        "path": "LICENSE",
+        "revision": "91e68d606a6273dd46db600f83938e61322b2b37",
+        "size": 776,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "kind": "models",
+        "oid": "07c07af9d649b5de38a742a8499ea253ac379990",
+        "path": "MODEL_PROVENANCE.json",
+        "revision": "91e68d606a6273dd46db600f83938e61322b2b37",
+        "size": 3114,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "kind": "models",
+        "oid": "d4881664266fa85559313b12e61c1de100bd8d89",
+        "path": "OPERATIONAL.json",
+        "revision": "91e68d606a6273dd46db600f83938e61322b2b37",
+        "size": 1930,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "kind": "models",
+        "oid": "1d10d42eadd83690e6b88c7d8bc08b9300ac523d",
+        "path": "PROMOTION_READINESS_AUDIT.json",
+        "revision": "91e68d606a6273dd46db600f83938e61322b2b37",
+        "size": 12619,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "kind": "models",
+        "oid": "6530ccb8a7ba24d584dd4adb6c9370e5fb843c25",
+        "path": "README.md",
+        "revision": "91e68d606a6273dd46db600f83938e61322b2b37",
+        "size": 5457,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "kind": "models",
+        "oid": "fc1f29b236370f865c18a6c0407ec28372bf5adb",
+        "path": "SECURITY.md",
+        "revision": "91e68d606a6273dd46db600f83938e61322b2b37",
+        "size": 1598,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "kind": "models",
+        "oid": "0c7fb58b3e105494b11161ab65b4193afd5e1592",
+        "path": "SZL_ESTATE_MANAGED.json",
+        "revision": "91e68d606a6273dd46db600f83938e61322b2b37",
+        "size": 679,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "kind": "models",
+        "oid": "3cdbdd193abd0b8c0455efb1c7469b4e0164e373",
+        "path": "TRAINING_RECEIPT.json",
+        "revision": "91e68d606a6273dd46db600f83938e61322b2b37",
+        "size": 2327,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "kind": "models",
+        "oid": "ad8a7c1e9998fa7579ab59cc82a51da30d701b65",
+        "path": "bom",
+        "revision": "91e68d606a6273dd46db600f83938e61322b2b37",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "kind": "models",
+        "oid": "2d8c56b6fb964ead769da9457302d6cfa5fd1020",
+        "path": "bom/model-bom.cdx.json",
+        "revision": "91e68d606a6273dd46db600f83938e61322b2b37",
+        "size": 6647,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "kind": "models",
+        "oid": "884172172920503761e8c53b7addb100616954d4",
+        "path": "build",
+        "revision": "91e68d606a6273dd46db600f83938e61322b2b37",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "kind": "models",
+        "oid": "35c5df3bcb86442af32cc852bbb97f391176dd9d",
+        "path": "build.toml",
+        "revision": "91e68d606a6273dd46db600f83938e61322b2b37",
+        "size": 59,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "kind": "models",
+        "oid": "002d6bc9a58db1984cce0d47f5905b40e9a614d6",
+        "path": "build/torch-universal",
+        "revision": "91e68d606a6273dd46db600f83938e61322b2b37",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "kind": "models",
+        "oid": "da43a41ed79a7d099f8836db3aa332dc3b237ac8",
+        "path": "build/torch-universal/szl_ouroboros",
+        "revision": "91e68d606a6273dd46db600f83938e61322b2b37",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "kind": "models",
+        "oid": "3f93d91af8e3d1c210b472f03cbd9d84b0d48353",
+        "path": "build/torch-universal/szl_ouroboros/__init__.py",
+        "revision": "91e68d606a6273dd46db600f83938e61322b2b37",
+        "size": 14506,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "kind": "models",
+        "oid": "e23e86103c257fbb2e80dd383dee5cd9365b02f8",
+        "path": "build/torch-universal/szl_ouroboros/metadata.json",
+        "revision": "91e68d606a6273dd46db600f83938e61322b2b37",
+        "size": 673,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "kind": "models",
+        "oid": "42cb979b8ed2cb82d1824550dccf33a442fe9b50",
+        "path": "card",
+        "revision": "91e68d606a6273dd46db600f83938e61322b2b37",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "kind": "models",
+        "oid": "d78c3171d72c63b04f048134669808b412abc38e",
+        "path": "card/holo-banner.svg",
+        "revision": "91e68d606a6273dd46db600f83938e61322b2b37",
+        "size": 1771,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "kind": "models",
+        "oid": "2653b594429d10973f87ee6a7de2f2a96418dfef",
+        "path": "og-card.png",
+        "revision": "91e68d606a6273dd46db600f83938e61322b2b37",
+        "size": 39289,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "kind": "models",
+        "oid": "9ac1f96d71c49a1ef828558e84590add205bb1bf",
+        "path": "ouroboros.py",
+        "revision": "91e68d606a6273dd46db600f83938e61322b2b37",
+        "size": 1955,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "kind": "models",
+        "oid": "5c0116fc7deb0793cc7314c15cf2bd445eb390a1",
+        "path": "scripts",
+        "revision": "91e68d606a6273dd46db600f83938e61322b2b37",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "kind": "models",
+        "oid": "ba0c7ba666598b0e872d5cca1bd6fbee24b579ec",
+        "path": "scripts/eval.py",
+        "revision": "91e68d606a6273dd46db600f83938e61322b2b37",
+        "size": 1488,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "kind": "models",
+        "oid": "18eebf1db00d4b1b8c70d9213d0462976b0f799d",
+        "path": "scripts/forge.py",
+        "revision": "91e68d606a6273dd46db600f83938e61322b2b37",
+        "size": 7985,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "kind": "models",
+        "oid": "bfd420a4e28af24d2ae257e4c6ffcb418c3ae811",
+        "path": "tests",
+        "revision": "91e68d606a6273dd46db600f83938e61322b2b37",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-ouroboros",
+        "kind": "models",
+        "oid": "74d1e4c1b1367daa834d5f0c2025da4007615dbb",
+        "path": "tests/test_ouroboros.py",
+        "revision": "91e68d606a6273dd46db600f83938e61322b2b37",
+        "size": 4507,
+        "type": "file"
+      }
+    ],
+    "text_record": {
+      "content": {
+        "claims": {
+          "reproducible_build": "NOT_CLAIMED",
+          "trained_model": "CLAIMED — sklearn HistGradientBoostingRegressor, MEASURED, receipted",
+          "weights_present": "model.joblib (sklearn surrogate; kernel stays weightless)"
+        },
+        "lambda": {
+          "status": "Conjecture 1 (open) — uniqueness unproven",
+          "touched_by_this_artifact": false
+        },
+        "limits": [
+          "The trained surrogate APPROXIMATES the kernel's DERIVED overheadMs from trace shape; it does NOT replace the kernel's exact arithmetic, which remains authoritative.",
+          "Runs with an unmeasured wall (overheadMs=None / UNAVAILABLE) are dropped from training — never fabricated.",
+          "modelMs and peakAttemptMs are MEASURED (upstream wall windows); overheadMs, serializationTaxMs and deadHopMs are DERIVED arithmetic on those measurements — never new claims.",
+          "serializationTaxMs is a COUNTERFACTUAL (what a perfectly-parallel loop could save), never a realized saving — Alloy's loop is strictly sequential.",
+          "deadHopMs is an upper bound only — Alloy does not prefetch.",
+          "overheadMs is UNAVAILABLE (None) when the run wall was not measured — never fabricated.",
+          "No .bin, .safetensors, .pt, .pth, .onnx, or .gguf weight artifact is present.",
+          "Loop-tax accounting does not prove or upgrade Λ, which remains Conjecture 1 (open)."
+        ],
+        "mirrors": {
+          "doi_lutar_lean": "10.5281/zenodo.20434308",
+          "lean_repo": "szl-holdings/lutar-lean",
+          "live_surface": "a11oy backbone loop tax (artifacts/api-server/src/lib/backbone.ts buildLoopTrace/sumAttemptMs/peakAttemptMs/deadHopMs)",
+          "timing_basis": "LOOP_TIMING_BASIS carried verbatim from backbone.ts"
+        },
+        "model": {
+          "artifact_kind": "kernel-code-and-configuration + trained surrogate (model.joblib)",
+          "id": "SZLHOLDINGS/szl-ouroboros",
+          "repository_type": "model",
+          "stdlib_only": false,
+          "stdlib_only_note": "kernel package itself stays stdlib-only; the OPTIONAL surrogate needs sklearn+joblib",
+          "surrogate": {
+            "fidelity_MEASURED": {
+              "held_out_MAE_ms": 15.5853,
+              "held_out_R2": 0.9822,
+              "held_out_target_std_ms": 191.079
+            },
+            "file": "model.joblib",
+            "receipt": "TRAINING_RECEIPT.json",
+            "reverify": "python scripts/eval.py",
+            "role": "loop-tax regressor (predicts kernel-derived overheadMs) — kernel remains sole ground truth",
+            "sha256": "6c4067810eb508dfb61f3cfaf84b6db81cf2f7c78286f02e786205e0b014ac65"
+          },
+          "torch_required": false,
+          "trained_weights_present": true
+        },
+        "schema": "szl.model-source-attestation/v1",
+        "source_of_record": {
+          "platform": "huggingface",
+          "repository": "SZLHOLDINGS/szl-ouroboros",
+          "state": "VERIFIED_HF_SOURCE_OF_RECORD"
+        },
+        "verification": {
+          "falsifiability": "arithmetic is falsifiable (a wrong split flips the asserts); an unmeasured wall yields overheadMs=None (UNAVAILABLE, not fabricated); a missing latency raises; a budget violation is surfaced",
+          "tests": "13/13 passed",
+          "tests_basis": "MEASURED local python3 -m pytest run, stdlib-only, offline"
+        }
+      },
+      "id": "SZLHOLDINGS/szl-ouroboros",
+      "kind": "models",
+      "path": "MODEL_PROVENANCE.json",
+      "receipt": {
+        "completed_at": "2026-09-30T02:25:28.021001+00:00",
+        "final_url": "https://huggingface.co/api/resolve-cache/models/SZLHOLDINGS/szl-ouroboros/91e68d606a6273dd46db600f83938e61322b2b37/MODEL_PROVENANCE.json?%2FSZLHOLDINGS%2Fszl-ouroboros%2Fresolve%2F91e68d606a6273dd46db600f83938e61322b2b37%2FMODEL_PROVENANCE.json=&etag=%2207c07af9d649b5de38a742a8499ea253ac379990%22",
+        "observed_at": "2026-09-30T02:25:27.793849+00:00",
+        "requested_url": "https://huggingface.co/SZLHOLDINGS/szl-ouroboros/resolve/91e68d606a6273dd46db600f83938e61322b2b37/MODEL_PROVENANCE.json",
+        "response_bytes": 3114,
+        "response_sha256": "21d6b40206b36821aa82c493f2f706fe2e2e4206841680194e23f5fc33b43786",
+        "status": 200
+      },
+      "revision": "91e68d606a6273dd46db600f83938e61322b2b37"
+    },
+    "original_bytes_base64": "ewogICJzY2hlbWEiOiAic3psLm1vZGVsLXNvdXJjZS1hdHRlc3RhdGlvbi92MSIsCiAgIm1vZGVsIjogewogICAgImlkIjogIlNaTEhPTERJTkdTL3N6bC1vdXJvYm9yb3MiLAogICAgInJlcG9zaXRvcnlfdHlwZSI6ICJtb2RlbCIsCiAgICAiYXJ0aWZhY3Rfa2luZCI6ICJrZXJuZWwtY29kZS1hbmQtY29uZmlndXJhdGlvbiArIHRyYWluZWQgc3Vycm9nYXRlIChtb2RlbC5qb2JsaWIpIiwKICAgICJ0cmFpbmVkX3dlaWdodHNfcHJlc2VudCI6IHRydWUsCiAgICAic3RkbGliX29ubHkiOiBmYWxzZSwKICAgICJ0b3JjaF9yZXF1aXJlZCI6IGZhbHNlLAogICAgInN1cnJvZ2F0ZSI6IHsKICAgICAgImZpbGUiOiAibW9kZWwuam9ibGliIiwKICAgICAgInNoYTI1NiI6ICI2YzQwNjc4MTBlYjUwOGRmYjYxZjNjZmFmODRiNmRiODFjZjJmN2M3ODI4NmYwMmU3ODYyMDVlMGIwMTRhYzY1IiwKICAgICAgInJvbGUiOiAibG9vcC10YXggcmVncmVzc29yIChwcmVkaWN0cyBrZXJuZWwtZGVyaXZlZCBvdmVyaGVhZE1zKSBcdTIwMTQga2VybmVsIHJlbWFpbnMgc29sZSBncm91bmQgdHJ1dGgiLAogICAgICAiZmlkZWxpdHlfTUVBU1VSRUQiOiB7CiAgICAgICAgImhlbGRfb3V0X01BRV9tcyI6IDE1LjU4NTMsCiAgICAgICAgImhlbGRfb3V0X1IyIjogMC45ODIyLAogICAgICAgICJoZWxkX291dF90YXJnZXRfc3RkX21zIjogMTkxLjA3OQogICAgICB9LAogICAgICAicmVjZWlwdCI6ICJUUkFJTklOR19SRUNFSVBULmpzb24iLAogICAgICAicmV2ZXJpZnkiOiAicHl0aG9uIHNjcmlwdHMvZXZhbC5weSIKICAgIH0sCiAgICAic3RkbGliX29ubHlfbm90ZSI6ICJrZXJuZWwgcGFja2FnZSBpdHNlbGYgc3RheXMgc3RkbGliLW9ubHk7IHRoZSBPUFRJT05BTCBzdXJyb2dhdGUgbmVlZHMgc2tsZWFybitqb2JsaWIiCiAgfSwKICAic291cmNlX29mX3JlY29yZCI6IHsKICAgICJzdGF0ZSI6ICJWRVJJRklFRF9IRl9TT1VSQ0VfT0ZfUkVDT1JEIiwKICAgICJwbGF0Zm9ybSI6ICJodWdnaW5nZmFjZSIsCiAgICAicmVwb3NpdG9yeSI6ICJTWkxIT0xESU5HUy9zemwtb3Vyb2Jvcm9zIgogIH0sCiAgIm1pcnJvcnMiOiB7CiAgICAibGl2ZV9zdXJmYWNlIjogImExMW95IGJhY2tib25lIGxvb3AgdGF4IChhcnRpZmFjdHMvYXBpLXNlcnZlci9zcmMvbGliL2JhY2tib25lLnRzIGJ1aWxkTG9vcFRyYWNlL3N1bUF0dGVtcHRNcy9wZWFrQXR0ZW1wdE1zL2RlYWRIb3BNcykiLAogICAgInRpbWluZ19iYXNpcyI6ICJMT09QX1RJTUlOR19CQVNJUyBjYXJyaWVkIHZlcmJhdGltIGZyb20gYmFja2JvbmUudHMiLAogICAgImxlYW5fcmVwbyI6ICJzemwtaG9sZGluZ3MvbHV0YXItbGVhbiIsCiAgICAiZG9pX2x1dGFyX2xlYW4iOiAiMTAuNTI4MS96ZW5vZG8uMjA0MzQzMDgiCiAgfSwKICAidmVyaWZpY2F0aW9uIjogewogICAgInRlc3RzIjogIjEzLzEzIHBhc3NlZCIsCiAgICAidGVzdHNfYmFzaXMiOiAiTUVBU1VSRUQgbG9jYWwgcHl0aG9uMyAtbSBweXRlc3QgcnVuLCBzdGRsaWItb25seSwgb2ZmbGluZSIsCiAgICAiZmFsc2lmaWFiaWxpdHkiOiAiYXJpdGhtZXRpYyBpcyBmYWxzaWZpYWJsZSAoYSB3cm9uZyBzcGxpdCBmbGlwcyB0aGUgYXNzZXJ0cyk7IGFuIHVubWVhc3VyZWQgd2FsbCB5aWVsZHMgb3ZlcmhlYWRNcz1Ob25lIChVTkFWQUlMQUJMRSwgbm90IGZhYnJpY2F0ZWQpOyBhIG1pc3NpbmcgbGF0ZW5jeSByYWlzZXM7IGEgYnVkZ2V0IHZpb2xhdGlvbiBpcyBzdXJmYWNlZCIKICB9LAogICJsYW1iZGEiOiB7CiAgICAic3RhdHVzIjogIkNvbmplY3R1cmUgMSAob3BlbikgXHUyMDE0IHVuaXF1ZW5lc3MgdW5wcm92ZW4iLAogICAgInRvdWNoZWRfYnlfdGhpc19hcnRpZmFjdCI6IGZhbHNlCiAgfSwKICAiY2xhaW1zIjogewogICAgInRyYWluZWRfbW9kZWwiOiAiQ0xBSU1FRCBcdTIwMTQgc2tsZWFybiBIaXN0R3JhZGllbnRCb29zdGluZ1JlZ3Jlc3NvciwgTUVBU1VSRUQsIHJlY2VpcHRlZCIsCiAgICAicmVwcm9kdWNpYmxlX2J1aWxkIjogIk5PVF9DTEFJTUVEIiwKICAgICJ3ZWlnaHRzX3ByZXNlbnQiOiAibW9kZWwuam9ibGliIChza2xlYXJuIHN1cnJvZ2F0ZTsga2VybmVsIHN0YXlzIHdlaWdodGxlc3MpIgogIH0sCiAgImxpbWl0cyI6IFsKICAgICJUaGUgdHJhaW5lZCBzdXJyb2dhdGUgQVBQUk9YSU1BVEVTIHRoZSBrZXJuZWwncyBERVJJVkVEIG92ZXJoZWFkTXMgZnJvbSB0cmFjZSBzaGFwZTsgaXQgZG9lcyBOT1QgcmVwbGFjZSB0aGUga2VybmVsJ3MgZXhhY3QgYXJpdGhtZXRpYywgd2hpY2ggcmVtYWlucyBhdXRob3JpdGF0aXZlLiIsCiAgICAiUnVucyB3aXRoIGFuIHVubWVhc3VyZWQgd2FsbCAob3ZlcmhlYWRNcz1Ob25lIC8gVU5BVkFJTEFCTEUpIGFyZSBkcm9wcGVkIGZyb20gdHJhaW5pbmcgXHUyMDE0IG5ldmVyIGZhYnJpY2F0ZWQuIiwKICAgICJtb2RlbE1zIGFuZCBwZWFrQXR0ZW1wdE1zIGFyZSBNRUFTVVJFRCAodXBzdHJlYW0gd2FsbCB3aW5kb3dzKTsgb3ZlcmhlYWRNcywgc2VyaWFsaXphdGlvblRheE1zIGFuZCBkZWFkSG9wTXMgYXJlIERFUklWRUQgYXJpdGhtZXRpYyBvbiB0aG9zZSBtZWFzdXJlbWVudHMgXHUyMDE0IG5ldmVyIG5ldyBjbGFpbXMuIiwKICAgICJzZXJpYWxpemF0aW9uVGF4TXMgaXMgYSBDT1VOVEVSRkFDVFVBTCAod2hhdCBhIHBlcmZlY3RseS1wYXJhbGxlbCBsb29wIGNvdWxkIHNhdmUpLCBuZXZlciBhIHJlYWxpemVkIHNhdmluZyBcdTIwMTQgQWxsb3kncyBsb29wIGlzIHN0cmljdGx5IHNlcXVlbnRpYWwuIiwKICAgICJkZWFkSG9wTXMgaXMgYW4gdXBwZXIgYm91bmQgb25seSBcdTIwMTQgQWxsb3kgZG9lcyBub3QgcHJlZmV0Y2guIiwKICAgICJvdmVyaGVhZE1zIGlzIFVOQVZBSUxBQkxFIChOb25lKSB3aGVuIHRoZSBydW4gd2FsbCB3YXMgbm90IG1lYXN1cmVkIFx1MjAxNCBuZXZlciBmYWJyaWNhdGVkLiIsCiAgICAiTm8gLmJpbiwgLnNhZmV0ZW5zb3JzLCAucHQsIC5wdGgsIC5vbm54LCBvciAuZ2d1ZiB3ZWlnaHQgYXJ0aWZhY3QgaXMgcHJlc2VudC4iLAogICAgIkxvb3AtdGF4IGFjY291bnRpbmcgZG9lcyBub3QgcHJvdmUgb3IgdXBncmFkZSBcdTAzOWIsIHdoaWNoIHJlbWFpbnMgQ29uamVjdHVyZSAxIChvcGVuKS4iCiAgXQp9"
+  },
+  {
+    "id": "SZLHOLDINGS/szl-provctl",
+    "repository_type": "model",
+    "revision": "8d2082d4b9901b1b92c9efd86113fb760a64bf1e",
+    "repository_record": {
+      "file_count": 20,
+      "id": "SZLHOLDINGS/szl-provctl",
+      "kind": "models",
+      "metadata": {
+        "_id": "6a3c1d301a696462b4e73758",
+        "author": "SZLHOLDINGS",
+        "cardData": {
+          "library_name": "kernels",
+          "license": "apache-2.0",
+          "szl-governance": {
+            "energy": "MEASURED-only — real NVML per-kernel delta; None when no GPU, never fabricated",
+            "honest_blocked": "BLOCKED nodes are surfaced in the provenance DAG, never silently dropped",
+            "interop": "in-toto Statement v1 + SLSA provenance v1 shapes — repository-selfchecked; external compatibility must be tested",
+            "lambda": "Conjecture 1 (open) — proven_trust structurally locked False",
+            "verdict": "INTEROP-PROVENANCE"
+          },
+          "tags": [
+            "kernel",
+            "provenance",
+            "supply-chain",
+            "in-toto",
+            "slsa",
+            "governance",
+            "doi:10.5281/zenodo.19944926"
+          ]
+        },
+        "config": {},
+        "createdAt": "2026-06-24T18:08:48.000Z",
+        "disabled": false,
+        "downloads": 0,
+        "gated": false,
+        "id": "SZLHOLDINGS/szl-provctl",
+        "lastModified": "2026-09-28T21:04:00.000Z",
+        "library_name": "kernels",
+        "likes": 0,
+        "model-index": null,
+        "modelId": "SZLHOLDINGS/szl-provctl",
+        "private": false,
+        "sha": "8d2082d4b9901b1b92c9efd86113fb760a64bf1e",
+        "siblings": [
+          {
+            "rfilename": ".gitattributes"
+          },
+          {
+            "rfilename": "BENCH.laptop-blackwell.json"
+          },
+          {
+            "rfilename": "LICENSE"
+          },
+          {
+            "rfilename": "MODEL_PROVENANCE.json"
+          },
+          {
+            "rfilename": "PROMOTION_READINESS_AUDIT.json"
+          },
+          {
+            "rfilename": "README.md"
+          },
+          {
+            "rfilename": "SECURITY.md"
+          },
+          {
+            "rfilename": "SZL_ESTATE_MANAGED.json"
+          },
+          {
+            "rfilename": "TRAINING_RECEIPT.json"
+          },
+          {
+            "rfilename": "bom/model-bom.cdx.json"
+          },
+          {
+            "rfilename": "build.toml"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_provctl/__init__.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_provctl/_chain.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_provctl/_dag.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_provctl/_energy.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_provctl/_interop.py"
+          },
+          {
+            "rfilename": "build/torch-universal/szl_provctl/metadata.json"
+          },
+          {
+            "rfilename": "card/holo-banner.svg"
+          },
+          {
+            "rfilename": "scripts/eval.py"
+          },
+          {
+            "rfilename": "scripts/forge.py"
+          }
+        ],
+        "spaces": [],
+        "tags": [
+          "kernels",
+          "kernel",
+          "provenance",
+          "supply-chain",
+          "in-toto",
+          "slsa",
+          "governance",
+          "doi:10.5281/zenodo.19944926",
+          "license:apache-2.0",
+          "region:us"
+        ],
+        "usedStorage": 222560
+      },
+      "metadata_receipt": {
+        "completed_at": "2026-09-30T02:25:28.222075+00:00",
+        "final_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-provctl/revision/8d2082d4b9901b1b92c9efd86113fb760a64bf1e",
+        "observed_at": "2026-09-30T02:25:28.140765+00:00",
+        "requested_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-provctl/revision/8d2082d4b9901b1b92c9efd86113fb760a64bf1e",
+        "response_bytes": 2029,
+        "response_sha256": "55c87714edf51d23fb5e89d600a41d9bf366b675d06c9817f43e9650fdab50d3",
+        "status": 200
+      },
+      "revision": "8d2082d4b9901b1b92c9efd86113fb760a64bf1e",
+      "tree_coverage": "COMPLETE_ACCESSIBLE_RESPONSE",
+      "tree_entries": 26,
+      "tree_pages": [
+        {
+          "completed_at": "2026-09-30T02:25:28.331651+00:00",
+          "final_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-provctl/tree/8d2082d4b9901b1b92c9efd86113fb760a64bf1e?recursive=true&expand=false&limit=100",
+          "next_url": null,
+          "observed_at": "2026-09-30T02:25:28.222075+00:00",
+          "requested_url": "https://huggingface.co/api/models/SZLHOLDINGS/szl-provctl/tree/8d2082d4b9901b1b92c9efd86113fb760a64bf1e?recursive=true&expand=false&limit=100",
+          "response_bytes": 2857,
+          "response_sha256": "b2225a5d8337ae369fe0f059b4a46ec6693623afcee3b29cc47a9b081b108c64",
+          "status": 200
+        }
+      ]
+    },
+    "tree": [
+      {
+        "id": "SZLHOLDINGS/szl-provctl",
+        "kind": "models",
+        "oid": "a6344aac8c09253b3b630fb776ae94478aa0275b",
+        "path": ".gitattributes",
+        "revision": "8d2082d4b9901b1b92c9efd86113fb760a64bf1e",
+        "size": 1519,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-provctl",
+        "kind": "models",
+        "oid": "28c779c94d5b32a1ed2f10d35b7a38746829860e",
+        "path": "BENCH.laptop-blackwell.json",
+        "revision": "8d2082d4b9901b1b92c9efd86113fb760a64bf1e",
+        "size": 1869,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-provctl",
+        "kind": "models",
+        "oid": "f02122ea79cbad4d0137dfd71c7fba654ec1233e",
+        "path": "LICENSE",
+        "revision": "8d2082d4b9901b1b92c9efd86113fb760a64bf1e",
+        "size": 809,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-provctl",
+        "kind": "models",
+        "oid": "92cb1d191c6433f59adb5c267413937b22131c77",
+        "path": "MODEL_PROVENANCE.json",
+        "revision": "8d2082d4b9901b1b92c9efd86113fb760a64bf1e",
+        "size": 3024,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-provctl",
+        "kind": "models",
+        "oid": "b214a2b963325a0746cb3d8f3e51ee05ed50c651",
+        "path": "PROMOTION_READINESS_AUDIT.json",
+        "revision": "8d2082d4b9901b1b92c9efd86113fb760a64bf1e",
+        "size": 12609,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-provctl",
+        "kind": "models",
+        "oid": "27dbc7914acd5f1f2e809bb4c8c1432a1f39eb80",
+        "path": "README.md",
+        "revision": "8d2082d4b9901b1b92c9efd86113fb760a64bf1e",
+        "size": 3469,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-provctl",
+        "kind": "models",
+        "oid": "a84cfdb14181e4b4434395b135b358144e94d54d",
+        "path": "SECURITY.md",
+        "revision": "8d2082d4b9901b1b92c9efd86113fb760a64bf1e",
+        "size": 1256,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-provctl",
+        "kind": "models",
+        "oid": "dd326d9b5bd29052179b510f498b779add5e03f9",
+        "path": "SZL_ESTATE_MANAGED.json",
+        "revision": "8d2082d4b9901b1b92c9efd86113fb760a64bf1e",
+        "size": 677,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-provctl",
+        "kind": "models",
+        "oid": "84b84edef7103c3036d09384fc8347fe13f707a2",
+        "path": "TRAINING_RECEIPT.json",
+        "revision": "8d2082d4b9901b1b92c9efd86113fb760a64bf1e",
+        "size": 2123,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-provctl",
+        "kind": "models",
+        "oid": "782d618626c353a32d9597d4d9daee85f78a9a5a",
+        "path": "bom",
+        "revision": "8d2082d4b9901b1b92c9efd86113fb760a64bf1e",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-provctl",
+        "kind": "models",
+        "oid": "1fb2d47fd882857ced306071bc45d66355f4ca5d",
+        "path": "bom/model-bom.cdx.json",
+        "revision": "8d2082d4b9901b1b92c9efd86113fb760a64bf1e",
+        "size": 6647,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-provctl",
+        "kind": "models",
+        "oid": "9b4c5cc43823b40b6eb48952f9399665fee318d9",
+        "path": "build",
+        "revision": "8d2082d4b9901b1b92c9efd86113fb760a64bf1e",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-provctl",
+        "kind": "models",
+        "oid": "74dbc8f0b7d128895869fa09ba2271c10d502852",
+        "path": "build.toml",
+        "revision": "8d2082d4b9901b1b92c9efd86113fb760a64bf1e",
+        "size": 74,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-provctl",
+        "kind": "models",
+        "oid": "fdb675657788175eaea472228ba6393b93ad7d6a",
+        "path": "build/torch-universal",
+        "revision": "8d2082d4b9901b1b92c9efd86113fb760a64bf1e",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-provctl",
+        "kind": "models",
+        "oid": "4d77bcac47d77892f2055ba7a97b6743f1fcb706",
+        "path": "build/torch-universal/szl_provctl",
+        "revision": "8d2082d4b9901b1b92c9efd86113fb760a64bf1e",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-provctl",
+        "kind": "models",
+        "oid": "32409a3b21ac2545f596358bc2f3ae0fc0210b45",
+        "path": "build/torch-universal/szl_provctl/__init__.py",
+        "revision": "8d2082d4b9901b1b92c9efd86113fb760a64bf1e",
+        "size": 10057,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-provctl",
+        "kind": "models",
+        "oid": "e1b7aa9caec1789295d1d38019c73c62ff6c9254",
+        "path": "build/torch-universal/szl_provctl/_chain.py",
+        "revision": "8d2082d4b9901b1b92c9efd86113fb760a64bf1e",
+        "size": 5568,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-provctl",
+        "kind": "models",
+        "oid": "6b4b17b7cb1cbc323d4fe357071f1447d18813ce",
+        "path": "build/torch-universal/szl_provctl/_dag.py",
+        "revision": "8d2082d4b9901b1b92c9efd86113fb760a64bf1e",
+        "size": 8667,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-provctl",
+        "kind": "models",
+        "oid": "b30c1631e2981e0a261e797a353c0f6b9065e97c",
+        "path": "build/torch-universal/szl_provctl/_energy.py",
+        "revision": "8d2082d4b9901b1b92c9efd86113fb760a64bf1e",
+        "size": 3902,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-provctl",
+        "kind": "models",
+        "oid": "002696602a1fa824c85adfd928438d75065a604c",
+        "path": "build/torch-universal/szl_provctl/_interop.py",
+        "revision": "8d2082d4b9901b1b92c9efd86113fb760a64bf1e",
+        "size": 9706,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-provctl",
+        "kind": "models",
+        "oid": "8f096343f91c6ef0b68dfcd0b513714cffd893bb",
+        "path": "build/torch-universal/szl_provctl/metadata.json",
+        "revision": "8d2082d4b9901b1b92c9efd86113fb760a64bf1e",
+        "size": 726,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-provctl",
+        "kind": "models",
+        "oid": "f3b48842f90c1995ea80966bbd20bef6211d0582",
+        "path": "card",
+        "revision": "8d2082d4b9901b1b92c9efd86113fb760a64bf1e",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-provctl",
+        "kind": "models",
+        "oid": "b1cc261766a35fc7af32e3f57ccd28dc88ec31a3",
+        "path": "card/holo-banner.svg",
+        "revision": "8d2082d4b9901b1b92c9efd86113fb760a64bf1e",
+        "size": 2740,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-provctl",
+        "kind": "models",
+        "oid": "ff929b46419ea4c8b526bb58c40f71129d49f56d",
+        "path": "scripts",
+        "revision": "8d2082d4b9901b1b92c9efd86113fb760a64bf1e",
+        "size": 0,
+        "type": "directory"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-provctl",
+        "kind": "models",
+        "oid": "37640faafb68cf0cba4012bb8a1cfacce800c9f8",
+        "path": "scripts/eval.py",
+        "revision": "8d2082d4b9901b1b92c9efd86113fb760a64bf1e",
+        "size": 1472,
+        "type": "file"
+      },
+      {
+        "id": "SZLHOLDINGS/szl-provctl",
+        "kind": "models",
+        "oid": "f1a0a0d8618366112bd1b7924bede89eea0e1745",
+        "path": "scripts/forge.py",
+        "revision": "8d2082d4b9901b1b92c9efd86113fb760a64bf1e",
+        "size": 11029,
+        "type": "file"
+      }
+    ],
+    "text_record": {
+      "content": {
+        "claims": {
+          "github_repository_parity": "NOT_CLAIMED",
+          "reproducible_build": "NOT_CLAIMED",
+          "serving_process_revision": "NOT_APPLICABLE_REPOSITORY_ARTIFACT",
+          "trained_model": "SURROGATE_PRESENT_MEASURED_FIDELITY"
+        },
+        "limits": [
+          "The 404 observation establishes only that no public same-name repository was reachable at the observation time; it does not make a claim about private repositories.",
+          "The attestation overlay cannot self-embed its resulting Hub commit, so the immutable artifact_base_revision is the measured pre-overlay base.",
+          "No .bin, .safetensors, .pt, .pth, .onnx, or .gguf weight artifact was present in the measured base tree."
+        ],
+        "model": {
+          "artifact_kind": "kernel-code-and-configuration",
+          "id": "SZLHOLDINGS/szl-provctl",
+          "repository_type": "model",
+          "stdlib_only_note": "kernel is Python stdlib-only; the OPTIONAL surrogate needs sklearn+joblib",
+          "surrogate": {
+            "fidelity_MEASURED": {
+              "fidelity_vs_kernel_heldout": 1.0,
+              "per_class_recall": {
+                "chain-integrity": 1.0,
+                "clean": 1.0,
+                "cycle": 1.0,
+                "edge-mismatch": 1.0
+              }
+            },
+            "file": "model.joblib",
+            "kernel_limitation_note": "the kernel's `missing_dependency` verdict is UNREACHABLE (topo-sort KeyErrors on ghost edges before the check); that class is honestly excluded, not fabricated",
+            "reachable_classes": [
+              "clean",
+              "cycle",
+              "edge-mismatch",
+              "chain-integrity"
+            ],
+            "receipt": "TRAINING_RECEIPT.json",
+            "reverify": "python scripts/eval.py",
+            "role": "provenance-DAG anomaly triage only — kernel verify_dag traversal remains sole ground truth",
+            "sha256": "4ae3fd919e65bc37e6ee4e70136254ea077391b1ea938ccf5ea559d8a9249f16"
+          },
+          "trained_weights_present": true
+        },
+        "observed_at": "2026-07-12T00:27:14Z",
+        "public_github": {
+          "card_reference_role": "SPECIFICATION_OR_RESEARCH_CONTEXT_NOT_BUILD_SOURCE",
+          "card_references": [
+            "https://github.com/szl-holdings/governed-receipt-spec",
+            "https://github.com/szl-holdings/szl-papers/blob/main/PAPERS_INDEX.md"
+          ],
+          "same_name_candidate": "https://github.com/szl-holdings/szl-provctl",
+          "same_name_candidate_http_status": 404,
+          "state": "NO_DIRECT_PUBLIC_IMPLEMENTATION_OBSERVED"
+        },
+        "schema": "szl.model-source-attestation/v1",
+        "source_of_record": {
+          "artifact_base_revision": "e06fa26741812339c8a01d96a6abcec2eb9e08a6",
+          "artifact_base_state": "MEASURED_PRE_ATTESTATION_BASE",
+          "artifact_base_url": "https://huggingface.co/SZLHOLDINGS/szl-provctl/tree/e06fa26741812339c8a01d96a6abcec2eb9e08a6",
+          "file_count": 11,
+          "platform": "huggingface",
+          "repository": "SZLHOLDINGS/szl-provctl",
+          "state": "VERIFIED_HF_SOURCE_OF_RECORD",
+          "tree_hash_algorithm": "sha256 of UTF-8 path + NUL + per-file sha256 + LF, sorted by path; .cache excluded",
+          "tree_sha256": "9e9346ca70e02225b0e8625374793dd328113bc0bdc5ee962b0dab440d15a489"
+        }
+      },
+      "id": "SZLHOLDINGS/szl-provctl",
+      "kind": "models",
+      "path": "MODEL_PROVENANCE.json",
+      "receipt": {
+        "completed_at": "2026-09-30T02:25:28.461603+00:00",
+        "final_url": "https://huggingface.co/api/resolve-cache/models/SZLHOLDINGS/szl-provctl/8d2082d4b9901b1b92c9efd86113fb760a64bf1e/MODEL_PROVENANCE.json?%2FSZLHOLDINGS%2Fszl-provctl%2Fresolve%2F8d2082d4b9901b1b92c9efd86113fb760a64bf1e%2FMODEL_PROVENANCE.json=&etag=%2292cb1d191c6433f59adb5c267413937b22131c77%22",
+        "observed_at": "2026-09-30T02:25:28.331983+00:00",
+        "requested_url": "https://huggingface.co/SZLHOLDINGS/szl-provctl/resolve/8d2082d4b9901b1b92c9efd86113fb760a64bf1e/MODEL_PROVENANCE.json",
+        "response_bytes": 3024,
+        "response_sha256": "28bf866b757ab9238927baecdf0bf3d51d1b9df98ba2898a4a7e26c84fed07dd",
+        "status": 200
+      },
+      "revision": "8d2082d4b9901b1b92c9efd86113fb760a64bf1e"
+    },
+    "original_bytes_base64": "ewogICJzY2hlbWEiOiAic3psLm1vZGVsLXNvdXJjZS1hdHRlc3RhdGlvbi92MSIsCiAgIm9ic2VydmVkX2F0IjogIjIwMjYtMDctMTJUMDA6Mjc6MTRaIiwKICAibW9kZWwiOiB7CiAgICAiaWQiOiAiU1pMSE9MRElOR1Mvc3psLXByb3ZjdGwiLAogICAgInJlcG9zaXRvcnlfdHlwZSI6ICJtb2RlbCIsCiAgICAiYXJ0aWZhY3Rfa2luZCI6ICJrZXJuZWwtY29kZS1hbmQtY29uZmlndXJhdGlvbiIsCiAgICAidHJhaW5lZF93ZWlnaHRzX3ByZXNlbnQiOiB0cnVlLAogICAgInN1cnJvZ2F0ZSI6IHsKICAgICAgImZpbGUiOiAibW9kZWwuam9ibGliIiwKICAgICAgInNoYTI1NiI6ICI0YWUzZmQ5MTllNjViYzM3ZTZlZTRlNzAxMzYyNTRlYTA3NzM5MWIxZWE5MzhjY2Y1ZWE1NTlkOGE5MjQ5ZjE2IiwKICAgICAgInJvbGUiOiAicHJvdmVuYW5jZS1EQUcgYW5vbWFseSB0cmlhZ2Ugb25seSBcdTIwMTQga2VybmVsIHZlcmlmeV9kYWcgdHJhdmVyc2FsIHJlbWFpbnMgc29sZSBncm91bmQgdHJ1dGgiLAogICAgICAiZmlkZWxpdHlfTUVBU1VSRUQiOiB7CiAgICAgICAgImZpZGVsaXR5X3ZzX2tlcm5lbF9oZWxkb3V0IjogMS4wLAogICAgICAgICJwZXJfY2xhc3NfcmVjYWxsIjogewogICAgICAgICAgImNsZWFuIjogMS4wLAogICAgICAgICAgImN5Y2xlIjogMS4wLAogICAgICAgICAgImVkZ2UtbWlzbWF0Y2giOiAxLjAsCiAgICAgICAgICAiY2hhaW4taW50ZWdyaXR5IjogMS4wCiAgICAgICAgfQogICAgICB9LAogICAgICAicmVhY2hhYmxlX2NsYXNzZXMiOiBbCiAgICAgICAgImNsZWFuIiwKICAgICAgICAiY3ljbGUiLAogICAgICAgICJlZGdlLW1pc21hdGNoIiwKICAgICAgICAiY2hhaW4taW50ZWdyaXR5IgogICAgICBdLAogICAgICAia2VybmVsX2xpbWl0YXRpb25fbm90ZSI6ICJ0aGUga2VybmVsJ3MgYG1pc3NpbmdfZGVwZW5kZW5jeWAgdmVyZGljdCBpcyBVTlJFQUNIQUJMRSAodG9wby1zb3J0IEtleUVycm9ycyBvbiBnaG9zdCBlZGdlcyBiZWZvcmUgdGhlIGNoZWNrKTsgdGhhdCBjbGFzcyBpcyBob25lc3RseSBleGNsdWRlZCwgbm90IGZhYnJpY2F0ZWQiLAogICAgICAicmVjZWlwdCI6ICJUUkFJTklOR19SRUNFSVBULmpzb24iLAogICAgICAicmV2ZXJpZnkiOiAicHl0aG9uIHNjcmlwdHMvZXZhbC5weSIKICAgIH0sCiAgICAic3RkbGliX29ubHlfbm90ZSI6ICJrZXJuZWwgaXMgUHl0aG9uIHN0ZGxpYi1vbmx5OyB0aGUgT1BUSU9OQUwgc3Vycm9nYXRlIG5lZWRzIHNrbGVhcm4ram9ibGliIgogIH0sCiAgInNvdXJjZV9vZl9yZWNvcmQiOiB7CiAgICAic3RhdGUiOiAiVkVSSUZJRURfSEZfU09VUkNFX09GX1JFQ09SRCIsCiAgICAicGxhdGZvcm0iOiAiaHVnZ2luZ2ZhY2UiLAogICAgInJlcG9zaXRvcnkiOiAiU1pMSE9MRElOR1Mvc3psLXByb3ZjdGwiLAogICAgImFydGlmYWN0X2Jhc2VfcmV2aXNpb24iOiAiZTA2ZmEyNjc0MTgxMjMzOWM4YTAxZDk2YTZhYmNlYzJlYjllMDhhNiIsCiAgICAiYXJ0aWZhY3RfYmFzZV9zdGF0ZSI6ICJNRUFTVVJFRF9QUkVfQVRURVNUQVRJT05fQkFTRSIsCiAgICAiYXJ0aWZhY3RfYmFzZV91cmwiOiAiaHR0cHM6Ly9odWdnaW5nZmFjZS5jby9TWkxIT0xESU5HUy9zemwtcHJvdmN0bC90cmVlL2UwNmZhMjY3NDE4MTIzMzljOGEwMWQ5NmE2YWJjZWMyZWI5ZTA4YTYiLAogICAgImZpbGVfY291bnQiOiAxMSwKICAgICJ0cmVlX3NoYTI1NiI6ICI5ZTkzNDZjYTcwZTAyMjI1YjBlODYyNTM3NDc5M2RkMzI4MTEzYmMwYmRjNWVlOTYyYjBkYWI0NDBkMTVhNDg5IiwKICAgICJ0cmVlX2hhc2hfYWxnb3JpdGhtIjogInNoYTI1NiBvZiBVVEYtOCBwYXRoICsgTlVMICsgcGVyLWZpbGUgc2hhMjU2ICsgTEYsIHNvcnRlZCBieSBwYXRoOyAuY2FjaGUgZXhjbHVkZWQiCiAgfSwKICAicHVibGljX2dpdGh1YiI6IHsKICAgICJzdGF0ZSI6ICJOT19ESVJFQ1RfUFVCTElDX0lNUExFTUVOVEFUSU9OX09CU0VSVkVEIiwKICAgICJzYW1lX25hbWVfY2FuZGlkYXRlIjogImh0dHBzOi8vZ2l0aHViLmNvbS9zemwtaG9sZGluZ3Mvc3psLXByb3ZjdGwiLAogICAgInNhbWVfbmFtZV9jYW5kaWRhdGVfaHR0cF9zdGF0dXMiOiA0MDQsCiAgICAiY2FyZF9yZWZlcmVuY2VzIjogWwogICAgICAiaHR0cHM6Ly9naXRodWIuY29tL3N6bC1ob2xkaW5ncy9nb3Zlcm5lZC1yZWNlaXB0LXNwZWMiLAogICAgICAiaHR0cHM6Ly9naXRodWIuY29tL3N6bC1ob2xkaW5ncy9zemwtcGFwZXJzL2Jsb2IvbWFpbi9QQVBFUlNfSU5ERVgubWQiCiAgICBdLAogICAgImNhcmRfcmVmZXJlbmNlX3JvbGUiOiAiU1BFQ0lGSUNBVElPTl9PUl9SRVNFQVJDSF9DT05URVhUX05PVF9CVUlMRF9TT1VSQ0UiCiAgfSwKICAiY2xhaW1zIjogewogICAgImdpdGh1Yl9yZXBvc2l0b3J5X3Bhcml0eSI6ICJOT1RfQ0xBSU1FRCIsCiAgICAicmVwcm9kdWNpYmxlX2J1aWxkIjogIk5PVF9DTEFJTUVEIiwKICAgICJ0cmFpbmVkX21vZGVsIjogIlNVUlJPR0FURV9QUkVTRU5UX01FQVNVUkVEX0ZJREVMSVRZIiwKICAgICJzZXJ2aW5nX3Byb2Nlc3NfcmV2aXNpb24iOiAiTk9UX0FQUExJQ0FCTEVfUkVQT1NJVE9SWV9BUlRJRkFDVCIKICB9LAogICJsaW1pdHMiOiBbCiAgICAiVGhlIDQwNCBvYnNlcnZhdGlvbiBlc3RhYmxpc2hlcyBvbmx5IHRoYXQgbm8gcHVibGljIHNhbWUtbmFtZSByZXBvc2l0b3J5IHdhcyByZWFjaGFibGUgYXQgdGhlIG9ic2VydmF0aW9uIHRpbWU7IGl0IGRvZXMgbm90IG1ha2UgYSBjbGFpbSBhYm91dCBwcml2YXRlIHJlcG9zaXRvcmllcy4iLAogICAgIlRoZSBhdHRlc3RhdGlvbiBvdmVybGF5IGNhbm5vdCBzZWxmLWVtYmVkIGl0cyByZXN1bHRpbmcgSHViIGNvbW1pdCwgc28gdGhlIGltbXV0YWJsZSBhcnRpZmFjdF9iYXNlX3JldmlzaW9uIGlzIHRoZSBtZWFzdXJlZCBwcmUtb3ZlcmxheSBiYXNlLiIsCiAgICAiTm8gLmJpbiwgLnNhZmV0ZW5zb3JzLCAucHQsIC5wdGgsIC5vbm54LCBvciAuZ2d1ZiB3ZWlnaHQgYXJ0aWZhY3Qgd2FzIHByZXNlbnQgaW4gdGhlIG1lYXN1cmVkIGJhc2UgdHJlZS4iCiAgXQp9"
+  }
+]

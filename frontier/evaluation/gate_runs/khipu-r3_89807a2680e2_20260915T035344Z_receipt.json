@@ -1,0 +1,10 @@
+{
+  "schema": "szl.forge.postpublish-eval.v1",
+  "model": "khipu-r3",
+  "repo": "SZLHOLDINGS/khipu-r3",
+  "revision": "89807a2680e2400bbbc7523772aa6ff4b86a7988",
+  "status": "HELDOUT_EXECUTION_FAIL",
+  "heldoutStderr": "::error::run_heldout: cannot execute held-out prompts (no --results; transformers run failed: Couldn't instantiate the backend tokenizer from one of: \n(1) a `tokenizers` library serialization file, \n(2) a slow tokenizer instance to convert or \n(3) an equivalent slow tokenizer class to instantiate and convert. \nYou need to have sentencepiece or tiktoken installed to convert a slow tokenizer to a fast one.). Fail-closed: no eval, no publication.\n",
+  "heldoutStdout": "",
+  "productionAuthorization": false
+}

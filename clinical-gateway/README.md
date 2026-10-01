@@ -37,6 +37,12 @@ site_validated=false.
   inference kernel for synthetic operational transport signals.
 - frontend/index.html: control/configuration UI. It has no
   raw-message, patient, order, specimen, observation, or result input.
+- frontend/szl/: byte-for-byte copy of the SZL KANCHAY v1.1.1 design system
+  (`szl-design-system.css`, `szl-console.css`, the square orbit favicon and
+  `SOURCE.json` digests; system font stacks, no webfonts). The API serves only
+  `/szl/szl-design-system.css`, `/szl/szl-console.css` and
+  `/szl/logos/szl_favicon_square.svg`, from a fixed allowlist, with the same
+  admission and security headers as the UI page.
 - fixtures/assay_map.json: exact MOCK mapping accepted by the core.
 - fixtures/assay_map.live-shadow.example.json: non-production site mapping
   placeholder.
@@ -75,6 +81,59 @@ are deterministic implementation checks only, not production or clinical
 performance. The output contains an explicit all-false authority map and is not
 called by ingestion, MLLP ACK handling, clinical review, FHIR generation, or
 release logic.
+
+### Descriptive evaluation and the next data gate
+
+Run the fixed model against the existing public synthetic test split without
+training, changing weights, or choosing another threshold:
+
+```bash
+python -I -B clinical-gateway/tools/evaluate_operational_health_model.py \
+  --output oac-operational-evaluation.json
+```
+
+The new output contains source hashes, individual observation hashes, confusion
+counts, precision/recall intervals, Brier score and descriptive calibration bins.
+Replaying a public synthetic test is not new blind-test evidence. The evaluator
+does not grant deployment or clinical authority and does not accept real patient
+data. An optional admission declaration is checked for shape, not independently
+verified or accepted as a real training corpus. See
+[the evaluation contract](docs/operational-health-evaluation.md) for the limits
+and the evidence required before a future operational-data study.
+
+### Exact GitHub / Hugging Face alignment
+
+Reproduction and publication are separate checks. The read-only verifier below
+compares both published packages against immutable Git blobs, not the checkout.
+Use full 40-character commit hashes; branch names and shortened revisions fail.
+
+```bash
+python -I -B clinical-gateway/tools/verify_hub_alignment.py \
+  --git-revision <trusted-github-commit> \
+  --model-revision <oac-system-health-hub-commit> \
+  --dataset-revision <synthetic-dataset-hub-commit> \
+  --output oac-hub-alignment.json
+```
+
+The output path must be new. Exit zero requires every declared model and dataset
+file to match, including README, license, kernel, training snapshot and receipts.
+Only Hub's root `.gitattributes` is excluded and explicitly reported as excluded.
+The verifier also checks canonical source/trainer/receipt/data hash bindings.
+It rejects unexpected files, mutable revisions, symlinks, oversized responses,
+malformed manifests, and redirects outside the fixed HTTPS Hub origin. No Hub
+Python is imported or executed; no token, paid compute, upload or deletion is used.
+
+The OAC CI workflow optionally accepts both Hub revision inputs on manual
+dispatch and retains a success or failure receipt against that run's Git commit.
+Regular CI stays offline for these unit tests; it does not assume live Hub parity.
+The workflow never publishes or rewrites an existing Hub repository.
+
+Trust the reviewed Git source and verifier separately: this is a comparison
+receipt, not a signature verifier, independent attestation, training run, runtime
+health check, production-promotion grant, or medical authorization. A mismatched
+receipt must not be relabeled successful just because the coefficients match.
+Align approved source through a reviewed publication and rerun this check against
+the new immutable Hub revisions before making any release claim.
 
 ## Documented Roche transport profile
 
@@ -150,6 +209,46 @@ is capped by the configured queue capacity. This reconciliation is in-process:
 it is not a durable crash-recovery or exactly-once-after-restart guarantee.
 
 ## Start the local control plane
+
+### Portable installed-wheel workspace (distribution 2.5.1)
+
+The wheel now contains a closed, build-derived bundle of the browser shell
+and its vendored SZL KANCHAY stylesheets and favicon, fixed synthetic assay map,
+operational advisory model/receipt, and example.
+The existing control engine remains version 2.5.0; 2.5.1 changes packaging and
+workspace preparation only, not diagnostic, result, or transport behavior.
+No site bindings, keys, clinical data, live configuration or training splits
+are included. Install the reviewed wheel in an isolated environment, then run
+this from any working directory; the source checkout is not required:
+
+    oac-clinical-prepare-workspace --directory C:\OAC\shadow-workspace
+    $env:OAC_API_KEY = "<strong random value from your secret manager>"
+    $env:OAC_ALLOWED_ORIGINS = "http://127.0.0.1:8010"
+    oac-clinical-gateway --host 127.0.0.1 --port 8010 --data-root C:\OAC\shadow-workspace --state-dir state
+
+`C:\OAC` must already exist and be controlled by the trusted operator.
+`shadow-workspace` must **not** exist, even as an empty directory. The command
+verifies the wheel's manifest against its generated integrity module and every
+declared asset hash before creating it; it refuses existing targets, dot
+traversal, symlinks/reparse points and Windows network/device/removable paths
+(including mapped network drives, using the controller's fixed-drive check). Incomplete
+new work is retained on an I/O error and has no successful preparation receipt;
+inspect it and choose a new directory, never blindly retry over existing data.
+No listener, state initialization, signing key or device connection is created
+by preparation. The operator starts the loopback API explicitly afterward.
+
+Open `http://127.0.0.1:8010/` and enter the bearer token. The default UI and
+hash-verified advisory model are now available under the prepared `data_root`.
+The initialization command is also available as
+`python -I -B -m oac_clinical_resources --directory <new-directory>`.
+The nine copied asset hashes are recorded in `portable-assets.json`; this is
+a package-integrity record, not independent provenance or clinical approval.
+The installed Python environment is trusted; an attacker able to replace both
+code and its integrity module is outside this integrity boundary. The trusted
+parent-directory precondition below still applies, including concurrent local
+filesystem replacement risks. Preparation does not widen API filesystem access.
+
+### Existing source-tree startup
 
 Create an isolated environment and install the exact source tree:
 
@@ -342,6 +441,14 @@ authorization.
 
 ## Development verification
 
+`clinical-self-test` uses a fresh synthetic workspace and reports success only
+after that workspace has been removed. Its `disposable_state_removed=true`
+field is emitted after successful cleanup. Temporary Windows file locks receive
+bounded retries; a persistent permission error, another filesystem failure, or
+a remaining directory fails with `CLINICAL_SELF_TEST_CLEANUP_FAILED`. A passing
+self-test remains synthetic offline QA and grants no clinical-use or delivery
+authority.
+
 From the repository root with the runtime requirements installed:
 
     $env:PYTHONPATH = (Resolve-Path .\clinical-gateway\src).Path
@@ -353,3 +460,11 @@ CI runs the portable contracts on Python 3.11, 3.12, and 3.13, builds and
 installs the wheel, and re-runs the contracts on Windows Server 2022. These are
 source and isolated-runtime checks; they do not establish device or clinical
 validation.
+
+Both Linux and Windows wheel jobs also run
+`python -I -B clinical-gateway/tools/verify_installed_workspace.py`. It imports
+the installed distribution, prepares a fresh workspace outside the checkout,
+starts the API from a fresh working directory, verifies exact HTML bytes and
+authenticated advisory scoring, rejects unauthenticated and non-operational
+requests, and checks the all-false authority boundary. It does not connect a
+device or train a model.

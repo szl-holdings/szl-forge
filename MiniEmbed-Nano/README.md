@@ -19,7 +19,7 @@ implementation lives in the canonical `szl_khipu` package; no packaged Hub
 loader or `config.json` is shipped alongside these weights. Treat this as a
 software fixture until its complete inference contract is independently verified.
 
-> **Now loadable:** [`load.py`](https://github.com/szl-holdings/szl-forge/blob/main/MiniEmbed-Nano/load.py) ships the documented forward pass — SHA-256 token id mod 64, mean-pool, L2 — against the receipted `table[64,12]`. `python load.py "knot the run"` prints the embedding.
+> **Local loader:** [`load.py`](./load.py) uses the canonical little-endian first eight SHA-256 bytes modulo 64, row normalization, mean pooling, and L2 normalization against `table[64,12]`. Empty text uses normalized row zero. `python load.py "knot the run" --weights mini_embed.npz` prints the embedding. Python 3.11+ and NumPy 2.4.6 are required. This GitHub source does not establish that the loader is deployed to the Hub or that retrieval quality has been measured.
 
 # MiniEmbed-Nano
 

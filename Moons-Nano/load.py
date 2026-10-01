@@ -14,35 +14,55 @@ _NAMES = ("W1", "b1", "W2", "b2")
 _SHAPES = ((8, 2), (8,), (2, 8), (2,))
 
 
+def _weights(values):
+    if not isinstance(values, (tuple, list)) or len(values) != 4:
+        raise ValueError("Moons-Nano: expected four named tensors")
+    result = []
+    for value, name, shape in zip(values, _NAMES, _SHAPES):
+        array = np.asarray(value)
+        if array.shape != shape or array.dtype.kind not in "fiu":
+            raise ValueError(f"Moons-Nano: invalid real tensor {name}; expected {shape}")
+        array = array.astype(np.float64)
+        if not np.isfinite(array).all():
+            raise ValueError(f"Moons-Nano: non-finite tensor {name}")
+        result.append(array)
+    return tuple(result)
+
+
 def load(path: str | pathlib.Path = "moons.npz"):
-    z = np.load(path, allow_pickle=False)
-    missing = [n for n in _NAMES if n not in z.files]
-    if missing:
-        raise ValueError(f"Moons-Nano: missing arrays {missing}; have {sorted(z.files)}")
-    w1, b1, w2, b2 = (z[n].astype(np.float64) for n in _NAMES)
-    if (w1.shape, b1.shape, w2.shape, b2.shape) != _SHAPES:
-        raise ValueError(
-            "Moons-Nano: shape drift "
-            f"{(w1.shape, b1.shape, w2.shape, b2.shape)} != {_SHAPES}"
-        )
-    if not all(np.isfinite(v).all() for v in (w1, b1, w2, b2)):
-        raise ValueError("Moons-Nano: non-finite entry in archive")
-    return w1, b1, w2, b2
+    with np.load(path, allow_pickle=False) as archive:
+        if len(archive.files) != 4 or set(archive.files) != set(_NAMES):
+            raise ValueError("Moons-Nano: expected exactly W1/b1/W2/b2")
+        return _weights(tuple(archive[name] for name in _NAMES))
 
 
 def infer(x, y, weights=None, path="moons.npz"):
     """(x, y) point -> moon index (0 or 1) with the softmax confidence."""
-    w1, b1, w2, b2 = weights if weights is not None else load(path)
-    h = np.tanh(w1 @ np.asarray([x, y], dtype=np.float64) + b1)
-    logits = w2 @ h + b2
-    p = np.exp(logits - logits.max())
-    p /= p.sum()
+    point = np.asarray([x, y])
+    if point.shape != (2,) or point.dtype.kind not in "fiu":
+        raise ValueError("Moons-Nano: expected two real scalar coordinates")
+    point = point.astype(np.float64)
+    if not np.isfinite(point).all():
+        raise ValueError("Moons-Nano: non-finite coordinates")
+    w1, b1, w2, b2 = _weights(weights) if weights is not None else load(path)
+    try:
+        with np.errstate(over="raise", invalid="raise", divide="raise", under="ignore"):
+            h = np.tanh(w1 @ point + b1)
+            logits = w2 @ h + b2
+            p = np.exp(logits - logits.max())
+            p /= p.sum()
+    except FloatingPointError as error:
+        raise ValueError("Moons-Nano: non-finite forward pass") from error
     top = int(p.argmax())
     return top, float(p[top])
 
 
 if __name__ == "__main__":
-    import sys
+    import argparse
 
-    x, y = (0.0, 0.0) if len(sys.argv) < 3 else (float(sys.argv[1]), float(sys.argv[2]))
-    print(infer(x, y))
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("x", type=float, nargs="?", default=0.0)
+    parser.add_argument("y", type=float, nargs="?", default=0.0)
+    parser.add_argument("--weights", default="moons.npz")
+    args = parser.parse_args()
+    print(infer(args.x, args.y, path=args.weights))

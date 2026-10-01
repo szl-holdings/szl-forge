@@ -1,0 +1,30 @@
+{
+  "schema": "szl.evaluation-binding/v1",
+  "repository": "SZLHOLDINGS/chaski-r2",
+  "pinned_revision": "661f8ee9ff6ab8b11dda6e7a9d42c14d3124c6dd",
+  "identity_manifest": "chaski-r2_661f8ee9ff6a.json",
+  "identity_manifest_sha256": "79f58f44aef753e071373dad5703f4a1fd87720180246a55e5468da085e741c7",
+  "evaluated_files": [
+    {
+      "path": "adapter_config.json",
+      "sha256": "d36472a3100231dfdf0c4aa16d3a80cb8ab53c86af33a15172b06f9d9a313193"
+    },
+    {
+      "path": "adapter_model.safetensors",
+      "sha256": "6f12981ea5df5e22d3493eefb20d75db75c1c88961ba6621a35af09edd0cdde6"
+    }
+  ],
+  "evaluator": "chaski/bakeoff_named_n.py --run",
+  "evaluation_receipt": "chaski-r2_661f8ee9ff6a_bakeoff_20260924-181521.receipt.json",
+  "evaluation_receipt_sha256": "3f268eacb9b84fbfe96a53b3fad4a89b12a8b8a22dac05f0de64b8ed2cbf46cb",
+  "evaluation_receipt_kind": "szl-chaski-named-n-bakeoff-receipt",
+  "run_exit_code": 0,
+  "receipt_check_exit_code": 0,
+  "bound_at_utc": "2026-09-24T22:16:12+00:00",
+  "publication_eligible": false,
+  "autonomy_eligible": false,
+  "production_disposition": "HOLD",
+  "promotion_effect": "NONE",
+  "signature_status": "UNSIGNED_HONEST",
+  "boundary": "Binds one local held-out run to exact pinned bytes. Not qualification, promotion, or authorization."
+}

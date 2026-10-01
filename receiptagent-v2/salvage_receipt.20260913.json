@@ -1,0 +1,13 @@
+{
+  "label": "MEASURED",
+  "repo": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2",
+  "root_cause": "v2 adapter trained on the multimodal wrapper (FastVisionModel); LoRA keys target model.language_model.layers.N.linear_attn.* without .default; original merge loaded text-only base and dropped all 372 keys, producing a byte-copy of base",
+  "fix": "multimodal base via AutoModelForImageTextToText; .default key rename; verified key map; merge_and_unload; non-zero delta gate",
+  "key_map": { "checkpoint_lora_keys": 372, "expected": 372, "unmatched": 0, "missing": 0 },
+  "merge_max_weight_delta": 0.00422266,
+  "merge_tensors_touched": 186,
+  "merged_output_local": "C:/Users/steph/szl/merged/szl-receiptagent-qwen35-0.8b-v2-salvaged",
+  "load_test": "AutoModel + AutoTokenizer load OK",
+  "publication_eligible": false,
+  "hub_write": false
+}

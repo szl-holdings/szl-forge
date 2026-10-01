@@ -1,0 +1,10 @@
+{
+  "schema": "szl.forge.postpublish-eval.v1",
+  "model": "WILLAY",
+  "repo": "SZLHOLDINGS/WILLAY",
+  "revision": "375a007ec961f125ab051747b70c3e3b7dcd64c7",
+  "status": "HELDOUT_EXECUTION_FAIL",
+  "heldoutStderr": "::error::run_heldout: cannot execute held-out prompts (no --results; transformers run failed: Couldn't instantiate the backend tokenizer from one of: \n(1) a `tokenizers` library serialization file, \n(2) a slow tokenizer instance to convert or \n(3) an equivalent slow tokenizer class to instantiate and convert. \nYou need to have sentencepiece or tiktoken installed to convert a slow tokenizer to a fast one.). Fail-closed: no eval, no publication.\n",
+  "heldoutStdout": "",
+  "productionAuthorization": false
+}

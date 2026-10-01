@@ -117,8 +117,8 @@ PROFILES: Mapping[str, CardProfile] = {
         source_directory=ROOT / "chaski-5050" / "card",
         display_name="Chaski-5050",
         report_schema="szl.hf.chaski-5050-card-publication/v1",
-        evaluation_state="NONE_THIS_RUN",
-        release_blocker="no_json_or_refusal_gate",
+        evaluation_state="BLOCKED_LATER_GATE_FAIL",
+        release_blocker="historical_gate=1/5;overall=FAIL;heldout.refusal_no_regression=false",
         autonomy_eligible=False,
         required_card_boundaries=(
             "base_model: Qwen/Qwen3.5-0.8B",
@@ -127,7 +127,7 @@ PROFILES: Mapping[str, CardProfile] = {
             "originality: FINETUNE_DISCLOSED_BASE",
             "job_id: local-5050",
             "weights: AVAILABLE",
-            "evals: none-this-run",
+            "evals: HISTORICAL_TRAINING_NONE_SEPARATE_GATE_FAIL",
             "publication_eligible: false",
             "autonomy_eligible: false",
             "never_overwrite: SZLHOLDINGS/chaski",
@@ -135,11 +135,11 @@ PROFILES: Mapping[str, CardProfile] = {
             "train_loss: 2.228136855544466",
             "adapter_sha256: 620b3488fac2ebc6518090424de5b3c6a182293cf52dfd5bd9f886f54aef0df5",
             "> **QUARANTINE.** Research residue.",
-            "Evaluation state: none-this-run; no evaluation score is claimed by this card.",
-            "No signed held-out evaluation receipt for this 5050 adapter is present in this source tree.",
-            "**Status: none-this-run.** No JSON/refusal gate ran. Not 5/5. Not 6/6.",
-            "Card, banner, and source binding only; weights, adapter, configs, evals, visibility, hardware, collection, and runtime state unchanged",
-            "Canonical GitHub: [`chaski/README_5050.md`]",
+            "`evals=none-this-run`: no JSON/refusal gate ran in that training step.",
+            "**1/5 held-out and overall FAIL**",
+            "heldout.refusal_no_regression=false",
+            "nonportable owner-local base path",
+            "Canonical card authoring source: [chaski-5050/card/README.md]",
         ),
         forbidden_card_claims=(
             "publication_eligible: true",
@@ -162,10 +162,7 @@ PROFILES: Mapping[str, CardProfile] = {
             'stop-color="#e879a9"',
         ),
         commit_description=(
-            "Exact-source Chaski-5050 card publication. Evaluation remains "
-            "none-this-run; no JSON/refusal gate is claimed; publication_eligible "
-            "and autonomy_eligible remain false. No weights, adapter, configs, "
-            "evals, visibility, hardware, collection, or runtime state changed."
+            "Exact-source Chaski-5050 card publication. Historical training had no evaluation; the separate historical 1/5 held-out gate FAIL remains a release blocker. Publication and autonomy eligibility remain false. No weights, adapter, configs, evals, visibility, hardware, collection, or runtime state changed."
         ),
     ),
     "chaski-r2": CardProfile(
@@ -175,8 +172,8 @@ PROFILES: Mapping[str, CardProfile] = {
         display_name="Chaski-R2",
         required_card_tags=("proposal-only",),
         report_schema="szl.hf.chaski-r2-card-publication/v1",
-        evaluation_state="NONE_THIS_RUN",
-        release_blocker="no_json_or_refusal_gate",
+        evaluation_state="BLOCKED_LATER_GATE_FAIL",
+        release_blocker="historical_gate=1/5;overall=FAIL;later_adapter_fixture_pass_not_qualification",
         autonomy_eligible=False,
         required_card_boundaries=(
             "base_model: Qwen/Qwen3.5-0.8B",
@@ -186,11 +183,15 @@ PROFILES: Mapping[str, CardProfile] = {
             "quant: bf16-lora",
             "qlora: false",
             "- proposal-only\n",
-            "evals: none-this-run",
+            "evals: HISTORICAL_OWNER_RECORDS_UNQUALIFIED",
             "publication_eligible: false",
             "autonomy_eligible: false",
             "never_overwrite: SZLHOLDINGS/chaski",
-            "Train loss is not a JSON-draft or refusal gate. Not 5/5 or 6/6.",
+            "The training step itself reported no evaluation",
+            "**1/5 held-out; overall FAIL**",
+            "5/5 draft contracts; 6/6 refusal prefixes",
+            "does not erase the earlier gate **FAIL**",
+            "merged-model evaluation identity.",
         ),
         forbidden_card_claims=(
             "publication_eligible: true",
@@ -210,10 +211,66 @@ PROFILES: Mapping[str, CardProfile] = {
             'stop-color="#f472b6"',
         ),
         commit_description=(
-            "Exact-source Chaski-R2 card publication with proposal-only search "
-            "metadata. Evaluation remains none-this-run; publication_eligible "
-            "and autonomy_eligible remain false. No weights, adapter, configs, "
-            "evals, visibility, hardware, collection, or runtime state changed."
+            "Exact-source Chaski-R2 card publication. Historical training had no evaluation; the separate historical 1/5 held-out gate FAIL remains a release blocker. Later adapter-only reused-fixture results do not erase that failure or qualify the merged checkpoint. Publication and autonomy eligibility remain false. No weights, adapter, configs, evals, visibility, hardware, collection, or runtime state changed."
+        ),
+    ),
+    "chaski-r4": CardProfile(
+        key="chaski-r4",
+        repo_id="SZLHOLDINGS/chaski-r4",
+        source_directory=ROOT / "chaski_r4" / "card",
+        display_name="Chaski-R4",
+        required_card_tags=("experimental", "research-only"),
+        report_schema="szl.hf.chaski-r4-card-publication/v1",
+        evaluation_state="MEASURED_NAMED_N_RECEIPT_C_NOT_PROMOTABLE",
+        release_blocker="publication_eligible=false_by_evaluator;promotion=owner_decision_not_taken;receipts_A_B_provenance_unresolved",
+        autonomy_eligible=False,
+        required_card_boundaries=(
+            "base_model: Qwen/Qwen3.5-0.8B",
+            "base_model_relation: adapter",
+            "artifact_class: ADAPTER",
+            "artifact_state: PUBLIC_EXPERIMENTAL_ARTIFACT",
+            "sku: CHASKI-R4",
+            "quant: bf16-lora",
+            "qlora: false",
+            "- experimental\n",
+            "evals: MEASURED_NAMED_N_RECEIPT_C",
+            "promotion: NOT_PROMOTABLE",
+            "publication_eligible: false",
+            "autonomy_eligible: false",
+            "never_overwrite: SZLHOLDINGS/chaski",
+            "5ae3de970014726f190dfe8e4d5b35e667fd737b1be29e27205c25d143bdf403",
+            "**5/5 JSON drafts; 6/6 adversarial refusals**",
+            "192/192",
+            "0/5 JSON drafts; 3/6 refusals",
+            "provenance of receipts A and B remains unresolved",
+            "n=5 JSON drafts, n=6 adversarial refusals, integer counts only",
+            "It is not a broad quality or safety benchmark.",
+            "e1abc37a5c41a82b0fc2cd98ccd6edbb2a08fceb8ca9e883bcfb76b861c221cf",
+            "f1a2cdc313795775966280bc8648367005700327dd28010da8d2f88d2a5e2a02",
+            "it does not promote anything.",
+            "No uniqueness claim is made.",
+        ),
+        forbidden_card_claims=(
+            "publication_eligible: true",
+            "autonomy_eligible: true",
+            "promotion: PROMOTABLE",
+            "nobody else ships this combination",
+            "one-of-one",
+            "status: production ready",
+            "named-n-measured%20pass",
+            "evals: measured pass",
+            "state-of-the-art",
+        ),
+        required_svg_boundaries=(
+            'viewBox="0 0 1200 360"',
+            'id="r4"',
+            'id="glow"',
+            'id="fade"',
+            'stop-color="#22d3ee"',
+            'stop-color="#a78bfa"',
+        ),
+        commit_description=(
+            "Exact-source Chaski-R4 card publication as a public experimental artifact. Receipt C (2026-10-01, canonical named-N bake-off, adapters 192/192 applied) measured 5/5 JSON drafts and 6/6 adversarial refusals beside the r2 control; receipts A and B keep unresolved provenance. publication_eligible is false by evaluator design and promotion is an owner decision not taken. No weights, adapter, configs, evals, visibility, hardware, collection, or runtime state changed by this card publication."
         ),
     ),
 }
@@ -438,8 +495,9 @@ def _current_target_matches(
     token: str,
     profile: CardProfile,
     target_assets: Mapping[str, bytes],
-) -> tuple[str, dict[str, bytes]] | None:
-    info = api.repo_info(repo_id=profile.repo_id, repo_type="model")
+) -> tuple[str, dict[str, bytes] | None]:
+    """Keep the inspected Hub parent even when controlled files differ."""
+    info = api.repo_info(repo_id=profile.repo_id, repo_type="model", revision="main")
     revision = str(getattr(info, "sha", "") or "").strip().lower()
     if not FULL_SHA.fullmatch(revision):
         raise PublicationError("Hub repository did not expose an exact revision")
@@ -451,7 +509,7 @@ def _current_target_matches(
         )
     )
     if not set(target_assets).issubset(files):
-        return None
+        return revision, None
     observed = _readback_bytes(
         repo_id=profile.repo_id,
         revision=revision,
@@ -459,7 +517,7 @@ def _current_target_matches(
         paths=target_assets,
     )
     if observed != dict(target_assets):
-        return None
+        return revision, None
     return revision, observed
 
 
@@ -470,7 +528,10 @@ def publish(
     assets: Mapping[str, bytes],
     profile: str | CardProfile | None = None,
 ) -> tuple[str, dict[str, dict[str, Any]], str, bool]:
-    from huggingface_hub import CommitOperationAdd, HfApi
+    from huggingface_hub import CommitOperationAdd, HfApi, __version__ as hub_version
+
+    if hub_version != "1.23.0":
+        raise PublicationError("publication requires the reviewed huggingface_hub 1.23.0 client")
 
     selected = resolve_profile(profile)
     source_evidence = validate_assets(assets, selected)
@@ -488,24 +549,35 @@ def publish(
     if not publisher:
         raise PublicationError("publisher identity is unavailable")
 
-    current = _current_target_matches(
+    expected_parent, observed = _current_target_matches(
         api=api,
         token=token,
         profile=selected,
         target_assets=target_assets,
     )
-    if current is not None:
-        revision, observed = current
-        return revision, evidence_for(observed), publisher, False
+    if observed is not None:
+        current_info = api.repo_info(repo_id=selected.repo_id, repo_type="model", revision="main")
+        current_parent = str(getattr(current_info, "sha", "") or "").strip().lower()
+        if current_parent != expected_parent:
+            raise PublicationError("Hub parent changed during no-op verification")
+        return expected_parent, evidence_for(observed), publisher, False
 
     operations = [
         CommitOperationAdd(path_in_repo=target, path_or_fileobj=value)
         for target, value in sorted(target_assets.items())
     ]
-    commit = publish_with_bounded_retry(
-        lambda: api.create_commit(
+    # Pinned 1.23.0 marks additions only after a successful server commit.
+    # Reject missing client support before any write.
+    if any(getattr(operation, "_is_committed", None) is not False for operation in operations):
+        raise PublicationError("reviewed client commit-origin contract is unavailable")
+
+    def commit_at_inspected_parent() -> Any:
+        return api.create_commit(
             repo_id=selected.repo_id,
             repo_type="model",
+            revision="main",
+            create_pr=False,
+            parent_commit=expected_parent,
             operations=operations,
             commit_message=(
                 f"docs: publish {selected.display_name} card from "
@@ -513,7 +585,13 @@ def publish(
             ),
             commit_description=selected.commit_description,
         )
-    )
+
+    # A 429 retry keeps this exact parent; a stale-parent 412 propagates.
+    commit = publish_with_bounded_retry(commit_at_inspected_parent)
+    # The SDK can return a current head without sending CAS when every add
+    # becomes a no-op. Do not turn that ambiguous concurrent result into success.
+    if not all(getattr(operation, "_is_committed", None) is True for operation in operations):
+        raise PublicationError("Hub client returned without an expected-parent server commit")
     revision = str(getattr(commit, "oid", "") or "").strip().lower()
     if not FULL_SHA.fullmatch(revision):
         raise PublicationError("Hub commit did not return an exact revision")

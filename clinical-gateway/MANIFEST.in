@@ -1,0 +1,11 @@
+include frontend/index.html
+include frontend/szl/SOURCE.json
+include frontend/szl/logos/szl_favicon_square.svg
+include frontend/szl/szl-console.css
+include frontend/szl/szl-design-system.css
+include fixtures/assay_map.json
+include operational-model/artifacts/model.json
+include operational-model/artifacts/model-receipt.json
+include operational-model/example-input.json
+include requirements.lock
+include tools/verify_installed_workspace.py

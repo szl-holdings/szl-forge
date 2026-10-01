@@ -101,8 +101,13 @@ def run_gate(*, artifact: str, probes_path: str, generate,
         receipt[kind] = f"{c}/{n}"
 
     baseline = baseline or {}
-    beats = all(receipt.get(f"{k}_correct", 0) > v for k, v in baseline.items())
+    # Fail closed: all() over an empty baseline is vacuously True. With no
+    # declared line there is nothing to strictly beat, so never PASS.
+    beats = bool(baseline) and all(
+        receipt.get(f"{k}_correct", 0) > v for k, v in baseline.items())
     receipt["baseline"] = baseline
     receipt["gate"] = "PASS" if beats else "FAIL"
     receipt["publication_eligible"] = beats
+    if not baseline:
+        receipt["reason"] = "no declared baseline"
     return receipt

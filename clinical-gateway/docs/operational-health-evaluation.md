@@ -1,0 +1,173 @@
+# Operational health evaluation
+
+This offline evaluator adds descriptive evidence for the existing OAC System
+Health v1 advisory model. It does **not** train a v2 model, change coefficients,
+retune the 0.16 decision threshold, ingest external observations, or qualify
+clinical or production use. It needs Python 3.11-3.13 and the source checkout;
+it makes no network requests and needs no GPU or paid service.
+
+## Run from the repository root
+
+```powershell
+python -I -B clinical-gateway/tools/evaluate_operational_health_model.py --output oac-operational-evaluation.json
+python -m unittest discover -s clinical-gateway/tests -p test_oac_operational_evaluation.py -v
+```
+
+Choose a new output filename each time. Existing files are never overwritten.
+Success exits 0 and produces `complete: true` with status
+`SYNTHETIC_EVALUATION_COMPLETE`. A validation failure exits 2 and emits a
+`complete: false` JSON receipt; no input contents or paths are echoed in its
+fixed error code. If the output cannot be created, the failure receipt goes to
+standard error. A successful run still leaves every promotion, clinical-use,
+training, weight-update, threshold-tuning, and signature-verification claim false.
+
+## What is checked
+
+- The exact committed model and test-data SHA-256 values are fixed in the tool.
+  A changed baseline requires a separately reviewed evaluator change, not an
+  implicit re-baseline.
+- The model receipt binds model bytes, the inference kernel, the trainer, and
+  the dataset receipt. The dataset receipt binds its generator, schema, and all
+  three data splits. Every consumed source file is hashed in the output.
+- All 768 training, 192 validation, and 240 test rows must satisfy the closed
+  synthetic operational-only schema, expected sequence IDs, feature ranges,
+  and boolean labels. Unknown fields, duplicate JSON keys, nonfinite numbers,
+  oversized input, and nonregular input files fail closed.
+- The existing inference kernel scores only the test split. Its exported
+  rounded scores must agree with its decisions at the original threshold.
+  No advisory may acquire acknowledgement, release, device-control, or clinical
+  authority.
+- Recomputed test counts, confusion matrix, accuracy, precision, recall,
+  specificity, balanced accuracy, F1, and AUROC must agree with the published
+  receipt. Rates allow an absolute tolerance of `1e-10` for the kernel's
+  12-decimal score export. Published training/validation metrics and log loss
+  are not independently re-evaluated by this tool.
+- Source bytes are read again after scoring and must still match the original
+  snapshots. This detects ordinary concurrent edits; it is not a filesystem
+  sandbox or a defense against a privileged process racing and restoring files.
+
+Each ordinary input is limited to 2 MiB, each JSONL row to 4,096 bytes, and the
+optional admission manifest to 16 KiB. JSON container nesting is capped at 64
+levels, independent of the Python runtime's recursion limit. The evaluator rejects symlinks and Windows
+reparse points at the file itself; run it only from a trusted checkout with
+trusted ancestor directories. No external corpus path or URL is accepted.
+
+## How to read the new metrics
+
+The unchanged baseline has 40 true positives, 132 true negatives, 57 false
+positives, and 11 false negatives on its 240 public synthetic test rows.
+That is a reproducibility check, not new evidence of real-world performance.
+
+The report adds two-sided 95% Wilson intervals for supported proportions,
+Brier score, a constant-score Brier baseline using **training** prevalence,
+Brier skill relative to that baseline, and ten equal-width calibration bins.
+Expected calibration error weights each bin's absolute mean-score/observed-rate
+gap by its row count. Bins are lower-inclusive and upper-exclusive, except the
+last bin includes score 1. AUROC uses average ranks for tied scores. Unsupported
+rates, empty-bin rates, and one-class AUROC are `null`, never invented zeros.
+
+Wilson intervals assume independent Bernoulli observations. They do not account
+for synthetic generator bias, correlated devices, site shift, or repeated use of
+these public examples. Brier and bin summaries are descriptive, not a calibration
+certificate. Feature-overlap counts detect only exact canonical JSON feature
+matches, not semantic, device-family, or temporal leakage.
+
+The output also includes 240 per-example records with sample ID, source-line
+hash, canonical feature hash, label, score, and decision. These records contain
+only the committed public synthetic test examples. They support an auditable
+recalculation and deterministic repeated output on the same source/runtime;
+they are not signed attestations. Source signature verification and canonical
+GitHub/Hugging Face parity are separate release checks.
+
+## Preparing a future approved-data evaluation
+
+An optional `--admission-manifest <file.json>` checks only a **declaration
+contract**. It never opens the referenced corpus, verifies permission, or admits
+data for evaluation. The manifest must contain exactly these fields:
+
+```json
+{
+  "schema": "szl-oac/operational-corpus-admission/v1",
+  "data_class": "nonsensitive_operational_only",
+  "contains_phi": false,
+  "contains_clinical_results": false,
+  "authorized_for_evaluation": true,
+  "corpus_sha256": "<actual lowercase 64-character SHA-256>",
+  "permission_evidence_sha256": "<actual lowercase 64-character SHA-256>",
+  "privacy_review_sha256": "<actual lowercase 64-character SHA-256>",
+  "label_protocol_sha256": "<actual lowercase 64-character SHA-256>",
+  "split_policy_sha256": "<actual lowercase 64-character SHA-256>",
+  "deduplication_report_sha256": "<actual lowercase 64-character SHA-256>",
+  "heldout_isolation_evidence_sha256": "<actual lowercase 64-character SHA-256>"
+}
+```
+
+The angle-bracket values above deliberately fail validation: replace them only
+with hashes of actual reviewed materials. Even syntactically valid hashes produce
+`MANIFEST_VALID_EVIDENCE_UNVERIFIED`, `evidence_verified: false`, and
+`external_corpus_admitted: false`. Hash-shaped strings alone establish nothing
+about permission or privacy.
+
+Before a real-data successor can be considered, the corpus bytes and referenced
+evidence need substantive review, lawful permission, nonsensitive operational
+scope, a defined labeling protocol, device/site/time-aware isolation, duplicate
+checks, frozen acceptance criteria, and an untouched evaluation set. Collecting
+those materials, training a successor, and running a prospective pilot are
+separate work. No real patient records or clinical results belong in this path.
+
+## Reference comparisons
+
+The receipt's `comparisons` block places the fixed model between two floors and a
+ceiling on the same 240 held-out synthetic rows:
+
+- `train_majority_constant`: always predicts the training-majority class (negative).
+- `rule_consecutive_failures_gt_0`: the one-line rule `consecutive_failures > 0`.
+- `generator_bayes_optimal_ceiling`: the published trainer's own
+  `_synthetic_label_probability`, executed from the hash-verified trainer bytes. The
+  synthetic labels are Bernoulli draws from that function of the same eight features,
+  so it is the Bayes-optimal scorer for this distribution. It is reported
+  threshold-free only (ROC AUC, Brier), so no threshold is selected on the test split.
+
+Every predictor metric and every model-minus-floor difference carries a paired
+percentile-bootstrap 95% interval (`BOOTSTRAP_REPLICATES = 2000`, fixed seed, resampling
+test rows). Two readings follow from the fixed split and should travel with the headline
+metrics:
+
+- The model beats both floors on balanced accuracy, recall, F1 and ROC AUC (intervals
+  exclude zero), but **not on accuracy**: the constant scores 0.7875 against the model's
+  0.716667, and the paired difference interval includes zero.
+- The ceiling ROC AUC is 0.841477 against the model's 0.830169. With at most ~0.024 of
+  AUC headroom (upper interval bound), this split can no longer discriminate between
+  modelling changes; the lower bound sits at zero and moves with the Monte Carlo seed.
+
+These intervals resample the already-public test split. They quantify sampling
+variation on these 240 rows, not performance on new data or any real transport.
+
+## Fresh-seed and distribution-shift lanes
+
+`--fresh-seed-lanes` adds a `fresh_seed_lanes` block (opt-in; the default receipt is
+unchanged). Each lane draws 2000 new rows from the hash-verified trainer's own
+`_generate_features` and label rule, with a seed disjoint from the development seed 2500,
+and scores the fixed model at the fixed threshold. Nothing is retrained or re-thresholded.
+Every lane reports its own oracle (the lane's true label probability), so
+`roc_auc_headroom` is loss attributable to the model rather than to label noise.
+
+| lane | shift | prevalence | balanced accuracy [95%] | ROC AUC | lane oracle | AUC headroom [95%] |
+|---|---|---:|---|---:|---:|---|
+| fresh_seed_in_distribution | none | 0.189 | 0.753 [0.731, 0.779] | 0.821 | 0.828 | +0.007 [+0.003, +0.010] |
+| covariate_queue_saturation | queue + 0.5 | 0.495 | **0.500 [0.500, 0.500]** | 0.782 | 0.783 | +0.001 [−0.002, +0.004] |
+| covariate_long_outage_tail | outage age × 24 | 0.241 | 0.715 [0.693, 0.740] | 0.809 | 0.840 | **+0.031 [+0.020, +0.043]** |
+| covariate_fault_heavy | more failures, config faults | 0.311 | 0.768 [0.752, 0.785] | 0.883 | 0.890 | +0.007 [+0.003, +0.010] |
+| concept_tls_weight_tripled | label rule changed | 0.211 | 0.775 [0.755, 0.798] | 0.847 | 0.879 | **+0.032 [+0.024, +0.042]** |
+
+Readings (bootstrap B=400 per lane):
+
+- The published v1 metrics hold on fresh in-distribution draws.
+- Under queue saturation the ranking survives but the fixed threshold does not: every row
+  is flagged, and balanced accuracy is exactly 0.5.
+- Under long outages the model loses ~0.031 AUC because it learned a weight of 0.054 on
+  `seconds_since_last_success`, while the generator uses 2.2. In-distribution outage ages
+  rarely reach the range where that weight matters, so the training data never taught it.
+- A concept shift on TLS costs ~0.032 AUC, as expected for fixed weights.
+
+The fresh seeds are public once published. Tuning against them would burn them.

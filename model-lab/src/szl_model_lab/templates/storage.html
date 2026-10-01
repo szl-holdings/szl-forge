@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark"><title>Storage-aware research · SZL Forge</title>
+<link rel="stylesheet" href="/szl/szl-design-system.css">
+<link rel="stylesheet" href="/szl/szl-console.css">
+<style>
+main{max-width:var(--container);margin:auto;padding:clamp(var(--space-4),4vw,var(--space-12))}
+header{border-bottom:var(--border-hairline) solid var(--hairline);padding-bottom:var(--space-6)}.page-head__lead{margin-top:var(--space-3)}
+.skip-link{display:inline-flex;align-items:center;min-height:var(--target-size-coarse)}
+nav{display:flex;gap:var(--space-1);flex-wrap:wrap;align-items:center;margin:var(--space-4) 0 0 calc(-1*var(--space-3))}
+.nav__link{display:inline-flex;align-items:center;min-height:var(--target-size-coarse);padding:0 var(--space-3);border-radius:var(--radius-md)}.nav__link:hover{background:color-mix(in srgb,var(--text) 7%,transparent)}
+h2{font-size:var(--text-xl);margin:var(--space-8) 0 var(--space-3)}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-4);margin:var(--space-6) 0}.card{min-width:0}
+.chip{max-width:100%;overflow-wrap:anywhere;margin-bottom:var(--space-3)}.metric__value{display:block;margin:var(--space-2) 0 var(--space-3);overflow-wrap:anywhere}code{overflow-wrap:anywhere;color:var(--text)}
+.note{background:var(--bg-deep);border:var(--border-hairline) solid var(--border);border-radius:var(--radius-lg);padding:var(--space-5) var(--space-6)}.note strong{color:var(--text)}
+form{display:flex;flex-wrap:wrap;gap:var(--space-4);align-items:end;margin:var(--space-4) 0}.field{flex:1;min-width:0}.input{min-block-size:var(--target-size-coarse);font-size:var(--text-base)}.btn{min-block-size:var(--target-size-coarse)}
+summary{min-height:var(--target-size-coarse);cursor:pointer;padding:var(--space-3) 0;font-weight:var(--weight-medium);color:var(--text)}summary:focus-visible{outline:var(--border-focus) solid transparent;box-shadow:var(--shadow-focus);border-radius:var(--radius-sm)}
+dt{font-weight:var(--weight-semibold);color:var(--text)}dd{margin:0 0 var(--space-4);color:var(--text-sub);overflow-wrap:anywhere}details a{display:inline-flex;align-items:center;min-height:var(--target-size-coarse)}
+footer{border-top:var(--border-hairline) solid var(--hairline);margin-top:var(--space-8);padding-top:var(--space-5);font-size:var(--text-sm);color:var(--text-ghost)}
+@media(max-width:650px){.grid{grid-template-columns:minmax(0,1fr)}form{display:block}.field,.btn{width:100%;margin-bottom:var(--space-4)}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media(forced-colors:active){.card,.note,.input,.btn,.chip{border:1px solid CanvasText}a{color:LinkText}}
+</style></head><body><a class="skip-link" href="#workspace">Skip to resource planner</a><main>
+<header><span class="eyebrow">SZL Holdings / Forge / Inference research</span><h1 class="page-head__title">Storage-aware. Route-exact.</h1>
+<p class="page-head__lead">Two distinct architectures, one explicit resource discipline. This page calculates memory; it does not load models, inspect devices, run benchmarks or authorize work.</p>
+<nav aria-label="Workbench"><a class="nav__link" href="/">Model Lab</a><a class="nav__link" href="/pool#pool">Pool evidence</a><a class="nav__link" href="/corpus-review#corpus">Corpus review</a><a class="nav__link" href="/api/storage/plan?tokens={{ plan.tokens_including_output }}&amp;batch={{ plan.batch }}">Plan JSON</a></nav></header>
+<section id="workspace" aria-labelledby="planning"><h2 id="planning">Spark context planner</h2><span class="tag chip chip-simulated">CALCULATED · NOT MEASURED</span>
+<p>Includes prompt, output and tool-history tokens. FP16/BF16 KV, batch {{ plan.batch }}. Weights and runtime workspace are additional.</p>
+<form method="get" action="/storage"><label class="field"><span class="field__label">Total token capacity</span><input class="input input--mono" name="tokens" type="number" min="1" max="1048576" step="1" value="{{ plan.tokens_including_output }}" required></label><label class="field"><span class="field__label">Batch size</span><input class="input input--mono" name="batch" type="number" min="1" max="128" step="1" value="{{ plan.batch }}" required></label><button class="btn btn-primary" type="submit">Calculate KV memory</button></form>
+<div class="grid"><article class="card"><h3 class="card-title">Full cache allocation</h3><strong class="metric__value">{{ full_gib }} GiB</strong><p>Conservative KV arithmetic when the runtime's sliding-window allocation behavior is unverified.</p></article>
+<article class="card"><h3 class="card-title">With bounded sliding caches</h3><strong class="metric__value">{{ bounded_gib }} GiB</strong><p>Conditional calculation: nine full layers plus 27 layers cropped to 512 tokens. This optimization has not been qualified on your engine.</p></article></div>
+<aside class="note"><strong>A supported context length is not an available-memory guarantee.</strong><p>No GPU, free-memory or latency measurements were acquired. A million-token window must not become a default allocation on an unqualified worker.</p></aside></section>
+<section aria-labelledby="paths"><h2 id="paths">Separate implementation paths</h2><div class="grid"><article class="card"><h3 class="card-title">MoE expert storage</h3><span class="tag chip">CPU REFERENCE SOURCE</span><p>Content-checked expert payloads, bounded serialized cache, explicit leases and budgeted staging. Predicted experts are hints only; the actual selected route controls execution.</p><p>Not an Edge0 CUDA port. No packed INT4 or Recover-LoRA adapter support is claimed by this reference.</p></article><article class="card"><h3 class="card-title">Dense Spark workload</h3><span class="tag chip">ENGINE QUALIFICATION REQUIRED</span><p>Use the existing Spark intake. Test actual cache allocation, tool-call correctness and long-context retrieval before adding a provider route. Dense layers do not have MoE experts to stream.</p></article></div></section>
+<details><summary>Source and bounds</summary><dl><dt>Existing Spark intake revision</dt><dd><code>{{ plan.existing_intake_revision }}</code></dd><dt>Canonical intake file</dt><dd><code>{{ plan.existing_intake_path }}</code></dd><dt>Configuration observation</dt><dd>Public dimensions transcribed for reference calculation. No immutable provider-byte or weight verification is implied.</dd><dt>Execution authority</dt><dd>None. No training, provider calls, publication or promotion.</dd></dl><a href="{{ plan.source }}" rel="noreferrer">Upstream configuration</a></details>
+<footer>GitHub source → HF artifacts → product status → proof. This private workbench is not a public operator proxy.</footer>
+</main></body></html>

@@ -1,0 +1,120 @@
+{
+  "schema": "szl.forge.frontier-evaluation.v1",
+  "candidate": "transformers-fsdp2-expert-parallel-415e6d2",
+  "frontierIssue": 108,
+  "forgeIssue": 255,
+  "source": {
+    "repository": "huggingface/transformers",
+    "revision": "415e6d2f596ef2bd44fdee4261799200a7fc02bf",
+    "upstreamPullRequest": 48516,
+    "parentRevision": "5474a55e920f358d8382f3ecd3377edca979baa1",
+    "sourceClass": "MAIN_ONLY_WATCH"
+  },
+  "authority": {
+    "disposition": "EVALUATION_HOLD",
+    "productionTrainingAuthorized": false,
+    "modelQualificationAuthorized": false,
+    "publicationAuthorized": false,
+    "providerWritesAuthorized": false,
+    "automaticPromotion": false,
+    "paidComputeAuthorizedByThisPlan": false,
+    "weightRehostingForInventory": false
+  },
+  "requiredPins": [
+    "transformers_git_revision",
+    "torch_version",
+    "accelerate_version",
+    "cuda_version",
+    "driver_version",
+    "nccl_version",
+    "model_revision",
+    "tokenizer_revision",
+    "fixture_or_dataset_digest",
+    "hardware_inventory",
+    "world_size",
+    "fsdp_size",
+    "tp_size",
+    "seed",
+    "launch_command"
+  ],
+  "evidenceLabels": {
+    "upstreamNumbers": "UPSTREAM_REPORTED_NOT_SZL_MEASURED",
+    "staticPreflight": "PREPARATION_ONLY",
+    "executedEvidence": "UNAVAILABLE_UNTIL_RUN"
+  },
+  "stages": [
+    {
+      "id": "S0",
+      "name": "exact-source-preflight",
+      "requiresGpu": false,
+      "acceptance": [
+        "Resolve every required pin before execution.",
+        "Refuse floating Transformers main, floating model revisions, missing topology identity, or dirty tracked source.",
+        "Record upstream evidence only as UPSTREAM_REPORTED_NOT_SZL_MEASURED."
+      ]
+    },
+    {
+      "id": "S1",
+      "name": "single-device-reference",
+      "requiresGpu": true,
+      "acceptance": [
+        "Use fixed synthetic MoE inputs or a fixed public non-secret small MoE checkpoint.",
+        "Record loss and per-parameter gradient digests for router, non-expert and expert parameter classes.",
+        "Run at least two optimizer steps and fail on any NaN or Inf loss, gradient, parameter or optimizer state."
+      ]
+    },
+    {
+      "id": "S2",
+      "name": "expert-parallel-reference",
+      "requiresGpu": true,
+      "acceptance": [
+        "Bind expert ownership and token routing for each rank.",
+        "Prove grouped-GEMM sentinel-tail rows cannot leak uninitialized NaN or Inf values into backward.",
+        "Compare router, non-expert and expert gradients to S1 within declared numerical tolerances."
+      ]
+    },
+    {
+      "id": "S3",
+      "name": "fsdp2-plus-expert-parallel",
+      "requiresGpu": true,
+      "acceptance": [
+        "Use a named two-dimensional fsdp/tp device mesh with world_size equal to fsdp_size times tp_size.",
+        "Prove router-score gradient all-reduce semantics and remote-expert contribution recovery.",
+        "Prove per-mesh total-gradient-norm calculation and mesh-specific optimizer parameter groups.",
+        "Reject pipeline-parallel composition with tp/fsdp exactly as the pinned upstream source requires."
+      ]
+    },
+    {
+      "id": "S4",
+      "name": "save-gather-reload",
+      "requiresGpu": true,
+      "acceptance": [
+        "Run collective save_pretrained state-dict gather on the admitted topology.",
+        "Read back immutable bytes and reload them into the documented supported topology.",
+        "Do not claim optimizer checkpoint resumability where the upstream source explicitly refuses it."
+      ]
+    },
+    {
+      "id": "S5",
+      "name": "failure-and-rollback",
+      "requiresGpu": true,
+      "acceptance": [
+        "Exercise rank loss, collective timeout, malformed mesh, OOM and cancellation.",
+        "Emit explicit failure receipts; partial completion is not PASS.",
+        "Verify rollback to the previously admitted training path without changing production defaults."
+      ]
+    },
+    {
+      "id": "S6",
+      "name": "same-hardware-performance",
+      "requiresGpu": true,
+      "blockedUntil": ["S1", "S2", "S3", "S4", "S5"],
+      "acceptance": [
+        "Measure only after all correctness and failure gates pass.",
+        "Compare step latency, throughput and peak memory on identical hardware, model, batch and sequence settings.",
+        "Never convert a speed result into model quality or production qualification."
+      ]
+    }
+  ],
+  "claimBoundary": "This preparation defines evidence requirements only. No FSDP2 plus Expert Parallel training run, model quality result, performance result, production readiness claim, publication, or promotion is created by this file."
+}

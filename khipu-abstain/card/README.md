@@ -13,132 +13,112 @@ tags:
 - szl-holdings
 - khipu
 - abstain-retrain
-- no-weights
-- curriculum-only
+- weights-unreceipted
 szl:
   doctrine: v11-LOCKED
   lean: 749/14/163
   lambda: Conjecture 1 — advisory, never a theorem
   artifact_class: ADAPTER
-  weights: UNAVAILABLE
+  weights: PRESENT_UNRECEIPTED
   jobs: UNAVAILABLE
-  evals: none-this-run
+  evals: HISTORICAL_OWNER_RECORD_CURRENT_BINDING_UNVERIFIED
   publication_eligible: false
   autonomy_eligible: false
   original_signed_weights: SZLHOLDINGS/SZL-Khipu-1.5B
   successor_with_weights: SZLHOLDINGS/KHIPU-R2
 ---
 
-> **EXPERIMENT. Adapter bytes missing or unverified.**
-> Evaluators use `SZLHOLDINGS/SZL-Khipu-1.5B` until a receipted adapter exists.
+# SZL-Khipu-1.5B-abstain
 
-> **NO WEIGHTS IN THIS REPO — metadata corrected.** The card already said
-> "WEIGHTS UNAVAILABLE", but the front matter simultaneously declared
-> `library_name: peft`, `base_model_relation: adapter` and
-> `pipeline_tag: text-generation`, plus `peft`/`qlora` tags. Together those tell
-> the Hub this is a loadable PEFT adapter. There is no
-> `adapter_model.safetensors` here, so it is not. Those four declarations have
-> been removed; the prose was already honest and is unchanged.
->
-> What *is* here is a complete, runnable training curriculum: `train.jsonl`,
-> `train.abstain.jsonl`, `adversarial.jsonl`, `eval.jsonl`, a 23 KB training
-> script, and a manifest. Everything needed to produce the adapter is present —
-> it has simply not been run. The trained successor is
-> [KHIPU-R2](https://huggingface.co/SZLHOLDINGS/KHIPU-R2) (abstain 3/6 MEASURED,
-> declared not a pass).
+**Research adapter and derived GGUF · historical receipts present · current binding unverified**
 
-<p align="center">
-  <img src="holo-banner.svg" alt="SZL-Khipu-1.5B-abstain — holographic closed-gate banner" width="100%"/>
-</p>
+This repository contains adapter and GGUF bytes. A binding from the
+historical receipts to the currently published adapter and GGUF has **not
+been established in this review**. `PRESENT_UNRECEIPTED` retains the card's
+conservative disposition; it does not assert a proven hash mismatch or
+that no historical receipts exist. Publication and autonomy eligibility
+remain **false**.
 
-<h1 align="center">K H I P U &nbsp;A B S T A I N</h1>
+Card and evidence review snapshot: [942c02dd4e94f2cb7cfb0432a051c2db2219ee79](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B-abstain/tree/942c02dd4e94f2cb7cfb0432a051c2db2219ee79).
+Small cards, receipts, and the hash implementation were read. No weights
+were downloaded, no directory digest was recomputed, no runtime was tested,
+and signatures were not independently verified.
 
-<p align="center"><em>A specialist in silence. Capability is someone else's LoRA.</em></p>
+## Historical inventory and digest domains
 
-<p align="center">
-  <img alt="Base: Qwen2.5-1.5B-Instruct" src="https://img.shields.io/badge/base-Qwen2.5--1.5B--Instruct-334155?style=flat-square"/>
-  <img alt="Downloads" src="https://img.shields.io/huggingface/dt/SZLHOLDINGS/SZL-Khipu-1.5B-abstain?style=flat-square&color=fb7185&label=downloads"/>
-  <img alt="Weights: UNAVAILABLE — curriculum only" src="https://img.shields.io/badge/weights-UNAVAILABLE%20%C2%B7%20curriculum%20only-991b1b?style=flat-square"/>
-  <img alt="Eval: not yet run — no fabricated k/n" src="https://img.shields.io/badge/eval-not%20yet%20run%20%C2%B7%20no%20fabricated%20k%2Fn-b45309?style=flat-square"/>
-  <img alt="Prior abstain: 2 of 6 blocker" src="https://img.shields.io/badge/prior%20abstain-2%20of%206%20blocker-9f1239?style=flat-square"/>
-  <img alt="License: Apache-2.0" src="https://img.shields.io/badge/License-Apache--2.0-7e8aa3?style=flat-square"/>
-</p>
+The earlier card records this 2026-09-25 Hub metadata observation:
 
-**WEIGHTS UNAVAILABLE.** No `adapter_model.safetensors` on this ID. Successor adapter with weights is [`SZLHOLDINGS/KHIPU-R2`](https://huggingface.co/SZLHOLDINGS/KHIPU-R2).
+| Artifact | Bytes | Raw-file SHA-256 from LFS metadata |
+|---|---:|---|
+| `khipu-abstain-adapter/adapter_model.safetensors` | 147,770,496 | `da0f948b7a6b555cbd50026eafcbb38ae8187b66be450fd1c3ed27f7eff9bef1` |
+| `khipu-f16.gguf` | 3,093,668,832 | `0df16da8dc6d5865370b90880080dfefda028a5e4c0f758825bf40cdcfb93bd2` |
 
-QLoRA **adapter** retrain recipe of the existing Khipu line. Raises in-memory
-`ABSTAIN_OVERSAMPLE` from 2 to 4 (8×4=32 abstain vs 15 navigate). Proposal-only.
-Λ = Conjecture 1. Doctrine v11 LOCKED 749/14/163.
+The [historical training receipt](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B-abstain/blob/942c02dd4e94f2cb7cfb0432a051c2db2219ee79/training_receipt.signed.json)
+reports `adapterSha256=bd5a1a92b24d85bac19a8df203287e1d4173b6d59d4bc7212f862eef60d9f1db`
+and `weightsArtifactSha256=86c33222c44349c31c3db9a42429a4bfe7b79acc1b68b26645645e881e553476`.
+These must not be compared directly with the raw-file LFS hashes above.
 
-This ID currently holds curriculum + script only. It is **not** a loadable PEFT adapter.
+The committed [training script](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B-abstain/blob/942c02dd4e94f2cb7cfb0432a051c2db2219ee79/train_khipu_abstain.py)
+computes a safetensor directory digest by sorting `*.safetensors` paths,
+then hashing each UTF-8 basename followed by its file bytes. This algorithm
+does **not** insert a delimiter. A directory digest is a different hash
+domain from an individual-file digest. A GGUF is also a different artifact
+form from merged safetensors and needs its own conversion binding.
 
-| | |
+The earlier direct hash comparison therefore did not establish that the
+receipt fails to attest the current files. Correctly scoped adapter
+directory verification and GGUF conversion provenance remain unresolved.
+Byte presence establishes neither loadability nor evaluation applicability.
+
+## Historical evaluation
+
+An [owner-signed evaluation record](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B-abstain/blob/942c02dd4e94f2cb7cfb0432a051c2db2219ee79/eval_receipt.signed.json)
+dated **2026-09-08T19:00:17.946003+00:00** is present:
+
+| Metric | Historical result |
 |---|---|
-| **Weights** | **UNAVAILABLE** |
+| Plan-valid | 11/11 |
+| Grounding | 4/5 |
+| Abstention | **3/6** |
+| Hallucinated citations | 0 in that run |
 
-<!-- SZL-ATELIER-CUT:v1:START -->
-## The cut
+The file carries an owner signature under key ID `89540347a69b789e`; this
+review did not establish independent key trust or reverify that signature.
+Its binding to the currently published adapter and GGUF remains unverified.
+The record is a small owner-reported evaluation, not artifact-scoped
+qualification of the current Hub revision. **3/6 abstention is not a pass.**
+Historical `SZLHOLDINGS/SZL-Khipu-1.5B` abstention **2/6** and the separate
+`SZLHOLDINGS/KHIPU-R2` **3/6** record remain separate observations; neither
+result transfers to this repository's current bytes.
 
-Most 'safety LoRAs' teach tone. This one teaches a binary: the handles are not enough. Research-only until abstain beats 2/6.
+## Declared training recipe
 
-A specialist in silence. Capability is someone else's LoRA.
+The recipe describes Unsloth QLoRA on disclosed
+`Qwen/Qwen2.5-1.5B-Instruct`, with runtime base
+`unsloth/Qwen2.5-1.5B-Instruct-bnb-4bit`. Byte equality of those base
+repositories was not verified here. LoRA r=32, α=64, seed 11, learning
+rate 2e-4, 45 epochs, batch size 1, accumulation 2, response-only loss,
+and `adamw_8bit` are recipe declarations. Increasing in-memory abstention
+oversampling from 2 to 4 yields 15 navigation rows plus 8×4 abstention
+rows. The held-out recipe uses five navigation and six adversarial rows.
 
-### Silhouette → leave → SZL
+The training receipt reports training at
+`2026-09-08T18:44:18.461205+00:00` and final train loss **0.0250**.
+Train loss is not evaluation. `jobs=UNAVAILABLE` is retained from the
+card; it does not erase those historical owner records or assert a new job.
 
-| Leader | Take, then tweak |
-|---|---|
-| Anthropic | Constitutional fine-tune, but only the refuse clause. |
-| NVIDIA | A guardrail as weights, not as Colang. |
-| Unsloth | QLoRA adapter, proposal-only, research-only tag. |
+## Research use and authority
 
-Nobody else ships this combination. That is the point of a one-of-one.
+The intended outputs are proposal-only JSON retrieval plans (`NAVIGATE`
+or `ABSTAIN`) over synthetic Brain node handles. An external controller
+validates the plan and resolves content. Stacking adapters is a gated
+research procedure requiring its own byte binding and evaluation; no
+performance improvement, production use, or autonomous operation is
+authorized by this card. The original signed Khipu line remains separate.
 
-## Intended use
+Apache-2.0 is declared, and a standalone `LICENSE` is listed in the reviewed
+Hub tree. This observation does not independently establish ownership or
+downstream artifact license coverage.
 
-Stack on the navigator. Measure abstain. Do not ship on hope.
-
-## Limitations
-
-- research-only
-- proposal-only
-- Does not magically fix 2/6 until a signed eval says so.
-
-Canonical GitHub: [`szl-holdings/szl-forge`](https://github.com/szl-holdings/szl-forge/blob/main/khipu/)
-<!-- SZL-ATELIER-CUT:v1:END -->
-
-| **Jobs** | **UNAVAILABLE** |
-| **Base (canonical)** | [`Qwen/Qwen2.5-1.5B-Instruct`](https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct) |
-| **Runtime train** | `unsloth/Qwen2.5-1.5B-Instruct-bnb-4bit` (same Qwen2.5-1.5B weights, 4-bit) |
-| **Relation** | `adapter` (declared; files not present) |
-| **License** | Apache-2.0 |
-| **Does NOT overwrite** | [`SZLHOLDINGS/SZL-Khipu-1.5B`](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B) signed weights |
-| **Successor with weights** | [`SZLHOLDINGS/KHIPU-R2`](https://huggingface.co/SZLHOLDINGS/KHIPU-R2) (MEASURED abstain 3/6, not a pass) |
-| **This is NOT** | the Chaski Qwen3.5 lock |
-
-## Evaluation
-
-**Status: NOT YET RUN.** No fabricated k/n. `publication_eligible` is false until
-the held-out eval in `train_khipu_abstain.py` actually executes after training.
-
-Prior original MEASURED abstain on `SZLHOLDINGS/SZL-Khipu-1.5B` is **2/6** (blocker).
-Eval protocol: `eval.jsonl` 5 navigate + `adversarial.jsonl` 6 abstain. Report k/n only.
-
-## Training (this job)
-
-- Unsloth QLoRA, seed 11, lr 2e-4, adamw_8bit, `train_on_responses_only`, Trackio
-- LoRA r=32 α=64, 45 epochs, ga=2, batch=1, constant_with_warmup (from `train_khipu.py`)
-- Train: `train.jsonl` 15 navigate + `train.abstain.jsonl` 8 rows × 4
-- Held-out never in gradients
-- Script: [`train_khipu_abstain.py`](train_khipu_abstain.py)
-
-## Intended use
-
-Proposal-only JSON retrieval plans (`NAVIGATE` / `ABSTAIN`) over synthetic Brain
-node handles. A controller outside the weights validates and resolves content.
-Not autonomous. Not a replacement for the signed original weights.
-
----
-
-<p align="center">
-  Hub: <a href="https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B-abstain">SZLHOLDINGS/SZL-Khipu-1.5B-abstain</a>
-</p>
+Canonical card authoring source: [khipu-abstain/card/README.md](https://github.com/szl-holdings/szl-forge/blob/6f4ac90ff503265cec9c0436587f086e52d6124e/khipu-abstain/card/README.md).
+Doctrine v11 LOCKED 749/14/163. Λ = Conjecture 1, advisory, never a theorem.

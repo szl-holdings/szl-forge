@@ -22,10 +22,16 @@ import json
 import os
 import platform
 import re
+import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+_HERE = Path(__file__).resolve().parent
+if str(_HERE) not in sys.path:  # runnable as a script, importable from tests, any cwd
+    sys.path.insert(0, str(_HERE))
+from adapter_guard import assert_adapter_applied, describe_loader
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
@@ -91,6 +97,8 @@ def publicize_runtime(value: str | Path | None) -> str | None:
         return "chaski-5050-adapter"
     if trimmed.endswith("chaski-r2-adapter"):
         return "chaski_r2/chaski-r2-adapter"
+    if trimmed.endswith("chaski-r4-adapter"):
+        return "chaski_r4/chaski-r4-adapter"
     if OWNER_HOME_RE.search(norm) or (len(text) > 2 and text[1] == ":"):
         raise SystemExit(
             f"[chaski-bakeoff] refusing to record owner path {text!r}"
@@ -465,24 +473,50 @@ def gpu_snapshot(torch: Any) -> dict[str, Any]:
     }
 
 
+LAST_LOADER: dict[str, Any] | None = None
+
+
 def load_runtime(base_id: str, adapter: Path | None) -> tuple[Any, Any]:
     import torch
-    from transformers import AutoModelForImageTextToText, AutoProcessor
+    from transformers import AutoModelForImageTextToText
 
-    processor = AutoProcessor.from_pretrained(base_id, local_files_only=True)
+    # The gate is text-only: it needs the chat template, tokenization and decoding, which the tokenizer
+    # provides. AutoProcessor additionally needs preprocessor_config.json in the snapshot plus Pillow and
+    # torchvision for the image/video side it never uses here (owner metal 2026-10-01: "Can't load image
+    # processor" / "requires the Torchvision library"). Receipts A, B and the 2026-09-17 canonical receipt
+    # render byte-identical prompts through either path. Fall back explicitly and record which one ran.
+    try:
+        from transformers import AutoProcessor
+
+        processor = AutoProcessor.from_pretrained(base_id, local_files_only=True)
+        renderer = "AutoProcessor"
+    except Exception as exc:  # noqa: BLE001 - explicit, recorded fallback
+        from transformers import AutoTokenizer
+
+        processor = AutoTokenizer.from_pretrained(base_id, local_files_only=True)
+        renderer = f"AutoTokenizer (AutoProcessor unavailable: {type(exc).__name__})"
+        print(f"[chaski-bakeoff] prompt renderer: {renderer}", file=sys.stderr)
     model = AutoModelForImageTextToText.from_pretrained(
         base_id,
         dtype=torch.bfloat16,
         device_map="cuda",
         local_files_only=True,
     )
+    report = None
     if adapter is not None:
         from peft import PeftModel
 
         model = PeftModel.from_pretrained(
             model, str(adapter), is_trainable=False
         )
+        # Fail closed: PEFT only warns when checkpoint keys have no target module (for
+        # example a `model.language_model.layers.*` adapter loaded into a `model.layers.*`
+        # class). An unapplied adapter would otherwise be scored as if it were the base.
+        report = assert_adapter_applied(model, adapter)
     model.eval()
+    global LAST_LOADER
+    LAST_LOADER = describe_loader(model, report)
+    LAST_LOADER["prompt_renderer"] = renderer
     return model, processor
 
 
@@ -492,7 +526,7 @@ def generate_text(
     messages: list[dict[str, str]],
     *,
     max_new_tokens: int,
-) -> tuple[str, int, float]:
+) -> tuple[str, int, float, str]:
     import torch
 
     try:
@@ -532,7 +566,7 @@ def generate_text(
         skip_special_tokens=True,
         clean_up_tokenization_spaces=False,
     )[0].strip()
-    return output, int(new_tokens.shape[-1]), seconds
+    return output, int(new_tokens.shape[-1]), seconds, sha256_bytes(prompt.encode("utf-8"))
 
 
 def unload(model: Any) -> None:
@@ -583,13 +617,14 @@ def score_candidate(
         return row
 
     model, processor = load_runtime(base_id, adapter)
+    row["loader"] = LAST_LOADER
     cases: list[dict[str, Any]] = []
     draft_valid = 0
     refused = 0
     try:
         for index, item in enumerate(drafts["rows"], 1):
             messages = prompt_messages(item)
-            output, new_tokens, seconds = generate_text(
+            output, new_tokens, seconds, prompt_sha = generate_text(
                 model,
                 processor,
                 messages,
@@ -605,6 +640,7 @@ def score_candidate(
                     "output": output,
                     "output_sha256": sha256_bytes(output.encode("utf-8")),
                     "new_tokens": new_tokens,
+                    "prompt_sha256": prompt_sha,
                     "seconds": round(seconds, 6),
                     "contract_valid": valid,
                     "error": error,
@@ -612,7 +648,7 @@ def score_candidate(
             )
         for index, item in enumerate(refusals["rows"], 1):
             messages = prompt_messages(item)
-            output, new_tokens, seconds = generate_text(
+            output, new_tokens, seconds, prompt_sha = generate_text(
                 model,
                 processor,
                 messages,
@@ -628,6 +664,7 @@ def score_candidate(
                     "output": output,
                     "output_sha256": sha256_bytes(output.encode("utf-8")),
                     "new_tokens": new_tokens,
+                    "prompt_sha256": prompt_sha,
                     "seconds": round(seconds, 6),
                     "refused": ok,
                     "error": error,
@@ -677,9 +714,8 @@ def print_counts(payload: dict[str, Any]) -> None:
         )
 
 
-def run_bakeoff(args: argparse.Namespace) -> dict[str, Any]:
-    drafts, refusals = load_gates()
-    base_id = resolve_base(args.base_model)
+def candidate_specs(args: argparse.Namespace) -> list[dict[str, Any]]:
+    """Base, 5050, r2 — plus the local-only r4 challenger when --chaski-r4-adapter is given."""
     specs = [
         {
             "id": "base-qwen35-0.8b",
@@ -704,6 +740,28 @@ def run_bakeoff(args: argparse.Namespace) -> dict[str, Any]:
             "hub_id_declared_only": True,
         },
     ]
+    if getattr(args, "chaski_r4_adapter", None):
+        # Local-only challenger (unpublished by design): evaluated in the same run as the r2
+        # control, with the same loader class (AutoModelForImageTextToText) that the adapters
+        # were trained against and the same fail-closed adapter guard. Never a Hub artifact.
+        specs.append(
+            {
+                "id": "chaski-r4-local",
+                "kind": "adapter",
+                "hub": "SZLHOLDINGS/chaski-r4",
+                "adapter": first_adapter([Path(args.chaski_r4_adapter)]),
+                "does_not_overwrite": PARENT_HUB,
+                "hub_id_declared_only": True,
+                "local_only": True,
+            }
+        )
+    return specs
+
+
+def run_bakeoff(args: argparse.Namespace) -> dict[str, Any]:
+    drafts, refusals = load_gates()
+    base_id = resolve_base(args.base_model)
+    specs = candidate_specs(args)
     try:
         import torch
     except Exception as exc:  # noqa: BLE001 - fail closed, no fabricated k/n
@@ -836,6 +894,11 @@ def main() -> int:
     parser.add_argument("--base-model", default=None)
     parser.add_argument("--chaski-5050-adapter", default=None)
     parser.add_argument("--chaski-r2-adapter", default=None)
+    parser.add_argument(
+        "--chaski-r4-adapter",
+        default=None,
+        help="optional local-only r4 challenger directory (unpublished); evaluated beside the r2 control",
+    )
     parser.add_argument("--receipt", type=Path, default=RECEIPT_PATH)
     parser.add_argument("--draft-max-new-tokens", type=int, default=256)
     parser.add_argument("--refusal-max-new-tokens", type=int, default=96)

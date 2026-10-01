@@ -1,60 +1,76 @@
-"""ReceiptAgent-Nano loader.
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 SZL Holdings
+"""Load the receipted 24-16-8-4 ReLU ReceiptAgent surrogate.
 
-4-10-4 MLP: (4->10 tanh) then (10->4 gate logits). Every output is one of the
-four named gates. ESCALATE is a class, not a retry loop; a low-confidence read
-hands the decision to a human with a receipt rather than silently succeeding.
-Layout resolved by shape, like the other nano loaders.
+Contract: szl-holdings/szl-khipu@7d7ead17e509d11dd9d715510e0bf8f0839e2930,
+szl_khipu/train/receipt_agent.py. Labels are ALLOW/WARN/BLOCKED/ESCALATE.
+This MLP is advisory: rule_check remains authoritative. It does not grant
+permission, generate a delivery receipt, or establish production readiness.
 """
 from __future__ import annotations
 
+import argparse
+import json
 import pathlib
+from collections.abc import Mapping
 
 import numpy as np
 
-GATES = ("ALLOW", "DENY", "ABSTAIN", "ESCALATE")
-_CONFIDENCE = 0.5  # below this, the read escalates: a human decides
+GATES = ("ALLOW", "WARN", "BLOCKED", "ESCALATE")
+_SHAPES = {"W1": (16, 24), "b1": (16,), "W2": (8, 16), "b2": (8,),
+           "W3": (4, 8), "b3": (4,)}
 
 
-def _tree(path: str | pathlib.Path) -> dict:
-    z = np.load(path, allow_pickle=False)
-    d = {k: z[k] for k in z.files}
-    if not all(np.isfinite(v).all() for v in d.values()):
-        raise ValueError("ReceiptAgent-Nano: non-finite entry in archive")
-    return d
+def _weights(values):
+    if not isinstance(values, Mapping) or set(values) != set(_SHAPES):
+        raise ValueError("ReceiptAgent-Nano: expected exactly W1/b1/W2/b2/W3/b3")
+    result = {}
+    for name, shape in _SHAPES.items():
+        value = np.asarray(values[name])
+        if value.shape != shape or value.dtype.kind not in "fiu":
+            raise ValueError(f"ReceiptAgent-Nano: invalid real tensor {name}; expected {shape}")
+        value = value.astype(np.float64)
+        if not np.isfinite(value).all():
+            raise ValueError(f"ReceiptAgent-Nano: non-finite tensor {name}")
+        result[name] = value
+    return result
 
 
 def load(path: str | pathlib.Path = "receipt_agent.npz"):
-    d = _tree(path)
-    w1 = next(v for k, v in d.items() if v.ndim == 2 and set(v.shape) == {4, 10})
-    b1 = next(v for k, v in d.items() if v.ndim == 1 and v.shape == (10,))
-    w2 = next(v for k, v in d.items() if v.ndim == 2 and set(v.shape) == {10, 4})
-    b2 = next(v for k, v in d.items() if v.ndim == 1 and v.shape == (4,))
-    if id(w1) == id(w2):
-        raise ValueError("ReceiptAgent-Nano: W1/W2 collision")
-    if w1.shape[0] == 4:  # in x out -> transpose to torch layout
-        w1 = w1.T
-    if w2.shape[0] == 10:
-        w2 = w2.T
-    if not (w1.shape == (10, 4) and w2.shape == (4, 10)):
-        raise ValueError(f"ReceiptAgent-Nano: unrecognised layout {sorted((k, v.shape) for k, v in d.items())}")
-    return w1, b1, w2, b2
+    with np.load(path, allow_pickle=False) as archive:
+        if len(archive.files) != len(_SHAPES):
+            raise ValueError("ReceiptAgent-Nano: invalid archive tensor count")
+        return _weights({name: archive[name] for name in archive.files})
 
 
-def infer(x, weights=None, path="receipt_agent.npz"):
-    """4-D feature vector -> gate label. Low confidence escalates, never guesses."""
-    w1, b1, w2, b2 = weights if weights is not None else load(path)
-    h = np.tanh(w1 @ np.asarray(x, dtype=np.float64) + b1)
-    logits = w2 @ h + b2
-    p = np.exp(logits - logits.max())
-    p /= p.sum()
-    top = int(p.argmax())
-    if GATES[top] != "ESCALATE" and p[top] < _CONFIDENCE:
-        return "ESCALATE"
-    return GATES[top]
+def forward(features, weights=None, path="receipt_agent.npz"):
+    """A finite 24-D feature vector -> four canonical softmax probabilities."""
+    x = np.asarray(features)
+    if x.shape != (24,) or x.dtype.kind not in "fiu":
+        raise ValueError("ReceiptAgent-Nano: expected a real 24-D feature vector")
+    x = x.astype(np.float64)
+    if not np.isfinite(x).all():
+        raise ValueError("ReceiptAgent-Nano: non-finite features")
+    w = load(path) if weights is None else _weights(weights)
+    try:
+        with np.errstate(over="raise", invalid="raise", divide="raise", under="ignore"):
+            a1 = np.maximum(x @ w["W1"].T + w["b1"], 0.0)
+            a2 = np.maximum(a1 @ w["W2"].T + w["b2"], 0.0)
+            logits = a2 @ w["W3"].T + w["b3"]
+            p = np.exp(logits - logits.max())
+            return p / p.sum()
+    except FloatingPointError as error:
+        raise ValueError("ReceiptAgent-Nano: non-finite forward pass") from error
+
+
+def infer(features, weights=None, path="receipt_agent.npz"):
+    """Return the trained advisory class, without an invented confidence policy."""
+    return GATES[int(forward(features, weights=weights, path=path).argmax())]
 
 
 if __name__ == "__main__":
-    import sys
-
-    x = np.zeros(4) if len(sys.argv) < 2 else np.fromstring(sys.argv[1], sep=",")
-    print(infer(x))
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("features", help="JSON array of 24 numeric features")
+    parser.add_argument("--weights", default="receipt_agent.npz")
+    args = parser.parse_args()
+    print(infer(json.loads(args.features), path=args.weights))

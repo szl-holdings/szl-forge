@@ -1,0 +1,175 @@
+{
+  "schema_version": 1,
+  "observed_at": "2026-09-24T13:05:30.296570+00:00",
+  "repo": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2-merged",
+  "observed_main": "b770792751f00069fb042e04ee60f28f9faf5ebf",
+  "history": [
+    {
+      "revision": "5b52334d6c1fe896eb934b20147bd02fcb7f9da9",
+      "commit_created_at": "2026-09-14T03:30:00+00:00",
+      "title": "initial commit",
+      "files": {
+        ".gitattributes": {
+          "size": 1519,
+          "git_blob_oid": "a6344aac8c09253b3b630fb776ae94478aa0275b"
+        }
+      }
+    },
+    {
+      "revision": "138a1c78eaa8553f12abf2c86387571be6861882",
+      "commit_created_at": "2026-09-14T03:43:17+00:00",
+      "title": "Upload folder using huggingface_hub",
+      "files": {
+        ".gitattributes": {
+          "size": 1570,
+          "git_blob_oid": "52373fe24473b1aa44333d318f578ae6bf04b49b"
+        },
+        "chat_template.jinja": {
+          "size": 8149,
+          "git_blob_oid": "723f75fc97383244d27f75ea3da50b976cce108f",
+          "sha256": "119de9f18811a7019b61a3ae5fff3f5ea5e20759cb1bb103ff40d50f5d077c96",
+          "hash_method": "downloaded immutable source bytes"
+        },
+        "config.json": {
+          "size": 2874,
+          "git_blob_oid": "dacf712e53b1f1710174f1387c5e98a1bf0d35c7",
+          "sha256": "ef0d11ceb1729ee717b08c6339a72061cfc91cf07a7cd7e79393adeef9df6401",
+          "hash_method": "downloaded immutable source bytes"
+        },
+        "generation_config.json": {
+          "size": 122,
+          "git_blob_oid": "a66af58223278207bf4d6b0440654e72bcd44e15",
+          "sha256": "2bb288381005ac379cbbb8e60ce18f88054312e59432a4d8f61cbedd2e8cbabe",
+          "hash_method": "downloaded immutable source bytes"
+        },
+        "model.safetensors": {
+          "size": 3412002208,
+          "git_blob_oid": "18c124999f20fce7b847ee81d96ec2abb5f1421c",
+          "sha256": "3435ba19eafc0bc0781067f31e8192ff84a5b21d307aca89573af880a30feb68",
+          "hash_method": "Hub LFS metadata; artifact not downloaded"
+        },
+        "tokenizer.json": {
+          "size": 19989325,
+          "git_blob_oid": "5520bfd2dd834ce386c1312c410fa71af56db5ad",
+          "sha256": "06b9509352d2af50381ab2247e083b80d32d5c0aba91c272ca9ff729b6a0e523",
+          "hash_method": "Hub LFS metadata; artifact not downloaded"
+        },
+        "tokenizer_config.json": {
+          "size": 1227,
+          "git_blob_oid": "06c30b721fbc783ca688e74b90249947c0bb8184",
+          "sha256": "e5a8c7963253229762539379c0e868fe3dcfc927131c1ede5d933fe04350d09c",
+          "hash_method": "downloaded immutable source bytes"
+        }
+      }
+    },
+    {
+      "revision": "6f7dc8e2215b689aa2b7d2a28d794d29f5ba3079",
+      "commit_created_at": "2026-09-14T03:45:37+00:00",
+      "title": "Upload README.md with huggingface_hub",
+      "files": {
+        ".gitattributes": {
+          "size": 1570,
+          "git_blob_oid": "52373fe24473b1aa44333d318f578ae6bf04b49b"
+        },
+        "README.md": {
+          "size": 1239,
+          "git_blob_oid": "d7cc10db3e0f7dbbb6342c0195449ab42f07addf",
+          "sha256": "9cb8e14cd3d0789f4d5eeffa5fc6b4b9996ba0cfee5823601423f2c4a435cf7d",
+          "hash_method": "downloaded immutable source bytes"
+        },
+        "chat_template.jinja": {
+          "size": 8149,
+          "git_blob_oid": "723f75fc97383244d27f75ea3da50b976cce108f",
+          "sha256": "119de9f18811a7019b61a3ae5fff3f5ea5e20759cb1bb103ff40d50f5d077c96",
+          "hash_method": "downloaded immutable source bytes"
+        },
+        "config.json": {
+          "size": 2874,
+          "git_blob_oid": "dacf712e53b1f1710174f1387c5e98a1bf0d35c7",
+          "sha256": "ef0d11ceb1729ee717b08c6339a72061cfc91cf07a7cd7e79393adeef9df6401",
+          "hash_method": "downloaded immutable source bytes"
+        },
+        "generation_config.json": {
+          "size": 122,
+          "git_blob_oid": "a66af58223278207bf4d6b0440654e72bcd44e15",
+          "sha256": "2bb288381005ac379cbbb8e60ce18f88054312e59432a4d8f61cbedd2e8cbabe",
+          "hash_method": "downloaded immutable source bytes"
+        },
+        "model.safetensors": {
+          "size": 3412002208,
+          "git_blob_oid": "18c124999f20fce7b847ee81d96ec2abb5f1421c",
+          "sha256": "3435ba19eafc0bc0781067f31e8192ff84a5b21d307aca89573af880a30feb68",
+          "hash_method": "Hub LFS metadata; artifact not downloaded"
+        },
+        "tokenizer.json": {
+          "size": 19989325,
+          "git_blob_oid": "5520bfd2dd834ce386c1312c410fa71af56db5ad",
+          "sha256": "06b9509352d2af50381ab2247e083b80d32d5c0aba91c272ca9ff729b6a0e523",
+          "hash_method": "Hub LFS metadata; artifact not downloaded"
+        },
+        "tokenizer_config.json": {
+          "size": 1227,
+          "git_blob_oid": "06c30b721fbc783ca688e74b90249947c0bb8184",
+          "sha256": "e5a8c7963253229762539379c0e868fe3dcfc927131c1ede5d933fe04350d09c",
+          "hash_method": "downloaded immutable source bytes"
+        }
+      }
+    },
+    {
+      "revision": "b770792751f00069fb042e04ee60f28f9faf5ebf",
+      "commit_created_at": "2026-09-24T12:31:56+00:00",
+      "title": "docs: clarify szl-receiptagent-qwen35-0.8b-v2-merged evidence and release boundary (#1)",
+      "files": {
+        ".gitattributes": {
+          "size": 1570,
+          "git_blob_oid": "52373fe24473b1aa44333d318f578ae6bf04b49b"
+        },
+        "README.md": {
+          "size": 3390,
+          "git_blob_oid": "31a45700bc7d5a04865ccb2eb02dce5a1e2e2777",
+          "sha256": "d719f9eac7a937f9722c487b2749f1c14db3768d3e18630bfa26ec726f488c6c",
+          "hash_method": "downloaded immutable source bytes"
+        },
+        "chat_template.jinja": {
+          "size": 8149,
+          "git_blob_oid": "723f75fc97383244d27f75ea3da50b976cce108f",
+          "sha256": "119de9f18811a7019b61a3ae5fff3f5ea5e20759cb1bb103ff40d50f5d077c96",
+          "hash_method": "downloaded immutable source bytes"
+        },
+        "config.json": {
+          "size": 2874,
+          "git_blob_oid": "dacf712e53b1f1710174f1387c5e98a1bf0d35c7",
+          "sha256": "ef0d11ceb1729ee717b08c6339a72061cfc91cf07a7cd7e79393adeef9df6401",
+          "hash_method": "downloaded immutable source bytes"
+        },
+        "generation_config.json": {
+          "size": 122,
+          "git_blob_oid": "a66af58223278207bf4d6b0440654e72bcd44e15",
+          "sha256": "2bb288381005ac379cbbb8e60ce18f88054312e59432a4d8f61cbedd2e8cbabe",
+          "hash_method": "downloaded immutable source bytes"
+        },
+        "model.safetensors": {
+          "size": 3412002208,
+          "git_blob_oid": "18c124999f20fce7b847ee81d96ec2abb5f1421c",
+          "sha256": "3435ba19eafc0bc0781067f31e8192ff84a5b21d307aca89573af880a30feb68",
+          "hash_method": "Hub LFS metadata; artifact not downloaded"
+        },
+        "tokenizer.json": {
+          "size": 19989325,
+          "git_blob_oid": "5520bfd2dd834ce386c1312c410fa71af56db5ad",
+          "sha256": "06b9509352d2af50381ab2247e083b80d32d5c0aba91c272ca9ff729b6a0e523",
+          "hash_method": "Hub LFS metadata; artifact not downloaded"
+        },
+        "tokenizer_config.json": {
+          "size": 1227,
+          "git_blob_oid": "06c30b721fbc783ca688e74b90249947c0bb8184",
+          "sha256": "e5a8c7963253229762539379c0e868fe3dcfc927131c1ede5d933fe04350d09c",
+          "hash_method": "downloaded immutable source bytes"
+        }
+      }
+    }
+  ],
+  "honesty_boundary": "Current immutable history observation, not a retroactive signature or binding of historical local equivalence evaluation. Large artifact hashes are Hub metadata. No new inference or production qualification.",
+  "promotion_effect": "NONE",
+  "production_disposition": "HOLD"
+}

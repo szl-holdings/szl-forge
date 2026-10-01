@@ -1,0 +1,126 @@
+name: OAC source-bound hosted preview
+
+on:
+  pull_request:
+    paths:
+      - "spaces/oac-system-health-lab/**"
+      - ".github/workflows/oac-health-space.yml"
+      - ".gitattributes"
+  push:
+    branches: [main]
+    paths:
+      - "spaces/oac-system-health-lab/**"
+      - ".github/workflows/oac-health-space.yml"
+      - ".gitattributes"
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish only the reviewed main source to the existing free-CPU target
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: oac-health-space-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  contract:
+    name: OAC preview ${{ matrix.os }} Python ${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: ubuntu-latest, python: "3.11"}
+          - {os: ubuntu-latest, python: "3.12"}
+          - {os: ubuntu-latest, python: "3.13"}
+          - {os: ubuntu-latest, python: "3.14"}
+          - {os: windows-latest, python: "3.12"}
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+      - name: Checkout exact source with artifact-source history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Set up the UI contract-test runtime
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+      - name: Run bounded server, source, publication and live-verifier contracts
+        run: python -I -B -m unittest discover -s spaces/oac-system-health-lab/tests -p "test_*.py" -v
+      - name: Verify all three packaged artifacts against immutable Git source
+        run: python -I -B spaces/oac-system-health-lab/verify_release.py --repository-root . --output oac-artifact-source-parity.json
+
+  publish:
+    name: Publish one free-CPU OAC preview and witness scoring
+    needs: contract
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    concurrency:
+      group: hf-write/space/SZLHOLDINGS/oac-system-health-lab
+      cancel-in-progress: false
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+      - name: Checkout the protected source that passed contracts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          ref: ${{ github.sha }}
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Install publication-only clients
+        run: python -m pip install --disable-pip-version-check "huggingface-hub==1.23.0" "requests==2.32.5"
+      - name: Actively validate credential for the single Space target
+        env:
+          HF_ORG_TOKEN_CANDIDATE: ${{ secrets.HF_ORG_TOKEN }}
+          HF_ORG_TOKEN1_CANDIDATE: ${{ secrets.HF_ORG_TOKEN1 }}
+          HF_WRITE_TOKEN_CANDIDATE: ${{ secrets.HF_WRITE_TOKEN }}
+          HF_TOKEN_CANDIDATE: ${{ secrets.HF_TOKEN }}
+          HUGGINGFACE_TOKEN_CANDIDATE: ${{ secrets.HUGGINGFACE_TOKEN }}
+          HUGGING_FACE_HUB_TOKEN_CANDIDATE: ${{ secrets.HUGGING_FACE_HUB_TOKEN }}
+        run: >-
+          python tools/acquire_hf_publisher_token.py
+          --target-repo SZLHOLDINGS/oac-system-health-lab --target-type space
+          --allow-create --github-env "$GITHUB_ENV" --report reports/oac-publisher-credential.json
+      - name: Enforce exact source, existing plan, CPU Basic and atomic target parent
+        run: >-
+          python -I -B spaces/oac-system-health-lab/publish_space.py
+          --source-revision "${{ github.sha }}" --wait-seconds 900
+          --report reports/oac-space-publication.json
+      - name: Witness exact-source scoring and forbidden-input refusal
+        run: >-
+          python -I -B spaces/oac-system-health-lab/verify_live.py
+          --origin https://szlholdings-oac-system-health-lab.hf.space
+          --expected-source-sha "${{ github.sha }}"
+          --output reports/oac-live-verification.json
+      - name: Retain success and failure evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: oac-space-release-${{ github.run_id }}
+          path: reports/oac-*.json
+          if-no-files-found: error
+          retention-days: 90

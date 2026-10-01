@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>SZL Model Lab · Research workbench</title>
+<link rel="stylesheet" href="/szl/szl-design-system.css">
+<link rel="stylesheet" href="/szl/szl-console.css">
+<style>
+main{max-width:var(--container);margin:auto;padding:clamp(var(--space-4),4vw,var(--space-12))}
+header{border-bottom:var(--border-hairline) solid var(--hairline);padding-bottom:var(--space-6);margin-bottom:var(--space-6)}
+.page-head__lead{margin-top:var(--space-3)}.skip-link{display:inline-flex;align-items:center;min-height:var(--target-size-coarse)}
+nav{display:flex;gap:var(--space-1);flex-wrap:wrap;align-items:center;margin:var(--space-4) 0 0 calc(-1*var(--space-3))}
+.nav__link{display:inline-flex;align-items:center;min-height:var(--target-size-coarse);padding:0 var(--space-3);border-radius:var(--radius-md)}.nav__link:hover{background:color-mix(in srgb,var(--text) 7%,transparent)}
+h2{font-size:var(--text-xl);margin:var(--space-8) 0 var(--space-4)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-4)}
+.card{min-width:0}section>.card{margin-top:var(--space-4)}.chip{max-width:100%;overflow-wrap:anywhere;margin-bottom:var(--space-3)}
+code,td{overflow-wrap:anywhere}code{color:var(--text)}.table{table-layout:fixed;font-variant-numeric:tabular-nums lining-nums;margin-bottom:var(--space-4)}caption{text-align:left;color:var(--text-sub);font-size:var(--text-sm);padding-bottom:var(--space-2)}
+.note{background:var(--bg-deep);border:var(--border-hairline) solid var(--border);border-radius:var(--radius-lg);padding:var(--space-5) var(--space-6);margin:var(--space-6) 0}.note strong{color:var(--text)}.meta{font-size:var(--text-sm)}
+footer{margin-top:var(--space-8);border-top:var(--border-hairline) solid var(--hairline);padding-top:var(--space-4);font-size:var(--text-sm);color:var(--text-ghost)}
+@media(max-width:600px){.grid{grid-template-columns:minmax(0,1fr)}}
+@media(prefers-contrast:more){p,caption,.eyebrow,.nav__link,.chip,footer{color:var(--text)}header,footer,.card,.note,.chip,th,td{border-color:var(--text-sub)}.card,.note{background:var(--bg)}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></head>
+<body><a class="skip-link" href="#tracks">Skip to model tracks</a><main>
+<header><span class="eyebrow">SZL Holdings / Forge / Research</span><h1 class="page-head__title">Models, with boundaries.</h1>
+<p class="page-head__lead">Two advisory model recipes. Your existing pool remains in control. No training, remote generation, or publication runs from this interface.</p>
+<nav aria-label="Workbench"><a class="nav__link" href="/">Model tracks</a><a class="nav__link" href="/compute">Inspect configured compute</a><a class="nav__link" href="/pool#pool">Canonical pool snapshot</a><a class="nav__link" href="/corpus-review#corpus">Corpus review</a><a class="nav__link" href="/storage">Storage-aware research</a><a class="nav__link" href="/api/catalog">Catalog JSON</a></nav></header>
+<section aria-labelledby="tracks"><h2 id="tracks">Model tracks</h2><div class="grid">
+{% for track in tracks %}<article class="card"><h3 class="card-title">{{ track.display_name }}</h3><span class="state chip">{{ track.state }}</span>
+<p>{{ track.boundary if track.boundary is defined else track.reason }}</p>
+{% if track.proposed_hf_id %}<p class="meta">Proposed or existing-name candidate, not publication proof:<br><code>{{ track.proposed_hf_id }}</code></p>{% endif %}
+<p class="meta">Production readiness: not asserted. Publication: disabled.</p></article>{% endfor %}
+</div></section>
+<aside class="note"><strong>Prediction is not permission.</strong><p>The router may estimate an outcome. The invariant predictor may flag a risk. Neither can authorize an action, override a hard deny, or replace signed qualification evidence.</p></aside>
+<section aria-labelledby="compute"><h2 id="compute">Owner compute</h2>
+<p>{{ configured_nodes }} explicitly configured endpoint(s). A successful inventory probe does not prove real inference, pooled memory, model quality, or current GPU availability.</p>
+{% if nodes is none %}<p>No network probes run on this page. Open “Inspect configured compute” for bounded, read-only Ollama inventory requests.</p>
+{% elif not nodes %}<p class="state chip chip-unavailable">UNCONFIGURED — no endpoints guessed or contacted</p>
+{% else %}{% for node in nodes %}<article class="card"><h3 class="card-title">{{ node.node_id }}</h3><span class="state chip">{{ node.state }}</span>
+<p>Qualification: {{ node.qualification }}. {% if node.error %}Probe incomplete or invalid.{% endif %}</p>
+<table class="table"><caption>Stored model inventory, as reported by this Ollama endpoint</caption><thead><tr><th scope="col">Model</th><th scope="col">Reported digest</th></tr></thead><tbody>
+{% for model in node.stored_models %}<tr><td>{{ model.name }}</td><td><code>{{ model.digest }}</code></td></tr>{% else %}<tr><td colspan="2">No stored-model rows observed.</td></tr>{% endfor %}
+</tbody></table><p class="meta">Running models observed: {{ node.running_models|length }}. Size/VRAM figures are available in the authenticated JSON endpoint; no missing value becomes zero.</p>
+</article>{% endfor %}{% endif %}</section>
+<section aria-labelledby="pool"><h2 id="pool">Canonical pool · reported snapshot</h2>
+<span class="state chip">{{ pool.state }}</span>
+<p>This view consumes the existing a11oy compute-pool/v1 schema. A matched snapshot hash checks bytes, not the producer’s signatures, machine identity or current eligibility.</p>
+{% if pool.nodes is not none %}
+<p class="meta">Snapshot freshness: {{ pool.snapshot_fresh }}. Qualification verified here: false. Scheduling authority: none.</p>
+<table class="table"><caption>Reported upstream states — not local permission to dispatch</caption><thead><tr><th scope="col">Node</th><th scope="col">Reported state</th><th scope="col">Reported model</th></tr></thead><tbody>
+{% for item in pool.nodes %}<tr><td>{{ item.node_id }}</td><td>{{ item.reported_state }}</td><td>{{ item.model_id_reported or 'UNAVAILABLE' }}</td></tr>{% else %}<tr><td colspan="3">The validated snapshot explicitly contains no node rows.</td></tr>{% endfor %}
+</tbody></table>
+{% else %}<p>No usable snapshot supplied. Unknown inventory is not counted as zero.</p>{% endif %}
+<p class="meta"><a href="/api/pool">Authenticated pool projection JSON</a></p></section>
+{% if corpus is defined %}<section aria-labelledby="corpus"><h2 id="corpus">Corpus review · preparation only</h2>
+<span class="state chip">{{ corpus.state }}</span>
+<p>This is a redacted summary from the existing Forge pilot reviewer, not another dataset parser. A report hash checks supplied bytes, not rights, rewards, source authenticity or training permission.</p>
+{% if corpus.counts is not none %}
+<p class="meta">Dataset: <code>{{ corpus.dataset_repo_id }}</code><br>Report generated: <code>{{ corpus.report_generated_at }}</code><br>{{ corpus.freshness }}</p>
+<table class="table"><caption>Reported pilot structure — not model quality or whole-corpus acceptance</caption><thead><tr><th scope="col">Rows inspected</th><th scope="col">Format checked</th><th scope="col">Review required</th></tr></thead><tbody>
+<tr><td>{{ corpus.counts.total }}</td><td>{{ corpus.counts.format_checked }}</td><td>{{ corpus.counts.review_required }}</td></tr></tbody></table>
+{% else %}<p>No usable, externally pinned report was supplied. Unknown coverage is not zero.</p>{% endif %}
+<p>Rights, privacy, decontamination and outcome reviews are not established here. Training, execution and publication remain disabled.</p>
+<p class="meta"><a href="/api/corpus-review">Authenticated redacted report JSON</a></p></section>{% endif %}
+<footer>Source addition · not deployed · not a training console · not a Hugging Face publisher.<br>
+GitHub source → qualified HF artifacts → product status → evidence. Existing signed release controls remain authoritative.</footer>
+</main></body></html>

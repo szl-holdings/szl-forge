@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -555,3 +556,27 @@ def test_dataset_card_links_pinned_sources_and_reports_actual_scope(tmp_path, su
     assert "3,072 submitted cell columns" in card
     for term in ("Khipu", "Lambda", "Doctrine", "admission layer", "estate"):
         assert term not in card
+
+
+def test_dataset_card_selects_all_run_summaries_without_mixing_evidence_schemas(tmp_path):
+    receipt = _publication_files(tmp_path)
+    card = dataset_card(PUBLICATION_DATASET, PUBLICATION_PATH, receipt)
+    frontmatter = card.split("---\n", 2)[1]
+    assert "configs:\n- config_name: default\n  data_files:\n  - split: train\n" in frontmatter
+    patterns = re.findall(r'^    path: "([^"]+)"$', frontmatter, flags=re.MULTILINE)
+    assert len(patterns) == 1
+    expected = set()
+    for directory in (PUBLICATION_PATH, "runs/2026/09/24/another-run/another-candidate"):
+        run = tmp_path / directory
+        run.mkdir(parents=True)
+        for name in ("summary.json", "receipt.json", "bundle.json", "runner-output.jsonl"):
+            (run / name).write_text("{}", encoding="utf-8")
+        expected.add(run / "summary.json")
+    (tmp_path / "runs" / "SEALED_COUNT.json").write_text("{}", encoding="utf-8")
+    selected = set(tmp_path.glob(patterns[0]))
+    assert selected == expected
+    assert "one row per published evaluation run" in card
+    assert "not a training curriculum" in card
+    assert "production_disposition=HOLD" in card
+    assert "promotion_effect=NONE" in card
+    assert "UNSIGNED_HONEST" in card

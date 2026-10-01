@@ -1,0 +1,42 @@
+{
+  "adapter_directory_digest": "e1abc37a5c41a82b0fc2cd98ccd6edbb2a08fceb8ca9e883bcfb76b861c221cf",
+  "artifact_state": "PUBLIC_EXPERIMENTAL_ARTIFACT",
+  "autonomy_eligible": false,
+  "bytes_revision": "f662e24aa9e878dc6c2df50151d4fd500ea8a16c",
+  "card_revision": "13c9b10fee50542426b105520b7f32969d595ed8",
+  "card_sha256_main_equals_hub": true,
+  "claim_boundary": "Publication of bytes and evidence only. No promotion, deployment, autonomy or production authorization. Receipts A and B provenance remains unresolved. SZLHOLDINGS/chaski is not overwritten.",
+  "files": {
+    "LICENSE": {
+      "readback_sha256": "145a78cf10c6cfd87e99b94dd7ede2839a9103ba2293e287ed5fdc1674f81ac6",
+      "sha256": "145a78cf10c6cfd87e99b94dd7ede2839a9103ba2293e287ed5fdc1674f81ac6"
+    },
+    "adapter_config.json": {
+      "readback_sha256": "d36472a3100231dfdf0c4aa16d3a80cb8ab53c86af33a15172b06f9d9a313193",
+      "sha256": "d36472a3100231dfdf0c4aa16d3a80cb8ab53c86af33a15172b06f9d9a313193"
+    },
+    "adapter_model.safetensors": {
+      "readback_sha256": "f1a2cdc313795775966280bc8648367005700327dd28010da8d2f88d2a5e2a02",
+      "sha256": "f1a2cdc313795775966280bc8648367005700327dd28010da8d2f88d2a5e2a02"
+    },
+    "evidence/QUALIFICATION_STATE.md": {
+      "readback_sha256": "5ca1a1c3036c215057e705f2bf8e24cfb32b475b65f68449b11b596b99ac2769",
+      "sha256": "5ca1a1c3036c215057e705f2bf8e24cfb32b475b65f68449b11b596b99ac2769"
+    },
+    "evidence/canonical_rerun_20261001_140615.receipt.json": {
+      "readback_sha256": "5ae3de970014726f190dfe8e4d5b35e667fd737b1be29e27205c25d143bdf403",
+      "sha256": "5ae3de970014726f190dfe8e4d5b35e667fd737b1be29e27205c25d143bdf403"
+    },
+    "training_receipt.json": {
+      "readback_sha256": "fea82085c6bcc2c8f35ee805169207b03e2c0347ef902c85f505cff3168c1af2",
+      "sha256": "fea82085c6bcc2c8f35ee805169207b03e2c0347ef902c85f505cff3168c1af2"
+    }
+  },
+  "promotion": "NOT_PROMOTABLE",
+  "publication_eligible": false,
+  "published_at": "2026-10-01T21:10:19.548639+00:00",
+  "published_by": "betterwithage",
+  "receipt_c_sha256": "5ae3de970014726f190dfe8e4d5b35e667fd737b1be29e27205c25d143bdf403",
+  "repo_id": "SZLHOLDINGS/chaski-r4",
+  "schema": "szl.hf-artifact-publication/v1"
+}

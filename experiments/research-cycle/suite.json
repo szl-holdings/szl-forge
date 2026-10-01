@@ -1,0 +1,21 @@
+{
+  "schema": "szl.research-cycle-suite/v1",
+  "evidence_class": "PUBLIC_SYNTHETIC_DEVELOPMENT_ONLY",
+  "baseline": {"title_weight": 0, "body_weight": 1, "normalize_length": false},
+  "documents": [
+    {"id": "a-distractor", "title": "Historical glossary", "body": "receipt ledger model training deployment source receipt ledger model training deployment source receipt ledger"},
+    {"id": "b-receipts", "title": "Receipt ledger", "body": "Durable evidence storage and restart verification."},
+    {"id": "c-training", "title": "Model training", "body": "Licensed examples, frozen evaluation and measured outcomes."},
+    {"id": "d-deploy", "title": "Deployment source", "body": "Immutable revision binding and exact published file comparison."}
+  ],
+  "development": [
+    {"id": "dev-receipt", "query": "durable receipt", "relevant_id": "b-receipts"},
+    {"id": "dev-training", "query": "licensed training", "relevant_id": "c-training"},
+    {"id": "dev-deploy", "query": "immutable deployment", "relevant_id": "d-deploy"}
+  ],
+  "validation": [
+    {"id": "val-receipt", "query": "receipt ledger", "relevant_id": "b-receipts"},
+    {"id": "val-training", "query": "model training", "relevant_id": "c-training"},
+    {"id": "val-deploy", "query": "deployment source", "relevant_id": "d-deploy"}
+  ]
+}
