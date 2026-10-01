@@ -88,11 +88,22 @@ def env_block() -> dict:
         "schema": SCHEMA,
         "generated_at": utcnow(),
     }
-    for mod in ("torch", "transformers", "peft", "trl", "datasets", "huggingface_hub"):
+    for mod in ("torch", "transformers", "peft", "trl", "datasets", "accelerate", "huggingface_hub"):
         try:
             block[mod] = __import__(mod).__version__
         except Exception:
             block[mod] = "NOT_INSTALLED"
+    # Which fused-kernel stacks the runtime can actually import. Qwen3.5 is a hybrid model: without `fla`
+    # (flash-linear-attention) and `causal_conv1d` transformers runs reference PyTorch kernels for the
+    # gated-delta layers (correct, slow, memory-heavy). Recorded, never silently assumed.
+    stack = {}
+    for mod in ("triton", "fla", "causal_conv1d", "liger_kernel", "unsloth", "bitsandbytes"):
+        try:
+            m = __import__(mod)
+            stack[mod] = getattr(m, "__version__", "present")
+        except Exception:
+            stack[mod] = "ABSENT"
+    block["kernel_stack"] = stack
     return block
 
 
@@ -443,38 +454,36 @@ def cmd_dpo(out: pathlib.Path, epochs: int | None, max_pairs: int, profile: str 
         gc.collect()
         torch.cuda.empty_cache()
         torch.cuda.reset_peak_memory_stats()
+        import dataclasses
+        knobs = {f.name for f in dataclasses.fields(DPOConfig)}
+        optional = {"use_logits_to_keep": True, "precompute_ref_log_probs": True, "precompute_ref_batch_size": 1,
+                    "max_prompt_length": max_prompt_length, "torch_empty_cache_steps": 1}
+        accepted = {k: v for k, v in optional.items() if k in knobs}
+        if settings["rpo_alpha"] is not None and "rpo_alpha" not in knobs:
+            raise SystemExit("installed TRL has no rpo_alpha; profile C3 cannot run without its anchor (use --profile C2 deliberately, or upgrade TRL)")
+        # With logits_to_keep only completion positions are materialised, so bf16 autocast (fp32 log-probs) is
+        # affordable. Without it (TRL >= 1.x dropped the knob) the full 248k-vocab logits would be upcast to fp32
+        # by accelerate (the 2026-09-30 OOMs), so train in the model's own bf16 instead and say so.
+        autocast = "use_logits_to_keep" in accepted
         cfg_kwargs = dict(
             output_dir=str(out / "trainer"), per_device_train_batch_size=1, gradient_accumulation_steps=4,
             num_train_epochs=epochs, learning_rate=settings["learning_rate"], lr_scheduler_type="cosine", logging_steps=1,
-            save_strategy="no", bf16=False, fp16=False, gradient_checkpointing=True,
+            save_strategy="no", bf16=autocast, fp16=False, gradient_checkpointing=True,
             gradient_checkpointing_kwargs={"use_reentrant": False}, beta=settings["beta"], max_length=max_length,
-            max_prompt_length=max_prompt_length, seed=SEED, report_to=[], torch_empty_cache_steps=1,
-            use_logits_to_keep=True, precompute_ref_log_probs=True, precompute_ref_batch_size=1,
+            seed=SEED, report_to=[], **accepted,
         )
         if settings["rpo_alpha"] is not None:
             cfg_kwargs["rpo_alpha"] = settings["rpo_alpha"]   # NLL on the chosen completion: the anti-collapse anchor
         memory_profile = {"max_length": max_length, "max_prompt_length": max_prompt_length,
-                          "compute_dtype": "bf16 model weights, no autocast, logits never upcast to fp32",
-                          "torch_empty_cache_steps": 1,
-                          "use_logits_to_keep": True, "precompute_ref_log_probs": True,
+                          "compute_dtype": ("bf16 autocast; logits restricted to completion positions" if autocast
+                                            else "bf16 model weights, no autocast, logits never upcast to fp32"),
                           "per_device_train_batch_size": 1, "gradient_accumulation_steps": 4, "gradient_checkpointing": True,
                           "prompts_over_budget": sum(1 for n in prompt_lengths if n > max_prompt_length),
                           "pairs_over_total_budget": sum(1 for n, c in zip(prompt_lengths, completion_lengths) if n + c > max_length),
                           "alloc_conf": os.environ.get("PYTORCH_ALLOC_CONF", "")}
-        for _ in range(4):
-            try:
-                cfg = DPOConfig(**cfg_kwargs)
-                break
-            except TypeError as exc:
-                dropped = next((k for k in ("precompute_ref_batch_size", "use_logits_to_keep", "precompute_ref_log_probs", "max_prompt_length", "torch_empty_cache_steps") if k in str(exc) and k in cfg_kwargs), None)
-                if dropped is None and "rpo_alpha" in str(exc) and "rpo_alpha" in cfg_kwargs:
-                    raise SystemExit("installed TRL has no rpo_alpha; profile C3 cannot run without its anchor (use --profile C2 deliberately, or upgrade TRL)") from exc
-                if dropped is None:
-                    raise
-                cfg_kwargs.pop(dropped)
-                memory_profile[dropped] = "UNAVAILABLE_IN_INSTALLED_TRL"
-        else:
-            raise SystemExit("DPOConfig could not be constructed with the installed TRL")
+        for k, v in optional.items():
+            memory_profile[k] = v if k in accepted else "UNAVAILABLE_IN_INSTALLED_TRL"
+        cfg = DPOConfig(**cfg_kwargs)
         trainer = DPOTrainer(
             model=policy,            # the loaded khipu-r3 policy (merged), NOT the bare base id
             ref_model=None,          # reference = same policy with the new LoRA disabled
