@@ -38,6 +38,14 @@ function Banner([string]$Text) {
     Write-Host ("=" * 88) -ForegroundColor DarkCyan
 }
 function Sha256([string]$Path) { return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant() }
+# Manifest hashes are LF-normalized (estate convention, see chaski/test_bakeoff_named_n.py::test_file_hash_is_lf_normalized):
+# a Windows git checkout with core.autocrlf=true rewrites every text file to CRLF, which must not read as tampering.
+function Sha256Text([string]$Path) {
+    $bytes = [IO.File]::ReadAllBytes($Path)
+    $text  = [Text.Encoding]::UTF8.GetString($bytes).Replace("`r`n", "`n")
+    $sha   = [Security.Cryptography.SHA256]::Create()
+    try { return ([BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($text))) -replace "-", "").ToLowerInvariant() } finally { $sha.Dispose() }
+}
 function Require-File([string]$Path) { if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { throw "Required file is missing: $Path" } }
 function Require-Dir([string]$Path)  { if (-not (Test-Path -LiteralPath $Path -PathType Container)) { throw "Required directory is missing: $Path" } }
 function Run-Step([string]$Label, [string]$Exe, [string[]]$ArgList, [string]$Cwd) {
@@ -107,7 +115,7 @@ $Drift = @()
 foreach ($rel in $Manifest.Keys) {
     $p = Join-Path $Tools $rel
     if (-not (Test-Path -LiteralPath $p -PathType Leaf)) { $Drift += "MISSING $rel"; continue }
-    $h = Sha256 $p
+    $h = Sha256Text $p
     if ($h -ne $Manifest[$rel]) { $Drift += "DRIFT   $rel  expected=$($Manifest[$rel].Substring(0,16)) actual=$($h.Substring(0,16))" }
     else { Write-Host ("  ok  {0}  {1}" -f $h.Substring(0,16), $rel) -ForegroundColor DarkGreen }
 }
