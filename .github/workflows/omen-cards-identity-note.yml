@@ -7,8 +7,14 @@ name: Omen cards identity note (Hub PRs)
 # pull-request  -> acquires the validated estate publisher credential the same way
 #                  hub-honesty-banners-via-token1.yml does, then runs
 #                  `cards --apply --owner-authorized`, which can ONLY open Hub pull
-#                  requests. Nothing changes on any card until a human merges on
-#                  the Hub. Direct commits are impossible from this workflow.
+#                  requests. Nothing changes on any card until a merge on the Hub.
+#                  Direct commits are impossible from this workflow.
+# merge         -> merges ONLY the Hub pull requests named in `merge_prs`, and only
+#                  when each one is still open, carries the exact identity-note title,
+#                  was opened by the same publisher identity, and its diff adds lines
+#                  to README.md alone (no removals, no other files). Anything else is
+#                  refused and recorded. This is the owner's merge decision executed
+#                  with the estate credential; it never merges "all open PRs".
 #
 # The pipeline is fetched at an exact commit and its bytes are verified against the
 # supplied SHA-256 before anything runs. Publisher-managed cards (chaski-*, KHIPU-R2,
@@ -25,6 +31,11 @@ on:
         options:
           - dry-run
           - pull-request
+          - merge
+      merge_prs:
+        description: "merge mode only: comma-separated <owner/repo>#<num> Hub pull requests to merge"
+        required: false
+        default: ""
       pipeline_sha:
         description: "szl-forge commit holding tools/szl_omen_pipeline.py (huggingface lineage)"
         required: true
@@ -51,6 +62,7 @@ jobs:
       MODE: ${{ inputs.mode }}
       PIPELINE_SHA: ${{ inputs.pipeline_sha }}
       PIPELINE_SHA256: ${{ inputs.pipeline_sha256 }}
+      MERGE_PRS: ${{ inputs.merge_prs }}
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
@@ -98,7 +110,7 @@ jobs:
           PY
 
       - name: Acquire validated publisher credential
-        if: env.MODE == 'pull-request'
+        if: env.MODE == 'pull-request' || env.MODE == 'merge'
         env:
           HF_ORG_TOKEN_CANDIDATE: ${{ secrets.HF_ORG_TOKEN }}
           HF_ORG_TOKEN1_CANDIDATE: ${{ secrets.HF_ORG_TOKEN1 }}
@@ -127,6 +139,68 @@ jobs:
           print("wo6_status:", receipt["wo6_status"])
           for item in receipt["items"]:
               print(item["repo"], "|", item["mode"], "|", item.get("result_url", "-"))
+          PY
+
+      - name: Merge the named identity-note Hub pull requests (owner decision; strict checks)
+        if: env.MODE == 'merge'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports/cards-merge
+          python - <<'PY'
+          import difflib, json, os, re, sys, time
+          from huggingface_hub import HfApi, hf_hub_download
+
+          TITLE = "card: note the merged root checkpoint alongside the adapter (metadata only)"
+          MARKER = "<!-- szl:artifact-identity-reconciled -->"
+          spec = os.environ.get("MERGE_PRS", "").strip()
+          if not spec:
+              print("::error::merge mode requires merge_prs"); sys.exit(2)
+          api = HfApi()
+          me = api.whoami()["name"]
+          receipt = {"stage": "cards-merge", "publisher_identity": me, "items": [], "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+          failed = False
+          for item in [x.strip() for x in spec.split(",") if x.strip()]:
+              m = re.fullmatch(r"([A-Za-z0-9._-]+/[A-Za-z0-9._-]+)#(\d+)", item)
+              rec = {"spec": item, "result": "REFUSED", "reasons": []}
+              receipt["items"].append(rec)
+              if not m:
+                  rec["reasons"].append("malformed spec"); failed = True; continue
+              repo, num = m.group(1), int(m.group(2))
+              d = api.get_discussion_details(repo, num, repo_type="model")
+              if not d.is_pull_request: rec["reasons"].append("not a pull request")
+              if d.status != "open": rec["reasons"].append(f"status is {d.status}, not open")
+              if d.title != TITLE: rec["reasons"].append(f"title mismatch: {d.title!r}")
+              if d.author != me: rec["reasons"].append(f"opened by {d.author!r}, not the publisher identity")
+              # Diff computed from the trees themselves (the discussion API does not return one): every blob that
+              # differs between main and refs/pr/N is a touched file; README.md is compared line by line.
+              def blobs(rev):
+                  return {f.path: f.blob_id for f in api.list_repo_tree(repo, revision=rev, repo_type="model", recursive=True) if hasattr(f, "blob_id")}
+              main_tree, pr_tree = blobs("main"), blobs(f"refs/pr/{num}")
+              files = sorted(pth for pth in set(main_tree) | set(pr_tree) if main_tree.get(pth) != pr_tree.get(pth))
+              if files != ["README.md"]: rec["reasons"].append(f"pull request touches {files}, not README.md alone")
+              before = open(hf_hub_download(repo, "README.md", repo_type="model", revision="main", force_download=True), encoding="utf-8").read().splitlines()
+              after_pr = open(hf_hub_download(repo, "README.md", repo_type="model", revision=f"refs/pr/{num}", force_download=True), encoding="utf-8").read().splitlines()
+              hunk = list(difflib.unified_diff(before, after_pr, lineterm="", n=0))
+              added = [ln for ln in hunk if ln.startswith("+") and not ln.startswith("+++")]
+              removed = [ln for ln in hunk if ln.startswith("-") and not ln.startswith("---")]
+              if removed: rec["reasons"].append(f"diff removes {len(removed)} line(s); identity note must be additive")
+              if not added or not any(MARKER in ln for ln in added): rec["reasons"].append("diff does not add the identity-note marker")
+              if MARKER in "\n".join(before): rec["reasons"].append("main already carries the marker; merge would duplicate it")
+              rec.update({"repo": repo, "num": num, "title": d.title, "author": d.author, "added_lines": len(added), "removed_lines": len(removed)})
+              if rec["reasons"]:
+                  failed = True; print(f"REFUSED {item}: {rec['reasons']}"); continue
+              api.merge_pull_request(repo, num, repo_type="model",
+                                     comment="Merged under explicit owner authorization (2026-09-30). Additive artifact-identity note; no evaluation claim, frontmatter unchanged.")
+              after = api.get_discussion_details(repo, num, repo_type="model")
+              readme = open(hf_hub_download(repo, "README.md", repo_type="model", revision="main", force_download=True), encoding="utf-8").read()
+              rec["status_after"] = after.status
+              rec["marker_on_main"] = MARKER in readme
+              rec["result"] = "MERGED" if after.status == "merged" and MARKER in readme else "MERGE_UNVERIFIED"
+              if rec["result"] != "MERGED": failed = True
+              print(f"{rec['result']} {item} (main carries marker: {rec['marker_on_main']})")
+          json.dump(receipt, open("reports/cards-merge/merge_receipt.json", "w", encoding="utf-8"), indent=2)
+          sys.exit(1 if failed else 0)
           PY
 
       - name: Upload sanitized receipts and diffs
