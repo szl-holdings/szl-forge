@@ -478,7 +478,7 @@ class IntegrationNormalizationTests(unittest.TestCase):
     def test_vendored_szl_bytes_match_export_and_are_packaged(self) -> None:
         szl = FRONTEND / "szl"
         source = json.loads((szl / "SOURCE.json").read_text(encoding="utf-8"))
-        self.assertEqual((source["name"], source["version"]), ("szl-kanchay", "1.1.0"))
+        self.assertEqual((source["name"], source["version"]), ("szl-kanchay", "1.1.1"))
         vendored = sorted(
             path.relative_to(szl).as_posix()
             for path in szl.rglob("*")
