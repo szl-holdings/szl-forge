@@ -1179,7 +1179,8 @@ def scan_corpora():
     home = pathlib.Path.home()
     roots += [p for p in home.iterdir() if p.is_dir() and p.name.lower().startswith("szl")] if home.is_dir() else []
     skip = {".git", ".venv", "venv", "node_modules", "__pycache__", "site-packages", "out", "outputs", ".cache",
-            "appdata", "runs", "repos", "ledger", "dist", "build", ".tox", ".mypy_cache"}
+            "appdata", "runs", "repos", "ledger", "dist", "build", ".tox", ".mypy_cache", "tests", "test", "fixtures",
+            "fixture", "probes", "samples", "examples", "gate", "gates", "evidence", "receipts", "publish"}
     found, examined = [], 0
     for root in roots:
         base_depth = len(root.parts)
@@ -1219,26 +1220,33 @@ def scan_corpora():
                         splits[rec["split"] or "untagged"] += 1
                     except (ValueError, TypeError):
                         pass
-                if not sample or okc / len(sample) < 0.9:
+                if not sample or okc / len(sample) < 0.9 or rows < 20:
                     continue
-                found.append({"path": str(p), "dir": str(p.parent), "file": fn, "rows": rows, "bytes": size,
+                found.append({"path": str(p), "dir": str(p.parent), "file": fn, "rows": rows, "bytes": size, "root": root.name,
                               "sha256": kit.sha256_file(p), "mtime": dt.datetime.fromtimestamp(p.stat().st_mtime).isoformat(timespec="seconds"),
                               "sample_ok": f"{okc}/{len(sample)}", "split_tags": dict(splits),
-                              "tokens": sorted(ntoks(str(p.relative_to(root)) if p.is_relative_to(root) else str(p)) - GENERIC)})
+                              "tokens": sorted(sig_tokens(str(p.relative_to(root)) if p.is_relative_to(root) else str(p))),
+                              "root_tokens": sorted(sig_tokens(root.name))})
     wj(RUN / "local_corpora.json", found)
     log(f"corpora: {len(found)} candidate JSONL files under {[str(r) for r in roots]}")
     return found
 
 
+def sig_tokens(text):
+    """Tokens that can carry identity: 3+ chars, not numeric, not generic."""
+    return {t for t in ntoks(text) if len(t) >= 3 and not re.fullmatch(r"\d+[a-z]?|v\d+", t)} - GENERIC
+
+
 def bind_corpus(name, corpora):
-    """Pick the best local corpus group for a model by token overlap; group split files living in one directory."""
-    mt = ntoks(name) - GENERIC
+    """Pick the best local corpus group for a model: significant-token overlap on the relative path (2 points each)
+    plus a same-repository bonus (1 point); split files living in one directory are grouped."""
+    mt = sig_tokens(name)
     excl = ("quarantine", "backup", "pre-fix", "prefix", "sample", "fixture", "example", "probe", "smoke")
     groups = {}
     for c in corpora:
-        if any(x in c["file"].lower() for x in excl):
+        if not mt or any(x in c["file"].lower() for x in excl):
             continue
-        score = len(mt & set(c["tokens"]))
+        score = 2 * len(mt & set(c["tokens"])) + (1 if mt & set(c.get("root_tokens") or []) else 0)
         if score == 0:
             continue
         groups.setdefault(c["dir"], []).append((score, c))

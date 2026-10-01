@@ -83,20 +83,22 @@ def test_candidate_generation_is_fail_closed(op, tmp_path, monkeypatch):
     corpus_dir = tmp_path / "szl-demo" / "output"
     corpus_dir.mkdir(parents=True)
     rows = [{"messages": [{"role": "user", "content": f"ticket {i} about invoices {i}"}, {"role": "assistant", "content": json.dumps({"label": "billing"})}],
-             "split": "train" if i < 8 else "eval", "family_key": f"f{i}"} for i in range(10)]
+             "split": "train" if i < 32 else "eval", "family_key": f"f{i}"} for i in range(40)]
     (corpus_dir / "demo_distill_v0.2_deduped.jsonl").write_text("\n".join(json.dumps(r) for r in rows) + "\n", encoding="utf-8")
-    (corpus_dir / "demo_distill_v0.1.jsonl").write_text("\n".join(json.dumps(r) for r in rows[:3]) + "\n", encoding="utf-8")
+    (corpus_dir / "demo_distill_v0.1.jsonl").write_text("\n".join(json.dumps(r) for r in rows[:22]) + "\n", encoding="utf-8")
+    (corpus_dir / "demo_tiny_5.jsonl").write_text("\n".join(json.dumps(r) for r in rows[:5]) + "\n", encoding="utf-8")
     monkeypatch.setenv("SZL_CORPUS_ROOTS", str(tmp_path / "szl-demo"))
     monkeypatch.setattr(op, "hf_pin", lambda repo: ("a" * 40, "apache-2.0"))
     corpora = op.scan_corpora()
-    assert len(corpora) == 2
-    m = {"model": "SZLHOLDINGS/demo-model", "status": "ADAPTER", "sha": "b" * 40, "adapter_base": ["Qwen/Qwen2.5-0.5B-Instruct"],
+    assert len(corpora) == 2, "files under 20 rows are never corpora"
+    m = {"model": "SZLHOLDINGS/demo-model-5", "status": "ADAPTER", "sha": "b" * 40, "adapter_base": ["Qwen/Qwen2.5-0.5B-Instruct"],
          "base_model": [], "schema_files": [], "sources": [], "family": "unmapped"}
     bound = op.gen_candidate(m, corpora, {"github": []})
     folder = Path(bound["folder"])
     cand = json.loads((folder / "candidate.json").read_text(encoding="utf-8"))
-    assert bound["binding"] == "BOUND_LOCAL" and bound["rows"] == 10
+    assert bound["binding"] == "BOUND_LOCAL" and bound["rows"] == 40, "numeric tokens like '5' must not steer the binding"
     assert cand["training_data"]["files"]["all"]["path"].endswith("demo_distill_v0.2_deduped.jsonl")
+    assert cand["training_data"]["candidates_observed"][0].endswith("demo_distill_v0.1.jsonl")
     assert cand["actual_training_base"]["revision"] == "a" * 40 and cand["promotion"] == "NOT_PROMOTABLE"
     assert cand["target_repo_id"] != cand["predecessor"]["repo_id"]
     gates_text = (folder / "gates.json").read_text(encoding="utf-8")
@@ -116,7 +118,7 @@ def test_candidate_generation_is_fail_closed(op, tmp_path, monkeypatch):
             lib.curriculum_files(json.loads((Path(unbound["folder"]) / "candidate.json").read_text(encoding="utf-8")))
         assert e.value.code == 3
         rows_by_split, bad, excluded = lib.load_splits(cand)
-        assert len(rows_by_split["train"]) == 8 and len(rows_by_split["dev"]) == 2 and not bad and excluded == 0
+        assert len(rows_by_split["train"]) == 32 and len(rows_by_split["dev"]) == 8 and not bad and excluded == 0
         leak = lib.leakage_report(rows_by_split["train"], rows_by_split["dev"], json.loads(gates_text)["leakage"])
         assert leak["verdict"] == "PASS"
     finally:
