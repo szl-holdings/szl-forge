@@ -42,6 +42,9 @@ HEX64 = re.compile(r"^[0-9a-f]{64}$")
 KNOWN_PIPELINE_SHA256 = {
     "6a4b893b8d5141e73e2d1e91b0cc4f84c1ceb0bef5ea9230cc4f4288a1440a15": "szl-forge huggingface@c6e60fee (pipeline v2)",
     "31d5d1bb33f81d9b4ab20f9ba9054741bec8183e45788a99f0e77fe50f58d1ca": "szl-forge huggingface@6c35dbca (pipeline v2 + owner-authorized cards)",
+    "c2361df7ab79315fd5934b839116a7ad3ad612329f182c5069c0ff6bc947bdff": "szl-forge huggingface@8cdb1ac3 (#467 memory ladder)",
+    "ef3a9049ca8ebd9f48cfecb1c039792360d220cc101bd638f2e563ed84432da2": "szl-forge huggingface@3dee2933 (#469 pure-bf16 lane; produced bundle 20261001-a989dd523998)",
+    "2e242ac68e8fe925d3cbb9c77feb9ffc908bbfc1c8f0ed841cfeeafc2bb56316": "szl-forge huggingface (DPO profiles C2/C3; this commit)",
 }
 
 
