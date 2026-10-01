@@ -1,0 +1,23 @@
+{
+  "kind": "szl-geh-v8-runbook-receipt",
+  "generated": "2026-10-01T01:04:19.5363262+00:00",
+  "root": "/home/user/workspace/owner_sim",
+  "python": "/usr/local/bin/python3",
+  "lean_toolchain": "leanprover/lean4:v4.18.0",
+  "harness_sha256": "25008681bed2563c2caa683ae342933fd1ae72e7b2c89ef0c16bb021f7a736b7",
+  "verifier_sha256": "6647ef7fb207cbf01e4c69275735fc632009a0558625208899bcdef2e2787040",
+  "geh_chain_head": "694dd59752e5065f073a27dddf7ce32578ffab6c30f7f57af2aa329b65671353",
+  "geh_evidence_dir": "/home/user/workspace/owner_sim/chaski_r4/evidence/geh",
+  "chaski_reconciliation": {
+    "runner_pristine": true,
+    "r4_on_disk_is": "NOT FOUND",
+    "r4_weights_match_training_receipt": false,
+    "runner_sha256": "f4ca282a29e2fa2f0246ebcb6e3298b7b3f023d686ba883d948459bcaf56dadb",
+    "r4_adapter": "MISSING /home/user/workspace/owner_sim/chaski_r4/chaski-r4-adapter/adapter_model.safetensors",
+    "r2_weights_sha256": "6f12981ea5df5e22d3493eefb20d75db75c1c88961ba6621a35af09edd0cdde6",
+    "r2_runner_dirhash": "078ec09fb3e8e215d1b6a98bb7164a94c7bb332d847c8e1d66f565e767171107",
+    "r2_local_matches_hub_published": true
+  },
+  "canonical_rerun_receipt": null,
+  "safety": "No training, adapter modification, merge, upload, publication, deployment, Git commit, Git push, or promotion occurred."
+}

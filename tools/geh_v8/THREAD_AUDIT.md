@@ -236,6 +236,30 @@ Chain head `bdb60e93…0890`; `szl_geh_verify.py --evidence …` → 5 receipts,
   this is toolchain drift on an unbuilt file, not a false locked-set claim — but the "Source" link
   for the locked 8 should point at `ProvedFormulas.lean` alone.
 
+* **Runbook executed end-to-end (PowerShell 7.6.6 on Linux, 2026-10-01):** `geh_v8_runbook.ps1 -Root <sim> -Bundle geh_v8_bundle.zip`
+  ran every stage on a simulated owner root — bundle hash, 14/14 manifest matches, elan/lake
+  present, `lake update` + `lake build` + `lake build repl` from scratch, three red tests correctly
+  failing the build, 34 self-checks, tool-use spec, kernel proof receipt (PASS), K=10 kernel
+  benchmark (PASS), pytest, chain verified by both verifiers, reconciliation
+  (`runner_pristine=true`, Hub r2 bytes `6f12981e…` recognised with dir-hash `078ec09f…`),
+  state block, runbook receipt; exit 0. Transcript and receipt in `evidence_sandbox/runbook_pwsh/`.
+  Fix found on the way: Python detection now falls back `py → python3 → python` (the old script
+  threw without the `py` launcher). What this does not cover: Windows PowerShell 5.1 itself and the
+  CUDA gate (`-RunCanonicalGate` needs `.venv-ra-v2` and the local adapters).
+
+* **Coverage preflight across the public estate (transformers 5.18, CPU):** all three Hub adapters
+  (`chaski`, `chaski-5050`, `chaski-r2`; 192 tensors each) are `ADAPTER_NOT_APPLIED 0/192` under the
+  pristine runner's class (`AutoModelForCausalLM`, exit 4) and `APPLIED 192/192` under
+  `AutoModelForImageTextToText` (exit 0). The runbook's preflight will therefore stop the canonical
+  gate on any machine whose transformers build resolves the text class — the right outcome.
+* **CPU replay of the other two public adapters (multimodal class, 192/192 applied):**
+  `chaski-5050` 0/5 drafts, 0/6 refusals (never refuses; 48–73-token answers);
+  `chaski` 0/5 drafts, 4/6 refusals, emitting the same three-key 19-token JSON as receipt A's
+  original r4, with structural `}`-vs-`,` margins of 0.18–2.3 logits (two knife-edge drafts)
+  against r2's +7.2. The card for `chaski` records 0/5 and 2/6: same draft verdict, refusal count
+  differs by environment — exactly the knife-edge behaviour the probe was built to expose.
+  Diagnostic receipts; counts qualify nothing.
+
 ## Part D — Limits, stated plainly
 
 * **Pantograph toolchain mismatch:** PyPantograph 0.3.15 pins `leanprover/Pantograph` @ `842c0fe6`,
