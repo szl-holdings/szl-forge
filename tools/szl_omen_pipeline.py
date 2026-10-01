@@ -43,9 +43,10 @@ import pathlib
 import platform
 import re
 
-# Set before torch is imported anywhere: expandable segments cut allocator fragmentation on 8 GB laptop GPUs.
-os.environ.setdefault("PYTORCH_ALLOC_CONF", "expandable_segments:True")
-os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
+# Set before torch is imported anywhere: expandable segments cut allocator fragmentation (not supported on Windows).
+if platform.system() != "Windows":
+    os.environ.setdefault("PYTORCH_ALLOC_CONF", "expandable_segments:True")
+    os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 
 SCHEMA = "szl.omen-pipeline/v2"
 SEED = 11
@@ -381,55 +382,89 @@ def cmd_dpo(out: pathlib.Path, epochs: int, max_pairs: int) -> int:
     policy.config.use_cache = False
     peft_cfg = LoraConfig(r=16, lora_alpha=32, lora_dropout=0.0, bias="none", task_type="CAUSAL_LM",
                           target_modules=["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"])
-    # Memory profile for an 8 GB laptop GPU (RTX 5050 run 2026-09-30 went OOM at step 2/12 on the reference
-    # forward: a 248k-vocab logits tensor over the full 1024-token sequence was materialised in fp32).
-    # use_logits_to_keep restricts logits to completion positions; precompute_ref_log_probs takes the
-    # reference pass out of the training step entirely.
+    # Memory ladder for an 8 GB laptop GPU. Evidence (RTX 5050, 2026-09-30): run 1 OOMed at step 2/12 on the
+    # fp32 reference logits (248k vocab x 1024 tokens); run 2, with completion-only logits and precomputed
+    # reference log-probs, OOMed at step 0/12 inside the first training step (Windows allocator cannot use
+    # expandable segments, so freed reference-pass blocks fragment). The ladder frees the allocator between
+    # the reference pass and training, then steps the sequence budget down until a profile fits, recording
+    # every attempt. A truncated prompt budget is a training-data change and is written into the receipt.
     import gc
-    gc.collect()
-    torch.cuda.empty_cache()
-    cfg_kwargs = dict(
-        output_dir=str(out / "trainer"), per_device_train_batch_size=1, gradient_accumulation_steps=4,
-        num_train_epochs=epochs, learning_rate=5e-5, lr_scheduler_type="cosine", logging_steps=1,
-        save_strategy="no", bf16=True, gradient_checkpointing=True,
-        gradient_checkpointing_kwargs={"use_reentrant": False}, beta=0.1, max_length=1024,
-        max_prompt_length=512, seed=SEED, report_to=[],
-        use_logits_to_keep=True, precompute_ref_log_probs=True, precompute_ref_batch_size=1,
-    )
-    memory_profile = {"use_logits_to_keep": True, "precompute_ref_log_probs": True, "per_device_train_batch_size": 1,
-                      "gradient_accumulation_steps": 4, "gradient_checkpointing": True,
-                      "alloc_conf": os.environ.get("PYTORCH_ALLOC_CONF", "")}
-    for _attempt in range(4):
-        try:
-            cfg = DPOConfig(**cfg_kwargs)
-            break
-        except TypeError as exc:
-            # older TRL: drop the knob it does not know, record the downgrade honestly
-            dropped = next((k for k in ("precompute_ref_batch_size", "use_logits_to_keep", "precompute_ref_log_probs", "max_prompt_length") if k in str(exc) and k in cfg_kwargs), None)
-            if dropped is None:
-                raise
-            cfg_kwargs.pop(dropped)
-            memory_profile[dropped] = "UNAVAILABLE_IN_INSTALLED_TRL"
-    else:
-        raise SystemExit("DPOConfig could not be constructed with the installed TRL")
-    trainer = DPOTrainer(
-        model=policy,            # the loaded khipu-r3 policy (merged), NOT the bare base id
-        ref_model=None,          # reference = same policy with the new LoRA disabled
-        peft_config=peft_cfg,    # fresh isolated challenger adapter
-        args=cfg,
-        train_dataset=Dataset.from_list([{k: p[k] for k in ("prompt", "chosen", "rejected")} for p in pairs]),
-        processing_class=tok,
-    )
+    prompt_lengths = [len(tok(p["prompt"], add_special_tokens=False)["input_ids"]) for p in pairs]
+    completion_lengths = [max(len(tok(p[k], add_special_tokens=False)["input_ids"]) for k in ("chosen", "rejected")) for p in pairs]
+    ladder = [(1024, 512), (768, 384), (640, 320), (512, 256)]
     oom_type = getattr(torch, "OutOfMemoryError", None) or torch.cuda.OutOfMemoryError
-    try:
-        result = trainer.train()
-    except oom_type as exc:
+    attempts: list[dict] = []
+    trainer = None
+    result = None
+    memory_profile: dict = {}
+    for max_length, max_prompt_length in ladder:
+        gc.collect()
+        torch.cuda.empty_cache()
+        torch.cuda.reset_peak_memory_stats()
+        cfg_kwargs = dict(
+            output_dir=str(out / "trainer"), per_device_train_batch_size=1, gradient_accumulation_steps=4,
+            num_train_epochs=epochs, learning_rate=5e-5, lr_scheduler_type="cosine", logging_steps=1,
+            save_strategy="no", bf16=True, gradient_checkpointing=True,
+            gradient_checkpointing_kwargs={"use_reentrant": False}, beta=0.1, max_length=max_length,
+            max_prompt_length=max_prompt_length, seed=SEED, report_to=[],
+            use_logits_to_keep=True, precompute_ref_log_probs=True, precompute_ref_batch_size=1,
+        )
+        memory_profile = {"max_length": max_length, "max_prompt_length": max_prompt_length,
+                          "use_logits_to_keep": True, "precompute_ref_log_probs": True,
+                          "per_device_train_batch_size": 1, "gradient_accumulation_steps": 4, "gradient_checkpointing": True,
+                          "prompts_over_budget": sum(1 for n in prompt_lengths if n > max_prompt_length),
+                          "pairs_over_total_budget": sum(1 for n, c in zip(prompt_lengths, completion_lengths) if n + c > max_length),
+                          "alloc_conf": os.environ.get("PYTORCH_ALLOC_CONF", "")}
+        for _ in range(4):
+            try:
+                cfg = DPOConfig(**cfg_kwargs)
+                break
+            except TypeError as exc:
+                dropped = next((k for k in ("precompute_ref_batch_size", "use_logits_to_keep", "precompute_ref_log_probs", "max_prompt_length") if k in str(exc) and k in cfg_kwargs), None)
+                if dropped is None:
+                    raise
+                cfg_kwargs.pop(dropped)
+                memory_profile[dropped] = "UNAVAILABLE_IN_INSTALLED_TRL"
+        else:
+            raise SystemExit("DPOConfig could not be constructed with the installed TRL")
+        trainer = DPOTrainer(
+            model=policy,            # the loaded khipu-r3 policy (merged), NOT the bare base id
+            ref_model=None,          # reference = same policy with the new LoRA disabled
+            peft_config=peft_cfg,    # fresh isolated challenger adapter
+            args=cfg,
+            train_dataset=Dataset.from_list([{k: p[k] for k in ("prompt", "chosen", "rejected")} for p in pairs]),
+            processing_class=tok,
+        )
+        try:
+            trainer.get_train_dataloader()   # runs the reference pass now (no grad), so its blocks can be released before training
+            gc.collect()
+            torch.cuda.empty_cache()
+            torch.cuda.reset_peak_memory_stats()
+            print(f"    memory profile max_length={max_length} max_prompt_length={max_prompt_length} "
+                  f"prompts_over_budget={memory_profile['prompts_over_budget']} free={torch.cuda.mem_get_info()[0] / 2**30:.2f} GiB")
+            result = trainer.train()
+            memory_profile["peak_allocated_bytes"] = int(torch.cuda.max_memory_allocated())
+            break
+        except oom_type as exc:
+            attempts.append({**memory_profile, "outcome": "CUDA_OOM", "message": str(exc)[:300],
+                             "peak_allocated_bytes": int(torch.cuda.max_memory_allocated()),
+                             "peak_reserved_bytes": int(torch.cuda.max_memory_reserved())})
+            print(f"    CUDA_OOM at max_length={max_length}; stepping the ladder down")
+            try:
+                policy = trainer.model.unload()   # strip the half-trained LoRA layers; the base policy is unchanged
+            except Exception:
+                pass
+            del trainer
+            trainer = None
+            gc.collect()
+            torch.cuda.empty_cache()
+    memory_profile["attempts_before_fit"] = attempts
+    memory_profile["prompt_tokens"] = {"max": max(prompt_lengths), "mean": round(sum(prompt_lengths) / len(prompt_lengths), 1)}
+    memory_profile["completion_tokens_max"] = max(completion_lengths)
+    if result is None or trainer is None:
         props = torch.cuda.get_device_properties(0)
-        return fail_closed(receipt_path, "dpo", "CUDA_OOM: training step exceeded device memory; nothing was saved",
-                           {"oom_message": str(exc)[:400], "memory_profile": memory_profile,
-                            "device_total_bytes": int(props.total_memory),
-                            "max_memory_allocated_bytes": int(torch.cuda.max_memory_allocated()),
-                            "max_memory_reserved_bytes": int(torch.cuda.max_memory_reserved()),
+        return fail_closed(receipt_path, "dpo", "CUDA_OOM: every memory profile on the ladder exceeded device memory; nothing was saved",
+                           {"memory_profile": memory_profile, "device_total_bytes": int(props.total_memory),
                             "pair_classes": classes, "pairs_used": len(pairs)})
     trainer.model.save_pretrained(out)   # adapter only (challenger identity)
     tok.save_pretrained(out)
