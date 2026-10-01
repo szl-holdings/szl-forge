@@ -15,6 +15,12 @@ name: Omen cards identity note (Hub PRs)
 #                  to README.md alone (no removals, no other files). Anything else is
 #                  refused and recorded. This is the owner's merge decision executed
 #                  with the estate credential; it never merges "all open PRs".
+# publish-curated-card -> prepares the WILLAY candidate with the repository's own offline
+#                  tool (tools/prepare_curated_model_card.py, hash-bound to the reviewed
+#                  profile) and opens ONE Hub pull request that replaces README.md with
+#                  those exact bytes. The run prints candidate_sha256; nothing merges here.
+#                  In merge mode, `expected_readme_sha256` swaps the additive-note rule for
+#                  a byte-exact rule: the PR README must hash to that value and carry the marker.
 #
 # The pipeline is fetched at an exact commit and its bytes are verified against the
 # supplied SHA-256 before anything runs. Publisher-managed cards (chaski-*, KHIPU-R2,
@@ -32,8 +38,13 @@ on:
           - dry-run
           - pull-request
           - merge
+          - publish-curated-card
       merge_prs:
         description: "merge mode only: comma-separated <owner/repo>#<num> Hub pull requests to merge"
+        required: false
+        default: ""
+      expected_readme_sha256:
+        description: "merge mode only, optional: require the PR README to hash to this value (byte-exact curated card) instead of the additive-note rule"
         required: false
         default: ""
       pipeline_sha:
@@ -63,6 +74,7 @@ jobs:
       PIPELINE_SHA: ${{ inputs.pipeline_sha }}
       PIPELINE_SHA256: ${{ inputs.pipeline_sha256 }}
       MERGE_PRS: ${{ inputs.merge_prs }}
+      EXPECTED_README_SHA256: ${{ inputs.expected_readme_sha256 }}
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
@@ -110,7 +122,7 @@ jobs:
           PY
 
       - name: Acquire validated publisher credential
-        if: env.MODE == 'pull-request' || env.MODE == 'merge'
+        if: env.MODE == 'pull-request' || env.MODE == 'merge' || env.MODE == 'publish-curated-card'
         env:
           HF_ORG_TOKEN_CANDIDATE: ${{ secrets.HF_ORG_TOKEN }}
           HF_ORG_TOKEN1_CANDIDATE: ${{ secrets.HF_ORG_TOKEN1 }}
@@ -141,6 +153,47 @@ jobs:
               print(item["repo"], "|", item["mode"], "|", item.get("result_url", "-"))
           PY
 
+      - name: Prepare the WILLAY curated candidate and open one Hub pull request
+        if: env.MODE == 'publish-curated-card'
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf reports/willay-candidate
+          python tools/prepare_curated_model_card.py --profile willay --output-dir reports/willay-candidate
+          python - <<'PY'
+          import hashlib, json, time
+          from huggingface_hub import HfApi, CommitOperationAdd, hf_hub_download
+          repo = "SZLHOLDINGS/WILLAY"
+          receipt = json.load(open("reports/willay-candidate/receipt.json", encoding="utf-8"))
+          candidate = open("reports/willay-candidate/README.md", "rb").read()
+          sha = hashlib.sha256(candidate).hexdigest()
+          assert sha == receipt["candidate_sha256"], "candidate bytes do not match the preparation receipt"
+          api = HfApi()
+          info = api.model_info(repo)
+          live = open(hf_hub_download(repo, "README.md", repo_type="model", revision=info.sha, force_download=True), "rb").read()
+          out = {"stage": "publish-curated-card", "repo": repo, "hub_revision_before": info.sha, "candidate_sha256": sha,
+                 "live_readme_sha256": hashlib.sha256(live).hexdigest(), "reviewed_source_revision": receipt["reviewed_source_revision"],
+                 "source_sha256": receipt["source_sha256"], "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+          if live == candidate:
+              out["result"] = "NOOP: Hub README already equals the prepared candidate"
+          else:
+              open_prs = [d for d in api.get_repo_discussions(repo, repo_type="model", discussion_type="pull_request", discussion_status="open")
+                          if d.title.startswith("card: publish the reviewed curated card")]
+              if open_prs:
+                  out["result"] = f"EXISTS: open curated-card PR #{open_prs[0].num}"; out["pr_num"] = open_prs[0].num
+              else:
+                  r = api.create_commit(repo_id=repo, repo_type="model", operations=[CommitOperationAdd("README.md", candidate)],
+                                        commit_message="card: publish the reviewed curated card (szl-forge willay/card/README.md, metadata/prose only)",
+                                        commit_description=("Byte-exact candidate prepared by tools/prepare_curated_model_card.py at szl-holdings/szl-forge "
+                                                            f"reviewed_source_revision {receipt['reviewed_source_revision']}; candidate sha256 {sha}. "
+                                                            "States the exact reviewed artifacts (both adapters and the derived merge); adds no evaluation claim; "
+                                                            "release/promotion holds unchanged."),
+                                        parent_commit=info.sha, create_pr=True)
+                  out["result"] = "PULL_REQUEST_OPENED"; out["pr_url"] = getattr(r, "pr_url", None); out["pr_num"] = getattr(r, "pr_num", None)
+          json.dump(out, open("reports/willay-candidate/publish_receipt.json", "w", encoding="utf-8"), indent=2)
+          print(json.dumps(out, indent=2))
+          PY
+
       - name: Merge the named identity-note Hub pull requests (owner decision; strict checks)
         if: env.MODE == 'merge'
         shell: bash
@@ -148,10 +201,11 @@ jobs:
           set -euo pipefail
           mkdir -p reports/cards-merge
           python - <<'PY'
-          import difflib, json, os, re, sys, time
+          import difflib, hashlib, json, os, re, sys, time
           from huggingface_hub import HfApi, hf_hub_download
 
           TITLE = "card: note the merged root checkpoint alongside the adapter (metadata only)"
+          CURATED_TITLE = "card: publish the reviewed curated card"
           MARKER = "<!-- szl:artifact-identity-reconciled -->"
           spec = os.environ.get("MERGE_PRS", "").strip()
           if not spec:
@@ -170,7 +224,12 @@ jobs:
               d = api.get_discussion_details(repo, num, repo_type="model")
               if not d.is_pull_request: rec["reasons"].append("not a pull request")
               if d.status != "open": rec["reasons"].append(f"status is {d.status}, not open")
-              if d.title != TITLE: rec["reasons"].append(f"title mismatch: {d.title!r}")
+              expected = os.environ.get("EXPECTED_README_SHA256", "").strip().lower()
+              if expected and not re.fullmatch(r"[0-9a-f]{64}", expected):
+                  rec["reasons"].append("expected_readme_sha256 must be 64 hex")
+              if expected:
+                  if not d.title.startswith(CURATED_TITLE): rec["reasons"].append(f"title mismatch for curated publish: {d.title!r}")
+              elif d.title != TITLE: rec["reasons"].append(f"title mismatch: {d.title!r}")
               if d.author != me: rec["reasons"].append(f"opened by {d.author!r}, not the publisher identity")
               # Diff computed from the trees themselves (the discussion API does not return one): every blob that
               # differs between main and refs/pr/N is a touched file; README.md is compared line by line.
@@ -184,14 +243,22 @@ jobs:
               hunk = list(difflib.unified_diff(before, after_pr, lineterm="", n=0))
               added = [ln for ln in hunk if ln.startswith("+") and not ln.startswith("+++")]
               removed = [ln for ln in hunk if ln.startswith("-") and not ln.startswith("---")]
-              if removed: rec["reasons"].append(f"diff removes {len(removed)} line(s); identity note must be additive")
-              if not added or not any(MARKER in ln for ln in added): rec["reasons"].append("diff does not add the identity-note marker")
-              if MARKER in "\n".join(before): rec["reasons"].append("main already carries the marker; merge would duplicate it")
+              pr_bytes = open(hf_hub_download(repo, "README.md", repo_type="model", revision=f"refs/pr/{num}", force_download=True), "rb").read()
+              if expected:
+                  got = hashlib.sha256(pr_bytes).hexdigest()
+                  if got != expected: rec["reasons"].append(f"PR README sha256 {got[:12]} != expected {expected[:12]} (not the reviewed curated bytes)")
+                  if MARKER not in pr_bytes.decode("utf-8", "replace"): rec["reasons"].append("curated card lacks the identity marker")
+                  rec["rule"] = "byte-exact curated card"
+              else:
+                  if removed: rec["reasons"].append(f"diff removes {len(removed)} line(s); identity note must be additive")
+                  if not added or not any(MARKER in ln for ln in added): rec["reasons"].append("diff does not add the identity-note marker")
+                  if MARKER in "\n".join(before): rec["reasons"].append("main already carries the marker; merge would duplicate it")
+                  rec["rule"] = "additive identity note"
               rec.update({"repo": repo, "num": num, "title": d.title, "author": d.author, "added_lines": len(added), "removed_lines": len(removed)})
               if rec["reasons"]:
                   failed = True; print(f"REFUSED {item}: {rec['reasons']}"); continue
               api.merge_pull_request(repo, num, repo_type="model",
-                                     comment="Merged under explicit owner authorization (2026-09-30). Additive artifact-identity note; no evaluation claim, frontmatter unchanged.")
+                                     comment=("Merged under explicit owner authorization (2026-09-30). " + ("Byte-exact reviewed curated card from szl-holdings/szl-forge; no evaluation claim added." if expected else "Additive artifact-identity note; no evaluation claim, frontmatter unchanged.")))
               after = api.get_discussion_details(repo, num, repo_type="model")
               readme = open(hf_hub_download(repo, "README.md", repo_type="model", revision="main", force_download=True), encoding="utf-8").read()
               rec["status_after"] = after.status
