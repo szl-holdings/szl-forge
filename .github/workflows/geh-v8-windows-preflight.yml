@@ -3,7 +3,8 @@ name: GEH v8 Windows preflight (PowerShell 5.1)
 # Executes tools/geh_v8/geh_v8_runbook.ps1 under Windows PowerShell 5.1 on a GitHub-hosted
 # Windows runner against a simulated owner root: Lean 4.18.0 toolchain + REPL build, red tests,
 # self-check, kernel proof + benchmark receipts, pytest, both chain verifiers, reconciliation,
-# runbook receipt. This is the preflight ONLY: no GPU, no local adapters, so -RunCanonicalGate is
+# runbook receipt. The checkout is CRLF (runner default), which the runbook's LF-normalized
+# manifest hashing must accept. This is the preflight ONLY: no GPU, no local adapters, so -RunCanonicalGate is
 # never passed and the runbook's own guard would refuse it anyway. Evidence is uploaded as an
 # artifact. Dispatch-only; it proves nothing about a model.
 
@@ -53,6 +54,8 @@ jobs:
           $Root = "$env:GITHUB_WORKSPACE\owner_sim"
           New-Item -ItemType Directory -Force -Path "$Root\tools", "$Root\chaski_r4", "$Root\chaski\gate" | Out-Null
           Copy-Item -Recurse -Force "$env:GITHUB_WORKSPACE\tools\geh_v8" "$Root\tools\geh_v8"
+          # the bundle ships the probe inside geh_v8/; in the repo it lives one level up
+          Copy-Item -Force "$env:GITHUB_WORKSPACE\tools\chaski_margin_probe.py" "$Root\tools\geh_v8\chaski_margin_probe.py"
           Copy-Item -Force "$env:GITHUB_WORKSPACE\chaski_r4\bakeoff_canonical_four_way_r4.py" "$Root\chaski_r4\"
           Copy-Item -Force "$env:GITHUB_WORKSPACE\chaski\gate\*.jsonl" "$Root\chaski\gate\"
           python -m venv "$Root\.venv-ra-v2"
