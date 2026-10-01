@@ -1,0 +1,109 @@
+{
+  "datasets": "5.0.1",
+  "generated_at": "2026-10-01T19:34:23Z",
+  "huggingface_hub": "1.33.0",
+  "items": [
+    {
+      "after_sha256": "76f3432528ffa8bd457d82d2661b3441c251ac06c21f89b3fd4d0fea886b9995",
+      "before_sha256": "76f3432528ffa8bd457d82d2661b3441c251ac06c21f89b3fd4d0fea886b9995",
+      "changes": [
+        "SKIP: root is adapter-only (no config.json + model.safetensors at root)"
+      ],
+      "managed_by": "adapter-only root; out of scope",
+      "mode": "dry-run",
+      "repo": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2",
+      "revision": "9f71de39861898e752602a2332ef7ca1e0df87a7"
+    },
+    {
+      "after_sha256": "bfa0fac0f1f9ddf03fe2fd9444b8091f0a1f5a08bdf991ff75d23a09ff57cd07",
+      "before_sha256": "bfa0fac0f1f9ddf03fe2fd9444b8091f0a1f5a08bdf991ff75d23a09ff57cd07",
+      "changes": [
+        "NOOP: card already reconciled"
+      ],
+      "managed_by": "hub-pr",
+      "mode": "dry-run",
+      "repo": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3",
+      "revision": "f4b28d75e1bdbbbf299bb8f5beceb8f141f38baf"
+    },
+    {
+      "after_sha256": "fa1b953e6d86f4d4786c920fcfc27251090ad425c96059a25d89d5b8d8adc007",
+      "before_sha256": "fa1b953e6d86f4d4786c920fcfc27251090ad425c96059a25d89d5b8d8adc007",
+      "changes": [
+        "NOOP: card already reconciled"
+      ],
+      "managed_by": "hub-pr",
+      "mode": "dry-run",
+      "repo": "SZLHOLDINGS/khipu-r3",
+      "revision": "7e388efb6e332c8c28e94bdf266293baf437fb64"
+    },
+    {
+      "after_sha256": "63883be1eceb08decb6da151feb7d97bd56bc2ea119bf665767c820896e93133",
+      "before_sha256": "63883be1eceb08decb6da151feb7d97bd56bc2ea119bf665767c820896e93133",
+      "changes": [
+        "NOOP: card already reconciled"
+      ],
+      "managed_by": "szl-forge:chaski-r2/card/README.md (publish-chaski-card.yml)",
+      "mode": "dry-run",
+      "repo": "SZLHOLDINGS/chaski-r2",
+      "revision": "1b0bf158d309e2210f81ef594b4eed9088551db2"
+    },
+    {
+      "after_sha256": "9621f1b4c3456eac7e2d47feec39bbf4ef7a1a62e4ce055b93f11a1fcf9f032f",
+      "before_sha256": "9621f1b4c3456eac7e2d47feec39bbf4ef7a1a62e4ce055b93f11a1fcf9f032f",
+      "changes": [
+        "NOOP: card already reconciled"
+      ],
+      "managed_by": "szl-forge:chaski-5050/card/README.md (publish-chaski-card.yml)",
+      "mode": "dry-run",
+      "repo": "SZLHOLDINGS/chaski-5050",
+      "revision": "91ae7f25a6cf3c641efbd5f10564c7fcc4e149b4"
+    },
+    {
+      "after_sha256": "3a777cc3561b09a293ec837a072f2e89499e3dd5dd05a8a395037fe8b3225133",
+      "before_sha256": "3a777cc3561b09a293ec837a072f2e89499e3dd5dd05a8a395037fe8b3225133",
+      "changes": [
+        "NOOP: card already reconciled"
+      ],
+      "managed_by": "hub-pr",
+      "mode": "dry-run",
+      "repo": "SZLHOLDINGS/brain-navigator-r2",
+      "revision": "8f7d67af9c2f8315dc3a63afa9ebf23a3f60ca01"
+    },
+    {
+      "after_sha256": "aec38c7568a6dbca5862264d65fc1ce24bf7fb5868051ea33ddafeb4abc93163",
+      "before_sha256": "aec38c7568a6dbca5862264d65fc1ce24bf7fb5868051ea33ddafeb4abc93163",
+      "changes": [
+        "NOOP: card already reconciled"
+      ],
+      "managed_by": "szl-forge:khipu-r2/card/README.md (publish-khipu-card.yml)",
+      "mode": "dry-run",
+      "repo": "SZLHOLDINGS/KHIPU-R2",
+      "revision": "e4c5d6c00876ae02b78bfd720560a31b91ad1b76"
+    },
+    {
+      "after_sha256": "fa0e39e5f45d24c6bca39c3e966e99842ab8a0351ee6983f37ed30ae450d83d9",
+      "before_sha256": "fa0e39e5f45d24c6bca39c3e966e99842ab8a0351ee6983f37ed30ae450d83d9",
+      "changes": [
+        "NOOP: card already reconciled"
+      ],
+      "managed_by": "szl-forge:willay/card/README.md (closed curated pipeline, pinned source sha)",
+      "mode": "dry-run",
+      "repo": "SZLHOLDINGS/WILLAY",
+      "revision": "432646a22d37e6c43f9fa8580365d9f718cfea50"
+    }
+  ],
+  "note": "Additive identity note by default; publisher-managed cards are refused Hub-side and route through szl-forge; v2 (adapter-only root) is skipped by rule.",
+  "peft": "0.20.0",
+  "pipeline_sha256": "ef3a9049ca8ebd9f48cfecb1c039792360d220cc101bd638f2e563ed84432da2",
+  "platform": "Windows-10-10.0.26200-SP0",
+  "publication_eligible": false,
+  "python": "3.11.9",
+  "relabel": false,
+  "schema": "szl.omen-pipeline/v2",
+  "stage": "cards",
+  "status": "DRY-RUN",
+  "torch": "2.10.0+cu128",
+  "transformers": "5.17.0",
+  "trl": "1.13.0",
+  "wo6_status": "CLOSED"
+}

@@ -1,0 +1,107 @@
+{
+  "adapter_sha256": {
+    "adapter_model.safetensors": "4064238281e328067690032459a844d79f32158b9ee58ced35a3d662dff3412f"
+  },
+  "artifact": "dpo-khipu-r4-challenger",
+  "autonomy_eligible": false,
+  "data": {
+    "counts": {
+      "adversarial.jsonl": 6,
+      "eval.jsonl": 5,
+      "train": 23
+    },
+    "digests_sha256": {
+      "adversarial.jsonl": "812a23b3ed15c1df8c5e18b2365b6e7c474968f42f329a5f30b7c57c445659fd",
+      "eval.jsonl": "61ede1488e3c6e3cded81679affe258e8d03c47019424182330a94b8c505794e",
+      "train.abstain.jsonl": "421a6e733fda656c18b250ad5a5140f010392598750c48d672972f45a1e6c4a6",
+      "train.jsonl": "f0f8a9b232e8662f65eda1a58e3875ee9c1f859851ef3c2bfb28dd727cc27a75"
+    },
+    "disjoint_prompts_verified": true,
+    "heldout_files_sealed": [
+      "adversarial.jsonl",
+      "eval.jsonl"
+    ],
+    "repo": "model:SZLHOLDINGS/SZL-Khipu-1.5B-abstain",
+    "revision": "942c02dd4e94f2cb7cfb0432a051c2db2219ee79",
+    "train_files": [
+      "train.abstain.jsonl",
+      "train.jsonl"
+    ]
+  },
+  "datasets": "5.0.1",
+  "dpo": {
+    "beta": 0.1,
+    "max_length": 1024,
+    "max_prompt_length": 512,
+    "memory_profile": {
+      "alloc_conf": "",
+      "allocated_before_train_bytes": 1564053504,
+      "attempts_before_fit": [],
+      "completion_tokens_max": 470,
+      "compute_dtype": "bf16 model weights, no autocast, logits never upcast to fp32",
+      "free_before_train_bytes": 5754585088,
+      "gradient_accumulation_steps": 4,
+      "gradient_checkpointing": true,
+      "max_length": 1024,
+      "max_prompt_length": "UNAVAILABLE_IN_INSTALLED_TRL",
+      "pairs_over_total_budget": 0,
+      "peak_allocated_bytes": 4282568704,
+      "per_device_train_batch_size": 1,
+      "precompute_ref_log_probs": true,
+      "prompt_tokens": {
+        "max": 322,
+        "mean": 317.0
+      },
+      "prompts_over_budget": 0,
+      "torch_empty_cache_steps": 1,
+      "use_logits_to_keep": "UNAVAILABLE_IN_INSTALLED_TRL"
+    },
+    "reference": "policy with challenger adapter disabled"
+  },
+  "epochs": 2,
+  "evaluation": "NOT_RUN",
+  "generated_at": "2026-10-01T19:31:29Z",
+  "hardware": {
+    "cuda": "12.8",
+    "device_count": 1,
+    "gpu": "NVIDIA GeForce RTX 5050 Laptop GPU",
+    "vram_bytes": 8546484224
+  },
+  "huggingface_hub": "1.33.0",
+  "lane": "khipu-abstain-dpo",
+  "lora": {
+    "alpha": 32,
+    "dtype": "bf16",
+    "qlora": "FORBIDDEN_ON_QWEN3.5",
+    "r": 16
+  },
+  "next_gate": "python szl_omen_pipeline.py eval-abstain --challenger C:\\Users\\steph\\szl\\dpo-khipu-r4-challenger-20261001-1527",
+  "pair_classes": {
+    "already_correct": 0,
+    "failure_class": 15,
+    "format_drift": 8
+  },
+  "pairs_sha256": "e01221e154217d412fe34aff5611ce0779181abfbc8e500bc4f810e6d066fcd4",
+  "pairs_used": 23,
+  "peft": "0.20.0",
+  "pipeline_sha256": "ef3a9049ca8ebd9f48cfecb1c039792360d220cc101bd638f2e563ed84432da2",
+  "platform": "Windows-10-10.0.26200-SP0",
+  "policy": {
+    "adapter": "SZLHOLDINGS/khipu-r3",
+    "adapter_revision": "7e388efb6e332c8c28e94bdf266293baf437fb64",
+    "base": "Qwen/Qwen3.5-0.8B",
+    "init": "base+adapter merged"
+  },
+  "promotion": "NOT_PROMOTABLE",
+  "publication_eligible": false,
+  "python": "3.11.9",
+  "schema": "szl.omen-pipeline/v2",
+  "seed": 11,
+  "stage": "dpo",
+  "status": "TRAINED_CHALLENGER",
+  "torch": "2.10.0+cu128",
+  "train_loss": 0.06189982251174827,
+  "train_loss_label": "TRAIN METRIC, NOT AN EVAL",
+  "transformers": "5.17.0",
+  "trl": "1.13.0"
+}
