@@ -43,6 +43,10 @@ import pathlib
 import platform
 import re
 
+# Set before torch is imported anywhere: expandable segments cut allocator fragmentation on 8 GB laptop GPUs.
+os.environ.setdefault("PYTORCH_ALLOC_CONF", "expandable_segments:True")
+os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
+
 SCHEMA = "szl.omen-pipeline/v2"
 SEED = 11
 
@@ -377,18 +381,37 @@ def cmd_dpo(out: pathlib.Path, epochs: int, max_pairs: int) -> int:
     policy.config.use_cache = False
     peft_cfg = LoraConfig(r=16, lora_alpha=32, lora_dropout=0.0, bias="none", task_type="CAUSAL_LM",
                           target_modules=["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"])
+    # Memory profile for an 8 GB laptop GPU (RTX 5050 run 2026-09-30 went OOM at step 2/12 on the reference
+    # forward: a 248k-vocab logits tensor over the full 1024-token sequence was materialised in fp32).
+    # use_logits_to_keep restricts logits to completion positions; precompute_ref_log_probs takes the
+    # reference pass out of the training step entirely.
+    import gc
+    gc.collect()
+    torch.cuda.empty_cache()
     cfg_kwargs = dict(
         output_dir=str(out / "trainer"), per_device_train_batch_size=1, gradient_accumulation_steps=4,
         num_train_epochs=epochs, learning_rate=5e-5, lr_scheduler_type="cosine", logging_steps=1,
         save_strategy="no", bf16=True, gradient_checkpointing=True,
         gradient_checkpointing_kwargs={"use_reentrant": False}, beta=0.1, max_length=1024,
         max_prompt_length=512, seed=SEED, report_to=[],
+        use_logits_to_keep=True, precompute_ref_log_probs=True, precompute_ref_batch_size=1,
     )
-    try:
-        cfg = DPOConfig(**cfg_kwargs)
-    except TypeError:
-        cfg_kwargs.pop("max_prompt_length", None)
-        cfg = DPOConfig(**cfg_kwargs)
+    memory_profile = {"use_logits_to_keep": True, "precompute_ref_log_probs": True, "per_device_train_batch_size": 1,
+                      "gradient_accumulation_steps": 4, "gradient_checkpointing": True,
+                      "alloc_conf": os.environ.get("PYTORCH_ALLOC_CONF", "")}
+    for _attempt in range(4):
+        try:
+            cfg = DPOConfig(**cfg_kwargs)
+            break
+        except TypeError as exc:
+            # older TRL: drop the knob it does not know, record the downgrade honestly
+            dropped = next((k for k in ("precompute_ref_batch_size", "use_logits_to_keep", "precompute_ref_log_probs", "max_prompt_length") if k in str(exc) and k in cfg_kwargs), None)
+            if dropped is None:
+                raise
+            cfg_kwargs.pop(dropped)
+            memory_profile[dropped] = "UNAVAILABLE_IN_INSTALLED_TRL"
+    else:
+        raise SystemExit("DPOConfig could not be constructed with the installed TRL")
     trainer = DPOTrainer(
         model=policy,            # the loaded khipu-r3 policy (merged), NOT the bare base id
         ref_model=None,          # reference = same policy with the new LoRA disabled
@@ -397,7 +420,17 @@ def cmd_dpo(out: pathlib.Path, epochs: int, max_pairs: int) -> int:
         train_dataset=Dataset.from_list([{k: p[k] for k in ("prompt", "chosen", "rejected")} for p in pairs]),
         processing_class=tok,
     )
-    result = trainer.train()
+    oom_type = getattr(torch, "OutOfMemoryError", None) or torch.cuda.OutOfMemoryError
+    try:
+        result = trainer.train()
+    except oom_type as exc:
+        props = torch.cuda.get_device_properties(0)
+        return fail_closed(receipt_path, "dpo", "CUDA_OOM: training step exceeded device memory; nothing was saved",
+                           {"oom_message": str(exc)[:400], "memory_profile": memory_profile,
+                            "device_total_bytes": int(props.total_memory),
+                            "max_memory_allocated_bytes": int(torch.cuda.max_memory_allocated()),
+                            "max_memory_reserved_bytes": int(torch.cuda.max_memory_reserved()),
+                            "pair_classes": classes, "pairs_used": len(pairs)})
     trainer.model.save_pretrained(out)   # adapter only (challenger identity)
     tok.save_pretrained(out)
 
@@ -410,7 +443,8 @@ def cmd_dpo(out: pathlib.Path, epochs: int, max_pairs: int) -> int:
                  "counts": data["counts"], "disjoint_prompts_verified": data["disjoint_prompts_verified"]},
         "pairs_used": len(pairs), "pair_classes": classes, "pairs_sha256": sha256_of(pairs_path),
         "lora": {"r": 16, "alpha": 32, "dtype": "bf16", "qlora": "FORBIDDEN_ON_QWEN3.5"},
-        "dpo": {"beta": 0.1, "max_length": 1024, "max_prompt_length": 512, "reference": "policy with challenger adapter disabled"},
+        "dpo": {"beta": 0.1, "max_length": 1024, "max_prompt_length": 512, "reference": "policy with challenger adapter disabled",
+                "memory_profile": memory_profile},
         "train_loss": float(result.training_loss), "train_loss_label": "TRAIN METRIC, NOT AN EVAL",
         "hardware": hw, "adapter_sha256": {p.name: sha256_of(p) for p in sorted(out.glob("adapter_model.*"))},
         "evaluation": "NOT_RUN", "publication_eligible": False, "autonomy_eligible": False, "promotion": "NOT_PROMOTABLE",
