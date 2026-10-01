@@ -1,6 +1,6 @@
 # chaski-r4 — qualification state (after receipt C)
 
-Last updated 2026-10-01 after [szl-forge #475](https://github.com/szl-holdings/szl-forge/pull/475) merged receipt C.
+Last updated 2026-10-01 after [szl-forge #475](https://github.com/szl-holdings/szl-forge/pull/475) merged receipt C and the owner decision to publish chaski-r4 as a PUBLIC_EXPERIMENTAL_ARTIFACT was executed (card [#478](https://github.com/szl-holdings/szl-forge/pull/478), bytes via [`tools/publish_chaski_r4_bytes.py`](https://github.com/szl-holdings/szl-forge/blob/main/tools/publish_chaski_r4_bytes.py)).
 States follow the model-qualification-gates vocabulary: training, evaluation, publication and promotion are
 assigned independently and never collapsed.
 
@@ -55,12 +55,12 @@ Artifact: chaski-r4 local adapter, retrained (weights f1a2cdc313795775966280bc86
 Canonical source: szl-holdings/szl-forge chaski/bakeoff_named_n.py @ 55c3027b; receipt C committed in #475 (06804ce4)
 Training: TRAINED_CHALLENGER (training_receipt.json 2026-09-17T02:36Z; dataset 0fea0d85…; training_plan hash mismatch recorded)
 Evaluation: MEASURED — receipt C: r4 5/5 + 6/6 beside r2 control 5/5 + 6/6; 5050 5/5 + 6/6; base 0/5 + 6/6; adapters 192/192 applied
-Publication: UNPUBLISHED (chaski-r4 is absent from the Hub; evidence is published in this repository only)
+Publication: PUBLIC_EXPERIMENTAL_ARTIFACT — SZLHOLDINGS/chaski-r4: card revision 13c9b10fee50542426b105520b7f32969d595ed8 (byte-identical to chaski_r4/card/README.md), bytes revision f662e24aa9e878dc6c2df50151d4fd500ea8a16c (raw f1a2cdc3…, config d36472a3…, directory e1abc37a… recomputed from Hub files); publication receipt d8eea67b…
 Promotion: NOT_PROMOTABLE — publication_eligible=false is fixed by the evaluator; promotion is an owner decision taken outside the gate
-Blocking gate: none from the gate itself. Open items: (1) owner decision on publishing r4 as a PUBLIC_EXPERIMENTAL_ARTIFACT with receipts A, B, C and the provenance caveat above the fold; (2) receipts A/B provenance stays unresolved
-Next bounded action: owner decision. If publish: card first (status line, receipt C hash, limits), bytes second, never the reverse
+Blocking gate: none from the gate itself. Publication decision taken and executed 2026-10-01. Open item: receipts A/B provenance stays unresolved. Promotion remains an owner decision outside the gate and has not been taken
+Next bounded action: none required for publication. Promotion, if ever, is an explicit owner step with its own receipt; the evaluator's publication_eligible=false does not change
 Protected state: receipts A and B, chaski_r4/training_receipt.json, adapters, gate files, pristine evaluator copy; none modified
-Completion evidence: this file + receipt C sha256 5ae3de970014726f… + GEH v8 chain (12 receipts, head 344df7b4…) in chaski_r4/evidence/geh/
+Completion evidence: this file + receipt C sha256 5ae3de970014726f… + publication receipt d8eea67b… + GEH v8 chain (12 receipts, head 344df7b4…) in chaski_r4/evidence/geh/
 ```
 
 ## Claim boundary

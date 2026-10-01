@@ -238,7 +238,7 @@ Artifact: chaski-r4 local adapter ($($Recon.r4_on_disk_is))
 Canonical source: szl-holdings/szl-forge chaski_r4/ @ bcdd1d85 (runner f4ca282a...dadb)
 Training: TRAINED_CHALLENGER (training_receipt.json 2026-09-17T02:36Z, weights f1a2cdc3..., dataset 0fea0d85...)
 Evaluation: $EvalLine
-Publication: UNPUBLISHED (chaski-r4 absent from the Hub; correct)
+Publication: PUBLIC_EXPERIMENTAL_ARTIFACT (SZLHOLDINGS/chaski-r4; card 13c9b10f..., bytes f662e24a..., digests verified; promotion NOT taken)
 Promotion: NOT_PROMOTABLE
 Blocking gate: $BlockLine
 Open question: receipts A and B show adapter effects that the f4ca282a copy cannot produce with the current adapter files; their provenance is recorded as unresolved, not explained away
