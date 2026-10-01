@@ -22,10 +22,16 @@ import json
 import os
 import platform
 import re
+import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+_HERE = Path(__file__).resolve().parent
+if str(_HERE) not in sys.path:  # runnable as a script, importable from tests, any cwd
+    sys.path.insert(0, str(_HERE))
+from adapter_guard import assert_adapter_applied, describe_loader
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
@@ -465,6 +471,9 @@ def gpu_snapshot(torch: Any) -> dict[str, Any]:
     }
 
 
+LAST_LOADER: dict[str, Any] | None = None
+
+
 def load_runtime(base_id: str, adapter: Path | None) -> tuple[Any, Any]:
     import torch
     from transformers import AutoModelForImageTextToText, AutoProcessor
@@ -476,13 +485,20 @@ def load_runtime(base_id: str, adapter: Path | None) -> tuple[Any, Any]:
         device_map="cuda",
         local_files_only=True,
     )
+    report = None
     if adapter is not None:
         from peft import PeftModel
 
         model = PeftModel.from_pretrained(
             model, str(adapter), is_trainable=False
         )
+        # Fail closed: PEFT only warns when checkpoint keys have no target module (for
+        # example a `model.language_model.layers.*` adapter loaded into a `model.layers.*`
+        # class). An unapplied adapter would otherwise be scored as if it were the base.
+        report = assert_adapter_applied(model, adapter)
     model.eval()
+    global LAST_LOADER
+    LAST_LOADER = describe_loader(model, report)
     return model, processor
 
 
@@ -583,6 +599,7 @@ def score_candidate(
         return row
 
     model, processor = load_runtime(base_id, adapter)
+    row["loader"] = LAST_LOADER
     cases: list[dict[str, Any]] = []
     draft_valid = 0
     refused = 0
