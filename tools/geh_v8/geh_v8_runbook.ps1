@@ -65,10 +65,15 @@ foreach ($tool in @("lake", "elan", "git")) {
 $VenvPy = Join-Path $Root ".venv-ra-v2\Scripts\python.exe"
 $HaveVenv = Test-Path -LiteralPath $VenvPy -PathType Leaf
 if ($HaveVenv) { $Py = $VenvPy } else {
-    $PyCmd = Get-Command py -ErrorAction SilentlyContinue
-    if ($null -eq $PyCmd) { throw "No Python: expected $VenvPy or the py launcher." }
+    # Windows: the py launcher, then python; other hosts (validation runs under pwsh): python3, then python.
+    $PyCmd = $null
+    foreach ($candidate in @("py", "python3", "python")) {
+        $PyCmd = Get-Command $candidate -ErrorAction SilentlyContinue
+        if ($null -ne $PyCmd) { break }
+    }
+    if ($null -eq $PyCmd) { throw "No Python: expected $VenvPy, the py launcher, python3 or python on PATH." }
     $Py = $PyCmd.Source
-    Write-Host "  .venv-ra-v2 missing; falling back to the py launcher (GEH needs no CUDA; the chaski gate does)" -ForegroundColor Yellow
+    Write-Host "  .venv-ra-v2 missing; falling back to $($PyCmd.Name) (GEH needs no CUDA; the chaski gate does)" -ForegroundColor Yellow
 }
 Write-Host "Root:        $Root"
 Write-Host "Python:      $Py"
