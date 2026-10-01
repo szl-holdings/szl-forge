@@ -106,3 +106,20 @@ def test_kernel_bench_and_chain(paths):
     payload = json.loads(env["payload"])
     assert payload["decision"]["gate"] == "PASS" and payload["proof"]["bench"]["pass_at_k"] == 1.0
     assert ver.verify_chain(paths.evidence) == 0
+
+
+def test_receipt_collision_is_refused_and_chain_stays_verifiable(paths):
+    """Two runs sharing a run id must not overwrite chained evidence (owner-metal finding, 2026-09-30)."""
+    args = ["--root", str(paths.root), "--lean-project", str(LEAN), "--transport", "sim",
+            "--run-id", "dupdupdupdupdup1", "--prove", "True", "--script", "trivial"]
+    first = geh.main(args)
+    assert first in (0, 3)  # sim transport can never PASS; VOID (3) is the expected verdict here
+    rf = paths.evidence / "geh_proof_receipt_dupdupdupdupdup1.json"
+    before = rf.read_bytes()
+    with pytest.raises(SystemExit) as exc:
+        geh.main(args)
+    assert "already exists" in str(exc.value)
+    assert rf.read_bytes() == before            # first receipt untouched
+    assert ver.verify_chain(paths.evidence) == 0  # chain still verifies: nothing orphaned
+    log = (paths.evidence / "geh_article12_log.jsonl").read_text(encoding="utf-8")
+    assert "geh.receipt_collision_refused" in log

@@ -97,10 +97,10 @@ if ($Bundle -ne "") {
     Expand-Archive -LiteralPath $Bundle -DestinationPath $Tools -Force
 }
 $Manifest = @{
-    "szl_geh_v8.py" = "25008681bed2563c2caa683ae342933fd1ae72e7b2c89ef0c16bb021f7a736b7"
+    "szl_geh_v8.py" = "50cba83d66b86d9cff0ea10eaa36b4f31d497a10e8ce22518836c99b63d0a9c4"
     "szl_geh_verify.py" = "6647ef7fb207cbf01e4c69275735fc632009a0558625208899bcdef2e2787040"
     "chaski_margin_probe.py" = "324e064a214973c563bca3de4d9c1ded7631b387c6f3fb142813292fc90ac668"
-    "tests\test_geh_v8.py" = "c5a601f482da7e605ee02171c633ab931b082a90a24ec5f5f2f270b5fec47b6b"
+    "tests\test_geh_v8.py" = "7260570384189787c257af275167333cd114a4855eae231588fc4e8690235d44"
     "README.md" = "c45f15347da292fcd6970fb996b4360ee83d101eadea9f1a77bf8f40718c4602"
     "geh-lean\lakefile.toml" = "60b374e3ac39ecf8e9f8bf79c7ffee008c9fcbb0bfafab5530cd7d8bec373cb8"
     "geh-lean\lean-toolchain" = "692487121da24843c4cc39e8225d0e016615914dc602328195691014cc98c526"
@@ -157,7 +157,19 @@ Banner "GEH v8 RUNS (fail-closed; evidence -> $GehEvid)"
 $Harness = Join-Path $Tools "szl_geh_v8.py"
 $Verifier = Join-Path $Tools "szl_geh_verify.py"
 $Common = @("--root", $Root, "--lean-project", $LeanProj)
-$RunId = ("owner" + $Stamp.Substring(0,8) + $Stamp.Substring(9,4)).ToLower()
+# run id to the second plus a random suffix: receipts are append-only and the harness refuses to overwrite one,
+# so two runbook passes in the same minute (owner metal 2026-09-30) must never share an id
+$RunId = ("owner" + $Stamp.Replace("_", "") + ((Get-Random -Maximum 0xFFFF).ToString("x4"))).ToLower()
+# an existing chain must verify before anything is appended; a drifted chain is quarantined (renamed, never edited)
+if (Test-Path -LiteralPath (Join-Path $GehEvid "geh_chain.jsonl") -PathType Leaf) {
+    $EAP = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+    try { & $Py $Harness @Common --verify-chain; $chainRc = $LASTEXITCODE } finally { $ErrorActionPreference = $EAP }
+    if ($chainRc -ne 0) {
+        $Quarantine = Join-Path $Evidence ("geh_quarantined_" + $Stamp)
+        Move-Item -LiteralPath $GehEvid -Destination $Quarantine
+        Write-Host "  existing GEH chain did not verify; preserved untouched at $Quarantine and starting a fresh chain" -ForegroundColor Red
+    } else { Write-Host "  existing GEH chain verifies; appending" -ForegroundColor DarkGreen }
+}
 Run-Step "self-check (structural + kernel-grounded)" $Py (@($Harness) + $Common + @("--selfcheck")) $Tools
 Run-Step "emit tool-use spec" $Py (@($Harness) + $Common + @("--emit-toolspec")) $Tools
 Run-Step "governed proof -> DSSE receipt" $Py (@($Harness) + $Common + @("--transport", "repl", "--run-id", ($RunId + "p"), "--prove", "forall (p q : Prop), p -> (p -> q) -> q", "--script", "intro p q hp hpq, exact hpq hp")) $Tools
