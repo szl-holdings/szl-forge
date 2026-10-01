@@ -260,6 +260,17 @@ Chain head `bdb60e93…0890`; `szl_geh_verify.py --evidence …` → 5 receipts,
   differs by environment — exactly the knife-edge behaviour the probe was built to expose.
   Diagnostic receipts; counts qualify nothing.
 
+* **Runbook executed under real Windows PowerShell 5.1 (GitHub-hosted `windows-latest`, run
+  36803274253, 2026-10-01):** `$PSVersionTable` 5.1.26100; CRLF git checkout; elan v4.2.3 +
+  Lean 4.18.0 installed on the runner; `lake update`/`build`/`build repl` from scratch on Windows;
+  14/14 manifest, three red tests failing correctly, self-check, kernel proof receipt `56994dc2…`
+  PASS, K=10 benchmark receipt `dc03832d…` PASS, chain verified on the runner and again off-runner,
+  exit 0. Two defects only a real run could show, both fixed: (1) a CRLF checkout made every
+  manifest hash drift — manifest hashing is now LF-normalized, the estate's convention;
+  (2) PS 5.1 `Set-Content -Encoding UTF8` writes a BOM that `json.load` rejects — the runbook
+  receipt is now written BOM-free. Evidence: `evidence_sandbox/runbook_windows_ps51/`. Still not
+  covered anywhere but the laptop: the CUDA gate with the local r4 adapter.
+
 ## Part D — Limits, stated plainly
 
 * **Pantograph toolchain mismatch:** PyPantograph 0.3.15 pins `leanprover/Pantograph` @ `842c0fe6`,
@@ -277,17 +288,25 @@ Chain head `bdb60e93…0890`; `szl_geh_verify.py --evidence …` → 5 receipts,
 * The sandbox signing key is throwaway; your owner key is generated on first run under
   `chaski_r4\evidence\geh\geh_keys\` — back it up, never commit the `.pem`.
 
-## Part E — Next bounded actions
+## Part E — Next bounded actions (state as of 2026-10-01 02:00Z)
 
-1. Run `geh_v8_runbook.ps1 -Bundle …` (no gate). Read the reconciliation block: it tells you which
-   r4 adapter is on disk.
-2. Run it again with `-RunCanonicalGate`. Promote the new receipt to the canonical path only by an
-   explicit copy after reading it; then close the thread's open item in the ledger.
-3. Drop `#geh_guard` into `lutar-lean` CI for the locked theorem set {F1,F4,F7,F11,F12,F18,F19,F22} — it converts `SORRIES.md`
-   discipline from a script that counts to a build that fails.
-4. Add `transformers`/`peft` versions, model class, rendered prompt and top-2 logit margin per case
-   to the chaski runner receipt; that is the receipt upgrade this whole thread was asking for.
-5. Replace `HeuristicProver` with the chaski adapter via `CallableProposer` and publish the first
-   randomized-syntax prover benchmark receipt with an honest `research-only` tag.
+Done and merged: GEH v8 + CI kernel gate (#444), coverage preflight (#448), canonical runner
+adapter guard + `loader` receipt field (#450), loader-class note on the three Hub cards (#451,
+published byte-exact), runbook validated under pwsh 7.6 (#456) and under Windows PowerShell 5.1
+on a GitHub-hosted runner (#458, #460, #462), lutar-lean locked-24 kernel axiom guard (#305) and
+the PROVEN_FORMULAS source correction (#306).
 
-Sources: [szl-forge canonical receipt](https://github.com/szl-holdings/szl-forge/blob/main/chaski_r4/bakeoff_canonical_four_way_r4.receipt.json) · [szl-forge four-way receipt](https://github.com/szl-holdings/szl-forge/blob/main/chaski_r4/bakeoff_four_way_receipt.json) · [training_receipt.json](https://github.com/szl-holdings/szl-forge/blob/main/chaski_r4/training_receipt.json) · [training_plan.json](https://github.com/szl-holdings/szl-forge/blob/main/chaski_r4/training_plan.json) · [commit bcdd1d85](https://github.com/szl-holdings/szl-forge/commit/bcdd1d85) · [lutar-lean lean-toolchain](https://github.com/szl-holdings/lutar-lean/blob/main/lean-toolchain) · [Qwen3.5-0.8B chat_template.jinja](https://huggingface.co/Qwen/Qwen3.5-0.8B/blob/main/chat_template.jinja) · [Lean REPL](https://github.com/leanprover-community/repl) · [PyPantograph server.py](https://github.com/stanford-centaur/PyPantograph/blob/main/pantograph/server.py) · [DSSE protocol](https://github.com/secure-systems-lab/dsse/blob/master/protocol.md)
+The one action that exists nowhere but the owner laptop — CUDA, `.venv-ra-v2`, and the local
+`chaski_r4\chaski-r4-adapter` bytes — in admin Windows PowerShell 5.1 with the two shared files
+in Downloads:
+
+```
+powershell -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\Downloads\geh_v8_runbook.ps1" -Root "C:\Users\steph\szl-forge" -Bundle "$env:USERPROFILE\Downloads\geh_v8_bundle.zip"
+powershell -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\Downloads\geh_v8_runbook.ps1" -Root "C:\Users\steph\szl-forge" -Bundle "$env:USERPROFILE\Downloads\geh_v8_bundle.zip" -RunCanonicalGate
+```
+
+The second command runs the adapter-coverage preflight with the pristine runner's own loader
+class and stops before the gate if the installed transformers build would score the base model
+as an adapter; otherwise it writes `chaski_r4\evidence\canonical_rerun_<stamp>.receipt.json`
+(never overwriting the committed receipt). Promote by explicit copy only after reading it.
+Until that receipt exists, chaski-r4 stays `NOT_PROMOTABLE`.

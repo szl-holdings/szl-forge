@@ -19,3 +19,9 @@ runbook receipt did not parse with `json.load`. Fixed in the runbook (BOM-free `
 the receipt in this folder is the BOM-prefixed original from the run, kept as evidence.
 The signing key was generated on the runner and discarded; only the public key is kept here.
 Preflight only: no GPU, no local adapters, `-RunCanonicalGate` not passed. Proves nothing about a model.
+
+## Confirmation run after the BOM fix (run 36804143063)
+
+Same workflow on main after #462: exit 0, `COMPLETE`; runbook receipt now BOM-free and parses with
+`json.load`; proof receipt `f07cd715…` PASS, benchmark receipt `c2ac2586…` PASS, chain head
+`c2ac2586…` verified off-runner (`failures=0`); the artifact no longer contains the private key.
