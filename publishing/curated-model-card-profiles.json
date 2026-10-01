@@ -6,7 +6,7 @@
     "willay": {
       "repo_id": "SZLHOLDINGS/WILLAY",
       "observed_hub_revision": "e04bd728f20857c75e7c831d19d7190affd29133",
-      "reviewed_source_revision": "36821b7e23199ffd37d232fed5e7855e0be0b308",
+      "reviewed_source_revision": "bedfabc7e8d823e087d14c74a51b614ebadcb69e",
       "source_path": "willay/card/README.md",
       "source_sha256": "1acda405d7aa2d934aa620ecfa5f4652812dbae1ef9da7b79a1a8cd5b92c1dfe",
       "observation_path": "publishing/curated-card-observations/willay-20260930.json",
