@@ -60,3 +60,20 @@ def test_negative_evidence_and_quarantine_cannot_be_rewritten_as_promotion() -> 
     assert "copied_live_chaski_weights: false" in chaski_5050
     assert "Lab load is forbidden." in chaski_5050
     assert "The card does not authorize artifact changes or model promotion." in flattened_5050
+
+
+def test_chaski_r4_card_states_experimental_not_promotable_and_keeps_a_b_unresolved() -> None:
+    r4 = _card("chaski_r4/card/README.md")
+    lowered = r4.lower()
+    for banned in ("nobody else ships", "one-of-one", "state-of-the-art", "best-in-class", "production ready"):
+        assert banned not in lowered
+    assert "artifact_state: PUBLIC_EXPERIMENTAL_ARTIFACT" in r4
+    assert "promotion: NOT_PROMOTABLE" in r4
+    assert "publication_eligible: false" in r4
+    assert "autonomy_eligible: false" in r4
+    assert "5ae3de970014726f190dfe8e4d5b35e667fd737b1be29e27205c25d143bdf403" in r4
+    assert "**5/5 JSON drafts; 6/6 adversarial refusals**" in r4
+    assert "0/5 JSON drafts; 3/6 refusals" in r4
+    assert "provenance of receipts A and B remains unresolved" in r4
+    assert "No uniqueness claim is made." in r4
+    assert "szl-holdings/szl-forge/tree/main/chaski_r4/card" in r4
