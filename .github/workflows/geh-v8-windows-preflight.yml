@@ -1,0 +1,75 @@
+name: GEH v8 Windows preflight (PowerShell 5.1)
+
+# Executes tools/geh_v8/geh_v8_runbook.ps1 under Windows PowerShell 5.1 on a GitHub-hosted
+# Windows runner against a simulated owner root: Lean 4.18.0 toolchain + REPL build, red tests,
+# self-check, kernel proof + benchmark receipts, pytest, both chain verifiers, reconciliation,
+# runbook receipt. This is the preflight ONLY: no GPU, no local adapters, so -RunCanonicalGate is
+# never passed and the runbook's own guard would refuse it anyway. Evidence is uploaded as an
+# artifact. Dispatch-only; it proves nothing about a model.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    name: runbook under Windows PowerShell 5.1
+    runs-on: windows-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: powershell
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install elan v4.2.3 (SHA-pinned) and Lean 4.18.0
+        run: |
+          $ErrorActionPreference = "Stop"
+          $zip = "$env:RUNNER_TEMP\elan.zip"
+          Invoke-WebRequest -Uri "https://github.com/leanprover/elan/releases/download/v4.2.3/elan-x86_64-pc-windows-msvc.zip" -OutFile $zip
+          $h = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($h -ne "be5e92a2dfdd8176099b2db0b810c27237c9054f1e5db1126f4f2a1134773b25") { throw "elan zip hash mismatch: $h" }
+          Expand-Archive -LiteralPath $zip -DestinationPath "$env:RUNNER_TEMP\elan" -Force
+          & "$env:RUNNER_TEMP\elan\elan-init.exe" -y --default-toolchain none
+          $bin = "$env:USERPROFILE\.elan\bin"
+          Add-Content -Path $env:GITHUB_PATH -Value $bin
+          & "$bin\elan.exe" toolchain install leanprover/lean4:v4.18.0
+          & "$bin\elan.exe" default leanprover/lean4:v4.18.0
+          & "$bin\lean.exe" --version
+
+      - name: Stage simulated owner root and the CUDA-free venv the runbook expects
+        run: |
+          $ErrorActionPreference = "Stop"
+          $Root = "$env:GITHUB_WORKSPACE\owner_sim"
+          New-Item -ItemType Directory -Force -Path "$Root\tools", "$Root\chaski_r4", "$Root\chaski\gate" | Out-Null
+          Copy-Item -Recurse -Force "$env:GITHUB_WORKSPACE\tools\geh_v8" "$Root\tools\geh_v8"
+          Copy-Item -Force "$env:GITHUB_WORKSPACE\chaski_r4\bakeoff_canonical_four_way_r4.py" "$Root\chaski_r4\"
+          Copy-Item -Force "$env:GITHUB_WORKSPACE\chaski\gate\*.jsonl" "$Root\chaski\gate\"
+          python -m venv "$Root\.venv-ra-v2"
+          & "$Root\.venv-ra-v2\Scripts\python.exe" -m pip install --quiet --upgrade pip
+          & "$Root\.venv-ra-v2\Scripts\python.exe" -m pip install --quiet cryptography pytest
+          Get-ChildItem -Recurse "$Root\tools\geh_v8" | Measure-Object | Select-Object -ExpandProperty Count
+
+      - name: "Run the runbook (Windows PowerShell 5.1; no bundle, files already staged)"
+        run: |
+          $PSVersionTable.PSVersion.ToString()
+          powershell -NoProfile -ExecutionPolicy Bypass -File "$env:GITHUB_WORKSPACE\owner_sim\tools\geh_v8\geh_v8_runbook.ps1" -Root "$env:GITHUB_WORKSPACE\owner_sim"
+          if ($LASTEXITCODE -ne 0) { throw "runbook exited $LASTEXITCODE" }
+
+      - name: Upload evidence (receipts, chain, article-12 log, runbook receipt)
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v6.0.0
+        with:
+          name: geh-v8-windows-preflight-${{ github.run_id }}
+          path: owner_sim/chaski_r4/evidence/
+          if-no-files-found: warn
