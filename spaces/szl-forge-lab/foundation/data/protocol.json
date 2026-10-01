@@ -1,0 +1,91 @@
+{
+  "architecture": "208 raw public history features -> 96 SiLU -> 64 SiLU -> 8 utilities; 26792 parameters",
+  "batch_size": 128,
+  "budget": 4,
+  "created_utc": "2026-09-24T13:20:53Z",
+  "development_seed": 9242411,
+  "development_states": 768,
+  "episodes_per_family": 96,
+  "families": [
+    "clean",
+    "shared_bias",
+    "independent_outliers",
+    "reference_outliers",
+    "bias_drift",
+    "compositional"
+  ],
+  "inherited": "Four cheap reports, one per group, available to every policy before additional spending",
+  "learning_rate": 0.002,
+  "model_seeds": [
+    17,
+    23,
+    41
+  ],
+  "neural_stop": "Stop when highest affordable predicted utility <= 0",
+  "optimizer": "AdamW weight_decay=0.01",
+  "pairing": "Same world and action/visit noise tape across policies; drift changes bias after first paid cheap observation",
+  "policies": [
+    "no_confirmation",
+    "independent_bias",
+    "source_aware",
+    "cheap_only",
+    "reference_only",
+    "random_mixed",
+    "learned"
+  ],
+  "prices": [
+    0.025,
+    0.025,
+    0.025,
+    0.025,
+    0.05,
+    0.05,
+    0.05,
+    0.05
+  ],
+  "primary": {
+    "baseline": "independent_bias",
+    "bootstrap": "2000 resamples of whole episode clusters, averaging model seeds within each episode",
+    "bootstrap_seed": 9242413,
+    "candidate": "learned",
+    "clean_max_utility_regret": 0.01,
+    "family": "shared_bias",
+    "metric": "net_utility",
+    "required_ci_low": 0,
+    "required_gain": 0.03
+  },
+  "random": "Uniform affordable paid actions until budget exhaustion",
+  "resource_costs": [
+    1,
+    1,
+    1,
+    1,
+    2,
+    2,
+    2,
+    2
+  ],
+  "schema": "szl.confirmation.protocol/v1",
+  "secondary": "Report all six families and all baselines including no extra evidence, cheap only and reference only; analytic source-aware comparison is separate",
+  "selection": "Minimum development decision regret; development masked MSE breaks ties; no test feedback",
+  "source_sha256": {
+    "core.py": "573740e2f3e138b82508b49e29ad55c11e2a6e29c07fd44fe49f973628632c69",
+    "experiment.py": "a763286c6e29dd041ff8e09a3c49f6376e3c08383d5be38788d4b81f65854a11",
+    "policy.py": "02705491ed34ca23ef2e900768ad33dc96903c16729a9981ad72475bf4379919"
+  },
+  "steps": 1600,
+  "teacher": "Exact one-step expected weighted accuracy gain minus observation price; explicit Bayesian predictor",
+  "test_seed": 9242412,
+  "training_families": [
+    "clean",
+    "shared_bias"
+  ],
+  "training_family_probability": [
+    0.5,
+    0.5
+  ],
+  "training_seed": 9242410,
+  "training_states": 4096,
+  "truth_boundary": "Synthetic finite worlds and programmed likelihoods; learned acquisition only; no AGI or biological/operational-domain claim",
+  "validation_interval": 200
+}

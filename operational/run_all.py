@@ -32,6 +32,7 @@ EVAL_RECEIPTAGENT = HERE / "evaluate_receiptagent_v3.py"
 EVAL_WILLAY = HERE / "evaluate_willay.py"
 REM_CHASKI = HERE / "remediate_chaski.py"
 REM_KHIPU = HERE / "remediate_khipu_r3.py"
+BENCH = HERE / "benchmark_candidates.py"
 
 
 def run_step(name: str, script: Path, extra: list[str] | None = None) -> dict:
@@ -70,6 +71,7 @@ def main() -> int:
     steps.append(run_step("evaluate-reranker", EVAL_RERANKER))
     steps.append(run_step("evaluate-receiptagent-v3", EVAL_RECEIPTAGENT))
     steps.append(run_step("evaluate-willay", EVAL_WILLAY))
+    steps.append(run_step("benchmark-candidates", BENCH))
 
     receipt = {
         "kind": "szl-ops-run-receipt",

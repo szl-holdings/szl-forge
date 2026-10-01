@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import unittest
 from pathlib import Path
@@ -29,13 +30,56 @@ class StaticForgeContractTests(unittest.TestCase):
             '<meta name="viewport" content="width=device-width, initial-scale=1">',
             index,
         )
-        self.assertIn('rel="icon" href="data:image/svg+xml,', index)
+        self.assertIn(
+            '<link rel="icon" type="image/svg+xml" '
+            'href="szl/logos/szl_favicon.svg">',
+            index,
+        )
+        self.assertTrue((ROOT / "szl" / "logos" / "szl_favicon.svg").is_file())
         self.assertIn("MODEL / KERNEL PORTFOLIO", index)
         for filename in REQUIRED_EVIDENCE:
             with self.subTest(filename=filename):
                 self.assertTrue((ROOT / filename).is_file())
                 self.assertIn(filename, index)
                 json.loads((ROOT / filename).read_text(encoding="utf-8"))
+
+    def test_szl_design_system_is_vendored_and_loaded_locally(self) -> None:
+        index = (ROOT / "index.html").read_text(encoding="utf-8")
+        szl = ROOT / "szl"
+        self.assertIn('<link rel="stylesheet" href="szl/szl-design-system.css">', index)
+        self.assertIn('<link rel="stylesheet" href="szl/szl-console.css">', index)
+        source = json.loads((szl / "SOURCE.json").read_text(encoding="utf-8"))
+        self.assertEqual("1.1.0", source["version"])
+        vendored = sorted(
+            path.relative_to(szl).as_posix()
+            for path in szl.rglob("*")
+            if path.is_file() and path.name != "SOURCE.json"
+        )
+        self.assertEqual(
+            [
+                "logos/szl_favicon.svg",
+                "szl-console.css",
+                "szl-design-system.css",
+            ],
+            vendored,
+        )
+        for relative in vendored:
+            with self.subTest(file=relative):
+                digest = hashlib.sha256((szl / relative).read_bytes()).hexdigest()
+                self.assertEqual(source["sha256"][relative], digest)
+        self.assertFalse((ROOT / "kanchay").exists())
+        lowered = index.lower()
+        for remote in (
+            "fonts.googleapis",
+            "fonts.gstatic",
+            "cdnjs",
+            "jsdelivr",
+            "unpkg",
+            "@font-face",
+            ".woff2",
+            "kanchay/",
+        ):
+            self.assertNotIn(remote, lowered)
 
     def test_model_portfolio_does_not_conflate_cards_with_weights(self) -> None:
         portfolio = json.loads(

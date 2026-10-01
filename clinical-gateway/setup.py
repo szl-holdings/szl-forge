@@ -10,6 +10,10 @@ from setuptools.command.build_py import build_py
 SOURCE_ASSETS = (
     "fixtures/assay_map.json",
     "frontend/index.html",
+    "frontend/szl/SOURCE.json",
+    "frontend/szl/logos/szl_favicon_square.svg",
+    "frontend/szl/szl-console.css",
+    "frontend/szl/szl-design-system.css",
     "operational-model/artifacts/model-receipt.json",
     "operational-model/artifacts/model.json",
     "operational-model/example-input.json",

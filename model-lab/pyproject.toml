@@ -10,13 +10,13 @@ readme = "README.md"
 description = "Advisory model research and read-only owner-compute inspection for SZL Forge"
 requires-python = ">=3.11,<3.14"
 dependencies = [
-  "torch>=2.6,<3", "safetensors>=0.6,<0.8", "fastapi>=0.120,<0.130",
-  "pydantic>=2.10,<3", "httpx>=0.28,<0.29", "uvicorn>=0.34,<0.49",
+  "torch>=2.6,<3", "safetensors>=0.6,<0.9", "fastapi>=0.120,<0.142",
+  "pydantic>=2.10,<3", "httpx>=0.28,<0.29", "uvicorn>=0.34,<0.55",
   "jinja2>=3.1.6,<4", "numpy>=2.3.5,<3"
 ]
 
 [project.optional-dependencies]
-test = ["pytest>=8,<10", "huggingface-hub>=1.16,<2", "PyYAML>=6,<7"]
+test = ["pytest>=8,<10", "huggingface-hub>=1.16,<3", "PyYAML>=6,<7"]
 
 [project.scripts]
 szl-model-lab = "szl_model_lab.cli:main"
@@ -25,7 +25,11 @@ szl-model-lab = "szl_model_lab.cli:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-szl_model_lab = ["templates/*.html"]
+szl_model_lab = [
+  "templates/*.html",
+  # Vendored SZL KANCHAY design system served by the allowlisted /szl/ routes.
+  "static/szl/szl-design-system.css", "static/szl/szl-console.css", "static/szl/SOURCE.json",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -1,0 +1,13 @@
+{
+  "origin": "http://127.0.0.1:18768/",
+  "checked_at": "2026-09-29T20:44:06.241Z",
+  "families": 6,
+  "rows_per_episode": 7,
+  "model_seeds": 3,
+  "registered_gate": "FAILED",
+  "price_control": "FIXED_TRACE_SCORE_ONLY",
+  "exported_record_matches": true,
+  "tampered_summary_rejected": true,
+  "browser_errors": [],
+  "mobile_overflow": false
+}

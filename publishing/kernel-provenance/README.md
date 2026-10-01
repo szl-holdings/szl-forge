@@ -8,7 +8,7 @@ The audited model trees lack the surrogate files claimed by their legacy root `M
 
 ## What is retained and what is asserted
 
-`snapshots.json` contains public September 24, 2026 exact-revision metadata, tree records, request receipts, and the original provenance bytes. The old documents are preserved both as parsed historical evidence and verbatim base64 bytes in each replacement. Their historical claims, metrics, dependencies, and source assertions are **not** adopted as current verification.
+`snapshots.json` contains public September 29, 2026 exact-revision metadata, tree records, request receipts, and the original provenance bytes. This refresh replaces the active September 24 capture, retained in Git history at `5b3dfdf9beafe0d6d1e6043ca005ec4b17c45204`. All six provider parents had advanced while their original provenance bytes remained unchanged. The replacements were regenerated with the existing deterministic helpers; only current artifact evidence changed. The old documents remain preserved both as parsed historical evidence and verbatim base64 bytes in each replacement. Their historical claims, metrics, dependencies, and source assertions are **not** adopted as current verification.
 
 Current assertions are limited to the observed artifact state: no recognized weight artifact was present, the named historical surrogate was absent, and no new training or runtime-quality claim is made. A training receipt's presence is not proof of its contents. Suffix scanning is not semantic analysis of every file; unsigned local audit records are not independent witnessing.
 

@@ -110,7 +110,12 @@ def test_context_cannot_publish_from_pr(key):
         publish_context(env, "a" * 40)
 
 def test_missing_repo_creation_is_explicit_and_journaled(tmp_path, payload):
-    import httpx
+    # Hub errors wrap the SDK's own HTTP client response: huggingface-hub 2.x
+    # re-exports httpx2 as huggingface_hub.utils.httpx; 1.x uses httpx directly.
+    try:
+        from huggingface_hub.utils import httpx
+    except ImportError:
+        import httpx
     from huggingface_hub.errors import RepositoryNotFoundError
     class MissingHub(FakeHub):
         missing = True
