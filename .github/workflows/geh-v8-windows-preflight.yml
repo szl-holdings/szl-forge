@@ -74,5 +74,7 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v6.0.0
         with:
           name: geh-v8-windows-preflight-${{ github.run_id }}
-          path: owner_sim/chaski_r4/evidence/
+          path: |
+            owner_sim/chaski_r4/evidence/
+            !owner_sim/chaski_r4/evidence/geh/geh_keys/*.pem
           if-no-files-found: warn

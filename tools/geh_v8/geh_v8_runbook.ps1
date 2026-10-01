@@ -42,6 +42,7 @@ function Sha256([string]$Path) { return (Get-FileHash -LiteralPath $Path -Algori
 # a Windows git checkout with core.autocrlf=true rewrites every text file to CRLF, which must not read as tampering.
 function Sha256Text([string]$Path) {
     $bytes = [IO.File]::ReadAllBytes($Path)
+    if ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF) { $bytes = $bytes[3..($bytes.Length - 1)] }
     $text  = [Text.Encoding]::UTF8.GetString($bytes).Replace("`r`n", "`n")
     $sha   = [Security.Cryptography.SHA256]::Create()
     try { return ([BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($text))) -replace "-", "").ToLowerInvariant() } finally { $sha.Dispose() }
@@ -261,7 +262,8 @@ $Out = [ordered]@{
     safety = "No training, adapter modification, merge, upload, publication, deployment, Git commit, Git push, or promotion occurred."
 }
 $ReceiptPath = Join-Path $Evidence ("geh_v8_runbook_" + $Stamp + ".json")
-$Out | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $ReceiptPath -Encoding UTF8
+# UTF-8 without BOM on both Windows PowerShell 5.1 and PowerShell 7 (5.1's -Encoding UTF8 writes a BOM that json.load rejects)
+[IO.File]::WriteAllText($ReceiptPath, (($Out | ConvertTo-Json -Depth 6) + "`n"), (New-Object Text.UTF8Encoding $false))
 Write-Host "RUNBOOK_RECEIPT=$ReceiptPath"
 Write-Host "RUNBOOK_RECEIPT_SHA256=$(Sha256 $ReceiptPath)"
 Write-Host "GEH_CHAIN_HEAD=$ChainHead"
