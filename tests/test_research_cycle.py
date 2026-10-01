@@ -350,3 +350,52 @@ def test_modified_adapter_metadata_cannot_inject_unbounded_diagnostics(monkeypat
     monkeypatch.setattr(proposer, "_observe", observe)
     result = local_run(proposer)
     assert "failure_phase" not in result["attempts"][0]
+
+
+def test_local_generation_requests_closed_recipe_schema_without_budget_change(monkeypatch):
+    proposer = rc.OllamaProposer("local:test", "a" * 64)
+    seen = []
+
+    def request(path, body=None):
+        if path == "/api/chat":
+            seen.append(body)
+        return local_reply(path)
+
+    monkeypatch.setattr(proposer, "_request", request)
+    result = local_run(proposer, attempts=1)
+    assert result["attempts"][0]["status"] == "EVALUATED"
+    schema = seen[0]["format"]
+    assert schema == {
+        "type": "object", "additionalProperties": False,
+        "properties": {
+            "title_weight": {"type": "integer", "enum": [0, 1, 2, 3, 4]},
+            "body_weight": {"type": "integer", "enum": [0, 1, 2, 3, 4]},
+            "normalize_length": {"type": "boolean"},
+        },
+        "required": ["title_weight", "body_weight", "normalize_length"],
+    }
+    assert rc.canonical(schema).decode("utf-8") in seen[0]["messages"][0]["content"]
+    assert seen[0]["options"] == {"temperature": 0, "num_predict": 128}
+    assert seen[0]["think"] is False and seen[0]["stream"] is False
+
+
+@pytest.mark.parametrize("content", [
+    '{"title_weight":0,"body_weight":0,"normalize_length":true}',
+    '{"title_weight":4,"body_weight":1,"normalize_length":true,"execute":"anything"}',
+    '{"title_weight":true,"body_weight":1,"normalize_length":true}',
+    '{"title_weight":4,"body_weight":1,"normalize_length":',
+])
+def test_server_schema_is_not_trusted_in_place_of_independent_validator(monkeypatch, content):
+    proposer = rc.OllamaProposer("local:test", "a" * 64)
+
+    def request(path, body=None):
+        reply = local_reply(path)
+        if path == "/api/chat":
+            reply["message"]["content"] = content
+        return reply
+
+    monkeypatch.setattr(proposer, "_request", request)
+    result = local_run(proposer, attempts=1)
+    assert result["attempts"][0]["status"] == "INVALID_PROPOSAL"
+    assert result["selected_recipe"] is None
+    assert result["publication_eligible"] is False and result["training_admission"] is False

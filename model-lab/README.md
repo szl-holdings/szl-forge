@@ -6,7 +6,7 @@ trained-model release or a qualification of owner hardware.
 
 ## Implemented tracks
 
-| Track | Architecture | Target | Proposed HF model identity |
+| Track | Architecture | Target | Proposed HF model identity (hub_state NOT_PUBLISHED) |
 | --- | --- | --- | --- |
 | router | 8 -> 16 -> 1 MLP; 161 parameters | labeled task success | SZLHOLDINGS/A11OY-Router |
 | invariant | 8 -> 16 -> 1 MLP; 161 parameters | labeled violation | SZLHOLDINGS/A11OY-Invariant |
@@ -24,7 +24,7 @@ owner workloads must not be modified to install this small CPU module.
 ```bash
 python -m venv ../szl-model-lab-venv
 # Activate the virtual environment using the command appropriate for your shell.
-python -m pip install 'torch==2.10.0+cpu' --index-url https://download.pytorch.org/whl/cpu
+python -m pip install 'torch==2.14.0+cpu' --index-url https://download.pytorch.org/whl/cpu
 python -m pip install -c model-lab/constraints-test.txt -e 'model-lab[test]'
 szl-model-lab plan
 python -m pytest -q -c model-lab/pyproject.toml model-lab/tests
@@ -70,22 +70,21 @@ retains admission and dispatch; no active learned routing hook is enabled here.
 
 ## GitHub -> Hugging Face source alignment
 
-The `Model Lab source and blueprint contract` workflow tests pull requests without
-secrets. Its explicitly dispatched main-only publication jobs reuse
-`tools/acquire_hf_publisher_token.py`. They export an allowlisted source tree from
-an exact Git revision to the two model repositories above, with no checkpoints,
-fixtures, private node configuration or tokens. No kernel identity is moved.
+Neither proposed model identity exists on the Hub. `/api/catalog` and
+`szl-model-lab plan` report `hub_state: NOT_PUBLISHED` for every track, and no
+committed workflow holds a write path to either id. The `Model Lab source and
+blueprint contract` workflow runs tests and credential-free code-only plans only;
+its former dispatch-only publication jobs, which could create both repositories,
+were removed (HF upgrade plan P9: one committed writer per Hub asset, no latent
+create paths to absent ids). `tests/test_workflow_contract.py` fails if any
+workflow names an unpublished catalog id.
 
-The publication default is off. It is permitted only after normal protected-main
-admission, a matching dispatch source SHA and passing tests. Each write uses a
-conditional HF parent commit and is followed by immutable file-by-file readback.
-Existing non-blueprint artifacts are preserved by refusal, not overwritten. Reports
-record request-start stages so a timeout is not mistaken for verified publication.
-Inspect these reports and the remote state before retrying an uncertain write.
-
-A successful blueprint publication means CODE_ONLY_PUBLICATION_VERIFIED and
-BLUEPRINT_NOT_TRAINED. It is not a trained model, an inference-ready HF endpoint,
-or a production deployment. The existing trained-model publisher remains separate.
+`blueprints.py` still builds the allowlisted code-only projection and keeps its
+conditional-parent, file-by-file readback publisher for a future release. Creating
+either repository is an owner decision; it then needs one deliberate writer
+workflow and a `hub_state` change in the same pull request. A blueprint
+publication would mean CODE_ONLY_PUBLICATION_VERIFIED and BLUEPRINT_NOT_TRAINED,
+never a trained model, an inference-ready HF endpoint or a production deployment.
 The static Forge Lab Space is not repurposed into a training UI.
 
 ## Remaining runtime gates

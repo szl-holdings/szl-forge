@@ -154,7 +154,7 @@ Future full `forge.ps1` runs birth via this GGUF path automatically (step 6).
 | [`RUNBOOK-NEMO.md`](./RUNBOOK-NEMO.md) | One-command-per-step runbook to put **SZL-Nemo** (doctrine-wrapped NVIDIA Nemotron 3 Nano 4B) on the tower. |
 | `Modelfile.nemo` | Ollama recipe for SZL-Nemo (`FROM nemotron-3-nano:4b` + SZL doctrine system prompt — a wrapper, not an SZL fine-tune). |
 | `conjecture_machine.py` | **Conjecture Machine** — points the owner-controlled model at the formula corpus, asking each formula for an *advisory* proof sketch / lemma decomposition / counterexample search. Stdlib-only. NEVER claims proven. |
-| [`RUNBOOK-CONJECTURE.md`](./RUNBOOK-CONJECTURE.md) | One-command-per-step runbook to run the Conjecture Machine against the sovereign endpoint. |
+| [`RUNBOOK-CONJECTURE.md`](./RUNBOOK-CONJECTURE.md) | One-command-per-step runbook to run the Conjecture Machine against the owner-operated endpoint. |
 | `thesis_formula_index.json` | Local snapshot of the estate's `thesis-formula-index` (80 entries) so the Conjecture Machine runs offline. |
 | `chaski/bakeoff_named_n.py` | Owner-metal named-N JSON-draft (n=5) + refusal (n=6) bake-off: base `Qwen/Qwen3.5-0.8B` vs local chaski-5050 and chaski-r2 adapters. Writes a MEASURED receipt. Gate files stay held-out. `publication_eligible` stays false. |
 
@@ -185,18 +185,29 @@ repository's encrypted Hugging Face organization credential.
 
 `.github/workflows/publish-szl-kernels.yml` is the sole publication gateway for
 `SZLHOLDINGS/szl-kernels`. It authorizes exact protected-main revisions of both
-the source and this publisher before the Hugging Face credential is exposed.
+the source and this publisher before provider authority is acquired. The
+publication job exchanges GitHub OIDC separately for the exact model resource
+and the exact first-class Kernel resource. Hugging Face defines each successful
+repository Trusted Publisher exchange as a short-lived write grant to exactly
+that resource; the two grants must be distinct and both exchanges must succeed
+before publication continues. The helper does not route these synthetic OIDC
+grants through `HfApi.auth_check`, which is a separate user-token endpoint.
+Provider-supported structural reads establish the current parents and file
+sets, but are not claimed as independent write proof. Actual write authority is
+exercised only by the typed Kernel upload and the parent-bound model
+`create_commit`, followed by exact immutable readback.
+
 The trusted publisher stages the Kernel Hub package, embeds a digest covering
 every executable and source-binding file, and signs `metadata.json` with
-Sigstore keyless signing. Authority is split across jobs: the signing job has
-GitHub OIDC but is required to have no Hugging Face token, while the publication
-job has the Hugging Face token but no OIDC minting authority. Only `cosign
-sign-blob` receives the OIDC request variables among subprocesses launched by
-the publisher code; version and verification probes are credentialless, and the
-kernel uploader receives only the provider token plus a small operating-system
-environment allowlist. GitHub grants OIDC at job scope, so the entire signing
-job is deliberately treated as the trusted OIDC boundary even though it has no
-provider credential.
+Sigstore keyless signing. Authority remains separated by job and purpose: the
+signing job uses GitHub OIDC only for Sigstore and is required to have no
+Hugging Face token; the publication job uses GitHub OIDC only to obtain the two
+exact Hub grants, then removes the OIDC request variables before any provider
+read or write. Only `cosign sign-blob` receives the OIDC request variables among
+subprocesses launched by the signer; version and verification probes are
+credentialless, and the Kernel uploader receives only its Kernel grant plus a
+small operating-system environment allowlist. There is no PAT, cached-token, or
+broad organization-token fallback.
 
 Before upload, Forge verifies the signature against exactly
 `szl-holdings/szl-forge/.github/workflows/publish-szl-kernels.yml@refs/heads/main`

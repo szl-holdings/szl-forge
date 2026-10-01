@@ -19,6 +19,8 @@ ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "emit_run_manifest.py"
 RUN = "https://github.com/szl-holdings/szl-forge/actions/runs/123456"
 VALID = {"pass_rate": 0.9, "heldout_passed": True, "refusal_no_regression": True}
+ARCHIVE = "spaces/szl-foundation-confirmation/release.zip"
+FROZEN_ARCHIVE_SHA256 = "869e318dd5f328205dd181ee836ef267bd2ae278f6430a9e8ddc661fbc689d03"
 SPEC = importlib.util.spec_from_file_location("release_manifest_boundary_subject", SCRIPT)
 EMITTER = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(EMITTER)
@@ -181,6 +183,61 @@ class ReleaseManifestBoundaryTests(unittest.TestCase):
     def test_dirty_source_is_not_assigned_a_clean_revision(self):
         with patch.object(EMITTER.subprocess, "check_output", side_effect=[self.revision + "\n", " M scripts/emit_run_manifest.py\n"]):
             self.assert_rejected()
+
+    def assert_rejected_with(self, code, **kwargs):
+        result, body = self.invoke(**kwargs)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIsNone(body)
+        self.assertIn(code.encode(), result.stderr)
+
+    def test_real_checkout_binds_lfs_archive_and_is_clean(self):
+        evidence = EMITTER.LFS_BINDING.verify_registered(ROOT)
+        self.assertEqual([item["path"] for item in evidence], [ARCHIVE])
+        self.assertEqual(evidence[0]["pointer_oid"], FROZEN_ARCHIVE_SHA256)
+        result, _ = self.invoke()
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_lfs_pointer_bound_to_frozen_digest_is_not_dirty(self):
+        # A smudged LFS file is reported ` M` against its pointer; it is clean
+        # only because the binding proved oid == ARCHIVE_SHA256 == bytes digest.
+        bound = [{"path": ARCHIVE, "pointer_oid": FROZEN_ARCHIVE_SHA256}]
+        with patch.object(EMITTER.subprocess, "check_output", side_effect=[self.revision + "\n", f" M {ARCHIVE}\n"]), \
+                patch.object(EMITTER.LFS_BINDING, "verify_registered", return_value=bound):
+            result, body = self.invoke()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(body)["subject"]["git_sha"], self.revision)
+
+    def test_lfs_binding_failures_fail_closed(self):
+        for code in ("POINTER_OID_MISMATCH", "WORKTREE_DIGEST_MISMATCH", "MISSING", "UNTRACKED",
+                     "STAGED_CHANGE", "WORKTREE_POINTER_MISMATCH", "LFS_FILTER_DISABLED",
+                     "COMMITTED_NOT_LFS_POINTER", "FROZEN_DIGEST_UNREADABLE"):
+            with self.subTest(code=code), \
+                    patch.object(EMITTER.subprocess, "check_output", side_effect=[self.revision + "\n", ""]), \
+                    patch.object(EMITTER.LFS_BINDING, "verify_registered",
+                                 side_effect=EMITTER.LFS_BINDING.BindingError(code, ARCHIVE)):
+                self.assert_rejected_with("LFS_ARCHIVE_BINDING_" + code)
+
+    def test_only_worktree_modification_of_a_bound_archive_is_excused(self):
+        bound = [{"path": ARCHIVE}]
+        for status in (f"M  {ARCHIVE}", f"MM {ARCHIVE}", f" D {ARCHIVE}", f" T {ARCHIVE}", f"UU {ARCHIVE}",
+                       f" M {ARCHIVE}\n M scripts/emit_run_manifest.py", f" M {ARCHIVE}.bak",
+                       " M spaces/szl-foundation-confirmation/.gitattributes"):
+            with self.subTest(status=status), \
+                    patch.object(EMITTER.subprocess, "check_output", side_effect=[self.revision + "\n", status + "\n"]), \
+                    patch.object(EMITTER.LFS_BINDING, "verify_registered", return_value=bound):
+                self.assert_rejected_with("TRACKED_CHECKOUT_DIRTY")
+
+    def test_unbound_archive_modification_stays_dirty(self):
+        with patch.object(EMITTER.subprocess, "check_output", side_effect=[self.revision + "\n", f" M {ARCHIVE}\n"]), \
+                patch.object(EMITTER.LFS_BINDING, "verify_registered", return_value=[]):
+            self.assert_rejected_with("TRACKED_CHECKOUT_DIRTY")
+
+    def test_unexplained_dirty_entries_is_exact(self):
+        bound = {ARCHIVE}
+        self.assertEqual(EMITTER.unexplained_dirty_entries("", bound), [])
+        self.assertEqual(EMITTER.unexplained_dirty_entries(f" M {ARCHIVE}\n", bound), [])
+        self.assertEqual(EMITTER.unexplained_dirty_entries(f" M {ARCHIVE}\n", set()), [f" M {ARCHIVE}"])
+        self.assertEqual(EMITTER.unexplained_dirty_entries(f"M  {ARCHIVE}\n", bound), [f"M  {ARCHIVE}"])
 
     def test_unavailable_checkout_is_not_accepted(self):
         with patch.object(EMITTER.subprocess, "check_output", side_effect=OSError("unavailable")):

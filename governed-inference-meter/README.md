@@ -66,7 +66,7 @@ Energy-attested inference as the default, including the honest case where energy
 | NVIDIA | Direct take: NVML. Cut: signed tokens-per-joule. |
 | Unsloth | Train cheap, then measure the decode. |
 
-Nobody else ships this combination. That is the point of a one-of-one.
+No equivalent public combination was found among the leaders surveyed above (a snapshot, not an ecosystem-wide novelty claim).
 
 ## Intended use
 

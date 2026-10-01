@@ -5,13 +5,29 @@
 Inspect the Forge's reproducibility, evaluation, formula, source-policy, and
 curriculum evidence without implying that the snapshots are live model state.
 
-## Read-only tools
+## Read-only static surface
 
-- `GET /config` — Gradio interface metadata.
-- `GET /gradio_api/info` — named endpoint descriptions.
-- Named Gradio endpoints: `/status`, `/integrity`, `/evaluation`, `/receipt`,
-  `/formulas`, `/formula`, `/sources`, `/source`, `/curriculum`, and
-  `/curriculum-stage`.
+The deployed Space uses `sdk: static` with `app_file: index.html`. Retained
+Python and Gradio source files do not define the deployed HTTP API.
+
+- `GET /` - platform entry redirect to the static page.
+- `GET /index.html` - evidence console.
+- `GET /run_manifest.json` - packaged run manifest.
+- `GET /eval_receipt.json` - packaged evaluation receipt.
+- `GET /training_summary.json` - packaged training summary.
+- `GET /thesis_formula_index.json` - formula metadata snapshot.
+- `GET /science_source_ledger.json` - source-policy snapshot.
+- `GET /curriculum.json` - curriculum blueprint.
+- `GET /model_portfolio.json` - model and kernel evidence inventory.
+
+Initial page load reads these seven JSON files, checks packaged evidence hashes
+locally in the browser, and reads the public Hugging Face Space metadata API to
+display its repository revision. That revision is not a running-process
+attestation. The page's revision and byte-hash controls do not publish receipts.
+
+Gradio metadata paths `/config` and `/gradio_api/info`, and named Gradio
+prediction endpoints, are not available APIs of this static deployment. Do not
+invoke prediction or queue endpoints to inspect its evidence.
 
 ## Evidence rules
 

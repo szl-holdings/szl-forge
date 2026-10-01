@@ -1,0 +1,21 @@
+{
+  "schema": "szl.oac-health-space-release/v1",
+  "artifact_source": {
+    "repository": "szl-holdings/szl-forge",
+    "revision": "48cb7630dc5c6982cf14755da72d3d07cd45740c",
+    "directory": "clinical-gateway/huggingface/model/oac-system-health-v1"
+  },
+  "hub_model": {
+    "repo_id": "SZLHOLDINGS/oac-system-health-v1",
+    "revision": "dd7d109813abcd90c5250106dc2eabd2804e7ac3"
+  },
+  "hub_dataset": {
+    "repo_id": "SZLHOLDINGS/oac-clinical-transport-observability-synthetic",
+    "revision": "f7ab6170bf78138b187b8cb707d374a25ad85375"
+  },
+  "artifacts": {
+    "oac_operational_health.py": "2fd8ffd3fd3ca8d0f960d4e0d471593b86e6cccb03607116390cbe9300992669",
+    "model.json": "f111b7fc65db561c80763b25e538366a19bed18526ca881915777487935d9557",
+    "artifact_receipt.json": "23239bb39b0a5b6db1e41284e6372f352cee61d7938da1e84472246dcdaf95a1"
+  }
+}

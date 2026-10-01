@@ -2,82 +2,45 @@
 license: apache-2.0
 library_name: numpy
 tags:
-- governed-ai
-- szl-holdings
-- doctrine-v11
-- nano
-- synthetic
-- needs-loader
-- test-fixture
+  - governed-ai
+  - szl-holdings
+  - doctrine-v11
+  - nano
+  - synthetic
+  - software
+  - reference
+  - test-fixture
 ---
 
-> ### How to actually load this — the weights alone are not enough
->
-> `tiny_khipu.npz` is a real, honest 4-6-2 MLP produced by a real training run, and the card
-> below does not overstate it. But it is a bare NumPy archive with **no
-> `config.json` and no loader in this repo**, so `from_pretrained` and the Hub
-> inference widget cannot touch it. Nothing here tells you the array names or the
-> forward pass.
->
-> ```python
-> import numpy as np
-> from huggingface_hub import hf_hub_download
->
-> path = hf_hub_download("SZLHOLDINGS/TinyKhipu-Nano", "tiny_khipu.npz")
-> w = np.load(path)
-> print(sorted(w.files))   # array names are the de-facto interface
-> ```
->
-> The forward pass this was trained against lives in the `szl_khipu` package, in
-> [SZLHOLDINGS/szl-khipu-kernels](https://huggingface.co/SZLHOLDINGS/szl-khipu-kernels)
-> — a **different repository**. Until the loader ships alongside the weights (or a
-> `custom_code` handler is added), treat this repo as a **test fixture**, not a
-> deployable model. Evidence status: plan_valid 1.00 / abstain 1.00 (SYNTHETIC).
+<p align="center"><img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/main/tinykhipu-nano/card/holo-banner.svg" alt="TinyKhipu-Nano synthetic token-and-handle archive illustration; schematic, not array dimensions" width="100%"/></p>
 
-> **Now loadable:** [`load.py`](https://github.com/szl-holdings/szl-forge/blob/main/TinyKhipu-Nano/load.py) ships the forward pass — resolve the layout by shape, tanh hidden layer, softmax over NAVIGATE/ABSTAIN with the abstain-leaning margin. `python load.py 0.1,0.2,0.3,0.4` prints a class.
+> **Status: SOFTWARE / REFERENCE / TEST FIXTURE.** Not a production model.
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/main/tinykhipu-nano/card/holo-banner.svg" alt="TinyKhipu-Nano — holographic 4-6-2 MLP banner" width="100%"/>
-</p>
+This Hub repository contains a bare NumPy archive. The loading and forward-pass
+implementation lives in the canonical `szl_khipu` package; no packaged Hub
+loader or `config.json` is shipped alongside these weights. Treat this as a
+software fixture until its complete inference contract is independently verified.
 
-<h1 align="center">T I N Y K H I P U &nbsp;N A N O</h1>
+# TinyKhipu-Nano
 
-<p align="center"><em>Four features in. NAVIGATE or ABSTAIN out. Abstain is the default class, not a post-hoc filter.</em></p>
+Synthetic token embeddings and candidate handles produce a proposed NAVIGATE or ABSTAIN output. This fixture establishes no refusal guarantee.
 
-<p align="center">
-  <img alt="Params: 4-6-2 MLP on numpy" src="https://img.shields.io/badge/params-4--6--2%20MLP%20%C2%B7%20numpy-9f1239?style=flat-square"/>
-  <img alt="Downloads" src="https://img.shields.io/huggingface/dt/SZLHOLDINGS/TinyKhipu-Nano?style=flat-square&color=fb7185&label=downloads"/>
-  <img alt="Evidence: SYNTHETIC — design fact, not field claim" src="https://img.shields.io/badge/evidence-SYNTHETIC%20%C2%B7%20design%20fact-b45309?style=flat-square"/>
-  <img alt="Needs loader: test fixture" src="https://img.shields.io/badge/needs%20loader-test%20fixture-991b1b?style=flat-square"/>
-  <img alt="Not 1.5B, not Qwen" src="https://img.shields.io/badge/not%201.5B-not%20Qwen-334155?style=flat-square"/>
-  <img alt="License: Apache-2.0" src="https://img.shields.io/badge/License-Apache--2.0-7e8aa3?style=flat-square"/>
-</p>
+**Family.** nano · **Evidence.** SYNTHETIC · **Weights.** numpy · **Architecture.** 24-token, 12-dimensional embedding with two-class and handle-scoring heads · **Not 1.5B.**
 
-<p align="center">
-  <strong>Family.</strong> nano · <strong>Evidence.</strong> SYNTHETIC · <strong>Weights.</strong> numpy · <strong>Params.</strong> 4-6-2 · <strong>Not 1.5B.</strong>
-</p>
+Hub: [SZLHOLDINGS/TinyKhipu-Nano](https://huggingface.co/SZLHOLDINGS/TinyKhipu-Nano)
 
-## The cut
+## Reference fixture
 
-Leaders train models to answer. We train a silhouette to shut up when overlap is thin or the lure is adversarial. This nano is the 4-6-2 silhouette of that cut. Not 1.5B.
-
-A navigator that has never seen document text — only handles — and still knows when to refuse the walk.
-
-### Silhouette → leave → SZL
-
-| Leader | Take, then tweak |
-|---|---|
-| Anthropic | Refusal as a typed output, not a polite paragraph. |
-| NVIDIA | Guardrail inside the head, not a sidecar. |
-| Unsloth | The 1.5B QLoRA is the grown form of this MLP. |
-
-Nobody else ships this combination. That is the point of a one-of-one.
+A synthetic token-and-handle reference fixture for the NAVIGATE/ABSTAIN schema.
+It mean-pools token embeddings and scores handle notes. This card makes no
+ecosystem-wide novelty claim and establishes no predecessor relationship or
+quality proxy for a 1.5B checkpoint.
 
 ## Intended use
 
 Unit-test the NAVIGATE|ABSTAIN schema before GPU spend.
 
-## Bench (this tree)
+## Reported synthetic fixture evidence
 
 `TRAINING_RECEIPT.json` seed `20260721` · steps 280 · honesty **REPORTED**
 
@@ -86,14 +49,18 @@ Unit-test the NAVIGATE|ABSTAIN schema before GPU spend.
 | plan_valid | 1.00 |
 | abstain | 1.00 |
 | hallucinated | 0 |
-| weights | `tiny_khipu.npz` sha256 `cc8d0385b2c75079669df809d7e4823f1ad8d9d535aec511446347490b11dff9` |
+| weights | `tiny_khipu.npz` receipt-reported sha256 `cc8d0385b2c75079669df809d7e4823f1ad8d9d535aec511446347490b11dff9` |
 
-Infers on `POST /api/infer {"kind":"tiny_khipu"}`. Hard ID filter. **Not Qwen. Not 1.5B.**
+The related demo documents an application-specific `POST /api/infer` route.
+This archive repository establishes no hosted endpoint, served revision, or
+deployment guarantee. The route is illustrative application context.
 
 ## Limitations
 
-- Synthetic features. Perfect holdout is a design fact, not a field claim.
-- The signed 1.5B abstain line is 3/6 (owner-metal receipt 2026-09-08; earlier line 2/6) — this nano does not wash that.
+- The shared unsigned receipt reports `plan_valid=1.0`, `abstain=1.0`, and
+  `hallucinated=0.0` on its synthetic fixture. Named sample count, split identity,
+  and generalization are not independently established by that receipt.
+- These reported values are not a reliability guarantee or a sibling model evaluation.
 
 ## Honesty
 
@@ -108,8 +75,45 @@ Doctrine v11 LOCKED · 749 declarations · 14 axioms · 163 sorries · locked-pr
 
 Apache-2.0. Copyright 2026 SZL Holdings · Stephen P. Lutar Jr. · ORCID [0009-0001-0110-4173](https://orcid.org/0009-0001-0110-4173).
 
----
+## Artifact evidence
 
-<p align="center">
-  Hub: <a href="https://huggingface.co/SZLHOLDINGS/TinyKhipu-Nano">SZLHOLDINGS/TinyKhipu-Nano</a>
-</p>
+The previous card reports `tiny_khipu.npz` (3,568 bytes). Receipt-reported SHA-256 (not rehashed in this review):
+
+`cc8d0385b2c75079669df809d7e4823f1ad8d9d535aec511446347490b11dff9`
+
+The previous card reported that the archive matched the unsigned training
+receipt and that `numpy.load(..., allow_pickle=False)` found finite numeric
+arrays. The table below preserves that historical report. The September 30,
+2026 card review read pinned text and the receipt; it did not download, rehash,
+or inspect the archive, and did not replay training.
+
+| Array | Shape | Data type |
+| --- | --- | --- |
+| `E` | `[24, 12]` | `float64` |
+| `W` | `[2, 12]` | `float64` |
+| `b` | `[2]` | `float64` |
+| `Wc` | `[12]` | `float64` |
+
+The retained receipt labels these reported synthetic fixture results **REPORTED**.
+
+An independently checked archive/receipt match could establish local artifact
+consistency; an unsigned digest would still not authenticate authorship or
+measurement. These preserved receipt and array reports establish no new
+training replay, independent evaluation, deployment, or production readiness.
+
+Reviewed Hub text: [immutable snapshot `d890010f874ecafd3f2f1ef4066d84b810ba775e`](https://huggingface.co/SZLHOLDINGS/TinyKhipu-Nano/blob/d890010f874ecafd3f2f1ef4066d84b810ba775e/README.md).
+Reviewed publisher source: [`hf/TinyKhipu-Nano/README.md` at `e53e3d24b22e356eb986c373aee27b3b3e7947ec`](https://github.com/szl-holdings/szl-khipu/blob/e53e3d24b22e356eb986c373aee27b3b3e7947ec/hf/TinyKhipu-Nano/README.md).
+The shared unsigned [`TRAINING_RECEIPT.json`](https://huggingface.co/SZLHOLDINGS/TinyKhipu-Nano/blob/d890010f874ecafd3f2f1ef4066d84b810ba775e/TRAINING_RECEIPT.json), timestamped
+`2026-08-29T17:11:32.518042+00:00`, enumerates four artifacts. Only its
+`artifacts["tiny_khipu.npz"]` entry describes this archive; the other
+entries do not establish that sibling artifacts are present in this repository.
+The receipt does not bind its training run to the reviewed source commit.
+
+## Card authoring scope
+
+This mirror's card is authored separately in Forge at `tinykhipu-nano/card/README.md`.
+Its reviewed canonical card reference is [`szl-khipu@57fab7f8c3a8514d597b055cf0dfbfd3592caea5`](https://github.com/szl-holdings/szl-khipu/blob/57fab7f8c3a8514d597b055cf0dfbfd3592caea5/hf/TinyKhipu-Nano/README.md).
+A card/banner correction does not publish the canonical package, independently
+verify archive bytes, replay training, recover a historical class contract, or
+qualify a hosted runtime. The banner is a decorative schematic; its node counts
+do not specify the arrays reported above.
