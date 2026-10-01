@@ -19,6 +19,7 @@ DSSE PAE over this file is stable across runs (see conformance vectors).
 import argparse
 import datetime
 import hashlib
+import importlib.util
 import json
 import math
 import pathlib
@@ -29,6 +30,29 @@ import sys
 MAX_JSON_BYTES = 1024 * 1024
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 RUN_URL = re.compile(r"https://github\.com/szl-holdings/szl-forge/actions/runs/[1-9][0-9]{0,19}")
+_BINDING_SPEC = importlib.util.spec_from_file_location(
+    "szl_lfs_archive_binding", pathlib.Path(__file__).resolve().with_name("lfs_archive_binding.py"))
+LFS_BINDING = importlib.util.module_from_spec(_BINDING_SPEC)
+_BINDING_SPEC.loader.exec_module(LFS_BINDING)
+
+
+def unexplained_dirty_entries(porcelain: str, bound: set[str]) -> list[str]:
+    """Return porcelain entries that are not a proven-identical LFS archive.
+
+    A bound archive may be reported as worktree-modified (` M`) only because a
+    smudged LFS file and its committed pointer differ byte-wise; that entry is
+    excused solely after ``LFS_BINDING`` proved index == HEAD, the pointer oid
+    equals the frozen digest and the checked-out bytes hash to it. Every other
+    status (staged, deleted, renamed, conflicted, type change) stays dirty.
+    """
+    remaining = []
+    for entry in porcelain.splitlines():
+        if not entry.strip():
+            continue
+        if entry[:3] == " M " and entry[3:] in bound:
+            continue
+        remaining.append(entry)
+    return remaining
 
 
 def die(msg: str) -> "SystemExit":
@@ -105,12 +129,17 @@ def validate_subject(git_sha: str, workflow_run: str, previous: str | None) -> s
         dirty = subprocess.check_output(
             ["git", "status", "--porcelain", "--untracked-files=no"], cwd=ROOT,
             text=True, stderr=subprocess.DEVNULL, timeout=10,
-        ).strip()
+        )  # not stripped: the leading porcelain status column is significant
     except (OSError, subprocess.SubprocessError):
         die("source: CHECKOUT_UNAVAILABLE")
     if current != git_sha:
         die("source: CHECKOUT_REVISION_MISMATCH")
-    if dirty:
+    # LFS-tracked frozen archives: the pointer oid IS the integrity binding.
+    try:
+        bound = {item["path"] for item in LFS_BINDING.verify_registered(ROOT)}
+    except LFS_BINDING.BindingError as exc:
+        die(f"source: LFS_ARCHIVE_BINDING_{exc.code}")
+    if unexplained_dirty_entries(dirty, bound):
         die("source: TRACKED_CHECKOUT_DIRTY")
     return previous
 
