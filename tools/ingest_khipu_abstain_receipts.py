@@ -44,7 +44,8 @@ KNOWN_PIPELINE_SHA256 = {
     "31d5d1bb33f81d9b4ab20f9ba9054741bec8183e45788a99f0e77fe50f58d1ca": "szl-forge huggingface@6c35dbca (pipeline v2 + owner-authorized cards)",
     "c2361df7ab79315fd5934b839116a7ad3ad612329f182c5069c0ff6bc947bdff": "szl-forge huggingface@8cdb1ac3 (#467 memory ladder)",
     "ef3a9049ca8ebd9f48cfecb1c039792360d220cc101bd638f2e563ed84432da2": "szl-forge huggingface@3dee2933 (#469 pure-bf16 lane; produced bundle 20261001-a989dd523998)",
-    "2e242ac68e8fe925d3cbb9c77feb9ffc908bbfc1c8f0ed841cfeeafc2bb56316": "szl-forge huggingface (DPO profiles C2/C3; this commit)",
+    "2e242ac68e8fe925d3cbb9c77feb9ffc908bbfc1c8f0ed841cfeeafc2bb56316": "szl-forge huggingface@0aa28b8f (#473 DPO profiles C2/C3)",
+    "0093753bd18510ee79f1d99f20a143951e44fa90b117c674b1d85c4d7acd491d": "szl-forge huggingface@f4c9bab8 (#474 knob probe + kernel stack on the C2/C3 profiles)",
 }
 
 
