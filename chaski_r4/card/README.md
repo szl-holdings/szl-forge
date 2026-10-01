@@ -38,8 +38,8 @@ szl:
 **Public experimental artifact · measured named-N record (receipt C) · NOT PROMOTABLE · NOT AUTONOMOUS**
 
 Chaski-R4 is a bf16 LoRA research recut of `Qwen/Qwen3.5-0.8B`, trained on owner metal on
-2026-09-17 and evaluated on 2026-10-01 beside its `SZLHOLDINGS/chaski-r2` control in one run of
-the canonical named-N bake-off. It is separate from `SZLHOLDINGS/chaski`, `SZLHOLDINGS/chaski-5050`
+2026-09-17, evaluated on 2026-10-01 beside its `SZLHOLDINGS/chaski-r2` control in one run of
+the canonical named-N bake-off, and published here the same day with digest-verified bytes. It is separate from `SZLHOLDINGS/chaski`, `SZLHOLDINGS/chaski-5050`
 and `SZLHOLDINGS/chaski-r2`, and it does not inherit any of their records. Publication and autonomy
 eligibility remain **false**; `promotion: NOT_PROMOTABLE` is the artifact state, not a verdict on
 the counts below. Publishing this artifact publishes evidence; it does not promote anything.
@@ -92,6 +92,8 @@ the counts do not.
 | `adapter_config.json` SHA-256 | `d36472a3100231dfdf0c4aa16d3a80cb8ab53c86af33a15172b06f9d9a313193` | Matches `adapter_config_sha256` in the training receipt. |
 | Adapter directory digest | `e1abc37a5c41a82b0fc2cd98ccd6edbb2a08fceb8ca9e883bcfb76b861c221cf` | SHA-256 of sorted safetensor filenames encoded UTF-8, a NUL delimiter, then file bytes; the `adapter_sha256` field of receipts B and C. |
 | Training dataset | `chaski_r4/train.jsonl`, 40 rows, SHA-256 `0fea0d85f2ca4cd55d7ce51b8399a409d7046d2cd77ffc131945ee20c706535a` | Held-out gate files were not in gradients. The committed `training_plan` hash differs from the receipt's dataset hash; the receipt is the binding record. |
+| Hub bytes revision | `f662e24aa9e878dc6c2df50151d4fd500ea8a16c` | The commit (2026-10-01T21:10Z) that added `adapter_config.json`, `adapter_model.safetensors`, `training_receipt.json`, `evidence/` and `LICENSE` after the card (`13c9b10fee50542426b105520b7f32969d595ed8`). Every file was read back byte-identical and the directory digest above was recomputed from the Hub files. |
+| Publication receipt | szl-forge [`chaski_r4/evidence/publication_receipt_20261001_171009.json`](https://github.com/szl-holdings/szl-forge/blob/main/chaski_r4/evidence/publication_receipt_20261001_171009.json), SHA-256 `d8eea67be2062b0741c4d52dedb511ac1e87e99c43d54b6e1f34809b1de49af2` | Written by `tools/publish_chaski_r4_bytes.py` only after the read-back passed; records card and bytes revisions and per-file digests. Publication of bytes and evidence; not promotion. |
 
 Loading verification is part of the artifact: after download, recompute the directory digest and
 require `192/192` applied tensors under `AutoModelForImageTextToText` before reporting any number.

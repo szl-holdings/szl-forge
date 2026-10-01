@@ -333,6 +333,16 @@ Chain head `bdb60e93…0890`; `szl_geh_verify.py --evidence …` → 5 receipts,
   promotable by itself: `publication_eligible=false` is fixed by the runner, and promotion is an owner
   decision taken outside the gate, after the receipt is committed as an additional receipt and read.
 
+* **Publication executed (2026-10-01 17:10 local).** Owner decision: publish chaski-r4 as a
+  PUBLIC_EXPERIMENTAL_ARTIFACT. Card first: `SZLHOLDINGS/chaski-r4` created empty, card published by
+  `publish-chaski-card.yml` from main (#478) at Hub revision `13c9b10f…`, byte-identical to
+  `chaski_r4/card/README.md`. Bytes second: `tools/publish_chaski_r4_bytes.py` (#479) refused to run
+  until the card matched main, verified raw `f1a2cdc3…`, config `d36472a3…` and directory `e1abc37a…`
+  before upload, committed `f662e24a…`, read every file back and recomputed the digests. Independent
+  cloud-side recomputation from the Hub files agrees. Publication receipt
+  `chaski_r4/evidence/publication_receipt_20261001_171009.json` (`d8eea67b…`, #483). Promotion was
+  not taken and is not implied; receipts A/B provenance stays unresolved.
+
 ## Part D — Limits, stated plainly
 
 * **Pantograph toolchain mismatch:** PyPantograph 0.3.15 pins `leanprover/Pantograph` @ `842c0fe6`,
