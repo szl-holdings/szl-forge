@@ -19,8 +19,7 @@ Repairs the four Frontier-1 execution blockers recorded against v1
 
 Subcommands
   merge         merge the eight Tier-3 adapters into standalone checkpoints (unchanged)
-  dpo           on-policy DPO challenger for the khipu abstain lane (CUDA only; --profile C3 default,
-                C2 reproduces the collapsed 2026-10-01 run; every setting lands in the receipt)
+  dpo           on-policy DPO challenger for the khipu abstain lane (CUDA only)
   eval-abstain  held-out MEASURED counts, baseline vs challenger (CUDA only)
   cards         WO1 artifact-identity note for repos that hold a merged root checkpoint
                 (additive by default; --relabel flips frontmatter; dry-run unless --apply;
@@ -88,11 +87,22 @@ def env_block() -> dict:
         "schema": SCHEMA,
         "generated_at": utcnow(),
     }
-    for mod in ("torch", "transformers", "peft", "trl", "datasets", "huggingface_hub"):
+    for mod in ("torch", "transformers", "peft", "trl", "datasets", "accelerate", "huggingface_hub"):
         try:
             block[mod] = __import__(mod).__version__
         except Exception:
             block[mod] = "NOT_INSTALLED"
+    # Which fused-kernel stacks the runtime can actually import. Qwen3.5 is a hybrid model: without `fla`
+    # (flash-linear-attention) and `causal_conv1d` transformers runs reference PyTorch kernels for the
+    # gated-delta layers (correct, slow, memory-heavy). Recorded, never silently assumed.
+    stack = {}
+    for mod in ("triton", "fla", "causal_conv1d", "liger_kernel", "unsloth", "bitsandbytes"):
+        try:
+            m = __import__(mod)
+            stack[mod] = getattr(m, "__version__", "present")
+        except Exception:
+            stack[mod] = "ABSENT"
+    block["kernel_stack"] = stack
     return block
 
 
@@ -196,42 +206,6 @@ TRAIN_FILES = ("train.abstain.jsonl", "train.jsonl")          # 8 ABSTAIN + 15 N
 HELDOUT_FILES = ("adversarial.jsonl", "eval.jsonl")           # 6 ABSTAIN + 5 NAVIGATE, sealed
 GEN_MAX_NEW_TOKENS = 768
 CHALLENGER_ID = "dpo-khipu-r4-challenger"
-
-# Training profiles for the DPO challenger. C2 is the configuration that produced bundle
-# 20261001-a989dd523998 (receipts/khipu-abstain/): the challenger collapsed to unparseable output on
-# every held-out row (adversarial 0/6, eval 0/5, all parse failures) while the baseline held 6/6 and 0/5.
-# C3 targets exactly that measured failure: an NLL term on the chosen completion (TRL `rpo_alpha`,
-# Pang et al. 2024) keeps the policy anchored to the JSON format while the preference term moves the
-# decision; a smaller learning rate, a stronger KL anchor (beta) and a single epoch bound the drift
-# on 23 pairs. Profiles are data so the receipt names the one used; nothing is promoted by a profile.
-DPO_PROFILES = {
-    "C2": {"learning_rate": 5e-5, "beta": 0.1, "rpo_alpha": None, "epochs": 2,
-           "note": "historical; produced bundle 20261001-a989dd523998 (format collapse)"},
-    "C3": {"learning_rate": 1e-5, "beta": 0.3, "rpo_alpha": 1.0, "epochs": 1,
-           "note": "collapse-resistant: NLL-anchored preference (rpo_alpha), 5x lower lr, 3x beta, one epoch"},
-}
-DEFAULT_DPO_PROFILE = "C3"
-
-
-def resolve_dpo_profile(name: str, *, epochs: int | None = None, learning_rate: float | None = None,
-                        beta: float | None = None, rpo_alpha: float | None = None) -> dict:
-    """Return the effective training settings: the named profile with explicit overrides applied.
-
-    Every value that differs from the profile is recorded as an override so a receipt can never
-    present a hand-tuned run as a named profile.
-    """
-    if name not in DPO_PROFILES:
-        raise ValueError(f"unknown DPO profile {name!r}; known: {sorted(DPO_PROFILES)}")
-    base = dict(DPO_PROFILES[name])
-    overrides = {}
-    for key, value in (("epochs", epochs), ("learning_rate", learning_rate), ("beta", beta), ("rpo_alpha", rpo_alpha)):
-        if value is not None and value != base[key]:
-            overrides[key] = {"profile": base[key], "override": value}
-            base[key] = value
-    base["profile"] = name
-    base["overrides"] = overrides
-    base["rpo_alpha"] = base["rpo_alpha"] if base["rpo_alpha"] is None else float(base["rpo_alpha"])
-    return base
 
 
 def _download_rows(fname: str, revision: str) -> tuple[list[dict], str]:
@@ -371,11 +345,8 @@ def summarize(grades: list[dict]) -> dict:
 # ---------------- dpo ----------------
 
 
-def cmd_dpo(out: pathlib.Path, epochs: int | None, max_pairs: int, profile: str = DEFAULT_DPO_PROFILE,
-            learning_rate: float | None = None, beta: float | None = None, rpo_alpha: float | None = None) -> int:
+def cmd_dpo(out: pathlib.Path, epochs: int, max_pairs: int) -> int:
     receipt_path = out / "dpo_receipt.json"
-    settings = resolve_dpo_profile(profile, epochs=epochs, learning_rate=learning_rate, beta=beta, rpo_alpha=rpo_alpha)
-    epochs = int(settings["epochs"])
     code, hw = require_cuda("dpo", receipt_path)
     if code is not None:
         return code
@@ -443,38 +414,32 @@ def cmd_dpo(out: pathlib.Path, epochs: int | None, max_pairs: int, profile: str 
         gc.collect()
         torch.cuda.empty_cache()
         torch.cuda.reset_peak_memory_stats()
+        import dataclasses
+        knobs = {f.name for f in dataclasses.fields(DPOConfig)}
+        optional = {"use_logits_to_keep": True, "precompute_ref_log_probs": True, "precompute_ref_batch_size": 1,
+                    "max_prompt_length": max_prompt_length, "torch_empty_cache_steps": 1}
+        accepted = {k: v for k, v in optional.items() if k in knobs}
+        # With logits_to_keep only completion positions are materialised, so bf16 autocast (fp32 log-probs) is
+        # affordable. Without it (TRL >= 1.x dropped the knob) the full 248k-vocab logits would be upcast to fp32
+        # by accelerate, so train in the model's own bf16 instead and say so.
+        autocast = "use_logits_to_keep" in accepted
         cfg_kwargs = dict(
             output_dir=str(out / "trainer"), per_device_train_batch_size=1, gradient_accumulation_steps=4,
-            num_train_epochs=epochs, learning_rate=settings["learning_rate"], lr_scheduler_type="cosine", logging_steps=1,
-            save_strategy="no", bf16=False, fp16=False, gradient_checkpointing=True,
-            gradient_checkpointing_kwargs={"use_reentrant": False}, beta=settings["beta"], max_length=max_length,
-            max_prompt_length=max_prompt_length, seed=SEED, report_to=[], torch_empty_cache_steps=1,
-            use_logits_to_keep=True, precompute_ref_log_probs=True, precompute_ref_batch_size=1,
+            num_train_epochs=epochs, learning_rate=5e-5, lr_scheduler_type="cosine", logging_steps=1,
+            save_strategy="no", bf16=autocast, fp16=False, gradient_checkpointing=True,
+            gradient_checkpointing_kwargs={"use_reentrant": False}, beta=0.1, max_length=max_length,
+            seed=SEED, report_to=[], **accepted,
         )
-        if settings["rpo_alpha"] is not None:
-            cfg_kwargs["rpo_alpha"] = settings["rpo_alpha"]   # NLL on the chosen completion: the anti-collapse anchor
         memory_profile = {"max_length": max_length, "max_prompt_length": max_prompt_length,
-                          "compute_dtype": "bf16 model weights, no autocast, logits never upcast to fp32",
-                          "torch_empty_cache_steps": 1,
-                          "use_logits_to_keep": True, "precompute_ref_log_probs": True,
+                          "compute_dtype": ("bf16 autocast; logits restricted to completion positions" if autocast
+                                            else "bf16 model weights, no autocast, logits never upcast to fp32"),
                           "per_device_train_batch_size": 1, "gradient_accumulation_steps": 4, "gradient_checkpointing": True,
                           "prompts_over_budget": sum(1 for n in prompt_lengths if n > max_prompt_length),
                           "pairs_over_total_budget": sum(1 for n, c in zip(prompt_lengths, completion_lengths) if n + c > max_length),
                           "alloc_conf": os.environ.get("PYTORCH_ALLOC_CONF", "")}
-        for _ in range(4):
-            try:
-                cfg = DPOConfig(**cfg_kwargs)
-                break
-            except TypeError as exc:
-                dropped = next((k for k in ("precompute_ref_batch_size", "use_logits_to_keep", "precompute_ref_log_probs", "max_prompt_length", "torch_empty_cache_steps") if k in str(exc) and k in cfg_kwargs), None)
-                if dropped is None and "rpo_alpha" in str(exc) and "rpo_alpha" in cfg_kwargs:
-                    raise SystemExit("installed TRL has no rpo_alpha; profile C3 cannot run without its anchor (use --profile C2 deliberately, or upgrade TRL)") from exc
-                if dropped is None:
-                    raise
-                cfg_kwargs.pop(dropped)
-                memory_profile[dropped] = "UNAVAILABLE_IN_INSTALLED_TRL"
-        else:
-            raise SystemExit("DPOConfig could not be constructed with the installed TRL")
+        for k, v in optional.items():
+            memory_profile[k] = v if k in accepted else "UNAVAILABLE_IN_INSTALLED_TRL"
+        cfg = DPOConfig(**cfg_kwargs)
         trainer = DPOTrainer(
             model=policy,            # the loaded khipu-r3 policy (merged), NOT the bare base id
             ref_model=None,          # reference = same policy with the new LoRA disabled
@@ -528,10 +493,8 @@ def cmd_dpo(out: pathlib.Path, epochs: int | None, max_pairs: int, profile: str 
                  "counts": data["counts"], "disjoint_prompts_verified": data["disjoint_prompts_verified"]},
         "pairs_used": len(pairs), "pair_classes": classes, "pairs_sha256": sha256_of(pairs_path),
         "lora": {"r": 16, "alpha": 32, "dtype": "bf16", "qlora": "FORBIDDEN_ON_QWEN3.5"},
-        "dpo": {"profile": settings["profile"], "profile_note": settings["note"], "overrides": settings["overrides"],
-                "learning_rate": settings["learning_rate"], "beta": settings["beta"], "rpo_alpha": settings["rpo_alpha"],
-                "max_length": memory_profile.get("max_length"), "max_prompt_length": memory_profile.get("max_prompt_length"),
-                "reference": "policy with challenger adapter disabled", "memory_profile": memory_profile},
+        "dpo": {"beta": 0.1, "max_length": 1024, "max_prompt_length": 512, "reference": "policy with challenger adapter disabled",
+                "memory_profile": memory_profile},
         "train_loss": float(result.training_loss), "train_loss_label": "TRAIN METRIC, NOT AN EVAL",
         "hardware": hw, "adapter_sha256": {p.name: sha256_of(p) for p in sorted(out.glob("adapter_model.*"))},
         "evaluation": "NOT_RUN", "publication_eligible": False, "autonomy_eligible": False, "promotion": "NOT_PROMOTABLE",
@@ -782,12 +745,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
     m = sub.add_parser("merge"); m.add_argument("--out", default="merged")
-    d = sub.add_parser("dpo"); d.add_argument("--out", default=CHALLENGER_ID); d.add_argument("--max-pairs", type=int, default=64)
-    d.add_argument("--profile", choices=sorted(DPO_PROFILES), default=DEFAULT_DPO_PROFILE, help="training profile (C3 default; C2 reproduces the collapsed run)")
-    d.add_argument("--epochs", type=int, default=None, help="override the profile epochs (recorded as an override)")
-    d.add_argument("--lr", type=float, default=None, help="override the profile learning rate")
-    d.add_argument("--beta", type=float, default=None, help="override the profile DPO beta")
-    d.add_argument("--rpo-alpha", type=float, default=None, help="override the profile rpo_alpha (NLL anchor weight)")
+    d = sub.add_parser("dpo"); d.add_argument("--out", default=CHALLENGER_ID); d.add_argument("--epochs", type=int, default=2); d.add_argument("--max-pairs", type=int, default=64)
     e = sub.add_parser("eval-abstain"); e.add_argument("--challenger", default=CHALLENGER_ID); e.add_argument("--out", default=None)
     c = sub.add_parser("cards"); c.add_argument("--apply", action="store_true"); c.add_argument("--direct", action="store_true", help="commit directly instead of opening Hub PRs"); c.add_argument("--owner-confirmed-wo6", action="store_true"); c.add_argument("--out", default="cards-reconcile"); c.add_argument("--relabel", action="store_true", help="also flip frontmatter to transformers/finetune (publisher contracts forbid this for chaski-*/KHIPU-R2)"); c.add_argument("--all", action="store_true", help="include publisher-managed cards in the dry-run"); c.add_argument("--owner-authorized", action="store_true", help="owner-directed run with the estate publisher credential: opens Hub PRs only, never direct commits; WO6 revocation is recorded as not verified here")
     p = sub.add_parser("publish"); p.add_argument("--folder", default="merged"); p.add_argument("--only", default=None); p.add_argument("--owner-confirmed-wo6", action="store_true")
@@ -795,7 +753,7 @@ def main() -> int:
     if args.cmd == "merge":
         return cmd_merge(pathlib.Path(args.out))
     if args.cmd == "dpo":
-        return cmd_dpo(pathlib.Path(args.out), args.epochs, args.max_pairs, profile=args.profile, learning_rate=args.lr, beta=args.beta, rpo_alpha=args.rpo_alpha)
+        return cmd_dpo(pathlib.Path(args.out), args.epochs, args.max_pairs)
     if args.cmd == "eval-abstain":
         ch = pathlib.Path(args.challenger)
         return cmd_eval(ch, pathlib.Path(args.out) if args.out else ch / "eval")
