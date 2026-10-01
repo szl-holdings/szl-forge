@@ -1,0 +1,15 @@
+{
+  "complete": true,
+  "files": {
+    "STATUS.md": "5b01d2a6ea491f412a21d17e157d32a1e05ef05a13500017ffa1b561464a17c8",
+    "cards/cards_receipt.json": "9af8542134a149df6dbf69e2fbc72a8a01835af2e229abdc103ef2b4e7a8b0db",
+    "dpo_receipt.json": "38a04f75875cdf71ee05cd56e5e6a5c7128c4e490dcd5e867daa4ac112677618",
+    "eval/eval_receipt.json": "d326b30eea1d89602c62afa29be969a5815409ba462dea020c7c1cbe5492f000",
+    "eval/eval_transcripts.jsonl": "aa65f2789371e6dad6173f011eed0fee84f5047e5ba98a283fd39838e71ea222"
+  },
+  "promotion": "NOT_PROMOTABLE",
+  "publication_eligible": false,
+  "run_id": "20261001-4064238281e3",
+  "schema": "szl.khipu-abstain-bundle/v1",
+  "staged_at": "2026-10-01T20:17:43Z"
+}
