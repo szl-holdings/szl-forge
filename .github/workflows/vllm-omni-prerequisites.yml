@@ -1,0 +1,91 @@
+name: vLLM-Omni runtime prerequisite observation
+on:
+  pull_request:
+    paths:
+      - tools/evaluate_vllm_omni_prerequisites.py
+      - tools/evaluate_vllm_omni_wheel.py
+      - tests/test_vllm_omni_prerequisites.py
+      - frontier/vllm-omni-029rc1/**
+      - .github/workflows/vllm-omni-prerequisites.yml
+  push:
+    branches: [main]
+    paths:
+      - tools/evaluate_vllm_omni_prerequisites.py
+      - tools/evaluate_vllm_omni_wheel.py
+      - tests/test_vllm_omni_prerequisites.py
+      - frontier/vllm-omni-029rc1/**
+      - .github/workflows/vllm-omni-prerequisites.yml
+permissions:
+  contents: read
+concurrency:
+  group: omni-prerequisites-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+jobs:
+  observe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.11', '3.12']
+    defaults:
+      run:
+        working-directory: forge
+        shell: bash
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1
+        with:
+          egress-policy: block
+          allowed-endpoints: >-
+            github.com:443
+            api.github.com:443
+            raw.githubusercontent.com:443
+            objects.githubusercontent.com:443
+            release-assets.githubusercontent.com:443
+            pypi.org:443
+            files.pythonhosted.org:443
+      - name: Checkout exact Forge source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          path: forge
+          persist-credentials: false
+      - name: Checkout admitted upstream without execution
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: vllm-project/vllm-omni
+          ref: aff7d64948f6c0e81e9b3272234623044e215967
+          path: upstream-vllm-omni
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Execute deterministic source contracts
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          python -m unittest discover -s tests -p 'test_vllm_omni_prerequisites.py' -v 2>&1 | tee reports/omni-prerequisite-contracts.log
+          python -O -m unittest discover -s tests -p 'test_vllm_omni_prerequisites.py' -v 2>&1 | tee reports/omni-prerequisite-optimized.log
+          git diff --check
+      - name: Prepare hash-bound isolated resolver
+        run: |
+          set -euo pipefail
+          python -m venv "$RUNNER_TEMP/omni-resolver"
+          PIP_CONFIG_FILE=/dev/null "$RUNNER_TEMP/omni-resolver/bin/python" -m pip --isolated --disable-pip-version-check install --require-hashes --only-binary=:all: --index-url https://pypi.org/simple -r frontier/vllm-omni-029rc1/resolver-requirements.txt
+      - name: Observe actual binary prerequisites, fail on unmet prerequisites
+        run: |
+          set -euo pipefail
+          "$RUNNER_TEMP/omni-resolver/bin/python" -m tools.evaluate_vllm_omni_prerequisites --observe
+      - name: Retain evidence including failed attempts, never package bytes
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: omni-prerequisites-${{ github.run_id }}-${{ github.run_attempt }}-py${{ matrix.python }}
+          path: |
+            forge/reports/omni-prerequisite-contracts.log
+            forge/reports/omni-prerequisite-optimized.log
+            forge/reports/omni-prerequisites
+          if-no-files-found: error
+          retention-days: 90
