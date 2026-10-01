@@ -3,7 +3,8 @@ name: Omen cards identity note (Hub PRs)
 # Owner-directed WO1 finisher for the three Hub-PR-managed model cards
 # (khipu-r3, brain-navigator-r2, szl-receiptagent-qwen35-0.8b-v3).
 #
-# dry-run       -> diffs + receipt only, no credential is even acquired.
+# dry-run       -> diffs + receipt only, no credential is even acquired. The daily schedule
+#                  runs exactly this and fails on drift, so WO1 stays a checked invariant.
 # pull-request  -> acquires the validated estate publisher credential the same way
 #                  hub-honesty-banners-via-token1.yml does, then runs
 #                  `cards --apply --owner-authorized`, which can ONLY open Hub pull
@@ -27,6 +28,8 @@ name: Omen cards identity note (Hub PRs)
 # WILLAY) are refused by the tool itself and route through their source cards.
 
 on:
+  schedule:
+    - cron: "17 13 * * *"   # daily 13:17 UTC: dry-run drift gate only (no credential, no writes)
   workflow_dispatch:
     inputs:
       mode:
@@ -70,9 +73,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      MODE: ${{ inputs.mode }}
-      PIPELINE_SHA: ${{ inputs.pipeline_sha }}
-      PIPELINE_SHA256: ${{ inputs.pipeline_sha256 }}
+      MODE: ${{ inputs.mode || 'dry-run' }}
+      PIPELINE_SHA: ${{ inputs.pipeline_sha || '6c35dbca7966cedd948ca2fd755e94cdb3ea3fbe' }}
+      PIPELINE_SHA256: ${{ inputs.pipeline_sha256 || '31d5d1bb33f81d9b4ab20f9ba9054741bec8183e45788a99f0e77fe50f58d1ca' }}
       MERGE_PRS: ${{ inputs.merge_prs }}
       EXPECTED_README_SHA256: ${{ inputs.expected_readme_sha256 }}
     steps:
@@ -119,6 +122,21 @@ jobs:
           receipt = json.load(open("reports/cards-dry-run/cards_receipt.json", encoding="utf-8"))
           for item in receipt["items"]:
               print(item["repo"], "@", item["revision"][:10], "|", item["managed_by"], "|", "; ".join(item["changes"]))
+          PY
+
+      - name: Card drift gate (dry-run mode only; the scheduled run exists for this)
+        if: env.MODE == 'dry-run'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, sys
+          receipt = json.load(open("reports/cards-dry-run/cards_receipt.json", encoding="utf-8"))
+          drift = [i for i in receipt["items"] if i["changes"] and not i["changes"][0].startswith(("NOOP", "SKIP"))]
+          for i in drift:
+              print(f"::error::card drift: {i['repo']} @ {i['revision'][:10]} -> {'; '.join(i['changes'])}")
+          print(f"cards checked={len(receipt['items'])} drift={len(drift)}")
+          sys.exit(1 if drift else 0)
           PY
 
       - name: Acquire validated publisher credential
