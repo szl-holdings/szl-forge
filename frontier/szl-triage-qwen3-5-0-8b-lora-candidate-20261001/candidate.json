@@ -1,0 +1,105 @@
+{
+  "actual_training_base": {
+    "license": "apache-2.0",
+    "load_in_4bit": true,
+    "repo_id": "Qwen/Qwen3.5-0.8B",
+    "revision": "2fc06364715b967f1860aea9cf38778875588b17",
+    "selection": "ADAPTER_CONFIG"
+  },
+  "candidate_id": "szl-triage-qwen3-5-0-8b-lora-candidate-20261001",
+  "evaluation_protocol": {
+    "claim_scope": "Project-authored, committed, preregistered suite evaluated by the author; not a blind benchmark or independent certification.",
+    "do_sample": false,
+    "refusal_max_new_tokens": 128,
+    "required_strict_case_improvement_over_predecessor": 1,
+    "structured_max_new_tokens": 512
+  },
+  "family": "typesafe-triage",
+  "gates_file": "gates.json",
+  "gates_sha256": "0c60232292cda266b5790dfc724f1cb417cc0b747cb977a42cf2bd405c212504",
+  "generated_by": "szl-payload/4.0.0",
+  "generated_utc": "2026-10-01T20:48:32+00:00",
+  "predecessor": {
+    "observed_status": "ADAPTER",
+    "repo_id": "SZLHOLDINGS/szl-triage-qwen3.5-0.8b-lora",
+    "revision": "5414c4abcbebe2b37638b47ca1257968c03b2255",
+    "role": "FROZEN_COMPARATOR_NOT_WEIGHT_INITIALIZATION"
+  },
+  "promotion": "NOT_PROMOTABLE",
+  "promotion_requirements": {
+    "immutable_hub_byte_readback": true,
+    "independent_inference_check": true,
+    "owner_signed_evaluation_envelope": true,
+    "owner_signed_training_envelope": true,
+    "twelve_gates_pass": true,
+    "unsigned_reports_are_receipt_eligible": false
+  },
+  "publication_eligible": false,
+  "runtime_lock": {},
+  "schema": "szl.frontier-model-candidate/v2",
+  "source_repositories": [
+    "szl-typesafe-triage"
+  ],
+  "state": "SOURCE_READY_NOT_TRAINED",
+  "target_repo_id": "SZLHOLDINGS/szl-triage-qwen3-5-0-8b-lora-candidate-20261001",
+  "training_data": {
+    "binding_mode": "HEURISTIC_TOKEN_MATCH_LATEST_MODIFIED",
+    "binding_status": "BOUND_LOCAL",
+    "candidates_observed": [
+      "C:\\Users\\steph\\szl-estate\\szl-typesafe-triage\\dataset",
+      "C:\\Users\\steph\\szl-typesafe-triage\\dataset",
+      "C:\\Users\\steph\\szl-typesafe-triage-BACKUP-20260921-220702\\dataset",
+      "C:\\Users\\steph\\szl-typesafe-triage-BACKUP-20260921-221507\\dataset",
+      "C:\\Users\\steph\\szl-work\\frontier\\research\\src\\szl-typesafe-triage\\dataset",
+      "C:\\Users\\steph\\szl-work\\fusion-jev-graph-seat-20260926\\wt\\en-01-review\\dataset",
+      "C:\\Users\\steph\\szl-work\\xemantic-fusion-20260926\\szl\\szl-holdings\\szl-typesafe-triage\\dataset"
+    ],
+    "confirmed_by_owner": false,
+    "files": {
+      "all": {
+        "path": "C:\\Users\\steph\\szl-frontier\\szl-typesafe-triage\\dataset\\sft_triage_v1.jsonl",
+        "rows": 5,
+        "sha256": "9858a5ab838a646979495836632996b3a75c1042df5f63433b10a26ab0635b7e",
+        "split_tags": {
+          "untagged": 5
+        }
+      }
+    },
+    "note": "Paths are the owner's local files; the digest binds the exact bytes. Nothing is committed to the repository.",
+    "origin": "LOCAL_OWNER_CORPUS",
+    "rights": "OPERATOR_DECLARED",
+    "rights_boundary": "Only project-authored or rights-documented rows are admitted. Dev/test rows, Brain rows, OSINT rows, third-party private data and other-model outputs are excluded from gradients."
+  },
+  "training_recipe": {
+    "export_levels": [
+      "Q4_K_M",
+      "Q5_K_M",
+      "Q8_0"
+    ],
+    "full_optimizer_steps": 20,
+    "gradient_accumulation_steps": 4,
+    "learning_rate": 0.0001,
+    "lora_alpha": 32,
+    "lora_dropout": 0.0,
+    "lora_r": 16,
+    "lr_scheduler": "constant_with_warmup",
+    "max_length": 2048,
+    "minimum_free_gpu_gib": 4.0,
+    "optimizer": "adamw_8bit",
+    "per_device_batch_size": 1,
+    "response_only_loss": true,
+    "seed": 11,
+    "smoke_optimizer_steps": 1,
+    "target_modules": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+    ],
+    "warmup_steps": 10,
+    "weight_decay": 0.01
+  }
+}
