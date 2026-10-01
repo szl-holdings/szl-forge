@@ -37,7 +37,7 @@ site_validated=false.
   inference kernel for synthetic operational transport signals.
 - frontend/index.html: control/configuration UI. It has no
   raw-message, patient, order, specimen, observation, or result input.
-- frontend/szl/: byte-for-byte copy of the SZL KANCHAY v1.1.0 design system
+- frontend/szl/: byte-for-byte copy of the SZL KANCHAY v1.1.1 design system
   (`szl-design-system.css`, `szl-console.css`, the square orbit favicon and
   `SOURCE.json` digests; system font stacks, no webfonts). The API serves only
   `/szl/szl-design-system.css`, `/szl/szl-console.css` and
