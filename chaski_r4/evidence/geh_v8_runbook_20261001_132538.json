@@ -1,0 +1,29 @@
+{
+    "kind":  "szl-geh-v8-runbook-receipt",
+    "generated":  "2026-10-01T13:26:11.8046551-04:00",
+    "root":  "C:\\Users\\steph\\szl-forge",
+    "python":  "C:\\Users\\steph\\szl-forge\\.venv-ra-v2\\Scripts\\python.exe",
+    "lean_toolchain":  "leanprover/lean4:v4.18.0",
+    "harness_sha256":  "50cba83d66b86d9cff0ea10eaa36b4f31d497a10e8ce22518836c99b63d0a9c4",
+    "verifier_sha256":  "6647ef7fb207cbf01e4c69275735fc632009a0558625208899bcdef2e2787040",
+    "geh_chain_head":  "b842b0f5d667f48817a3f389550787ccce28f537bde6fb87c8bc90fd627cf2f5",
+    "geh_evidence_dir":  "C:\\Users\\steph\\szl-forge\\chaski_r4\\evidence\\geh",
+    "chaski_reconciliation":  {
+                                  "runner_pristine":  true,
+                                  "r4_on_disk_is":  "RETRAINED r4 (receipt B: 5/5 drafts, 6/6 refusals, 2026-09-17T02:41Z)",
+                                  "r4_weights_match_training_receipt":  true,
+                                  "runner_sha256":  "f4ca282a29e2fa2f0246ebcb6e3298b7b3f023d686ba883d948459bcaf56dadb",
+                                  "train_sha256":  "0fea0d85f2ca4cd55d7ce51b8399a409d7046d2cd77ffc131945ee20c706535a",
+                                  "train_matches":  {
+                                                        "receipt":  true,
+                                                        "plan":  false
+                                                    },
+                                  "r4_weights_sha256":  "f1a2cdc313795775966280bc8648367005700327dd28010da8d2f88d2a5e2a02",
+                                  "r4_runner_dirhash":  "e1abc37a5c41a82b0fc2cd98ccd6edbb2a08fceb8ca9e883bcfb76b861c221cf",
+                                  "r2_weights_sha256":  "a16be6dde8e721348a1dcf1f00eafb01f0272e93be30e04c73ef1443f477ea17",
+                                  "r2_runner_dirhash":  "e35df3bea9b9d2604a64dc7cc18237aa6c04ca40b9a6d3718d4eab049190733d",
+                                  "r2_local_matches_hub_published":  false
+                              },
+    "canonical_rerun_receipt":  null,
+    "safety":  "No training, adapter modification, merge, upload, publication, deployment, Git commit, Git push, or promotion occurred."
+}
