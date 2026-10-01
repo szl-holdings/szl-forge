@@ -34,4 +34,6 @@ CPU Basic is an on-demand service and may sleep when idle. It is not an always-o
 
 Archive SHA-256: `869e318dd5f328205dd181ee836ef267bd2ae278f6430a9e8ddc661fbc689d03`.
 
+`release.zip` is stored with Git LFS on both GitHub and the Hub. Its LFS pointer `oid sha256:` equals the frozen archive SHA-256 above; that equality is the integrity binding, checked by `scripts/lfs_archive_binding.py`, by the publisher before upload and after publication, and again by `app.py` on the real bytes. `.gitattributes` must keep `release.zip filter=lfs diff=lfs merge=lfs -text`. Never set `-filter` for `release.zip`: the Docker build then checks out the 132-byte pointer, the frozen-digest gate refuses it, and the Space fails to build. This is a build-integrity rule only; the registered benchmark result stays FAILED.
+
 Dependencies are locked with package hashes, including the official PyTorch CPU wheels. The Linux container uses Python 3.12 and runs as UID 1000 with the admitted release and source owned by root and read-only. The adapter wraps the unchanged sealed runtime; it does not expose its loopback HTTP server.

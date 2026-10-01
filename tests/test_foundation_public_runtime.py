@@ -26,6 +26,26 @@ SPEC = importlib.util.spec_from_file_location("foundation_public_adapter_tests",
 adapter = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = adapter
 SPEC.loader.exec_module(adapter)
+LFS_POINTER_PREFIX = b"version https://git-lfs.github.com/spec/v1\n"
+
+
+def require_materialized_archive(case: unittest.TestCase) -> None:
+    """release.zip is an LFS pointer bound to ARCHIVE_SHA256; content needs LFS.
+
+    A checkout without LFS smudge holds only the pointer. Its oid must still be
+    the frozen digest; the content assertions then require the dedicated gate
+    (FOUNDATION_REQUIRE_INTEGRATION=1, checkout with ``lfs: true``) and may not
+    be skipped there.
+    """
+    head = (SPACE / "release.zip").read_bytes()[:256]
+    if not head.startswith(LFS_POINTER_PREFIX):
+        return
+    if os.getenv("FOUNDATION_REQUIRE_INTEGRATION") == "1":
+        case.fail("release.zip is an unmaterialized LFS pointer; check out with lfs: true")
+    case.assertIn(b"\noid sha256:" + adapter.ARCHIVE_SHA256.encode() + b"\n", head)
+    case.skipTest("LFS pointer bound to ARCHIVE_SHA256; archive bytes not materialized in this checkout")
+
+
 REQUEST = {"seed": 20260929, "index": 0, "family": "shared_bias", "policy": "learned", "model_seed": 17}
 
 
@@ -306,6 +326,7 @@ class StorageAndAdmission(unittest.TestCase):
                 adapter.release_files(SPACE / "release.zip")
 
     def test_zip_and_full_manifest_are_pinned_and_unchanged(self):
+        require_materialized_archive(self)
         files = adapter.release_files(SPACE / "release.zip")
         self.assertEqual(len(files), 71)
         self.assertEqual(len(json.loads(files["release-manifest.json"])["files"]), 70)
@@ -330,6 +351,7 @@ class ActualCheckpointIntegration(unittest.TestCase):
             if required:
                 self.fail("Dedicated runtime gate lacks required dependencies: " + ", ".join(absent))
             self.skipTest("ML dependencies unavailable in the general development environment")
+        require_materialized_archive(self)
         completed = subprocess.run([sys.executable, str(Path(__file__).resolve()), "--actual-integration"],
                                    cwd=str(ROOT), env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
                                    capture_output=True, text=True, timeout=180)

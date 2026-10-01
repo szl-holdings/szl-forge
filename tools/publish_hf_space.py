@@ -4,8 +4,10 @@
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import hashlib
 import json
+import re
 import os
 import subprocess
 import sys
@@ -22,6 +24,16 @@ ROOT = Path(__file__).resolve().parents[1]
 # design; the source rules must still all be present in the published copy.
 HUB_MANAGED_METADATA = frozenset({".gitattributes"})
 
+# Canonical Git LFS pointer. A pointer must never be uploaded in place of the
+# object it names; a committed pointer binds the checked-out bytes by oid.
+LFS_POINTER = re.compile(
+    rb"version https://git-lfs\.github\.com/spec/v1\n"
+    rb"oid sha256:([0-9a-f]{64})\n"
+    rb"size (0|[1-9][0-9]{0,15})\n"
+)
+SHA256_HEX = re.compile(r"[0-9a-f]{64}")
+LFS_ATTRIBUTES = ("filter", "diff", "merge")
+
 
 class PublishError(RuntimeError):
     """The Space publication or attestation contract failed."""
@@ -29,6 +41,95 @@ class PublishError(RuntimeError):
 
 def sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
+
+
+def parse_lfs_pointer(data: bytes) -> tuple[str, int] | None:
+    """Return (oid, size) for an exact canonical LFS pointer, else None."""
+    if len(data) > 1024:
+        return None
+    match = LFS_POINTER.fullmatch(data)
+    if match is None:
+        return None
+    return match.group(1).decode("ascii"), int(match.group(2))
+
+
+def gitattribute_states(text: str, path: str) -> dict[str, str]:
+    """Evaluate one path against a Space-root ``.gitattributes`` (last match wins).
+
+    This is what the Hub and the Docker builder's clone see. Values: the
+    assigned value (e.g. ``lfs``), ``set``, ``unset`` (``-attr``) or absent.
+    """
+    states: dict[str, str] = {}
+    name = PurePosixPath(path).name
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        pattern, *tokens = line.split()
+        anchored = "/" in pattern.rstrip("/")
+        candidate = pattern.lstrip("/")
+        if not (fnmatch.fnmatchcase(path, candidate) if anchored else fnmatch.fnmatchcase(name, pattern)):
+            continue
+        for token in tokens:
+            if token == "binary":
+                states.update({"diff": "unset", "merge": "unset", "text": "unset"})
+            elif token.startswith("-"):
+                states[token[1:]] = "unset"
+            elif token.startswith("!"):
+                states.pop(token[1:], None)
+            elif "=" in token:
+                key, value = token.split("=", 1)
+                states[key] = value
+            else:
+                states[token] = "set"
+    return states
+
+
+def require_lfs_routing(gitattributes: str, target: str) -> dict[str, str]:
+    """Fail closed if ``.gitattributes`` would not smudge ``target`` via LFS.
+
+    Publishing a ``-filter`` rule makes the Hub Docker build check out the LFS
+    pointer instead of the archive (the 2026-09-30 BUILD_ERROR), so the
+    publisher refuses to regress the live LFS routing.
+    """
+    states = gitattribute_states(gitattributes, target)
+    observed = {key: states.get(key, "unspecified") for key in LFS_ATTRIBUTES}
+    if any(value != "lfs" for value in observed.values()):
+        raise PublishError(
+            f".gitattributes does not route {target} through LFS: {observed!r}"
+        )
+    return observed
+
+
+def _lfs_tracked(repository_paths: list[str]) -> set[str]:
+    """Repository paths whose checkout attribute is ``filter=lfs``."""
+    if not repository_paths:
+        return set()
+    result = subprocess.run(
+        ["git", "check-attr", "-z", "--stdin", "filter"],
+        cwd=ROOT,
+        input=b"\0".join(path.encode("utf-8") for path in repository_paths) + b"\0",
+        check=False,
+        capture_output=True,
+    )
+    fields = (result.stdout or b"").split(b"\0") if result.returncode == 0 else []
+    return {
+        fields[index].decode("utf-8", "replace")
+        for index in range(0, len(fields) - 2, 3)
+        if fields[index + 2] == b"lfs"
+    }
+
+
+def _committed_lfs_pointer(repository_path: str) -> tuple[str, int] | None:
+    result = subprocess.run(
+        ["git", "cat-file", "blob", f"HEAD:{repository_path}"],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+    )
+    if result.returncode != 0 or not isinstance(result.stdout, bytes):
+        return None
+    return parse_lfs_pointer(result.stdout)
 
 
 def tracked_source_files(
@@ -47,10 +148,9 @@ def tracked_source_files(
     )
     files: dict[str, dict[str, Any]] = {}
     prefix = relative_source.rstrip("/") + "/"
-    for raw in result.stdout.split(b"\0"):
-        if not raw:
-            continue
-        repository_path = raw.decode("utf-8")
+    repository_paths = [raw.decode("utf-8") for raw in result.stdout.split(b"\0") if raw]
+    lfs_tracked = _lfs_tracked(repository_paths)
+    for repository_path in repository_paths:
         if not repository_path.startswith(prefix):
             raise PublishError(f"tracked path escaped source directory: {repository_path}")
         target = repository_path[len(prefix) :]
@@ -59,11 +159,25 @@ def tracked_source_files(
             raise PublishError(f"unsafe Space target path: {target!r}")
         source = ROOT / Path(repository_path)
         data = source.read_bytes()
-        files[target] = {
+        if parse_lfs_pointer(data) is not None:
+            raise PublishError(
+                f"LFS object not materialized (refusing to upload a pointer): {target}; "
+                "check out with lfs: true"
+            )
+        entry: dict[str, Any] = {
             "source_path": repository_path,
             "size": len(data),
             "sha256": sha256_bytes(data),
         }
+        committed = _committed_lfs_pointer(repository_path) if repository_path in lfs_tracked else None
+        if committed is not None:
+            oid, size = committed
+            if entry["sha256"] != oid or entry["size"] != size:
+                raise PublishError(
+                    f"materialized LFS bytes do not match the committed pointer: {target}"
+                )
+            entry["lfs_pointer"] = {"oid": oid, "size": size}
+        files[target] = entry
     required_files = {"README.md", "index.html"} if static else {
         "README.md",
         "Dockerfile",
@@ -77,17 +191,86 @@ def tracked_source_files(
     return files
 
 
+def parse_frozen_archives(values: list[str]) -> dict[str, str]:
+    """Parse repeatable ``TARGET=SHA256`` declarations."""
+    archives: dict[str, str] = {}
+    for value in values:
+        target, separator, digest = value.partition("=")
+        normalized = PurePosixPath(target)
+        if (
+            not separator
+            or not target
+            or normalized.is_absolute()
+            or ".." in normalized.parts
+            or SHA256_HEX.fullmatch(digest) is None
+            or target in archives
+        ):
+            raise PublishError(f"invalid --frozen-archive declaration: {value!r}")
+        archives[target] = digest
+    return archives
+
+
+def verify_frozen_archives_before(
+    files: dict[str, dict[str, Any]],
+    source_dir: Path,
+    frozen_archives: dict[str, str],
+) -> dict[str, dict[str, Any]]:
+    """Bind each frozen archive to its digest before anything is uploaded."""
+    evidence: dict[str, dict[str, Any]] = {}
+    if not frozen_archives:
+        return evidence
+    if ".gitattributes" not in files:
+        raise PublishError("frozen archives require a tracked Space .gitattributes")
+    gitattributes = (source_dir / ".gitattributes").read_text(encoding="utf-8")
+    for target, digest in sorted(frozen_archives.items()):
+        entry = files.get(target)
+        if entry is None:
+            raise PublishError(f"frozen archive is not a tracked Space file: {target}")
+        if entry["sha256"] != digest:
+            raise PublishError(f"frozen archive digest mismatch before upload: {target}")
+        pointer = entry.get("lfs_pointer")
+        if pointer is not None and pointer["oid"] != digest:
+            raise PublishError(f"frozen archive LFS pointer oid mismatch: {target}")
+        evidence[target] = {
+            "frozen_sha256": digest,
+            "size": entry["size"],
+            "lfs_pointer_oid": pointer["oid"] if pointer else None,
+            "gitattributes": require_lfs_routing(gitattributes, target),
+            "verified_before_upload": True,
+            "verified_after_publish": False,
+        }
+    return evidence
+
+
+def verify_frozen_archives_after(
+    evidence: dict[str, dict[str, Any]],
+    fetch: Any,
+) -> dict[str, dict[str, Any]]:
+    """Re-read the published archive bytes and published LFS routing."""
+    if not evidence:
+        return evidence
+    published_attributes = fetch(".gitattributes").decode("utf-8")
+    for target, item in evidence.items():
+        if sha256_bytes(fetch(target)) != item["frozen_sha256"]:
+            raise PublishError(f"published frozen archive digest mismatch: {target}")
+        item["published_gitattributes"] = require_lfs_routing(published_attributes, target)
+        item["verified_after_publish"] = True
+    return evidence
+
+
 def build_plan(
     source_dir: Path,
     repo_id: str,
     source_revision: str,
     *,
     static: bool = False,
+    frozen_archives: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     revision = source_revision.strip().lower()
     if len(revision) != 40 or any(char not in "0123456789abcdef" for char in revision):
         raise PublishError("source revision must be an exact lowercase Git SHA")
     files = tracked_source_files(source_dir, static=static)
+    frozen = verify_frozen_archives_before(files, source_dir, frozen_archives or {})
     return {
         "schema": "szl.hf-space-publication/v1",
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -96,6 +279,7 @@ def build_plan(
         "source_revision_variable": "SZL_GITHUB_SOURCE_REVISION",
         "source_dir": source_dir.resolve().relative_to(ROOT).as_posix(),
         "files": files,
+        "frozen_archives": frozen,
         "publish": False,
         "hf_commit": None,
         "live": None,
@@ -433,6 +617,9 @@ def publish_and_verify(
     plan["hub_managed_metadata"] = verify_published_bytes(
         plan["files"], source_dir, fetch_published
     )
+    plan["frozen_archives"] = verify_frozen_archives_after(
+        plan.get("frozen_archives") or {}, fetch_published
+    )
 
     origin = live_origin(repo_id, static=static)
     probes: dict[str, Any] = {}
@@ -500,6 +687,17 @@ def main() -> int:
         action="store_true",
         help="use the static Space host and exact byte parity instead of runtime variable readback",
     )
+    parser.add_argument(
+        "--frozen-archive",
+        action="append",
+        default=[],
+        metavar="TARGET=SHA256",
+        help=(
+            "repeatable: Space file whose bytes (and LFS pointer oid) must equal the "
+            "frozen digest before upload and after publication, and which "
+            ".gitattributes must route through LFS"
+        ),
+    )
     parser.add_argument("--wait-seconds", type=int, default=1800)
     parser.add_argument(
         "--smoke-path",
@@ -516,6 +714,7 @@ def main() -> int:
             args.repo_id,
             args.source_revision,
             static=args.static,
+            frozen_archives=parse_frozen_archives(args.frozen_archive),
         )
         if args.publish:
             token = os.environ.get("HF_TOKEN", "")

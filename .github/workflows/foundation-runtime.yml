@@ -2,10 +2,10 @@ name: Foundation operational workbench
 
 on:
   pull_request:
-    paths: ['spaces/szl-foundation-confirmation/**', 'foundation-confirmation/operations/**', 'foundation-confirmation/verify_public_runtime.py', 'tests/test_foundation_public_runtime.py', 'tests/test_hf_write_locks.py', '.github/workflows/foundation-runtime.yml']
+    paths: ['spaces/szl-foundation-confirmation/**', 'foundation-confirmation/operations/**', 'foundation-confirmation/verify_public_runtime.py', 'tests/test_foundation_public_runtime.py', 'tests/test_hf_write_locks.py', 'scripts/lfs_archive_binding.py', 'tests/test_lfs_archive_binding.py', '.github/workflows/foundation-runtime.yml']
   push:
     branches: [main]
-    paths: ['spaces/szl-foundation-confirmation/**', 'foundation-confirmation/operations/**', 'foundation-confirmation/verify_public_runtime.py', 'tests/test_foundation_public_runtime.py', 'tests/test_hf_write_locks.py', '.github/workflows/foundation-runtime.yml']
+    paths: ['spaces/szl-foundation-confirmation/**', 'foundation-confirmation/operations/**', 'foundation-confirmation/verify_public_runtime.py', 'tests/test_foundation_public_runtime.py', 'tests/test_hf_write_locks.py', 'scripts/lfs_archive_binding.py', 'tests/test_lfs_archive_binding.py', '.github/workflows/foundation-runtime.yml']
   merge_group:
     types: [checks_requested]
   workflow_dispatch: {}
@@ -27,6 +27,8 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
+          # release.zip is an LFS pointer whose oid is the frozen ARCHIVE_SHA256.
+          lfs: true
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.12'
@@ -35,10 +37,22 @@ jobs:
           python -m pip install --disable-pip-version-check --require-hashes --only-binary=:all: -r spaces/szl-foundation-confirmation/requirements.txt
       - name: Install check tools
         run: python -m pip install 'pytest==9.1.1' 'PyYAML==6.0.3'
+      - name: Bind release.zip LFS pointer oid to the frozen digest
+        run: python -B scripts/lfs_archive_binding.py
       - name: Reject invalid requests and run all three original models
         env:
           FOUNDATION_REQUIRE_INTEGRATION: '1'
-        run: python -B -m pytest -q tests/test_foundation_public_runtime.py tests/test_hf_write_locks.py
+        run: python -B -m pytest -q tests/test_foundation_public_runtime.py tests/test_hf_write_locks.py tests/test_lfs_archive_binding.py
+      - name: Publisher plan-only check (no Hub write)
+        env:
+          CHECKOUT_SOURCE: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: >-
+          python tools/publish_hf_space.py
+          --source-dir spaces/szl-foundation-confirmation
+          --repo-id SZLHOLDINGS/szl-foundation-confirmation
+          --source-revision "${CHECKOUT_SOURCE}"
+          --frozen-archive release.zip=869e318dd5f328205dd181ee836ef267bd2ae278f6430a9e8ddc661fbc689d03
+          --report /tmp/foundation-publication-plan.json
       - name: Build immutable non-root Linux image
         run: docker build --tag foundation-confirmation:ci spaces/szl-foundation-confirmation
       - name: Verify actual container startup and source binding
@@ -80,6 +94,8 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 1
+          # Upload the real archive bytes, never the LFS pointer.
+          lfs: true
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.12'
@@ -106,6 +122,7 @@ jobs:
             --source-dir spaces/szl-foundation-confirmation \
             --repo-id SZLHOLDINGS/szl-foundation-confirmation \
             --source-revision "${GITHUB_SHA}" --publish --wait-seconds 1500 \
+            --frozen-archive release.zip=869e318dd5f328205dd181ee836ef267bd2ae278f6430a9e8ddc661fbc689d03 \
             --smoke-path / --smoke-path /live --smoke-path /readyz --smoke-path /api/build-info \
             --report reports/foundation-publication.json
       - name: Expose redacted terminal publication diagnosis
