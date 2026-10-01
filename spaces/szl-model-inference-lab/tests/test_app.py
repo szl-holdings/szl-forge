@@ -1,6 +1,8 @@
 import asyncio
+import hashlib
 import json
 import os
+import re
 import tempfile
 import unittest
 from pathlib import Path
@@ -942,6 +944,126 @@ class AppContractTests(unittest.TestCase):
         asyncio.run(limiter(scope, receive, send))
         self.assertFalse(downstream_called)
         self.assertEqual(sent[0]["status"], 408)
+
+
+class SzlAssetRouteTests(unittest.TestCase):
+    """The landing page's SZL KANCHAY files: exact allowlist, exact bytes."""
+
+    STYLESHEET = "/szl/szl-design-system.css"
+    FAVICON = "/szl/logos/szl_favicon.svg"
+
+    def setUp(self):
+        self.client = TestClient(app.app)
+        self.export = json.loads(
+            (app.SZL_ROOT / "SOURCE.json").read_text(encoding="utf-8")
+        )
+
+    def test_allowlist_is_exactly_the_stylesheet_and_the_favicon(self):
+        self.assertEqual({self.STYLESHEET, self.FAVICON}, set(app.SZL_ASSETS))
+        self.assertEqual("1.1.0", self.export["version"])
+        vendored = {
+            path.relative_to(app.SZL_ROOT).as_posix()
+            for path in app.SZL_ROOT.rglob("*")
+            if path.is_file()
+        }
+        self.assertEqual(
+            {"SOURCE.json", "szl-design-system.css", "logos/szl_favicon.svg"},
+            vendored,
+        )
+        self.assertFalse((app.SOURCE_ROOT / "kanchay").exists())
+
+    def test_each_asset_is_served_byte_exact_with_page_headers(self):
+        page = self.client.get("/")
+        self.assertEqual(200, page.status_code)
+        for url_path, (relative, media_type) in app.SZL_ASSETS.items():
+            with self.subTest(path=url_path):
+                response = self.client.get(url_path)
+                self.assertEqual(200, response.status_code)
+                self.assertEqual(media_type, response.headers["content-type"])
+                self.assertEqual(
+                    (app.SZL_ROOT / relative).read_bytes(), response.content
+                )
+                self.assertEqual(
+                    self.export["sha256"][relative],
+                    hashlib.sha256(response.content).hexdigest(),
+                )
+                for header in ("x-content-type-options", "referrer-policy"):
+                    self.assertEqual(page.headers[header], response.headers[header])
+        self.assertEqual(
+            "text/css; charset=utf-8",
+            self.client.get(self.STYLESHEET).headers["content-type"],
+        )
+        self.assertEqual(
+            "image/svg+xml", self.client.get(self.FAVICON).headers["content-type"]
+        )
+
+    def test_unknown_and_withdrawn_paths_are_the_normal_404(self):
+        for path in (
+            "/szl",
+            "/szl/",
+            "/szl/SOURCE.json",
+            "/szl/szl-console.css",
+            "/szl/logos/",
+            "/szl/logos/szl_logo_horizontal.svg",
+            "/szl/logos/szl_favicon.svg/extra",
+            "/szl/%2e%2e/app.py",
+            "/szl/logos/%2e%2e/szl-design-system.css",
+            "/kanchay/kanchay.css",
+            "/kanchay/fonts/Inter-latin.woff2",
+        ):
+            with self.subTest(path=path):
+                response = self.client.get(path)
+                self.assertEqual(404, response.status_code)
+                self.assertEqual({"detail": "Not Found"}, response.json())
+
+    def test_asset_routes_stay_out_of_the_public_api_schema(self):
+        paths = self.client.get("/api/openapi.json").json()["paths"]
+        self.assertFalse(
+            [path for path in paths if path.startswith(("/szl", "/kanchay"))]
+        )
+
+    def test_release_manifest_binds_every_vendored_szl_file(self):
+        manifest = app.load_release_manifest()
+        for relative in (
+            "SOURCE.json",
+            "szl-design-system.css",
+            "logos/szl_favicon.svg",
+        ):
+            self.assertIn("szl/" + relative, manifest["source_files"])
+        self.assertFalse(
+            [path for path in manifest["source_files"] if path.startswith("kanchay/")]
+        )
+
+    def test_root_links_local_szl_before_its_own_tokens_only_style(self):
+        html = app.index()
+        link = '<link rel="stylesheet" href="/szl/szl-design-system.css">'
+        self.assertIn(link, html)
+        self.assertIn(
+            '<link rel="icon" type="image/svg+xml" href="/szl/logos/szl_favicon.svg">',
+            html,
+        )
+        self.assertLess(html.index(link), html.index("<style>"))
+        style = html[html.index("<style>") : html.index("</style>")]
+        self.assertIsNone(re.search(r"#[0-9a-fA-F]{3,8}\b|rgba?\(|hsla?\(", style))
+        for retired in ("Georgia", "ui-monospace", "@font-face", ".woff2", "kanchay"):
+            self.assertNotIn(retired, html)
+        defined = set(
+            re.findall(
+                r"(--[A-Za-z0-9_-]+)\s*:",
+                (app.SZL_ROOT / "szl-design-system.css").read_text(encoding="utf-8"),
+            )
+        )
+        self.assertEqual(set(), set(re.findall(r"var\((--[A-Za-z0-9_-]+)", style)) - defined)
+        for external in ("fonts.googleapis", "fonts.gstatic", "cdn", "http://"):
+            self.assertNotIn(external, html)
+
+    def test_root_has_one_coral_moment_the_run_action(self):
+        html = app.index()
+        self.assertEqual(1, html.count("btn-primary"))
+        self.assertIn('class="btn btn-primary btn-lg" id="run"', html)
+        style = html[html.index("<style>") : html.index("</style>")]
+        self.assertNotIn("--accent", style)
+        self.assertNotIn("--premium", style)
 
 
 if __name__ == "__main__":
