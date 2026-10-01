@@ -1,0 +1,10 @@
+[coverage] chaski-r2-adapter: ADAPTER_NOT_APPLIED 0/192 tensors class=Qwen3_5ForCausalLM checkpoint_layout=language_model transformers=5.18.0 peft=0.21.1
+[coverage] chaski-5050-adapter: ADAPTER_NOT_APPLIED 0/192 tensors class=Qwen3_5ForCausalLM checkpoint_layout=language_model transformers=5.18.0 peft=0.21.1
+[coverage] chaski-adapter: ADAPTER_NOT_APPLIED 0/192 tensors class=Qwen3_5ForCausalLM checkpoint_layout=language_model transformers=5.18.0 peft=0.21.1
+[coverage] FAIL-CLOSED: at least one adapter does not land in this loader class under the installed transformers; a canonical run here would score the base model as that adapter. Fix the environment (the class the adapter was trained against is AutoModelForImageTextToText for language_model layouts) before any gate run.
+COVERAGE_TEXTCLASS_EXIT=4
+[coverage] chaski-r2-adapter: APPLIED 192/192 tensors class=Qwen3_5ForConditionalGeneration checkpoint_layout=language_model transformers=5.18.0 peft=0.21.1
+[coverage] chaski-5050-adapter: APPLIED 192/192 tensors class=Qwen3_5ForConditionalGeneration checkpoint_layout=language_model transformers=5.18.0 peft=0.21.1
+[coverage] chaski-adapter: APPLIED 192/192 tensors class=Qwen3_5ForConditionalGeneration checkpoint_layout=language_model transformers=5.18.0 peft=0.21.1
+[coverage] OK: every adapter tensor landed
+COVERAGE_MMCLASS_EXIT=0
