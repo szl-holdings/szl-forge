@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Offline provider races for the five closed card-publication profiles.
+"""Offline provider races for the six closed card-publication profiles.
 
 No provider package, token, model artifact, or network access is required. The
 real asset validation and source-binding builder run on tiny synthetic assets;
@@ -28,6 +28,7 @@ PROFILES = [
     ("publish_chaski_card", "chaski"),
     ("publish_chaski_card", "chaski-5050"),
     ("publish_chaski_card", "chaski-r2"),
+    ("publish_chaski_card", "chaski-r4"),
     ("publish_khipu_card", "khipu"),
     ("publish_khipu_card", "khipu-r2"),
 ]

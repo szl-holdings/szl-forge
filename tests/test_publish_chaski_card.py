@@ -20,10 +20,11 @@ class RateLimited(RuntimeError):
 
 
 def test_profile_registry_is_closed_and_target_specific() -> None:
-    assert set(publisher.PROFILES) == {"chaski", "chaski-5050", "chaski-r2"}
+    assert set(publisher.PROFILES) == {"chaski", "chaski-5050", "chaski-r2", "chaski-r4"}
     assert publisher.resolve_profile("chaski").repo_id == "SZLHOLDINGS/chaski"
     assert publisher.resolve_profile("chaski-5050").repo_id == "SZLHOLDINGS/chaski-5050"
     assert publisher.resolve_profile("chaski-r2").repo_id == "SZLHOLDINGS/chaski-r2"
+    assert publisher.resolve_profile("chaski-r4").repo_id == "SZLHOLDINGS/chaski-r4"
     with pytest.raises(publisher.PublicationError, match="unknown card profile"):
         publisher.resolve_profile("operator-controlled-target")
 
@@ -95,7 +96,7 @@ def test_r2_is_in_candidate_and_publication_workflow() -> None:
         assert row["repo_id"] == publisher.resolve_profile(row["profile"]).repo_id
 
 
-@pytest.mark.parametrize("profile", ["chaski", "chaski-5050", "chaski-r2"])
+@pytest.mark.parametrize("profile", ["chaski", "chaski-5050", "chaski-r2", "chaski-r4"])
 def test_svg_is_local_scriptless_and_bounded(profile: str) -> None:
     assets = publisher.load_assets(profile)
     publisher.validate_assets(assets, profile)
@@ -269,6 +270,10 @@ def test_invalid_source_revision_fails_closed(tmp_path: Path) -> None:
         ("chaski-r2", "**1/5 held-out; overall FAIL**"),
         ("chaski-r2", "5/5 draft contracts; 6/6 refusal prefixes"),
         ("chaski-r2", "does not erase the earlier gate **FAIL**"),
+        ("chaski-r4", "0/5 JSON drafts; 3/6 refusals"),
+        ("chaski-r4", "provenance of receipts A and B remains unresolved"),
+        ("chaski-r4", "It is not a broad quality or safety benchmark."),
+        ("chaski-r4", "it does not promote anything."),
     ],
 )
 def test_dated_evidence_scope_cannot_be_erased(profile: str, required_scope: str) -> None:
