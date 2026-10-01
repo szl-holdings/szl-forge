@@ -47,7 +47,6 @@ def main() -> int:
     staging = Path(sys.argv[2])
     license_path = Path(sys.argv[3])
     receipt_out = Path(sys.argv[4])
-    from huggingface_hub import CommitOperationAdd, HfApi, hf_hub_download
 
     # ---- local preflight: the bytes we are about to publish are exactly the receipted bytes
     local = {
@@ -72,7 +71,9 @@ def main() -> int:
         raise SystemExit("PREFLIGHT: LICENSE is not the Apache-2.0 text. Stop state: nothing uploaded.")
     print(f"[preflight] adapter raw {local_sha['adapter_model.safetensors'][:16]}... config {local_sha['adapter_config.json'][:16]}... dir {local_dir_digest[:16]}... receipt C {local_sha['evidence/canonical_rerun_20261001_140615.receipt.json'][:16]}... OK")
 
-    # ---- Hub preflight: identity, repo, CARD FIRST
+    # ---- Hub preflight: identity, repo, CARD FIRST (Hub client imported only after the local bytes check passed)
+    from huggingface_hub import HfApi, hf_hub_download
+
     api = HfApi()
     who = api.whoami()
     orgs = [o.get("name") for o in who.get("orgs", [])]
@@ -95,6 +96,10 @@ def main() -> int:
         print("[upload] adapter bytes already on the Hub; verifying instead of uploading")
         bytes_revision = card_revision
     else:
+        try:
+            from huggingface_hub import CommitOperationAdd
+        except ImportError:  # older/newer hub layouts expose it from hf_api
+            from huggingface_hub.hf_api import CommitOperationAdd
         ops = [CommitOperationAdd(path_in_repo=t, path_or_fileobj=str(p)) for t, p in local.items()]
         commit = api.create_commit(
             repo_id=REPO,
