@@ -216,17 +216,33 @@ if ($Recon.Contains("r2_weights_sha256")) { $Recon.r2_local_matches_hub_publishe
 $Recon | ConvertTo-Json -Depth 4 | Write-Host
 
 Write-Host ""
+# Evidence-aware evaluation line: the newest MEASURED canonical_rerun receipt (if any) supersedes the split A/B story.
+$EvalLine = "MEASURED but SPLIT: receipt A (original adapter, torch 2.11.0+cu128): 0/5, 3/6 | receipt B (retrained adapter, torch 2.10.0+cu130): 5/5, 6/6"
+$BlockLine = "no receipt evaluates the RETRAINED r4 adapter beside the r2 control in one run with a loader that applies it (the f4ca282a copy's AutoModelForCausalLM applies 0/192 tensors of any language_model-layout adapter: owner metal 2026-10-01, transformers 5.16.1 / peft 0.20.0)"
+$NextLine = "-RunCanonicalGate (evaluator = chaski\bakeoff_named_n.py @ main; writes a NEW receipt; promote to canonical only by explicit copy after review)"
+$Reruns = @(Get-ChildItem -LiteralPath $Evidence -Filter "canonical_rerun_*.receipt.json" -ErrorAction SilentlyContinue | Sort-Object LastWriteTime)
+if ($Reruns.Count -gt 0) {
+    $Latest = $Reruns[-1]
+    $LR = Get-Content -LiteralPath $Latest.FullName -Raw | ConvertFrom-Json
+    if ($LR.label -eq "MEASURED") {
+        $parts = @()
+        foreach ($c in $LR.candidates) { $parts += ("{0} {1}/{2} drafts {3}/{4} refusals" -f $c.id, $c.json_draft_valid, $c.json_draft_total, $c.adversarial_refused, $c.adversarial_total) }
+        $EvalLine = "MEASURED (receipt C: " + $Latest.Name + ", torch " + $LR.gpu.torch + ", every adapter 192/192 applied, same run as the r2 control): " + ($parts -join " | ")
+        $BlockLine = "none from the gate itself; receipt C is on disk and NOT yet committed to szl-forge or reviewed. publication_eligible=false is fixed by the runner: promotion is an owner decision taken outside this gate, never derived by it"
+        $NextLine = "commit receipt C to szl-forge chaski_r4/evidence/ as an ADDITIONAL receipt (never overwrite A or B), then decide promotion with the open question on A/B provenance written next to it"
+    }
+}
 Write-Host "STATE BLOCK (model-qualification-gates)" -ForegroundColor Cyan
 @"
 Artifact: chaski-r4 local adapter ($($Recon.r4_on_disk_is))
 Canonical source: szl-holdings/szl-forge chaski_r4/ @ bcdd1d85 (runner f4ca282a...dadb)
 Training: TRAINED_CHALLENGER (training_receipt.json 2026-09-17T02:36Z, weights f1a2cdc3..., dataset 0fea0d85...)
-Evaluation: MEASURED but SPLIT: receipt A (original adapter, torch 2.11.0+cu128): 0/5, 3/6 | receipt B (retrained adapter, torch 2.10.0+cu130): 5/5, 6/6
+Evaluation: $EvalLine
 Publication: UNPUBLISHED (chaski-r4 absent from the Hub; correct)
 Promotion: NOT_PROMOTABLE
-Blocking gate: no receipt evaluates the RETRAINED r4 adapter beside the r2 control in one run with a loader that applies it (the f4ca282a copy's AutoModelForCausalLM applies 0/192 tensors of any language_model-layout adapter: owner metal 2026-10-01, transformers 5.16.1 / peft 0.20.0)
+Blocking gate: $BlockLine
 Open question: receipts A and B show adapter effects that the f4ca282a copy cannot produce with the current adapter files; their provenance is recorded as unresolved, not explained away
-Next bounded action: -RunCanonicalGate (evaluator = chaski\bakeoff_named_n.py @ main; writes a NEW receipt; promote to canonical only by explicit copy after review)
+Next bounded action: $NextLine
 Protected state: committed receipts A and B, adapters, gate files, pristine runner copy; none modified by this runbook
 "@ | Write-Host
 
@@ -272,7 +288,12 @@ if ($RunCanonicalGate) {
     $R = Get-Content -LiteralPath $GateReceipt -Raw | ConvertFrom-Json
     foreach ($c in $R.candidates) {
         $cov = ""
-        if ($null -ne $c.PSObject.Properties["loader"] -and $null -ne $c.loader) { $cov = "  applied=" + $c.loader.adapter_keys.applied + "/" + $c.loader.adapter_keys.checkpoint_tensors + "  class=" + $c.loader.model_class + "  transformers=" + $c.loader.transformers + "  peft=" + $c.loader.peft }
+        if ($null -ne $c.PSObject.Properties["loader"] -and $null -ne $c.loader) {
+            $cov = "  class=" + $c.loader.model_class + "  transformers=" + $c.loader.transformers + "  peft=" + $c.loader.peft
+            if ($null -ne $c.loader.PSObject.Properties["prompt_renderer"]) { $cov += "  renderer=" + $c.loader.prompt_renderer }
+            if ($null -ne $c.loader.PSObject.Properties["adapter_keys"] -and $null -ne $c.loader.adapter_keys) { $cov = "  applied=" + $c.loader.adapter_keys.applied + "/" + $c.loader.adapter_keys.checkpoint_tensors + $cov }
+            else { $cov = "  (base: no adapter)" + $cov }
+        }
         Write-Host ("  {0,-18} drafts {1}/{2}  refusals {3}/{4}  adapter_sha {5}{6}" -f $c.id, $c.json_draft_valid, $c.json_draft_total, $c.adversarial_refused, $c.adversarial_total, $c.adapter_sha256, $cov)
     }
     Write-Host "  torch in receipt: $($R.gpu.torch)   receipt SHA-256: $(Sha256 $GateReceipt)"
