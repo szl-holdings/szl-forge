@@ -1,0 +1,197 @@
+﻿2026-10-01T01:55:07.5357547Z ##[group]Run $PSVersionTable.PSVersion.ToString()
+2026-10-01T01:55:07.5358766Z ^[[36;1m$PSVersionTable.PSVersion.ToString()^[[0m
+2026-10-01T01:55:07.5359519Z ^[[36;1mpowershell -NoProfile -ExecutionPolicy Bypass -File "$env:GITHUB_WORKSPACE\owner_sim\tools\geh_v8\geh_v8_runbook.ps1" -Root "$env:GITHUB_WORKSPACE\owner_sim"^[[0m
+2026-10-01T01:55:07.5360326Z ^[[36;1mif ($LASTEXITCODE -ne 0) { throw "runbook exited $LASTEXITCODE" }^[[0m
+2026-10-01T01:55:07.5436665Z shell: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.EXE -command ". '{0}'"
+2026-10-01T01:55:07.5437103Z env:
+2026-10-01T01:55:07.5437376Z   pythonLocation: C:\hostedtoolcache\windows\Python\3.12.10\x64
+2026-10-01T01:55:07.5437846Z   PKG_CONFIG_PATH: C:\hostedtoolcache\windows\Python\3.12.10\x64/lib/pkgconfig
+2026-10-01T01:55:07.5438294Z   Python_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.12.10\x64
+2026-10-01T01:55:07.5438704Z   Python2_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.12.10\x64
+2026-10-01T01:55:07.5439099Z   Python3_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.12.10\x64
+2026-10-01T01:55:07.5439481Z ##[endgroup]
+2026-10-01T01:55:07.7377212Z 5.1.26100.33438
+2026-10-01T01:55:08.0729961Z 
+2026-10-01T01:55:08.0746629Z ========================================================================================
+2026-10-01T01:55:08.0761546Z   PREFLIGHT
+2026-10-01T01:55:08.0769853Z ========================================================================================
+2026-10-01T01:55:08.1791352Z Root:        D:\a\szl-forge\szl-forge\owner_sim
+2026-10-01T01:55:08.1810960Z Python:      D:\a\szl-forge\szl-forge\owner_sim\.venv-ra-v2\Scripts\python.exe
+2026-10-01T01:55:08.1837292Z Lean tools:  C:\Users\runneradmin\.elan\bin\lake.exe
+2026-10-01T01:55:08.1846105Z Stamp:       20261001_015508
+2026-10-01T01:55:08.1851955Z 
+2026-10-01T01:55:08.1860300Z ========================================================================================
+2026-10-01T01:55:08.1868552Z   MATERIALIZE GEH v8 FILES
+2026-10-01T01:55:08.1878087Z ========================================================================================
+2026-10-01T01:55:08.2240825Z   ok  692487121da24843  geh-lean\lean-toolchain
+2026-10-01T01:55:08.2263717Z   ok  25008681bed2563c  szl_geh_v8.py
+2026-10-01T01:55:08.2279692Z   ok  c5a601f482da7e60  tests\test_geh_v8.py
+2026-10-01T01:55:08.2295803Z   ok  60b374e3ac39ecf8  geh-lean\lakefile.toml
+2026-10-01T01:55:08.2310715Z   ok  f74c2fc9e4eac155  geh-lean\GEH.lean
+2026-10-01T01:55:08.2326168Z   ok  8005c605eb2ecbe5  geh-lean\GEH\RedTests\Red_Sorry.lean
+2026-10-01T01:55:08.2342748Z   ok  324e064a214973c5  chaski_margin_probe.py
+2026-10-01T01:55:08.2357547Z   ok  fa10b82adcfb15f3  geh-lean\GEH\Compliance\SelfTest.lean
+2026-10-01T01:55:08.2372602Z   ok  fdae35f1092bbf5f  geh-lean\GEH\RedTests\Red_NativeDecide.lean
+2026-10-01T01:55:08.2387683Z   ok  de661cc73bae1ad3  geh-lean\GEH\RedTests\Red_Axiom.lean
+2026-10-01T01:55:08.2402531Z   ok  c45f15347da292fc  README.md
+2026-10-01T01:55:08.2418625Z   ok  6ed9fb9146c62fde  geh-lean\GEH\Compliance\GehGuard.lean
+2026-10-01T01:55:08.2433408Z   ok  a0436a50dfb08b7d  geh-lean\GEH\Evidence\README.md
+2026-10-01T01:55:08.2448490Z   ok  6647ef7fb207cbf0  szl_geh_verify.py
+2026-10-01T01:55:08.2496717Z 
+2026-10-01T01:55:08.2506838Z ========================================================================================
+2026-10-01T01:55:08.2516488Z   PYTHON DEPENDENCIES (venv-local only)
+2026-10-01T01:55:08.2525897Z ========================================================================================
+2026-10-01T01:55:08.4731919Z cryptography 50.0.2 | pytest 9.1.1
+2026-10-01T01:55:08.4985108Z 
+2026-10-01T01:55:08.4993529Z ========================================================================================
+2026-10-01T01:55:08.5001268Z   LEAN BUILD (leanprover/lean4:v4.18.0, the lutar-lean pin)
+2026-10-01T01:55:08.5009951Z ========================================================================================
+2026-10-01T01:55:08.5127208Z > lake update (clones leanprover-community/repl @ v4.18.0)
+2026-10-01T01:55:08.5147701Z   lake update
+2026-10-01T01:55:09.0812442Z info: REPL: cloning https://github.com/leanprover-community/repl
+2026-10-01T01:55:09.0813625Z info: REPL: checking out revision '2f0a3cb876b045cc0fe550ca3a625bc479816739'
+2026-10-01T01:55:09.0814276Z info: toolchain not updated; already up-to-date
+2026-10-01T01:55:09.0939687Z > lake build (GEH.Compliance.*: guard + kernel self-tests)
+2026-10-01T01:55:09.0948009Z   lake build
+2026-10-01T01:55:10.3571504Z ✔ [2/4] Built GEH.Compliance.GehGuard
+2026-10-01T01:55:11.4887508Z ℹ [3/4] Built GEH.Compliance.SelfTest
+2026-10-01T01:55:11.4891815Z info: .\.\.\.\GEH\Compliance\SelfTest.lean:6:0: GEH_GUARD {"trust_base":["propext","Classical.choice","Quot.sound"],"tool":"lean.query_axioms","theorem":"geh_selftest_clean","axioms":[],"allowed":true}
+2026-10-01T01:55:11.4893206Z info: .\.\.\.\GEH\Compliance\SelfTest.lean:12:0: GEH_GUARD {"trust_base":["propext","Classical.choice","Quot.sound"],"tool":"lean.query_axioms","theorem":"geh_selftest_pae","axioms":[],"allowed":true}
+2026-10-01T01:55:11.4894555Z info: .\.\.\.\GEH\Compliance\SelfTest.lean:15:0: GEH_GUARD {"trust_base":["propext","Classical.choice","Quot.sound"],"tool":"lean.query_axioms","theorem":"geh_selftest_pae_rfl","axioms":[],"allowed":true}
+2026-10-01T01:55:11.4895971Z info: .\.\.\.\GEH\Compliance\SelfTest.lean:18:0: GEH_GUARD {"trust_base":["propext","Classical.choice","Quot.sound"],"tool":"lean.query_axioms","theorem":"geh_selftest_disamb","axioms":[],"allowed":true}
+2026-10-01T01:55:11.4898067Z info: .\.\.\.\GEH\Compliance\SelfTest.lean:23:0: GEH_GUARD {"trust_base":["propext","Classical.choice","Quot.sound"],"tool":"lean.query_axioms","theorem":"geh_selftest_link","axioms":[],"allowed":true}
+2026-10-01T01:55:11.4900171Z info: .\.\.\.\GEH\Compliance\SelfTest.lean:27:0: GEH_GUARD {"trust_base":["propext","Classical.choice","Quot.sound"],"tool":"lean.query_axioms","theorem":"geh_selftest_xor","axioms":[],"allowed":true}
+2026-10-01T01:55:11.4902252Z info: .\.\.\.\GEH\Compliance\SelfTest.lean:30:0: GEH_GUARD {"trust_base":["propext","Classical.choice","Quot.sound"],"tool":"lean.query_axioms","theorem":"geh_selftest_nodup","axioms":[],"allowed":true}
+2026-10-01T01:55:11.4904646Z info: .\.\.\.\GEH\Compliance\SelfTest.lean:33:0: GEH_GUARD {"trust_base":["propext","Classical.choice","Quot.sound"],"tool":"lean.query_axioms","theorem":"geh_selftest_classical","axioms":["Classical.choice","Quot.sound","propext"],"allowed":true}
+2026-10-01T01:55:11.4906620Z Build completed successfully.
+2026-10-01T01:55:11.5005033Z > lake build repl
+2026-10-01T01:55:11.5015666Z   lake build repl
+2026-10-01T01:55:13.6707503Z ✔ [2/22] Built REPL.JSON
+2026-10-01T01:55:13.6785876Z ✔ [3/22] Built REPL.Frontend
+2026-10-01T01:55:13.6946859Z ✔ [4/22] Built REPL.Util.Path
+2026-10-01T01:55:13.6993083Z ✔ [5/22] Built REPL.Lean.ContextInfo
+2026-10-01T01:55:13.9852598Z ✔ [6/22] Built REPL.Frontend:c.o
+2026-10-01T01:55:13.9853990Z ✔ [7/22] Built REPL.Util.Path:c.o
+2026-10-01T01:55:13.9855137Z ✔ [8/22] Built REPL.Lean.ContextInfo:c.o
+2026-10-01T01:55:14.3241507Z ✔ [9/22] Built REPL.Util.Pickle
+2026-10-01T01:55:15.9950164Z ✔ [10/22] Built REPL.Lean.InfoTree
+2026-10-01T01:55:15.9951266Z ✔ [11/22] Built REPL.JSON:c.o
+2026-10-01T01:55:16.6270549Z ✔ [12/22] Built REPL.Lean.Environment
+2026-10-01T01:55:16.6401513Z ✔ [13/22] Built REPL.Snapshots
+2026-10-01T01:55:16.6597622Z ✔ [14/22] Built REPL.Util.Pickle:c.o
+2026-10-01T01:55:16.9616281Z ✔ [15/22] Built REPL.Lean.Environment:c.o
+2026-10-01T01:55:17.2775237Z ✔ [16/22] Built REPL.Lean.InfoTree:c.o
+2026-10-01T01:55:18.1955122Z ✔ [17/22] Built REPL.Lean.InfoTree.ToJson
+2026-10-01T01:55:19.1433158Z ✔ [18/22] Built REPL.Snapshots:c.o
+2026-10-01T01:55:20.7046397Z ✔ [19/22] Built REPL.Lean.InfoTree.ToJson:c.o
+2026-10-01T01:55:20.8053813Z ✔ [20/22] Built REPL.Main
+2026-10-01T01:55:23.4743972Z ✔ [21/22] Built REPL.Main:c.o
+2026-10-01T01:55:23.6839861Z ✔ [22/22] Built repl
+2026-10-01T01:55:23.6853164Z Build completed successfully.
+2026-10-01T01:55:24.7965912Z   red test Red_Axiom.lean correctly FAILED the build (exit 1)
+2026-10-01T01:55:25.8920981Z   red test Red_NativeDecide.lean correctly FAILED the build (exit 1)
+2026-10-01T01:55:26.9790377Z   red test Red_Sorry.lean correctly FAILED the build (exit 1)
+2026-10-01T01:55:26.9796988Z 
+2026-10-01T01:55:26.9805873Z ========================================================================================
+2026-10-01T01:55:26.9814138Z   GEH v8 RUNS (fail-closed; evidence -> D:\a\szl-forge\szl-forge\owner_sim\chaski_r4\evidence\geh)
+2026-10-01T01:55:26.9822644Z ========================================================================================
+2026-10-01T01:55:26.9899072Z > self-check (structural + kernel-grounded)
+2026-10-01T01:55:26.9908455Z   D:\a\szl-forge\szl-forge\owner_sim\.venv-ra-v2\Scripts\python.exe D:\a\szl-forge\szl-forge\owner_sim\tools\geh_v8\szl_geh_v8.py --root D:\a\szl-forge\szl-forge\owner_sim --lean-project D:\a\szl-forge\szl-forge\owner_sim\tools\geh_v8\geh-lean --selfcheck
+2026-10-01T01:55:29.5633094Z {
+2026-10-01T01:55:29.5633607Z   "sim_loop_closes": true,
+2026-10-01T01:55:29.5634015Z   "sim_never_certifies": true,
+2026-10-01T01:55:29.5634410Z   "branching_exercised": true,
+2026-10-01T01:55:29.5634805Z   "sorry_blocked_and_void": true,
+2026-10-01T01:55:29.5635188Z   "combinator_sorry_blocked": true,
+2026-10-01T01:55:29.5635589Z   "native_decide_blocked": true,
+2026-10-01T01:55:29.5636006Z   "plausible_isolated": true,
+2026-10-01T01:55:29.5636393Z   "evidence_void_in_compliance": true,
+2026-10-01T01:55:29.5636810Z   "exact_h_not_unregistered": true,
+2026-10-01T01:55:29.5637222Z   "classifier_quarantines_sorry": true,
+2026-10-01T01:55:29.5637639Z   "classifier_quarantines_axiom": true,
+2026-10-01T01:55:29.5638095Z   "classifier_ignores_comment_sorry": true,
+2026-10-01T01:55:29.5638556Z   "classifier_evidence_plausible": true,
+2026-10-01T01:55:29.5638992Z   "crypto_suite_deterministic": true,
+2026-10-01T01:55:29.5639385Z   "crypto_realizations_differ": true,
+2026-10-01T01:55:29.5639799Z   "crypto_oracle_consistent": true,
+2026-10-01T01:55:29.5640212Z   "contamination_scoring_detects_leak": true,
+2026-10-01T01:55:29.5640669Z   "contamination_scoring_clean_passes": true,
+2026-10-01T01:55:29.5641093Z   "leandojo_wiring_mocked": true,
+2026-10-01T01:55:29.5641445Z   "dsse_roundtrip": true,
+2026-10-01T01:55:29.5641767Z   "dsse_rejects_tamper": true,
+2026-10-01T01:55:29.5642096Z   "kernel_available": true,
+2026-10-01T01:55:29.5642438Z   "kernel_green_closes": true,
+2026-10-01T01:55:29.5642774Z   "kernel_green_audit_clean": true,
+2026-10-01T01:55:29.5643155Z   "kernel_green_axioms_in_trust_base": true,
+2026-10-01T01:55:29.5643561Z   "kernel_rejects_wrong_proof": true,
+2026-10-01T01:55:29.5643942Z   "kernel_guard_fails_on_sorry": true,
+2026-10-01T01:55:29.5644339Z   "kernel_guard_fails_on_native_decide": true,
+2026-10-01T01:55:29.5644794Z   "kernel_guard_fails_on_foreign_axiom": true,
+2026-10-01T01:55:29.5645255Z   "surface_variants_elaborate_identically": true,
+2026-10-01T01:55:29.5645758Z   "kernel_backtracking_from_immutable_state": true,
+2026-10-01T01:55:29.5646261Z   "kernel_timeout_is_dead_branch_not_hang": true,
+2026-10-01T01:55:29.5646719Z   "kernel_recovers_after_timeout": true,
+2026-10-01T01:55:29.5647171Z   "self_check_pass": true
+2026-10-01T01:55:29.5647470Z }
+2026-10-01T01:55:29.5815692Z > emit tool-use spec
+2026-10-01T01:55:29.5824557Z   D:\a\szl-forge\szl-forge\owner_sim\.venv-ra-v2\Scripts\python.exe D:\a\szl-forge\szl-forge\owner_sim\tools\geh_v8\szl_geh_v8.py --root D:\a\szl-forge\szl-forge\owner_sim --lean-project D:\a\szl-forge\szl-forge\owner_sim\tools\geh_v8\geh-lean --emit-toolspec
+2026-10-01T01:55:29.7063901Z EMITTED=D:\a\szl-forge\szl-forge\owner_sim\chaski_r4\evidence\geh\geh_tooluse_spec.v2.json
+2026-10-01T01:55:29.7214052Z > governed proof -> DSSE receipt
+2026-10-01T01:55:29.7223693Z   D:\a\szl-forge\szl-forge\owner_sim\.venv-ra-v2\Scripts\python.exe D:\a\szl-forge\szl-forge\owner_sim\tools\geh_v8\szl_geh_v8.py --root D:\a\szl-forge\szl-forge\owner_sim --lean-project D:\a\szl-forge\szl-forge\owner_sim\tools\geh_v8\geh-lean --transport repl --run-id owner202610010155p --prove forall (p q : Prop), p -> (p -> q) -> q --script intro p q hp hpq, exact hpq hp
+2026-10-01T01:55:33.5900912Z VERDICT=KERNEL_VERIFIED_AND_SIGNED TRANSPORT=LEAN_REPL GATE=PASS
+2026-10-01T01:55:33.5901592Z RECEIPT=D:\a\szl-forge\szl-forge\owner_sim\chaski_r4\evidence\geh\geh_proof_receipt_owner202610010155p.json
+2026-10-01T01:55:33.5902232Z RECEIPT_SHA256=56994dc2fbc666559c1438175aa300a7bf94dd581fb051afbcdb4464390f6804
+2026-10-01T01:55:33.5902812Z No training, adapter modification, upload, publication, deployment, or Git write occurred.
+2026-10-01T01:55:33.6072956Z > randomized crypto benchmark K=10 on the kernel
+2026-10-01T01:55:33.6083191Z   D:\a\szl-forge\szl-forge\owner_sim\.venv-ra-v2\Scripts\python.exe D:\a\szl-forge\szl-forge\owner_sim\tools\geh_v8\szl_geh_v8.py --root D:\a\szl-forge\szl-forge\owner_sim --lean-project D:\a\szl-forge\szl-forge\owner_sim\tools\geh_v8\geh-lean --transport repl --run-id owner202610010155b --salt 20261001 --bench-crypto 10
+2026-10-01T01:55:39.4123521Z VERDICT=KERNEL_VERIFIED_AND_SIGNED TRANSPORT=LEAN_REPL GATE=PASS
+2026-10-01T01:55:39.4124210Z RECEIPT=D:\a\szl-forge\szl-forge\owner_sim\chaski_r4\evidence\geh\geh_proof_receipt_owner202610010155b.json
+2026-10-01T01:55:39.4124880Z RECEIPT_SHA256=dc03832defebe21f9239c95df49499eed2f2ec5ec62db2d0fe5f9f9e3727defe
+2026-10-01T01:55:39.4125469Z No training, adapter modification, upload, publication, deployment, or Git write occurred.
+2026-10-01T01:55:39.4303631Z > pytest
+2026-10-01T01:55:39.4313168Z   D:\a\szl-forge\szl-forge\owner_sim\.venv-ra-v2\Scripts\python.exe -m pytest -q D:\a\szl-forge\szl-forge\owner_sim\tools\geh_v8\tests
+2026-10-01T01:55:46.5925767Z ...........                                                              [100%]
+2026-10-01T01:55:46.5926365Z 11 passed in 6.75s
+2026-10-01T01:55:46.6224717Z > verify chain (harness)
+2026-10-01T01:55:46.6234282Z   D:\a\szl-forge\szl-forge\owner_sim\.venv-ra-v2\Scripts\python.exe D:\a\szl-forge\szl-forge\owner_sim\tools\geh_v8\szl_geh_v8.py --root D:\a\szl-forge\szl-forge\owner_sim --lean-project D:\a\szl-forge\szl-forge\owner_sim\tools\geh_v8\geh-lean --verify-chain
+2026-10-01T01:55:46.7494380Z {"CHAIN_VERIFIED": {"receipts": 2, "head": "dc03832defebe21f9239c95df49499eed2f2ec5ec62db2d0fe5f9f9e3727defe"}}
+2026-10-01T01:55:46.7655158Z > verify chain (zero-dependency offline verifier)
+2026-10-01T01:55:46.7663678Z   D:\a\szl-forge\szl-forge\owner_sim\.venv-ra-v2\Scripts\python.exe D:\a\szl-forge\szl-forge\owner_sim\tools\geh_v8\szl_geh_verify.py --evidence D:\a\szl-forge\szl-forge\owner_sim\chaski_r4\evidence\geh
+2026-10-01T01:55:46.8339077Z ok   geh_proof_receipt_owner202610010155p.json dsse_signature: signature valid
+2026-10-01T01:55:46.8340125Z ok   geh_proof_receipt_owner202610010155p.json gate_recomputed: claimed=PASS recomputed=PASS 
+2026-10-01T01:55:46.8341402Z ok   geh_proof_receipt_owner202610010155p.json harness_self_check_recorded_pass: self_check_pass in receipt
+2026-10-01T01:55:46.8342815Z ok   geh_proof_receipt_owner202610010155b.json dsse_signature: signature valid
+2026-10-01T01:55:46.8343885Z ok   geh_proof_receipt_owner202610010155b.json gate_recomputed: claimed=PASS recomputed=PASS 
+2026-10-01T01:55:46.8345045Z ok   geh_proof_receipt_owner202610010155b.json harness_self_check_recorded_pass: self_check_pass in receipt
+2026-10-01T01:55:46.8346232Z CHAIN: 2 receipts, head=dc03832defebe21f9239c95df49499eed2f2ec5ec62db2d0fe5f9f9e3727defe, failures=0
+2026-10-01T01:55:46.8430192Z 
+2026-10-01T01:55:46.8438820Z ========================================================================================
+2026-10-01T01:55:46.8447544Z   CHASKI R4 EVIDENCE RECONCILIATION (read-only)
+2026-10-01T01:55:46.8455665Z ========================================================================================
+2026-10-01T01:55:47.6380935Z {
+2026-10-01T01:55:47.6381353Z     "runner_pristine":  true,
+2026-10-01T01:55:47.6381790Z     "r4_on_disk_is":  "NOT FOUND",
+2026-10-01T01:55:47.6383602Z     "r4_weights_match_training_receipt":  false,
+2026-10-01T01:55:47.6384122Z     "runner_sha256":  "f4ca282a29e2fa2f0246ebcb6e3298b7b3f023d686ba883d948459bcaf56dadb",
+2026-10-01T01:55:47.6384935Z     "r4_adapter":  "MISSING D:\\a\\szl-forge\\szl-forge\\owner_sim\\chaski_r4\\chaski-r4-adapter\\adapter_model.safetensors",
+2026-10-01T01:55:47.6385805Z     "r2_adapter":  "MISSING D:\\a\\szl-forge\\szl-forge\\owner_sim\\chaski_r2\\chaski-r2-adapter\\adapter_model.safetensors"
+2026-10-01T01:55:47.6386364Z }
+2026-10-01T01:55:47.6388540Z 
+2026-10-01T01:55:47.6397976Z STATE BLOCK (model-qualification-gates)
+2026-10-01T01:55:47.6419970Z Artifact: chaski-r4 local adapter (NOT FOUND)
+2026-10-01T01:55:47.6420758Z Canonical source: szl-holdings/szl-forge chaski_r4/ @ bcdd1d85 (runner f4ca282a...dadb)
+2026-10-01T01:55:47.6421805Z Training: TRAINED_CHALLENGER (training_receipt.json 2026-09-17T02:36Z, weights f1a2cdc3..., dataset 0fea0d85...)
+2026-10-01T01:55:47.6422682Z Evaluation: MEASURED but SPLIT: receipt A (original adapter, torch 2.11.0+cu128): 0/5, 3/6 | receipt B (retrained adapter, torch 2.10.0+cu130): 5/5, 6/6
+2026-10-01T01:55:47.6423377Z Publication: UNPUBLISHED (chaski-r4 absent from the Hub; correct)
+2026-10-01T01:55:47.6423724Z Promotion: NOT_PROMOTABLE
+2026-10-01T01:55:47.6424350Z Blocking gate: canonical receipt path still holds receipt A; no canonical rerun of the RETRAINED adapter exists in a pinned env with r2 control in the same run
+2026-10-01T01:55:47.6425288Z Next bounded action: -RunCanonicalGate (writes a NEW receipt; promote to canonical only by explicit copy after review)
+2026-10-01T01:55:47.6426065Z Protected state: committed receipts A and B, adapters, gate files, pristine runner; none modified by this runbook
+2026-10-01T01:55:47.6435724Z 
+2026-10-01T01:55:47.6444171Z ========================================================================================
+2026-10-01T01:55:47.6452603Z   RUNBOOK RECEIPT
+2026-10-01T01:55:47.6461060Z ========================================================================================
+2026-10-01T01:55:47.7562715Z RUNBOOK_RECEIPT=D:\a\szl-forge\szl-forge\owner_sim\chaski_r4\evidence\geh_v8_runbook_20261001_015508.json
+2026-10-01T01:55:47.7586250Z RUNBOOK_RECEIPT_SHA256=ebb956ae56391b07d519cba44c94e12da57d38c0dde31042e62df5300ffd9b98
+2026-10-01T01:55:47.7594189Z GEH_CHAIN_HEAD=dc03832defebe21f9239c95df49499eed2f2ec5ec62db2d0fe5f9f9e3727defe
+2026-10-01T01:55:47.7601793Z COMPLETE: all gates observable above. Nothing was promoted.
