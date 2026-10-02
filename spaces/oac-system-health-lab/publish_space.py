@@ -8,6 +8,7 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+import time
 from datetime import datetime, timezone
 
 SPACE_ROOT = Path(__file__).resolve().parent
@@ -132,9 +133,15 @@ def publish(api, revision, report, *, wait_seconds=900):
     # adds a parent-commit CAS and refuses unexpected files instead of deleting.
     sys.path.insert(0, str(REPOSITORY_ROOT / "tools"))
     sys.path.insert(0, str(SPACE_ROOT))
-    from publish_hf_space import build_plan, wait_for_exact_running_space
+    from publish_hf_space import (
+        build_plan,
+        live_origin,
+        wait_for_exact_running_space,
+        wait_for_exact_runtime_source,
+    )
     from huggingface_hub import CommitOperationAdd
     from huggingface_hub.utils import RepositoryNotFoundError
+    from requests import Session
     from verify_release import verify_release
 
     report["source_verification"] = verify_release(SPACE_ROOT, REPOSITORY_ROOT)
@@ -196,8 +203,13 @@ def publish(api, revision, report, *, wait_seconds=900):
     )
     if observed_variable != revision:
         raise PublicationRefused("source variable readback failed")
+    publication_deadline = time.monotonic() + wait_seconds
     live = wait_for_exact_running_space(
-        api, TARGET, commit.oid, wait_seconds=wait_seconds
+        api,
+        TARGET,
+        commit.oid,
+        wait_seconds=wait_seconds,
+        deadline=publication_deadline,
     )
     report["hardware_after"] = verify_hardware(
         api.get_space_runtime(TARGET), running=True
@@ -223,6 +235,28 @@ def publish(api, revision, report, *, wait_seconds=900):
     if api.space_info(TARGET).sha != commit.oid or live.sha != commit.oid:
         raise PublicationRefused("Hub source drift after publication")
     report["files"] = matches
+    session = Session()
+    session.headers.update(
+        {
+            "Accept": "application/json",
+            "Cache-Control": "no-cache, no-store, max-age=0",
+            "User-Agent": "szl-forge-oac-publisher/1",
+        }
+    )
+    try:
+        _, report["runtime_source_wait"] = wait_for_exact_runtime_source(
+            session,
+            live_origin(TARGET),
+            revision,
+            deadline=publication_deadline,
+        )
+    finally:
+        session.close()
+    if api.space_info(TARGET).sha != commit.oid:
+        raise PublicationRefused("Hub source drift during runtime rollout")
+    report["hardware_final"] = verify_hardware(
+        api.get_space_runtime(TARGET), running=True
+    )
     report["complete"] = True
     report["status"] = "PUBLISHED_SOURCE_VERIFIED"
     # Actual GET/POST application checks are a separate mandatory workflow step.
