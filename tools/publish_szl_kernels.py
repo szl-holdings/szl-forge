@@ -186,13 +186,22 @@ KERNEL_BUILDER_FAILURE_CODES = frozenset({
 })
 
 
+KERNEL_HTTP_STATUSES = frozenset({400, 401, 403, 404, 408, 409, 422, 429, 500, 502, 503, 504})
+KERNEL_HTTP_ERROR_CLASSES = frozenset({
+    "HTTP_ERROR", "AUTH_REQUIRED", "FORBIDDEN", "CONFLICT", "RATE_LIMITED", "REQUEST",
+})
+
+
 class KernelBuilderUploadError(PublicationError):
     """A fixed, non-secret diagnosis for the pinned uploader subprocess."""
 
-    def __init__(self, code: str, *, exit_code: int | None = None) -> None:
+    def __init__(self, code: str, *, exit_code: int | None = None,
+                 http_status: int | str = "UNKNOWN", http_error_class: str = "UNKNOWN") -> None:
         super().__init__("kernel-builder upload failed")
         self.code = code
         self.exit_code = exit_code
+        self.http_status = http_status
+        self.http_error_class = http_error_class
 
 
 def kernel_builder_failure_code(stderr: object) -> str:
@@ -215,6 +224,43 @@ def kernel_builder_failure_code(stderr: object) -> str:
                 line.removeprefix("Error: "), "KERNEL_BUILDER_COMMAND_FAILED"
             )
     return "KERNEL_BUILDER_COMMAND_FAILED"
+
+
+def kernel_builder_http_diagnostics(stderr: object) -> tuple[int | str, str]:
+    """Read only the first eyre cause using hf-hub 1.0.0-rc.0 display prefixes.
+
+    No URL, body, headers, or arbitrary message text leaves this parser.
+    Class names do not imply a numeric status that upstream did not print.
+    """
+    unknown = ("UNKNOWN", "UNKNOWN")
+    if type(stderr) is not str or len(stderr) > 65536:
+        return unknown
+    if kernel_builder_failure_code(stderr) == "KERNEL_BUILDER_COMMAND_FAILED":
+        return unknown
+    lines = stderr.splitlines()
+    markers = [i for i, line in enumerate(lines) if line == "Caused by:"]
+    errors = [i for i, line in enumerate(lines) if line.startswith("Error: ")]
+    if (len(markers) != 1 or len(errors) != 1 or markers[0] <= errors[0]
+            or any(line.strip() for line in lines[errors[0] + 1:markers[0]])):
+        return unknown
+    causes = [line.strip() for line in lines[markers[0] + 1:] if line.strip()]
+    if not causes:
+        return unknown
+    cause = causes[0].removeprefix("0: ")
+    match = re.match(r"HTTP error: ([0-9]{3}) ", cause)
+    if match:
+        status = int(match.group(1))
+        return (status, "HTTP_ERROR") if status in KERNEL_HTTP_STATUSES else unknown
+    for prefix, error_class in (
+        ("Authentication required: ", "AUTH_REQUIRED"),
+        ("Forbidden: ", "FORBIDDEN"),
+        ("Conflict: ", "CONFLICT"),
+        ("Rate limited: ", "RATE_LIMITED"),
+        ("HTTP request error: ", "REQUEST"),
+    ):
+        if cause.startswith(prefix):
+            return "UNKNOWN", error_class
+    return unknown
 
 
 def canonical_json(payload: Any) -> str:
@@ -308,6 +354,14 @@ def record_publication_failure(
         result["failure"]["error_code"] = exc.code
         if type(exc.exit_code) is int and -255 <= exc.exit_code <= 255:
             result["failure"]["exit_code"] = exc.exit_code
+        result["failure"]["http_status"] = (
+            exc.http_status if type(exc.http_status) is int
+            and exc.http_status in KERNEL_HTTP_STATUSES else "UNKNOWN"
+        )
+        result["failure"]["http_error_class"] = (
+            exc.http_error_class if type(exc.http_error_class) is str
+            and exc.http_error_class in KERNEL_HTTP_ERROR_CLASSES else "UNKNOWN"
+        )
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(canonical_json(result), encoding="utf-8")
 
@@ -1163,8 +1217,10 @@ def upload_first_class_kernel(staging_root: Path, token: str) -> None:
         except FileNotFoundError:
             raise PublicationError("pinned kernel-builder is not installed") from None
         except subprocess.CalledProcessError as exc:
+            http_status, http_error_class = kernel_builder_http_diagnostics(exc.stderr)
             raise KernelBuilderUploadError(
                 kernel_builder_failure_code(exc.stderr), exit_code=exc.returncode,
+                http_status=http_status, http_error_class=http_error_class,
             ) from None
         except subprocess.TimeoutExpired:
             raise KernelBuilderUploadError("KERNEL_BUILDER_TIMEOUT") from None
