@@ -188,7 +188,9 @@ class SpacePublicationPlanTests(unittest.TestCase):
             )
         self.assertIs(info, observed)
         self.assertEqual(2, api.space_info.call_count)
-        sleep.assert_called_once_with(10)
+        sleep.assert_called_once()
+        self.assertGreater(sleep.call_args.args[0], 0)
+        self.assertLessEqual(sleep.call_args.args[0], 1)
 
     def test_final_volume_reconciliation_restarts_changed_runtime(self) -> None:
         api = Mock()
@@ -203,14 +205,11 @@ class SpacePublicationPlanTests(unittest.TestCase):
                 )
             ),
             SimpleNamespace(runtime=SimpleNamespace(volumes=[])),
+            SimpleNamespace(runtime=SimpleNamespace(
+                stage="BUILDING", raw={"domains": [{"stage": "BUILDING"}]},
+            )),
             info,
             info,
-        ]
-        api.get_space_runtime.side_effect = [
-            SimpleNamespace(
-                stage="BUILDING",
-                raw={"domains": [{"stage": "BUILDING"}]},
-            )
         ]
         with patch("publish_hf_space.time.sleep"):
             evidence, observed = publisher.reconcile_final_space_volumes(
@@ -433,6 +432,172 @@ class FrozenLfsArchivePublicationTests(unittest.TestCase):
                 else:
                     plan = publisher.build_plan(source, "owner/space", REVISION)
                     self.assertEqual({"oid": oid, "size": len(self.ARCHIVE)}, plan["files"]["release.zip"]["lfs_pointer"])
+
+
+class RuntimeSourceRolloutTests(unittest.TestCase):
+    """A saved Space variable can precede the running process's observation."""
+
+    def setUp(self):
+        self.clock = 0.0
+        self.session = Mock()
+        self.origin = "https://owner-space.hf.space"
+
+    def _response(self, revision=REVISION, *, status=200, minted=False, state="OBSERVED"):
+        response = Mock(status_code=status)
+        response.json.return_value = {
+            "build": {"state": state, "revision": revision},
+            "receipt_minted": minted,
+        }
+        return response
+
+    def _sleep(self, seconds):
+        self.clock += seconds
+
+    def _wait(self, deadline=6):
+        with patch("publish_hf_space.time.monotonic", side_effect=lambda: self.clock), \
+                patch("publish_hf_space.time.sleep", side_effect=self._sleep):
+            return publisher.wait_for_exact_runtime_source(
+                self.session, self.origin, REVISION, deadline=deadline,
+            )
+
+    def test_old_running_source_is_waited_for_then_exact_source_is_admitted(self):
+        self.session.get.side_effect = [self._response("b" * 40), self._response()]
+        build, evidence = self._wait()
+        self.assertEqual(REVISION, build["build"]["revision"])
+        self.assertEqual(2, evidence["attempts"])
+        self.assertEqual(["b" * 40, REVISION], evidence["observed_revisions"])
+        self.assertGreater(evidence["elapsed_seconds"], 0)
+        self.assertTrue(all(call.kwargs["allow_redirects"] is False
+                            for call in self.session.get.call_args_list))
+
+    def test_permanently_wrong_source_exhausts_the_shared_budget(self):
+        self.session.get.return_value = self._response("b" * 40)
+        with self.assertRaisesRegex(publisher.PublishError, "runtime source binding.*deadline"):
+            self._wait()
+        self.assertEqual(6, self.clock)
+        self.assertEqual([6, 4, 2], [call.kwargs["timeout"]
+                                    for call in self.session.get.call_args_list])
+
+    def test_invalid_json_and_temporary_restart_http503_can_recover(self):
+        invalid = Mock(status_code=200)
+        invalid.json.side_effect = ValueError("Controlled invalid JSON")
+        self.session.get.side_effect = [invalid, self._response(status=503), self._response()]
+        build, evidence = self._wait()
+        self.assertEqual(REVISION, build["build"]["revision"])
+        self.assertEqual(3, evidence["attempts"])
+
+    def test_unknown_source_or_minted_receipt_is_never_admitted(self):
+        for response in [self._response(state="UNKNOWN"), self._response(minted=True)]:
+            with self.subTest(response=response):
+                self.clock = 0
+                self.session.get.return_value = response
+                with self.assertRaises(publisher.PublishError):
+                    self._wait(deadline=2)
+
+    def test_redirect_is_not_followed_or_admitted_even_with_matching_json(self):
+        self.session.get.return_value = self._response(status=302)
+        with self.assertRaises(publisher.PublishError):
+            self._wait(deadline=2)
+        self.session.get.assert_called_once_with(
+            self.origin + "/api/build-info", timeout=2, allow_redirects=False,
+        )
+
+    def test_spent_hub_budget_does_not_start_another_runtime_wait(self):
+        self.clock = 10
+        with self.assertRaises(publisher.PublishError):
+            self._wait(deadline=6)
+        self.session.get.assert_not_called()
+
+    def test_exact_response_after_the_deadline_is_still_not_admitted(self):
+        def late_response(*args, **kwargs):
+            self.clock = 7
+            return self._response()
+        self.session.get.side_effect = late_response
+        with self.assertRaises(publisher.PublishError):
+            self._wait(deadline=6)
+        self.session.get.assert_called_once()
+
+    def test_nonobject_json_is_waited_for_without_assuming_source_identity(self):
+        invalid = Mock(status_code=200)
+        invalid.json.return_value = ["not a build identity"]
+        self.session.get.side_effect = [invalid, self._response()]
+        build, evidence = self._wait()
+        self.assertEqual(REVISION, build["build"]["revision"])
+        self.assertEqual(2, evidence["attempts"])
+
+    def test_foundation_workflow_watches_the_publisher_and_its_controls(self):
+        import yaml
+        data = yaml.safe_load((publisher.ROOT / ".github/workflows/foundation-runtime.yml")
+                              .read_text(encoding="utf-8"))
+        events = data.get("on", data.get(True))
+        for event in ("pull_request", "push"):
+            with self.subTest(event=event):
+                self.assertIn("tools/publish_hf_space.py", events[event]["paths"])
+                self.assertIn("tools/test_publish_hf_space.py", events[event]["paths"])
+
+    def test_publication_passes_only_the_budget_remaining_after_hub_wait(self):
+        api = Mock()
+        api.list_repo_files.return_value = []
+        api.create_commit.return_value = SimpleNamespace(oid="c" * 40)
+        api.get_space_variables.return_value = {
+            "SZL_GITHUB_SOURCE_REVISION": {"value": REVISION},
+        }
+        plan = {"repo_id": "owner/space", "files": {}, "source_revision": REVISION,
+                "source_revision_variable": "SZL_GITHUB_SOURCE_REVISION"}
+        info = SimpleNamespace(sha="c" * 40, runtime=SimpleNamespace(stage="RUNNING"))
+
+        def hub_wait(*args, **kwargs):
+            self.clock = 4
+            return info
+
+        response = self._response()
+        response.content = b"{}"
+        response.headers = {"content-type": "application/json"}
+        self.session.get.return_value = response
+        with patch("huggingface_hub.HfApi", return_value=api), \
+                patch("publish_hf_space.ensure_space_repository", return_value={}), \
+                patch("publish_hf_space.wait_for_exact_running_space", side_effect=hub_wait), \
+                patch("requests.Session", return_value=self.session), \
+                patch("publish_hf_space.time.monotonic", side_effect=lambda: self.clock):
+            result = publisher.publish_and_verify(
+                plan, token="controlled-publisher-test", source_dir=publisher.ROOT,
+                smoke_paths=["/live"], wait_seconds=6, static=False, clear_space_volumes=False,
+            )
+        self.assertEqual(REVISION, result["live"]["source_revision"])
+        self.assertEqual(2, self.session.get.call_args_list[0].kwargs["timeout"])
+        self.assertTrue(result["runtime_source_wait"]["shared_publication_deadline"])
+
+    def test_volume_reconciliation_cannot_reset_an_already_consumed_budget(self):
+        api = Mock()
+        api.space_info.return_value = SimpleNamespace(
+            sha="c" * 40, runtime=SimpleNamespace(stage="RUNNING", volumes=[]),
+        )
+        def clearing(*args, **kwargs):
+            self.assertEqual(6, kwargs["deadline"])
+            self.clock = 4
+            return {"before_count": 0, "after_count": 0}
+        with patch("publish_hf_space.time.monotonic", side_effect=lambda: self.clock), \
+                patch("publish_hf_space.time.sleep", side_effect=self._sleep), \
+                patch("publish_hf_space.clear_legacy_space_volumes", side_effect=clearing):
+            with self.assertRaises(publisher.PublishError):
+                publisher.reconcile_final_space_volumes(
+                    api, "owner/space", "c" * 40, wait_seconds=100, deadline=6,
+                )
+        self.assertEqual(6, self.clock)
+        self.assertEqual(2, api.space_info.call_args.kwargs["timeout"])
+
+    def test_unknown_domain_stage_does_not_prove_a_restart_transition(self):
+        api = Mock()
+        api.space_info.return_value = SimpleNamespace(
+            runtime=SimpleNamespace(stage="RUNNING", raw={"domains": [{}]}),
+        )
+        with patch("publish_hf_space.time.monotonic", side_effect=lambda: self.clock), \
+                patch("publish_hf_space.time.sleep", side_effect=self._sleep):
+            with self.assertRaises(publisher.PublishError):
+                publisher.wait_for_space_restart_transition(
+                    api, "owner/space", wait_seconds=100, deadline=2,
+                )
+        self.assertEqual(2, self.clock)
 
 
 if __name__ == "__main__":

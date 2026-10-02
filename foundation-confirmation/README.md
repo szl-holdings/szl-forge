@@ -32,6 +32,13 @@ It then witnesses three actual public inference calls and their receipt
 readbacks. Those publication records establish source and runtime consistency;
 they do not turn the failed scientific gate into a pass.
 
+The Hub can report the unchanged Space files as running before a source-variable
+update reaches the process. Publication therefore waits for the declared Git
+revision at the runtime build endpoint, using the remaining original publication
+deadline. Redirects, unknown identities and permanent source mismatches never
+qualify. The receipt records the observed revisions and number of probes; source
+observation still does not establish independent authenticity.
+
 [Current-user Windows startup](operations/README.md) supervises the original
 local workbench while preserving its saved trials. Registration, on-demand
 execution and owned-process restart have separate evidence. Logon startup does

@@ -351,26 +351,38 @@ def ensure_space_repository(
     }
 
 
+def space_info_before_deadline(api: Any, repo_id: str, deadline: float) -> Any:
+    remaining = deadline - time.monotonic()
+    if remaining <= 0:
+        raise PublishError("Space publication deadline exhausted before control-plane read")
+    info = api.space_info(repo_id, files_metadata=False, timeout=min(60, remaining))
+    if time.monotonic() >= deadline:
+        raise PublishError("Space publication deadline exhausted during control-plane read")
+    return info
+
+
 def clear_legacy_space_volumes(
     api: Any,
     repo_id: str,
     *,
     wait_seconds: int = 60,
+    deadline: float | None = None,
 ) -> dict[str, Any]:
     """Remove externally configured volumes and verify the control-plane state."""
 
-    info = api.space_info(repo_id, files_metadata=False)
+    deadline = min(time.monotonic() + wait_seconds,
+                   deadline if deadline is not None else float("inf"))
+    info = space_info_before_deadline(api, repo_id, deadline)
     runtime = getattr(info, "runtime", None)
     before = list(getattr(runtime, "volumes", None) or [])
     if before:
         api.delete_space_volumes(repo_id=repo_id)
-        deadline = time.monotonic() + wait_seconds
         while time.monotonic() < deadline:
-            info = api.space_info(repo_id, files_metadata=False)
+            info = space_info_before_deadline(api, repo_id, deadline)
             runtime = getattr(info, "runtime", None)
             if not list(getattr(runtime, "volumes", None) or []):
                 break
-            time.sleep(2)
+            time.sleep(min(2, max(0, deadline - time.monotonic())))
         else:
             raise PublishError("Space volumes remained configured after removal")
     return {
@@ -390,11 +402,13 @@ def wait_for_exact_running_space(
     *,
     wait_seconds: int,
     require_zero_volumes: bool = False,
+    deadline: float | None = None,
 ) -> Any:
-    deadline = time.monotonic() + wait_seconds
+    deadline = min(time.monotonic() + wait_seconds,
+                   deadline if deadline is not None else float("inf"))
     stable_zero_volume_observations = 0
     while time.monotonic() < deadline:
-        info = api.space_info(repo_id, files_metadata=False)
+        info = space_info_before_deadline(api, repo_id, deadline)
         stage = str(getattr(getattr(info, "runtime", None), "stage", "")).upper()
         if info.sha == expected_sha and stage == "RUNNING":
             if not require_zero_volumes:
@@ -408,7 +422,7 @@ def wait_for_exact_running_space(
                 stable_zero_volume_observations = 0
         else:
             stable_zero_volume_observations = 0
-        time.sleep(10)
+        time.sleep(min(10, max(0, deadline - time.monotonic())))
     requirement = " and zero volumes" if require_zero_volumes else ""
     raise PublishError(
         "Space did not reach RUNNING at the exact published Hugging Face commit"
@@ -421,10 +435,12 @@ def wait_for_space_restart_transition(
     repo_id: str,
     *,
     wait_seconds: int = 120,
+    deadline: float | None = None,
 ) -> dict[str, Any]:
-    deadline = time.monotonic() + wait_seconds
+    deadline = min(time.monotonic() + wait_seconds,
+                   deadline if deadline is not None else float("inf"))
     while time.monotonic() < deadline:
-        runtime = api.get_space_runtime(repo_id=repo_id)
+        runtime = getattr(space_info_before_deadline(api, repo_id, deadline), "runtime", None)
         stage = str(getattr(runtime, "stage", "")).upper()
         domains = (getattr(runtime, "raw", None) or {}).get("domains", [])
         domain_stages = [
@@ -432,13 +448,13 @@ def wait_for_space_restart_transition(
             for domain in domains
             if isinstance(domain, dict)
         ]
-        if stage != "RUNNING" or any(value != "READY" for value in domain_stages):
+        if stage and (stage != "RUNNING" or any(value and value != "READY" for value in domain_stages)):
             return {
                 "observed": True,
                 "runtime_stage": stage or None,
                 "domain_stages": domain_stages,
             }
-        time.sleep(2)
+        time.sleep(min(2, max(0, deadline - time.monotonic())))
     raise PublishError("Space restart was requested but no transition was observed")
 
 
@@ -448,14 +464,18 @@ def reconcile_final_space_volumes(
     expected_sha: str,
     *,
     wait_seconds: int,
+    deadline: float | None = None,
 ) -> tuple[dict[str, Any], Any]:
-    evidence = clear_legacy_space_volumes(api, repo_id)
+    deadline = min(time.monotonic() + wait_seconds,
+                   deadline if deadline is not None else float("inf"))
+    evidence = clear_legacy_space_volumes(api, repo_id, deadline=deadline)
     restart_requested = evidence["before_count"] > 0
     if restart_requested:
         api.restart_space(repo_id=repo_id)
         evidence["restart_transition"] = wait_for_space_restart_transition(
             api,
             repo_id,
+            deadline=deadline,
         )
     info = wait_for_exact_running_space(
         api,
@@ -463,6 +483,7 @@ def reconcile_final_space_volumes(
         expected_sha,
         wait_seconds=wait_seconds,
         require_zero_volumes=True,
+        deadline=deadline,
     )
     evidence["restart_requested"] = restart_requested
     evidence["final_count"] = 0
@@ -508,6 +529,70 @@ def verify_published_bytes(
             "hub_appended_lines": extra,
         }
     return receipt
+
+
+def wait_for_exact_runtime_source(
+    session: Any,
+    origin: str,
+    expected_revision: str,
+    *,
+    deadline: float,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Observe the new process after an asynchronous Space-variable rollout.
+
+    The deadline is established before waiting for Hub RUNNING, so an old
+    healthy process cannot start a second full publication wait budget.
+    """
+    import requests
+
+    started = time.monotonic()
+    attempts = 0
+    observed_revisions: list[str] = []
+    last_status: int | None = None
+    while (remaining := deadline - time.monotonic()) > 0:
+        attempts += 1
+        build = None
+        try:
+            response = session.get(
+                origin + "/api/build-info",
+                timeout=min(90, remaining),
+                allow_redirects=False,
+            )
+            last_status = response.status_code
+            if response.status_code == 200:
+                try:
+                    candidate = response.json()
+                except ValueError:
+                    candidate = None
+                if isinstance(candidate, dict):
+                    build = candidate
+        except requests.RequestException:
+            last_status = None
+
+        identity = build.get("build") if build else None
+        if isinstance(identity, dict):
+            revision = identity.get("revision")
+            if (isinstance(revision, str) and re.fullmatch(r"[0-9a-f]{40}", revision)
+                    and revision not in observed_revisions and len(observed_revisions) < 8):
+                observed_revisions.append(revision)
+            if (identity.get("state") == "OBSERVED"
+                    and revision == expected_revision
+                    and build.get("receipt_minted") is False
+                    and time.monotonic() < deadline):
+                return build, {
+                    "state": "EXACT_SOURCE_OBSERVED",
+                    "attempts": attempts,
+                    "observed_revisions": observed_revisions,
+                    "elapsed_seconds": round(time.monotonic() - started, 3),
+                    "shared_publication_deadline": True,
+                    "redirects_followed": False,
+                }
+        time.sleep(min(2, max(0, deadline - time.monotonic())))
+    raise PublishError(
+        "runtime source binding deadline exhausted: "
+        f"expected={expected_revision}, observed={observed_revisions!r}, "
+        f"last_http_status={last_status!r}, attempts={attempts}"
+    )
 
 
 def publish_and_verify(
@@ -583,11 +668,13 @@ def publish_and_verify(
                 f"Space source variable mismatch: {observed_variable!r}"
             )
 
+    publication_deadline = time.monotonic() + wait_seconds
     info = wait_for_exact_running_space(
         api,
         repo_id,
         commit.oid,
         wait_seconds=wait_seconds,
+        deadline=publication_deadline,
     )
 
     if clear_space_volumes:
@@ -596,6 +683,7 @@ def publish_and_verify(
             repo_id,
             commit.oid,
             wait_seconds=wait_seconds,
+            deadline=publication_deadline,
         )
         plan["volume_reconciliation"]["post_publish"] = post_publish
         plan["volume_reconciliation"]["final_count"] = 0
@@ -631,6 +719,14 @@ def publish_and_verify(
             "User-Agent": "szl-forge-space-publisher/1",
         }
     )
+    build = None
+    if not static:
+        build, plan["runtime_source_wait"] = wait_for_exact_runtime_source(
+            session,
+            origin,
+            plan["source_revision"],
+            deadline=publication_deadline,
+        )
     for path in smoke_paths:
         response = session.get(origin + path, timeout=90)
         probes[path] = {
@@ -640,15 +736,6 @@ def publish_and_verify(
         }
         if response.status_code != 200 or not response.content:
             raise PublishError(f"live smoke probe failed: {path}")
-    build = None
-    if not static:
-        build = session.get(origin + "/api/build-info", timeout=90).json()
-        if (
-            build.get("build", {}).get("state") != "OBSERVED"
-            or build.get("build", {}).get("revision") != plan["source_revision"]
-            or build.get("receipt_minted") is not False
-        ):
-            raise PublishError(f"runtime source binding mismatch: {build!r}")
     plan["live"] = {
         "origin": origin,
         "hf_commit": info.sha,

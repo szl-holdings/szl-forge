@@ -42,7 +42,7 @@ jobs:
           "cryptography==49.0.0"
           "fastapi==0.139.0"
           "httpx==0.28.1"
-          "huggingface-hub==1.23.0"
+          "huggingface-hub==1.23.0" "requests==2.32.5"
           "jsonschema==4.26.0"
           "pydantic==2.13.4"
           "safetensors==0.8.0"
