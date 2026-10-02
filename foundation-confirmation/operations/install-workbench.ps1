@@ -54,12 +54,15 @@ try {
         state = 'PREPARED'; scripts = $scriptHashes; source_admission = $admitted.Verification;
         archive_sha256 = '869e318dd5f328205dd181ee836ef267bd2ae278f6430a9e8ddc661fbc689d03';
         action = @{ executable = $paths.Shell; arguments = $arguments; working_directory = $admitted.LabRoot };
-        startup_scope = 'CURRENT_USER_LOGON'; machine_reboot_start_claimed = $false; on_demand_execution_verified = $false }
+        startup_scope = 'CURRENT_USER_LOGON'; machine_reboot_start_claimed = $false; on_demand_execution_verified = $false;
+        recovery_mechanism = 'BOUNDED_SUPERVISOR_RETRY'; retry_limit = 2; retry_interval_seconds = 60; scheduler_restart_count = 0 }
     Write-FoundationJson $paths.Receipt $receipt
     $action = New-ScheduledTaskAction -Execute $paths.Shell -Argument $arguments -WorkingDirectory $admitted.LabRoot
     $trigger = New-ScheduledTaskTrigger -AtLogOn -User $paths.Sid
     $principal = New-ScheduledTaskPrincipal -UserId $paths.Sid -LogonType Interactive -RunLevel Limited
-    $settings = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew -RestartCount 2 -RestartInterval (New-TimeSpan -Minutes 1) -ExecutionTimeLimit ([TimeSpan]::Zero) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+    # The supervisor owns the bounded recovery budget. Scheduler retries must
+    # remain disabled so the two independent mechanisms cannot multiply retries.
+    $settings = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew -ExecutionTimeLimit ([TimeSpan]::Zero) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
     # No -Force: an intervening task-name conflict is a failure, never a takeover.
     Register-ScheduledTask -TaskName $paths.Task -TaskPath '\' -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Description 'Verified local SZL Foundation Confirmation research workbench; current-user logon only.' | Out-Null
     $registered = Get-ScheduledTask -TaskName $paths.Task -TaskPath '\' -ErrorAction Stop
