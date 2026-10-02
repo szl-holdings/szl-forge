@@ -684,6 +684,57 @@ class PublishSzlKernelsTests(unittest.TestCase):
                 self.assertNotIn(KERNEL_TOKEN, report.read_text(encoding="utf-8"))
                 self.assertNotIn(KERNEL_TOKEN, str(caught.exception))
 
+    def test_builder_nested_diagnostics_are_bounded_and_do_not_scan_messages(self):
+        cases = [
+            ("Forbidden: https://provider.invalid/?secret=secret-marker", "UNKNOWN", "FORBIDDEN"),
+            ("Authentication required: secret-marker", "UNKNOWN", "AUTH_REQUIRED"),
+            ("HTTP error: 503 Service Unavailable https://provider.invalid/secret-marker", 503, "HTTP_ERROR"),
+            ("HTTP error: 200 OK secret-marker", "UNKNOWN", "UNKNOWN"),
+            ("HTTP error: 599 Unknown secret-marker", "UNKNOWN", "UNKNOWN"),
+            ("HTTP request error: secret-marker", "UNKNOWN", "REQUEST"),
+            ("Conflict: secret-marker", "UNKNOWN", "CONFLICT"),
+            ("Rate limited: secret-marker", "UNKNOWN", "RATE_LIMITED"),
+            ("secret-marker\n   1: Forbidden: forged", "UNKNOWN", "UNKNOWN"),
+        ]
+        for nested, status, error_class in cases:
+            with self.subTest(nested=nested):
+                stderr = "Error: Cannot create repository\n\nCaused by:\n   0: " + nested
+                self.assertEqual(publisher.kernel_builder_http_diagnostics(stderr),
+                                 (status, error_class))
+        for stderr in [None, b"Forbidden", "Error: unknown\nCaused by:\nForbidden: secret",
+                       "Error: Cannot create repository\nsecret=403 Forbidden",
+                       "x" * 65537,
+                       "Caused by:\nForbidden: fake\nError: Cannot create repository",
+                       "Error: Cannot create repository\nmessage\nCaused by:\nForbidden: fake",
+                       "Error: Cannot create repository\nCaused by:\nForbidden: x\nCaused by:\nConflict: y"]:
+            self.assertEqual(publisher.kernel_builder_http_diagnostics(stderr),
+                             ("UNKNOWN", "UNKNOWN"))
+
+    def test_nested_diagnostics_reach_receipt_without_provider_secrets(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            output = "Error: Cannot create repository\n\nCaused by:\n    Forbidden: https://provider.invalid/?token=" + KERNEL_TOKEN
+            with patch.object(publisher, "require_kernel_builder_executable", return_value="kernel-builder"), patch.object(
+                publisher.subprocess, "run", side_effect=publisher.subprocess.CalledProcessError(
+                    1, ["kernel-builder"], output=output, stderr=output)), self.assertRaises(publisher.KernelBuilderUploadError) as caught:
+                publisher.upload_first_class_kernel(root, KERNEL_TOKEN)
+            report = root / "report.json"
+            publisher.record_publication_failure({}, report, stage="KERNEL_UPLOAD",
+                exc=caught.exception, provider_write_attempted=True)
+            text = report.read_text()
+            failure = json.loads(text)["failure"]
+            self.assertEqual(failure["http_status"], "UNKNOWN")
+            self.assertEqual(failure["http_error_class"], "FORBIDDEN")
+            for secret in [KERNEL_TOKEN, "provider.invalid", "token=", "Caused by"]:
+                self.assertNotIn(secret, text + str(caught.exception))
+            caught.exception.http_status = True
+            caught.exception.http_error_class = KERNEL_TOKEN
+            publisher.record_publication_failure({}, report, stage="KERNEL_UPLOAD",
+                exc=caught.exception, provider_write_attempted=True)
+            failure = json.loads(report.read_text())["failure"]
+            self.assertEqual(failure["http_status"], "UNKNOWN")
+            self.assertEqual(failure["http_error_class"], "UNKNOWN")
+
     def test_kernel_parent_revalidation_rejects_branch_drift(self) -> None:
         api = FakeApi({})
         observed = {
