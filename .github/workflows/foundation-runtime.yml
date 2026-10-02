@@ -2,10 +2,10 @@ name: Foundation operational workbench
 
 on:
   pull_request:
-    paths: ['spaces/szl-foundation-confirmation/**', 'foundation-confirmation/operations/**', 'foundation-confirmation/verify_public_runtime.py', 'tests/test_foundation_public_runtime.py', 'tests/test_hf_write_locks.py', 'scripts/lfs_archive_binding.py', 'tests/test_lfs_archive_binding.py', '.github/workflows/foundation-runtime.yml']
+    paths: ['spaces/szl-foundation-confirmation/**', 'foundation-confirmation/operations/**', 'foundation-confirmation/verify_public_runtime.py', 'tests/test_foundation_public_runtime.py', 'tests/test_hf_write_locks.py', 'scripts/lfs_archive_binding.py', 'tests/test_lfs_archive_binding.py', 'tools/publish_hf_space.py', 'tools/test_publish_hf_space.py', '.github/workflows/foundation-runtime.yml']
   push:
     branches: [main]
-    paths: ['spaces/szl-foundation-confirmation/**', 'foundation-confirmation/operations/**', 'foundation-confirmation/verify_public_runtime.py', 'tests/test_foundation_public_runtime.py', 'tests/test_hf_write_locks.py', 'scripts/lfs_archive_binding.py', 'tests/test_lfs_archive_binding.py', '.github/workflows/foundation-runtime.yml']
+    paths: ['spaces/szl-foundation-confirmation/**', 'foundation-confirmation/operations/**', 'foundation-confirmation/verify_public_runtime.py', 'tests/test_foundation_public_runtime.py', 'tests/test_hf_write_locks.py', 'scripts/lfs_archive_binding.py', 'tests/test_lfs_archive_binding.py', 'tools/publish_hf_space.py', 'tools/test_publish_hf_space.py', '.github/workflows/foundation-runtime.yml']
   merge_group:
     types: [checks_requested]
   workflow_dispatch: {}

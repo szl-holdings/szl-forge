@@ -510,6 +510,70 @@ def verify_published_bytes(
     return receipt
 
 
+def wait_for_exact_runtime_source(
+    session: Any,
+    origin: str,
+    expected_revision: str,
+    *,
+    deadline: float,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Observe the new process after an asynchronous Space-variable rollout.
+
+    The deadline is established before waiting for Hub RUNNING, so an old
+    healthy process cannot start a second full publication wait budget.
+    """
+    import requests
+
+    started = time.monotonic()
+    attempts = 0
+    observed_revisions: list[str] = []
+    last_status: int | None = None
+    while (remaining := deadline - time.monotonic()) > 0:
+        attempts += 1
+        build = None
+        try:
+            response = session.get(
+                origin + "/api/build-info",
+                timeout=min(90, remaining),
+                allow_redirects=False,
+            )
+            last_status = response.status_code
+            if response.status_code == 200:
+                try:
+                    candidate = response.json()
+                except ValueError:
+                    candidate = None
+                if isinstance(candidate, dict):
+                    build = candidate
+        except requests.RequestException:
+            last_status = None
+
+        identity = build.get("build") if build else None
+        if isinstance(identity, dict):
+            revision = identity.get("revision")
+            if (isinstance(revision, str) and re.fullmatch(r"[0-9a-f]{40}", revision)
+                    and revision not in observed_revisions and len(observed_revisions) < 8):
+                observed_revisions.append(revision)
+            if (identity.get("state") == "OBSERVED"
+                    and revision == expected_revision
+                    and build.get("receipt_minted") is False
+                    and time.monotonic() < deadline):
+                return build, {
+                    "state": "EXACT_SOURCE_OBSERVED",
+                    "attempts": attempts,
+                    "observed_revisions": observed_revisions,
+                    "elapsed_seconds": round(time.monotonic() - started, 3),
+                    "shared_publication_deadline": True,
+                    "redirects_followed": False,
+                }
+        time.sleep(min(2, max(0, deadline - time.monotonic())))
+    raise PublishError(
+        "runtime source binding deadline exhausted: "
+        f"expected={expected_revision}, observed={observed_revisions!r}, "
+        f"last_http_status={last_status!r}, attempts={attempts}"
+    )
+
+
 def publish_and_verify(
     plan: dict[str, Any],
     *,
@@ -583,6 +647,7 @@ def publish_and_verify(
                 f"Space source variable mismatch: {observed_variable!r}"
             )
 
+    publication_deadline = time.monotonic() + wait_seconds
     info = wait_for_exact_running_space(
         api,
         repo_id,
@@ -631,6 +696,14 @@ def publish_and_verify(
             "User-Agent": "szl-forge-space-publisher/1",
         }
     )
+    build = None
+    if not static:
+        build, plan["runtime_source_wait"] = wait_for_exact_runtime_source(
+            session,
+            origin,
+            plan["source_revision"],
+            deadline=publication_deadline,
+        )
     for path in smoke_paths:
         response = session.get(origin + path, timeout=90)
         probes[path] = {
@@ -640,15 +713,6 @@ def publish_and_verify(
         }
         if response.status_code != 200 or not response.content:
             raise PublishError(f"live smoke probe failed: {path}")
-    build = None
-    if not static:
-        build = session.get(origin + "/api/build-info", timeout=90).json()
-        if (
-            build.get("build", {}).get("state") != "OBSERVED"
-            or build.get("build", {}).get("revision") != plan["source_revision"]
-            or build.get("receipt_minted") is not False
-        ):
-            raise PublishError(f"runtime source binding mismatch: {build!r}")
     plan["live"] = {
         "origin": origin,
         "hf_commit": info.sha,
