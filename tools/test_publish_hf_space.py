@@ -188,7 +188,9 @@ class SpacePublicationPlanTests(unittest.TestCase):
             )
         self.assertIs(info, observed)
         self.assertEqual(2, api.space_info.call_count)
-        sleep.assert_called_once_with(10)
+        sleep.assert_called_once()
+        self.assertGreater(sleep.call_args.args[0], 0)
+        self.assertLessEqual(sleep.call_args.args[0], 1)
 
     def test_final_volume_reconciliation_restarts_changed_runtime(self) -> None:
         api = Mock()
@@ -203,14 +205,11 @@ class SpacePublicationPlanTests(unittest.TestCase):
                 )
             ),
             SimpleNamespace(runtime=SimpleNamespace(volumes=[])),
+            SimpleNamespace(runtime=SimpleNamespace(
+                stage="BUILDING", raw={"domains": [{"stage": "BUILDING"}]},
+            )),
             info,
             info,
-        ]
-        api.get_space_runtime.side_effect = [
-            SimpleNamespace(
-                stage="BUILDING",
-                raw={"domains": [{"stage": "BUILDING"}]},
-            )
         ]
         with patch("publish_hf_space.time.sleep"):
             evidence, observed = publisher.reconcile_final_space_volumes(
@@ -567,6 +566,38 @@ class RuntimeSourceRolloutTests(unittest.TestCase):
         self.assertEqual(REVISION, result["live"]["source_revision"])
         self.assertEqual(2, self.session.get.call_args_list[0].kwargs["timeout"])
         self.assertTrue(result["runtime_source_wait"]["shared_publication_deadline"])
+
+    def test_volume_reconciliation_cannot_reset_an_already_consumed_budget(self):
+        api = Mock()
+        api.space_info.return_value = SimpleNamespace(
+            sha="c" * 40, runtime=SimpleNamespace(stage="RUNNING", volumes=[]),
+        )
+        def clearing(*args, **kwargs):
+            self.assertEqual(6, kwargs["deadline"])
+            self.clock = 4
+            return {"before_count": 0, "after_count": 0}
+        with patch("publish_hf_space.time.monotonic", side_effect=lambda: self.clock), \
+                patch("publish_hf_space.time.sleep", side_effect=self._sleep), \
+                patch("publish_hf_space.clear_legacy_space_volumes", side_effect=clearing):
+            with self.assertRaises(publisher.PublishError):
+                publisher.reconcile_final_space_volumes(
+                    api, "owner/space", "c" * 40, wait_seconds=100, deadline=6,
+                )
+        self.assertEqual(6, self.clock)
+        self.assertEqual(2, api.space_info.call_args.kwargs["timeout"])
+
+    def test_unknown_domain_stage_does_not_prove_a_restart_transition(self):
+        api = Mock()
+        api.space_info.return_value = SimpleNamespace(
+            runtime=SimpleNamespace(stage="RUNNING", raw={"domains": [{}]}),
+        )
+        with patch("publish_hf_space.time.monotonic", side_effect=lambda: self.clock), \
+                patch("publish_hf_space.time.sleep", side_effect=self._sleep):
+            with self.assertRaises(publisher.PublishError):
+                publisher.wait_for_space_restart_transition(
+                    api, "owner/space", wait_seconds=100, deadline=2,
+                )
+        self.assertEqual(2, self.clock)
 
 
 if __name__ == "__main__":
