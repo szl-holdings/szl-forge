@@ -71,6 +71,8 @@ is labeled `deterministic_operational_evidence_not_clinical_confidence`. This is
 an allowlisted local observability log, not patient data, clinical evidence, a
 training corpus, or proof of model performance. Do not fine-tune a model on it
 and do not put PHI into it.
+Only literal boolean success and ledger-correlation signals earn their score
+contributions, and a nonzero command exit cannot earn the success contribution.
 
 The separately trained `OperationalHealthKernel` accepts exactly eight bounded
 transport/configuration features and returns an operator-attention advisory. It
