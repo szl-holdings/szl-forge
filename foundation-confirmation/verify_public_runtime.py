@@ -29,7 +29,33 @@ def fetch(origin, path, payload=None):
     if payload is not None:
         headers.update({"Origin": "https://" + HOST, "Content-Type": "application/json"})
     request = Request(origin + path, data=canonical(payload) if payload is not None else None, headers=headers)
-    with urlopen(request, timeout=20) as response:
+    try:
+        response = urlopen(request, timeout=20)
+    except HTTPError as exc:
+        # Preserve an actionable bounded witness without retrying failed trials
+        # or retaining arbitrary response headers (which can contain credentials).
+        try:
+            body = exc.read(4097)
+            captured, truncated = body[:4096], len(body) > 4096
+            body_unavailable = False
+        except (OSError, ValueError):
+            captured, truncated, body_unavailable = b"", False, True
+        finally:
+            exc.close()
+        def header(name):
+            value = exc.headers.get(name)
+            return value[:256] if value is not None else None
+        exc.runtime_http_evidence = {
+            "method": "POST" if payload is not None else "GET", "endpoint": path,
+            "status": exc.code, "content_type": header("Content-Type"),
+            "server": header("Server"), "connection": header("Connection"),
+            "captured_body_bytes": len(captured), "body_truncated": truncated,
+            "body_unavailable": body_unavailable,
+            "captured_body_sha256": hashlib.sha256(captured).hexdigest() if not body_unavailable else None,
+            "body_utf8": captured.decode("utf-8", "replace") if not body_unavailable else None,
+        }
+        raise
+    with response:
         if response.geturl() != origin + path:
             raise ValueError("Runtime evidence redirected outside the declared exact endpoint")
         raw = response.read(131073)
@@ -134,9 +160,14 @@ def main():
         witness(args.origin.rstrip("/"), args.expected_source, evidence)
     except Exception as exc:
         evidence["error"] = f"{type(exc).__name__}: {exc}"
+        if isinstance(exc, HTTPError) and hasattr(exc, "runtime_http_evidence"):
+            evidence["http_failure"] = exc.runtime_http_evidence
     args.report.parent.mkdir(parents=True, exist_ok=True)
     args.report.write_text(json.dumps(evidence, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    print(json.dumps({"ok": evidence["ok"], "trials": len(evidence.get("trials", [])), "error": evidence.get("error")}))
+    summary = {"ok": evidence["ok"], "trials": len(evidence.get("trials", [])), "error": evidence.get("error")}
+    if "http_failure" in evidence:
+        summary["http_failure"] = evidence["http_failure"]
+    print(json.dumps(summary))
     return 0 if evidence["ok"] else 1
 
 
