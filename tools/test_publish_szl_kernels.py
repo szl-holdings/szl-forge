@@ -636,6 +636,54 @@ class PublishSzlKernelsTests(unittest.TestCase):
         ), self.assertRaisesRegex(publisher.PublicationError, "^kernel-builder upload failed$"):
             publisher.upload_first_class_kernel(Path(temporary), KERNEL_TOKEN)
 
+    def test_uploader_failure_receipt_classifies_only_fixed_builder_context(self) -> None:
+        cases = (
+            ("Error: Cannot create repository", "KERNEL_BUILDER_REPOSITORY_CREATE_FAILED"),
+            (
+                "Error: You do not have permission to publish the kernel "
+                "`SZLHOLDINGS/szl-kernels`.",
+                "KERNEL_BUILDER_PUBLISHING_DENIED",
+            ),
+            ("Error: Cannot list repository refs", "KERNEL_BUILDER_REFS_READ_FAILED"),
+            ("Error: Cannot create commit on branch `v1`", "KERNEL_BUILDER_COMMIT_FAILED"),
+            ("Error: unexpected provider detail", "KERNEL_BUILDER_COMMAND_FAILED"),
+            (
+                "Error: transport rejected\n0: Cannot create repository",
+                "KERNEL_BUILDER_COMMAND_FAILED",
+            ),
+        )
+        for stderr, code in cases:
+            with self.subTest(code=code), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                provider_output = f"{stderr}\nsecret={KERNEL_TOKEN}\n"
+                with patch.object(
+                    publisher, "require_kernel_builder_executable",
+                    return_value="kernel-builder",
+                ), patch.object(
+                    publisher.subprocess, "run",
+                    side_effect=publisher.subprocess.CalledProcessError(
+                        1, ["kernel-builder"], output=provider_output,
+                        stderr=provider_output,
+                    ),
+                ), self.assertRaisesRegex(
+                    publisher.PublicationError, "^kernel-builder upload failed$"
+                ) as caught:
+                    publisher.upload_first_class_kernel(root, KERNEL_TOKEN)
+
+                report = root / "report.json"
+                publisher.record_publication_failure(
+                    {}, report, stage="KERNEL_UPLOAD", exc=caught.exception,
+                    provider_write_attempted=True,
+                )
+                failure = json.loads(report.read_text(encoding="utf-8"))["failure"]
+                self.assertEqual(failure["stage"], "KERNEL_UPLOAD")
+                self.assertEqual(failure["error_type"], "KernelBuilderUploadError")
+                self.assertEqual(failure["error_code"], code)
+                self.assertEqual(failure["exit_code"], 1)
+                self.assertIs(failure["provider_write_attempted"], True)
+                self.assertNotIn(KERNEL_TOKEN, report.read_text(encoding="utf-8"))
+                self.assertNotIn(KERNEL_TOKEN, str(caught.exception))
+
     def test_kernel_parent_revalidation_rejects_branch_drift(self) -> None:
         api = FakeApi({})
         observed = {
