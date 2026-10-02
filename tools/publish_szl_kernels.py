@@ -175,6 +175,48 @@ class PublicationError(RuntimeError):
     """Raised when publication evidence is insufficient."""
 
 
+KERNEL_BUILDER_FAILURE_CODES = frozenset({
+    "KERNEL_BUILDER_COMMAND_FAILED",
+    "KERNEL_BUILDER_REPOSITORY_CREATE_FAILED",
+    "KERNEL_BUILDER_PUBLISHING_DENIED",
+    "KERNEL_BUILDER_REFS_READ_FAILED",
+    "KERNEL_BUILDER_COMMIT_FAILED",
+    "KERNEL_BUILDER_TIMEOUT",
+    "KERNEL_BUILDER_PROCESS_ERROR",
+})
+
+
+class KernelBuilderUploadError(PublicationError):
+    """A fixed, non-secret diagnosis for the pinned uploader subprocess."""
+
+    def __init__(self, code: str, *, exit_code: int | None = None) -> None:
+        super().__init__("kernel-builder upload failed")
+        self.code = code
+        self.exit_code = exit_code
+
+
+def kernel_builder_failure_code(stderr: object) -> str:
+    """Classify only fixed upstream contexts; never retain subprocess output."""
+    if type(stderr) is not str:
+        return "KERNEL_BUILDER_COMMAND_FAILED"
+    contexts = {
+        "Cannot create repository": "KERNEL_BUILDER_REPOSITORY_CREATE_FAILED",
+        (
+            "You do not have permission to publish the kernel "
+            f"`{EXPECTED_REPO_ID}`."
+        ): "KERNEL_BUILDER_PUBLISHING_DENIED",
+        "Cannot list repository refs": "KERNEL_BUILDER_REFS_READ_FAILED",
+        "Cannot create commit on branch `main`": "KERNEL_BUILDER_COMMIT_FAILED",
+        "Cannot create commit on branch `v1`": "KERNEL_BUILDER_COMMIT_FAILED",
+    }
+    for line in stderr[-65536:].splitlines():
+        if line.startswith("Error: "):
+            return contexts.get(
+                line.removeprefix("Error: "), "KERNEL_BUILDER_COMMAND_FAILED"
+            )
+    return "KERNEL_BUILDER_COMMAND_FAILED"
+
+
 def canonical_json(payload: Any) -> str:
     return json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
 
@@ -257,6 +299,15 @@ def record_publication_failure(
         "error_type": bounded_error_type(exc),
         "provider_write_attempted": provider_write_attempted,
     }
+    if (
+        stage == "KERNEL_UPLOAD"
+        and type(exc) is KernelBuilderUploadError
+        and type(exc.code) is str
+        and exc.code in KERNEL_BUILDER_FAILURE_CODES
+    ):
+        result["failure"]["error_code"] = exc.code
+        if type(exc.exit_code) is int and -255 <= exc.exit_code <= 255:
+            result["failure"]["exit_code"] = exc.exit_code
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(canonical_json(result), encoding="utf-8")
 
@@ -1111,8 +1162,14 @@ def upload_first_class_kernel(staging_root: Path, token: str) -> None:
             )
         except FileNotFoundError:
             raise PublicationError("pinned kernel-builder is not installed") from None
+        except subprocess.CalledProcessError as exc:
+            raise KernelBuilderUploadError(
+                kernel_builder_failure_code(exc.stderr), exit_code=exc.returncode,
+            ) from None
+        except subprocess.TimeoutExpired:
+            raise KernelBuilderUploadError("KERNEL_BUILDER_TIMEOUT") from None
         except (OSError, subprocess.SubprocessError):
-            raise PublicationError("kernel-builder upload failed") from None
+            raise KernelBuilderUploadError("KERNEL_BUILDER_PROCESS_ERROR") from None
 
     try:
         outcome = json.loads(output_path.read_text(encoding="utf-8"))
