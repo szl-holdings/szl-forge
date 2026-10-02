@@ -41,6 +41,15 @@ try {
         if ($parseErrors.Count -gt 0) { throw ($parseErrors | Out-String) }
     }
     $checks.Add('ALL_POWERSHELL_SOURCES_PARSE')
+    $sharedPaths = Get-FoundationPaths
+    $expectedOperations = Join-Path $sharedPaths.Profile 'Documents\SZL\FoundationConfirmation'
+    if ($sharedPaths.Operations -cne $expectedOperations -or
+        $sharedPaths.Receipt -cne (Join-Path $expectedOperations 'installation.json') -or
+        $sharedPaths.Supervisor -cne (Join-Path $expectedOperations 'supervise-workbench.ps1')) {
+        throw 'Managed startup files must use the shared current-profile Documents directory.'
+    }
+    Assert-FoundationPath $sharedPaths.Operations -Directory -MayNotExist | Out-Null
+    $checks.Add('MANAGED_STARTUP_USES_SHARED_PROFILE_DOCUMENTS_OUTSIDE_APPDATA')
     $admitted = Test-FoundationRelease $LabRoot $ArchivePath
     $checks.Add('PINNED_ARCHIVE_AND_COMPLETE_70_FILE_RELEASE_VERIFIED')
     Confirm-Rejection 'NETWORK_PATH_REJECTED' { Assert-FoundationPath '\\localhost\C$\Users' -Directory } 'absolute local filesystem'
