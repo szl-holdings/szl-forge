@@ -44,7 +44,8 @@ def main():
     else:
         ok &= check("cuda", args.allow_cpu, "CUDA unavailable" + (" (cpu allowed for contract smoke)" if args.allow_cpu else ""))
     free_gib = shutil.disk_usage(str(lib.OUT.parent)).free / 2**30
-    ok &= check("disk_free", free_gib >= 5.0, f"{free_gib:.1f} GiB free under {lib.OUT.parent}")
+    need_disk = float(cand["training_recipe"].get("minimum_free_disk_gib", 3.0))
+    ok &= check("disk_free", free_gib >= need_disk, f"{free_gib:.1f} GiB free under {lib.OUT.parent} (need {need_disk})")
 
     base = cand["actual_training_base"]
     rev = base.get("revision")

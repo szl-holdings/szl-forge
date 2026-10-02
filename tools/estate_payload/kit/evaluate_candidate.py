@@ -79,7 +79,7 @@ def gate(gid, status, value, threshold, detail=""):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--split", default="dev", choices=["dev", "test"])
+    ap.add_argument("--split", default="auto", choices=["auto", "dev", "test"], help="auto = dev when bound, else test")
     ap.add_argument("--adapter", default=None, help="adapter dir (default out/adapter); 'none' evaluates the bare base")
     ap.add_argument("--comparator", default=None, help="predecessor adapter dir for the strict-improvement gate")
     ap.add_argument("--allow-cpu", action="store_true")
@@ -90,6 +90,8 @@ def main():
     protocol = cand["evaluation_protocol"]
     leak = lib.require_report("leakage_receipt.json")
     rows, _, _ = lib.load_splits(cand)
+    if args.split == "auto":
+        args.split = "dev" if rows["dev"] else "test"
     held = rows[args.split]
     adv = rows["adversarial"]
     if args.limit:
