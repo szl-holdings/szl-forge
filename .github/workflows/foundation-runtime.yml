@@ -100,7 +100,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install exact publication clients
-        run: python -m pip install --disable-pip-version-check 'huggingface-hub==1.23.0' 'requests==2.32.5'
+        run: python -m pip install --disable-pip-version-check 'huggingface-hub==1.23.0' 'requests==2.33.0'
       - name: Validate existing org publisher access
         env:
           HF_ORG_TOKEN_CANDIDATE: ${{ secrets.HF_ORG_TOKEN }}
