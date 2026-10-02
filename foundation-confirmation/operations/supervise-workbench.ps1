@@ -16,7 +16,10 @@ function Assert-FoundationWindows {
 function Get-FoundationPaths {
     Assert-FoundationWindows
     $profileRoot = [IO.Path]::GetFullPath([Environment]::GetFolderPath('UserProfile')).TrimEnd('\')
-    $operations = Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'SZL\FoundationConfirmation'
+    # Packaged desktop applications may see a virtualized LocalApplicationData
+    # directory that the native Task Scheduler process cannot see. The explicit
+    # profile Documents path has one shared filesystem view for both processes.
+    $operations = Join-Path $profileRoot 'Documents\SZL\FoundationConfirmation'
     return @{
         Profile = $profileRoot
         Operations = [IO.Path]::GetFullPath($operations)

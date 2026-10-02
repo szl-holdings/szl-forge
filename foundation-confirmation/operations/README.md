@@ -30,10 +30,20 @@ records. A caller-supplied manifest cannot authorize changed executable source.
 The frozen directory and its trials are preserved.
 
 Managed copies and installation evidence live in
-`%LOCALAPPDATA%\SZL\FoundationConfirmation`, outside the release. The task invokes
+`%USERPROFILE%\Documents\SZL\FoundationConfirmation`, outside the release. The
+explicit profile path is shared with native Task Scheduler; a packaged desktop
+application can see a virtualized AppData directory that native tasks cannot
+read. The path must pass the same profile, system-volume and reparse-point
+checks as the frozen lab. The task invokes
 that installed supervisor. Its action, arguments, current-user SID, trigger,
 privileges, retry settings, and script hashes must match the owned receipt.
 Existing conflicting tasks, receipts, or managed files are refused.
+
+If an earlier installation used `%LOCALAPPDATA%\SZL\FoundationConfirmation`,
+retain that installation evidence and verify its exact owned task with the
+earlier scripts before removing that task. The new installer never takes over
+an existing task or treats the earlier receipt as proof for the new directory.
+The frozen lab and its trial receipts remain in place during this migration.
 
 Before installation, run the validation-only helper with the same paths:
 
@@ -79,8 +89,8 @@ an unrelated process or use port ownership alone as authorization to stop it.
 ## Remove startup
 
 ```powershell
-& "$env:LOCALAPPDATA\SZL\FoundationConfirmation\uninstall-workbench.ps1" -ValidateOnly
-& "$env:LOCALAPPDATA\SZL\FoundationConfirmation\uninstall-workbench.ps1"
+& "$env:USERPROFILE\Documents\SZL\FoundationConfirmation\uninstall-workbench.ps1" -ValidateOnly
+& "$env:USERPROFILE\Documents\SZL\FoundationConfirmation\uninstall-workbench.ps1"
 ```
 
 Uninstall verifies the current-user receipt and exact task definition before
