@@ -41,6 +41,15 @@ try {
         if ($parseErrors.Count -gt 0) { throw ($parseErrors | Out-String) }
     }
     $checks.Add('ALL_POWERSHELL_SOURCES_PARSE')
+    $sharedPaths = Get-FoundationPaths
+    $expectedOperations = Join-Path $sharedPaths.Profile 'Documents\SZL\FoundationConfirmation'
+    if ($sharedPaths.Operations -cne $expectedOperations -or
+        $sharedPaths.Receipt -cne (Join-Path $expectedOperations 'installation.json') -or
+        $sharedPaths.Supervisor -cne (Join-Path $expectedOperations 'supervise-workbench.ps1')) {
+        throw 'Managed startup files must use the shared current-profile Documents directory.'
+    }
+    Assert-FoundationPath $sharedPaths.Operations -Directory -MayNotExist | Out-Null
+    $checks.Add('MANAGED_STARTUP_USES_SHARED_PROFILE_DOCUMENTS_OUTSIDE_APPDATA')
     $admitted = Test-FoundationRelease $LabRoot $ArchivePath
     $checks.Add('PINNED_ARCHIVE_AND_COMPLETE_70_FILE_RELEASE_VERIFIED')
     Confirm-Rejection 'NETWORK_PATH_REJECTED' { Assert-FoundationPath '\\localhost\C$\Users' -Directory } 'absolute local filesystem'
@@ -57,6 +66,17 @@ try {
     }
     [IO.File]::WriteAllText((Join-Path $fixtureRoot 'verify_release.py'), "raise RuntimeError('UNTRUSTED_VERIFIER_EXECUTED')", [Text.UTF8Encoding]::new($false))
     Confirm-Rejection 'MODIFIED_VERIFIER_REJECTED_BEFORE_EXECUTION' { Test-FoundationRelease $fixtureRoot $admitted.ArchivePath } 'Pinned release hash mismatch: .*verify_release.py'
+    $transitionPath = Join-Path $fixtureRoot 'atomic-receipt.json'
+    Write-FoundationJson $transitionPath @{ state = 'PREPARED'; installation_id = 'fixture-owned-installation' }
+    if ((Get-Content -LiteralPath $transitionPath -Raw | ConvertFrom-Json).state -cne 'PREPARED') {
+        throw 'The atomic receipt did not preserve the prepared state.'
+    }
+    Write-FoundationJson $transitionPath @{ state = 'REGISTERED'; installation_id = 'fixture-owned-installation' }
+    $transition = Get-Content -LiteralPath $transitionPath -Raw | ConvertFrom-Json
+    if ($transition.state -cne 'REGISTERED' -or $transition.installation_id -cne 'fixture-owned-installation') {
+        throw 'The atomic receipt update did not preserve the second transition.'
+    }
+    $checks.Add('ATOMIC_RECEIPT_SECOND_TRANSITION_VERIFIED')
 
     $paths = Get-FoundationPaths
     $receipt = [pscustomobject]@{ lab_root = $admitted.LabRoot; action = [pscustomobject]@{
