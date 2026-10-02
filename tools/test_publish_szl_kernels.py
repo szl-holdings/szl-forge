@@ -1664,8 +1664,10 @@ class PublishSzlKernelsTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             staging_root = Path(temporary)
             observed_environment: dict[str, str] = {}
+            observed_command: list[str] = []
 
             def upload(command: list[str], **kwargs: object) -> SimpleNamespace:
+                observed_command.extend(command)
                 observed_environment.update(kwargs["env"])
                 output_path = Path(command[command.index("--output-json") + 1])
                 output_path.write_text(
@@ -1700,6 +1702,8 @@ class PublishSzlKernelsTests(unittest.TestCase):
 
             self.assertEqual(observed_environment["PATH"], "trusted-path")
             self.assertEqual(observed_environment["HF_TOKEN"], "explicit-provider-secret")
+            self.assertIn("--existing-repo", observed_command)
+            self.assertNotIn("--create-pr", observed_command)
             self.assertFalse(Path(observed_environment["HF_HOME"]).exists())
             self.assertNotIn("HF_HUB_DISABLE_IMPLICIT_TOKEN", observed_environment)
             for key in ("GITHUB_TOKEN", "ACTIONS_ID_TOKEN_REQUEST_TOKEN",
@@ -1732,6 +1736,20 @@ class PublishSzlKernelsTests(unittest.TestCase):
         dockerfile = (
             Path(__file__).parent / "kernel-runtime.Dockerfile"
         ).read_text(encoding="utf-8")
+        installer = (
+            Path(__file__).parent / "install_patched_kernel_builder.sh"
+        ).read_text(encoding="utf-8")
+        patch_bytes = (
+            Path(__file__).parents[1]
+            / "patches"
+            / "hf-kernel-builder-existing-repo.patch"
+        ).read_bytes()
+        frontier_workflow = (
+            Path(__file__).parents[1]
+            / ".github"
+            / "workflows"
+            / "model-kernel-frontier.yml"
+        ).read_text(encoding="utf-8")
         install = workflow.index("Install trusted gateway test dependency")
         tests = workflow.index("Test trusted gateway contracts")
         dependency = workflow.index('"huggingface-hub==1.26.0"', install)
@@ -1759,9 +1777,8 @@ class PublishSzlKernelsTests(unittest.TestCase):
         uploader = publish_job.index(
             "Install exact publication client without publisher secret"
         )
-        upstream_pin = publish_job.index(
-            "633246310320d85def0c67d62c7912fd444a842f",
-            uploader,
+        install_command = publish_job.index(
+            "bash tools/install_patched_kernel_builder.sh", uploader,
         )
         verifier = publish_job.index(
             "Install pinned credentialless signature verifier",
@@ -1774,8 +1791,8 @@ class PublishSzlKernelsTests(unittest.TestCase):
             "Build credentialless stable runtime sandbox",
             uploader,
         )
-        self.assertLess(uploader, upstream_pin)
-        self.assertLess(upstream_pin, verifier)
+        self.assertLess(uploader, install_command)
+        self.assertLess(install_command, verifier)
         self.assertLess(verifier, publish)
         self.assertLess(sandbox, publish)
         self.assertIn(
@@ -1800,10 +1817,17 @@ class PublishSzlKernelsTests(unittest.TestCase):
             "--file tools/kernel-runtime.Dockerfile",
             publish_job[sandbox:publish],
         )
+        self.assertIn(publisher.KERNEL_BUILDER_SOURCE_REVISION, installer)
+        self.assertIn("git -C \"${builder_dir}\" apply --unidiff-zero --check", installer)
+        self.assertEqual(
+            hashlib.sha256(patch_bytes).hexdigest(),
+            publisher.KERNEL_BUILDER_PATCH_SHA256,
+        )
+        self.assertIn(publisher.KERNEL_BUILDER_PATCH_SHA256, installer)
+        self.assertIn("kernel-builder upload --help | grep -Fq -- '--existing-repo'", installer)
         self.assertIn(
-            'test "$(kernel-builder --version)" = '
-            f'"{publisher.KERNEL_BUILDER_VERSION_OUTPUT}"',
-            publish_job[uploader:publish],
+            "bash tools/install_patched_kernel_builder.sh --verify",
+            frontier_workflow,
         )
 
     source_revision = "a" * 40
@@ -2416,6 +2440,10 @@ class PublishSzlKernelsTests(unittest.TestCase):
                 "szl.hf-first-class-kernel-binding/v2",
             )
             self.assertEqual(binding["source_revision"], self.source_revision)
+            self.assertEqual(
+                binding["artifact"]["publication_interface_patch_sha256"],
+                publisher.KERNEL_BUILDER_PATCH_SHA256,
+            )
             self.assertIn("authorization_binding", binding)
             self.assertNotIn("authorization", binding)
             self.assertIn(self.publisher_revision, identity["workflow_url"])

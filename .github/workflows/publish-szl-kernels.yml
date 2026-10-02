@@ -216,11 +216,7 @@ jobs:
           set -euo pipefail
           python -m pip install --disable-pip-version-check \
             "huggingface-hub==1.26.0"
-          cargo install --locked \
-            --git https://github.com/huggingface/kernels \
-            --rev 633246310320d85def0c67d62c7912fd444a842f \
-            hf-kernel-builder
-          test "$(kernel-builder --version)" = "hf-kernel-builder 0.17.0-dev0"
+          bash tools/install_patched_kernel_builder.sh
 
       - name: Install pinned credentialless signature verifier
         uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
