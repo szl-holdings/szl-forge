@@ -65,6 +65,9 @@ KERNEL_BUILDER_VERSION_OUTPUT = (
 KERNEL_BUILDER_SOURCE_REVISION = (
     "633246310320d85def0c67d62c7912fd444a842f"
 )
+KERNEL_BUILDER_PATCH_SHA256 = (
+    "e30c7c5f4bb9833b3905984a3040690c857f5162f02c548f899360bda948c402"
+)
 KERNEL_BINDING_FILENAME = "source-binding.json"
 KERNEL_SIGNATURE_FILENAME = "metadata.json.sigstore"
 KERNEL_IMMUTABLE_ROOT_FILES = frozenset({".gitattributes", "LICENSE", "README.md"})
@@ -1189,6 +1192,7 @@ def upload_first_class_kernel(staging_root: Path, token: str) -> None:
         f"v{KERNEL_VERSION}",
         "--repo-type",
         KERNEL_REPO_TYPE,
+        "--existing-repo",
         "--output-json",
         str(output_path),
         "--quiet",
@@ -1956,6 +1960,9 @@ def run(
             "publication_interface_version": KERNEL_BUILDER_VERSION,
             "publication_interface_source_revision": (
                 KERNEL_BUILDER_SOURCE_REVISION
+            ),
+            "publication_interface_patch_sha256": (
+                KERNEL_BUILDER_PATCH_SHA256
             ),
         },
         "source_repository": EXPECTED_SOURCE_REPOSITORY,
