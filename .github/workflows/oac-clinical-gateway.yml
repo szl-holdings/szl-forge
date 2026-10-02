@@ -147,6 +147,24 @@ jobs:
       - name: Build wheel
         run: python -m build --wheel clinical-gateway
 
+      - name: Verify wheel bytes against immutable Git source before install
+        env:
+          SOURCE_REVISION: ${{ github.sha }}
+        run: |
+          python -I -B clinical-gateway/tools/verify_wheel_source.py \
+            --wheel clinical-gateway/dist/szl_oac_clinical_gateway-2.5.1-py3-none-any.whl \
+            --git-revision "$SOURCE_REVISION" \
+            --output oac-wheel-source-linux.json
+
+      - name: Retain wheel source success or failure receipt (Linux)
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: oac-wheel-source-linux-${{ github.run_id }}-${{ github.run_attempt }}
+          path: oac-wheel-source-linux.json
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Install and verify wheel
         shell: bash
         run: |
@@ -154,8 +172,8 @@ jobs:
           python -m venv /tmp/oac-clinical-wheel-test
           /tmp/oac-clinical-wheel-test/bin/python -m pip install --disable-pip-version-check \
             --requirement clinical-gateway/requirements.lock
-          wheel_path="$(find clinical-gateway/dist -maxdepth 1 -type f -name '*.whl' -print -quit)"
-          test -n "${wheel_path}"
+          wheel_path="clinical-gateway/dist/szl_oac_clinical_gateway-2.5.1-py3-none-any.whl"
+          test -f "${wheel_path}"
           /tmp/oac-clinical-wheel-test/bin/python -m pip install --disable-pip-version-check \
             --no-deps "${wheel_path}"
           /tmp/oac-clinical-wheel-test/bin/python -m pip check
@@ -172,7 +190,7 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: oac-clinical-gateway-wheel-${{ github.run_id }}
-          path: clinical-gateway/dist/*.whl
+          path: clinical-gateway/dist/szl_oac_clinical_gateway-2.5.1-py3-none-any.whl
           if-no-files-found: error
           retention-days: 30
 
@@ -203,6 +221,26 @@ jobs:
         with:
           name: oac-clinical-gateway-wheel-${{ github.run_id }}
           path: wheelhouse
+
+      - name: Verify downloaded wheel against immutable Git source before install
+        shell: pwsh
+        env:
+          SOURCE_REVISION: ${{ github.sha }}
+        run: |
+          python -I -B clinical-gateway/tools/verify_wheel_source.py `
+            --wheel wheelhouse/szl_oac_clinical_gateway-2.5.1-py3-none-any.whl `
+            --git-revision $env:SOURCE_REVISION `
+            --output oac-wheel-source-windows.json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Retain wheel source success or failure receipt (Windows)
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: oac-wheel-source-windows-${{ github.run_id }}-${{ github.run_attempt }}
+          path: oac-wheel-source-windows.json
+          if-no-files-found: error
+          retention-days: 30
 
       - name: Install exact wheel and run tests
         shell: pwsh
