@@ -47,7 +47,7 @@ jobs:
         run: >-
           python -m pip install --disable-pip-version-check
           "huggingface-hub==1.23.0"
-          "requests==2.32.5"
+          "requests==2.33.0"
 
       - name: Require canonical portfolio byte parity
         run: cmp portfolio/model_portfolio.json spaces/szl-forge-lab/model_portfolio.json

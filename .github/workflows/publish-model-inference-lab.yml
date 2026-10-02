@@ -53,7 +53,7 @@ jobs:
         run: >-
           python -m pip install --disable-pip-version-check
           "huggingface-hub==1.23.0"
-          "requests==2.32.5"
+          "requests==2.33.0"
           "pytest==9.1.1"
 
       - name: Verify publisher and live-verifier contracts

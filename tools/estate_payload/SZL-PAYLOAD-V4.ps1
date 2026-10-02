@@ -130,7 +130,7 @@ if (-not (Test-Path $VenvPy)) {
     $r = Invoke-Native $Py.Exe ($Py.Pre + @('-m','venv',$Venv))
     if ($r.Code -ne 0) { throw "Virtual environment creation failed:`n$($r.Out)" }
 }
-$r = Invoke-Native $VenvPy @('-m','pip','install','--upgrade','--disable-pip-version-check','pip','requests>=2.31','huggingface_hub>=0.24','ruff','black')
+$r = Invoke-Native $VenvPy @('-m','pip','install','--upgrade','--disable-pip-version-check','pip','requests>=2.33.0','huggingface_hub>=0.24','ruff','black')
 if ($r.Code -ne 0) { throw "Dependency install failed:`n$($r.Out)" }
 $r = Invoke-Native $VenvPy (@('-m','py_compile',$PyFile) + @(Get-ChildItem (Join-Path $OpDir 'kit') -Filter '*.py' | ForEach-Object { $_.FullName }))
 if ($r.Code -ne 0) { throw "Operator failed to compile:`n$($r.Out)" }
