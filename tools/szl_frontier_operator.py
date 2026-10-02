@@ -101,8 +101,13 @@ def strict_json(raw: bytes | str) -> Any:
         return result
     def invalid(value):
         raise OperatorError(f"non-finite JSON constant: {value}")
+    def finite_float(value):
+        parsed = float(value)
+        need(math.isfinite(parsed), "non-finite JSON number")
+        return parsed
     try:
-        return json.loads(raw, object_pairs_hook=pairs, parse_constant=invalid)
+        return json.loads(raw, object_pairs_hook=pairs, parse_constant=invalid,
+                          parse_float=finite_float)
     except (ValueError, UnicodeError) as exc:
         raise OperatorError("invalid JSON response") from exc
 
