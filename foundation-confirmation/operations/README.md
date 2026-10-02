@@ -60,10 +60,15 @@ an ownership witness. Its temporary verifier fixture is removed within the
 operations source directory; production tasks, services and trial receipts are
 not changed.
 
-The supervisor invokes the unchanged `start.ps1` with a hidden window. It checks
+The supervisor invokes the unchanged `start.ps1` with a hidden window and waits
+for that launcher alone to exit. It then separately verifies and tracks the
+running service; waiting for the launcher's entire descendant tree would block
+those checks for the lifetime of the service. It checks
 the service receipt against the process's exact executable and command arguments,
-creation timestamp, PID, and exclusive loopback listener. It also checks the
-health response and all three checkpoint bindings before waiting for that owned
+creation timestamp, PID, and exclusive loopback listener. The process handle is
+compared at CIM's declared microsecond timestamp precision, with exact equality
+and no time tolerance. The health response and all three checkpoint bindings
+must pass before it waits for that owned
 process. Task Scheduler therefore tracks the running service instead of a
 launcher that has already exited. A service exit produces a failed supervisor
 result, allowing **two retries, one minute apart**. There is no endless restart
@@ -85,6 +90,41 @@ machine reboot was tested or that execution begins before desktop logon.
 To deliberately stop the service without the retry policy restarting it, first
 disable the owned task and then use the original lab's `stop.ps1`. Do not terminate
 an unrelated process or use port ownership alone as authorization to stop it.
+
+## Upgrade an existing installation
+
+Running the new installer over an existing same-directory installation returns
+`ALREADY_REGISTERED`; it verifies the earlier receipt and does **not** replace
+the earlier supervisor. To deploy these launcher and timestamp fixes, explicitly
+uninstall the owned installation and reinstall from the new protected source.
+
+Before removal, preserve `installation.json` and any `supervisor-status.json`
+outside the managed directory. Use the **currently installed** helper and
+uninstaller to verify that installation's script hashes, current-user identity,
+and exact task definition. Only after those checks pass, disable its retry
+trigger and stop its running task:
+
+```powershell
+$installedRoot = "$env:USERPROFILE\Documents\SZL\FoundationConfirmation"
+& "$installedRoot\uninstall-workbench.ps1" -ValidateOnly
+. "$installedRoot\supervise-workbench.ps1"
+$installed = Read-FoundationInstallation
+$ownedTask = Get-ScheduledTask -TaskName $installed.task_name -TaskPath $installed.task_path
+Assert-FoundationTask $ownedTask $installed
+Disable-ScheduledTask -TaskName $installed.task_name -TaskPath $installed.task_path
+if ([string]$ownedTask.State -eq 'Running') {
+    Stop-ScheduledTask -TaskName $installed.task_name -TaskPath $installed.task_path
+}
+& "$installedRoot\uninstall-workbench.ps1"
+```
+
+Stopping the task can also stop its owned service descendants, so this is a
+deliberate local workbench interruption. The uninstaller preserves the sealed
+lab, archive, and `state/trials`. Then run the new checkout's validation and
+installation commands above, start the newly registered task on demand, and
+retain fresh readiness, exact process, supervisor-wait, and controlled-restart
+evidence. A conflicting task, changed script, or unexpected managed file remains
+a refusal; it is never removed as an upgrade shortcut.
 
 ## Remove startup
 
