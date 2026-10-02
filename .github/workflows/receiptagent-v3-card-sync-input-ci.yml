@@ -1,0 +1,42 @@
+name: ReceiptAgent v3 card correction input
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "receiptagent-v3/card/README.md"
+      - "tools/prepare_receiptagent_v3_card_sync.py"
+      - "tests/test_receiptagent_v3_card_sync.py"
+      - "docs/receiptagent-v3-card-sync-input.md"
+      - ".github/workflows/receiptagent-v3-card-sync-input-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "receiptagent-v3/card/README.md"
+      - "tools/prepare_receiptagent_v3_card_sync.py"
+      - "tests/test_receiptagent_v3_card_sync.py"
+      - "docs/receiptagent-v3-card-sync-input.md"
+      - ".github/workflows/receiptagent-v3-card-sync-input-ci.yml"
+permissions:
+  contents: read
+jobs:
+  offline-review-input:
+    name: Keep public-card correction source-bound and offline
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: "3.12"
+      - name: Test fail-closed source and card preservation offline
+        run: |
+          python -B -m unittest discover -s tests -p test_receiptagent_v3_card_sync.py -v
+          git diff --exit-code
