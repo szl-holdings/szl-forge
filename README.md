@@ -228,6 +228,14 @@ deterministic exact-head projection used across the two jobs. The legacy model
 publication retains the established `szl.hf-kernel-source-binding/v2`
 `authorization` observation contract.
 
+Kernel upload failure receipts retain only an allowlisted numeric `http_status`
+and fixed `http_error_class` from a recognized first upstream error cause.
+Unrecognized or ambiguous output remains `UNKNOWN`; a `FORBIDDEN` class does
+not infer a numeric 403 or establish which provider permission is missing.
+Raw stderr, provider URLs, response bodies, headers, and tokens are never added
+to these fields. Diagnostics do not change authorization, upload acceptance,
+file readback, or runtime gates.
+
 This source contract does not assert that an older Hub revision is signed or
 that a new revision has been published. The `kernels` client does not yet make
 signature verification a load-time guarantee, and its default verification
