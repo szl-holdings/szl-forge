@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Select a Hugging Face token that can access the Inference Providers router.
+"""Select an authenticated Hugging Face credential for bounded inference.
 
 Each configured secret is tested independently. Token bytes are masked and only
 written to the GitHub Actions environment file; reports contain hashes and safe
-status metadata, never credentials.
+status metadata, never credentials. Identity and declared token permissions are
+checked without model execution; the real evaluation proves target capability.
 """
 from __future__ import annotations
 
@@ -14,11 +15,13 @@ import os
 import re
 import urllib.error
 import urllib.request
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 from typing import Mapping, Sequence
 
 ROUTER_MODELS_URL = "https://router.huggingface.co/v1/models"
+WHOAMI_URL = "https://huggingface.co/api/whoami-v2"
+INFERENCE_PERMISSION = "inference.serverless.write"
 TOKEN_RE = re.compile(r"^hf_[A-Za-z0-9._-]+$")
 TOKEN_ENV_ORDER: tuple[tuple[str, str], ...] = (
     ("HF_INFERENCE_TOKEN", "HF_INFERENCE_TOKEN_CANDIDATE"),
@@ -41,6 +44,11 @@ class Attempt:
     response_sha256: str | None = None
     failure_type: str | None = None
     failure_sha256: str | None = None
+    identity_verified: bool = False
+    identity_sha256: str | None = None
+    identity_status_code: int | None = None
+    token_role: str | None = None
+    inference_scope: str | None = None
 
 
 class TokenSelectionError(RuntimeError):
@@ -56,16 +64,66 @@ def normalize_token(value: str) -> str:
     return token
 
 
+def identity_permission(identity: object) -> tuple[str, str, str]:
+    """Accept only authenticated user-token roles with declared inference scope.
+
+    HF documents legacy read/write roles for inference and the fine-grained
+    permission at https://huggingface.co/docs/inference-providers/index.
+    Repository-scoped permissions alone do not grant serverless inference.
+    """
+    if not isinstance(identity, dict) or identity.get("type") != "user":
+        raise ValueError("identity response does not identify a user")
+    name = identity.get("name")
+    if not isinstance(name, str) or not name.strip():
+        raise ValueError("identity response has no user name")
+    auth = identity.get("auth")
+    if not isinstance(auth, dict) or auth.get("type") != "access_token":
+        raise ValueError("identity response does not authenticate an access token")
+    access = auth.get("accessToken")
+    if not isinstance(access, dict):
+        raise ValueError("identity response has no access-token permissions")
+    role = access.get("role")
+    if role in ("read", "write"):
+        scope = "LEGACY_READ_WRITE_ROLE"
+    elif role in ("fineGrained", "fine-grained"):
+        fine = access.get("fineGrained")
+        permissions = fine.get("global") if isinstance(fine, dict) else None
+        if (
+            not isinstance(permissions, list)
+            or not all(isinstance(item, str) for item in permissions)
+            or INFERENCE_PERMISSION not in permissions
+        ):
+            raise ValueError("token lacks the global Inference Providers permission")
+        scope = "FINE_GRAINED_INFERENCE_PROVIDERS"
+    else:
+        raise ValueError("identity response has an unrecognized token role")
+    return hashlib.sha256(name.encode()).hexdigest(), role, scope
+
+
 def validate_token(token: str, target_model: str, timeout: float) -> Attempt:
-    request = urllib.request.Request(
-        ROUTER_MODELS_URL,
-        headers={
-            "authorization": f"Bearer {token}",
-            "accept": "application/json",
-        },
-        method="GET",
-    )
+    evidence: dict[str, object] = {}
     try:
+        token = normalize_token(token)
+        headers = {"authorization": f"Bearer {token}", "accept": "application/json"}
+        identity_request = urllib.request.Request(WHOAMI_URL, headers=headers, method="GET")
+        with urllib.request.urlopen(identity_request, timeout=timeout) as response:
+            status = int(response.status)
+            evidence["identity_status_code"] = status
+            if not 200 <= status < 300:
+                raise ValueError("identity endpoint did not return a successful status")
+            raw_identity = response.read(1_000_001)
+            if len(raw_identity) > 1_000_000:
+                raise ValueError("identity response exceeds size limit")
+            identity_hash, role, scope = identity_permission(json.loads(raw_identity))
+            evidence.update(
+                identity_verified=True,
+                identity_sha256=identity_hash,
+                token_role=role,
+                inference_scope=scope,
+            )
+        # The catalog is public, including when an invalid bearer is supplied.
+        # Keep it as a reachability/model-listing diagnostic after authentication.
+        request = urllib.request.Request(ROUTER_MODELS_URL, headers=headers, method="GET")
         with urllib.request.urlopen(request, timeout=timeout) as response:
             raw = response.read(8_000_000)
             text = raw.decode("utf-8", "replace")
@@ -76,6 +134,7 @@ def validate_token(token: str, target_model: str, timeout: float) -> Attempt:
                 status_code=int(response.status),
                 target_model_listed=target_model in text,
                 response_sha256=hashlib.sha256(raw).hexdigest(),
+                **evidence,
             )
     except urllib.error.HTTPError as error:
         try:
@@ -90,6 +149,7 @@ def validate_token(token: str, target_model: str, timeout: float) -> Attempt:
             status_code=int(error.code),
             failure_type="HTTPError",
             failure_sha256=hashlib.sha256(safe.encode()).hexdigest(),
+            **evidence,
         )
     except Exception as error:
         safe = f"{type(error).__name__}:{str(error)[:300]}"
@@ -99,6 +159,7 @@ def validate_token(token: str, target_model: str, timeout: float) -> Attempt:
             valid=False,
             failure_type=type(error).__name__,
             failure_sha256=hashlib.sha256(safe.encode()).hexdigest(),
+            **evidence,
         )
 
 
@@ -129,24 +190,14 @@ def select(
             )
             continue
         observed = validate_token(token, target_model, timeout)
-        attempt = Attempt(
-            source=source,
-            present=observed.present,
-            valid=observed.valid,
-            status_code=observed.status_code,
-            target_model_listed=observed.target_model_listed,
-            response_sha256=observed.response_sha256,
-            failure_type=observed.failure_type,
-            failure_sha256=observed.failure_sha256,
-        )
+        attempt = replace(observed, source=source)
         attempts.append(attempt)
-        # A 2xx response proves router access. The global model catalog can be
-        # paginated or truncated, so model presence is diagnostic only; the real
-        # evaluation call is the authoritative target-model capability check.
+        # Authentication and declared permissions precede catalog access. The
+        # real evaluation remains the target-model/credit/route capability check.
         if attempt.valid:
             return token, source, attempts
     raise TokenSelectionError(
-        "no configured token could access the Inference Providers router",
+        "no configured token passed identity and inference permission checks",
         attempts,
     )
 
@@ -164,6 +215,10 @@ def write_report(
             {
                 "schema": "szl.hf-inference-credential-selection.v1",
                 "router": ROUTER_MODELS_URL,
+                "identity_endpoint": WHOAMI_URL,
+                "validation_boundary": "authenticated identity and declared permissions; no inference executed",
+                "catalog_is_authentication_evidence": False,
+                "target_inference_verified": False,
                 "target_model": target_model,
                 "selected_source": selected_source,
                 "attempts": [asdict(attempt) for attempt in attempts],
@@ -210,7 +265,10 @@ def main(argv: list[str] | None = None) -> int:
             selected_source=source,
             attempts=attempts,
         )
-        print(f"Hugging Face inference credential validated: source={source}")
+        print(
+            f"Hugging Face identity and declared permissions validated: source={source}; "
+            "target inference remains unverified"
+        )
         return 0
     except TokenSelectionError as error:
         attempts = list(error.attempts)
@@ -220,7 +278,7 @@ def main(argv: list[str] | None = None) -> int:
             selected_source=None,
             attempts=attempts,
         )
-        print("::error::No configured token can access Inference Providers")
+        print("::error::No configured token passed identity, permission and catalog checks")
         return 1
 
 
