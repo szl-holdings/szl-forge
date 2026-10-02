@@ -1,0 +1,26 @@
+diff --git a/kernel-builder/src/main.rs b/kernel-builder/src/main.rs
+index 5254733..2b548a7 100644
+--- a/kernel-builder/src/main.rs
++++ b/kernel-builder/src/main.rs
+@@ -389,0 +390 @@ fn main() -> Result<()> {
++                existing_repo: false,
+diff --git a/kernel-builder/src/upload.rs b/kernel-builder/src/upload.rs
+index 2d98592..d90a4d3 100644
+--- a/kernel-builder/src/upload.rs
++++ b/kernel-builder/src/upload.rs
+@@ -100,0 +101,5 @@ pub struct UploadArgs {
++    /// Upload to an existing repository without asking for repository-creation scope.
++    /// The subsequent refs request fails closed if the repository is absent.
++    #[arg(long, conflicts_with_all = ["create_pr", "private"])]
++    pub existing_repo: bool,
++
+@@ -199,5 +204,4 @@ fn run_upload_typed<T: RepoType>(args: UploadArgs) -> Result<()> {
+-    // With --create-pr, write access is not required and we must not create a
+-    // new repository: the repository only needs to already exist for the Hub to
+-    // open a pull request against it. Skip repository creation entirely and use
+-    // the provided repo id as-is.
+-    let repo_id = if args.create_pr {
++    // A pull request or an explicit existing-repo upload must not call the Hub's
++    // repository-creation endpoint. The refs request below verifies existence
++    // before any commit is attempted.
++    let repo_id = if args.create_pr || args.existing_repo {
