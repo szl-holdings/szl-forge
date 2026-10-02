@@ -223,9 +223,18 @@ namespace SZL {
         }
     }
 }
+
 '@
     }
     return [SZL.FoundationCommandLine]::Parse($CommandLine)
+}
+
+function ConvertTo-FoundationCimTimestamp {
+    param([datetime]$Value)
+    # CIM creation timestamps expose microseconds; Process.StartTime includes
+    # 100 ns ticks. Preserve exact equality at CIM's declared precision.
+    $utc = $Value.ToUniversalTime()
+    return [datetime]::new($utc.Ticks - ($utc.Ticks % 10), [DateTimeKind]::Utc)
 }
 
 function Get-FoundationService {
@@ -275,6 +284,16 @@ function Assert-FoundationLaunchPort {
     }
 }
 
+function Invoke-FoundationLauncher {
+    param([string]$Executable, [string]$Arguments, [string]$WorkingDirectory)
+    $launcher = Start-Process -FilePath $Executable -ArgumentList $Arguments -WorkingDirectory $WorkingDirectory -WindowStyle Hidden -PassThru
+    # Start-Process -Wait includes the server descendant on Windows. Wait only
+    # for the launcher before admitting and tracking the exact owned service.
+    $launcher.WaitForExit()
+    $launcher.Refresh()
+    return $launcher.ExitCode
+}
+
 # The installer and uninstaller dot-source only these definitions.
 if ($MyInvocation.InvocationName -eq '.') { return }
 
@@ -294,8 +313,8 @@ try {
     $predecessor = Get-FoundationService $admitted.LabRoot $admitted.Python $Port -MayBeAbsent
     Assert-FoundationLaunchPort $Port $predecessor
     $launchArguments = '-NoProfile -NonInteractive -File "' + (Join-Path $admitted.LabRoot 'start.ps1') + '" -Port ' + $Port
-    $launcher = Start-Process -FilePath $paths.Shell -ArgumentList $launchArguments -WorkingDirectory $admitted.LabRoot -WindowStyle Hidden -Wait -PassThru
-    if ($launcher.ExitCode -ne 0) { throw 'The unchanged workbench launcher failed. See retained state/service.stderr.log.' }
+    $launcherExitCode = Invoke-FoundationLauncher $paths.Shell $launchArguments $admitted.LabRoot
+    if ($launcherExitCode -ne 0) { throw 'The unchanged workbench launcher failed. See retained state/service.stderr.log.' }
     $owned = Get-FoundationService $admitted.LabRoot $admitted.Python $Port
     $run = @{ schema = 'szl.foundation-confirmation.windows-supervisor/v1'; owner_sid = $paths.Sid;
         installation_id = $installation.installation_id; started_utc = [datetime]::UtcNow.ToString('o');
@@ -304,7 +323,7 @@ try {
     Write-FoundationJson (Join-Path $paths.Operations 'supervisor-status.json') $run
     $tracked = Get-Process -Id $owned.Receipt.pid -ErrorAction Stop
     # Pin the process handle to the creation timestamp, even if the PID exits and is reused.
-    if ($tracked.StartTime.ToUniversalTime() -ne ([datetime]$owned.Receipt.process_created).ToUniversalTime() -or
+    if ((ConvertTo-FoundationCimTimestamp $tracked.StartTime) -ne ([datetime]$owned.Receipt.process_created).ToUniversalTime() -or
         $tracked.Path -ne $admitted.Python) { throw 'The service changed before supervision began.' }
     Wait-Process -InputObject $tracked -ErrorAction Stop
     $run.status = 'OWNED_SERVICE_EXITED'

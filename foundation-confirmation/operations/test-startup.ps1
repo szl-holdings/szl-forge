@@ -77,6 +77,75 @@ try {
         throw 'The atomic receipt update did not preserve the second transition.'
     }
     $checks.Add('ATOMIC_RECEIPT_SECOND_TRANSITION_VERIFIED')
+    $cimInstant = [datetime]::Parse('2026-10-02T01:59:46.2526220Z').ToUniversalTime()
+    foreach ($extraTick in 0..9) {
+        if ((ConvertTo-FoundationCimTimestamp $cimInstant.AddTicks($extraTick)) -ne $cimInstant) {
+            throw 'The process handle timestamp did not match its CIM microsecond identity.'
+        }
+    }
+    $checks.Add('PROCESS_HANDLE_TIMESTAMP_MATCHES_CIM_MICROSECOND_PRECISION')
+    if ((ConvertTo-FoundationCimTimestamp $cimInstant.AddTicks(10)) -eq $cimInstant) {
+        throw 'A distinct next-microsecond process identity was admitted.'
+    }
+    $checks.Add('NEXT_MICROSECOND_PROCESS_IDENTITY_REJECTED')
+
+    # A real launcher exits with a known failure code while its bounded child
+    # remains running. Waiting for a process tree would consume the entire child
+    # lifetime and prevent the separate service-ownership checks from running.
+    $parentScript = Join-Path $fixtureRoot 'launcher-parent.py'
+    $childScript = Join-Path $fixtureRoot 'launcher-child.py'
+    $childPidPath = Join-Path $fixtureRoot 'launcher-child.pid'
+    $finishPath = Join-Path $fixtureRoot 'launcher-child.finish'
+    $completedPath = Join-Path $fixtureRoot 'launcher-child.completed'
+    $parentCode = @'
+import pathlib, subprocess, sys
+child = subprocess.Popen([sys.executable, '-I', '-B', sys.argv[1], sys.argv[3], sys.argv[4]], creationflags=subprocess.CREATE_NO_WINDOW)
+pathlib.Path(sys.argv[2]).write_text(str(child.pid), encoding='ascii')
+sys.exit(7)
+'@
+    $childCode = @'
+import pathlib, sys, time
+finish = pathlib.Path(sys.argv[1])
+deadline = time.monotonic() + 20
+while not finish.exists() and time.monotonic() < deadline:
+    time.sleep(0.1)
+pathlib.Path(sys.argv[2]).write_text('complete', encoding='ascii')
+'@
+    [IO.File]::WriteAllText($parentScript, $parentCode, [Text.UTF8Encoding]::new($false))
+    [IO.File]::WriteAllText($childScript, $childCode, [Text.UTF8Encoding]::new($false))
+    $childHandle = $null
+    try {
+        # Warm the native ownership helpers before creating the bounded child.
+        # Shell/module compilation latency must not consume its test lifetime.
+        @(Get-FoundationArgv ('"' + $admitted.Python + '"')) | Out-Null
+        Get-CimInstance Win32_Process -Filter "ProcessId=$PID" -ErrorAction Stop | Out-Null
+        $fixtureArguments = '-I -B "' + $parentScript + '" "' + $childScript + '" "' + $childPidPath + '" "' + $finishPath + '" "' + $completedPath + '"'
+        $fixtureExit = Invoke-FoundationLauncher $admitted.Python $fixtureArguments $fixtureRoot
+        if ($fixtureExit -ne 7) { throw 'Launcher exit code was not retained.' }
+        if (Test-Path -LiteralPath $completedPath) { throw 'Launcher wait incorrectly included the bounded descendant process.' }
+        $fixturePid = [int](Get-Content -LiteralPath $childPidPath -Raw)
+        $childHandle = Get-Process -Id $fixturePid -ErrorAction Stop
+        $childProcess = Get-CimInstance Win32_Process -Filter "ProcessId=$fixturePid" -ErrorAction Stop
+        $childArguments = @(Get-FoundationArgv $childProcess.CommandLine)
+        $expectedChild = @($admitted.Python, '-I', '-B', $childScript, $finishPath, $completedPath)
+        if ($childHandle.HasExited -or $childHandle.Path -cne $admitted.Python -or
+            (ConvertTo-FoundationCimTimestamp $childHandle.StartTime) -ne $childProcess.CreationDate.ToUniversalTime() -or
+            $childArguments.Count -ne $expectedChild.Count) {
+            throw ('The bounded fixture child ownership differs: exited={0}; executable={1}; creation_ticks_delta={2}; argument_count={3}.' -f
+                $childHandle.HasExited, ($childHandle.Path -ceq $admitted.Python),
+                ($childHandle.StartTime.ToUniversalTime().Ticks - $childProcess.CreationDate.ToUniversalTime().Ticks),
+                ($childArguments.Count -eq $expectedChild.Count))
+        }
+        for ($index = 0; $index -lt $expectedChild.Count; $index++) {
+            if ($childArguments[$index] -cne $expectedChild[$index]) { throw 'The bounded fixture child command differs.' }
+        }
+        $checks.Add('LAUNCHER_EXIT_OBSERVED_WITH_OWNED_DESCENDANT_STILL_RUNNING')
+        $checks.Add('LAUNCHER_NONZERO_EXIT_CODE_RETAINED')
+    } finally {
+        # Ask only this exact fixture child to exit naturally; no process is killed.
+        [IO.File]::WriteAllText($finishPath, 'finish', [Text.UTF8Encoding]::new($false))
+        if ($null -ne $childHandle) { Wait-Process -InputObject $childHandle -Timeout 25 -ErrorAction Stop }
+    }
 
     $paths = Get-FoundationPaths
     $receipt = [pscustomobject]@{ lab_root = $admitted.LabRoot; action = [pscustomobject]@{
@@ -128,7 +197,7 @@ try {
         $checks.Add('VERIFIED_PREDECESSOR_LISTENER_ADMITTED')
         Confirm-Rejection 'LISTENER_WITHOUT_OWNERSHIP_WITNESS_REJECTED' { Assert-FoundationLaunchPort $Port $null } 'without this lab receipt'
         $tracked = Get-Process -Id $service.Receipt.pid -ErrorAction Stop
-        if ($tracked.StartTime.ToUniversalTime() -ne ([datetime]$service.Receipt.process_created).ToUniversalTime() -or
+        if ((ConvertTo-FoundationCimTimestamp $tracked.StartTime) -ne ([datetime]$service.Receipt.process_created).ToUniversalTime() -or
             $tracked.Path -ne $admitted.Python) { throw 'Live owned process handle did not match its receipt.' }
         $checks.Add('EXISTING_SERVICE_OWNERSHIP_READINESS_AND_PROCESS_HANDLE_VERIFIED')
         $serviceWitness = 'READY'

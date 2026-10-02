@@ -60,10 +60,15 @@ an ownership witness. Its temporary verifier fixture is removed within the
 operations source directory; production tasks, services and trial receipts are
 not changed.
 
-The supervisor invokes the unchanged `start.ps1` with a hidden window. It checks
+The supervisor invokes the unchanged `start.ps1` with a hidden window and waits
+for that launcher alone to exit. It then separately verifies and tracks the
+running service; waiting for the launcher's entire descendant tree would block
+those checks for the lifetime of the service. It checks
 the service receipt against the process's exact executable and command arguments,
-creation timestamp, PID, and exclusive loopback listener. It also checks the
-health response and all three checkpoint bindings before waiting for that owned
+creation timestamp, PID, and exclusive loopback listener. The process handle is
+compared at CIM's declared microsecond timestamp precision, with exact equality
+and no time tolerance. The health response and all three checkpoint bindings
+must pass before it waits for that owned
 process. Task Scheduler therefore tracks the running service instead of a
 launcher that has already exited. A service exit produces a failed supervisor
 result, allowing **two retries, one minute apart**. There is no endless restart
