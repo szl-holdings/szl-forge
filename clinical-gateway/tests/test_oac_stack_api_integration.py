@@ -646,6 +646,21 @@ class IntegrationNormalizationTests(unittest.TestCase):
             self.assertEqual(summary["schema"], integration.DATASET_SCHEMA)
             self.assertEqual(summary["dataset_semantics"], integration.DATASET_SEMANTICS)
 
+    def test_command_success_requires_literal_boolean_true(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="oac-status-test-") as temporary:
+            root = Path(temporary).resolve()
+            kernel = ClinicalKernel(root / "state", data_root=root)
+            for malformed in ("false", 1, None):
+                with self.subTest(ok=malformed):
+                    with mock.patch.object(
+                        integration,
+                        "run_owned_command",
+                        return_value=({"ok": malformed, "operation": "clinical-status"}, "{}", 0),
+                    ):
+                        result = kernel.run("clinical-status")
+                    self.assertIs(result["ok"], False)
+            self.assertTrue(all(row["ok"] is False for row in kernel.dataset_tail()))
+
     def test_callable_main_forwards_packaging_configuration(self) -> None:
         with tempfile.TemporaryDirectory(prefix="oac-main-test-") as temporary:
             root = Path(temporary).resolve()

@@ -154,8 +154,9 @@ notification, or undocumented commands.
 
 ACK handling is bounded as follows:
 
-- AA is sent only after the local ingest callback reports successful
-  processing.
+- AA is sent only after the local ingest callback reports literal boolean
+  success, including a zero command exit and a literal-success kernel payload.
+  Missing, contradictory, or truthy non-boolean responses fail closed with AE.
 - Malformed framing, an invalid envelope, an oversized frame, the wrong message
   type, or the wrong configured HL7 version receives AR.
 - Internal ingest rejection, queue/backpressure, or a stopping transport

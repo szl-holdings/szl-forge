@@ -483,7 +483,8 @@ class ClinicalKernel:
 
         payload, stdout, rc = run_owned_command(command, arguments, self.script)
         operation = str(payload.get("operation", command))
-        ok = bool(payload.get("ok")) and rc == 0
+        # The command's success field is a protocol boolean, not a truthy hint.
+        ok = payload.get("ok") is True and rc == 0
         payload_hash = stable_hash({"command": command, "args": arguments, "stdout": stdout, "rc": rc})
         evidence_score = self.model.score(payload, command)
 
