@@ -385,7 +385,11 @@ def run_mission(mission_path, run_dir, execute=False, codex_path=None):
         remaining = deadline - time.monotonic()
         require(remaining > 0, "Mission deadline exhausted")
         receipt["execution"] = bounded_run(command, workspace, run_dir, "model", remaining, prompt)
-        events = (run_dir / "model.jsonl").read_text(encoding="utf-8").splitlines()
+        # Frame JSONL on LF only; universal-newline decoding and splitlines()
+        # can turn a valid JSON string's Unicode content into extra records.
+        events = (run_dir / "model.jsonl").read_bytes().decode("utf-8").split("\n")
+        if events[-1] == "":
+            events.pop()  # One terminal delimiter is framing, not a blank event.
         completed = False
         failed = False
         last_message = None
