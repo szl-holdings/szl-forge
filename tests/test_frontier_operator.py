@@ -566,9 +566,56 @@ class ResourceAndTruthGuards(unittest.TestCase):
             op.run([sys.executable, "-c", "import time;time.sleep(2)"], timeout=0.05)
 
     def test_duplicate_and_nonfinite_json_rejected(self):
-        for raw in ('{"x":1,"x":2}', '{"x":NaN}', '{"x":Infinity}'):
-            with self.assertRaises(op.OperatorError):
-                op.strict_json(raw)
+        for raw in ('{"x":1,"x":2}', '{"x":1,"\\u0078":2}',
+                    '{"x":NaN}', '{"x":Infinity}', '{"x":-Infinity}'):
+            for value in (raw, raw.encode("utf-8")):
+                with self.subTest(raw=raw, input_type=type(value).__name__), \
+                     self.assertRaises(op.OperatorError):
+                    op.strict_json(value)
+
+    def test_overflowed_json_numbers_rejected_at_nested_intake(self):
+        for literal in ("1e999", "-1e999", "1.8e308", "-1.8e308", "1E+999"):
+            for template in ("{}", "[{}]", '{{"value":{}}}',
+                             '{{"outer":[{{"inner":[{}]}}]}}'):
+                raw = template.format(literal)
+                for value in (raw, raw.encode("utf-8")):
+                    with self.subTest(raw=raw, input_type=type(value).__name__), \
+                         self.assertRaisesRegex(op.OperatorError, "^non-finite JSON number$"):
+                        op.strict_json(value)
+        raw = "[" * 40 + "1e999" + "]" * 40
+        for value in (raw, raw.encode("utf-8")):
+            with self.subTest(input_type=type(value).__name__), self.assertRaises(op.OperatorError):
+                op.strict_json(value)
+
+    def test_finite_json_numbers_and_underflow_preserve_default_semantics(self):
+        raw = ('{"values":[1.7976931348623157e308,-1.7976931348623157e308,'
+               '5e-324,1e-999,-1e-999,-0.0,1.25,1E+2,12345678901234567890],'
+               '"text":"1e999","flag":true,"missing":null}')
+        expected = json.loads(raw)
+        for value in (raw, raw.encode("utf-8")):
+            with self.subTest(input_type=type(value).__name__):
+                parsed = op.strict_json(value)
+                self.assertEqual(parsed, expected)
+                self.assertEqual([type(x) for x in parsed["values"]],
+                                 [type(x) for x in expected["values"]])
+                self.assertEqual(parsed["values"][3], 0.0)
+                self.assertEqual(op.math.copysign(1.0, parsed["values"][4]), -1.0)
+                self.assertEqual(op.math.copysign(1.0, parsed["values"][5]), -1.0)
+
+    def test_json_intake_errors_remain_sanitized(self):
+        for raw in ('{"detail":"private intake marker","value":1e999}',
+                    '{"detail":"private intake marker","value":}'):
+            for value in (raw, raw.encode("utf-8")):
+                with self.subTest(raw=raw, input_type=type(value).__name__):
+                    result = op.safe_measure("intake", lambda: op.strict_json(value))
+                    self.assertEqual(result["state"], "MEASURED_FAIL")
+                    self.assertNotIn("private intake marker", result["error"])
+        raw = '{"private intake marker":1,"private intake marker":2}'
+        with patch.dict(os.environ, {"TEST_API_TOKEN": "private intake marker"}):
+            result = op.safe_measure("intake", lambda: op.strict_json(raw))
+        self.assertEqual(result["state"], "MEASURED_FAIL")
+        self.assertNotIn("private intake marker", result["error"])
+        self.assertIn("[REDACTED]", result["error"])
 
     def test_measurement_does_not_relabel_failure(self):
         self.assertEqual(op.safe_measure("x", lambda: {"state": "MEASURED_FAIL"})["state"], "MEASURED_FAIL")
