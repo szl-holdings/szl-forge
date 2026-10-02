@@ -29,7 +29,7 @@ function New-TaskFixture {
         Actions = @(New-ScheduledTaskAction -Execute $paths.Shell -Argument $Receipt.action.arguments -WorkingDirectory $Receipt.lab_root)
         Principal = New-ScheduledTaskPrincipal -UserId $paths.Sid -LogonType Interactive -RunLevel Limited
         Triggers = @(New-ScheduledTaskTrigger -AtLogOn -User $paths.Sid)
-        Settings = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew -RestartCount 2 -RestartInterval (New-TimeSpan -Minutes 1) -ExecutionTimeLimit ([TimeSpan]::Zero) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+        Settings = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew -ExecutionTimeLimit ([TimeSpan]::Zero) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
     }
 }
 
@@ -147,6 +147,44 @@ pathlib.Path(sys.argv[2]).write_text('complete', encoding='ascii')
         if ($null -ne $childHandle) { Wait-Process -InputObject $childHandle -Timeout 25 -ErrorAction Stop }
     }
 
+    # Three real bounded launcher exits exercise the retry budget. The delay
+    # callback records the production interval without sleeping during validation.
+    $exitScript = Join-Path $fixtureRoot 'recovery-exit.py'
+    [IO.File]::WriteAllText($exitScript, 'import sys; sys.exit(7)', [Text.UTF8Encoding]::new($false))
+    $script:recoveryAttempts = [Collections.Generic.List[int]]::new()
+    $script:recoveryDelays = [Collections.Generic.List[int]]::new()
+    Confirm-Rejection 'OWNED_EXIT_RECOVERY_BUDGET_EXHAUSTED_AFTER_TWO_RETRIES' {
+        Invoke-FoundationRecoveryLoop -Cycle {
+            param($Attempt)
+            $script:recoveryAttempts.Add($Attempt)
+            $code = Invoke-FoundationLauncher $admitted.Python ('-I -B "' + $exitScript + '"') $fixtureRoot
+            if ($code -ne 7) { throw 'The bounded recovery fixture exit differs.' }
+            return @{ status = 'OWNED_SERVICE_EXITED'; owned_service_exit_verified = $true }
+        } -Delay {
+            param($Seconds)
+            $script:recoveryDelays.Add($Seconds)
+        }
+    } 'recovery budget exhausted'
+    if (($script:recoveryAttempts -join ',') -cne '0,1,2' -or ($script:recoveryDelays -join ',') -cne '60,60') {
+        throw 'Recovery did not enforce exactly two retries at the declared 60-second interval.'
+    }
+    $checks.Add('THREE_REAL_LAUNCHER_EXITS_ENFORCE_TWO_60_SECOND_RETRIES')
+    $script:recoveryAttempts.Clear(); $script:recoveryDelays.Clear()
+    Confirm-Rejection 'ADMISSION_ERROR_PREVENTS_ANY_RECOVERY_RETRY' {
+        Invoke-FoundationRecoveryLoop -Cycle {
+            param($Attempt)
+            $script:recoveryAttempts.Add($Attempt)
+            throw 'Fixture ownership admission refused.'
+        } -Delay { param($Seconds) $script:recoveryDelays.Add($Seconds) }
+    } 'Fixture ownership admission refused'
+    if ($script:recoveryAttempts.Count -ne 1 -or $script:recoveryDelays.Count -ne 0) { throw 'Admission failure was retried.' }
+    Confirm-Rejection 'UNVERIFIED_EXIT_PREVENTS_ANY_RECOVERY_RETRY' {
+        Invoke-FoundationRecoveryLoop -Cycle { return @{ status = 'OWNED_SERVICE_EXITED'; owned_service_exit_verified = $false } } -Delay {
+            param($Seconds) $script:recoveryDelays.Add($Seconds)
+        }
+    } 'did not verify the owned service exit'
+    if ($script:recoveryDelays.Count -ne 0) { throw 'An unverified exit was retried.' }
+
     $paths = Get-FoundationPaths
     $receipt = [pscustomobject]@{ lab_root = $admitted.LabRoot; action = [pscustomobject]@{
         executable = $paths.Shell; arguments = Get-FoundationTaskArguments $admitted.LabRoot $admitted.ArchivePath $Port
@@ -187,8 +225,8 @@ pathlib.Path(sys.argv[2]).write_text('complete', encoding='ascii')
     $task.Actions = @(New-ScheduledTaskAction -Execute $paths.Shell -Argument '-NoProfile -Command exit' -WorkingDirectory $admitted.LabRoot)
     Confirm-Rejection 'CONFLICTING_TASK_ARGUMENTS_REJECTED' { Assert-FoundationTask $task $receipt } 'conflicting task definition'
     $task = New-TaskFixture $receipt
-    $task.Settings = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1) -ExecutionTimeLimit ([TimeSpan]::Zero)
-    Confirm-Rejection 'CHANGED_RESTART_POLICY_REJECTED' { Assert-FoundationTask $task $receipt } 'conflicting task definition'
+    $task.Settings = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew -RestartCount 2 -RestartInterval (New-TimeSpan -Minutes 1) -ExecutionTimeLimit ([TimeSpan]::Zero)
+    Confirm-Rejection 'ADDITIONAL_SCHEDULER_RETRIES_REJECTED' { Assert-FoundationTask $task $receipt } 'conflicting task definition'
 
     $service = Get-FoundationService $admitted.LabRoot $admitted.Python $Port -MayBeAbsent
     $serviceWitness = 'ABSENT'

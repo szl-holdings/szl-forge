@@ -147,6 +147,10 @@ function Read-FoundationInstallation {
     Assert-FoundationPath $paths.Operations -Directory | Out-Null
     Assert-FoundationPath $paths.Receipt | Out-Null
     $receipt = Get-Content -LiteralPath $paths.Receipt -Raw | ConvertFrom-Json
+    if ($receipt.recovery_mechanism -cne 'BOUNDED_SUPERVISOR_RETRY' -or
+        $receipt.retry_limit -ne 2 -or $receipt.retry_interval_seconds -ne 60 -or $receipt.scheduler_restart_count -ne 0) {
+        throw 'The installation receipt has a different recovery policy.'
+    }
     if ($receipt.schema -ne 'szl.foundation-confirmation.windows-installation/v1' -or
         $receipt.owner_sid -ne $paths.Sid -or $receipt.task_name -ne $paths.Task -or
         $receipt.task_path -ne '\' -or $receipt.operations_root -ne $paths.Operations -or
@@ -199,7 +203,7 @@ function Assert-FoundationTask {
         $principalSid -ne $paths.Sid -or [string]$Task.Principal.LogonType -ne 'Interactive' -or
         [string]$Task.Principal.RunLevel -ne 'Limited' -or @($Task.Triggers).Count -ne 1 -or
         $Task.Triggers[0].CimClass.CimClassName -ne 'MSFT_TaskLogonTrigger' -or $triggerSid -ne $paths.Sid -or
-        $Task.Settings.RestartCount -ne 2 -or $Task.Settings.RestartInterval -ne 'PT1M' -or
+        $Task.Settings.RestartCount -ne 0 -or -not [string]::IsNullOrEmpty($Task.Settings.RestartInterval) -or
         [string]$Task.Settings.MultipleInstances -ne 'IgnoreNew' -or $Task.Settings.ExecutionTimeLimit -ne 'PT0S') {
         throw 'A conflicting task definition was found; no task was changed.'
     }
@@ -294,43 +298,75 @@ function Invoke-FoundationLauncher {
     return $launcher.ExitCode
 }
 
+function Invoke-FoundationRecoveryLoop {
+    param([Parameter(Mandatory = $true)][scriptblock]$Cycle,
+          [Parameter(Mandatory = $true)][scriptblock]$Delay)
+    $attempt = 0
+    while ($true) {
+        # Admission, ownership and readiness exceptions propagate immediately.
+        # Only the successful exact-owned-process wait can authorize a retry.
+        $completed = @(& $Cycle $attempt)
+        if ($completed.Count -ne 1 -or $completed[0].status -cne 'OWNED_SERVICE_EXITED' -or
+            $completed[0].owned_service_exit_verified -isnot [bool] -or
+            $completed[0].owned_service_exit_verified -ne $true) {
+            throw 'The recovery cycle did not verify the owned service exit.'
+        }
+        if ($attempt -ge 2) { throw 'The owned service recovery budget exhausted its two retries.' }
+        $attempt++
+        & $Delay 60 | Out-Null
+    }
+}
+
 # The installer and uninstaller dot-source only these definitions.
 if ($MyInvocation.InvocationName -eq '.') { return }
 
 try {
-    $admitted = Test-FoundationRelease $LabRoot $ArchivePath
     if ($ValidateOnly) {
+        $admitted = Test-FoundationRelease $LabRoot $ArchivePath
         @{ status = 'VERIFIED'; admission = $admitted; task_registered = $false; service_started = $false } | ConvertTo-Json -Depth 8
         exit 0
     }
-    $paths = Get-FoundationPaths
-    $installation = Read-FoundationInstallation
-    if ($installation.lab_root -ne $admitted.LabRoot -or $installation.archive_path -ne $admitted.ArchivePath -or $installation.port -ne $Port) {
-        throw 'Launch arguments do not match the owned installation receipt.'
+    Invoke-FoundationRecoveryLoop -Cycle {
+        param($Attempt)
+        # Re-admit the sealed source, installation and task before every launch.
+        $admitted = Test-FoundationRelease $LabRoot $ArchivePath
+        $paths = Get-FoundationPaths
+        $installation = Read-FoundationInstallation
+        if ($installation.lab_root -ne $admitted.LabRoot -or $installation.archive_path -ne $admitted.ArchivePath -or $installation.port -ne $Port) {
+            throw 'Launch arguments do not match the owned installation receipt.'
+        }
+        Assert-FoundationTask (Get-ScheduledTask -TaskName $paths.Task -TaskPath '\' -ErrorAction Stop) $installation
+        $predecessor = Get-FoundationService $admitted.LabRoot $admitted.Python $Port -MayBeAbsent
+        Assert-FoundationLaunchPort $Port $predecessor
+        $launchArguments = '-NoProfile -NonInteractive -File "' + (Join-Path $admitted.LabRoot 'start.ps1') + '" -Port ' + $Port
+        $launcherExitCode = Invoke-FoundationLauncher $paths.Shell $launchArguments $admitted.LabRoot
+        if ($launcherExitCode -ne 0) { throw 'The unchanged workbench launcher failed. See retained state/service.stderr.log.' }
+        $owned = Get-FoundationService $admitted.LabRoot $admitted.Python $Port
+        $script:foundationSupervisionRun = @{ schema = 'szl.foundation-confirmation.windows-supervisor/v1'; owner_sid = $paths.Sid;
+            installation_id = $installation.installation_id; started_utc = [datetime]::UtcNow.ToString('o');
+            status = 'WAITING_FOR_OWNED_SERVICE'; process = $owned.Receipt; source_admission = $admitted.Verification;
+            checkpoints_verified = $owned.Status.checkpoints_verified; task_tracks_service = $true;
+            recovery_mechanism = 'BOUNDED_SUPERVISOR_RETRY'; retry_limit = 2; retry_interval_seconds = 60;
+            scheduler_restart_count = 0; recovery_attempt = $Attempt }
+        Write-FoundationJson (Join-Path $paths.Operations 'supervisor-status.json') $script:foundationSupervisionRun
+        $tracked = Get-Process -Id $owned.Receipt.pid -ErrorAction Stop
+        if ((ConvertTo-FoundationCimTimestamp $tracked.StartTime) -ne ([datetime]$owned.Receipt.process_created).ToUniversalTime() -or
+            $tracked.Path -ne $admitted.Python) { throw 'The service changed before supervision began.' }
+        Wait-Process -InputObject $tracked -ErrorAction Stop
+        $tracked.Refresh()
+        if (-not $tracked.HasExited) { throw 'The exact owned process has not exited.' }
+        $script:foundationSupervisionRun.status = 'OWNED_SERVICE_EXITED'
+        $script:foundationSupervisionRun.completed_utc = [datetime]::UtcNow.ToString('o')
+        Write-FoundationJson (Join-Path $paths.Operations 'supervisor-status.json') $script:foundationSupervisionRun
+        return @{ status = 'OWNED_SERVICE_EXITED'; owned_service_exit_verified = $true }
+    } -Delay {
+        param($Seconds)
+        $paths = Get-FoundationPaths
+        $script:foundationSupervisionRun.status = 'AWAITING_BOUNDED_SUPERVISOR_RETRY'
+        $script:foundationSupervisionRun.retry_requested_utc = [datetime]::UtcNow.ToString('o')
+        Write-FoundationJson (Join-Path $paths.Operations 'supervisor-status.json') $script:foundationSupervisionRun
+        Start-Sleep -Seconds $Seconds
     }
-    Assert-FoundationTask (Get-ScheduledTask -TaskName $paths.Task -TaskPath '\' -ErrorAction Stop) $installation
-    # Verify a live predecessor before letting the unchanged launcher reuse its receipt.
-    $predecessor = Get-FoundationService $admitted.LabRoot $admitted.Python $Port -MayBeAbsent
-    Assert-FoundationLaunchPort $Port $predecessor
-    $launchArguments = '-NoProfile -NonInteractive -File "' + (Join-Path $admitted.LabRoot 'start.ps1') + '" -Port ' + $Port
-    $launcherExitCode = Invoke-FoundationLauncher $paths.Shell $launchArguments $admitted.LabRoot
-    if ($launcherExitCode -ne 0) { throw 'The unchanged workbench launcher failed. See retained state/service.stderr.log.' }
-    $owned = Get-FoundationService $admitted.LabRoot $admitted.Python $Port
-    $run = @{ schema = 'szl.foundation-confirmation.windows-supervisor/v1'; owner_sid = $paths.Sid;
-        installation_id = $installation.installation_id; started_utc = [datetime]::UtcNow.ToString('o');
-        status = 'WAITING_FOR_OWNED_SERVICE'; process = $owned.Receipt; source_admission = $admitted.Verification;
-        checkpoints_verified = $owned.Status.checkpoints_verified; task_tracks_service = $true }
-    Write-FoundationJson (Join-Path $paths.Operations 'supervisor-status.json') $run
-    $tracked = Get-Process -Id $owned.Receipt.pid -ErrorAction Stop
-    # Pin the process handle to the creation timestamp, even if the PID exits and is reused.
-    if ((ConvertTo-FoundationCimTimestamp $tracked.StartTime) -ne ([datetime]$owned.Receipt.process_created).ToUniversalTime() -or
-        $tracked.Path -ne $admitted.Python) { throw 'The service changed before supervision began.' }
-    Wait-Process -InputObject $tracked -ErrorAction Stop
-    $run.status = 'OWNED_SERVICE_EXITED'
-    $run.completed_utc = [datetime]::UtcNow.ToString('o')
-    Write-FoundationJson (Join-Path $paths.Operations 'supervisor-status.json') $run
-    # Ending the service is a failure for the supervisor; Task Scheduler owns the bounded retries.
-    exit 1
 } catch {
     Write-Error $_ -ErrorAction Continue
     exit 1
