@@ -394,6 +394,24 @@ class WitnessFailureEvidence(unittest.TestCase):
         self.assertEqual(len(detail["body_utf8"]), 4096)
         self.assertEqual(detail["captured_body_sha256"], hashlib.sha256(body[:4096]).hexdigest())
 
+    def test_incomplete_error_body_preserves_original_http_failure(self):
+        class IncompleteBody(io.BytesIO):
+            def read(self, size=-1):
+                raise http.client.IncompleteRead(b"partial", 1)
+        headers = Message()
+        headers["Content-Type"] = "text/plain"
+        failure = HTTPError(adapter.PUBLIC_ORIGIN + "/api/trial", 503, "Service Unavailable", headers, IncompleteBody())
+        with patch.object(public_witness, "urlopen", side_effect=failure):
+            with self.assertRaises(HTTPError) as raised:
+                public_witness.fetch(adapter.PUBLIC_ORIGIN, "/api/trial", REQUEST)
+        self.assertIs(raised.exception, failure)
+        detail = failure.runtime_http_evidence
+        self.assertEqual(detail["status"], 503)
+        self.assertTrue(detail["body_unavailable"])
+        self.assertIsNone(detail["captured_body_sha256"])
+        self.assertIsNone(detail["body_utf8"])
+        self.assertTrue(failure.file.closed)
+
 
 class TransportIdleAdmission(unittest.TestCase):
     def test_completed_idle_requests_do_not_consume_the_next_trial_slot(self):

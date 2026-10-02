@@ -38,11 +38,12 @@ It then witnesses three actual public inference calls and their receipt
 readbacks. Those publication records establish source and runtime consistency;
 they do not turn the failed scientific gate into a pass.
 
-HTTP failures remain terminal for public trial qualification. The verifier
+HTTP failures other than the existing bounded 429 backpressure retries remain
+terminal for public trial qualification. The verifier
 retains the failed method, endpoint, status, selected transport headers and up
 to 4,096 response bytes with their hash. Truncated captures are labeled; these
-diagnostics neither retry a failed trial nor establish the cause of older
-failures whose response bodies were not captured.
+diagnostics add no retries. They do not establish the cause of older failures
+whose response bodies were not captured.
 
 The Hub can report the unchanged Space files as running before a source-variable
 update reaches the process. Publication therefore waits for the declared Git

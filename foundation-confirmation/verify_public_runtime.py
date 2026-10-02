@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 from datetime import datetime, timezone
 import hashlib
+from http.client import HTTPException
 import json
 from pathlib import Path
 import re
@@ -38,15 +39,18 @@ def fetch(origin, path, payload=None):
             body = exc.read(4097)
             captured, truncated = body[:4096], len(body) > 4096
             body_unavailable = False
-        except (OSError, ValueError):
+        except (OSError, ValueError, HTTPException):
             captured, truncated, body_unavailable = b"", False, True
         finally:
             exc.close()
+        response_headers = exc.headers or {}
         def header(name):
-            value = exc.headers.get(name)
+            value = response_headers.get(name)
             return value[:256] if value is not None else None
         exc.runtime_http_evidence = {
             "method": "POST" if payload is not None else "GET", "endpoint": path,
+            "endpoint_evidence": "ATTEMPTED_REQUEST_PATH",
+            "response_at_requested_endpoint": exc.geturl() == origin + path,
             "status": exc.code, "content_type": header("Content-Type"),
             "server": header("Server"), "connection": header("Connection"),
             "captured_body_bytes": len(captured), "body_truncated": truncated,
