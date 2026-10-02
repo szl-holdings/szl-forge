@@ -8,15 +8,22 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import http.client
 import importlib.util
+import io
 import json
 import os
 from pathlib import Path
 import subprocess
+import socket
 import sys
+import tempfile
 import threading
+import time
 import unittest
 from unittest.mock import patch
+from email.message import Message
+from urllib.error import HTTPError
 
 import yaml
 
@@ -26,6 +33,9 @@ SPEC = importlib.util.spec_from_file_location("foundation_public_adapter_tests",
 adapter = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = adapter
 SPEC.loader.exec_module(adapter)
+WITNESS_SPEC = importlib.util.spec_from_file_location("foundation_witness_tests", ROOT / "foundation-confirmation" / "verify_public_runtime.py")
+public_witness = importlib.util.module_from_spec(WITNESS_SPEC)
+WITNESS_SPEC.loader.exec_module(public_witness)
 LFS_POINTER_PREFIX = b"version https://git-lfs.github.com/spec/v1\n"
 
 
@@ -341,6 +351,139 @@ class StorageAndAdmission(unittest.TestCase):
         self.assertIn("does not establish AGI", html)
         for forbidden in ("innerHTML", "localStorage", "sessionStorage", "document.cookie", "setInterval"):
             self.assertNotIn(forbidden, javascript)
+
+
+class WitnessFailureEvidence(unittest.TestCase):
+    def failure(self, body=b"Service Unavailable"):
+        headers = Message()
+        headers["Content-Type"] = "text/plain; charset=utf-8"
+        headers["Connection"] = "close"
+        headers["Authorization"] = "fixture-private-header"
+        return HTTPError(adapter.PUBLIC_ORIGIN + "/api/trial", 503, "Service Unavailable", headers, io.BytesIO(body))
+
+    def test_actual_http_failure_body_survives_as_a_terminal_report(self):
+        failure = self.failure()
+        with patch.object(public_witness, "urlopen", side_effect=failure):
+            with self.assertRaises(HTTPError) as raised:
+                public_witness.fetch(adapter.PUBLIC_ORIGIN, "/api/trial", REQUEST)
+        captured = raised.exception
+        with tempfile.TemporaryDirectory() as folder:
+            report = Path(folder) / "failure.json"
+            argv = ["witness", "--origin", adapter.PUBLIC_ORIGIN, "--expected-source", "a" * 40, "--report", str(report)]
+            with patch.object(sys, "argv", argv), patch.object(public_witness, "witness", side_effect=captured):
+                self.assertEqual(public_witness.main(), 1)
+            evidence = json.loads(report.read_bytes())
+        self.assertFalse(evidence["ok"])
+        detail = evidence["http_failure"]
+        self.assertEqual((detail["method"], detail["endpoint"], detail["status"]), ("POST", "/api/trial", 503))
+        self.assertEqual(detail["body_utf8"], "Service Unavailable")
+        self.assertFalse(detail["body_truncated"])
+        self.assertEqual(detail["captured_body_sha256"], hashlib.sha256(b"Service Unavailable").hexdigest())
+        self.assertEqual(detail["connection"], "close")
+        self.assertNotIn("fixture-private-header", json.dumps(evidence))
+
+    def test_http_error_evidence_is_byte_bounded_and_not_retried(self):
+        body = b"x" * 8192
+        with patch.object(public_witness, "urlopen", side_effect=self.failure(body)) as transport:
+            with self.assertRaises(HTTPError) as raised:
+                public_witness.fetch(adapter.PUBLIC_ORIGIN, "/api/trial", REQUEST)
+        transport.assert_called_once()
+        detail = raised.exception.runtime_http_evidence
+        self.assertTrue(detail["body_truncated"])
+        self.assertEqual(detail["captured_body_bytes"], 4096)
+        self.assertEqual(len(detail["body_utf8"]), 4096)
+        self.assertEqual(detail["captured_body_sha256"], hashlib.sha256(body[:4096]).hexdigest())
+
+    def test_incomplete_error_body_preserves_original_http_failure(self):
+        class IncompleteBody(io.BytesIO):
+            def read(self, size=-1):
+                raise http.client.IncompleteRead(b"partial", 1)
+        headers = Message()
+        headers["Content-Type"] = "text/plain"
+        failure = HTTPError(adapter.PUBLIC_ORIGIN + "/api/trial", 503, "Service Unavailable", headers, IncompleteBody())
+        with patch.object(public_witness, "urlopen", side_effect=failure):
+            with self.assertRaises(HTTPError) as raised:
+                public_witness.fetch(adapter.PUBLIC_ORIGIN, "/api/trial", REQUEST)
+        self.assertIs(raised.exception, failure)
+        detail = failure.runtime_http_evidence
+        self.assertEqual(detail["status"], 503)
+        self.assertTrue(detail["body_unavailable"])
+        self.assertIsNone(detail["captured_body_sha256"])
+        self.assertIsNone(detail["body_utf8"])
+        self.assertTrue(failure.file.closed)
+
+
+class TransportIdleAdmission(unittest.TestCase):
+    def test_completed_idle_requests_do_not_consume_the_next_trial_slot(self):
+        absent = [name for name in ("uvicorn", "h11") if importlib.util.find_spec(name) is None]
+        if absent:
+            if os.getenv("FOUNDATION_REQUIRE_INTEGRATION") == "1":
+                self.fail("Dedicated runtime gate lacks transport dependencies: " + ", ".join(absent))
+            self.skipTest("Transport dependencies unavailable in general development environment")
+        docker = (SPACE / "Dockerfile").read_text()
+        command = json.loads(next(line[4:] for line in docker.splitlines() if line.startswith("CMD ")))
+        concurrency = int(command[command.index("--limit-concurrency") + 1])
+        keepalive = int(command[command.index("--timeout-keep-alive") + 1])
+        self.assertEqual(concurrency, 8)
+        self.assertEqual(command[command.index("--workers") + 1], "1")
+        probe = socket.socket()
+        probe.bind(("127.0.0.1", 0))
+        port = probe.getsockname()[1]
+        probe.close()
+        child = '''import uvicorn,sys
+async def app(scope,receive,send):
+ body=b"transport-control-only"
+ await send({"type":"http.response.start","status":201 if scope["method"]=="POST" else 200,"headers":[(b"content-length",str(len(body)).encode())]})
+ await send({"type":"http.response.body","body":body})
+uvicorn.run(app,host="127.0.0.1",port=int(sys.argv[1]),workers=1,limit_concurrency=int(sys.argv[2]),timeout_keep_alive=int(sys.argv[3]),proxy_headers=False,server_header=False,http="h11",lifespan="off",log_level="warning")
+'''
+        process = subprocess.Popen([sys.executable, "-B", "-c", child, str(port), str(concurrency), str(keepalive)],
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        connections, raw_sockets = [], []
+        try:
+            deadline = time.monotonic() + 8
+            while True:
+                try:
+                    with socket.create_connection(("127.0.0.1", port), timeout=.2):
+                        break
+                except OSError:
+                    if time.monotonic() >= deadline:
+                        self.fail("Owned controlled transport process did not listen")
+                    time.sleep(.05)
+            time.sleep(.1)
+
+            def exchange(method="GET"):
+                connection = http.client.HTTPConnection("127.0.0.1", port, timeout=3)
+                connections.append(connection)
+                connection.request(method, "/", headers={"Connection": "keep-alive"})
+                response = connection.getresponse()
+                raw = response.read(1024)
+                return response.status, raw
+
+            for _ in range(7):
+                self.assertEqual(exchange()[0], 200)
+            self.assertEqual(exchange("POST")[0], 201, "Completed keepalive sockets obstruct the fresh trial")
+            for connection in connections:
+                connection.close()
+            time.sleep(.15)
+            # Initial sockets still count: disabling idle response retention must
+            # preserve admission against eight concurrent HTTP connections.
+            for _ in range(7):
+                raw_sockets.append(socket.create_connection(("127.0.0.1", port), timeout=2))
+            time.sleep(.1)
+            self.assertEqual(exchange(), (503, b"Service Unavailable"))
+        finally:
+            for connection in connections:
+                connection.close()
+            for opened in raw_sockets:
+                opened.close()
+            if process.poll() is None:
+                process.terminate()
+            try:
+                process.communicate(timeout=5)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.communicate(timeout=5)
 
 
 class ActualCheckpointIntegration(unittest.TestCase):
