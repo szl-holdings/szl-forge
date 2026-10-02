@@ -102,10 +102,12 @@ authorization to stop it.
 
 ## Upgrade an existing installation
 
-Running the new installer over an existing same-directory installation returns
-`ALREADY_REGISTERED`; it verifies the earlier receipt and does **not** replace
-the earlier supervisor. To deploy the current supervisor and recovery policy, explicitly
-uninstall the owned installation and reinstall from the new protected source.
+When an existing same-directory installation already uses this recovery policy,
+running the new installer returns `ALREADY_REGISTERED`; it verifies the receipt
+and does **not** replace the supervisor. Earlier receipts without this recovery
+policy are refused. In either case, deploy the current supervisor and policy by
+explicitly uninstalling the owned installation with its currently installed
+helper, then reinstalling from the new protected source.
 
 Before removal, preserve `installation.json` and any `supervisor-status.json`
 outside the managed directory. Use the **currently installed** helper and
