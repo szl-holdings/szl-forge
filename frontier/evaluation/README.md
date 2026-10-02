@@ -22,7 +22,7 @@ If Khipu transport succeeds but its output is malformed or semantically differen
 
 Pull requests run the two-case smoke suite without publication. Pushes to `main`, the weekly schedule, and approved manual runs execute the four-case suite and publish the receipt bundle to `SZLHOLDINGS/szl-frontier-evaluation-receipts` when a validated write credential is available.
 
-The GitHub workflow independently validates configured Hugging Face credentials. Secret bytes are masked, never placed in artifacts, and never written to the repository. The runner dependency is fixed at `huggingface_hub==1.30.0`, and each receipt records the client software and hardware fingerprint.
+The GitHub workflow checks an access token with authenticated Hugging Face identity before consulting the public model catalog. Legacy read/write tokens require that authenticated identity; fine-grained tokens require the global `inference.serverless.write` permission. A model listed in the catalog is only a reachability diagnostic: it can return HTTP 200 for an invalid token and does not prove that a paid provider request will succeed. The real evaluation establishes target access or records a failure. Secret bytes are masked, never placed in artifacts, and never written to the repository. The runner dependency is fixed at `huggingface_hub==1.30.0`, and each receipt records the client software and hardware fingerprint.
 
 ## Sealed-run counter
 
