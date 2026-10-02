@@ -66,6 +66,17 @@ try {
     }
     [IO.File]::WriteAllText((Join-Path $fixtureRoot 'verify_release.py'), "raise RuntimeError('UNTRUSTED_VERIFIER_EXECUTED')", [Text.UTF8Encoding]::new($false))
     Confirm-Rejection 'MODIFIED_VERIFIER_REJECTED_BEFORE_EXECUTION' { Test-FoundationRelease $fixtureRoot $admitted.ArchivePath } 'Pinned release hash mismatch: .*verify_release.py'
+    $transitionPath = Join-Path $fixtureRoot 'atomic-receipt.json'
+    Write-FoundationJson $transitionPath @{ state = 'PREPARED'; installation_id = 'fixture-owned-installation' }
+    if ((Get-Content -LiteralPath $transitionPath -Raw | ConvertFrom-Json).state -cne 'PREPARED') {
+        throw 'The atomic receipt did not preserve the prepared state.'
+    }
+    Write-FoundationJson $transitionPath @{ state = 'REGISTERED'; installation_id = 'fixture-owned-installation' }
+    $transition = Get-Content -LiteralPath $transitionPath -Raw | ConvertFrom-Json
+    if ($transition.state -cne 'REGISTERED' -or $transition.installation_id -cne 'fixture-owned-installation') {
+        throw 'The atomic receipt update did not preserve the second transition.'
+    }
+    $checks.Add('ATOMIC_RECEIPT_SECOND_TRANSITION_VERIFIED')
 
     $paths = Get-FoundationPaths
     $receipt = [pscustomobject]@{ lab_root = $admitted.LabRoot; action = [pscustomobject]@{

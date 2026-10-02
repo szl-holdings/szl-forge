@@ -135,7 +135,7 @@ function Write-FoundationJson {
         $bytes = [Text.UTF8Encoding]::new($false).GetBytes(($Value | ConvertTo-Json -Depth 12))
         $stream = [IO.File]::Open($temporary, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::None)
         try { $stream.Write($bytes, 0, $bytes.Length); $stream.Flush($true) } finally { $stream.Dispose() }
-        if (Test-Path -LiteralPath $safe) { [IO.File]::Replace($temporary, $safe, $null) }
+        if (Test-Path -LiteralPath $safe) { [IO.File]::Replace($temporary, $safe, [System.Management.Automation.Language.NullString]::Value) }
         else { [IO.File]::Move($temporary, $safe) }
     } finally {
         if (Test-Path -LiteralPath $temporary) { Remove-Item -LiteralPath $temporary }
