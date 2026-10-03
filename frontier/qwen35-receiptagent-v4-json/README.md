@@ -73,7 +73,7 @@ training, serving, signing or file mutation is performed by the validator.
 ## Run offline
 
 Use an environment with `jsonschema==4.26.0`. No model download or API key is
-needed. From the repository root:
+needed for protocol checks. From the repository root:
 
 ```sh
 python -I -B frontier/qwen35-receiptagent-v4-json/json_contract.py --schema response
@@ -85,17 +85,81 @@ python -I -B -m unittest discover \
 
 CLI exit 0 means schema/pair conformance only. Exit 1 means BLOCKED input or
 binding; exit 2 is invalid CLI usage. Neither success nor failure permits
-training, publication or execution. The 39 software tests use SIMULATED test
-targets, not actual model decodes, training examples or held-out model results.
+training, publication or execution. Software tests use SIMULATED test
+targets, not actual model decodes or held-out model results.
 The existing blocking offline CI lane owns these tests; no publisher was added.
+
+## Fresh curriculum and preregistration
+
+The v4-only curriculum has 360 train rows, 90 dev rows and 180 separately authored
+public frozen final-gate rows. Families are disjoint (four/two/three), and each
+split balances DRAFT, RECOVERY and REFUSAL. Each train family has six examples of
+every recovery status and blocked authority; dev has three and final has four.
+All evidence and reference targets are synthetic. `curriculum-manifest.json`
+commits exact LF bytes; `preregistration.json` declares the future denominators,
+limits and remaining launch/release gates. This is not a signed curriculum.
+
+`generate_curriculum.py` authors only train/dev. It reads final-gate aggregate
+commitments, never final-gate cases/templates. A separate custodian authored the
+final gate. A non-authoring reviewer checked every split for exact and normalized
+task/value overlap; the independent integrity test freezes those checks and
+commitments. Zero textual overlap is not a semantic-independence proof: the fixed
+protocol, claims and output rules are deliberately shared. The final 180 cases
+have 75 normalized task forms and 12 normalized evidence-value forms, not 180
+independent semantic problems. Access is `PUBLIC_FROZEN_NOT_BLIND`.
+
+This is a typed routing/binding/copying benchmark, not software analysis, intent
+classification, or a comparable replacement for old v3, Khipu or Chaski scores.
+Train/dev evidence counts are zero through two; final counts extend through four.
+Exact tokenizer capacity and nontruncating runtime qualification remain UNKNOWN.
+
+```sh
+python -I -B frontier/qwen35-receiptagent-v4-json/generate_curriculum.py --check
+```
+
+Generation refuses differing existing artifacts; `--write` creates only missing
+matching artifacts, and final readback rejects racing substitutions. These are
+owner-controlled single-writer reproducibility utilities, not authorization
+boundaries. Missing/drifted committed artifacts fail `--check`. Never regenerate
+or retune a final gate after seeing a model failure; freeze a new experiment.
+
+## Train-only conformance (not training authorization)
+
+`curriculum_admission.py` reads the explicit training file and exact immutable
+manifest only; it does not discover/glob/open dev or final-gate cases. It checks
+strict JSON, all pair/ID/digest bindings, SIMULATED labels, exact family/class and
+status/authority coverage, and pinned LF contract/gate source bytes. It snapshots
+the same bounded, non-aliased training bytes into a private temporary directory
+and reruns the real generic validator and Nemo R1-R5 gate. The maintained Nemo
+verifier checks the complete unsigned receipt chain and each exact prompt/target
+input hash; a saved report or supplied signature is never accepted as a shortcut.
+
+Use an environment with `jsonschema==4.26.0` and the reviewed doctrine kernel
+`szl-nemo @ git+https://github.com/szl-holdings/szl-nemo.git@f44b468a60c97978897bc610cf4729fc16b271af`.
+The source-only CI lane installs that exact kernel and runs:
+
+```sh
+python -I -B frontier/qwen35-receiptagent-v4-json/curriculum_admission.py \
+  --check-conformance \
+  --train frontier/qwen35-receiptagent-v4-json/train.jsonl \
+  --manifest frontier/qwen35-receiptagent-v4-json/curriculum-manifest.json
+```
+
+Exit 0 means train-only conformance, not authority. Exit 1 is invalid/drifted
+source/data or failed integrity. Exit 2 means a required gate/kernel/verifier is
+NOT_READY (or invalid CLI usage), never a pass. Success still reports
+`state=BLOCKED`, all eligibility/authority false, signature invalid/unavailable
+and runtime binding unavailable. Its unsigned chain is software integrity evidence,
+not an owner-signed curriculum, authenticated origin or permission to train.
+Actual training/evaluation remains NOT RUN, optimizer steps zero, energy UNAVAILABLE.
 
 ## Still required before training
 
-1. Author genuinely new nonclinical task families and separate train/dev/held-out
-   content; do not rehash or transfer v3 held-out into gradients.
-2. Preregister immutable split hashes, semantic leakage review, seed, absolute
-   denominators and comparison criteria. Do not silently inherit the old
-   72-case/+15 result threshold as if this were the same task.
+1. Obtain protected source merge/readback and owner-signed curriculum admission;
+   immutable source references and peer textual checks are not authorization.
+2. Keep final-gate cases out of gradients and development. Do not inherit the old
+   72-case/+15 result threshold as if this were the same task or assert semantic
+   independence from identifiers or textual checks alone.
 3. Bind a signed curriculum to the generic SFT validator, reviewed immutable
    Nemo R1-R5 gate, this JSON contract and a source-current trainer/supervisor.
 4. Establish bounded local resources, emit chained per-run evidence and verify

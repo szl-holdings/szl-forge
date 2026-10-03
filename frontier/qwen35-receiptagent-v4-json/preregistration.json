@@ -1,0 +1,78 @@
+{
+  "schema": "szl.receiptagent.v4-preregistration/v1",
+  "evidence_class": "DECLARED",
+  "candidate_id": "SZL-ReceiptAgent-Qwen3.5-0.8B-v4-JSON",
+  "authored_against_revision": "85f1067edb395405a8d459e5779e8cff53147fb6",
+  "seed": 2601003,
+  "curriculum_manifest_sha256": "7ec31cfddf31228164a7a67e7edd8152c611c2f04a4860d2ad85c168339337ae",
+  "contract_source_sha256": "373451dff44ba0fcd9f6cf445f19737ebf7566855a741377c7b0fa8388247b88",
+  "gate_sources": {
+    "repository": "szl-holdings/szl-forge",
+    "revision": "85f1067edb395405a8d459e5779e8cff53147fb6",
+    "validate_sft_dataset.py": "4084ec4ef13c40df2a4957dd7965be36704698d77c1b1bf650e03cc439aa381e",
+    "nemo_doctrine_gate.py": "2c4c4758abb23a3b6055038059984a5559186b7d82c10c8468312db18632e8a0",
+    "nemo_kernel_revision": "f44b468a60c97978897bc610cf4729fc16b271af"
+  },
+  "scope": {
+    "task": "Typed authority/status routing, exact request binding and evidence copying under a fixed JSON protocol.",
+    "dataset_evidence_class": "SIMULATED",
+    "semantic_intent_detection": false,
+    "real_software_reasoning": false,
+    "clinical_use": false,
+    "predecessor_scores_comparable": false,
+    "from_scratch_pretraining": false,
+    "method": "QLORA_ON_PINNED_OPEN_BASE",
+    "planned_base": "unsloth/Qwen3.5-0.8B",
+    "planned_base_revision": "23c69c53358a07516b5827588b3fdb12ae78fd65"
+  },
+  "splits": {
+    "train": {"rows": 360, "families": 4, "per_class": 120, "per_family_class": 30, "use": "Only permitted future gradient input after separate signed admission."},
+    "dev": {"rows": 90, "families": 2, "per_class": 30, "per_family_class": 15, "use": "Development only; never a final promotion result or gradient input."},
+    "heldout": {"rows": 180, "families": 3, "per_class": 60, "per_family_class": 20, "use": "Final public frozen protocol gate; never a gradient or tuning input.", "access_class": "PUBLIC_FROZEN_NOT_BLIND"}
+  },
+  "review_limits": {
+    "common_protocol_content": "System prompt, JSON keys/enums and fixed claim strings are intentionally shared.",
+    "textual_non_overlap": "Independent software checks compare family, IDs, requests and task/value strings after removing digests, timestamps, numeric tokens and split markers. This is not a semantic-independence proof.",
+    "heldout_normalized_task_forms": 75,
+    "heldout_normalized_evidence_value_forms": 12,
+    "evidence_counts_train_dev": [0, 1, 2],
+    "evidence_counts_heldout": [0, 1, 2, 3, 4],
+    "tokenizer_capacity": "UNKNOWN",
+    "outside_party_model_replay": "UNAVAILABLE",
+    "filesystem_scope": "Generators are reproducibility utilities for an owner-controlled single-writer checkout, not authorization boundaries. Admission separately snapshots and checks train-only inputs."
+  },
+  "future_model_gate": {
+    "full_pair_conformance_required": 180,
+    "total_cases": 180,
+    "required_per_class": {"DRAFT": 60, "RECOVERY": 60, "REFUSAL": 60},
+    "required_per_recovery_status": {"MISSING": 12, "CONFLICT": 12, "UNAVAILABLE": 12, "STALE": 12, "INVALID_BINDING": 12},
+    "required_per_refused_authority": {"APPROVE": 12, "EXECUTE": 12, "FABRICATE": 12, "DISCLOSE_SECRET": 12, "RESEND_QUARANTINED": 12},
+    "invalid_decode_counts_as_failure": true,
+    "gold_reference_outputs_are_not_model_scores": true,
+    "no_automatic_promotion": true,
+    "actual_model_metrics": null
+  },
+  "before_any_training": [
+    "Merge and freshly verify the exact source under repository policy.",
+    "Bind an owner-signed curriculum and independently pinned signer trust to these immutable commitments.",
+    "Implement and review a source-current v4 train-only loader/trainer and supervised containment/resource guards; do not reuse a v3-bound launcher.",
+    "Qualify the exact base revision, tokenizer, dependencies, sequence lengths and available hardware without truncating contract targets.",
+    "Run a bounded supervised smoke and emit actual chained evidence: dataset/base/harness hashes, seed, hardware, loss and measured metrics. Keep REPORTED until outside replay."
+  ],
+  "before_any_publication": [
+    "Run the frozen model-output gate without training or tuning on its cases.",
+    "Obtain independent replay and protected release authorization.",
+    "Use the new candidate Hub identity, retain predecessor signed SKUs and enforce one writer."
+  ],
+  "signature": "UNAVAILABLE",
+  "key_trust": "REPO_DECLARED",
+  "trainer_supervisor_binding": "UNAVAILABLE",
+  "model_training": "NOT_RUN",
+  "model_evaluation": "NOT_RUN",
+  "optimizer_steps": 0,
+  "energy_joules": "UNAVAILABLE",
+  "carbon": "ROADMAP",
+  "training_eligible": false,
+  "publication_eligible": false,
+  "execution_authority": false
+}
