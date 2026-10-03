@@ -142,7 +142,13 @@ try {
     Reject 'CONFLICTING_CPU_TASK_ARGUMENTS' { Assert-FoundationTask $task $taskReceipt } 'conflicting task definition'
     # This is a stdlib-only test image, not production environment admission.
     $fixturePython = Join-Path $paths.Profile 'AppData\Local\Programs\Python\Python311\python.exe'
-    if (-not (Test-Path -LiteralPath $fixturePython)) { $fixturePython = (Get-Command python -CommandType Application -ErrorAction Stop).Source }
+    if (-not (Test-Path -LiteralPath $fixturePython)) {
+        $pyCmd = @(Get-Command python -CommandType Application -ErrorAction Stop) |
+            Where-Object { $_.Source -and ($_.Source -notmatch 'WindowsApps') } |
+            Select-Object -First 1
+        if (-not $pyCmd) { throw 'No usable python.exe for the predecessor fixture.' }
+        $fixturePython = [string]$pyCmd.Source
+    }
     $nativeRaw = & $fixturePython -I -S -B (Join-Path $PSScriptRoot 'test-cpu-predecessor.py')
     if ($LASTEXITCODE -ne 0) { throw 'The actual retained-handle predecessor fixture failed.' }
     $native = ($nativeRaw -join "`n") | ConvertFrom-Json
