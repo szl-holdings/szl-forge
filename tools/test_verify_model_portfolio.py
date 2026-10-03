@@ -26,6 +26,36 @@ class PortfolioContractTests(unittest.TestCase):
         self.assertEqual(16, len(repo_ids))
         self.assertEqual(16, len(set(repo_ids)))
 
+    def test_canonical_kernel_sources_preserve_existing_maturity(self) -> None:
+        expected = {
+            "SZLHOLDINGS/szl-blocked": (
+                "https://github.com/szl-holdings/szl-blocked", "SOURCE_UNBOUND"
+            ),
+            "SZLHOLDINGS/szl-govsign": (
+                "https://github.com/szl-holdings/szl-govsign", "SOURCE_UNBOUND"
+            ),
+            "SZLHOLDINGS/szl-provctl": (
+                "https://github.com/szl-holdings/szl-provctl", "SOURCE_UNBOUND"
+            ),
+            "SZLHOLDINGS/szl-invariants": (
+                "https://github.com/szl-holdings/szl-invariants", "SOFTWARE_ARTIFACT"
+            ),
+            "SZLHOLDINGS/szl-kernels": (
+                "https://github.com/szl-holdings/szl-kernels", "SOFTWARE_ARTIFACT"
+            ),
+            "SZLHOLDINGS/szl-ouroboros": (
+                "https://github.com/szl-holdings/szl-ouroboros", "SOFTWARE_ARTIFACT"
+            ),
+        }
+        artifacts = {item["repo_id"]: item for item in self.document["artifacts"]}
+        for repo_id, (source, maturity) in expected.items():
+            with self.subTest(repo_id=repo_id):
+                item = artifacts[repo_id]
+                self.assertEqual(source, item["github_source"])
+                self.assertEqual(maturity, item["maturity"])
+                self.assertEqual("software_kernel", item["kind"])
+                self.assertIs(item["autonomy_eligible"], False)
+
     def test_forge_lab_renders_the_exact_canonical_portfolio(self) -> None:
         self.assertEqual(
             verifier.DEFAULT_PORTFOLIO.read_bytes(),

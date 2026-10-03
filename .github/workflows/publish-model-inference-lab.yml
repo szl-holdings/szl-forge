@@ -62,6 +62,7 @@ jobs:
           tests/test_acquire_hf_publisher_token.py
           tests/test_hf_org_token1_fallback.py
           tests/test_governed_live_verifier_entrypoint.py
+          tools/test_publish_hf_space.py
 
       - name: Acquire and actively validate Space publisher credential
         env:
@@ -89,7 +90,7 @@ jobs:
             --repo-id SZLHOLDINGS/szl-model-inference-lab \
             --source-revision "${GITHUB_SHA}" \
             --publish \
-            --clear-space-volumes \
+            --reject-attached-space-volumes \
             --wait-seconds 1800 \
             --smoke-path /live \
             --smoke-path /health \

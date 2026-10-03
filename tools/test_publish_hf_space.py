@@ -171,6 +171,47 @@ class SpacePublicationPlanTests(unittest.TestCase):
         api.delete_space_volumes.assert_called_once_with(repo_id="owner/space")
         api.get_space_runtime.assert_not_called()
 
+    def test_read_only_volume_observation_keeps_missing_metadata_unknown(self) -> None:
+        for runtime in (None, SimpleNamespace(), SimpleNamespace(volumes=None)):
+            with self.subTest(runtime=runtime):
+                self.assertEqual(
+                    {"state": "UNKNOWN", "count": None},
+                    publisher.observe_space_volumes(SimpleNamespace(runtime=runtime)),
+                )
+        self.assertEqual(
+            {"state": "OBSERVED_ZERO", "count": 0},
+            publisher.observe_space_volumes(
+                SimpleNamespace(runtime=SimpleNamespace(volumes=[]))
+            ),
+        )
+
+    def test_read_only_volume_guard_blocks_explicit_attachment_before_commit(self) -> None:
+        api = Mock()
+        api.space_info.return_value = SimpleNamespace(
+            runtime=SimpleNamespace(volumes=[SimpleNamespace(source="owner/model")])
+        )
+        plan = {"repo_id": "owner/space"}
+        with patch("huggingface_hub.HfApi", return_value=api), \
+                patch("publish_hf_space.ensure_space_repository", return_value={}):
+            with self.assertRaisesRegex(
+                publisher.PublishError, "explicitly attached volume"
+            ):
+                publisher.publish_and_verify(
+                    plan, token="controlled-publisher-test", source_dir=publisher.ROOT,
+                    smoke_paths=["/live"], wait_seconds=6, static=False,
+                    clear_space_volumes=False, reject_attached_space_volumes=True,
+                )
+        api.create_commit.assert_not_called()
+        api.delete_space_volumes.assert_not_called()
+        api.list_repo_files.assert_not_called()
+
+    def test_model_lab_workflow_uses_read_only_volume_guard(self) -> None:
+        workflow = (publisher.ROOT / ".github/workflows/publish-model-inference-lab.yml")
+        text = workflow.read_text(encoding="utf-8")
+        self.assertIn("--reject-attached-space-volumes", text)
+        self.assertNotIn("--clear-space-volumes", text)
+        self.assertIn("tools/test_publish_hf_space.py", text)
+
     def test_exact_runtime_wait_can_require_final_zero_volumes(self) -> None:
         api = Mock()
         info = SimpleNamespace(
@@ -537,6 +578,9 @@ class RuntimeSourceRolloutTests(unittest.TestCase):
 
     def test_publication_passes_only_the_budget_remaining_after_hub_wait(self):
         api = Mock()
+        api.space_info.return_value = SimpleNamespace(
+            runtime=SimpleNamespace(volumes=None),
+        )
         api.list_repo_files.return_value = []
         api.create_commit.return_value = SimpleNamespace(oid="c" * 40)
         api.get_space_variables.return_value = {
@@ -562,8 +606,12 @@ class RuntimeSourceRolloutTests(unittest.TestCase):
             result = publisher.publish_and_verify(
                 plan, token="controlled-publisher-test", source_dir=publisher.ROOT,
                 smoke_paths=["/live"], wait_seconds=6, static=False, clear_space_volumes=False,
+                reject_attached_space_volumes=True,
             )
         self.assertEqual(REVISION, result["live"]["source_revision"])
+        self.assertEqual("UNKNOWN", result["volume_observation"]["pre_publish"]["state"])
+        self.assertEqual("UNKNOWN", result["volume_observation"]["post_publish"]["state"])
+        api.delete_space_volumes.assert_not_called()
         self.assertEqual(2, self.session.get.call_args_list[0].kwargs["timeout"])
         self.assertTrue(result["runtime_source_wait"]["shared_publication_deadline"])
 
