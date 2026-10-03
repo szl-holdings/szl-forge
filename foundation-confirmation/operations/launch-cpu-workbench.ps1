@@ -1,14 +1,22 @@
 # SPDX-License-Identifier: Apache-2.0
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'supervise-workbench.ps1')
+Initialize-FoundationPhaseLog -Role 'cpu-launcher'
+try {
+Write-FoundationPhaseEvent 'installation_admission' 'ENTERED'
 $installation = Read-FoundationInstallation
 if (-not $installation.cpu_runtime) { throw 'This launcher requires an admitted CPU installation.' }
+Write-FoundationPhaseEvent 'installation_admission' 'RETURNED'
 $paths = Get-FoundationPaths
 Assert-FoundationTask (Get-ScheduledTask -TaskName $paths.Task -TaskPath '\' -ErrorAction Stop) $installation
+Write-FoundationPhaseEvent 'release_verification' 'ENTERED'
 $admitted = Test-FoundationRelease $installation.lab_root $installation.archive_path
+Write-FoundationPhaseEvent 'release_verification' 'RETURNED'
+Write-FoundationPhaseEvent 'predecessor_admission' 'ENTERED'
 $prior = Get-FoundationService $admitted.LabRoot $admitted.Python $installation.port -MayBeAbsent
 Assert-FoundationLaunchPort $installation.port $prior
 if ($prior) { throw 'An admitted service already runs; the CPU launcher did not replace it.' }
+Write-FoundationPhaseEvent 'predecessor_admission' 'RETURNED'
 $cpu = $script:foundationCpuRuntime
 $state = Assert-FoundationPath $cpu.state_directory -Directory
 $argv = @(Get-FoundationCpuArgv $cpu $admitted.LabRoot $admitted.ArchivePath $installation.port)
@@ -24,6 +32,7 @@ $attemptReceipt = Join-Path $state ('launch.' + $attempt + '.json')
 foreach ($path in @($stdout, $stderr, $attemptReceipt)) {
     if (Test-Path -LiteralPath $path) { throw 'The exclusive CPU launch evidence path already exists.' }
 }
+Write-FoundationPhaseEvent 'child_creation' 'ENTERED'
 Initialize-FoundationCpuDeadline # Compile before any child exists.
 $clock = [Diagnostics.Stopwatch]::StartNew()
 try {
@@ -38,6 +47,8 @@ try {
 $guard = $null
 try {
 $guard = New-FoundationCpuDeadline $child 180000 $clock
+Write-FoundationPhaseEvent 'child_creation' 'RETURNED'
+Write-FoundationPhaseEvent 'child_readiness_admission' 'ENTERED'
 Write-FoundationJson $attemptReceipt @{ schema='szl.foundation-confirmation.cpu-launch-attempt/v1';
     attempt_id=$attempt; observed_utc=[datetime]::UtcNow.ToString('o'); pid=$child.Id;
     process_created=(ConvertTo-FoundationCimTimestamp $child.StartTime).ToString('o');
@@ -55,6 +66,8 @@ while ($clock.ElapsedMilliseconds -lt 180000) {
             $owned = Get-FoundationService $admitted.LabRoot $admitted.Python $installation.port
             if ($owned.Receipt.pid -ne $child.Id -or
                 (ConvertTo-FoundationCimTimestamp $child.StartTime) -ne ([datetime]$owned.Receipt.process_created).ToUniversalTime()) { throw 'The CPU child identity changed before launch admission.' }
+            # Endpoint admission only. Complete still charges all diagnostic I/O.
+            Write-FoundationPhaseEvent 'child_readiness_admission' 'RETURNED'
             $guard.Complete() # Monotonic recheck after the bounded endpoints.
             @{ status='ADMITTED_CPU_READY'; pid=$child.Id; models_loaded=$owned.Status.models_loaded; receipt_minted=$false } | ConvertTo-Json
             exit 0
@@ -71,4 +84,10 @@ throw 'The bounded CPU startup deadline elapsed; no readiness retry was attempte
         $child.Refresh()
         if (-not $child.HasExited) { $child.Kill(); $child.WaitForExit(5000) | Out-Null }
     }
+}
+} catch {
+    Write-FoundationPhaseFailure $_
+    throw
+} finally {
+    Close-FoundationPhaseLog
 }
