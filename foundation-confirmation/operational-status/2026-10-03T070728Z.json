@@ -1,0 +1,163 @@
+{
+  "agi_established": false,
+  "assembled_utc": "2026-10-03T07:07:28.042830+00:00",
+  "automatic_recovery": {
+    "actual_outcome": "FAILED",
+    "deadlines_or_gates_relaxed": false,
+    "failed_evidence_preserved": true,
+    "measured_prelaunch_delay_seconds": 407.333916,
+    "observation_limit_seconds": 420,
+    "qualified_successor_release_issued": false,
+    "slow_phase": "UNKNOWN",
+    "state": "BLOCKED",
+    "termination_cause": "UNKNOWN"
+  },
+  "capacity": {
+    "diagnostic_source_change": "ROADMAP",
+    "diagnostic_source_controls": "NOT RUN",
+    "free_bytes": 1466925056,
+    "nonessential_write_floor_bytes": 1500000000,
+    "observed_utc": "2026-10-03T07:03:43.1201256Z"
+  },
+  "domains": {
+    "browser_navigation_verified": false,
+    "observed_utc": "2026-10-03T03:31:24.778813+00:00",
+    "product": "https://a-11-oy.com/research/confirmation/workbench",
+    "proof": "https://a11oy.net/experiments/confirmation/",
+    "proof_exact_files": 25,
+    "proof_files_total": 27,
+    "proof_mismatches": 2,
+    "provider_setting_repair": "NOT_ATTEMPTED; PRIOR AUTHENTICATED AUDIT DENIAL REMAINS UNRESOLVED",
+    "whole_product_repository_qualified": false
+  },
+  "evidence_catalog": [
+    {
+      "bytes": 2852,
+      "role": "protected-source-binding",
+      "sha256": "a77f59da3c4e698523651e23044b1d4cd189ad3047950ac10f93e552c016bd6b"
+    },
+    {
+      "bytes": 1280,
+      "role": "production-primary-normalized-checks",
+      "sha256": "d9a460ac352a4cfa4813831a50d742f5a3673ce5c4bac16038eaa61a8d4bbe54"
+    },
+    {
+      "bytes": 1650,
+      "role": "production-primary-pagination-observation",
+      "sha256": "6752d579f14bd6b0a53ca27b3e6122cc7ef3aad67fff3a008d7d82d38e0b7a0a"
+    },
+    {
+      "bytes": 2712,
+      "role": "public-hub-actual-byte-parity",
+      "sha256": "a296512ef78f5b0b5398b28f99aa819ff87ebbe6432942efe256d139a2059338"
+    },
+    {
+      "bytes": 34498,
+      "role": "public-actual-inference-and-retained-exports",
+      "sha256": "91320cc52405d193c3c1ff3935d361357c98b7361be6cb48af498238f44551e0"
+    },
+    {
+      "bytes": 4485,
+      "role": "local-actual-three-selector-trials",
+      "sha256": "01b410d0ce1b4d1f2da35075e0d074257e16543db9b962291383cdddc79a7e13"
+    },
+    {
+      "bytes": 3642,
+      "role": "manual-availability-strict-preservation-audit",
+      "sha256": "70aec4d6649927f9b2dcecc8a878e32acf7d77141a366285dbbcf43aa0cae72b"
+    },
+    {
+      "bytes": 395,
+      "role": "failed-actual-automatic-recovery-command",
+      "sha256": "3a2a4144a92f76f34f3372d007ccc4bc438025c80ceedcfe87f253f9b38764d0"
+    },
+    {
+      "bytes": 15244,
+      "role": "retained-automatic-retry-request",
+      "sha256": "fefbb2ee4517b2b1456092cb2740ca104e82446049451765722875eb8b0280c0"
+    },
+    {
+      "bytes": 2342,
+      "role": "retained-late-automatic-successor-launch",
+      "sha256": "fbc7f0aa95c02bceabd9bebf9f43a090d2aac319d0aabb3dbe1574cdf146304c"
+    },
+    {
+      "bytes": 15086,
+      "role": "domain-observation",
+      "sha256": "e4d0381101bd049207a7b983e82819e37e5855ea273beefd40356eae3dd9ae23"
+    },
+    {
+      "bytes": 887,
+      "role": "onedrive-client-observation",
+      "sha256": "f8319e9323af89668877f28c05f6fbdb69ee16813223b1e0732dfe3f513c507e"
+    }
+  ],
+  "evidence_class": "MEASURED",
+  "full_estate_operational_verified": false,
+  "local_runtime": {
+    "actual_local_trials": 3,
+    "current_process_priority_adjustment_used": false,
+    "manual_task_start_count": 1,
+    "observed_utc": "2026-10-03T07:03:44.533347+00:00",
+    "post_retries": 0,
+    "process_priority": "Normal",
+    "retained_trial_counts": {
+      "current_cpu_trials": 3,
+      "original_trials": 9,
+      "predecessor_cpu_trials": 3
+    },
+    "startup_elapsed_seconds": 20.766,
+    "state": "MANUAL_AVAILABILITY_VERIFIED",
+    "task_priority": 5
+  },
+  "onedrive": {
+    "client_in_sync": false,
+    "cloud_backup_state": "UNKNOWN",
+    "observed_utc": "2026-10-03T04:43:15.667246+00:00",
+    "private_runtime_files_copied": false,
+    "public_v06_assets_copied_and_hash_checked": 4,
+    "remote_hash_readback": false
+  },
+  "overall_state": "BLOCKED",
+  "production": {
+    "run": "https://github.com/szl-holdings/szl-forge/actions/runs/37101177428",
+    "source_revision": "3a9ee78ab7cba190d310c69e49c89582e4cc271f",
+    "successful_jobs": 4
+  },
+  "public_runtime": {
+    "actual_selectors_executed": [
+      17,
+      23,
+      41
+    ],
+    "byte_exact_post_get_exports": 3,
+    "continuous_availability_verified": false,
+    "exact_hosted_files": 10,
+    "hub_revision": "6ff8c82428d3e91b43d454f7dcdc42431feebe3e",
+    "independent_authenticity": false,
+    "observed_utc": "2026-10-03T05:57:33.459880+00:00",
+    "origin": "https://szlholdings-szl-foundation-confirmation.hf.space"
+  },
+  "publication": {
+    "digital_signature": "UNAVAILABLE",
+    "existing_v06_release": "https://github.com/szl-holdings/szl-forge/releases/tag/foundation-confirmation-v0.6",
+    "governed_receipt_qualification": false,
+    "this_projection": "LOCAL_ARTIFACT_ONLY",
+    "v061_qualified_release": "BLOCKED"
+  },
+  "schema": "szl.foundation-confirmation.local-operational-status/v1",
+  "science": {
+    "evaluation_rows_recomputed": 5184,
+    "model_promotion_performed": false,
+    "new_training_performed": false,
+    "registered_gate_outcome": "FAILED",
+    "state": "BLOCKED"
+  },
+  "scope": "SOURCE_BOUND_EXPLORATORY_SYNTHETIC_CPU_INFERENCE",
+  "source": {
+    "exact_reviewed_operations_files": 11,
+    "protected_pr": "https://github.com/szl-holdings/szl-forge/pull/527",
+    "repository": "https://github.com/szl-holdings/szl-forge",
+    "revision": "3a9ee78ab7cba190d310c69e49c89582e4cc271f"
+  }
+}
