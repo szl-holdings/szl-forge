@@ -379,6 +379,25 @@ def summarize(grades: list[dict]) -> dict:
     }
 
 
+def challenger_adapter_sha256(challenger: pathlib.Path, dpo_receipt: dict) -> dict[str, str]:
+    """Bind the adapter loaded by eval to the bytes sealed by the DPO receipt."""
+    if dpo_receipt.get("status") != "TRAINED_CHALLENGER":
+        raise ValueError("DPO receipt is not TRAINED_CHALLENGER")
+    expected = dpo_receipt.get("adapter_sha256")
+    if not isinstance(expected, dict) or set(expected) != {"adapter_model.safetensors"}:
+        raise ValueError("DPO receipt must seal one adapter_model.safetensors")
+    sealed = expected["adapter_model.safetensors"]
+    if not isinstance(sealed, str) or re.fullmatch(r"[0-9a-f]{64}", sealed) is None:
+        raise ValueError("DPO receipt has an invalid adapter SHA-256")
+    files = sorted(p.name for p in challenger.glob("adapter_model.*") if p.is_file())
+    if files != ["adapter_model.safetensors"]:
+        raise ValueError(f"adapter files differ from the DPO receipt: {files}")
+    actual = sha256_of(challenger / "adapter_model.safetensors")
+    if actual != sealed:
+        raise ValueError("adapter_model.safetensors SHA-256 differs from the DPO receipt")
+    return {"adapter_model.safetensors": actual}
+
+
 # ---------------- dpo ----------------
 
 
@@ -568,6 +587,10 @@ def cmd_eval(challenger: pathlib.Path, out: pathlib.Path) -> int:
     if not (challenger / "adapter_config.json").exists() or not dpo_receipt_path.exists():
         return fail_closed(receipt_path, "eval-abstain", f"CHALLENGER_INCOMPLETE: {challenger} lacks adapter_config.json or dpo_receipt.json")
     dpo_receipt = json.loads(dpo_receipt_path.read_text(encoding="utf-8"))
+    try:
+        adapter_sha256 = challenger_adapter_sha256(challenger, dpo_receipt)
+    except ValueError as exc:
+        return fail_closed(receipt_path, "eval-abstain", f"ADAPTER_IDENTITY: {exc}")
     adapter_rev = dpo_receipt["policy"]["adapter_revision"]
     data_rev = dpo_receipt["data"]["revision"]
     data = load_split(data_rev)
@@ -595,6 +618,10 @@ def cmd_eval(challenger: pathlib.Path, out: pathlib.Path) -> int:
         results[f] = {"baseline": summarize(base_grades), "challenger": summarize(chal_grades)}
         print(f"    {f}: baseline {results[f]['baseline']['correct']}/{len(rows)} | challenger {results[f]['challenger']['correct']}/{len(rows)}")
 
+    try:
+        adapter_sha256 = challenger_adapter_sha256(challenger, dpo_receipt)
+    except ValueError as exc:
+        return fail_closed(receipt_path, "eval-abstain", f"ADAPTER_IDENTITY_AFTER_EVAL: {exc}")
     out.mkdir(parents=True, exist_ok=True)
     tpath = out / "eval_transcripts.jsonl"
     tpath.write_text("".join(json.dumps(t, sort_keys=True) + "\n" for t in transcripts), encoding="utf-8")
@@ -604,7 +631,7 @@ def cmd_eval(challenger: pathlib.Path, out: pathlib.Path) -> int:
                 and nav["challenger"]["invented_handle_rows"] <= nav["baseline"]["invented_handle_rows"])
     receipt = {
         "stage": "eval-abstain", "status": "MEASURED", "artifact": CHALLENGER_ID,
-        "challenger_dir": str(challenger.resolve()), "challenger_adapter_sha256": dpo_receipt.get("adapter_sha256"),
+        "challenger_dir": str(challenger.resolve()), "challenger_adapter_sha256": adapter_sha256,
         "policy": dpo_receipt["policy"], "data": {"repo": dpo_receipt["data"]["repo"], "revision": data_rev,
                                                   "heldout_digests_sha256": {f: data["digests"][f] for f in HELDOUT_FILES},
                                                   "counts": data["counts"], "disjoint_prompts_verified": True},
