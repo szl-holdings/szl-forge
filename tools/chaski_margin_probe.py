@@ -173,11 +173,13 @@ def probe_candidate(mod, *, base: str, adapter: Path | None, drafts, refusals, d
         adapter_keys = {"checkpoint_tensors": len(ckpt_keys), "applied": len(ckpt_keys) - len(unapplied),
                         "unapplied": len(unapplied), "unapplied_sample": unapplied[:3],
                         "checkpoint_layout": "language_model" if any(".language_model." in k for k in ckpt_keys) else "text"}
-        if unapplied:
+        # An empty checkpoint is not vacuous proof that an adapter was applied.
+        if not ckpt_keys or unapplied:
             raise SystemExit(f"FAIL-CLOSED: ADAPTER_NOT_APPLIED — {len(unapplied)}/{len(ckpt_keys)} adapter tensors have no target in "
                              f"{model_class} (checkpoint layout: {adapter_keys['checkpoint_layout']}; sample {unapplied[:2]}). "
                              f"Load the class the adapter was trained against (e.g. AutoModelForImageTextToText for "
-                             f"`model.language_model.layers.*` keys) or re-key the adapter. Refusing to score the base model as an adapter.")
+                             f"`model.language_model.layers.*` keys) or re-key the adapter. Checkpoint coverage must be nonempty "
+                             f"and complete. Refusing to score the base model as an adapter.")
     model.eval()
     if tok.pad_token_id is None:
         tok.pad_token = tok.eos_token
