@@ -45,7 +45,7 @@
   "target_repo_id": "SZLHOLDINGS/brain-navigator-r2-candidate-20261001",
   "training_data": {
     "binding_mode": "HEURISTIC_TOKEN_MATCH_LATEST_MODIFIED",
-    "binding_status": "BOUND_LOCAL",
+    "binding_status": "UNBOUND",
     "candidates_observed": [
       "C:\\Users\\steph\\szl\\frontier\\a11oy\\training",
       "C:\\Users\\steph\\szl-estate\\a11oy\\training",
@@ -59,19 +59,10 @@
       "C:\\Users\\steph\\szl-followup\\fin-20260928-230308\\pair\\a11oy\\training"
     ],
     "confirmed_by_owner": false,
-    "files": {
-      "all": {
-        "path": "C:\\Users\\steph\\szl-work\\frontier\\clones\\wt-rae1-current-20260930\\training\\szl_brain_corpus.jsonl",
-        "rows": 1233,
-        "sha256": "17ee8e810c21c451b4bcd39ef28cba8510d42fab5733b4c94a411f5ee223ef68",
-        "split_tags": {
-          "untagged": 40
-        }
-      }
-    },
-    "note": "Paths are the owner's local files; the digest binds the exact bytes. Nothing is committed to the repository.",
-    "origin": "LOCAL_OWNER_CORPUS",
-    "rights": "OPERATOR_DECLARED",
+    "files": {},
+    "note": "The heuristic Brain corpus selection was rejected: it is not present at the recorded path and Brain rows are excluded from gradients. A clean, rights-documented curriculum needs a new reviewed binding.",
+    "origin": "UNBOUND",
+    "rights": "UNVERIFIED",
     "rights_boundary": "Only project-authored or rights-documented rows are admitted. Dev/test rows, Brain rows, OSINT rows, third-party private data and other-model outputs are excluded from gradients."
   },
   "training_recipe": {
