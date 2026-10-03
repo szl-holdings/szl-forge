@@ -8,6 +8,8 @@ import py_compile
 import subprocess
 import sys
 import tempfile
+import threading
+import time
 import unittest
 from unittest import mock
 import zipfile
@@ -86,6 +88,32 @@ class CpuControls(unittest.TestCase):
         env,wh,site,row = payload(self.root)
         (site/'example/__init__.py').unlink()
         with self.assertRaisesRegex(ValueError,'incomplete'): ENV.verify_payload(env,wh,[row])
+    def test_bounded_parallel_hashes_and_tamper_failure(self):
+        extra = {'example/file'+str(i)+'.py': b'VALUE=1\n' for i in range(20)}
+        env,wh,site,row = payload(self.root,extra)
+        for name,raw in extra.items(): (site/name).write_bytes(raw)
+        guard = threading.Lock(); counts = {'active':0,'maximum':0,'calls':0}
+        original = ENV.digest_file
+        def measured(path):
+            if not Path(path).is_relative_to(site): return original(path)
+            with guard:
+                counts['active']+=1; counts['calls']+=1
+                counts['maximum']=max(counts['maximum'],counts['active'])
+            try:
+                time.sleep(0.02)
+                return original(path)
+            finally:
+                with guard: counts['active']-=1
+        with mock.patch.object(ENV,'digest_file',side_effect=measured):
+            result=ENV.verify_payload(env,wh,[row])
+        self.assertEqual(result['files_verified'],22)
+        self.assertEqual(counts['calls'],22)
+        self.assertGreater(counts['maximum'],1)
+        self.assertLessEqual(counts['maximum'],4)
+        self.assertEqual(counts['active'],0)
+        (site/'example/file19.py').write_bytes(b'TAMPER\n')
+        with self.assertRaisesRegex(ValueError,'payload differs'):
+            ENV.verify_payload(env,wh,[row])
     def test_nonempty_installer_marker(self):
         env,wh,site,row = payload(self.root)
         (site/'example-1.0.dist-info/REQUESTED').write_bytes(b'code')
