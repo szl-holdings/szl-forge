@@ -361,6 +361,22 @@ def space_info_before_deadline(api: Any, repo_id: str, deadline: float) -> Any:
     return info
 
 
+def observe_space_volumes(info: Any) -> dict[str, Any]:
+    """Fail closed on explicit attachments without treating absent metadata as zero."""
+
+    runtime = getattr(info, "runtime", None)
+    volumes = getattr(runtime, "volumes", None)
+    if volumes is None:
+        return {"state": "UNKNOWN", "count": None}
+    count = len(volumes)
+    if count:
+        raise PublishError(
+            f"Space has {count} explicitly attached volume(s); "
+            "refusing publication pending owner review"
+        )
+    return {"state": "OBSERVED_ZERO", "count": 0}
+
+
 def clear_legacy_space_volumes(
     api: Any,
     repo_id: str,
@@ -604,10 +620,13 @@ def publish_and_verify(
     wait_seconds: int,
     static: bool,
     clear_space_volumes: bool,
+    reject_attached_space_volumes: bool = False,
 ) -> dict[str, Any]:
     import requests
     from huggingface_hub import CommitOperationAdd, CommitOperationDelete, HfApi
 
+    if clear_space_volumes and reject_attached_space_volumes:
+        raise PublishError("Space volume deletion and read-only guard are mutually exclusive")
     api = HfApi(token=token)
     repo_id = plan["repo_id"]
     plan["repository_reconciliation"] = ensure_space_repository(
@@ -618,6 +637,13 @@ def publish_and_verify(
     if clear_space_volumes:
         plan["volume_reconciliation"] = {
             "pre_publish": clear_legacy_space_volumes(api, repo_id)
+        }
+    if reject_attached_space_volumes:
+        plan["volume_observation"] = {
+            "policy": "READ_ONLY_REJECT_EXPLICIT_ATTACHMENTS",
+            "pre_publish": observe_space_volumes(
+                api.space_info(repo_id, files_metadata=False)
+            ),
         }
     live_files = set(api.list_repo_files(repo_id=repo_id, repo_type="space"))
     expected_files = set(plan["files"])
@@ -687,6 +713,8 @@ def publish_and_verify(
         )
         plan["volume_reconciliation"]["post_publish"] = post_publish
         plan["volume_reconciliation"]["final_count"] = 0
+    if reject_attached_space_volumes:
+        plan["volume_observation"]["post_publish"] = observe_space_volumes(info)
 
     from huggingface_hub import hf_hub_download
 
@@ -770,6 +798,14 @@ def main() -> int:
         ),
     )
     parser.add_argument(
+        "--reject-attached-space-volumes",
+        action="store_true",
+        help=(
+            "read Space volume metadata and block explicitly attached volumes "
+            "without deleting any volumes; omitted metadata remains UNKNOWN"
+        ),
+    )
+    parser.add_argument(
         "--static",
         action="store_true",
         help="use the static Space host and exact byte parity instead of runtime variable readback",
@@ -816,6 +852,7 @@ def main() -> int:
                 wait_seconds=args.wait_seconds,
                 static=args.static,
                 clear_space_volumes=args.clear_space_volumes,
+                reject_attached_space_volumes=args.reject_attached_space_volumes,
             )
     except Exception as exc:  # noqa: BLE001 - always emit terminal evidence
         plan = {
