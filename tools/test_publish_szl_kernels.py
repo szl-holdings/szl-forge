@@ -2535,11 +2535,12 @@ class PublishSzlKernelsTests(unittest.TestCase):
             ]
             retired = json.loads(retired_bytes)
             self.assertEqual(retired["schema"], "szl.kernel-operational-retirement/v1")
-            self.assertEqual(retired["status"], "RETIRED")
-            self.assertEqual(retired["qualification"], "NOT_ATTESTED")
-            self.assertEqual(retired["tests"], "NOT_CURRENT")
-            self.assertEqual(retired["eval"], "NOT_CURRENT")
-            self.assertEqual(retired["get_kernel"], "NOT_CURRENT")
+            self.assertEqual(retired["lifecycle"], "RETIRED")
+            self.assertEqual(retired["evidence_class"], "DECLARED")
+            self.assertEqual(retired["qualification"], "UNKNOWN")
+            self.assertEqual(retired["tests"], "UNKNOWN")
+            self.assertEqual(retired["eval"], "UNKNOWN")
+            self.assertEqual(retired["get_kernel"], "UNKNOWN")
             self.assertEqual(retired["source_revision"], self.source_revision)
             self.assertEqual(retired["publisher_revision"], self.publisher_revision)
             self.assertNotIn("load_path", retired)
@@ -2550,7 +2551,7 @@ class PublishSzlKernelsTests(unittest.TestCase):
                     "path": "OPERATIONAL.json",
                     "bytes": len(retired_bytes),
                     "sha256": hashlib.sha256(retired_bytes).hexdigest(),
-                    "status": "RETIRED",
+                    "lifecycle": "RETIRED",
                 }],
             )
             self.assertEqual(

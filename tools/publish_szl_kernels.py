@@ -743,11 +743,12 @@ def retired_operational_bytes(*, source_revision: str, publisher_revision: str) 
     return canonical_json(
         {
             "schema": "szl.kernel-operational-retirement/v1",
-            "status": "RETIRED",
-            "qualification": "NOT_ATTESTED",
-            "tests": "NOT_CURRENT",
-            "eval": "NOT_CURRENT",
-            "get_kernel": "NOT_CURRENT",
+            "lifecycle": "RETIRED",
+            "evidence_class": "DECLARED",
+            "qualification": "UNKNOWN",
+            "tests": "UNKNOWN",
+            "eval": "UNKNOWN",
+            "get_kernel": "UNKNOWN",
             "source_repository": EXPECTED_SOURCE_REPOSITORY,
             "source_revision": source_revision,
             "publisher_repository": EXPECTED_PUBLISHER_REPOSITORY,
@@ -756,7 +757,8 @@ def retired_operational_bytes(*, source_revision: str, publisher_revision: str) 
             "source_binding_reference": "publication.json at the same immutable Hub revision",
             "limitations": [
                 "Earlier OPERATIONAL.json PASS and import-LIVE claims are historical and superseded.",
-                "This record does not assert current tests, evaluation, loader safety, or runtime readiness.",
+                "RETIRED describes this record's lifecycle, not an evidence class.",
+                "UNKNOWN means no current tests, evaluation, loader safety, or runtime readiness are attested here.",
             ],
         }
     ).encode("utf-8")
@@ -1993,7 +1995,7 @@ def run(
                 "path": LEGACY_OPERATIONAL_FILE,
                 "bytes": len(operational_bytes),
                 "sha256": hashlib.sha256(operational_bytes).hexdigest(),
-                "status": "RETIRED",
+                "lifecycle": "RETIRED",
             }
         ],
         "publisher": publisher,
