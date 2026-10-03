@@ -131,25 +131,44 @@ def process_created():
     return (epoch + dt.timedelta(microseconds=times[0].value // 10)).isoformat(timespec='microseconds').replace('+00:00', 'Z')
 
 
-def prior_process_absent(pid):
-    require(type(pid) is int and pid > 0, 'Prior service PID is invalid')
+def prior_process_exited(pid, process_created):
+    require(type(pid) is int and 0 < pid <= 0xffffffff, 'Prior service PID is invalid')
+    require(isinstance(process_created, str) and re.fullmatch(r'[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{6}Z', process_created), 'Prior service creation time is invalid')
+    recorded = dt.datetime.fromisoformat(process_created[:-1] + '+00:00')
+    epoch = dt.datetime(1601, 1, 1, tzinfo=dt.timezone.utc)
+    require(recorded >= epoch, 'Prior service creation time is invalid')
     kernel = ctypes.WinDLL('kernel32', use_last_error=True)
     kernel.OpenProcess.argtypes = (ctypes.c_ulong, ctypes.c_int, ctypes.c_ulong)
     kernel.OpenProcess.restype = ctypes.c_void_p
+    kernel.GetProcessTimes.argtypes = (ctypes.c_void_p, *(ctypes.POINTER(ctypes.c_ulonglong) for _ in range(4)))
+    kernel.GetProcessTimes.restype = ctypes.c_int
+    kernel.WaitForSingleObject.argtypes = (ctypes.c_void_p, ctypes.c_ulong)
+    kernel.WaitForSingleObject.restype = ctypes.c_ulong
     kernel.CloseHandle.argtypes = (ctypes.c_void_p,)
-    handle = kernel.OpenProcess(0x1000, False, pid)
-    if handle:
-        kernel.CloseHandle(handle)
-        return False
-    require(ctypes.get_last_error() == 87, 'Prior service absence could not be established')
-    return True
+    kernel.CloseHandle.restype = ctypes.c_int
+    # SYNCHRONIZE | PROCESS_QUERY_LIMITED_INFORMATION. A retained handle can
+    # keep an exited process object queryable; opening it does not imply life.
+    handle = kernel.OpenProcess(0x100000 | 0x1000, False, pid)
+    if not handle:
+        require(ctypes.get_last_error() == 87, 'Prior service absence could not be established')
+        return True  # No such PID at this native query instant.
+    try:
+        times = [ctypes.c_ulonglong() for _ in range(4)]
+        require(kernel.GetProcessTimes(handle, *(ctypes.byref(value) for value in times)) != 0, 'Prior service native creation time is unavailable')
+        observed = epoch + dt.timedelta(microseconds=times[0].value // 10)
+        require(observed == recorded, 'Prior service native creation identity differs')
+        waited = kernel.WaitForSingleObject(handle, 0)
+        require(waited in (0, 0x102), 'Prior service native exit could not be established')
+        return waited == 0
+    finally:
+        require(kernel.CloseHandle(handle) != 0, 'Prior service query handle could not be closed')
 
 
 def publish_service(path, receipt):
     if path.exists():
         previous = json.loads(path.read_bytes().decode('utf-8-sig'))
         contract = ('schema', 'environment_binding_sha256', 'server_script', 'lab_root', 'port', 'executable', 'python_image_sha256', 'state_directory', 'environment_root', 'wheelhouse', 'argv', 'startup_timeout_seconds')
-        require(all(previous.get(key) == receipt[key] for key in contract) and prior_process_absent(previous.get('pid')), 'Existing CPU service receipt is not an absent admitted predecessor')
+        require(all(previous.get(key) == receipt[key] for key in contract) and prior_process_exited(previous.get('pid'), previous.get('process_created')), 'Existing CPU service receipt is not an exited admitted predecessor')
     temporary = path.with_name(path.name + '.' + uuid.uuid4().hex + '.tmp')
     with temporary.open('xb') as handle:
         handle.write(canonical(receipt))
