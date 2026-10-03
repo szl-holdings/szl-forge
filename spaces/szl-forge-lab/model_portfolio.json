@@ -125,7 +125,7 @@
       "repo_id": "SZLHOLDINGS/szl-blocked",
       "kind": "software_kernel",
       "role": "blocked_state_contract",
-      "github_source": null,
+      "github_source": "https://github.com/szl-holdings/szl-blocked",
       "autonomy_eligible": false,
       "maturity": "SOURCE_UNBOUND"
     },
@@ -149,7 +149,7 @@
       "repo_id": "SZLHOLDINGS/szl-govsign",
       "kind": "software_kernel",
       "role": "signature_profile",
-      "github_source": null,
+      "github_source": "https://github.com/szl-holdings/szl-govsign",
       "autonomy_eligible": false,
       "maturity": "SOURCE_UNBOUND"
     },
@@ -157,7 +157,7 @@
       "repo_id": "SZLHOLDINGS/szl-invariants",
       "kind": "software_kernel",
       "role": "formal_invariant_registry",
-      "github_source": "https://github.com/szl-holdings/lutar-lean",
+      "github_source": "https://github.com/szl-holdings/szl-invariants",
       "autonomy_eligible": false,
       "maturity": "SOFTWARE_ARTIFACT"
     },
@@ -165,7 +165,7 @@
       "repo_id": "SZLHOLDINGS/szl-kernels",
       "kind": "software_kernel",
       "role": "kernel_portfolio_card",
-      "github_source": "https://github.com/szl-holdings/governed-receipt-spec",
+      "github_source": "https://github.com/szl-holdings/szl-kernels",
       "autonomy_eligible": false,
       "maturity": "SOFTWARE_ARTIFACT"
     },
@@ -181,7 +181,7 @@
       "repo_id": "SZLHOLDINGS/szl-ouroboros",
       "kind": "software_kernel",
       "role": "governed_loop_contract",
-      "github_source": "https://github.com/szl-holdings/lutar-lean",
+      "github_source": "https://github.com/szl-holdings/szl-ouroboros",
       "autonomy_eligible": false,
       "maturity": "SOFTWARE_ARTIFACT"
     },
@@ -189,7 +189,7 @@
       "repo_id": "SZLHOLDINGS/szl-provctl",
       "kind": "software_kernel",
       "role": "provenance_control_profile",
-      "github_source": null,
+      "github_source": "https://github.com/szl-holdings/szl-provctl",
       "autonomy_eligible": false,
       "maturity": "SOURCE_UNBOUND"
     }
