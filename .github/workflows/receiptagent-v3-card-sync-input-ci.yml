@@ -5,7 +5,9 @@ on:
     paths:
       - "receiptagent-v3/card/README.md"
       - "tools/prepare_receiptagent_v3_card_sync.py"
+      - "tools/publish_receiptagent_v3_public_card.py"
       - "tests/test_receiptagent_v3_card_sync.py"
+      - "tests/test_publish_receiptagent_v3_public_card.py"
       - "docs/receiptagent-v3-card-sync-input.md"
       - ".github/workflows/receiptagent-v3-card-sync-input-ci.yml"
   push:
@@ -13,7 +15,9 @@ on:
     paths:
       - "receiptagent-v3/card/README.md"
       - "tools/prepare_receiptagent_v3_card_sync.py"
+      - "tools/publish_receiptagent_v3_public_card.py"
       - "tests/test_receiptagent_v3_card_sync.py"
+      - "tests/test_publish_receiptagent_v3_public_card.py"
       - "docs/receiptagent-v3-card-sync-input.md"
       - ".github/workflows/receiptagent-v3-card-sync-input-ci.yml"
 permissions:
@@ -38,5 +42,5 @@ jobs:
           python-version: "3.12"
       - name: Test fail-closed source and card preservation offline
         run: |
-          python -B -m unittest discover -s tests -p test_receiptagent_v3_card_sync.py -v
+          python -B -m unittest discover -s tests -p 'test_*receiptagent_v3*card*.py' -v
           git diff --exit-code

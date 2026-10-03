@@ -23,6 +23,7 @@ SOURCE_CARD_SHA256 = "d15037c8a084b9ea2e0b9f0c71324632f6e97cc177f93120e8485dbb8d
 HUB_REPO = "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3"
 HUB_PARENT = "f4b28d75e1bdbbbf299bb8f5beceb8f141f38baf"
 HUB_README_SHA256 = "bfa0fac0f1f9ddf03fe2fd9444b8091f0a1f5a08bdf991ff75d23a09ff57cd07"
+CANDIDATE_README_SHA256 = "79fa68b40bcd8cdfff3c4c0a50a7f4c452bf62b080fa95080baffb02a9430555"
 ADAPTER_SHA256 = "90b82ade0b2c84eca92e90cdeb56137d61d7da4b4863ff4d29fa75e9dc037870"
 MAX_REMOTE_BYTES = 1_000_000
 
@@ -137,15 +138,28 @@ NEW_EVIDENCE = (
     "Separate owner-run DEV n=12 checks: historical 11/12 and additive adapter-bound 12/12; "
     "neither held-out nor a merged-checkpoint qualification. |"
 )
+OLD_EVALS = "  evals: DEV_NAMED_N_11_OF_12_MEASURED"
+NEW_EVALS = (
+    "  evals: HISTORICAL_DEV_11_OF_12_AND_ADDITIVE_ADAPTER_BOUND_DEV_12_OF_12_UNQUALIFIED"
+)
+OLD_SOURCE_NOTE = (
+    "with the receipt-bound 11/12 retained where the source card still says 12/12)."
+)
+NEW_SOURCE_NOTE = (
+    "with the historical 11/12 receipt retained; current Forge source distinguishes "
+    "it from the separate additive adapter-bound 12/12 DEV record)."
+)
 
 
 def candidate(readme: bytes) -> bytes:
     if b"\r\n" in readme:
         raise CardSyncError("Hub line endings changed from reviewed LF")
     updated = readme
-    for old, new in ((OLD_CLAIM, NEW_CLAIM),
+    for old, new in ((OLD_EVALS, NEW_EVALS),
+                     (OLD_CLAIM, NEW_CLAIM),
                      (OLD_EXPLANATION, NEW_EXPLANATION),
-                     (OLD_EVIDENCE, NEW_EVIDENCE)):
+                     (OLD_EVIDENCE, NEW_EVIDENCE),
+                     (OLD_SOURCE_NOTE, NEW_SOURCE_NOTE)):
         before, after = old.encode("utf-8"), new.encode("utf-8")
         if updated.count(before) != 1 or updated.count(after):
             raise CardSyncError("Hub card anchor is absent, duplicated, or already edited")
@@ -158,6 +172,8 @@ def prepare(root: Path, source_revision: str) -> tuple[bytes, str, dict]:
     readme, historical, additive = read_hub_parent()
     validate_dev_records(historical, additive)
     changed = candidate(readme)
+    if digest(changed) != CANDIDATE_README_SHA256:
+        raise CardSyncError("reviewed five-anchor Hub candidate bytes changed")
     diff = "".join(difflib.unified_diff(
         readme.decode("utf-8").splitlines(keepends=True),
         changed.decode("utf-8").splitlines(keepends=True),

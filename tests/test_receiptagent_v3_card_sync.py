@@ -44,7 +44,9 @@ def records():
 
 def hub_fixture():
     return (
-        "---\nlicense: apache-2.0\nszl:\n  publication_eligible: false\n---\n"
+        "---\nlicense: apache-2.0\nszl:\n"
+        + card.OLD_EVALS
+        + "\n  publication_eligible: false\n---\n"
         "Unmanaged hero and loader guidance.\n"
         + card.OLD_CLAIM
         + "\nSome unrelated paragraph.\n"
@@ -52,6 +54,8 @@ def hub_fixture():
         + "\n"
         + card.OLD_EVIDENCE
         + "\nUnmanaged legal and release HOLD notes.\n"
+        + card.OLD_SOURCE_NOTE
+        + "\n"
     ).encode("utf-8")
 
 
@@ -68,16 +72,22 @@ class ReceiptAgentV3CardSyncTests(unittest.TestCase):
     def test_surgical_candidate_preserves_every_unmanaged_byte(self):
         before = hub_fixture()
         after = card.candidate(before)
-        self.assertEqual(after.count(b"11/12"), 3)
+        self.assertEqual(after.count(b"11/12"), 4)
         self.assertIn(b"12/12", after)
         self.assertNotIn(b"contradicts the committed receipt", after)
         self.assertIn(b"Unmanaged hero and loader guidance.", after)
         self.assertIn(b"Unmanaged legal and release HOLD notes.", after)
         self.assertIn(b"publication_eligible: false", after)
+        self.assertIn(card.NEW_EVALS.encode(), after)
+        self.assertIn(card.NEW_SOURCE_NOTE.encode(), after)
+        self.assertNotIn(card.OLD_EVALS.encode(), after)
+        self.assertNotIn(card.OLD_SOURCE_NOTE.encode(), after)
         for old, new in (
+            (card.OLD_EVALS, card.NEW_EVALS),
             (card.OLD_CLAIM, card.NEW_CLAIM),
             (card.OLD_EXPLANATION, card.NEW_EXPLANATION),
             (card.OLD_EVIDENCE, card.NEW_EVIDENCE),
+            (card.OLD_SOURCE_NOTE, card.NEW_SOURCE_NOTE),
         ):
             after = after.replace(new.encode("utf-8"), old.encode("utf-8"), 1)
         self.assertEqual(after, before)
@@ -87,6 +97,9 @@ class ReceiptAgentV3CardSyncTests(unittest.TestCase):
         for body in (
             fixture.replace(card.OLD_CLAIM.encode(), b"missing", 1),
             fixture + card.OLD_CLAIM.encode(),
+            fixture.replace(card.OLD_EVALS.encode(), b"missing", 1),
+            fixture + card.OLD_SOURCE_NOTE.encode(),
+            fixture.replace(card.OLD_SOURCE_NOTE.encode(), b"missing", 1),
             fixture.replace(card.OLD_EXPLANATION.encode(), card.NEW_EXPLANATION.encode(), 1),
             fixture.replace(b"\n", b"\r\n"),
         ):
@@ -122,13 +135,26 @@ class ReceiptAgentV3CardSyncTests(unittest.TestCase):
             check=True, capture_output=True, text=True,
         ).stdout.strip()
         historical, additive = records()
-        with patch.object(card, "read_hub_parent", return_value=(hub_fixture(), historical, additive)):
+        fixture_digest = card.digest(card.candidate(hub_fixture()))
+        with patch.object(card, "CANDIDATE_README_SHA256", fixture_digest), patch.object(
+            card, "read_hub_parent", return_value=(hub_fixture(), historical, additive)
+        ):
             changed, diff, receipt = card.prepare(ROOT, revision)
         self.assertEqual(receipt["changed_paths"], ["README.md"])
         self.assertEqual(receipt["disposition"], "REVIEW_ONLY_NO_HUB_WRITE")
         self.assertEqual(receipt["release_status"], "UNQUALIFIED")
         self.assertEqual(receipt["candidate_readme_sha256"], card.digest(changed))
         self.assertIn("+| Additive adapter-bound development check", diff)
+
+    def test_unreviewed_candidate_digest_fails_closed(self):
+        revision = subprocess.run(
+            ["git", "-C", str(ROOT), "rev-parse", "HEAD"],
+            check=True, capture_output=True, text=True,
+        ).stdout.strip()
+        historical, additive = records()
+        with patch.object(card, "read_hub_parent", return_value=(hub_fixture(), historical, additive)):
+            with self.assertRaisesRegex(card.CardSyncError, "five-anchor Hub candidate"):
+                card.prepare(ROOT, revision)
 
 
 if __name__ == "__main__":
