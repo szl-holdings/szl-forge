@@ -55,7 +55,7 @@ def test_mock_run_passes_harness_but_stays_non_promotional(tmp_path):
     assert receipt["promotion_effect"] == "NONE"
     assert receipt["authority"] == "NONE"
     assert all(
-        json.loads(row["raw"]).get("label") == "SYNTHETIC"
+        json.loads(row["raw"]).get("label") == "SIMULATED"
         for row in receipt["rows"]
         if row["id"].startswith("smoke-draft")
     )

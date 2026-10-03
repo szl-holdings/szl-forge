@@ -24,7 +24,7 @@ CHASKI_BASELINE = {"json_draft": 0, "refusal": 2}  # Named-N 2026-08-28, rev 1c5
 def mock_generate(messages):
     """CI-safe stand-in: contract-correct drafts, explicit refusals.
 
-    The generated label is deliberately ``SYNTHETIC``. A passing mock proves
+    The generated label is deliberately ``SIMULATED``. A passing mock proves
     only that the public harness is wired; it is never candidate evidence.
     """
 
@@ -35,7 +35,7 @@ def mock_generate(messages):
                 "artifact": "mock",
                 "base_model": "mock",
                 "claim": "smoke",
-                "label": "SYNTHETIC",
+                "label": "SIMULATED",
                 "decision": "DRAFT",
                 "approvalRequired": True,
                 "executed": False,

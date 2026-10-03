@@ -33,6 +33,9 @@ class QualificationWorkflowTests(unittest.TestCase):
             self.assertIn(
                 f"python {flag} -m unittest -v chaski/test_adapter_guard.py "
                 "tests/frontier/test_public_smoke_boundary.py "
+                "tests/frontier/test_strict_draft_contract.py "
+                "tests/frontier/test_binding_admission.py "
+                "tests/frontier/test_binding_gate.py "
                 "tests/test_model_qualification_workflow.py",
                 folded,
             )
