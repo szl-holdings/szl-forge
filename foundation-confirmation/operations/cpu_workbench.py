@@ -50,6 +50,63 @@ def now():
     return dt.datetime.now(dt.timezone.utc).isoformat()
 
 
+class StartupPhaseLog:
+    """Advisory stderr events; never an admission, timer, or user receipt."""
+    def __init__(self, started=None):
+        self.available = False
+        try:
+            self.started = time.monotonic() if started is None else started
+            self.session_id = uuid.uuid4().hex
+            self.sequence, self.phases, self.active = 0, {}, []
+            try:
+                self.created = process_created()
+            except Exception:
+                self.created = None  # Identity unavailable; admission is unchanged.
+            self.available = True
+        except Exception:
+            self.unavailable()
+
+    def unavailable(self):
+        self.available = False
+        try:
+            sys.__stderr__.write(json.dumps({'schema': 'szl.foundation-confirmation.startup-phase/v1', 'class': 'UNAVAILABLE', 'diagnostic_only': True, 'reason': 'PHASE_TELEMETRY_UNAVAILABLE'}) + '\n')
+            sys.__stderr__.flush()
+        except Exception:
+            pass  # A broken stderr cannot replace the original operation/timeout.
+
+    def event(self, phase, event, error_type=None):
+        if not self.available:
+            return
+        try:
+            elapsed = time.monotonic() - self.started
+            if event == 'ENTERED':
+                self.phases[phase] = elapsed
+                self.active.append(phase)
+            phase_elapsed = elapsed - self.phases[phase] if phase in self.phases else None
+            self.sequence += 1
+            value = {'schema': 'szl.foundation-confirmation.startup-phase/v1', 'class': 'MEASURED', 'signed': False,
+                     'diagnostic_only': True, 'role': 'cpu-child', 'session_id': self.session_id, 'pid': os.getpid(),
+                     'process_created': self.created, 'sequence': self.sequence, 'phase': phase, 'event': event,
+                     'observed_utc': now(), 'monotonic_elapsed_seconds': elapsed, 'phase_elapsed_seconds': phase_elapsed}
+            if error_type:
+                value['error_type'] = error_type  # No exception text or argv.
+            sys.stderr.write(json.dumps(value, sort_keys=True, allow_nan=False) + '\n')
+            sys.stderr.flush()
+            if event != 'ENTERED':
+                self.phases.pop(phase, None)
+                if phase in self.active:
+                    self.active.remove(phase)
+        except Exception:
+            self.unavailable()
+
+    def failed(self, error):
+        if self.available:
+            self.event(self.active[-1] if self.active else 'UNKNOWN', 'FAILED', type(error).__name__)
+
+
+_startup_phases = None
+
+
 def load_admission():
     path = Path(__file__).with_name('cpu_environment.py')
     return load_exact_module('szl_cpu_environment', path, HELPER_SHA256)
@@ -190,20 +247,33 @@ def main():
     timer = threading.Timer(args.startup_timeout_seconds, startup_timeout, args=(args.startup_timeout_seconds,))
     timer.daemon = True
     timer.start()
+    global _startup_phases
+    _startup_phases = StartupPhaseLog(started)
+    _startup_phases.event('admission_helper_load', 'ENTERED')
     helper = load_admission()
+    _startup_phases.event('admission_helper_load', 'RETURNED')
+    _startup_phases.event('environment_admission', 'ENTERED')
     admission = helper.admit(args.environment_root, args.wheelhouse, args.expected_python_sha256)
     require(admission['binding_sha256'] == args.environment_binding_sha256, 'Installed CPU environment binding changed')
+    _startup_phases.event('environment_admission', 'RETURNED')
+    _startup_phases.event('frozen_verification', 'ENTERED')
     lab, source_admission = verify_frozen(helper, args.lab_root, args.archive)
+    _startup_phases.event('frozen_verification', 'RETURNED')
+    _startup_phases.event('state_and_import_admission', 'ENTERED')
     state = helper.profile_path(args.state_directory)
     require_separate_state(state, lab)
     helper.no_links(state, recursive=True)
     helper.activate(admission)
     os.chdir(lab)
     require(not any(Path(value).resolve() == lab for value in sys.path if value), 'The frozen lab must never be a general import directory')
+    _startup_phases.event('state_and_import_admission', 'RETURNED')
+    _startup_phases.event('torch_import', 'ENTERED')
     import torch
     require(torch.__version__ == '2.10.0+cpu' and torch.version.cuda is None and Path(torch.__file__).resolve().is_relative_to(Path(admission['binding']['site_packages'])), 'Actual CPU Torch identity/import path differs')
     torch.set_num_threads(1)
     torch.set_num_interop_threads(1)
+    _startup_phases.event('torch_import', 'RETURNED')
+    _startup_phases.event('sealed_module_load', 'ENTERED')
     modules = {name: load_exact_module(name, lab / (name + '.py'), FROZEN[name + '.py']) for name in ('core', 'policy', 'experiment')}
     server = load_exact_module('szl_sealed_confirmation_server', lab / 'server.py', FROZEN['server.py'])
     runtime = server.ConfirmationRuntime(lab)
@@ -213,7 +283,10 @@ def main():
         runtime.experiment = modules['experiment']
         runtime.loaded_sources = admitted['source_sha256']
     runtime._load_modules = load_preverified_modules
+    _startup_phases.event('sealed_module_load', 'RETURNED')
+    _startup_phases.event('all_three_preload', 'ENTERED')
     probes = preload(runtime)
+    _startup_phases.event('all_three_preload', 'RETURNED')
     original_status = runtime.status
     def status():
         value = original_status()
@@ -223,13 +296,20 @@ def main():
         return value
     runtime.status = status
     # No listener exists until admitted imports and every actual probe pass.
+    _startup_phases.event('owned_service_publication', 'ENTERED')
     with server.ConfirmationServer(('127.0.0.1', args.port), root=lab, runtime=runtime, state_directory=state / 'trials') as web:
         receipt = {'schema': 'szl.foundation-confirmation.cpu-service/v1', 'pid': os.getpid(), 'executable': admission['binding']['native_executable'], 'process_created': process_created(), 'launched_utc': now(), 'server_script': str(Path(__file__).resolve()), 'lab_root': str(lab), 'port': args.port, 'state_directory': str(state), 'environment_root': admission['binding']['environment_root'], 'wheelhouse': admission['binding']['wheelhouse'], 'python_image_sha256': admission['binding']['python_image_sha256'], 'environment_binding_sha256': admission['binding_sha256'], 'source_admission': source_admission, 'startup_execution_probes': probes, 'models_loaded': [17, 23, 41], 'checkpoints_verified': 3, 'startup_elapsed_seconds': round(time.monotonic() - started, 6), 'startup_timeout_seconds': args.startup_timeout_seconds, 'argv': sys.argv, 'receipt_minted': False, 'registered_scientific_gate': 'FAILED'}
         publish_service(state / 'service.json', receipt)
+        _startup_phases.event('owned_service_publication', 'RETURNED')
         timer.cancel()
         print(json.dumps({'schema': receipt['schema'], 'state': 'READY', 'pid': receipt['pid'], 'models_loaded': receipt['models_loaded'], 'environment_binding_sha256': admission['binding_sha256'], 'startup_elapsed_seconds': receipt['startup_elapsed_seconds']}), flush=True)
         web.serve_forever()
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except BaseException as error:
+        if _startup_phases is not None:
+            _startup_phases.failed(error)
+        raise

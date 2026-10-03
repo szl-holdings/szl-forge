@@ -1,7 +1,9 @@
 """Network-free stdlib-only CPU admission controls; no model import."""
 import hashlib
+import ast
 import datetime as dt
 import importlib.util
+import io
 import json
 import os
 from pathlib import Path
@@ -259,6 +261,115 @@ class CpuControls(unittest.TestCase):
             stderr.write.side_effect=OSError('disk full')
             with self.assertRaises(SystemExit): RUNNER.startup_timeout(180)
             terminate.assert_called_once_with(124)
+    def test_phase_events_are_stderr_only_and_monotonic(self):
+        stdout, stderr = io.StringIO(), io.StringIO()
+        with mock.patch.object(sys,'stdout',stdout),mock.patch.object(sys,'stderr',stderr),mock.patch.object(RUNNER,'process_created',return_value=CREATED):
+            phases = RUNNER.StartupPhaseLog()
+            self.assertIsNone(phases.event('environment_admission','ENTERED'))
+            self.assertIsNone(phases.event('environment_admission','RETURNED'))
+        rows = [json.loads(line) for line in stderr.getvalue().splitlines()]
+        self.assertEqual(stdout.getvalue(),'')
+        self.assertEqual([row['event'] for row in rows],['ENTERED','RETURNED'])
+        self.assertTrue(all(row['pid'] == os.getpid() and row['process_created'] == CREATED and row['class'] == 'MEASURED' and row['diagnostic_only'] is True and row['signed'] is False for row in rows))
+        self.assertEqual([row['sequence'] for row in rows],[1,2])
+        self.assertGreaterEqual(rows[1]['monotonic_elapsed_seconds'],rows[0]['monotonic_elapsed_seconds'])
+        self.assertGreaterEqual(rows[1]['phase_elapsed_seconds'],0)
+    def test_phase_failures_preserve_original_exception(self):
+        sentinel = ValueError('original admission failure')
+        stderr = io.StringIO()
+        with mock.patch.object(sys,'stderr',stderr),mock.patch.object(RUNNER,'process_created',return_value=CREATED):
+            phases = RUNNER.StartupPhaseLog()
+            phases.event('frozen_verification','ENTERED')
+            try:
+                try: raise sentinel
+                except BaseException as error:
+                    phases.failed(error)
+                    raise
+            except ValueError as error: self.assertIs(error,sentinel)
+        failure = json.loads(stderr.getvalue().splitlines()[-1])
+        self.assertEqual((failure['phase'],failure['event'],failure['error_type']),('frozen_verification','FAILED','ValueError'))
+        self.assertNotIn('original admission failure',stderr.getvalue())
+    def test_phase_logging_failure_cannot_replace_operation_or_deadline(self):
+        sentinel = ValueError('admission must still fail')
+        fallback = io.StringIO()
+        with mock.patch.object(sys,'stderr') as stderr,mock.patch.object(sys,'__stderr__',fallback),mock.patch.object(RUNNER,'process_created',return_value=CREATED):
+            stderr.write.side_effect=OSError('disk full')
+            phases = RUNNER.StartupPhaseLog()
+            phases.event('environment_admission','ENTERED')
+            try:
+                try: raise sentinel
+                except BaseException as error:
+                    phases.failed(error)
+                    raise
+            except ValueError as error: self.assertIs(error,sentinel)
+            with mock.patch.object(RUNNER.os,'_exit',side_effect=SystemExit(124)) as terminate:
+                with self.assertRaises(SystemExit): RUNNER.startup_timeout(180)
+                terminate.assert_called_once_with(124)
+        self.assertEqual(json.loads(fallback.getvalue().splitlines()[0])['class'],'UNAVAILABLE')
+    def test_phase_sessions_are_distinct_and_timer_origin_is_unchanged(self):
+        with mock.patch.object(sys,'stderr',io.StringIO()),mock.patch.object(RUNNER,'process_created',return_value=CREATED):
+            first,second = RUNNER.StartupPhaseLog(),RUNNER.StartupPhaseLog()
+        self.assertNotEqual(first.session_id,second.session_id)
+        source = (OPS/'cpu_workbench.py').read_text()
+        self.assertLess(source.index('timer.start()'),source.index('_startup_phases = StartupPhaseLog(started)'))
+        self.assertIn("threading.Timer(args.startup_timeout_seconds, startup_timeout, args=(args.startup_timeout_seconds,))",source)
+        self.assertIn('timer.cancel()',source)
+    def test_instrumented_main_keeps_admission_failure_and_started_timer(self):
+        sentinel = ValueError('environment admission sentinel')
+        helper, timer = mock.Mock(), mock.Mock()
+        helper.admit.side_effect = sentinel
+        argv = ['cpu_workbench.py']
+        for name in ('lab-root','archive','environment-root','wheelhouse','expected-python-sha256','state-directory'):
+            argv.extend(['--'+name,'fixture'])
+        argv.extend(['--environment-binding-sha256','b'*64])
+        stderr = io.StringIO()
+        with mock.patch.object(sys,'argv',argv),mock.patch.object(sys,'stderr',stderr),mock.patch.object(RUNNER,'process_created',return_value=CREATED),mock.patch.object(RUNNER,'load_admission',return_value=helper),mock.patch.object(RUNNER.threading,'Timer',return_value=timer) as deadline,mock.patch.object(RUNNER,'publish_service') as publish:
+            try: RUNNER.main()
+            except ValueError as error: self.assertIs(error,sentinel)
+            else: self.fail('Original admission failure was swallowed')
+            deadline.assert_called_once_with(180,RUNNER.startup_timeout,args=(180,))
+            timer.start.assert_called_once_with(); timer.cancel.assert_not_called()
+            helper.admit.assert_called_once_with('fixture','fixture','fixture')
+            publish.assert_not_called()
+        rows = [json.loads(line) for line in stderr.getvalue().splitlines()]
+        self.assertEqual([(row['phase'],row['event']) for row in rows],[('admission_helper_load','ENTERED'),('admission_helper_load','RETURNED'),('environment_admission','ENTERED')])
+    def test_phase_initialization_failure_cannot_replace_admission(self):
+        sentinel = ValueError('unchanged original admission')
+        helper, timer, fallback = mock.Mock(), mock.Mock(), io.StringIO()
+        helper.admit.side_effect = sentinel
+        argv = ['cpu_workbench.py']
+        for name in ('lab-root','archive','environment-root','wheelhouse','expected-python-sha256','state-directory'):
+            argv.extend(['--'+name,'fixture'])
+        argv.extend(['--environment-binding-sha256','b'*64])
+        with mock.patch.object(sys,'argv',argv),mock.patch.object(sys,'__stderr__',fallback),mock.patch.object(RUNNER.uuid,'uuid4',side_effect=OSError('random source unavailable')),mock.patch.object(RUNNER,'load_admission',return_value=helper),mock.patch.object(RUNNER.threading,'Timer',return_value=timer):
+            try: RUNNER.main()
+            except ValueError as error:
+                self.assertIs(error,sentinel)
+                RUNNER._startup_phases.failed(error) # Disabled telemetry must also remain safe.
+            else: self.fail('Telemetry initialization replaced admission')
+            helper.admit.assert_called_once_with('fixture','fixture','fixture')
+            timer.start.assert_called_once_with(); timer.cancel.assert_not_called()
+        self.assertEqual(json.loads(fallback.getvalue())['class'],'UNAVAILABLE')
+    def test_diagnostic_io_is_before_final_deadline_admission(self):
+        source = ast.parse((OPS/'cpu_workbench.py').read_text())
+        main = next(node for node in source.body if isinstance(node,ast.FunctionDef) and node.name == 'main')
+        publication = next(node for node in ast.walk(main) if isinstance(node,ast.Expr) and isinstance(node.value,ast.Call) and isinstance(node.value.func,ast.Attribute) and node.value.func.attr == 'event' and [value.value for value in node.value.args if isinstance(value,ast.Constant)] == ['owned_service_publication','RETURNED'])
+        cancel = next(node for node in ast.walk(main) if isinstance(node,ast.Expr) and isinstance(node.value,ast.Call) and isinstance(node.value.func,ast.Attribute) and isinstance(node.value.func.value,ast.Name) and node.value.func.value.id == 'timer' and node.value.func.attr == 'cancel')
+        self.assertLess(publication.lineno,cancel.lineno)
+        launcher = (OPS/'launch-cpu-workbench.ps1').read_text()
+        self.assertLess(launcher.index("Write-FoundationPhaseEvent 'child_readiness_admission' 'RETURNED'"),launcher.index('$guard.Complete()'))
+    def test_actual_entrypoint_rethrows_and_retains_failed_phase(self):
+        sentinel = ValueError('original entrypoint failure')
+        stderr = io.StringIO()
+        with mock.patch.object(sys,'stderr',stderr),mock.patch.object(RUNNER,'process_created',return_value=CREATED):
+            phases = RUNNER.StartupPhaseLog(); phases.event('all_three_preload','ENTERED')
+            entrypoint = ast.parse((OPS/'cpu_workbench.py').read_text()).body[-1]
+            namespace = {'__name__':'__main__','main':mock.Mock(side_effect=sentinel),'_startup_phases':phases}
+            try: exec(compile(ast.Module(body=[entrypoint],type_ignores=[]),'<actual entrypoint>','exec'),namespace)
+            except ValueError as error: self.assertIs(error,sentinel)
+            else: self.fail('Actual entrypoint swallowed the failure')
+        row = json.loads(stderr.getvalue().splitlines()[-1])
+        self.assertEqual((row['phase'],row['event']),('all_three_preload','FAILED'))
     def test_isolated_verifier_ignores_site_hook(self):
         marker=self.root/'hook-ran'
         (self.root/'sitecustomize.py').write_text('from pathlib import Path\nPath('+repr(str(marker))+').write_text("hook")\n')
