@@ -4,9 +4,13 @@
 > in [README.md](./README.md) (`forge.ps1`). This runbook remains the
 > step-by-step version of the same pipeline.
 
-Goal: fine-tune an open base model into **SZL-1** — SZL Holdings' own model —
-entirely on SZL's own hardware, then serve it through Ollama like any other
-estate model.
+Historical goal: fine-tune an open base model into **SZL-1** on SZL hardware.
+This recipe is not a current recovery or serving authorization. Its former
+direct import can replace an installed model without establishing clean source
+lineage or qualification. The installed repeated-`@` exports are held under
+[recovery issue #264](https://github.com/szl-holdings/szl-forge/issues/264).
+Use `local-compute/README.md` for bounded new experiments; preserve existing
+model names, merges, reports, claims, and locks.
 
 Sources (REPORTED): Unsloth docs state RTX 50-series (Blackwell) is supported,
 Windows works without WSL, Python 3.11–3.13, and a 3B QLoRA run fits in
@@ -82,24 +86,21 @@ mkdir "$env:USERPROFILE\szl-forge" -Force; cd "$env:USERPROFILE\szl-forge"; curl
 cd "$env:USERPROFILE\szl-forge"; python train_szl.py
 ```
 
-Success looks like: loss numbers ticking down, then
-`[szl-forge] DONE. Next: ollama create szl1 -f Modelfile`
+Loss numbers and a saved merge establish only that this historical training
+recipe ran. They do not qualify the merge for canonical import.
 
-## Step 4 — birth the model into Ollama
+## Step 4 — hold canonical import
 
-```powershell
-cd "$env:USERPROFILE\szl-forge"; ollama create szl1 -f Modelfile
-```
+Do not run the historical `ollama create szl1` command. A separately named
+candidate requires exact base, adapter, tokenizer, merge, converter, and input
+lineage; preserved rollback bytes; adequate storage; and fresh held-out
+before/after evidence. Issue #264 remains open until those gates are met.
 
-## Step 5 — first words
+## Step 5 — hold routing
 
-```powershell
-ollama run szl1 "Who are you and who do you belong to?"
-```
-
-If it answers as SZL-1, sovereign model of SZL Holdings — the estate has its
-own model. Alloy then switches `SOVEREIGN_MODEL=szl1` and every default run
-in the cockpit is served by a model SZL trained itself.
+A self-identification answer is a smoke check, not model qualification. Do not
+set `SOVEREIGN_MODEL=szl1` or treat the installed repeated-`@` export as a
+working sovereign model.
 
 ## Honest notes
 
