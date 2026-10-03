@@ -1,5 +1,6 @@
 """Network-free stdlib-only CPU admission controls; no model import."""
 import hashlib
+import datetime as dt
 import importlib.util
 import json
 import os
@@ -21,6 +22,20 @@ def module(name):
     exec(compile(path.read_bytes(), str(path), 'exec'), value.__dict__)
     return value
 ENV, RUNNER = module('cpu_environment'), module('cpu_workbench')
+CREATED = '2026-10-03T04:20:46.417523Z'
+
+def fake_kernel(open_handle=123, creation_delta=0, times_ok=1, waited=0, closed=1):
+    kernel = mock.Mock()
+    kernel.OpenProcess.return_value = open_handle
+    native = dt.datetime.fromisoformat(CREATED[:-1] + '+00:00') - dt.datetime(1601,1,1,tzinfo=dt.timezone.utc)
+    ticks = (native.days*86400 + native.seconds)*10000000 + native.microseconds*10 + 9 + creation_delta
+    def times(handle, *values):
+        values[0]._obj.value = ticks
+        return times_ok
+    kernel.GetProcessTimes.side_effect = times
+    kernel.WaitForSingleObject.return_value = waited
+    kernel.CloseHandle.return_value = closed
+    return kernel
 def payload(root, extra=None):
     environment, wheels = root / 'env', root / 'wheels'
     site = environment / 'Lib/site-packages'
@@ -163,20 +178,82 @@ class CpuControls(unittest.TestCase):
         self.assertNotIn('szl_cpu_failed_control',sys.modules)
     def test_full_predecessor_contract_preserved(self):
         receipt={k:'owned' for k in ['schema','environment_binding_sha256','server_script','lab_root','executable','python_image_sha256','state_directory','environment_root','wheelhouse']}
-        receipt.update(pid=123,port=12345,argv=['runner','--owned'],startup_timeout_seconds=180)
+        receipt.update(pid=123,process_created=CREATED,port=12345,argv=['runner','--owned'],startup_timeout_seconds=180)
         path=self.root/'service.json'
-        for key in ['state_directory','argv','executable','environment_root','wheelhouse','python_image_sha256']:
+        for key in ['schema','environment_binding_sha256','server_script','lab_root','port','executable','python_image_sha256','state_directory','environment_root','wheelhouse','argv','startup_timeout_seconds']:
             with self.subTest(key=key):
                 raw=RUNNER.canonical({**receipt,key:['wrong'] if key=='argv' else 'wrong'}); path.write_bytes(raw)
-                with mock.patch.object(RUNNER,'prior_process_absent',return_value=True) as absent:
-                    with self.assertRaisesRegex(ValueError,'absent admitted predecessor'): RUNNER.publish_service(path,receipt)
-                    absent.assert_not_called()
+                with mock.patch.object(RUNNER,'prior_process_exited',return_value=True) as exited:
+                    with self.assertRaisesRegex(ValueError,'exited admitted predecessor'): RUNNER.publish_service(path,receipt)
+                    exited.assert_not_called()
                 self.assertEqual(path.read_bytes(),raw)
         path.write_bytes(RUNNER.canonical(receipt))
-        with mock.patch.object(RUNNER,'prior_process_absent',return_value=False):
-            with self.assertRaisesRegex(ValueError,'absent admitted predecessor'): RUNNER.publish_service(path,receipt)
-        with mock.patch.object(RUNNER,'prior_process_absent',return_value=True): RUNNER.publish_service(path,{**receipt,'pid':456})
+        with mock.patch.object(RUNNER,'prior_process_exited',return_value=False):
+            with self.assertRaisesRegex(ValueError,'exited admitted predecessor'): RUNNER.publish_service(path,receipt)
+        with mock.patch.object(RUNNER,'prior_process_exited',return_value=True) as exited:
+            RUNNER.publish_service(path,{**receipt,'pid':456})
+            exited.assert_called_once_with(123,CREATED)
         self.assertEqual(json.loads(path.read_bytes())['pid'],456)
+    def test_prior_process_requires_strict_identity_before_native_query(self):
+        with mock.patch.object(RUNNER.ctypes,'WinDLL',create=True) as native:
+            for pid in [None,True,False,0,-1,0x100000000,'123',123.0]:
+                with self.subTest(pid=pid):
+                    with self.assertRaises(ValueError): RUNNER.prior_process_exited(pid,CREATED)
+            for created in [None,False,123,[],CREATED.replace('Z','+00:00'),CREATED.replace('.417523','.41752'),CREATED.replace('10-03','02-30'),'1600-01-01T00:00:00.000000Z']:
+                with self.subTest(created=created):
+                    with self.assertRaises(ValueError): RUNNER.prior_process_exited(123,created)
+            native.assert_not_called()
+    def test_prior_process_absence_requires_exact_native_error(self):
+        for error in [87,5,0]:
+            kernel = fake_kernel(open_handle=0)
+            with self.subTest(error=error),mock.patch.object(RUNNER.ctypes,'WinDLL',return_value=kernel,create=True),mock.patch.object(RUNNER.ctypes,'get_last_error',return_value=error,create=True):
+                if error == 87: self.assertTrue(RUNNER.prior_process_exited(123,CREATED))
+                else:
+                    with self.assertRaisesRegex(ValueError,'absence could not be established'): RUNNER.prior_process_exited(123,CREATED)
+            kernel.OpenProcess.assert_called_once_with(0x101000,False,123)
+            kernel.GetProcessTimes.assert_not_called(); kernel.WaitForSingleObject.assert_not_called(); kernel.CloseHandle.assert_not_called()
+    def test_retained_exit_requires_exact_native_creation(self):
+        kernel = fake_kernel()
+        with mock.patch.object(RUNNER.ctypes,'WinDLL',return_value=kernel,create=True):
+            self.assertTrue(RUNNER.prior_process_exited(123,CREATED))
+        kernel.GetProcessTimes.assert_called_once(); kernel.WaitForSingleObject.assert_called_once_with(123,0)
+        kernel.CloseHandle.assert_called_once_with(123)
+        for options,message in [({'creation_delta':10},'creation identity differs'),({'times_ok':0},'creation time is unavailable')]:
+            kernel = fake_kernel(**options)
+            with self.subTest(options=options),mock.patch.object(RUNNER.ctypes,'WinDLL',return_value=kernel,create=True):
+                with self.assertRaisesRegex(ValueError,message): RUNNER.prior_process_exited(123,CREATED)
+            kernel.WaitForSingleObject.assert_not_called(); kernel.CloseHandle.assert_called_once_with(123)
+    def test_native_wait_and_close_failures_deny(self):
+        for waited in [0x102,0xffffffff,1,0x80]:
+            kernel = fake_kernel(waited=waited)
+            with self.subTest(waited=waited),mock.patch.object(RUNNER.ctypes,'WinDLL',return_value=kernel,create=True):
+                if waited == 0x102: self.assertFalse(RUNNER.prior_process_exited(123,CREATED))
+                else:
+                    with self.assertRaisesRegex(ValueError,'exit could not be established'): RUNNER.prior_process_exited(123,CREATED)
+            kernel.CloseHandle.assert_called_once_with(123)
+        kernel = fake_kernel(closed=0)
+        with mock.patch.object(RUNNER.ctypes,'WinDLL',return_value=kernel,create=True):
+            with self.assertRaisesRegex(ValueError,'query handle could not be closed'): RUNNER.prior_process_exited(123,CREATED)
+    def test_native_rejection_preserves_predecessor_receipt_bytes(self):
+        receipt={key:'owned' for key in ['schema','environment_binding_sha256','server_script','lab_root','executable','python_image_sha256','state_directory','environment_root','wheelhouse']}
+        receipt.update(pid=123,process_created=CREATED,port=12345,argv=['runner','--owned'],startup_timeout_seconds=180)
+        path=self.root/'service.json'; original=RUNNER.canonical(receipt)
+        for options,error in [({'waited':0x102},87),({'waited':0xffffffff},87),({'creation_delta':10},87),({'times_ok':0},87),({'open_handle':0},5),({'closed':0},87)]:
+            path.write_bytes(original); kernel=fake_kernel(**options)
+            with self.subTest(options=options),mock.patch.object(RUNNER.ctypes,'WinDLL',return_value=kernel,create=True),mock.patch.object(RUNNER.ctypes,'get_last_error',return_value=error,create=True):
+                with self.assertRaises(ValueError): RUNNER.publish_service(path,{**receipt,'pid':456})
+            self.assertEqual(path.read_bytes(),original)
+        for key,value in [('pid',True),('process_created','2026-02-30T00:00:00.000000Z')]:
+            raw=RUNNER.canonical({**receipt,key:value}); path.write_bytes(raw)
+            with mock.patch.object(RUNNER.ctypes,'WinDLL',create=True) as native:
+                with self.assertRaises(ValueError): RUNNER.publish_service(path,{**receipt,'pid':456})
+                native.assert_not_called()
+            self.assertEqual(path.read_bytes(),raw)
+    @unittest.skipUnless(os.name == 'nt','Actual retained native handle requires Windows')
+    def test_actual_retained_native_handle_publication(self):
+        native=module('test-cpu-predecessor').run()
+        self.assertEqual(native['status'],'VERIFIED'); self.assertEqual(native['count'],5)
+        self.assertFalse(native['production_services_changed']); self.assertFalse(native['model_imported'])
     def test_deadline_exit_survives_disk_error(self):
         with mock.patch.object(sys,'stderr') as stderr,mock.patch.object(RUNNER.os,'_exit',side_effect=SystemExit(124)) as terminate:
             stderr.write.side_effect=OSError('disk full')
