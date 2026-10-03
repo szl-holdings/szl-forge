@@ -1,13 +1,17 @@
 from __future__ import annotations
 
 import contextlib
+import hashlib
 import importlib.util
 import io
 import json
+import os
 import pathlib
 import signal
+import stat
 import subprocess
 import tempfile
+import types
 import unittest
 from unittest import mock
 
@@ -40,6 +44,35 @@ def candidate() -> dict:
             "runs_root": RUNS_ROOT,
         }
     }
+
+
+def supervisor_report(
+    run_id: str,
+    run_kind: str,
+    source_commit: str,
+    *,
+    state: str | None = None,
+    cause: str = "SUCCESS",
+    schema: str = "szl.frontier-training-supervisor/v1",
+    receipt_eligible: bool = False,
+) -> bytes:
+    report = {
+        "schema": schema,
+        "runId": run_id,
+        "runKind": run_kind.upper(),
+        "source": {"revision": source_commit},
+        "primaryCause": cause,
+        "state": state or launcher.SUPERVISOR_SUCCESS_STATE_BY_KIND[run_kind],
+        "receiptEligible": receipt_eligible,
+        "publicationEligible": False,
+        "autonomyEligible": False,
+    }
+    def canonical(value):
+        return json.dumps(
+            value, ensure_ascii=False, separators=(",", ":"), sort_keys=True
+        )
+    report["reportSha256"] = hashlib.sha256(canonical(report).encode()).hexdigest()
+    return (canonical(report) + "\n").encode()
 
 
 class FlushTrackingStream(io.StringIO):
@@ -259,6 +292,11 @@ class LauncherContractTests(unittest.TestCase):
             mock.patch.object(launcher, "verify_local_components") as verify_components,
             mock.patch.object(launcher.secrets, "token_hex", return_value="ef" * 16),
             mock.patch.object(launcher.sys, "stdout", output),
+            mock.patch.object(
+                launcher,
+                "record_missing_supervisor_report",
+                return_value="NO_ATTEMPT",
+            ),
         ):
             code = launcher.main(["--source-commit", SOURCE, "--run-kind", "full"])
 
@@ -323,6 +361,11 @@ class LauncherContractTests(unittest.TestCase):
                     mock.patch.object(
                         launcher.secrets, "token_hex", return_value="cd" * 16
                     ),
+                    mock.patch.object(
+                        launcher,
+                        "record_missing_supervisor_report",
+                        return_value="NO_ATTEMPT",
+                    ),
                     contextlib.redirect_stdout(io.StringIO()),
                 ):
                     code = launcher.main(
@@ -366,6 +409,213 @@ class LauncherContractTests(unittest.TestCase):
         self.assertEqual(2, raised.exception.code)
         self.assertEqual(1, len(calls))
         self.assertEqual("/usr/bin/git", calls[0][0])
+
+
+class MissingReportObservationTests(unittest.TestCase):
+    def test_exact_attempt_gets_false_launcher_observation_only_when_report_absent(self):
+        with tempfile.TemporaryDirectory() as directory:
+            runs_root = pathlib.Path(directory)
+            run_id = "ab" * 16
+            service_name = f"szl-ra3-supervisor-{run_id}"
+            attempt = runs_root / run_id
+            reports = attempt / "reports"
+            reports.mkdir(parents=True)
+            real_lstat = os.lstat
+            owner_uid = real_lstat(reports).st_uid
+
+            def controlled_lstat(path):
+                if pathlib.Path(path) in (runs_root, attempt, reports):
+                    real_lstat(path)
+                    return types.SimpleNamespace(
+                        st_mode=stat.S_IFDIR | 0o700,
+                        st_uid=owner_uid,
+                    )
+                return real_lstat(path)
+
+            arguments = {
+                "service_name": service_name,
+                "run_id": run_id,
+                "attempt_path": str(attempt),
+                "source_commit": SOURCE,
+                "run_kind": "smoke",
+                "systemd_exit_code": 143,
+                "launcher_signal": None,
+                "outer_stop_error": None,
+            }
+            with (
+                mock.patch.object(launcher.os, "lstat", side_effect=controlled_lstat),
+                mock.patch.object(launcher.os, "getuid", return_value=owner_uid, create=True),
+                mock.patch.object(
+                    launcher,
+                    "publish_launcher_observation",
+                    return_value=reports / "launcher-stop-observation.json",
+                ) as publish,
+                contextlib.redirect_stdout(io.StringIO()),
+            ):
+                observed = launcher.record_missing_supervisor_report(**arguments)
+                self.assertEqual("LAUNCHER_OBSERVATION_WRITTEN", observed)
+                published_reports, payload = publish.call_args.args
+                self.assertEqual(reports, published_reports)
+                self.assertEqual(run_id, payload["runId"])
+                self.assertEqual(SOURCE, payload["sourceCommit"])
+                self.assertEqual(143, payload["systemdRunExitCode"])
+                self.assertIs(payload["supervisorReportPresent"], False)
+                self.assertIs(payload["trainingCompletionObserved"], False)
+                for field in (
+                    "receiptEligible",
+                    "publicationEligible",
+                    "autonomyEligible",
+                ):
+                    self.assertIs(payload[field], False)
+
+                publish.reset_mock()
+                report_path = reports / "supervisor-report.json"
+                report_path.write_bytes(supervisor_report(run_id, "smoke", SOURCE))
+                self.assertEqual(
+                    "SUPERVISOR_REPORT_SUCCESS",
+                    launcher.record_missing_supervisor_report(**arguments),
+                )
+                publish.assert_not_called()
+
+                report_path.write_bytes(
+                    supervisor_report(
+                        run_id,
+                        "smoke",
+                        SOURCE,
+                        state="SUPERVISOR_TERMINATED_RUN_NO_COMPLETION_CLAIM",
+                        cause="SUPERVISOR_STOP_REQUESTED",
+                    )
+                )
+                self.assertEqual(
+                    "SUPERVISOR_REPORTED_NON_SUCCESS",
+                    launcher.record_missing_supervisor_report(**arguments),
+                )
+                publish.assert_not_called()
+
+                report_path.unlink()
+                reports.rmdir()
+                self.assertEqual(
+                    "NO_REPORTS_DIRECTORY",
+                    launcher.record_missing_supervisor_report(**arguments),
+                )
+                publish.assert_not_called()
+
+            with self.assertRaisesRegex(launcher.LauncherError, "identity"):
+                launcher.record_missing_supervisor_report(
+                    **{**arguments, "run_id": "cd" * 16}
+                )
+
+    def test_bounded_report_requires_exact_identity_integrity_and_success_state(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / "supervisor-report.json"
+            run_id = "ab" * 16
+            for kind in ("smoke", "full"):
+                with self.subTest(kind=kind):
+                    path.write_bytes(supervisor_report(run_id, kind, SOURCE))
+                    self.assertEqual(
+                        "SUPERVISOR_REPORT_SUCCESS",
+                        launcher.classify_supervisor_report(
+                            path, run_id=run_id, run_kind=kind, source_commit=SOURCE
+                        ),
+                    )
+            cases = (
+                (supervisor_report("cd" * 16, "smoke", SOURCE), "SUPERVISOR_REPORT_IDENTITY_MISMATCH"),
+                (supervisor_report(run_id, "smoke", "b" * 40), "SUPERVISOR_REPORT_IDENTITY_MISMATCH"),
+                (supervisor_report(run_id, "full", SOURCE), "SUPERVISOR_REPORT_IDENTITY_MISMATCH"),
+                (
+                    supervisor_report(run_id, "smoke", SOURCE, schema="wrong/v1"),
+                    "SUPERVISOR_REPORT_IDENTITY_MISMATCH",
+                ),
+                (
+                    supervisor_report(run_id, "smoke", SOURCE, receipt_eligible=True),
+                    "SUPERVISOR_REPORT_CLAIM_BOUNDARY_INVALID",
+                ),
+                (
+                    supervisor_report(
+                        run_id,
+                        "smoke",
+                        SOURCE,
+                        state="SUPERVISOR_TERMINATED_RUN_NO_COMPLETION_CLAIM",
+                        cause="SUPERVISOR_STOP_REQUESTED",
+                    ),
+                    "SUPERVISOR_REPORTED_NON_SUCCESS",
+                ),
+                (
+                    supervisor_report(
+                        run_id,
+                        "smoke",
+                        SOURCE,
+                        state=launcher.SUPERVISOR_SUCCESS_STATE_BY_KIND["full"],
+                    ),
+                    "SUPERVISOR_REPORTED_NON_SUCCESS",
+                ),
+                (b"{}\n", "SUPERVISOR_REPORT_INVALID"),
+                (b'{"runId":"a","runId":"b"}\n', "SUPERVISOR_REPORT_INVALID"),
+                (b"x" * (launcher.MAX_SUPERVISOR_REPORT_BYTES + 1), "SUPERVISOR_REPORT_INVALID"),
+            )
+            for data, expected in cases:
+                with self.subTest(expected=expected, prefix=data[:30]):
+                    path.write_bytes(data)
+                    self.assertEqual(
+                        expected,
+                        launcher.classify_supervisor_report(
+                            path, run_id=run_id, run_kind="smoke", source_commit=SOURCE
+                        ),
+                    )
+
+    @unittest.skipUnless(os.name == "posix", "write-once publisher requires POSIX")
+    def test_launcher_observation_is_write_once(self):
+        with tempfile.TemporaryDirectory() as directory:
+            reports = pathlib.Path(directory)
+            payload = {"schema": "test", "receiptEligible": False}
+            path = launcher.publish_launcher_observation(reports, payload)
+            original = path.read_bytes()
+            with self.assertRaises(Exception):
+                launcher.publish_launcher_observation(
+                    reports, {"schema": "replacement", "receiptEligible": True}
+                )
+            self.assertEqual(original, path.read_bytes())
+
+    def test_success_exit_without_supervisor_report_is_withheld(self):
+        run_id = "ab" * 16
+        service_name = f"szl-ra3-supervisor-{run_id}"
+        for observation_state, expected in (
+            ("LAUNCHER_OBSERVATION_WRITTEN", 76),
+            ("NO_ATTEMPT", 76),
+            ("SUPERVISOR_REPORTED_NON_SUCCESS", 76),
+            ("SUPERVISOR_REPORT_INVALID", 76),
+            ("SUPERVISOR_REPORT_IDENTITY_MISMATCH", 76),
+            ("SUPERVISOR_REPORT_SUCCESS", 0),
+        ):
+            with self.subTest(observation_state=observation_state):
+                with (
+                    mock.patch.object(
+                        launcher.subprocess,
+                        "run",
+                        side_effect=lambda command, **_kwargs: subprocess.CompletedProcess(
+                            command, 0
+                        ),
+                    ),
+                    mock.patch.object(
+                        launcher,
+                        "record_missing_supervisor_report",
+                        return_value=observation_state,
+                    ),
+                    contextlib.redirect_stdout(io.StringIO()),
+                ):
+                    observed = launcher.invoke_with_cleanup(
+                        [launcher.SYSTEMD_RUN],
+                        service_name=service_name,
+                        run_id=run_id,
+                        attempt_path=f"{RUNS_ROOT}/{run_id}",
+                        source_commit=SOURCE,
+                        run_kind="smoke",
+                    )
+                self.assertEqual(expected, observed)
+
+    def test_outer_stop_budget_exceeds_supervisor_worker_cleanup(self):
+        self.assertIn("TimeoutStopSec=90s", launcher.SYSTEMD_PROPERTIES)
+        self.assertGreater(launcher.CLEANUP_TIMEOUT_SECONDS, 90)
 
 
 if __name__ == "__main__":

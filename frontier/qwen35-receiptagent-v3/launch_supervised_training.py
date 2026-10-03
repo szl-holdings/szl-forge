@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
+import importlib.util
 import json
 import os
 import posixpath
@@ -13,6 +15,7 @@ import signal
 import stat
 import subprocess
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Sequence
 
@@ -25,7 +28,7 @@ SUPERVISOR = HERE / "supervise_training.py"
 GIT = "/usr/bin/git"
 SYSTEMD_RUN = "/usr/bin/systemd-run"
 SYSTEMCTL = "/usr/bin/systemctl"
-CLEANUP_TIMEOUT_SECONDS = 30
+CLEANUP_TIMEOUT_SECONDS = 100
 SOURCE_COMMIT = re.compile(r"[0-9a-f]{40}")
 SERVICE_NAME = re.compile(r"szl-ra3-supervisor-[0-9a-f]{32}")
 SUPERVISED_EXECUTABLE_COMPONENTS = (
@@ -37,10 +40,15 @@ SUPERVISED_EXECUTABLE_COMPONENTS = (
     "supervisor_validation.py",
 )
 MAX_COMPONENT_BYTES = 2 * 1024 * 1024
+MAX_SUPERVISOR_REPORT_BYTES = 8 * 1024 * 1024
+SUPERVISOR_SUCCESS_STATE_BY_KIND = {
+    "smoke": "SUPERVISOR_OBSERVED_SMOKE_OUTPUT_BOUND_NOT_QUALIFIED",
+    "full": "SUPERVISOR_OBSERVED_FULL_OUTPUT_BOUND_UNATTESTED",
+}
 SYSTEMD_PROPERTIES = (
     "KillMode=control-group",
     "SendSIGKILL=yes",
-    "TimeoutStopSec=20s",
+    "TimeoutStopSec=90s",
     "NoNewPrivileges=yes",
     "ProtectControlGroups=yes",
     "PrivateTmp=yes",
@@ -363,12 +371,190 @@ def stop_outer_unit(service_name: str) -> str | None:
     return None
 
 
+def publish_launcher_observation(reports: Path, observation: dict[str, Any]) -> Path:
+    specification = importlib.util.spec_from_file_location(
+        "szl_ra3_launcher_bootstrap", HERE / "supervisor_bootstrap.py"
+    )
+    if specification is None or specification.loader is None:
+        raise LauncherError("launcher evidence publisher is unavailable")
+    publisher = importlib.util.module_from_spec(specification)
+    sys.modules[specification.name] = publisher
+    specification.loader.exec_module(publisher)
+    artifact = publisher.publish_write_once(
+        reports,
+        "launcher-stop-observation.json",
+        (json.dumps(observation, sort_keys=True, separators=(",", ":")) + "\n").encode(
+            "utf-8"
+        ),
+    )
+    return artifact.path
+
+
+def classify_supervisor_report(
+    path: Path, *, run_id: str, run_kind: str, source_commit: str
+) -> str:
+    """Require a stable, bounded, exact report before a zero launcher exit."""
+
+    def unique_pairs(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+        value: dict[str, Any] = {}
+        for key, item in pairs:
+            if key in value:
+                raise ValueError("duplicate supervisor report key")
+            value[key] = item
+        return value
+
+    def reject_constant(_value: str) -> None:
+        raise ValueError("nonfinite supervisor report value")
+
+    try:
+        raw = _read_regular_file_once(path, MAX_SUPERVISOR_REPORT_BYTES)
+        report = json.loads(
+            raw.decode("utf-8"),
+            object_pairs_hook=unique_pairs,
+            parse_constant=reject_constant,
+        )
+    except (LauncherError, OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError):
+        return "SUPERVISOR_REPORT_INVALID"
+    if not isinstance(report, dict):
+        return "SUPERVISOR_REPORT_INVALID"
+    unsigned = dict(report)
+    declared_digest = unsigned.pop("reportSha256", None)
+    if (
+        not isinstance(declared_digest, str)
+        or hashlib.sha256(
+            json.dumps(unsigned, ensure_ascii=False, separators=(",", ":"), sort_keys=True).encode(
+                "utf-8"
+            )
+        ).hexdigest()
+        != declared_digest
+        or raw
+        != (json.dumps(report, ensure_ascii=False, separators=(",", ":"), sort_keys=True) + "\n").encode(
+            "utf-8"
+        )
+    ):
+        return "SUPERVISOR_REPORT_INVALID"
+    if (
+        report.get("schema") != "szl.frontier-training-supervisor/v1"
+        or report.get("runId") != run_id
+        or report.get("runKind") != run_kind.upper()
+        or not isinstance(report.get("source"), dict)
+        or report["source"].get("revision") != source_commit
+    ):
+        return "SUPERVISOR_REPORT_IDENTITY_MISMATCH"
+    if any(
+        report.get(field) is not False
+        for field in ("receiptEligible", "publicationEligible", "autonomyEligible")
+    ):
+        return "SUPERVISOR_REPORT_CLAIM_BOUNDARY_INVALID"
+    if (
+        report.get("primaryCause") == "SUCCESS"
+        and report.get("state") == SUPERVISOR_SUCCESS_STATE_BY_KIND[run_kind]
+    ):
+        return "SUPERVISOR_REPORT_SUCCESS"
+    return "SUPERVISOR_REPORTED_NON_SUCCESS"
+
+
+def record_missing_supervisor_report(
+    *,
+    service_name: str,
+    run_id: str,
+    attempt_path: str,
+    source_commit: str,
+    run_kind: str,
+    systemd_exit_code: int | None,
+    launcher_signal: int | None,
+    outer_stop_error: str | None,
+) -> str:
+    """Write a separate launcher observation only for this admitted attempt."""
+
+    if (
+        SERVICE_NAME.fullmatch(service_name) is None
+        or service_name.removeprefix("szl-ra3-supervisor-") != run_id
+        or SOURCE_COMMIT.fullmatch(source_commit) is None
+        or run_kind not in {"smoke", "full"}
+    ):
+        raise LauncherError("launcher observation identity is invalid")
+    attempt = Path(attempt_path)
+    if (
+        not attempt.is_absolute()
+        or posixpath.normpath(attempt_path) != attempt_path
+        or attempt.name != run_id
+    ):
+        raise LauncherError("launcher observation attempt path is invalid")
+    current = Path(attempt.anchor)
+    for part in attempt.parts[1:]:
+        current = current / part
+        try:
+            metadata = os.lstat(current)
+        except FileNotFoundError:
+            return "NO_ATTEMPT"
+        if stat.S_ISLNK(metadata.st_mode):
+            raise LauncherError("launcher observation path contains a symlink")
+    reports = attempt / "reports"
+    try:
+        reports_metadata = os.lstat(reports)
+    except FileNotFoundError:
+        return "NO_REPORTS_DIRECTORY"
+    for directory in (attempt.parent, attempt, reports):
+        metadata = os.lstat(directory)
+        if (
+            not stat.S_ISDIR(metadata.st_mode)
+            or metadata.st_uid != os.getuid()
+            or metadata.st_mode & 0o022
+        ):
+            raise LauncherError("launcher observation directory is not owner controlled")
+    if not stat.S_ISDIR(reports_metadata.st_mode):
+        raise LauncherError("launcher reports path is not a directory")
+    try:
+        terminal_metadata = os.lstat(reports / "supervisor-report.json")
+    except FileNotFoundError:
+        pass
+    else:
+        if (
+            not stat.S_ISREG(terminal_metadata.st_mode)
+            or terminal_metadata.st_uid != os.getuid()
+            or terminal_metadata.st_nlink != 1
+        ):
+            raise LauncherError("supervisor report path is not a trusted regular file")
+        return classify_supervisor_report(
+            reports / "supervisor-report.json",
+            run_id=run_id,
+            run_kind=run_kind,
+            source_commit=source_commit,
+        )
+    observation = {
+        "schema": "szl.frontier-training-launcher-observation/v1",
+        "state": "SUPERVISOR_REPORT_ABSENT_AFTER_LAUNCHER_WAIT",
+        "observedAt": datetime.now(timezone.utc).isoformat(),
+        "runId": run_id,
+        "runKind": run_kind.upper(),
+        "supervisorUnit": f"{service_name}.service",
+        "sourceCommit": source_commit,
+        "systemdRunExitCode": systemd_exit_code,
+        "launcherSignal": launcher_signal,
+        "outerStopError": outer_stop_error,
+        "supervisorReportPresent": False,
+        "trainingCompletionObserved": False,
+        "workerTerminationConfirmedByLauncher": False,
+        "integrityDigestIsAuthentication": False,
+        "receiptEligible": False,
+        "publicationEligible": False,
+        "autonomyEligible": False,
+    }
+    path = publish_launcher_observation(reports, observation)
+    sys.stdout.write(f"launcherObservationPath={path}\n")
+    sys.stdout.flush()
+    return "LAUNCHER_OBSERVATION_WRITTEN"
+
+
 def invoke_with_cleanup(
     command: Sequence[str],
     *,
     service_name: str,
     run_id: str,
     attempt_path: str,
+    source_commit: str,
+    run_kind: str,
 ) -> int:
     previous_handlers: dict[int, Any] = {}
     launched: subprocess.CompletedProcess[Any] | None = None
@@ -397,10 +583,32 @@ def invoke_with_cleanup(
             sys.stderr.write(f"supervisorCleanupWarning={cleanup_problem}\n")
             sys.stderr.flush()
     if interrupted is not None:
-        return 128 + interrupted.signum
-    if launched is None:
+        result_code = 128 + interrupted.signum
+    elif launched is None:
         raise LauncherError("systemd-run returned no process result")
-    return launched.returncode if 0 <= launched.returncode <= 255 else 1
+    else:
+        result_code = launched.returncode if 0 <= launched.returncode <= 255 else 1
+    try:
+        observation_state = record_missing_supervisor_report(
+            service_name=service_name,
+            run_id=run_id,
+            attempt_path=attempt_path,
+            source_commit=source_commit,
+            run_kind=run_kind,
+            systemd_exit_code=launched.returncode if launched is not None else None,
+            launcher_signal=interrupted.signum if interrupted is not None else None,
+            outer_stop_error=cleanup_problem,
+        )
+    except Exception as exc:  # noqa: BLE001 - preserve the systemd result
+        sys.stderr.write(f"launcherObservationWarning={type(exc).__name__}\n")
+        sys.stderr.flush()
+        return result_code or 76
+    if observation_state != "SUPERVISOR_REPORT_SUCCESS":
+        sys.stderr.write(f"launcherSupervisorReportState={observation_state}\n")
+        sys.stderr.flush()
+    if observation_state != "SUPERVISOR_REPORT_SUCCESS" and result_code == 0:
+        return 76
+    return result_code
 
 
 def systemd_command(
@@ -477,6 +685,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             service_name=service_name,
             run_id=run_id,
             attempt_path=attempt_path,
+            source_commit=args.source_commit,
+            run_kind=args.run_kind,
         )
     except LauncherError as exc:
         parser.error(str(exc))
