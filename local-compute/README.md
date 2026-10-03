@@ -107,6 +107,32 @@ cooperative timer is not a Windows Job Object guarantee. Saved candidates remain
 ineligible for publication/promotion pending clean reload, generation gates,
 fresh holdout evaluation and exact source/weight provenance.
 
+Disk admission happens **before** creating output directories or the local lock.
+The hard free-space floor is 1.5 GiB, with an additional 256 MiB of conservative
+candidate headroom. Missing output paths are probed through their nearest
+existing ancestor on the resolved output volume; the lock volume is checked
+separately. Probe failure is `DISK_PROBE_UNAVAILABLE`, not a zero or a pass.
+Runtime, adapter/processor checkpoint writes, and explicit Trackio writes each
+get a fresh probe. These cooperative observations do not atomically reserve
+space, bound Trackio background writes, or establish machine-wide GPU ownership.
+Use the existing explicit `--no-trackio` option for a pilot that needs no tracking
+background writer; it remains recorded as `EXPLICITLY_DISABLED`.
+
+The final receipt is serialized in memory, capped at 1 MiB, and admitted using
+its actual UTF-8 byte length plus a 4 KiB filesystem allowance above the hard
+floor. A failed capacity check or write returns exit 1, `FAILED_CLOSED`, and
+`durable_report_written: false` with the in-memory receipt on stdout. An earlier
+execution error remains separately recorded. No blocked/partial write is
+claimed as a saved receipt, and neither partial candidates nor another owner's
+lock are removed. Receipt bytes are written to a unique pending file, flushed,
+synced and closed before the final name is published with a no-overwrite hard
+link. Unsupported hard links fail closed; there is no overwrite/copy fallback.
+Pending diagnostics are retained and are not final receipts. A failed sync
+cannot leave a successful final receipt. Failed owned-lock cleanup retains the
+uncertain lock and original execution error, and still attempts bounded failure
+evidence. File sync is not a portable directory/crash-durability guarantee. A
+saved report is still local evidence, not publication or promotion authority.
+
 ## Docker, Tailscale and llama.cpp
 
 Offline contracts can run in an existing trusted Python container with no
