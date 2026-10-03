@@ -90,6 +90,7 @@ jobs:
           python -m py_compile
           spaces/szl-model-inference-lab/app.py
           spaces/szl-model-inference-lab/app_governed.py
+          spaces/szl-model-inference-lab/formula_atlas_contract.py
           spaces/szl-model-inference-lab/verify_governed_live.py
 
       - name: Run legacy and governed Space contracts
@@ -99,6 +100,7 @@ jobs:
           python -m pytest -q
           spaces/szl-model-inference-lab/tests/test_app.py
           spaces/szl-model-inference-lab/tests/test_governed_app.py
+          spaces/szl-model-inference-lab/tests/test_formula_atlas_contract.py
 
       - name: Verify dependency graph
         run: python -m pip check
