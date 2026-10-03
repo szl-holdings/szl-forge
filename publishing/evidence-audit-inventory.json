@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "scope": "Twelve prioritized evidence remediation repositories; no promotion verdict. Other handoff preserve-only surfaces are not claimed audited.",
+  "scope": "Thirteen prioritized evidence remediation repositories; no promotion verdict. Adapter runtime checks bind one evaluated candidate to published bytes. Other handoff preserve-only surfaces are not claimed audited.",
   "repositories": [
     {
       "repo": "SZLHOLDINGS/brain-navigator-r2",
@@ -185,6 +185,37 @@
       "required_boundaries": [
         "publication_eligible_false",
         "no_autonomy"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/chaski-r4",
+      "type": "model",
+      "class": "measured_research_candidate",
+      "revision": "main",
+      "readme": "README.md",
+      "canonical_source": "szl-holdings/szl-forge",
+      "evidence_files": [
+        "evidence/canonical_rerun_20261001_140615.receipt.json",
+        "szl-source-binding.json"
+      ],
+      "checks": {
+        "adapter_runtime_binding": {
+          "evidence_file": "evidence/canonical_rerun_20261001_140615.receipt.json",
+          "candidate_id": "chaski-r4-local",
+          "artifact_path": "adapter_model.safetensors",
+          "identity_bridge": "canonical/chaski_r4/evidence/publication_receipt_20261001_171009.json",
+          "base_runtime": "huggingface:Qwen/Qwen3.5-0.8B@2fc06364715b967f1860aea9cf38778875588b17",
+          "model_class": "Qwen3_5ForConditionalGeneration",
+          "wrapper_class": "PeftModelForCausalLM"
+        }
+      },
+      "external_evidence": [
+        {
+          "path": "canonical/chaski_r4/evidence/publication_receipt_20261001_171009.json",
+          "url": "https://raw.githubusercontent.com/szl-holdings/szl-forge/cac09769d2b171da259794f6c43df4e9d71e25c0/chaski_r4/evidence/publication_receipt_20261001_171009.json",
+          "revision": "cac09769d2b171da259794f6c43df4e9d71e25c0",
+          "sha256": "d8eea67be2062b0741c4d52dedb511ac1e87e99c43d54b6e1f34809b1de49af2"
+        }
       ]
     },
     {
