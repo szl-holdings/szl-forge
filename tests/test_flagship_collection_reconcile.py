@@ -82,6 +82,15 @@ def test_manifest_rejects_quarantine_or_visibility_downgrade() -> None:
         validate_manifest(bad)
 
 
+def test_manifest_rejects_description_the_hub_will_refuse() -> None:
+    manifest = load_manifest()
+    assert len(manifest["target"]["description"]) <= 150
+    bad = copy.deepcopy(manifest)
+    bad["target"]["description"] = "No model is promoted. " + "x" * 150
+    with pytest.raises(ValueError, match="150 characters"):
+        validate_manifest(bad)
+
+
 class FakeHub:
     def __init__(self, collection: dict) -> None:
         self.collection = collection

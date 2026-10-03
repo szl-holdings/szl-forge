@@ -6,20 +6,26 @@ on:
       - "receiptagent-v3/card/README.md"
       - "tools/prepare_receiptagent_v3_card_sync.py"
       - "tools/publish_receiptagent_v3_public_card.py"
+      - "tools/check_receiptagent_v3_card_dispatch.py"
       - "tests/test_receiptagent_v3_card_sync.py"
       - "tests/test_publish_receiptagent_v3_public_card.py"
+      - "tests/test_receiptagent_v3_card_dispatch.py"
       - "docs/receiptagent-v3-card-sync-input.md"
       - ".github/workflows/receiptagent-v3-card-sync-input-ci.yml"
+      - ".github/workflows/publish-receiptagent-v3-public-card.yml"
   push:
     branches: [main]
     paths:
       - "receiptagent-v3/card/README.md"
       - "tools/prepare_receiptagent_v3_card_sync.py"
       - "tools/publish_receiptagent_v3_public_card.py"
+      - "tools/check_receiptagent_v3_card_dispatch.py"
       - "tests/test_receiptagent_v3_card_sync.py"
       - "tests/test_publish_receiptagent_v3_public_card.py"
+      - "tests/test_receiptagent_v3_card_dispatch.py"
       - "docs/receiptagent-v3-card-sync-input.md"
       - ".github/workflows/receiptagent-v3-card-sync-input-ci.yml"
+      - ".github/workflows/publish-receiptagent-v3-public-card.yml"
 permissions:
   contents: read
 jobs:

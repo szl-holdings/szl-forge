@@ -33,6 +33,9 @@ FULL_SHA = re.compile(r"^[0-9a-f]{40}$")
 SOURCE_BOUND_WRITER_FILES = (
     "tools/prepare_receiptagent_v3_card_sync.py",
     "tools/publish_receiptagent_v3_public_card.py",
+    "tools/check_receiptagent_v3_card_dispatch.py",
+    "tools/acquire_hf_publisher_token.py",
+    ".github/workflows/publish-receiptagent-v3-public-card.yml",
 )
 REQUIRED_HOLD_MARKERS = (
     b"publication_eligible: false",

@@ -1,7 +1,7 @@
 """Prepare, but never publish, the bounded ReceiptAgent v3 Hub-card correction.
 
 The public Hub README and the Forge authoring card have different layouts. This
-one-shot preparer changes three reviewed prose spans in the exact observed Hub
+one-shot preparer changes five reviewed spans in the exact observed Hub
 README and preserves every other byte. It has no credential or Hub write path.
 """
 

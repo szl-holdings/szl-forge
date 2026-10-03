@@ -72,3 +72,34 @@ it is **not** an authorized publication environment. A changed Hub parent
 requires a new reviewed candidate and digest, not a forced write. Existing
 license, lineage, consent, privacy, training-suitability, deployment and model
 promotion holds remain untouched.
+
+## Manual GitHub publication workflow
+
+After this source is merged, `publish-receiptagent-v3-public-card.yml` offers
+one explicit dispatch on current protected `main`. It has no push or PR writer.
+Supply the exact current main SHA, the reviewed Hub parent above, and the literal
+`README_ONLY_UNQUALIFIED` confirmation. The workflow validates all three before
+credentials, runs the offline tests and preparer, then checks current main again.
+The publisher, preparer, dispatch guard, credential selector and workflow must
+all match their committed source. The credential selector actively verifies
+write permission for this exact model; configured secret names alone are not
+evidence of access. Only the reviewed Hub client version is installed.
+
+```sh
+gh workflow run publish-receiptagent-v3-public-card.yml \
+  --repo szl-holdings/szl-forge --ref main \
+  -f source_revision=<current-main-40-hex-sha> \
+  -f expected_hub_parent=f4b28d75e1bdbbbf299bb8f5beceb8f141f38baf \
+  -f confirmation=README_ONLY_UNQUALIFIED
+```
+
+The per-model concurrency lock does not cancel an in-progress writer. Evidence
+is uploaded even when a control fails. GitHub's Re-run action is rejected because
+`GITHUB_RUN_ATTEMPT` must equal `1`. Do not start a fresh dispatch to repeat an
+ambiguous attempt: first reconcile the prior receipt and immutable Hub bytes.
+A fresh dispatch is not a globally unique consumed intent. If main moves after
+a Hub commit, the receipt can remain `POST_COMMIT_UNVERIFIED_DO_NOT_RETRY` even
+though the card was written; a failed workflow does not prove no write occurred.
+
+The successful state for this workflow is a corrected README with matching
+immutable bytes. Every model qualification and deployment hold still applies.

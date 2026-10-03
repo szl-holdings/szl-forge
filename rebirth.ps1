@@ -1,12 +1,7 @@
-# SZL Forge rebirth — fix SZL-1's voice WITHOUT retraining.
-#
-# Diagnosis (MEASURED 2026-07-12): after forge.ps1 finished, szl1 answered
-# '@@@@...' at temperature 0 — even in raw mode. The Ollama-imported weights
-# are corrupted. The trained merge at .\szl-model is the input this script
-# re-imports properly: convert to F16 GGUF with llama.cpp's pure-Python
-# converter, then quantize to q4_K_M (fits the 8 GB GPU, fast).
-#
-#   iwr https://raw.githubusercontent.com/szl-holdings/szl-forge/main/rebirth.ps1 -OutFile "$env:TEMP\rebirth.ps1"; powershell -ExecutionPolicy Bypass -File "$env:TEMP\rebirth.ps1"
+# SZL Forge historical GGUF import helper - HELD.
+# Repeated @ output was observed; neither cause nor clean source is proven.
+# This script exits before model mutation. The body below is provenance only.
+# Do not use it to repair, replace, or route the canonical szl1 model.
 #
 # Historical body below is retained for provenance but is not an authorized
 # repair. It removed the canonical szl1 name and converted an unbound merge
