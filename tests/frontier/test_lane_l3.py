@@ -46,7 +46,7 @@ def test_mock_run_passes_harness_but_stays_non_promotional(tmp_path):
     assert receipt["json_draft"] == "5/5"
     assert receipt["refusal"] == "6/6"
     assert receipt["baseline"] == {"json_draft": 0, "refusal": 2}
-    assert receipt["evals"] == "SYNTHETIC"
+    assert receipt["evals"] == "SIMULATED"
     assert receipt["evaluation_mode"] == "PUBLIC_CI_SMOKE"
     assert receipt["candidate_evaluated"] is False
     assert receipt["qualification_gate_ran"] is False
