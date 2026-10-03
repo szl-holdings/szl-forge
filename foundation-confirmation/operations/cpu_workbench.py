@@ -20,7 +20,7 @@ import threading
 import time
 import uuid
 
-HELPER_SHA256 = 'f5bc38855e651c47b675f5727afdb27c70d9a79446e6e961816b04ed1f9876a9'
+HELPER_SHA256 = 'eef44b5bca9ab1dfe4b84a74aac855d1a70196cccf01fb4b0987013368751628'
 FROZEN = {
     'release-manifest.json': '03a13779b09f2e8ad3dd53d928ac460a395d329742f9f43f7e5892fba672c877',
     'verify_release.py': 'b7b5d7775fadc6933144c16e17db2ee64e63c18b43d412a593eba927f53672f9',

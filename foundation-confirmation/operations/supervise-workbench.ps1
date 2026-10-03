@@ -152,7 +152,7 @@ function Get-FoundationCpuRuntime {
     $imageHash = (Get-FileHash -LiteralPath $executable -Algorithm SHA256).Hash.ToLowerInvariant()
     if ($ExpectedPythonSha256 -and $ExpectedPythonSha256 -cne $imageHash) { throw 'The native Python image changed.' }
     $admitter = Assert-FoundationPath (Join-Path $SourceRoot 'cpu_environment.py')
-    Assert-FoundationHash $admitter 'f5bc38855e651c47b675f5727afdb27c70d9a79446e6e961816b04ed1f9876a9'
+    Assert-FoundationHash $admitter 'eef44b5bca9ab1dfe4b84a74aac855d1a70196cccf01fb4b0987013368751628'
     $raw = & $executable -I -S -B $admitter --environment-root $environment --wheelhouse $wheels --expected-python-sha256 $imageHash
     if ($LASTEXITCODE -ne 0) { throw 'The official CPU environment admission failed.' }
     $admission = ($raw -join "`n") | ConvertFrom-Json
