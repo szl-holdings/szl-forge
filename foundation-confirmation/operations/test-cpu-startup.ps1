@@ -100,14 +100,24 @@ try {
         Reject 'LATE_READINESS_CANNOT_PASS' { $guard.Complete() } 'startup deadline exceeded'
         $checks.Add('NATIVE_DEADLINE_TERMINATES_ONLY_DIRECT_NEW_CHILD')
     } finally { $guard.Dispose() }
-    $child = Start-Process -FilePath $paths.Shell -ArgumentList '-NoProfile -NonInteractive -WindowStyle Hidden -Command "Start-Sleep -Seconds 2"' -WindowStyle Hidden -PassThru
+    # Keep the successful child alive until after the deadline. A slow shell
+    # startup must not be mistaken for a guard that failed to disarm.
+    $signal = Join-Path $fixture 'completed-child.signal'
+    $quotedSignal = $signal.Replace("'", "''")
+    $childCommand = "while (-not (Test-Path -LiteralPath '$quotedSignal')) { Start-Sleep -Milliseconds 100 }"
+    $encodedCommand = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($childCommand))
+    $child = Start-Process -FilePath $paths.Shell -ArgumentList ('-NoProfile -NonInteractive -WindowStyle Hidden -EncodedCommand ' + $encodedCommand) -WindowStyle Hidden -PassThru
     $children += $child
-    $guard = New-FoundationCpuDeadline $child 1000
-    $guard.Complete(); $guard.Dispose()
-    # Disarm still has its 1-second deadline. Allow a separate bounded wait for
-    # native Windows PowerShell startup and the fixture's 2-second sleep.
-    if (-not $child.WaitForExit(15000)) { throw 'Disarmed fixture child did not exit within its 15-second fixture bound.' }
-    if ($child.ExitCode -ne 0) { throw ('Successful completion did not disarm the direct child deadline; child exit code: ' + $child.ExitCode) }
+    $guard = New-FoundationCpuDeadline $child 5000
+    try {
+        $guard.Complete()
+        if ($child.WaitForExit(5500)) { throw 'Completed guard terminated the direct child before release.' }
+        Set-Content -LiteralPath $signal -Value 'release' -NoNewline -Encoding Ascii
+        if (-not $child.WaitForExit(20000) -or $child.ExitCode -ne 0) { throw 'Successful completion did not disarm the direct child deadline.' }
+    } finally {
+        $guard.Dispose()
+        if (-not $child.HasExited) { $child.Kill(); $child.WaitForExit(5000) | Out-Null }
+    }
     $checks.Add('COMPLETED_READINESS_DISARMS_DEADLINE')
     $child = Start-Process -FilePath $paths.Shell -ArgumentList '-NoProfile -NonInteractive -WindowStyle Hidden -Command "Start-Sleep -Seconds 15"' -WindowStyle Hidden -PassThru
     $children += $child
