@@ -55,6 +55,7 @@ jobs:
           "huggingface-hub==1.23.0"
           "requests==2.33.0"
           "pytest==9.1.1"
+          "PyYAML==6.0.3"
 
       - name: Verify publisher and live-verifier contracts
         run: >-
