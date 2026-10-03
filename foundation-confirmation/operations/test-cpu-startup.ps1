@@ -10,7 +10,8 @@ function Reject {
     if (-not $failed) { throw "Control was admitted: $Name" }
     $checks.Add($Name)
 }
-$fixture = Join-Path $PSScriptRoot ('.cpu-controls-' + [guid]::NewGuid().ToString('N'))
+$fixtureParent = (Get-FoundationPaths).Profile
+$fixture = Join-Path $fixtureParent ('.cpu-controls-' + [guid]::NewGuid().ToString('N'))
 $children = @()
 try {
     foreach ($source in Get-ChildItem -LiteralPath $PSScriptRoot -Filter '*.ps1') {
@@ -121,8 +122,9 @@ try {
     foreach ($child in $children) { $child.Dispose() }
     if (Test-Path -LiteralPath $fixture) {
         $safe = Assert-FoundationPath $fixture -Directory
-        if (-not $safe.StartsWith($PSScriptRoot.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase) -or
-            [IO.Path]::GetFileName($safe) -notmatch '^\.cpu-controls-[0-9a-f]{32}$') { throw 'Refused fixture cleanup outside this owned source directory.' }
+        if (-not $safe.StartsWith($fixtureParent.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase) -or
+            [IO.Path]::GetDirectoryName($safe) -cne $fixtureParent -or
+            [IO.Path]::GetFileName($safe) -notmatch '^\.cpu-controls-[0-9a-f]{32}$') { throw 'Refused fixture cleanup outside this owned profile directory.' }
         Remove-Item -LiteralPath $safe -Recurse -Force
     }
 }
