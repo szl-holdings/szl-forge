@@ -1,6 +1,8 @@
 """Offline publication contract tests; mocks never establish real Hub state."""
+import ast
 import hashlib
 import subprocess
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -58,6 +60,32 @@ def test_export_is_code_only_and_exact(payload):
     assert binding["state"] == "BLUEPRINT_NOT_TRAINED" and binding["weights_present"] is False
     assert not any(name.endswith((".safetensors", ".gguf", ".joblib")) for name in payload)
     assert all(hashlib.sha256(payload[name]).hexdigest() == digest for name, digest in binding["files_sha256"].items())
+    assert "source/src/szl_model_lab/archive_stage.py" in payload
+    assert "source/docs/ARCHIVE_STAGING.md" in payload
+
+
+def test_real_export_relative_imports_have_complete_source_closure():
+    """Inspect real source, including lazy imports, not placeholder fixtures."""
+    root = Path(__file__).resolve().parents[1]
+    listed = set(SOURCE_FILES)
+    missing = []
+    for relative in sorted(listed):
+        if not relative.endswith(".py"):
+            continue
+        package = Path(relative).parent.parts
+        for node in ast.walk(ast.parse((root / relative).read_text(encoding="utf-8"))):
+            if not isinstance(node, ast.ImportFrom) or not node.level:
+                continue
+            assert node.level <= len(package), (relative, node.lineno)
+            prefix = package[:len(package) - node.level + 1]
+            modules = [node.module] if node.module else [alias.name for alias in node.names]
+            for module in modules:
+                parts = (*prefix, *module.split("."))
+                stem = "/".join(parts)
+                targets = {stem + ".py", stem + "/__init__.py"}
+                if not targets & listed:
+                    missing.append((relative, node.lineno, module))
+    assert not missing, missing
 
 def test_conditional_commit_and_readback(tmp_path, payload):
     hub = FakeHub(tmp_path, {})

@@ -76,16 +76,36 @@ def fit(dataset: Dataset, *, epochs: int = 30, seed: int = 20260913, batch_size:
 
 
 def train_candidate(dataset_path: Path, track: str, output: Path, revision: str,
-                    epochs: int, seed: int, batch_size: int) -> dict:
+                    epochs: int, seed: int, batch_size: int, *,
+                    archive_stage_manifest: Path | None = None,
+                    archive_stage_sha256: str | None = None) -> dict:
     source = verify_source(revision)
+    if (archive_stage_manifest is None) != (archive_stage_sha256 is None):
+        raise ValueError("archive_stage_manifest_and_digest_required_together")
+    stage = None
+    if archive_stage_manifest is not None:
+        from .archive_stage import (_archive_root, _local_root, require_local_workspace,
+                                    require_stage_output_disjoint, verify_stage)
+        require_local_workspace(dataset_path, _local_root(), _archive_root())
+        require_local_workspace(output, _local_root(), _archive_root())
+        require_stage_output_disjoint(output, archive_stage_manifest)
+        stage = verify_stage(archive_stage_manifest, archive_stage_sha256, dataset_path, track)
     dataset = Dataset.read(dataset_path, track)
+    if stage is not None and dataset.sha256 != stage["data_sha256"]:
+        raise ValueError("archive_stage_dataset_mismatch")
     if output.exists():
         raise ValueError("output_must_not_exist")
     model, validation = fit(dataset, epochs=epochs, seed=seed, batch_size=batch_size)
+    if stage is not None:
+        if verify_stage(archive_stage_manifest, archive_stage_sha256, dataset_path, track) != stage:
+            raise ValueError("archive_stage_changed_during_training")
     if verify_source(revision) != source:
         raise ValueError("source_changed_during_training")
     versions = {name: importlib.metadata.version(name) for name in ("torch", "safetensors", "pydantic")}
-    return write_candidate(output, model, source=source, dataset=dataset.summary(), validation=validation,
+    dataset_receipt = dataset.summary()
+    if stage is not None:
+        dataset_receipt["archive_stage"] = stage
+    return write_candidate(output, model, source=source, dataset=dataset_receipt, validation=validation,
                            recipe={"epochs": epochs, "seed": seed, "batch_size": batch_size,
                                    "optimizer": "Adam", "learning_rate": 0.01, "device": "cpu",
                                    "dependencies_observed": versions})

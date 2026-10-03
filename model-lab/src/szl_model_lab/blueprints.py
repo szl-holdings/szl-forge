@@ -28,6 +28,7 @@ SOURCE_FILES = (
     "src/szl_model_lab/__init__.py", "src/szl_model_lab/catalog.py",
     "src/szl_model_lab/models.py", "src/szl_model_lab/data.py",
     "src/szl_model_lab/safeio.py", "src/szl_model_lab/artifacts.py",
+    "src/szl_model_lab/archive_stage.py", "docs/ARCHIVE_STAGING.md",
     "src/szl_model_lab/training.py", "src/szl_model_lab/probes.py",
     "src/szl_model_lab/pool_view.py",
     "src/szl_model_lab/corpus_view.py", "docs/CORPUS_VIEW.md",
