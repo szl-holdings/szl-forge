@@ -192,6 +192,10 @@ a later successor cannot overwrite an earlier failed startup's diagnostics.
 The original two retries, 60 second delay, exact ownership checks and zero
 Scheduler retries remain in force.
 
+The supervisor imports the built-in Utility module from the running shell's
+`PSHOME`. A mixed PowerShell 5.1/7 module search path cannot substitute another
+shell's hashing or JSON commands. This changes no user or machine settings.
+
 Run the network-free controls with:
 
 ```powershell

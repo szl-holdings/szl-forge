@@ -8,6 +8,8 @@ param(
     [string]$CpuStateDirectory, [string]$PythonImageSha256, [string]$CpuEnvironmentBindingSha256
 )
 $ErrorActionPreference = 'Stop'
+# Bind built-in hashing/JSON commands to this shell, even with a mixed PSModulePath.
+Import-Module -Name (Join-Path $PSHOME 'Modules\Microsoft.PowerShell.Utility\Microsoft.PowerShell.Utility.psd1') -ErrorAction Stop
 $script:foundationSourceRoot = $PSScriptRoot
 $script:foundationArchivePath = $ArchivePath
 $script:foundationCpuInputs = @{ PythonExecutable=$PythonExecutable; EnvironmentRoot=$CpuEnvironmentRoot;
