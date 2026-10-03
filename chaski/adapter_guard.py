@@ -1,4 +1,4 @@
-"""Fail-closed guard: every tensor of a LoRA checkpoint must land in the loaded model.
+"""Fail-closed admission guard for one active, unmerged LoRA adapter namespace.
 
 Why this exists (2026-09-30, szl-forge PR #444 evidence): the published chaski adapters are
 keyed for the multimodal module layout (``base_model.model.model.language_model.layers.*``).
@@ -7,9 +7,12 @@ When the base is instantiated through a class whose modules live at ``model.laye
 192** adapter tensors and only emits a ``UserWarning``. The "adapter" candidate then reproduces
 the bare base model byte-for-byte and would be receipted as a MEASURED 0/5 with no error.
 
-This module makes that condition a hard failure and a receipt field. The key logic is pure
-Python (the safetensors header is 8 bytes of little-endian length + JSON), so it is unit-tested
-without torch; the model-facing helpers only need ``named_parameters()``.
+This module makes missing checkpoint targets a hard failure and a receipt field. It also
+requires PEFT model status to report the expected adapter alone as active and enabled.
+The key logic is pure Python (the safetensors header is 8 bytes of little-endian length +
+JSON), so it is unit-tested without torch. Model-facing helpers use ``named_parameters()``
+and ``get_model_status()``. Name coverage and activation do not establish numerical tensor
+application, inference quality, or qualification; those require separate evidence.
 """
 
 from __future__ import annotations
@@ -37,7 +40,7 @@ DTYPE_BITS = {
 
 
 class AdapterNotApplied(RuntimeError):
-    """Raised when at least one checkpoint tensor has no target in the loaded model."""
+    """Raised when checkpoint targets or expected-adapter activation cannot be admitted."""
 
 
 class InvalidAdapterCheckpoint(AdapterNotApplied):
@@ -153,24 +156,68 @@ def checkpoint_keys(adapter_dir: Path) -> list[str]:
     return _validate_header(header, file_size - 8 - header_len)
 
 
-def live_lora_keys(model: Any) -> set[str]:
-    """LoRA parameter names of a loaded PeftModel, with the adapter-name segment removed
-    (``lora_A.default.weight`` -> ``lora_A.weight``) so they compare against checkpoint keys."""
+def _valid_adapter_name(value: Any) -> bool:
+    return (type(value) is str and bool(value) and "." not in value
+            and "\0" not in value and _valid_string(value))
+
+
+def _require_adapter_name(value: Any) -> str:
+    if not _valid_adapter_name(value):
+        raise AdapterNotApplied("ADAPTER_NOT_APPLIED: invalid expected adapter namespace")
+    return value
+
+
+def live_lora_keys(model: Any, *, expected_adapter: str = "default") -> set[str]:
+    """Checkpoint-style parameter targets in exactly one loaded adapter namespace.
+
+    Only the exact PEFT namespace segment is removed: ``lora_A.default.weight``
+    becomes ``lora_A.weight``, while ``lora_embedding_A.default`` becomes
+    ``lora_embedding_A``. Other adapters, unqualified names, and arbitrary
+    ``lora_*`` substrings never establish coverage of the expected adapter.
+    """
+    expected_adapter = _require_adapter_name(expected_adapter)
     names: set[str] = set()
     for name, _ in model.named_parameters():
-        if "lora_" not in name:
-            continue
         parts = name.split(".")
-        # drop the adapter-name segment that PEFT inserts after lora_A / lora_B / lora_embedding_*
-        cleaned = [
-            p for i, p in enumerate(parts)
-            if not (i > 0 and parts[i - 1].startswith("lora_") and p not in {"weight", "bias"})
-        ]
-        names.add(".".join(cleaned))
+        if (len(parts) >= 3 and parts[-3] in {"lora_A", "lora_B", "lora_magnitude_vector"}
+                and parts[-2] == expected_adapter and parts[-1] in {"weight", "bias"}):
+            names.add(".".join(parts[:-2] + [parts[-1]]))
+        elif (len(parts) >= 2 and parts[-2] in {"lora_embedding_A", "lora_embedding_B"}
+              and parts[-1] == expected_adapter):
+            names.add(".".join(parts[:-1]))
     return names
 
 
+def _adapter_activation(model: Any, expected_adapter: str) -> dict[str, Any]:
+    """Validate PEFT's structural model status without importing PEFT or torch."""
+    try:
+        status_reader = getattr(model, "get_model_status", None)
+        status = status_reader() if callable(status_reader) else None
+        enabled = getattr(status, "enabled", None)
+        active = getattr(status, "active_adapters", None)
+        layers = getattr(status, "num_adapter_layers", None)
+        available = getattr(status, "available_adapters", None)
+        merged = getattr(status, "merged_adapters", None)
+    except Exception:
+        # Status failures may include private runtime paths or untrusted text.
+        raise AdapterNotApplied("ADAPTER_NOT_APPLIED: model activation status lookup failed") from None
+    if not callable(status_reader):
+        raise AdapterNotApplied("ADAPTER_NOT_APPLIED: model activation status is unavailable")
+    if (enabled is not True or type(active) is not list
+            or not all(_valid_adapter_name(v) for v in active) or active != [expected_adapter]
+            or type(layers) is not int or layers <= 0
+            or type(available) is not list or not all(_valid_adapter_name(v) for v in available)
+            or len(available) != len(set(available)) or expected_adapter not in available
+            or type(merged) is not list or merged):
+        raise AdapterNotApplied("ADAPTER_NOT_APPLIED: expected adapter is not consistently active and unmerged")
+    return {
+        "enabled": True, "active_adapters": list(active), "num_adapter_layers": layers,
+        "available_adapters": list(available), "merged_adapters": [],
+    }
+
+
 def coverage_report(ckpt_keys: Iterable[str], live_keys: Iterable[str]) -> dict[str, Any]:
+    """Name-target inventory only; legacy ``applied`` fields do not compare tensor values."""
     ckpt = sorted(set(ckpt_keys))
     live = set(live_keys)
     unapplied = [k for k in ckpt if k not in live]
@@ -185,9 +232,18 @@ def coverage_report(ckpt_keys: Iterable[str], live_keys: Iterable[str]) -> dict[
     }
 
 
-def assert_adapter_applied(model: Any, adapter_dir: Path) -> dict[str, Any]:
-    """Return the coverage report, or raise ``AdapterNotApplied`` (fail closed)."""
-    report = coverage_report(checkpoint_keys(adapter_dir), live_lora_keys(model))
+def assert_adapter_applied(
+    model: Any, adapter_dir: Path, *, expected_adapter: str = "default",
+) -> dict[str, Any]:
+    """Admit complete target coverage and one enabled, active, unmerged namespace.
+
+    Inspect the strict checkpoint first, before querying any loaded-model state.
+    Admission is structural; numerical application and qualification remain UNKNOWN.
+    """
+    keys = checkpoint_keys(adapter_dir)
+    expected_adapter = _require_adapter_name(expected_adapter)
+    activation = _adapter_activation(model, expected_adapter)
+    report = coverage_report(keys, live_lora_keys(model, expected_adapter=expected_adapter))
     if not report["fully_applied"]:
         base = getattr(getattr(model, "base_model", None), "model", model)
         raise AdapterNotApplied(
@@ -195,11 +251,15 @@ def assert_adapter_applied(model: Any, adapter_dir: Path) -> dict[str, Any]:
             f"have no target in {type(base).__name__} (checkpoint layout: {report['checkpoint_layout']}; "
             f"sample {report['unapplied_sample']}). Refusing to score the base model as an adapter."
         )
+    report.update({
+        "expected_adapter": expected_adapter, "adapter_activation": activation,
+        "coverage_basis": "parameter_names_and_model_status", "numerical_application": "UNKNOWN",
+    })
     return report
 
 
 def describe_loader(model: Any, report: dict[str, Any] | None) -> dict[str, Any]:
-    """Receipt field: which classes actually ran, with library versions and key coverage."""
+    """Loader class/version and structural admission fields, not numerical application proof."""
     import transformers
 
     base = getattr(getattr(model, "base_model", None), "model", model)

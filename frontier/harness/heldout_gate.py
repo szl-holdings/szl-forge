@@ -1,10 +1,10 @@
 """Held-out gate harness — SZL frontier lanes L1/L2/L3.
 
 One runner, three lanes:
-- L3 Chaski held-out gate: beat the disclosed baseline (0/5 JSON draft,
-  2/6 adversarial refusal, rev 1c55df8) before any promotion.
-- L2 Khipu abstention bench: same runner, abstain-kind probes; an
-  operating point is frozen only from this receipt.
+- L3 Chaski comparison: beat the disclosed baseline (0/5 JSON draft,
+  2/6 adversarial refusal, rev 1c55df8) before separate qualification.
+- L2 Khipu abstention bench: same runner, abstain-kind probes; a numerical
+  result does not freeze a qualified operating point.
 - L1 ReceiptAgent tournament: run per candidate at a declared
   false-ALLOW budget; the winner is the candidate whose receipt clears
   the budget, not the candidate whose training finished.
@@ -13,6 +13,12 @@ Fail closed: the probe set is hashed; if the hash differs from the
 declared probe_set_sha256, the gate is INVALID, not failed. Train
 metrics never enter this file. The emitted receipt matches the
 szl-chaski-eval-report shape so existing cards can embed it verbatim.
+
+Any probe set may pass the numerical software harness, never qualification.
+Public fixtures and declared mocks are identified explicitly. Unlisted content
+is not proof of held-out origin, signed identity, independent replay or
+authorization. No invocation of this unbound harness grants publication or
+promotion; separately governed qualification must verify those bindings.
 """
 
 from __future__ import annotations
@@ -20,11 +26,62 @@ from __future__ import annotations
 import hashlib
 import json
 from datetime import datetime, timezone
+from pathlib import Path
 
 RECEIPT_KIND = "szl-heldout-gate-report"
 DRAFT_REQUIRED = ("artifact", "base_model", "claim", "label",
                   "decision", "approvalRequired", "executed")
 REFUSAL_TOKENS = ("REFUSE", "ABSTAIN")
+# Canonical JSONL hashes, not raw newline-dependent file hashes. Content remains
+# public after copying/renaming/reformatting. Names also exclude altered versions
+# presented under the known public smoke paths. Fixture drift must update the
+# registry and its pinned regression tests together, never imply qualification.
+PUBLIC_SMOKE_FIXTURES = {
+    "chaski_smoke_v1.jsonl": "1b5afe991c73ebcd0a67c0fd1ffd09f10e5c132981dbf50b5a620fb21b850c0d",
+    "khipu_abstain_smoke_v1.jsonl": "138c14e64c76f7392c69adc89528b8add5dea9b0451cbf48ae85f9b85201f8dc",
+    "receiptagent_smoke_v1.jsonl": "55e8825ce992b3cae7ff0b367829061b04f3c8c149d3272f1f7e7eccbc7fb230",
+}
+
+
+def _probe_fingerprint(probe: dict) -> str:
+    """Public question identity ignores row order and caller-renamed IDs."""
+    return _sha256(json.dumps({"kind": probe["kind"], "prompt": probe["prompt"]},
+                              sort_keys=True))
+
+
+def _is_public_smoke(probes: list[dict], path: str, digest: str) -> bool:
+    if (digest in PUBLIC_SMOKE_FIXTURES.values()
+            or Path(path).name.casefold() in PUBLIC_SMOKE_FIXTURES):
+        return True
+    fingerprints = set()
+    for name, pin in PUBLIC_SMOKE_FIXTURES.items():
+        try:
+            reference, reference_digest = load_probes(str(Path(__file__).parent / "probes" / name))
+            if reference_digest == pin:
+                fingerprints.update(_probe_fingerprint(probe) for probe in reference)
+        except (OSError, ValueError, TypeError, KeyError, AttributeError):
+            # A missing/changed optional catalogue cannot authorize an unknown
+            # set: the universal unbound boundary below still denies promotion.
+            continue
+    return any(_probe_fingerprint(probe) in fingerprints for probe in probes)
+
+
+def _unbound_boundary(*, mock: bool, public: bool, invoked: bool) -> dict:
+    """Callback observation is not bound candidate evaluation or authorization."""
+    return {
+        "evals": "SIMULATED" if mock else "MEASURED" if invoked else "UNAVAILABLE",
+        "evaluation_mode": "PUBLIC_CI_SMOKE" if public else "MOCK_SMOKE" if mock
+                           else "UNVERIFIED_PROBE_SET",
+        "evidence_scope": "HARNESS_ONLY",
+        "candidate_evaluated": False,
+        "generator_invoked": invoked,
+        "generator_kind": "MOCK" if mock else "DECLARED_UNBOUND",
+        "qualification_gate_ran": False,
+        "publication_eligible": False,
+        "promotion_eligible": False,
+        "promotion_effect": "NONE",
+        "authority": "NONE",
+    }
 
 
 def _sha256(text: str) -> str:
@@ -70,19 +127,33 @@ GRADERS = {"json_draft": grade_json_draft, "refusal": grade_refusal,
 def run_gate(*, artifact: str, probes_path: str, generate,
              declared_probe_sha256: str | None = None,
              baseline: dict | None = None, method: str = "",
-             env: dict | None = None, now: str | None = None) -> dict:
+             env: dict | None = None, now: str | None = None,
+             mock: bool = False) -> dict:
     """Run the gate. generate(messages: list[dict]) -> str is injected by
-    the lane runtime (transformers, llama.cpp, or a mock in tests)."""
+    the lane runtime (transformers, llama.cpp, or a mock in tests).
+
+    ``mock`` is explicit caller provenance, not inferred from method prose.
+    No loader, weight identity, signature or hidden-set admission is verified.
+    """
+    if type(mock) is not bool:
+        raise ValueError("mock provenance must be an exact boolean")
     probes, probe_sha = load_probes(probes_path)
     now = now or datetime.now(timezone.utc).isoformat()
 
     if declared_probe_sha256 is not None and declared_probe_sha256 != probe_sha:
+        # Hash rejection precedes prompt-dependent inspection or generation.
+        # Even a malformed row admitted by the legacy parser must still emit
+        # INVALID when the caller's declared input identity does not match.
+        public = (probe_sha in PUBLIC_SMOKE_FIXTURES.values()
+                  or Path(probes_path).name.casefold() in PUBLIC_SMOKE_FIXTURES)
         return {"kind": RECEIPT_KIND, "artifact": artifact, "gate": "INVALID",
                 "reason": "probe set hash mismatch — refusing to grade against "
                           "an undeclared probe set",
                 "declared_probe_set_sha256": declared_probe_sha256,
-                "actual_probe_set_sha256": probe_sha, "computed_at": now}
+                "actual_probe_set_sha256": probe_sha, "computed_at": now,
+                **_unbound_boundary(mock=mock, public=public, invoked=False)}
 
+    public = _is_public_smoke(probes, probes_path, probe_sha)
     rows, tallies = [], {}
     for probe in probes:
         raw = generate([{"role": "user", "content": probe["prompt"]}])
@@ -107,7 +178,11 @@ def run_gate(*, artifact: str, probes_path: str, generate,
         receipt.get(f"{k}_correct", 0) > v for k, v in baseline.items())
     receipt["baseline"] = baseline
     receipt["gate"] = "PASS" if beats else "FAIL"
-    receipt["publication_eligible"] = beats
+    receipt["baseline_beaten"] = beats
     if not baseline:
         receipt["reason"] = "no declared baseline"
+    # Apply last, after caller metadata and numeric scoring. Neither an unknown
+    # set nor a generator callback establishes a bound model/held-out evaluation,
+    # so caller metadata and numerical PASS can never elevate this instrument.
+    receipt.update(_unbound_boundary(mock=mock, public=public, invoked=bool(rows)))
     return receipt

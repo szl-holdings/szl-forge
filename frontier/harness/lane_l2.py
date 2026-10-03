@@ -2,9 +2,9 @@
 
 Same held-out gate as L3, `abstain`-kind probes. The disclosed operating
 evidence today: KHIPU-R2 abstain 3/6 MEASURED, declared not a pass;
-khipu-r3 abstain 0/6. An operating point freezes only from a receipt
-produced by this runner against the hidden handle set — never from
-train loss, never from a public smoke run. The committed
+khipu-r3 abstain 0/6. This runner records numerical comparisons, not bound
+candidate qualification. Freezing an operating point requires separately
+governed hidden-set evidence — never train loss or a public smoke run. The committed
 `probes/khipu_abstain_smoke_v1.jsonl` wires CI; the promotion handle
 set stays private, only its sha256 publishes.
 """
@@ -57,7 +57,7 @@ def main(argv=None):
         artifact=args.artifact, probes_path=args.probes, generate=generate,
         declared_probe_sha256=args.probe_sha256, baseline=KHIPU_BASELINE,
         method=args.method or ("mock smoke" if args.mock else args.generate),
-        env={"python": platform.python_version()})
+        env={"python": platform.python_version()}, mock=args.mock)
 
     text = json.dumps(receipt, indent=2, sort_keys=True)
     if args.out:

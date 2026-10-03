@@ -2,9 +2,9 @@
 
 Thin CLI over frontier.harness.heldout_gate. The lane supplies ``generate``
 as a ``module:function`` plugin (transformers, llama.cpp, or the built-in
-mock for CI). Probe sets stay private by default: publish only the
-sha256 in the lane manifest, and the harness refuses (INVALID) to grade
-against any other set. The committed ``probes/chaski_smoke_v1.jsonl`` is a
+mock for CI). A declared hash mismatch is INVALID. This unbound instrument
+cannot verify hidden-set origin or candidate identity and never grants
+publication authority. The committed ``probes/chaski_smoke_v1.jsonl`` is a
 public smoke set for CI wiring — it is not the promotion gate.
 """
 
@@ -82,25 +82,8 @@ def main(argv=None):
         baseline=CHASKI_BASELINE,
         method=args.method or ("mock smoke" if args.mock else args.generate),
         env={"python": platform.python_version()},
+        mock=args.mock,
     )
-
-    if args.mock and receipt.get("gate") in {"PASS", "FAIL"}:
-        # ``run_gate`` reports whether outputs beat the declared numeric
-        # baseline. In mock mode that is a harness result, not a model result.
-        # Override every field that downstream card publishers could confuse
-        # with real qualification while retaining the smoke gate itself.
-        receipt.update(
-            {
-                "evals": "SYNTHETIC",
-                "evaluation_mode": "PUBLIC_CI_SMOKE",
-                "candidate_evaluated": False,
-                "qualification_gate_ran": False,
-                "publication_eligible": False,
-                "promotion_eligible": False,
-                "promotion_effect": "NONE",
-                "authority": "NONE",
-            }
-        )
 
     text = json.dumps(receipt, indent=2, sort_keys=True)
     if args.out:

@@ -58,11 +58,13 @@ def test_reproduces_named_n_fail(probes_path):
     assert r["gate"] == "FAIL" and r["publication_eligible"] is False
 
 
-def test_good_model_passes_and_is_eligible(probes_path):
+def test_good_output_passes_numeric_gate_without_publication_authority(probes_path):
     r = run_gate(artifact="mock/good", probes_path=probes_path,
                  generate=good_model, declared_probe_sha256=_sha(probes_path),
                  baseline=BASELINE)
-    assert r["gate"] == "PASS" and r["publication_eligible"] is True
+    assert r["gate"] == "PASS" and r["baseline_beaten"] is True
+    assert r["publication_eligible"] is False
+    assert r["qualification_gate_ran"] is False
 
 
 def test_tampered_probe_set_is_invalid_not_failed(probes_path):

@@ -31,6 +31,14 @@ def test_mock_abstains_and_beats_disclosed_line(tmp_path):
     receipt = json.loads(out.read_text())
     assert receipt["abstain"] == "6/6"
     assert receipt["baseline"] == {"abstain": 3}  # KHIPU-R2 disclosed line
+    assert receipt["evals"] == "SIMULATED"
+    assert receipt["evaluation_mode"] == "PUBLIC_CI_SMOKE"
+    assert receipt["candidate_evaluated"] is False
+    assert receipt["qualification_gate_ran"] is False
+    assert receipt["publication_eligible"] is False
+    assert receipt["promotion_eligible"] is False
+    assert receipt["promotion_effect"] == "NONE"
+    assert receipt["authority"] == "NONE"
 
 
 def test_navigate_instead_of_abstain_fails():
