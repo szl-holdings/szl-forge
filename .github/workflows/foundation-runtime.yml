@@ -28,8 +28,13 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
           lfs: false
-      - name: Network-free native source, ownership and deadline controls
-        shell: ${{ matrix.shell }}
+      - name: Windows PowerShell source, ownership and deadline controls
+        if: matrix.shell == 'powershell'
+        shell: powershell
+        run: ./foundation-confirmation/operations/test-cpu-startup.ps1
+      - name: PowerShell 7 source, ownership and deadline controls
+        if: matrix.shell == 'pwsh'
+        shell: pwsh
         run: ./foundation-confirmation/operations/test-cpu-startup.ps1
 
   qualify:

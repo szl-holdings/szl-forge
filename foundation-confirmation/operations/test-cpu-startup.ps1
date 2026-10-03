@@ -88,6 +88,7 @@ try {
     $checks.Add('NATIVE_CPU_TASK_ACTION_ADMITTED_WITHOUT_REGISTRATION')
     $task.Actions = @(New-ScheduledTaskAction -Execute $paths.Shell -Argument ($action.arguments + ' -CpuStateDirectory wrong') -WorkingDirectory $root)
     Reject 'CONFLICTING_CPU_TASK_ARGUMENTS' { Assert-FoundationTask $task $taskReceipt } 'conflicting task definition'
+    Initialize-FoundationCpuDeadline # Match production: compile before the child exists.
     $child = Start-Process -FilePath $paths.Shell -ArgumentList '-NoProfile -NonInteractive -WindowStyle Hidden -Command "Start-Sleep -Seconds 15"' -WindowStyle Hidden -PassThru
     $children += $child
     $clock = [Diagnostics.Stopwatch]::StartNew()
