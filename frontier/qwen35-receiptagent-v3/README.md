@@ -145,6 +145,11 @@ and inside the trainer at optimizer boundaries. A sample of 80 C may pass; 81 C
 terminates the one-shot run with no completion claim. Final adapter weights must
 parse as SafeTensors; metadata is allowlisted.
 
+If a post-step sample reaches 72 C, the trainer pauses between steps
+until two consecutive 2-second samples are at most 68 C. A 120-second pause
+timeout fails the run. This does not alter the 80 C stop, the independent
+supervisor, the fixed optimizer recipe, or the 3-hour full-run wall limit.
+
 Each launch generates a random exclusive attempt under the committed WSL-native
 runs root. An existing attempt is never reused, even if empty. Admission and
 terminal reports are published without replacement; interrupted output is
