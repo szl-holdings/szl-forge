@@ -20,7 +20,9 @@ import random
 import re
 import shutil
 import subprocess
+import sys
 import time
+import uuid
 import warnings
 
 HERE = Path(__file__).resolve().parent
@@ -47,6 +49,12 @@ DATA = {
 }
 HEX40 = re.compile(r"[0-9a-f]{40}\Z")
 HEX64 = re.compile(r"[0-9a-f]{64}\Z")
+# Hard estate floor plus conservative headroom, not an atomic reservation or
+# a proven bound on checkpoint/Trackio background writes.
+MIN_FREE_DISK_BYTES = 1536 * 1024**2
+CANDIDATE_HEADROOM_BYTES = 256 * 1024**2
+MAX_REPORT_BYTES = 1024**2
+REPORT_FILESYSTEM_ALLOWANCE_BYTES = 4096
 
 
 class GateError(ValueError):
@@ -224,8 +232,73 @@ def configure_local_environment(output):
     os.environ.update(HF_HUB_OFFLINE="1", TRANSFORMERS_OFFLINE="1", HF_HUB_DISABLE_TELEMETRY="1", WANDB_DISABLED="true", CUBLAS_WORKSPACE_CONFIG=":4096:8", TOKENIZERS_PARALLELISM="false", TRACKIO_DIR=str(output / "trackio"))
 
 
+def disk_guard(output, *, reserve_bytes=CANDIDATE_HEADROOM_BYTES):
+    """Probe the actual output volume without creating a missing directory."""
+    require(type(reserve_bytes) is int and reserve_bytes >= 0, "DISK_RESERVE_INVALID")
+    try:
+        existing = Path(output).resolve()
+        while not existing.exists():
+            parent = existing.parent
+            require(parent != existing, "DISK_PROBE_UNAVAILABLE")
+            existing = parent
+        require(existing.is_dir(), "DISK_PROBE_UNAVAILABLE")
+        free = shutil.disk_usage(existing).free
+    except OSError:
+        raise GateError("DISK_PROBE_UNAVAILABLE") from None
+    require(type(free) is int and free >= 0, "DISK_PROBE_UNAVAILABLE")
+    require(free >= MIN_FREE_DISK_BYTES + reserve_bytes, "DISK_LIMIT")
+    return {"free_bytes": free, "floor_bytes": MIN_FREE_DISK_BYTES,
+            "headroom_bytes": reserve_bytes, "atomic_reservation": False}
+
+
+def tracking_write(output, writer, *args, **kwargs):
+    disk_guard(output)
+    return writer(*args, **kwargs)
+
+
+def finish_tracking(tracker, output, report, *, primary_error):
+    try:
+        tracking_write(output, tracker.finish)
+    except BaseException as error:
+        report["tracking_finish_error_code"] = (str(error) if isinstance(error, GateError)
+            else "LOCAL_TRACKING_FINISH_FAILED")
+        if not primary_error:
+            raise
+
+
+def save_candidate(model, processor, candidate_dir):
+    require(not candidate_dir.exists(), "CANDIDATE_OUTPUT_EXISTS")
+    disk_guard(candidate_dir)
+    model.save_pretrained(candidate_dir, safe_serialization=True)
+    disk_guard(candidate_dir)
+    processor.save_pretrained(candidate_dir)
+
+
+def persist_report(output, report):
+    # Authenticate exactly the report that is attempted; a denied/partial write
+    # remains a separate FAILED_CLOSED returned/stdout receipt.
+    saved = {**report, "durable_report_written": True}
+    saved.pop("report_sha256", None)
+    saved["report_sha256"] = sha(canonical(saved))
+    raw = (json.dumps(saved, indent=2, ensure_ascii=False, allow_nan=False) + "\n").encode("utf-8")
+    require(len(raw) <= MAX_REPORT_BYTES, "REPORT_TOO_LARGE")
+    disk_guard(output, reserve_bytes=len(raw) + REPORT_FILESYSTEM_ALLOWANCE_BYTES)
+    pending = output / f".training-report-{uuid.uuid4().hex}.pending"
+    with pending.open("xb") as stream:
+        require(stream.write(raw) == len(raw), "REPORT_SHORT_WRITE")
+        stream.flush()
+        os.fsync(stream.fileno())
+    # Publish only synced bytes, with exclusive no-overwrite semantics on both
+    # Windows and POSIX. Unsupported hard links fail closed. Pending diagnostics
+    # remain non-final evidence, including after a failed sync/publication.
+    disk_guard(output, reserve_bytes=REPORT_FILESYSTEM_ALLOWANCE_BYTES)
+    os.link(pending, output / "training-report.json")
+    return saved
+
+
 def runtime_guard(torch, args, started, *, before_load=False):
     require(time.monotonic() - started < args.max_runtime_seconds, "COOPERATIVE_DEADLINE_EXCEEDED")
+    disk = disk_guard(args.output)
     require(torch.cuda.is_available() and torch.cuda.is_bf16_supported(), "BF16_CUDA_REQUIRED")
     measured = subprocess.check_output(["nvidia-smi", "--query-gpu=temperature.gpu", "--format=csv,noheader,nounits"], text=True, timeout=10)
     temperature = int(measured.strip().splitlines()[0])
@@ -240,8 +313,7 @@ def runtime_guard(torch, args, started, *, before_load=False):
         free, total = torch.cuda.mem_get_info()
         cached_reclaimed = True
     require(free >= minimum, "GPU_MEMORY_LIMIT")
-    require(shutil.disk_usage(args.output).free >= 1024**3, "DISK_LIMIT")
-    return {"temperature_c": temperature, "free_bytes": free, "total_bytes": total, "reserved_bytes": torch.cuda.memory_reserved(), "unused_cache_reclaim_attempted": cached_reclaimed}
+    return {"temperature_c": temperature, "free_bytes": free, "total_bytes": total, "reserved_bytes": torch.cuda.memory_reserved(), "unused_cache_reclaim_attempted": cached_reclaimed, "disk": disk}
 
 
 def compute_loss(model, item, torch):
@@ -305,7 +377,7 @@ def train(args, report):
     if not args.no_trackio:
         import trackio
         tracker = trackio
-        tracker.init(project="szl-native-local-continuation", name=args.output.name, space_id=None, config={"steps": args.steps, "learning_rate": args.learning_rate, "base_revision": BASE_REVISION, "adapter_revision": ADAPTER_REVISION, "loss_mode": args.loss_mode, "provider_cost_usd": 0})
+        tracking_write(args.output, tracker.init, project="szl-native-local-continuation", name=args.output.name, space_id=None, config={"steps": args.steps, "learning_rate": args.learning_rate, "base_revision": BASE_REVISION, "adapter_revision": ADAPTER_REVISION, "loss_mode": args.loss_mode, "provider_cost_usd": 0})
     report["tracking"] = "LOCAL_TRACKIO" if tracker else "EXPLICITLY_DISABLED"
     try:
         model, loading = Qwen3_5ForConditionalGeneration.from_pretrained(str(args.base_dir), local_files_only=True, trust_remote_code=False, use_safetensors=True, dtype=torch.bfloat16, attn_implementation="sdpa", output_loading_info=True)
@@ -352,7 +424,7 @@ def train(args, report):
             require(all(math.isfinite(v) for v in metric.values()), "NONFINITE_METRIC")
             report["steps"].append(metric)
             if tracker:
-                tracker.log(metric)
+                tracking_write(args.output, tracker.log, metric)
             print(json.dumps(metric, allow_nan=False), flush=True)
         require(any(not torch.equal(original[name], p.detach().cpu()) for name, p in parameters), "ADAPTER_UNCHANGED_AFTER_TRAINING")
         report["post_heldout_loss"] = evaluate_loss(model, heldout_items, torch, args, report["_started"])
@@ -361,8 +433,7 @@ def train(args, report):
         for adapter_config in model.peft_config.values():
             adapter_config.base_model_name_or_path = BASE_REPO
             adapter_config.revision = BASE_REVISION
-        model.save_pretrained(candidate_dir, safe_serialization=True)
-        processor.save_pretrained(candidate_dir)
+        save_candidate(model, processor, candidate_dir)
         report["candidate_files"] = [{"path": p.relative_to(candidate_dir).as_posix(), "bytes": p.stat().st_size, "sha256": file_sha(p)} for p in sorted(candidate_dir.rglob("*")) if p.is_file()]
         require(any(item["path"] == "adapter_model.safetensors" for item in report["candidate_files"]), "CANDIDATE_WEIGHTS_MISSING")
         verify_artifact(args.base_dir, args.base_manifest, BASE_REPO, BASE_REVISION)
@@ -374,7 +445,7 @@ def train(args, report):
         report["gpu"]["final"] = runtime_guard(torch, args, report["_started"])
     finally:
         if tracker:
-            tracker.finish()
+            finish_tracking(tracker, args.output, report, primary_error=sys.exc_info()[0] is not None)
 
 
 def run(args, train_function=train):
@@ -382,15 +453,20 @@ def run(args, train_function=train):
     output = args.output.resolve()
     require(output.is_relative_to((HERE / "results").resolve()) and output != (HERE / "results").resolve(), "OUTPUT_MUST_BE_NEW_RESULTS_CHILD")
     require(not output.exists() and not any(p.is_symlink() for p in output.parents), "OUTPUT_EXISTS_OR_SYMLINK")
+    output_admission = disk_guard(output)
+    lock_admission = disk_guard(HERE, reserve_bytes=REPORT_FILESYSTEM_ALLOWANCE_BYTES)
     output.mkdir(parents=True, exist_ok=False)
     args.output = output
     report = {"schema": "szl.native-bf16-continuation/v1", "state": "UNAVAILABLE", "started_at": datetime.now(timezone.utc).isoformat(), "_started": time.monotonic(), "source_revision": args.source_commit, "runner_sha256": file_sha(Path(__file__)), "candidate_id": output.name, "provider_cost_usd": 0, "electricity_cost": "NOT_MEASURED", "publication_eligible": False, "autonomy_eligible": False, "steps": [], "recipe": {"optimizer_steps": args.steps, "gradient_accumulation": 2, "learning_rate": args.learning_rate, "seed": 11, "bf16": True, "quantized": False, "loss_mode": args.loss_mode, "max_length": args.max_length}, "claim_boundary": "Local continuation and cross-entropy only. No generation acceptance, broad benchmark, safety certification, clinical use, publication or deployment. Lower loss does not by itself prove improvement."}
     lock = HERE / ".native-training.lock"
     owned_lock = False
+    report.update(durable_report_written=False,
+        disk_admission={"output": output_admission, "lock_volume": lock_admission})
     try:
+        disk_guard(HERE, reserve_bytes=REPORT_FILESYSTEM_ALLOWANCE_BYTES)
         with lock.open("x", encoding="utf-8") as stream:
+            owned_lock = True
             stream.write(json.dumps({"pid": os.getpid(), "candidate": output.name}))
-        owned_lock = True
         train_function(args, report)
         code = 0 if report["state"] == "MEASURED_LOCAL_CONTINUATION_COMPLETED" else 1
     except BaseException as error:
@@ -401,13 +477,34 @@ def run(args, train_function=train):
         code = 1
     finally:
         if owned_lock:
-            lock.unlink()
+            try:
+                lock.unlink()
+            except OSError:
+                report["lock_cleanup_error_code"] = "OWNED_LOCK_CLEANUP_FAILED"
+                if report.get("error_code"):
+                    report["prior_error_code"] = report["error_code"]
+                report["state"] = "FAILED_CLOSED"
+                report["error_code"] = "OWNED_LOCK_CLEANUP_FAILED"
+                report["error_type"] = "OSError"
+                code = 1
         report["elapsed_seconds"] = round(time.monotonic() - report.pop("_started"), 6)
         report["finished_at"] = datetime.now(timezone.utc).isoformat()
-        report["report_sha256"] = sha(canonical(report))
-        with (output / "training-report.json").open("x", encoding="utf-8") as stream:
-            json.dump(report, stream, indent=2, allow_nan=False)
-            stream.write("\n")
+        try:
+            report = persist_report(output, report)
+        except (GateError, OSError) as error:
+            previous = report.get("error_code")
+            if previous:
+                report.setdefault("prior_error_code", previous)
+                if report["prior_error_code"] != previous:
+                    report["prior_persistence_error_code"] = previous
+            report["state"] = "FAILED_CLOSED"
+            report["durable_report_written"] = False
+            report["error_type"] = type(error).__name__
+            report["error_code"] = str(error) if isinstance(error, GateError) else "REPORT_PERSISTENCE_FAILED"
+            report["candidate_may_be_partial"] = (output / "adapter").exists()
+            report.pop("report_sha256", None)
+            report["report_sha256"] = sha(canonical(report))
+            code = 1
     return code, report
 
 
@@ -432,9 +529,10 @@ def main():
     try:
         code, report = run(args)
     except Exception as error:
-        report = {"state": "FAILED_CLOSED", "error_type": type(error).__name__, "error_code": str(error) if isinstance(error, GateError) else "OUTPUT_OR_ARGUMENT_ADMISSION_FAILED", "publication_eligible": False, "autonomy_eligible": False}
+        report = {"state": "FAILED_CLOSED", "error_type": type(error).__name__, "error_code": str(error) if isinstance(error, GateError) else "OUTPUT_OR_ARGUMENT_ADMISSION_FAILED", "durable_report_written": False, "publication_eligible": False, "autonomy_eligible": False}
         code = 1
-    print(json.dumps({key: report[key] for key in ("state", "publication_eligible", "autonomy_eligible", "error_code") if key in report}))
+    summary = {key: report[key] for key in ("state", "publication_eligible", "autonomy_eligible", "error_code", "durable_report_written", "report_sha256") if key in report}
+    print(json.dumps(report if not report.get("durable_report_written") else summary, allow_nan=False))
     return code
 
 

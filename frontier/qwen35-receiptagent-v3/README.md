@@ -77,6 +77,20 @@ oracles, anti-tamper comparison behavior, bootstrap and containment enforcement,
 supervisor/evaluator provenance linkage, and serialization boundaries. It does
 not import the full GPU stack or claim training success.
 
+## Training-data admission
+
+The dedicated `nemo-doctrine-gate` workflow checks this lane on pull requests
+and main pushes. Before any gradients, the 180 training rows must pass
+`tools/validate_sft_dataset.py --min-examples 180` and the raw prompt/answer
+R1-R5 gate with `--persona finetuned`. Dev/test rows are not added to this
+training-data step. The kernel is pinned to the reviewed Nemo commit
+`f44b468a60c97978897bc610cf4729fc16b271af` (Nemo PR #20), which distinguishes
+whole metric tokens from fragments of opaque identifiers without removing
+identifiers or changing curriculum bytes. The JSON gate output retains the
+dataset digest and honestly unsigned decision chain. Passing these content
+checks is not GPU/runtime qualification, training success, or publication
+authorization; the separate fixed GPU sequence still applies.
+
 ## Fixed GPU sequence
 
 GPU commands are allowed only after this source merges to protected `main`, the
