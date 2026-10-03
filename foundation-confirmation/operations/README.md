@@ -4,15 +4,17 @@ These Windows operations manage the original, unchanged Foundation Confirmation
 v0.4 workbench. They install one **current-user logon** task, `SZL Foundation
 Confirmation`, with an Interactive token and Limited privileges. No password or
 administrator elevation is requested. Installation does not start the workbench.
-This is local synthetic research execution; the public evidence explorer remains
-a recorded replay, and the registered benchmark remains **FAILED**.
+This is local synthetic research execution, and the registered benchmark remains
+**FAILED**. Public runtime deployment and readiness are qualified separately.
 
 ## Install and verify
 
 Use Windows PowerShell 5.1 or newer as the intended desktop user. Supply the
 absolute extracted lab directory and original sealed archive. Both must be below
 that user's profile on the Windows system volume; network/device paths and
-reparse points are rejected. Install the original pinned Python dependencies
+reparse points are rejected. These initial commands select legacy mode. To use
+an isolated CPU environment, follow **Admit a CPU environment** below. For legacy
+mode, install the original pinned Python dependencies
 first. The Python selection is the original launcher's Python 3.11 preference,
 then an installed `python` command under the current user's profile.
 
@@ -138,6 +140,71 @@ evidence. Report supervisor recovery separately from any actual Scheduler restar
 manual demand recovery cannot prove automatic recovery. A conflicting task,
 changed script, or unexpected managed file remains
 a refusal; it is never removed as an upgrade shortcut.
+
+## Admit a CPU environment
+
+The optional CPU mode runs the frozen workbench with the eleven exact official
+wheels in `cpu-runtime-lock.json`, including Torch `2.10.0+cpu`. It retains the
+original Torch 2.10 model semantics and immutable checkpoints. It requires an
+explicit native Python 3.11 AMD64 executable, a dedicated environment created
+with `include-system-site-packages = false`, and the retained official wheelhouse.
+Provision only those pinned wheels into the owned environment with hash checking,
+no shared cache, and no dependency substitution. The admission helper verifies
+the complete installed importable payload against the locked wheel bytes, rejects
+additional source, extensions, bytecode, site hooks and links, and binds the
+native executable hash, environment paths, payload digest and package versions.
+An NTFS-compressed file is acceptable when its bytes and hashes are unchanged.
+
+Use all three explicit CPU arguments when validating or installing:
+
+```powershell
+& .\foundation-confirmation\operations\install-workbench.ps1 `
+  -LabRoot $lab -ArchivePath $archive `
+  -PythonExecutable $nativePython311 `
+  -CpuEnvironmentRoot $ownedCpuEnvironment -CpuWheelhouse $officialWheelhouse `
+  -CpuStateDirectory $freshCpuState -ValidateOnly
+```
+
+After the protected source is published, the same command without `-ValidateOnly`
+registers the current-user task. Existing installations still require the
+receipt-verified uninstall/reinstall procedure above; supplying CPU arguments
+does not replace an existing managed installation. Exact repeated CPU arguments
+verify the existing environment and task before returning `ALREADY_REGISTERED`.
+CPU state defaults to `lab/state/cpu-runtime`; it must be fresh on installation
+and cannot alias or contain the original `lab/state/trials` directory. CPU user
+trials, logs and service receipt are retained in that separate state directory.
+Uninstall preserves both sets of trial evidence, the environment and wheelhouse.
+
+The managed launcher starts the hash-bound native image with `-I -S -B`, activates
+only the admitted CPU site directory, and loads each frozen Python module by
+compiling the exact bytes whose hash was checked. It executes learned selectors
+17, 23 and 41 with checkpoint/source bindings before constructing the listener.
+These startup probes do not mint user trial receipts or qualify the registered
+scientific gate, which remains `FAILED`. Health and status keep their respective
+5 second and 10 second bounds. A monotonic 180 second startup limit is enforced
+through the retained handle of the direct newly launched child, including guard
+setup and endpoint verification; a late readiness response fails admission.
+Startup failure preserves its logs and cannot authorize supervisor recovery.
+Every launch attempt uses fresh GUID-named stdout, stderr and attempt evidence;
+a later successor cannot overwrite an earlier failed startup's diagnostics.
+The original two retries, 60 second delay, exact ownership checks and zero
+Scheduler retries remain in force.
+
+Run the network-free controls with:
+
+```powershell
+python -I -S -B -m unittest discover -s tests -p test_foundation_cpu_environment.py -v
+powershell -NoProfile -NonInteractive -File .\foundation-confirmation\operations\test-cpu-startup.ps1
+pwsh -NoProfile -NonInteractive -File .\foundation-confirmation\operations\test-cpu-startup.ps1
+```
+
+The controls use small owned fixtures, never register a task, never import Torch
+and never change a production service. The existing `test-startup.ps1` also
+checks the immutable release and any already-running exact-owned legacy service.
+The Foundation workflow runs the Python controls and both native shells before
+its existing publisher may run. Local fixture results do not prove deployment,
+actual managed CPU startup, reboot behavior or scientific generality. Each of
+those claims requires its own fresh evidence.
 
 ## Remove startup
 

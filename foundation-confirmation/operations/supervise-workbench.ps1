@@ -3,9 +3,21 @@ param(
     [string]$LabRoot,
     [string]$ArchivePath,
     [ValidateRange(1, 65535)][int]$Port = 18767,
-    [switch]$ValidateOnly
+    [switch]$ValidateOnly,
+    [string]$PythonExecutable, [string]$CpuEnvironmentRoot, [string]$CpuWheelhouse,
+    [string]$CpuStateDirectory, [string]$PythonImageSha256, [string]$CpuEnvironmentBindingSha256
 )
 $ErrorActionPreference = 'Stop'
+$script:foundationSourceRoot = $PSScriptRoot
+$script:foundationArchivePath = $ArchivePath
+$script:foundationCpuInputs = @{ PythonExecutable=$PythonExecutable; EnvironmentRoot=$CpuEnvironmentRoot;
+    Wheelhouse=$CpuWheelhouse; StateDirectory=$CpuStateDirectory; PythonSha256=$PythonImageSha256;
+    BindingSha256=$CpuEnvironmentBindingSha256 }
+$script:foundationCpuRuntime = $null
+if (($PythonExecutable -or $CpuEnvironmentRoot -or $CpuWheelhouse -or $CpuStateDirectory -or $PythonImageSha256 -or $CpuEnvironmentBindingSha256) -and
+    (-not $PythonExecutable -or -not $CpuEnvironmentRoot -or -not $CpuWheelhouse)) {
+    throw 'CPU mode requires an explicit native Python executable, environment and official wheelhouse.'
+}
 
 function Assert-FoundationWindows {
     if ([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT -or $PSVersionTable.PSVersion.Major -lt 5) {
@@ -65,6 +77,12 @@ function Assert-FoundationPath {
 }
 
 function Get-FoundationPython {
+    if ($script:foundationCpuRuntime) { return Assert-FoundationPath $script:foundationCpuRuntime.python_executable }
+    if ($script:foundationCpuInputs.PythonExecutable) {
+        $explicit = Assert-FoundationPath $script:foundationCpuInputs.PythonExecutable
+        if ($script:foundationCpuInputs.PythonSha256) { Assert-FoundationHash $explicit $script:foundationCpuInputs.PythonSha256 }
+        return $explicit
+    }
     $preferred = Join-Path $env:LOCALAPPDATA 'Programs\Python\Python311\python.exe'
     if (Test-Path -LiteralPath $preferred) { return Assert-FoundationPath $preferred }
     return Assert-FoundationPath (Get-Command python -CommandType Application -ErrorAction Stop).Source
@@ -108,7 +126,7 @@ function Test-FoundationRelease {
     }
     $python = Get-FoundationPython
     # Only the known-hash, stdlib verifier is executable at this admission stage.
-    $raw = & $python -I -B (Join-Path $rootPath 'verify_release.py') --root $rootPath
+    $raw = & $python -I -S -B (Join-Path $rootPath 'verify_release.py') --root $rootPath
     if ($LASTEXITCODE -ne 0) { throw 'Original directory verification failed.' }
     $verified = ($raw -join "`n") | ConvertFrom-Json
     if ($verified.status -ne 'VERIFIED' -or $verified.files -ne 70 -or
@@ -121,10 +139,94 @@ function Test-FoundationRelease {
     return @{ LabRoot = $rootPath; ArchivePath = $archiveFile; Python = $python; Verification = $verified }
 }
 
+function Get-FoundationCpuRuntime {
+    param([string]$Executable, [string]$EnvironmentRoot, [string]$Wheelhouse, [string]$StateDirectory,
+          [string]$ExpectedPythonSha256, [string]$ExpectedBindingSha256, [string]$Root,
+          [string]$SourceRoot = $script:foundationSourceRoot)
+    $executable = Assert-FoundationPath $Executable
+    $environment = Assert-FoundationPath $EnvironmentRoot -Directory
+    $wheels = Assert-FoundationPath $Wheelhouse -Directory
+    if (-not $StateDirectory) { $StateDirectory = Join-Path $Root 'state\cpu-runtime' }
+    $state = Assert-FoundationPath $StateDirectory -Directory -MayNotExist
+    Assert-FoundationCpuState $state $Root
+    $imageHash = (Get-FileHash -LiteralPath $executable -Algorithm SHA256).Hash.ToLowerInvariant()
+    if ($ExpectedPythonSha256 -and $ExpectedPythonSha256 -cne $imageHash) { throw 'The native Python image changed.' }
+    $admitter = Assert-FoundationPath (Join-Path $SourceRoot 'cpu_environment.py')
+    Assert-FoundationHash $admitter 'f5bc38855e651c47b675f5727afdb27c70d9a79446e6e961816b04ed1f9876a9'
+    $raw = & $executable -I -S -B $admitter --environment-root $environment --wheelhouse $wheels --expected-python-sha256 $imageHash
+    if ($LASTEXITCODE -ne 0) { throw 'The official CPU environment admission failed.' }
+    $admission = ($raw -join "`n") | ConvertFrom-Json
+    if ($admission.schema -cne 'szl.foundation-confirmation.cpu-environment/v1' -or $admission.state -cne 'VERIFIED' -or
+        $admission.packages_verified -ne 11 -or $admission.binding.native_executable -cne $executable -or
+        $admission.binding.python_image_sha256 -cne $imageHash -or $admission.binding_sha256 -notmatch '^[0-9a-f]{64}$' -or
+        ($ExpectedBindingSha256 -and $ExpectedBindingSha256 -cne $admission.binding_sha256)) { throw 'The CPU environment binding changed.' }
+    return @{ kind='ADMITTED_CPU_ONLY'; python_executable=$executable; python_image_sha256=$imageHash;
+        environment_root=$environment; wheelhouse=$wheels; state_directory=$state;
+        environment_binding_sha256=$admission.binding_sha256; environment_admission=$admission; startup_timeout_seconds=180 }
+}
+
+function Assert-FoundationCpuState {
+    param([string]$StateDirectory, [string]$Root)
+    $state = [IO.Path]::GetFullPath($StateDirectory).TrimEnd('\')
+    $original = [IO.Path]::GetFullPath((Join-Path $Root 'state\trials')).TrimEnd('\')
+    if ($state.Equals($original, [StringComparison]::OrdinalIgnoreCase) -or
+        $state.StartsWith($original + '\', [StringComparison]::OrdinalIgnoreCase) -or
+        $original.StartsWith($state + '\', [StringComparison]::OrdinalIgnoreCase)) {
+        throw 'CPU state must be separate from the original trial receipts.'
+    }
+}
+
+function Get-FoundationCpuArgv {
+    param($CpuRuntime, [string]$Root, [string]$Archive, [int]$ServicePort)
+    $runner = Join-Path (Get-FoundationPaths).Operations 'cpu_workbench.py'
+    return @($CpuRuntime.python_executable, '-I', '-S', '-B', $runner,
+        '--lab-root', $Root, '--archive', $Archive, '--environment-root', $CpuRuntime.environment_root,
+        '--wheelhouse', $CpuRuntime.wheelhouse, '--expected-python-sha256', $CpuRuntime.python_image_sha256,
+        '--environment-binding-sha256', $CpuRuntime.environment_binding_sha256,
+        '--state-directory', $CpuRuntime.state_directory, '--port', [string]$ServicePort, '--startup-timeout-seconds', '180')
+}
+
+function Assert-FoundationCpuReadiness {
+    param($Status, $ServiceReceipt, $CpuRuntime, [string]$Root)
+    if ($ServiceReceipt.schema -cne 'szl.foundation-confirmation.cpu-service/v1' -or
+        $ServiceReceipt.environment_binding_sha256 -cne $CpuRuntime.environment_binding_sha256 -or
+        $ServiceReceipt.python_image_sha256 -cne $CpuRuntime.python_image_sha256 -or
+        $ServiceReceipt.state_directory -cne $CpuRuntime.state_directory -or
+        $Status.ready -ne $true -or $Status.state -cne 'READY' -or $Status.checkpoints_verified -ne 3 -or
+        $Status.runtime_kind -cne 'ADMITTED_CPU_ONLY' -or $Status.environment_binding_sha256 -cne $CpuRuntime.environment_binding_sha256 -or
+        @($Status.models_loaded).Count -ne 3 -or (@($Status.models_loaded) -join ',') -cne '17,23,41' -or
+        @($Status.startup_execution_probes).Count -ne 3 -or $Status.startup_probes_are_user_receipts -isnot [bool] -or
+        $Status.startup_probes_are_user_receipts -ne $false -or $Status.receipt_minted -isnot [bool] -or $Status.receipt_minted -ne $false) {
+        throw 'Actual CPU startup execution/readiness was not demonstrated.'
+    }
+    if ((@($ServiceReceipt.startup_execution_probes) | ConvertTo-Json -Depth 12 -Compress) -cne
+        (@($Status.startup_execution_probes) | ConvertTo-Json -Depth 12 -Compress)) { throw 'CPU startup probe receipt differs from the owned runtime.' }
+    $training = Get-Content -LiteralPath (Join-Path $Root 'training-summary.json') -Raw | ConvertFrom-Json
+    $seen = @{}
+    foreach ($probe in $Status.startup_execution_probes) {
+        $seed = [int]$probe.model_seed
+        $checkpoint = @($training.checkpoints | Where-Object { $_.seed -eq $seed })
+        if ($seed -notin @(17,23,41) -or $seen.ContainsKey($seed) -or $checkpoint.Count -ne 1 -or
+            $probe.request.model_seed -ne $seed -or $probe.request.policy -cne 'learned' -or
+            $probe.request.seed -ne 20261002 -or $probe.request.index -ne 10007 -or $probe.request.family -cne 'shared_bias' -or
+            $probe.binding.checkpoint_sha256 -cne $checkpoint[0].sha256 -or $probe.binding.model_fingerprint -cne $checkpoint[0].trained_fingerprint -or
+            $probe.result_sha256 -notmatch '^[0-9a-f]{64}$' -or $probe.receipt_minted -isnot [bool] -or $probe.receipt_minted -ne $false) {
+            throw 'An actual startup probe differs from the admitted selector.'
+        }
+        $seen[$seed] = $true
+    }
+}
+
 function Get-FoundationTaskArguments {
-    param([string]$Root, [string]$Archive, [int]$TaskPort)
+    param([string]$Root, [string]$Archive, [int]$TaskPort, $CpuRuntime = $null)
     $paths = Get-FoundationPaths
-    return '-NoProfile -NonInteractive -WindowStyle Hidden -File "' + $paths.Supervisor + '" -LabRoot "' + $Root + '" -ArchivePath "' + $Archive + '" -Port ' + $TaskPort
+    $arguments = '-NoProfile -NonInteractive -WindowStyle Hidden -File "' + $paths.Supervisor + '" -LabRoot "' + $Root + '" -ArchivePath "' + $Archive + '" -Port ' + $TaskPort
+    if ($CpuRuntime) {
+        $arguments += ' -PythonExecutable "' + $CpuRuntime.python_executable + '" -CpuEnvironmentRoot "' + $CpuRuntime.environment_root +
+            '" -CpuWheelhouse "' + $CpuRuntime.wheelhouse + '" -CpuStateDirectory "' + $CpuRuntime.state_directory +
+            '" -PythonImageSha256 ' + $CpuRuntime.python_image_sha256 + ' -CpuEnvironmentBindingSha256 ' + $CpuRuntime.environment_binding_sha256
+    }
+    return $arguments
 }
 
 function Write-FoundationJson {
@@ -159,15 +261,28 @@ function Read-FoundationInstallation {
     }
     $root = Assert-FoundationPath $receipt.lab_root -Directory
     $archive = Assert-FoundationPath $receipt.archive_path
+    $script:foundationArchivePath = $archive
     if ($receipt.port -isnot [long] -and $receipt.port -isnot [int]) { throw 'Invalid recorded port.' }
     if ($receipt.port -lt 1 -or $receipt.port -gt 65535 -or
-        $receipt.action.arguments -ne (Get-FoundationTaskArguments $root $archive $receipt.port) -or
+        $receipt.action.arguments -ne (Get-FoundationTaskArguments $root $archive $receipt.port $receipt.cpu_runtime) -or
         $receipt.action.working_directory -ne $root) { throw 'Installation action mismatch.' }
-    foreach ($name in @('install-workbench.ps1', 'supervise-workbench.ps1', 'uninstall-workbench.ps1')) {
+    $managedNames = @('install-workbench.ps1', 'supervise-workbench.ps1', 'uninstall-workbench.ps1')
+    if ($receipt.cpu_runtime) { $managedNames += @('launch-cpu-workbench.ps1', 'cpu_environment.py', 'cpu_workbench.py', 'cpu-runtime-lock.json') }
+    foreach ($name in $managedNames) {
         $expected = $receipt.scripts.$name
         if ($expected -notmatch '^[0-9a-f]{64}$') { throw 'Incomplete managed script receipt.' }
         Assert-FoundationHash (Assert-FoundationPath (Join-Path $paths.Operations $name)) $expected
     }
+    if ($receipt.cpu_runtime) {
+        $cpu = $receipt.cpu_runtime
+        if ($cpu.kind -cne 'ADMITTED_CPU_ONLY' -or $cpu.startup_timeout_seconds -ne 180) { throw 'Unsupported CPU runtime contract.' }
+        $script:foundationCpuRuntime = Get-FoundationCpuRuntime -Executable $cpu.python_executable -EnvironmentRoot $cpu.environment_root -Wheelhouse $cpu.wheelhouse -StateDirectory $cpu.state_directory -ExpectedPythonSha256 $cpu.python_image_sha256 -ExpectedBindingSha256 $cpu.environment_binding_sha256 -Root $root -SourceRoot $paths.Operations
+        if ($script:foundationCpuInputs.PythonExecutable -and
+            ($script:foundationCpuInputs.PythonExecutable -cne $cpu.python_executable -or $script:foundationCpuInputs.EnvironmentRoot -cne $cpu.environment_root -or
+             $script:foundationCpuInputs.Wheelhouse -cne $cpu.wheelhouse -or ($script:foundationCpuInputs.StateDirectory -and $script:foundationCpuInputs.StateDirectory -cne $cpu.state_directory) -or
+             ($script:foundationCpuInputs.PythonSha256 -and $script:foundationCpuInputs.PythonSha256 -cne $cpu.python_image_sha256) -or
+             ($script:foundationCpuInputs.BindingSha256 -and $script:foundationCpuInputs.BindingSha256 -cne $cpu.environment_binding_sha256))) { throw 'CPU task arguments differ from the installation.' }
+    } elseif ($script:foundationCpuInputs.PythonExecutable) { throw 'Legacy installations require explicit uninstall/reinstall to adopt CPU mode.' }
     return $receipt
 }
 
@@ -244,6 +359,11 @@ function ConvertTo-FoundationCimTimestamp {
 function Get-FoundationService {
     param([string]$Root, [string]$Python, [int]$ServicePort, [switch]$MayBeAbsent)
     $path = Join-Path $Root 'state\service.json'
+    $expectedScript = Join-Path $Root 'server.py'
+    if ($script:foundationCpuRuntime) {
+        $path = Join-Path $script:foundationCpuRuntime.state_directory 'service.json'
+        $expectedScript = Join-Path (Get-FoundationPaths).Operations 'cpu_workbench.py'
+    }
     if (-not (Test-Path -LiteralPath $path)) {
         if ($MayBeAbsent) { return $null }
         throw 'No service process receipt exists.'
@@ -251,10 +371,11 @@ function Get-FoundationService {
     Assert-FoundationPath $path | Out-Null
     $receipt = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
     if (($receipt.pid -isnot [int] -and $receipt.pid -isnot [long]) -or $receipt.pid -le 0 -or
-        $receipt.server_script -ne (Join-Path $Root 'server.py') -or
+        $receipt.server_script -ne $expectedScript -or
         $receipt.executable -ne $Python -or $receipt.port -ne $ServicePort) {
         throw 'The service receipt belongs to a different launch; no process was changed.'
     }
+    if ($script:foundationCpuRuntime) { Assert-FoundationCpuReceipt $receipt $script:foundationCpuRuntime $Root $script:foundationArchivePath $ServicePort }
     $process = Get-CimInstance Win32_Process -Filter "ProcessId=$([int]$receipt.pid)" -ErrorAction Stop
     if ($null -eq $process) {
         if ($MayBeAbsent) { return $null }
@@ -263,6 +384,9 @@ function Get-FoundationService {
     $created = ([datetime]$receipt.process_created).ToUniversalTime()
     $arguments = @(Get-FoundationArgv $process.CommandLine)
     $expected = @($Python, '-X', 'utf8', '-B', (Join-Path $Root 'server.py'), '--port', [string]$ServicePort)
+    if ($script:foundationCpuRuntime) { $expected = @(Get-FoundationCpuArgv $script:foundationCpuRuntime $Root $script:foundationArchivePath $ServicePort) }
+    $owner = Invoke-CimMethod -InputObject $process -MethodName GetOwnerSid -ErrorAction Stop
+    if ($owner.ReturnValue -ne 0 -or $owner.Sid -cne (Get-FoundationPaths).Sid) { throw 'Service current-user ownership could not be verified.' }
     if ($process.ExecutablePath -ne $Python -or $process.CreationDate.ToUniversalTime() -ne $created -or
         $arguments.Count -ne $expected.Count) { throw 'Service process ownership could not be verified.' }
     for ($index = 0; $index -lt $expected.Count; $index++) {
@@ -278,7 +402,64 @@ function Get-FoundationService {
         $status.ready -ne $true -or $status.state -ne 'READY' -or $status.checkpoints_verified -ne 3) {
         throw 'The owned service has not demonstrated release readiness.'
     }
+    if ($script:foundationCpuRuntime) { Assert-FoundationCpuReadiness $status $receipt $script:foundationCpuRuntime $Root }
     return @{ Receipt = $receipt; Process = $process; Status = $status }
+}
+
+function Assert-FoundationCpuReceipt {
+    param($Receipt, $CpuRuntime, [string]$Root, [string]$Archive, [int]$ServicePort)
+    $expected = @(Get-FoundationCpuArgv $CpuRuntime $Root $Archive $ServicePort)
+    if ($Receipt.schema -cne 'szl.foundation-confirmation.cpu-service/v1' -or
+        $Receipt.lab_root -cne $Root -or $Receipt.executable -cne $CpuRuntime.python_executable -or
+        $Receipt.python_image_sha256 -cne $CpuRuntime.python_image_sha256 -or
+        $Receipt.state_directory -cne $CpuRuntime.state_directory -or
+        $Receipt.environment_root -cne $CpuRuntime.environment_root -or $Receipt.wheelhouse -cne $CpuRuntime.wheelhouse -or
+        $Receipt.environment_binding_sha256 -cne $CpuRuntime.environment_binding_sha256 -or
+        $Receipt.server_script -cne $expected[4] -or $Receipt.port -ne $ServicePort -or
+        $Receipt.startup_timeout_seconds -ne 180 -or @($Receipt.argv).Count -ne ($expected.Count - 4)) {
+        throw 'CPU service receipt launch contract differs; predecessor evidence was preserved.'
+    }
+    for ($index = 4; $index -lt $expected.Count; $index++) {
+        if ($Receipt.argv[$index - 4] -cne $expected[$index]) { throw 'CPU service receipt argv differs; predecessor evidence was preserved.' }
+    }
+}
+
+function Initialize-FoundationCpuDeadline {
+    if (-not ('SZL.FoundationCpuDeadline' -as [type])) {
+        Add-Type -TypeDefinition @'
+using System;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Threading;
+namespace SZL {
+    public sealed class FoundationCpuDeadline : IDisposable {
+        [DllImport("kernel32.dll", SetLastError=true)] static extern bool TerminateProcess(IntPtr handle, uint code);
+        readonly object gate = new object(); readonly Process child; readonly IntPtr handle;
+        readonly Stopwatch clock; readonly int limit; Timer timer;
+        bool completed, expired;
+        public FoundationCpuDeadline(Process directNewChild, int milliseconds, Stopwatch originalClock) {
+            child = directNewChild; handle = child.Handle; limit = milliseconds; clock = originalClock;
+            timer = new Timer(Expire, null, Math.Max(1, milliseconds - (int)clock.ElapsedMilliseconds), Timeout.Infinite);
+        }
+        void EndChild() { if (!child.HasExited && !TerminateProcess(handle, 124)) throw new InvalidOperationException("Direct CPU child deadline termination failed"); }
+        void Expire(object ignored) { lock (gate) { if (completed) return; expired = true; try { EndChild(); } catch { /* Complete/Dispose retain failure; never select a PID. */ } } }
+        public void Complete() { lock (gate) {
+            if (expired || clock.ElapsedMilliseconds >= limit) { expired = true; EndChild(); throw new TimeoutException("CPU startup deadline exceeded"); }
+            if (child.HasExited) throw new InvalidOperationException("Direct CPU child exited before readiness");
+            completed = true; timer.Dispose();
+        } }
+        public void Dispose() { lock (gate) { timer.Dispose(); if (!completed) EndChild(); } }
+    }
+}
+'@
+    }
+}
+
+function New-FoundationCpuDeadline {
+    param([Diagnostics.Process]$Child, [ValidateRange(1,180000)][int]$TimeoutMilliseconds = 180000,
+          [Diagnostics.Stopwatch]$Clock = [Diagnostics.Stopwatch]::StartNew())
+    Initialize-FoundationCpuDeadline
+    return [SZL.FoundationCpuDeadline]::new($Child, $TimeoutMilliseconds, $Clock)
 }
 
 function Assert-FoundationLaunchPort {
@@ -339,6 +520,7 @@ try {
         $predecessor = Get-FoundationService $admitted.LabRoot $admitted.Python $Port -MayBeAbsent
         Assert-FoundationLaunchPort $Port $predecessor
         $launchArguments = '-NoProfile -NonInteractive -File "' + (Join-Path $admitted.LabRoot 'start.ps1') + '" -Port ' + $Port
+        if ($script:foundationCpuRuntime) { $launchArguments = '-NoProfile -NonInteractive -File "' + (Join-Path $paths.Operations 'launch-cpu-workbench.ps1') + '"' }
         $launcherExitCode = Invoke-FoundationLauncher $paths.Shell $launchArguments $admitted.LabRoot
         if ($launcherExitCode -ne 0) { throw 'The unchanged workbench launcher failed. See retained state/service.stderr.log.' }
         $owned = Get-FoundationService $admitted.LabRoot $admitted.Python $Port

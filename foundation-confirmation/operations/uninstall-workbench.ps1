@@ -9,6 +9,7 @@ try {
     $task = Get-ScheduledTask -TaskName $paths.Task -TaskPath '\' -ErrorAction SilentlyContinue
     if ($null -ne $task) { Assert-FoundationTask $task $receipt }
     $known = @('install-workbench.ps1', 'supervise-workbench.ps1', 'uninstall-workbench.ps1', 'installation.json', 'supervisor-status.json')
+    if ($receipt.cpu_runtime) { $known += @('launch-cpu-workbench.ps1', 'cpu_environment.py', 'cpu_workbench.py', 'cpu-runtime-lock.json') }
     $unknown = @(Get-ChildItem -LiteralPath $paths.Operations -Force | Where-Object { $_.PSIsContainer -or $_.Name -notin $known })
     if ($unknown.Count -gt 0) { throw 'The managed directory contains unowned files; uninstall refused.' }
     if (Test-Path -LiteralPath (Join-Path $paths.Operations 'supervisor-status.json')) {

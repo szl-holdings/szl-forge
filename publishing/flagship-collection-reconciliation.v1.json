@@ -1,0 +1,285 @@
+{
+  "schema": "szl.flagship-collection-reconciliation/v1",
+  "source_repository": "szl-holdings/szl-forge",
+  "source_base_revision": "dcad257b0d1b93392fe9553cd6091233bba9e6c7",
+  "observed_at_utc": "2026-10-03T00:05:45.159919+00:00",
+  "collection_slug": "SZLHOLDINGS/szl-flagship-models-6a9315c1c853da528726dd8d",
+  "observed_collection": {
+    "title": "SZL Flagship Models",
+    "description": "Trained weights only. Kernels and empty ROADMAP cards live in other collections. Lambda uniqueness is Conjecture 1.",
+    "last_updated": "2026-10-02T00:26:29.975Z",
+    "private": false,
+    "item_count": 26
+  },
+  "target": {
+    "title": "SZL Flagship Models",
+    "description": "No model is promoted to this flagship shelf. Review the public model artifact catalog for checkpoints, adapters, numeric fixtures, software, recipes, research results, and explicit failed gates. Lambda uniqueness remains Conjecture 1.",
+    "membership": "EMPTY_UNTIL_SOURCE_BOUND_QUALIFICATION",
+    "repository_visibility_change": false,
+    "model_repository_delete": false,
+    "public_catalog_url": "https://holdings.a-11-oy.com/frontier/"
+  },
+  "hub_write": "DENIED_IN_THIS_SOURCE_CHANGE",
+  "items": [
+    {
+      "hub_id": "SZLHOLDINGS/SZL-Khipu-1.5B",
+      "collection_item_object_id": "6a9315c141084f9516ae4ad0",
+      "model_revision": "445c3abe52bd32e067c74806dff7cc5aca7fe826",
+      "artifact_class": "Tensor and adapter files",
+      "promotion_declaration": "Promotion withheld by card",
+      "source_planned_shelf": "candidates",
+      "quarantine_denies_flagship": false,
+      "decision": "REMOVE_FROM_FLAGSHIP_KEEP_PUBLIC_REPOSITORY"
+    },
+    {
+      "hub_id": "SZLHOLDINGS/SZL-Khipu-1.5B-GGUF",
+      "collection_item_object_id": "6a9315c186947dfa9d5c0ecf",
+      "model_revision": "ff97a2794f35e961d08d3545dcd3459a9a4ffdbe",
+      "artifact_class": "Model weights incl. GGUF",
+      "promotion_declaration": "Promotion not established",
+      "source_planned_shelf": "public_catalog_only",
+      "quarantine_denies_flagship": false,
+      "decision": "REMOVE_FROM_FLAGSHIP_KEEP_PUBLIC_REPOSITORY"
+    },
+    {
+      "hub_id": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2",
+      "collection_item_object_id": "6a9315c1b357a35ac1b1f612",
+      "model_revision": "9f71de39861898e752602a2332ef7ca1e0df87a7",
+      "artifact_class": "Adapter / tensor weights",
+      "promotion_declaration": "Promotion not established",
+      "source_planned_shelf": "candidates",
+      "quarantine_denies_flagship": false,
+      "decision": "REMOVE_FROM_FLAGSHIP_KEEP_PUBLIC_REPOSITORY"
+    },
+    {
+      "hub_id": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3",
+      "collection_item_object_id": "6a9315c10dbe91d7129f7560",
+      "model_revision": "f4b28d75e1bdbbbf299bb8f5beceb8f141f38baf",
+      "artifact_class": "Adapter / tensor weights",
+      "promotion_declaration": "Promotion withheld by card",
+      "source_planned_shelf": "research",
+      "quarantine_denies_flagship": true,
+      "decision": "REMOVE_FROM_FLAGSHIP_KEEP_PUBLIC_REPOSITORY"
+    },
+    {
+      "hub_id": "SZLHOLDINGS/chaski",
+      "collection_item_object_id": "6a9315c1a9e3d0a35f377e83",
+      "model_revision": "9b2c93e838bb6fa72733ee0199e9a8c80aba2a2d",
+      "artifact_class": "Adapter / tensor weights",
+      "promotion_declaration": "Declared evaluation gate failed",
+      "source_planned_shelf": "research",
+      "quarantine_denies_flagship": true,
+      "decision": "REMOVE_FROM_FLAGSHIP_KEEP_PUBLIC_REPOSITORY"
+    },
+    {
+      "hub_id": "SZLHOLDINGS/chaski-r2",
+      "collection_item_object_id": "6a9315c2ed327671e181e632",
+      "model_revision": "fa003918ba8cf7b85d751c7038e3c10e85c93057",
+      "artifact_class": "Adapter / tensor weights",
+      "promotion_declaration": "Promotion withheld by card",
+      "source_planned_shelf": "research",
+      "quarantine_denies_flagship": true,
+      "decision": "REMOVE_FROM_FLAGSHIP_KEEP_PUBLIC_REPOSITORY"
+    },
+    {
+      "hub_id": "SZLHOLDINGS/brain-navigator-r2",
+      "collection_item_object_id": "6a9315c20dbe91d7129f7565",
+      "model_revision": "8f7d67af9c2f8315dc3a63afa9ebf23a3f60ca01",
+      "artifact_class": "Adapter / tensor weights",
+      "promotion_declaration": "Promotion not established",
+      "source_planned_shelf": "public_catalog_only",
+      "quarantine_denies_flagship": false,
+      "decision": "REMOVE_FROM_FLAGSHIP_KEEP_PUBLIC_REPOSITORY"
+    },
+    {
+      "hub_id": "SZLHOLDINGS/khipu-r3",
+      "collection_item_object_id": "6a9315c24cd094901f049fac",
+      "model_revision": "7e388efb6e332c8c28e94bdf266293baf437fb64",
+      "artifact_class": "Adapter / tensor weights",
+      "promotion_declaration": "Promotion not established",
+      "source_planned_shelf": "public_catalog_only",
+      "quarantine_denies_flagship": false,
+      "decision": "REMOVE_FROM_FLAGSHIP_KEEP_PUBLIC_REPOSITORY"
+    },
+    {
+      "hub_id": "SZLHOLDINGS/KHIPU-R2",
+      "collection_item_object_id": "6a9315c2e710781835b6016a",
+      "model_revision": "e4c5d6c00876ae02b78bfd720560a31b91ad1b76",
+      "artifact_class": "Adapter / tensor weights",
+      "promotion_declaration": "Promotion withheld by card",
+      "source_planned_shelf": "candidates",
+      "quarantine_denies_flagship": false,
+      "decision": "REMOVE_FROM_FLAGSHIP_KEEP_PUBLIC_REPOSITORY"
+    },
+    {
+      "hub_id": "SZLHOLDINGS/WILLAY",
+      "collection_item_object_id": "6a9315c20dbe91d7129f756e",
+      "model_revision": "432646a22d37e6c43f9fa8580365d9f718cfea50",
+      "artifact_class": "Adapter / tensor weights",
+      "promotion_declaration": "Promotion not established",
+      "source_planned_shelf": "public_catalog_only",
+      "quarantine_denies_flagship": false,
+      "decision": "REMOVE_FROM_FLAGSHIP_KEEP_PUBLIC_REPOSITORY"
+    },
+    {
+      "hub_id": "SZLHOLDINGS/A11OY-MINI",
+      "collection_item_object_id": "6abdb4aa8882209890cd8ffb",
+      "model_revision": "7ea56236ea7988b3915b5ef07548cb2c3930a3cf",
+      "artifact_class": "Model weights incl. GGUF",
+      "promotion_declaration": "Promotion withheld by card",
+      "source_planned_shelf": "research",
+      "quarantine_denies_flagship": true,
+      "decision": "REMOVE_FROM_FLAGSHIP_KEEP_PUBLIC_REPOSITORY"
+    },
+    {
+      "hub_id": "SZLHOLDINGS/SZL-Khipu-1.5B-abstain",
+      "collection_item_object_id": "6abdb4abac57efd5e0d83773",
+      "model_revision": "942c02dd4e94f2cb7cfb0432a051c2db2219ee79",
+      "artifact_class": "Model weights incl. GGUF",
+      "promotion_declaration": "Promotion withheld by card",
+      "source_planned_shelf": "research",
+      "quarantine_denies_flagship": true,
+      "decision": "REMOVE_FROM_FLAGSHIP_KEEP_PUBLIC_REPOSITORY"
+    },
+    {
+      "hub_id": "SZLHOLDINGS/chaski-5050",
+      "collection_item_object_id": "6abdb4ab40a05b0ed9d43aaf",
+      "model_revision": "4a02db923cb7f5ec4c741cd4cabafc4e21e1991e",
+      "artifact_class": "Adapter / tensor weights",
+      "promotion_declaration": "Promotion withheld by card",
+      "source_planned_shelf": "research",
+      "quarantine_denies_flagship": true,
+      "decision": "REMOVE_FROM_FLAGSHIP_KEEP_PUBLIC_REPOSITORY"
+    },
+    {
+      "hub_id": "SZLHOLDINGS/SZL-Forge-1.5B-ReceiptAgent",
+      "collection_item_object_id": "6abdb4acd61ac77aef8fc7dd",
+      "model_revision": "260c4fa5129fd3f609c85246cbea36e5218b986d",
+      "artifact_class": "Adapter / tensor weights",
+      "promotion_declaration": "Promotion not established",
+      "source_planned_shelf": "candidates",
+      "quarantine_denies_flagship": false,
+      "decision": "REMOVE_FROM_FLAGSHIP_KEEP_PUBLIC_REPOSITORY"
+    },
+    {
+      "hub_id": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2-merged",
+      "collection_item_object_id": "6abdb4ad40a05b0ed9d43ae5",
+      "model_revision": "0ef9ed208b66c258e1d11e9112f0721c3b5c7565",
+      "artifact_class": "Tensor weight files",
+      "promotion_declaration": "Promotion withheld by card",
+      "source_planned_shelf": "public_catalog_only",
+      "quarantine_denies_flagship": false,
+      "decision": "REMOVE_FROM_FLAGSHIP_KEEP_PUBLIC_REPOSITORY"
+    },
+    {
+      "hub_id": "SZLHOLDINGS/szl-triage-qwen3.5-0.8b-lora",
+      "collection_item_object_id": "6abdb4adca63fede2582e74b",
+      "model_revision": "5414c4abcbebe2b37638b47ca1257968c03b2255",
+      "artifact_class": "Adapter / tensor weights",
+      "promotion_declaration": "Promotion not established",
+      "source_planned_shelf": "public_catalog_only",
+      "quarantine_denies_flagship": false,
+      "decision": "REMOVE_FROM_FLAGSHIP_KEEP_PUBLIC_REPOSITORY"
+    },
+    {
+      "hub_id": "SZLHOLDINGS/szl-triage-qwen3.5-0.8b-lora-study5",
+      "collection_item_object_id": "6abdb4ae4c81c77fde2cafae",
+      "model_revision": "eb79a26a2934d5eaa667984720feacdcb90dcc28",
+      "artifact_class": "Adapter / tensor weights",
+      "promotion_declaration": "Release BLOCKED 11/12; NOT_PROMOTABLE (pinned card)",
+      "source_planned_shelf": "public_catalog_only",
+      "quarantine_denies_flagship": false,
+      "decision": "REMOVE_FROM_FLAGSHIP_KEEP_PUBLIC_REPOSITORY"
+    },
+    {
+      "hub_id": "SZLHOLDINGS/ReceiptAgent-Nano",
+      "collection_item_object_id": "6abdb4ae303828e10c620da8",
+      "model_revision": "c139299d88d25d34d2ae53b95399b872d9f47a73",
+      "artifact_class": "Numeric archive",
+      "promotion_declaration": "Promotion not established",
+      "source_planned_shelf": "public_catalog_only",
+      "quarantine_denies_flagship": false,
+      "decision": "REMOVE_FROM_FLAGSHIP_KEEP_PUBLIC_REPOSITORY"
+    },
+    {
+      "hub_id": "SZLHOLDINGS/TinyKhipu-Nano",
+      "collection_item_object_id": "6abdb4afb8bc926654868d8f",
+      "model_revision": "b89f5c50ef09d21c695e7a97e73161572daabc39",
+      "artifact_class": "Numeric archive",
+      "promotion_declaration": "Promotion not established",
+      "source_planned_shelf": "public_catalog_only",
+      "quarantine_denies_flagship": false,
+      "decision": "REMOVE_FROM_FLAGSHIP_KEEP_PUBLIC_REPOSITORY"
+    },
+    {
+      "hub_id": "SZLHOLDINGS/Moons-Nano",
+      "collection_item_object_id": "6abdb4b0ac57efd5e0d8381e",
+      "model_revision": "4631d0fb54ad90423c3ae76f812ff4d0e80fbfdf",
+      "artifact_class": "Numeric archive",
+      "promotion_declaration": "Promotion not established",
+      "source_planned_shelf": "public_catalog_only",
+      "quarantine_denies_flagship": false,
+      "decision": "REMOVE_FROM_FLAGSHIP_KEEP_PUBLIC_REPOSITORY"
+    },
+    {
+      "hub_id": "SZLHOLDINGS/MiniEmbed-Nano",
+      "collection_item_object_id": "6abdb4b047b6c4b28014fbae",
+      "model_revision": "70557d12b91ca556939e559e540b70fb3c2c9e5b",
+      "artifact_class": "Numeric archive",
+      "promotion_declaration": "Promotion not established",
+      "source_planned_shelf": "public_catalog_only",
+      "quarantine_denies_flagship": false,
+      "decision": "REMOVE_FROM_FLAGSHIP_KEEP_PUBLIC_REPOSITORY"
+    },
+    {
+      "hub_id": "SZLHOLDINGS/a11oy-v19-substrate",
+      "collection_item_object_id": "6abefa34a4edc3b7626ef654",
+      "model_revision": "41a9a71d782adb6effd4a0af69dc684d5acded08",
+      "artifact_class": "Metadata or source",
+      "promotion_declaration": "Promotion not established",
+      "source_planned_shelf": "public_catalog_only",
+      "quarantine_denies_flagship": false,
+      "decision": "REMOVE_FROM_FLAGSHIP_KEEP_PUBLIC_REPOSITORY"
+    },
+    {
+      "hub_id": "SZLHOLDINGS/oac-clinical-transport-health-v1",
+      "collection_item_object_id": "6abefa35bd91060230fe957f",
+      "model_revision": "8a6cd25ed8121af4e99118cd874bb89f50cff981",
+      "artifact_class": "Metadata or source",
+      "promotion_declaration": "Promotion not established",
+      "source_planned_shelf": "public_catalog_only",
+      "quarantine_denies_flagship": false,
+      "decision": "REMOVE_FROM_FLAGSHIP_KEEP_PUBLIC_REPOSITORY"
+    },
+    {
+      "hub_id": "SZLHOLDINGS/oac-system-health-v1",
+      "collection_item_object_id": "6abefa35a3c83f12704e7b08",
+      "model_revision": "dd7d109813abcd90c5250106dc2eabd2804e7ac3",
+      "artifact_class": "Metadata or source",
+      "promotion_declaration": "Promotion not established",
+      "source_planned_shelf": "public_catalog_only",
+      "quarantine_denies_flagship": false,
+      "decision": "REMOVE_FROM_FLAGSHIP_KEEP_PUBLIC_REPOSITORY"
+    },
+    {
+      "hub_id": "SZLHOLDINGS/szl-khipu",
+      "collection_item_object_id": "6abefa35d83cd0387ecf5645",
+      "model_revision": "ee635354cb0b3d71965b17a227a374e40071e110",
+      "artifact_class": "Numeric archive",
+      "promotion_declaration": "Promotion not established",
+      "source_planned_shelf": "public_catalog_only",
+      "quarantine_denies_flagship": false,
+      "decision": "REMOVE_FROM_FLAGSHIP_KEEP_PUBLIC_REPOSITORY"
+    },
+    {
+      "hub_id": "SZLHOLDINGS/szl-triage-linear-development-v1",
+      "collection_item_object_id": "6abefa35c7debc9f564f3b86",
+      "model_revision": "b6ec192000d38e6a29787410f8bc077266b62a22",
+      "artifact_class": "Metadata or source",
+      "promotion_declaration": "Promotion not established",
+      "source_planned_shelf": "public_catalog_only",
+      "quarantine_denies_flagship": false,
+      "decision": "REMOVE_FROM_FLAGSHIP_KEEP_PUBLIC_REPOSITORY"
+    }
+  ]
+}

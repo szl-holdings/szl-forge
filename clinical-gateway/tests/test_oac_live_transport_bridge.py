@@ -237,6 +237,17 @@ class ListenerTests(unittest.TestCase):
         self.assertIn(b"ERR|||STORE_FAILED^OAC^99OAC|E", response)
         self.assertEqual(transport.status().messages_failed, 1)
 
+    def test_listener_never_acknowledges_ambiguous_ingest_success(self) -> None:
+        for result in (None, {}, {"ok": 1}, {"ok": "false"}):
+            with self.subTest(result=result):
+                response, transport = self._exchange(
+                    lambda _raw, _metadata: result,
+                    "CONTROL-AMBIGUOUS",
+                )
+                self.assertIn(b"MSA|AE|CONTROL-AMBIGUOUS|INVALID_INGEST_RESULT", response)
+                self.assertNotIn(b"MSA|AA|", response)
+                self.assertEqual(transport.status().messages_succeeded, 0)
+
     def test_status_never_includes_exception_details(self) -> None:
         def ingest(_raw: bytes, _metadata: dict[str, object]) -> None:
             raise RuntimeError(r"patient PATIENT-SECRET at C:\secret\result.hl7")
@@ -774,6 +785,84 @@ class RuntimeGateTests(unittest.TestCase):
             )
             with self.assertRaisesRegex(IngestRejected, "BINDING_NOT_FOUND"):
                 callback(missing_raw, {"kind": "mllp-listener"})
+
+    def test_kernel_response_requires_literal_success_and_zero_exit(self) -> None:
+        class Kernel:
+            def __init__(self) -> None:
+                self.response: dict[str, object] = {}
+
+            def run(self, _command, _args, **_kwargs):
+                return self.response
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            binding = root / "binding.json"
+            binding.write_text("{}", encoding="utf-8")
+            kernel = Kernel()
+            runtime = LiveTransportRuntime(kernel, state_dir=root)
+            callback = runtime._ingest_callback(
+                "literal-success-test",
+                {
+                    "kind": "mllp-listener",
+                    "source_id": "source",
+                    "binding_path": str(binding),
+                    "binding_dir": None,
+                    "state_dir": str(root),
+                },
+            )
+            for response in (
+                {"ok": "false", "return_code": 0, "payload": {"ok": True}},
+                {"ok": True, "return_code": 1, "payload": {"ok": True}},
+                {"ok": True, "return_code": 0, "payload": {"ok": 1}},
+            ):
+                with self.subTest(response=response):
+                    kernel.response = response
+                    with self.assertRaisesRegex(IngestRejected, "INVALID_KERNEL_RESPONSE"):
+                        callback(live_shadow_frame(), {"kind": "mllp-listener"})
+            self.assertEqual(
+                len(list((root / "clinical-inbound" / "quarantine").glob("*.hl7"))),
+                3,
+            )
+
+    def test_contradictory_kernel_response_returns_ae_on_wire(self) -> None:
+        class Kernel:
+            def run(self, _command, _args, **_kwargs):
+                return {"ok": True, "return_code": 1, "payload": {"ok": True}}
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            binding = root / "binding.json"
+            binding.write_text("{}", encoding="utf-8")
+            runtime = LiveTransportRuntime(Kernel(), state_dir=root)
+            callback = runtime._ingest_callback(
+                "contradictory-kernel-test",
+                {
+                    "kind": "mllp-listener",
+                    "source_id": "source",
+                    "binding_path": str(binding),
+                    "binding_dir": None,
+                    "state_dir": str(root),
+                },
+            )
+            transport = MLLPListenerTransport(
+                "contradictory-kernel-test",
+                {"bind_host": "127.0.0.1", "bind_port": 0, "socket_timeout": 0.1},
+                callback,
+                stop_event=threading.Event(),
+            )
+            transport.start()
+            try:
+                with socket.create_connection(("127.0.0.1", int(transport.bound_port)), timeout=2.0) as client:
+                    client.settimeout(2.0)
+                    client.sendall(live_shadow_frame())
+                    response = b""
+                    while not response.endswith(b"\x1c\r"):
+                        response += client.recv(4096)
+            finally:
+                transport.stop()
+            self.assertIn(b"MSA|AE|TECH-MSG-001|INVALID_KERNEL_RESPONSE", response)
+            self.assertNotIn(b"MSA|AA|", response)
+            self.assertEqual(transport.status().messages_succeeded, 0)
 
     def test_deidentification_gate_runs_before_any_raw_disk_write(self) -> None:
         calls: list[dict[str, object]] = []
