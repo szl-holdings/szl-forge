@@ -251,28 +251,28 @@ CI enforces it on every PR that touches doctrine-bearing data
 Current state (MEASURED 2026-09-01): all five gated datasets VALID, 75
 records, 0 violations.
 
-## Pipeline
+## Historical SZL-1 pipeline (held; not an operational procedure)
 
 ```
 szl_dataset.jsonl
       │  (identity + doctrine examples)
       ▼
-Unsloth QLoRA fine-tune  ──  train_szl.py  (base: unsloth/Qwen2.5-3B-Instruct)
+ Historical QLoRA recipe  ──  train_szl.py  (unqualified output)
       │
       ▼
-merged 16-bit safetensors  ──  ./szl-model
+ experimental 16-bit merge  ──  ./szl-model  (not qualified)
       │
       ▼
-llama.cpp convert_hf_to_gguf  ──  szl1-f16.gguf   (rebirth.ps1)
+ GGUF conversion  ──  HELD (clean source and converter lineage unproven)
       │
       ▼
-ollama create szl1 --quantize q4_K_M -f Modelfile.gguf
+ canonical Ollama import  ──  BLOCKED (do not run)
       │
       ▼
 HOLD: do not route as SOVEREIGN_MODEL=szl1 without source and runtime qualification
 ```
 
-See **[RUNBOOK.md](./RUNBOOK.md)** for the exact commands, VRAM/disk
+See **[RUNBOOK.md](./RUNBOOK.md)** for the historical steps, VRAM/disk
 requirements, and Windows-specific notes.
 
 ## SZL-Nemo (NemoClaw pattern)

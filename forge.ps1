@@ -1,6 +1,6 @@
-# SZL Forge bootstrap — ONE command runs the whole SZL-1 pipeline on this laptop.
-#
-#   iwr https://raw.githubusercontent.com/szl-holdings/szl-forge/main/forge.ps1 -OutFile "$env:TEMP\forge.ps1"; powershell -ExecutionPolicy Bypass -File "$env:TEMP\forge.ps1"
+# SZL Forge historical SZL-1 bootstrap - HELD, not an executable pipeline.
+# This script exits before source download, training, or import.
+# The implementation below the immediate exit is retained only as history.
 #
 # Historical body below is retained for provenance but is not an authorized
 # recovery path. It wrote a fixed merge path and invoked a canonical import
