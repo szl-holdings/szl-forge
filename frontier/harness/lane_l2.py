@@ -25,8 +25,31 @@ KHIPU_BASELINE = {"abstain": 3}
 
 
 def mock_generate(messages):
-    """CI-safe stand-in: abstains on every unanswerable probe."""
-    return "ABSTAIN — not in grounded context; routing to controller."
+    """CI-only synthetic abstention; no model or Brain content is loaded."""
+    return json.dumps({
+        "planId": "plan-synthetic-smoke-abstain",
+        "capabilityProfile": "SZL-Khipu-1.5B-BrainNavigator",
+        "provenance": "SYNTHETIC",
+        "query": messages[0]["content"],
+        "contentAccess": "HANDLES_ONLY",
+        "candidates": [{
+            "nodeId": "node://khipu-synthetic/smoke-unrelated",
+            "nodeKind": "INDEX",
+            "label": "SIMULATED",
+            "note": "Synthetic nonmatching handle; no node content is embedded.",
+        }],
+        "decision": "ABSTAIN",
+        "steps": [],
+        "citedNodeIds": [],
+        "groundedOnly": True,
+        "brainBinding": {
+            "protocol": "khipu-retrieval",
+            "status": "NOT_RESOLVED",
+            "note": "No node content was resolved by this software-only mock.",
+        },
+        "controllerBoundary": "Proposal only; the A11oy controller validates and resolves handles outside the model.",
+        "abstainReason": "No offered handle supports this query.",
+    })
 
 
 def load_generate(spec):

@@ -33,7 +33,7 @@ def response(messages):
             "label": "SAMPLE", "decision": "DRAFT", "approvalRequired": True,
             "executed": False,
         })
-    return "ABSTAIN"
+    return lane_l2.mock_generate(messages)
 
 
 class PublicSmokeBoundaryTests(unittest.TestCase):
