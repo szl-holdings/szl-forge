@@ -79,16 +79,77 @@ try {
     $script:foundationCpuRuntime = $null
     $cpu.state_directory = Join-Path $root 'state\cpu-runtime'
     $action = @{ executable=$paths.Shell; arguments=(Get-FoundationTaskArguments $root $archive 18767 $cpu); working_directory=$root }
-    $taskReceipt = @{ action=$action; lab_root=$root }
+    $taskReceipt = @{ schema='szl.foundation-confirmation.windows-installation/v2'; task_priority=5; action=$action; lab_root=$root }
     $task = [pscustomobject]@{ TaskName=$paths.Task; TaskPath='\';
         Actions=@(New-ScheduledTaskAction -Execute $paths.Shell -Argument $action.arguments -WorkingDirectory $root);
         Principal=(New-ScheduledTaskPrincipal -UserId $paths.Sid -LogonType Interactive -RunLevel Limited);
         Triggers=@(New-ScheduledTaskTrigger -AtLogOn -User $paths.Sid);
-        Settings=(New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew -ExecutionTimeLimit ([TimeSpan]::Zero) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries) }
+        Settings=(New-FoundationTaskSettings) }
+    if ($task.Settings.Priority -ne 5 -or $task.Settings.RestartCount -ne 0 -or
+        [string]$task.Settings.MultipleInstances -cne 'IgnoreNew' -or $task.Settings.ExecutionTimeLimit -cne 'PT0S') {
+        throw 'New native Scheduler settings differ from the Normal priority/recovery contract.'
+    }
     Assert-FoundationTask $task $taskReceipt
     $checks.Add('NATIVE_CPU_TASK_ACTION_ADMITTED_WITHOUT_REGISTRATION')
+    $checks.Add('NEW_NATIVE_TASK_SETTINGS_BIND_NORMAL_PRIORITY_WITH_ZERO_SCHEDULER_RETRIES')
+    foreach ($priority in @(0,4,6,7,10)) {
+        $task.Settings.Priority = $priority
+        Reject ('CONFLICTING_CPU_TASK_PRIORITY_' + $priority) { Assert-FoundationTask $task $taskReceipt } 'conflicting task definition'
+    }
+    $task.Settings.Priority = 5
+    foreach ($priority in @($null, '5', 5.0, 4, 7)) {
+        $badReceipt = $taskReceipt.Clone(); $badReceipt.task_priority = $priority
+        $priorityType = if ($null -eq $priority) { 'NULL' } else { $priority.GetType().Name }
+        Reject ('INVALID_RECEIPT_TASK_PRIORITY_' + $priorityType + '_' + [string]$priority) { Assert-FoundationTask $task $badReceipt } 'installation task priority contract'
+    }
+    $badReceipt = $taskReceipt.Clone(); $badReceipt.Remove('task_priority')
+    Reject 'V2_RECEIPT_MISSING_TASK_PRIORITY' { Assert-FoundationTask $task $badReceipt } 'installation task priority contract'
+    $badReceipt = $taskReceipt.Clone(); $badReceipt.schema = 'szl.foundation-confirmation.windows-installation/v3'
+    Reject 'UNKNOWN_INSTALLATION_SCHEMA' { Assert-FoundationTask $task $badReceipt } 'installation task priority contract'
+    $badReceipt = $taskReceipt.Clone(); $badReceipt.schema = $null
+    Reject 'NULL_INSTALLATION_SCHEMA' { Assert-FoundationTask $task $badReceipt } 'installation task priority contract'
+    $badReceipt = $taskReceipt.Clone(); $badReceipt.schema = @('szl.foundation-confirmation.windows-installation/v2')
+    Reject 'ARRAY_INSTALLATION_SCHEMA' { Assert-FoundationTask $task $badReceipt } 'installation task priority contract'
+    $badReceipt = $taskReceipt.Clone(); $badReceipt.schema = 'szl.foundation-confirmation.windows-installation/v1'
+    Reject 'V1_SCHEMA_CANNOT_HIDE_V2_PRIORITY_FIELD' { Assert-FoundationTask $task $badReceipt } 'installation task priority contract'
+    $legacyReceipt = $badReceipt.Clone(); $legacyReceipt.Remove('task_priority')
+    $downgradedReceipt = $legacyReceipt.Clone()
+    $downgradedReceipt.scripts = @{ 'install-workbench.ps1'=(Get-FileHash -LiteralPath (Join-Path $PSScriptRoot 'install-workbench.ps1') -Algorithm SHA256).Hash.ToLowerInvariant() }
+    $task.Settings.Priority = 7
+    Reject 'V1_SCHEMA_AND_PRIORITY_FIELD_DOWNGRADE_CANNOT_AUTHORIZE_NEW_INSTALLER' { Assert-FoundationTask $task $downgradedReceipt } 'installation task priority contract'
+    $legacyReceipt.scripts = @{ 'install-workbench.ps1'='2dded72edba06cd048c0ce17c3c36a66e80feeba2b31d990e5c2d3da45349b24' }
+    $task.Settings.Priority = 7
+    Assert-FoundationTask $task $legacyReceipt
+    Assert-FoundationTask $task ($legacyReceipt | ConvertTo-Json -Depth 4 | ConvertFrom-Json)
+    $checks.Add('LEGACY_V1_DEFAULT_PRIORITY_ADMITTED_FOR_OWNED_VALIDATION_AND_REMOVAL')
+    $legacyCpuHash = $legacyReceipt.scripts.'install-workbench.ps1'
+    $legacyReceipt.scripts.'install-workbench.ps1' = '0cb4523b74cbd197c86fae827294a648d4aea496f7a53428af176aacf3b49cfb'
+    Assert-FoundationTask $task $legacyReceipt
+    $checks.Add('LEGACY_V1_BOUNDED_RECOVERY_INSTALLER_DEFAULT_PRIORITY_ADMITTED')
+    $legacyReceipt.scripts.'install-workbench.ps1' = $legacyCpuHash
+    $badReceipt = $legacyReceipt | ConvertTo-Json -Depth 4 | ConvertFrom-Json
+    $badReceipt.scripts.'install-workbench.ps1' = 'unknown'
+    Reject 'UNKNOWN_V1_INSTALLER_SOURCE' { Assert-FoundationTask $task $badReceipt } 'installation task priority contract'
+    $task.Settings.Priority = 5
+    Reject 'LEGACY_V1_PRIORITY_MUTATION_REJECTED' { Assert-FoundationTask $task $legacyReceipt } 'conflicting task definition'
+    $downgradedReceipt = $taskReceipt | ConvertTo-Json -Depth 4 | ConvertFrom-Json
+    $downgradedReceipt.schema = 'szl.foundation-confirmation.windows-installation/v1'
+    Reject 'JSON_V1_SCHEMA_CANNOT_HIDE_V2_PRIORITY_FIELD' { Assert-FoundationTask $task $downgradedReceipt } 'installation task priority contract'
+    $jsonReceipt = $taskReceipt | ConvertTo-Json -Depth 4 | ConvertFrom-Json
+    Assert-FoundationTask $task $jsonReceipt
+    $checks.Add('JSON_V2_RECEIPT_NORMAL_PRIORITY_ADMITTED')
     $task.Actions = @(New-ScheduledTaskAction -Execute $paths.Shell -Argument ($action.arguments + ' -CpuStateDirectory wrong') -WorkingDirectory $root)
     Reject 'CONFLICTING_CPU_TASK_ARGUMENTS' { Assert-FoundationTask $task $taskReceipt } 'conflicting task definition'
+    # This is a stdlib-only test image, not production environment admission.
+    $fixturePython = Join-Path $paths.Profile 'AppData\Local\Programs\Python\Python311\python.exe'
+    if (-not (Test-Path -LiteralPath $fixturePython)) { $fixturePython = (Get-Command python -CommandType Application -ErrorAction Stop).Source }
+    $nativeRaw = & $fixturePython -I -S -B (Join-Path $PSScriptRoot 'test-cpu-predecessor.py')
+    if ($LASTEXITCODE -ne 0) { throw 'The actual retained-handle predecessor fixture failed.' }
+    $native = ($nativeRaw -join "`n") | ConvertFrom-Json
+    if ($native.schema -cne 'szl.foundation-confirmation.native-predecessor-controls/v1' -or $native.status -cne 'VERIFIED' -or
+        $native.class -cne 'MEASURED' -or $native.count -ne 5 -or $native.only_owned_fixture_child -ne $true -or
+        $native.production_services_changed -ne $false -or $native.model_imported -ne $false) { throw 'Native predecessor fixture evidence differs.' }
+    foreach ($check in $native.checks) { $checks.Add([string]$check) }
     Initialize-FoundationCpuDeadline # Match production: compile before the child exists.
     $child = Start-Process -FilePath $paths.Shell -ArgumentList '-NoProfile -NonInteractive -WindowStyle Hidden -Command "Start-Sleep -Seconds 15"' -WindowStyle Hidden -PassThru
     $children += $child

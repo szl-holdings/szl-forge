@@ -29,7 +29,7 @@ function New-TaskFixture {
         Actions = @(New-ScheduledTaskAction -Execute $paths.Shell -Argument $Receipt.action.arguments -WorkingDirectory $Receipt.lab_root)
         Principal = New-ScheduledTaskPrincipal -UserId $paths.Sid -LogonType Interactive -RunLevel Limited
         Triggers = @(New-ScheduledTaskTrigger -AtLogOn -User $paths.Sid)
-        Settings = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew -ExecutionTimeLimit ([TimeSpan]::Zero) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+        Settings = New-FoundationTaskSettings
     }
 }
 
@@ -186,12 +186,16 @@ pathlib.Path(sys.argv[2]).write_text('complete', encoding='ascii')
     if ($script:recoveryDelays.Count -ne 0) { throw 'An unverified exit was retried.' }
 
     $paths = Get-FoundationPaths
-    $receipt = [pscustomobject]@{ lab_root = $admitted.LabRoot; action = [pscustomobject]@{
+    $receipt = [pscustomobject]@{ schema = 'szl.foundation-confirmation.windows-installation/v2'; task_priority = 5;
+        lab_root = $admitted.LabRoot; action = [pscustomobject]@{
         executable = $paths.Shell; arguments = Get-FoundationTaskArguments $admitted.LabRoot $admitted.ArchivePath $Port
     } }
     $task = New-TaskFixture $receipt
     Assert-FoundationTask $task $receipt
     $checks.Add('NATIVE_CURRENT_USER_TASK_DEFINITION_ADMITTED_WITHOUT_REGISTRATION')
+    $task.Settings.Priority = 7
+    Confirm-Rejection 'BELOW_NORMAL_TASK_PRIORITY_REJECTED' { Assert-FoundationTask $task $receipt } 'conflicting task definition'
+    $task.Settings.Priority = 5
     $accountName = [Security.Principal.SecurityIdentifier]::new($paths.Sid).Translate([Security.Principal.NTAccount]).Value
     $task = New-TaskFixture $receipt
     $task.Triggers[0].UserId = $accountName
