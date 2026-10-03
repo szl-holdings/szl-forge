@@ -43,6 +43,166 @@ class AuditClassificationTests(unittest.TestCase):
         self.assertEqual(result["promotion_verdict"], "NOT_ASSESSED")
         self.assertEqual(result["permission_status"], "NOT_PROBED_READ_ONLY")
 
+    def runtime_fixture(self):
+        base = "huggingface:example/base@" + "c" * 40
+        binding = {"evidence_file": "eval_report.json", "candidate_id": "adapter-run",
+                   "artifact_path": "adapter_model.safetensors", "base_runtime": base,
+                   "model_class": "ConditionalGeneration", "wrapper_class": "PeftModel"}
+        receipt = {"label": "MEASURED", "gate_ran": True, "publication_eligible": False,
+                   "candidates": [{"id": "adapter-run", "kind": "adapter", "state": "MEASURED", "base_runtime": base,
+                                   "adapter_sha256": "b" * 64,
+                                   "loader": {"model_class": "ConditionalGeneration",
+                                              "wrapper_class": "PeftModel",
+                                              "adapter_keys": {"checkpoint_tensors": 192,
+                                                               "applied": 192, "unapplied": 0,
+                                                               "fully_applied": True}}}]}
+        entry, snap = self.fixture(evidence=receipt,
+                                   extra={"checks": {"adapter_runtime_binding": binding}})
+        return entry, snap, receipt
+
+    def runtime_result(self, change):
+        entry, snap, receipt = self.runtime_fixture()
+        change(entry["checks"]["adapter_runtime_binding"], receipt)
+        raw = json.dumps(receipt)
+        snap["contents"]["eval_report.json"] = raw
+        snap["file_sha256"]["eval_report.json"] = hashlib.sha256(raw.encode()).hexdigest()
+        return audit.classify_repository(entry, snap)
+
+    def test_same_run_adapter_runtime_binding_does_not_promote(self):
+        entry, snap, _ = self.runtime_fixture()
+        result = audit.classify_repository(entry, snap)
+        self.assertEqual(result["status"], "PASS", result)
+        self.assertEqual(result["promotion_verdict"], "NOT_ASSESSED")
+
+    def test_zero_partial_and_boolean_tensor_counts_hold(self):
+        cases = [{"applied": 0, "unapplied": 192, "fully_applied": False},
+                 {"applied": 191, "unapplied": 1}, {"checkpoint_tensors": True},
+                 {"checkpoint_tensors": 0, "applied": 0}, {"fully_applied": "true"}]
+        for values in cases:
+            with self.subTest(values=values):
+                result = self.runtime_result(lambda _, r: r["candidates"][0]["loader"]["adapter_keys"].update(values))
+                self.assertIn("ADAPTER_APPLICATION_INCOMPLETE", self.codes(result))
+                self.assertEqual(result["status"], "HOLD")
+
+    def test_wrong_loader_or_base_cannot_satisfy_runtime_binding(self):
+        for field, value in (("model_class", "CausalLM"), ("wrapper_class", "BaseOnly")):
+            result = self.runtime_result(lambda _, r: r["candidates"][0]["loader"].update({field: value}))
+            self.assertIn("ADAPTER_LOADER_MISMATCH", self.codes(result))
+        result = self.runtime_result(lambda _, r: r["candidates"][0].update({"base_runtime": "huggingface:example/base@" + "d" * 40}))
+        self.assertIn("ADAPTER_BASE_MISMATCH", self.codes(result))
+
+    def test_applied_candidate_must_match_published_raw_adapter_digest(self):
+        result = self.runtime_result(lambda _, r: r["candidates"][0].update({"adapter_sha256": "d" * 64}))
+        self.assertIn("ADAPTER_ARTIFACT_IDENTITY_MISMATCH", self.codes(result))
+        self.assertEqual(result["status"], "MISSING_BINDING")
+
+    def test_runtime_binding_requires_one_observed_candidate(self):
+        cases = [lambda r: r.update({"gate_ran": False}),
+                 lambda r: r.update({"label": "SAMPLE"}),
+                 lambda r: r["candidates"][0].update({"kind": "base"}),
+                 lambda r: r["candidates"][0].update({"state": "UNAVAILABLE"}),
+                 lambda r: r.update({"candidates": []}),
+                 lambda r: r["candidates"].append(dict(r["candidates"][0]))]
+        for change in cases:
+            result = self.runtime_result(lambda _, r: change(r))
+            self.assertIn("ADAPTER_RUNTIME_EVIDENCE_UNAVAILABLE", self.codes(result))
+            self.assertNotEqual(result["status"], "PASS")
+
+    def test_missing_receipt_and_invalid_binding_fail_closed(self):
+        entry, snap, _ = self.runtime_fixture()
+        entry["evidence_files"] = []
+        result = audit.classify_repository(entry, snap)
+        self.assertIn("ADAPTER_RUNTIME_EVIDENCE_UNAVAILABLE", self.codes(result))
+        for value in ({}, "invalid", {"base_runtime": "huggingface:example/base@main"}):
+            entry, snap, _ = self.runtime_fixture()
+            entry["checks"]["adapter_runtime_binding"] = value
+            result = audit.classify_repository(entry, snap)
+            self.assertIn("ADAPTER_RUNTIME_CONFIG_INVALID", self.codes(result))
+            self.assertEqual(result["status"], "HOLD")
+
+    def test_counts_from_a_different_candidate_cannot_fill_missing_coverage(self):
+        def change(_, receipt):
+            other = json.loads(json.dumps(receipt["candidates"][0]))
+            other["id"] = "other-adapter"
+            receipt["candidates"][0]["loader"].pop("adapter_keys")
+            receipt["candidates"].append(other)
+        result = self.runtime_result(change)
+        self.assertIn("ADAPTER_APPLICATION_INCOMPLETE", self.codes(result))
+
+    def test_text_source_digest_cannot_substitute_for_adapter(self):
+        entry, snap, receipt = self.runtime_fixture()
+        entry["checks"]["adapter_runtime_binding"]["artifact_path"] = "README.md"
+        result = audit.classify_repository(entry, snap)
+        self.assertIn("ADAPTER_RUNTIME_CONFIG_INVALID", self.codes(result))
+        entry, snap, receipt = self.runtime_fixture()
+        snap["file_sha256"]["adapter_model.safetensors"] = "b" * 64
+        snap["artifact_sha256"] = {}
+        result = audit.classify_repository(entry, snap)
+        self.assertIn("ADAPTER_ARTIFACT_IDENTITY_MISMATCH", self.codes(result))
+
+    def bridge_fixture(self):
+        entry, snap, receipt = self.runtime_fixture()
+        receipt["candidates"][0]["adapter_sha256"] = "e" * 64
+        raw = json.dumps(receipt)
+        snap["contents"]["eval_report.json"] = raw
+        evaluation_digest = hashlib.sha256(raw.encode()).hexdigest()
+        snap["file_sha256"]["eval_report.json"] = evaluation_digest
+        bridge = {"schema": "szl.hf-artifact-publication/v1", "repo_id": entry["repo"],
+                  "adapter_directory_digest": "e" * 64, "receipt_c_sha256": evaluation_digest,
+                  "bytes_revision": "d" * 40,
+                  "files": {"adapter_model.safetensors": {"sha256": "b" * 64, "readback_sha256": "b" * 64},
+                            "eval_report.json": {"sha256": evaluation_digest, "readback_sha256": evaluation_digest}}}
+        entry["checks"]["adapter_runtime_binding"]["identity_bridge"] = "publication.json"
+        entry["evidence_files"].append("publication.json")
+        snap["files"].append("publication.json")
+        return entry, snap, bridge
+
+    def test_explicit_publication_bridge_binds_directory_and_raw_digests(self):
+        entry, snap, bridge = self.bridge_fixture()
+        raw = json.dumps(bridge)
+        snap["contents"]["publication.json"] = raw
+        snap["file_sha256"]["publication.json"] = hashlib.sha256(raw.encode()).hexdigest()
+        result = audit.classify_repository(entry, snap)
+        self.assertEqual(result["status"], "PASS", result)
+        self.assertEqual(result["promotion_verdict"], "NOT_ASSESSED")
+
+    def test_configured_bridge_cannot_be_skipped_by_direct_raw_match(self):
+        entry, snap, _ = self.runtime_fixture()
+        entry["checks"]["adapter_runtime_binding"]["identity_bridge"] = "unread-publication.json"
+        result = audit.classify_repository(entry, snap)
+        self.assertIn("ADAPTER_ARTIFACT_IDENTITY_MISMATCH", self.codes(result))
+
+    def test_bridge_cannot_mix_receipts_artifacts_or_repositories(self):
+        changes = [lambda b: b.update({"repo_id": "example/other"}),
+                   lambda b: b.update({"adapter_directory_digest": "f" * 64}),
+                   lambda b: b.update({"receipt_c_sha256": "f" * 64}),
+                   lambda b: b.update({"bytes_revision": "main"}),
+                   lambda b: b["files"]["adapter_model.safetensors"].update({"readback_sha256": "f" * 64}),
+                   lambda b: b["files"]["eval_report.json"].update({"sha256": "f" * 64})]
+        for change in changes:
+            entry, snap, bridge = self.bridge_fixture()
+            change(bridge)
+            raw = json.dumps(bridge)
+            snap["contents"]["publication.json"] = raw
+            snap["file_sha256"]["publication.json"] = hashlib.sha256(raw.encode()).hexdigest()
+            result = audit.classify_repository(entry, snap)
+            self.assertIn("ADAPTER_ARTIFACT_IDENTITY_MISMATCH", self.codes(result))
+
+    def test_training_step_none_this_run_does_not_deny_later_eval(self):
+        result = self.classify("A training metric, not an evaluation; the training step itself reported `evals: none-this-run`.\nNot promotable. No autonomy. No deployment.")
+        self.assertNotIn("MEASURED_RECORD_CONTRADICTS_NO_EVAL", self.codes(result))
+        result = self.classify("The training receipt reports `evals: none-this-run`; no evaluation exists.\nNot promotable. No autonomy. No deployment.")
+        self.assertIn("MEASURED_RECORD_CONTRADICTS_NO_EVAL", self.codes(result))
+
+    def test_chaski_runtime_check_is_wired_to_canonical_audit_inventory(self):
+        entries = audit.read_inventory(MODULE_PATH.parents[1] / "publishing" / "evidence-audit-inventory.json")
+        entry = next(row for row in entries if row["repo"] == "SZLHOLDINGS/chaski-r4")
+        binding = entry["checks"]["adapter_runtime_binding"]
+        self.assertIn(binding["evidence_file"], entry["evidence_files"])
+        self.assertEqual(binding["candidate_id"], "chaski-r4-local")
+        self.assertEqual(binding["artifact_path"], "adapter_model.safetensors")
+        self.assertEqual(binding["model_class"], "Qwen3_5ForConditionalGeneration")
+
     def test_archive_selection_requires_exact_structured_metadata(self):
         expected = [{"config_name": "default", "data_files": [
             {"split": "train", "path": "runs/**/summary.json"}]}]
