@@ -20,27 +20,22 @@ startup_duration_timeout: 30m
 ---
 
 
-<div align="center">
-<p>
-
-[![governed](https://img.shields.io/badge/governed-SZL%20Holdings-3af4c8?style=flat-square)](https://huggingface.co/SZLHOLDINGS)
-[![Λ](https://img.shields.io/badge/Λ-Conjecture%201%20advisory-d7b96b?style=flat-square)](https://a-11-oy.com)
-[![license](https://img.shields.io/badge/license-apache--2.0-7e8aa3?style=flat-square)](https://huggingface.co/spaces/SZLHOLDINGS/szl-model-inference-lab)
-
-</p>
-</div>
 <!-- SZL-ESTATE-CARD:v2:START -->
 <p align="center"><a href="https://a-11-oy.com/"><img src="https://huggingface.co/spaces/SZLHOLDINGS/README/resolve/main/assets/estate-banner-v2.svg" alt="SZL Holdings — governed, receipted, verifiable" width="100%"></a></p>
 <p align="center">
   <a href="https://github.com/szl-holdings/.github/tree/main/doctrine"><img src="https://img.shields.io/badge/doctrine-v11%20LOCKED-0B1F3A?style=flat-square" alt="doctrine v11"></a>
   <a href="https://a-11-oy.com/"><img src="https://img.shields.io/badge/evidence%20wall-LIVE%20%C2%B7%20verify%20in%20browser-3AF4C8?style=flat-square" alt="live evidence wall"></a>
   <a href="https://huggingface.co/datasets/SZLHOLDINGS/szl-lake"><img src="https://img.shields.io/badge/szl--lake-offline%20verifiable-C9B787?style=flat-square" alt="szl-lake offline verifiable"></a>
-  <a href="https://huggingface.co/spaces/SZLHOLDINGS/holographic"><img src="https://img.shields.io/badge/estate%20map-holographic-5B8DEE?style=flat-square" alt="holographic estate map"></a>
+  <a href="https://huggingface.co/spaces/SZLHOLDINGS/szl-constellation"><img src="https://img.shields.io/badge/estate%20map-constellation-5B8DEE?style=flat-square" alt="SZL Constellation estate map"></a>
 </p>
 <p align="center"><sub>Part of the <a href="https://huggingface.co/SZLHOLDINGS">SZL Holdings</a> governed estate — claims are designed to carry checkable receipts. Verification proves integrity &amp; origin, never accuracy or performance.</sub></p>
 <!-- SZL-ESTATE-CARD:v2:END -->
 
-# SZL Model Inference Lab
+# Khipu Loom · SZL Model Inference Lab
+
+Run one bounded prompt in the [live instrument](https://szlholdings-szl-model-inference-lab.hf.space/), then inspect the [model identity](https://szlholdings-szl-model-inference-lab.hf.space/api/v1/identity), [source revision](https://szlholdings-szl-model-inference-lab.hf.space/version), and [receipt boundary](https://szlholdings-szl-model-inference-lab.hf.space/evidence) beside the output. The visual loom is a conceptual map; the status strip and linked endpoints report the live state.
+
+The interface fits phones, laptops, and wide screens. Its small-screen navigation exposes the same four destinations as desktop navigation. It has no external fonts, scripts, trackers, or UI assets. Reduced-motion settings stop the decorative orbit.
 
 A public, zero-secret, bounded CPU demonstration for the exact
 `SZLHOLDINGS/SZL-Khipu-1.5B-Q4_K_M.gguf` bytes at immutable model commit
