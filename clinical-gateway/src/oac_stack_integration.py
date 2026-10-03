@@ -194,7 +194,7 @@ class ControlEvidenceModel:
             return 0.0
         score = 0.0
 
-        if result.get("ok"):
+        if result.get("ok") is True:
             score += 0.35
         if result.get("clinical_use_authorized") is False:
             score += 0.20
@@ -202,7 +202,7 @@ class ControlEvidenceModel:
             score += 0.05
         if result.get("direct_device_transport") is False:
             score += 0.05
-        if result.get("ledger_correlation_verified"):
+        if result.get("ledger_correlation_verified") is True:
             score += 0.20
         if result.get("truth_boundary") in {
             "synthetic_offline_artifact_not_clinical_delivery",
@@ -483,9 +483,12 @@ class ClinicalKernel:
 
         payload, stdout, rc = run_owned_command(command, arguments, self.script)
         operation = str(payload.get("operation", command))
-        ok = bool(payload.get("ok")) and rc == 0
+        # The command's success field is a protocol boolean, not a truthy hint.
+        ok = payload.get("ok") is True and rc == 0
         payload_hash = stable_hash({"command": command, "args": arguments, "stdout": stdout, "rc": rc})
-        evidence_score = self.model.score(payload, command)
+        # Score the same normalized outcome exposed by the wrapper, including
+        # the subprocess exit status, without changing the raw command receipt.
+        evidence_score = self.model.score({**payload, "ok": ok}, command)
 
         record = DatasetRecord(
             schema=DATASET_SCHEMA,
