@@ -29,6 +29,11 @@ else:
 
 ROOT = Path(__file__).resolve().parents[1]
 REPO = "SZLHOLDINGS/chaski-r4"
+CANONICAL_FORGE_REMOTE = "https://github.com/szl-holdings/szl-forge.git"
+RUNTIME_MODULES = (
+    "tools/publish_chaski_r4_qualification.py",
+    "tools/publish_chaski_card.py",
+)
 SIDECAR = "evidence/QUALIFICATION_STATE.md"
 SOURCE_SIDECAR = "chaski_r4/QUALIFICATION_STATE.md"
 SOURCE_RECEIPT = "chaski_r4/evidence/publication_receipt_20261001_171009.json"
@@ -164,6 +169,72 @@ def load_source_contract(root: Path, source_revision: str) -> SourceContract:
         return result.stdout
 
     return build_contract(read_blob, source_revision)
+
+
+def assert_current_main(root: Path, source_revision: str) -> None:
+    """Fail closed unless this exact checkout still owns canonical Forge main.
+
+    The workflow's earlier check is not enough: a run can queue behind the Hub
+    writer lock, and direct ``--publish`` invocations bypass workflow steps.
+    This check is repeated inside reconciliation before success or a write.
+    It cannot make independent GitHub and Hub operations atomic.
+    """
+    if not _is_sha(source_revision, FULL_SHA):
+        raise PublicationError("fresh-main guard requires an exact source revision")
+
+    def git(*args: str) -> subprocess.CompletedProcess[str]:
+        try:
+            result = subprocess.run(
+                ["git", *args], cwd=root, capture_output=True, text=True,
+                encoding="utf-8", timeout=30, check=False,
+            )
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            raise PublicationError("fresh-main lookup failed") from exc
+        return result
+
+    head = git("rev-parse", "--verify", "HEAD")
+    if head.returncode or head.stdout.strip() != source_revision:
+        raise PublicationError("checkout does not match the exact source revision")
+    branch = git("symbolic-ref", "--quiet", "--short", "HEAD")
+    if branch.returncode == 0:
+        if branch.stdout.strip() != "main":
+            raise PublicationError("publication requires a protected main checkout")
+    elif not (
+        branch.returncode == 1
+        and not branch.stdout.strip()
+        and os.environ.get("GITHUB_ACTIONS") == "true"
+        and os.environ.get("GITHUB_REPOSITORY") == "szl-holdings/szl-forge"
+        and os.environ.get("GITHUB_REF") == "refs/heads/main"
+        and os.environ.get("GITHUB_SHA") == source_revision
+    ):
+        raise PublicationError("publication requires a protected main checkout")
+
+    remote = git("ls-remote", "--exit-code", CANONICAL_FORGE_REMOTE, "refs/heads/main")
+    if remote.returncode:
+        raise PublicationError("fresh-main lookup failed")
+    lines = remote.stdout.splitlines()
+    fields = lines[0].split() if len(lines) == 1 else []
+    if len(fields) != 2 or fields[1] != "refs/heads/main" or not _is_sha(fields[0], FULL_SHA):
+        raise PublicationError("canonical main did not expose one exact revision")
+    if fields[0] != source_revision:
+        raise PublicationError("publication source no longer owns current main")
+
+    # A direct local invocation must not publish from unreviewed publisher bytes
+    # merely because its committed HEAD still matches protected main. The
+    # filtered object comparison tolerates Git's CRLF checkout conversion.
+    status = git("status", "--porcelain=v1", "--untracked-files=all", "--", *RUNTIME_MODULES)
+    if status.returncode or status.stdout.strip():
+        raise PublicationError("publisher runtime modules differ from the exact source revision")
+    for name in RUNTIME_MODULES:
+        expected = git("rev-parse", "--verify", f"{source_revision}:{name}")
+        actual = git("hash-object", f"--path={name}", "--", name)
+        if (
+            expected.returncode
+            or actual.returncode
+            or not _is_sha(expected.stdout.strip(), FULL_SHA)
+            or actual.stdout.strip() != expected.stdout.strip()
+        ):
+            raise PublicationError("publisher runtime modules differ from the exact source revision")
 
 
 def historic_blob_reader(root: Path) -> Callable[[str, str], bytes]:
@@ -305,6 +376,7 @@ def reconcile(
     read_source_blob: Callable[[str, str], bytes],
     make_operation: Callable[[str, bytes], Any],
     *,
+    assert_current_source: Callable[[str], None],
     on_commit: Callable[[dict[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
     """Compare every known file before and after a one-path conditional commit."""
@@ -331,6 +403,7 @@ def reconcile(
     if api.repo_info(REPO, repo_type="model").sha != parent:
         raise PublicationError("Hub parent changed during preflight")
     if sidecar_hash == desired_hash:
+        assert_current_source(contract.source_revision)
         status = "ALREADY_CURRENT"
         published_revision = parent
     else:
@@ -340,6 +413,7 @@ def reconcile(
         # misattribute another writer's identical sidecar to this publisher.
         if getattr(operation, "_is_committed", None) is not False:
             raise PublicationError("reviewed Hub commit-origin marker is unavailable before write")
+        assert_current_source(contract.source_revision)
         commit = api.create_commit(
             repo_id=REPO,
             repo_type="model",
@@ -375,6 +449,10 @@ def reconcile(
             raise PublicationError(f"unrelated Hub file changed during sidecar publication: {name}")
     if api.repo_info(REPO, repo_type="model").sha != published_revision:
         raise PublicationError("Hub tip changed after immutable readback")
+    # A main advance during the Hub call or readback cannot become either a
+    # no-op or published success. A committed write is already recorded through
+    # on_commit as COMMITTED_UNVERIFIED if this final guard fails.
+    assert_current_source(contract.source_revision)
     return {
         "schema": "szl.hf.chaski-r4-qualification-reconciliation/v1",
         "status": status,
@@ -424,6 +502,7 @@ def main() -> int:
                 "claim_boundary": "Source contract only; Hub state not inspected and no publication attempted.",
             }
         else:
+            assert_current_main(ROOT, contract.source_revision)
             from huggingface_hub import CommitOperationAdd, HfApi, __version__ as hub_version, hf_hub_download
 
             if hub_version != "1.23.0":
@@ -451,6 +530,7 @@ def main() -> int:
                     read_hub,
                     historic_blob_reader(ROOT),
                     lambda name, content: CommitOperationAdd(path_in_repo=name, path_or_fileobj=content),
+                    assert_current_source=lambda revision: assert_current_main(ROOT, revision),
                     on_commit=on_commit,
                 )
         _write_report(args.report, report)

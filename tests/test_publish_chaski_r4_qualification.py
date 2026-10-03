@@ -168,8 +168,224 @@ def publish(contract, api, **kwargs):
         lambda name, content: SimpleNamespace(
             path_in_repo=name, path_or_fileobj=content, _is_committed=False
         ),
+        assert_current_source=kwargs.pop("assert_current_source", lambda _revision: None),
         **kwargs,
     )
+
+
+def test_current_main_guard_rejects_nonmain_branch_with_identical_commit(monkeypatch):
+    revision = "d" * 40
+
+    def git(command, **_kwargs):
+        if command == ["git", "rev-parse", "--verify", "HEAD"]:
+            return SimpleNamespace(returncode=0, stdout=f"{revision}\n")
+        if command == ["git", "symbolic-ref", "--quiet", "--short", "HEAD"]:
+            return SimpleNamespace(returncode=0, stdout="szl/other-branch\n")
+        raise AssertionError(f"unexpected Git call: {command}")
+
+    monkeypatch.setattr(MODULE.subprocess, "run", git)
+    with pytest.raises(MODULE.PublicationError, match="protected main checkout"):
+        MODULE.assert_current_main(ROOT, revision)
+
+
+@pytest.mark.parametrize("detached_actions", [False, True])
+def test_current_main_guard_accepts_exact_main_checkout(monkeypatch, detached_actions):
+    revision = "d" * 40
+    if detached_actions:
+        monkeypatch.setenv("GITHUB_ACTIONS", "true")
+        monkeypatch.setenv("GITHUB_REPOSITORY", "szl-holdings/szl-forge")
+        monkeypatch.setenv("GITHUB_REF", "refs/heads/main")
+        monkeypatch.setenv("GITHUB_SHA", revision)
+
+    def git(command, **_kwargs):
+        if command == ["git", "rev-parse", "--verify", "HEAD"]:
+            return SimpleNamespace(returncode=0, stdout=f"{revision}\n")
+        if command == ["git", "symbolic-ref", "--quiet", "--short", "HEAD"]:
+            return SimpleNamespace(
+                returncode=1 if detached_actions else 0,
+                stdout="" if detached_actions else "main\n",
+            )
+        if command[:2] == ["git", "ls-remote"]:
+            return SimpleNamespace(returncode=0, stdout=f"{revision}\trefs/heads/main\n")
+        if command[:2] == ["git", "status"]:
+            assert command[-2:] == list(MODULE.RUNTIME_MODULES)
+            return SimpleNamespace(returncode=0, stdout="")
+        if command[:2] == ["git", "hash-object"]:
+            return SimpleNamespace(returncode=0, stdout=f"{'a' * 40}\n")
+        if command[:3] == ["git", "rev-parse", "--verify"]:
+            return SimpleNamespace(returncode=0, stdout=f"{'a' * 40}\n")
+        raise AssertionError(f"unexpected Git call: {command}")
+
+    monkeypatch.setattr(MODULE.subprocess, "run", git)
+    MODULE.assert_current_main(ROOT, revision)
+
+
+def test_current_main_guard_rejects_stale_or_unavailable_remote(monkeypatch):
+    revision = "d" * 40
+
+    def git(command, **_kwargs):
+        if command == ["git", "rev-parse", "--verify", "HEAD"]:
+            return SimpleNamespace(returncode=0, stdout=f"{revision}\n")
+        if command == ["git", "symbolic-ref", "--quiet", "--short", "HEAD"]:
+            return SimpleNamespace(returncode=0, stdout="main\n")
+        if command[:2] == ["git", "ls-remote"]:
+            return SimpleNamespace(returncode=0, stdout=f"{'e' * 40}\trefs/heads/main\n")
+        raise AssertionError(f"unexpected Git call: {command}")
+
+    monkeypatch.setattr(MODULE.subprocess, "run", git)
+    with pytest.raises(MODULE.PublicationError, match="no longer owns current main"):
+        MODULE.assert_current_main(ROOT, revision)
+
+    def unavailable(command, **kwargs):
+        if command[:2] == ["git", "ls-remote"]:
+            raise subprocess.TimeoutExpired(command, kwargs["timeout"])
+        return git(command, **kwargs)
+
+    monkeypatch.setattr(MODULE.subprocess, "run", unavailable)
+    with pytest.raises(MODULE.PublicationError, match="fresh-main lookup failed"):
+        MODULE.assert_current_main(ROOT, revision)
+
+
+@pytest.mark.parametrize("status", [" M tools/publish_chaski_card.py\n", "M  tools/publish_chaski_card.py\n", "?? tools/publish_chaski_card.py\n"])
+def test_current_main_guard_rejects_dirty_runtime_modules(monkeypatch, status):
+    revision = "d" * 40
+
+    def git(command, **_kwargs):
+        if command == ["git", "rev-parse", "--verify", "HEAD"]:
+            return SimpleNamespace(returncode=0, stdout=f"{revision}\n")
+        if command == ["git", "symbolic-ref", "--quiet", "--short", "HEAD"]:
+            return SimpleNamespace(returncode=0, stdout="main\n")
+        if command[:2] == ["git", "ls-remote"]:
+            return SimpleNamespace(returncode=0, stdout=f"{revision}\trefs/heads/main\n")
+        if command[:2] == ["git", "status"]:
+            assert command[-2:] == list(MODULE.RUNTIME_MODULES)
+            return SimpleNamespace(returncode=0, stdout=status)
+        raise AssertionError(f"unexpected Git call: {command}")
+
+    monkeypatch.setattr(MODULE.subprocess, "run", git)
+    with pytest.raises(MODULE.PublicationError, match="publisher runtime modules"):
+        MODULE.assert_current_main(ROOT, revision)
+
+
+def test_current_main_guard_rejects_runtime_blob_mismatch_even_with_clean_status(monkeypatch):
+    revision = "d" * 40
+
+    def git(command, **_kwargs):
+        if command == ["git", "rev-parse", "--verify", "HEAD"]:
+            return SimpleNamespace(returncode=0, stdout=f"{revision}\n")
+        if command == ["git", "symbolic-ref", "--quiet", "--short", "HEAD"]:
+            return SimpleNamespace(returncode=0, stdout="main\n")
+        if command[:2] == ["git", "ls-remote"]:
+            return SimpleNamespace(returncode=0, stdout=f"{revision}\trefs/heads/main\n")
+        if command[:2] == ["git", "status"]:
+            return SimpleNamespace(returncode=0, stdout="")
+        if command[:2] == ["git", "rev-parse"]:
+            return SimpleNamespace(returncode=0, stdout=f"{'a' * 40}\n")
+        if command[:2] == ["git", "hash-object"]:
+            return SimpleNamespace(returncode=0, stdout=f"{'b' * 40}\n")
+        raise AssertionError(f"unexpected Git call: {command}")
+
+    monkeypatch.setattr(MODULE.subprocess, "run", git)
+    with pytest.raises(MODULE.PublicationError, match="publisher runtime modules"):
+        MODULE.assert_current_main(ROOT, revision)
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    ["clean_crlf", "unstaged", "staged", "untracked_replacement", "skip_worktree"],
+)
+def test_current_main_guard_checks_real_git_checkout_bytes(tmp_path, monkeypatch, mutation):
+    checkout = tmp_path / "checkout"
+    remote = tmp_path / "remote.git"
+
+    def git(*args, cwd=None):
+        return subprocess.run(
+            ["git", *args], cwd=cwd, capture_output=True, text=True, check=True
+        ).stdout.strip()
+
+    git("init", "-q", "-b", "main", str(checkout))
+    git("config", "user.name", "Test Publisher", cwd=checkout)
+    git("config", "user.email", "publisher@example.invalid", cwd=checkout)
+    git("config", "commit.gpgsign", "false", cwd=checkout)
+    git("config", "core.autocrlf", "true", cwd=checkout)
+    for name in MODULE.RUNTIME_MODULES:
+        path = checkout / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(b"VALUE = 'reviewed'\r\n")
+    git("add", "--", *MODULE.RUNTIME_MODULES, cwd=checkout)
+    git("commit", "-qm", "test: reviewed publisher modules", cwd=checkout)
+    git("init", "--bare", "-q", str(remote))
+    git("remote", "add", "origin", str(remote), cwd=checkout)
+    git("push", "--quiet", "origin", "main", cwd=checkout)
+    revision = git("rev-parse", "HEAD", cwd=checkout)
+    monkeypatch.setattr(MODULE, "CANONICAL_FORGE_REMOTE", str(remote))
+
+    helper = checkout / MODULE.RUNTIME_MODULES[1]
+    assert b"\r\n" in helper.read_bytes()
+    assert git("status", "--porcelain=v1", cwd=checkout) == ""
+    if mutation == "clean_crlf":
+        MODULE.assert_current_main(checkout, revision)
+        return
+    if mutation == "untracked_replacement":
+        git("rm", "--cached", "--", MODULE.RUNTIME_MODULES[1], cwd=checkout)
+    elif mutation == "skip_worktree":
+        git("update-index", "--skip-worktree", "--", MODULE.RUNTIME_MODULES[1], cwd=checkout)
+        helper.write_bytes(b"VALUE = 'unreviewed'\r\n")
+        assert git("status", "--porcelain=v1", cwd=checkout) == ""
+    else:
+        helper.write_bytes(b"VALUE = 'unreviewed'\r\n")
+        if mutation == "staged":
+            git("add", "--", MODULE.RUNTIME_MODULES[1], cwd=checkout)
+    with pytest.raises(MODULE.PublicationError, match="publisher runtime modules"):
+        MODULE.assert_current_main(checkout, revision)
+
+
+def test_main_advancing_after_preflight_refuses_noop_success():
+    contract, baseline, current = fixture_state()
+    current[MODULE.SIDECAR] = contract.sidecar
+    api = FakeApi(baseline, current)
+
+    def advanced(_revision):
+        raise MODULE.PublicationError("synthetic protected main advanced")
+
+    with pytest.raises(MODULE.PublicationError, match="protected main advanced"):
+        publish(contract, api, assert_current_source=advanced)
+    assert api.operations == []
+
+
+def test_main_advancing_after_preflight_refuses_hub_commit():
+    contract, baseline, current = fixture_state()
+    api = FakeApi(baseline, current)
+
+    def advanced(_revision):
+        raise MODULE.PublicationError("synthetic protected main advanced")
+
+    with pytest.raises(MODULE.PublicationError, match="protected main advanced"):
+        publish(contract, api, assert_current_source=advanced)
+    assert api.operations == []
+    assert api.parent_commits == []
+
+
+def test_main_advancing_during_hub_commit_refuses_published_success():
+    contract, baseline, current = fixture_state()
+    api = FakeApi(baseline, current)
+    main_revision = {"current": contract.source_revision}
+    checks = []
+    pending = []
+
+    def check_main(revision):
+        checks.append(revision)
+        if main_revision["current"] != revision:
+            raise MODULE.PublicationError("synthetic protected main advanced after commit")
+
+    api.before_commit = lambda _instance: main_revision.update(current="e" * 40)
+    with pytest.raises(MODULE.PublicationError, match="advanced after commit"):
+        publish(contract, api, assert_current_source=check_main, on_commit=pending.append)
+    assert checks == [contract.source_revision, contract.source_revision]
+    assert api.parent_commits == ["e" * 40]
+    assert api.head == "f" * 40
+    assert pending[0]["status"] == "COMMITTED_UNVERIFIED"
+    assert pending[0]["hub_revision"] == "f" * 40
 
 
 def test_real_source_contract_is_bound_to_immutable_git_blob():
