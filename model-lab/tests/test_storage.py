@@ -2,6 +2,10 @@
 import concurrent.futures
 import hashlib
 import json
+import os
+import stat
+from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 import torch
@@ -86,7 +90,9 @@ def test_config_bounds_and_architecture_rejected(key,value):
 
 
 @pytest.mark.parametrize('raw', [b'', b'{}'+b' '*65536, b'{"a":1,"a":2}',
-                                 b'{"a":NaN}', b'{"a":1e999}', b'\xff', b'['*1500])
+                                 b'{"a":NaN}', b'{"a":1e999}', b'\xff', b'['*1500],
+                         ids=['empty','oversized','duplicate-member','nan',
+                              'numeric-overflow','invalid-utf8','excessive-nesting'])
 def test_invalid_config_bytes(raw):
     with pytest.raises(ValueError): S.SparkShape.from_config(raw,hashlib.sha256(raw).hexdigest())
 
@@ -153,12 +159,42 @@ def test_corrupt_file_is_not_loaded_or_cached(store):
     assert cache.stats()['file_reads']==0
 
 
-def test_truncated_and_symlink_files_rejected(store,tmp_path):
+def test_truncated_files_rejected(store):
     source,_=store;chunk=source.chunks['expert_0'];path=source.root/(chunk.sha256+'.safetensors')
     raw=path.read_bytes();path.write_bytes(raw[:-1])
     with pytest.raises(ValueError):source.read('expert_0')
-    path.unlink();other=tmp_path/'outside';other.write_bytes(raw);path.symlink_to(other)
-    with pytest.raises(ValueError):source.read('expert_0')
+
+
+def test_actual_symlink_files_rejected(store,tmp_path):
+    source,_=store;chunk=source.chunks['expert_0'];path=source.root/(chunk.sha256+'.safetensors')
+    raw=path.read_bytes();path.unlink();other=tmp_path/'outside';other.write_bytes(raw)
+    try:
+        path.symlink_to(other)
+    except OSError as exc:
+        if os.name=='nt' and getattr(exc,'winerror',None)==1314:
+            pytest.skip('UNAVAILABLE: host lacks symlink creation privilege; real symlink gate remains required on capable CI')
+        raise
+    with pytest.raises(ValueError,match='symlink_or_reparse_path_rejected'):source.read('expert_0')
+
+
+@pytest.mark.parametrize('kind',['symlink','reparse-attribute'])
+def test_unsafe_metadata_rejected_before_payload_open(store,monkeypatch,kind):
+    """SIMULATED metadata; not evidence of real host symlink capability."""
+    from szl_model_lab import safeio
+    source,_=store;chunk=source.chunks['expert_0'];path=source.root/(chunk.sha256+'.safetensors')
+    original_lstat=Path.lstat
+    def controlled_lstat(value,*args,**kwargs):
+        if value==path:
+            return SimpleNamespace(st_mode=stat.S_IFLNK if kind=='symlink' else stat.S_IFREG,
+                                   st_file_attributes=0x400 if kind=='reparse-attribute' else 0)
+        return original_lstat(value,*args,**kwargs)
+    def forbidden_open(*args,**kwargs):
+        raise AssertionError('unsafe metadata reached payload open')
+    with monkeypatch.context() as patch:
+        patch.setattr(Path,'lstat',controlled_lstat)
+        patch.setattr(safeio.os,'open',forbidden_open)
+        with pytest.raises(ValueError,match='symlink_or_reparse_path_rejected'):
+            source.read('expert_0')
 
 
 @pytest.mark.parametrize('hints',[[],['expert_0'],['expert_3'],['expert_2','expert_3']])

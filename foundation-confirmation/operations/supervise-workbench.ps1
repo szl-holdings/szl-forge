@@ -255,12 +255,13 @@ function Read-FoundationInstallation {
         $receipt.retry_limit -ne 2 -or $receipt.retry_interval_seconds -ne 60 -or $receipt.scheduler_restart_count -ne 0) {
         throw 'The installation receipt has a different recovery policy.'
     }
-    if ($receipt.schema -ne 'szl.foundation-confirmation.windows-installation/v1' -or
+    if ($receipt.schema -cnotin @('szl.foundation-confirmation.windows-installation/v1', 'szl.foundation-confirmation.windows-installation/v2') -or
         $receipt.owner_sid -ne $paths.Sid -or $receipt.task_name -ne $paths.Task -or
         $receipt.task_path -ne '\' -or $receipt.operations_root -ne $paths.Operations -or
         $receipt.action.executable -ne $paths.Shell -or $receipt.state -notin @('PREPARED', 'REGISTERED')) {
         throw 'The installation receipt does not identify this current-user installation.'
     }
+    Get-FoundationTaskPriority $receipt | Out-Null
     $root = Assert-FoundationPath $receipt.lab_root -Directory
     $archive = Assert-FoundationPath $receipt.archive_path
     $script:foundationArchivePath = $archive
@@ -302,9 +303,46 @@ function Resolve-FoundationTaskSid {
     }
 }
 
+function Get-FoundationTaskPriority {
+    param($Receipt)
+    if ($Receipt.schema -isnot [string]) { throw 'Unsupported installation task priority contract.' }
+    switch -CaseSensitive ($Receipt.schema) {
+        'szl.foundation-confirmation.windows-installation/v2' {
+            if (($Receipt.task_priority -isnot [int] -and $Receipt.task_priority -isnot [long]) -or $Receipt.task_priority -ne 5) {
+                throw 'Unsupported installation task priority contract.'
+            }
+            return 5
+        }
+        'szl.foundation-confirmation.windows-installation/v1' {
+            $hasPriority = if ($Receipt -is [Collections.IDictionary]) { $Receipt.Contains('task_priority') }
+                           else { 'task_priority' -in @($Receipt.PSObject.Properties.Name) }
+            # Bind compatibility to the immutable bounded-recovery v1 installers
+            # at a0cc7cb2 (CPU) and b7ba4163 (legacy). A new installer cannot be
+            # downgraded by deleting its priority field and changing its schema.
+            if ($hasPriority -or $Receipt.scripts.'install-workbench.ps1' -cnotin @(
+                '2dded72edba06cd048c0ce17c3c36a66e80feeba2b31d990e5c2d3da45349b24',
+                '0cb4523b74cbd197c86fae827294a648d4aea496f7a53428af176aacf3b49cfb')) {
+                throw 'Unsupported installation task priority contract.'
+            }
+            # Historical v1 installers used the native Scheduler default (7).
+            # Admit only that value, so owned validation/removal stays possible.
+            return 7
+        }
+        default { throw 'Unsupported installation task priority contract.' }
+    }
+}
+
+function New-FoundationTaskSettings {
+    # Normal process priority; no elevated or real-time scheduling policy.
+    $settings = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew -ExecutionTimeLimit ([TimeSpan]::Zero) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+    $settings.Priority = 5
+    return $settings
+}
+
 function Assert-FoundationTask {
     param($Task, $Receipt)
     $paths = Get-FoundationPaths
+    $expectedPriority = Get-FoundationTaskPriority $Receipt
     $principalSid = $null
     $triggerSid = $null
     if ($null -ne $Task) {
@@ -321,7 +359,8 @@ function Assert-FoundationTask {
         [string]$Task.Principal.RunLevel -ne 'Limited' -or @($Task.Triggers).Count -ne 1 -or
         $Task.Triggers[0].CimClass.CimClassName -ne 'MSFT_TaskLogonTrigger' -or $triggerSid -ne $paths.Sid -or
         $Task.Settings.RestartCount -ne 0 -or -not [string]::IsNullOrEmpty($Task.Settings.RestartInterval) -or
-        [string]$Task.Settings.MultipleInstances -ne 'IgnoreNew' -or $Task.Settings.ExecutionTimeLimit -ne 'PT0S') {
+        [string]$Task.Settings.MultipleInstances -ne 'IgnoreNew' -or $Task.Settings.ExecutionTimeLimit -ne 'PT0S' -or
+        $Task.Settings.Priority -ne $expectedPriority) {
         throw 'A conflicting task definition was found; no task was changed.'
     }
 }

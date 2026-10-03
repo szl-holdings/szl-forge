@@ -24,10 +24,17 @@ COPY --chown=user:user download_artifacts.py ./download_artifacts.py
 # fail the image build unless their declared sizes and SHA-256 digests match.
 RUN python download_artifacts.py --fetch --output-dir /home/user/model-artifacts
 
+FROM runtime-base AS formula-contract-validator
+COPY --chown=user:user formula_atlas_contract.py ./formula_atlas_contract.py
+COPY --chown=user:user formula_atlas/ ./formula_atlas/
+RUN python formula_atlas_contract.py --verify \
+    && touch /home/user/formula-contract-verified
+
 FROM runtime-base AS runtime
 ENV HF_HUB_OFFLINE=1 \
     HF_HUB_DISABLE_XET=1
 COPY --from=artifact-builder --chown=root:root /home/user/model-artifacts/ /opt/szl/model-artifacts/
+COPY --from=formula-contract-validator --chown=root:root /home/user/formula-contract-verified /opt/szl/formula-contract-verified
 COPY --chown=user:user . .
 
 EXPOSE 7860

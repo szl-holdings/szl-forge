@@ -61,7 +61,7 @@ try {
         $scriptHashes[$name] = $hash
     }
     $arguments = Get-FoundationTaskArguments $admitted.LabRoot $admitted.ArchivePath $Port $script:foundationCpuRuntime
-    $receipt = @{ schema = 'szl.foundation-confirmation.windows-installation/v1'; installation_id = [guid]::NewGuid().ToString('N');
+    $receipt = @{ schema = 'szl.foundation-confirmation.windows-installation/v2'; task_priority = 5; installation_id = [guid]::NewGuid().ToString('N');
         installed_utc = [datetime]::UtcNow.ToString('o'); owner_sid = $paths.Sid; task_name = $paths.Task; task_path = '\';
         lab_root = $admitted.LabRoot; archive_path = $admitted.ArchivePath; port = $Port; operations_root = $operationsPath;
         state = 'PREPARED'; scripts = $scriptHashes; source_admission = $admitted.Verification;
@@ -76,7 +76,7 @@ try {
     $principal = New-ScheduledTaskPrincipal -UserId $paths.Sid -LogonType Interactive -RunLevel Limited
     # The supervisor owns the bounded recovery budget. Scheduler retries must
     # remain disabled so the two independent mechanisms cannot multiply retries.
-    $settings = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew -ExecutionTimeLimit ([TimeSpan]::Zero) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+    $settings = New-FoundationTaskSettings
     # No -Force: an intervening task-name conflict is a failure, never a takeover.
     Register-ScheduledTask -TaskName $paths.Task -TaskPath '\' -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Description 'Verified local SZL Foundation Confirmation research workbench; current-user logon only.' | Out-Null
     $registered = Get-ScheduledTask -TaskName $paths.Task -TaskPath '\' -ErrorAction Stop

@@ -1,21 +1,25 @@
 {
   "schema": "szl.space-source-release/v1",
-  "release_id": "brain13-1d3960c-controller-9f227f6",
+  "release_id": "brain13-1d3960c-controller-9f227f6-atlas-d7b08cde",
   "source_files": {
     ".dockerignore": "dba1fb4c6538a44cd8d7e77f133af90a8e7927d3dee23f8694fe6d867238333c",
-    "Dockerfile": "49ae4b1ab9e35675c2133c0acd592bdbd4e2a6cf41cdeb205223a8b60e836212",
+    "Dockerfile": "9750d8e6f8ba36f96cb77afebb5ec121760aad9ade07d921e36e98b1efe6b45a",
     "LICENSE": "0a41cda63c0751e5cdb240864525fc8bf29b2d3f2cb5c6406b9bae97f1e1407b",
-    "README.md": "7481834f0a05758a3afc8bbeb3c1620471486ddc1565e633907810c4d742d63e",
+    "README.md": "a040798b7b1a0dfcb05ab17a0ae5ba2e28776ad3796bf7c0e013796f25e73ab8",
     "app.py": "28a81bc9e2510218c735436a3f9b9e0e0dfdd8e12f62852824626ee79f6f3c56",
-    "app_governed.py": "10c355b6a4e189e651a42b006694d77e67dd8cc3a96025d6aec5dfaf0fe1153f",
+    "app_governed.py": "0879252c6dbf83b635cf22c41685eeb5e844a98a914f67fefb104eefd9291b00",
     "download_artifacts.py": "aa9f98b3d19753953864beae167b5e74872270c880e78430bb345a5f06b4ef36",
+    "formula_atlas/formula-atlas.v1.json": "765b9e5c9dd8d4fc5c7518a5b2f70cd6008918591cfa5edfc9868453cb30b7a2",
+    "formula_atlas/source-formula-ledger-corpus.json": "c0b6dfee3233097307c518a57c076e5ba3ea9013f34ab454bef92aeddf0f3634",
+    "formula_atlas_contract.py": "a3976d4b341672cc3f9a8c577fbb20d4c8b55797c99a8fa8ec896def56a3aeba",
     "requirements.txt": "0fbdb25326826741cdb8864cf5285054ef3897328d44e2305c4e94f71547acb1",
     "szl/SOURCE.json": "5cfe994c4ea5060aec217f250bf049b57f2063bbd2cf74ef67d16b086e1965b3",
     "szl/logos/szl_favicon.svg": "4b154f0de21f71b111bde98bc564ddeef082d888d44f0b50b5a5247e3badf190",
     "szl/szl-design-system.css": "9e5e6e3ae2a5c6f5a2a3c6bf4c607406dc39db3fbe9115e91a1865054678493e",
     "tests/test_app.py": "55e8acf97ea8f65cfcf6234d685b12fa41dc7d41ff80afa595a2755a43c9ce2e",
     "tests/test_governed_app.py": "9752c093589dce8fe6720efec5dcba15d7a827e503fb5d324e79d1cd16b2c04f",
-    "verify_execution_record.py": "d9e5dfde6eb88662d7565f6b2b998caff5172c1d908cf3a1b9f860cf1f8fbadb",
-    "verify_governed_live.py": "9923af8452bd9afed137a60adb05ddfd29eefbaff31a342953eb461e6f8dfe5b"
+    "tests/test_formula_atlas_contract.py": "b279915e12b27b2a087f0c2681bd9c20d21501e6b7d6249019779727120c0bc0",
+    "verify_execution_record.py": "7f6a1052cda52b862fab2cb897d84ed271d938bb19bf505cf45a9dfde20c22c2",
+    "verify_governed_live.py": "eee076a7808db70cb33b6d9994d89e612b6158ada963eae443349681135f15bf"
   }
 }

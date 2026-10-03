@@ -138,10 +138,21 @@ def test_actual_git_export_contains_importable_storage_stack(tmp_path,track):
         path=exported/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(body)
     environment=__import__('os').environ.copy()
     environment['PYTHONPATH']=str(exported/'source/src')
-    command="from szl_model_lab.app import Settings,create_app; a=create_app(Settings('x'*40,{},{})); assert any(getattr(r,'path',None)=='/storage' for r in a.routes); print('EXPORTED_STORAGE_ROUTE_IMPORT_PASSED')"
+    command=("from szl_model_lab.app import Settings,create_app; "
+             "a=create_app(Settings('x'*40,{},{})); "
+             "assert any(getattr(r,'path',None)=='/storage' for r in a.routes); "
+             "from szl_model_lab.cli import main; import os; "
+             "os.environ.pop('SZL_ARCHIVE_ROOT',None); os.environ.pop('SZL_STAGE_ROOT',None); "
+             "assert main(['stage-archive','--request','missing.json','--output','stage'])==2; "
+             "assert main(['archive-candidate','--candidate','missing-candidate'])==2; "
+             "print('EXPORTED_STORAGE_AND_ARCHIVE_IMPORT_PASSED')")
     done=subprocess.run([sys.executable,'-B','-c',command],env=environment,cwd=tmp_path,
                         capture_output=True,text=True,timeout=30,check=True)
-    assert done.stdout.strip()=='EXPORTED_STORAGE_ROUTE_IMPORT_PASSED'
+    assert done.stdout.strip()=='EXPORTED_STORAGE_AND_ARCHIVE_IMPORT_PASSED'
+    assert [json.loads(line) for line in done.stderr.splitlines()]==[
+        {'status':'BLOCKED','error_type':'ValueError'},
+        {'status':'BLOCKED','error_type':'ValueError'},
+    ]
 
 
 def test_existing_publication_contract_guards_retained():
