@@ -40,6 +40,9 @@ szl:
 
 **Research adapter · dated owner-run evidence · HOLD**
 
+This research candidate is **not promotable**. Publication and autonomy
+eligibility remain false; the dated observations authorize no deployment.
+
 Chaski-R2 is a bf16 LoRA research recut of `Qwen/Qwen3.5-0.8B`.
 It is separate from `SZLHOLDINGS/chaski` and the r=16, α=16
 `SZLHOLDINGS/chaski-5050` experiment. Publication and autonomy eligibility
