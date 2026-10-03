@@ -43,6 +43,8 @@ Refresh the plan before **every later removal**; never reuse the example timesta
 
 After all 26 removals read back as absent, a separate invocation updates only title and description from the manifest:
 
+The Hub limits collection descriptions to 150 characters. The source plan validates that limit before a provider call; the public artifact catalog carries the longer explanation. If a provider call fails ambiguously, independently read the public collection and its `lastUpdated` value before any retry.
+
 ```powershell
 $szlSourceSha = (git rev-parse HEAD).Trim()
 py -3 -B -m publishing.flagship_collection_apply `
