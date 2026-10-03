@@ -1,7 +1,7 @@
 # SZL Forge — train SZL-1 on your own metal.
 # Fine-tunes Qwen2.5-3B-Instruct with QLoRA via Unsloth, then merges to a
-# 16-bit safetensors folder that Ollama can import directly (no llama.cpp
-# build needed on Windows).
+# 16-bit safetensors folder. This historical recipe does not qualify the
+# output for import to the canonical szl1 Ollama name.
 #
 # Honest expectations:
 # - First run downloads the ~2 GB 4-bit base model from Hugging Face.
@@ -9,6 +9,13 @@
 # - Merge step needs ~8 GB free RAM and ~7 GB free disk for ./szl-model.
 
 import json
+from pathlib import Path
+
+if Path('szl-model').exists() or Path('outputs').exists():
+    raise SystemExit(
+        '[szl-forge] HOLD: existing legacy training output detected; '
+        'refusing to overwrite szl-model or outputs'
+    )
 
 from unsloth import FastLanguageModel
 
@@ -80,4 +87,4 @@ print(f"[szl-forge] training done: {stats.training_loss:.4f} final loss")
 
 print("[szl-forge] merging to 16-bit safetensors at ./szl-model ...")
 model.save_pretrained_merged("szl-model", tokenizer, save_method="merged_16bit")
-print("[szl-forge] DONE. Next: ollama create szl1 -f Modelfile")
+print("[szl-forge] Experimental merge written. Do not import it as canonical szl1; follow recovery issue #264.")
