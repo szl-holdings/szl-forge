@@ -25,6 +25,9 @@ def adapter_config():
 
 
 class Admissions(unittest.TestCase):
+    def setUp(self):
+        self.enterContext(patch.object(target.shutil, "disk_usage", return_value=Mock(free=8 * 1024**3)))
+
     def test_strict_json_rejects_duplicates_and_nonfinite(self):
         for text in (b'{"x":1,"x":2}', b'{"x":NaN}', b'{"x":Infinity}'):
             with self.subTest(text=text), self.assertRaises(target.GateError):
@@ -192,6 +195,232 @@ class Admissions(unittest.TestCase):
             code, report = target.run(options(Path(temp) / "results" / "fresh"), train_function=lambda *_: self.fail("must not train"))
             self.assertEqual(code, 1); self.assertEqual(report["state"], "FAILED_CLOSED")
             self.assertEqual(lock.read_text(), "other owner")
+
+
+class DiskAdmissions(unittest.TestCase):
+    FLOOR = 1536 * 1024**2
+    RESERVE = 256 * 1024**2
+
+    def setUp(self):
+        self.temp = self.enterContext(tempfile.TemporaryDirectory())
+        self.root = Path(self.temp)
+        self.enterContext(patch.object(target, "HERE", self.root))
+        self.probe = self.enterContext(patch.object(target.shutil, "disk_usage",
+            return_value=Mock(free=8 * 1024**3)))
+
+    def test_low_disk_refuses_before_output_lock_or_training(self):
+        for free in (self.FLOOR - 1, self.FLOOR + self.RESERVE - 1):
+            with self.subTest(free=free):
+                self.probe.return_value = Mock(free=free)
+                output = self.root / "results" / "not-created"
+                callback = Mock()
+                with self.assertRaisesRegex(target.GateError, "DISK_LIMIT"):
+                    target.run(options(output), train_function=callback)
+                callback.assert_not_called()
+                self.assertFalse(output.parent.exists())
+                self.assertFalse((self.root / ".native-training.lock").exists())
+
+    def test_exact_headroom_boundary_preserves_complete_receipt_hash(self):
+        self.probe.return_value = Mock(free=self.FLOOR + self.RESERVE)
+        args = options(self.root / "results" / "boundary")
+        def complete(_args, report):
+            report["state"] = "MEASURED_LOCAL_CONTINUATION_COMPLETED"
+        code, report = target.run(args, train_function=complete)
+        self.assertEqual(code, 0)
+        self.assertTrue(report["durable_report_written"])
+        self.assertEqual(json.loads((args.output / "training-report.json").read_bytes()), report)
+        unsigned = dict(report); digest = unsigned.pop("report_sha256")
+        self.assertEqual(target.sha(target.canonical(unsigned)), digest)
+
+    def test_probe_nearest_existing_ancestor_without_creating_parents(self):
+        missing = self.root / "results" / "not-created"
+        target.disk_guard(missing)
+        self.probe.assert_called_once_with(self.root.resolve())
+        self.assertFalse(missing.parent.exists())
+
+    def test_probe_failure_invalid_free_and_invalid_reserve_fail_closed(self):
+        for free in (None, True, -1, "unknown"):
+            with self.subTest(free=free):
+                self.probe.return_value = Mock(free=free)
+                with self.assertRaisesRegex(target.GateError, "DISK_PROBE_UNAVAILABLE"):
+                    target.disk_guard(self.root)
+        self.probe.side_effect = OSError("private-shaped-probe-error")
+        with self.assertRaisesRegex(target.GateError, "DISK_PROBE_UNAVAILABLE"):
+            target.disk_guard(self.root)
+        self.probe.side_effect = None
+        for reserve in (-1, True, 0.5):
+            with self.subTest(reserve=reserve), self.assertRaisesRegex(target.GateError, "DISK_RESERVE_INVALID"):
+                target.disk_guard(self.root, reserve_bytes=reserve)
+
+    def test_lock_volume_failure_leaves_output_and_other_owner_untouched(self):
+        lock = self.root / ".native-training.lock"; lock.write_text("other owner")
+        self.probe.side_effect = [Mock(free=8 * 1024**3), OSError("lock volume unavailable")]
+        output = self.root / "results" / "fresh"
+        callback = Mock()
+        with self.assertRaisesRegex(target.GateError, "DISK_PROBE_UNAVAILABLE"):
+            target.run(options(output), train_function=callback)
+        callback.assert_not_called()
+        self.assertFalse(output.exists())
+        self.assertEqual(lock.read_text(), "other owner")
+
+    def test_runtime_disk_gate_precedes_any_cuda_probe(self):
+        self.probe.return_value = Mock(free=self.FLOOR + self.RESERVE - 1)
+        torch = Mock()
+        with self.assertRaisesRegex(target.GateError, "DISK_LIMIT"):
+            target.runtime_guard(torch, options(self.root), target.time.monotonic())
+        torch.cuda.is_available.assert_not_called()
+
+    def test_checkpoint_admission_denies_any_save_when_disk_drops(self):
+        self.probe.return_value = Mock(free=self.FLOOR + self.RESERVE - 1)
+        model, processor = Mock(), Mock()
+        with self.assertRaisesRegex(target.GateError, "DISK_LIMIT"):
+            target.save_candidate(model, processor, self.root / "adapter")
+        model.save_pretrained.assert_not_called()
+        processor.save_pretrained.assert_not_called()
+
+    def test_processor_save_has_an_independent_fresh_disk_probe(self):
+        self.probe.side_effect = [Mock(free=8 * 1024**3), Mock(free=self.FLOOR - 1)]
+        model, processor = Mock(), Mock()
+        candidate = self.root / "adapter"
+        with self.assertRaisesRegex(target.GateError, "DISK_LIMIT"):
+            target.save_candidate(model, processor, candidate)
+        model.save_pretrained.assert_called_once_with(candidate, safe_serialization=True)
+        processor.save_pretrained.assert_not_called()
+
+    def test_tracking_write_is_not_called_after_capacity_refusal(self):
+        self.probe.return_value = Mock(free=self.FLOOR - 1)
+        tracker = Mock()
+        with self.assertRaisesRegex(target.GateError, "DISK_LIMIT"):
+            target.tracking_write(self.root, tracker.log, {"step": 1})
+        tracker.log.assert_not_called()
+
+    def test_secondary_tracking_failure_does_not_mask_execution_failure(self):
+        self.probe.return_value = Mock(free=self.FLOOR - 1)
+        tracker, report = Mock(), {}
+        target.finish_tracking(tracker, self.root, report, primary_error=True)
+        tracker.finish.assert_not_called()
+        self.assertEqual(report["tracking_finish_error_code"], "DISK_LIMIT")
+        with self.assertRaisesRegex(target.GateError, "DISK_LIMIT"):
+            target.finish_tracking(tracker, self.root, {}, primary_error=False)
+
+    def test_report_disk_refusal_returns_failure_without_opening_report(self):
+        args = options(self.root / "results" / "no-report")
+        def complete(_args, report):
+            report["state"] = "MEASURED_LOCAL_CONTINUATION_COMPLETED"
+            self.probe.return_value = Mock(free=self.FLOOR - 1)
+        code, report = target.run(args, train_function=complete)
+        self.assertEqual(code, 1)
+        self.assertEqual(report["state"], "FAILED_CLOSED")
+        self.assertEqual(report["error_code"], "DISK_LIMIT")
+        self.assertFalse(report["durable_report_written"])
+        self.assertFalse((args.output / "training-report.json").exists())
+        self.assertFalse((self.root / ".native-training.lock").exists())
+        self.assertFalse(report["publication_eligible"])
+
+    def test_report_failure_preserves_original_error_and_other_owner_lock(self):
+        lock = self.root / ".native-training.lock"; lock.write_text("other owner")
+        args = options(self.root / "results" / "occupied")
+        self.probe.side_effect = [Mock(free=8 * 1024**3), Mock(free=8 * 1024**3),
+            Mock(free=8 * 1024**3),
+            OSError("capacity unavailable at report")]
+        code, report = target.run(args, train_function=Mock())
+        self.assertEqual(code, 1)
+        self.assertEqual(report["error_code"], "DISK_PROBE_UNAVAILABLE")
+        self.assertEqual(report["prior_error_code"], "LOCAL_EXECUTION_FAILED_NO_PROMOTION")
+        self.assertFalse(report["durable_report_written"])
+        self.assertEqual(lock.read_text(), "other owner")
+
+    def test_report_actual_utf8_bytes_and_explicit_size_limit(self):
+        output = self.root / "receipt"; output.mkdir()
+        report = {"state": "FAILED_CLOSED", "text": "\u00e9", "durable_report_written": False}
+        saved = target.persist_report(output, report)
+        raw = (output / "training-report.json").read_bytes()
+        self.assertEqual(json.loads(raw), saved)
+        self.assertEqual(self.probe.call_count, 2)
+        with patch.object(target, "MAX_REPORT_BYTES", len(raw) - 1):
+            with self.assertRaisesRegex(target.GateError, "REPORT_TOO_LARGE"):
+                target.persist_report(self.root / "not-written", report)
+        self.assertFalse((self.root / "not-written").exists())
+        boundary = self.root / "boundary"; boundary.mkdir()
+        with patch.object(target, "MAX_REPORT_BYTES", len(raw)):
+            target.persist_report(boundary, report)
+
+    def test_fsync_failure_cannot_publish_a_successful_final_receipt(self):
+        args = options(self.root / "results" / "sync-failed")
+        def complete(_args, report):
+            report["state"] = "MEASURED_LOCAL_CONTINUATION_COMPLETED"
+        with patch.object(target.os, "fsync", side_effect=OSError("private sync error")):
+            code, report = target.run(args, train_function=complete)
+        self.assertEqual(code, 1)
+        self.assertEqual(report["state"], "FAILED_CLOSED")
+        self.assertEqual(report["error_code"], "REPORT_PERSISTENCE_FAILED")
+        self.assertFalse(report["durable_report_written"])
+        self.assertFalse((args.output / "training-report.json").exists())
+        self.assertEqual(len(list(args.output.glob(".training-report-*.pending"))), 1)
+        self.assertFalse((self.root / ".native-training.lock").exists())
+
+    def test_short_or_unflushed_pending_report_is_never_final(self):
+        for failure in ("short", "flush"):
+            with self.subTest(failure=failure):
+                output = self.root / failure; output.mkdir()
+                stream = Mock()
+                stream.write.side_effect = lambda raw: len(raw) - (failure == "short")
+                if failure == "flush":
+                    stream.flush.side_effect = OSError("private flush error")
+                manager = Mock()
+                manager.__enter__ = Mock(return_value=stream)
+                manager.__exit__ = Mock(return_value=False)
+                with patch.object(Path, "open", return_value=manager), patch.object(target.os, "link") as publish:
+                    with self.assertRaises((target.GateError, OSError)):
+                        target.persist_report(output, {"state": "MEASURED_LOCAL_CONTINUATION_COMPLETED"})
+                publish.assert_not_called()
+                self.assertFalse((output / "training-report.json").exists())
+
+    def test_existing_final_receipt_is_never_overwritten(self):
+        output = self.root / "prior"; output.mkdir()
+        final = output / "training-report.json"; final.write_bytes(b"preserve older evidence")
+        with self.assertRaises(FileExistsError):
+            target.persist_report(output, {"state": "FAILED_CLOSED"})
+        self.assertEqual(final.read_bytes(), b"preserve older evidence")
+
+    def test_exclusive_lock_write_failure_cleans_only_newly_owned_lock(self):
+        original_open = Path.open
+        def opening(path, *args, **kwargs):
+            if path.name == ".native-training.lock":
+                stream = original_open(path, *args, **kwargs)
+                manager = Mock()
+                manager.__enter__ = Mock(return_value=Mock(write=Mock(side_effect=OSError("private lock write error"))))
+                manager.__exit__ = Mock(side_effect=lambda *_: stream.close())
+                return manager
+            return original_open(path, *args, **kwargs)
+        callback = Mock()
+        args = options(self.root / "results" / "lock-failed")
+        with patch.object(Path, "open", opening):
+            code, report = target.run(args, train_function=callback)
+        callback.assert_not_called()
+        self.assertEqual(code, 1)
+        self.assertFalse((self.root / ".native-training.lock").exists())
+        self.assertTrue(report["durable_report_written"])
+        self.assertEqual(report["state"], "FAILED_CLOSED")
+
+    def test_cleanup_refusal_retains_primary_error_and_attempts_failure_receipt(self):
+        original_unlink = Path.unlink
+        def unlinking(path, *args, **kwargs):
+            if path.name == ".native-training.lock":
+                raise OSError("private cleanup error")
+            return original_unlink(path, *args, **kwargs)
+        def fail(_args, _report):
+            raise target.GateError("PRIMARY_EXECUTION_FAILURE")
+        args = options(self.root / "results" / "cleanup-failed")
+        with patch.object(Path, "unlink", unlinking):
+            code, report = target.run(args, train_function=fail)
+        self.assertEqual(code, 1)
+        self.assertEqual(report["state"], "FAILED_CLOSED")
+        self.assertEqual(report["error_code"], "OWNED_LOCK_CLEANUP_FAILED")
+        self.assertEqual(report["prior_error_code"], "PRIMARY_EXECUTION_FAILURE")
+        self.assertTrue(report["durable_report_written"])
+        self.assertTrue((self.root / ".native-training.lock").exists())
+        self.assertNotIn("private cleanup", (args.output / "training-report.json").read_text())
 
 
 if __name__ == "__main__":
