@@ -10,6 +10,15 @@ function Reject {
     if (-not $failed) { throw "Control was admitted: $Name" }
     $checks.Add($Name)
 }
+function Resolve-FoundationFixtureApplication {
+    param([object[]]$Applications)
+    $first = @($Applications | Select-Object -First 1)
+    if ($first.Count -ne 1 -or [string]$first[0].CommandType -cne 'Application' -or
+        $first[0].Source -isnot [string] -or [string]::IsNullOrWhiteSpace($first[0].Source)) {
+        throw 'The fixture requires one resolved native application.'
+    }
+    return $first[0].Source
+}
 $fixtureParent = (Get-FoundationPaths).Profile
 $fixture = Join-Path $fixtureParent ('.cpu-controls-' + [guid]::NewGuid().ToString('N'))
 $children = @()
@@ -140,9 +149,21 @@ try {
     $checks.Add('JSON_V2_RECEIPT_NORMAL_PRIORITY_ADMITTED')
     $task.Actions = @(New-ScheduledTaskAction -Execute $paths.Shell -Argument ($action.arguments + ' -CpuStateDirectory wrong') -WorkingDirectory $root)
     Reject 'CONFLICTING_CPU_TASK_ARGUMENTS' { Assert-FoundationTask $task $taskReceipt } 'conflicting task definition'
+    # Reproduce multiple discovery results without changing PATH or the host.
+    $firstApplication = Get-Command $paths.Shell -CommandType Application -ErrorAction Stop
+    $secondApplication = [pscustomobject]@{ CommandType='Application'; Source=(Join-Path $fixture 'must-not-invoke.exe') }
+    $selectedApplication = Resolve-FoundationFixtureApplication @($firstApplication, $secondApplication)
+    if ($selectedApplication -isnot [string] -or $selectedApplication -cne $paths.Shell) { throw 'Multiple application results were not reduced to the first source.' }
+    $checks.Add('TWO_APPLICATION_RESULTS_RESOLVE_ONE_EXACT_SOURCE')
+    $selectionChild = Start-Process -FilePath $selectedApplication -ArgumentList '-NoProfile -NonInteractive -WindowStyle Hidden -Command "exit 37"' -WindowStyle Hidden -PassThru
+    $children += $selectionChild
+    if (-not $selectionChild.WaitForExit(20000) -or $selectionChild.ExitCode -ne 37) { throw 'The first resolved fixture application did not execute exactly.' }
+    $checks.Add('ONLY_FIRST_RESOLVED_APPLICATION_INVOKED_WITH_RETAINED_EXIT_CODE')
+    Reject 'EMPTY_APPLICATION_DISCOVERY' { Resolve-FoundationFixtureApplication @() } 'one resolved native application'
+    Reject 'ARRAY_APPLICATION_SOURCE' { Resolve-FoundationFixtureApplication @([pscustomobject]@{CommandType='Application';Source=@($paths.Shell,$secondApplication.Source)}) } 'one resolved native application'
     # This is a stdlib-only test image, not production environment admission.
     $fixturePython = Join-Path $paths.Profile 'AppData\Local\Programs\Python\Python311\python.exe'
-    if (-not (Test-Path -LiteralPath $fixturePython)) { $fixturePython = (Get-Command python -CommandType Application -ErrorAction Stop).Source }
+    if (-not (Test-Path -LiteralPath $fixturePython)) { $fixturePython = Resolve-FoundationFixtureApplication @(Get-Command python -CommandType Application -ErrorAction Stop) }
     $nativeRaw = & $fixturePython -I -S -B (Join-Path $PSScriptRoot 'test-cpu-predecessor.py')
     if ($LASTEXITCODE -ne 0) { throw 'The actual retained-handle predecessor fixture failed.' }
     $native = ($nativeRaw -join "`n") | ConvertFrom-Json
