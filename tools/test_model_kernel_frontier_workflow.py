@@ -57,6 +57,16 @@ class ModelKernelFrontierWorkflowTests(unittest.TestCase):
         )
         self.assertIn("python tools/verify_model_portfolio.py \\\n            --live", self.live_region)
 
+    def test_adapter_guard_has_a_blocking_offline_test_owner(self) -> None:
+        self.assertIn("chaski/adapter_guard.py", self.offline_region)
+        self.assertIn("chaski/test_adapter_guard.py", self.offline_region)
+        self.assertIn(
+            "PYTHONPATH=. python -B -m unittest -v chaski/test_adapter_guard.py",
+            self.offline_region,
+        )
+        self.assertIn("set -euo pipefail", self.offline_region)
+        self.assertNotIn("continue-on-error", self.offline_region)
+
     def test_reports_are_retained_without_making_skipped_live_proofs_look_present(
         self,
     ) -> None:
