@@ -296,6 +296,8 @@ class FakeApi:
                 raise AssertionError(type(source))
             remote[operation.path_in_repo] = payload
         self.remote[(repo_type, oid)] = remote
+        if repo_type == publisher.LEGACY_REPO_TYPE:
+            self.model_revision = oid
         return SimpleNamespace(oid=oid)
 
     def upload_kernel(self, staging_root: Path, token: str) -> None:
@@ -2454,6 +2456,10 @@ class PublishSzlKernelsTests(unittest.TestCase):
             authorization, artifacts = self._fixture(root)
             api = FakeApi(artifacts)
             api.download_root = root / "downloads"
+            api.remote[(publisher.LEGACY_REPO_TYPE, api.model_revision)][
+                "OPERATIONAL.json"
+            ] = b'{"tests":"PASS","eval":"PASS","load_path":"revision=main"}'
+            api.files.append("OPERATIONAL.json")
             identity = publisher.publisher_identity(
                 repository=publisher.EXPECTED_PUBLISHER_REPOSITORY,
                 revision=self.publisher_revision,
@@ -2514,11 +2520,38 @@ class PublishSzlKernelsTests(unittest.TestCase):
                 result["targets"]["legacy_model"]["readback"],
                 "EXACT_BYTES_VERIFIED",
             )
+            self.assertEqual(
+                result["targets"]["legacy_model"]["operational_retirement"],
+                "RETIRED_AND_EXACT_READBACK_VERIFIED",
+            )
             legacy_revision = result["targets"]["legacy_model"]["revision_after"]
             legacy_publication = json.loads(
                 api.remote[(publisher.LEGACY_REPO_TYPE, legacy_revision)][
                     "publication.json"
                 ]
+            )
+            retired_bytes = api.remote[(publisher.LEGACY_REPO_TYPE, legacy_revision)][
+                "OPERATIONAL.json"
+            ]
+            retired = json.loads(retired_bytes)
+            self.assertEqual(retired["schema"], "szl.kernel-operational-retirement/v1")
+            self.assertEqual(retired["status"], "RETIRED")
+            self.assertEqual(retired["qualification"], "NOT_ATTESTED")
+            self.assertEqual(retired["tests"], "NOT_CURRENT")
+            self.assertEqual(retired["eval"], "NOT_CURRENT")
+            self.assertEqual(retired["get_kernel"], "NOT_CURRENT")
+            self.assertEqual(retired["source_revision"], self.source_revision)
+            self.assertEqual(retired["publisher_revision"], self.publisher_revision)
+            self.assertNotIn("load_path", retired)
+            self.assertNotIn('"PASS"', retired_bytes.decode("utf-8"))
+            self.assertEqual(
+                legacy_publication["generated_files"],
+                [{
+                    "path": "OPERATIONAL.json",
+                    "bytes": len(retired_bytes),
+                    "sha256": hashlib.sha256(retired_bytes).hexdigest(),
+                    "status": "RETIRED",
+                }],
             )
             self.assertEqual(
                 legacy_publication["authorization"]["schema"],
@@ -2564,6 +2597,123 @@ class PublishSzlKernelsTests(unittest.TestCase):
                 api.remote[
                     (publisher.KERNEL_REPO_TYPE, branches_after["v1"])
                 ],
+            )
+
+    def test_legacy_readback_rejects_tampered_operational_retirement(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self._fixture(root)
+            contract = publisher.load_contract(root)
+            publication_bytes = b"{}\n"
+            operational_bytes = publisher.retired_operational_bytes(
+                source_revision=self.source_revision,
+                publisher_revision=self.publisher_revision,
+            )
+            publication_path = root / "publication.json"
+            publication_path.write_bytes(publication_bytes)
+            stale_path = root / "stale-operational.json"
+            stale_path.write_bytes(b'{"tests":"PASS"}\n')
+
+            def download(_repo: str, relative: str, **_kwargs: object) -> str:
+                if relative == "publication.json":
+                    return str(publication_path)
+                if relative == "OPERATIONAL.json":
+                    return str(stale_path)
+                return str(root / relative)
+
+            with self.assertRaisesRegex(
+                publisher.PublicationError,
+                "readback mismatch at OPERATIONAL.json",
+            ):
+                publisher.verify_legacy_readback(
+                    root,
+                    contract,
+                    publication_bytes,
+                    operational_bytes,
+                    revision="f" * 40,
+                    token="test-token",
+                    download_fn=download,
+                )
+
+    def test_source_contract_cannot_claim_generated_files_or_aliases(self) -> None:
+        for relative in (
+            "OPERATIONAL.json",
+            "publication.json",
+            "./OPERATIONAL.json",
+            "./publication.json",
+            "nested/../OPERATIONAL.json",
+            r".\publication.json",
+        ):
+            with self.subTest(relative=relative), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                self._fixture(root)
+                contract_path = root / publisher.CONTRACT_RELATIVE
+                contract = json.loads(contract_path.read_text(encoding="utf-8"))
+                contract["artifact_files"].append(relative)
+                contract_path.write_text(json.dumps(contract), encoding="utf-8")
+                with self.assertRaisesRegex(
+                    publisher.PublicationError,
+                    "publisher-generated",
+                ):
+                    publisher.load_contract(root)
+
+    def test_legacy_current_head_move_fails_closed_after_exact_readback(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            authorization, artifacts = self._fixture(root)
+            api = FakeApi(artifacts)
+            api.download_root = root / "downloads"
+            identity = publisher.publisher_identity(
+                repository=publisher.EXPECTED_PUBLISHER_REPOSITORY,
+                revision=self.publisher_revision,
+                workflow_ref=(
+                    f"{publisher.EXPECTED_PUBLISHER_REPOSITORY}/"
+                    ".github/workflows/publish-szl-kernels.yml@refs/heads/main"
+                ),
+                run_id="123",
+                run_attempt="1",
+            )
+
+            def moved_head_download(*args: object, **kwargs: object) -> str:
+                path = api.download(*args, **kwargs)
+                if (
+                    kwargs.get("repo_type") == publisher.LEGACY_REPO_TYPE
+                    and kwargs.get("revision") != "d" * 40
+                ):
+                    api.model_revision = "9" * 40
+                return path
+
+            report = root / "report.json"
+            with self.assertRaisesRegex(
+                publisher.PublicationError,
+                "legacy model main moved during readback",
+            ):
+                publisher.run(
+                    source_root=root,
+                    report_path=report,
+                    authorization_path=authorization,
+                    source_revision=self.source_revision,
+                    publisher=identity,
+                    publish=True,
+                    **keyless_grants(),
+                    api=api,
+                    download_fn=moved_head_download,
+                    kernel_sign_fn=fake_sign_kernel_metadata,
+                    kernel_upload_fn=api.upload_kernel,
+                    kernel_runtime_fn=lambda *, revision: runtime_evidence(revision),
+                )
+            result = json.loads(report.read_text(encoding="utf-8"))
+            self.assertEqual(
+                result["status"], "PUBLICATION_FAILED_AFTER_PROVIDER_WRITE_ATTEMPT"
+            )
+            self.assertEqual(result["failure"]["stage"], "LEGACY_CURRENT_HEAD")
+            self.assertEqual(
+                result["targets"]["legacy_model"]["operational_retirement"],
+                "PENDING_PUBLICATION",
+            )
+            self.assertEqual(
+                result["targets"]["legacy_model"]["current_head_observed"],
+                "9" * 40,
             )
 
     def test_extra_runtime_claim_is_not_persisted_or_promoted_to_legacy(self) -> None:

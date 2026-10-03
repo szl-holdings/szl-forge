@@ -11,6 +11,7 @@ import io
 import json
 import math
 import os
+import posixpath
 import re
 import shutil
 import struct
@@ -50,6 +51,7 @@ KERNEL_RUNTIME_EVIDENCE_PATH = "/tmp/szl-kernel-runtime-evidence.json"
 KERNEL_RUNTIME_LOG_PREFIX = "SZL_KERNEL_RUNTIME_EVIDENCE="
 KERNEL_RUNTIME_LOG_LIMIT = 64 * 1024
 CONTRACT_RELATIVE = Path("publishing/source-binding.json")
+LEGACY_OPERATIONAL_FILE = "OPERATIONAL.json"
 FULL_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 DOCKER_CONTAINER_ID_RE = re.compile(r"^[0-9a-f]{64}$")
 LEGACY_REPO_TYPE = "model"
@@ -426,6 +428,20 @@ def load_contract(source_root: Path) -> dict[str, Any]:
         or len(artifact_files) != len(set(artifact_files))
     ):
         raise PublicationError("artifact_files must be a unique non-empty string list")
+    normalized_files = [
+        posixpath.normpath(item.replace("\\", "/")) for item in artifact_files
+    ]
+    reserved_files = {"publication.json", LEGACY_OPERATIONAL_FILE}
+    if reserved_files.intersection(normalized_files):
+        raise PublicationError(
+            "publication.json and OPERATIONAL.json are publisher-generated, "
+            "not source-declared"
+        )
+    if any(
+        item != normalized or item.startswith("/") or ".." in item.split("/")
+        for item, normalized in zip(artifact_files, normalized_files)
+    ):
+        raise PublicationError("artifact_files must use canonical relative paths")
     missing_kernel_sources = FIRST_CLASS_REQUIRED_SOURCE_FILES - set(artifact_files)
     if missing_kernel_sources:
         raise PublicationError(
@@ -722,16 +738,44 @@ def publisher_identity(
     }
 
 
+def retired_operational_bytes(*, source_revision: str, publisher_revision: str) -> bytes:
+    """Replace the legacy PASS document with a non-qualification record."""
+    return canonical_json(
+        {
+            "schema": "szl.kernel-operational-retirement/v1",
+            "status": "RETIRED",
+            "qualification": "NOT_ATTESTED",
+            "tests": "NOT_CURRENT",
+            "eval": "NOT_CURRENT",
+            "get_kernel": "NOT_CURRENT",
+            "source_repository": EXPECTED_SOURCE_REPOSITORY,
+            "source_revision": source_revision,
+            "publisher_repository": EXPECTED_PUBLISHER_REPOSITORY,
+            "publisher_revision": publisher_revision,
+            "generated_by_publisher": True,
+            "source_binding_reference": "publication.json at the same immutable Hub revision",
+            "limitations": [
+                "Earlier OPERATIONAL.json PASS and import-LIVE claims are historical and superseded.",
+                "This record does not assert current tests, evaluation, loader safety, or runtime readiness.",
+            ],
+        }
+    ).encode("utf-8")
+
+
 def verify_legacy_readback(
     source_root: Path,
     contract: dict[str, Any],
     publication_bytes: bytes,
+    operational_bytes: bytes,
     *,
     revision: str,
     token: str,
     download_fn: Callable[..., str],
 ) -> None:
-    for relative in list(contract["artifact_files"]) + ["publication.json"]:
+    for relative in list(contract["artifact_files"]) + [
+        "publication.json",
+        LEGACY_OPERATIONAL_FILE,
+    ]:
         downloaded = Path(
             download_fn(
                 EXPECTED_REPO_ID,
@@ -741,11 +785,12 @@ def verify_legacy_readback(
                 token=token,
             )
         )
-        expected = (
-            publication_bytes
-            if relative == "publication.json"
-            else safe_file(source_root, relative).read_bytes()
-        )
+        expected = {
+            "publication.json": publication_bytes,
+            LEGACY_OPERATIONAL_FILE: operational_bytes,
+        }.get(relative)
+        if expected is None:
+            expected = safe_file(source_root, relative).read_bytes()
         if downloaded.read_bytes() != expected:
             raise PublicationError(f"readback mismatch at {relative}")
 
@@ -1923,6 +1968,10 @@ def run(
         kernel_token=kernel_token,
         download_fn=download_fn,
     )
+    operational_bytes = retired_operational_bytes(
+        source_revision=source_revision,
+        publisher_revision=publisher["revision"],
+    )
     legacy_publication = {
         "schema": "szl.hf-kernel-source-binding/v2",
         "artifact": {
@@ -1939,6 +1988,14 @@ def run(
             "declared_file_count": len(files),
             "files": files,
         },
+        "generated_files": [
+            {
+                "path": LEGACY_OPERATIONAL_FILE,
+                "bytes": len(operational_bytes),
+                "sha256": hashlib.sha256(operational_bytes).hexdigest(),
+                "status": "RETIRED",
+            }
+        ],
         "publisher": publisher,
         "publisher_authority": required_authority,
         "authorization": authorization_observation,
@@ -2013,6 +2070,10 @@ def run(
             "legacy_model": {
                 "repo_type": LEGACY_REPO_TYPE,
                 "revision_before": observed_before["legacy_model"]["revision"],
+                "operational_retirement": "PENDING_PUBLICATION",
+                "operational_retirement_sha256": hashlib.sha256(
+                    operational_bytes
+                ).hexdigest(),
                 "publication_sha256": hashlib.sha256(
                     legacy_publication_bytes
                 ).hexdigest(),
@@ -2274,6 +2335,12 @@ def run(
                 path_or_fileobj=io.BytesIO(legacy_publication_bytes),
             )
         )
+        legacy_operations.append(
+            CommitOperationAdd(
+                path_in_repo=LEGACY_OPERATIONAL_FILE,
+                path_or_fileobj=io.BytesIO(operational_bytes),
+            )
+        )
         try:
             legacy_commit = api.create_commit(
                 repo_id=EXPECTED_REPO_ID,
@@ -2303,6 +2370,7 @@ def run(
                 source_root,
                 contract,
                 legacy_publication_bytes,
+                operational_bytes,
                 revision=legacy_revision,
                 token=token,
                 download_fn=download_fn,
@@ -2317,6 +2385,28 @@ def run(
             )
             raise
         result["targets"]["legacy_model"]["readback"] = "EXACT_BYTES_VERIFIED"
+        try:
+            current_revision = api.model_info(EXPECTED_REPO_ID, token=token).sha
+            result["targets"]["legacy_model"]["current_head_observed"] = (
+                current_revision
+            )
+            if current_revision != legacy_revision:
+                raise PublicationError(
+                    "legacy model main moved during readback; retirement is "
+                    "verified only at the immutable publication revision"
+                )
+        except Exception as exc:
+            record_publication_failure(
+                result,
+                report_path,
+                stage="LEGACY_CURRENT_HEAD",
+                exc=exc,
+                provider_write_attempted=True,
+            )
+            raise
+        result["targets"]["legacy_model"]["operational_retirement"] = (
+            "RETIRED_AND_EXACT_READBACK_VERIFIED"
+        )
         result["status"] = "PUBLISHED_AND_EXACT_READBACK_VERIFIED"
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(canonical_json(result), encoding="utf-8")
