@@ -20,7 +20,7 @@ import oac_clinical_resources  # noqa: E402
 import oac_stack_api as api  # noqa: E402
 import oac_stack_integration as integration  # noqa: E402
 from oac_operational_health import OperationalHealthKernel  # noqa: E402
-from oac_stack_integration import ClinicalKernel  # noqa: E402
+from oac_stack_integration import ClinicalKernel, ControlEvidenceModel  # noqa: E402
 
 
 FRONTEND = Path(__file__).resolve().parents[1] / "frontend"
@@ -645,6 +645,45 @@ class IntegrationNormalizationTests(unittest.TestCase):
             summary = kernel.dataset_summary()
             self.assertEqual(summary["schema"], integration.DATASET_SCHEMA)
             self.assertEqual(summary["dataset_semantics"], integration.DATASET_SEMANTICS)
+
+    def test_command_success_requires_literal_boolean_true(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="oac-status-test-") as temporary:
+            root = Path(temporary).resolve()
+            kernel = ClinicalKernel(root / "state", data_root=root)
+            for malformed in ("false", 1, None):
+                with self.subTest(ok=malformed):
+                    with mock.patch.object(
+                        integration,
+                        "run_owned_command",
+                        return_value=({"ok": malformed, "operation": "clinical-status"}, "{}", 0),
+                    ):
+                        result = kernel.run("clinical-status")
+                    self.assertIs(result["ok"], False)
+                    self.assertEqual(result["control_evidence_score"], 0.0)
+            with mock.patch.object(
+                integration,
+                "run_owned_command",
+                return_value=({"ok": True, "operation": "clinical-status"}, "{}", 1),
+            ):
+                nonzero_exit = kernel.run("clinical-status")
+            self.assertIs(nonzero_exit["ok"], False)
+            self.assertEqual(nonzero_exit["control_evidence_score"], 0.0)
+            self.assertTrue(all(row["ok"] is False for row in kernel.dataset_tail()))
+
+    def test_advisory_score_requires_literal_boolean_evidence(self) -> None:
+        model = ControlEvidenceModel()
+        for malformed in ("false", 1, None):
+            with self.subTest(signal="ok", value=malformed):
+                self.assertEqual(model.score({"ok": malformed}, "clinical-status"), 0.0)
+            with self.subTest(signal="ledger_correlation_verified", value=malformed):
+                self.assertEqual(
+                    model.score({"ledger_correlation_verified": malformed}, "clinical-status"),
+                    0.0,
+                )
+        self.assertEqual(
+            model.score({"ok": True, "ledger_correlation_verified": True}, "clinical-status"),
+            0.55,
+        )
 
     def test_callable_main_forwards_packaging_configuration(self) -> None:
         with tempfile.TemporaryDirectory(prefix="oac-main-test-") as temporary:

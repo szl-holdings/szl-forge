@@ -434,7 +434,9 @@ class BaseTransport:
             outcome = IngestOutcome(False, "INGEST_EXCEPTION")
             try:
                 result = self._ingest(item.raw, dict(item.metadata))
-                if isinstance(result, Mapping) and result.get("ok") is False:
+                if not isinstance(result, Mapping) or type(result.get("ok")) is not bool:
+                    raise IngestRejected("INVALID_INGEST_RESULT")
+                if result["ok"] is False:
                     raise IngestRejected(str(result.get("code") or "INGEST_REJECTED"))
                 outcome = IngestOutcome(True, "INGESTED")
             except IngestRejected as exc:
@@ -1209,12 +1211,25 @@ class LiveTransportRuntime:
                     hl7_path.replace(rejected / payload_name)
                 raise IngestRejected("INVALID_KERNEL_RESPONSE")
             inner = result.get("payload") if isinstance(result.get("payload"), dict) else {}
+            outer_ok = result.get("ok")
+            inner_ok = inner.get("ok")
+            return_code = result.get("return_code")
+            if (
+                type(outer_ok) is not bool
+                or type(inner_ok) is not bool
+                or type(return_code) is not int
+                or (outer_ok is True and (inner_ok is not True or return_code != 0))
+                or (outer_ok is False and inner_ok is True and return_code == 0)
+            ):
+                if hl7_path.exists():
+                    hl7_path.replace(rejected / payload_name)
+                raise IngestRejected("INVALID_KERNEL_RESPONSE")
             result_code = _safe_code(
                 inner.get("code") or result.get("code") or ("OK" if result.get("ok") else "INGEST_REJECTED"),
                 "INGEST_REJECTED",
             )
             summary = {
-                "ok": bool(result.get("ok")),
+                "ok": outer_ok,
                 "code": result_code,
                 "return_code": result.get("return_code"),
                 "transport_token": transport_token,
@@ -1233,7 +1248,7 @@ class LiveTransportRuntime:
                 _atomic_json(state_dir / "oac_transport_last_payload.json", summary)
             except OSError:
                 pass
-            if result.get("ok"):
+            if outer_ok:
                 hl7_path.unlink(missing_ok=True)
                 return {"ok": True, "code": result_code}
             if hl7_path.exists():
