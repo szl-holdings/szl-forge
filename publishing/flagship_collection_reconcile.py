@@ -146,7 +146,7 @@ def main() -> int:
         if args.live:
             print(json.dumps(plan_live(manifest, fetch_public_collection()), indent=2))
         else:
-            print(f"flagship source plan valid: 26 observed; 6 quarantined; target empty; Hub write denied")
+            print("flagship source plan valid: 26 observed; 6 quarantined; target empty; Hub write denied")
     except (OSError, ValueError, KeyError, TypeError) as exc:
         parser.exit(2, f"flagship reconciliation HOLD: {exc}\n")
     return 0
