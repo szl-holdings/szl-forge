@@ -57,6 +57,11 @@ local workbench while preserving its saved trials. Registration, on-demand
 execution and owned-process restart have separate evidence. Logon startup does
 not imply a tested machine reboot or an always-on public availability promise.
 
+The [3 October operational observation](operational-status/README.md) retains
+source publication, public inference, manual Windows availability, and the
+failed automatic recovery attempt with their individual measurement times.
+The qualified successor release remains **BLOCKED**.
+
 ## Research release and showcase version
 
 The original v0.4 ZIP contains all source, three trained selectors and their
