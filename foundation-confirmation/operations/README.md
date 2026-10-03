@@ -153,6 +153,8 @@ no shared cache, and no dependency substitution. The admission helper verifies
 the complete installed importable payload against the locked wheel bytes, rejects
 additional source, extensions, bytecode, site hooks and links, and binds the
 native executable hash, environment paths, payload digest and package versions.
+Installed payload hashing uses four bounded I/O workers after every pathname is
+admitted. Each file is read in full; missing, added or changed bytes still fail.
 An NTFS-compressed file is acceptable when its bytes and hashes are unchanged.
 
 Use all three explicit CPU arguments when validating or installing:

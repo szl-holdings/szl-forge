@@ -6,6 +6,7 @@ site directory is activated without executing .pth files or global site hooks.
 from __future__ import annotations
 
 import argparse
+from concurrent.futures import ThreadPoolExecutor
 import ctypes
 import datetime as dt
 import hashlib
@@ -137,7 +138,7 @@ def verify_payload(environment, wheelhouse, records):
                 # Stream large DLLs instead of allocating their expanded bytes.
                 with archive.open(info) as payload_file:
                     expected[name] = digest_stream(payload_file)
-    observed = {}
+    installed = []
     for path in site.rglob('*'):
         if not path.is_file():
             continue
@@ -148,8 +149,16 @@ def verify_payload(environment, wheelhouse, records):
         if relative.endswith('/INSTALLER'):
             require(path.read_bytes() == b'uv', 'Installer identity differs')
         if relative in expected:
-            observed[relative] = digest_file(path)
-            require(observed[relative] == expected[relative], 'Installed wheel payload differs: ' + relative)
+            installed.append((relative, path))
+    # Validate every pathname before opening payloads. Four bounded I/O workers
+    # avoid serial file-open delay; every admitted file still gets a full hash.
+    def verify_installed(entry):
+        relative, path = entry
+        observed_hash = digest_file(path)
+        require(observed_hash == expected[relative], 'Installed wheel payload differs: ' + relative)
+        return relative, observed_hash
+    with ThreadPoolExecutor(max_workers=4) as workers:
+        observed = dict(workers.map(verify_installed, installed))
     require(observed == expected, 'Installed CPU wheel payload is incomplete')
     return {'site_packages': str(site), 'environment_payload_sha256': hashlib.sha256(canonical(observed)).hexdigest(), 'files_verified': len(observed), 'package_versions': package_versions}
 
