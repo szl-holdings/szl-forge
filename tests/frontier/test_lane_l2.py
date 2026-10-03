@@ -30,6 +30,7 @@ def test_mock_abstains_and_beats_disclosed_line(tmp_path):
     assert r.returncode == 0 and r.stdout.strip() == "PASS"
     receipt = json.loads(out.read_text())
     assert receipt["abstain"] == "6/6"
+    assert receipt["grader_version"] == "explicit-refusal-khipu-abstain-v2"
     assert receipt["baseline"] == {"abstain": 3}  # KHIPU-R2 disclosed line
     assert receipt["evals"] == "SIMULATED"
     assert receipt["evaluation_mode"] == "PUBLIC_CI_SMOKE"
