@@ -18,6 +18,19 @@ SECOND_BRAIN_REVISION = "1d3960c69235f117b7ec2b5ea97472f81fb588f5"
 NEMO_REVISION = "810231a531188bb569e3faa17396386eb0a5e260"
 MODEL_REVISION = "67d60ec577730747055491640cfb91fc4a4b5d25"
 LOCKED_EIGHT = ["F1", "F4", "F7", "F11", "F12", "F18", "F19", "F22"]
+ATLAS_REPOSITORY = "szl-holdings/szl-formulas"
+ATLAS_REVISION = "d03536144d2f23ee2da35c356e2558abe5183779"
+ATLAS_GIT_BLOB_SHA = "1d3737cb3fc32ee17916f9dfe139a286a930a29f"
+ATLAS_SHA256 = "765b9e5c9dd8d4fc5c7518a5b2f70cd6008918591cfa5edfc9868453cb30b7a2"
+ATLAS_PAYLOAD_SHA256 = "d7b08cde24f57a40de5707c4336ae41eae48aff9e91cb210ec3152ae8d3a8024"
+ATTRIBUTED_SOURCE = {
+    "repository": "szl-holdings/szl-formula-ledger",
+    "revision": "ceaef540eba6c5acf85091faf4a20cd9aef480f9",
+    "path": "formulas/corpus.json",
+    "git_blob_sha": "600654f89cb062320acae4284cb5220ff881eb3c",
+    "sha256": "c0b6dfee3233097307c518a57c076e5ba3ea9013f34ab454bef92aeddf0f3634",
+    "state": "ARCHIVED_ATTRIBUTED_SOURCE",
+}
 BANNED_PERSISTED_KEYS = {
     "prompt",
     "raw_prompt",
@@ -189,6 +202,18 @@ def verify_health(
         observed = packages.get(name) or {}
         require(observed.get("match") is True, f"{name} package mismatch")
         require(observed.get("observed") == expected, f"{name} version mismatch")
+    dependency = health.get("dependency_status") or {}
+    require(dependency.get("formula_atlas_ready") is True, "Formula Atlas is not ready")
+    atlas = health.get("formula_atlas") or {}
+    require(atlas.get("ready") is True, "Formula Atlas health is not ready")
+    for name, expected in (
+        ("attributed_formula_count", 30),
+        ("executable_formula_count", 21),
+        ("quant_domain_count", 9),
+        ("locked_proven_count", 8),
+    ):
+        require(atlas.get(name) == expected, f"Formula Atlas {name} drift")
+    require(atlas.get("formula_may_authorize") is False, "formula gained authority")
     require(
         headers.get("x-szl-forge-controller-revision")
         == FORGE_CONTROLLER_REVISION,
@@ -211,6 +236,15 @@ def verify_contract(contract: dict[str, Any]) -> None:
         "governed endpoint path drift",
     )
     require(endpoint.get("tools") is False, "public tools must remain disabled")
+    require(
+        contract.get("public_read_only_endpoints")
+        == {
+            "formula_atlas": "/api/v2/formula-atlas",
+            "source": "/api/source",
+            "well_known_source": "/.well-known/szl-source.json",
+        },
+        "public Formula Atlas route contract drift",
+    )
     controller = contract.get("controller") or {}
     require(
         controller.get("revision") == FORGE_CONTROLLER_REVISION,
@@ -253,6 +287,138 @@ def verify_contract(contract: dict[str, Any]) -> None:
     require(runtime.get("winner") == "UNSELECTED", "runtime winner fabricated")
     model = contract.get("model") or {}
     require(model.get("revision") == MODEL_REVISION, "model revision drift")
+
+
+def verify_formula_atlas(atlas: dict[str, Any]) -> dict[str, Any]:
+    require(atlas.get("schema") == "szl.formula-atlas.public/v2", "atlas schema drift")
+    require(
+        atlas.get("state") == "VERIFIED_IMMUTABLE_PUBLIC_PROJECTION",
+        "atlas projection is unavailable",
+    )
+    sources = atlas.get("source") or {}
+    materialized = sources.get("atlas") or {}
+    require(materialized.get("repository") == ATLAS_REPOSITORY, "atlas repo drift")
+    require(materialized.get("revision") == ATLAS_REVISION, "atlas revision drift")
+    require(materialized.get("git_blob_sha") == ATLAS_GIT_BLOB_SHA, "atlas blob drift")
+    require(materialized.get("sha256") == ATLAS_SHA256, "atlas digest drift")
+    require(
+        materialized.get("payload_sha256") == ATLAS_PAYLOAD_SHA256,
+        "atlas payload digest drift",
+    )
+    require(
+        sources.get("attributed_corpus") == ATTRIBUTED_SOURCE,
+        "attributed corpus source drift",
+    )
+    counts = atlas.get("counts") or {}
+    for name, expected in (
+        ("attributed_formula_count", 30),
+        ("executable_formula_count", 21),
+        ("quant_domain_count", 9),
+        ("locked_proven_count", 8),
+    ):
+        require(counts.get(name) == expected, f"atlas {name} drift")
+    handles = atlas.get("formula_handles") or []
+    require(len(handles) == 30, "formula handle count drift")
+    require(
+        len({item.get("id") for item in handles}) == 30,
+        "duplicate formula handles",
+    )
+    require(
+        all(
+            set(item)
+            == {
+                "id",
+                "class",
+                "reported_status",
+                "quant_domain",
+                "admission",
+                "locked_proven_membership",
+                "source_attribution",
+            }
+            for item in handles
+        ),
+        "formula handle projection exposed unexpected fields",
+    )
+    require(
+        len(atlas.get("executable_formula_handles") or []) == 21,
+        "executable formula handle count drift",
+    )
+    require(len(atlas.get("quant_domains") or []) == 9, "quant domain count drift")
+    proof = atlas.get("proof_authority") or {}
+    require(
+        set(proof.get("locked_proven_ids") or []) == set(LOCKED_EIGHT),
+        "locked formula identity drift",
+    )
+    require(
+        proof.get("lambda_status") == "CONJECTURE_1_OPEN_ADVISORY_ONLY",
+        "Lambda status drift",
+    )
+    authority = atlas.get("authority") or {}
+    require(authority.get("formula_may_authorize") is False, "formula gained authority")
+    require(authority.get("model_may_authorize") is False, "model gained authority")
+    require(
+        authority.get("public_effectors_enabled") is False,
+        "public effectors became enabled",
+    )
+    require(authority.get("public_tools") == [], "public tools are not empty")
+    privacy = atlas.get("privacy") or {}
+    for key in (
+        "formula_statements_included",
+        "second_brain_handles_included",
+        "private_graph_content_included",
+        "private_retrieval_performed",
+    ):
+        require(privacy.get(key) is False, f"atlas privacy boundary drift: {key}")
+    require(not walk_banned_keys(atlas), "atlas exposed private content")
+    return {
+        "atlas_revision": ATLAS_REVISION,
+        "atlas_sha256": ATLAS_SHA256,
+        "atlas_payload_sha256": ATLAS_PAYLOAD_SHA256,
+        "attributed_corpus_revision": ATTRIBUTED_SOURCE["revision"],
+        "attributed_corpus_sha256": ATTRIBUTED_SOURCE["sha256"],
+    }
+
+
+def verify_source_contract(
+    source: dict[str, Any], expected_source_revision: str
+) -> None:
+    require(
+        source.get("schema") == "szl.model-inference-lab.source/v1",
+        "source contract schema drift",
+    )
+    require(source.get("state") == "OBSERVED", "source contract is not observed")
+    service = source.get("service") or {}
+    require(
+        service.get("repository") == "szl-holdings/szl-forge",
+        "source repository drift",
+    )
+    require(
+        service.get("revision") == expected_source_revision,
+        "source revision mismatch",
+    )
+    require(bool(service.get("release_id")), "source release identity missing")
+    require(
+        len(str(service.get("release_manifest_sha256") or "")) == 64,
+        "source release manifest digest missing",
+    )
+    components = source.get("components") or {}
+    require(
+        (components.get("formula_atlas") or {}).get("revision") == ATLAS_REVISION,
+        "source Formula Atlas revision drift",
+    )
+    require(
+        components.get("attributed_formula_corpus") == ATTRIBUTED_SOURCE,
+        "source attributed corpus drift",
+    )
+    authority = source.get("authority") or {}
+    require(authority.get("formula_may_authorize") is False, "source formula gained authority")
+    require(authority.get("model_may_authorize") is False, "source model gained authority")
+    require(
+        authority.get("public_effectors_enabled") is False,
+        "source effectors enabled",
+    )
+    require(authority.get("public_tools") == [], "source public tools are not empty")
+    require(not walk_banned_keys(source), "source contract exposed private content")
 
 
 def verify_inference(
@@ -397,6 +563,26 @@ def main(argv: list[str] | None = None) -> int:
         require(status == 200, "governed contract endpoint failed")
         verify_contract(contract)
 
+        status, formula_atlas, _ = request_json(
+            f"{base_url}/api/v2/formula-atlas", timeout=30.0
+        )
+        require(status == 200, "Formula Atlas endpoint failed")
+        formula_evidence = verify_formula_atlas(formula_atlas)
+
+        status, source_contract, _ = request_json(
+            f"{base_url}/api/source", timeout=30.0
+        )
+        require(status == 200, "source contract endpoint failed")
+        verify_source_contract(source_contract, args.expected_source_revision)
+        status, well_known_source, _ = request_json(
+            f"{base_url}/.well-known/szl-source.json", timeout=30.0
+        )
+        require(status == 200, "well-known source endpoint failed")
+        require(
+            source_contract == well_known_source,
+            "source contract aliases returned different payloads",
+        )
+
         last_status = 0
         inference: dict[str, Any] = {}
         inference_headers: dict[str, str] = {}
@@ -435,6 +621,7 @@ def main(argv: list[str] | None = None) -> int:
                 "source_revision": args.expected_source_revision,
                 "second_brain_public_chunk_count": 575,
                 "locked_proven_formula_count": 8,
+                "formula_atlas": formula_evidence,
                 "runtime_winner": "UNSELECTED",
                 "tool_execution": False,
                 "anatomy_observation_count": anatomy.get("observation_count"),
