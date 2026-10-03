@@ -36,7 +36,10 @@ evidence digests remain bound to original file bytes, not reserialized JSON.
 Every model-event record must be a JSON object. Corrupt or non-object records
 produce a sanitized `INCOMPLETE` receipt, even after an apparent completion,
 before any proposal application or candidate check. The original event stream
-is retained; unknown well-formed event types remain compatible.
+is retained; unknown well-formed event types remain compatible. Records are
+framed by LF (including CRLF), so literal Unicode line-separator characters
+inside valid JSON strings are not mistaken for separate records. Blank records
+remain invalid.
 
 Optional `source_paths` supplies at most twelve relative repository files as
 revision-verified source context, each capped at 128 KiB. This lets research

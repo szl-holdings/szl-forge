@@ -54,6 +54,19 @@ non-secret `SZL_GITHUB_SOURCE_REVISION` Space variable and verifies it at
 That endpoint reports `UNKNOWN` rather than inferring a source revision when
 the binding is absent or malformed.
 
+The read-only `GET /api/v2/formula-atlas` route projects handles and
+attribution from two immutable source snapshots: the 30-row attributed
+formula corpus and the 21-entry executable registry, grouped into nine
+quantitative domains. The image build checks their exact Git blobs and
+SHA-256 digests; `GET /api/source` and
+`GET /.well-known/szl-source.json` expose the deployed source binding
+and snapshot identities. The response omits formula statements and private
+Second Brain content. Its eight locked-proven identifiers remain exactly
+`F1, F4, F7, F11, F12, F18, F19, F22`; source-reported status is
+attribution, not a new proof or execution authority. Formula Atlas
+integrity failure makes governed health unavailable. These checks establish
+source consistency, not independent replay or a model qualification.
+
 The human-facing surface is the **Khipu Loom**: a responsive Formula Genome
 instrument that keeps the source thread, immutable model pin, receipt boundary,
 runtime state, and unsigned-output limitation visible beside the bounded

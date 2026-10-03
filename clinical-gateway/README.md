@@ -71,6 +71,8 @@ is labeled `deterministic_operational_evidence_not_clinical_confidence`. This is
 an allowlisted local observability log, not patient data, clinical evidence, a
 training corpus, or proof of model performance. Do not fine-tune a model on it
 and do not put PHI into it.
+Only literal boolean success and ledger-correlation signals earn their score
+contributions, and a nonzero command exit cannot earn the success contribution.
 
 The separately trained `OperationalHealthKernel` accepts exactly eight bounded
 transport/configuration features and returns an operator-attention advisory. It
@@ -154,8 +156,9 @@ notification, or undocumented commands.
 
 ACK handling is bounded as follows:
 
-- AA is sent only after the local ingest callback reports successful
-  processing.
+- AA is sent only after the local ingest callback reports literal boolean
+  success, including a zero command exit and a literal-success kernel payload.
+  Missing, contradictory, or truthy non-boolean responses fail closed with AE.
 - Malformed framing, an invalid envelope, an oversized frame, the wrong message
   type, or the wrong configured HL7 version receives AR.
 - Internal ingest rejection, queue/backpressure, or a stopping transport

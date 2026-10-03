@@ -42,7 +42,7 @@ jobs:
           "cryptography==49.0.0"
           "fastapi==0.139.0"
           "httpx==0.28.1"
-          "huggingface-hub==1.23.0"
+          "huggingface-hub==1.23.0" "requests==2.33.0"
           "jsonschema==4.26.0"
           "pydantic==2.13.4"
           "safetensors==0.8.0"
@@ -96,11 +96,15 @@ jobs:
             frontier/qwen35-receiptagent-v3/test_prepare_release.py \
             frontier/qwen35-receiptagent-v3/test_supervise_training.py \
             frontier/qwen35-receiptagent-v3/test_supervisor_validation.py \
+            frontier/qwen35-receiptagent-v4-json/json_contract.py \
+            frontier/qwen35-receiptagent-v4-json/test_json_contract.py \
             tools/publish_receiptagent_v3.py \
             tools/test_publish_receiptagent_v3.py \
             chaski/train_chaski.py \
             chaski/eval_chaski.py \
             chaski/bakeoff_named_n.py \
+            chaski/adapter_guard.py \
+            chaski/test_adapter_guard.py \
             chaski/test_bakeoff_named_n.py \
             chaski/serve_chaski.py \
             chaski/jobs/launch_chaski_job.py \
@@ -141,6 +145,7 @@ jobs:
           python tools/test_verify_model_portfolio.py
           PYTHONPATH=. python -m unittest -v tools/test_fall2026_alignment.py
           PYTHONPATH=. python -m unittest -v chaski/test_named_n_gate.py
+          PYTHONPATH=. python -B -m unittest -v chaski/test_adapter_guard.py
           PYTHONPATH=. python -m unittest -v chaski/test_bakeoff_named_n.py
           PYTHONPATH=. python -m unittest -v khipu_r2/test_khipu_r2.py
           PYTHONPATH=. python -m unittest -v chaski_r2/test_chaski_r2.py
@@ -159,6 +164,9 @@ jobs:
             python frontier/qwen35-receiptagent-v2/test_qualify_runtime.py
           python frontier/qwen35-receiptagent-v2/evidence_chain.py verify
           python frontier/qwen35-receiptagent-v3/generate_curriculum.py --check
+          python -B -m unittest discover \
+            -s frontier/qwen35-receiptagent-v4-json \
+            -p 'test_*.py' -v
           PYTHONPATH=frontier/qwen35-receiptagent-v3 \
             python -m unittest discover \
               -s frontier/qwen35-receiptagent-v3 \
@@ -264,6 +272,24 @@ jobs:
             reports/hf-private-read-credential.json
           if-no-files-found: warn
           retention-days: 30
+
+  verify-kernel-builder-patch:
+    name: Compile pinned kernel publisher patch
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Compile and test the exact patched builder without publisher credentials
+        run: bash tools/install_patched_kernel_builder.sh --verify
 
   verify-receiptagent-v3-windows:
     name: ReceiptAgent v3 authenticated release (Windows)

@@ -212,7 +212,7 @@ class AgentTests(unittest.TestCase):
 
     def research_events(self, raw, name):
         def fake_run(argv, cwd, folder, label, seconds, incoming):
-            (folder / "model.jsonl").write_text(raw, encoding="utf-8")
+            (folder / "model.jsonl").write_bytes(raw.encode("utf-8"))
             return {"exit_code": 0, "stopped": None}
         with patch.object(agent, "git", side_effect=self.fake_git), \
              patch.object(agent.shutil, "which", return_value="codex.exe"), \
@@ -252,6 +252,46 @@ class AgentTests(unittest.TestCase):
         self.assertEqual(receipt["state"], "MODEL_RESPONSE_OBSERVED")
         self.assertTrue(receipt["model_execution_observed"])
         self.assertFalse(receipt["production_authorized"])
+
+    def test_unicode_message_content_is_not_an_event_delimiter(self):
+        for index, text in enumerate(("ordinary", "before\u0085after", "before\u2028after", "before\u2029after")):
+            for ending_index, ending in enumerate(("\n", "\r\n")):
+                for terminated in (False, True):
+                    with self.subTest(text=text, ending=ending, terminated=terminated):
+                        records = [json.dumps({"type": "item.completed", "item": {
+                            "type": "agent_message", "text": text}}, ensure_ascii=False),
+                            '{"type":"turn.completed"}']
+                        raw = ending.join(records) + (ending if terminated else "")
+                        name = f"unicode-{index}-{ending_index}-{terminated}"
+                        receipt = self.research_events(raw, name)
+                        self.assertEqual(receipt["state"], "MODEL_RESPONSE_OBSERVED")
+                        self.assertTrue(receipt["model_execution_observed"])
+                        self.assertFalse(receipt["production_authorized"])
+                        self.assertEqual((self.root / name / "model.jsonl").read_bytes(), raw.encode("utf-8"))
+                        self.assertEqual((self.root / name / "model-report.md").read_text(encoding="utf-8"), text)
+
+    def test_blank_records_stay_corrupt_with_lf_or_crlf_framing(self):
+        for ending_index, ending in enumerate(("\n", "\r\n")):
+            for placement, records in enumerate((
+                ("", '{"type":"turn.completed"}'),
+                ('{"type":"future.event"}', "", '{"type":"turn.completed"}'),
+                ('{"type":"turn.completed"}', ""),
+            )):
+                with self.subTest(ending=ending, placement=placement):
+                    raw = ending.join(records) + ending
+                    receipt = self.research_events(raw, f"blank-{ending_index}-{placement}")
+                    self.assertEqual(receipt["state"], "INCOMPLETE")
+                    self.assertFalse(receipt["model_execution_observed"])
+                    self.assertFalse(receipt["production_authorized"])
+
+    def test_only_lf_frames_distinct_event_records(self):
+        for index, separator in enumerate(("\r", "\u0085", "\u2028", "\u2029", "\v", "\f")):
+            with self.subTest(separator=separator):
+                raw = separator.join(('{"type":"future.event"}', '{"type":"turn.completed"}'))
+                receipt = self.research_events(raw, f"non-jsonl-delimiter-{index}")
+                self.assertEqual(receipt["state"], "INCOMPLETE")
+                self.assertFalse(receipt["model_execution_observed"])
+                self.assertFalse(receipt["production_authorized"])
 
     def test_explicit_failure_event_still_blocks_research_success(self):
         for index, event_type in enumerate(("error", "turn.failed")):
@@ -330,7 +370,7 @@ class BuildGateTests(unittest.TestCase):
         return subprocess.check_output(["git", "-C", str(self.repo), *args], text=True,
                                        stderr=subprocess.DEVNULL)
 
-    def execute(self, mutate, *, event_lines=(), run_name="run"):
+    def execute(self, mutate, *, event_lines=(), run_name="run", event_separator="\n"):
         path = self.root / "mission.json"
         path.write_text(json.dumps(self.mission), encoding="utf-8")
         real_run = agent.bounded_run
@@ -339,11 +379,11 @@ class BuildGateTests(unittest.TestCase):
             if label != "model":
                 return real_run(argv, cwd, folder, label, seconds, incoming)
             proposal = mutate(cwd)
-            text = proposal if type(proposal) is str else json.dumps(proposal)
+            text = proposal if type(proposal) is str else json.dumps(proposal, ensure_ascii=False)
             events = [{"type": "item.completed", "item": {"type": "agent_message", "text": text}},
                       {"type": "turn.completed"}]
-            raw = "\n".join([*map(json.dumps, events), *event_lines])
-            (folder / "model.jsonl").write_text(raw, encoding="utf-8")
+            raw = event_separator.join([*(json.dumps(event, ensure_ascii=False) for event in events), *event_lines])
+            (folder / "model.jsonl").write_bytes(raw.encode("utf-8"))
             return {"exit_code": 0, "stopped": None}
 
         with patch.object(agent.shutil, "which", return_value="codex.exe"), \
@@ -381,6 +421,19 @@ class BuildGateTests(unittest.TestCase):
                 self.assertEqual((Path(result["workspace"]) / "value.py").read_bytes(), b"VALUE = 0\n")
                 self.assertFalse((self.root / f"corrupt-build-{index}" / "proposal.json").exists())
                 self.assertNotIn("secret_marker", json.dumps(result))
+
+    def test_unicode_proposal_messages_allow_verified_repairs(self):
+        for index, separator in enumerate(("\u0085", "\u2028", "\u2029")):
+            for ending_index, ending in enumerate(("\n", "\r\n")):
+                with self.subTest(separator=separator, ending=ending):
+                    proposal = self.proposal()
+                    proposal["summary"] = "before" + separator + "after"
+                    result = self.execute(lambda cwd: proposal,
+                                          run_name=f"unicode-build-{index}-{ending_index}", event_separator=ending)
+                    self.assertEqual(result["state"], "REPAIR_VERIFIED")
+                    self.assertEqual(result["baseline_checks"][0]["exit_code"], 1)
+                    self.assertEqual(result["checks"][0]["exit_code"], 0)
+                    self.assertFalse(result["production_authorized"])
 
     def test_no_op_is_not_a_verified_build(self):
         result = self.execute(lambda cwd: self.proposal("VALUE = 0\n"))

@@ -295,6 +295,19 @@ def current_prose(text: str) -> list[str]:
     return result
 
 
+def current_no_eval_assertion(line: str, pattern: re.Pattern) -> bool:
+    """Exclude training-only disclosures per occurrence, retaining later claims."""
+    for match in pattern.finditer(line):
+        before, after = line[:match.start()], line[match.end():]
+        training_report = re.search(
+            r"\btraining\s+(?:receipt|step)(?:\s+itself)?\s+(?:retains|records|lists|reports|reported)\s+"
+            r"(?:[`'\"]?(?:evals?|evaluation)\s*:\s*)?[`'\"]?$", before, re.I)
+        training_scope = re.match(r"^[`'\"\s]*for\s+(?:its\s+|the\s+)?training\s+step\b", after, re.I)
+        if not training_report and not training_scope:
+            return True
+    return False
+
+
 def read_frontmatter(text: str) -> tuple[dict[str, Any] | None, str | None]:
     lines = text.lstrip("\ufeff").splitlines()
     if not lines or lines[0].strip() != "---":
@@ -332,6 +345,92 @@ def local_markdown_links(text: str, readme: str) -> list[tuple[str, str | None]]
         except ValueError:
             links.append((target, None))
     return links
+
+
+def adapter_runtime_findings(binding: Any, snapshot: dict[str, Any], evidence: dict[str, Any]) -> list[dict[str, Any]]:
+    """Check one evaluated candidate against published bytes; never qualify it.
+
+    Configuration names an evidence_file, candidate_id, artifact_path,
+    base_runtime (huggingface:owner/repo@commit), model_class and wrapper_class.
+    All runtime observations must come from that candidate in that receipt.
+    A directory digest needs an explicit publication bridge to the raw digest
+    and the exact evaluation source hash. This verifies reported consistency.
+    """
+    findings = []
+
+    def add(code, status, message):
+        findings.append({"code": code, "status": status, "message": message})
+
+    required = ("evidence_file", "candidate_id", "artifact_path", "base_runtime", "model_class", "wrapper_class")
+    valid = isinstance(binding, dict) and all(
+        isinstance(binding.get(key), str) and binding[key].strip() for key in required)
+    if valid:
+        try:
+            safe_relative(binding["evidence_file"])
+            safe_relative(binding["artifact_path"])
+            if not binding["artifact_path"].endswith(".safetensors"):
+                valid = False
+            if "identity_bridge" in binding:
+                safe_relative(binding["identity_bridge"])
+        except ValueError:
+            valid = False
+        valid = valid and bool(re.fullmatch(
+            r"huggingface:[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+@(?:[a-fA-F0-9]{40}|[a-fA-F0-9]{64})",
+            binding["base_runtime"]))
+    if not valid:
+        add("ADAPTER_RUNTIME_CONFIG_INVALID", "HOLD", "Adapter runtime check needs literal paths, an immutable base and explicit candidate/loader classes")
+        return findings
+
+    data = evidence.get(binding["evidence_file"])
+    candidates = data.get("candidates") if isinstance(data, dict) else None
+    selected = [item for item in candidates if isinstance(item, dict) and item.get("id") == binding["candidate_id"]] if isinstance(candidates, list) else []
+    if (not isinstance(data, dict) or data.get("label") != "MEASURED"
+            or data.get("gate_ran") is not True or len(selected) != 1
+            or selected[0].get("kind") != "adapter" or selected[0].get("state") != "MEASURED"):
+        add("ADAPTER_RUNTIME_EVIDENCE_UNAVAILABLE", "MISSING_BINDING", "One measured, executed receipt must identify exactly one configured adapter candidate")
+        return findings
+    candidate = selected[0]
+    path = binding["artifact_path"]
+    digest = snapshot.get("artifact_sha256", {}).get(path)
+    observed = candidate.get("adapter_sha256")
+    digest_valid = (path in snapshot.get("files", []) and isinstance(digest, str)
+                    and bool(HEX_SHA256.fullmatch(digest)) and isinstance(observed, str)
+                    and bool(HEX_SHA256.fullmatch(observed)))
+    identity_matches = digest_valid and "identity_bridge" not in binding and observed.lower() == digest.lower()
+    bridge = evidence.get(binding.get("identity_bridge"))
+    if "identity_bridge" in binding and digest_valid and isinstance(bridge, dict):
+        records = bridge.get("files")
+        records = records if isinstance(records, dict) else {}
+        artifact = records.get(path)
+        evaluation = records.get(binding["evidence_file"])
+        evaluation_digest = snapshot.get("file_sha256", {}).get(binding["evidence_file"])
+        identity_matches = (
+            bridge.get("schema") == "szl.hf-artifact-publication/v1"
+            and bridge.get("repo_id") == snapshot.get("repo")
+            and bridge.get("adapter_directory_digest") == observed
+            and isinstance(evaluation_digest, str) and bool(HEX_SHA256.fullmatch(evaluation_digest))
+            and bridge.get("receipt_c_sha256") == evaluation_digest
+            and isinstance(artifact, dict) and artifact.get("sha256") == digest
+            and artifact.get("readback_sha256") == digest
+            and isinstance(evaluation, dict) and evaluation.get("sha256") == evaluation_digest
+            and evaluation.get("readback_sha256") == evaluation_digest
+            and bool(HEX_REVISION.fullmatch(str(bridge.get("bytes_revision", ""))))
+        )
+    if not identity_matches:
+        add("ADAPTER_ARTIFACT_IDENTITY_MISMATCH", "MISSING_BINDING", "Evaluated adapter digest does not bind the configured published raw artifact")
+    if candidate.get("base_runtime") != binding["base_runtime"]:
+        add("ADAPTER_BASE_MISMATCH", "HOLD", "Evaluated candidate does not name the configured immutable base runtime")
+    loader = candidate.get("loader")
+    loader = loader if isinstance(loader, dict) else {}
+    if any(loader.get(key) != binding[key] for key in ("model_class", "wrapper_class")):
+        add("ADAPTER_LOADER_MISMATCH", "HOLD", "Evaluated candidate did not observe both configured loader classes")
+    coverage = loader.get("adapter_keys")
+    coverage = coverage if isinstance(coverage, dict) else {}
+    counts = [coverage.get(key) for key in ("checkpoint_tensors", "applied", "unapplied")]
+    if (not all(type(value) is int for value in counts) or counts[0] <= 0
+            or counts[1] != counts[0] or counts[2] != 0 or coverage.get("fully_applied") is not True):
+        add("ADAPTER_APPLICATION_INCOMPLETE", "HOLD", "The same evaluated candidate must record positive complete adapter-key coverage with zero unapplied tensors")
+    return findings
 
 
 def classify_repository(entry: dict[str, Any], snapshot: dict[str, Any]) -> dict[str, Any]:
@@ -437,8 +536,7 @@ def classify_repository(entry: dict[str, Any], snapshot: dict[str, Any]) -> dict
     measured = [path for path in eval_sources if measured_record(evidence[path])]
     prose = current_prose(readme)
     no_eval = re.compile(r"none[-_ ]this[-_ ]run|\bno\s+(?:held[- ]out\s+)?eval(?:uation)?(?:s|\s+(?:record|receipt))?\s*(?:[.|:]|exists|available|has\s+been\s+run)|\bnot\s+evaluated\b", re.I)
-    no_eval_assertions = [line for line in prose if no_eval.search(line)
-                          and not re.search(r"\btraining\s+receipt\b.{0,100}\b(?:retains|records|lists|reports)\b|\bfor\s+(?:its\s+|the\s+)?training\s+step\b", line, re.I)]
+    no_eval_assertions = [line for line in prose if current_no_eval_assertion(line, no_eval)]
     if measured and no_eval_assertions:
         add("MEASURED_RECORD_CONTRADICTS_NO_EVAL", "CONFLICT", "Current README no-evaluation claim conflicts with configured measured evidence: " + ", ".join(measured), readme_path)
     # A positive k/n held-out claim needs a configured, readable evaluation record.
@@ -524,6 +622,8 @@ def classify_repository(entry: dict[str, Any], snapshot: dict[str, Any]) -> dict
                 bound.add(path)
         if not artifacts or not set(artifacts).issubset(bound):
             add("ARTIFACT_BINDING_INCOMPLETE", "MISSING_BINDING", "Configured evaluation records do not bind every configured artifact to its exact published SHA-256")
+    if "adapter_runtime_binding" in checks:
+        findings.extend(adapter_runtime_findings(checks["adapter_runtime_binding"], snapshot, evidence))
     publication = checks.get("publication_record")
     if publication:
         data = evidence.get(publication.get("path"))

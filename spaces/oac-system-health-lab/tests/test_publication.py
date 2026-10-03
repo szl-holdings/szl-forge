@@ -171,9 +171,13 @@ class PublicationContracts(unittest.TestCase):
         remote_files=None,
         drifting=False,
         drift_after=False,
+        drift_during_runtime=False,
         hardware="cpu-basic",
+        final_hardware=None,
         readme_bytes=None,
         card_validation_error=None,
+        runtime_wait_error=None,
+        inspection=None,
     ):
         before, after = "1" * 40, "2" * 40
         api = mock.Mock()
@@ -183,13 +187,19 @@ class PublicationContracts(unittest.TestCase):
             info,
             SimpleNamespace(sha=after if drifting else before),
             SimpleNamespace(sha=before if drift_after else after),
+            SimpleNamespace(sha=before if drift_during_runtime else after),
         ]
         api.list_repo_files.return_value = (
             remote_files if remote_files is not None else [".gitattributes"]
         )
-        api.get_space_runtime.return_value = SimpleNamespace(
-            hardware=hardware, requested_hardware=hardware, storage=None
-        )
+        api.get_space_runtime.side_effect = [
+            SimpleNamespace(
+                hardware=observed,
+                requested_hardware=observed,
+                storage=None,
+            )
+            for observed in (hardware, hardware, final_hardware or hardware)
+        ]
         api.create_commit.return_value = SimpleNamespace(oid=after)
         api.get_space_variables.return_value = {
             MODULE.SOURCE_VARIABLE: SimpleNamespace(value="3" * 40)
@@ -217,10 +227,28 @@ class PublicationContracts(unittest.TestCase):
             }
             helper = SimpleNamespace(
                 build_plan=mock.Mock(return_value=plan),
+                live_origin=mock.Mock(
+                    return_value="https://szlholdings-oac-system-health-lab.hf.space"
+                ),
                 wait_for_exact_running_space=mock.Mock(
                     return_value=SimpleNamespace(sha=after)
                 ),
+                wait_for_exact_runtime_source=mock.Mock(
+                    return_value=(
+                        {
+                            "build": {"state": "OBSERVED", "revision": "3" * 40},
+                            "receipt_minted": False,
+                        },
+                        {
+                            "state": "EXACT_SOURCE_OBSERVED",
+                            "shared_publication_deadline": True,
+                        },
+                    ),
+                    side_effect=runtime_wait_error,
+                ),
             )
+            session = mock.Mock()
+            session.headers = {}
             card = mock.Mock()
             card.validate.side_effect = card_validation_error
             repo_card = mock.Mock(return_value=card)
@@ -240,9 +268,14 @@ class PublicationContracts(unittest.TestCase):
                 "publish_hf_space": helper,
                 "huggingface_hub": client,
                 "huggingface_hub.utils": utils,
+                "requests": SimpleNamespace(Session=mock.Mock(return_value=session)),
                 "verify_release": release,
             }
             result = {}
+            if inspection is not None:
+                inspection.update(
+                    {"api": api, "helper": helper, "report": result, "session": session}
+                )
             with (
                 mock.patch.dict(MODULE.sys.modules, modules),
                 mock.patch.object(
@@ -259,7 +292,10 @@ class PublicationContracts(unittest.TestCase):
             return api, result, True, repo_card, card
 
     def test_atomic_parent_and_verified_success(self):
-        api, report, succeeded, _, _ = self.run_publication()
+        inspection = {}
+        api, report, succeeded, _, _ = self.run_publication(
+            inspection=inspection
+        )
         self.assertTrue(succeeded)
         self.assertEqual(api.create_commit.call_args.kwargs["parent_commit"], "1" * 40)
         self.assertEqual(api.create_commit.call_args.kwargs["repo_id"], MODULE.TARGET)
@@ -274,7 +310,34 @@ class PublicationContracts(unittest.TestCase):
         self.assertEqual(report["hub_commit"], "2" * 40)
         self.assertTrue(report["complete"])
         self.assertEqual(report["files"][0]["matches"], True)
+        self.assertEqual(
+            report["runtime_source_wait"]["state"], "EXACT_SOURCE_OBSERVED"
+        )
+        hub_wait = inspection["helper"].wait_for_exact_running_space.call_args
+        runtime_wait = inspection["helper"].wait_for_exact_runtime_source.call_args
+        self.assertEqual(hub_wait.kwargs["deadline"], runtime_wait.kwargs["deadline"])
+        self.assertEqual(runtime_wait.args[2], "3" * 40)
+        self.assertIs(runtime_wait.args[0], inspection["session"])
+        self.assertEqual(
+            runtime_wait.args[1],
+            "https://szlholdings-oac-system-health-lab.hf.space",
+        )
+        self.assertEqual(inspection["session"].close.call_count, 1)
+        self.assertEqual(report["hardware_final"]["current"], "cpu-basic")
         api.create_repo.assert_not_called()
+
+    def test_runtime_source_timeout_never_marks_publication_complete(self):
+        inspection = {}
+        with self.assertRaisesRegex(RuntimeError, "runtime deadline exhausted"):
+            self.run_publication(
+                runtime_wait_error=RuntimeError("runtime deadline exhausted"),
+                inspection=inspection,
+            )
+        self.assertNotIn("complete", inspection["report"])
+        self.assertNotIn("status", inspection["report"])
+        self.assertEqual(inspection["report"]["files"][0]["matches"], True)
+        inspection["api"].create_commit.assert_called_once()
+        inspection["session"].close.assert_called_once()
 
     def test_valid_provider_card_preflight_preserves_existing_adoption(self):
         readme = (
@@ -343,6 +406,24 @@ class PublicationContracts(unittest.TestCase):
         _, report, succeeded, _, _ = self.run_publication(drift_after=True)
         self.assertFalse(succeeded)
         self.assertNotIn("complete", report)
+
+    def test_hub_drift_during_runtime_rollout_never_complete(self):
+        inspection = {}
+        _, report, succeeded, _, _ = self.run_publication(
+            drift_during_runtime=True, inspection=inspection
+        )
+        self.assertFalse(succeeded)
+        self.assertNotIn("complete", report)
+        self.assertEqual(report["runtime_source_wait"]["state"], "EXACT_SOURCE_OBSERVED")
+        inspection["helper"].wait_for_exact_runtime_source.assert_called_once()
+
+    def test_paid_hardware_during_runtime_rollout_never_complete(self):
+        _, report, succeeded, _, _ = self.run_publication(
+            final_hardware="cpu-upgrade"
+        )
+        self.assertFalse(succeeded)
+        self.assertNotIn("complete", report)
+        self.assertNotIn("hardware_final", report)
 
 
 if __name__ == "__main__":

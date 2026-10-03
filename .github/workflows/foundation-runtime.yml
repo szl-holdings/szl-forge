@@ -2,10 +2,10 @@ name: Foundation operational workbench
 
 on:
   pull_request:
-    paths: ['spaces/szl-foundation-confirmation/**', 'foundation-confirmation/operations/**', 'foundation-confirmation/verify_public_runtime.py', 'tests/test_foundation_public_runtime.py', 'tests/test_hf_write_locks.py', 'scripts/lfs_archive_binding.py', 'tests/test_lfs_archive_binding.py', '.github/workflows/foundation-runtime.yml']
+    paths: ['spaces/szl-foundation-confirmation/**', 'foundation-confirmation/operations/**', 'foundation-confirmation/verify_public_runtime.py', 'tests/test_foundation_public_runtime.py', 'tests/test_foundation_cpu_environment.py', 'tests/test_hf_write_locks.py', 'scripts/lfs_archive_binding.py', 'tests/test_lfs_archive_binding.py', 'tools/publish_hf_space.py', 'tools/test_publish_hf_space.py', '.github/workflows/foundation-runtime.yml']
   push:
     branches: [main]
-    paths: ['spaces/szl-foundation-confirmation/**', 'foundation-confirmation/operations/**', 'foundation-confirmation/verify_public_runtime.py', 'tests/test_foundation_public_runtime.py', 'tests/test_hf_write_locks.py', 'scripts/lfs_archive_binding.py', 'tests/test_lfs_archive_binding.py', '.github/workflows/foundation-runtime.yml']
+    paths: ['spaces/szl-foundation-confirmation/**', 'foundation-confirmation/operations/**', 'foundation-confirmation/verify_public_runtime.py', 'tests/test_foundation_public_runtime.py', 'tests/test_foundation_cpu_environment.py', 'tests/test_hf_write_locks.py', 'scripts/lfs_archive_binding.py', 'tests/test_lfs_archive_binding.py', 'tools/publish_hf_space.py', 'tools/test_publish_hf_space.py', '.github/workflows/foundation-runtime.yml']
   merge_group:
     types: [checks_requested]
   workflow_dispatch: {}
@@ -14,6 +14,29 @@ permissions:
   contents: read
 
 jobs:
+  cpu-source:
+    name: Native CPU admission controls (${{ matrix.shell }})
+    runs-on: windows-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        shell: [powershell, pwsh]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+          lfs: false
+      - name: Windows PowerShell source, ownership and deadline controls
+        if: matrix.shell == 'powershell'
+        shell: powershell
+        run: ./foundation-confirmation/operations/test-cpu-startup.ps1
+      - name: PowerShell 7 source, ownership and deadline controls
+        if: matrix.shell == 'pwsh'
+        shell: pwsh
+        run: ./foundation-confirmation/operations/test-cpu-startup.ps1
+
   qualify:
     name: Runtime security and sealed models
     runs-on: ubuntu-latest
@@ -32,6 +55,8 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.12'
+      - name: Network-free CPU payload, source and receipt controls
+        run: python -I -S -B -m unittest discover -s tests -p test_foundation_cpu_environment.py -v
       - name: Install hash-locked Linux CPU runtime
         run: >-
           python -m pip install --disable-pip-version-check --require-hashes --only-binary=:all: -r spaces/szl-foundation-confirmation/requirements.txt
@@ -78,7 +103,7 @@ jobs:
 
   publish:
     name: Publish and witness public Foundation inference
-    needs: qualify
+    needs: [qualify, cpu-source]
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 35
@@ -100,7 +125,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install exact publication clients
-        run: python -m pip install --disable-pip-version-check 'huggingface-hub==1.23.0' 'requests==2.32.5'
+        run: python -m pip install --disable-pip-version-check 'huggingface-hub==1.23.0' 'requests==2.33.0'
       - name: Validate existing org publisher access
         env:
           HF_ORG_TOKEN_CANDIDATE: ${{ secrets.HF_ORG_TOKEN }}

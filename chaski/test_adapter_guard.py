@@ -8,6 +8,8 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import Mock, call, patch
 
 CHASKI = Path(__file__).resolve().parent
 sys.path.insert(0, str(CHASKI))
@@ -18,10 +20,164 @@ TXT = "base_model.model.model.layers.{i}.mlp.down_proj.lora_{ab}.weight"
 
 
 def write_safetensors_header(adapter_dir: Path, keys: list[str]) -> None:
-    header = {k: {"dtype": "F32", "shape": [1], "data_offsets": [0, 4]} for k in keys}
+    header = {
+        k: {"dtype": "F32", "shape": [1], "data_offsets": [4 * i, 4 * (i + 1)]}
+        for i, k in enumerate(keys)
+    }
     header["__metadata__"] = {"format": "pt"}
     body = json.dumps(header).encode("utf-8")
-    (adapter_dir / guard.ADAPTER_WEIGHTS).write_bytes(struct.pack("<Q", len(body)) + body + b"\0" * 4)
+    (adapter_dir / guard.ADAPTER_WEIGHTS).write_bytes(
+        struct.pack("<Q", len(body)) + body + b"\0" * (4 * len(keys))
+    )
+
+
+class CheckpointHeaderTests(unittest.TestCase):
+    """Malformed headers fail closed before an unbounded read or key admission."""
+
+    def parse(self, header: bytes | dict, payload: bytes = b"\0" * 4) -> list[str]:
+        body = json.dumps(header).encode("utf-8") if isinstance(header, dict) else header
+        with tempfile.TemporaryDirectory() as tmp:
+            (Path(tmp) / guard.ADAPTER_WEIGHTS).write_bytes(
+                struct.pack("<Q", len(body)) + body + payload
+            )
+            return guard.checkpoint_keys(Path(tmp))
+
+    @staticmethod
+    def tensor(**changes):
+        return {"dtype": "F32", "shape": [1], "data_offsets": [0, 4], **changes}
+
+    def test_short_prefix_fails_with_normalized_error(self) -> None:
+        for size in range(8):
+            with self.subTest(size=size), tempfile.TemporaryDirectory() as tmp:
+                (Path(tmp) / guard.ADAPTER_WEIGHTS).write_bytes(b"\0" * size)
+                with self.assertRaisesRegex(guard.AdapterNotApplied, "INVALID_ADAPTER_CHECKPOINT:"):
+                    guard.checkpoint_keys(Path(tmp))
+
+    def test_declared_length_is_bounded_before_header_read(self) -> None:
+        for length in (0, 1, guard.MAX_ADAPTER_HEADER_BYTES + 1, (1 << 64) - 1, 100):
+            with self.subTest(length=length), tempfile.TemporaryDirectory() as tmp:
+                path = Path(tmp) / guard.ADAPTER_WEIGHTS
+                path.write_bytes(struct.pack("<Q", length) + b"{}")
+                with path.open("rb") as handle, patch.object(Path, "open") as opened:
+                    reader = opened.return_value.__enter__.return_value
+                    reader.fileno.return_value = handle.fileno()
+                    reader.read.side_effect = handle.read
+                    with self.assertRaises(guard.InvalidAdapterCheckpoint):
+                        guard.checkpoint_keys(Path(tmp))
+                    self.assertEqual(reader.read.call_args_list, [call(8)])
+
+    def test_valid_read_budget_excludes_tensor_payload(self) -> None:
+        body = json.dumps({"t": self.tensor()}).encode("utf-8")
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / guard.ADAPTER_WEIGHTS
+            path.write_bytes(struct.pack("<Q", len(body)) + body + b"\0" * 4)
+            with path.open("rb") as handle, patch.object(Path, "open") as opened:
+                reader = opened.return_value.__enter__.return_value
+                reader.fileno.return_value = handle.fileno()
+                reader.read.side_effect = handle.read
+                self.assertEqual(guard.checkpoint_keys(Path(tmp)), ["t"])
+                self.assertEqual(reader.read.call_args_list, [call(8), call(len(body))])
+
+    def test_short_header_read_after_size_check_fails(self) -> None:
+        body = json.dumps({"t": self.tensor()}).encode("utf-8")
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / guard.ADAPTER_WEIGHTS
+            path.write_bytes(struct.pack("<Q", len(body)) + body + b"\0" * 4)
+            with path.open("rb") as handle, patch.object(Path, "open") as opened:
+                reader = opened.return_value.__enter__.return_value
+                reader.fileno.return_value = handle.fileno()
+                reader.read.side_effect = [struct.pack("<Q", len(body)), body[:-1]]
+                with self.assertRaises(guard.InvalidAdapterCheckpoint):
+                    guard.checkpoint_keys(Path(tmp))
+
+    def test_scalar_empty_tensor_padding_and_empty_checkpoint(self) -> None:
+        self.assertEqual(self.parse({"t": self.tensor(shape=[])}), ["t"])
+        self.assertEqual(self.parse({"t": self.tensor(shape=[0, 9], data_offsets=[0, 0])}, b""), ["t"])
+        self.assertEqual(self.parse(b'{"t":{"dtype":"F32","shape":[1],"data_offsets":[0,4]}}   '), ["t"])
+        self.assertEqual(self.parse({}, b""), [])
+
+    def test_header_order_does_not_determine_payload_order(self) -> None:
+        header = {"z": self.tensor(data_offsets=[4, 8]), "a": self.tensor()}
+        self.assertEqual(self.parse(header, b"\0" * 8), ["a", "z"])
+
+    def test_invalid_encoding_root_json_and_depth_fail_closed(self) -> None:
+        headers = [b"\xff\xff", b"[]", b"null", b' {"t":{}}', b'{"t":',
+                   b'{"t":NaN}', b'{"t":Infinity}', b'{"t":-Infinity}',
+                   b'{"t":' + b"[" * 1100 + b"]" * 1100 + b"}"]
+        for body in headers:
+            with self.subTest(body=body[:20]), self.assertRaises(guard.InvalidAdapterCheckpoint):
+                self.parse(body)
+
+    def test_duplicate_keys_at_each_level_are_rejected(self) -> None:
+        headers = [b'{"t":{},"t":{}}',
+                   b'{"t":{"dtype":"F32","dtype":"F32","shape":[1],"data_offsets":[0,4]}}',
+                   b'{"__metadata__":{"format":"pt","format":"pt"}}']
+        for body in headers:
+            with self.subTest(body=body), self.assertRaises(guard.InvalidAdapterCheckpoint):
+                self.parse(body)
+
+    def test_bad_metadata_and_tensor_names_fail_closed(self) -> None:
+        for metadata in (None, [], {"format": 1}, {"format": "\ud800"}):
+            with self.subTest(metadata=metadata), self.assertRaises(guard.InvalidAdapterCheckpoint):
+                self.parse({"__metadata__": metadata, "t": self.tensor()})
+        for name in ("", "\ud800"):
+            with self.subTest(name=name), self.assertRaises(guard.InvalidAdapterCheckpoint):
+                self.parse({name: self.tensor()})
+
+    def test_invalid_descriptors_fail_closed(self) -> None:
+        descriptors = [None, [], {}, self.tensor(extra=True),
+                       {"dtype": "F32", "shape": [1]}, self.tensor(dtype="UNKNOWN"),
+                       self.tensor(dtype=[])]
+        for descriptor in descriptors:
+            with self.subTest(descriptor=descriptor), self.assertRaises(guard.InvalidAdapterCheckpoint):
+                self.parse({"t": descriptor})
+
+    def test_invalid_shapes_and_offsets_fail_closed(self) -> None:
+        for shape in (None, "1", [True], [-1], [1.0], [10**1000, 10**1000]):
+            with self.subTest(shape=shape), self.assertRaises(guard.InvalidAdapterCheckpoint):
+                self.parse({"t": self.tensor(shape=shape)})
+        for offsets in (None, [0], [0, 4, 4], [False, 4], [-1, 3], [4, 0], [0, 5], [0.0, 4]):
+            with self.subTest(offsets=offsets), self.assertRaises(guard.InvalidAdapterCheckpoint):
+                self.parse({"t": self.tensor(data_offsets=offsets)})
+
+    def test_shape_byte_size_holes_overlaps_and_tail_fail_closed(self) -> None:
+        cases = [({"t": self.tensor(shape=[2])}, 4),
+                 ({"t": self.tensor(data_offsets=[1, 5])}, 5),
+                 ({"a": self.tensor(), "b": self.tensor()}, 4),
+                 ({"t": self.tensor()}, 5), ({}, 1)]
+        for header, size in cases:
+            with self.subTest(header=header), self.assertRaises(guard.InvalidAdapterCheckpoint):
+                self.parse(header, b"\0" * size)
+
+    def test_empty_tensor_cannot_hide_unrepresentable_shape_or_prior_overflow(self) -> None:
+        for shape in ([0, 2**64], [2**64, 0], [0, 10**1000],
+                      [10**1000, 0], [2**63, 3, 0]):
+            with self.subTest(shape=shape), self.assertRaises(guard.InvalidAdapterCheckpoint):
+                self.parse({"t": self.tensor(shape=shape, data_offsets=[0, 0])}, b"")
+        self.assertEqual(
+            self.parse({"t": self.tensor(shape=[0, 2**63, 3], data_offsets=[0, 0])}, b""),
+            ["t"],
+        )
+
+    def test_safetensors_v080_dtype_widths_and_packed_alignment(self) -> None:
+        for dtype, bits in guard.DTYPE_BITS.items():
+            count = 4 if bits == 6 else 2 if bits == 4 else 1
+            size = count * bits // 8
+            with self.subTest(dtype=dtype):
+                header = {"t": self.tensor(dtype=dtype, shape=[count], data_offsets=[0, size])}
+                self.assertEqual(self.parse(header, b"\0" * size), ["t"])
+        for dtype in ("F4", "F6_E2M3", "F6_E3M2"):
+            with self.subTest(dtype=dtype), self.assertRaises(guard.InvalidAdapterCheckpoint):
+                self.parse({"t": self.tensor(dtype=dtype)})
+
+    def test_malformed_checkpoint_does_not_query_loaded_model(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            (Path(tmp) / guard.ADAPTER_WEIGHTS).write_bytes(b"bad")
+            model = Mock()
+            with self.assertRaises(guard.AdapterNotApplied):
+                guard.assert_adapter_applied(model, Path(tmp))
+            model.named_parameters.assert_not_called()
+            model.get_model_status.assert_not_called()
 
 
 class _FakeParam:
@@ -31,6 +187,10 @@ class _FakeParam:
 class _FakePeftModel:
     def __init__(self, names: list[str]) -> None:
         self._names = names
+        self.get_model_status = Mock(return_value=SimpleNamespace(
+            enabled=True, active_adapters=["default"], num_adapter_layers=1,
+            available_adapters=["default"], merged_adapters=[],
+        ))
 
     def named_parameters(self):
         return [(n, _FakeParam()) for n in self._names]
@@ -86,8 +246,129 @@ class AdapterGuardTests(unittest.TestCase):
         self.assertFalse(guard.coverage_report([], set())["fully_applied"])
 
 
-if __name__ == "__main__":
-    unittest.main()
+class AdapterActivationTests(unittest.TestCase):
+    """Synthetic admission controls; no numerical adapter application is established."""
+
+    def check(self, model, keys=None, **kwargs):
+        keys = [MM.format(i=0, ab="A")] if keys is None else keys
+        with tempfile.TemporaryDirectory() as tmp:
+            write_safetensors_header(Path(tmp), keys)
+            return guard.assert_adapter_applied(model, Path(tmp), **kwargs)
+
+    def model(self, adapter="default"):
+        key = MM.format(i=0, ab="A")
+        return _FakePeftModel([key.replace(".weight", f".{adapter}.weight")])
+
+    def test_inactive_expected_adapter_fails_despite_complete_key_inventory(self):
+        model = self.model()
+        model.get_model_status.return_value.active_adapters = ["other"]
+        model.get_model_status.return_value.available_adapters = ["default", "other"]
+        with self.assertRaises(guard.AdapterNotApplied):
+            self.check(model)
+
+    def test_other_namespace_cannot_complete_expected_adapter_coverage(self):
+        keys = [MM.format(i=0, ab=ab) for ab in ("A", "B")]
+        model = _FakePeftModel([
+            keys[0].replace(".weight", ".default.weight"),
+            keys[1].replace(".weight", ".other.weight"),
+        ])
+        model.get_model_status.return_value.available_adapters = ["default", "other"]
+        with self.assertRaises(guard.AdapterNotApplied):
+            self.check(model, keys)
+
+    def test_live_keys_are_scoped_to_one_namespace(self):
+        a, b = (MM.format(i=0, ab=ab) for ab in ("A", "B"))
+        model = _FakePeftModel([
+            a.replace(".weight", ".default.weight"),
+            b.replace(".weight", ".other.weight"),
+            b,  # unqualified checkpoint-style names are not a loaded namespace
+            "prefix.lora_debug.default.weight",
+        ])
+        self.assertEqual(guard.live_lora_keys(model), {a})
+
+    def test_embeddings_and_explicit_namespace_do_not_strip_arbitrary_segments(self):
+        model = _FakePeftModel([
+            "prefix.lora_embedding_A.reviewed", "prefix.lora_embedding_B.other",
+            "prefix.lora_embedding_A", "prefix.lora_A.reviewed.weight",
+            "prefix.lora_B.reviewed.bias", "prefix.lora_debug.reviewed.weight",
+        ])
+        self.assertEqual(guard.live_lora_keys(model, expected_adapter="reviewed"), {
+            "prefix.lora_embedding_A", "prefix.lora_A.weight", "prefix.lora_B.bias",
+        })
+
+    def test_explicit_expected_adapter_passes_with_matching_status_and_keys(self):
+        model = self.model("reviewed")
+        model.get_model_status.return_value.active_adapters = ["reviewed"]
+        model.get_model_status.return_value.available_adapters = ["reviewed"]
+        report = self.check(model, expected_adapter="reviewed")
+        self.assertTrue(report["fully_applied"])
+        self.assertEqual(report["expected_adapter"], "reviewed")
+        self.assertEqual(report["adapter_activation"]["active_adapters"], ["reviewed"])
+        self.assertEqual(report["numerical_application"], "UNKNOWN")
+
+    def test_default_admission_reports_only_structural_application(self):
+        model = self.model()
+        report = self.check(model)
+        model.get_model_status.assert_called_once_with()
+        self.assertEqual((report["checkpoint_tensors"], report["applied"]), (1, 1))
+        self.assertEqual(report["expected_adapter"], "default")
+        self.assertEqual(report["coverage_basis"], "parameter_names_and_model_status")
+        self.assertEqual(report["numerical_application"], "UNKNOWN")
+        self.assertEqual(report["adapter_activation"], {
+            "enabled": True, "active_adapters": ["default"], "num_adapter_layers": 1,
+            "available_adapters": ["default"], "merged_adapters": [],
+        })
+
+    def test_missing_noncallable_or_throwing_status_fails_closed(self):
+        for value in (None, False, [], "unavailable"):
+            with self.subTest(value=value):
+                model = self.model()
+                model.get_model_status = value
+                with self.assertRaises(guard.AdapterNotApplied):
+                    self.check(model)
+        model = self.model()
+        del model.get_model_status
+        with self.assertRaises(guard.AdapterNotApplied):
+            self.check(model)
+        for error in (RuntimeError, guard.AdapterNotApplied):
+            with self.subTest(error=error):
+                model = self.model()
+                model.get_model_status.side_effect = error("private runtime detail")
+                with self.assertRaises(guard.AdapterNotApplied) as caught:
+                    self.check(model)
+                self.assertNotIn("private runtime detail", str(caught.exception))
+
+    def test_malformed_or_inconsistent_activation_status_fails_closed(self):
+        cases = {
+            "enabled": [False, "irregular", 1, None],
+            "active_adapters": [[], ["other"], ["default", "other"],
+                                "default", "irregular", ("default",), [None], None],
+            "num_adapter_layers": [0, -1, True, 1.0, "1", None],
+            "available_adapters": [[], ["other"], "default", [None],
+                                   ["default", "default"], ["default", ""], None],
+            "merged_adapters": [["default"], ["other"], "irregular", (), None],
+        }
+        for field, values in cases.items():
+            for value in values:
+                with self.subTest(field=field, value=value):
+                    model = self.model()
+                    setattr(model.get_model_status.return_value, field, value)
+                    with self.assertRaises(guard.AdapterNotApplied):
+                        self.check(model)
+        for status in (None, {}, SimpleNamespace()):
+            with self.subTest(status=status):
+                model = self.model()
+                model.get_model_status.return_value = status
+                with self.assertRaises(guard.AdapterNotApplied):
+                    self.check(model)
+
+    def test_invalid_expected_namespace_fails_before_model_queries(self):
+        for value in (None, True, "", "a.b", "\ud800", "a\0b"):
+            with self.subTest(value=value):
+                model = self.model()
+                with self.assertRaises(guard.AdapterNotApplied):
+                    self.check(model, expected_adapter=value)
+                model.get_model_status.assert_not_called()
 
 
 class R4CandidateTests(unittest.TestCase):
@@ -120,3 +401,7 @@ class R4CandidateTests(unittest.TestCase):
             self.assertTrue(specs[-1]["local_only"])
             self.assertTrue(specs[-1]["hub_id_declared_only"])
             self.assertEqual(bakeoff.publicize_runtime(specs[-1]["adapter"]), "chaski_r4/chaski-r4-adapter")
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -26,16 +26,41 @@ exportable unsigned execution receipts with exact request, result, source and
 checkpoint hashes. Public receipts live in bounded process memory and can be
 lost on idle sleep or restart. This is an on-demand exploratory service.
 
+The HTTP server closes each completed response connection instead of keeping
+idle proxy or browser sockets in its eight-connection admission allowance. The
+single active trial, zero queue, request-body deadline and shared rate limits
+remain enforced. A real socket control checks both the next request after seven
+completed responses and refusal when seven initial connections remain open.
+
 The protected `foundation-runtime.yml` workflow verifies the Linux container
 and all three models before publishing exact source to the dedicated Space.
 It then witnesses three actual public inference calls and their receipt
 readbacks. Those publication records establish source and runtime consistency;
 they do not turn the failed scientific gate into a pass.
 
+HTTP failures other than the existing bounded 429 backpressure retries remain
+terminal for public trial qualification. The verifier
+retains the failed method, endpoint, status, selected transport headers and up
+to 4,096 response bytes with their hash. Truncated captures are labeled; these
+diagnostics add no retries. They do not establish the cause of older failures
+whose response bodies were not captured.
+
+The Hub can report the unchanged Space files as running before a source-variable
+update reaches the process. Publication therefore waits for the declared Git
+revision at the runtime build endpoint, using the remaining original publication
+deadline. Redirects, unknown identities and permanent source mismatches never
+qualify. The receipt records the observed revisions and number of probes; source
+observation still does not establish independent authenticity.
+
 [Current-user Windows startup](operations/README.md) supervises the original
 local workbench while preserving its saved trials. Registration, on-demand
 execution and owned-process restart have separate evidence. Logon startup does
 not imply a tested machine reboot or an always-on public availability promise.
+
+The [3 October operational observation](operational-status/README.md) retains
+source publication, public inference, manual Windows availability, and the
+failed automatic recovery attempt with their individual measurement times.
+The qualified successor release remains **BLOCKED**.
 
 ## Research release and showcase version
 

@@ -439,7 +439,7 @@ def toks(s):
 
 
 def ntoks(s):
-    return {t for t in re.split(r"[-_.\s/]+", s.lower()) if t}
+    return {t for t in re.split(r"[-_.\s/\\]+", s.lower()) if t}
 
 
 def family(n):
@@ -491,10 +491,14 @@ def source_map(rid, name, kind, status, ev, llm_ok=True, llm_why=""):
             if a.get("github_source"):
                 sm["portfolio_source"] = a["github_source"]
     sm["portfolio_kind"] = portfolio_kind
+    sm["managed_candidates"] = []
     for p, c in (ev.get("candidates") or {}).items():
         ids = {str(c.get("target_repo_id", "")).lower(), str((c.get("predecessor") or {}).get("repo_id", "")).lower()}
         if low in ids:
-            sm["frontier_candidates"].append(posixpath.dirname(p))
+            if str(c.get("generated_by", "")).startswith("szl-payload/"):
+                sm["managed_candidates"].append(posixpath.dirname(p))
+            else:
+                sm["frontier_candidates"].append(posixpath.dirname(p))
     paths = ev.get("paths") or []
     dirs = {p.split("/")[0] for p in paths if "/" in p}
     dirs |= {"/".join(p.split("/")[:2]) for p in paths if p.startswith("frontier/") and p.count("/") >= 2}
@@ -513,6 +517,7 @@ def source_map(rid, name, kind, status, ev, llm_ok=True, llm_why=""):
                   if "/tree/main/" in (sm["portfolio_source"] or "") else None):
         if extra and extra not in sm["folders"]:
             sm["folders"].insert(0, extra)
+    sm["folders"] = [f for f in sm["folders"] if f not in sm["managed_candidates"]]
     scope = sm["folders"] + sm["frontier_candidates"]
     files = [p for p in paths if any(p == f or p.startswith(f + "/") for f in scope)]
     for p in files:
@@ -545,6 +550,8 @@ def source_map(rid, name, kind, status, ev, llm_ok=True, llm_why=""):
                                            ("receipts", sm["receipts"]), ("schema", sm["schema"])) if not present]
     elif sm["frontier_candidates"]:
         sm["plan"] = "FRONTIER_CANDIDATE_EXISTS"
+    elif sm["managed_candidates"]:
+        sm["plan"] = "PAYLOAD_CANDIDATE_MANAGED"
     elif sm["reference"]:
         sm["plan"] = "REFERENCE_ARTIFACT_NO_SFT"
     elif not llm_ok:
@@ -659,6 +666,7 @@ def analyze(est):
         nxt = {"GENERATE_CANDIDATE": "CANDIDATE_KIT_GENERATED_BIND_DATA_THEN_TRAIN",
                "HAS_TRAINER": "RUN_EXISTING_TRAINER_PATH_CLOSE_GAPS:" + ",".join(sm["gaps"]) if sm["gaps"] else "VERIFY_RELEASE_GATES_WITH_EXISTING_TRAINER",
                "FRONTIER_CANDIDATE_EXISTS": "RUN_EXISTING_FRONTIER_CANDIDATE",
+               "PAYLOAD_CANDIDATE_MANAGED": "REFRESH_BINDINGS_THEN_TRAIN_ON_OWNER_METAL",
                "SKIPPED_BY_RECEIPT": "HONESTLY_SKIPPED_KEEP_RECEIPT",
                "REFERENCE_ARTIFACT_NO_SFT": "RUN_LOAD_CONTRACT_NOT_SFT",
                "QUANT_DERIVATIVE_PARITY_ONLY": "TRACE_PARENT_AND_PARITY_RECEIPT",
@@ -676,6 +684,7 @@ def analyze(est):
                        "forge_evaluator": sm["evaluator"][:4], "forge_receipts": len(sm["receipts"]),
                        "forge_curriculum": len(sm["curriculum"]), "forge_gaps": sm["gaps"],
                        "forge_binding": sm["bound_source_path"], "frontier_candidates": sm["frontier_candidates"],
+                       "managed_candidates": sm["managed_candidates"],
                        "identity_bound": sm["identity_bound"], "portfolio_kind": sm.get("portfolio_kind"),
                        "pipeline_tag": d.get("pipeline_tag"), "library_name": d.get("library_name"), "llm_eligible": llm_ok})
     datasets = []
@@ -1177,9 +1186,12 @@ def scan_corpora():
         raise RuntimeError("candidate kit library unavailable: " + str(KIT_IMPORT_ERROR))
     roots = [pathlib.Path(x) for x in os.environ.get("SZL_CORPUS_ROOTS", "").split(";") if x.strip()]
     home = pathlib.Path.home()
-    roots += [p for p in home.iterdir() if p.is_dir() and p.name.lower().startswith("szl")] if home.is_dir() else []
+    noise = re.compile(r"backup|forensic|recovery|archive|hold|laptop|push-?\d|payload|audit|-ops|admin|identity|maintenance|"
+                       r"followup|autopush|-runs$|lab-|evidence|mirror|model-backup|process", re.I)
+    roots += [p for p in home.iterdir() if p.is_dir() and p.name.lower().startswith("szl") and not noise.search(p.name)] if home.is_dir() else []
     skip = {".git", ".venv", "venv", "node_modules", "__pycache__", "site-packages", "out", "outputs", ".cache",
-            "appdata", "runs", "repos", "ledger", "dist", "build", ".tox", ".mypy_cache"}
+            "appdata", "runs", "repos", "ledger", "dist", "build", ".tox", ".mypy_cache", "tests", "test", "fixtures",
+            "fixture", "probes", "samples", "examples", "gate", "gates", "evidence", "receipts", "publish"}
     found, examined = [], 0
     for root in roots:
         base_depth = len(root.parts)
@@ -1219,41 +1231,55 @@ def scan_corpora():
                         splits[rec["split"] or "untagged"] += 1
                     except (ValueError, TypeError):
                         pass
-                if not sample or okc / len(sample) < 0.9:
+                if not sample or okc / len(sample) < 0.9 or rows < 20:
                     continue
-                found.append({"path": str(p), "dir": str(p.parent), "file": fn, "rows": rows, "bytes": size,
+                found.append({"path": str(p), "dir": str(p.parent), "file": fn, "rows": rows, "bytes": size, "root": root.name,
                               "sha256": kit.sha256_file(p), "mtime": dt.datetime.fromtimestamp(p.stat().st_mtime).isoformat(timespec="seconds"),
                               "sample_ok": f"{okc}/{len(sample)}", "split_tags": dict(splits),
-                              "tokens": sorted(ntoks(str(p.relative_to(root)) if p.is_relative_to(root) else str(p)) - GENERIC)})
+                              "tokens": sorted(sig_tokens(str(p.relative_to(root)) if p.is_relative_to(root) else str(p))),
+                              "root_tokens": sorted(sig_tokens(root.name))})
     wj(RUN / "local_corpora.json", found)
     log(f"corpora: {len(found)} candidate JSONL files under {[str(r) for r in roots]}")
     return found
 
 
+def sig_tokens(text):
+    """Tokens that can carry identity: 3+ chars, not numeric, not generic."""
+    return {t for t in ntoks(text) if len(t) >= 3 and not re.fullmatch(r"\d+[a-z]?|v\d+", t)} - GENERIC
+
+
 def bind_corpus(name, corpora):
-    """Pick the best local corpus group for a model by token overlap; group split files living in one directory."""
-    mt = ntoks(name) - GENERIC
+    """Pick the best local corpus group for a model: significant-token overlap on the relative path (2 points each)
+    plus a same-repository bonus (1 point); split files living in one directory are grouped."""
+    mt = sig_tokens(name)
     excl = ("quarantine", "backup", "pre-fix", "prefix", "sample", "fixture", "example", "probe", "smoke")
     groups = {}
     for c in corpora:
-        if any(x in c["file"].lower() for x in excl):
+        if not mt or any(x in c["file"].lower() for x in excl):
             continue
-        score = len(mt & set(c["tokens"]))
+        score = 2 * len(mt & set(c["tokens"])) + (1 if mt & set(c.get("root_tokens") or []) else 0)
         if score == 0:
             continue
         groups.setdefault(c["dir"], []).append((score, c))
     if not groups:
         return None
+    def split_of(c):
+        fl = c["file"].lower()
+        return ("train" if fl.startswith("train") else "dev" if re.match(r"(dev|eval|val)", fl) else
+                "test" if re.match(r"(test|held)", fl) else "adversarial" if re.match(r"(adversarial|red)", fl) else "all")
+
     def rank(c):
         fl = c["file"].lower()
         ver = tuple(int(x) for x in re.findall(r"\d+", (re.search(r"v(\d+(?:[._]\d+)*)", fl) or [None, ""])[1]))
         return (ver, int(any(x in fl for x in ("dedup", "clean", "final", "gated"))), c["rows"], c["mtime"])
-    best_dir, best = max(groups.items(), key=lambda kv: (max(s for s, _ in kv[1]), max(rank(c) for _, c in kv[1])))
+
+    def group_key(kv):  # best score, then a designed train/held split in one directory, then file rank
+        designed = int(len({split_of(c) for _, c in kv[1]} - {"all"}) >= 2)
+        return (max(s for s, _ in kv[1]), designed, max(rank(c) for _, c in kv[1]))
+    best_dir, best = max(groups.items(), key=group_key)
     files, alternatives = {}, []
     for score, c in sorted(best, key=lambda sc: rank(sc[1]), reverse=True):
-        fl = c["file"].lower()
-        split = ("train" if fl.startswith("train") else "dev" if re.match(r"(dev|eval|val)", fl) else
-                 "test" if re.match(r"(test|held)", fl) else "adversarial" if re.match(r"(adversarial|red)", fl) else "all")
+        split = split_of(c)
         if split in files:
             alternatives.append(c["path"])
         else:
@@ -1287,37 +1313,57 @@ def pick_base(m):
     return ("Qwen/Qwen2.5-0.5B-Instruct" if small else "Qwen/Qwen2.5-1.5B-Instruct"), "DEFAULT_UNVERIFIED_CONFIRM_BEFORE_TRAINING"
 
 
-def gen_candidate(m, corpora, est):
+def recipe_defaults(full_steps):
+    return {"smoke_optimizer_steps": 1, "full_optimizer_steps": full_steps, "per_device_batch_size": 1,
+            "gradient_accumulation_steps": 4, "max_length": 2048, "learning_rate": 0.0001, "warmup_steps": 10,
+            "optimizer": "adamw_8bit", "weight_decay": 0.01, "lr_scheduler": "constant_with_warmup", "seed": 11,
+            "lora_r": 16, "lora_alpha": 32, "lora_dropout": 0.0, "response_only_loss": True,
+            "target_modules": ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
+            "minimum_free_gpu_gib": 4.0, "minimum_free_disk_gib": 3.0, "export_levels": ["Q4_K_M", "Q5_K_M", "Q8_0"]}
+
+
+def gen_candidate(m, corpora, est, existing=None, repo_dir=None):
+    """Write one complete candidate kit. With `existing` (a payload-managed candidate.json already in the training repo)
+    the kit is refreshed in place: owner-confirmed or in-repo bindings, the runtime lock and the frozen gates are preserved;
+    heuristic bindings are recomputed against the corpora found on this machine."""
     name = m["model"].split("/")[-1]
     slug = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
-    cid = f"{slug}-candidate-{DATE}"
+    cid = (existing or {}).get("candidate_id") or f"{slug}-candidate-{DATE}"
     folder = RUN / "training" / cid
     folder.mkdir(parents=True, exist_ok=True)
+    prev_td = (existing or {}).get("training_data") or {}
+    owner_bound = prev_td.get("confirmed_by_owner") is True or prev_td.get("binding_status") == "BOUND_IN_REPO"
     base, sel = pick_base(m)
-    base_sha, base_lic = hf_pin(base)
-    bound = bind_corpus(name, corpora)
-    rows = bound["rows"] if bound else 0
+    prev_base = (existing or {}).get("actual_training_base") or {}
+    if existing and prev_base.get("repo_id") and str(prev_base.get("selection", "")).startswith(("OWNER", "ADAPTER", "DECLARED")):
+        base, sel = prev_base["repo_id"], prev_base["selection"]
+        base_sha, base_lic = prev_base.get("revision"), prev_base.get("license")
+    else:
+        base_sha, base_lic = hf_pin(base)
+    if owner_bound:
+        td, rows, bound = dict(prev_td), sum(int(f.get("rows") or 0) for f in (prev_td.get("files") or {}).values()), None
+        td["refreshed_note"] = "owner-confirmed binding preserved by the payload refresh"
+    else:
+        bound = bind_corpus(name, corpora)
+        rows = bound["rows"] if bound else 0
+        td = {"origin": "LOCAL_OWNER_CORPUS" if bound else "UNBOUND", "binding_status": "BOUND_LOCAL" if bound else "UNBOUND",
+              "binding_mode": "HEURISTIC_TOKEN_MATCH_LATEST_VERSION" if bound else None, "confirmed_by_owner": False,
+              "rights": "OPERATOR_DECLARED" if bound else "UNDECLARED",
+              "files": bound["files"] if bound else {}, "candidates_observed": (bound or {}).get("alternatives", []),
+              "rights_boundary": "Only project-authored or rights-documented rows are admitted. Dev/test rows, Brain rows, OSINT rows, "
+                                 "third-party private data and other-model outputs are excluded from gradients.",
+              "note": "Paths are the owner's local files; the digest binds the exact bytes. Nothing is committed to the repository."}
     full_steps = max(20, math.ceil(rows * 3 / 4)) if rows else 135
-    td = {"origin": "LOCAL_OWNER_CORPUS" if bound else "UNBOUND", "binding_status": "BOUND_LOCAL" if bound else "UNBOUND",
-          "binding_mode": "HEURISTIC_TOKEN_MATCH_LATEST_MODIFIED" if bound else None, "confirmed_by_owner": False,
-          "rights": "OPERATOR_DECLARED" if bound else "UNDECLARED",
-          "files": bound["files"] if bound else {}, "candidates_observed": (bound or {}).get("alternatives", []),
-          "rights_boundary": "Only project-authored or rights-documented rows are admitted. Dev/test rows, Brain rows, OSINT rows, "
-                             "third-party private data and other-model outputs are excluded from gradients.",
-          "note": "Paths are the owner's local files; the digest binds the exact bytes. Nothing is committed to the repository."}
+    recipe = recipe_defaults(full_steps)
+    if existing and isinstance(existing.get("training_recipe"), dict):
+        recipe = {**recipe, **existing["training_recipe"], "full_optimizer_steps": full_steps}
     cand = {"schema": "szl.frontier-model-candidate/v2", "candidate_id": cid, "state": "SOURCE_READY_NOT_TRAINED",
-            "generated_by": f"szl-payload/{VERSION}", "generated_utc": now(), "target_repo_id": f"{HF_ORG}/{slug}-candidate-{DATE}",
+            "generated_by": f"szl-payload/{VERSION}", "generated_utc": (existing or {}).get("generated_utc") or now(), "refreshed_utc": now(),
+            "target_repo_id": (existing or {}).get("target_repo_id") or f"{HF_ORG}/{cid}",
             "predecessor": {"repo_id": m["model"], "revision": m.get("sha"), "observed_status": m["status"],
                             "role": "FROZEN_COMPARATOR_NOT_WEIGHT_INITIALIZATION"},
             "actual_training_base": {"repo_id": base, "revision": base_sha, "license": base_lic, "selection": sel, "load_in_4bit": True},
-            "training_data": td,
-            "training_recipe": {"smoke_optimizer_steps": 1, "full_optimizer_steps": full_steps, "per_device_batch_size": 1,
-                                "gradient_accumulation_steps": 4, "max_length": 2048, "learning_rate": 0.0001, "warmup_steps": 10,
-                                "optimizer": "adamw_8bit", "weight_decay": 0.01, "lr_scheduler": "constant_with_warmup", "seed": 11,
-                                "lora_r": 16, "lora_alpha": 32, "lora_dropout": 0.0, "response_only_loss": True,
-                                "target_modules": ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
-                                "minimum_free_gpu_gib": 4.0, "export_levels": ["Q4_K_M", "Q5_K_M", "Q8_0"]},
-            "runtime_lock": {},
+            "training_data": td, "training_recipe": recipe, "runtime_lock": (existing or {}).get("runtime_lock") or {},
             "evaluation_protocol": {"do_sample": False, "structured_max_new_tokens": 512, "refusal_max_new_tokens": 128,
                                     "required_strict_case_improvement_over_predecessor": 1,
                                     "claim_scope": "Project-authored, committed, preregistered suite evaluated by the author; "
@@ -1327,7 +1373,13 @@ def gen_candidate(m, corpora, est):
                                        "independent_inference_check": True, "unsigned_reports_are_receipt_eligible": False},
             "gates_file": "gates.json", "publication_eligible": False, "promotion": "NOT_PROMOTABLE",
             "source_repositories": m.get("sources", []), "family": m.get("family")}
-    gates_text = json.dumps(GATES_DEFAULT, indent=2, sort_keys=True) + "\n"
+    gates_text = None
+    if existing and repo_dir:
+        gates_text = forge_raw(f"{repo_dir}/gates.json") or None
+        if gates_text and sha(gates_text) != existing.get("gates_sha256"):
+            gates_text = None  # frozen hash no longer matches the file in the repo: re-freeze explicitly
+    if not gates_text:
+        gates_text = json.dumps(GATES_DEFAULT, indent=2, sort_keys=True) + "\n"
     cand["gates_sha256"] = sha(gates_text)
     schema_file = next(iter(m.get("schema_files") or []), None)
     if schema_file:
@@ -1335,6 +1387,14 @@ def gen_candidate(m, corpora, est):
         if text:
             (folder / "output.schema.json").write_text(text, encoding="utf-8")
             cand["output_schema_file"] = "output.schema.json"
+    if owner_bound and repo_dir:  # in-repo curriculum files travel with the kit copy used for local runs
+        for spec in (td.get("files") or {}).values():
+            rel = str(spec.get("path") or "")
+            if rel and not re.match(r"^[A-Za-z]:\\|^/", rel):
+                text = forge_raw(f"{repo_dir}/{rel}")
+                if text:
+                    (folder / rel).parent.mkdir(parents=True, exist_ok=True)
+                    (folder / rel).write_text(text, encoding="utf-8")
     (folder / "gates.json").write_text(gates_text, encoding="utf-8")
     wj(folder / "candidate.json", cand)
     repl = {"__VERSION__": VERSION, "__CANDIDATE_ID__": cid, "__DATE__": DATE, "__PREDECESSOR__": m["model"],
@@ -1347,70 +1407,83 @@ def gen_candidate(m, corpora, est):
             (folder / src.name).write_text(text, encoding="utf-8")
     return {"candidate": cid, "model": m["model"], "status": m["status"], "base": base, "base_revision": base_sha or "UNPINNED",
             "base_selection": sel, "binding": td["binding_status"], "rows": rows, "corpus_dir": (bound or {}).get("dir"),
-            "folder": str(folder), "repo_path": f"frontier/{cid}", "full_steps": full_steps}
+            "folder": str(folder), "repo_path": repo_dir or f"frontier/{cid}", "full_steps": full_steps,
+            "managed": bool(existing), "owner_bound": owner_bound}
 
 
 def open_training_pr(cands, est):
+    """Add new candidate kits and refresh payload-managed ones through ONE pull request against the training repo.
+    An already open candidates PR is refreshed on its own branch instead of being duplicated."""
     if not cands:
         return "NO_CANDIDATES"
     repo = next((r for r in est["github"] if r["name"].lower() == TRAIN_REPO.lower()), None)
     if not repo:
         return f"TRAINING_REPO_{TRAIN_REPO}_NOT_FOUND"
     full = f"{GH_ORG}/{repo['name']}"
-    fp = sha("candidates|" + "|".join(sorted(c["candidate"] for c in cands)))
-    if ledger_has(fp):
-        return "PR_ALREADY_RECORDED_FOR_THIS_CANDIDATE_SET"
-    code, o, _ = gh(["pr", "list", "--repo", full, "--state", "open", "--search", "frontier: add in:title training candidates in:title",
-                     "--json", "number,title,url"])
-    if code == 0:
-        prior = [x for x in json.loads(o or "[]") if "training candidates" in str(x.get("title", ""))]
-        if prior:
-            return "PR_ALREADY_OPEN:" + str(prior[0].get("url"))
     if not OPEN_PR:
         return "PR_DRY_RUN"
-    dest = repo_checkout(full)
-    branch = f"frontier/candidates-{dt.datetime.now():%Y%m%d-%H%M%S}"
     base = repo["default_branch"] or "main"
-    for args in (["fetch", "origin", base], ["checkout", "-B", branch, f"origin/{base}"]):
+    code, o, _ = gh(["pr", "list", "--repo", full, "--state", "open", "--search", "training candidates in:title",
+                     "--json", "number,title,url,headRefName"])
+    prior = [x for x in (json.loads(o or "[]") if code == 0 else []) if "training candidates" in str(x.get("title", ""))]
+    dest = repo_checkout(full)
+    if prior:
+        branch = prior[0]["headRefName"]
+        steps = [["fetch", "origin", branch], ["checkout", "-B", branch, f"origin/{branch}"]]
+    else:
+        branch = f"frontier/candidates-{dt.datetime.now():%Y%m%d-%H%M%S}"
+        steps = [["fetch", "origin", base], ["checkout", "-B", branch, f"origin/{base}"]]
+    for args in steps:
         code, out = git(dest, args)
         if code != 0:
             return "GIT_FAILED:" + out[-200:]
-    added = []
+    touched = []
     for c in cands:
         target = dest / c["repo_path"]
-        if target.exists():
+        if target.exists() and not c["managed"]:
             c["pr_note"] = "EXISTS_IN_REPO_SKIPPED"
             continue
+        if target.exists():
+            shutil.rmtree(target)
         shutil.copytree(c["folder"], target, ignore=shutil.ignore_patterns("out", "__pycache__", "*.pyc"))
-        added.append(c["repo_path"])
-    if not added:
+        touched.append(c["repo_path"])
+    if not touched:
         return "NOTHING_TO_ADD"
-    index = ["# Frontier candidates generated " + DATE, "", "Generated by szl-payload " + VERSION + " from live estate discovery. "
+    index = ["# Payload-managed frontier candidates", "", "Maintained by szl-payload " + VERSION + " from live estate discovery. "
              "Every folder is SOURCE_READY_NOT_TRAINED and fails closed until its curriculum is bound and leakage-gated. "
-             "Presence here is not production admission.", "",
-             mdt(["Candidate", "Predecessor", "Observed", "Base", "Binding", "Rows"],
-                 [[c["candidate"], c["model"], c["status"], c["base"], c["binding"], c["rows"]] for c in cands if c["repo_path"] in added]), ""]
-    (dest / "frontier" / f"CANDIDATES_{DATE}.md").write_text("\n".join(index), encoding="utf-8")
+             "Presence here is not production admission. Last refresh: " + now(), "",
+             mdt(["Candidate", "Predecessor", "Observed", "Base", "Binding", "Rows", "Owner-confirmed"],
+                 [[c["candidate"], c["model"], c["status"], c["base"], c["binding"], c["rows"], c["owner_bound"]] for c in cands]), ""]
+    (dest / "frontier" / "PAYLOAD_CANDIDATES.md").write_text("\n".join(index), encoding="utf-8")
     git(dest, ["add", "frontier"])
-    code, out = git(dest, ["commit", "-m", f"frontier: add {len(added)} fail-closed training candidates (SOURCE_READY_NOT_TRAINED)"], identity=True)
+    code, out = git(dest, ["status", "--porcelain"])
+    if not out.strip():
+        return ("NO_CHANGES_VS_" + ("OPEN_PR:" + str(prior[0]["url"]) if prior else base.upper()))
+    verb = "refresh" if any(c["managed"] for c in cands) else "add"
+    code, out = git(dest, ["commit", "-m", f"frontier: {verb} {len(touched)} payload-managed training candidates ({DATE})"], identity=True)
     if code != 0:
         return "COMMIT_FAILED:" + out[-200:]
     code, out = git(dest, ["push", "-u", "origin", branch])
     if code != 0:
         return "PUSH_FAILED:" + out[-300:]
+    if prior:
+        log(f"training PR refreshed: {prior[0]['url']}")
+        return "REFRESHED:" + str(prior[0]["url"])
     body = (RUN / "training" / "PR_BODY.md")
     body.write_text("\n".join(index + ["", "Each folder: candidate.json (exact base pin, frozen gates hash), qualify_runtime.py, curriculum.py "
                     "(digest + leakage gate), train_candidate.py (QLoRA, response-only loss, text-only tokenizer path, unsigned report), "
                     "evaluate_candidate.py (12-gate derivation, never writes PROMOTABLE), export_gguf.py (QUANT_MANIFEST + parity), "
                     "render_card.py (card from reports only), test_candidate_contract.py.", "",
                     "Review notes: base selections marked DEFAULT_UNVERIFIED need confirmation; local corpus bindings are "
-                    "heuristic and need `confirmed_by_owner: true` before --full; nothing here publishes or promotes."]), encoding="utf-8")
+                    "heuristic and need `confirmed_by_owner: true` before --full; the payload refreshes these folders on later runs "
+                    "unless a binding is owner-confirmed; nothing here publishes or promotes."]), encoding="utf-8")
     code, o, e = gh(["pr", "create", "--repo", full, "--base", base, "--head", branch,
-                     "--title", f"frontier: add {len(added)} fail-closed training candidates ({DATE})", "--body-file", str(body)])
+                     "--title", f"frontier: {verb} {len(touched)} payload-managed training candidates ({DATE})", "--body-file", str(body)])
     if code != 0:
         return "PR_CREATE_FAILED:" + (o + e)[-300:]
     url = o.strip().splitlines()[-1] if o.strip() else "created"
-    ledger_append({"action": "TRAINING_PR_OPENED", "repo": full, "branch": branch, "candidates": added, "ref": url, "fingerprint": fp})
+    ledger_append({"action": "TRAINING_PR_OPENED", "repo": full, "branch": branch, "candidates": touched, "ref": url,
+                   "fingerprint": sha("candidates|" + "|".join(sorted(touched)) + "|" + now())})
     log(f"training PR opened: {url}")
     return url
 
@@ -1420,17 +1493,23 @@ def candidates(A, corpora, est):
         raise RuntimeError("candidate kit library unavailable: " + str(KIT_IMPORT_ERROR))
     if not KIT_DIR.is_dir() or not (KIT_DIR / "candidate_lib.py").is_file():
         raise RuntimeError(f"kit directory missing: {KIT_DIR}")
-    todo = [m for m in A["models"] if m["sft_plan"] == "GENERATE_CANDIDATE"]
+    ev = est.get("forge") or {}
     out = []
-    for m in todo:
-        log(f"candidate kit for {m['model']} ({m['status']})")
-        out.append(gen_candidate(m, corpora or [], est))
+    for m in A["models"]:
+        if m["sft_plan"] == "GENERATE_CANDIDATE":
+            log(f"candidate kit for {m['model']} ({m['status']})")
+            out.append(gen_candidate(m, corpora or [], est))
+        elif m["sft_plan"] == "PAYLOAD_CANDIDATE_MANAGED":
+            repo_dir = m["managed_candidates"][0]
+            existing = (ev.get("candidates") or {}).get(f"{repo_dir}/candidate.json") or {}
+            log(f"refreshing managed candidate {repo_dir} for {m['model']}")
+            out.append(gen_candidate(m, corpora or [], est, existing=existing, repo_dir=repo_dir))
     pr = open_training_pr(out, est)
     for c in out:
         c["pr"] = pr
     (RUN / "training").mkdir(parents=True, exist_ok=True)
     wj(RUN / "training" / "candidates.json", out)
-    log(f"candidates: {len(out)} generated; PR: {pr}")
+    log(f"candidates: {len(out)} written ({sum(1 for c in out if c['managed'])} refreshed); PR: {pr}")
     return out
 
 
@@ -1483,14 +1562,14 @@ def train_lane(cands):
     for c in cands:
         folder = pathlib.Path(c["folder"])
         row = {"candidate": c["candidate"], "mode": TRAIN_MODE, "python": py, "steps": []}
-        if c["binding"] != "BOUND_LOCAL":
+        if c["binding"] not in ("BOUND_LOCAL", "BOUND_IN_REPO"):
             row["outcome"] = "SKIPPED_UNBOUND_CURRICULUM"
             out.append(row)
             continue
         plan = [("qualify_runtime.py", [], 900), ("curriculum.py", [], 900),
                 ("train_candidate.py", ["--smoke"] if TRAIN_MODE == "smoke" else ["--full"] + (["--confirm-binding"] if CONFIRM else []),
                  2400 if TRAIN_MODE == "smoke" else 6 * 3600),
-                ("evaluate_candidate.py", ["--split", "dev"], 3 * 3600)]
+                ("evaluate_candidate.py", ["--split", "auto"] + (["--limit", "24"] if TRAIN_MODE == "smoke" else []), 3 * 3600)]
         if llama:
             plan.append(("export_gguf.py", ["--llama-cpp", llama], 3 * 3600))
         plan.append(("render_card.py", [], 300))
@@ -1543,8 +1622,9 @@ def reports(est, A, Q, P, R, C, T):
           mdt(["Model", "Score", "Tier", "Status", "Family", "Flags", "Next action"],
               [[m["model"], m["score"], m["tier"], m["status"], m["family"], ", ".join(m["flags"]), m["next_action"]] for m in scored]), "",
           f"## Training candidates generated ({len(C)})", "",
-          mdt(["Candidate", "Predecessor", "Observed", "Base", "Selection", "Binding", "Rows", "PR"],
-              [[c["candidate"], c["model"], c["status"], c["base"], c["base_selection"], c["binding"], c["rows"], c.get("pr")] for c in C]), "",
+          mdt(["Candidate", "Predecessor", "Observed", "Base", "Selection", "Binding", "Rows", "Refreshed", "Owner-confirmed", "PR"],
+              [[c["candidate"], c["model"], c["status"], c["base"], c["base_selection"], c["binding"], c["rows"], c.get("managed"),
+                c.get("owner_bound"), c.get("pr")] for c in C]), "",
           f"## Training runs on this machine ({len(T)})", "",
           mdt(["Candidate", "Mode", "Outcome", "Steps", "Training", "Evaluation"],
               [[t["candidate"], t["mode"], t.get("outcome"), " > ".join(f"{s['step']}:{s['exit']}" for s in t.get("steps", [])),

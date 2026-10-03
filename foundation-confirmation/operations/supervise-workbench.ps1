@@ -3,9 +3,23 @@ param(
     [string]$LabRoot,
     [string]$ArchivePath,
     [ValidateRange(1, 65535)][int]$Port = 18767,
-    [switch]$ValidateOnly
+    [switch]$ValidateOnly,
+    [string]$PythonExecutable, [string]$CpuEnvironmentRoot, [string]$CpuWheelhouse,
+    [string]$CpuStateDirectory, [string]$PythonImageSha256, [string]$CpuEnvironmentBindingSha256
 )
 $ErrorActionPreference = 'Stop'
+# Bind built-in hashing/JSON commands to this shell, even with a mixed PSModulePath.
+Import-Module -Name (Join-Path $PSHOME 'Modules\Microsoft.PowerShell.Utility\Microsoft.PowerShell.Utility.psd1') -ErrorAction Stop
+$script:foundationSourceRoot = $PSScriptRoot
+$script:foundationArchivePath = $ArchivePath
+$script:foundationCpuInputs = @{ PythonExecutable=$PythonExecutable; EnvironmentRoot=$CpuEnvironmentRoot;
+    Wheelhouse=$CpuWheelhouse; StateDirectory=$CpuStateDirectory; PythonSha256=$PythonImageSha256;
+    BindingSha256=$CpuEnvironmentBindingSha256 }
+$script:foundationCpuRuntime = $null
+if (($PythonExecutable -or $CpuEnvironmentRoot -or $CpuWheelhouse -or $CpuStateDirectory -or $PythonImageSha256 -or $CpuEnvironmentBindingSha256) -and
+    (-not $PythonExecutable -or -not $CpuEnvironmentRoot -or -not $CpuWheelhouse)) {
+    throw 'CPU mode requires an explicit native Python executable, environment and official wheelhouse.'
+}
 
 function Assert-FoundationWindows {
     if ([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT -or $PSVersionTable.PSVersion.Major -lt 5) {
@@ -16,7 +30,10 @@ function Assert-FoundationWindows {
 function Get-FoundationPaths {
     Assert-FoundationWindows
     $profileRoot = [IO.Path]::GetFullPath([Environment]::GetFolderPath('UserProfile')).TrimEnd('\')
-    $operations = Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'SZL\FoundationConfirmation'
+    # Packaged desktop applications may see a virtualized LocalApplicationData
+    # directory that the native Task Scheduler process cannot see. The explicit
+    # profile Documents path has one shared filesystem view for both processes.
+    $operations = Join-Path $profileRoot 'Documents\SZL\FoundationConfirmation'
     return @{
         Profile = $profileRoot
         Operations = [IO.Path]::GetFullPath($operations)
@@ -62,6 +79,12 @@ function Assert-FoundationPath {
 }
 
 function Get-FoundationPython {
+    if ($script:foundationCpuRuntime) { return Assert-FoundationPath $script:foundationCpuRuntime.python_executable }
+    if ($script:foundationCpuInputs.PythonExecutable) {
+        $explicit = Assert-FoundationPath $script:foundationCpuInputs.PythonExecutable
+        if ($script:foundationCpuInputs.PythonSha256) { Assert-FoundationHash $explicit $script:foundationCpuInputs.PythonSha256 }
+        return $explicit
+    }
     $preferred = Join-Path $env:LOCALAPPDATA 'Programs\Python\Python311\python.exe'
     if (Test-Path -LiteralPath $preferred) { return Assert-FoundationPath $preferred }
     return Assert-FoundationPath (Get-Command python -CommandType Application -ErrorAction Stop).Source
@@ -105,7 +128,7 @@ function Test-FoundationRelease {
     }
     $python = Get-FoundationPython
     # Only the known-hash, stdlib verifier is executable at this admission stage.
-    $raw = & $python -I -B (Join-Path $rootPath 'verify_release.py') --root $rootPath
+    $raw = & $python -I -S -B (Join-Path $rootPath 'verify_release.py') --root $rootPath
     if ($LASTEXITCODE -ne 0) { throw 'Original directory verification failed.' }
     $verified = ($raw -join "`n") | ConvertFrom-Json
     if ($verified.status -ne 'VERIFIED' -or $verified.files -ne 70 -or
@@ -118,10 +141,94 @@ function Test-FoundationRelease {
     return @{ LabRoot = $rootPath; ArchivePath = $archiveFile; Python = $python; Verification = $verified }
 }
 
+function Get-FoundationCpuRuntime {
+    param([string]$Executable, [string]$EnvironmentRoot, [string]$Wheelhouse, [string]$StateDirectory,
+          [string]$ExpectedPythonSha256, [string]$ExpectedBindingSha256, [string]$Root,
+          [string]$SourceRoot = $script:foundationSourceRoot)
+    $executable = Assert-FoundationPath $Executable
+    $environment = Assert-FoundationPath $EnvironmentRoot -Directory
+    $wheels = Assert-FoundationPath $Wheelhouse -Directory
+    if (-not $StateDirectory) { $StateDirectory = Join-Path $Root 'state\cpu-runtime' }
+    $state = Assert-FoundationPath $StateDirectory -Directory -MayNotExist
+    Assert-FoundationCpuState $state $Root
+    $imageHash = (Get-FileHash -LiteralPath $executable -Algorithm SHA256).Hash.ToLowerInvariant()
+    if ($ExpectedPythonSha256 -and $ExpectedPythonSha256 -cne $imageHash) { throw 'The native Python image changed.' }
+    $admitter = Assert-FoundationPath (Join-Path $SourceRoot 'cpu_environment.py')
+    Assert-FoundationHash $admitter 'eef44b5bca9ab1dfe4b84a74aac855d1a70196cccf01fb4b0987013368751628'
+    $raw = & $executable -I -S -B $admitter --environment-root $environment --wheelhouse $wheels --expected-python-sha256 $imageHash
+    if ($LASTEXITCODE -ne 0) { throw 'The official CPU environment admission failed.' }
+    $admission = ($raw -join "`n") | ConvertFrom-Json
+    if ($admission.schema -cne 'szl.foundation-confirmation.cpu-environment/v1' -or $admission.state -cne 'VERIFIED' -or
+        $admission.packages_verified -ne 11 -or $admission.binding.native_executable -cne $executable -or
+        $admission.binding.python_image_sha256 -cne $imageHash -or $admission.binding_sha256 -notmatch '^[0-9a-f]{64}$' -or
+        ($ExpectedBindingSha256 -and $ExpectedBindingSha256 -cne $admission.binding_sha256)) { throw 'The CPU environment binding changed.' }
+    return @{ kind='ADMITTED_CPU_ONLY'; python_executable=$executable; python_image_sha256=$imageHash;
+        environment_root=$environment; wheelhouse=$wheels; state_directory=$state;
+        environment_binding_sha256=$admission.binding_sha256; environment_admission=$admission; startup_timeout_seconds=180 }
+}
+
+function Assert-FoundationCpuState {
+    param([string]$StateDirectory, [string]$Root)
+    $state = [IO.Path]::GetFullPath($StateDirectory).TrimEnd('\')
+    $original = [IO.Path]::GetFullPath((Join-Path $Root 'state\trials')).TrimEnd('\')
+    if ($state.Equals($original, [StringComparison]::OrdinalIgnoreCase) -or
+        $state.StartsWith($original + '\', [StringComparison]::OrdinalIgnoreCase) -or
+        $original.StartsWith($state + '\', [StringComparison]::OrdinalIgnoreCase)) {
+        throw 'CPU state must be separate from the original trial receipts.'
+    }
+}
+
+function Get-FoundationCpuArgv {
+    param($CpuRuntime, [string]$Root, [string]$Archive, [int]$ServicePort)
+    $runner = Join-Path (Get-FoundationPaths).Operations 'cpu_workbench.py'
+    return @($CpuRuntime.python_executable, '-I', '-S', '-B', $runner,
+        '--lab-root', $Root, '--archive', $Archive, '--environment-root', $CpuRuntime.environment_root,
+        '--wheelhouse', $CpuRuntime.wheelhouse, '--expected-python-sha256', $CpuRuntime.python_image_sha256,
+        '--environment-binding-sha256', $CpuRuntime.environment_binding_sha256,
+        '--state-directory', $CpuRuntime.state_directory, '--port', [string]$ServicePort, '--startup-timeout-seconds', '180')
+}
+
+function Assert-FoundationCpuReadiness {
+    param($Status, $ServiceReceipt, $CpuRuntime, [string]$Root)
+    if ($ServiceReceipt.schema -cne 'szl.foundation-confirmation.cpu-service/v1' -or
+        $ServiceReceipt.environment_binding_sha256 -cne $CpuRuntime.environment_binding_sha256 -or
+        $ServiceReceipt.python_image_sha256 -cne $CpuRuntime.python_image_sha256 -or
+        $ServiceReceipt.state_directory -cne $CpuRuntime.state_directory -or
+        $Status.ready -ne $true -or $Status.state -cne 'READY' -or $Status.checkpoints_verified -ne 3 -or
+        $Status.runtime_kind -cne 'ADMITTED_CPU_ONLY' -or $Status.environment_binding_sha256 -cne $CpuRuntime.environment_binding_sha256 -or
+        @($Status.models_loaded).Count -ne 3 -or (@($Status.models_loaded) -join ',') -cne '17,23,41' -or
+        @($Status.startup_execution_probes).Count -ne 3 -or $Status.startup_probes_are_user_receipts -isnot [bool] -or
+        $Status.startup_probes_are_user_receipts -ne $false -or $Status.receipt_minted -isnot [bool] -or $Status.receipt_minted -ne $false) {
+        throw 'Actual CPU startup execution/readiness was not demonstrated.'
+    }
+    if ((@($ServiceReceipt.startup_execution_probes) | ConvertTo-Json -Depth 12 -Compress) -cne
+        (@($Status.startup_execution_probes) | ConvertTo-Json -Depth 12 -Compress)) { throw 'CPU startup probe receipt differs from the owned runtime.' }
+    $training = Get-Content -LiteralPath (Join-Path $Root 'training-summary.json') -Raw | ConvertFrom-Json
+    $seen = @{}
+    foreach ($probe in $Status.startup_execution_probes) {
+        $seed = [int]$probe.model_seed
+        $checkpoint = @($training.checkpoints | Where-Object { $_.seed -eq $seed })
+        if ($seed -notin @(17,23,41) -or $seen.ContainsKey($seed) -or $checkpoint.Count -ne 1 -or
+            $probe.request.model_seed -ne $seed -or $probe.request.policy -cne 'learned' -or
+            $probe.request.seed -ne 20261002 -or $probe.request.index -ne 10007 -or $probe.request.family -cne 'shared_bias' -or
+            $probe.binding.checkpoint_sha256 -cne $checkpoint[0].sha256 -or $probe.binding.model_fingerprint -cne $checkpoint[0].trained_fingerprint -or
+            $probe.result_sha256 -notmatch '^[0-9a-f]{64}$' -or $probe.receipt_minted -isnot [bool] -or $probe.receipt_minted -ne $false) {
+            throw 'An actual startup probe differs from the admitted selector.'
+        }
+        $seen[$seed] = $true
+    }
+}
+
 function Get-FoundationTaskArguments {
-    param([string]$Root, [string]$Archive, [int]$TaskPort)
+    param([string]$Root, [string]$Archive, [int]$TaskPort, $CpuRuntime = $null)
     $paths = Get-FoundationPaths
-    return '-NoProfile -NonInteractive -WindowStyle Hidden -File "' + $paths.Supervisor + '" -LabRoot "' + $Root + '" -ArchivePath "' + $Archive + '" -Port ' + $TaskPort
+    $arguments = '-NoProfile -NonInteractive -WindowStyle Hidden -File "' + $paths.Supervisor + '" -LabRoot "' + $Root + '" -ArchivePath "' + $Archive + '" -Port ' + $TaskPort
+    if ($CpuRuntime) {
+        $arguments += ' -PythonExecutable "' + $CpuRuntime.python_executable + '" -CpuEnvironmentRoot "' + $CpuRuntime.environment_root +
+            '" -CpuWheelhouse "' + $CpuRuntime.wheelhouse + '" -CpuStateDirectory "' + $CpuRuntime.state_directory +
+            '" -PythonImageSha256 ' + $CpuRuntime.python_image_sha256 + ' -CpuEnvironmentBindingSha256 ' + $CpuRuntime.environment_binding_sha256
+    }
+    return $arguments
 }
 
 function Write-FoundationJson {
@@ -132,7 +239,7 @@ function Write-FoundationJson {
         $bytes = [Text.UTF8Encoding]::new($false).GetBytes(($Value | ConvertTo-Json -Depth 12))
         $stream = [IO.File]::Open($temporary, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::None)
         try { $stream.Write($bytes, 0, $bytes.Length); $stream.Flush($true) } finally { $stream.Dispose() }
-        if (Test-Path -LiteralPath $safe) { [IO.File]::Replace($temporary, $safe, $null) }
+        if (Test-Path -LiteralPath $safe) { [IO.File]::Replace($temporary, $safe, [System.Management.Automation.Language.NullString]::Value) }
         else { [IO.File]::Move($temporary, $safe) }
     } finally {
         if (Test-Path -LiteralPath $temporary) { Remove-Item -LiteralPath $temporary }
@@ -144,23 +251,41 @@ function Read-FoundationInstallation {
     Assert-FoundationPath $paths.Operations -Directory | Out-Null
     Assert-FoundationPath $paths.Receipt | Out-Null
     $receipt = Get-Content -LiteralPath $paths.Receipt -Raw | ConvertFrom-Json
-    if ($receipt.schema -ne 'szl.foundation-confirmation.windows-installation/v1' -or
+    if ($receipt.recovery_mechanism -cne 'BOUNDED_SUPERVISOR_RETRY' -or
+        $receipt.retry_limit -ne 2 -or $receipt.retry_interval_seconds -ne 60 -or $receipt.scheduler_restart_count -ne 0) {
+        throw 'The installation receipt has a different recovery policy.'
+    }
+    if ($receipt.schema -cnotin @('szl.foundation-confirmation.windows-installation/v1', 'szl.foundation-confirmation.windows-installation/v2') -or
         $receipt.owner_sid -ne $paths.Sid -or $receipt.task_name -ne $paths.Task -or
         $receipt.task_path -ne '\' -or $receipt.operations_root -ne $paths.Operations -or
         $receipt.action.executable -ne $paths.Shell -or $receipt.state -notin @('PREPARED', 'REGISTERED')) {
         throw 'The installation receipt does not identify this current-user installation.'
     }
+    Get-FoundationTaskPriority $receipt | Out-Null
     $root = Assert-FoundationPath $receipt.lab_root -Directory
     $archive = Assert-FoundationPath $receipt.archive_path
+    $script:foundationArchivePath = $archive
     if ($receipt.port -isnot [long] -and $receipt.port -isnot [int]) { throw 'Invalid recorded port.' }
     if ($receipt.port -lt 1 -or $receipt.port -gt 65535 -or
-        $receipt.action.arguments -ne (Get-FoundationTaskArguments $root $archive $receipt.port) -or
+        $receipt.action.arguments -ne (Get-FoundationTaskArguments $root $archive $receipt.port $receipt.cpu_runtime) -or
         $receipt.action.working_directory -ne $root) { throw 'Installation action mismatch.' }
-    foreach ($name in @('install-workbench.ps1', 'supervise-workbench.ps1', 'uninstall-workbench.ps1')) {
+    $managedNames = @('install-workbench.ps1', 'supervise-workbench.ps1', 'uninstall-workbench.ps1')
+    if ($receipt.cpu_runtime) { $managedNames += @('launch-cpu-workbench.ps1', 'cpu_environment.py', 'cpu_workbench.py', 'cpu-runtime-lock.json') }
+    foreach ($name in $managedNames) {
         $expected = $receipt.scripts.$name
         if ($expected -notmatch '^[0-9a-f]{64}$') { throw 'Incomplete managed script receipt.' }
         Assert-FoundationHash (Assert-FoundationPath (Join-Path $paths.Operations $name)) $expected
     }
+    if ($receipt.cpu_runtime) {
+        $cpu = $receipt.cpu_runtime
+        if ($cpu.kind -cne 'ADMITTED_CPU_ONLY' -or $cpu.startup_timeout_seconds -ne 180) { throw 'Unsupported CPU runtime contract.' }
+        $script:foundationCpuRuntime = Get-FoundationCpuRuntime -Executable $cpu.python_executable -EnvironmentRoot $cpu.environment_root -Wheelhouse $cpu.wheelhouse -StateDirectory $cpu.state_directory -ExpectedPythonSha256 $cpu.python_image_sha256 -ExpectedBindingSha256 $cpu.environment_binding_sha256 -Root $root -SourceRoot $paths.Operations
+        if ($script:foundationCpuInputs.PythonExecutable -and
+            ($script:foundationCpuInputs.PythonExecutable -cne $cpu.python_executable -or $script:foundationCpuInputs.EnvironmentRoot -cne $cpu.environment_root -or
+             $script:foundationCpuInputs.Wheelhouse -cne $cpu.wheelhouse -or ($script:foundationCpuInputs.StateDirectory -and $script:foundationCpuInputs.StateDirectory -cne $cpu.state_directory) -or
+             ($script:foundationCpuInputs.PythonSha256 -and $script:foundationCpuInputs.PythonSha256 -cne $cpu.python_image_sha256) -or
+             ($script:foundationCpuInputs.BindingSha256 -and $script:foundationCpuInputs.BindingSha256 -cne $cpu.environment_binding_sha256))) { throw 'CPU task arguments differ from the installation.' }
+    } elseif ($script:foundationCpuInputs.PythonExecutable) { throw 'Legacy installations require explicit uninstall/reinstall to adopt CPU mode.' }
     return $receipt
 }
 
@@ -178,9 +303,46 @@ function Resolve-FoundationTaskSid {
     }
 }
 
+function Get-FoundationTaskPriority {
+    param($Receipt)
+    if ($Receipt.schema -isnot [string]) { throw 'Unsupported installation task priority contract.' }
+    switch -CaseSensitive ($Receipt.schema) {
+        'szl.foundation-confirmation.windows-installation/v2' {
+            if (($Receipt.task_priority -isnot [int] -and $Receipt.task_priority -isnot [long]) -or $Receipt.task_priority -ne 5) {
+                throw 'Unsupported installation task priority contract.'
+            }
+            return 5
+        }
+        'szl.foundation-confirmation.windows-installation/v1' {
+            $hasPriority = if ($Receipt -is [Collections.IDictionary]) { $Receipt.Contains('task_priority') }
+                           else { 'task_priority' -in @($Receipt.PSObject.Properties.Name) }
+            # Bind compatibility to the immutable bounded-recovery v1 installers
+            # at a0cc7cb2 (CPU) and b7ba4163 (legacy). A new installer cannot be
+            # downgraded by deleting its priority field and changing its schema.
+            if ($hasPriority -or $Receipt.scripts.'install-workbench.ps1' -cnotin @(
+                '2dded72edba06cd048c0ce17c3c36a66e80feeba2b31d990e5c2d3da45349b24',
+                '0cb4523b74cbd197c86fae827294a648d4aea496f7a53428af176aacf3b49cfb')) {
+                throw 'Unsupported installation task priority contract.'
+            }
+            # Historical v1 installers used the native Scheduler default (7).
+            # Admit only that value, so owned validation/removal stays possible.
+            return 7
+        }
+        default { throw 'Unsupported installation task priority contract.' }
+    }
+}
+
+function New-FoundationTaskSettings {
+    # Normal process priority; no elevated or real-time scheduling policy.
+    $settings = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew -ExecutionTimeLimit ([TimeSpan]::Zero) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+    $settings.Priority = 5
+    return $settings
+}
+
 function Assert-FoundationTask {
     param($Task, $Receipt)
     $paths = Get-FoundationPaths
+    $expectedPriority = Get-FoundationTaskPriority $Receipt
     $principalSid = $null
     $triggerSid = $null
     if ($null -ne $Task) {
@@ -196,8 +358,9 @@ function Assert-FoundationTask {
         $principalSid -ne $paths.Sid -or [string]$Task.Principal.LogonType -ne 'Interactive' -or
         [string]$Task.Principal.RunLevel -ne 'Limited' -or @($Task.Triggers).Count -ne 1 -or
         $Task.Triggers[0].CimClass.CimClassName -ne 'MSFT_TaskLogonTrigger' -or $triggerSid -ne $paths.Sid -or
-        $Task.Settings.RestartCount -ne 2 -or $Task.Settings.RestartInterval -ne 'PT1M' -or
-        [string]$Task.Settings.MultipleInstances -ne 'IgnoreNew' -or $Task.Settings.ExecutionTimeLimit -ne 'PT0S') {
+        $Task.Settings.RestartCount -ne 0 -or -not [string]::IsNullOrEmpty($Task.Settings.RestartInterval) -or
+        [string]$Task.Settings.MultipleInstances -ne 'IgnoreNew' -or $Task.Settings.ExecutionTimeLimit -ne 'PT0S' -or
+        $Task.Settings.Priority -ne $expectedPriority) {
         throw 'A conflicting task definition was found; no task was changed.'
     }
 }
@@ -220,14 +383,28 @@ namespace SZL {
         }
     }
 }
+
 '@
     }
     return [SZL.FoundationCommandLine]::Parse($CommandLine)
 }
 
+function ConvertTo-FoundationCimTimestamp {
+    param([datetime]$Value)
+    # CIM creation timestamps expose microseconds; Process.StartTime includes
+    # 100 ns ticks. Preserve exact equality at CIM's declared precision.
+    $utc = $Value.ToUniversalTime()
+    return [datetime]::new($utc.Ticks - ($utc.Ticks % 10), [DateTimeKind]::Utc)
+}
+
 function Get-FoundationService {
     param([string]$Root, [string]$Python, [int]$ServicePort, [switch]$MayBeAbsent)
     $path = Join-Path $Root 'state\service.json'
+    $expectedScript = Join-Path $Root 'server.py'
+    if ($script:foundationCpuRuntime) {
+        $path = Join-Path $script:foundationCpuRuntime.state_directory 'service.json'
+        $expectedScript = Join-Path (Get-FoundationPaths).Operations 'cpu_workbench.py'
+    }
     if (-not (Test-Path -LiteralPath $path)) {
         if ($MayBeAbsent) { return $null }
         throw 'No service process receipt exists.'
@@ -235,10 +412,11 @@ function Get-FoundationService {
     Assert-FoundationPath $path | Out-Null
     $receipt = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
     if (($receipt.pid -isnot [int] -and $receipt.pid -isnot [long]) -or $receipt.pid -le 0 -or
-        $receipt.server_script -ne (Join-Path $Root 'server.py') -or
+        $receipt.server_script -ne $expectedScript -or
         $receipt.executable -ne $Python -or $receipt.port -ne $ServicePort) {
         throw 'The service receipt belongs to a different launch; no process was changed.'
     }
+    if ($script:foundationCpuRuntime) { Assert-FoundationCpuReceipt $receipt $script:foundationCpuRuntime $Root $script:foundationArchivePath $ServicePort }
     $process = Get-CimInstance Win32_Process -Filter "ProcessId=$([int]$receipt.pid)" -ErrorAction Stop
     if ($null -eq $process) {
         if ($MayBeAbsent) { return $null }
@@ -247,6 +425,9 @@ function Get-FoundationService {
     $created = ([datetime]$receipt.process_created).ToUniversalTime()
     $arguments = @(Get-FoundationArgv $process.CommandLine)
     $expected = @($Python, '-X', 'utf8', '-B', (Join-Path $Root 'server.py'), '--port', [string]$ServicePort)
+    if ($script:foundationCpuRuntime) { $expected = @(Get-FoundationCpuArgv $script:foundationCpuRuntime $Root $script:foundationArchivePath $ServicePort) }
+    $owner = Invoke-CimMethod -InputObject $process -MethodName GetOwnerSid -ErrorAction Stop
+    if ($owner.ReturnValue -ne 0 -or $owner.Sid -cne (Get-FoundationPaths).Sid) { throw 'Service current-user ownership could not be verified.' }
     if ($process.ExecutablePath -ne $Python -or $process.CreationDate.ToUniversalTime() -ne $created -or
         $arguments.Count -ne $expected.Count) { throw 'Service process ownership could not be verified.' }
     for ($index = 0; $index -lt $expected.Count; $index++) {
@@ -262,7 +443,64 @@ function Get-FoundationService {
         $status.ready -ne $true -or $status.state -ne 'READY' -or $status.checkpoints_verified -ne 3) {
         throw 'The owned service has not demonstrated release readiness.'
     }
+    if ($script:foundationCpuRuntime) { Assert-FoundationCpuReadiness $status $receipt $script:foundationCpuRuntime $Root }
     return @{ Receipt = $receipt; Process = $process; Status = $status }
+}
+
+function Assert-FoundationCpuReceipt {
+    param($Receipt, $CpuRuntime, [string]$Root, [string]$Archive, [int]$ServicePort)
+    $expected = @(Get-FoundationCpuArgv $CpuRuntime $Root $Archive $ServicePort)
+    if ($Receipt.schema -cne 'szl.foundation-confirmation.cpu-service/v1' -or
+        $Receipt.lab_root -cne $Root -or $Receipt.executable -cne $CpuRuntime.python_executable -or
+        $Receipt.python_image_sha256 -cne $CpuRuntime.python_image_sha256 -or
+        $Receipt.state_directory -cne $CpuRuntime.state_directory -or
+        $Receipt.environment_root -cne $CpuRuntime.environment_root -or $Receipt.wheelhouse -cne $CpuRuntime.wheelhouse -or
+        $Receipt.environment_binding_sha256 -cne $CpuRuntime.environment_binding_sha256 -or
+        $Receipt.server_script -cne $expected[4] -or $Receipt.port -ne $ServicePort -or
+        $Receipt.startup_timeout_seconds -ne 180 -or @($Receipt.argv).Count -ne ($expected.Count - 4)) {
+        throw 'CPU service receipt launch contract differs; predecessor evidence was preserved.'
+    }
+    for ($index = 4; $index -lt $expected.Count; $index++) {
+        if ($Receipt.argv[$index - 4] -cne $expected[$index]) { throw 'CPU service receipt argv differs; predecessor evidence was preserved.' }
+    }
+}
+
+function Initialize-FoundationCpuDeadline {
+    if (-not ('SZL.FoundationCpuDeadline' -as [type])) {
+        Add-Type -TypeDefinition @'
+using System;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Threading;
+namespace SZL {
+    public sealed class FoundationCpuDeadline : IDisposable {
+        [DllImport("kernel32.dll", SetLastError=true)] static extern bool TerminateProcess(IntPtr handle, uint code);
+        readonly object gate = new object(); readonly Process child; readonly IntPtr handle;
+        readonly Stopwatch clock; readonly int limit; Timer timer;
+        bool completed, expired;
+        public FoundationCpuDeadline(Process directNewChild, int milliseconds, Stopwatch originalClock) {
+            child = directNewChild; handle = child.Handle; limit = milliseconds; clock = originalClock;
+            timer = new Timer(Expire, null, Math.Max(1, milliseconds - (int)clock.ElapsedMilliseconds), Timeout.Infinite);
+        }
+        void EndChild() { if (!child.HasExited && !TerminateProcess(handle, 124)) throw new InvalidOperationException("Direct CPU child deadline termination failed"); }
+        void Expire(object ignored) { lock (gate) { if (completed) return; expired = true; try { EndChild(); } catch { /* Complete/Dispose retain failure; never select a PID. */ } } }
+        public void Complete() { lock (gate) {
+            if (expired || clock.ElapsedMilliseconds >= limit) { expired = true; EndChild(); throw new TimeoutException("CPU startup deadline exceeded"); }
+            if (child.HasExited) throw new InvalidOperationException("Direct CPU child exited before readiness");
+            completed = true; timer.Dispose();
+        } }
+        public void Dispose() { lock (gate) { timer.Dispose(); if (!completed) EndChild(); } }
+    }
+}
+'@
+    }
+}
+
+function New-FoundationCpuDeadline {
+    param([Diagnostics.Process]$Child, [ValidateRange(1,180000)][int]$TimeoutMilliseconds = 180000,
+          [Diagnostics.Stopwatch]$Clock = [Diagnostics.Stopwatch]::StartNew())
+    Initialize-FoundationCpuDeadline
+    return [SZL.FoundationCpuDeadline]::new($Child, $TimeoutMilliseconds, $Clock)
 }
 
 function Assert-FoundationLaunchPort {
@@ -272,43 +510,86 @@ function Assert-FoundationLaunchPort {
     }
 }
 
+function Invoke-FoundationLauncher {
+    param([string]$Executable, [string]$Arguments, [string]$WorkingDirectory)
+    $launcher = Start-Process -FilePath $Executable -ArgumentList $Arguments -WorkingDirectory $WorkingDirectory -WindowStyle Hidden -PassThru
+    # Start-Process -Wait includes the server descendant on Windows. Wait only
+    # for the launcher before admitting and tracking the exact owned service.
+    $launcher.WaitForExit()
+    $launcher.Refresh()
+    return $launcher.ExitCode
+}
+
+function Invoke-FoundationRecoveryLoop {
+    param([Parameter(Mandatory = $true)][scriptblock]$Cycle,
+          [Parameter(Mandatory = $true)][scriptblock]$Delay)
+    $attempt = 0
+    while ($true) {
+        # Admission, ownership and readiness exceptions propagate immediately.
+        # Only the successful exact-owned-process wait can authorize a retry.
+        $completed = @(& $Cycle $attempt)
+        if ($completed.Count -ne 1 -or $completed[0].status -cne 'OWNED_SERVICE_EXITED' -or
+            $completed[0].owned_service_exit_verified -isnot [bool] -or
+            $completed[0].owned_service_exit_verified -ne $true) {
+            throw 'The recovery cycle did not verify the owned service exit.'
+        }
+        if ($attempt -ge 2) { throw 'The owned service recovery budget exhausted its two retries.' }
+        $attempt++
+        & $Delay 60 | Out-Null
+    }
+}
+
 # The installer and uninstaller dot-source only these definitions.
 if ($MyInvocation.InvocationName -eq '.') { return }
 
 try {
-    $admitted = Test-FoundationRelease $LabRoot $ArchivePath
     if ($ValidateOnly) {
+        $admitted = Test-FoundationRelease $LabRoot $ArchivePath
         @{ status = 'VERIFIED'; admission = $admitted; task_registered = $false; service_started = $false } | ConvertTo-Json -Depth 8
         exit 0
     }
-    $paths = Get-FoundationPaths
-    $installation = Read-FoundationInstallation
-    if ($installation.lab_root -ne $admitted.LabRoot -or $installation.archive_path -ne $admitted.ArchivePath -or $installation.port -ne $Port) {
-        throw 'Launch arguments do not match the owned installation receipt.'
+    Invoke-FoundationRecoveryLoop -Cycle {
+        param($Attempt)
+        # Re-admit the sealed source, installation and task before every launch.
+        $admitted = Test-FoundationRelease $LabRoot $ArchivePath
+        $paths = Get-FoundationPaths
+        $installation = Read-FoundationInstallation
+        if ($installation.lab_root -ne $admitted.LabRoot -or $installation.archive_path -ne $admitted.ArchivePath -or $installation.port -ne $Port) {
+            throw 'Launch arguments do not match the owned installation receipt.'
+        }
+        Assert-FoundationTask (Get-ScheduledTask -TaskName $paths.Task -TaskPath '\' -ErrorAction Stop) $installation
+        $predecessor = Get-FoundationService $admitted.LabRoot $admitted.Python $Port -MayBeAbsent
+        Assert-FoundationLaunchPort $Port $predecessor
+        $launchArguments = '-NoProfile -NonInteractive -File "' + (Join-Path $admitted.LabRoot 'start.ps1') + '" -Port ' + $Port
+        if ($script:foundationCpuRuntime) { $launchArguments = '-NoProfile -NonInteractive -File "' + (Join-Path $paths.Operations 'launch-cpu-workbench.ps1') + '"' }
+        $launcherExitCode = Invoke-FoundationLauncher $paths.Shell $launchArguments $admitted.LabRoot
+        if ($launcherExitCode -ne 0) { throw 'The unchanged workbench launcher failed. See retained state/service.stderr.log.' }
+        $owned = Get-FoundationService $admitted.LabRoot $admitted.Python $Port
+        $script:foundationSupervisionRun = @{ schema = 'szl.foundation-confirmation.windows-supervisor/v1'; owner_sid = $paths.Sid;
+            installation_id = $installation.installation_id; started_utc = [datetime]::UtcNow.ToString('o');
+            status = 'WAITING_FOR_OWNED_SERVICE'; process = $owned.Receipt; source_admission = $admitted.Verification;
+            checkpoints_verified = $owned.Status.checkpoints_verified; task_tracks_service = $true;
+            recovery_mechanism = 'BOUNDED_SUPERVISOR_RETRY'; retry_limit = 2; retry_interval_seconds = 60;
+            scheduler_restart_count = 0; recovery_attempt = $Attempt }
+        Write-FoundationJson (Join-Path $paths.Operations 'supervisor-status.json') $script:foundationSupervisionRun
+        $tracked = Get-Process -Id $owned.Receipt.pid -ErrorAction Stop
+        if ((ConvertTo-FoundationCimTimestamp $tracked.StartTime) -ne ([datetime]$owned.Receipt.process_created).ToUniversalTime() -or
+            $tracked.Path -ne $admitted.Python) { throw 'The service changed before supervision began.' }
+        Wait-Process -InputObject $tracked -ErrorAction Stop
+        $tracked.Refresh()
+        if (-not $tracked.HasExited) { throw 'The exact owned process has not exited.' }
+        $script:foundationSupervisionRun.status = 'OWNED_SERVICE_EXITED'
+        $script:foundationSupervisionRun.completed_utc = [datetime]::UtcNow.ToString('o')
+        Write-FoundationJson (Join-Path $paths.Operations 'supervisor-status.json') $script:foundationSupervisionRun
+        return @{ status = 'OWNED_SERVICE_EXITED'; owned_service_exit_verified = $true }
+    } -Delay {
+        param($Seconds)
+        $paths = Get-FoundationPaths
+        $script:foundationSupervisionRun.status = 'AWAITING_BOUNDED_SUPERVISOR_RETRY'
+        $script:foundationSupervisionRun.retry_requested_utc = [datetime]::UtcNow.ToString('o')
+        Write-FoundationJson (Join-Path $paths.Operations 'supervisor-status.json') $script:foundationSupervisionRun
+        Start-Sleep -Seconds $Seconds
     }
-    Assert-FoundationTask (Get-ScheduledTask -TaskName $paths.Task -TaskPath '\' -ErrorAction Stop) $installation
-    # Verify a live predecessor before letting the unchanged launcher reuse its receipt.
-    $predecessor = Get-FoundationService $admitted.LabRoot $admitted.Python $Port -MayBeAbsent
-    Assert-FoundationLaunchPort $Port $predecessor
-    $launchArguments = '-NoProfile -NonInteractive -File "' + (Join-Path $admitted.LabRoot 'start.ps1') + '" -Port ' + $Port
-    $launcher = Start-Process -FilePath $paths.Shell -ArgumentList $launchArguments -WorkingDirectory $admitted.LabRoot -WindowStyle Hidden -Wait -PassThru
-    if ($launcher.ExitCode -ne 0) { throw 'The unchanged workbench launcher failed. See retained state/service.stderr.log.' }
-    $owned = Get-FoundationService $admitted.LabRoot $admitted.Python $Port
-    $run = @{ schema = 'szl.foundation-confirmation.windows-supervisor/v1'; owner_sid = $paths.Sid;
-        installation_id = $installation.installation_id; started_utc = [datetime]::UtcNow.ToString('o');
-        status = 'WAITING_FOR_OWNED_SERVICE'; process = $owned.Receipt; source_admission = $admitted.Verification;
-        checkpoints_verified = $owned.Status.checkpoints_verified; task_tracks_service = $true }
-    Write-FoundationJson (Join-Path $paths.Operations 'supervisor-status.json') $run
-    $tracked = Get-Process -Id $owned.Receipt.pid -ErrorAction Stop
-    # Pin the process handle to the creation timestamp, even if the PID exits and is reused.
-    if ($tracked.StartTime.ToUniversalTime() -ne ([datetime]$owned.Receipt.process_created).ToUniversalTime() -or
-        $tracked.Path -ne $admitted.Python) { throw 'The service changed before supervision began.' }
-    Wait-Process -InputObject $tracked -ErrorAction Stop
-    $run.status = 'OWNED_SERVICE_EXITED'
-    $run.completed_utc = [datetime]::UtcNow.ToString('o')
-    Write-FoundationJson (Join-Path $paths.Operations 'supervisor-status.json') $run
-    # Ending the service is a failure for the supervisor; Task Scheduler owns the bounded retries.
-    exit 1
 } catch {
     Write-Error $_ -ErrorAction Continue
     exit 1

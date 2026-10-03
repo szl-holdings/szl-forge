@@ -62,6 +62,26 @@ The house CPU lab serves **Khipu GGUF**, not Chaski. Lab load forbidden.
 ROADMAP (prose). `publication_eligible: false`. Train loss MEASURED
 `1.783925924450159` is a train metric, not an eval.
 
+## Adapter inspection guard
+
+`adapter_guard.py` rejects malformed checkpoints before admitting their tensor
+names to the application-coverage check. It reads only the eight-byte prefix and
+a bounded header, never the tensor payload. This local LoRA profile caps the
+header at 8 MiB, supports the SafeTensors v0.8.0 dtype widths, requires exact
+descriptor fields and strict UTF-8/JSON, and checks dimensions, byte sizes and
+complete nonoverlapping payload indexing. Duplicate keys, unsupported future
+dtypes and oversized headers fail closed as `InvalidAdapterCheckpoint`, a
+subclass of `AdapterNotApplied`.
+
+Full, partial and zero key-application coverage retain their existing meaning;
+an empty checkpoint cannot count as applied. Header inspection is not a weight
+integrity proof, numerical application test or model-quality evaluation, and
+does not change any publication or autonomy gate. The loader and authenticated
+artifact/evaluation evidence remain separate requirements.
+
+The blocking offline CI owner runs `python -B -m unittest -v
+chaski/test_adapter_guard.py`; these tests do not import torch or download models.
+
 ## Training
 
 - Recipe: Unsloth QLoRA SFT. Script: train_chaski.py. Loads only szl_dataset.jsonl.

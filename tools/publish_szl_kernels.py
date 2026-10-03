@@ -11,6 +11,7 @@ import io
 import json
 import math
 import os
+import posixpath
 import re
 import shutil
 import struct
@@ -50,6 +51,7 @@ KERNEL_RUNTIME_EVIDENCE_PATH = "/tmp/szl-kernel-runtime-evidence.json"
 KERNEL_RUNTIME_LOG_PREFIX = "SZL_KERNEL_RUNTIME_EVIDENCE="
 KERNEL_RUNTIME_LOG_LIMIT = 64 * 1024
 CONTRACT_RELATIVE = Path("publishing/source-binding.json")
+LEGACY_OPERATIONAL_FILE = "OPERATIONAL.json"
 FULL_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 DOCKER_CONTAINER_ID_RE = re.compile(r"^[0-9a-f]{64}$")
 LEGACY_REPO_TYPE = "model"
@@ -64,6 +66,9 @@ KERNEL_BUILDER_VERSION_OUTPUT = (
 )
 KERNEL_BUILDER_SOURCE_REVISION = (
     "633246310320d85def0c67d62c7912fd444a842f"
+)
+KERNEL_BUILDER_PATCH_SHA256 = (
+    "e30c7c5f4bb9833b3905984a3040690c857f5162f02c548f899360bda948c402"
 )
 KERNEL_BINDING_FILENAME = "source-binding.json"
 KERNEL_SIGNATURE_FILENAME = "metadata.json.sigstore"
@@ -175,6 +180,94 @@ class PublicationError(RuntimeError):
     """Raised when publication evidence is insufficient."""
 
 
+KERNEL_BUILDER_FAILURE_CODES = frozenset({
+    "KERNEL_BUILDER_COMMAND_FAILED",
+    "KERNEL_BUILDER_REPOSITORY_CREATE_FAILED",
+    "KERNEL_BUILDER_PUBLISHING_DENIED",
+    "KERNEL_BUILDER_REFS_READ_FAILED",
+    "KERNEL_BUILDER_COMMIT_FAILED",
+    "KERNEL_BUILDER_TIMEOUT",
+    "KERNEL_BUILDER_PROCESS_ERROR",
+})
+
+
+KERNEL_HTTP_STATUSES = frozenset({400, 401, 403, 404, 408, 409, 422, 429, 500, 502, 503, 504})
+KERNEL_HTTP_ERROR_CLASSES = frozenset({
+    "HTTP_ERROR", "AUTH_REQUIRED", "FORBIDDEN", "CONFLICT", "RATE_LIMITED", "REQUEST",
+})
+
+
+class KernelBuilderUploadError(PublicationError):
+    """A fixed, non-secret diagnosis for the pinned uploader subprocess."""
+
+    def __init__(self, code: str, *, exit_code: int | None = None,
+                 http_status: int | str = "UNKNOWN", http_error_class: str = "UNKNOWN") -> None:
+        super().__init__("kernel-builder upload failed")
+        self.code = code
+        self.exit_code = exit_code
+        self.http_status = http_status
+        self.http_error_class = http_error_class
+
+
+def kernel_builder_failure_code(stderr: object) -> str:
+    """Classify only fixed upstream contexts; never retain subprocess output."""
+    if type(stderr) is not str:
+        return "KERNEL_BUILDER_COMMAND_FAILED"
+    contexts = {
+        "Cannot create repository": "KERNEL_BUILDER_REPOSITORY_CREATE_FAILED",
+        (
+            "You do not have permission to publish the kernel "
+            f"`{EXPECTED_REPO_ID}`."
+        ): "KERNEL_BUILDER_PUBLISHING_DENIED",
+        "Cannot list repository refs": "KERNEL_BUILDER_REFS_READ_FAILED",
+        "Cannot create commit on branch `main`": "KERNEL_BUILDER_COMMIT_FAILED",
+        "Cannot create commit on branch `v1`": "KERNEL_BUILDER_COMMIT_FAILED",
+    }
+    for line in stderr[-65536:].splitlines():
+        if line.startswith("Error: "):
+            return contexts.get(
+                line.removeprefix("Error: "), "KERNEL_BUILDER_COMMAND_FAILED"
+            )
+    return "KERNEL_BUILDER_COMMAND_FAILED"
+
+
+def kernel_builder_http_diagnostics(stderr: object) -> tuple[int | str, str]:
+    """Read only the first eyre cause using hf-hub 1.0.0-rc.0 display prefixes.
+
+    No URL, body, headers, or arbitrary message text leaves this parser.
+    Class names do not imply a numeric status that upstream did not print.
+    """
+    unknown = ("UNKNOWN", "UNKNOWN")
+    if type(stderr) is not str or len(stderr) > 65536:
+        return unknown
+    if kernel_builder_failure_code(stderr) == "KERNEL_BUILDER_COMMAND_FAILED":
+        return unknown
+    lines = stderr.splitlines()
+    markers = [i for i, line in enumerate(lines) if line == "Caused by:"]
+    errors = [i for i, line in enumerate(lines) if line.startswith("Error: ")]
+    if (len(markers) != 1 or len(errors) != 1 or markers[0] <= errors[0]
+            or any(line.strip() for line in lines[errors[0] + 1:markers[0]])):
+        return unknown
+    causes = [line.strip() for line in lines[markers[0] + 1:] if line.strip()]
+    if not causes:
+        return unknown
+    cause = causes[0].removeprefix("0: ")
+    match = re.match(r"HTTP error: ([0-9]{3}) ", cause)
+    if match:
+        status = int(match.group(1))
+        return (status, "HTTP_ERROR") if status in KERNEL_HTTP_STATUSES else unknown
+    for prefix, error_class in (
+        ("Authentication required: ", "AUTH_REQUIRED"),
+        ("Forbidden: ", "FORBIDDEN"),
+        ("Conflict: ", "CONFLICT"),
+        ("Rate limited: ", "RATE_LIMITED"),
+        ("HTTP request error: ", "REQUEST"),
+    ):
+        if cause.startswith(prefix):
+            return "UNKNOWN", error_class
+    return unknown
+
+
 def canonical_json(payload: Any) -> str:
     return json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
 
@@ -257,6 +350,23 @@ def record_publication_failure(
         "error_type": bounded_error_type(exc),
         "provider_write_attempted": provider_write_attempted,
     }
+    if (
+        stage == "KERNEL_UPLOAD"
+        and type(exc) is KernelBuilderUploadError
+        and type(exc.code) is str
+        and exc.code in KERNEL_BUILDER_FAILURE_CODES
+    ):
+        result["failure"]["error_code"] = exc.code
+        if type(exc.exit_code) is int and -255 <= exc.exit_code <= 255:
+            result["failure"]["exit_code"] = exc.exit_code
+        result["failure"]["http_status"] = (
+            exc.http_status if type(exc.http_status) is int
+            and exc.http_status in KERNEL_HTTP_STATUSES else "UNKNOWN"
+        )
+        result["failure"]["http_error_class"] = (
+            exc.http_error_class if type(exc.http_error_class) is str
+            and exc.http_error_class in KERNEL_HTTP_ERROR_CLASSES else "UNKNOWN"
+        )
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(canonical_json(result), encoding="utf-8")
 
@@ -318,6 +428,20 @@ def load_contract(source_root: Path) -> dict[str, Any]:
         or len(artifact_files) != len(set(artifact_files))
     ):
         raise PublicationError("artifact_files must be a unique non-empty string list")
+    normalized_files = [
+        posixpath.normpath(item.replace("\\", "/")) for item in artifact_files
+    ]
+    reserved_files = {"publication.json", LEGACY_OPERATIONAL_FILE}
+    if reserved_files.intersection(normalized_files):
+        raise PublicationError(
+            "publication.json and OPERATIONAL.json are publisher-generated, "
+            "not source-declared"
+        )
+    if any(
+        item != normalized or item.startswith("/") or ".." in item.split("/")
+        for item, normalized in zip(artifact_files, normalized_files)
+    ):
+        raise PublicationError("artifact_files must use canonical relative paths")
     missing_kernel_sources = FIRST_CLASS_REQUIRED_SOURCE_FILES - set(artifact_files)
     if missing_kernel_sources:
         raise PublicationError(
@@ -614,16 +738,46 @@ def publisher_identity(
     }
 
 
+def retired_operational_bytes(*, source_revision: str, publisher_revision: str) -> bytes:
+    """Replace the legacy PASS document with a non-qualification record."""
+    return canonical_json(
+        {
+            "schema": "szl.kernel-operational-retirement/v1",
+            "lifecycle": "RETIRED",
+            "evidence_class": "DECLARED",
+            "qualification": "UNKNOWN",
+            "tests": "UNKNOWN",
+            "eval": "UNKNOWN",
+            "get_kernel": "UNKNOWN",
+            "source_repository": EXPECTED_SOURCE_REPOSITORY,
+            "source_revision": source_revision,
+            "publisher_repository": EXPECTED_PUBLISHER_REPOSITORY,
+            "publisher_revision": publisher_revision,
+            "generated_by_publisher": True,
+            "source_binding_reference": "publication.json at the same immutable Hub revision",
+            "limitations": [
+                "Earlier OPERATIONAL.json PASS and import-LIVE claims are historical and superseded.",
+                "RETIRED describes this record's lifecycle, not an evidence class.",
+                "UNKNOWN means no current tests, evaluation, loader safety, or runtime readiness are attested here.",
+            ],
+        }
+    ).encode("utf-8")
+
+
 def verify_legacy_readback(
     source_root: Path,
     contract: dict[str, Any],
     publication_bytes: bytes,
+    operational_bytes: bytes,
     *,
     revision: str,
     token: str,
     download_fn: Callable[..., str],
 ) -> None:
-    for relative in list(contract["artifact_files"]) + ["publication.json"]:
+    for relative in list(contract["artifact_files"]) + [
+        "publication.json",
+        LEGACY_OPERATIONAL_FILE,
+    ]:
         downloaded = Path(
             download_fn(
                 EXPECTED_REPO_ID,
@@ -633,11 +787,12 @@ def verify_legacy_readback(
                 token=token,
             )
         )
-        expected = (
-            publication_bytes
-            if relative == "publication.json"
-            else safe_file(source_root, relative).read_bytes()
-        )
+        expected = {
+            "publication.json": publication_bytes,
+            LEGACY_OPERATIONAL_FILE: operational_bytes,
+        }.get(relative)
+        if expected is None:
+            expected = safe_file(source_root, relative).read_bytes()
         if downloaded.read_bytes() != expected:
             raise PublicationError(f"readback mismatch at {relative}")
 
@@ -1084,6 +1239,7 @@ def upload_first_class_kernel(staging_root: Path, token: str) -> None:
         f"v{KERNEL_VERSION}",
         "--repo-type",
         KERNEL_REPO_TYPE,
+        "--existing-repo",
         "--output-json",
         str(output_path),
         "--quiet",
@@ -1111,8 +1267,16 @@ def upload_first_class_kernel(staging_root: Path, token: str) -> None:
             )
         except FileNotFoundError:
             raise PublicationError("pinned kernel-builder is not installed") from None
+        except subprocess.CalledProcessError as exc:
+            http_status, http_error_class = kernel_builder_http_diagnostics(exc.stderr)
+            raise KernelBuilderUploadError(
+                kernel_builder_failure_code(exc.stderr), exit_code=exc.returncode,
+                http_status=http_status, http_error_class=http_error_class,
+            ) from None
+        except subprocess.TimeoutExpired:
+            raise KernelBuilderUploadError("KERNEL_BUILDER_TIMEOUT") from None
         except (OSError, subprocess.SubprocessError):
-            raise PublicationError("kernel-builder upload failed") from None
+            raise KernelBuilderUploadError("KERNEL_BUILDER_PROCESS_ERROR") from None
 
     try:
         outcome = json.loads(output_path.read_text(encoding="utf-8"))
@@ -1806,6 +1970,10 @@ def run(
         kernel_token=kernel_token,
         download_fn=download_fn,
     )
+    operational_bytes = retired_operational_bytes(
+        source_revision=source_revision,
+        publisher_revision=publisher["revision"],
+    )
     legacy_publication = {
         "schema": "szl.hf-kernel-source-binding/v2",
         "artifact": {
@@ -1822,6 +1990,14 @@ def run(
             "declared_file_count": len(files),
             "files": files,
         },
+        "generated_files": [
+            {
+                "path": LEGACY_OPERATIONAL_FILE,
+                "bytes": len(operational_bytes),
+                "sha256": hashlib.sha256(operational_bytes).hexdigest(),
+                "lifecycle": "RETIRED",
+            }
+        ],
         "publisher": publisher,
         "publisher_authority": required_authority,
         "authorization": authorization_observation,
@@ -1843,6 +2019,9 @@ def run(
             "publication_interface_version": KERNEL_BUILDER_VERSION,
             "publication_interface_source_revision": (
                 KERNEL_BUILDER_SOURCE_REVISION
+            ),
+            "publication_interface_patch_sha256": (
+                KERNEL_BUILDER_PATCH_SHA256
             ),
         },
         "source_repository": EXPECTED_SOURCE_REPOSITORY,
@@ -1893,6 +2072,10 @@ def run(
             "legacy_model": {
                 "repo_type": LEGACY_REPO_TYPE,
                 "revision_before": observed_before["legacy_model"]["revision"],
+                "operational_retirement": "PENDING_PUBLICATION",
+                "operational_retirement_sha256": hashlib.sha256(
+                    operational_bytes
+                ).hexdigest(),
                 "publication_sha256": hashlib.sha256(
                     legacy_publication_bytes
                 ).hexdigest(),
@@ -2154,6 +2337,12 @@ def run(
                 path_or_fileobj=io.BytesIO(legacy_publication_bytes),
             )
         )
+        legacy_operations.append(
+            CommitOperationAdd(
+                path_in_repo=LEGACY_OPERATIONAL_FILE,
+                path_or_fileobj=io.BytesIO(operational_bytes),
+            )
+        )
         try:
             legacy_commit = api.create_commit(
                 repo_id=EXPECTED_REPO_ID,
@@ -2183,6 +2372,7 @@ def run(
                 source_root,
                 contract,
                 legacy_publication_bytes,
+                operational_bytes,
                 revision=legacy_revision,
                 token=token,
                 download_fn=download_fn,
@@ -2197,6 +2387,28 @@ def run(
             )
             raise
         result["targets"]["legacy_model"]["readback"] = "EXACT_BYTES_VERIFIED"
+        try:
+            current_revision = api.model_info(EXPECTED_REPO_ID, token=token).sha
+            result["targets"]["legacy_model"]["current_head_observed"] = (
+                current_revision
+            )
+            if current_revision != legacy_revision:
+                raise PublicationError(
+                    "legacy model main moved during readback; retirement is "
+                    "verified only at the immutable publication revision"
+                )
+        except Exception as exc:
+            record_publication_failure(
+                result,
+                report_path,
+                stage="LEGACY_CURRENT_HEAD",
+                exc=exc,
+                provider_write_attempted=True,
+            )
+            raise
+        result["targets"]["legacy_model"]["operational_retirement"] = (
+            "RETIRED_AND_EXACT_READBACK_VERIFIED"
+        )
         result["status"] = "PUBLISHED_AND_EXACT_READBACK_VERIFIED"
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(canonical_json(result), encoding="utf-8")

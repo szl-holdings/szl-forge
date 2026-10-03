@@ -30,6 +30,16 @@ def parser() -> argparse.ArgumentParser:
     t.add_argument("--seed", type=int, default=20260913)
     t.add_argument("--batch-size", type=int, default=32)
     t.add_argument("--acknowledge-research-only", action="store_true", required=True)
+    t.add_argument("--archive-stage-manifest", type=Path,
+                   help="Local staged-data manifest; requires its independently recorded SHA-256")
+    t.add_argument("--archive-stage-sha256")
+    stage = s.add_parser("stage-archive", help="Copy pinned local archive JSONL to a new local stage")
+    stage.add_argument("--request", type=Path, required=True)
+    stage.add_argument("--output", type=Path, required=True)
+    stage.add_argument("--materialized-input-root", type=Path,
+                       help="Plain local copy of archive input when a cloud reparse placeholder is unsupported")
+    copied = s.add_parser("archive-candidate", help="Copy a completed candidate into the local archive")
+    copied.add_argument("--candidate", type=Path, required=True)
     e = s.add_parser("evaluate-test", help="Explicit frozen-test observation; no promotion")
     e.add_argument("--artifact", type=Path, required=True)
     e.add_argument("--data", type=Path, required=True)
@@ -61,12 +71,33 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "validate":
             from .data import Dataset
             result = Dataset.read(args.data, args.track).summary()
+        elif args.command == "stage-archive":
+            from .archive_stage import (_archive_root, _local_root,
+                                        require_local_workspace, stage_archive)
+            require_local_workspace(args.output, _local_root(), _archive_root())
+            result = stage_archive(args.materialized_input_root or _archive_root(), args.request,
+                                   args.output, _local_root())
+        elif args.command == "archive-candidate":
+            from .archive_stage import _archive_root, _local_root, archive_candidate
+            result = archive_candidate(args.candidate, _archive_root(), _local_root())
         elif args.command == "train":
+            if (args.archive_stage_manifest is None) != (args.archive_stage_sha256 is None):
+                raise ValueError("archive_stage_manifest_and_digest_required_together")
+            if args.archive_stage_manifest is not None:
+                from .archive_stage import (_archive_root, _local_root, require_local_workspace,
+                                            require_stage_output_disjoint, verify_stage)
+                require_local_workspace(args.data, _local_root(), _archive_root())
+                require_local_workspace(args.output, _local_root(), _archive_root())
+                require_stage_output_disjoint(args.output, args.archive_stage_manifest)
+                verify_stage(args.archive_stage_manifest, args.archive_stage_sha256,
+                             args.data, args.track)
             import torch
             from .training import train_candidate
             torch.set_num_threads(1)
             result = train_candidate(args.data, args.track, args.output, args.source_revision,
-                                     args.epochs, args.seed, args.batch_size)
+                                     args.epochs, args.seed, args.batch_size,
+                                     archive_stage_manifest=args.archive_stage_manifest,
+                                     archive_stage_sha256=args.archive_stage_sha256)
         elif args.command == "evaluate-test":
             from .training import evaluate_test
             from .safeio import canonical_bytes, write_new

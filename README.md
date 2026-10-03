@@ -101,36 +101,29 @@ and keep every deployment claim at `NOT_SITE_VALIDATED` until the exact device,
 site certificate, assay mappings, network, privacy controls, laboratory workflow,
 and destination reconciliation have been witnessed and approved.
 
-## One command (laptop)
+## Historical one-command bootstrap (held)
 
-The whole pipeline — folder, kit files, Unsloth, the CUDA-build torch the
-RTX 5050 needs, training, and the Ollama import — in a single PowerShell
-command (run from ANY folder; it puts itself in `%USERPROFILE%\szl-forge`):
-
-```powershell
-iwr https://raw.githubusercontent.com/szl-holdings/szl-forge/main/forge.ps1 -OutFile "$env:TEMP\forge.ps1"; powershell -ExecutionPolicy Bypass -File "$env:TEMP\forge.ps1"
-```
-
-It prints each step honestly and stops on the real error if one appears.
-Prefer step-by-step? [`RUNBOOK.md`](./RUNBOOK.md) is the same pipeline as
-one command per step.
+The former pipeline downloaded mutable inputs, wrote the fixed `szl-model`
+path, and replaced the canonical `szl1` Ollama name. It is retired for current
+recovery: `forge.ps1` now stops before training or import. Use
+[`local-compute/README.md`](./local-compute/README.md) for bounded new
+experiments and [recovery issue #264](https://github.com/szl-holdings/szl-forge/issues/264)
+for the held historical Qwen exports. `RUNBOOK.md` preserves the historical
+step-by-step recipe, not authorization to train, import, route, or publish `szl1`.
 
 ## If first words are garbage (`@@@@…`)
 
-MEASURED 2026-07-12: Ollama's **direct safetensors import** of the Unsloth
-16-bit merge produced corrupted weights — szl1 answered `@` spam at
-temperature 0, even in raw mode, and re-quantizing the imported model did not
-fix it. Most likely the import path is at fault; the fix re-imports the
-already-trained merge at `.\szl-model` properly (no retraining):
+The July 2026 observation of repeated `@` output did not prove whether import,
+conversion, merge, or source weights caused it. A later frozen smoke run found
+both historical Qwen exports still produced repeated `@`, and the bounded GGUF
+forensic run stopped at an unsupported tensor type before full-blob
+authentication. The cause and clean source lineage remain unproven.
 
-```powershell
-iwr https://raw.githubusercontent.com/szl-holdings/szl-forge/main/rebirth.ps1 -OutFile "$env:TEMP\rebirth.ps1"; powershell -ExecutionPolicy Bypass -File "$env:TEMP\rebirth.ps1"
-```
-
-If rebirth STILL produces `@` spam, the merge itself is suspect — report back
-for diagnosis rather than retraining (training is seeded, so an identical re-run
-would likely reproduce the same merge; isolating merge vs converter comes first).
-Future full `forge.ps1` runs birth via this GGUF path automatically (step 6).
+Do not rerun `rebirth.ps1`, delete or replace either installed model, convert
+unknown bytes as a repair, or route either model to production. The script now
+fails closed without modifying model state. Preserve the current blobs and
+follow [issue #264](https://github.com/szl-holdings/szl-forge/issues/264) for
+separately admitted diagnostics and a separately named candidate.
 
 ## What SZL Forge is NOT
 
@@ -144,13 +137,13 @@ Future full `forge.ps1` runs birth via this GGUF path automatically (step 6).
 
 | File | What it is |
 | --- | --- |
-| `forge.ps1` | **One-command bootstrap** — runs the entire pipeline below (downloads kit, fixes CUDA torch, trains, imports into Ollama), stopping honestly on any real failure. |
+| `forge.ps1` | **Historical bootstrap, held** — fails closed before training or import. Use the bounded local-compute lane for new experiments. |
 | [`RUNBOOK.md`](./RUNBOOK.md) | Step-by-step, one-command-per-step runbook for running the whole pipeline on the laptop. |
-| `train_szl.py` | Unsloth QLoRA training script: loads the 4-bit base, applies LoRA, trains, merges to `./szl-model` (16-bit safetensors). |
+| `train_szl.py` | Historical Unsloth QLoRA recipe: refuses to overwrite existing legacy output and labels a new merge experimental, not qualified for canonical import. |
 | `szl_dataset.jsonl` | 41 chat-format training examples encoding SZL-1's identity and honesty doctrine. |
-| `rebirth.ps1` | **Birth/rebirth into Ollama via GGUF** — converts `./szl-model` to F16 GGUF with llama.cpp's pure-Python converter, then `ollama create --quantize q4_K_M`. Fixes the corrupted-voice import without retraining. |
-| `Modelfile.gguf` | Ollama recipe used by `rebirth.ps1` (`FROM ./szl1-f16.gguf`) with the SZL-1 system prompt and chat template. |
-| `Modelfile` | Legacy direct-import recipe (`FROM ./szl-model`). **Superseded** — direct safetensors import corrupted SZL-1's voice (MEASURED 2026-07-12: `@` spam at temperature 0). Kept for provenance. |
+| `rebirth.ps1` | **Historical import helper, held** — fails closed without deleting or replacing the canonical `szl1` model. |
+| `Modelfile.gguf` | Historical GGUF Ollama recipe (`FROM ./szl1-f16.gguf`); not a qualified recovery path. |
+| `Modelfile` | Historical direct-import recipe (`FROM ./szl-model`), retained for provenance and not authorized for canonical recovery. |
 | [`RUNBOOK-NEMO.md`](./RUNBOOK-NEMO.md) | One-command-per-step runbook to put **SZL-Nemo** (doctrine-wrapped NVIDIA Nemotron 3 Nano 4B) on the tower. |
 | `Modelfile.nemo` | Ollama recipe for SZL-Nemo (`FROM nemotron-3-nano:4b` + SZL doctrine system prompt — a wrapper, not an SZL fine-tune). |
 | `conjecture_machine.py` | **Conjecture Machine** — points the owner-controlled model at the formula corpus, asking each formula for an *advisory* proof sketch / lemma decomposition / counterexample search. Stdlib-only. NEVER claims proven. |
@@ -228,6 +221,14 @@ deterministic exact-head projection used across the two jobs. The legacy model
 publication retains the established `szl.hf-kernel-source-binding/v2`
 `authorization` observation contract.
 
+Kernel upload failure receipts retain only an allowlisted numeric `http_status`
+and fixed `http_error_class` from a recognized first upstream error cause.
+Unrecognized or ambiguous output remains `UNKNOWN`; a `FORBIDDEN` class does
+not infer a numeric 403 or establish which provider permission is missing.
+Raw stderr, provider URLs, response bodies, headers, and tokens are never added
+to these fields. Diagnostics do not change authorization, upload acceptance,
+file readback, or runtime gates.
+
 This source contract does not assert that an older Hub revision is signed or
 that a new revision has been published. The `kernels` client does not yet make
 signature verification a load-time guarantee, and its default verification
@@ -250,28 +251,28 @@ CI enforces it on every PR that touches doctrine-bearing data
 Current state (MEASURED 2026-09-01): all five gated datasets VALID, 75
 records, 0 violations.
 
-## Pipeline
+## Historical SZL-1 pipeline (held; not an operational procedure)
 
 ```
 szl_dataset.jsonl
       │  (identity + doctrine examples)
       ▼
-Unsloth QLoRA fine-tune  ──  train_szl.py  (base: unsloth/Qwen2.5-3B-Instruct)
+ Historical QLoRA recipe  ──  train_szl.py  (unqualified output)
       │
       ▼
-merged 16-bit safetensors  ──  ./szl-model
+ experimental 16-bit merge  ──  ./szl-model  (not qualified)
       │
       ▼
-llama.cpp convert_hf_to_gguf  ──  szl1-f16.gguf   (rebirth.ps1)
+ GGUF conversion  ──  HELD (clean source and converter lineage unproven)
       │
       ▼
-ollama create szl1 --quantize q4_K_M -f Modelfile.gguf
+ canonical Ollama import  ──  BLOCKED (do not run)
       │
       ▼
-serve as SOVEREIGN_MODEL=szl1   (Alloy cockpit runs on SZL-1)
+HOLD: do not route as SOVEREIGN_MODEL=szl1 without source and runtime qualification
 ```
 
-See **[RUNBOOK.md](./RUNBOOK.md)** for the exact commands, VRAM/disk
+See **[RUNBOOK.md](./RUNBOOK.md)** for the historical steps, VRAM/disk
 requirements, and Windows-specific notes.
 
 ## SZL-Nemo (NemoClaw pattern)

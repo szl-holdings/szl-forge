@@ -95,22 +95,30 @@ def main():
     if cuda:
         torch.cuda.reset_peak_memory_stats()
     optim = recipe.get("optimizer", "adamw_8bit")
-    if not cuda or lib.installed_versions().get("bitsandbytes") is None:
-        optim = "adamw_torch"
+    if not cuda or lib.installed_versions().get("bitsandbytes") is None or not backend.endswith("4bit"):
+        optim = "adamw_torch"  # 8-bit AdamW only where bitsandbytes already proved itself by loading the 4-bit base
     targs = dict(output_dir=str(lib.OUT / "trainer"), per_device_train_batch_size=int(recipe["per_device_batch_size"]),
                  gradient_accumulation_steps=int(recipe["gradient_accumulation_steps"]), max_steps=steps,
                  learning_rate=float(recipe["learning_rate"]), warmup_steps=min(int(recipe["warmup_steps"]), max(0, steps - 1)),
                  lr_scheduler_type=recipe.get("lr_scheduler", "constant_with_warmup"), weight_decay=float(recipe["weight_decay"]),
                  optim=optim, logging_steps=1, save_strategy="no", seed=seed, report_to="none",
                  bf16=cuda and torch.cuda.is_bf16_supported(), fp16=False, remove_unused_columns=False,
-                 gradient_checkpointing=bool(cuda and backend != "unsloth"), dataloader_pin_memory=cuda)
+                 gradient_checkpointing=bool(cuda and not backend.startswith("unsloth")), dataloader_pin_memory=cuda)
     try:
         training_args = TrainingArguments(**targs)
     except TypeError:
         targs.pop("dataloader_pin_memory", None)
         training_args = TrainingArguments(**targs)
     trainer = Trainer(model=model, args=training_args, train_dataset=examples, data_collator=collate(tok.pad_token_id))
-    stats = trainer.train()
+    try:
+        stats = trainer.train()
+    except (ImportError, RuntimeError, ValueError) as e:
+        if optim == "adamw_torch":
+            raise
+        print(f"[train] {optim} failed ({type(e).__name__}: {str(e)[:120]}); retrying with adamw_torch")
+        optim = targs["optim"] = "adamw_torch"
+        trainer = Trainer(model=model, args=TrainingArguments(**targs), train_dataset=examples, data_collator=collate(tok.pad_token_id))
+        stats = trainer.train()
     final_loss = f"{stats.training_loss:.6f}"
     adapter_dir = lib.OUT / "adapter"
     model.save_pretrained(str(adapter_dir))

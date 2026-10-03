@@ -367,8 +367,8 @@ def gpu_snapshot():
 
 
 def load_base_model(cand, for_training, allow_cpu=False):
-    """Load the pinned base as a causal LM. Prefers Unsloth when importable; falls back to transformers+peft.
-    Returns (model, tokenizer, backend)."""
+    """Load the pinned base as a causal LM. Attempts, in order: Unsloth (4-bit), transformers+peft 4-bit (bitsandbytes),
+    transformers+peft bf16 full precision. Returns (model, tokenizer, backend); backend names the path that worked."""
     base = cand["actual_training_base"]
     recipe = cand["training_recipe"]
     repo, rev = base["repo_id"], base.get("revision")
@@ -376,67 +376,79 @@ def load_base_model(cand, for_training, allow_cpu=False):
     device_cuda = torch.cuda.is_available()
     if not device_cuda and not allow_cpu:
         raise SystemExit("[model] CUDA unavailable; pass --allow-cpu only for tiny contract smoke runs")
-    use_4bit = bool(base.get("load_in_4bit", True)) and device_cuda
-    try:
-        from unsloth import FastLanguageModel
-        model, tok = FastLanguageModel.from_pretrained(model_name=repo, revision=rev, max_seq_length=recipe["max_length"],
-                                                       load_in_4bit=use_4bit, dtype=None)
-        if for_training:
-            model = FastLanguageModel.get_peft_model(
-                model, r=recipe["lora_r"], lora_alpha=recipe["lora_alpha"], lora_dropout=recipe["lora_dropout"],
-                target_modules=recipe["target_modules"], bias="none", use_gradient_checkpointing="unsloth",
-                random_state=recipe["seed"])
-        if tok.pad_token is None:
-            tok.pad_token = tok.eos_token
-        return model, tok, "unsloth"
-    except Exception as e:  # guarded fallback: the plain stack is slower but version-stable
-        print(f"[model] unsloth path unavailable ({type(e).__name__}: {str(e)[:160]}); using transformers+peft")
-    import transformers
-    kwargs = {"revision": rev}
-    if use_4bit:
+    want_4bit = bool(base.get("load_in_4bit", True)) and device_cuda
+    attempts = []
+    if want_4bit:
         try:
-            from transformers import BitsAndBytesConfig
-            kwargs["quantization_config"] = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_quant_type="nf4",
-                                                               bnb_4bit_compute_dtype=torch.bfloat16,
-                                                               bnb_4bit_use_double_quant=True)
-            kwargs["device_map"] = {"": 0}
-        except Exception as e:
-            print(f"[model] bitsandbytes unavailable ({type(e).__name__}); loading bf16 full precision")
-            kwargs["dtype"] = torch.bfloat16
-            kwargs["device_map"] = {"": 0}
-    elif device_cuda:
-        kwargs["dtype"] = torch.bfloat16
-        kwargs["device_map"] = {"": 0}
-    else:
-        kwargs["dtype"] = torch.float32
-    model, errors = None, []
-    for loader in ("AutoModelForCausalLM", "AutoModelForImageTextToText", "AutoModelForVision2Seq"):
-        cls = getattr(transformers, loader, None)
-        if cls is None:
-            continue
-        for kw in (kwargs, {**{k: v for k, v in kwargs.items() if k != "dtype"}, "torch_dtype": kwargs.get("dtype")}):
+            from unsloth import FastLanguageModel
+            model, tok = FastLanguageModel.from_pretrained(model_name=repo, revision=rev, max_seq_length=recipe["max_length"],
+                                                           load_in_4bit=True, dtype=None)
+            if for_training:
+                model = FastLanguageModel.get_peft_model(
+                    model, r=recipe["lora_r"], lora_alpha=recipe["lora_alpha"], lora_dropout=recipe["lora_dropout"],
+                    target_modules=recipe["target_modules"], bias="none", use_gradient_checkpointing="unsloth",
+                    random_state=recipe["seed"])
+            if tok.pad_token is None:
+                tok.pad_token = tok.eos_token
+            return model, tok, "unsloth-4bit"
+        except Exception as e:  # guarded fallback: the plain stack is slower but version-stable
+            attempts.append(f"unsloth: {type(e).__name__}: {str(e)[:160]}")
+            print(f"[model] unsloth path unavailable ({attempts[-1]}); trying transformers+peft")
+    import transformers
+    plans = []
+    if want_4bit:
+        plans.append("4bit")
+    plans.append("bf16" if device_cuda else "fp32")
+    model, tok, backend = None, None, None
+    for plan in plans:
+        kwargs = {"revision": rev}
+        if plan == "4bit":
             try:
-                model = cls.from_pretrained(repo, **kw)
+                from transformers import BitsAndBytesConfig
+                kwargs["quantization_config"] = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_quant_type="nf4",
+                                                                   bnb_4bit_compute_dtype=torch.bfloat16,
+                                                                   bnb_4bit_use_double_quant=True)
+                kwargs["device_map"] = {"": 0}
+            except Exception as e:
+                attempts.append(f"bitsandbytes config: {type(e).__name__}: {str(e)[:120]}")
+                continue
+        elif plan == "bf16":
+            kwargs["dtype"], kwargs["device_map"] = torch.bfloat16, {"": 0}
+        else:
+            kwargs["dtype"] = torch.float32
+        for loader in ("AutoModelForCausalLM", "AutoModelForImageTextToText", "AutoModelForVision2Seq"):
+            cls = getattr(transformers, loader, None)
+            if cls is None:
+                continue
+            for kw in (kwargs, {**{k: v for k, v in kwargs.items() if k != "dtype"}, "torch_dtype": kwargs.get("dtype")}):
+                try:
+                    model = cls.from_pretrained(repo, **kw)
+                    break
+                except Exception as e:
+                    attempts.append(f"{plan}/{loader}: {type(e).__name__}: {str(e)[:120]}")
+            if model is not None:
                 break
-            except (TypeError, ValueError, KeyError) as e:
-                errors.append(f"{loader}: {type(e).__name__}: {str(e)[:120]}")
         if model is not None:
+            backend = f"transformers+peft-{plan}"
             break
     if model is None:
-        raise SystemExit("[model] could not load base with any causal/multimodal loader: " + " | ".join(errors[-4:]))
+        raise SystemExit("[model] could not load base: " + " | ".join(attempts[-6:]))
     tok = load_tokenizer(repo, rev)
     if for_training:
         from peft import LoraConfig, get_peft_model
-        if use_4bit:
+        if backend.endswith("4bit"):
             try:
                 from peft import prepare_model_for_kbit_training
                 model = prepare_model_for_kbit_training(model)
-            except Exception:
-                pass
+            except Exception as e:
+                attempts.append(f"prepare_model_for_kbit_training: {type(e).__name__}")
         model = get_peft_model(model, LoraConfig(r=recipe["lora_r"], lora_alpha=recipe["lora_alpha"],
                                                  lora_dropout=recipe["lora_dropout"], bias="none",
                                                  task_type="CAUSAL_LM", target_modules=recipe["target_modules"]))
-    return model, tok, "transformers+peft"
+        if hasattr(model, "enable_input_require_grads"):
+            model.enable_input_require_grads()  # needed for gradient checkpointing with frozen embeddings
+    print(f"[model] backend={backend}" + (f" after {len(attempts)} fallback(s)" if attempts else ""))
+    return model, tok, backend
 
 
 def attach_adapter(model, adapter_dir):

@@ -63,6 +63,9 @@ splits and exclusive output directories. Held-out evaluation is a separate comma
 Safetensors and local hashes are used; pickle/joblib are not loaded. Unsigned
 candidate manifests do not replace existing Forge release receipts.
 
+For an owner-controlled private archive, `docs/ARCHIVE_STAGING.md` describes
+the local byte-pinned stage, training manifest gate, and local candidate copy.
+
 The current handoff authorizes source and code-only HF alignment, not training,
 paid provider calls, remote teacher generation, model pulls or GPU disruption.
 Existing Owned Agent Control / gpu-bridge own eventual execution. `szl-router`

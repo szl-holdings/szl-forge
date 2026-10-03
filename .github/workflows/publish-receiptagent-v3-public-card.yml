@@ -1,0 +1,107 @@
+# SPDX-License-Identifier: Apache-2.0
+name: Publish ReceiptAgent v3 public card (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_revision:
+        description: Exact current protected-main SHA reviewed for this publication
+        required: true
+        type: string
+      expected_hub_parent:
+        description: Reviewed public Hub parent; drift requires a new candidate
+        required: true
+        type: string
+      confirmation:
+        description: Type README_ONLY_UNQUALIFIED to authorize only this card correction
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hf-write/model/SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: ${{ github.event_name == 'workflow_dispatch' && github.repository == 'szl-holdings/szl-forge' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      CARD_SOURCE_REVISION: ${{ inputs.source_revision }}
+      CARD_EXPECTED_HUB_PARENT: ${{ inputs.expected_hub_parent }}
+      CARD_CONFIRMATION: ${{ inputs.confirmation }}
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - name: Check out the dispatched source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Validate manual intent and current main
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          python -B tools/check_receiptagent_v3_card_dispatch.py > reports/dispatch.json
+
+      - name: Install the reviewed publication client
+        run: >-
+          python -m pip install --disable-pip-version-check --no-cache-dir
+          "huggingface-hub==1.23.0"
+
+      - name: Verify offline controls and prepare the reviewed candidate
+        run: |
+          set -euo pipefail
+          python -B -m unittest discover -s tests -p 'test_*receiptagent_v3*card*.py' -v
+          python -B tools/prepare_receiptagent_v3_card_sync.py \
+            --source-revision "${GITHUB_SHA}" --output-dir reports/review
+          git diff --exit-code
+
+      - name: Recheck intent and current main before credentials
+        run: |
+          set -euo pipefail
+          python -B tools/check_receiptagent_v3_card_dispatch.py > reports/precredential.json
+
+      - name: Acquire and validate the target publisher credential
+        env:
+          HF_ORG_TOKEN_CANDIDATE: ${{ secrets.HF_ORG_TOKEN }}
+          HF_ORG_TOKEN1_CANDIDATE: ${{ secrets.HF_ORG_TOKEN1 }}
+          HF_WRITE_TOKEN_CANDIDATE: ${{ secrets.HF_WRITE_TOKEN }}
+          HF_TOKEN_CANDIDATE: ${{ secrets.HF_TOKEN }}
+          HUGGINGFACE_TOKEN_CANDIDATE: ${{ secrets.HUGGINGFACE_TOKEN }}
+          HUGGING_FACE_HUB_TOKEN_CANDIDATE: ${{ secrets.HUGGING_FACE_HUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          python -B tools/acquire_hf_publisher_token.py \
+            --target-repo SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3 \
+            --target-type model --github-env "${GITHUB_ENV}" \
+            --report reports/credential.json
+
+      - name: Attempt one README commit and verify immutable Hub bytes
+        run: |
+          set -euo pipefail
+          python -B tools/publish_receiptagent_v3_public_card.py \
+            --source-revision "${GITHUB_SHA}" --publish \
+            --receipt-file "reports/publication-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.json"
+
+      - name: Upload secret-free review and publication evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: receiptagent-v3-public-card-${{ github.run_id }}-${{ github.run_attempt }}
+          path: reports/
+          if-no-files-found: warn
+          retention-days: 90

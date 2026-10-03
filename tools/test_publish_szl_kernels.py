@@ -296,6 +296,8 @@ class FakeApi:
                 raise AssertionError(type(source))
             remote[operation.path_in_repo] = payload
         self.remote[(repo_type, oid)] = remote
+        if repo_type == publisher.LEGACY_REPO_TYPE:
+            self.model_revision = oid
         return SimpleNamespace(oid=oid)
 
     def upload_kernel(self, staging_root: Path, token: str) -> None:
@@ -635,6 +637,105 @@ class PublishSzlKernelsTests(unittest.TestCase):
             ),
         ), self.assertRaisesRegex(publisher.PublicationError, "^kernel-builder upload failed$"):
             publisher.upload_first_class_kernel(Path(temporary), KERNEL_TOKEN)
+
+    def test_uploader_failure_receipt_classifies_only_fixed_builder_context(self) -> None:
+        cases = (
+            ("Error: Cannot create repository", "KERNEL_BUILDER_REPOSITORY_CREATE_FAILED"),
+            (
+                "Error: You do not have permission to publish the kernel "
+                "`SZLHOLDINGS/szl-kernels`.",
+                "KERNEL_BUILDER_PUBLISHING_DENIED",
+            ),
+            ("Error: Cannot list repository refs", "KERNEL_BUILDER_REFS_READ_FAILED"),
+            ("Error: Cannot create commit on branch `v1`", "KERNEL_BUILDER_COMMIT_FAILED"),
+            ("Error: unexpected provider detail", "KERNEL_BUILDER_COMMAND_FAILED"),
+            (
+                "Error: transport rejected\n0: Cannot create repository",
+                "KERNEL_BUILDER_COMMAND_FAILED",
+            ),
+        )
+        for stderr, code in cases:
+            with self.subTest(code=code), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                provider_output = f"{stderr}\nsecret={KERNEL_TOKEN}\n"
+                with patch.object(
+                    publisher, "require_kernel_builder_executable",
+                    return_value="kernel-builder",
+                ), patch.object(
+                    publisher.subprocess, "run",
+                    side_effect=publisher.subprocess.CalledProcessError(
+                        1, ["kernel-builder"], output=provider_output,
+                        stderr=provider_output,
+                    ),
+                ), self.assertRaisesRegex(
+                    publisher.PublicationError, "^kernel-builder upload failed$"
+                ) as caught:
+                    publisher.upload_first_class_kernel(root, KERNEL_TOKEN)
+
+                report = root / "report.json"
+                publisher.record_publication_failure(
+                    {}, report, stage="KERNEL_UPLOAD", exc=caught.exception,
+                    provider_write_attempted=True,
+                )
+                failure = json.loads(report.read_text(encoding="utf-8"))["failure"]
+                self.assertEqual(failure["stage"], "KERNEL_UPLOAD")
+                self.assertEqual(failure["error_type"], "KernelBuilderUploadError")
+                self.assertEqual(failure["error_code"], code)
+                self.assertEqual(failure["exit_code"], 1)
+                self.assertIs(failure["provider_write_attempted"], True)
+                self.assertNotIn(KERNEL_TOKEN, report.read_text(encoding="utf-8"))
+                self.assertNotIn(KERNEL_TOKEN, str(caught.exception))
+
+    def test_builder_nested_diagnostics_are_bounded_and_do_not_scan_messages(self):
+        cases = [
+            ("Forbidden: https://provider.invalid/?secret=secret-marker", "UNKNOWN", "FORBIDDEN"),
+            ("Authentication required: secret-marker", "UNKNOWN", "AUTH_REQUIRED"),
+            ("HTTP error: 503 Service Unavailable https://provider.invalid/secret-marker", 503, "HTTP_ERROR"),
+            ("HTTP error: 200 OK secret-marker", "UNKNOWN", "UNKNOWN"),
+            ("HTTP error: 599 Unknown secret-marker", "UNKNOWN", "UNKNOWN"),
+            ("HTTP request error: secret-marker", "UNKNOWN", "REQUEST"),
+            ("Conflict: secret-marker", "UNKNOWN", "CONFLICT"),
+            ("Rate limited: secret-marker", "UNKNOWN", "RATE_LIMITED"),
+            ("secret-marker\n   1: Forbidden: forged", "UNKNOWN", "UNKNOWN"),
+        ]
+        for nested, status, error_class in cases:
+            with self.subTest(nested=nested):
+                stderr = "Error: Cannot create repository\n\nCaused by:\n   0: " + nested
+                self.assertEqual(publisher.kernel_builder_http_diagnostics(stderr),
+                                 (status, error_class))
+        for stderr in [None, b"Forbidden", "Error: unknown\nCaused by:\nForbidden: secret",
+                       "Error: Cannot create repository\nsecret=403 Forbidden",
+                       "x" * 65537,
+                       "Caused by:\nForbidden: fake\nError: Cannot create repository",
+                       "Error: Cannot create repository\nmessage\nCaused by:\nForbidden: fake",
+                       "Error: Cannot create repository\nCaused by:\nForbidden: x\nCaused by:\nConflict: y"]:
+            self.assertEqual(publisher.kernel_builder_http_diagnostics(stderr),
+                             ("UNKNOWN", "UNKNOWN"))
+
+    def test_nested_diagnostics_reach_receipt_without_provider_secrets(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            output = "Error: Cannot create repository\n\nCaused by:\n    Forbidden: https://provider.invalid/?token=" + KERNEL_TOKEN
+            with patch.object(publisher, "require_kernel_builder_executable", return_value="kernel-builder"), patch.object(
+                publisher.subprocess, "run", side_effect=publisher.subprocess.CalledProcessError(
+                    1, ["kernel-builder"], output=output, stderr=output)), self.assertRaises(publisher.KernelBuilderUploadError) as caught:
+                publisher.upload_first_class_kernel(root, KERNEL_TOKEN)
+            report = root / "report.json"
+            publisher.record_publication_failure({}, report, stage="KERNEL_UPLOAD",
+                exc=caught.exception, provider_write_attempted=True)
+            text = report.read_text()
+            failure = json.loads(text)["failure"]
+            self.assertEqual(failure["http_status"], "UNKNOWN")
+            self.assertEqual(failure["http_error_class"], "FORBIDDEN")
+            for secret in [KERNEL_TOKEN, "provider.invalid", "token=", "Caused by"]:
+                self.assertNotIn(secret, text + str(caught.exception))
+            caught.exception.http_status = True
+            caught.exception.http_error_class = KERNEL_TOKEN
+            publisher.record_publication_failure({}, report, stage="KERNEL_UPLOAD",
+                exc=caught.exception, provider_write_attempted=True)
+            failure = json.loads(report.read_text())["failure"]
+            self.assertEqual(failure["http_status"], "UNKNOWN")
+            self.assertEqual(failure["http_error_class"], "UNKNOWN")
 
     def test_kernel_parent_revalidation_rejects_branch_drift(self) -> None:
         api = FakeApi({})
@@ -1565,8 +1666,10 @@ class PublishSzlKernelsTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             staging_root = Path(temporary)
             observed_environment: dict[str, str] = {}
+            observed_command: list[str] = []
 
             def upload(command: list[str], **kwargs: object) -> SimpleNamespace:
+                observed_command.extend(command)
                 observed_environment.update(kwargs["env"])
                 output_path = Path(command[command.index("--output-json") + 1])
                 output_path.write_text(
@@ -1601,6 +1704,8 @@ class PublishSzlKernelsTests(unittest.TestCase):
 
             self.assertEqual(observed_environment["PATH"], "trusted-path")
             self.assertEqual(observed_environment["HF_TOKEN"], "explicit-provider-secret")
+            self.assertIn("--existing-repo", observed_command)
+            self.assertNotIn("--create-pr", observed_command)
             self.assertFalse(Path(observed_environment["HF_HOME"]).exists())
             self.assertNotIn("HF_HUB_DISABLE_IMPLICIT_TOKEN", observed_environment)
             for key in ("GITHUB_TOKEN", "ACTIONS_ID_TOKEN_REQUEST_TOKEN",
@@ -1633,6 +1738,20 @@ class PublishSzlKernelsTests(unittest.TestCase):
         dockerfile = (
             Path(__file__).parent / "kernel-runtime.Dockerfile"
         ).read_text(encoding="utf-8")
+        installer = (
+            Path(__file__).parent / "install_patched_kernel_builder.sh"
+        ).read_text(encoding="utf-8")
+        patch_bytes = (
+            Path(__file__).parents[1]
+            / "patches"
+            / "hf-kernel-builder-existing-repo.patch"
+        ).read_bytes()
+        frontier_workflow = (
+            Path(__file__).parents[1]
+            / ".github"
+            / "workflows"
+            / "model-kernel-frontier.yml"
+        ).read_text(encoding="utf-8")
         install = workflow.index("Install trusted gateway test dependency")
         tests = workflow.index("Test trusted gateway contracts")
         dependency = workflow.index('"huggingface-hub==1.26.0"', install)
@@ -1660,9 +1779,8 @@ class PublishSzlKernelsTests(unittest.TestCase):
         uploader = publish_job.index(
             "Install exact publication client without publisher secret"
         )
-        upstream_pin = publish_job.index(
-            "633246310320d85def0c67d62c7912fd444a842f",
-            uploader,
+        install_command = publish_job.index(
+            "bash tools/install_patched_kernel_builder.sh", uploader,
         )
         verifier = publish_job.index(
             "Install pinned credentialless signature verifier",
@@ -1675,8 +1793,8 @@ class PublishSzlKernelsTests(unittest.TestCase):
             "Build credentialless stable runtime sandbox",
             uploader,
         )
-        self.assertLess(uploader, upstream_pin)
-        self.assertLess(upstream_pin, verifier)
+        self.assertLess(uploader, install_command)
+        self.assertLess(install_command, verifier)
         self.assertLess(verifier, publish)
         self.assertLess(sandbox, publish)
         self.assertIn(
@@ -1701,10 +1819,17 @@ class PublishSzlKernelsTests(unittest.TestCase):
             "--file tools/kernel-runtime.Dockerfile",
             publish_job[sandbox:publish],
         )
+        self.assertIn(publisher.KERNEL_BUILDER_SOURCE_REVISION, installer)
+        self.assertIn("git -C \"${builder_dir}\" apply --unidiff-zero --check", installer)
+        self.assertEqual(
+            hashlib.sha256(patch_bytes).hexdigest(),
+            publisher.KERNEL_BUILDER_PATCH_SHA256,
+        )
+        self.assertIn(publisher.KERNEL_BUILDER_PATCH_SHA256, installer)
+        self.assertIn("kernel-builder upload --help | grep -Fq -- '--existing-repo'", installer)
         self.assertIn(
-            'test "$(kernel-builder --version)" = '
-            f'"{publisher.KERNEL_BUILDER_VERSION_OUTPUT}"',
-            publish_job[uploader:publish],
+            "bash tools/install_patched_kernel_builder.sh --verify",
+            frontier_workflow,
         )
 
     source_revision = "a" * 40
@@ -2317,6 +2442,10 @@ class PublishSzlKernelsTests(unittest.TestCase):
                 "szl.hf-first-class-kernel-binding/v2",
             )
             self.assertEqual(binding["source_revision"], self.source_revision)
+            self.assertEqual(
+                binding["artifact"]["publication_interface_patch_sha256"],
+                publisher.KERNEL_BUILDER_PATCH_SHA256,
+            )
             self.assertIn("authorization_binding", binding)
             self.assertNotIn("authorization", binding)
             self.assertIn(self.publisher_revision, identity["workflow_url"])
@@ -2327,6 +2456,10 @@ class PublishSzlKernelsTests(unittest.TestCase):
             authorization, artifacts = self._fixture(root)
             api = FakeApi(artifacts)
             api.download_root = root / "downloads"
+            api.remote[(publisher.LEGACY_REPO_TYPE, api.model_revision)][
+                "OPERATIONAL.json"
+            ] = b'{"tests":"PASS","eval":"PASS","load_path":"revision=main"}'
+            api.files.append("OPERATIONAL.json")
             identity = publisher.publisher_identity(
                 repository=publisher.EXPECTED_PUBLISHER_REPOSITORY,
                 revision=self.publisher_revision,
@@ -2387,11 +2520,39 @@ class PublishSzlKernelsTests(unittest.TestCase):
                 result["targets"]["legacy_model"]["readback"],
                 "EXACT_BYTES_VERIFIED",
             )
+            self.assertEqual(
+                result["targets"]["legacy_model"]["operational_retirement"],
+                "RETIRED_AND_EXACT_READBACK_VERIFIED",
+            )
             legacy_revision = result["targets"]["legacy_model"]["revision_after"]
             legacy_publication = json.loads(
                 api.remote[(publisher.LEGACY_REPO_TYPE, legacy_revision)][
                     "publication.json"
                 ]
+            )
+            retired_bytes = api.remote[(publisher.LEGACY_REPO_TYPE, legacy_revision)][
+                "OPERATIONAL.json"
+            ]
+            retired = json.loads(retired_bytes)
+            self.assertEqual(retired["schema"], "szl.kernel-operational-retirement/v1")
+            self.assertEqual(retired["lifecycle"], "RETIRED")
+            self.assertEqual(retired["evidence_class"], "DECLARED")
+            self.assertEqual(retired["qualification"], "UNKNOWN")
+            self.assertEqual(retired["tests"], "UNKNOWN")
+            self.assertEqual(retired["eval"], "UNKNOWN")
+            self.assertEqual(retired["get_kernel"], "UNKNOWN")
+            self.assertEqual(retired["source_revision"], self.source_revision)
+            self.assertEqual(retired["publisher_revision"], self.publisher_revision)
+            self.assertNotIn("load_path", retired)
+            self.assertNotIn('"PASS"', retired_bytes.decode("utf-8"))
+            self.assertEqual(
+                legacy_publication["generated_files"],
+                [{
+                    "path": "OPERATIONAL.json",
+                    "bytes": len(retired_bytes),
+                    "sha256": hashlib.sha256(retired_bytes).hexdigest(),
+                    "lifecycle": "RETIRED",
+                }],
             )
             self.assertEqual(
                 legacy_publication["authorization"]["schema"],
@@ -2437,6 +2598,123 @@ class PublishSzlKernelsTests(unittest.TestCase):
                 api.remote[
                     (publisher.KERNEL_REPO_TYPE, branches_after["v1"])
                 ],
+            )
+
+    def test_legacy_readback_rejects_tampered_operational_retirement(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self._fixture(root)
+            contract = publisher.load_contract(root)
+            publication_bytes = b"{}\n"
+            operational_bytes = publisher.retired_operational_bytes(
+                source_revision=self.source_revision,
+                publisher_revision=self.publisher_revision,
+            )
+            publication_path = root / "publication.json"
+            publication_path.write_bytes(publication_bytes)
+            stale_path = root / "stale-operational.json"
+            stale_path.write_bytes(b'{"tests":"PASS"}\n')
+
+            def download(_repo: str, relative: str, **_kwargs: object) -> str:
+                if relative == "publication.json":
+                    return str(publication_path)
+                if relative == "OPERATIONAL.json":
+                    return str(stale_path)
+                return str(root / relative)
+
+            with self.assertRaisesRegex(
+                publisher.PublicationError,
+                "readback mismatch at OPERATIONAL.json",
+            ):
+                publisher.verify_legacy_readback(
+                    root,
+                    contract,
+                    publication_bytes,
+                    operational_bytes,
+                    revision="f" * 40,
+                    token="test-token",
+                    download_fn=download,
+                )
+
+    def test_source_contract_cannot_claim_generated_files_or_aliases(self) -> None:
+        for relative in (
+            "OPERATIONAL.json",
+            "publication.json",
+            "./OPERATIONAL.json",
+            "./publication.json",
+            "nested/../OPERATIONAL.json",
+            r".\publication.json",
+        ):
+            with self.subTest(relative=relative), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                self._fixture(root)
+                contract_path = root / publisher.CONTRACT_RELATIVE
+                contract = json.loads(contract_path.read_text(encoding="utf-8"))
+                contract["artifact_files"].append(relative)
+                contract_path.write_text(json.dumps(contract), encoding="utf-8")
+                with self.assertRaisesRegex(
+                    publisher.PublicationError,
+                    "publisher-generated",
+                ):
+                    publisher.load_contract(root)
+
+    def test_legacy_current_head_move_fails_closed_after_exact_readback(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            authorization, artifacts = self._fixture(root)
+            api = FakeApi(artifacts)
+            api.download_root = root / "downloads"
+            identity = publisher.publisher_identity(
+                repository=publisher.EXPECTED_PUBLISHER_REPOSITORY,
+                revision=self.publisher_revision,
+                workflow_ref=(
+                    f"{publisher.EXPECTED_PUBLISHER_REPOSITORY}/"
+                    ".github/workflows/publish-szl-kernels.yml@refs/heads/main"
+                ),
+                run_id="123",
+                run_attempt="1",
+            )
+
+            def moved_head_download(*args: object, **kwargs: object) -> str:
+                path = api.download(*args, **kwargs)
+                if (
+                    kwargs.get("repo_type") == publisher.LEGACY_REPO_TYPE
+                    and kwargs.get("revision") != "d" * 40
+                ):
+                    api.model_revision = "9" * 40
+                return path
+
+            report = root / "report.json"
+            with self.assertRaisesRegex(
+                publisher.PublicationError,
+                "legacy model main moved during readback",
+            ):
+                publisher.run(
+                    source_root=root,
+                    report_path=report,
+                    authorization_path=authorization,
+                    source_revision=self.source_revision,
+                    publisher=identity,
+                    publish=True,
+                    **keyless_grants(),
+                    api=api,
+                    download_fn=moved_head_download,
+                    kernel_sign_fn=fake_sign_kernel_metadata,
+                    kernel_upload_fn=api.upload_kernel,
+                    kernel_runtime_fn=lambda *, revision: runtime_evidence(revision),
+                )
+            result = json.loads(report.read_text(encoding="utf-8"))
+            self.assertEqual(
+                result["status"], "PUBLICATION_FAILED_AFTER_PROVIDER_WRITE_ATTEMPT"
+            )
+            self.assertEqual(result["failure"]["stage"], "LEGACY_CURRENT_HEAD")
+            self.assertEqual(
+                result["targets"]["legacy_model"]["operational_retirement"],
+                "PENDING_PUBLICATION",
+            )
+            self.assertEqual(
+                result["targets"]["legacy_model"]["current_head_observed"],
+                "9" * 40,
             )
 
     def test_extra_runtime_claim_is_not_persisted_or_promoted_to_legacy(self) -> None:
