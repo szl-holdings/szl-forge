@@ -211,6 +211,7 @@ class SpacePublicationPlanTests(unittest.TestCase):
         self.assertIn("--reject-attached-space-volumes", text)
         self.assertNotIn("--clear-space-volumes", text)
         self.assertIn("tools/test_publish_hf_space.py", text)
+        self.assertIn('"PyYAML==6.0.3"', text)
 
     def test_exact_runtime_wait_can_require_final_zero_volumes(self) -> None:
         api = Mock()
