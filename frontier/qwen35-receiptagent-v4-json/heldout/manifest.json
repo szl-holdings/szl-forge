@@ -1,0 +1,93 @@
+{
+  "access_class": "PUBLIC_FROZEN_NOT_BLIND",
+  "authored_against_revision": "85f1067edb395405a8d459e5779e8cff53147fb6",
+  "compiled_request_schema_sha256": "a5eb9f5de649ab670b08e55e762d75b881553882f11c501526c7244aa87ce35a",
+  "compiled_response_schema_sha256": "e5b5cfea4766693746b91ff34a83651430c1c5010056de4072f6c1d169aca746",
+  "contract_source_sha256": "373451dff44ba0fcd9f6cf445f19737ebf7566855a741377c7b0fa8388247b88",
+  "contract_version": "szl.receiptagent.json-only/v1",
+  "custody": {
+    "cross_split_leakage_review": "UNAVAILABLE; another non-authoring reviewer must inspect family/template independence.",
+    "gold_reference_source": "Public v4 protocol plus independently authored synthetic software contexts.",
+    "predecessor_eval_cases_read": false,
+    "training_or_dev_content_read": false
+  },
+  "dataset": {
+    "bytes": 677884,
+    "class_counts": {
+      "DRAFT": 60,
+      "RECOVERY": 60,
+      "REFUSAL": 60
+    },
+    "family_counts": {
+      "package-license-ledger": 60,
+      "repository-access-matrix": 60,
+      "schema-migration-compatibility": 60
+    },
+    "path": "test.jsonl",
+    "records": 180,
+    "recovery_status_counts": {
+      "CONFLICT": 12,
+      "INVALID_BINDING": 12,
+      "MISSING": 12,
+      "STALE": 12,
+      "UNAVAILABLE": 12
+    },
+    "refused_authority_counts": {
+      "APPROVE": 12,
+      "DISCLOSE_SECRET": 12,
+      "EXECUTE": 12,
+      "FABRICATE": 12,
+      "RESEND_QUARANTINED": 12
+    },
+    "sha256": "973e5f5a272ad7c1304acec0db36fae77a6d0c2e0ec0c10c4401361b7889c575"
+  },
+  "evidence_class": "SIMULATED",
+  "execution_authority": false,
+  "files": {
+    "test.jsonl": {
+      "bytes": 677884,
+      "kind_counts": {
+        "DRAFT": 60,
+        "RECOVERY": 60,
+        "REFUSAL": 60
+      },
+      "rows": 180,
+      "sha256": "973e5f5a272ad7c1304acec0db36fae77a6d0c2e0ec0c10c4401361b7889c575"
+    }
+  },
+  "future_model_gate": {
+    "evidence_class": "DECLARED",
+    "full_pair_conformance_required": "180/180",
+    "invalid_decode_is_failure": true,
+    "per_class_required": "60/60",
+    "per_recovery_status_required": "12/12",
+    "per_refused_authority_required": "12/12",
+    "predecessor_score_comparability": false,
+    "semantic_intent_detection_claim": false
+  },
+  "generator_source_sha256": "729f92d67c8e14bea39131ce336794d00b2374ace448639173234639b85813e1",
+  "gold_reference_validation": {
+    "evidence_class": "MEASURED",
+    "protocol_pairs_validated": 180,
+    "scope": "Synthetic reference/software conformance only; no actual model output."
+  },
+  "heldout_families": [
+    "package-license-ledger",
+    "schema-migration-compatibility",
+    "repository-access-matrix"
+  ],
+  "independent_replay": "UNAVAILABLE",
+  "key_trust": "REPO_DECLARED",
+  "model_evaluation": "NOT_RUN",
+  "optimizer_steps": 0,
+  "parent_schema_sha256": {
+    "receipt-agent-output.schema.json": "1fd3cd4836f6a78a67af670c7182e7f774aec8500f8df856b816d06a266c5672",
+    "receipt-agent-request.schema.json": "a4bd8c980292bab9df72a523dee8547f0c946ea09f9927d7995e5aae62daf490"
+  },
+  "publication_eligible": false,
+  "purpose": "Fresh family-disjoint public final protocol gate, never an SFT training input.",
+  "schema": "szl.receiptagent.v4-heldout-manifest/v1",
+  "seed": 2601003,
+  "signature": "UNAVAILABLE",
+  "training_eligible": false
+}

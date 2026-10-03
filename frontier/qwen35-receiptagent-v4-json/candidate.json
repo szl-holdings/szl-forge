@@ -24,11 +24,15 @@
   },
   "curriculum": {
     "state": "BLOCKED",
-    "train_sha256": null,
-    "dev_sha256": null,
-    "held_out_sha256": null,
-    "seed": null,
-    "reason": "Fresh task families, semantic leakage review, signed curriculum and immutable held-out gates are not yet preregistered. Conformance fixtures are not a training or model-evaluation dataset."
+    "evidence_class": "SIMULATED",
+    "train_sha256": "26c3b11c64d0d6201e29716656c1898893fb449249f6a67611a68f477a64699f",
+    "dev_sha256": "24914bdf060efd4900d9fbbc7058982a8b46ef71977f6d9cd030775e4b6d4608",
+    "held_out_sha256": "973e5f5a272ad7c1304acec0db36fae77a6d0c2e0ec0c10c4401361b7889c575",
+    "manifest_sha256": "7ec31cfddf31228164a7a67e7edd8152c611c2f04a4860d2ad85c168339337ae",
+    "rows": {"train": 360, "dev": 90, "held_out": 180},
+    "seed": 2601003,
+    "preregistration": "preregistration.json",
+    "reason": "Fresh public synthetic protocol splits and immutable commitments exist. Textual non-overlap is not semantic independence. Signed curriculum, source-current v4 trainer/supervisor, tokenizer/resource qualification, supervised smoke and actual model evaluation/replay remain unavailable."
   },
   "held_out_metrics": null,
   "energy_joules": "UNAVAILABLE",

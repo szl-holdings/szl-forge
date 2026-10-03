@@ -336,7 +336,10 @@ class JsonOnlyContractTests(unittest.TestCase):
         for key in ("training_eligible", "publication_eligible", "execution_authority"):
             self.assertIs(candidate[key], False)
         self.assertIsNone(candidate["held_out_metrics"])
-        self.assertEqual(list(contract.HERE.glob("*.jsonl")), [])
+        self.assertEqual({path.name for path in contract.HERE.glob("*.jsonl")}, {"train.jsonl", "dev.jsonl"})
+        manifest = json.loads((contract.HERE / "curriculum-manifest.json").read_text(encoding="utf-8"))
+        for key in ("training_eligible", "publication_eligible", "execution_authority"):
+            self.assertIs(manifest[key], False)
         for name in ("adapter_model.safetensors", "model.safetensors"):
             self.assertFalse((contract.HERE / name).exists())
 
