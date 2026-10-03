@@ -1,0 +1,164 @@
+# SPDX-License-Identifier: Apache-2.0
+name: Publish Chaski-R4 qualification sidecar
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "chaski_r4/QUALIFICATION_STATE.md"
+      - "chaski_r4/evidence/publication_receipt_20261001_171009.json"
+      - "chaski_r4/card/**"
+      - "tools/publish_chaski_r4_qualification.py"
+      - "tests/test_publish_chaski_r4_qualification.py"
+      - ".github/workflows/publish-chaski-r4-qualification.yml"
+  push:
+    branches: [main]
+    paths:
+      - "chaski_r4/QUALIFICATION_STATE.md"
+      - "tools/publish_chaski_r4_qualification.py"
+      - "tests/test_publish_chaski_r4_qualification.py"
+      - ".github/workflows/publish-chaski-r4-qualification.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    if: ${{ github.event_name == 'pull_request' }}
+    name: Verify source and sidecar-only contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - name: Check out exact candidate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install exact offline test clients
+        run: >-
+          python -m pip install --disable-pip-version-check --no-cache-dir
+          "pytest==9.1.1" "PyYAML==6.0.3"
+
+      - name: Test publisher and validate exact Git blobs without provider access
+        env:
+          SOURCE_REVISION: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${SOURCE_REVISION}"
+          python -m pytest -q tests/test_publish_chaski_r4_qualification.py
+          python -m py_compile tools/publish_chaski_r4_qualification.py
+          python tools/publish_chaski_r4_qualification.py \
+            --source-revision "${SOURCE_REVISION}" \
+            --report reports/chaski-r4-qualification-source-check.json
+          git diff --check
+
+      - name: Retain secret-free source-check receipt
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: chaski-r4-qualification-source-check-${{ github.run_id }}
+          path: reports/chaski-r4-qualification-source-check.json
+          if-no-files-found: warn
+          retention-days: 30
+
+  publish:
+    if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' }}
+    name: Reconcile only the Chaski-R4 qualification sidecar
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    concurrency:
+      group: hf-write/model/SZLHOLDINGS/chaski-r4
+      cancel-in-progress: false
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - name: Check out exact protected main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install exact publication and verification clients
+        run: >-
+          python -m pip install --disable-pip-version-check --no-cache-dir
+          "huggingface-hub==1.23.0" "pytest==9.1.1" "PyYAML==6.0.3"
+
+      - name: Prove source contract before acquiring provider authority
+        env:
+          SOURCE_REVISION: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${SOURCE_REVISION}"
+          python -m pytest -q tests/test_publish_chaski_r4_qualification.py
+          python tools/publish_chaski_r4_qualification.py \
+            --source-revision "${SOURCE_REVISION}" \
+            --report reports/chaski-r4-qualification-source-check.json
+
+      - name: Refuse a superseded protected-main source
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin main
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" || {
+            echo "::error::This qualification reconciliation no longer owns current protected main."
+            exit 1
+          }
+
+      - name: Acquire and actively validate exact model publisher credential
+        env:
+          HF_ORG_TOKEN_CANDIDATE: ${{ secrets.HF_ORG_TOKEN }}
+          HF_ORG_TOKEN1_CANDIDATE: ${{ secrets.HF_ORG_TOKEN1 }}
+          HF_WRITE_TOKEN_CANDIDATE: ${{ secrets.HF_WRITE_TOKEN }}
+          HF_TOKEN_CANDIDATE: ${{ secrets.HF_TOKEN }}
+          HUGGINGFACE_TOKEN_CANDIDATE: ${{ secrets.HUGGINGFACE_TOKEN }}
+          HUGGING_FACE_HUB_TOKEN_CANDIDATE: ${{ secrets.HUGGING_FACE_HUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          python tools/acquire_hf_publisher_token.py \
+            --target-repo "SZLHOLDINGS/chaski-r4" \
+            --target-type model \
+            --github-env "${GITHUB_ENV}" \
+            --report reports/chaski-r4-qualification-credential.json
+
+      - name: Publish one guarded sidecar operation and read back all Hub bytes
+        env:
+          SOURCE_REVISION: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          python tools/publish_chaski_r4_qualification.py \
+            --source-revision "${SOURCE_REVISION}" \
+            --publish \
+            --report reports/chaski-r4-qualification-publication.json
+
+      - name: Retain secret-free publication evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: chaski-r4-qualification-publication-${{ github.run_id }}
+          path: |
+            reports/chaski-r4-qualification-source-check.json
+            reports/chaski-r4-qualification-credential.json
+            reports/chaski-r4-qualification-publication.json
+          if-no-files-found: warn
+          retention-days: 90
