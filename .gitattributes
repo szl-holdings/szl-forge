@@ -8,3 +8,5 @@ foundation-confirmation/** text eol=lf
 spaces/szl-forge-lab/foundation/** -text
 spaces/oac-system-health-lab/** text eol=lf
 spaces/szl-forge-lab/kanchay/** -text
+khipu/*.jsonl text eol=lf
+khipu/khipu.schema.json text eol=lf
