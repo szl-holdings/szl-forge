@@ -611,6 +611,75 @@ def wait_for_exact_runtime_source(
     )
 
 
+def verify_live_smoke_paths(
+    session: Any,
+    origin: str,
+    paths: list[str],
+    *,
+    deadline: float,
+    probes: dict[str, Any],
+    max_attempts: int = 30,
+) -> None:
+    """Retry transient readiness only; preserve every status in terminal evidence."""
+
+    import requests
+
+    transient_statuses = {408, 429, 500, 502, 503, 504}
+    for path in paths:
+        observations: list[dict[str, Any]] = []
+        while True:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0 or len(observations) >= max_attempts:
+                raise PublishError(
+                    f"live smoke probe failed: {path}: deadline or attempt limit "
+                    f"exhausted, attempts={len(observations)}"
+                )
+            try:
+                response = session.get(
+                    origin + path,
+                    timeout=min(90, remaining),
+                    allow_redirects=False,
+                )
+                observation = {
+                    "status": response.status_code,
+                    "bytes": len(response.content),
+                    "content_type": response.headers.get("content-type"),
+                }
+            except requests.RequestException as exc:
+                observation = {
+                    "status": None,
+                    "bytes": 0,
+                    "content_type": None,
+                    "error_class": type(exc).__name__,
+                }
+            observations.append(observation)
+            probes[path] = {
+                **observation,
+                "attempt_count": len(observations),
+                "attempts": observations,
+            }
+            status = observation["status"]
+            if status == 200 and observation["bytes"] and time.monotonic() < deadline:
+                break
+            if status not in transient_statuses and status not in (None, 200):
+                raise PublishError(
+                    f"live smoke probe failed: {path}: status={status}, "
+                    f"attempts={len(observations)}"
+                )
+            if len(observations) >= max_attempts:
+                raise PublishError(
+                    f"live smoke probe failed: {path}: status={status}, "
+                    f"attempt limit exhausted, attempts={len(observations)}"
+                )
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise PublishError(
+                    f"live smoke probe failed: {path}: status={status}, "
+                    f"deadline exhausted, attempts={len(observations)}"
+                )
+            time.sleep(min(2, remaining))
+
+
 def publish_and_verify(
     plan: dict[str, Any],
     *,
@@ -755,15 +824,19 @@ def publish_and_verify(
             plan["source_revision"],
             deadline=publication_deadline,
         )
-    for path in smoke_paths:
-        response = session.get(origin + path, timeout=90)
-        probes[path] = {
-            "status": response.status_code,
-            "bytes": len(response.content),
-            "content_type": response.headers.get("content-type"),
-        }
-        if response.status_code != 200 or not response.content:
-            raise PublishError(f"live smoke probe failed: {path}")
+    plan["smoke_verification"] = {"state": "IN_PROGRESS", "probes": probes}
+    try:
+        verify_live_smoke_paths(
+            session,
+            origin,
+            smoke_paths,
+            deadline=publication_deadline,
+            probes=probes,
+        )
+    except Exception:  # noqa: BLE001 - preserve failed smoke evidence on any error
+        plan["smoke_verification"]["state"] = "FAILED"
+        raise
+    plan["smoke_verification"]["state"] = "VERIFIED"
     plan["live"] = {
         "origin": origin,
         "hf_commit": info.sha,
@@ -830,6 +903,7 @@ def main() -> int:
     )
     args = parser.parse_args()
     report_path = Path(args.report)
+    plan: dict[str, Any] = {}
     try:
         source_dir = (ROOT / args.source_dir).resolve()
         plan = build_plan(
@@ -855,12 +929,19 @@ def main() -> int:
                 reject_attached_space_volumes=args.reject_attached_space_volumes,
             )
     except Exception as exc:  # noqa: BLE001 - always emit terminal evidence
+        partial = plan
         plan = {
             "schema": "szl.hf-space-publication/v1",
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "ok": False,
             "fatal": f"{type(exc).__name__}: {exc}",
         }
+        for key in (
+            "repo_id", "source_revision", "hf_commit", "volume_observation",
+            "runtime_source_wait", "smoke_verification",
+        ):
+            if key in partial:
+                plan[key] = partial[key]
     report_path.parent.mkdir(parents=True, exist_ok=True)
     rendered = json.dumps(plan, indent=2, sort_keys=True) + "\n"
     report_path.write_text(rendered, encoding="utf-8")
