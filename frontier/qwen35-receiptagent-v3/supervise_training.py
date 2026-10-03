@@ -16,10 +16,12 @@ import math
 import os
 import re
 import secrets
+import signal
 import stat
 import subprocess
 import sys
 import time
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -128,6 +130,7 @@ TERMINAL_EXIT_CODES = {
     "WORKER_REPORT_INVALID": 77,
     "LOG_QUOTA_EXCEEDED": 78,
     "CONTAINMENT_UNAVAILABLE": 79,
+    "SUPERVISOR_STOP_REQUESTED": 80,
 }
 OBSERVED_TRIGGER_CAUSES = {
     "THERMAL_POLICY_VIOLATION",
@@ -141,6 +144,28 @@ OBSERVED_TRIGGER_CAUSES = {
 
 class SupervisionError(RuntimeError):
     """A supervision precondition, observation, or evidence gate failed."""
+
+
+class SupervisorInterrupted(BaseException):
+    """A direct stop must escape inner Exception handlers and reach cleanup."""
+
+    def __init__(self, signum: int) -> None:
+        super().__init__(f"supervisor received signal {signum}")
+        self.signum = signum
+
+
+def request_supervisor_stop(signum: int, _frame: Any) -> None:
+    for managed_signal in (signal.SIGINT, signal.SIGTERM):
+        signal.signal(managed_signal, signal.SIG_IGN)
+    raise SupervisorInterrupted(signum)
+
+
+def sanitized_failure(exc: BaseException) -> str:
+    if isinstance(exc, SupervisorInterrupted):
+        return str(exc)
+    if trainer is None:
+        return type(exc).__name__
+    return trainer.sanitized_error(exc)
 
 
 class DuplicateKeyError(SupervisionError):
@@ -1060,7 +1085,9 @@ def cgroup_empty(policy: dict[str, Any], cgroup: str) -> bool:
     return not (path / "cgroup.procs").read_text(encoding="utf-8").strip()
 
 
-def stop_worker_unit(policy: dict[str, Any], unit: str, cgroup: str) -> dict[str, Any]:
+def stop_worker_unit(
+    policy: dict[str, Any], unit: str, cgroup: str | None
+) -> dict[str, Any]:
     requested_at = utc_now()
     error: str | None = None
     try:
@@ -1079,9 +1106,9 @@ def stop_worker_unit(policy: dict[str, Any], unit: str, cgroup: str) -> dict[str
         except Exception as kill_exc:  # noqa: BLE001
             error = f"{error}; kill={trainer.sanitized_error(kill_exc)}"
     deadline = time.monotonic() + policy["kill_confirmation_seconds"]
-    while time.monotonic() < deadline and not cgroup_empty(policy, cgroup):
+    while cgroup and time.monotonic() < deadline and not cgroup_empty(policy, cgroup):
         time.sleep(0.1)
-    empty = cgroup_empty(policy, cgroup)
+    empty = cgroup_empty(policy, cgroup) if cgroup else False
     return {
         "requestedAt": requested_at,
         "systemdStopRequested": True,
@@ -1545,6 +1572,38 @@ def render_report(report: dict[str, Any]) -> bytes:
     return (canonical_json(report) + "\n").encode("utf-8")
 
 
+def withhold_success_claims(report: dict[str, Any]) -> None:
+    for field in ("bindings", "adapter", "trainingReport"):
+        report.pop(field, None)
+    for field in (
+        "qualificationEligible",
+        "receiptEligible",
+        "publicationEligible",
+        "runtimeWitnessPresent",
+        "autonomyEligible",
+        "evaluationPerformed",
+        "comparisonCriteriaSatisfied",
+        "localEvaluationInputBindingSatisfied",
+    ):
+        report[field] = False
+    report["workerPayloadDisposition"] = "UNTRUSTED_PARTIAL_NOT_REUSABLE"
+
+
+@contextmanager
+def defer_terminal_signals():
+    """Keep SIGINT/SIGTERM out of the final link-and-fsync commit interval."""
+
+    if os.name != "posix":
+        yield
+        return
+    managed = {signal.SIGINT, signal.SIGTERM}
+    previous_mask = signal.pthread_sigmask(signal.SIG_BLOCK, managed)
+    try:
+        yield
+    finally:
+        signal.pthread_sigmask(signal.SIG_SETMASK, previous_mask)
+
+
 def strict_args(argv: Sequence[str]) -> argparse.Namespace:
     required = ("--source-commit", "--run-kind", "--unit-name")
     parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
@@ -1567,12 +1626,13 @@ def strict_args(argv: Sequence[str]) -> argparse.Namespace:
     return args
 
 
-def main(argv: Sequence[str] | None = None) -> int:
+def _supervise(args: argparse.Namespace) -> int:
     global trainer, supervisor_validation
 
-    args = strict_args(sys.argv[1:] if argv is None else argv)
     attempt: Attempt | None = None
     worker_launched = False
+    worker_cgroup: str | None = None
+    interrupted_signal: int | None = None
     worker_unit = f"szl-ra3-worker-{args.run_id}"
     terminal_cause = "PRECONDITION_DENIED"
     report: dict[str, Any] | None = None
@@ -2150,30 +2210,39 @@ def main(argv: Sequence[str] | None = None) -> int:
             "It did not prove optimizer semantics, useful learning, model quality, evaluation, "
             "receipt eligibility, publication, deployment, runtime health, or autonomy."
         )
-    except Exception as exc:  # noqa: BLE001 - one fail-closed terminal path
+    except (Exception, SupervisorInterrupted) as exc:  # noqa: BLE001 - terminal path
+        if isinstance(exc, SupervisorInterrupted):
+            terminal_cause = "SUPERVISOR_STOP_REQUESTED"
+            interrupted_signal = exc.signum
         publication_failure = publication_failure_evidence(exc)
         if worker_launched and attempt is not None:
             try:
                 policy = validate_policy(candidate)
-                properties = unit_properties(policy, f"{worker_unit}.service")
-                cleanup = stop_worker_unit(
-                    policy, worker_unit, properties.get("ControlGroup", "")
-                )
+                if worker_cgroup is None:
+                    try:
+                        properties = unit_properties(policy, f"{worker_unit}.service")
+                        worker_cgroup = properties.get("ControlGroup") or None
+                    except Exception:  # noqa: BLE001 - exact unit still needs stop
+                        pass
+                cleanup = stop_worker_unit(policy, worker_unit, worker_cgroup)
+                if report is not None:
+                    report["terminalWorkerCleanup"] = cleanup
                 if not cleanup["cgroupEmptyConfirmed"]:
                     terminal_cause = "TERMINATION_UNCONFIRMED"
             except Exception:  # noqa: BLE001 - original bounded failure remains primary
                 terminal_cause = "TERMINATION_UNCONFIRMED"
         exit_code = TERMINAL_EXIT_CODES.get(terminal_cause, 70)
         if report is not None:
+            withhold_success_claims(report)
             report["state"] = (
                 "SUPERVISOR_CHILD_EXITED_WITHOUT_VALID_REPORT"
                 if terminal_cause == "WORKER_REPORT_INVALID"
                 else "SUPERVISOR_TERMINATED_RUN_NO_COMPLETION_CLAIM"
             )
             report["primaryCause"] = terminal_cause
-            report["fatal"] = trainer.sanitized_error(exc)
-            report["workerPayloadDisposition"] = "UNTRUSTED_PARTIAL_NOT_REUSABLE"
-            report["localEvaluationInputBindingSatisfied"] = False
+            report["fatal"] = sanitized_failure(exc)
+            if interrupted_signal is not None:
+                report["interruptionSignal"] = interrupted_signal
             if publication_failure is not None:
                 report["evidencePublicationFailure"] = publication_failure
 
@@ -2191,10 +2260,16 @@ def main(argv: Sequence[str] | None = None) -> int:
             "qualificationEligible": False,
             "receiptEligible": False,
             "publicationEligible": False,
+            "runtimeWitnessPresent": False,
             "autonomyEligible": False,
+            "evaluationPerformed": False,
+            "comparisonCriteriaSatisfied": False,
+            "localEvaluationInputBindingSatisfied": False,
         }
         if publication_failure is not None:
             emergency_report["evidencePublicationFailure"] = publication_failure
+        if interrupted_signal is not None:
+            emergency_report["interruptionSignal"] = interrupted_signal
         try:
             release_evidence_reserve(attempt)
             rendered = render_report(emergency_report)
@@ -2203,13 +2278,13 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
             print(rendered.decode("utf-8"), end="")
             print(f"supervisorReportPath={artifact['path']}")
-        except Exception as exc:  # noqa: BLE001 - last-resort bounded console evidence
+        except (Exception, SupervisorInterrupted) as exc:  # noqa: BLE001 - console evidence
             report_publication_failure = publication_failure_evidence(exc)
             print(
                 json.dumps(
                     {
                         **emergency_report,
-                        "fatal": trainer.sanitized_error(exc),
+                        "fatal": sanitized_failure(exc),
                         "supervisorReportPublished": False,
                         "supervisorReportPublication": report_publication_failure,
                     },
@@ -2232,22 +2307,36 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         )
         return exit_code
+    artifact: dict[str, Any] | None = None
     try:
         release_evidence_reserve(attempt)
         rendered = render_report(report)
-        artifact = publish_evidence_write_once(
-            attempt.reports, "supervisor-report.json", rendered
-        )
+        # If the publisher returns COMMITTED, its final hard link and directory
+        # fsync completed. A cooperative stop during this short interval is
+        # delivered only after that commit, never between link and fsync.
+        with defer_terminal_signals():
+            artifact = publish_evidence_write_once(
+                attempt.reports, "supervisor-report.json", rendered
+            )
         print(rendered.decode("utf-8"), end="")
         print(f"supervisorReportPath={artifact['path']}")
-    except Exception as exc:  # noqa: BLE001 - success is withheld if evidence is not durable
+    except (Exception, SupervisorInterrupted) as exc:  # noqa: BLE001 - durability
+        if (
+            isinstance(exc, SupervisorInterrupted)
+            and artifact is not None
+            and artifact.get("publicationState") == "COMMITTED"
+        ):
+            print(rendered.decode("utf-8"), end="")
+            print(f"supervisorReportPath={artifact['path']}")
+            return exit_code
+        withhold_success_claims(report)
         report_publication_failure = publication_failure_evidence(exc)
         print(
             json.dumps(
                 {
                     "schema": "szl.frontier-training-supervisor/v1",
                     "state": "EVIDENCE_DURABILITY_FAILED",
-                    "fatal": trainer.sanitized_error(exc),
+                    "fatal": sanitized_failure(exc),
                     "supervisorReportPublished": False,
                     "supervisorReportPublication": report_publication_failure,
                     "receiptEligible": False,
@@ -2259,6 +2348,19 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
         return TERMINAL_EXIT_CODES["EVIDENCE_DURABILITY_FAILED"]
     return exit_code
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    args = strict_args(sys.argv[1:] if argv is None else argv)
+    previous_handlers: dict[int, Any] = {}
+    try:
+        for signum in (signal.SIGINT, signal.SIGTERM):
+            previous_handlers[signum] = signal.getsignal(signum)
+            signal.signal(signum, request_supervisor_stop)
+        return _supervise(args)
+    finally:
+        for signum, previous_handler in previous_handlers.items():
+            signal.signal(signum, previous_handler)
 
 
 if __name__ == "__main__":
