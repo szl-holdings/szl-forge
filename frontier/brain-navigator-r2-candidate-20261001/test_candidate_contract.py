@@ -80,7 +80,13 @@ def test_text_only_encode_never_touches_a_processor():
 def test_unbound_curriculum_fails_closed(tmp_path, monkeypatch):
     monkeypatch.setattr(lib, "OUT", tmp_path)
     c = lib.load_candidate()
-    c = dict(c, training_data=dict(c["training_data"], binding_status="UNBOUND"))
+    td = c["training_data"]
+    assert td["binding_mode"] == "HEURISTIC_TOKEN_MATCH_LATEST_MODIFIED"
+    assert td["confirmed_by_owner"] is False
+    assert td["binding_status"] == "UNBOUND"
+    assert td["files"] == {}
+    assert td["origin"] == "UNBOUND"
+    assert td["rights"] == "UNVERIFIED"
     with pytest.raises(SystemExit) as e:
         lib.curriculum_files(c)
     assert e.value.code == 3
