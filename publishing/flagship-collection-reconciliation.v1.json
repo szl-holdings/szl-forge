@@ -13,7 +13,7 @@
   },
   "target": {
     "title": "SZL Flagship Models",
-    "description": "No model is promoted to this flagship shelf. Review the public model artifact catalog for checkpoints, adapters, numeric fixtures, software, recipes, research results, and explicit failed gates. Lambda uniqueness remains Conjecture 1.",
+    "description": "No model is promoted. See https://holdings.a-11-oy.com/frontier/ for public artifacts and their evidence. Lambda uniqueness remains Conjecture 1.",
     "membership": "EMPTY_UNTIL_SOURCE_BOUND_QUALIFICATION",
     "repository_visibility_change": false,
     "model_repository_delete": false,

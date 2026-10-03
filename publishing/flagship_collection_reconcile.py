@@ -65,8 +65,11 @@ def validate_manifest(manifest: dict[str, Any]) -> None:
         raise ValueError("collection observation is incomplete")
     if not observed.get("description", "").startswith("Trained weights only."):
         raise ValueError("the inaccurate observed description changed; reobserve before editing")
-    if "No model is promoted" not in target.get("description", ""):
+    target_description = target.get("description", "")
+    if "No model is promoted" not in target_description:
         raise ValueError("target description must state the promotion boundary")
+    if len(target_description) > 150:
+        raise ValueError("target description exceeds the Hub collection limit of 150 characters")
 
     seen_ids: set[str] = set()
     seen_objects: set[str] = set()
