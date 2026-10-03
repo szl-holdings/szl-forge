@@ -75,6 +75,13 @@ class ModelKernelFrontierWorkflowTests(unittest.TestCase):
         self.assertIn("reports/hf-private-read-credential.json", self.workflow)
         self.assertIn("if-no-files-found: warn", self.workflow)
 
+    def test_json_only_successor_has_a_blocking_offline_test_owner(self) -> None:
+        self.assertIn("frontier/qwen35-receiptagent-v4-json/json_contract.py", self.offline_region)
+        self.assertIn("frontier/qwen35-receiptagent-v4-json/test_json_contract.py", self.offline_region)
+        self.assertIn("-s frontier/qwen35-receiptagent-v4-json", self.offline_region)
+        self.assertIn("python -B -m unittest discover", self.offline_region)
+        self.assertNotIn("continue-on-error", self.offline_region)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
