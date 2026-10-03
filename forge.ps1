@@ -2,8 +2,14 @@
 #
 #   iwr https://raw.githubusercontent.com/szl-holdings/szl-forge/main/forge.ps1 -OutFile "$env:TEMP\forge.ps1"; powershell -ExecutionPolicy Bypass -File "$env:TEMP\forge.ps1"
 #
-# Honest: prints exactly what it is doing at each step; stops on real failure
-# with the real error on screen. It never claims success it didn't see.
+# Historical body below is retained for provenance but is not an authorized
+# recovery path. It wrote a fixed merge path and invoked a canonical import
+# without exact source binding, qualification, or rollback evidence.
+
+Write-Host '[szl-forge] HOLD: the legacy SZL-1 bootstrap is not a safe recovery path.' -ForegroundColor Red
+Write-Host 'No training, model import, or existing artifact mutation was attempted.'
+Write-Host 'Use local-compute/README.md for bounded new work and issue #264 for held Qwen exports.'
+exit 1
 
 $ErrorActionPreference = "Continue"
 function Step($msg) { Write-Host "`n=== $msg ===" -ForegroundColor Cyan }

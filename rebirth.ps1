@@ -8,8 +8,14 @@
 #
 #   iwr https://raw.githubusercontent.com/szl-holdings/szl-forge/main/rebirth.ps1 -OutFile "$env:TEMP\rebirth.ps1"; powershell -ExecutionPolicy Bypass -File "$env:TEMP\rebirth.ps1"
 #
-# Honest: prints exactly what it is doing; stops on real failure with the
-# real error on screen. It never claims success it didn't see.
+# Historical body below is retained for provenance but is not an authorized
+# repair. It removed the canonical szl1 name and converted an unbound merge
+# with a mutable converter; neither operation establishes clean lineage.
+
+Write-Host '[szl-forge] HOLD: legacy rebirth cannot replace the canonical szl1 model.' -ForegroundColor Red
+Write-Host 'No model name, blob, merge, or forensic evidence was changed.'
+Write-Host 'Follow local-compute/recovery/README.md and issue #264 for bounded diagnostics and a separately named candidate.'
+exit 1
 
 $ErrorActionPreference = "Continue"
 function Step($msg) { Write-Host "`n=== $msg ===" -ForegroundColor Cyan }
