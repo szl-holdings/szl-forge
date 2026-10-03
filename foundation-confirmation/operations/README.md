@@ -41,6 +41,15 @@ that installed supervisor. Its action, arguments, current-user SID, trigger,
 privileges, retry settings, and script hashes must match the owned receipt.
 Existing conflicting tasks, receipts, or managed files are refused.
 
+New installations use Scheduler priority `5` (Normal), recorded as
+`task_priority: 5` in a `windows-installation/v2` receipt and checked again after
+registration and before each launch. Priority mismatches fail admission. Historical
+`v1` receipts without that field remain valid only with their original Scheduler
+default priority `7` (BelowNormal) and the hash-bound historical bounded-recovery
+installer, so an owned installation can be verified and
+removed before upgrading. An existing installation is never silently reprioritized.
+The process-priority mapping follows [Microsoft's Scheduler priority contract](https://learn.microsoft.com/en-us/windows/win32/taskschd/tasksettings-priority).
+
 If an earlier installation used `%LOCALAPPDATA%\SZL\FoundationConfirmation`,
 retain that installation evidence and verify its exact owned task with the
 earlier scripts before removing that task. The new installer never takes over
@@ -106,7 +115,8 @@ authorization to stop it.
 
 When an existing same-directory installation already uses this recovery policy,
 running the new installer returns `ALREADY_REGISTERED`; it verifies the receipt
-and does **not** replace the supervisor. Earlier receipts without this recovery
+and does **not** replace the supervisor or upgrade a historical `v1` task to Normal
+priority. Earlier receipts without this recovery
 policy are refused. In either case, deploy the current supervisor and policy by
 explicitly uninstalling the owned installation with its currently installed
 helper, then reinstalling from the new protected source.
@@ -192,6 +202,16 @@ a later successor cannot overwrite an earlier failed startup's diagnostics.
 The original two retries, 60 second delay, exact ownership checks and zero
 Scheduler retries remain in force.
 
+Recovery admits a previous service receipt only after its complete launch
+contract matches and native PID/creation-time identity establishes exit. Windows
+can keep an exited process object available while the supervisor retains its
+handle; the runner therefore verifies that exact object's creation time and
+zero-duration native exit signal on one query handle. A live process, reused PID,
+malformed identity, access denial, or unknown native result is refused and leaves
+the predecessor receipt bytes in place. An absent PID is admitted only for native
+error `87` at the query instant. The runner closes only the query handle it opened.
+This follows [Microsoft's process lifetime contract](https://learn.microsoft.com/en-us/windows/win32/procthread/terminating-a-process).
+
 The supervisor imports the built-in Utility module from the running shell's
 `PSHOME`. A mixed PowerShell 5.1/7 module search path cannot substitute another
 shell's hashing or JSON commands. This changes no user or machine settings.
@@ -211,6 +231,12 @@ The Foundation workflow runs the Python controls and both native shells before
 its existing publisher may run. Local fixture results do not prove deployment,
 actual managed CPU startup, reboot behavior or scientific generality. Each of
 those claims requires its own fresh evidence.
+Both native-shell controls execute `test-cpu-predecessor.py`, which keeps its own
+bounded child handle open after exit, refuses the live child and a changed
+creation identity, and verifies exact receipt replacement only after native exit.
+The Python suite also runs this actual Windows fixture and platform-independent
+negative native-API controls. These fixtures are separate from an actual managed
+service recovery witness.
 
 ## Remove startup
 

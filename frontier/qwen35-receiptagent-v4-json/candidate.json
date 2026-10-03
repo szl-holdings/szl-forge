@@ -1,0 +1,36 @@
+{
+  "schema": "szl.receiptagent.json-contract-candidate/v1",
+  "evidence_class": "DECLARED",
+  "candidate_id": "SZL-ReceiptAgent-Qwen3.5-0.8B-v4-JSON",
+  "artifact_kind": "SOFTWARE_CONTRACT_NOT_WEIGHTS",
+  "planned_target_repo_id": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v4-json",
+  "planned_target_evidence_class": "ROADMAP",
+  "training_eligible": false,
+  "publication_eligible": false,
+  "execution_authority": false,
+  "predecessor_source": {
+    "repository": "szl-holdings/szl-forge",
+    "revision": "e64d467d8c09f1ecaf7762680c3a662bf23e9622",
+    "path": "frontier/qwen35-receiptagent-v3",
+    "request_schema_sha256": "a4bd8c980292bab9df72a523dee8547f0c946ea09f9927d7995e5aae62daf490",
+    "response_schema_sha256": "1fd3cd4836f6a78a67af670c7182e7f774aec8500f8df856b816d06a266c5672",
+    "binding_scope": "Exact schema bytes only; no weight initialization or equivalence claim."
+  },
+  "planned_base": {
+    "repository": "unsloth/Qwen3.5-0.8B",
+    "revision": "23c69c53358a07516b5827588b3fdb12ae78fd65",
+    "method": "QLORA_NOT_FROM_SCRATCH",
+    "evidence_class": "ROADMAP"
+  },
+  "curriculum": {
+    "state": "BLOCKED",
+    "train_sha256": null,
+    "dev_sha256": null,
+    "held_out_sha256": null,
+    "seed": null,
+    "reason": "Fresh task families, semantic leakage review, signed curriculum and immutable held-out gates are not yet preregistered. Conformance fixtures are not a training or model-evaluation dataset."
+  },
+  "held_out_metrics": null,
+  "energy_joules": "UNAVAILABLE",
+  "independent_replay": "UNAVAILABLE"
+}

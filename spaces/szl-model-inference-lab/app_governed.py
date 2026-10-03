@@ -14,6 +14,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 import app as legacy
+from formula_atlas_contract import FormulaAtlasIntegrityError, public_formula_atlas
 from inference import (
     ProductionBoundaryError,
     load_production_contract,
@@ -171,11 +172,38 @@ def _dependency_status() -> dict[str, Any]:
     except Exception as exc:
         contract_error = type(exc).__name__
     ready = ready and contract_ready
+    formula_atlas_ready = False
+    formula_atlas_error = None
+    formula_atlas_counts = None
+    try:
+        atlas = public_formula_atlas()
+        formula_atlas_counts = {
+            "attributed_formula_count": atlas["counts"]["attributed_formula_count"],
+            "executable_formula_count": atlas["counts"]["executable_formula_count"],
+            "quant_domain_count": atlas["counts"]["quant_domain_count"],
+            "locked_proven_count": atlas["counts"]["locked_proven_count"],
+        }
+        formula_atlas_ready = (
+            atlas["state"] == "VERIFIED_IMMUTABLE_PUBLIC_PROJECTION"
+            and formula_atlas_counts
+            == {
+                "attributed_formula_count": 30,
+                "executable_formula_count": 21,
+                "quant_domain_count": 9,
+                "locked_proven_count": 8,
+            }
+        )
+    except FormulaAtlasIntegrityError as exc:
+        formula_atlas_error = type(exc).__name__
+    ready = ready and formula_atlas_ready
     return {
         "ready": ready,
         "packages": observed,
         "contract_ready": contract_ready,
         "contract_error": contract_error,
+        "formula_atlas_ready": formula_atlas_ready,
+        "formula_atlas_error": formula_atlas_error,
+        "formula_atlas_counts": formula_atlas_counts,
     }
 
 
@@ -369,9 +397,90 @@ def _governed_headers() -> dict[str, str]:
     }
 
 
+def _unavailable_formula_response() -> JSONResponse:
+    return JSONResponse(
+        {
+            "schema": "szl.formula-atlas.public/v2",
+            "state": "UNAVAILABLE",
+            "error": "FORMULA_ATLAS_INTEGRITY_FAILURE",
+        },
+        status_code=503,
+        headers=_governed_headers(),
+    )
+
+
+def _unavailable_source_response() -> JSONResponse:
+    return JSONResponse(
+        {
+            "schema": "szl.model-inference-lab.source/v1",
+            "state": "UNAVAILABLE",
+            "error": "SOURCE_CONTRACT_INTEGRITY_FAILURE",
+        },
+        status_code=503,
+        headers=_governed_headers(),
+    )
+
+
+@app.get("/api/v2/formula-atlas")
+def formula_atlas() -> JSONResponse:
+    try:
+        return JSONResponse(public_formula_atlas(), headers=_governed_headers())
+    except FormulaAtlasIntegrityError:
+        return _unavailable_formula_response()
+
+
+def _source_contract_payload() -> dict[str, Any]:
+    atlas = public_formula_atlas()
+    revision = legacy.observed_source_revision()
+    manifest_path = legacy.SOURCE_ROOT / "release.json"
+    manifest = legacy.load_release_manifest()
+    return {
+        "schema": "szl.model-inference-lab.source/v1",
+        "state": "OBSERVED" if revision is not None else "UNKNOWN",
+        "service": {
+            "name": legacy.SERVICE_NAME,
+            "repository": "szl-holdings/szl-forge",
+            "revision": revision,
+            "revision_source": (
+                f"Hugging Face Space variable {legacy.SOURCE_REVISION_ENV}"
+                if revision is not None
+                else "UNAVAILABLE"
+            ),
+            "release_id": manifest["release_id"],
+            "release_manifest_sha256": legacy.sha256_source_file(manifest_path),
+        },
+        "components": {
+            "formula_atlas": atlas["source"]["atlas"],
+            "attributed_formula_corpus": atlas["source"]["attributed_corpus"],
+        },
+        "authority": dict(atlas["authority"]),
+        "privacy": {
+            "private_graph_content_included": False,
+            "private_retrieval_performed": False,
+            "formula_statements_included": False,
+        },
+    }
+
+
+@app.get("/.well-known/szl-source.json")
+@app.get("/api/source")
+def source_contract() -> JSONResponse:
+    try:
+        return JSONResponse(_source_contract_payload(), headers=_governed_headers())
+    except (
+        FormulaAtlasIntegrityError,
+        OSError,
+        RuntimeError,
+        json.JSONDecodeError,
+        KeyError,
+    ):
+        return _unavailable_source_response()
+
+
 @app.get("/api/v2/governed-health")
 def governed_health() -> JSONResponse:
     dependency = _dependency_status()
+    formula_counts = dependency.get("formula_atlas_counts") or {}
     brain_ready = False
     brain_chunks = None
     frontier = {}
@@ -409,6 +518,14 @@ def governed_health() -> JSONResponse:
         "source_revision": source_revision,
         "controller_revision": FORGE_CONTROLLER_REVISION,
         "dependency_status": dependency,
+        "formula_atlas": {
+            "ready": dependency.get("formula_atlas_ready", False),
+            "attributed_formula_count": formula_counts.get("attributed_formula_count"),
+            "executable_formula_count": formula_counts.get("executable_formula_count"),
+            "quant_domain_count": formula_counts.get("quant_domain_count"),
+            "locked_proven_count": formula_counts.get("locked_proven_count"),
+            "formula_may_authorize": False,
+        },
         "second_brain": {
             "ready": brain_ready,
             "public_chunk_count": brain_chunks,
@@ -453,6 +570,11 @@ def governed_contract() -> JSONResponse:
                 "max_input_chars": legacy.MAX_INPUT_CHARS,
                 "max_completion_tokens": legacy.MAX_NEW_TOKENS,
                 "max_retrieval_handles": MAX_GOVERNED_K,
+            },
+            "public_read_only_endpoints": {
+                "formula_atlas": "/api/v2/formula-atlas",
+                "source": "/api/source",
+                "well_known_source": "/.well-known/szl-source.json",
             },
             "controller": {
                 "repository": "szl-holdings/szl-forge",
