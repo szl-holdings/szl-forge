@@ -77,6 +77,14 @@ oracles, anti-tamper comparison behavior, bootstrap and containment enforcement,
 supervisor/evaluator provenance linkage, and serialization boundaries. It does
 not import the full GPU stack or claim training success.
 
+The supervised lane also requires the independent
+[Windows host-memory guard](HOST_MEMORY_GUARD.md): native physical memory and
+system commit must remain above provisional 8 GiB floors, and the exact
+successful terminal receipt must survive evaluator, authentication, release,
+and publication preflight validation. Missing, stale, aborted, or unguarded
+evidence is not an admissible substitute. Owner Windows/WSL fault controls and
+a guarded smoke remain separate from source and native API CI.
+
 ## Training-data admission
 
 The dedicated `nemo-doctrine-gate` workflow checks this lane on pull requests

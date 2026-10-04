@@ -15,6 +15,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import types
 import unittest
 from unittest import mock
 
@@ -1078,7 +1079,7 @@ class WorkerEnvironmentTests(unittest.TestCase):
                 supervisor.os.getpid()
             ),
             "LimitFSIZE": "67108864",
-            "BindsTo": "outer.service",
+            "BindsTo": f"outer.service szl-ra3-host-memory-{attempt.run_id}.service",
             "ControlGroup": "/user.slice/worker.service",
             "MainPID": "123",
             "ExecMainPID": "123",
@@ -1181,7 +1182,7 @@ class WorkerEnvironmentTests(unittest.TestCase):
                 supervisor.os.getpid()
             ),
             "LimitFSIZE": "67108864",
-            "BindsTo": "outer.service",
+            "BindsTo": f"outer.service szl-ra3-host-memory-{attempt.run_id}.service",
             "ControlGroup": "/user.slice/worker.service",
             "MainPID": "0",
             "ExecMainPID": "456",
@@ -1305,6 +1306,14 @@ class DirectStopTests(unittest.TestCase):
                 for signum in (signal.SIGINT, signal.SIGTERM)
             }
             stop_worker = mock.Mock(return_value=cleanup)
+            memory_client = mock.Mock()
+            memory_client.start.return_value = {"state": "ADMITTED_PROVISIONAL"}
+            memory_client.assert_healthy = mock.Mock(return_value=None)
+            memory_client.abort.return_value = {"state": "ABORTED_NOT_ELIGIBLE"}
+            memory_module = types.SimpleNamespace(
+                HostMemoryError=type("SyntheticMemoryError", (RuntimeError,), {}),
+                GuardClient=mock.Mock(return_value=memory_client),
+            )
             output = io.StringIO()
             patches = (
                 mock.patch.object(supervisor, "trainer", None),
@@ -1317,6 +1326,7 @@ class DirectStopTests(unittest.TestCase):
                         {
                             "train_candidate.py": worker,
                             "supervisor_validation.py": mock.Mock(),
+                            "host_memory_guard.py": memory_module,
                         },
                     ),
                 ),

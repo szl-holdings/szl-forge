@@ -16,6 +16,7 @@ from jsonschema import Draft202012Validator
 
 import evidence_chain as evidence
 import prepare_release as release
+from host_memory_test_fixture import add_host_memory_fixture, evaluation_guard_linkage
 
 
 SOURCE = "a" * 40
@@ -24,6 +25,7 @@ RUN_ID = "b" * 32
 
 def sealed(report: dict[str, Any]) -> dict[str, Any]:
     report = copy.deepcopy(report)
+    report.pop("reportSha256", None)
     report["reportSha256"] = release.sha256_json(report)
     return report
 
@@ -148,6 +150,9 @@ class Fixture:
             }
         )
 
+        host_memory = add_host_memory_fixture(supervisor, SOURCE, RUN_ID)
+        supervisor = sealed(supervisor)
+
         def evaluation(kind: str, split: str, adapter_bound: bool = False) -> dict[str, Any]:
             model: dict[str, Any] = {"kind": kind}
             linkage: dict[str, Any] = {}
@@ -160,6 +165,7 @@ class Fixture:
                         "reportSha256": supervisor["reportSha256"],
                         "adapterAggregateSha256": aggregate,
                         "sourceRevision": SOURCE,
+                        "hostMemoryGuard": evaluation_guard_linkage(host_memory),
                     }
                 )
                 training_digest = child["reportSha256"]
@@ -219,6 +225,7 @@ class Fixture:
         self.reports = {
             "childTraining": child,
             "supervisor": supervisor,
+            "hostMemoryGuard": host_memory,
             "devEvaluation": dev,
             "testEvaluation": test,
             "baseTestEvaluation": base,
@@ -276,6 +283,7 @@ class Fixture:
         training = evidence.mint_training_receipt(
             self.reports["childTraining"],
             self.reports["supervisor"],
+            host_memory_report=self.reports["hostMemoryGuard"],
             source_revision=SOURCE,
             private_key=self.key,
             key_id="owner-release-key-1",
