@@ -56,6 +56,61 @@ try {
     $bad = $receipt.Clone(); $bad.argv = @($receipt.argv.Clone()); $bad.argv[-1] = '181'
     Reject 'MISMATCHED_PREDECESSOR_ARGV' { Assert-FoundationCpuReceipt $bad $cpu $root $archive 18767 } 'argv differs'
     [IO.Directory]::CreateDirectory($fixture) | Out-Null
+    # Actual exclusive diagnostic files; no managed task, environment or model.
+    $phaseOutput = @(Initialize-FoundationPhaseLog -Role 'cpu-supervisor' -Directory $fixture)
+    $firstPhasePath = $script:foundationPhaseLog.Path
+    $phaseOutput += @(Write-FoundationPhaseEvent 'release_verification' 'ENTERED')
+    $phaseOutput += @(Write-FoundationPhaseEvent 'environment_admission' 'ENTERED')
+    $phaseOutput += @(Write-FoundationPhaseEvent 'environment_admission' 'RETURNED')
+    $phaseOutput += @(Write-FoundationPhaseEvent 'release_verification' 'RETURNED')
+    if ($phaseOutput.Count -ne 0) { throw 'Diagnostic logging polluted the success stream.' }
+    $checks.Add('PHASE_TELEMETRY_EMITS_NO_SUCCESS_STREAM_OBJECTS')
+    Reject 'PHASE_FILE_HAS_ONE_EXCLUSIVE_WRITER' {
+        $foreignWriter = [IO.File]::Open($firstPhasePath, [IO.FileMode]::Open, [IO.FileAccess]::Write, [IO.FileShare]::ReadWrite)
+        $foreignWriter.Dispose()
+    } 'used by another process|sharing violation'
+    Close-FoundationPhaseLog
+    $phaseRows = @(Get-Content -LiteralPath $firstPhasePath | ForEach-Object { $_ | ConvertFrom-Json })
+    if ($phaseRows.Count -ne 4 -or $phaseRows[0].sequence -ne 1 -or $phaseRows[3].sequence -ne 4 -or
+        $phaseRows[0].pid -ne $PID -or $phaseRows[0].class -cne 'MEASURED' -or $phaseRows[0].signed -ne $false -or
+        $phaseRows[0].diagnostic_only -ne $true -or $phaseRows[1].event -cne 'ENTERED' -or $phaseRows[2].event -cne 'RETURNED' -or
+        $phaseRows[3].monotonic_elapsed_seconds -lt $phaseRows[0].monotonic_elapsed_seconds -or $phaseRows[3].phase_elapsed_seconds -lt 0) {
+        throw 'Retained nested phase identity/timing differs.'
+    }
+    $firstPhaseHash = (Get-FileHash -LiteralPath $firstPhasePath).Hash
+    $checks.Add('ACTUAL_NESTED_PHASE_SEQUENCE_AND_MONOTONIC_TIMING_RETAINED')
+    Initialize-FoundationPhaseLog -Role 'cpu-launcher' -Directory $fixture
+    if ($script:foundationPhaseLog.Path -ceq $firstPhasePath) { throw 'Diagnostic sessions shared a path.' }
+    Write-FoundationPhaseEvent 'installation_admission' 'ENTERED'
+    $sentinel = [InvalidOperationException]::new('original admission sentinel')
+    $caught = $null
+    try {
+        try { throw $sentinel } catch { Write-FoundationPhaseFailure $_; throw }
+    } catch { $caught = $_.Exception }
+    if (-not [object]::ReferenceEquals($caught, $sentinel)) { throw 'Phase telemetry replaced the original operation exception.' }
+    $failurePhasePath = $script:foundationPhaseLog.Path
+    Close-FoundationPhaseLog
+    $failurePhase = Get-Content -LiteralPath $failurePhasePath | Select-Object -Last 1 | ConvertFrom-Json
+    if ($failurePhase.event -cne 'FAILED' -or $failurePhase.phase -cne 'installation_admission' -or
+        (Get-Content -LiteralPath $failurePhasePath -Raw).Contains($sentinel.Message) -or
+        (Get-FileHash -LiteralPath $firstPhasePath).Hash -cne $firstPhaseHash) { throw 'Diagnostic failure/session preservation differs.' }
+    $checks.Add('DISTINCT_DIAGNOSTIC_SESSIONS_PRESERVE_PRIOR_BYTES')
+    $checks.Add('PHASE_FAILURE_PRESERVES_ORIGINAL_EXCEPTION_WITHOUT_SECRET_TEXT')
+    Initialize-FoundationPhaseLog -Role 'cpu-supervisor' -Directory $fixture
+    $script:foundationPhaseLog.Stream.Dispose() # Actual retained writer failure.
+    $loggingFailureOutput = @(Write-FoundationPhaseEvent 'environment_admission' 'ENTERED' -WarningVariable phaseWarnings)
+    if ($loggingFailureOutput.Count -ne 0 -or $script:foundationPhaseLog.Available -ne $false -or
+        ($phaseWarnings -join ' ') -notmatch 'UNAVAILABLE') { throw 'Diagnostic write failure was not separate UNAVAILABLE telemetry.' }
+    $script:phaseDelayCalls = 0
+    Reject 'FAILED_TELEMETRY_CANNOT_AUTHORIZE_RECOVERY' {
+        Invoke-FoundationRecoveryLoop -Cycle { param($Attempt)
+            Write-FoundationPhaseEvent 'environment_admission' 'ENTERED'
+            throw 'original phase admission failure'
+        } -Delay { param($Seconds); $script:phaseDelayCalls++ }
+    } 'original phase admission failure'
+    if ($script:phaseDelayCalls -ne 0) { throw 'Telemetry failure authorized a retry.' }
+    Close-FoundationPhaseLog
+    $checks.Add('PHASE_WRITE_FAILURE_IS_UNAVAILABLE_WITH_ZERO_SUCCESS_OUTPUT')
     $checkpoints = @(foreach ($seed in @(17,23,41)) { @{ seed=$seed; sha256=('c' * 64); trained_fingerprint=('d' * 64) } })
     Write-FoundationJson (Join-Path $fixture 'training-summary.json') @{ checkpoints=$checkpoints }
     $probes = @(foreach ($checkpoint in $checkpoints) { @{ model_seed=$checkpoint.seed;
@@ -201,6 +256,25 @@ try {
         if (-not $child.HasExited) { $child.Kill(); $child.WaitForExit(5000) | Out-Null }
     }
     $checks.Add('COMPLETED_READINESS_DISARMS_DEADLINE')
+    # A delayed diagnostic flush must be charged to the existing native clock.
+    Initialize-FoundationPhaseLog -Role 'cpu-launcher' -Directory $fixture
+    Write-FoundationPhaseEvent 'child_readiness_admission' 'ENTERED'
+    $slowOwnedStream = $script:foundationPhaseLog.Stream
+    $slowStream = [pscustomobject]@{}
+    $slowStream | Add-Member ScriptMethod Write ({ param($Bytes,$Offset,$Length); $slowOwnedStream.Write($Bytes,$Offset,$Length) }.GetNewClosure())
+    $slowStream | Add-Member ScriptMethod Flush ({ param($Durable); Start-Sleep -Milliseconds 600; $slowOwnedStream.Flush($Durable) }.GetNewClosure())
+    $slowStream | Add-Member ScriptMethod Dispose ({ $slowOwnedStream.Dispose() }.GetNewClosure())
+    $script:foundationPhaseLog.Stream = $slowStream
+    $child = Start-Process -FilePath $paths.Shell -ArgumentList '-NoProfile -NonInteractive -WindowStyle Hidden -Command "Start-Sleep -Seconds 15"' -WindowStyle Hidden -PassThru
+    $children += $child
+    $clock = [Diagnostics.Stopwatch]::StartNew()
+    $guard = New-FoundationCpuDeadline $child 500 $clock
+    try {
+        Write-FoundationPhaseEvent 'child_readiness_admission' 'RETURNED'
+        Reject 'DIAGNOSTIC_IO_CANNOT_EXTEND_ORIGINAL_DEADLINE' { $guard.Complete() } 'startup deadline exceeded'
+        if (-not $child.WaitForExit(4000) -or $child.ExitCode -ne 124) { throw 'Delayed telemetry did not preserve the exact direct-child deadline.' }
+    } finally { $guard.Dispose(); Close-FoundationPhaseLog }
+    $checks.Add('DELAYED_DIAGNOSTIC_FLUSH_CHARGED_TO_NATIVE_CLOCK')
     $child = Start-Process -FilePath $paths.Shell -ArgumentList '-NoProfile -NonInteractive -WindowStyle Hidden -Command "Start-Sleep -Seconds 15"' -WindowStyle Hidden -PassThru
     $children += $child
     $clock = [Diagnostics.Stopwatch]::StartNew()
@@ -214,6 +288,7 @@ try {
         shell=$PSVersionTable.PSVersion.ToString(); count=$checks.Count; checks=@($checks);
         tasks_registered=$false; production_services_changed=$false; model_imported=$false; provider_writes=$false } | ConvertTo-Json -Depth 5
 } finally {
+    Close-FoundationPhaseLog
     foreach ($child in $children) { $child.Dispose() }
     if (Test-Path -LiteralPath $fixture) {
         $safe = Assert-FoundationPath $fixture -Directory

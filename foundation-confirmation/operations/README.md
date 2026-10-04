@@ -104,6 +104,25 @@ on-demand execution, owned-process restart, and unchanged trial receipt readback
 before claiming startup has been verified. These scripts do not claim that a
 machine reboot was tested or that execution begins before desktop logon.
 
+CPU startup diagnostics retain `ENTERED`, `RETURNED` and `FAILED` phase events
+with UTC and monotonic elapsed time. Supervisor and launcher processes each own
+an exclusive JSONL file under
+`%USERPROFILE%\Documents\SZL\FoundationConfirmationDiagnostics`, outside managed
+Operations and the frozen lab. The CPU child writes its events to the existing
+per-attempt stderr file identified by `launch.<attempt>.json`. Logs bind a
+process/session and contain error types, without exception messages or argv.
+They are unsigned diagnostic observations, not readiness, authorization, user
+trial receipts or automatic recovery evidence. A missing `RETURNED` event shows
+the last observed entered phase; it does not establish why that phase stopped.
+
+Telemetry is advisory: an I/O failure reports `UNAVAILABLE` where its warning
+stream remains writable and leaves the original operation and exception intact.
+Disk exhaustion or process termination can leave missing or partial events.
+Diagnostic I/O can add latency; it cannot extend the existing 180-second child
+clock, authorize a retry, skip an admission or change the two 60-second retries.
+Retain diagnostic files alongside the other evidence before an explicit owned
+upgrade; the uninstaller never deletes this separate diagnostic directory.
+
 To deliberately stop the service without recovery restarting it, first verify
 the installed receipt and exact task definition, disable and stop that owned task,
 then use the original lab's `stop.ps1` if its exact owned service remains alive.
