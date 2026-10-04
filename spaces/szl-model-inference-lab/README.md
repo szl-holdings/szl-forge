@@ -19,6 +19,28 @@ suggested_hardware: cpu-basic
 startup_duration_timeout: 30m
 ---
 
+<p><a href="https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab"><img src="https://raw.githubusercontent.com/szl-holdings/.github/main/profile/assets/szl/logos/szl_mark_holographic.svg" alt="SZL Holdings" width="112" /></a></p>
+
+# Khipu Loom
+
+Try a bounded CPU prompt and inspect the pinned model identity, source revision and output evidence.
+
+**Artifact:** Bounded GGUF inference demonstration · **Stage:** Research use; inspect readiness
+
+[Explore in Command Lab](https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab) · [Build](https://github.com/szl-holdings/szl-forge) · [Evidence](https://github.com/szl-holdings/szl-forge/blob/bed8adf0e91f1506b81c8c27def6c9ca5aa7655e/spaces/szl-model-inference-lab/README.md)
+
+## Before you use it
+
+- The demonstration serves one exact GGUF revision and does not qualify other model artifacts.
+- Output receipts are unsigned; transport availability, a provider request and inference readiness remain separate.
+
+<details>
+<summary>Technical details and original evidence</summary>
+
+The retained source below is exact and may contain historical observations. Its dates, use restrictions, licenses and evidence boundaries continue to apply.
+
+<!-- SZL-PRESERVED-TECHNICAL-BODY:START -->
+
 
 <!-- SZL-ESTATE-CARD:v2:START -->
 <p align="center"><a href="https://a-11-oy.com/"><img src="https://huggingface.co/spaces/SZLHOLDINGS/README/resolve/main/assets/estate-banner-v2.svg" alt="SZL Holdings — governed, receipted, verifiable" width="100%"></a></p>
@@ -214,3 +236,7 @@ No independent benchmark, post-quantization evaluation, or safety certification 
 <sub>Labels remain explicit: MEASURED / REPORTED / MODELED / SAMPLE / UNKNOWN / UNAVAILABLE. Integrity and origin evidence do not establish model quality, safety, or runtime readiness.</sub>
 
 </div>
+
+<!-- SZL-PRESERVED-TECHNICAL-BODY:END -->
+
+</details>
