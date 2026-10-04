@@ -10,6 +10,28 @@ pinned: false
 short_description: Evidence console for SZL Forge models and formulas.
 ---
 
+<p><a href="https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab"><img src="https://raw.githubusercontent.com/szl-holdings/.github/main/profile/assets/szl/logos/szl_mark_holographic.svg" alt="SZL Holdings" width="112" /></a></p>
+
+# SZL Forge Lab
+
+Inspect packaged model, formula, curriculum and receipt evidence in a read-only research console.
+
+**Artifact:** Evidence snapshot console · **Stage:** SNAPSHOT / READ-ONLY
+
+[Explore in Command Lab](https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab) · [Build](https://github.com/szl-holdings/szl-forge) · [Evidence](https://github.com/szl-holdings/szl-forge/blob/bed8adf0e91f1506b81c8c27def6c9ca5aa7655e/spaces/szl-forge-lab/README.md)
+
+## Before you use it
+
+- The curriculum remains BLUEPRINT\_NOT\_TRAINED; this is not a trainer, Jobs launcher or deployment control plane.
+- Promotion remains separately gated; transport reachability does not establish training or provider state.
+
+<details>
+<summary>Technical details and original evidence</summary>
+
+The retained source below is exact and may contain historical observations. Its dates, use restrictions, licenses and evidence boundaries continue to apply.
+
+<!-- SZL-PRESERVED-TECHNICAL-BODY:START -->
+
 
 <div align="center">
 <p>
@@ -110,3 +132,7 @@ python -m py_compile forge_lab.py forge_runtime_contract.py app.py  # legacy Gra
 <sub>Labels remain explicit: MEASURED / REPORTED / MODELED / SAMPLE / UNKNOWN / UNAVAILABLE. Integrity and origin evidence do not establish model quality, safety, or runtime readiness.</sub>
 
 </div>
+
+<!-- SZL-PRESERVED-TECHNICAL-BODY:END -->
+
+</details>
