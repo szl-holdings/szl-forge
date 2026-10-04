@@ -63,6 +63,7 @@ TRUST_POLICY_PATH = (
 SOURCE_BOUND_PATHS = (
     "tools/publish_receiptagent_v3.py",
     "frontier/qwen35-receiptagent-v3/evidence_chain.py",
+    "frontier/qwen35-receiptagent-v3/host_memory_guard.py",
     "frontier/qwen35-receiptagent-v3/prepare_release.py",
     "frontier/qwen35-receiptagent-v3/release.schema.json",
     "frontier/qwen35-receiptagent-v3/schemas/authenticated-receipt.schema.json",
