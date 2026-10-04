@@ -2,9 +2,9 @@
 
 Same held-out gate as L3, `abstain`-kind probes. The disclosed operating
 evidence today: KHIPU-R2 abstain 3/6 MEASURED, declared not a pass;
-khipu-r3 abstain 0/6. An operating point freezes only from a receipt
-produced by this runner against the hidden handle set — never from
-train loss, never from a public smoke run. The committed
+khipu-r3 abstain 0/6. This runner records numerical comparisons, not bound
+candidate qualification. Freezing an operating point requires separately
+governed hidden-set evidence — never train loss or a public smoke run. The committed
 `probes/khipu_abstain_smoke_v1.jsonl` wires CI; the promotion handle
 set stays private, only its sha256 publishes.
 """
@@ -25,8 +25,31 @@ KHIPU_BASELINE = {"abstain": 3}
 
 
 def mock_generate(messages):
-    """CI-safe stand-in: abstains on every unanswerable probe."""
-    return "ABSTAIN — not in grounded context; routing to controller."
+    """CI-only synthetic abstention; no model or Brain content is loaded."""
+    return json.dumps({
+        "planId": "plan-synthetic-smoke-abstain",
+        "capabilityProfile": "SZL-Khipu-1.5B-BrainNavigator",
+        "provenance": "SYNTHETIC",
+        "query": messages[0]["content"],
+        "contentAccess": "HANDLES_ONLY",
+        "candidates": [{
+            "nodeId": "node://khipu-synthetic/smoke-unrelated",
+            "nodeKind": "INDEX",
+            "label": "SIMULATED",
+            "note": "Synthetic nonmatching handle; no node content is embedded.",
+        }],
+        "decision": "ABSTAIN",
+        "steps": [],
+        "citedNodeIds": [],
+        "groundedOnly": True,
+        "brainBinding": {
+            "protocol": "khipu-retrieval",
+            "status": "NOT_RESOLVED",
+            "note": "No node content was resolved by this software-only mock.",
+        },
+        "controllerBoundary": "Proposal only; the A11oy controller validates and resolves handles outside the model.",
+        "abstainReason": "No offered handle supports this query.",
+    })
 
 
 def load_generate(spec):
@@ -57,7 +80,7 @@ def main(argv=None):
         artifact=args.artifact, probes_path=args.probes, generate=generate,
         declared_probe_sha256=args.probe_sha256, baseline=KHIPU_BASELINE,
         method=args.method or ("mock smoke" if args.mock else args.generate),
-        env={"python": platform.python_version()})
+        env={"python": platform.python_version()}, mock=args.mock)
 
     text = json.dumps(receipt, indent=2, sort_keys=True)
     if args.out:

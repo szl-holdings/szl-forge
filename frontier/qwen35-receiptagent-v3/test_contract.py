@@ -163,6 +163,72 @@ class CurriculumTests(unittest.TestCase):
 
 
 class TrainerBoundaryTests(unittest.TestCase):
+    def test_cooldown_skips_pause_below_trigger(self):
+        with mock.patch.object(trainer.time, "sleep") as sleep:
+            samples = trainer.cool_after_optimizer_step(
+                lambda: 71, 80, 1, sleep=sleep
+            )
+        self.assertEqual([71], samples)
+        sleep.assert_not_called()
+
+    def test_cooldown_needs_two_cool_confirmations(self):
+        observed = iter((72, 68, 70, 68, 67))
+        slept: list[float] = []
+        samples = trainer.cool_after_optimizer_step(
+            lambda: next(observed),
+            80,
+            2,
+            sleep=slept.append,
+            now=lambda: 0.0,
+        )
+        self.assertEqual([72, 68, 70, 68, 67], samples)
+        self.assertEqual([2.0] * 4, slept)
+
+    def test_cooldown_never_relaxes_the_fixed_thermal_gate(self):
+        observed = iter((72, 81))
+        with self.assertRaisesRegex(trainer.QualificationError, "fixed 80 C"):
+            trainer.cool_after_optimizer_step(
+                lambda: next(observed), 80, 3, sleep=lambda _seconds: None
+            )
+        with self.assertRaisesRegex(trainer.QualificationError, "fixed 80 C"):
+            trainer.cool_after_optimizer_step(lambda: 81, 80, 3)
+
+    def test_cooldown_accepts_80_but_waits_before_next_step(self):
+        observed = iter((80, 68, 68))
+        slept: list[float] = []
+        samples = trainer.cool_after_optimizer_step(
+            lambda: next(observed),
+            80,
+            3,
+            sleep=slept.append,
+            now=lambda: 0.0,
+        )
+        self.assertEqual([80, 68, 68], samples)
+        self.assertEqual([2.0, 2.0], slept)
+
+    def test_cooldown_probe_failure_is_not_ignored(self):
+        def unavailable():
+            raise subprocess.TimeoutExpired("nvidia-smi", 10)
+
+        with self.assertRaises(subprocess.TimeoutExpired):
+            trainer.cool_after_optimizer_step(unavailable, 80, 3)
+
+    def test_cooldown_fails_closed_on_timeout(self):
+        elapsed = [0.0]
+
+        def advance(seconds: float) -> None:
+            elapsed[0] += seconds
+
+        with self.assertRaisesRegex(trainer.QualificationError, "did not cool"):
+            trainer.cool_after_optimizer_step(
+                lambda: 72,
+                80,
+                4,
+                sleep=advance,
+                now=lambda: elapsed[0],
+            )
+        self.assertEqual(120.0, elapsed[0])
+
     def test_trainer_opens_manifest_and_train_but_no_heldout_content(self):
         observed: list[str] = []
         local = {

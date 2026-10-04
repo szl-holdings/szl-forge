@@ -8,6 +8,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import Mock, call, patch
 
 CHASKI = Path(__file__).resolve().parent
@@ -176,6 +177,7 @@ class CheckpointHeaderTests(unittest.TestCase):
             with self.assertRaises(guard.AdapterNotApplied):
                 guard.assert_adapter_applied(model, Path(tmp))
             model.named_parameters.assert_not_called()
+            model.get_model_status.assert_not_called()
 
 
 class _FakeParam:
@@ -185,6 +187,10 @@ class _FakeParam:
 class _FakePeftModel:
     def __init__(self, names: list[str]) -> None:
         self._names = names
+        self.get_model_status = Mock(return_value=SimpleNamespace(
+            enabled=True, active_adapters=["default"], num_adapter_layers=1,
+            available_adapters=["default"], merged_adapters=[],
+        ))
 
     def named_parameters(self):
         return [(n, _FakeParam()) for n in self._names]
@@ -238,6 +244,131 @@ class AdapterGuardTests(unittest.TestCase):
 
     def test_empty_checkpoint_never_counts_as_applied(self) -> None:
         self.assertFalse(guard.coverage_report([], set())["fully_applied"])
+
+
+class AdapterActivationTests(unittest.TestCase):
+    """Synthetic admission controls; no numerical adapter application is established."""
+
+    def check(self, model, keys=None, **kwargs):
+        keys = [MM.format(i=0, ab="A")] if keys is None else keys
+        with tempfile.TemporaryDirectory() as tmp:
+            write_safetensors_header(Path(tmp), keys)
+            return guard.assert_adapter_applied(model, Path(tmp), **kwargs)
+
+    def model(self, adapter="default"):
+        key = MM.format(i=0, ab="A")
+        return _FakePeftModel([key.replace(".weight", f".{adapter}.weight")])
+
+    def test_inactive_expected_adapter_fails_despite_complete_key_inventory(self):
+        model = self.model()
+        model.get_model_status.return_value.active_adapters = ["other"]
+        model.get_model_status.return_value.available_adapters = ["default", "other"]
+        with self.assertRaises(guard.AdapterNotApplied):
+            self.check(model)
+
+    def test_other_namespace_cannot_complete_expected_adapter_coverage(self):
+        keys = [MM.format(i=0, ab=ab) for ab in ("A", "B")]
+        model = _FakePeftModel([
+            keys[0].replace(".weight", ".default.weight"),
+            keys[1].replace(".weight", ".other.weight"),
+        ])
+        model.get_model_status.return_value.available_adapters = ["default", "other"]
+        with self.assertRaises(guard.AdapterNotApplied):
+            self.check(model, keys)
+
+    def test_live_keys_are_scoped_to_one_namespace(self):
+        a, b = (MM.format(i=0, ab=ab) for ab in ("A", "B"))
+        model = _FakePeftModel([
+            a.replace(".weight", ".default.weight"),
+            b.replace(".weight", ".other.weight"),
+            b,  # unqualified checkpoint-style names are not a loaded namespace
+            "prefix.lora_debug.default.weight",
+        ])
+        self.assertEqual(guard.live_lora_keys(model), {a})
+
+    def test_embeddings_and_explicit_namespace_do_not_strip_arbitrary_segments(self):
+        model = _FakePeftModel([
+            "prefix.lora_embedding_A.reviewed", "prefix.lora_embedding_B.other",
+            "prefix.lora_embedding_A", "prefix.lora_A.reviewed.weight",
+            "prefix.lora_B.reviewed.bias", "prefix.lora_debug.reviewed.weight",
+        ])
+        self.assertEqual(guard.live_lora_keys(model, expected_adapter="reviewed"), {
+            "prefix.lora_embedding_A", "prefix.lora_A.weight", "prefix.lora_B.bias",
+        })
+
+    def test_explicit_expected_adapter_passes_with_matching_status_and_keys(self):
+        model = self.model("reviewed")
+        model.get_model_status.return_value.active_adapters = ["reviewed"]
+        model.get_model_status.return_value.available_adapters = ["reviewed"]
+        report = self.check(model, expected_adapter="reviewed")
+        self.assertTrue(report["fully_applied"])
+        self.assertEqual(report["expected_adapter"], "reviewed")
+        self.assertEqual(report["adapter_activation"]["active_adapters"], ["reviewed"])
+        self.assertEqual(report["numerical_application"], "UNKNOWN")
+
+    def test_default_admission_reports_only_structural_application(self):
+        model = self.model()
+        report = self.check(model)
+        model.get_model_status.assert_called_once_with()
+        self.assertEqual((report["checkpoint_tensors"], report["applied"]), (1, 1))
+        self.assertEqual(report["expected_adapter"], "default")
+        self.assertEqual(report["coverage_basis"], "parameter_names_and_model_status")
+        self.assertEqual(report["numerical_application"], "UNKNOWN")
+        self.assertEqual(report["adapter_activation"], {
+            "enabled": True, "active_adapters": ["default"], "num_adapter_layers": 1,
+            "available_adapters": ["default"], "merged_adapters": [],
+        })
+
+    def test_missing_noncallable_or_throwing_status_fails_closed(self):
+        for value in (None, False, [], "unavailable"):
+            with self.subTest(value=value):
+                model = self.model()
+                model.get_model_status = value
+                with self.assertRaises(guard.AdapterNotApplied):
+                    self.check(model)
+        model = self.model()
+        del model.get_model_status
+        with self.assertRaises(guard.AdapterNotApplied):
+            self.check(model)
+        for error in (RuntimeError, guard.AdapterNotApplied):
+            with self.subTest(error=error):
+                model = self.model()
+                model.get_model_status.side_effect = error("private runtime detail")
+                with self.assertRaises(guard.AdapterNotApplied) as caught:
+                    self.check(model)
+                self.assertNotIn("private runtime detail", str(caught.exception))
+
+    def test_malformed_or_inconsistent_activation_status_fails_closed(self):
+        cases = {
+            "enabled": [False, "irregular", 1, None],
+            "active_adapters": [[], ["other"], ["default", "other"],
+                                "default", "irregular", ("default",), [None], None],
+            "num_adapter_layers": [0, -1, True, 1.0, "1", None],
+            "available_adapters": [[], ["other"], "default", [None],
+                                   ["default", "default"], ["default", ""], None],
+            "merged_adapters": [["default"], ["other"], "irregular", (), None],
+        }
+        for field, values in cases.items():
+            for value in values:
+                with self.subTest(field=field, value=value):
+                    model = self.model()
+                    setattr(model.get_model_status.return_value, field, value)
+                    with self.assertRaises(guard.AdapterNotApplied):
+                        self.check(model)
+        for status in (None, {}, SimpleNamespace()):
+            with self.subTest(status=status):
+                model = self.model()
+                model.get_model_status.return_value = status
+                with self.assertRaises(guard.AdapterNotApplied):
+                    self.check(model)
+
+    def test_invalid_expected_namespace_fails_before_model_queries(self):
+        for value in (None, True, "", "a.b", "\ud800", "a\0b"):
+            with self.subTest(value=value):
+                model = self.model()
+                with self.assertRaises(guard.AdapterNotApplied):
+                    self.check(model, expected_adapter=value)
+                model.get_model_status.assert_not_called()
 
 
 class R4CandidateTests(unittest.TestCase):
