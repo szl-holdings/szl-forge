@@ -8,6 +8,28 @@ library_name: llama.cpp
 tags: [gguf, llama.cpp, research, proposal-only, retrieval]
 ---
 
+<!-- SZL-CARD-PRESENTATION:v1 -->
+<p><a href="https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab"><img src="https://raw.githubusercontent.com/szl-holdings/.github/main/profile/assets/szl/logos/szl_mark_holographic.svg" alt="SZL Holdings" width="112" /></a></p>
+
+# Khipu 1.5B · GGUF
+
+Compact Khipu quantizations for research on retrieval-plan proposals over controller-supplied handles.
+
+**Artifact:** GGUF quantizations · **Stage:** Research · promotion blocked
+
+[Explore in Command Lab](https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab) · [Build](https://github.com/szl-holdings/szl-forge/tree/main/khipu-gguf) · [Evidence](https://github.com/szl-holdings/szl-forge/blob/2b4d7a0f69e68d60cb0f35f09c9bac837d66acdc/khipu-gguf/card/README.md)
+
+## Before you use it
+
+- Proposal-only use. The controller retains authorization, execution, and trusted receipt signing.
+- The parent model's recorded abstention result remains 2/6; quantization does not clear that release blocker.
+- Select and verify an exact GGUF revision and compatible runtime. No comparative post-quantization quality or runtime-memory result is established.
+
+<details>
+<summary>Technical details and evidence</summary>
+
+<!-- SZL-CARD-TECHNICAL:v1:START -->
+
 <p align="center"><img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/main/khipu-gguf/card/holo-banner.svg" alt="Khipu GGUF research artifact illustration" width="100%"/></p>
 
 # Khipu 1.5B · GGUF
@@ -79,3 +101,6 @@ Retrieval may consume approximately 986 MB of storage for the selected file plus
 - Quantized numerics can differ; do not transfer parent results without evaluation
 - Apache-2.0 is declared and [LICENSE](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B-GGUF/blob/7c39154b22ccb5e2151b4dd53e0d36965dfbc920/LICENSE) is present; preserve base-model and dependency notices
 - Lambda remains an open advisory conjecture; this card claims no SLSA level, government approval, ATO, or blanket trust percentage
+
+<!-- SZL-CARD-TECHNICAL:v1:END -->
+</details>

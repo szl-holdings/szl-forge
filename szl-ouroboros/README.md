@@ -17,6 +17,28 @@ szl-review:
   reviewed_at: "2026-09-30"
 ---
 
+<!-- SZL-CARD-PRESENTATION:v1 -->
+<p><a href="https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab"><img src="https://raw.githubusercontent.com/szl-holdings/.github/main/profile/assets/szl/logos/szl_mark_holographic.svg" alt="SZL Holdings" width="112" /></a></p>
+
+# szl-ouroboros
+
+Reconstruct bounded-loop traces and account for model time and measured wall time.
+
+**Artifact:** Python timing kernel; no trained weights · **Stage:** Limited software
+
+[Explore in Command Lab](https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab) · [Build](https://github.com/szl-holdings/szl-ouroboros) · [Evidence](https://github.com/szl-holdings/szl-forge/blob/2b4d7a0f69e68d60cb0f35f09c9bac837d66acdc/szl-ouroboros/README.md)
+
+## Before you use it
+
+- Accounting does not execute or enforce an application's retry policy.
+- Without measured wall time, overhead remains unavailable. Counterfactual timing fields are not realized savings.
+- This mirror covers the kernel artifact. Verify its separate package revision before remote-code loading.
+
+<details>
+<summary>Technical details and evidence</summary>
+
+<!-- SZL-CARD-TECHNICAL:v1:START -->
+
 <p align="center"><img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/main/szl-ouroboros/card/holo-banner.svg" alt="szl-ouroboros software provenance illustration" width="100%"/></p>
 
 # szl-ouroboros
@@ -90,3 +112,6 @@ The reviewed [LICENSE](https://huggingface.co/SZLHOLDINGS/szl-ouroboros/blob/91e
 ## Citation and verification
 
 Cite the exact artifact URL, revision, evidence file, date, and test scope relevant to the claim. Prefer immutable links above over branch links or a live status badge. Report an evidence gap as an evidence gap.
+
+<!-- SZL-CARD-TECHNICAL:v1:END -->
+</details>

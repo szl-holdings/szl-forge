@@ -12,6 +12,28 @@ tags:
   - test-fixture
 ---
 
+<!-- SZL-CARD-PRESENTATION:v1 -->
+<p><a href="https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab"><img src="https://raw.githubusercontent.com/szl-holdings/.github/main/profile/assets/szl/logos/szl_mark_holographic.svg" alt="SZL Holdings" width="112" /></a></p>
+
+# ReceiptAgent-Nano
+
+A synthetic four-class policy surrogate for inspecting advisory ALLOW, WARN, BLOCKED, and ESCALATE outputs.
+
+**Artifact:** Bare NumPy weight archive · **Stage:** Synthetic test fixture
+
+[Explore in Command Lab](https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab) · [Build](https://github.com/szl-holdings/szl-khipu) · [Evidence](https://github.com/szl-holdings/szl-forge/blob/2b4d7a0f69e68d60cb0f35f09c9bac837d66acdc/receiptagent-nano/card/README.md)
+
+## Before you use it
+
+- Keep the deterministic rule_check decision authoritative; the ESCALATE class does not establish a runtime retry loop.
+- The archive has no packaged Hub loader or config.json. The complete inference contract remains unqualified.
+- Reported synthetic agreement does not establish production accuracy or a substitute for the larger ReceiptAgent model.
+
+<details>
+<summary>Technical details and evidence</summary>
+
+<!-- SZL-CARD-TECHNICAL:v1:START -->
+
 <p align="center"><img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/main/receiptagent-nano/card/holo-banner.svg" alt="ReceiptAgent-Nano synthetic advisory four-class archive illustration; schematic, not array dimensions" width="100%"/></p>
 
 > **Status: SOFTWARE / REFERENCE / TEST FIXTURE.** Not a production model.
@@ -121,3 +143,6 @@ A card/banner correction does not publish the canonical package, independently
 verify archive bytes, replay training, recover a historical class contract, or
 qualify a hosted runtime. The banner is a decorative schematic; its node counts
 do not specify the arrays reported above.
+
+<!-- SZL-CARD-TECHNICAL:v1:END -->
+</details>
