@@ -12,6 +12,28 @@ tags:
   - alloy
 ---
 
+<!-- SZL-CARD-PRESENTATION:v1 -->
+<p><a href="https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab"><img src="https://raw.githubusercontent.com/szl-holdings/.github/main/profile/assets/szl/logos/szl_mark_holographic.svg" alt="SZL Holdings" width="112" /></a></p>
+
+# ReceiptAgent 1.5B
+
+A restricted research listing for controller-bound decision drafts based on Qwen2.5-1.5B-Instruct.
+
+**Artifact:** Gated research model listing · **Stage:** HOLD · access restricted
+
+[Explore in Command Lab](https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab) · [Build](https://github.com/szl-holdings/szl-forge/tree/main/receiptagent) · [Evidence](https://github.com/szl-holdings/szl-forge/blob/2b4d7a0f69e68d60cb0f35f09c9bac837d66acdc/receiptagent/card/README.md)
+
+## Before you use it
+
+- The access gate remains in place. Current model files and runtime readiness were not reverified.
+- Retained owner-reported signed contract evidence does not establish independent model accuracy, safety, or a refusal guarantee.
+- The external controller retains authorization and execution. This listing is not the A11oy product or a promoted flagship.
+
+<details>
+<summary>Technical details and evidence</summary>
+
+<!-- SZL-CARD-TECHNICAL:v1:START -->
+
 > **SOFTWARE / do-not-promote / not the product origin.** Proposal-only research SKU; not A11oy and not the flagship product.
 
 <p align="center">
@@ -217,3 +239,6 @@ the Alloy governed-inference backbone.
 </p>
 
 <p align="center"><sub>SLSA: L1 honest · L2 attested · L3 roadmap. Λ = Conjecture 1. Trust ceiling 0.97.</sub></p>
+
+<!-- SZL-CARD-TECHNICAL:v1:END -->
+</details>

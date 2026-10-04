@@ -18,6 +18,28 @@ szl-review:
   reviewed_at: "2026-09-30"
 ---
 
+<!-- SZL-CARD-PRESENTATION:v1 -->
+<p><a href="https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab"><img src="https://raw.githubusercontent.com/szl-holdings/.github/main/profile/assets/szl/logos/szl_mark_holographic.svg" alt="SZL Holdings" width="112" /></a></p>
+
+# szl-provctl
+
+Inspect provenance relationships and construct receipt-chain, in-toto-shaped, and SLSA-shaped records.
+
+**Artifact:** Python provenance kernel; no trained weights · **Stage:** Limited software
+
+[Explore in Command Lab](https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab) · [Build](https://github.com/szl-holdings/szl-provctl) · [Evidence](https://github.com/szl-holdings/szl-forge/blob/2b4d7a0f69e68d60cb0f35f09c9bac837d66acdc/szl-provctl/README.md)
+
+## Before you use it
+
+- Hash-chain consistency does not authenticate the producer, prove truthful inputs, or establish graph completeness.
+- SLSA-shaped JSON does not establish a SLSA level; external verifier interoperability remains unverified.
+- Treat malformed dependency graphs as failure. Energy observations remain unavailable when their measurement backend is unavailable.
+
+<details>
+<summary>Technical details and evidence</summary>
+
+<!-- SZL-CARD-TECHNICAL:v1:START -->
+
 <p align="center"><img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/main/szl-provctl/card/holo-banner.svg" alt="szl-provctl software provenance illustration" width="100%"/></p>
 
 # szl-provctl
@@ -91,3 +113,6 @@ The reviewed [LICENSE](https://huggingface.co/SZLHOLDINGS/szl-provctl/blob/8d208
 ## Citation and verification
 
 Cite the exact artifact URL, revision, evidence file, date, and test scope relevant to the claim. Prefer immutable links above over branch links or a live status badge. Report an evidence gap as an evidence gap.
+
+<!-- SZL-CARD-TECHNICAL:v1:END -->
+</details>

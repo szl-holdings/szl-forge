@@ -30,6 +30,30 @@ szl:
   autonomy_eligible: false
   never_overwrite: SZLHOLDINGS/chaski
 ---
+
+<!-- SZL-CARD-PRESENTATION:v1 -->
+<p><a href="https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab"><img src="https://raw.githubusercontent.com/szl-holdings/.github/main/profile/assets/szl/logos/szl_mark_holographic.svg" alt="SZL Holdings" width="112" /></a></p>
+
+# Chaski-R2
+
+A bf16 LoRA research recut of Qwen3.5-0.8B, with separate adapter and merged artifact identities.
+
+**Artifact:** LoRA adapter; separate merged checkpoint · **Stage:** HOLD · not promotable
+
+[Explore in Command Lab](https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab) · [Build](https://github.com/szl-holdings/szl-forge/tree/main/chaski-r2) · [Evidence](https://github.com/szl-holdings/szl-forge/blob/2b4d7a0f69e68d60cb0f35f09c9bac837d66acdc/chaski-r2/card/README.md)
+
+Provider compatibility support [requested on 4 October 2026](https://huggingface.co/spaces/huggingface/InferenceSupport/discussions/12785). No provider was listed in the dated Hub observation; adoption and use qualification remain unchanged.
+
+## Before you use it
+
+- The historical 1/5 held-out gate and overall FAIL remain. Later reused-fixture adapter results do not clear that gate.
+- Publication and autonomy eligibility remain false; lab loading remains forbidden.
+- Record the loader class and 192/192 applied adapter tensors. The merged runtime needs its own byte-bound evaluation.
+
+<details>
+<summary>Technical details and evidence</summary>
+
+<!-- SZL-CARD-TECHNICAL:v1:START -->
 <!-- szl:artifact-identity-reconciled -->
 > **Artifact identity (noted 2026-09-30).** Besides the LoRA adapter, this repository's root carries a merged full-precision checkpoint (`model.safetensors` + `config.json`, loadable with `transformers`) produced by the receipted CPU merge of this adapter into its declared base (`merge_receipt.json`). The adapter remains the artifact of record for every figure on this card; the merged bytes carry no separate held-out receipt and add no claim. Metadata-only note.
 
@@ -112,3 +136,6 @@ downstream artifact license coverage.
 Canonical authoring source: [chaski-r2/card/README.md](https://github.com/szl-holdings/szl-forge/blob/6f4ac90ff503265cec9c0436587f086e52d6124e/chaski-r2/card/README.md).
 An observed source revision identifies the reviewed file; it is not release
 approval. Doctrine v11 LOCKED. Λ = Conjecture 1, advisory, never a theorem.
+
+<!-- SZL-CARD-TECHNICAL:v1:END -->
+</details>

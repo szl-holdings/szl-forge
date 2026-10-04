@@ -17,6 +17,28 @@ szl-review:
   reviewed_at: "2026-09-30"
 ---
 
+<!-- SZL-CARD-PRESENTATION:v1 -->
+<p><a href="https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab"><img src="https://raw.githubusercontent.com/szl-holdings/.github/main/profile/assets/szl/logos/szl_mark_holographic.svg" alt="SZL Holdings" width="112" /></a></p>
+
+# szl-blocked
+
+Apply an explicit policy before a function call and retain the outcome in a receipt chain.
+
+**Artifact:** Python software kernel; no trained weights · **Stage:** Limited software
+
+[Explore in Command Lab](https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab) · [Build](https://github.com/szl-holdings/szl-blocked) · [Evidence](https://github.com/szl-holdings/szl-forge/blob/2b4d7a0f69e68d60cb0f35f09c9bac837d66acdc/szl-blocked/README.md)
+
+## Before you use it
+
+- Inspect and test the denial path before integration; an allow receipt does not certify the surrounding application.
+- The Annex IV companion produces a draft for human review and does not establish legal compliance.
+- Verify the separate kernel-package revision before loading remote Python. Historical surrogate records do not establish downloadable weights.
+
+<details>
+<summary>Technical details and evidence</summary>
+
+<!-- SZL-CARD-TECHNICAL:v1:START -->
+
 <p align="center"><img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/main/szl-blocked/card/holo-banner.svg" alt="szl-blocked software provenance illustration" width="100%"/></p>
 
 # szl-blocked
@@ -89,3 +111,6 @@ The reviewed [LICENSE](https://huggingface.co/SZLHOLDINGS/szl-blocked/blob/730a2
 ## Citation and verification
 
 Cite the exact artifact URL, revision, evidence file, date, and test scope relevant to the claim. Prefer immutable links above over branch links or a live status badge. Report an evidence gap as an evidence gap.
+
+<!-- SZL-CARD-TECHNICAL:v1:END -->
+</details>

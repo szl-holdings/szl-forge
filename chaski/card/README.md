@@ -37,6 +37,30 @@ szl:
   autonomy_eligible: false
   gpu: UNAVAILABLE
 ---
+
+<!-- SZL-CARD-PRESENTATION:v1 -->
+<p><a href="https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab"><img src="https://raw.githubusercontent.com/szl-holdings/.github/main/profile/assets/szl/logos/szl_mark_holographic.svg" alt="SZL Holdings" width="112" /></a></p>
+
+# Chaski
+
+A controller-bound drafting experiment that retains its failed qualification as research evidence.
+
+**Artifact:** Fine-tuned checkpoint; separate LoRA adapter · **Stage:** HOLD · failed qualification
+
+[Explore in Command Lab](https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab) · [Build](https://github.com/szl-holdings/szl-forge/tree/main/chaski) · [Evidence](https://github.com/szl-holdings/szl-forge/blob/2b4d7a0f69e68d60cb0f35f09c9bac837d66acdc/chaski/card/README.md)
+
+Provider compatibility support [requested on 4 October 2026](https://huggingface.co/spaces/huggingface/InferenceSupport/discussions/12783). No provider was listed in the dated Hub observation; adoption and use qualification remain unchanged.
+
+## Before you use it
+
+- The historical release gates failed: 0/5 JSON drafts and 2/6 adversarial refusals. Publication and autonomy eligibility remain false.
+- Choose the exact checkpoint or adapter form. Adapter evaluation must record the loader class and all 192/192 applied tensors.
+- Generated drafts remain untrusted and require an independent validating controller. This artifact is not a promoted flagship.
+
+<details>
+<summary>Technical details and evidence</summary>
+
+<!-- SZL-CARD-TECHNICAL:v1:START -->
 <!-- szl:loader-class-boundary -->
 > **Loader-class boundary (noted 2026-09-30).** The adapter tensors are keyed for the multimodal module layout (`base_model.model.model.language_model.layers.*`, the class `Qwen3_5ForConditionalGeneration` / `AutoModelForImageTextToText`). Under transformers 5.18, `AutoModelForCausalLM` instantiates `Qwen3_5ForCausalLM` (`model.layers.*`); PEFT then applies 0 of the 192 adapter tensors and emits only a warning, so the result is the bare base model (observed and receipted on the sibling `SZLHOLDINGS/chaski-r2` adapter, which shares this exact key layout: byte-identical base outputs on the held-out prompts). Any run that reports a score for this adapter must show adapter key coverage (192/192) and the loader class it used; a record without those fields does not establish that the adapter was applied. Evidence: szl-holdings/szl-forge `tools/geh_v8/evidence_sandbox/chaski_probe/` (CPU replay receipts, #444). Metadata-only note; it authorizes no load, changes no artifact, and adds no claim.
 
@@ -211,3 +235,6 @@ release gates. A new model or runtime revision requires a new immutable
 evaluation receipt; this card cannot confer approval.
 
 Doctrine v11 LOCKED. Λ = Conjecture 1. Owner: Stephen Lutar / SZL Holdings.
+
+<!-- SZL-CARD-TECHNICAL:v1:END -->
+</details>

@@ -22,6 +22,30 @@ szl:
   lambda: "Conjecture 1 — advisory, never a theorem"
 ---
 
+<!-- SZL-CARD-PRESENTATION:v1 -->
+<p><a href="https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab"><img src="https://raw.githubusercontent.com/szl-holdings/.github/main/profile/assets/szl/logos/szl_mark_holographic.svg" alt="SZL Holdings" width="112" /></a></p>
+
+# Khipu 1.5B
+
+A Qwen2.5-1.5B-Instruct fine-tune for proposal-only retrieval plans over supplied handles.
+
+**Artifact:** Fine-tuned checkpoint · **Stage:** Research · release blocked
+
+[Explore in Command Lab](https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab) · [Build](https://github.com/szl-holdings/szl-forge/tree/main/khipu) · [Evidence](https://github.com/szl-holdings/szl-forge/blob/2b4d7a0f69e68d60cb0f35f09c9bac837d66acdc/khipu/card/README.md)
+
+Provider compatibility support [requested on 4 October 2026](https://huggingface.co/spaces/huggingface/InferenceSupport/discussions/12781). No provider was listed in the dated Hub observation; adoption and use qualification remain unchanged.
+
+## Before you use it
+
+- The recorded 2/6 abstention result remains a release blocker; publication_eligible stays false.
+- Small owner-run synthetic contract counts do not establish broad capability or a refusal guarantee.
+- Plans require external validation and authorization. No deployed endpoint or autonomous execution is established by this card.
+
+<details>
+<summary>Technical details and evidence</summary>
+
+<!-- SZL-CARD-TECHNICAL:v1:START -->
+
 <!-- SZL-ESTATE-CARD:v2:START -->
 <p align="center"><a href="https://a-11-oy.com/"><img src="https://huggingface.co/spaces/SZLHOLDINGS/README/resolve/main/assets/estate-banner-v2.svg" alt="SZL Holdings — governed, receipted, verifiable" width="100%"></a></p>
 <p align="center">
@@ -456,3 +480,6 @@ verifiable from the committed files; runtime deployment status is a separate cla
 </p>
 
 <p align="center"><sub>? = Conjecture 1 (advisory, never a theorem). The declared policy ceiling 0.97 is not a measured quality or confidence-calibration score. Owner-run counts remain bounded historical evidence; this card establishes no model-specific formal-proof mapping or new runtime qualification.</sub></p>
+
+<!-- SZL-CARD-TECHNICAL:v1:END -->
+</details>
