@@ -16,6 +16,7 @@ $script:foundationCpuInputs = @{ PythonExecutable=$PythonExecutable; Environment
     Wheelhouse=$CpuWheelhouse; StateDirectory=$CpuStateDirectory; PythonSha256=$PythonImageSha256;
     BindingSha256=$CpuEnvironmentBindingSha256 }
 $script:foundationCpuRuntime = $null
+$script:foundationPhaseLog = $null
 if (($PythonExecutable -or $CpuEnvironmentRoot -or $CpuWheelhouse -or $CpuStateDirectory -or $PythonImageSha256 -or $CpuEnvironmentBindingSha256) -and
     (-not $PythonExecutable -or -not $CpuEnvironmentRoot -or -not $CpuWheelhouse)) {
     throw 'CPU mode requires an explicit native Python executable, environment and official wheelhouse.'
@@ -246,6 +247,83 @@ function Write-FoundationJson {
     }
 }
 
+# Advisory diagnostics have one retained writer per native process/session.
+# Their success stream is empty; logging failures never alter admission/retries.
+function Initialize-FoundationPhaseLog {
+    param([ValidateSet('cpu-supervisor','cpu-launcher')][string]$Role,
+          [string]$Directory)
+    $stream = $null
+    try {
+        if ($script:foundationPhaseLog) { throw 'A diagnostic writer is already active.' }
+        $paths = Get-FoundationPaths
+        if (-not $Directory) {
+            # Keep diagnostics outside managed Operations: its uninstaller must
+            # continue to refuse every unknown file, without deleting evidence.
+            Assert-FoundationPath $paths.Operations -Directory | Out-Null
+            $Directory = Join-Path ([IO.Path]::GetDirectoryName($paths.Operations)) 'FoundationConfirmationDiagnostics'
+        }
+        $directoryPath = Assert-FoundationPath $Directory -Directory -MayNotExist
+        [IO.Directory]::CreateDirectory($directoryPath) | Out-Null
+        Assert-FoundationPath $directoryPath -Directory | Out-Null
+        $session = [guid]::NewGuid().ToString('N')
+        $path = Assert-FoundationPath (Join-Path $directoryPath ($Role + '.' + $PID + '.' + $session + '.jsonl')) -MayNotExist
+        $self = [Diagnostics.Process]::GetCurrentProcess()
+        try { $created = (ConvertTo-FoundationCimTimestamp $self.StartTime).ToString('o') }
+        finally { $self.Dispose() }
+        $stream = [IO.File]::Open($path, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::Read)
+        $script:foundationPhaseLog = @{ Path=$path; Stream=$stream; Role=$Role; Session=$session;
+            ProcessCreated=$created; Clock=[Diagnostics.Stopwatch]::StartNew(); Sequence=0;
+            Phases=@{}; Active=[Collections.Generic.List[string]]::new(); Available=$true }
+    } catch {
+        if ($null -ne $stream) { try { $stream.Dispose() } catch {} } # Preserve its partial evidence.
+        Write-Warning 'Foundation phase telemetry UNAVAILABLE; operation policy is unchanged.' -WarningAction Continue
+    }
+}
+
+function Write-FoundationPhaseEvent {
+    [CmdletBinding()]
+    param([string]$Phase, [ValidateSet('ENTERED','RETURNED','FAILED')][string]$Event,
+          [string]$ErrorType)
+    $log = $script:foundationPhaseLog
+    if (-not $log -or -not $log.Available) { return }
+    try {
+        $elapsed = $log.Clock.Elapsed.TotalSeconds
+        if ($Event -ceq 'ENTERED') { $log.Phases[$Phase] = $elapsed; $log.Active.Add($Phase) }
+        $phaseElapsed = if ($log.Phases.ContainsKey($Phase)) { $elapsed - $log.Phases[$Phase] } else { $null }
+        $log.Sequence++
+        $value = @{ schema='szl.foundation-confirmation.startup-phase/v1'; class='MEASURED'; signed=$false;
+            diagnostic_only=$true; role=$log.Role; session_id=$log.Session; pid=$PID; process_created=$log.ProcessCreated;
+            sequence=$log.Sequence; phase=$Phase; event=$Event; observed_utc=[datetime]::UtcNow.ToString('o');
+            monotonic_elapsed_seconds=$elapsed; phase_elapsed_seconds=$phaseElapsed }
+        if ($ErrorType) { $value.error_type=$ErrorType } # Never log an exception's message or argv.
+        $bytes = [Text.UTF8Encoding]::new($false).GetBytes(($value | ConvertTo-Json -Depth 4 -Compress) + "`n")
+        $log.Stream.Write($bytes, 0, $bytes.Length)
+        $log.Stream.Flush($true)
+        if ($Event -cne 'ENTERED') { $log.Phases.Remove($Phase); $log.Active.Remove($Phase) | Out-Null }
+    } catch {
+        $log.Available=$false
+        Write-Warning 'Foundation phase telemetry UNAVAILABLE; operation policy is unchanged.' -WarningAction Continue
+    }
+}
+
+function Write-FoundationPhaseFailure {
+    param($Failure)
+    try {
+        $log = $script:foundationPhaseLog
+        if (-not $log) { return }
+        $phase = if ($log.Active.Count -gt 0) { $log.Active[$log.Active.Count - 1] } else { 'UNKNOWN' }
+        Write-FoundationPhaseEvent $phase 'FAILED' $Failure.Exception.GetType().FullName
+    } catch { Write-Warning 'Foundation phase telemetry UNAVAILABLE; operation policy is unchanged.' -WarningAction Continue }
+}
+
+function Close-FoundationPhaseLog {
+    if ($script:foundationPhaseLog) {
+        try { $script:foundationPhaseLog.Stream.Dispose() }
+        catch { Write-Warning 'Foundation phase telemetry UNAVAILABLE; operation policy is unchanged.' -WarningAction Continue }
+        $script:foundationPhaseLog=$null
+    }
+}
+
 function Read-FoundationInstallation {
     $paths = Get-FoundationPaths
     Assert-FoundationPath $paths.Operations -Directory | Out-Null
@@ -279,7 +357,9 @@ function Read-FoundationInstallation {
     if ($receipt.cpu_runtime) {
         $cpu = $receipt.cpu_runtime
         if ($cpu.kind -cne 'ADMITTED_CPU_ONLY' -or $cpu.startup_timeout_seconds -ne 180) { throw 'Unsupported CPU runtime contract.' }
+        Write-FoundationPhaseEvent 'environment_admission' 'ENTERED'
         $script:foundationCpuRuntime = Get-FoundationCpuRuntime -Executable $cpu.python_executable -EnvironmentRoot $cpu.environment_root -Wheelhouse $cpu.wheelhouse -StateDirectory $cpu.state_directory -ExpectedPythonSha256 $cpu.python_image_sha256 -ExpectedBindingSha256 $cpu.environment_binding_sha256 -Root $root -SourceRoot $paths.Operations
+        Write-FoundationPhaseEvent 'environment_admission' 'RETURNED'
         if ($script:foundationCpuInputs.PythonExecutable -and
             ($script:foundationCpuInputs.PythonExecutable -cne $cpu.python_executable -or $script:foundationCpuInputs.EnvironmentRoot -cne $cpu.environment_root -or
              $script:foundationCpuInputs.Wheelhouse -cne $cpu.wheelhouse -or ($script:foundationCpuInputs.StateDirectory -and $script:foundationCpuInputs.StateDirectory -cne $cpu.state_directory) -or
@@ -548,23 +628,34 @@ try {
         @{ status = 'VERIFIED'; admission = $admitted; task_registered = $false; service_started = $false } | ConvertTo-Json -Depth 8
         exit 0
     }
+    if ($script:foundationCpuInputs.PythonExecutable) { Initialize-FoundationPhaseLog -Role 'cpu-supervisor' }
     Invoke-FoundationRecoveryLoop -Cycle {
         param($Attempt)
         # Re-admit the sealed source, installation and task before every launch.
+        Write-FoundationPhaseEvent 'release_verification' 'ENTERED'
         $admitted = Test-FoundationRelease $LabRoot $ArchivePath
+        Write-FoundationPhaseEvent 'release_verification' 'RETURNED'
         $paths = Get-FoundationPaths
+        Write-FoundationPhaseEvent 'installation_admission' 'ENTERED'
         $installation = Read-FoundationInstallation
         if ($installation.lab_root -ne $admitted.LabRoot -or $installation.archive_path -ne $admitted.ArchivePath -or $installation.port -ne $Port) {
             throw 'Launch arguments do not match the owned installation receipt.'
         }
+        Write-FoundationPhaseEvent 'installation_admission' 'RETURNED'
+        Write-FoundationPhaseEvent 'task_predecessor_admission' 'ENTERED'
         Assert-FoundationTask (Get-ScheduledTask -TaskName $paths.Task -TaskPath '\' -ErrorAction Stop) $installation
         $predecessor = Get-FoundationService $admitted.LabRoot $admitted.Python $Port -MayBeAbsent
         Assert-FoundationLaunchPort $Port $predecessor
+        Write-FoundationPhaseEvent 'task_predecessor_admission' 'RETURNED'
         $launchArguments = '-NoProfile -NonInteractive -File "' + (Join-Path $admitted.LabRoot 'start.ps1') + '" -Port ' + $Port
         if ($script:foundationCpuRuntime) { $launchArguments = '-NoProfile -NonInteractive -File "' + (Join-Path $paths.Operations 'launch-cpu-workbench.ps1') + '"' }
+        Write-FoundationPhaseEvent 'launcher_wait' 'ENTERED'
         $launcherExitCode = Invoke-FoundationLauncher $paths.Shell $launchArguments $admitted.LabRoot
         if ($launcherExitCode -ne 0) { throw 'The unchanged workbench launcher failed. See retained state/service.stderr.log.' }
+        Write-FoundationPhaseEvent 'launcher_wait' 'RETURNED'
+        Write-FoundationPhaseEvent 'owned_readiness_admission' 'ENTERED'
         $owned = Get-FoundationService $admitted.LabRoot $admitted.Python $Port
+        Write-FoundationPhaseEvent 'owned_readiness_admission' 'RETURNED'
         $script:foundationSupervisionRun = @{ schema = 'szl.foundation-confirmation.windows-supervisor/v1'; owner_sid = $paths.Sid;
             installation_id = $installation.installation_id; started_utc = [datetime]::UtcNow.ToString('o');
             status = 'WAITING_FOR_OWNED_SERVICE'; process = $owned.Receipt; source_admission = $admitted.Verification;
@@ -588,9 +679,14 @@ try {
         $script:foundationSupervisionRun.status = 'AWAITING_BOUNDED_SUPERVISOR_RETRY'
         $script:foundationSupervisionRun.retry_requested_utc = [datetime]::UtcNow.ToString('o')
         Write-FoundationJson (Join-Path $paths.Operations 'supervisor-status.json') $script:foundationSupervisionRun
+        Write-FoundationPhaseEvent 'retry_delay' 'ENTERED'
         Start-Sleep -Seconds $Seconds
+        Write-FoundationPhaseEvent 'retry_delay' 'RETURNED'
     }
 } catch {
+    Write-FoundationPhaseFailure $_
     Write-Error $_ -ErrorAction Continue
     exit 1
+} finally {
+    Close-FoundationPhaseLog
 }

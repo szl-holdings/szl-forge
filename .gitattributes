@@ -1,4 +1,7 @@
 frontier/qwen35-receiptagent-v3/** text eol=lf
+frontier/qwen35-receiptagent-v4-json/** text eol=lf
+tools/validate_sft_dataset.py text eol=lf
+tools/nemo_doctrine_gate.py text eol=lf
 tools/publish_receiptagent_v3.py text eol=lf
 spaces/szl-model-inference-lab/formula_atlas/*.json text eol=lf
 clinical-gateway/** text eol=lf
@@ -11,3 +14,5 @@ spaces/oac-system-health-lab/** text eol=lf
 spaces/szl-forge-lab/kanchay/** -text
 khipu/*.jsonl text eol=lf
 khipu/khipu.schema.json text eol=lf
+receiptagent/*.jsonl text eol=lf
+receiptagent/receiptagent.schema.json text eol=lf

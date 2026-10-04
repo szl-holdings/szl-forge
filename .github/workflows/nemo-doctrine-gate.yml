@@ -11,6 +11,7 @@ on:
       - "szl_dataset.jsonl"
       - "receiptagent/*.jsonl"
       - "frontier/qwen35-receiptagent-v3/**"
+      - "frontier/qwen35-receiptagent-v4-json/**"
       - "tools/validate_sft_dataset.py"
       - "tools/nemo_doctrine_gate.py"
       - "tools/test_nemo_doctrine_workflow.py"
@@ -22,6 +23,7 @@ on:
       - "szl_dataset.jsonl"
       - "receiptagent/*.jsonl"
       - "frontier/qwen35-receiptagent-v3/**"
+      - "frontier/qwen35-receiptagent-v4-json/**"
       - "tools/validate_sft_dataset.py"
       - "tools/nemo_doctrine_gate.py"
       - "tools/test_nemo_doctrine_workflow.py"
@@ -68,6 +70,15 @@ jobs:
           set -euo pipefail
           python tools/validate_sft_dataset.py frontier/qwen35-receiptagent-v3/train.jsonl --min-examples 180 --json
           python tools/nemo_doctrine_gate.py frontier/qwen35-receiptagent-v3/train.jsonl --persona finetuned --json
+
+      - name: Gate ReceiptAgent v4 training references (conformance only)
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check "jsonschema==4.26.0"
+          python -B frontier/qwen35-receiptagent-v4-json/curriculum_admission.py \
+            --check-conformance \
+            --train frontier/qwen35-receiptagent-v4-json/train.jsonl \
+            --manifest frontier/qwen35-receiptagent-v4-json/curriculum-manifest.json
 
       - name: Gate contract tests
         run: |

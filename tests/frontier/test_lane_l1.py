@@ -115,7 +115,8 @@ def test_publication_follows_winner_gate_receipt(monkeypatch):
     import frontier.harness.lane_l1 as lane
     from frontier.harness.heldout_gate import run_gate
 
-    # Test-only line: proves a PASSing winner receipt still publishes. L1
+    # Test-only numeric line: PASS can select a winner, but neither a public
+    # fixture nor an unbound harness receipt grants publication authority. L1
     # itself declares no baseline; this does not declare one for it.
     monkeypatch.setattr(lane, "run_gate", lambda **kw: run_gate(
         **kw, baseline={"json_draft": 0, "refusal": 0}))
@@ -132,7 +133,7 @@ def test_publication_follows_winner_gate_receipt(monkeypatch):
         probes_path=str(SMOKE), false_allow_budget=0,
         declared_probe_sha256=SMOKE_SHA256)
     assert receipt["candidates"][0]["gate"] == "PASS"
-    assert receipt["gate"] == "WINNER" and receipt["publication_eligible"] is True
+    assert receipt["gate"] == "WINNER" and receipt["publication_eligible"] is False
 
 
 def test_all_failing_candidate_cli_exit_code_unchanged(tmp_path):

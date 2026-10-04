@@ -98,6 +98,12 @@ jobs:
             frontier/qwen35-receiptagent-v3/test_supervisor_validation.py \
             frontier/qwen35-receiptagent-v4-json/json_contract.py \
             frontier/qwen35-receiptagent-v4-json/test_json_contract.py \
+            frontier/qwen35-receiptagent-v4-json/generate_curriculum.py \
+            frontier/qwen35-receiptagent-v4-json/curriculum_admission.py \
+            frontier/qwen35-receiptagent-v4-json/test_curriculum_admission.py \
+            frontier/qwen35-receiptagent-v4-json/test_generate_curriculum.py \
+            frontier/qwen35-receiptagent-v4-json/test_cross_split_integrity.py \
+            frontier/qwen35-receiptagent-v4-json/test_workflow_bindings.py \
             tools/publish_receiptagent_v3.py \
             tools/test_publish_receiptagent_v3.py \
             chaski/train_chaski.py \
@@ -164,6 +170,8 @@ jobs:
             python frontier/qwen35-receiptagent-v2/test_qualify_runtime.py
           python frontier/qwen35-receiptagent-v2/evidence_chain.py verify
           python frontier/qwen35-receiptagent-v3/generate_curriculum.py --check
+          python -B frontier/qwen35-receiptagent-v4-json/generate_curriculum.py --check
+          python -B frontier/qwen35-receiptagent-v4-json/heldout/generate_heldout.py --check
           python -B -m unittest discover \
             -s frontier/qwen35-receiptagent-v4-json \
             -p 'test_*.py' -v

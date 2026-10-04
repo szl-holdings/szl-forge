@@ -145,10 +145,37 @@ and inside the trainer at optimizer boundaries. A sample of 80 C may pass; 81 C
 terminates the one-shot run with no completion claim. Final adapter weights must
 parse as SafeTensors; metadata is allowlisted.
 
+If a post-step sample reaches 72 C, the trainer pauses between steps
+until two consecutive 2-second samples are at most 68 C. A 120-second pause
+timeout fails the run. This does not alter the 80 C stop, the independent
+supervisor, the fixed optimizer recipe, or the 3-hour full-run wall limit.
+
 Each launch generates a random exclusive attempt under the committed WSL-native
 runs root. An existing attempt is never reused, even if empty. Admission and
 terminal reports are published without replacement; interrupted output is
 retained as untrusted and never resumed.
+
+For an operator stop while the supervisor is running, use the exact
+`supervisorRunId` printed by the launcher and stop its worker first:
+
+```bash
+RUN_ID=replace-with-the-32-hex-supervisor-run-id
+systemctl --user stop "szl-ra3-worker-$RUN_ID.service"
+```
+
+A worker-first stop gives the supervisor a chance to observe the stop and
+publish a terminal report; inspect the actual result. A stop near completion
+can race a success report and is not a host-guard veto. A direct stop of the
+outer supervisor unit also requests bounded cleanup. If
+the supervisor is killed before it can report, the waiting launcher attempts
+to write a separate, non-authoritative `reports/launcher-stop-observation.json`
+when that run's owner-controlled reports directory exists. Neither an absent
+report nor that observation permits evaluation, publication, or reuse of
+partial bytes. Do not backfill an
+earlier interrupted attempt.
+The launcher returns zero only after reading a bounded supervisor report whose
+run identity, source revision, digest, and smoke or full success state match
+this launch. That local exit status does not authorize promotion.
 
 The supervisor is a process observer and artifact binder. A successful smoke
 state means only that the fixed stack completed one step and saved internally
