@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import contextlib
 import copy
+from datetime import datetime, timedelta, timezone
 import importlib.util
 import json
 import pathlib
@@ -39,6 +40,8 @@ COMPONENT_BYTES = {
     "containment_probe.py": b"exact-containment-source",
     "train_candidate.py": b"exact-worker-source",
     "supervisor_validation.py": b"exact-validator-source",
+    "host_memory_guard.py": b"exact-host-guard-source",
+    "windows_host_memory_sampler.ps1": b"exact-native-sampler-source",
     "candidate.json": b"exact-candidate-source",
 }
 TRAINING_RECIPE = {
@@ -248,6 +251,8 @@ def supervisor_report(child: dict, child_bytes: bytes) -> dict:
             "workerArgvSha256": "5" * 64,
             "startedAt": "2026-08-13T12:00:00+00:00",
             "endedAt": "2026-08-13T12:02:00+00:00",
+            "startedMonotonicNs": 2_000_000_000,
+            "endedMonotonicNs": 122_000_000_000,
             "durationSeconds": 120.0,
             "wallTimeoutSeconds": 10800.0,
             "workerExitStatus": 0,
@@ -380,7 +385,51 @@ class SupervisorLinkageTests(unittest.TestCase):
         ).encode("utf-8")
         self.child_path.write_bytes(self.child_bytes)
         self.supervisor = supervisor_report(self.child, self.child_bytes)
+        self.write_host_memory_receipt()
         self.write_supervisor(self.supervisor)
+
+    def write_host_memory_receipt(self) -> None:
+        guard = sys.modules["host_memory_guard"]
+        lease = guard.MemoryLease(RUN_ID, SOURCE, evaluator.sha256_bytes(COMPONENT_BYTES["windows_host_memory_sampler.ps1"]))
+        origin = datetime(2026, 8, 13, 11, 59, 59, tzinfo=timezone.utc)
+        for sequence in range(63):
+            observed = origin + timedelta(seconds=sequence * 2)
+            lease.observe({
+                "schema": guard.SAMPLE_SCHEMA, "runId": RUN_ID, "sourceRevision": SOURCE,
+                "samplerSourceSha256": lease.sampler_sha256, "observedAt": observed.isoformat(),
+                "sequence": sequence, "nativeMonotonicTicks": 10_000_000 + sequence * 20_000_000,
+                "nativeMonotonicFrequency": 10_000_000,
+                "availablePhysicalBytes": 12 * 1024**3, "totalPhysicalBytes": 32 * 1024**3,
+                "committedBytes": 12 * 1024**3, "commitLimitBytes": 48 * 1024**3,
+                "availableCommitBytes": 36 * 1024**3,
+            }, received_ns=1_000_000_000 + sequence * 2_000_000_000, now=observed)
+        names = guard.unit_names(RUN_ID)
+        identity = lambda kind: {"unit": names[kind], "invocationId": "d" * 32,
+                                 "controlGroup": "/user.slice/" + names[kind]}
+        units = types.SimpleNamespace(identity={"helper": identity("host-memory"), "supervisor": identity("supervisor")},
+                                      worker_identity={**identity("worker"), "controlGroup": self.supervisor["launch"]["workerControlGroup"]})
+        session = guard.GuardSession(lease, None, units, evaluator.sha256_bytes(COMPONENT_BYTES["host_memory_guard.py"]))
+        request = {"runId": RUN_ID, "sourceRevision": SOURCE, "requestedMonotonicNs": 123_000_000_000,
+                   "workerStartedMonotonicNs": 2_000_000_000, "workerEndedMonotonicNs": 122_000_000_000}
+        receipt = session.receipt("FINAL_HEALTHY", now_ns=125_000_000_000, request=request)
+        receipt["observedAt"] = (origin + timedelta(seconds=124)).isoformat()
+        receipt["reportSha256"] = guard.digest(receipt)
+        raw = guard.canonical_bytes(receipt) + b"\n"
+        self.host_memory_path = self.supervisor_path.parent / "host-memory-terminal.json"
+        self.host_memory_path.write_bytes(raw)
+        (self.supervisor_path.parent / "host-memory-finalize.json").write_bytes(guard.canonical_bytes(request) + b"\n")
+        self.supervisor["hostMemoryGuard"] = {"relativePath": "reports/host-memory-terminal.json",
+                                              "fileSha256": evaluator.sha256_bytes(raw), "bytes": len(raw), "state": "FINAL_HEALTHY", "helperExitConfirmed": True}
+
+    def test_missing_and_aborted_host_guard_receipts_veto_otherwise_valid_output(self):
+        self.host_memory_path.unlink()
+        with self.linkage_mocks(), self.assertRaisesRegex(evaluator.QualificationError, "host-memory"):
+            self.verify()
+        self.write_host_memory_receipt()
+        self.write_supervisor(self.supervisor)
+        (self.supervisor_path.parent / "host-memory-abort.json").write_text("{}")
+        with self.linkage_mocks(), self.assertRaisesRegex(evaluator.QualificationError, "host-memory"):
+            self.verify()
 
     def write_supervisor(self, report: dict) -> None:
         unsigned = copy.deepcopy(report)

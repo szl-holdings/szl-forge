@@ -84,6 +84,9 @@ jobs:
             frontier/qwen35-receiptagent-v3/launch_supervised_training.py \
             frontier/qwen35-receiptagent-v3/supervise_training.py \
             frontier/qwen35-receiptagent-v3/supervisor_bootstrap.py \
+            frontier/qwen35-receiptagent-v3/host_memory_guard.py \
+            frontier/qwen35-receiptagent-v3/host_memory_test_fixture.py \
+            frontier/qwen35-receiptagent-v3/test_host_memory_guard.py \
             frontier/qwen35-receiptagent-v3/supervisor_validation.py \
             frontier/qwen35-receiptagent-v3/train_candidate.py \
             frontier/qwen35-receiptagent-v3/evaluate_candidate.py \
@@ -348,6 +351,8 @@ jobs:
           }
 
           Invoke-CheckedPython -B -m py_compile `
+            frontier/qwen35-receiptagent-v3/host_memory_guard.py `
+            frontier/qwen35-receiptagent-v3/host_memory_test_fixture.py `
             frontier/qwen35-receiptagent-v3/evidence_chain.py `
             frontier/qwen35-receiptagent-v3/prepare_release.py `
             frontier/qwen35-receiptagent-v3/test_evidence_chain.py `
@@ -388,3 +393,10 @@ jobs:
           if ($LASTEXITCODE -ne 0) {
             throw "git diff --check failed with exit code $LASTEXITCODE"
           }
+
+      - name: Verify native Windows physical and system-commit observations
+        shell: pwsh
+        env:
+          SOURCE_REVISION: ${{ github.sha }}
+        run: |
+          ./frontier/qwen35-receiptagent-v3/test_windows_host_memory_sampler.ps1 -SourceRevision $env:SOURCE_REVISION

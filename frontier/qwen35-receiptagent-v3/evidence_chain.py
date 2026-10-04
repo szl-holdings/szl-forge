@@ -19,6 +19,7 @@ import re
 import stat
 from pathlib import Path
 from typing import Any, Mapping
+from host_memory_guard import HostMemoryError, validate_report_bundle
 
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import (
@@ -52,6 +53,7 @@ PAYLOAD_KEYS = {
         "runId",
         "childReportSha256",
         "supervisorReportSha256",
+        "hostMemoryGuardReportSha256",
         "adapterAggregateSha256",
         "adapterManifestSha256",
         "datasetHashes",
@@ -421,6 +423,7 @@ def _training_payload(
     child_report: dict[str, Any],
     supervisor_report: dict[str, Any],
     source_revision: str,
+    host_memory_report: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     child_sha = verify_report_digest(child_report, "child training report")
     supervisor_sha = verify_report_digest(supervisor_report, "supervisor report")
@@ -454,6 +457,10 @@ def _training_payload(
     }.items():
         _require(supervisor_report.get(key), expected, f"supervisor {key}")
     run_id = _run_id(supervisor_report.get("runId"), "supervisor run ID")
+    try:
+        guard_report_sha = validate_report_bundle(supervisor_report, host_memory_report, source_revision)
+    except HostMemoryError as exc:
+        raise EvidenceError("a valid final native host-memory guard report is required") from exc
     _require(child_report.get("supervisorRunId"), run_id, "child/supervisor run ID")
     training_binding = _mapping(
         supervisor_report.get("trainingReport"), "supervisor training report binding"
@@ -497,6 +504,7 @@ def _training_payload(
         "runId": run_id,
         "childReportSha256": child_sha,
         "supervisorReportSha256": supervisor_sha,
+        "hostMemoryGuardReportSha256": guard_report_sha,
         "adapterAggregateSha256": adapter_sha,
         "adapterManifestSha256": sha256_json(supervisor_adapter),
         "datasetHashes": dataset_hashes,
@@ -513,13 +521,14 @@ def mint_training_receipt(
     child_report: dict[str, Any],
     supervisor_report: dict[str, Any],
     *,
+    host_memory_report: dict[str, Any] | None = None,
     source_revision: str,
     private_key: Ed25519PrivateKey | bytes | str | Path,
     key_id: str,
 ) -> dict[str, Any]:
     """Validate measured child/supervisor reports and sign the training receipt."""
 
-    payload = _training_payload(child_report, supervisor_report, source_revision)
+    payload = _training_payload(child_report, supervisor_report, source_revision, host_memory_report)
     return _mint(
         "TRAINING",
         payload,
@@ -567,6 +576,10 @@ def _validate_evaluation_report(
         f"{split} adapter binding",
     )
     linkage = _mapping(report.get("supervisionLinkage"), f"{split} supervision linkage")
+    host_memory = _mapping(linkage.get("hostMemoryGuard"), f"{split} host-memory linkage")
+    _require(host_memory.get("state"), "FINAL_HEALTHY", f"{split} host-memory state")
+    _require(host_memory.get("terminalReportSha256"), training_payload["hostMemoryGuardReportSha256"],
+             f"{split} authenticated host-memory binding")
     _require(linkage.get("runId"), training_payload["runId"], f"{split} run ID")
     _require(
         linkage.get("reportSha256"),

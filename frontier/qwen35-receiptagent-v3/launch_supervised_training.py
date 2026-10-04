@@ -38,6 +38,8 @@ SUPERVISED_EXECUTABLE_COMPONENTS = (
     "containment_probe.py",
     "train_candidate.py",
     "supervisor_validation.py",
+    "host_memory_guard.py",
+    "windows_host_memory_sampler.ps1",
 )
 MAX_COMPONENT_BYTES = 2 * 1024 * 1024
 MAX_SUPERVISOR_REPORT_BYTES = 8 * 1024 * 1024
@@ -617,6 +619,7 @@ def systemd_command(
     python_executable: str,
     source_commit: str,
     run_kind: str,
+    interop_socket: str | None = None,
 ) -> list[str]:
     if SERVICE_NAME.fullmatch(service_name) is None:
         raise LauncherError("systemd service name is not safe")
@@ -624,6 +627,11 @@ def systemd_command(
         raise LauncherError("source commit is not exact lowercase hexadecimal")
     if run_kind not in {"smoke", "full"}:
         raise LauncherError("run kind is unsupported")
+    supervisor_environment = dict(SUPERVISOR_ENVIRONMENT)
+    if interop_socket is not None:
+        if re.fullmatch(r"/run/WSL/[0-9]+_interop", interop_socket) is None:
+            raise LauncherError("native Windows interop socket identity is malformed")
+        supervisor_environment["WSL_INTEROP"] = interop_socket
     command = [
         SYSTEMD_RUN,
         "--user",
@@ -644,7 +652,7 @@ def systemd_command(
             "-i",
             *(
                 f"{key}={value}"
-                for key, value in sorted(SUPERVISOR_ENVIRONMENT.items())
+                for key, value in sorted(supervisor_environment.items())
             ),
             python_executable,
             "-I",
@@ -661,6 +669,19 @@ def systemd_command(
     return command
 
 
+def require_native_interop() -> str:
+    interop_socket = os.environ.get("WSL_INTEROP", "")
+    if re.fullmatch(r"/run/WSL/[0-9]+_interop", interop_socket) is None:
+        raise LauncherError("native Windows interop is required for the host-memory guard")
+    interop_path = Path(interop_socket)
+    interop_stat = interop_path.lstat()
+    if (not stat.S_ISSOCK(interop_stat.st_mode)
+            or interop_path.resolve(strict=True) != interop_path
+            or interop_stat.st_uid not in {0, os.getuid()}):
+        raise LauncherError("native Windows interop socket is not admissible")
+    return interop_socket
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argument_parser()
     args = parser.parse_args(argv)
@@ -672,6 +693,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
         require_local_executables(python_executable)
         verify_local_components(args.source_commit)
+        interop_socket = require_native_interop()
         service_name = generate_service_name(args.run_kind)
         run_id, attempt_path = attempt_identity(candidate, service_name)
         command = systemd_command(
@@ -679,6 +701,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             python_executable=python_executable,
             source_commit=args.source_commit,
             run_kind=args.run_kind,
+            interop_socket=interop_socket,
         )
         return invoke_with_cleanup(
             command,

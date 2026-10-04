@@ -50,6 +50,8 @@ class SourceBootstrapTests(unittest.TestCase):
             "containment_probe.py": b"CONTAINMENT = True\n",
             "train_candidate.py": trainer,
             "supervisor_validation.py": b"VALUE = 'validator'\n",
+            "host_memory_guard.py": b"VALUE = 'memory-guard'\n",
+            "windows_host_memory_sampler.ps1": b"# source-bound native sampler\n",
         }
         for filename, data in committed.items():
             local = data
@@ -164,7 +166,8 @@ class SourceBootstrapTests(unittest.TestCase):
                         sys.modules[name] = module
 
     def test_launcher_and_containment_tampering_fail_before_sibling_imports(self):
-        for filename in ("launch_supervised_training.py", "containment_probe.py"):
+        for filename in ("launch_supervised_training.py", "containment_probe.py",
+                         "host_memory_guard.py", "windows_host_memory_sampler.ps1"):
             with self.subTest(filename=filename):
                 with tempfile.TemporaryDirectory() as directory:
                     root = pathlib.Path(directory).resolve()

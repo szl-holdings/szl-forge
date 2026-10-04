@@ -89,6 +89,7 @@
             "ADAPTER_SOURCE_README",
             "MEASURED_CHILD_TRAINING_REPORT",
             "MEASURED_SUPERVISOR_REPORT",
+            "MEASURED_HOST_MEMORY_GUARD_REPORT",
             "MEASURED_DEV_EVALUATION_REPORT",
             "MEASURED_TEST_EVALUATION_REPORT",
             "MEASURED_BASE_TEST_EVALUATION_REPORT",
@@ -300,6 +301,7 @@
       "required": [
         "childTraining",
         "supervisor",
+        "hostMemoryGuard",
         "devEvaluation",
         "testEvaluation",
         "baseTestEvaluation",
@@ -309,6 +311,7 @@
       "properties": {
         "childTraining": {"$ref": "#/$defs/sha256"},
         "supervisor": {"$ref": "#/$defs/sha256"},
+        "hostMemoryGuard": {"$ref": "#/$defs/sha256"},
         "devEvaluation": {"$ref": "#/$defs/sha256"},
         "testEvaluation": {"$ref": "#/$defs/sha256"},
         "baseTestEvaluation": {"$ref": "#/$defs/sha256"},
@@ -336,8 +339,8 @@
     "localEvidenceDisposition": {"const": "NOT_FOR_PUBLICATION"},
     "localEvidenceFiles": {
       "type": "array",
-      "minItems": 7,
-      "maxItems": 8,
+      "minItems": 8,
+      "maxItems": 9,
       "uniqueItems": true,
       "items": {"$ref": "#/$defs/localEvidenceFile"}
     },
