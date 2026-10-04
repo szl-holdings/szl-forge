@@ -166,6 +166,22 @@ def dataset_card(
         "configs:\n- config_name: default\n  data_files:\n"
         "  - split: train\n    path: \"runs/**/summary.json\"\n"
         "tags:\n- evaluation\n- reproducibility\n- provenance\n---\n\n"
+        "<!-- SZL-EVALUATION-CARD-PRESENTATION:START -->\n"
+        '<p align="center"><img src="https://raw.githubusercontent.com/'
+        'szl-holdings/.github/b352ab29bb9a19c0754c5d8f5bf56cd62ccf7a2e/'
+        'profile/assets/szl/logos/szl_mark_holographic.svg" '
+        'alt="SZL Holdings" width="112"></p>\n\n'
+        '<p align="center"><strong>FRONTIER · EVALUATION ARCHIVE</strong></p>\n\n'
+        "Inspect the inputs, model responses and scores behind a small "
+        "recorded evaluation.\n\n"
+        "| Published material | Integrity evidence | Release boundary |\n"
+        "| --- | --- | --- |\n"
+        "| Evaluation records | File hashes; unsigned | HOLD; no promotion |\n\n"
+        f"[Open this run's summary]({run}/summary.json) · "
+        f"[Review the exact source]({source}/frontier/evaluation/runner.py)\n\n"
+        "Scores apply to the recorded cases. This archive grants no "
+        "execution authority.\n\n"
+        "<!-- SZL-EVALUATION-CARD-PRESENTATION:END -->\n\n"
         "# Checkable language-model evaluation records\n\n"
         "We publish the inputs, measured responses, scoring results and file "
         "hashes from small language-model evaluations. These records help "

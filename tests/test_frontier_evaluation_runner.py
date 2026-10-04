@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import sys
@@ -580,3 +581,38 @@ def test_dataset_card_selects_all_run_summaries_without_mixing_evidence_schemas(
     assert "production_disposition=HOLD" in card
     assert "promotion_effect=NONE" in card
     assert "UNSIGNED_HONEST" in card
+
+
+@pytest.mark.parametrize(
+    "count,revision,path,original_sha256",
+    [
+        (4, "a" * 40, "runs/2026/10/04/offline-layout-full/candidate",
+         "8b5b4c8f5c05651b02707579d718922421c6730757e2c2936adc68efa91fe81a"),
+        (2, "b" * 40, "runs/2026/10/04/offline-layout-smoke/candidate",
+         "554db943455186e6d2ab3497c9b25466ef6583a1419febdc147040b1f401fa95"),
+        (4, "c" * 40, "runs/2026/10/04/offline layout/candidate+one",
+         "1ef12b727709687f0013d0853fbb082a567afbfb480c306e676ef986e201b47b"),
+    ],
+)
+def test_dataset_card_presentation_preserves_original_dynamic_bytes(
+    count, revision, path, original_sha256
+):
+    # Layout inputs only; no evaluation, finalized evidence, or publication.
+    # Baseline hashes were captured before presentation from source854ae348.
+    card = dataset_card(PUBLICATION_DATASET, path, {
+        "run_identity": {
+            "source_repository": "szl-holdings/szl-forge",
+            "source_revision": revision,
+        },
+        "candidate_metrics": {"case_count": count},
+    })
+    start = "<!-- SZL-EVALUATION-CARD-PRESENTATION:START -->\n"
+    end = "<!-- SZL-EVALUATION-CARD-PRESENTATION:END -->\n\n"
+    assert card.count(start) == card.count(end) == 1
+    before, presentation_and_original = card.split(start, 1)
+    presentation, original = presentation_and_original.split(end, 1)
+    assert hashlib.sha256((before + original).encode()).hexdigest() == original_sha256
+    assert "| HOLD; no promotion |" in presentation
+    assert "File hashes; unsigned" in presentation
+    assert f"/blob/{revision}/frontier/evaluation/runner.py" in presentation
+    assert "README-only publication" not in presentation
