@@ -3,14 +3,18 @@ from __future__ import annotations
 import ast
 import contextlib
 import copy
+import hashlib
 import importlib.util
 import inspect
 import io
+import json
 import os
 import pathlib
+import signal
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from unittest import mock
 
@@ -941,7 +945,7 @@ class WorkerEnvironmentTests(unittest.TestCase):
     }
 
     def test_main_passes_admitted_attempt_to_worker_launcher(self):
-        tree = ast.parse(inspect.getsource(supervisor.main))
+        tree = ast.parse(inspect.getsource(supervisor._supervise))
         launch_calls = [
             node
             for node in ast.walk(tree)
@@ -960,7 +964,7 @@ class WorkerEnvironmentTests(unittest.TestCase):
         self.assertEqual("attempt", attempt_keywords[0].value.id)
 
     def test_main_orders_fresh_confirmation_immediately_before_launch(self):
-        tree = ast.parse(inspect.getsource(supervisor.main))
+        tree = ast.parse(inspect.getsource(supervisor._supervise))
 
         def named_calls(name: str) -> list[ast.Call]:
             return [
@@ -1228,6 +1232,270 @@ class WorkerEnvironmentTests(unittest.TestCase):
         properties.assert_called_once_with(supervisor.EXPECTED_POLICY, "worker.service")
         self.assertEqual("15", observed["ExecMainStatus"])
         self.assertEqual("signal", observed["Result"])
+
+
+class DirectStopTests(unittest.TestCase):
+    def _run_signal_case(
+        self, *, signal_during_publication: bool = False, signal_after_commit: bool = False
+    ):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            for child in ("reports", "payload", "logs", "runtime-cache"):
+                (root / child).mkdir()
+            attempt = supervisor.Attempt(
+                run_id=RUN_ID,
+                root=root,
+                reports=root / "reports",
+                payload=root / "payload",
+                logs=root / "logs",
+                runtime_cache=root / "runtime-cache",
+                reserve=root / ".evidence-reserve",
+            )
+            committed_candidate = candidate()
+            committed_candidate["actual_training_base"] = {"revision": SOURCE}
+            worker = mock.Mock()
+            worker.committed_bytes.return_value = json.dumps(
+                committed_candidate
+            ).encode("utf-8")
+            worker.sanitized_error.side_effect = lambda exc: type(exc).__name__
+            verified_source = mock.Mock()
+            verified_source.public_evidence.return_value = {"revision": SOURCE}
+
+            def write_evidence(folder, name, data):
+                if name == "supervisor-report.json" and signal_during_publication:
+                    signal.raise_signal(signal.SIGTERM)
+                    raise AssertionError("SIGTERM handler did not interrupt publication")
+                if name == "supervisor-report.json" and signal_after_commit:
+                    signal.raise_signal(signal.SIGTERM)
+                path = folder / name
+                self.assertFalse(path.exists())
+                path.write_bytes(data)
+                return {
+                    "path": str(path),
+                    "sha256": hashlib.sha256(data).hexdigest(),
+                    "bytes": len(data),
+                    "publicationState": "COMMITTED",
+                    "commitPoint": "TEST_WRITE",
+                    "cleanupComplete": True,
+                }
+
+            def observed_sample(*_args, **_kwargs):
+                return supervisor.TelemetrySample(
+                    observed_monotonic_ns=time.monotonic_ns(),
+                    observed_at=supervisor.utc_now(),
+                    gpu_uuid=GPU_UUID,
+                    name="No-GPU test sample",
+                    temperature_c=55,
+                    free_mib=7000,
+                    total_mib=8192,
+                )
+
+            def direct_stop(*_args, **_kwargs):
+                if signal_during_publication or signal_after_commit:
+                    raise supervisor.SupervisionError("synthetic worker watcher failure")
+                signal.raise_signal(signal.SIGTERM)
+                raise AssertionError("SIGTERM handler did not interrupt")
+
+            cleanup = {
+                "systemdStopRequested": True,
+                "cgroupEmptyConfirmed": True,
+            }
+            previous_handlers = {
+                signum: signal.getsignal(signum)
+                for signum in (signal.SIGINT, signal.SIGTERM)
+            }
+            stop_worker = mock.Mock(return_value=cleanup)
+            output = io.StringIO()
+            patches = (
+                mock.patch.object(supervisor, "trainer", None),
+                mock.patch.object(supervisor, "supervisor_validation", None),
+                mock.patch.object(
+                    supervisor.bootstrap,
+                    "verify_and_load_siblings",
+                    return_value=(
+                        verified_source,
+                        {
+                            "train_candidate.py": worker,
+                            "supervisor_validation.py": mock.Mock(),
+                        },
+                    ),
+                ),
+                mock.patch.object(
+                    supervisor.bootstrap,
+                    "admit_attempt_atomic",
+                    return_value=mock.Mock(prepared=True),
+                ),
+                mock.patch.object(supervisor, "bind_committed_component", return_value="a" * 64),
+                mock.patch.object(
+                    supervisor,
+                    "validate_policy",
+                    return_value={
+                        **supervisor.EXPECTED_POLICY,
+                        "python_executable": sys.executable,
+                    },
+                ),
+                mock.patch.object(
+                    supervisor, "hash_file", return_value={"sha256": "a" * 64, "bytes": 1}
+                ),
+                mock.patch.object(supervisor, "verify_supervisor_unit", return_value={}),
+                mock.patch.object(supervisor, "validate_runs_root", return_value=root.parent),
+                mock.patch.object(
+                    supervisor, "attempt_from_atomic_admission", return_value=attempt
+                ),
+                mock.patch.object(supervisor, "prepare_training_input_directory"),
+                mock.patch.object(
+                    supervisor, "publish_evidence_write_once", side_effect=write_evidence
+                ),
+                mock.patch.object(supervisor, "verify_fixed_host_decoys"),
+                mock.patch.object(
+                    supervisor,
+                    "stage_training_bundle",
+                    return_value={"bundleSha256": "b" * 64},
+                ),
+                mock.patch.object(supervisor, "worker_environment", return_value={}),
+                mock.patch.object(
+                    supervisor, "worker_environment_digest", return_value="c" * 64
+                ),
+                mock.patch.object(
+                    supervisor, "create_log", side_effect=lambda path: path.touch()
+                ),
+                mock.patch.object(
+                    supervisor, "sample_gpu_for_admission", side_effect=observed_sample
+                ),
+                mock.patch.object(
+                    supervisor, "sample_gpu_for_runtime", side_effect=observed_sample
+                ),
+                mock.patch.object(
+                    supervisor, "expected_worker_argv", return_value=["worker"]
+                ),
+                mock.patch.object(
+                    supervisor,
+                    "launch_worker_unit",
+                    return_value={"ControlGroup": "/user.slice/worker.service"},
+                ),
+                mock.patch.object(supervisor, "unit_properties", side_effect=direct_stop),
+                mock.patch.object(supervisor, "stop_worker_unit", stop_worker),
+                mock.patch.object(supervisor, "release_evidence_reserve"),
+                contextlib.redirect_stdout(output),
+            )
+            with contextlib.ExitStack() as stack:
+                for patch in patches:
+                    stack.enter_context(patch)
+                code = supervisor.main(
+                    [
+                        "--source-commit",
+                        SOURCE,
+                        "--run-kind",
+                        "smoke",
+                        "--unit-name",
+                        UNIT_NAME,
+                    ]
+                )
+            expected_code = 79 if signal_after_commit else 76 if signal_during_publication else 80
+            self.assertEqual(expected_code, code)
+            stop_worker.assert_called_once_with(
+                {**supervisor.EXPECTED_POLICY, "python_executable": sys.executable},
+                f"szl-ra3-worker-{RUN_ID}",
+                "/user.slice/worker.service",
+            )
+            report_path = root / "reports" / "supervisor-report.json"
+            if signal_after_commit:
+                self.assertTrue(report_path.exists())
+                report = json.loads(report_path.read_text(encoding="utf-8"))
+                self.assertEqual("CONTAINMENT_UNAVAILABLE", report["primaryCause"])
+                self.assertIs(report["receiptEligible"], False)
+                self.assertIs(report["publicationEligible"], False)
+                self.assertIn("supervisorReportPath=", output.getvalue())
+                self.assertEqual(
+                    previous_handlers,
+                    {
+                        signum: signal.getsignal(signum)
+                        for signum in (signal.SIGINT, signal.SIGTERM)
+                    },
+                )
+                return
+            if signal_during_publication:
+                self.assertFalse(report_path.exists())
+                failure = json.loads(output.getvalue().splitlines()[0])
+                self.assertEqual("EVIDENCE_DURABILITY_FAILED", failure["state"])
+                for field in ("receiptEligible", "publicationEligible", "autonomyEligible"):
+                    self.assertIs(failure[field], False)
+                self.assertEqual(
+                    previous_handlers,
+                    {
+                        signum: signal.getsignal(signum)
+                        for signum in (signal.SIGINT, signal.SIGTERM)
+                    },
+                )
+                return
+            report = json.loads(report_path.read_text(encoding="utf-8"))
+            self.assertEqual("SUPERVISOR_STOP_REQUESTED", report["primaryCause"])
+            self.assertEqual(signal.SIGTERM, report["interruptionSignal"])
+            self.assertEqual(
+                "SUPERVISOR_TERMINATED_RUN_NO_COMPLETION_CLAIM", report["state"]
+            )
+            for field in (
+                "qualificationEligible",
+                "receiptEligible",
+                "publicationEligible",
+                "autonomyEligible",
+                "localEvaluationInputBindingSatisfied",
+            ):
+                self.assertIs(report[field], False)
+            for field in ("bindings", "adapter", "trainingReport"):
+                self.assertNotIn(field, report)
+            self.assertEqual(
+                previous_handlers,
+                {
+                    signum: signal.getsignal(signum)
+                    for signum in (signal.SIGINT, signal.SIGTERM)
+                },
+            )
+
+    def test_signal_during_worker_watch_publishes_false_terminal_report(self):
+        self._run_signal_case()
+
+    def test_signal_during_final_publication_exposes_only_failure(self):
+        self._run_signal_case(signal_during_publication=True)
+
+    @unittest.skipUnless(os.name == "posix", "terminal signal mask requires POSIX")
+    def test_signal_delivered_after_committed_report_keeps_committed_result(self):
+        self._run_signal_case(signal_after_commit=True)
+
+    def test_missing_worker_cgroup_still_requests_stop_and_cannot_confirm(self):
+        with (
+            mock.patch.object(supervisor, "systemctl") as systemctl,
+            mock.patch.object(supervisor, "cgroup_empty") as cgroup_empty,
+        ):
+            observed = supervisor.stop_worker_unit(
+                supervisor.EXPECTED_POLICY, "szl-ra3-worker-" + RUN_ID, None
+            )
+        systemctl.assert_called_once()
+        cgroup_empty.assert_not_called()
+        self.assertIs(observed["systemdStopRequested"], True)
+        self.assertIs(observed["cgroupEmptyConfirmed"], False)
+
+    def test_success_fields_are_removed_when_terminal_state_changes(self):
+        report = {
+            "bindings": {"strictChildReportSchemaAndSemanticsValidated": True},
+            "adapter": {"matchesTrainingReport": True},
+            "trainingReport": {"state": "completed"},
+            "localEvaluationInputBindingSatisfied": True,
+        }
+        supervisor.withhold_success_claims(report)
+        for field in ("bindings", "adapter", "trainingReport"):
+            self.assertNotIn(field, report)
+        for field in (
+            "qualificationEligible",
+            "receiptEligible",
+            "publicationEligible",
+            "runtimeWitnessPresent",
+            "autonomyEligible",
+            "evaluationPerformed",
+            "comparisonCriteriaSatisfied",
+            "localEvaluationInputBindingSatisfied",
+        ):
+            self.assertIs(report[field], False)
 
 
 if __name__ == "__main__":

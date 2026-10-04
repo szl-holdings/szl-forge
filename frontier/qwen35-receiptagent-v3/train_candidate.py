@@ -14,7 +14,7 @@ import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 
 HERE = Path(__file__).resolve().parent
@@ -61,6 +61,11 @@ BUNDLE_SOURCE_FILES = (
     "train_candidate.py",
 )
 BUNDLE_ALLOWED_FILES = {*BUNDLE_SOURCE_FILES, "training-bundle.json"}
+COOLDOWN_TRIGGER_C = 72
+COOLDOWN_RESUME_C = 68
+COOLDOWN_INTERVAL_SECONDS = 2.0
+COOLDOWN_MAX_SECONDS = 120.0
+COOLDOWN_CONFIRMATIONS = 2
 
 
 class QualificationError(RuntimeError):
@@ -336,6 +341,43 @@ def gpu_temperature_c(executable: str = "nvidia-smi") -> int:
     return int(values[0])
 
 
+def cool_after_optimizer_step(
+    temperature_probe: Callable[[], int],
+    maximum_c: int,
+    optimizer_step: int,
+    *,
+    sleep: Callable[[float], None] = time.sleep,
+    now: Callable[[], float] = time.monotonic,
+) -> list[int]:
+    samples = [temperature_probe()]
+    if samples[-1] > maximum_c:
+        raise QualificationError(
+            f"GPU temperature {samples[-1]} C exceeded fixed {maximum_c} C policy "
+            f"at optimizer step {optimizer_step}"
+        )
+    if samples[-1] < COOLDOWN_TRIGGER_C:
+        return samples
+
+    started = now()
+    confirmations = 0
+    while True:
+        confirmations = confirmations + 1 if samples[-1] <= COOLDOWN_RESUME_C else 0
+        if confirmations >= COOLDOWN_CONFIRMATIONS:
+            return samples
+        if now() - started >= COOLDOWN_MAX_SECONDS:
+            raise QualificationError(
+                f"GPU did not cool below {COOLDOWN_RESUME_C} C within "
+                f"{COOLDOWN_MAX_SECONDS:g} s at optimizer step {optimizer_step}"
+            )
+        sleep(COOLDOWN_INTERVAL_SECONDS)
+        samples.append(temperature_probe())
+        if samples[-1] > maximum_c:
+            raise QualificationError(
+                f"GPU temperature {samples[-1]} C exceeded fixed {maximum_c} C policy "
+                f"at optimizer step {optimizer_step}"
+            )
+
+
 def raw_gpu_preflight(
     policy: dict[str, Any], executable: str = "nvidia-smi"
 ) -> dict[str, Any]:
@@ -583,13 +625,13 @@ def train(args: argparse.Namespace, output_dir: Path) -> dict[str, Any]:
 
     class ThermalGuard(TrainerCallback):
         def on_step_end(self, _args: Any, state: Any, control: Any, **_kwargs: Any) -> Any:
-            temperature = gpu_temperature_c(telemetry_executable)
-            thermal_samples.append(temperature)
-            if temperature > max_temp_c:
-                raise QualificationError(
-                    f"GPU temperature {temperature} C exceeded fixed {max_temp_c} C policy "
-                    f"at optimizer step {state.global_step}"
+            thermal_samples.extend(
+                cool_after_optimizer_step(
+                    lambda: gpu_temperature_c(telemetry_executable),
+                    max_temp_c,
+                    state.global_step,
                 )
+            )
             return control
 
     implementation = candidate["actual_training_base"]
