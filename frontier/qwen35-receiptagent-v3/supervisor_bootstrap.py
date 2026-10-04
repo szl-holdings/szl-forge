@@ -45,10 +45,13 @@ REQUIRED_COMPONENTS = (
     "containment_probe.py",
     "train_candidate.py",
     "supervisor_validation.py",
+    "host_memory_guard.py",
+    "windows_host_memory_sampler.ps1",
 )
 SIBLING_MODULE_NAMES = {
     "train_candidate.py": "szl_ra3_train_candidate",
     "supervisor_validation.py": "szl_ra3_supervisor_validation",
+    "host_memory_guard.py": "szl_ra3_host_memory_guard",
 }
 MAX_COMPONENT_BYTES = 2 * 1024 * 1024
 NAMESPACE_DIRECTORIES = (
@@ -487,7 +490,7 @@ def verify_and_load_siblings(
     repo_root: Path = ROOT,
     component_dir: Path = HERE,
 ) -> tuple[VerifiedSource, Mapping[str, types.ModuleType]]:
-    """Verify all component bytes, then execute the two verified siblings.
+    """Verify all component bytes, then execute the verified Python siblings.
 
     Every sibling is rechecked before either sibling executes. Compilation uses
     the already verified in-memory bytes, preventing a path-replacement race.

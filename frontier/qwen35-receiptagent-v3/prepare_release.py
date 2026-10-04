@@ -58,6 +58,7 @@ PAYLOAD_KEYS = {
         "runId",
         "childReportSha256",
         "supervisorReportSha256",
+        "hostMemoryGuardReportSha256",
         "adapterAggregateSha256",
         "adapterManifestSha256",
         "datasetHashes",
@@ -89,6 +90,7 @@ PAYLOAD_KEYS = {
 REPORT_ARGUMENTS = {
     "childTraining": "child-training-report",
     "supervisor": "supervisor-report",
+    "hostMemoryGuard": "host-memory-report",
     "devEvaluation": "dev-report",
     "testEvaluation": "test-report",
     "baseTestEvaluation": "base-test-report",
@@ -103,6 +105,7 @@ RECEIPT_OUTPUTS = {
 REPORT_OUTPUTS = {
     "childTraining": ("training-report.json", "MEASURED_CHILD_TRAINING_REPORT"),
     "supervisor": ("supervisor-report.json", "MEASURED_SUPERVISOR_REPORT"),
+    "hostMemoryGuard": ("host-memory-terminal.json", "MEASURED_HOST_MEMORY_GUARD_REPORT"),
     "devEvaluation": ("dev-evaluation-report.json", "MEASURED_DEV_EVALUATION_REPORT"),
     "testEvaluation": ("test-evaluation-report.json", "MEASURED_TEST_EVALUATION_REPORT"),
     "baseTestEvaluation": (
@@ -585,6 +588,12 @@ def bind_reports_and_adapter(
         raise ReleaseError("supervisor source revision differs")
     if digests["supervisor"] != training_payload["supervisorReportSha256"]:
         raise ReleaseError("authenticated supervisor report digest differs")
+    try:
+        guard_sha = evidence.validate_report_bundle(supervisor, reports["hostMemoryGuard"], source_revision)
+    except evidence.HostMemoryError as exc:
+        raise ReleaseError("native host-memory guard evidence is invalid") from exc
+    if guard_sha != training_payload["hostMemoryGuardReportSha256"]:
+        raise ReleaseError("authenticated native host-memory guard digest differs")
 
     aggregate, local_files, adapter_bytes = adapter_inventory(adapter_dir)
     if aggregate != training_payload["adapterAggregateSha256"]:
@@ -676,6 +685,10 @@ def bind_reports_and_adapter(
         model = report.get("model")
         if not isinstance(linkage, dict) or linkage.get("runId") != run_id:
             raise ReleaseError(f"{label} supervisor run binding differs")
+        host_memory = linkage.get("hostMemoryGuard")
+        if (not isinstance(host_memory, dict) or host_memory.get("state") != "FINAL_HEALTHY"
+                or host_memory.get("terminalReportSha256") != guard_sha):
+            raise ReleaseError(f"{label} host-memory guard binding differs")
         if not isinstance(model, dict) or model.get("adapterAggregateSha256") != aggregate:
             raise ReleaseError(f"{label} adapter binding differs")
     if digests["devEvaluation"] != evaluation_payload["devReportSha256"]:
@@ -1225,6 +1238,15 @@ def main() -> int:
             key: strict_json_file(getattr(args, option.replace("-", "_")), key)
             for key, option in REPORT_ARGUMENTS.items()
         }
+        if (args.host_memory_report.name != "host-memory-terminal.json"
+                or args.host_memory_report.parent.resolve() != args.supervisor_report.parent.resolve()):
+            raise ReleaseError("host-memory receipt must accompany the exact supervisor report")
+        try:
+            (args.host_memory_report.parent / "host-memory-abort.json").lstat()
+        except FileNotFoundError:
+            pass
+        else:
+            raise ReleaseError("host-memory abort evidence vetoes release preparation")
 
         manifest, packet_files = build_release_packet(
             candidate=candidate,

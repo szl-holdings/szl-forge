@@ -12,6 +12,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from jsonschema.validators import validator_for
 
 import evidence_chain as evidence
+from host_memory_test_fixture import add_host_memory_fixture, evaluation_guard_linkage
 
 
 SOURCE = "1" * 40
@@ -190,15 +191,22 @@ class EvidenceChainTests(unittest.TestCase):
         self.key = Ed25519PrivateKey.generate()
         self.child = child_report()
         self.supervisor = supervisor_report(self.child)
+        self.host_memory = add_host_memory_fixture(self.supervisor, SOURCE, RUN_ID)
+        self.supervisor = self_digest(self.supervisor)
         self.dev = evaluation_report(
             "DEV", self.child["reportSha256"], self.supervisor["reportSha256"]
         )
         self.test = evaluation_report(
             "TEST", self.child["reportSha256"], self.supervisor["reportSha256"]
         )
+        for name in ("dev", "test"):
+            report = getattr(self, name)
+            report["supervisionLinkage"]["hostMemoryGuard"] = evaluation_guard_linkage(self.host_memory)
+            setattr(self, name, self_digest(report))
         self.training = evidence.mint_training_receipt(
             self.child,
             self.supervisor,
+            host_memory_report=self.host_memory,
             source_revision=SOURCE,
             private_key=self.key,
             key_id="owner-test-key",
@@ -305,6 +313,22 @@ class EvidenceChainTests(unittest.TestCase):
                 key_id="owner-test-key",
             )
 
+    def test_missing_native_host_memory_receipt_is_rejected_before_signing(self) -> None:
+        with self.assertRaisesRegex(evidence.EvidenceError, "host-memory"):
+            evidence.mint_training_receipt(
+                self.child, self.supervisor, source_revision=SOURCE,
+                private_key=self.key, key_id="owner-test-key",
+            )
+
+    def test_evaluation_cannot_substitute_a_different_host_memory_receipt(self) -> None:
+        wrong = copy.deepcopy(self.dev)
+        wrong["supervisionLinkage"]["hostMemoryGuard"]["terminalReportSha256"] = "f" * 64
+        wrong = self_digest(wrong)
+        with self.assertRaisesRegex(evidence.EvidenceError, "host-memory"):
+            evidence.mint_evaluation_receipt(
+                wrong, self.test, self.training, private_key=self.key, key_id="owner-test-key",
+            )
+
     def test_wrong_adapter_is_rejected_before_signing(self) -> None:
         wrong_adapter = copy.deepcopy(self.test)
         wrong_adapter["model"]["adapterAggregateSha256"] = "f" * 64
@@ -331,6 +355,7 @@ class EvidenceChainTests(unittest.TestCase):
             evidence.mint_training_receipt(
                 wrong_child,
                 wrong_supervisor,
+                host_memory_report=self.host_memory,
                 source_revision=SOURCE,
                 private_key=self.key,
                 key_id="owner-test-key",

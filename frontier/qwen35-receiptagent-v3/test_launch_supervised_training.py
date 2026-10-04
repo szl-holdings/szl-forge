@@ -290,6 +290,7 @@ class LauncherContractTests(unittest.TestCase):
             mock.patch.object(launcher.Path, "is_file", return_value=True),
             mock.patch.object(launcher.os, "access", return_value=True),
             mock.patch.object(launcher, "verify_local_components") as verify_components,
+            mock.patch.object(launcher, "require_native_interop", return_value="/run/WSL/123_interop"),
             mock.patch.object(launcher.secrets, "token_hex", return_value="ef" * 16),
             mock.patch.object(launcher.sys, "stdout", output),
             mock.patch.object(
@@ -358,6 +359,7 @@ class LauncherContractTests(unittest.TestCase):
                     mock.patch.object(launcher.Path, "is_file", return_value=True),
                     mock.patch.object(launcher.os, "access", return_value=True),
                     mock.patch.object(launcher, "verify_local_components"),
+                    mock.patch.object(launcher, "require_native_interop", return_value="/run/WSL/123_interop"),
                     mock.patch.object(
                         launcher.secrets, "token_hex", return_value="cd" * 16
                     ),

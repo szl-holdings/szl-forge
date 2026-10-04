@@ -26,6 +26,9 @@ sys.modules[SPEC.name] = publisher
 SPEC.loader.exec_module(publisher)
 
 evidence, release = publisher._release_modules()
+memory_fixture = publisher._load_module(
+    "szl_publisher_memory_fixture", publisher.RELEASE_DIRECTORY / "host_memory_test_fixture.py"
+)
 SOURCE = "a" * 40
 RUN_ID = "b" * 32
 
@@ -199,6 +202,9 @@ def make_packet(root: Path) -> tuple[Path, Path]:
         }
     )
 
+    host_memory = memory_fixture.add_host_memory_fixture(supervisor, SOURCE, RUN_ID)
+    supervisor = sealed(supervisor)
+
     def evaluation(kind: str, split: str, authenticated_input: bool = False):
         model = {"kind": kind}
         linkage = {}
@@ -210,6 +216,7 @@ def make_packet(root: Path) -> tuple[Path, Path]:
                 "reportSha256": supervisor["reportSha256"],
                 "adapterAggregateSha256": aggregate,
                 "sourceRevision": SOURCE,
+                "hostMemoryGuard": memory_fixture.evaluation_guard_linkage(host_memory),
             }
             training_sha = child["reportSha256"]
         return sealed(
@@ -268,6 +275,7 @@ def make_packet(root: Path) -> tuple[Path, Path]:
     reports = {
         "childTraining": child,
         "supervisor": supervisor,
+        "hostMemoryGuard": host_memory,
         "devEvaluation": dev,
         "testEvaluation": test,
         "baseTestEvaluation": base,
@@ -279,6 +287,7 @@ def make_packet(root: Path) -> tuple[Path, Path]:
     training = evidence.mint_training_receipt(
         child,
         supervisor,
+        host_memory_report=host_memory,
         source_revision=SOURCE,
         private_key=key,
         key_id="publisher-integration-key",
