@@ -707,6 +707,31 @@ class PublishReceiptAgentV3Tests(unittest.TestCase):
                 ):
                     prepare_packet(manifest, receipt)
 
+    def test_host_memory_validator_drift_is_rejected_before_loading(self):
+        guard_path = "frontier/qwen35-receiptagent-v3/host_memory_guard.py"
+
+        def drifted_source(revision, path):
+            committed = source_blob(revision, path)
+            if path == guard_path:
+                return committed + b"\n# committed validator differs\n"
+            return committed
+
+        with tempfile.TemporaryDirectory() as temporary:
+            manifest, receipt = make_packet(Path(temporary))
+            with (
+                mock.patch.object(publisher, "_git_blob", side_effect=drifted_source),
+                mock.patch.object(
+                    publisher, "_release_modules", wraps=publisher._release_modules
+                ) as load_modules,
+            ):
+                with self.assertRaisesRegex(
+                    publisher.PublicationError,
+                    "local source differs from exact revision: .*host_memory_guard.py",
+                ):
+                    prepare_packet(manifest, receipt)
+                load_modules.assert_not_called()
+            self.assertFalse(receipt.exists())
+
     def test_target_and_remote_repo_type_mismatches_fail_closed(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
