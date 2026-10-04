@@ -619,11 +619,22 @@ def verify_live_smoke_paths(
     deadline: float,
     probes: dict[str, Any],
     max_attempts: int = 30,
+    static: bool = False,
 ) -> None:
-    """Retry transient readiness only; preserve every status in terminal evidence."""
+    """Probe directly, with one explicit static-host entry-point contract.
+
+    Static root may return 302 to the exact relative /index.html, which must
+    also be probed independently. Never enable automatic redirect following.
+    Transient retries retain the shared deadline and every observed status.
+    """
 
     import requests
 
+    static_entry_contract = (
+        static
+        and re.fullmatch(r"https://[a-z0-9][a-z0-9-]*\.static\.hf\.space", origin) is not None
+        and "/index.html" in paths
+    )
     transient_statuses = {408, 429, 500, 502, 503, 504}
     for path in paths:
         observations: list[dict[str, Any]] = []
@@ -645,6 +656,13 @@ def verify_live_smoke_paths(
                     "bytes": len(response.content),
                     "content_type": response.headers.get("content-type"),
                 }
+                if (static_entry_contract and path == "/" and response.status_code == 302
+                        and response.headers.get("location") == "/index.html"):
+                    observation.update({
+                        "verification": "EXPECTED_STATIC_ENTRY_REDIRECT",
+                        "redirect_target_probe": "/index.html",
+                        "redirects_followed": False,
+                    })
             except requests.RequestException as exc:
                 observation = {
                     "status": None,
@@ -660,6 +678,9 @@ def verify_live_smoke_paths(
             }
             status = observation["status"]
             if status == 200 and observation["bytes"] and time.monotonic() < deadline:
+                break
+            if (observation.get("verification") == "EXPECTED_STATIC_ENTRY_REDIRECT"
+                    and time.monotonic() < deadline):
                 break
             if status not in transient_statuses and status not in (None, 200):
                 raise PublishError(
@@ -832,6 +853,7 @@ def publish_and_verify(
             smoke_paths,
             deadline=publication_deadline,
             probes=probes,
+            static=static,
         )
     except Exception:  # noqa: BLE001 - preserve failed smoke evidence on any error
         plan["smoke_verification"]["state"] = "FAILED"
