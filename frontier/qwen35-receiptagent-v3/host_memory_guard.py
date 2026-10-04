@@ -1129,10 +1129,10 @@ class GuardClient:
                 # Wait for the exact helper to exit successfully. This closes the
                 # write-once link/fsync window and rejects a crash after a healthy seal.
                 helper = self.units.properties(self.units.names["host-memory"])
-                if helper.get("InvocationID") not in {
-                    "",
-                    self.units.identity["helper"]["invocationId"],
-                }:
+                if (
+                    helper.get("InvocationID")
+                    != self.units.identity["helper"]["invocationId"]
+                ):
                     raise HostMemoryError("HOST_MEMORY_IDENTITY_MISMATCH")
                 if helper.get("MainPID") != "0" and helper.get("ActiveState") in {
                     "active",

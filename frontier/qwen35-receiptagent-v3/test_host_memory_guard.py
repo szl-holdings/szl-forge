@@ -264,7 +264,13 @@ class GuardEvidenceTests(unittest.TestCase):
     def test_healthy_seal_requires_exact_completion_request_and_successful_helper_exit(
         self,
     ):
-        for scenario in ("success", "crash_after_seal", "wrong_request"):
+        for scenario in (
+            "success",
+            "crash_after_seal",
+            "wrong_request",
+            "empty_helper_invocation",
+            "missing_helper_invocation",
+        ):
             with (
                 self.subTest(scenario=scenario),
                 tempfile.TemporaryDirectory() as folder,
@@ -305,6 +311,10 @@ class GuardEvidenceTests(unittest.TestCase):
                         ActiveState="failed",
                         SubState="failed",
                     )
+                if scenario == "empty_helper_invocation":
+                    properties["InvocationID"] = ""
+                if scenario == "missing_helper_invocation":
+                    properties.pop("InvocationID")
                 with (
                     mock.patch.object(client, "assert_healthy"),
                     mock.patch.object(
