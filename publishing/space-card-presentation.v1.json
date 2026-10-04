@@ -97,5 +97,15 @@
       "original_body_preserved": true,
       "provider_or_runtime_promotion": false
     }
+  ],
+  "source_integrity_updates": [
+    {
+      "path": "spaces/szl-model-inference-lab/release.json",
+      "reason": "The existing runtime verifies the README digest in source_files before readiness. Update only the README digest to the preserved presentation bytes.",
+      "before_sha256": "5d20c8bc17f93f0b8275fb18c07a3889477c9e91fe2d25c522ffb27ab8d16d78",
+      "after_sha256": "94e74940700cd9fa41faf7de928ad46818b8255691263b4f2a230f20a716a15b",
+      "source_files_count": 19,
+      "runtime_code_or_model_weights_changed": false
+    }
   ]
 }
