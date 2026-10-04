@@ -121,6 +121,203 @@ class SmokeReadinessTests(unittest.TestCase):
         self.assertEqual(503, terminal["smoke_verification"]["probes"]["/health"]["status"])
 
 
+class StaticEntryPointTests(unittest.TestCase):
+    origin = "https://owner-space.static.hf.space"
+
+    def setUp(self) -> None:
+        self.clock = 0.0
+        self.session = Mock()
+        self.probes: dict[str, object] = {}
+
+    @staticmethod
+    def _response(status=302, content=b"entry", location="/index.html"):
+        headers = {"content-type": "text/html"}
+        if location is not None:
+            headers["location"] = location
+        return SimpleNamespace(status_code=status, content=content, headers=headers)
+
+    def _sleep(self, seconds):
+        self.clock += seconds
+
+    def _verify(self, *, paths=None, static=True, origin=None):
+        with patch("publish_hf_space.time.monotonic", side_effect=lambda: self.clock), \
+                patch("publish_hf_space.time.sleep", side_effect=self._sleep):
+            publisher.verify_live_smoke_paths(
+                self.session, origin or self.origin,
+                paths if paths is not None else ["/", "/index.html"],
+                deadline=6, probes=self.probes, max_attempts=3, static=static,
+            )
+
+    def test_exact_static_root_redirect_requires_independent_entry_probe(self):
+        self.session.get.side_effect = [self._response(), self._response(200)]
+        self._verify()
+        self.assertEqual(
+            [self.origin + "/", self.origin + "/index.html"],
+            [call.args[0] for call in self.session.get.call_args_list],
+        )
+        self.assertTrue(all(call.kwargs["allow_redirects"] is False
+                            for call in self.session.get.call_args_list))
+        self.assertEqual(302, self.probes["/"]["status"])
+        self.assertEqual("EXPECTED_STATIC_ENTRY_REDIRECT", self.probes["/"]["verification"])
+        self.assertEqual("/index.html", self.probes["/"]["redirect_target_probe"])
+        self.assertFalse(self.probes["/"]["redirects_followed"])
+        self.assertEqual(200, self.probes["/index.html"]["status"])
+
+    def test_static_root_can_still_serve_nonempty_200_directly(self):
+        self.session.get.return_value = self._response(200)
+        self._verify()
+        self.assertEqual(200, self.probes["/"]["status"])
+        self.assertNotIn("redirect_target_probe", self.probes["/"])
+
+    def test_dynamic_mode_never_admits_the_static_redirect(self):
+        for origin in (self.origin, "https://owner-space.hf.space"):
+            with self.subTest(origin=origin):
+                self.setUp()
+                self.session.get.return_value = self._response()
+                with self.assertRaisesRegex(publisher.PublishError, "status=302, attempts=1"):
+                    self._verify(static=False, origin=origin)
+                self.session.get.assert_called_once()
+
+    def test_static_redirect_is_confined_to_the_canonical_https_origin(self):
+        for origin in (
+            "https://owner-space.hf.space", "http://owner-space.static.hf.space",
+            self.origin + ".example.invalid", self.origin + ":443",
+            "https://user@owner-space.static.hf.space", self.origin + "/prefix",
+            self.origin + "?query", self.origin + "#fragment",
+        ):
+            with self.subTest(origin=origin):
+                self.setUp()
+                self.session.get.return_value = self._response()
+                with self.assertRaises(publisher.PublishError):
+                    self._verify(origin=origin)
+                self.session.get.assert_called_once()
+
+    def test_only_the_exact_relative_location_is_admitted(self):
+        for location in (
+            None, "", "index.html", "/index.html?next=elsewhere", "/index.html#x",
+            self.origin + "/index.html", "//owner-space.static.hf.space/index.html",
+            "https://example.invalid/index.html", "/foundation/index.html",
+            "/%69ndex.html", "/index.html/", "/a/../index.html", r"\index.html",
+        ):
+            with self.subTest(location=location):
+                self.setUp()
+                self.session.get.return_value = self._response(location=location)
+                with self.assertRaisesRegex(publisher.PublishError, "status=302, attempts=1"):
+                    self._verify()
+                self.session.get.assert_called_once()
+                self.assertFalse(self.session.get.call_args.kwargs["allow_redirects"])
+
+    def test_other_redirect_statuses_remain_terminal(self):
+        for status in (301, 303, 307, 308):
+            with self.subTest(status=status):
+                self.setUp()
+                self.session.get.return_value = self._response(status)
+                with self.assertRaisesRegex(publisher.PublishError, f"status={status}, attempts=1"):
+                    self._verify()
+                self.session.get.assert_called_once()
+
+    def test_other_paths_and_missing_target_probe_cannot_use_the_exception(self):
+        for paths in (["/foundation/index.html", "/index.html"], ["/"]):
+            with self.subTest(paths=paths):
+                self.setUp()
+                self.session.get.return_value = self._response()
+                with self.assertRaises(publisher.PublishError):
+                    self._verify(paths=paths)
+                self.session.get.assert_called_once()
+
+    def test_target_failure_is_not_hidden_by_a_valid_root_redirect(self):
+        for status, content in ((302, b"redirect"), (401, b"denied"), (200, b""), (503, b"down")):
+            with self.subTest(status=status, content=content):
+                self.setUp()
+                target = self._response(status, content)
+                self.session.get.side_effect = [self._response(), target, target, target]
+                with self.assertRaises(publisher.PublishError):
+                    self._verify()
+                self.assertEqual(status, self.probes["/index.html"]["status"])
+                self.assertLessEqual(self.session.get.call_count, 4)
+                self.assertTrue(all(call.kwargs["allow_redirects"] is False
+                                    for call in self.session.get.call_args_list))
+
+    def test_late_root_redirect_does_not_admit_or_probe_the_target(self):
+        def late(*args, **kwargs):
+            self.clock = 7
+            return self._response()
+        self.session.get.side_effect = late
+        with self.assertRaises(publisher.PublishError):
+            self._verify()
+        self.session.get.assert_called_once()
+
+    def test_target_must_complete_within_the_original_deadline(self):
+        def get(url, **kwargs):
+            self.clock = 5 if url.endswith("/") else 7
+            return self._response() if url.endswith("/") else self._response(200)
+        self.session.get.side_effect = get
+        with self.assertRaisesRegex(publisher.PublishError, "deadline exhausted"):
+            self._verify()
+        self.assertEqual([6, 1], [call.kwargs["timeout"] for call in self.session.get.call_args_list])
+
+    def test_transient_target_retries_keep_the_same_deadline_and_statuses(self):
+        self.session.get.side_effect = [self._response(), self._response(503), self._response(200)]
+        self._verify()
+        self.assertEqual([503, 200], [x["status"] for x in self.probes["/index.html"]["attempts"]])
+        self.assertEqual([6, 6, 4], [call.kwargs["timeout"] for call in self.session.get.call_args_list])
+
+    def test_static_publication_keeps_immutable_bytes_as_a_prior_gate(self):
+        for drift in (False, True):
+            with self.subTest(drift=drift), tempfile.TemporaryDirectory() as directory:
+                self.setUp()
+                source = Path(directory)
+                source.joinpath("index.html").write_bytes(b"<html>exact source</html>")
+                remote = source / "published.html"
+                remote.write_bytes(b"drift" if drift else source.joinpath("index.html").read_bytes())
+                plan = {
+                    "repo_id": "owner/space", "source_revision": REVISION,
+                    "files": {"index.html": {"sha256": publisher.sha256_bytes(
+                        source.joinpath("index.html").read_bytes())}},
+                }
+                api = Mock()
+                api.list_repo_files.return_value = []
+                api.create_commit.return_value = SimpleNamespace(oid="b" * 40)
+                info = SimpleNamespace(sha="b" * 40, runtime=SimpleNamespace(stage="RUNNING"))
+                self.session.get.side_effect = [self._response(), self._response(200)]
+                with patch("huggingface_hub.HfApi", return_value=api), \
+                        patch("huggingface_hub.hf_hub_download", return_value=str(remote)) as download, \
+                        patch.object(publisher, "ensure_space_repository", return_value={}), \
+                        patch.object(publisher, "wait_for_exact_running_space", return_value=info), \
+                        patch("requests.Session", return_value=self.session), \
+                        patch.object(publisher.time, "monotonic", return_value=0):
+                    if drift:
+                        with self.assertRaisesRegex(publisher.PublishError, "immutable Space byte mismatch"):
+                            publisher.publish_and_verify(
+                                plan, token="controlled-publisher-test", source_dir=source,
+                                smoke_paths=["/", "/index.html"], wait_seconds=6,
+                                static=True, clear_space_volumes=False,
+                            )
+                        self.session.get.assert_not_called()
+                    else:
+                        result = publisher.publish_and_verify(
+                            plan, token="controlled-publisher-test", source_dir=source,
+                            smoke_paths=["/", "/index.html"], wait_seconds=6,
+                            static=True, clear_space_volumes=False,
+                        )
+                        self.assertEqual("VERIFIED", result["smoke_verification"]["state"])
+                        self.assertEqual("EXACT_HF_COMMIT_PLUS_BYTE_PARITY",
+                                         result["live"]["source_revision_evidence"])
+                    self.assertEqual("b" * 40, download.call_args.kwargs["revision"])
+                    api.add_space_variable.assert_not_called()
+
+    def test_static_workflow_watches_publisher_controls_and_requires_both_paths(self):
+        import yaml
+        text = (publisher.ROOT / ".github/workflows/publish-forge-lab.yml").read_text(encoding="utf-8")
+        workflow = yaml.safe_load(text)
+        events = workflow.get("on", workflow.get(True))
+        self.assertIn("tools/publish_hf_space.py", events["push"]["paths"])
+        self.assertIn("tools/test_publish_hf_space.py", events["push"]["paths"])
+        self.assertIn("--static", text)
+        self.assertIn("--smoke-path / \\\n", text)
+        self.assertIn("--smoke-path /index.html", text)
+
+
 class SpacePublicationPlanTests(unittest.TestCase):
     def _tracked_files(self, *names: str) -> bytes:
         return b"\0".join(name.encode("utf-8") for name in names) + b"\0"
