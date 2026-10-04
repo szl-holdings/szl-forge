@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import json
 import subprocess
+import tempfile
 import unittest
+from pathlib import Path
 
 import httpx
 from huggingface_hub.utils import RepositoryNotFoundError
@@ -12,6 +15,110 @@ import publish_hf_space as publisher
 
 
 REVISION = "a" * 40
+
+
+class SmokeReadinessTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.clock = 0.0
+        self.session = Mock()
+        self.probes: dict[str, object] = {}
+
+    @staticmethod
+    def _response(status: int, content: bytes = b"ready") -> SimpleNamespace:
+        return SimpleNamespace(
+            status_code=status,
+            content=content,
+            headers={"content-type": "text/plain"},
+        )
+
+    def _verify(self, *, deadline: float = 6, max_attempts: int = 3) -> None:
+        with patch("publish_hf_space.time.monotonic", side_effect=lambda: self.clock), \
+                patch("publish_hf_space.time.sleep", side_effect=self._sleep):
+            publisher.verify_live_smoke_paths(
+                self.session,
+                "https://owner-space.hf.space",
+                ["/health"],
+                deadline=deadline,
+                probes=self.probes,
+                max_attempts=max_attempts,
+            )
+
+    def _sleep(self, seconds: float) -> None:
+        self.clock += seconds
+
+    def test_transient_503_then_nonempty_200_is_recorded_and_admitted(self) -> None:
+        self.session.get.side_effect = [self._response(503), self._response(200)]
+        self._verify()
+        self.assertEqual(2, self.probes["/health"]["attempt_count"])
+        self.assertEqual(
+            [503, 200],
+            [item["status"] for item in self.probes["/health"]["attempts"]],
+        )
+        self.assertEqual([6, 4], [call.kwargs["timeout"] for call in self.session.get.call_args_list])
+        self.assertTrue(all(call.kwargs["allow_redirects"] is False
+                            for call in self.session.get.call_args_list))
+
+    def test_persistent_503_fails_at_attempt_cap_with_status_evidence(self) -> None:
+        self.session.get.return_value = self._response(503)
+        with self.assertRaisesRegex(publisher.PublishError, "attempt limit exhausted"):
+            self._verify(deadline=20)
+        self.assertEqual(3, self.session.get.call_count)
+        self.assertEqual(3, self.probes["/health"]["attempt_count"])
+        self.assertEqual(
+            [503, 503, 503],
+            [item["status"] for item in self.probes["/health"]["attempts"]],
+        )
+
+    def test_empty_200_remains_a_failed_smoke_probe(self) -> None:
+        self.session.get.return_value = self._response(200, b"")
+        with self.assertRaisesRegex(publisher.PublishError, "attempt limit exhausted"):
+            self._verify(deadline=20)
+        self.assertEqual(0, self.probes["/health"]["bytes"])
+
+    def test_200_arriving_after_deadline_is_not_admitted(self) -> None:
+        def late_response(*args, **kwargs):
+            self.clock = 7
+            return self._response(200)
+
+        self.session.get.side_effect = late_response
+        with self.assertRaisesRegex(publisher.PublishError, "deadline exhausted"):
+            self._verify(deadline=6)
+        self.session.get.assert_called_once()
+
+    def test_credential_denial_status_is_not_retried(self) -> None:
+        self.session.get.return_value = self._response(401)
+        with self.assertRaisesRegex(publisher.PublishError, "status=401, attempts=1"):
+            self._verify()
+        self.session.get.assert_called_once()
+
+    def test_terminal_report_preserves_partial_publish_and_smoke_evidence(self) -> None:
+        plan = {"ok": True, "repo_id": "owner/space", "source_revision": REVISION}
+
+        def failed_publish(candidate, **kwargs):
+            candidate["hf_commit"] = "b" * 40
+            candidate["smoke_verification"] = {
+                "state": "FAILED",
+                "probes": {"/health": {"status": 503, "attempt_count": 3}},
+            }
+            raise publisher.PublishError("live smoke probe failed: /health")
+
+        with tempfile.TemporaryDirectory() as directory:
+            report = Path(directory) / "publication.json"
+            argv = [
+                "publish_hf_space.py", "--source-dir", "spaces/szl-model-inference-lab",
+                "--repo-id", "owner/space", "--source-revision", REVISION,
+                "--report", str(report), "--publish",
+            ]
+            with patch.object(publisher.sys, "argv", argv), \
+                    patch.dict("os.environ", {"HF_TOKEN": "controlled-publisher-test"}), \
+                    patch("publish_hf_space.build_plan", return_value=plan), \
+                    patch("publish_hf_space.publish_and_verify", side_effect=failed_publish):
+                self.assertEqual(1, publisher.main())
+            terminal = json.loads(report.read_text(encoding="utf-8"))
+        self.assertFalse(terminal["ok"])
+        self.assertEqual("b" * 40, terminal["hf_commit"])
+        self.assertEqual("FAILED", terminal["smoke_verification"]["state"])
+        self.assertEqual(503, terminal["smoke_verification"]["probes"]["/health"]["status"])
 
 
 class SpacePublicationPlanTests(unittest.TestCase):
@@ -211,6 +318,7 @@ class SpacePublicationPlanTests(unittest.TestCase):
         self.assertIn("--reject-attached-space-volumes", text)
         self.assertNotIn("--clear-space-volumes", text)
         self.assertIn("tools/test_publish_hf_space.py", text)
+        self.assertIn('"PyYAML==6.0.3"', text)
 
     def test_exact_runtime_wait_can_require_final_zero_volumes(self) -> None:
         api = Mock()
