@@ -12,6 +12,28 @@ tags:
   - hub
 ---
 
+<!-- SZL-CARD-PRESENTATION:v1 -->
+<p><a href="https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab"><img src="https://raw.githubusercontent.com/szl-holdings/.github/main/profile/assets/szl/logos/szl_mark_holographic.svg" alt="SZL Holdings" width="112" /></a></p>
+
+# ReceiptAgent v2
+
+A proposal-only adapter for structured drafting, with retained historical contract evidence.
+
+**Artifact:** PEFT LoRA adapter; separate derived merge · **Stage:** Research · proposal only
+
+[Explore in Command Lab](https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab) · [Build](https://github.com/szl-holdings/szl-forge/tree/main/frontier/qwen35-receiptagent-v2) · [Evidence](https://github.com/szl-holdings/szl-forge/blob/2b4d7a0f69e68d60cb0f35f09c9bac837d66acdc/receiptagent-v2/card/README.md)
+
+## Before you use it
+
+- Historical 5/5 draft and 6/6 refusal-prefix counts are bounded contract results, not factual accuracy or autonomy qualification.
+- The historical publication decision applies to its named release. It does not qualify the current Hub head or a hosted runtime.
+- The separate salvaged merge needs its own evidence; adapter results do not automatically transfer to that runtime form.
+
+<details>
+<summary>Technical details and evidence</summary>
+
+<!-- SZL-CARD-TECHNICAL:v1:START -->
+
 <p align="center"><img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/main/receiptagent-v2/card/holo-banner.svg" alt="ReceiptAgent v2 proposal-only adapter with historical owner-signed contract evidence" width="100%"/></p>
 
 # szl-receiptagent-qwen35-0.8b-v2
@@ -185,3 +207,6 @@ quality, safety, factual-accuracy, autonomy, or third-party benchmark claim.
 Apache-2.0 is declared in repository metadata. A [LICENSE file](https://huggingface.co/SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2/blob/9f71de39861898e752602a2332ef7ca1e0df87a7/LICENSE) is listed at the reviewed model revision; this review does not determine upstream or downstream license coverage.
 
 Lambda uniqueness remains Conjecture 1 (open). Historical receipts and failed outcomes are retained; this review does not upgrade them.
+
+<!-- SZL-CARD-TECHNICAL:v1:END -->
+</details>

@@ -30,6 +30,28 @@ szl:
   autonomy_eligible: false
   never_overwrite: SZLHOLDINGS/chaski
 ---
+
+<!-- SZL-CARD-PRESENTATION:v1 -->
+<p><a href="https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab"><img src="https://raw.githubusercontent.com/szl-holdings/.github/main/profile/assets/szl/logos/szl_mark_holographic.svg" alt="SZL Holdings" width="112" /></a></p>
+
+# Chaski-R4
+
+A public bf16 LoRA research artifact with a bounded named-N evaluation record.
+
+**Artifact:** LoRA adapter · **Stage:** Experimental · NOT PROMOTABLE
+
+[Explore in Command Lab](https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab) · [Build](https://github.com/szl-holdings/szl-forge/tree/main/chaski_r4) · [Evidence](https://github.com/szl-holdings/szl-forge/blob/2b4d7a0f69e68d60cb0f35f09c9bac837d66acdc/chaski_r4/card/README.md)
+
+## Before you use it
+
+- Receipt C records 5/5 JSON drafts and 6/6 refusals with 192/192 adapter tensors applied. These small contract counts are not a broad quality or safety benchmark.
+- The provenance of earlier receipts A and B remains unresolved; their results are not interchangeable with receipt C.
+- Publication and autonomy eligibility remain false. Pin the exact base and adapter runtime separately before any qualified use.
+
+<details>
+<summary>Technical details and evidence</summary>
+
+<!-- SZL-CARD-TECHNICAL:v1:START -->
 <!-- szl:loader-class-boundary -->
 > **Loader-class boundary.** The adapter tensors are keyed for the multimodal module layout (`base_model.model.model.language_model.layers.*`, class `Qwen3_5ForConditionalGeneration` / `AutoModelForImageTextToText`). Under transformers 5.4–5.18, `AutoModelForCausalLM` instantiates `Qwen3_5ForCausalLM` (`model.layers.*`); PEFT 0.18–0.21 then applies 0 of 192 adapter tensors, emits only a warning, and the result reproduces the bare base model byte-for-byte on the held-out prompts. Any run that reports a score for this adapter must show adapter key coverage (192/192) and the loader class it used; a record without those fields does not establish that the adapter was applied. Evidence: szl-holdings/szl-forge `tools/geh_v8/THREAD_AUDIT.md` and `tools/geh_v8/evidence_sandbox/chaski_probe/`. Metadata note; it authorizes no load and adds no claim.
 
@@ -118,3 +140,6 @@ Apache-2.0 is declared for the adapter; the base model carries its own license.
 Qualification state of record: [`chaski_r4/QUALIFICATION_STATE.md`](https://github.com/szl-holdings/szl-forge/blob/57e6e6c3/chaski_r4/QUALIFICATION_STATE.md).
 Canonical card authoring source: [chaski_r4/card/README.md](https://github.com/szl-holdings/szl-forge/tree/main/chaski_r4/card).
 Doctrine v11 LOCKED. Λ = Conjecture 1, advisory, never a theorem.
+
+<!-- SZL-CARD-TECHNICAL:v1:END -->
+</details>

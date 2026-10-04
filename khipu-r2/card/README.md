@@ -31,6 +31,30 @@ szl:
   evals: MEASURED
   gpu: UNAVAILABLE
 ---
+
+<!-- SZL-CARD-PRESENTATION:v1 -->
+<p><a href="https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab"><img src="https://raw.githubusercontent.com/szl-holdings/.github/main/profile/assets/szl/logos/szl_mark_holographic.svg" alt="SZL Holdings" width="112" /></a></p>
+
+# KHIPU-R2
+
+A separate abstention-retraining experiment with adapter-scoped historical evaluation records.
+
+**Artifact:** QLoRA adapter; separate merged checkpoint · **Stage:** Research · release blocked
+
+[Explore in Command Lab](https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab) · [Build](https://github.com/szl-holdings/szl-forge/tree/main/khipu-r2) · [Evidence](https://github.com/szl-holdings/szl-forge/blob/2b4d7a0f69e68d60cb0f35f09c9bac837d66acdc/khipu-r2/card/README.md)
+
+Provider compatibility support [requested on 4 October 2026](https://huggingface.co/spaces/huggingface/InferenceSupport/discussions/12786). No provider was listed in the dated Hub observation; adoption and use qualification remain unchanged.
+
+## Before you use it
+
+- Recorded abstention is 3/6, not a passing gate. Publication and autonomy eligibility remain false.
+- The adapter is the artifact of record for the figures; the merged checkpoint has no separate held-out qualification.
+- The recorded merge-time base reference is not an immutable identity. This experiment does not replace Khipu 1.5B.
+
+<details>
+<summary>Technical details and evidence</summary>
+
+<!-- SZL-CARD-TECHNICAL:v1:START -->
 <!-- szl:artifact-identity-reconciled -->
 > **Artifact identity (noted 2026-09-30).** Besides the LoRA adapter, this repository's root carries a merged full-precision checkpoint (`model.safetensors` + `config.json`, loadable with `transformers`) produced by the receipted CPU merge of this adapter into its declared base (`merge_receipt.json`). The adapter remains the artifact of record for every figure on this card; the merged bytes carry no separate held-out receipt and add no claim. Metadata-only note.
 
@@ -136,3 +160,6 @@ verified. A license addition requires source-owner review of that coverage.
 
 Canonical card authoring source: [khipu-r2/card/README.md](https://github.com/szl-holdings/szl-forge/blob/6f4ac90ff503265cec9c0436587f086e52d6124e/khipu-r2/card/README.md).
 Doctrine v11 LOCKED 749/14/163. Λ = Conjecture 1, advisory, never a theorem.
+
+<!-- SZL-CARD-TECHNICAL:v1:END -->
+</details>

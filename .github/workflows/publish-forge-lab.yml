@@ -6,6 +6,8 @@ on:
     paths:
       - "spaces/szl-forge-lab/**"
       - "portfolio/model_portfolio.json"
+      - "tools/publish_hf_space.py"
+      - "tools/test_publish_hf_space.py"
       - ".github/workflows/publish-forge-lab.yml"
   workflow_dispatch: {}
 
@@ -73,6 +75,9 @@ jobs:
           --report reports/szl-forge-lab-credential.json
 
       - name: Publish and independently verify
+        # The static host may return only 302 / -> /index.html. The publisher
+        # validates that exact relative Location and still probes /index.html
+        # independently with redirects disabled; byte/source gates stay exact.
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "${GITHUB_SHA}"

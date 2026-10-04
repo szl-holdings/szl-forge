@@ -18,6 +18,28 @@ szl-review:
   reviewed_at: "2026-09-30"
 ---
 
+<!-- SZL-CARD-PRESENTATION:v1 -->
+<p><a href="https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab"><img src="https://raw.githubusercontent.com/szl-holdings/.github/main/profile/assets/szl/logos/szl_mark_holographic.svg" alt="SZL Holdings" width="112" /></a></p>
+
+# szl-formulas
+
+Inspect formula implementations, composition helpers, and their declared proof-status metadata.
+
+**Artifact:** Python formula registry; no trained weights · **Stage:** Limited software
+
+[Explore in Command Lab](https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab) · [Build](https://github.com/szl-holdings/szl-formulas) · [Evidence](https://github.com/szl-holdings/szl-forge/blob/2b4d7a0f69e68d60cb0f35f09c9bac837d66acdc/szl-formulas/README.md)
+
+## Before you use it
+
+- The eight canonical proof identifiers and the 21 declared registry entries are separate sets; their implementation-to-theorem mapping is not established.
+- Lambda uniqueness remains Conjecture 1. A proof-status label does not qualify model accuracy, safety, or this Python implementation.
+- Verify the separate kernel-package revision before loading remote code; the retained historical records were not rerun.
+
+<details>
+<summary>Technical details and evidence</summary>
+
+<!-- SZL-CARD-TECHNICAL:v1:START -->
+
 <p align="center"><img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/main/szl-formulas/card/holo-banner.svg" alt="szl-formulas software provenance illustration" width="100%"/></p>
 
 # szl-formulas
@@ -89,3 +111,6 @@ The reviewed [LICENSE](https://huggingface.co/SZLHOLDINGS/szl-formulas/blob/5e45
 ## Citation and verification
 
 Cite the exact artifact URL, revision, evidence file, date, and test scope relevant to the claim. Prefer immutable links above over branch links or a live status badge. Report an evidence gap as an evidence gap.
+
+<!-- SZL-CARD-TECHNICAL:v1:END -->
+</details>

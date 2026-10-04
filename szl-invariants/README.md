@@ -18,6 +18,28 @@ szl-review:
   reviewed_at: "2026-09-30"
 ---
 
+<!-- SZL-CARD-PRESENTATION:v1 -->
+<p><a href="https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab"><img src="https://raw.githubusercontent.com/szl-holdings/.github/main/profile/assets/szl/logos/szl_mark_holographic.svg" alt="SZL Holdings" width="112" /></a></p>
+
+# szl-invariants
+
+Check supplied receipt and ledger exports while keeping missing evidence and failed checks explicit.
+
+**Artifact:** Python verification kernel; no trained weights · **Stage:** Limited software
+
+[Explore in Command Lab](https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab) · [Build](https://github.com/szl-holdings/szl-invariants) · [Evidence](https://github.com/szl-holdings/szl-forge/blob/2b4d7a0f69e68d60cb0f35f09c9bac837d66acdc/szl-invariants/README.md)
+
+## Before you use it
+
+- Self-consistency checks do not establish export completeness, honest inputs, or answer accuracy.
+- Keep HOLDS, VIOLATED, KEY_ROTATED, NO_DATA, and UNAVAILABLE distinct; missing key or sample evidence is indeterminate.
+- Verify source-bound kernel publication before loading it. A newer source commit does not establish current Hub package parity.
+
+<details>
+<summary>Technical details and evidence</summary>
+
+<!-- SZL-CARD-TECHNICAL:v1:START -->
+
 <p align="center"><img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/main/szl-invariants/card/holo-banner.svg" alt="szl-invariants software provenance illustration" width="100%"/></p>
 
 # szl-invariants
@@ -89,3 +111,6 @@ The reviewed [LICENSE](https://huggingface.co/SZLHOLDINGS/szl-invariants/blob/4b
 ## Citation and verification
 
 Cite the exact artifact URL, revision, evidence file, date, and test scope relevant to the claim. Prefer immutable links above over branch links or a live status badge. Report an evidence gap as an evidence gap.
+
+<!-- SZL-CARD-TECHNICAL:v1:END -->
+</details>

@@ -8,6 +8,28 @@ tags:
 - not-a-checkpoint
 ---
 
+<!-- SZL-CARD-PRESENTATION:v1 -->
+<p><a href="https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab"><img src="https://raw.githubusercontent.com/szl-holdings/.github/main/profile/assets/szl/logos/szl_mark_holographic.svg" alt="SZL Holdings" width="112" /></a></p>
+
+# szl-nemo
+
+Inspect historical recipe-conformance scripts and receipt records.
+
+**Artifact:** Historical software and receipt mirror · **Stage:** Scorer quarantined
+
+[Explore in Command Lab](https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab) · [Build](https://github.com/szl-holdings/szl-nemo) · [Evidence](https://github.com/szl-holdings/szl-forge/blob/2b4d7a0f69e68d60cb0f35f09c9bac837d66acdc/nemo/card/README.md)
+
+## Before you use it
+
+- The scorer and its generator remain quarantined; no approved loadable checkpoint or qualified kernel-loading path is established here.
+- Newer deterministic witness APIs remain source-only until their separate source-bound Hub publication is verified.
+- Historical synthetic fidelity and paraphrase figures do not establish a current runtime, generative model, or safety guarantee.
+
+<details>
+<summary>Technical details and evidence</summary>
+
+<!-- SZL-CARD-TECHNICAL:v1:START -->
+
 <p align="center"><img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/main/nemo/card/holo-banner.svg" alt="Historical recipe-conformance records illustration" width="100%"/></p>
 
 # szl-nemo
@@ -82,3 +104,6 @@ downstream license coverage. No NVIDIA weights are republished by this card.
 
 Lambda uniqueness remains Conjecture 1, open and advisory. Historical evidence
 and failed outcomes remain intact.
+
+<!-- SZL-CARD-TECHNICAL:v1:END -->
+</details>

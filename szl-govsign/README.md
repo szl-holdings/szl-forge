@@ -18,6 +18,28 @@ szl-review:
   reviewed_at: "2026-09-30"
 ---
 
+<!-- SZL-CARD-PRESENTATION:v1 -->
+<p><a href="https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab"><img src="https://raw.githubusercontent.com/szl-holdings/.github/main/profile/assets/szl/logos/szl_mark_holographic.svg" alt="SZL Holdings" width="112" /></a></p>
+
+# szl-govsign
+
+Create and verify ECDSA P-256 signatures over software provenance envelopes.
+
+**Artifact:** Python signing kernel; no trained weights · **Stage:** Limited software
+
+[Explore in Command Lab](https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab) · [Build](https://github.com/szl-holdings/szl-govsign) · [Evidence](https://github.com/szl-holdings/szl-forge/blob/2b4d7a0f69e68d60cb0f35f09c9bac837d66acdc/szl-govsign/README.md)
+
+## Before you use it
+
+- A valid signature establishes integrity relative to a selected key; establish identity and key trust separately.
+- A signature does not prove the truth of a predicate, model quality, or legal compliance.
+- Qualify the exact kernel package and its cryptography dependencies before remote-code loading; dependency declarations need review.
+
+<details>
+<summary>Technical details and evidence</summary>
+
+<!-- SZL-CARD-TECHNICAL:v1:START -->
+
 <p align="center"><img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/main/szl-govsign/card/holo-banner.svg" alt="szl-govsign software provenance illustration" width="100%"/></p>
 
 # szl-govsign
@@ -86,3 +108,6 @@ The reviewed [LICENSE](https://huggingface.co/SZLHOLDINGS/szl-govsign/blob/13ce0
 ## Citation and verification
 
 Cite the exact artifact URL, revision, evidence file, date, and test scope relevant to the claim. Prefer immutable links above over branch links or a live status badge. Report an evidence gap as an evidence gap.
+
+<!-- SZL-CARD-TECHNICAL:v1:END -->
+</details>
