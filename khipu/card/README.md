@@ -33,6 +33,8 @@ A Qwen2.5-1.5B-Instruct fine-tune for proposal-only retrieval plans over supplie
 
 [Explore in Command Lab](https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab) · [Build](https://github.com/szl-holdings/szl-forge/tree/main/khipu) · [Evidence](https://github.com/szl-holdings/szl-forge/blob/2b4d7a0f69e68d60cb0f35f09c9bac837d66acdc/khipu/card/README.md)
 
+Provider compatibility support [requested on 4 October 2026](https://huggingface.co/spaces/huggingface/InferenceSupport/discussions/12781). No provider was listed in the dated Hub observation; adoption and use qualification remain unchanged.
+
 ## Before you use it
 
 - The recorded 2/6 abstention result remains a release blocker; publication_eligible stays false.

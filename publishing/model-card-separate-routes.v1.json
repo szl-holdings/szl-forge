@@ -65,7 +65,24 @@
       "disposition": "HUB_PR_ROUTE_PER_CARD_MANAGEMENT",
       "source_changed": false,
       "observed_hub_revision": "8f7d67af9c2f8315dc3a63afa9ebf23a3f60ca01",
-      "observed_at": "2026-10-04T15:32:16.953124+00:00"
+      "observed_at": "2026-10-04T15:32:16.953124+00:00",
+      "provider_support_request": {
+        "model_id": "SZLHOLDINGS/brain-navigator-r2",
+        "model_revision": "8f7d67af9c2f8315dc3a63afa9ebf23a3f60ca01",
+        "target_repository": "huggingface/InferenceSupport",
+        "discussion_number": 12782,
+        "url": "https://huggingface.co/spaces/huggingface/InferenceSupport/discussions/12782",
+        "body_sha256": "694e73c8eb06a4f080d1a6573c2232f6d21df22f16bd9f1dceb4c03e52aeb23b",
+        "requested_at": "2026-10-04T15:56:31.894122+00:00",
+        "request_state": "SUBMITTED_RESEARCH_COMPATIBILITY_REVIEW",
+        "provider_state": "NO_PROVIDER_LISTED",
+        "author": "betterwithage",
+        "status": "open",
+        "verified_readback": true,
+        "readback_at": "2026-10-04T15:56:32.019263+00:00",
+        "readback_body_sha256": "8c4161a55646dc9e8c39341a42808af6a6e0039e9a4936f795a31a96438d98b2",
+        "readback_normalization": "HUB_REMOVED_ONE_TERMINAL_NEWLINE"
+      }
     },
     {
       "kind": "models",
@@ -151,7 +168,24 @@
       "disposition": "HUB_PR_ROUTE_PER_CARD_MANAGEMENT",
       "source_changed": false,
       "observed_hub_revision": "7e388efb6e332c8c28e94bdf266293baf437fb64",
-      "observed_at": "2026-10-04T15:32:26.104310+00:00"
+      "observed_at": "2026-10-04T15:32:26.104310+00:00",
+      "provider_support_request": {
+        "model_id": "SZLHOLDINGS/khipu-r3",
+        "model_revision": "7e388efb6e332c8c28e94bdf266293baf437fb64",
+        "target_repository": "huggingface/InferenceSupport",
+        "discussion_number": 12787,
+        "url": "https://huggingface.co/spaces/huggingface/InferenceSupport/discussions/12787",
+        "body_sha256": "a6f2fcf87a434e2303536625289ae5310630d67d6433d32dfe344b3ceadd2377",
+        "requested_at": "2026-10-04T15:56:34.082476+00:00",
+        "request_state": "SUBMITTED_RESEARCH_COMPATIBILITY_REVIEW",
+        "provider_state": "NO_PROVIDER_LISTED",
+        "author": "betterwithage",
+        "status": "open",
+        "verified_readback": true,
+        "readback_at": "2026-10-04T15:56:34.418165+00:00",
+        "readback_body_sha256": "aab516579efdea5db56a9b673543408c55d04231d31e16f8db2734ddfa9f5c65",
+        "readback_normalization": "HUB_REMOVED_ONE_TERMINAL_NEWLINE"
+      }
     },
     {
       "kind": "models",
@@ -275,7 +309,24 @@
       "disposition": "ONE_SHOT_SOURCE_AND_HUB_HASH_REQUIRES_SEPARATE_REVIEW",
       "source_changed": false,
       "observed_hub_revision": "d674c37cae7127021ba36820ea7a6774cec06255",
-      "observed_at": "2026-10-04T15:33:00.148956+00:00"
+      "observed_at": "2026-10-04T15:33:00.148956+00:00",
+      "provider_support_request": {
+        "model_id": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3",
+        "model_revision": "d674c37cae7127021ba36820ea7a6774cec06255",
+        "target_repository": "huggingface/InferenceSupport",
+        "discussion_number": 12789,
+        "url": "https://huggingface.co/spaces/huggingface/InferenceSupport/discussions/12789",
+        "body_sha256": "88e1535fc9f905ff280de43df89d29ef12b8dbee8e8247108ef593d7790a4813",
+        "requested_at": "2026-10-04T15:56:35.474313+00:00",
+        "request_state": "SUBMITTED_RESEARCH_COMPATIBILITY_REVIEW",
+        "provider_state": "NO_PROVIDER_LISTED",
+        "author": "betterwithage",
+        "status": "open",
+        "verified_readback": true,
+        "readback_at": "2026-10-04T15:56:35.630190+00:00",
+        "readback_body_sha256": "21fc845a79c08f06eb1154c44842850afd3fb68be5a14b3b40ea770cbad86235",
+        "readback_normalization": "HUB_REMOVED_ONE_TERMINAL_NEWLINE"
+      }
     },
     {
       "kind": "models",
@@ -299,7 +350,24 @@
       "disposition": "FIXED_SOURCE_HASH_REQUIRES_SEPARATE_REVIEW",
       "source_changed": false,
       "observed_hub_revision": "96a0ac5c5c26e89f732b72d747b3577e1ea5236f",
-      "observed_at": "2026-10-04T15:32:07.513882+00:00"
+      "observed_at": "2026-10-04T15:32:07.513882+00:00",
+      "provider_support_request": {
+        "model_id": "SZLHOLDINGS/WILLAY",
+        "model_revision": "96a0ac5c5c26e89f732b72d747b3577e1ea5236f",
+        "target_repository": "huggingface/InferenceSupport",
+        "discussion_number": 12790,
+        "url": "https://huggingface.co/spaces/huggingface/InferenceSupport/discussions/12790",
+        "body_sha256": "e13fd1f0a764d0da5fdfe40422f151ca1c8a9029692b67d17e9d1246007c64ec",
+        "requested_at": "2026-10-04T15:56:35.895093+00:00",
+        "request_state": "SUBMITTED_RESEARCH_COMPATIBILITY_REVIEW",
+        "provider_state": "NO_PROVIDER_LISTED",
+        "author": "betterwithage",
+        "status": "open",
+        "verified_readback": true,
+        "readback_at": "2026-10-04T15:56:36.454225+00:00",
+        "readback_body_sha256": "083d6e3d84a378c6a6eb81cebeeea4463a3795dc19a30f7e569f29b9060c5caf",
+        "readback_normalization": "HUB_REMOVED_ONE_TERMINAL_NEWLINE"
+      }
     }
   ]
 }

@@ -43,6 +43,8 @@ A separate abstention-retraining experiment with adapter-scoped historical evalu
 
 [Explore in Command Lab](https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab) · [Build](https://github.com/szl-holdings/szl-forge/tree/main/khipu-r2) · [Evidence](https://github.com/szl-holdings/szl-forge/blob/2b4d7a0f69e68d60cb0f35f09c9bac837d66acdc/khipu-r2/card/README.md)
 
+Provider compatibility support [requested on 4 October 2026](https://huggingface.co/spaces/huggingface/InferenceSupport/discussions/12786). No provider was listed in the dated Hub observation; adoption and use qualification remain unchanged.
+
 ## Before you use it
 
 - Recorded abstention is 3/6, not a passing gate. Publication and autonomy eligibility remain false.

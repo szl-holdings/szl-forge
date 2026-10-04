@@ -455,7 +455,7 @@
       "original_source_sha256": "df00859ae09db54273f51644e24b0dcbea94f7bfe21d2a355ef3eea042acf2ab",
       "original_frontmatter_sha256": "ef2d441348de0fe5e8185e60911137b5e1f73a0bb06d63b8e621c37d7d00c772",
       "original_body_sha256": "99e5700c08206b39b225abf58e72f28138a82dcada4556d4225d35b07494be16",
-      "output_sha256": "89dd16e1c06064ced0a48c4f45d46bd52b05b4d71fcc646aedbcf32be52d2029",
+      "output_sha256": "6d9d8832c7244bd24f2f7d5449942aefa083d131d0b60404a9dfcd3e686785fe",
       "technical_body_preserved_exactly": true,
       "provider_observation": {
         "hub_revision": "fe1b7dbf81162e586e4dd32845ed17f048b54329",
@@ -463,6 +463,23 @@
         "url": "https://huggingface.co/api/models/SZLHOLDINGS/SZL-Khipu-1.5B?expand[]=inferenceProviderMapping&expand[]=sha",
         "provider_mapping": {},
         "state": "NO_PROVIDER_LISTED"
+      },
+      "provider_support_request": {
+        "model_id": "SZLHOLDINGS/SZL-Khipu-1.5B",
+        "model_revision": "fe1b7dbf81162e586e4dd32845ed17f048b54329",
+        "target_repository": "huggingface/InferenceSupport",
+        "discussion_number": 12781,
+        "url": "https://huggingface.co/spaces/huggingface/InferenceSupport/discussions/12781",
+        "body_sha256": "351353c6fc35ea786cc2c482954784e23e382220535d8669e72a946ad20112a3",
+        "requested_at": "2026-10-04T15:51:03.839603+00:00",
+        "request_state": "SUBMITTED_RESEARCH_COMPATIBILITY_REVIEW",
+        "provider_state": "NO_PROVIDER_LISTED",
+        "author": "betterwithage",
+        "status": "open",
+        "verified_readback": true,
+        "readback_at": "2026-10-04T15:56:31.455467+00:00",
+        "readback_body_sha256": "c91d7f96f90ad75dc5452dcbc6d24257f11a8e5f92dd7eefb99a6e40880185c0",
+        "readback_normalization": "HUB_REMOVED_ONE_TERMINAL_NEWLINE"
       }
     },
     {
@@ -490,7 +507,7 @@
       "original_source_sha256": "aec38c7568a6dbca5862264d65fc1ce24bf7fb5868051ea33ddafeb4abc93163",
       "original_frontmatter_sha256": "63221aead57f99cede0737bf7537d2630f3125cd8ed7a3228a9faf617f70ed6b",
       "original_body_sha256": "a7f8e311aef599e202c50c44a21223c5622f587839c6a16418bd7ee00a51f6d9",
-      "output_sha256": "64007aaca37a587d0889f84d4cc5ed87caa972d06f29b6f7dc9ace6d35e745e6",
+      "output_sha256": "569fd9ebbc9d542a78055363cc6c52bd67eccf608f1403cdddffb6ef2c32bfa1",
       "technical_body_preserved_exactly": true,
       "provider_observation": {
         "hub_revision": "e4c5d6c00876ae02b78bfd720560a31b91ad1b76",
@@ -498,6 +515,23 @@
         "url": "https://huggingface.co/api/models/SZLHOLDINGS/KHIPU-R2?expand[]=inferenceProviderMapping&expand[]=sha",
         "provider_mapping": {},
         "state": "NO_PROVIDER_LISTED"
+      },
+      "provider_support_request": {
+        "model_id": "SZLHOLDINGS/KHIPU-R2",
+        "model_revision": "e4c5d6c00876ae02b78bfd720560a31b91ad1b76",
+        "target_repository": "huggingface/InferenceSupport",
+        "discussion_number": 12786,
+        "url": "https://huggingface.co/spaces/huggingface/InferenceSupport/discussions/12786",
+        "body_sha256": "a75d64a77af5c57746534805240acd093ae703f9ea96c423ad442ba627e903b8",
+        "requested_at": "2026-10-04T15:56:33.674221+00:00",
+        "request_state": "SUBMITTED_RESEARCH_COMPATIBILITY_REVIEW",
+        "provider_state": "NO_PROVIDER_LISTED",
+        "author": "betterwithage",
+        "status": "open",
+        "verified_readback": true,
+        "readback_at": "2026-10-04T15:56:33.794121+00:00",
+        "readback_body_sha256": "67f7356e28eb216bf34c015bb769ca4ed96aa6a63b4fcb87dfc50139791698a8",
+        "readback_normalization": "HUB_REMOVED_ONE_TERMINAL_NEWLINE"
       }
     },
     {
@@ -525,7 +559,7 @@
       "original_source_sha256": "a9d7275cda3fb58ea61d8da25124a81233ac8507502e2c165a55772046be789a",
       "original_frontmatter_sha256": "ff96d4bfda23c65ed0f5daf7308ca6a839570abf4c418123a61adb0c5a26eb54",
       "original_body_sha256": "2880454d12e89950fc76d1eb3c31081579c926b56ad7d4033c94a58ddac4f897",
-      "output_sha256": "0f9f28b4d3044451364a510816222cb4a8e82944dddf0c66051ffe6eea80f33c",
+      "output_sha256": "8e9c16cacf4a086dbd72f7ee7aa1679bf5d1186d8dad71b29a811c45cb6243e7",
       "technical_body_preserved_exactly": true,
       "provider_observation": {
         "hub_revision": "375330cb5768ff5c8d1902aa5e7c820f67953c90",
@@ -533,6 +567,23 @@
         "url": "https://huggingface.co/api/models/SZLHOLDINGS/chaski?expand[]=inferenceProviderMapping&expand[]=sha",
         "provider_mapping": {},
         "state": "NO_PROVIDER_LISTED"
+      },
+      "provider_support_request": {
+        "model_id": "SZLHOLDINGS/chaski",
+        "model_revision": "375330cb5768ff5c8d1902aa5e7c820f67953c90",
+        "target_repository": "huggingface/InferenceSupport",
+        "discussion_number": 12783,
+        "url": "https://huggingface.co/spaces/huggingface/InferenceSupport/discussions/12783",
+        "body_sha256": "96dcbe808cc14f62a8d82fe0734929eb092c642fbb1ab25ba019b2673ac62999",
+        "requested_at": "2026-10-04T15:56:32.326058+00:00",
+        "request_state": "SUBMITTED_RESEARCH_COMPATIBILITY_REVIEW",
+        "provider_state": "NO_PROVIDER_LISTED",
+        "author": "betterwithage",
+        "status": "open",
+        "verified_readback": true,
+        "readback_at": "2026-10-04T15:56:32.446610+00:00",
+        "readback_body_sha256": "7082b30d26117f5088b267022dc3df089e5fabfba343b61b761610d44751b1ac",
+        "readback_normalization": "HUB_REMOVED_ONE_TERMINAL_NEWLINE"
       }
     },
     {
@@ -560,7 +611,7 @@
       "original_source_sha256": "9621f1b4c3456eac7e2d47feec39bbf4ef7a1a62e4ce055b93f11a1fcf9f032f",
       "original_frontmatter_sha256": "643da442e3d35551ea82e9276c54b1a2b883500b5b2e8b8ebadcae571f0da8d5",
       "original_body_sha256": "710b3afe5413a33936f4c8febf66620707b3ffc4b8ec3f2d403b030d9437cb6c",
-      "output_sha256": "ff9e2f98524f2c29b3060146fa299b58e027da8e180afe55c667731acd489f72",
+      "output_sha256": "240b94c1bca8717b31427b4ce06b85f5fb1954c8f967374ef0d93f1e12a533bb",
       "technical_body_preserved_exactly": true,
       "provider_observation": {
         "hub_revision": "0e324a93761abb7069ce0e40597780e734bf342b",
@@ -568,6 +619,23 @@
         "url": "https://huggingface.co/api/models/SZLHOLDINGS/chaski-5050?expand[]=inferenceProviderMapping&expand[]=sha",
         "provider_mapping": {},
         "state": "NO_PROVIDER_LISTED"
+      },
+      "provider_support_request": {
+        "model_id": "SZLHOLDINGS/chaski-5050",
+        "model_revision": "0e324a93761abb7069ce0e40597780e734bf342b",
+        "target_repository": "huggingface/InferenceSupport",
+        "discussion_number": 12784,
+        "url": "https://huggingface.co/spaces/huggingface/InferenceSupport/discussions/12784",
+        "body_sha256": "8c9e1d31f370a71c88cbe55a8a073bfc147f2b85df176c1c76f75aa7f64c52a6",
+        "requested_at": "2026-10-04T15:56:32.742315+00:00",
+        "request_state": "SUBMITTED_RESEARCH_COMPATIBILITY_REVIEW",
+        "provider_state": "NO_PROVIDER_LISTED",
+        "author": "betterwithage",
+        "status": "open",
+        "verified_readback": true,
+        "readback_at": "2026-10-04T15:56:32.862375+00:00",
+        "readback_body_sha256": "967c6e1d5c2082a3002310646e3dc1eb64a78df28f4bbf8c7854bd6d86afdec8",
+        "readback_normalization": "HUB_REMOVED_ONE_TERMINAL_NEWLINE"
       }
     },
     {
@@ -595,7 +663,7 @@
       "original_source_sha256": "da25774c971d002ad992a9f833cb7400561035a9667f3ef10737304f8f48ce63",
       "original_frontmatter_sha256": "6125319e2093c33571588110d7e20c5d78f570ab8a5d699e3c9d257ad7486c12",
       "original_body_sha256": "abcda9fdd90ce42b2a8f7a35ce5833ebc84d89f82fa3877b0189dd6310ea6404",
-      "output_sha256": "a93b22eb5d809b46a6617c3f60b16ae0e066154e0dcde76a54aae4cbd3814d5e",
+      "output_sha256": "15950345b04e005ac502976b3d92dce67939afe0cc890f17773f85724981e38b",
       "technical_body_preserved_exactly": true,
       "provider_observation": {
         "hub_revision": "83734cf80a2ca306f090b40a2e1fd23db2ddda45",
@@ -603,6 +671,23 @@
         "url": "https://huggingface.co/api/models/SZLHOLDINGS/chaski-r2?expand[]=inferenceProviderMapping&expand[]=sha",
         "provider_mapping": {},
         "state": "NO_PROVIDER_LISTED"
+      },
+      "provider_support_request": {
+        "model_id": "SZLHOLDINGS/chaski-r2",
+        "model_revision": "83734cf80a2ca306f090b40a2e1fd23db2ddda45",
+        "target_repository": "huggingface/InferenceSupport",
+        "discussion_number": 12785,
+        "url": "https://huggingface.co/spaces/huggingface/InferenceSupport/discussions/12785",
+        "body_sha256": "33bc16c82eebc6a46b4802620ef8115d1daf54aba6a09efeb6bb4786c20e9f81",
+        "requested_at": "2026-10-04T15:56:33.142256+00:00",
+        "request_state": "SUBMITTED_RESEARCH_COMPATIBILITY_REVIEW",
+        "provider_state": "NO_PROVIDER_LISTED",
+        "author": "betterwithage",
+        "status": "open",
+        "verified_readback": true,
+        "readback_at": "2026-10-04T15:56:33.258377+00:00",
+        "readback_body_sha256": "53d0b67eeec97e0d05cfed181d9cca7e78ad7a927e5e243ea0e3d9b15d9cef32",
+        "readback_normalization": "HUB_REMOVED_ONE_TERMINAL_NEWLINE"
       }
     },
     {

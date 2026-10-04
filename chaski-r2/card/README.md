@@ -42,6 +42,8 @@ A bf16 LoRA research recut of Qwen3.5-0.8B, with separate adapter and merged art
 
 [Explore in Command Lab](https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab) · [Build](https://github.com/szl-holdings/szl-forge/tree/main/chaski-r2) · [Evidence](https://github.com/szl-holdings/szl-forge/blob/2b4d7a0f69e68d60cb0f35f09c9bac837d66acdc/chaski-r2/card/README.md)
 
+Provider compatibility support [requested on 4 October 2026](https://huggingface.co/spaces/huggingface/InferenceSupport/discussions/12785). No provider was listed in the dated Hub observation; adoption and use qualification remain unchanged.
+
 ## Before you use it
 
 - The historical 1/5 held-out gate and overall FAIL remain. Later reused-fixture adapter results do not clear that gate.

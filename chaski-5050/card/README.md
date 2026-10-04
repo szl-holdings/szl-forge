@@ -45,6 +45,8 @@ A separate bf16 LoRA research experiment with its training and failed gate recor
 
 [Explore in Command Lab](https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab) · [Build](https://github.com/szl-holdings/szl-forge/tree/main/chaski-5050) · [Evidence](https://github.com/szl-holdings/szl-forge/blob/2b4d7a0f69e68d60cb0f35f09c9bac837d66acdc/chaski-5050/card/README.md)
 
+Provider compatibility support [requested on 4 October 2026](https://huggingface.co/spaces/huggingface/InferenceSupport/discussions/12784). No provider was listed in the dated Hub observation; adoption and use qualification remain unchanged.
+
 ## Before you use it
 
 - The later held-out gate recorded 1/5 and overall FAIL. Publication and autonomy eligibility remain false.
