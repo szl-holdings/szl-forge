@@ -7,6 +7,7 @@ No training, threshold selection, network requests, or external corpus scoring.
 from __future__ import annotations
 
 import argparse
+from fractions import Fraction
 import hashlib
 import json
 import math
@@ -152,6 +153,90 @@ def proportion(numerator: int, denominator: int) -> dict[str, Any]:
         "value": round(value, 12), "numerator": numerator, "denominator": denominator,
         "wilson_95": {"lower": round(max(0.0, center - half), 12),
                       "upper": round(min(1.0, center + half), 12)},
+    }
+
+
+RISK_COVERAGE_CUTOFFS = (0.0, 0.1, 0.25, 0.5, 0.75, 0.9, 1.0)
+
+
+def calculate_risk_coverage(labels: Sequence[int], scores: Sequence[float],
+                            threshold: float) -> dict[str, Any]:
+    """Describe fixed, label-blind selections; never choose or apply a policy.
+
+    The selector is normalized distance from the existing decision boundary:
+    (score - threshold)/(1 - threshold) on its positive side, and
+    (threshold - score)/threshold on its negative side. This is neither a
+    correctness probability nor confidence, calibration, trust, or authority.
+    """
+    def unit_interval(value: Any) -> bool:
+        return type(value) in (float, int) and 0 <= value <= 1 and math.isfinite(value)
+
+    if (not isinstance(labels, Sequence) or isinstance(labels, (str, bytes, bytearray))
+            or not isinstance(scores, Sequence) or isinstance(scores, (str, bytes, bytearray))
+            or not labels or len(labels) != len(scores)
+            or any(type(label) is not int or label not in (0, 1) for label in labels)
+            or any(not unit_interval(score) for score in scores)
+            or not unit_interval(threshold) or not 0 < threshold < 1):
+        raise EvaluationError("INVALID_RISK_COVERAGE_INPUTS")
+    rows = len(labels)
+    positive, negative = sum(labels), rows - sum(labels)
+    predicted = [score >= threshold for score in scores]
+    # The exported numeric values have declared decimal comparison semantics.
+    # Exact rationals preserve decimal ties without admitting below-cut neighbors.
+    boundary = Fraction(str(threshold))
+    decimal_scores = [Fraction(str(score)) for score in scores]
+    margins = [(score - boundary) / (1 - boundary) if attention
+               else (boundary - score) / boundary
+               for score, attention in zip(decimal_scores, predicted, strict=True)]
+
+    def point(cutoff: float | None) -> dict[str, Any]:
+        minimum = Fraction(str(cutoff)) if cutoff is not None else None
+        accepted = {"true_positive": 0, "true_negative": 0,
+                    "false_positive": 0, "false_negative": 0}
+        abstained = dict(accepted)
+        for label, attention, margin in zip(labels, predicted, margins, strict=True):
+            # None is an explicit abstain-all control, including score endpoints.
+            bucket = accepted if minimum is not None and margin >= minimum else abstained
+            prefix = "true" if attention == bool(label) else "false"
+            suffix = "positive" if attention else "negative"
+            bucket[f"{prefix}_{suffix}"] += 1
+        count = sum(accepted.values())
+        errors = accepted["false_positive"] + accepted["false_negative"]
+        accepted_positive = accepted["true_positive"] + accepted["false_negative"]
+        accepted_negative = accepted["true_negative"] + accepted["false_positive"]
+        return {
+            "cutoff": cutoff, "accepted_rows": count, "abstained_rows": rows - count,
+            "coverage": proportion(count, rows), "abstention": proportion(rows - count, rows),
+            "accepted_errors": errors, "accepted_error_rate": proportion(errors, count),
+            "accepted_confusion": accepted,
+            "accepted_class_support": {"positive_rows": accepted_positive,
+                                       "negative_rows": accepted_negative},
+            "positive_coverage": proportion(accepted_positive, positive),
+            "negative_coverage": proportion(accepted_negative, negative),
+            "accepted_predicted_attention_rows": accepted["true_positive"] + accepted["false_positive"],
+            "accepted_predicted_clear_rows": accepted["true_negative"] + accepted["false_negative"],
+            "abstained_confusion": abstained,
+            "abstained_errors": abstained["false_positive"] + abstained["false_negative"],
+        }
+
+    return {
+        "schema": "szl-oac/operational-risk-coverage/v1", "evidence_class": "SAMPLE",
+        "rows": rows, "decision_threshold": threshold,
+        "selection_semantics": "normalized_decision_boundary_distance_not_confidence_not_trust",
+        "comparison_protocol": "exact_rationals_of_shortest_decimal_exported_numbers_no_tolerance",
+        "cutoff_protocol": "predeclared_grid_inclusive_ties_no_label_based_selection",
+        "cutoff_selected": False, "runtime_selection_applied": False,
+        "production_promotion_allowed": False,
+        "curve": [point(cutoff) for cutoff in RISK_COVERAGE_CUTOFFS],
+        "abstain_all_control": point(None),
+        "limitations": [
+            "synthetic_reused_public_examples_not_new_blind_or_production_validation",
+            "distance_is_not_calibrated_uncertainty_or_a_correctness_probability",
+            "risk_need_not_decrease_as_coverage_falls",
+            "pointwise_wilson_intervals_not_simultaneous_or_selected_policy_guarantees",
+            "zero_accepted_rows_have_undefined_risk_not_zero_risk",
+            "no_best_cutoff_selected_and_no_runtime_abstention_policy_installed",
+        ],
     }
 
 
@@ -469,6 +554,7 @@ def fresh_seed_lanes(trainer_source: bytes, kernel: Any, threshold: float, rows:
             "lane_oracle_roc_auc": round(oracle_auc, 12),
             "roc_auc_headroom": {"value": round(oracle_auc - point["roc_auc"], 12),
                                  "interval_95": _percentile_interval(gap_samples)},
+            "risk_coverage": calculate_risk_coverage(labels, scores, threshold),
         }
     return {
         "method": "fresh_rows_from_hash_verified_generator_seed_never_used_for_training_or_selection",
@@ -634,6 +720,7 @@ def evaluate(admission_path: Path | None = None, fresh_lanes: bool = False) -> d
             "scope": "exact_numeric_feature_matches_only_not_semantic_or_temporal_leakage_detection",
         },
         "metrics": metrics, "comparisons": comparisons, "observations": observations,
+        "risk_coverage": calculate_risk_coverage(labels, scores, 0.16),
         **({"fresh_seed_lanes": fresh} if fresh is not None else {}),
         "external_corpus_admission": admission,
         "limitations": [
