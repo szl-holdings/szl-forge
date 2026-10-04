@@ -122,6 +122,7 @@ RECEIPT_FILES = {
 REPORT_FILES = {
     "childTraining": ("training-report.json", "MEASURED_CHILD_TRAINING_REPORT"),
     "supervisor": ("supervisor-report.json", "MEASURED_SUPERVISOR_REPORT"),
+    "hostMemoryGuard": ("host-memory-terminal.json", "MEASURED_HOST_MEMORY_GUARD_REPORT"),
     "devEvaluation": ("dev-evaluation-report.json", "MEASURED_DEV_EVALUATION_REPORT"),
     "testEvaluation": ("test-evaluation-report.json", "MEASURED_TEST_EVALUATION_REPORT"),
     "baseTestEvaluation": ("base-test-evaluation-report.json", "MEASURED_BASE_TEST_EVALUATION_REPORT"),
@@ -552,10 +553,20 @@ def _load_module(name: str, path: Path) -> ModuleType:
 
 
 def _release_modules() -> tuple[ModuleType, ModuleType]:
-    evidence_module = _load_module(
-        "_szl_ra3_evidence_chain", RELEASE_DIRECTORY / "evidence_chain.py"
-    )
     missing = object()
+    previous_guard = sys.modules.get("host_memory_guard", missing)
+    sys.modules["host_memory_guard"] = _load_module(
+        "_szl_ra3_release_host_memory", RELEASE_DIRECTORY / "host_memory_guard.py"
+    )
+    try:
+        evidence_module = _load_module(
+            "_szl_ra3_evidence_chain", RELEASE_DIRECTORY / "evidence_chain.py"
+        )
+    finally:
+        if previous_guard is missing:
+            sys.modules.pop("host_memory_guard", None)
+        else:
+            sys.modules["host_memory_guard"] = previous_guard
     previous = sys.modules.get("evidence_chain", missing)
     sys.modules["evidence_chain"] = evidence_module
     try:

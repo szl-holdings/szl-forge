@@ -43,6 +43,7 @@ from supervisor_validation import (
     SupervisorValidationError,
     validate_successful_report,
 )
+from host_memory_guard import HostMemoryError, verify_terminal_binding
 
 
 HERE = Path(__file__).resolve().parent
@@ -71,6 +72,8 @@ SUPERVISOR_SOURCE_COMPONENTS = (
     "containment_probe.py",
     "train_candidate.py",
     "supervisor_validation.py",
+    "host_memory_guard.py",
+    "windows_host_memory_sampler.ps1",
 )
 SUPERVISOR_SOURCE_CORE = {
     "repository": "szl-holdings/szl-forge",
@@ -100,6 +103,8 @@ SUPERVISOR_LAUNCH_KEYS = {
     "workerArgvSha256",
     "startedAt",
     "endedAt",
+    "startedMonotonicNs",
+    "endedMonotonicNs",
     "durationSeconds",
     "wallTimeoutSeconds",
     "workerExitStatus",
@@ -175,6 +180,7 @@ SUPERVISOR_SUCCESS_KEYS = {
     "comparisonCriteriaSatisfied",
     "launch",
     "telemetry",
+    "hostMemoryGuard",
     "logs",
     "trainingReport",
     "bindings",
@@ -574,6 +580,11 @@ def verify_supervisor_launch(
         raise QualificationError(
             "worker duration is outside the committed full-run bound"
         )
+    started_ns, ended_ns = launch.get("startedMonotonicNs"), launch.get("endedMonotonicNs")
+    if (type(started_ns) is not int or type(ended_ns) is not int
+            or not 0 <= started_ns <= ended_ns < 2**63
+            or abs((ended_ns - started_ns) / 1e9 - duration) > 0.000002):
+        raise QualificationError("worker monotonic duration is not bound")
     if not isinstance(launch.get("startedAt"), str) or not isinstance(
         launch.get("endedAt"), str
     ):
@@ -1102,6 +1113,16 @@ def verify_supervisor_linkage(
     launch_evidence = verify_supervisor_launch(
         supervisor_report["launch"], run_id=run_id, candidate=candidate
     )
+    try:
+        host_memory_evidence = verify_terminal_binding(
+            supervisor_report["hostMemoryGuard"], reports=path.parent,
+            run_id=run_id, source_revision=source_commit,
+            sampler_sha256=source_components["windows_host_memory_sampler.ps1"]["sha256"],
+            guard_sha256=source_components["host_memory_guard.py"]["sha256"],
+            launch=supervisor_report["launch"],
+        )
+    except (HostMemoryError, OSError, ValueError, KeyError) as exc:
+        raise QualificationError("native Windows host-memory terminal evidence is missing or invalid") from exc
     telemetry_evidence = verify_supervisor_telemetry(
         supervisor_report["telemetry"], candidate=candidate
     )
@@ -1155,6 +1176,7 @@ def verify_supervisor_linkage(
         "supervisorUnit": containment_evidence["unit"],
         "workerUnit": launch_evidence["workerUnit"],
         "workerArgvSha256": launch_evidence["workerArgvSha256"],
+        "hostMemoryGuard": host_memory_evidence,
         "gpuUuid": gpu_uuid,
         "maximumObservedTemperatureC": telemetry_evidence[
             "maximumObservedTemperatureC"

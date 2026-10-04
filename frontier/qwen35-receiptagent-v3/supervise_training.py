@@ -74,6 +74,7 @@ bootstrap = load_bootstrap(
 )
 trainer: Any | None = None
 supervisor_validation: Any | None = None
+host_guard: Any | None = None
 
 
 RUN_ID_PATTERN = re.compile(r"[0-9a-f]{32}")
@@ -121,6 +122,15 @@ WORKER_ENVIRONMENT = {
 TERMINAL_EXIT_CODES = {
     "SUCCESS": 0,
     "PRECONDITION_DENIED": 70,
+    "HOST_MEMORY_PRESSURE": 81,
+    "HOST_MEMORY_SAMPLE_INVALID": 81,
+    "HOST_MEMORY_LEASE_EXPIRED": 81,
+    "HOST_MEMORY_WATCHER_EXITED": 81,
+    "HOST_MEMORY_HELPER_UNAVAILABLE": 81,
+    "HOST_MEMORY_EVIDENCE_FAILED": 81,
+    "HOST_MEMORY_IDENTITY_MISMATCH": 81,
+    "HOST_MEMORY_STOP_UNCONFIRMED": 81,
+    "HOST_MEMORY_ABORTED": 81,
     "THERMAL_POLICY_VIOLATION": 71,
     "WALL_TIMEOUT": 72,
     "WORKER_EXIT_FAILURE": 73,
@@ -930,8 +940,8 @@ def launch_worker_unit(
         "--property=SendSIGKILL=yes",
         "--property=RemainAfterExit=yes",
         f"--property=TimeoutStopSec={policy['termination_grace_seconds']}s",
-        f"--property=BindsTo={outer_unit}.service",
-        f"--property=After={outer_unit}.service",
+        f"--property=BindsTo={outer_unit}.service szl-ra3-host-memory-{attempt.run_id}.service",
+        f"--property=After={outer_unit}.service szl-ra3-host-memory-{attempt.run_id}.service",
         "--property=NoNewPrivileges=yes",
         "--property=ProtectControlGroups=yes",
         "--property=ProtectSystem=strict",
@@ -1001,6 +1011,8 @@ def launch_worker_unit(
             raise SupervisionError(f"worker systemd property {key} is not {expected}")
     if f"{outer_unit}.service" not in properties.get("BindsTo", "").split():
         raise SupervisionError("worker unit is not bound to the supervisor unit")
+    if f"szl-ra3-host-memory-{attempt.run_id}.service" not in properties.get("BindsTo", "").split():
+        raise SupervisionError("worker unit is not bound to the independent host-memory guard")
     cgroup = properties.get("ControlGroup", "")
     if not cgroup:
         raise SupervisionError("worker unit lacks a cgroup")
@@ -1627,7 +1639,7 @@ def strict_args(argv: Sequence[str]) -> argparse.Namespace:
 
 
 def _supervise(args: argparse.Namespace) -> int:
-    global trainer, supervisor_validation
+    global trainer, supervisor_validation, host_guard
 
     attempt: Attempt | None = None
     worker_launched = False
@@ -1637,6 +1649,8 @@ def _supervise(args: argparse.Namespace) -> int:
     terminal_cause = "PRECONDITION_DENIED"
     report: dict[str, Any] | None = None
     publication_failure: dict[str, Any] | None = None
+    host_client: Any | None = None
+    host_guard_status: dict[str, Any] | None = None
     exit_code = TERMINAL_EXIT_CODES[terminal_cause]
     try:
         verified_source, loaded_siblings = bootstrap.verify_and_load_siblings(
@@ -1644,6 +1658,7 @@ def _supervise(args: argparse.Namespace) -> int:
         )
         trainer = loaded_siblings["train_candidate.py"]
         supervisor_validation = loaded_siblings["supervisor_validation.py"]
+        host_guard = loaded_siblings["host_memory_guard.py"]
         source = verified_source.public_evidence()
         source["commitSignatureVerifiedByThisTool"] = False
         candidate_bytes = trainer.committed_bytes(
@@ -1711,6 +1726,11 @@ def _supervise(args: argparse.Namespace) -> int:
         stderr_path = attempt.logs / "worker.stderr"
         create_log(stdout_path)
         create_log(stderr_path)
+        # Native host admission precedes GPU readiness and every model-worker import.
+        # The helper has its own service/lease, independent of nvidia-smi delays.
+        terminal_cause = "HOST_MEMORY_HELPER_UNAVAILABLE"
+        host_client = host_guard.GuardClient(policy=policy, attempt=attempt, source=verified_source)
+        host_guard_status = host_client.start()
         recipe = candidate["training_recipe"]
         readiness_started_ns = time.monotonic_ns()
         admission_sample: TelemetrySample | None = None
@@ -1862,6 +1882,7 @@ def _supervise(args: argparse.Namespace) -> int:
             credential_canary_sha=credential_canary["sha256"],
         )
         report["telemetry"] = telemetry_readiness
+        report["hostMemoryGuard"] = host_guard_status
         runtime_samples: list[TelemetrySample] = []
         if runtime_confirmation is not None:
             runtime_samples.append(runtime_confirmation)
@@ -1915,6 +1936,8 @@ def _supervise(args: argparse.Namespace) -> int:
         runtime_confirmation = prelaunch_confirmation
         runtime_samples.append(prelaunch_confirmation)
 
+        host_client.assert_healthy()
+        launch_started_at = utc_now()
         launch_ns = time.monotonic_ns()
         wall_timeout = policy[
             "smoke_wall_timeout_seconds"
@@ -1943,6 +1966,7 @@ def _supervise(args: argparse.Namespace) -> int:
         trigger_error: str | None = None
         final_worker_properties = worker_properties
         while True:
+            host_client.assert_healthy()
             now_ns = time.monotonic_ns()
             if now_ns >= deadline_ns:
                 terminal_cause = "WALL_TIMEOUT"
@@ -2091,13 +2115,16 @@ def _supervise(args: argparse.Namespace) -> int:
             final_worker_properties.get("ExecMainStatus", "255") or "255"
         )
         worker_result = final_worker_properties.get("Result", "unknown")
+        launch_ended_ns = time.monotonic_ns()
         report["launch"] = {
             "workerUnit": worker_unit + ".service",
             "workerControlGroup": worker_cgroup,
             "workerArgvSha256": sha256_json(worker_argv),
-            "startedAt": admission["preparedAt"],
+            "startedAt": launch_started_at,
             "endedAt": utc_now(),
-            "durationSeconds": round((time.monotonic_ns() - launch_ns) / 1e9, 6),
+            "startedMonotonicNs": launch_ns,
+            "endedMonotonicNs": launch_ended_ns,
+            "durationSeconds": round((launch_ended_ns - launch_ns) / 1e9, 6),
             "wallTimeoutSeconds": wall_timeout,
             "workerExitStatus": worker_status,
             "workerResult": worker_result,
@@ -2175,6 +2202,7 @@ def _supervise(args: argparse.Namespace) -> int:
                 adapter_dir=attempt.payload / "adapter",
             )
             worker_report_file = hash_file(worker_report_path, 2 * 1024 * 1024)
+            report["hostMemoryGuard"] = host_client.finalize(report["launch"])
             report["trainingReport"] = {
                 "relativePath": "payload/training-report.json",
                 "fileSha256": worker_report_file["sha256"],
@@ -2203,6 +2231,7 @@ def _supervise(args: argparse.Namespace) -> int:
                     "localEvaluationInputBindingSatisfied"
                 ]
             report["primaryCause"] = "SUCCESS"
+            terminal_cause = "SUCCESS"
             report["workerPayloadDisposition"] = "BOUND_UNATTESTED"
             exit_code = 0
         report["claimBoundary"] = (
@@ -2211,6 +2240,8 @@ def _supervise(args: argparse.Namespace) -> int:
             "receipt eligibility, publication, deployment, runtime health, or autonomy."
         )
     except (Exception, SupervisorInterrupted) as exc:  # noqa: BLE001 - terminal path
+        if host_guard is not None and isinstance(exc, host_guard.HostMemoryError):
+            terminal_cause = str(exc)
         if isinstance(exc, SupervisorInterrupted):
             terminal_cause = "SUPERVISOR_STOP_REQUESTED"
             interrupted_signal = exc.signum
@@ -2246,6 +2277,14 @@ def _supervise(args: argparse.Namespace) -> int:
             if publication_failure is not None:
                 report["evidencePublicationFailure"] = publication_failure
 
+    if host_client is not None and exit_code != 0:
+        try:
+            host_guard_status = host_client.abort(terminal_cause)
+        except (Exception, SupervisorInterrupted):
+            host_guard_status = {"state": "ABORT_EVIDENCE_UNAVAILABLE_NOT_ELIGIBLE"}
+        if report is not None:
+            report["hostMemoryGuard"] = host_guard_status
+
     if attempt is not None and report is None:
         emergency_report = {
             "schema": "szl.frontier-training-supervisor/v1",
@@ -2268,6 +2307,9 @@ def _supervise(args: argparse.Namespace) -> int:
         }
         if publication_failure is not None:
             emergency_report["evidencePublicationFailure"] = publication_failure
+        if host_guard_status is not None:
+            emergency_report["hostMemoryGuard"] = host_guard_status
+            emergency_report["state"] = "SUPERVISOR_TERMINATED_RUN_NO_COMPLETION_CLAIM"
         if interrupted_signal is not None:
             emergency_report["interruptionSignal"] = interrupted_signal
         try:
@@ -2291,7 +2333,7 @@ def _supervise(args: argparse.Namespace) -> int:
                     sort_keys=True,
                 )
             )
-        return TERMINAL_EXIT_CODES["EVIDENCE_DURABILITY_FAILED"]
+        return exit_code if host_guard_status is not None else TERMINAL_EXIT_CODES["EVIDENCE_DURABILITY_FAILED"]
     if attempt is None or report is None:
         print(
             json.dumps(
