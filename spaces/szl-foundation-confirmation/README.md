@@ -16,6 +16,28 @@ tags:
   - provenance
 ---
 
+<p><a href="https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab"><img src="https://raw.githubusercontent.com/szl-holdings/.github/main/profile/assets/szl/logos/szl_mark_holographic.svg" alt="SZL Holdings" width="112" /></a></p>
+
+# Foundation Confirmation
+
+Explore three sealed selector models in a bounded synthetic research workbench.
+
+**Artifact:** Synthetic selector-model demonstration · **Stage:** Registered benchmark FAILED
+
+[Explore in Command Lab](https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab) · [Build](https://github.com/szl-holdings/szl-forge) · [Evidence](https://github.com/szl-holdings/szl-forge/blob/bed8adf0e91f1506b81c8c27def6c9ca5aa7655e/spaces/szl-foundation-confirmation/README.md)
+
+## Before you use it
+
+- The clean-family utility regression remains above its registered threshold; exploratory trials do not change that result.
+- This is not a general language model, AGI demonstration, always-on service or training interface.
+
+<details>
+<summary>Technical details and original evidence</summary>
+
+The retained source below is exact and may contain historical observations. Its dates, use restrictions, licenses and evidence boundaries continue to apply.
+
+<!-- SZL-PRESERVED-TECHNICAL-BODY:START -->
+
 # Foundation Confirmation Workbench
 
 A Python service runs the three original trained selector models from the sealed Foundation Confirmation v0.4 research release. These are 26,792-parameter selectors for a synthetic experiment; this service is not a general language model or a demonstration of AGI.
@@ -37,3 +59,7 @@ Archive SHA-256: `869e318dd5f328205dd181ee836ef267bd2ae278f6430a9e8ddc661fbc689d
 `release.zip` is stored with Git LFS on both GitHub and the Hub. Its LFS pointer `oid sha256:` equals the frozen archive SHA-256 above; that equality is the integrity binding, checked by `scripts/lfs_archive_binding.py`, by the publisher before upload and after publication, and again by `app.py` on the real bytes. `.gitattributes` must keep `release.zip filter=lfs diff=lfs merge=lfs -text`. Never set `-filter` for `release.zip`: the Docker build then checks out the 132-byte pointer, the frozen-digest gate refuses it, and the Space fails to build. This is a build-integrity rule only; the registered benchmark result stays FAILED.
 
 Dependencies are locked with package hashes, including the official PyTorch CPU wheels. The Linux container uses Python 3.12 and runs as UID 1000 with the admitted release and source owned by root and read-only. The adapter wraps the unchanged sealed runtime; it does not expose its loopback HTTP server.
+
+<!-- SZL-PRESERVED-TECHNICAL-BODY:END -->
+
+</details>

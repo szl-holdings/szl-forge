@@ -14,6 +14,28 @@ datasets:
 short_description: Synthetic telemetry scoring with verified source binding.
 ---
 
+<p><a href="https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab"><img src="https://raw.githubusercontent.com/szl-holdings/.github/main/profile/assets/szl/logos/szl_mark_holographic.svg" alt="SZL Holdings" width="112" /></a></p>
+
+# OAC System Health Lab
+
+Explore a fixed synthetic operational telemetry model through bounded stateless inputs.
+
+**Artifact:** Synthetic telemetry demonstration · **Stage:** Research preview
+
+[Explore in Command Lab](https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab) · [Build](https://github.com/szl-holdings/szl-forge) · [Evidence](https://github.com/szl-holdings/szl-forge/blob/bed8adf0e91f1506b81c8c27def6c9ca5aa7655e/spaces/oac-system-health-lab/README.md)
+
+## Before you use it
+
+- Do not submit clinical or sensitive data; this is not a PHI detector or a clinical decision system.
+- No device connection, training, input persistence, receipt signing or medical authority is supplied.
+
+<details>
+<summary>Technical details and original evidence</summary>
+
+The retained source below is exact and may contain historical observations. Its dates, use restrictions, licenses and evidence boundaries continue to apply.
+
+<!-- SZL-PRESERVED-TECHNICAL-BODY:START -->
+
 # OAC System Health Lab
 
 A bounded, stateless, Python-standard-library **synthetic operational telemetry
@@ -167,3 +189,7 @@ they do not connect medical devices or validate a clinical workflow.
 Apache-2.0. The kernel, model and synthetic data retain their canonical license
 and provenance. No independent medical, safety, regulatory, performance,
 accessibility, or production certification is claimed.
+
+<!-- SZL-PRESERVED-TECHNICAL-BODY:END -->
+
+</details>

@@ -20,19 +20,38 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import candidate_lib as lib  # noqa: E402
 
 
+def response_only_labels(full, prompt, max_length):
+    """Require the exact rendered prompt prefix before assigning assistant loss.
+
+    Inputs are plain token-ID lists from the existing text-only encoder. A chat
+    template that renders a different generation prefix is unsupported here;
+    never guess a mask from its length or silently drop a row with no target.
+    """
+    if type(max_length) is not int or max_length <= 0:
+        raise ValueError("MASK_MAX_LENGTH_INVALID")
+    for ids in (full, prompt):
+        if type(ids) is not list or not ids or any(type(i) is not int or i < 0 for i in ids):
+            raise ValueError("MASK_TOKEN_IDS_INVALID")
+    if len(prompt) >= len(full) or full[:len(prompt)] != prompt:
+        raise ValueError("MASK_PROMPT_PREFIX_MISMATCH")
+    if max_length <= len(prompt):
+        raise ValueError("MASK_NO_ASSISTANT_TOKENS_AFTER_TRUNCATION")
+    clipped = full[:max_length]
+    labels = [-100] * len(prompt) + clipped[len(prompt):]
+    return clipped, labels, int(len(full) > max_length)
+
+
 def build_examples(rows, tok, max_length):
-    """Response-only loss: labels are -100 over the rendered prompt, loss lands on the assistant turn only."""
+    """Response-only loss on a verified prompt prefix; malformed rows fail closed."""
     import torch
     examples, truncated = [], 0
     for r in rows:
         _, full = lib.text_only_encode(tok, r["messages"], add_generation_prompt=False)
         _, prompt = lib.text_only_encode(tok, r["messages"][:-1], add_generation_prompt=True)
-        if len(full) > max_length:
-            full, truncated = full[:max_length], truncated + 1
-        labels = [-100] * min(len(prompt), len(full)) + full[min(len(prompt), len(full)):]
-        if all(x == -100 for x in labels):
-            continue
-        examples.append({"input_ids": torch.tensor(full), "labels": torch.tensor(labels),
+        full, labels, clipped = response_only_labels(full, prompt, max_length)
+        truncated += clipped
+        examples.append({"input_ids": torch.tensor(full, dtype=torch.long),
+                         "labels": torch.tensor(labels, dtype=torch.long),
                          "attention_mask": torch.ones(len(full), dtype=torch.long)})
     return examples, truncated
 
