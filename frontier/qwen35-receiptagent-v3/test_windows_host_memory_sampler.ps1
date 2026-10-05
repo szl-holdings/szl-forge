@@ -3,11 +3,53 @@
 param([Parameter(Mandatory = $true)][ValidatePattern('^[0-9a-f]{40}$')][string]$SourceRevision)
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+
+function Get-ValidatedNativeUtcStamp {
+    param(
+        [Parameter(Mandatory = $true)][string]$RawJson,
+        [DateTimeOffset]$Now = [DateTimeOffset]::UtcNow
+    )
+    $document = [System.Text.Json.JsonDocument]::Parse($RawJson)
+    try {
+        # ConvertFrom-Json may convert ISO strings to local DateTime values.
+        # Validate the native representation before that timezone conversion.
+        $stamp = $document.RootElement.GetProperty('observedAt').GetString()
+        if (-not $stamp -or (-not $stamp.EndsWith('Z') -and -not $stamp.EndsWith('+00:00'))) {
+            throw 'native timestamp has no explicit UTC offset'
+        }
+        $observed = [DateTimeOffset]::Parse($stamp, [Globalization.CultureInfo]::InvariantCulture)
+        if ([Math]::Abs(($Now - $observed).TotalSeconds) -gt 5 -or
+            $observed.Offset -ne [TimeSpan]::Zero) {
+            throw 'native timestamp is not fresh UTC'
+        }
+        return $stamp
+    }
+    finally { $document.Dispose() }
+}
+
+$referenceTime = [DateTimeOffset]::Parse('2026-01-01T12:00:00+00:00')
+foreach ($stamp in @('2026-01-01T12:00:00+00:00', '2026-01-01T12:00:00Z',
+                      '2026-01-01T12:00:05Z', '2026-01-01T11:59:55Z')) {
+    $rawCase = @{ observedAt = $stamp } | ConvertTo-Json -Compress
+    $retained = Get-ValidatedNativeUtcStamp -RawJson $rawCase -Now $referenceTime
+    if ($retained -cne $stamp) { throw 'native timestamp representation changed' }
+}
+foreach ($stamp in @('2026-01-01T07:00:00-05:00', '2026-01-01T12:00:06Z',
+                      '2026-01-01T11:59:54Z', '2026-01-01T12:00:00', 'invalid', $null)) {
+    $rejected = $false
+    try {
+        $rawCase = @{ observedAt = $stamp } | ConvertTo-Json -Compress
+        $null = Get-ValidatedNativeUtcStamp -RawJson $rawCase -Now $referenceTime
+    }
+    catch { $rejected = $true }
+    if (-not $rejected) { throw 'invalid native timestamp was accepted' }
+}
+
 $sampler = Join-Path $PSScriptRoot 'windows_host_memory_sampler.ps1'
 $samplerSha = (Get-FileHash -LiteralPath $sampler -Algorithm SHA256).Hash.ToLowerInvariant()
 $executables = @(
     (Join-Path $env:SystemRoot 'System32/WindowsPowerShell/v1.0/powershell.exe'),
-    (Get-Command pwsh -CommandType Application).Source
+    (Join-Path $PSHOME 'pwsh.exe')
 )
 foreach ($executable in $executables) {
     $runId = [Guid]::NewGuid().ToString('N')
@@ -55,9 +97,7 @@ foreach ($executable in $executables) {
             $row.nativeMonotonicFrequency -le 0) {
             throw 'native memory counters are inconsistent'
         }
-        $observed = [DateTimeOffset]::Parse($row.observedAt)
-        if ([Math]::Abs(([DateTimeOffset]::UtcNow - $observed).TotalSeconds) -gt 5 -or
-            $observed.Offset -ne [TimeSpan]::Zero) { throw 'native timestamp is not fresh UTC' }
+        $row.observedAt = Get-ValidatedNativeUtcStamp -RawJson $raw
         [ordered]@{
             schema = 'szl.windows-native-memory-control/v1'
             state = 'NATIVE_API_OBSERVER_VERIFIED'
