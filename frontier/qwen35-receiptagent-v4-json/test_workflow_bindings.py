@@ -16,7 +16,7 @@ class WorkflowBindingTests(unittest.TestCase):
         workflow = (ROOT / ".github/workflows/nemo-doctrine-gate.yml").read_text(encoding="utf-8")
         self.assertEqual(workflow.count('- "frontier/qwen35-receiptagent-v4-json/**"'), 2)
         self.assertIn("szl-nemo.git@f44b468a60c97978897bc610cf4729fc16b271af", workflow)
-        region = workflow.split("      - name: Gate ReceiptAgent v4 training references", 1)[1].split("      - name: Gate contract tests", 1)[0]
+        region = workflow.split("      - name: Gate ReceiptAgent v4 training references", 1)[1].split("      - name:", 1)[0]
         for text in ("set -euo pipefail", "jsonschema==4.26.0", "probe_nemo_binding.py", "curriculum_admission.py", "--check-conformance",
                      "--train frontier/qwen35-receiptagent-v4-json/train.jsonl", "--manifest",
                      "--nemo-source-root .nemo-v4-source"):
@@ -24,6 +24,54 @@ class WorkflowBindingTests(unittest.TestCase):
         for text in ("dev.jsonl", "heldout/test.jsonl", "continue-on-error", "secrets.", "train_candidate.py",
                      "PYTHONPATH", "szl-nemo @", "|| true"):
             self.assertNotIn(text, region)
+
+    def test_v4_report_redirection_preserves_blocking_gate_commands(self):
+        workflow = (ROOT / ".github/workflows/nemo-doctrine-gate.yml").read_text(encoding="utf-8")
+        region = workflow.split("      - name: Gate ReceiptAgent v4 training references", 1)[1].split("      - name:", 1)[0]
+        script = region.split("        run: |\n", 1)[1]
+        lines = [line.strip() for line in script.splitlines() if line.strip()]
+        self.assertEqual(lines, [
+            "set -euo pipefail",
+            'python -m pip install --disable-pip-version-check "jsonschema==4.26.0"',
+            'mkdir -p "$RUNNER_TEMP/v4-source-conformance"',
+            "python -B frontier/qwen35-receiptagent-v4-json/probe_nemo_binding.py \\",
+            "--nemo-source-root .nemo-v4-source \\",
+            '> "$RUNNER_TEMP/v4-source-conformance/numeric-probe.json"',
+            "python -B frontier/qwen35-receiptagent-v4-json/curriculum_admission.py \\",
+            "--check-conformance \\",
+            "--train frontier/qwen35-receiptagent-v4-json/train.jsonl \\",
+            "--manifest frontier/qwen35-receiptagent-v4-json/curriculum-manifest.json \\",
+            "--nemo-source-root .nemo-v4-source \\",
+            '> "$RUNNER_TEMP/v4-source-conformance/curriculum-conformance.json"',
+        ])
+        for text in ("continue-on-error", "||", "set +", "exit 0", "if:"):
+            self.assertNotIn(text, region)
+
+    def test_v4_upload_retains_only_two_reports_and_never_changes_gate_authority(self):
+        workflow = (ROOT / ".github/workflows/nemo-doctrine-gate.yml").read_text(encoding="utf-8")
+        marker = "      - name: Retain v4 source-conformance reports (not training authority)"
+        self.assertEqual(workflow.count(marker), 1)
+        region = workflow.split(marker, 1)[1].split("      - name:", 1)[0]
+        self.assertEqual([line.strip() for line in region.splitlines() if line.strip()], [
+            "if: always()",
+            "uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1",
+            "with:",
+            "name: v4-source-conformance-${{ github.run_id }}",
+            "path: |",
+            "${{ runner.temp }}/v4-source-conformance/numeric-probe.json",
+            "${{ runner.temp }}/v4-source-conformance/curriculum-conformance.json",
+            "if-no-files-found: error",
+            "retention-days: 30",
+        ])
+        for text in ("continue-on-error", "train.jsonl", "dev.jsonl", "heldout", "secrets.",
+                     "github.workspace", "include-hidden-files", "*"):
+            self.assertNotIn(text, region)
+        self.assertLess(workflow.index("      - name: Gate ReceiptAgent v4 training references"),
+                        workflow.index(marker))
+        readme = (HERE / "README.md").read_text(encoding="utf-8")
+        for text in ("numeric-probe.json", "curriculum-conformance.json", "30 days",
+                     "no curriculum", "not independent witnessing"):
+            self.assertIn(text, readme)
 
     def test_v4_uses_separate_immutable_source_checkout(self):
         workflow = (ROOT / ".github/workflows/nemo-doctrine-gate.yml").read_text(encoding="utf-8")

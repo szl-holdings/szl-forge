@@ -84,13 +84,27 @@ jobs:
         run: |
           set -euo pipefail
           python -m pip install --disable-pip-version-check "jsonschema==4.26.0"
+          mkdir -p "$RUNNER_TEMP/v4-source-conformance"
           python -B frontier/qwen35-receiptagent-v4-json/probe_nemo_binding.py \
-            --nemo-source-root .nemo-v4-source
+            --nemo-source-root .nemo-v4-source \
+            > "$RUNNER_TEMP/v4-source-conformance/numeric-probe.json"
           python -B frontier/qwen35-receiptagent-v4-json/curriculum_admission.py \
             --check-conformance \
             --train frontier/qwen35-receiptagent-v4-json/train.jsonl \
             --manifest frontier/qwen35-receiptagent-v4-json/curriculum-manifest.json \
-            --nemo-source-root .nemo-v4-source
+            --nemo-source-root .nemo-v4-source \
+            > "$RUNNER_TEMP/v4-source-conformance/curriculum-conformance.json"
+
+      - name: Retain v4 source-conformance reports (not training authority)
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: v4-source-conformance-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/v4-source-conformance/numeric-probe.json
+            ${{ runner.temp }}/v4-source-conformance/curriculum-conformance.json
+          if-no-files-found: error
+          retention-days: 30
 
       - name: Gate contract tests
         run: |
