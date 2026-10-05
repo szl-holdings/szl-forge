@@ -95,6 +95,74 @@ def simulated_gate_modules(raw, generic_overrides=None, nemo_overrides=None, mut
             "nemo_doctrine_gate.py": SimpleNamespace(_IMPORT_ERROR=None, gate_dataset=doctrine)}
 
 
+class ReadOnceMetadataTests(unittest.TestCase):
+    """SIMULATED metadata races; no curriculum or kernel is loaded."""
+
+    def read_with_metadata(self, *, opened_changes=None, after_changes=None,
+                           current_changes=None):
+        path = Path(os.path.abspath("synthetic-reader.jsonl"))
+        fields = dict(st_mode=0o100600, st_file_attributes=0, st_dev=1,
+                      st_ino=2, st_size=7, st_mtime_ns=500, st_ctime_ns=100,
+                      st_nlink=1)
+        before = SimpleNamespace(**fields)
+        # Windows can expose creation time through lstat and change time through
+        # fstat. Stable values from these different clocks must not be equated.
+        descriptor_fields = {**fields, "st_ctime_ns": 200}
+        opened = SimpleNamespace(**{**descriptor_fields, **(opened_changes or {})})
+        after = SimpleNamespace(**{**descriptor_fields, **(after_changes or {})})
+        current = SimpleNamespace(**{**fields, **(current_changes or {})})
+        target_reads = 0
+
+        def metadata(candidate):
+            nonlocal target_reads
+            if candidate == path:
+                target_reads += 1
+                return current if target_reads == 3 else before
+            return SimpleNamespace(st_mode=0o040700, st_file_attributes=0)
+
+        with patch.object(Path, "lstat", metadata), \
+             patch.object(admission.os, "open", return_value=42), \
+             patch.object(admission.os, "fstat", side_effect=[opened, after]), \
+             patch.object(admission.os, "fdopen", return_value=io.BytesIO(b"bounded")), \
+             patch.object(admission.os, "close") as close:
+            try:
+                return admission._read_once(path, 7)
+            finally:
+                close.assert_called_once_with(42)
+
+    def test_stable_distinct_path_and_descriptor_ctime_are_accepted(self):
+        self.assertEqual(self.read_with_metadata(), b"bounded")
+
+    def test_descriptor_ctime_change_is_still_rejected(self):
+        with self.assertRaisesRegex(admission.AdmissionError, "changed during read"):
+            self.read_with_metadata(after_changes={"st_ctime_ns": 201})
+
+    def test_path_ctime_change_is_still_rejected(self):
+        # Match the descriptor clock deliberately: cross-API equality must not
+        # conceal a path timestamp mutation since the original lstat call.
+        with self.assertRaisesRegex(admission.AdmissionError, "changed after read"):
+            self.read_with_metadata(current_changes={"st_ctime_ns": 200})
+
+    def test_path_replacement_or_metadata_change_is_still_rejected(self):
+        for field, value in (("st_dev", 9), ("st_ino", 9), ("st_size", 8),
+                             ("st_mtime_ns", 501), ("st_nlink", 2)):
+            with self.subTest(field=field), self.assertRaisesRegex(
+                    admission.AdmissionError, "changed after read"):
+                self.read_with_metadata(current_changes={field: value})
+
+    def test_descriptor_size_or_mtime_change_is_still_rejected(self):
+        for field, value in (("st_size", 8), ("st_mtime_ns", 501)):
+            with self.subTest(field=field), self.assertRaisesRegex(
+                    admission.AdmissionError, "changed during read"):
+                self.read_with_metadata(after_changes={field: value})
+
+    def test_replacement_before_open_is_still_rejected(self):
+        for field in ("st_dev", "st_ino"):
+            with self.subTest(field=field), self.assertRaisesRegex(
+                    admission.AdmissionError, "changed before read"):
+                self.read_with_metadata(opened_changes={field: 9})
+
+
 class AdmissionTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
