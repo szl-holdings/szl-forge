@@ -1,14 +1,17 @@
 # Linux CPU test closure; exact versions, not an artifact hash lock.
 # Pairs follow their parents: pydantic 2.13.5 pins pydantic-core 2.46.5 and
-# sympy 1.14.0 (latest) caps mpmath <1.4. Verified by the hosted resolver.
+# sympy 1.14.0 caps mpmath <1.4. Keep the separately installed CPU Torch build.
+# This updated closure requires fresh hosted qualification.
 # Production platform and supply-chain qualification remain separate.
-torch==2.14.1
+torch==2.14.0+cpu
 safetensors==0.8.0
 # Required by Safetensors' PyTorch serialization path, not just by tests.
 numpy==2.4.6
 fastapi==0.142.2
+# Required by FastAPI 0.142.2; freeze the newly introduced runtime dependency.
+opentelemetry-api==1.45.0
 pydantic==2.13.5
-pydantic-core==2.49.0
+pydantic-core==2.46.5
 httpx==0.28.1
 httpcore==1.0.9
 h11==0.16.0
@@ -33,7 +36,7 @@ filelock==4.0.9
 fsspec==2026.9.0
 networkx==3.6.1
 sympy==1.14.0
-mpmath==1.4.1
+mpmath==1.3.0
 setuptools==84.0.0
 huggingface-hub==2.1.1
 PyYAML==6.0.3
