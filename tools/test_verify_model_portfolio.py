@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import copy
+from contextlib import redirect_stdout
+import io
 import json
 import subprocess
 import sys
@@ -359,6 +361,41 @@ class EstateReconciliationTests(unittest.TestCase):
                     verifier.reconcile_estate_snapshot(self.document, snapshot)
                 self.assertNotIn(private_id, str(caught.exception))
 
+    def test_census_name_grammar_rejects_malformed_public_ids(self) -> None:
+        bad_ids = (
+            "SZLHOLDINGS/?fake",
+            "SZLHOLDINGS/a..b",
+            "SZLHOLDINGS/a.",
+            "SZLHOLDINGS/a-",
+            "SZLHOLDINGS/.foo",
+            "SZLHOLDINGS/-foo",
+            "SZLHOLDINGS/a--b",
+            "SZLHOLDINGS/model.git",
+            "SZLHOLDINGS/" + "x" * 97,
+            "SZLHOLDINGS/a\u200bb",
+            "SZL?HOLDINGS/model",
+        )
+        for bad_id in bad_ids:
+            with self.subTest(bad_id=bad_id):
+                with self.assertRaises(verifier.PortfolioError) as caught:
+                    verifier.reconcile_estate_snapshot(
+                        self.document, [self.row(bad_id)]
+                    )
+                self.assertNotIn(bad_id, str(caught.exception))
+
+    def test_coverage_label_is_not_file_path_evidence(self) -> None:
+        result = verifier.reconcile_estate_snapshot(
+            self.document, [self.row(self.document["artifacts"][0]["repo_id"])]
+        )
+        self.assertIn("Caller-supplied", result["evidence_boundary"])
+        self.assertIn("no file-path or file-byte validation", result["evidence_boundary"])
+        self.assertNotIn("listed file paths", result["evidence_boundary"])
+        self.assertEqual(
+            "LISTED",
+            result["observed_public_models"][0]["caller_reported_files_coverage"],
+        )
+        self.assertNotIn("files_coverage", result["observed_public_models"][0])
+
     def test_raw_json_duplicate_privacy_key_fails_before_reconciliation(self) -> None:
         private_id = "SZLHOLDINGS/private-evidence-secret"
         with tempfile.TemporaryDirectory() as directory:
@@ -386,7 +423,7 @@ class EstateReconciliationTests(unittest.TestCase):
             completed = subprocess.run(command, capture_output=True, text=True, check=False)
         self.assertEqual(1, completed.returncode)
         self.assertNotIn("private-evidence-secret", completed.stdout)
-        self.assertIn("estate snapshot is unavailable", completed.stdout)
+        self.assertIn("ESTATE_PORTFOLIO_VERIFICATION_FAILED", completed.stdout)
 
     def test_oversized_snapshot_fails_before_json_parse(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -399,10 +436,11 @@ class EstateReconciliationTests(unittest.TestCase):
 
     def test_optional_cli_does_not_change_catalog_ok_or_default_shape(self) -> None:
         public_id = "SZLHOLDINGS/unreviewed-research-model"
+        curated_id = self.document["artifacts"][0]["repo_id"]
         with tempfile.TemporaryDirectory() as directory:
             snapshot_path = Path(directory) / "snapshot.json"
             snapshot_path.write_text(
-                json.dumps([self.row(public_id)]), encoding="utf-8"
+                json.dumps([self.row(public_id), self.row(curated_id)]), encoding="utf-8"
             )
             command = [sys.executable, "-B", str(verifier.ROOT / "tools" / "verify_model_portfolio.py"), "--offline"]
             default = subprocess.run(command, capture_output=True, text=True, check=False)
@@ -418,6 +456,10 @@ class EstateReconciliationTests(unittest.TestCase):
         enriched_report = json.loads(enriched.stdout)
         self.assertNotIn("estate_reconciliation", default_report)
         self.assertTrue(enriched_report["ok"])
+        self.assertEqual("OBSERVED_PUBLIC_CURATED_SUBSET", enriched_report["catalog_scope"])
+        self.assertEqual(1, enriched_report["portfolio_size"])
+        self.assertEqual(16, enriched_report["curated_catalog_count"])
+        self.assertEqual(15, enriched_report["curated_skipped_count"])
         self.assertEqual(
             64, len(enriched_report["estate_reconciliation"]["snapshot_sha256"])
         )
@@ -427,6 +469,94 @@ class EstateReconciliationTests(unittest.TestCase):
                 "unreviewed_observed_public_models"
             ][0]["repo_id"],
         )
+
+    def test_snapshot_mode_redacts_private_curated_id_in_stdout_and_report(self) -> None:
+        private_id = "SZLHOLDINGS/private-evidence-secret"
+        document = copy.deepcopy(self.document)
+        document["artifacts"] = document["artifacts"][:2]
+        document["artifacts"][0]["repo_id"] = private_id
+        document["artifacts"][0]["local_receipt_dir"] = "private-evidence-secret"
+        document["artifacts"][1].pop("local_receipt_dir", None)
+        public_id = document["artifacts"][1]["repo_id"]
+        with tempfile.TemporaryDirectory() as directory:
+            portfolio_path = Path(directory) / "portfolio.json"
+            snapshot_path = Path(directory) / "snapshot.json"
+            report_path = Path(directory) / "report.json"
+            portfolio_path.write_text(json.dumps(document), encoding="utf-8")
+            snapshot_path.write_text(
+                json.dumps([self.row(private_id, private=True), self.row(public_id)]),
+                encoding="utf-8",
+            )
+            command = [
+                sys.executable, "-B", str(verifier.ROOT / "tools" / "verify_model_portfolio.py"),
+                "--offline", "--portfolio", str(portfolio_path),
+                "--estate-snapshot", str(snapshot_path), "--report", str(report_path),
+            ]
+            completed = subprocess.run(command, capture_output=True, text=True, check=False)
+            report_text = report_path.read_text(encoding="utf-8")
+        self.assertEqual(0, completed.returncode, completed.stdout)
+        self.assertNotIn(private_id, completed.stdout)
+        self.assertNotIn(private_id, report_text)
+        report = json.loads(report_text)
+        self.assertEqual(1, report["portfolio_size"])
+        self.assertEqual(2, report["curated_catalog_count"])
+        self.assertEqual(1, report["curated_skipped_count"])
+        self.assertEqual(1, report["estate_reconciliation"]["counts"]["curated_known_private_excluded"])
+
+    def test_snapshot_mode_restricts_live_build_to_observed_public_subset(self) -> None:
+        private_id = "SZLHOLDINGS/private-evidence-secret"
+        document = copy.deepcopy(self.document)
+        document["artifacts"] = document["artifacts"][:2]
+        document["artifacts"][0]["repo_id"] = private_id
+        public_id = document["artifacts"][1]["repo_id"]
+        seen: list[str] = []
+
+        def fake_build(public_document: dict, *, live: bool) -> dict:
+            self.assertTrue(live)
+            seen.extend(item["repo_id"] for item in public_document["artifacts"])
+            return {"ok": True, "portfolio_size": len(seen), "live_artifacts": []}
+
+        with tempfile.TemporaryDirectory() as directory:
+            portfolio_path = Path(directory) / "portfolio.json"
+            snapshot_path = Path(directory) / "snapshot.json"
+            portfolio_path.write_text(json.dumps(document), encoding="utf-8")
+            snapshot_path.write_text(
+                json.dumps([self.row(private_id, private=True), self.row(public_id)]),
+                encoding="utf-8",
+            )
+            output = io.StringIO()
+            with mock.patch.object(verifier, "build_report", side_effect=fake_build), \
+                 mock.patch.object(sys, "argv", [
+                     "verify_model_portfolio.py", "--live", "--portfolio", str(portfolio_path),
+                     "--estate-snapshot", str(snapshot_path),
+                 ]), redirect_stdout(output):
+                self.assertEqual(0, verifier.main())
+        self.assertEqual([public_id], seen)
+        self.assertNotIn(private_id, output.getvalue())
+
+    def test_snapshot_mode_private_only_or_bad_portfolio_fails_without_id(self) -> None:
+        private_id = "SZLHOLDINGS/private-evidence-secret"
+        document = copy.deepcopy(self.document)
+        document["artifacts"] = document["artifacts"][:1]
+        document["artifacts"][0]["repo_id"] = private_id
+        with tempfile.TemporaryDirectory() as directory:
+            portfolio_path = Path(directory) / "portfolio.json"
+            snapshot_path = Path(directory) / "snapshot.json"
+            portfolio_path.write_text(json.dumps(document), encoding="utf-8")
+            snapshot_path.write_text(json.dumps([self.row(private_id, private=True)]), encoding="utf-8")
+            command = [
+                sys.executable, "-B", str(verifier.ROOT / "tools" / "verify_model_portfolio.py"),
+                "--offline", "--portfolio", str(portfolio_path),
+                "--estate-snapshot", str(snapshot_path),
+            ]
+            private_only = subprocess.run(command, capture_output=True, text=True, check=False)
+            document["artifacts"][0]["hub_revision"] = "not-a-revision"
+            portfolio_path.write_text(json.dumps(document), encoding="utf-8")
+            malformed = subprocess.run(command, capture_output=True, text=True, check=False)
+        for completed in (private_only, malformed):
+            self.assertEqual(1, completed.returncode)
+            self.assertNotIn(private_id, completed.stdout)
+            self.assertIn("ESTATE_PORTFOLIO_VERIFICATION_FAILED", completed.stdout)
 
 
 class PortfolioArtifactMetadataTests(unittest.TestCase):

@@ -7,6 +7,7 @@ import argparse
 import base64
 import hashlib
 import json
+import re
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -21,6 +22,8 @@ RECEIPT_FILES = (
     "eval_receipt.signed.json",
 )
 MAX_ESTATE_SNAPSHOT_BYTES = 8 * 1024 * 1024
+# Strict ASCII subset of the Hub validator; never echo rejected IDs in reports.
+ESTATE_REPO_ID = re.compile(r"[A-Za-z0-9_.-]{1,96}/[A-Za-z0-9_.-]{1,96}\Z")
 
 
 class PortfolioError(RuntimeError):
@@ -220,9 +223,15 @@ def reconcile_estate_snapshot(
         repo_type = row.get("type")
         if (
             not isinstance(repo_id, str)
-            or repo_id.count("/") != 1
-            or not all(repo_id.split("/"))
-            or any(ord(character) < 33 or ord(character) == 127 for character in repo_id)
+            or ESTATE_REPO_ID.fullmatch(repo_id) is None
+            or any(
+                part.startswith((".", "-"))
+                or part.endswith((".", "-"))
+                or ".." in part
+                or "--" in part
+                or part.lower().endswith(".git")
+                for part in repo_id.split("/")
+            )
             or not isinstance(owner, str)
             or owner != repo_id.split("/", 1)[0]
             or not isinstance(repo_type, str)
@@ -245,7 +254,7 @@ def reconcile_estate_snapshot(
             observed[repo_id] = {
                 "repo_id": repo_id,
                 "observed_revision": row["sha"],
-                "files_coverage": row["files_coverage"],
+                "caller_reported_files_coverage": row["files_coverage"],
             }
 
     # The canonical portfolio is public, but do not echo an ID if this
@@ -285,8 +294,9 @@ def reconcile_estate_snapshot(
             "not observed does not mean absent, and unobserved visibility is unknown."
         ),
         "evidence_boundary": (
-            "Repository metadata and listed file paths at recorded revisions only; "
-            "no file-byte, loader, inference, training, evaluation, or promotion check."
+            "Caller-supplied repository identities, revisions, and file-coverage labels "
+            "only; no file-path or file-byte validation, loader, inference, training, "
+            "evaluation, or promotion check."
         ),
         "pin_relationship": (
             "NOT_COMPARABLE"
@@ -914,19 +924,49 @@ def main() -> int:
             if args.estate_snapshot is not None
             else None
         )
-        report = build_report(document, live=args.live)
         if snapshot_and_hash is not None:
             snapshot, snapshot_sha256 = snapshot_and_hash
-            report["estate_reconciliation"] = reconcile_estate_snapshot(
-                document, snapshot
+            try:
+                reconciliation = reconcile_estate_snapshot(document, snapshot)
+            except Exception:  # private catalog IDs may appear in validation errors
+                raise PortfolioError("estate snapshot reconciliation failed") from None
+            public_ids = {
+                item["repo_id"] for item in reconciliation["observed_public_models"]
+            }
+            public_document = {
+                **document,
+                "artifacts": [
+                    item for item in document["artifacts"]
+                    if item["repo_id"] in public_ids
+                ],
+            }
+            if not public_document["artifacts"]:
+                raise PortfolioError("no curated public model observed in estate snapshot")
+            report = build_report(public_document, live=args.live)
+            report["catalog_scope"] = "OBSERVED_PUBLIC_CURATED_SUBSET"
+            report["catalog_scope_note"] = (
+                "This report checks only curated IDs observed public in the supplied "
+                "snapshot; unobserved visibility and full catalog status are UNKNOWN."
             )
-            report["estate_reconciliation"]["snapshot_sha256"] = snapshot_sha256
+            report["curated_catalog_count"] = reconciliation["counts"]["curated_artifacts"]
+            report["curated_skipped_count"] = (
+                reconciliation["counts"]["curated_artifacts"]
+                - report["portfolio_size"]
+            )
+            report["estate_reconciliation"] = reconciliation
+            reconciliation["snapshot_sha256"] = snapshot_sha256
+        else:
+            report = build_report(document, live=args.live)
     except Exception as exc:  # noqa: BLE001 - terminal verifier must emit evidence
         report = {
             "schema": "szl.model-kernel-portfolio-report/v1",
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "ok": False,
-            "fatal": f"{type(exc).__name__}: {exc}",
+            "fatal": (
+                "ESTATE_PORTFOLIO_VERIFICATION_FAILED"
+                if args.estate_snapshot is not None
+                else f"{type(exc).__name__}: {exc}"
+            ),
         }
     rendered = json.dumps(report, indent=2, sort_keys=True) + "\n"
     if args.report:
