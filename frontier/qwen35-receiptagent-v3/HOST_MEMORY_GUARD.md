@@ -125,6 +125,12 @@ bounded exit when the controlling pipe closes. The emitted records explicitly
 state that training, WSL interop, owner worker containment, full-run capacity,
 and model qualification have not been proved by those controls.
 
+Run the native control with PowerShell 7. It uses that running host's
+`pwsh.exe`, so duplicate installations on PATH cannot combine into an invalid
+executable name. Timestamp checks use the original JSON string and require
+explicit UTC within five seconds; PowerShell's automatic conversion to the
+machine's local timezone does not change the native evidence.
+
 Before an owner training retry is considered cleared, retain actual evidence
 from the intended Windows/WSL host for all of the following:
 
