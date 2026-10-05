@@ -95,6 +95,11 @@ def simulated_gate_modules(raw, generic_overrides=None, nemo_overrides=None, mut
             "nemo_doctrine_gate.py": SimpleNamespace(_IMPORT_ERROR=None, gate_dataset=doctrine)}
 
 
+def simulated_kernel_context(*args, **kwargs):
+    """Only for report/snapshot unit tests, never source-provenance evidence."""
+    return contextlib.nullcontext(SimpleNamespace(provenance={"evidence_class": "SIMULATED"}))
+
+
 class ReadOnceMetadataTests(unittest.TestCase):
     """SIMULATED metadata races; no curriculum or kernel is loaded."""
 
@@ -333,7 +338,8 @@ class AdmissionTests(unittest.TestCase):
             train.write_bytes(self.raw)
             manifest.write_bytes(contract.canonical_json(self.manifest).encode("utf-8"))
             modules = simulated_gate_modules(self.raw)
-            with patch.object(admission, "_load_gate", side_effect=modules.__getitem__), \
+            with patch.object(admission.nemo_binding, "load_kernel", side_effect=simulated_kernel_context), \
+                 patch.object(admission, "_load_gate", side_effect=lambda name, kernel=None: modules[name]), \
                  patch.object(admission, "_verify_doctrine_receipts"), \
                  patch.object(admission, "MANIFEST_SHA256", hashlib.sha256(manifest.read_bytes()).hexdigest()), \
                  patch.object(admission, "_read_once", side_effect=record):
@@ -345,6 +351,7 @@ class AdmissionTests(unittest.TestCase):
             self.assertIs(report[key], False)
         self.assertTrue(report["contract_conforms"])
         self.assertTrue(report["nemo_valid"])
+        self.assertEqual(report["nemo_source_binding"], {"evidence_class": "SIMULATED"})
         self.assertTrue(opened)
 
     def test_missing_kernel_is_not_ready_without_green_conformance_authority(self):
@@ -425,12 +432,16 @@ class AdmissionTests(unittest.TestCase):
                             {"violations": [{}]}, {"dataset_sha256": "sha256:" + "0" * 64})
         for changes in generic_changes:
             modules = simulated_gate_modules(self.raw, generic_overrides=changes)
-            with self.subTest(generic=changes), patch.object(admission, "_load_gate", side_effect=modules.__getitem__):
+            with self.subTest(generic=changes), \
+                 patch.object(admission.nemo_binding, "load_kernel", side_effect=simulated_kernel_context), \
+                 patch.object(admission, "_load_gate", side_effect=lambda name, kernel=None: modules[name]):
                 with self.assertRaises(admission.AdmissionError):
                     admission.run_gates(self.raw)
         for changes in doctrine_changes:
             modules = simulated_gate_modules(self.raw, nemo_overrides=changes)
-            with self.subTest(doctrine=changes), patch.object(admission, "_load_gate", side_effect=modules.__getitem__):
+            with self.subTest(doctrine=changes), \
+                 patch.object(admission.nemo_binding, "load_kernel", side_effect=simulated_kernel_context), \
+                 patch.object(admission, "_load_gate", side_effect=lambda name, kernel=None: modules[name]):
                 with self.assertRaises(admission.AdmissionError):
                     admission.run_gates(self.raw)
 
@@ -438,7 +449,8 @@ class AdmissionTests(unittest.TestCase):
         modules = simulated_gate_modules(self.raw, mutate=lambda path: path.write_bytes(b"changed"))
         doctrine = modules["nemo_doctrine_gate.py"].gate_dataset
         with patch.object(modules["nemo_doctrine_gate.py"], "gate_dataset", wraps=doctrine) as gate, \
-             patch.object(admission, "_load_gate", side_effect=modules.__getitem__):
+             patch.object(admission.nemo_binding, "load_kernel", side_effect=simulated_kernel_context), \
+             patch.object(admission, "_load_gate", side_effect=lambda name, kernel=None: modules[name]):
             with self.assertRaises(admission.AdmissionError):
                 admission.run_gates(self.raw)
         gate.assert_not_called()
@@ -446,7 +458,8 @@ class AdmissionTests(unittest.TestCase):
     def test_missing_nemo_dependency_not_ready(self):
         modules = simulated_gate_modules(self.raw)
         modules["nemo_doctrine_gate.py"]._IMPORT_ERROR = ImportError("SIMULATED missing kernel")
-        with patch.object(admission, "_load_gate", side_effect=modules.__getitem__):
+        with patch.object(admission.nemo_binding, "load_kernel", side_effect=simulated_kernel_context), \
+             patch.object(admission, "_load_gate", side_effect=lambda name, kernel=None: modules[name]):
             with self.assertRaises(admission.GateNotReady):
                 admission.run_gates(self.raw)
 
@@ -475,8 +488,10 @@ class AdmissionTests(unittest.TestCase):
                   "receipt_chain_tip": "SIMULATED-tip",
                   "kernel": {"repo": "https://github.com/szl-holdings/szl-nemo",
                              "rule_version": "doctrine-v11/R1-R5"}}
-        with patch.dict(sys.modules, {"szl_nemo.engine": engine, "szl_nemo.receipt": receipt_module}):
-            admission._verify_doctrine_receipts(report, self.raw)
+        kernel = SimpleNamespace(input_hash=engine.input_hash,
+                                 verify_chain=lambda receipts: receipt_module.verify_chain(receipts))
+        with patch.dict(sys.modules, {"szl_nemo.engine": None, "szl_nemo.receipt": None}):
+            admission._verify_doctrine_receipts(report, self.raw, kernel)
             for mutate in (lambda value: value.update(receipt_chain_tip="wrong"),
                            lambda value: value.update(receipt_chain=value["receipt_chain"][:-1]),
                            lambda value: value["receipt_chain"][0]["decision"].update(input_hash="wrong"),
@@ -485,10 +500,29 @@ class AdmissionTests(unittest.TestCase):
                 value = copy.deepcopy(report)
                 mutate(value)
                 with self.assertRaises(admission.AdmissionError):
-                    admission._verify_doctrine_receipts(value, self.raw)
+                    admission._verify_doctrine_receipts(value, self.raw, kernel)
             receipt_module.verify_chain = lambda receipts: False
             with self.assertRaises(admission.AdmissionError):
-                admission._verify_doctrine_receipts(report, self.raw)
+                admission._verify_doctrine_receipts(report, self.raw, kernel)
+
+    def test_source_root_is_required_before_loading_gates(self):
+        with patch.object(admission, "_load_gate") as load:
+            with self.assertRaises(admission.GateNotReady):
+                admission.run_gates(self.raw)
+        load.assert_not_called()
+
+    def test_source_drift_is_not_ready_or_valid_conformance(self):
+        with patch.object(admission.nemo_binding, "load_kernel",
+                          side_effect=admission.nemo_binding.BindingError("SIMULATED drift")), \
+             patch.object(admission, "_load_gate") as load:
+            with self.assertRaises(admission.AdmissionError) as caught:
+                admission.run_gates(self.raw, Path("SIMULATED-source"))
+        self.assertNotIsInstance(caught.exception, admission.GateNotReady)
+        load.assert_not_called()
+
+    def test_nemo_wrapper_cannot_use_ambient_kernel_without_binding(self):
+        with self.assertRaises(admission.GateNotReady):
+            admission._load_gate("nemo_doctrine_gate.py")
 
     def test_read_once_reparse_point_is_rejected_before_file_open(self):
         metadata = SimpleNamespace(st_mode=0o100600, st_file_attributes=0x400)
