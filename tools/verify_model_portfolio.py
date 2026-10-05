@@ -7,6 +7,7 @@ import argparse
 import base64
 import hashlib
 import json
+import re
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -20,6 +21,9 @@ RECEIPT_FILES = (
     "training_receipt.signed.json",
     "eval_receipt.signed.json",
 )
+MAX_ESTATE_SNAPSHOT_BYTES = 8 * 1024 * 1024
+# Strict ASCII subset of the Hub validator; never echo rejected IDs in reports.
+ESTATE_REPO_ID = re.compile(r"[A-Za-z0-9_.-]{1,96}/[A-Za-z0-9_.-]{1,96}\Z")
 
 
 class PortfolioError(RuntimeError):
@@ -181,6 +185,187 @@ def validate_portfolio(document: dict[str, Any]) -> list[str]:
                     f"{artifact['repo_id']}: invalid expected weight digest"
                 )
     return repo_ids
+
+
+def reconcile_estate_snapshot(
+    document: dict[str, Any], snapshot: Any
+) -> dict[str, Any]:
+    """Compare the curated catalog with a bounded HF inventory observation.
+
+    An audit-script repository array has no independently validated scope
+    contract. Even a well-formed array cannot prove that its owner listing is
+    complete, current, or authorized for model promotion. This function makes
+    no provider calls and never includes private repository IDs in its report.
+    """
+
+    validate_portfolio(document)
+    if not isinstance(snapshot, list):
+        raise PortfolioError("estate snapshot must be a JSON array")
+
+    def immutable_revision(value: Any) -> bool:
+        return (
+            isinstance(value, str)
+            and len(value) == 40
+            and all(character in "0123456789abcdef" for character in value)
+        )
+
+    observed: dict[str, dict[str, str]] = {}
+    known_private_models: set[str] = set()
+    seen: set[tuple[str, str]] = set()
+    for index, row in enumerate(snapshot):
+        # Deliberately omit repository IDs from errors: the input may contain
+        # private models, while the resulting report can be published.
+        label = f"estate snapshot entry {index}"
+        if not isinstance(row, dict):
+            raise PortfolioError(f"{label} must be an object")
+        repo_id = row.get("id")
+        owner = row.get("owner")
+        repo_type = row.get("type")
+        if (
+            not isinstance(repo_id, str)
+            or ESTATE_REPO_ID.fullmatch(repo_id) is None
+            or any(
+                part.startswith((".", "-"))
+                or part.endswith((".", "-"))
+                or ".." in part
+                or "--" in part
+                or part.lower().endswith(".git")
+                for part in repo_id.split("/")
+            )
+            or not isinstance(owner, str)
+            or owner != repo_id.split("/", 1)[0]
+            or not isinstance(repo_type, str)
+            or repo_type not in {"model", "dataset", "space"}
+            or type(row.get("private")) is not bool
+            or not immutable_revision(row.get("sha"))
+            or not immutable_revision(row.get("files_revision"))
+            or row["files_revision"] != row["sha"]
+            or not isinstance(row.get("files_coverage"), str)
+            or row.get("files_coverage") not in {"LISTED", "EXACT_REVISION"}
+        ):
+            raise PortfolioError(f"{label} has invalid identity or revision evidence")
+        key = (repo_type, repo_id)
+        if key in seen:
+            raise PortfolioError(f"{label} duplicates a repository of the same type")
+        seen.add(key)
+        if repo_type == "model" and row["private"]:
+            known_private_models.add(repo_id)
+        if owner == "SZLHOLDINGS" and repo_type == "model" and not row["private"]:
+            observed[repo_id] = {
+                "repo_id": repo_id,
+                "observed_revision": row["sha"],
+                "caller_reported_files_coverage": row["files_coverage"],
+            }
+
+    # The canonical portfolio is public, but do not echo an ID if this
+    # observation explicitly marks the matching model private.
+    all_curated = {item["repo_id"]: item for item in document["artifacts"]}
+    curated = {
+        item["repo_id"]: item
+        for item in document["artifacts"]
+        if item["repo_id"] not in known_private_models
+    }
+    overlap_ids = sorted(observed.keys() & curated.keys())
+    unreviewed_ids = sorted(observed.keys() - curated.keys())
+    not_observed_ids = sorted(curated.keys() - observed.keys())
+    overlapping: list[dict[str, Any]] = []
+    revision_differences: list[dict[str, str]] = []
+    for repo_id in overlap_ids:
+        pin = curated[repo_id].get("hub_revision")
+        item = {**observed[repo_id], "pinned_revision": pin}
+        if pin is None:
+            item["pin_comparison"] = "NO_PIN"
+        elif pin == observed[repo_id]["observed_revision"]:
+            item["pin_comparison"] = "MATCH_AT_SNAPSHOT"
+        else:
+            item["pin_comparison"] = "OBSERVED_REVISION_DIFFERS_FROM_PIN"
+            revision_differences.append({
+                "repo_id": repo_id,
+                "pinned_revision": pin,
+                "observed_revision": observed[repo_id]["observed_revision"],
+            })
+        overlapping.append(item)
+
+    return {
+        "schema": "szl.model-portfolio-estate-reconciliation/v1",
+        "scope_completeness": "UNKNOWN",
+        "scope_reason": (
+            "A repository JSON array has no validated owner-listing scope contract; "
+            "not observed does not mean absent, and unobserved visibility is unknown."
+        ),
+        "evidence_boundary": (
+            "Caller-supplied repository identities, revisions, and file-coverage labels "
+            "only; no file-path or file-byte validation, loader, inference, training, "
+            "evaluation, or promotion check."
+        ),
+        "pin_relationship": (
+            "NOT_COMPARABLE"
+            if not any(curated[repo_id].get("hub_revision") for repo_id in overlap_ids)
+            else "OBSERVED_REVISION_DIFFERS_FROM_PIN_AT_SNAPSHOT"
+            if revision_differences
+            else "NO_DIFFERENCE_OBSERVED"
+        ),
+        "pin_relationship_note": (
+            "An observed repository revision can differ from an intentionally "
+            "immutable release pin; this is not evidence of release drift or degradation."
+        ),
+        "counts": {
+            "observed_public_models": len(observed),
+            "curated_artifacts": len(all_curated),
+            "curated_known_private_excluded": len(all_curated) - len(curated),
+            "curated_overlapping": len(overlap_ids),
+            "unreviewed_observed_public_models": len(unreviewed_ids),
+            "curated_not_observed": len(not_observed_ids),
+            "observed_revision_differs_from_pin": len(revision_differences),
+            "overlapping_without_pin": sum(
+                curated[repo_id].get("hub_revision") is None for repo_id in overlap_ids
+            ),
+        },
+        "observed_public_models": [observed[repo_id] for repo_id in sorted(observed)],
+        "curated_overlapping": overlapping,
+        "unreviewed_observed_public_models": [
+            observed[repo_id] for repo_id in unreviewed_ids
+        ],
+        "curated_not_observed_visibility": (
+            "UNKNOWN; identifiers and pins omitted to avoid disclosing a model "
+            "whose current visibility was not observed."
+        ),
+        "observed_revision_differs_from_pin": revision_differences,
+    }
+
+
+def read_estate_snapshot(path: Path) -> tuple[Any, str]:
+    """Bound the input and reject duplicate keys before privacy filtering."""
+
+    try:
+        with path.open("rb") as handle:
+            source = handle.read(MAX_ESTATE_SNAPSHOT_BYTES + 1)
+    except OSError:
+        # Exception text can include a caller-supplied private repository name.
+        raise PortfolioError("estate snapshot is unavailable") from None
+    if len(source) > MAX_ESTATE_SNAPSHOT_BYTES:
+        raise PortfolioError("estate snapshot exceeds the size limit")
+
+    def unique_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+        result: dict[str, Any] = {}
+        for key, value in pairs:
+            if key in result:
+                raise PortfolioError("estate snapshot contains a duplicate JSON key")
+            result[key] = value
+        return result
+
+    def reject_non_json_constant(_value: str) -> Any:
+        raise PortfolioError("estate snapshot contains a non-JSON constant")
+
+    try:
+        snapshot = json.loads(
+            source,
+            object_pairs_hook=unique_keys,
+            parse_constant=reject_non_json_constant,
+        )
+    except (json.JSONDecodeError, UnicodeError):
+        raise PortfolioError("estate snapshot contains invalid JSON") from None
+    return snapshot, hashlib.sha256(source).hexdigest()
 
 
 def sibling_record(sibling: Any) -> dict[str, Any]:
@@ -726,17 +911,62 @@ def main() -> int:
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--offline", action="store_true")
     mode.add_argument("--live", action="store_true")
+    parser.add_argument(
+        "--estate-snapshot",
+        help="reconcile against a local enriched Hugging Face repository JSON array",
+    )
     parser.add_argument("--report")
     args = parser.parse_args()
     try:
         document = json.loads(Path(args.portfolio).read_text(encoding="utf-8"))
-        report = build_report(document, live=args.live)
+        snapshot_and_hash = (
+            read_estate_snapshot(Path(args.estate_snapshot))
+            if args.estate_snapshot is not None
+            else None
+        )
+        if snapshot_and_hash is not None:
+            snapshot, snapshot_sha256 = snapshot_and_hash
+            try:
+                reconciliation = reconcile_estate_snapshot(document, snapshot)
+            except Exception:  # private catalog IDs may appear in validation errors
+                raise PortfolioError("estate snapshot reconciliation failed") from None
+            public_ids = {
+                item["repo_id"] for item in reconciliation["observed_public_models"]
+            }
+            public_document = {
+                **document,
+                "artifacts": [
+                    item for item in document["artifacts"]
+                    if item["repo_id"] in public_ids
+                ],
+            }
+            if not public_document["artifacts"]:
+                raise PortfolioError("no curated public model observed in estate snapshot")
+            report = build_report(public_document, live=args.live)
+            report["catalog_scope"] = "OBSERVED_PUBLIC_CURATED_SUBSET"
+            report["catalog_scope_note"] = (
+                "This report checks only curated IDs observed public in the supplied "
+                "snapshot; unobserved visibility and full catalog status are UNKNOWN."
+            )
+            report["curated_catalog_count"] = reconciliation["counts"]["curated_artifacts"]
+            report["curated_skipped_count"] = (
+                reconciliation["counts"]["curated_artifacts"]
+                - report["portfolio_size"]
+            )
+            report["estate_reconciliation"] = reconciliation
+            reconciliation["snapshot_sha256"] = snapshot_sha256
+        else:
+            report = build_report(document, live=args.live)
     except Exception as exc:  # noqa: BLE001 - terminal verifier must emit evidence
         report = {
             "schema": "szl.model-kernel-portfolio-report/v1",
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "ok": False,
-            "fatal": f"{type(exc).__name__}: {exc}",
+            "fatal": (
+                "ESTATE_PORTFOLIO_VERIFICATION_FAILED"
+                if args.estate_snapshot is not None
+                else f"{type(exc).__name__}: {exc}"
+            ),
         }
     rendered = json.dumps(report, indent=2, sort_keys=True) + "\n"
     if args.report:
