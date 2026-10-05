@@ -102,10 +102,15 @@ def _read_once(path: Path, maximum: int) -> bytes:
                  (after.st_size, after.st_mtime_ns, after.st_ctime_ns),
                  "input changed during read")
         current = absolute.lstat()
+        # Windows lstat may report creation time where fstat reports change
+        # time (CPython issue #157671). Compare ctime only within the same API;
+        # retain both mutation checks and the cross-API file identity checks.
+        _require(current.st_ctime_ns == before.st_ctime_ns,
+                 "input changed after read")
         _require((current.st_dev, current.st_ino, current.st_size, current.st_mtime_ns,
-                  current.st_ctime_ns, current.st_nlink) ==
+                  current.st_nlink) ==
                  (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns,
-                  after.st_ctime_ns, 1), "input changed after read")
+                  1), "input changed after read")
         return raw
     finally:
         os.close(descriptor)
