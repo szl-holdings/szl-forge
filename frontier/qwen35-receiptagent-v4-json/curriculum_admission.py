@@ -23,6 +23,7 @@ from typing import Any
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import json_contract as contract
+import nemo_source_binding as nemo_binding
 
 TOOLS = HERE.parents[1] / "tools"
 SCHEMA = "szl.receiptagent.v4-curriculum/v1"
@@ -245,7 +246,7 @@ def validate_train_bytes(raw: bytes, manifest: dict[str, Any]) -> dict[str, Any]
             "family_counts": dict(families), "heldout_content_opened": False}
 
 
-def _load_gate(filename: str) -> Any:
+def _load_gate(filename: str, kernel: Any = None) -> Any:
     _require(filename in GATE_HASHES, "unknown gate")
     path = TOOLS / filename
     if not path.is_file():
@@ -253,6 +254,10 @@ def _load_gate(filename: str) -> Any:
     source = _read_once(path, MAX_FILE_BYTES)
     _require(hashlib.sha256(source).hexdigest() == GATE_HASHES[filename],
              "gate source differs from the pinned revision")
+    if filename == "nemo_doctrine_gate.py":
+        if kernel is None:
+            raise GateNotReady("Nemo gate requires verified source binding")
+        return kernel.exec_gate(source, str(path))
     module_name = "_szl_v4_admission_" + path.stem
     spec = importlib.util.spec_from_file_location(module_name, path)
     if spec is None or spec.loader is None:
@@ -265,13 +270,9 @@ def _load_gate(filename: str) -> Any:
     return module
 
 
-def _verify_doctrine_receipts(report: dict[str, Any], raw: bytes) -> None:
+def _verify_doctrine_receipts(report: dict[str, Any], raw: bytes, kernel: Any) -> None:
     """Use the maintained Nemo verifier; integrity is never signing authority."""
-    try:
-        from szl_nemo.engine import input_hash
-        from szl_nemo.receipt import verify_chain
-    except ImportError as exc:
-        raise GateNotReady("required Nemo receipt verifier is unavailable") from exc
+    input_hash, verify_chain = kernel.input_hash, kernel.verify_chain
     _require(report.get("receipt_schema") == "szl.nemo.receipt.v1",
              "wrong Nemo receipt schema")
     _require(report.get("kernel") == {"repo": "https://github.com/szl-holdings/szl-nemo",
@@ -300,10 +301,21 @@ def _verify_doctrine_receipts(report: dict[str, Any], raw: bytes) -> None:
                  "Nemo decision is not bound to the exact training pair")
 
 
-def run_gates(raw: bytes) -> dict[str, Any]:
+def run_gates(raw: bytes, nemo_source_root: Path | None = None) -> dict[str, Any]:
+    """Bind exact kernel bytes before running either gate; never saved reports."""
+    try:
+        with nemo_binding.load_kernel(nemo_source_root, _read_once) as kernel:
+            return _run_bound_gates(raw, kernel)
+    except nemo_binding.MissingSourceError as exc:
+        raise GateNotReady("required pinned Nemo source is unavailable") from exc
+    except nemo_binding.BindingError as exc:
+        raise AdmissionError("Nemo source binding failed closed") from exc
+
+
+def _run_bound_gates(raw: bytes, kernel: Any) -> dict[str, Any]:
     """Re-run real gates on a private train-only snapshot, never saved reports."""
     generic = _load_gate("validate_sft_dataset.py")
-    nemo = _load_gate("nemo_doctrine_gate.py")
+    nemo = _load_gate("nemo_doctrine_gate.py", kernel)
     if getattr(nemo, "_IMPORT_ERROR", object()) is not None:
         raise GateNotReady("required Nemo kernel is unavailable")
     digest = hashlib.sha256(raw).hexdigest()
@@ -337,20 +349,23 @@ def run_gates(raw: bytes) -> dict[str, Any]:
              and doctrine_report.get("dataset_sha256") == expected_sha
              and doctrine_report.get("violation_counts") == {}
              and doctrine_report.get("violations") == [], "Nemo gate did not cover exact bytes")
-    _verify_doctrine_receipts(doctrine_report, raw)
+    _verify_doctrine_receipts(doctrine_report, raw, kernel)
     return {"generic_sft_valid": True, "nemo_valid": True,
             "nemo_receipt_chain_tip": doctrine_report.get("receipt_chain_tip"),
             "nemo_receipt_chain": doctrine_report["receipt_chain"],
             "nemo_receipt_chain_verified": True, "nemo_receipt_count": MAX_ROWS,
             "gate_source_revision": CONTRACT_REVISION, "gate_source_sha256": dict(GATE_HASHES),
-            "gate_reports_authenticated": False}
+            "gate_reports_authenticated": False,
+            "nemo_source_binding": kernel.provenance}
 
 
-def check_conformance(train_path: Path, manifest_path: Path) -> tuple[dict[str, Any], int]:
+def check_conformance(train_path: Path, manifest_path: Path,
+                      nemo_source_root: Path | None = None) -> tuple[dict[str, Any], int]:
     report: dict[str, Any] = {"schema": REPORT_SCHEMA, "evidence_class": "MEASURED",
         "dataset_evidence_class": "SIMULATED", "candidate_id": contract.PROFILE,
         "state": "BLOCKED", "contract_conforms": False, "generic_sft_valid": False,
-        "nemo_valid": False, "signature_valid": False, "key_trust": "REPO_DECLARED",
+        "nemo_valid": False, "nemo_source_binding": None,
+        "signature_valid": False, "key_trust": "REPO_DECLARED",
         "semantic_leakage_review": "UNKNOWN", "trainer_supervisor_binding": "UNAVAILABLE",
         "training_eligible": False, "publication_eligible": False, "execution_authority": False,
         "heldout_content_opened": False, "errors": [],
@@ -369,7 +384,7 @@ def check_conformance(train_path: Path, manifest_path: Path) -> tuple[dict[str, 
         report.update(validate_train_bytes(raw, manifest))
         report["manifest_sha256"] = hashlib.sha256(manifest_bytes).hexdigest()
         report["contract_conforms"] = True
-        report.update(run_gates(raw))
+        report.update(run_gates(raw, nemo_source_root))
         return report, 0
     except GateNotReady:
         report["errors"] = ["required fixed-source gate or doctrine kernel is NOT_READY"]
@@ -385,8 +400,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--check-conformance", action="store_true", required=True)
     parser.add_argument("--train", type=Path, required=True)
     parser.add_argument("--manifest", type=Path, required=True)
+    parser.add_argument("--nemo-source-root", type=Path,
+                        help="Explicit source root containing the pinned szl_nemo directory; absent is NOT_READY")
     args = parser.parse_args(argv)
-    report, exit_code = check_conformance(args.train, args.manifest)
+    report, exit_code = check_conformance(args.train, args.manifest, args.nemo_source_root)
     print(contract.canonical_json(report))
     return exit_code
 

@@ -134,16 +134,61 @@ and reruns the real generic validator and Nemo R1-R5 gate. The maintained Nemo
 verifier checks the complete unsigned receipt chain and each exact prompt/target
 input hash; a saved report or supplied signature is never accepted as a shortcut.
 
-Use an environment with `jsonschema==4.26.0` and the reviewed doctrine kernel
-`szl-nemo @ git+https://github.com/szl-holdings/szl-nemo.git@f44b468a60c97978897bc610cf4729fc16b271af`.
-The source-only CI lane installs that exact kernel and runs:
+Use an environment with `jsonschema==4.26.0` and an explicit source checkout of
+the [reviewed doctrine kernel revision
+f7b33e1b1fe8f3b9b729a27567bcba375e2e0d6e](https://github.com/szl-holdings/szl-nemo/commit/f7b33e1b1fe8f3b9b729a27567bcba375e2e0d6e).
+The `nemo_source_binding.py` software profile
+`szl.receiptagent.v4-nemo-source-binding/v1` verifies SHA-256 commitments for six
+kernel modules before private imports. It does not resolve an ambient installed
+`szl_nemo` package. Canonical JSON uses the reviewed kernel's own local fallback,
+not an optional ambient `evidence_core` installation. The source root must be the
+repository directory containing `szl_nemo`, not the package directory itself.
+An absent source root is NOT_READY, never permission to import the ambient kernel.
+
+Acquire the source in a new directory; do not reuse or reset another writer's
+checkout. The following commands do not install or execute that repository:
+
+```sh
+git clone --no-checkout --config core.autocrlf=false https://github.com/szl-holdings/szl-nemo.git .nemo-v4-source
+git -C .nemo-v4-source sparse-checkout set szl_nemo
+cd .nemo-v4-source
+git checkout --detach f7b33e1b1fe8f3b9b729a27567bcba375e2e0d6e
+cd ..
+```
+
+Preserve the committed LF bytes: automatic checkout line-ending conversion can
+change the module hashes and will fail source admission. For archive exports,
+use command-local `git -c core.autocrlf=false -c core.eol=lf archive` as well;
+default `git archive` can apply the local line-ending configuration.
+
+The source-only CI lane obtains the same revision in `.nemo-v4-source` using a
+separate pinned checkout action with `persist-credentials: false`. The legacy
+shared gates retain their existing kernel installation; that installation is
+not used as the v4 source binding. Run the explicit v4 conformance check:
 
 ```sh
 python -I -B frontier/qwen35-receiptagent-v4-json/curriculum_admission.py \
   --check-conformance \
   --train frontier/qwen35-receiptagent-v4-json/train.jsonl \
-  --manifest frontier/qwen35-receiptagent-v4-json/curriculum-manifest.json
+  --manifest frontier/qwen35-receiptagent-v4-json/curriculum-manifest.json \
+  --nemo-source-root .nemo-v4-source
 ```
+
+The earlier 360-row replay against the older kernel cannot be reused as evidence
+for this revision. Rerun train-only conformance with this source binding and
+retain its exact source commitments and results. The source-byte check and
+private import profile are software integrity controls, not a sandbox against a
+hostile Python process, authenticated source origin, independent witnessing or
+training authorization. No model scores are established by a source replay.
+
+The CI `probe_nemo_binding.py --nemo-source-root .nemo-v4-source` exercises four
+SIMULATED fixtures against the real captured kernel: scientific numeric tokens,
+a snake-case JSON metric, adjacent non-English prose around an English metric,
+and an explicit UNKNOWN answer. It also checks receipt-chain tampering. These
+are source regressions, not a model evaluation. Exploratory `accuracy_0.91` and
+`0.91精度` answers remain unrecognized by the pinned lexical checker; the probe
+reports these observations separately with no passing-test credit. This kernel
+does not establish general multilingual or semantic claim detection.
 
 Exit 0 means train-only conformance, not authority. Exit 1 is invalid/drifted
 source/data or failed integrity. Exit 2 means a required gate/kernel/verifier is
