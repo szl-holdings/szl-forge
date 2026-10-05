@@ -11,7 +11,17 @@
     "revision": "85f1067edb395405a8d459e5779e8cff53147fb6",
     "validate_sft_dataset.py": "4084ec4ef13c40df2a4957dd7965be36704698d77c1b1bf650e03cc439aa381e",
     "nemo_doctrine_gate.py": "2c4c4758abb23a3b6055038059984a5559186b7d82c10c8468312db18632e8a0",
-    "nemo_kernel_revision": "f44b468a60c97978897bc610cf4729fc16b271af"
+    "nemo_kernel_revision": "f7b33e1b1fe8f3b9b729a27567bcba375e2e0d6e",
+    "nemo_source_binding": {
+      "schema": "szl.receiptagent.v4-nemo-source-binding/v1",
+      "module": "nemo_source_binding.py",
+      "required_for_conformance_cli_argument": "--nemo-source-root",
+      "source_modules": 6,
+      "ambient_package_imports": false,
+      "ambient_evidence_core_imports": false,
+      "canonical_json_provider": "reviewed_kernel_local_fallback",
+      "scope": "Declared software source-byte binding, not a sandbox, signature or training authorization."
+    }
   },
   "scope": {
     "task": "Typed authority/status routing, exact request binding and evidence copying under a fixed JSON protocol.",
