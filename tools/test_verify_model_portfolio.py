@@ -5,6 +5,7 @@ from __future__ import annotations
 import copy
 import json
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -21,7 +22,7 @@ class PortfolioContractTests(unittest.TestCase):
             verifier.DEFAULT_PORTFOLIO.read_text(encoding="utf-8")
         )
 
-    def test_portfolio_names_every_public_model_repository_once(self) -> None:
+    def test_curated_portfolio_names_each_declared_repository_once(self) -> None:
         repo_ids = verifier.validate_portfolio(self.document)
         self.assertEqual(16, len(repo_ids))
         self.assertEqual(16, len(set(repo_ids)))
@@ -249,6 +250,183 @@ class PortfolioContractTests(unittest.TestCase):
         self.assertIn("python tools/verify_model_portfolio.py --offline", card)
         self.assertNotIn("python khipu/eval_khipu.py --help", card)
         self.assertNotIn("python khipu/sanity_gate.py", card)
+
+
+class EstateReconciliationTests(unittest.TestCase):
+    """Synthetic inventory arrays are observations, not an HF scope receipt."""
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.document = json.loads(
+            verifier.DEFAULT_PORTFOLIO.read_text(encoding="utf-8")
+        )
+
+    @staticmethod
+    def row(
+        repo_id: str,
+        *,
+        revision: str = "a" * 40,
+        private: bool = False,
+        repo_type: str = "model",
+    ) -> dict:
+        return {
+            "id": repo_id,
+            "type": repo_type,
+            "owner": repo_id.split("/", 1)[0],
+            "private": private,
+            "sha": revision,
+            "files_coverage": "LISTED",
+            "files_revision": revision,
+        }
+
+    def test_extra_public_model_is_unreviewed_without_qualifying_scope(self) -> None:
+        curated_id = self.document["artifacts"][0]["repo_id"]
+        snapshot = [
+            self.row(curated_id),
+            self.row("SZLHOLDINGS/unreviewed-research-model"),
+            self.row("SZLHOLDINGS/other-repo", repo_type="dataset"),
+            self.row("betterwithage/other-model"),
+        ]
+        result = verifier.reconcile_estate_snapshot(self.document, snapshot)
+        self.assertEqual("UNKNOWN", result["scope_completeness"])
+        self.assertEqual(2, result["counts"]["observed_public_models"])
+        self.assertEqual(1, result["counts"]["curated_overlapping"])
+        self.assertEqual(1, result["counts"]["unreviewed_observed_public_models"])
+        self.assertEqual(15, result["counts"]["curated_not_observed"])
+        self.assertEqual(
+            "SZLHOLDINGS/unreviewed-research-model",
+            result["unreviewed_observed_public_models"][0]["repo_id"],
+        )
+        self.assertIn("not observed does not mean absent", result["scope_reason"])
+        self.assertNotIn(
+            self.document["artifacts"][1]["repo_id"], json.dumps(result)
+        )
+        self.assertIn("visibility was not observed", result["curated_not_observed_visibility"])
+        self.assertTrue(verifier.build_report(self.document, live=False)["ok"])
+
+    def test_newer_observed_revision_does_not_invalidate_immutable_pin(self) -> None:
+        document = copy.deepcopy(self.document)
+        artifact = document["artifacts"][0]
+        artifact["hub_revision"] = "a" * 40
+        result = verifier.reconcile_estate_snapshot(
+            document, [self.row(artifact["repo_id"], revision="b" * 40)]
+        )
+        self.assertEqual(
+            "OBSERVED_REVISION_DIFFERS_FROM_PIN_AT_SNAPSHOT",
+            result["pin_relationship"],
+        )
+        self.assertEqual(1, result["counts"]["observed_revision_differs_from_pin"])
+        self.assertEqual(
+            {
+                "repo_id": artifact["repo_id"],
+                "pinned_revision": "a" * 40,
+                "observed_revision": "b" * 40,
+            },
+            result["observed_revision_differs_from_pin"][0],
+        )
+        self.assertEqual("UNKNOWN", result["scope_completeness"])
+        self.assertIn("not evidence of release drift", result["pin_relationship_note"])
+        self.assertTrue(verifier.build_report(document, live=False)["ok"])
+
+    def test_private_model_identifiers_never_enter_public_report(self) -> None:
+        private_id = "SZLHOLDINGS/private-evidence-secret"
+        document = copy.deepcopy(self.document)
+        document["artifacts"][0]["repo_id"] = private_id
+        snapshot = [
+            self.row(private_id, private=True),
+            self.row("SZLHOLDINGS/public-observation"),
+        ]
+        result = verifier.reconcile_estate_snapshot(document, snapshot)
+        self.assertNotIn(private_id, json.dumps(result))
+        self.assertEqual(1, result["counts"]["observed_public_models"])
+        self.assertEqual(0, result["counts"]["curated_overlapping"])
+        self.assertEqual(1, result["counts"]["curated_known_private_excluded"])
+
+    def test_duplicate_and_malformed_snapshots_fail_without_leaking_ids(self) -> None:
+        private_id = "SZLHOLDINGS/private-evidence-secret"
+        private_row = self.row(private_id, private=True)
+        cases = (
+            [private_row, copy.deepcopy(private_row)],
+            {"repositories": [private_row]},
+            [None],
+            [{**private_row, "sha": "main"}],
+            [{**private_row, "files_revision": "b" * 40}],
+            [{**private_row, "private": "false"}],
+        )
+        for snapshot in cases:
+            with self.subTest(snapshot=snapshot):
+                with self.assertRaises(verifier.PortfolioError) as caught:
+                    verifier.reconcile_estate_snapshot(self.document, snapshot)
+                self.assertNotIn(private_id, str(caught.exception))
+
+    def test_raw_json_duplicate_privacy_key_fails_before_reconciliation(self) -> None:
+        private_id = "SZLHOLDINGS/private-evidence-secret"
+        with tempfile.TemporaryDirectory() as directory:
+            snapshot_path = Path(directory) / "snapshot.json"
+            snapshot_path.write_text(
+                '[{"id":"' + private_id + '","type":"model",'
+                '"owner":"SZLHOLDINGS","private":true,"private":false}]',
+                encoding="utf-8",
+            )
+            with self.assertRaises(verifier.PortfolioError) as caught:
+                verifier.read_estate_snapshot(snapshot_path)
+        self.assertNotIn(private_id, str(caught.exception))
+
+    def test_missing_private_named_path_is_redacted_in_cli_report(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            missing = Path(directory) / "private-evidence-secret" / "missing.json"
+            command = [
+                sys.executable,
+                "-B",
+                str(verifier.ROOT / "tools" / "verify_model_portfolio.py"),
+                "--offline",
+                "--estate-snapshot",
+                str(missing),
+            ]
+            completed = subprocess.run(command, capture_output=True, text=True, check=False)
+        self.assertEqual(1, completed.returncode)
+        self.assertNotIn("private-evidence-secret", completed.stdout)
+        self.assertIn("estate snapshot is unavailable", completed.stdout)
+
+    def test_oversized_snapshot_fails_before_json_parse(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            snapshot_path = Path(directory) / "snapshot.json"
+            snapshot_path.write_bytes(b"x" * (verifier.MAX_ESTATE_SNAPSHOT_BYTES + 1))
+            with self.assertRaisesRegex(
+                verifier.PortfolioError, "estate snapshot exceeds the size limit"
+            ):
+                verifier.read_estate_snapshot(snapshot_path)
+
+    def test_optional_cli_does_not_change_catalog_ok_or_default_shape(self) -> None:
+        public_id = "SZLHOLDINGS/unreviewed-research-model"
+        with tempfile.TemporaryDirectory() as directory:
+            snapshot_path = Path(directory) / "snapshot.json"
+            snapshot_path.write_text(
+                json.dumps([self.row(public_id)]), encoding="utf-8"
+            )
+            command = [sys.executable, "-B", str(verifier.ROOT / "tools" / "verify_model_portfolio.py"), "--offline"]
+            default = subprocess.run(command, capture_output=True, text=True, check=False)
+            enriched = subprocess.run(
+                [*command, "--estate-snapshot", str(snapshot_path)],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+        self.assertEqual(0, default.returncode, default.stderr)
+        self.assertEqual(0, enriched.returncode, enriched.stderr)
+        default_report = json.loads(default.stdout)
+        enriched_report = json.loads(enriched.stdout)
+        self.assertNotIn("estate_reconciliation", default_report)
+        self.assertTrue(enriched_report["ok"])
+        self.assertEqual(
+            64, len(enriched_report["estate_reconciliation"]["snapshot_sha256"])
+        )
+        self.assertEqual(
+            public_id,
+            enriched_report["estate_reconciliation"][
+                "unreviewed_observed_public_models"
+            ][0]["repo_id"],
+        )
 
 
 class PortfolioArtifactMetadataTests(unittest.TestCase):
