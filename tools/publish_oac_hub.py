@@ -261,6 +261,59 @@ def staged_change_since(
     return sorted(path for path in head if base.get(path) != head[path])
 
 
+def assert_expected_delta(
+    profile: HubProfile,
+    base_revision: str,
+    source_revision: str,
+    report: dict[str, Any],
+    *,
+    git: Callable[[list[str]], bytes] | None = None,
+) -> None:
+    """Dry-run assertion that the Hub sits at the base and the delta is this change.
+
+    Two conditions, both recorded under ``report["expected_delta_since"]``:
+    the Hub bytes of every staged path at the inspected parent equal the
+    base revision's staged bytes, with no path present on one side only
+    (``hub_equals_base``); and the dry-run delta equals the staged paths whose
+    bytes changed between the base and the source revision. The parent sha
+    itself is not derivable from Git; ``--expect-parent`` pins it.
+    """
+    require_sha(base_revision, "base revision")
+    base = evidence_for(_read_tree(base_revision, profile.staged_dir, git or _git))
+    hub = report.get("hub_before") or {}
+    drift = sorted(path for path in set(base) | set(hub) if base.get(path) != hub.get(path))
+    expected = staged_change_since(profile, base_revision, source_revision, git=git)
+    report["expected_delta_since"] = {
+        "base_revision": base_revision,
+        "parent_revision": report.get("parent_revision"),
+        "hub_equals_base": not drift,
+        "hub_drift": drift,
+        "delta": expected,
+    }
+    if drift:
+        raise PublicationRefused(
+            "Hub bytes at the inspected parent differ from the base revision's staged "
+            "bytes: " + ", ".join(drift)
+        )
+    if report.get("delta") != expected:
+        raise PublicationRefused(
+            "dry-run delta differs from the staged change since the base revision"
+        )
+
+
+def assert_expected_parent(expected_parent: str, report: dict[str, Any]) -> None:
+    """Dry-run assertion that the Hub head read is exactly ``expected_parent``."""
+    require_sha(expected_parent, "expected parent")
+    observed = report.get("parent_revision")
+    report["expected_parent"] = {
+        "revision": expected_parent,
+        "observed": observed,
+        "matches": observed == expected_parent,
+    }
+    if observed != expected_parent:
+        raise PublicationRefused("Hub head differs from the expected parent revision")
+
+
 def assert_checkout(
     source_revision: str, *, git: Callable[[list[str]], bytes] | None = None
 ) -> None:
@@ -619,7 +672,15 @@ def main(argv: list[str] | None = None, *, environ: Mapping[str, str] | None = N
     parser.add_argument(
         "--expect-delta-since",
         metavar="BASE_SHA",
-        help="dry-run only: require the delta to equal the staged change since BASE_SHA",
+        help=(
+            "dry-run only: require the Hub to hold BASE_SHA's staged bytes and the "
+            "delta to equal the staged change since BASE_SHA"
+        ),
+    )
+    parser.add_argument(
+        "--expect-parent",
+        metavar="HUB_SHA",
+        help="dry-run only: require the inspected Hub head to be exactly HUB_SHA",
     )
     args = parser.parse_args(argv)
     environ = os.environ if environ is None else environ
@@ -639,8 +700,10 @@ def main(argv: list[str] | None = None, *, environ: Mapping[str, str] | None = N
     try:
         require_sha(source_revision, "source revision")
         if args.publish:
-            if args.expect_delta_since:
-                raise PublicationRefused("--expect-delta-since is a dry-run assertion")
+            if args.expect_delta_since or args.expect_parent:
+                raise PublicationRefused(
+                    "--expect-delta-since and --expect-parent are dry-run assertions"
+                )
             assert_publish_environment(environ)
             token: str | bool = str(environ.get("HF_TOKEN", "")).strip()
             if not token:
@@ -665,16 +728,10 @@ def main(argv: list[str] | None = None, *, environ: Mapping[str, str] | None = N
                 not_found=clients["not_found"],
                 operation_factory=clients["operation_factory"],
             )
+        if args.expect_parent:
+            assert_expected_parent(args.expect_parent.strip(), report)
         if args.expect_delta_since:
-            expected = staged_change_since(profile, args.expect_delta_since, source_revision)
-            report["expected_delta_since"] = {
-                "base_revision": args.expect_delta_since,
-                "delta": expected,
-            }
-            if report["delta"] != expected:
-                raise PublicationRefused(
-                    "dry-run delta differs from the staged change since the base revision"
-                )
+            assert_expected_delta(profile, args.expect_delta_since.strip(), source_revision, report)
         exit_code = 0
     except PublicationRefused as error:
         report["state"] = "FAILED" if report["commit_attempted"] else "REFUSED"

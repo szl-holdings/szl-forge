@@ -90,8 +90,10 @@ jobs:
           test "$(git rev-parse HEAD)" = "${SOURCE_REVISION}"
           expect=()
           if [ "${EVENT_NAME}" = "pull_request" ]; then
-            # The Hub must equal the base's staged bytes, so each dry-run delta
-            # must equal exactly what this pull request changes.
+            # Each dry-run must find the Hub's staged-path bytes at the inspected
+            # parent equal to the base's staged bytes, and a delta equal to
+            # exactly what this pull request changes. The parent sha is not
+            # pinned here; the merger pins it with --expect-parent before merging.
             git fetch --no-tags --depth=1 origin "${BASE_REVISION}"
             expect=(--expect-delta-since "${BASE_REVISION}")
           fi
@@ -112,13 +114,15 @@ jobs:
           import json
           from pathlib import Path
 
-          print("| profile | Hub repo | state | parent | delta |")
-          print("| --- | --- | --- | --- | --- |")
+          print("| profile | Hub repo | state | parent | delta | Hub equals base |")
+          print("| --- | --- | --- | --- | --- | --- |")
           for path in sorted(Path("reports").glob("*-dry-run.json")):
               report = json.loads(path.read_text(encoding="utf-8"))
+              base = (report.get("expected_delta_since") or {}).get("hub_equals_base", "-")
               print(
                   f"| {report['profile']} | {report['target']['repo_id']} | {report['state']} "
-                  f"| {report['parent_revision']} | {', '.join(report['delta'] or []) or '-'} |"
+                  f"| {report['parent_revision']} | {', '.join(report['delta'] or []) or '-'} "
+                  f"| {base} |"
               )
           PY
 

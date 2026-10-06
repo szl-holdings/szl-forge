@@ -378,6 +378,73 @@ def test_staged_change_since_names_exactly_the_changed_paths() -> None:
     assert publisher.staged_change_since(MODEL, BASE, SOURCE, git=git) == sorted(MODEL.files)
 
 
+# --- dry-run expectations against the pull request base ------------------------
+
+HAND_EDIT = b"---\nlicense: apache-2.0\n---\n\n# Synthetic card, edited on the Hub\n"
+WIDE = dataclasses.replace(MODEL, replace_paths=MODEL.files)
+
+
+def dry_run_since(profile, *, base: dict, head: dict, hub: dict):
+    git = FakeGit({BASE: tree(profile, base), SOURCE: tree(profile, head)})
+    api = FakeApi(profile, hub)
+    report, _ = run(profile, api, publish=False, staged=head, git=git)
+    return report, git, api
+
+
+def test_expected_delta_holds_when_the_hub_sits_at_the_base() -> None:
+    base, head = package(MODEL), package(MODEL, **{"README.md": NEW_CARD})
+    report, git, api = dry_run_since(MODEL, base=base, head=head, hub=base)
+    publisher.assert_expected_delta(MODEL, BASE, SOURCE, report, git=git)
+    assert report["expected_delta_since"] == {
+        "base_revision": BASE,
+        "parent_revision": PARENT,
+        "hub_equals_base": True,
+        "hub_drift": [],
+        "delta": ["README.md"],
+    }
+    assert "create_commit" not in api.names()
+
+
+def test_expected_delta_refuses_a_hub_that_drifted_from_the_base() -> None:
+    # The path lists agree, so only the byte comparison can see the drift.
+    base, head = package(MODEL), package(MODEL, **{"README.md": NEW_CARD})
+    hub = package(MODEL, **{"README.md": HAND_EDIT})
+    report, git, _ = dry_run_since(MODEL, base=base, head=head, hub=hub)
+    assert report["delta"] == publisher.staged_change_since(MODEL, BASE, SOURCE, git=git)
+    with pytest.raises(publisher.PublicationRefused, match="base revision's staged bytes: README.md"):
+        publisher.assert_expected_delta(MODEL, BASE, SOURCE, report, git=git)
+    assert report["expected_delta_since"]["hub_equals_base"] is False
+    assert report["expected_delta_since"]["hub_drift"] == ["README.md"]
+
+
+@pytest.mark.parametrize(
+    ("base_drop", "hub_drop", "drift"),
+    [
+        ("example_input.json", None, "example_input.json"),  # on the Hub, not in the base
+        (None, "LICENSE", "LICENSE"),  # in the base, not on the Hub
+    ],
+)
+def test_expected_delta_refuses_a_path_present_on_one_side_only(base_drop, hub_drop, drift) -> None:
+    base, head, hub = package(WIDE), package(WIDE), package(WIDE)
+    base.pop(base_drop, None)
+    hub.pop(hub_drop, None)
+    report, git, _ = dry_run_since(WIDE, base=base, head=head, hub=hub)
+    with pytest.raises(publisher.PublicationRefused, match=f"staged bytes: {drift}$"):
+        publisher.assert_expected_delta(WIDE, BASE, SOURCE, report, git=git)
+    assert report["expected_delta_since"]["hub_drift"] == [drift]
+
+
+def test_expected_parent_pins_the_inspected_hub_head() -> None:
+    report = {"parent_revision": PARENT}
+    publisher.assert_expected_parent(PARENT, report)
+    assert report["expected_parent"] == {"revision": PARENT, "observed": PARENT, "matches": True}
+    with pytest.raises(publisher.PublicationRefused, match="expected parent"):
+        publisher.assert_expected_parent(NEW, report)
+    assert report["expected_parent"]["matches"] is False
+    with pytest.raises(publisher.PublicationRefused, match="full lowercase"):
+        publisher.assert_expected_parent("main", {"parent_revision": PARENT})
+
+
 # --- lookup, create-or-adopt, delta ------------------------------------------
 
 
@@ -698,7 +765,7 @@ def test_cli_dry_run_is_anonymous_and_records_the_real_staged_package(monkeypatc
     assert TOKEN not in output.read_text(encoding="utf-8")
 
 
-def test_cli_expected_delta_mismatch_is_refused(monkeypatch, tmp_path) -> None:
+def test_cli_expected_delta_refuses_a_hub_that_is_not_at_the_base(monkeypatch, tmp_path) -> None:
     head = real_head()
     hub = publisher.staged_package(MODEL, head)
     hub["README.md"] = CARD
@@ -709,7 +776,40 @@ def test_cli_expected_delta_mismatch_is_refused(monkeypatch, tmp_path) -> None:
     report = json.loads(output.read_text(encoding="utf-8"))
     assert code == 1 and report["state"] == "REFUSED"
     assert report["delta"] == ["README.md"]
-    assert report["expected_delta_since"] == {"base_revision": head, "delta": []}
+    assert report["expected_delta_since"] == {
+        "base_revision": head,
+        "parent_revision": PARENT,
+        "hub_equals_base": False,
+        "hub_drift": ["README.md"],
+        "delta": [],
+    }
+
+
+def test_cli_dry_run_expectations_pin_the_base_bytes_and_the_parent(monkeypatch, tmp_path) -> None:
+    base, head = package(MODEL), package(MODEL, **{"README.md": NEW_CARD})
+    monkeypatch.setattr(publisher, "_git", FakeGit({BASE: tree(MODEL, base), SOURCE: tree(MODEL, head)}))
+    args = ["--profile", "oac-v1-model", "--source-revision", SOURCE, "--expect-delta-since", BASE]
+
+    fake_clients(monkeypatch, FakeApi(MODEL, base))
+    output = tmp_path / "at-base.json"
+    code = publisher.main([*args, "--expect-parent", PARENT, "--report", str(output)], environ={})
+    report = json.loads(output.read_text(encoding="utf-8"))
+    assert code == 0 and report["state"] == "DELTA" and report["delta"] == ["README.md"]
+    assert report["expected_delta_since"]["hub_equals_base"] is True
+    assert report["expected_parent"] == {"revision": PARENT, "observed": PARENT, "matches": True}
+
+    output = tmp_path / "parent-moved.json"
+    code = publisher.main([*args, "--expect-parent", NEW, "--report", str(output)], environ={})
+    report = json.loads(output.read_text(encoding="utf-8"))
+    assert code == 1 and report["state"] == "REFUSED" and "expected parent" in report["refusal"]
+
+    # A hand edit on the Hub keeps the same delta path list but is refused on bytes.
+    fake_clients(monkeypatch, FakeApi(MODEL, package(MODEL, **{"README.md": HAND_EDIT})))
+    output = tmp_path / "hand-edit.json"
+    code = publisher.main([*args, "--report", str(output)], environ={})
+    report = json.loads(output.read_text(encoding="utf-8"))
+    assert code == 1 and report["state"] == "REFUSED" and report["delta"] == ["README.md"]
+    assert report["expected_delta_since"]["hub_drift"] == ["README.md"]
 
 
 def test_cli_publish_is_refused_outside_the_canonical_main_workflow(monkeypatch, tmp_path) -> None:
@@ -764,11 +864,12 @@ def test_cli_publish_success_never_records_the_credential(monkeypatch, tmp_path)
     assert fresh == [head, head]
 
 
-def test_cli_refuses_expectation_flags_when_publishing(tmp_path) -> None:
+@pytest.mark.parametrize("flag", ["--expect-delta-since", "--expect-parent"])
+def test_cli_refuses_expectation_flags_when_publishing(flag, tmp_path) -> None:
     output = tmp_path / "publish.json"
     code = publisher.main(["--profile", "oac-v1-model", "--source-revision", SOURCE, "--publish",
-                           "--expect-delta-since", BASE, "--report", str(output)], environ=CI)
-    assert code == 1 and "dry-run assertion" in json.loads(output.read_text(encoding="utf-8"))["refusal"]
+                           flag, BASE, "--report", str(output)], environ=CI)
+    assert code == 1 and "dry-run assertions" in json.loads(output.read_text(encoding="utf-8"))["refusal"]
 
 
 def test_cli_never_overwrites_an_existing_report(tmp_path) -> None:
