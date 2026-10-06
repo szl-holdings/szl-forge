@@ -528,6 +528,7 @@ def fresh_seed_lanes(trainer_source: bytes, kernel: Any, threshold: float, rows:
             raise EvaluationError("FRESH_LANE_SINGLE_CLASS")
         predicted = [score >= threshold for score in scores]
         point = _point_metrics(labels, predicted, scores)
+        oracle_point = _point_metrics(labels, [value >= threshold for value in oracle], oracle)
         oracle_auc = _point_metrics(labels, [False] * rows, oracle)["roc_auc"]
         boot_rng = random.Random(BOOTSTRAP_SEED + offset)
         auc_samples, balanced_samples, gap_samples = [], [], []
@@ -551,7 +552,14 @@ def fresh_seed_lanes(trainer_source: bytes, kernel: Any, threshold: float, rows:
             "balanced_accuracy": {"value": round(point["balanced_accuracy"], 12),
                                   "interval_95": _percentile_interval(balanced_samples)},
             "roc_auc": {"value": round(point["roc_auc"], 12), "interval_95": _percentile_interval(auc_samples)},
+            "flag_rate": round(sum(predicted) / rows, 12),
             "lane_oracle_roc_auc": round(oracle_auc, 12),
+            "lane_oracle_at_threshold": {
+                "flag_rate": round(sum(value >= threshold for value in oracle) / rows, 12),
+                "balanced_accuracy": round(oracle_point["balanced_accuracy"], 12)
+                if oracle_point["balanced_accuracy"] is not None else None,
+                "reading": "the same fixed threshold applied to the lane's true label probability",
+            },
             "roc_auc_headroom": {"value": round(oracle_auc - point["roc_auc"], 12),
                                  "interval_95": _percentile_interval(gap_samples)},
             "risk_coverage": calculate_risk_coverage(labels, scores, threshold),

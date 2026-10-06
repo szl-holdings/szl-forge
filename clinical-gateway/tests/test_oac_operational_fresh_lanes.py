@@ -35,11 +35,19 @@ class FreshSeedLaneTests(unittest.TestCase):
     def test_fresh_seeds_never_reuse_the_development_seed(self) -> None:
         self.assertNotIn(2500, {lane["seed"] for lane in self.lanes.values()})
 
-    def test_queue_saturation_collapses_the_fixed_threshold(self) -> None:
+    def test_queue_saturation_flags_every_row_and_so_does_the_oracle(self) -> None:
+        # Every saturated row has true risk above 0.16, so flagging all of them is the
+        # correct decision at this threshold. Balanced accuracy 0.5 here is a property of
+        # the metric under this shift, not a model or threshold defect.
         lane = self.lanes["covariate_queue_saturation"]
-        self.assertEqual(0, lane["confusion"]["true_negative"] + lane["confusion"]["false_negative"])
-        self.assertEqual(0.5, lane["balanced_accuracy"]["value"])
+        self.assertEqual(1.0, lane["flag_rate"])
+        self.assertEqual(1.0, lane["lane_oracle_at_threshold"]["flag_rate"])
+        self.assertEqual(lane["lane_oracle_at_threshold"]["balanced_accuracy"], lane["balanced_accuracy"]["value"])
         self.assertGreater(lane["roc_auc"]["value"], 0.7)
+
+    def test_long_outage_lane_underflags_relative_to_the_oracle(self) -> None:
+        lane = self.lanes["covariate_long_outage_tail"]
+        self.assertLess(lane["flag_rate"], lane["lane_oracle_at_threshold"]["flag_rate"])
 
     def test_headroom_is_measured_against_each_lanes_own_rule(self) -> None:
         for name, lane in self.lanes.items():
