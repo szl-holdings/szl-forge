@@ -1,5 +1,21 @@
 # Owned Agent Clinical Shadow Stack
 
+> **Scope note:** OAC System Health v1 consists only of
+> `src/oac_operational_health.py`, `tools/train_operational_health_model.py`,
+> `operational-model/` and `huggingface/` in this directory. It is a small
+> operations/observability logistic regression trained only on **synthetic
+> operational transport telemetry**. It scores eight bounded infrastructure
+> fields and emits a non-authoritative operator-attention advisory. It is not a
+> medical, diagnostic, prognostic, triage, treatment, or clinical decision
+> model. It has no care, diagnostic, device, or result authority: it cannot
+> command or identify a medical device, acknowledge a transport message,
+> interpret or release a result, or authorize clinical use. It must never
+> receive PHI or clinical/result content. The `clinical-gateway` directory name
+> refers to the separately bounded integration stack described below, which is
+> also not a clinical system. The model card
+> (`huggingface/model/oac-system-health-v1/README.md`) states the full
+> boundary.
+
 This stack exposes a local control API, a configuration-only browser shell, and
 bounded result-ingress transports around the Owned Agent clinical kernel.
 
