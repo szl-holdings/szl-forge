@@ -2,7 +2,8 @@
 
 Each publisher job listed in LOCKED_WRITERS writes an asset szl-forge keeps
 under plan P9 (the szl-forge-lab and szl-model-inference-lab Spaces, the chaski
-family, the model source bindings). It holds the canonical lock
+family, the model source bindings, the OAC v1 model and dataset). It holds the
+canonical lock
 ``hf-write/<type>/SZLHOLDINGS/<id>``, or the org lock ``hf-write/org/SZLHOLDINGS``
 when one job writes several assets. Locks are never keyed by event name or ref
 and never cancel an in-flight write. Writers of assets moving to other source
@@ -29,6 +30,10 @@ LOCKED_WRITERS = {
     ("publish-model-inference-lab.yml", "deploy"): "hf-write/space/SZLHOLDINGS/szl-model-inference-lab",
     ("publish-model-inference-lab.yml", "publish-bindings"): ORG_LOCK,
     ("publish-chaski-card.yml", "publish"): "hf-write/model/${{ matrix.repo_id }}",
+    ("publish-oac-hub.yml", "publish-oac-v1-model"): "hf-write/model/SZLHOLDINGS/oac-system-health-v1",
+    ("publish-oac-hub.yml", "publish-oac-v1-dataset"): (
+        "hf-write/dataset/SZLHOLDINGS/oac-clinical-transport-observability-synthetic"
+    ),
 }
 
 

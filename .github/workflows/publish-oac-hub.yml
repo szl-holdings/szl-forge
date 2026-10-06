@@ -1,0 +1,420 @@
+# SPDX-License-Identifier: Apache-2.0
+# The one committed writer for the OAC Hub packages (HF upgrade plan D1 and P9).
+# Pull requests and dispatches with publish=false run an anonymous dry-run only.
+# A push to main, or a main-only dispatch with publish=true, publishes each
+# closed profile under its per-asset lock (D3) with a parent-commit CAS.
+name: Publish OAC Hub packages
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "clinical-gateway/huggingface/**"
+      - "ops-health/huggingface/**"
+      - "tools/publish_oac_hub.py"
+      - "tests/test_publish_oac_hub.py"
+      - "tools/acquire_hf_publisher_token.py"
+      - "tests/test_acquire_hf_publisher_token.py"
+      - "tests/test_hf_org_token1_fallback.py"
+      - ".github/workflows/publish-oac-hub.yml"
+  push:
+    branches: [main]
+    paths:
+      - "clinical-gateway/huggingface/**"
+      - "ops-health/huggingface/**"
+      - "tools/publish_oac_hub.py"
+      - "tests/test_publish_oac_hub.py"
+      - "tools/acquire_hf_publisher_token.py"
+      - "tests/test_acquire_hf_publisher_token.py"
+      - "tests/test_hf_org_token1_fallback.py"
+      - ".github/workflows/publish-oac-hub.yml"
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish the staged OAC packages from current main (false runs the dry-run only)
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    if: ${{ github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && !inputs.publish) }}
+    name: Verify OAC publisher contracts and dry-run every profile
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - name: Check out exact candidate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install exact verification clients
+        run: >-
+          python -m pip install --disable-pip-version-check --no-cache-dir
+          "huggingface-hub==1.23.0" "pytest==9.1.1"
+
+      - name: Prove publisher, credential and lock contracts offline
+        run: |
+          set -euo pipefail
+          python -m pytest -q \
+            tests/test_publish_oac_hub.py \
+            tests/test_acquire_hf_publisher_token.py \
+            tests/test_hf_org_token1_fallback.py \
+            tests/test_hf_write_locks.py
+          python -m py_compile \
+            tools/publish_oac_hub.py \
+            tools/acquire_hf_publisher_token.py
+
+      - name: Dry-run every closed profile with anonymous Hub reads
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          SOURCE_REVISION: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          BASE_REVISION: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${SOURCE_REVISION}"
+          expect=()
+          if [ "${EVENT_NAME}" = "pull_request" ]; then
+            # The Hub must equal the base's staged bytes, so each dry-run delta
+            # must equal exactly what this pull request changes.
+            git fetch --no-tags --depth=1 origin "${BASE_REVISION}"
+            expect=(--expect-delta-since "${BASE_REVISION}")
+          fi
+          for profile in oac-v1-model oac-v1-dataset; do
+            python tools/publish_oac_hub.py \
+              --profile "${profile}" \
+              --source-revision "${SOURCE_REVISION}" \
+              "${expect[@]}" \
+              --report "reports/${profile}-dry-run.json"
+          done
+          git diff --check
+
+      - name: Summarize the expected Hub effect
+        if: always()
+        run: |
+          set -euo pipefail
+          python - <<'PY' >> "${GITHUB_STEP_SUMMARY}"
+          import json
+          from pathlib import Path
+
+          print("| profile | Hub repo | state | parent | delta |")
+          print("| --- | --- | --- | --- | --- |")
+          for path in sorted(Path("reports").glob("*-dry-run.json")):
+              report = json.loads(path.read_text(encoding="utf-8"))
+              print(
+                  f"| {report['profile']} | {report['target']['repo_id']} | {report['state']} "
+                  f"| {report['parent_revision']} | {', '.join(report['delta'] or []) or '-'} |"
+              )
+          PY
+
+      - name: Upload dry-run evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: oac-hub-dry-run-${{ github.run_id }}
+          path: reports/*-dry-run.json
+          if-no-files-found: error
+          retention-days: 30
+
+  publish-oac-v1-model:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))
+    name: Publish oac-v1-model and verify exact Hub bytes
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    # Per-asset Hub write lock (HF upgrade plan D3), never keyed by event or ref.
+    concurrency:
+      group: hf-write/model/SZLHOLDINGS/oac-system-health-v1
+      cancel-in-progress: false
+    outputs:
+      hub_revision: ${{ steps.result.outputs.hub_revision }}
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - name: Check out exact protected-main revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install exact publication clients
+        run: >-
+          python -m pip install --disable-pip-version-check --no-cache-dir
+          "huggingface-hub==1.23.0" "pytest==9.1.1"
+
+      - name: Prove local publisher contracts
+        run: >-
+          python -m pytest -q
+          tests/test_publish_oac_hub.py
+          tests/test_acquire_hf_publisher_token.py
+          tests/test_hf_org_token1_fallback.py
+          tests/test_hf_write_locks.py
+
+      - name: Refuse a superseded protected-main source
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin main
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" || {
+            echo "::error::This publication run no longer owns current protected main."
+            exit 1
+          }
+
+      - name: Bind this job to the closed profile registry
+        env:
+          PROFILE: oac-v1-model
+          TARGET_REPO: SZLHOLDINGS/oac-system-health-v1
+          TARGET_TYPE: model
+          JOB_ID: ${{ github.job }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import os
+          from tools.publish_oac_hub import resolve_profile
+
+          profile = resolve_profile(os.environ["PROFILE"])
+          observed = (profile.repo_id, profile.repo_type, profile.job_id)
+          expected = (os.environ["TARGET_REPO"], os.environ["TARGET_TYPE"], os.environ["JOB_ID"])
+          if observed != expected:
+              raise SystemExit("workflow target drifted from the closed profile registry")
+          PY
+
+      - name: Acquire and actively validate the publisher credential
+        env:
+          HF_ORG_TOKEN_CANDIDATE: ${{ secrets.HF_ORG_TOKEN }}
+          HF_ORG_TOKEN1_CANDIDATE: ${{ secrets.HF_ORG_TOKEN1 }}
+          HF_WRITE_TOKEN_CANDIDATE: ${{ secrets.HF_WRITE_TOKEN }}
+          HF_TOKEN_CANDIDATE: ${{ secrets.HF_TOKEN }}
+          HUGGINGFACE_TOKEN_CANDIDATE: ${{ secrets.HUGGINGFACE_TOKEN }}
+          HUGGING_FACE_HUB_TOKEN_CANDIDATE: ${{ secrets.HUGGING_FACE_HUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          python tools/acquire_hf_publisher_token.py \
+            --target-repo SZLHOLDINGS/oac-system-health-v1 \
+            --target-type model \
+            --github-env "${GITHUB_ENV}" \
+            --report reports/oac-v1-model-credential.json
+
+      - name: Publish the delta at the inspected parent and read every file back
+        run: |
+          set -euo pipefail
+          python tools/publish_oac_hub.py \
+            --profile oac-v1-model \
+            --source-revision "${GITHUB_SHA}" \
+            --publish \
+            --report reports/oac-v1-model-publication.json
+
+      - name: Export the verified Hub revision
+        id: result
+        run: |
+          set -euo pipefail
+          python - <<'PY' >> "${GITHUB_OUTPUT}"
+          import json
+
+          report = json.load(open("reports/oac-v1-model-publication.json", encoding="utf-8"))
+          revision = {"PUBLISHED": report["new_revision"], "NO_CHANGE": report["parent_revision"]}[report["state"]]
+          print(f"hub_revision={revision}")
+          PY
+
+      - name: Upload secret-free publication evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: oac-v1-model-publication-${{ github.run_id }}
+          path: |
+            reports/oac-v1-model-credential.json
+            reports/oac-v1-model-publication.json
+          if-no-files-found: error
+          retention-days: 90
+
+  publish-oac-v1-dataset:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))
+    name: Publish oac-v1-dataset and verify exact Hub bytes
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    # Per-asset Hub write lock (HF upgrade plan D3), never keyed by event or ref.
+    concurrency:
+      group: hf-write/dataset/SZLHOLDINGS/oac-clinical-transport-observability-synthetic
+      cancel-in-progress: false
+    outputs:
+      hub_revision: ${{ steps.result.outputs.hub_revision }}
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - name: Check out exact protected-main revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install exact publication clients
+        run: >-
+          python -m pip install --disable-pip-version-check --no-cache-dir
+          "huggingface-hub==1.23.0" "pytest==9.1.1"
+
+      - name: Prove local publisher contracts
+        run: >-
+          python -m pytest -q
+          tests/test_publish_oac_hub.py
+          tests/test_acquire_hf_publisher_token.py
+          tests/test_hf_org_token1_fallback.py
+          tests/test_hf_write_locks.py
+
+      - name: Refuse a superseded protected-main source
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin main
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" || {
+            echo "::error::This publication run no longer owns current protected main."
+            exit 1
+          }
+
+      - name: Bind this job to the closed profile registry
+        env:
+          PROFILE: oac-v1-dataset
+          TARGET_REPO: SZLHOLDINGS/oac-clinical-transport-observability-synthetic
+          TARGET_TYPE: dataset
+          JOB_ID: ${{ github.job }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import os
+          from tools.publish_oac_hub import resolve_profile
+
+          profile = resolve_profile(os.environ["PROFILE"])
+          observed = (profile.repo_id, profile.repo_type, profile.job_id)
+          expected = (os.environ["TARGET_REPO"], os.environ["TARGET_TYPE"], os.environ["JOB_ID"])
+          if observed != expected:
+              raise SystemExit("workflow target drifted from the closed profile registry")
+          PY
+
+      - name: Acquire and actively validate the publisher credential
+        env:
+          HF_ORG_TOKEN_CANDIDATE: ${{ secrets.HF_ORG_TOKEN }}
+          HF_ORG_TOKEN1_CANDIDATE: ${{ secrets.HF_ORG_TOKEN1 }}
+          HF_WRITE_TOKEN_CANDIDATE: ${{ secrets.HF_WRITE_TOKEN }}
+          HF_TOKEN_CANDIDATE: ${{ secrets.HF_TOKEN }}
+          HUGGINGFACE_TOKEN_CANDIDATE: ${{ secrets.HUGGINGFACE_TOKEN }}
+          HUGGING_FACE_HUB_TOKEN_CANDIDATE: ${{ secrets.HUGGING_FACE_HUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          python tools/acquire_hf_publisher_token.py \
+            --target-repo SZLHOLDINGS/oac-clinical-transport-observability-synthetic \
+            --target-type dataset \
+            --github-env "${GITHUB_ENV}" \
+            --report reports/oac-v1-dataset-credential.json
+
+      - name: Publish the delta at the inspected parent and read every file back
+        run: |
+          set -euo pipefail
+          python tools/publish_oac_hub.py \
+            --profile oac-v1-dataset \
+            --source-revision "${GITHUB_SHA}" \
+            --publish \
+            --report reports/oac-v1-dataset-publication.json
+
+      - name: Export the verified Hub revision
+        id: result
+        run: |
+          set -euo pipefail
+          python - <<'PY' >> "${GITHUB_OUTPUT}"
+          import json
+
+          report = json.load(open("reports/oac-v1-dataset-publication.json", encoding="utf-8"))
+          revision = {"PUBLISHED": report["new_revision"], "NO_CHANGE": report["parent_revision"]}[report["state"]]
+          print(f"hub_revision={revision}")
+          PY
+
+      - name: Upload secret-free publication evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: oac-v1-dataset-publication-${{ github.run_id }}
+          path: |
+            reports/oac-v1-dataset-credential.json
+            reports/oac-v1-dataset-publication.json
+          if-no-files-found: error
+          retention-days: 90
+
+  alignment:
+    needs: [publish-oac-v1-model, publish-oac-v1-dataset]
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))
+    name: Verify Git-to-Hub byte parity at the published revisions
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - name: Check out exact protected-main revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Require complete anonymous byte parity
+        env:
+          MODEL_REVISION: ${{ needs.publish-oac-v1-model.outputs.hub_revision }}
+          DATASET_REVISION: ${{ needs.publish-oac-v1-dataset.outputs.hub_revision }}
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          python -I -B clinical-gateway/tools/verify_hub_alignment.py \
+            --git-revision "${GITHUB_SHA}" \
+            --model-revision "${MODEL_REVISION}" \
+            --dataset-revision "${DATASET_REVISION}" \
+            --output reports/oac-hub-alignment.json
+
+      - name: Upload alignment evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: oac-hub-alignment-${{ github.run_id }}
+          path: reports/oac-hub-alignment.json
+          if-no-files-found: error
+          retention-days: 90
