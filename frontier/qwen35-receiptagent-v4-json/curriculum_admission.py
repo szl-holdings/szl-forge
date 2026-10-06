@@ -17,6 +17,7 @@ import stat
 import sys
 import tempfile
 from collections import Counter
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -59,6 +60,26 @@ class AdmissionError(ValueError):
 
 class GateNotReady(AdmissionError):
     """Missing required tools or doctrine kernel is not a conformance pass."""
+
+
+@dataclass(frozen=True, slots=True)
+class TrainOnlySnapshot:
+    """Retained conformance inputs, not a signed admission or launch permit.
+
+    All fields are immutable bytes captured in the same trusted process that
+    ran the gates. A future runner must create this snapshot freshly; it must
+    not accept a serialized snapshot or saved report instead of running gates.
+    This convenience object is not a sandbox or an unforgeable capability.
+    """
+
+    manifest_bytes: bytes
+    train_bytes: bytes
+    conformance_report_bytes: bytes
+
+    def __post_init__(self) -> None:
+        if any(type(value) is not bytes for value in
+               (self.manifest_bytes, self.train_bytes, self.conformance_report_bytes)):
+            raise AdmissionError("snapshot fields must be immutable bytes")
 
 
 def _require(condition: bool, message: str) -> None:
@@ -359,9 +380,8 @@ def _run_bound_gates(raw: bytes, kernel: Any) -> dict[str, Any]:
             "nemo_source_binding": kernel.provenance}
 
 
-def check_conformance(train_path: Path, manifest_path: Path,
-                      nemo_source_root: Path | None = None) -> tuple[dict[str, Any], int]:
-    report: dict[str, Any] = {"schema": REPORT_SCHEMA, "evidence_class": "MEASURED",
+def _new_report() -> dict[str, Any]:
+    return {"schema": REPORT_SCHEMA, "evidence_class": "MEASURED",
         "dataset_evidence_class": "SIMULATED", "candidate_id": contract.PROFILE,
         "state": "BLOCKED", "contract_conforms": False, "generic_sft_valid": False,
         "nemo_valid": False, "nemo_source_binding": None,
@@ -370,21 +390,53 @@ def check_conformance(train_path: Path, manifest_path: Path,
         "training_eligible": False, "publication_eligible": False, "execution_authority": False,
         "heldout_content_opened": False, "errors": [],
         "claim_boundary": "Conformance only; no signing, training, evaluation or authorization."}
+
+
+def _capture_train_only(train_path: Path, manifest_path: Path,
+                        nemo_source_root: Path | None,
+                        report: dict[str, Any]) -> TrainOnlySnapshot:
+    """Keep exactly the train bytes checked by the real source-bound gates."""
+    _require(train_path.name == "train.jsonl" and manifest_path.name == "curriculum-manifest.json",
+             "only explicit training and curriculum manifest filenames are allowed")
+    _require(Path(os.path.abspath(train_path.parent)) == Path(os.path.abspath(manifest_path.parent)),
+             "training and manifest must be in one explicit directory")
+    manifest_bytes = _read_once(manifest_path, contract.MAX_BYTES)
+    _require(hashlib.sha256(manifest_bytes).hexdigest() == MANIFEST_SHA256,
+             "curriculum manifest differs from the frozen source commitment")
+    manifest = _strict(manifest_bytes)
+    validate_manifest(manifest)
+    raw = _read_once(train_path, MAX_FILE_BYTES)
+    report.update(validate_train_bytes(raw, manifest))
+    report["manifest_sha256"] = hashlib.sha256(manifest_bytes).hexdigest()
+    report["contract_conforms"] = True
+    report.update(run_gates(raw, nemo_source_root))
+    return TrainOnlySnapshot(manifest_bytes, raw,
+                             contract.canonical_json(report).encode("utf-8"))
+
+
+def capture_train_only(train_path: Path, manifest_path: Path, *,
+                       nemo_source_root: Path | None = None) -> TrainOnlySnapshot:
+    """Capture checked inputs or raise; a failed gate never yields a snapshot.
+
+    No model, tokenizer, optimizer, signing, Hub or execution interface is
+    invoked here. Success preserves every existing BLOCKED/false authority
+    field. The eventual source-bound trainer requires separate signed admission
+    and supervised resource qualification before using these retained inputs.
+    """
     try:
-        _require(train_path.name == "train.jsonl" and manifest_path.name == "curriculum-manifest.json",
-                 "only explicit training and curriculum manifest filenames are allowed")
-        _require(Path(os.path.abspath(train_path.parent)) == Path(os.path.abspath(manifest_path.parent)),
-                 "training and manifest must be in one explicit directory")
-        manifest_bytes = _read_once(manifest_path, contract.MAX_BYTES)
-        _require(hashlib.sha256(manifest_bytes).hexdigest() == MANIFEST_SHA256,
-                 "curriculum manifest differs from the frozen source commitment")
-        manifest = _strict(manifest_bytes)
-        validate_manifest(manifest)
-        raw = _read_once(train_path, MAX_FILE_BYTES)
-        report.update(validate_train_bytes(raw, manifest))
-        report["manifest_sha256"] = hashlib.sha256(manifest_bytes).hexdigest()
-        report["contract_conforms"] = True
-        report.update(run_gates(raw, nemo_source_root))
+        return _capture_train_only(train_path, manifest_path, nemo_source_root, _new_report())
+    except GateNotReady:
+        raise
+    except (AdmissionError, contract.ContractError, OSError, UnicodeError, ValueError, TypeError,
+            KeyError, AttributeError, RecursionError, RuntimeError, OverflowError) as exc:
+        raise AdmissionError("source conformance failed closed") from exc
+
+
+def check_conformance(train_path: Path, manifest_path: Path,
+                      nemo_source_root: Path | None = None) -> tuple[dict[str, Any], int]:
+    report = _new_report()
+    try:
+        _capture_train_only(train_path, manifest_path, nemo_source_root, report)
         return report, 0
     except GateNotReady:
         report["errors"] = ["required fixed-source gate or doctrine kernel is NOT_READY"]
