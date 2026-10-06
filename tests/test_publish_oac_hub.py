@@ -320,10 +320,19 @@ def test_only_publish_jobs_see_credentials_or_publish() -> None:
     assert "clinical-gateway/tools/verify_hub_alignment.py" in steps_text(alignment)
 
 
-def test_locked_writers_register_every_publish_job() -> None:
+def test_every_publish_job_holds_its_canonical_lock() -> None:
+    # The LOCKED_WRITERS registration (HF upgrade plan D3) follows with a
+    # Foundation-coordinated change, because tests/test_hf_write_locks.py is in
+    # foundation-runtime.yml's push path filter. Until then the lock is asserted
+    # here, and any registration that does exist must agree with it.
+    jobs = workflow()["jobs"]
     locks = load_module("oac_hf_write_locks", ROOT / "tests" / "test_hf_write_locks.py")
     for profile in publisher.PROFILES.values():
-        assert locks.LOCKED_WRITERS[("publish-oac-hub.yml", profile.job_id)] == profile.lock_group
+        concurrency = jobs[profile.job_id]["concurrency"]
+        assert concurrency["group"] == profile.lock_group
+        assert concurrency["cancel-in-progress"] is False
+        registered = locks.LOCKED_WRITERS.get(("publish-oac-hub.yml", profile.job_id))
+        assert registered in (None, profile.lock_group)
 
 
 # --- Git source ---------------------------------------------------------------
