@@ -151,6 +151,9 @@ unchanged). Each lane draws 2000 new rows from the hash-verified trainer's own
 and scores the fixed model at the fixed threshold. Nothing is retrained or re-thresholded.
 Every lane reports its own oracle (the lane's true label probability), so
 `roc_auc_headroom` is loss attributable to the model rather than to label noise.
+`lane_oracle_at_threshold` applies the same fixed threshold to the lane's true label
+probability, so each lane's `flag_rate` and balanced accuracy can be read against the
+best possible decision at that threshold.
 
 | lane | shift | prevalence | balanced accuracy [95%] | ROC AUC | lane oracle | AUC headroom [95%] |
 |---|---|---:|---|---:|---:|---|
@@ -163,8 +166,12 @@ Every lane reports its own oracle (the lane's true label probability), so
 Readings (bootstrap B=400 per lane):
 
 - The published v1 metrics hold on fresh in-distribution draws.
-- Under queue saturation the ranking survives but the fixed threshold does not: every row
-  is flagged, and balanced accuracy is exactly 0.5.
+- Under queue saturation every row is flagged, and the lane's own oracle flags every row
+  at the same threshold too: the true risk of every saturated row exceeds 0.16 (minimum
+  0.183). Balanced accuracy is exactly 0.5 for both, so this is a property of the metric
+  under this shift, not a threshold or model defect. (Corrects the reading merged in #398.)
+- Under long outages the model under-flags: 39.6% of rows against the oracle's 46.0% at
+  the same threshold.
 - Under long outages the model loses ~0.031 AUC because it learned a weight of 0.054 on
   `seconds_since_last_success`, while the generator uses 2.2. In-distribution outage ages
   rarely reach the range where that weight matters, so the training data never taught it.
