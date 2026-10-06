@@ -1,0 +1,22 @@
+$ -B -m unittest -v v2.tests.test_mutation_suite  (cwd = tree at 929677d)
+test_broken_baselines_are_invalid_without_per_class_rates (v2.tests.test_mutation_suite.BehaviorAndBaselineTest.test_broken_baselines_are_invalid_without_per_class_rates) ... ok
+test_dev_reference_passes_every_gate (v2.tests.test_mutation_suite.BehaviorAndBaselineTest.test_dev_reference_passes_every_gate) ... ok
+test_sign_flip_is_caught_by_truth_sign_and_monotone (v2.tests.test_mutation_suite.BehaviorAndBaselineTest.test_sign_flip_is_caught_by_truth_sign_and_monotone) ... ok
+test_threshold_mutant_changes_decisions_only (v2.tests.test_mutation_suite.BehaviorAndBaselineTest.test_threshold_mutant_changes_decisions_only) ... ok
+test_artifact_catalogue_on_frozen_v2 (v2.tests.test_mutation_suite.CatalogueTest.test_artifact_catalogue_on_frozen_v2) ... ok
+test_kernel_edits_apply_exactly_once (v2.tests.test_mutation_suite.CatalogueTest.test_kernel_edits_apply_exactly_once) ... ok
+test_receipt_catalogue (v2.tests.test_mutation_suite.CatalogueTest.test_receipt_catalogue) ... ok
+test_artifact_mutant_pass1_refused_pass2_loads (v2.tests.test_mutation_suite.IntegrityLayerTest.test_artifact_mutant_pass1_refused_pass2_loads) ... ok
+test_frozen_v2_pair_passes_the_integrity_layer (v2.tests.test_mutation_suite.IntegrityLayerTest.test_frozen_v2_pair_passes_the_integrity_layer) ... ok
+test_registered_receipt_mutants_are_caught (v2.tests.test_mutation_suite.IntegrityLayerTest.test_registered_receipt_mutants_are_caught) ... ok
+test_identity_copy_loads_the_frozen_pair (v2.tests.test_mutation_suite.KernelMutantTest.test_identity_copy_loads_the_frozen_pair) ... ok
+test_kernel_test_harness_control_passes_and_mutant_fails (v2.tests.test_mutation_suite.KernelMutantTest.test_kernel_test_harness_control_passes_and_mutant_fails) ... ok
+test_mutations_do_what_they_claim (v2.tests.test_mutation_suite.KernelMutantTest.test_mutations_do_what_they_claim) ... ok
+test_self_hash_refuses_every_mutant_but_the_inverted_self_hash (v2.tests.test_mutation_suite.KernelMutantTest.test_self_hash_refuses_every_mutant_but_the_inverted_self_hash) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 78.967s
+
+OK
+
+exit 0

@@ -1,0 +1,19 @@
+----------------------------------------------------------------------
+Ran 94 tests in 10.043s
+
+OK
+# sealing audit (lens c): opens under v2/data during the in-process v2 test suite
+python 3.12.10; tests run 94, failures 0, errors 0
+  v2/data/MANIFEST.json | mode r | research/freeze.py:build_receipt | x28
+  v2/data/MANIFEST.json | mode r | tests/_support.py:sha256_file | x1
+  v2/data/legacy_v1/SOURCE.json | mode r | tests/test_generator_parity.py:setUpClass | x1
+  v2/data/legacy_v1/test.jsonl | mode r | tests/test_generator_parity.py:test_v1_parity_byte_for_byte | x1
+  v2/data/legacy_v1/train.jsonl | mode r | research/dataio.py:load_rows | x2
+  v2/data/legacy_v1/train.jsonl | mode r | research/v1_gd.py:legacy_train_xy | x2
+  v2/data/legacy_v1/train.jsonl | mode r | tests/test_generator_parity.py:test_nominal_draws_match_v1_draw_order | x1
+  v2/data/legacy_v1/train.jsonl | mode r | tests/test_generator_parity.py:test_v1_parity_byte_for_byte | x1
+  v2/data/legacy_v1/validation.jsonl | mode r | tests/test_generator_parity.py:test_v1_parity_byte_for_byte | x1
+opens under v2/data/sealed/: 0 []
+opens of the registered validation split: 0 []
+note: subprocesses spawned by tests (CLI / determinism) are not covered by this hook
+VERDICT: PASS

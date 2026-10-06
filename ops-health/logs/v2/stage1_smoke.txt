@@ -1,0 +1,292 @@
+# logs/v2/stage1_smoke.txt -- stage 1 smoke test (MEASURED 2026-09-26T21:17:09-04:00); DEV data only (split "dev"), SYNTHETIC; smoke values are not results
+# HEAD: 7c7226a4091bc0ef9b78dd840890165a3cb39112
+# working tree (v2 research/kernel uncommitted at this point):
+#    M v2/research/truth.py
+#   ?? v2/ops-health/
+#   ?? v2/research/bench_bootstrap.py
+#   ?? v2/research/bootstrap.py
+#   ?? v2/research/calibration.py
+#   ?? v2/research/conformal.py
+#   ?? v2/research/freeze.py
+#   ?? v2/research/gates.py
+#   ?? v2/research/kernel_bridge.py
+#   ?? v2/research/lr.py
+#   ?? v2/research/metrics.py
+#   ?? v2/research/pipeline.py
+#   ?? v2/research/v1_gd.py
+# command: PYTHONUTF8=1 py -3.12 -B smoke_stage1.py   (script source at end of this log)
+
+[   0.01s] python: "3.12.10"
+[   0.10s] dev_rows: {"first_id": "dev-000000", "n": 12288, "prevalence": 0.18359375}
+[   0.26s] lr.fit l2=1e-3: {"converged": true, "gradient_max_abs": 5.694094284622309e-17, "iterations": 7, "solvers": ["cholesky"], "step_halvings": 0, "stop_reason": "CONVERGED"}
+[   0.26s] lr.recovery: {"relative_l2_intercept_and_weights": 0.3098135743573484, "sign_agreement_k": 8, "sign_agreement_of": 8, "sign_disagreeing": [], "spearman_weights_vs_truth": 0.9761904761904762}
+[   0.97s] platt: {"diag": {"converged": true, "gradient_max_abs": 1.5062151626312782e-17, "iterations": 7, "rows": 2048, "stop_reason": "CONVERGED"}, "params": {"a": 1.290618547768, "b": 0.449994300927}}
+[   0.97s] isotonic: {"blocks": 20, "strictly_increasing": true, "tie_blocks": 2048}
+[   1.72s] build_candidate[none]: {"conformal_rank": {"0": 1521, "1": 324}, "n_cal": {"0": 1689, "1": 359}, "q_hat": {"0": 0.240508069375, "1": 0.913235849828}, "threshold": 0.16}
+[   2.40s] build_candidate[platt]: {"conformal_rank": {"0": 1521, "1": 324}, "n_cal": {"0": 1689, "1": 359}, "q_hat": {"0": 0.262293319353, "1": 0.930076462536}, "threshold": 0.17}
+[   2.96s] build_candidate[isotonic]: {"conformal_rank": {"0": 1521, "1": 324}, "n_cal": {"0": 1689, "1": 359}, "q_hat": {"0": 0.245098039216, "1": 0.941176470588}, "threshold": 0.17}
+[   3.01s] metrics[none]: {"abstain": 0.43408203125, "auc": 0.8394931261207412, "ba": 0.7661558079298665, "brier": 0.10103415454103341, "coverage": {"marginal": 0.904296875, "per_class": {"0": 0.9037656903765691, "1": 0.9066666666666666}, "rows": 2048}, "ece": 0.03249291423247994, "per_class": {"f1": 0.5495145631067961, "false_alert_share": 0.5679389312977099, "precision": 0.43206106870229005, "recall": 0.7546666666666667, "specificity": 0.7776449491930664}}
+[   3.08s] metrics[platt]: {"abstain": 0.43408203125, "auc": 0.8394931261207412, "ba": 0.7673289499900379, "brier": 0.09952034034133879, "coverage": {"marginal": 0.904296875, "per_class": {"0": 0.9037656903765691, "1": 0.9066666666666666}, "rows": 2048}, "ece": 0.012505599629432911, "per_class": {"f1": 0.5631469979296067, "false_alert_share": 0.5397631133671743, "precision": 0.4602368866328257, "recall": 0.7253333333333334, "specificity": 0.8093245666467423}}
+[   3.13s] metrics[isotonic]: {"abstain": 0.4365234375, "auc": 0.8380251046025105, "ba": 0.7683634190077704, "brier": 0.09990820271300399, "coverage": {"marginal": 0.90673828125, "per_class": {"0": 0.9067543335325762, "1": 0.9066666666666666}, "rows": 2048}, "ece": 0.010532699559695314, "per_class": {"f1": 0.5640495867768595, "false_alert_share": 0.5396290050590219, "precision": 0.46037099494097805, "recall": 0.728, "specificity": 0.8087268380155409}}
+[   3.13s] metrics[constant_alert]: {"ba": 0.5, "failed": ["iii_decisions_not_constant"], "per_class": "INVALID_BASELINE"}
+[   3.13s] metrics[v1 counts 40/57/132/11]: {"accuracy": 0.7166666666666667, "balanced_accuracy": 0.7413632119514473, "f1": 0.5405405405405406, "false_alert_share": 0.5876288659793815, "precision": 0.41237113402061853, "prevalence": 0.2125, "recall": 0.7843137254901961, "specificity": 0.6984126984126984}
+[   3.52s] freeze(real git probe): "REFUSED: working tree is not clean for v2/research, v2/ops-health/ops_health.py; refusing to freeze (dirty: [' M v2/research/truth.py', '?? v2/ops-health/ops_health.py',"
+[   3.55s] kernel.advise(valid): {"abstain_reason": null, "advisory": "NO_ALERT", "authority": {"acknowledgement": false, "clinical_decision": false, "device_control": false, "result_interpretation": false, "result_release": false}, "operator_attention_score": 0.050561423801}
+[   3.55s] g_failclosed: {"escaped": [], "fraction": 1.0, "total": 66}
+[   3.55s] g_integrity: [1.0, null]
+[   3.84s] g_monotone: {"checks": 19600, "failed_by_kind": {}, "passed": 19600, "value": 1.0}
+[   3.84s] g_truth_sign: 1.0
+[   4.41s] bootstrap(200): {"auc": {"level": 0.95, "lower": 0.8117712506327545, "method": "percentile_type7", "n_defined": 200, "n_undefined": 0, "upper": 0.8625397646002649}, "ba": {"level": 0.95, "lower": 0.7442364879480815, "method": "percentile_type7", "n_defined": 200, "n_undefined": 0, "upper": 0.7923405806604815}, "ece": {"level": 0.95, "lower": 0.010483766614532776, "method": "percentile_type7", "n_defined": 200, "n_undefined": 0, "upper": 0.030268220051985872}}
+[   4.42s] bootstrap unit-weight equality: {"auc": true, "auc_abs_diff": 0.0, "ece": true}
+[   4.42s] DONE: "smoke complete"
+
+# ---- v1_gd reproduction: PYTHONUTF8=1 py -3.12 -B -m v2.research.v1_gd --reproduce
+{
+  "all_equal_at_12dp": true,
+  "epochs": 2400,
+  "l2_penalty": 0.01,
+  "learning_rate": 0.42,
+  "max_abs_diff_unrounded_vs_published": 4.606315329169774e-13,
+  "parameters": {
+    "configuration_valid": {
+      "equal_at_12dp": true,
+      "published": -1.461266877987,
+      "rounded_12": -1.461266877987,
+      "unrounded": -1.4612668779868192
+    },
+    "consecutive_failures": {
+      "equal_at_12dp": true,
+      "published": 0.863860283722,
+      "rounded_12": 0.863860283722,
+      "unrounded": 0.8638602837215393
+    },
+    "intercept": {
+      "equal_at_12dp": true,
+      "published": 2.966862310261,
+      "rounded_12": 2.966862310261,
+      "unrounded": 2.966862310261277
+    },
+    "ledger_integrity_ok": {
+      "equal_at_12dp": true,
+      "published": -1.128984575692,
+      "rounded_12": -1.128984575692,
+      "unrounded": -1.1289845756921988
+    },
+    "listener_running": {
+      "equal_at_12dp": true,
+      "published": -1.61910172338,
+      "rounded_12": -1.61910172338,
+      "unrounded": -1.6191017233795588
+    },
+    "peer_allowlist_configured": {
+      "equal_at_12dp": true,
+      "published": -0.527177146666,
+      "rounded_12": -0.527177146666,
+      "unrounded": -0.5271771466655412
+    },
+    "queue_utilization": {
+      "equal_at_12dp": true,
+      "published": 0.908924629176,
+      "rounded_12": 0.908924629176,
+      "unrounded": 0.9089246291756448
+    },
+    "seconds_since_last_success": {
+      "equal_at_12dp": true,
+      "published": 0.053938998373,
+      "rounded_12": 0.053938998373,
+      "unrounded": 0.05393899837306583
+    },
+    "tls_enabled": {
+      "equal_at_12dp": true,
+      "published": -0.262108043211,
+      "rounded_12": -0.262108043211,
+      "unrounded": -0.26210804321081244
+    }
+  },
+  "python": "3.12.10",
+  "seconds": 2.375,
+  "train_rows": 768,
+  "train_sha256": "b868acce6a2e6a8f6a5e5edb3f5b45c4f2e7e7b33c1bc56d22128620aab8b1f6"
+}
+exit=0
+
+# ---- v1_gd reproduction: PYTHONUTF8=1 python -B -m v2.research.v1_gd --reproduce  (3.11)
+{
+  "all_equal_at_12dp": true,
+  "epochs": 2400,
+  "l2_penalty": 0.01,
+  "learning_rate": 0.42,
+  "max_abs_diff_unrounded_vs_published": 4.604094883120524e-13,
+  "parameters": {
+    "configuration_valid": {
+      "equal_at_12dp": true,
+      "published": -1.461266877987,
+      "rounded_12": -1.461266877987,
+      "unrounded": -1.4612668779868188
+    },
+    "consecutive_failures": {
+      "equal_at_12dp": true,
+      "published": 0.863860283722,
+      "rounded_12": 0.863860283722,
+      "unrounded": 0.8638602837215396
+    },
+    "intercept": {
+      "equal_at_12dp": true,
+      "published": 2.966862310261,
+      "rounded_12": 2.966862310261,
+      "unrounded": 2.966862310261274
+    },
+    "ledger_integrity_ok": {
+      "equal_at_12dp": true,
+      "published": -1.128984575692,
+      "rounded_12": -1.128984575692,
+      "unrounded": -1.128984575692198
+    },
+    "listener_running": {
+      "equal_at_12dp": true,
+      "published": -1.61910172338,
+      "rounded_12": -1.61910172338,
+      "unrounded": -1.6191017233795577
+    },
+    "peer_allowlist_configured": {
+      "equal_at_12dp": true,
+      "published": -0.527177146666,
+      "rounded_12": -0.527177146666,
+      "unrounded": -0.5271771466655405
+    },
+    "queue_utilization": {
+      "equal_at_12dp": true,
+      "published": 0.908924629176,
+      "rounded_12": 0.908924629176,
+      "unrounded": 0.9089246291756448
+    },
+    "seconds_since_last_success": {
+      "equal_at_12dp": true,
+      "published": 0.053938998373,
+      "rounded_12": 0.053938998373,
+      "unrounded": 0.05393899837306586
+    },
+    "tls_enabled": {
+      "equal_at_12dp": true,
+      "published": -0.262108043211,
+      "rounded_12": -0.262108043211,
+      "unrounded": -0.2621080432108122
+    }
+  },
+  "python": "3.11.9",
+  "seconds": 2.706,
+  "train_rows": 768,
+  "train_sha256": "b868acce6a2e6a8f6a5e5edb3f5b45c4f2e7e7b33c1bc56d22128620aab8b1f6"
+}
+exit=0
+
+# ---- smoke_stage1.py source
+"""Stage-1 smoke test: import + tiny DEV run of every v2 research module and the kernel.
+DEV data only (split name "dev"); SYNTHETIC; values are smoke checks, never results."""
+import json
+import math
+import sys
+import tempfile
+import time
+from pathlib import Path
+
+ROOT = Path(r"C:\Users\steph\szl-work\oac-frontier")
+sys.path.insert(0, str(ROOT))
+
+from v2.research import (bootstrap, calibration, conformal, freeze, gates, generator,  # noqa: E402
+                         kernel_bridge, lr, metrics, pipeline, truth, v1_gd)
+from v2.research.dataio import labels_of  # noqa: E402
+
+T0 = time.perf_counter()
+
+
+def say(tag, obj):
+    print(f"[{time.perf_counter() - T0:7.2f}s] {tag}: {json.dumps(obj, sort_keys=True, default=str)}")
+
+
+k = kernel_bridge.kernel()
+say("python", sys.version.split()[0])
+dev = generator.dev_rows(12288)
+say("dev_rows", {"n": len(dev), "first_id": dev[0]["sample_id"], "prevalence": sum(labels_of(dev)) / len(dev)})
+
+# lr
+tr = dev[:4096]
+X = pipeline.normalized_vectors(tr)
+y = labels_of(tr)
+fit = lr.fit(lr.columns_from_vectors(X), y, 1e-3)
+say("lr.fit l2=1e-3", {kk: fit[kk] for kk in ("iterations", "converged", "stop_reason", "gradient_max_abs", "step_halvings", "solvers")})
+say("lr.recovery", truth.recovery_report(fit["intercept"], fit["weights"]))
+
+# calibration
+raw_art, _ = pipeline.build_candidate(train_rows=tr, calibration_rows=dev[4096:6144], conformal_rows=dev[6144:8192],
+                                      threshold_rows=dev[8192:10240], l2=1e-3, calibrator="none",
+                                      split_names={r: f"dev-{r}" for r in pipeline.SPLIT_ROLES})
+sc = k.ArtifactScorer(raw_art)
+cal_raw = [sc.evaluate(v)["raw_score"] for v in pipeline.normalized_vectors(dev[4096:6144])]
+cal_y = labels_of(dev[4096:6144])
+p, pd = calibration.fit_platt(cal_raw, cal_y)
+say("platt", {"params": p["params"], "diag": pd})
+iso, idg = calibration.fit_isotonic(cal_raw, cal_y)
+vals = iso["params"]["values"]
+say("isotonic", {"blocks": idg["blocks"], "tie_blocks": idg["tie_blocks"], "strictly_increasing": all(b > a for a, b in zip(vals, vals[1:]))})
+
+# pipeline with each calibrator
+arts = {}
+for kind in calibration.KINDS:
+    art, diag = pipeline.build_candidate(train_rows=tr, calibration_rows=dev[4096:6144], conformal_rows=dev[6144:8192],
+                                         threshold_rows=dev[8192:10240], l2=1e-3, calibrator=kind,
+                                         split_names={r: f"dev-{r}" for r in pipeline.SPLIT_ROLES})
+    arts[kind] = art
+    say(f"build_candidate[{kind}]", {"threshold": art["decision_threshold"], "q_hat": art["conformal"]["q_hat"],
+                                     "n_cal": art["conformal"]["n_calibration"], "conformal_rank": diag["conformal"]["rank"]})
+
+# metrics on held-out DEV rows
+ev = dev[10240:12288]
+ey = labels_of(ev)
+for kind, art in arts.items():
+    s = k.ArtifactScorer(art)
+    res = [s.evaluate(v) for v in pipeline.normalized_vectors(ev)]
+    scores = [r["calibrated_score"] for r in res]
+    dec = [1 if r["threshold_decision"] else 0 for r in res]
+    val = metrics.baseline_validity(ey, dec, receipt_verified=True, probes_refused=1, probes_total=1)
+    rep = metrics.binary_report(ey, dec, val)
+    sr = metrics.score_report(ey, scores)
+    cov = metrics.coverage(ey, [r["prediction_set"] for r in res])
+    sel = metrics.selective(ey, [r["advisory"] for r in res], [r["abstain_reason"] for r in res])
+    say(f"metrics[{kind}]", {"ba": rep["balanced_accuracy"], "per_class": rep["per_class_rates"], "brier": sr["brier"],
+                             "ece": sr["ece"], "auc": sr["roc_auc"], "coverage": cov, "abstain": sel["abstention_rate"]})
+const = metrics.binary_report(ey, [1] * len(ey), metrics.baseline_validity(ey, [1] * len(ey), receipt_verified=True, probes_refused=1, probes_total=1))
+say("metrics[constant_alert]", {"ba": const["balanced_accuracy"], "per_class": const["per_class_rates"], "failed": const["baseline_validity"]["failed_preconditions"]})
+say("metrics[v1 counts 40/57/132/11]", metrics.rates_from_counts(40, 57, 132, 11))
+
+# freeze (test-only override: tree is dirty during stage 1) + kernel load + advise
+with tempfile.TemporaryDirectory() as tmp:
+    try:
+        freeze.freeze(arts["platt"], Path(tmp) / "real", selection={"procedure": "smoke", "selection_split": "dev", "trials": 0, "selected_trial": None, "stop_reason": None})
+        say("freeze(real git probe)", "WROTE (tree clean)")
+    except freeze.FreezeRefused as exc:
+        say("freeze(real git probe)", f"REFUSED: {str(exc)[:160]}")
+    out = freeze.freeze(arts["platt"], Path(tmp) / "a", selection={"procedure": "smoke", "selection_split": "dev", "trials": 0, "selected_trial": None, "stop_reason": None},
+                        source_state_override={"commit": "0" * 40, "tree_clean": True})
+    kern = k.OpsHealthKernel(out["model_path"], out["receipt_path"])
+    adv = kern.advise({"features": dict(gates.VALID_FEATURES)})
+    say("kernel.advise(valid)", {kk: adv[kk] for kk in ("advisory", "abstain_reason", "operator_attention_score", "authority")})
+    fc, rep = gates.g_failclosed(kern.advise)
+    say("g_failclosed", {"fraction": fc, "total": rep["total"], "escaped": rep["escaped"]})
+    gi = gates.g_integrity(out["model_path"], out["receipt_path"], k)
+    say("g_integrity", gi)
+    mono, mrep = gates.g_monotone(lambda f: kern.advise({"features": f})["operator_attention_score"])
+    say("g_monotone", {"value": mono, **mrep})
+    say("g_truth_sign", gates.g_truth_sign(arts["platt"]["weights"]))
+
+# bootstrap (tiny)
+res = [k.ArtifactScorer(arts["platt"]).evaluate(v) for v in pipeline.normalized_vectors(ev)]
+bs = bootstrap.BinaryStats(ey, [1 if r["threshold_decision"] else 0 for r in res])
+ss = bootstrap.ScoreStats(ey, [r["calibrated_score"] for r in res])
+vals = bootstrap.paired_bootstrap(len(ey), {"ba": bs.balanced_accuracy, "ece": ss.ece, "auc": ss.auroc}, seed=20260927, resamples=200)
+say("bootstrap(200)", {kk: bootstrap.interval(v) for kk, v in vals.items()})
+ones = [1] * len(ey)
+say("bootstrap unit-weight equality", {"auc": ss.auroc(ones) == metrics.roc_auc(ey, [r["calibrated_score"] for r in res]),
+                                        "auc_abs_diff": abs(ss.auroc(ones) - metrics.roc_auc(ey, [r["calibrated_score"] for r in res])),
+                                        "ece": ss.ece(ones) == metrics.ece(ey, [r["calibrated_score"] for r in res])})
+say("DONE", "smoke complete")

@@ -1,0 +1,192 @@
+{
+  "authority": "advisory_only_no_ack_release_device_or_care_authority",
+  "calibrator": {
+    "kind": "isotonic",
+    "params": {
+      "thresholds": [
+        0.029402284912,
+        0.031339050015,
+        0.034402422874,
+        0.04618225494,
+        0.048502405308,
+        0.056363334733,
+        0.083949592243,
+        0.093382383869,
+        0.107446044023,
+        0.11025742819,
+        0.130597631196,
+        0.167266649768,
+        0.20769934267,
+        0.212945852972,
+        0.238175002551,
+        0.321462441951,
+        0.349531373095,
+        0.406553685241,
+        0.470333407639,
+        0.471917623784,
+        0.607446857267,
+        0.622911803957,
+        0.655978930389,
+        0.743261648214,
+        0.826645135597,
+        0.854049591646,
+        0.960303307368
+      ],
+      "values": [
+        0.0,
+        0.022058823529,
+        0.035190615836,
+        0.045454545455,
+        0.06230529595,
+        0.062586926287,
+        0.077348066298,
+        0.080188679245,
+        0.115384615385,
+        0.121212121212,
+        0.145962732919,
+        0.19801980198,
+        0.230769230769,
+        0.282352941176,
+        0.304054054054,
+        0.363636363636,
+        0.379310344828,
+        0.444444444444,
+        0.5,
+        0.572463768116,
+        0.6,
+        0.657142857143,
+        0.717948717949,
+        0.732558139535,
+        0.76,
+        0.951807228916,
+        1.0
+      ]
+    }
+  },
+  "conformal": {
+    "alpha": 0.1,
+    "method": "mondrian_split_conformal",
+    "n_calibration": {
+      "0": 3346,
+      "1": 750
+    },
+    "q_hat": {
+      "0": 0.304054054054,
+      "1": 0.937413073713
+    }
+  },
+  "decision_threshold": 0.28,
+  "feature_manifest": [
+    {
+      "kind": "binary",
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "name": "listener_running",
+      "transform": "identity"
+    },
+    {
+      "kind": "binary",
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "name": "tls_enabled",
+      "transform": "identity"
+    },
+    {
+      "kind": "binary",
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "name": "peer_allowlist_configured",
+      "transform": "identity"
+    },
+    {
+      "kind": "continuous",
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "name": "queue_utilization",
+      "transform": "min_max"
+    },
+    {
+      "kind": "continuous",
+      "maximum": 20.0,
+      "minimum": 0.0,
+      "name": "consecutive_failures",
+      "transform": "min_max"
+    },
+    {
+      "kind": "continuous",
+      "maximum": 86400.0,
+      "minimum": 0.0,
+      "name": "seconds_since_last_success",
+      "transform": "min_max"
+    },
+    {
+      "kind": "binary",
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "name": "ledger_integrity_ok",
+      "transform": "identity"
+    },
+    {
+      "kind": "binary",
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "name": "configuration_valid",
+      "transform": "identity"
+    }
+  ],
+  "generator": {
+    "master_seed": 20260926,
+    "row_schema": "szl-oac/ops-health-observation/v2",
+    "source_sha256": "a502d3644534ec599663d8678b8066b390e612396b25350f33fa987194b44384",
+    "version": "ops-health-generator/2.0.0"
+  },
+  "intercept": 9.662086343808,
+  "model_type": "binary_logistic_regression_standard_library",
+  "purpose": "synthetic_operational_transport_attention_only",
+  "schema": "szl-oac/ops-health-logistic-model/v2",
+  "score_semantics": "synthetic_attention_probability_estimate_not_production_calibrated",
+  "synthetic_training_data": true,
+  "training": {
+    "algorithm": "newton_irls_l2_logistic_regression",
+    "converged": true,
+    "iterations": 7,
+    "l2": 0.0,
+    "max_iter": 100,
+    "splits": {
+      "calibration": {
+        "name": "calibration",
+        "rows": 4096,
+        "sha256": "526d47c5e922aa35e3fba1f46f595fad6cc0fd4b3fd2e52114b5c99247e57b16"
+      },
+      "conformal": {
+        "name": "conformal",
+        "rows": 4096,
+        "sha256": "bf317275e207e13ddd38d95b308eb7ff6a21d13e71b27622d8e65f4a4eb5f2dd"
+      },
+      "threshold": {
+        "name": "validation",
+        "rows": 4096,
+        "sha256": "d0a37356784dcd60a4dbea68d760c55d56a7bd69b3a6f4dc833cfdbb38a951f3"
+      },
+      "train": {
+        "name": "train",
+        "rows": 16384,
+        "sha256": "5211e7ec954ec00c743bd62dae107f7a80335e4e5962a31b788e7bf56ecf0adb"
+      }
+    },
+    "stop_reason": "CONVERGED",
+    "threshold_grid": "0.01:0.99:0.01",
+    "threshold_selection": "max_balanced_accuracy_then_f1_then_closest_to_0.5_then_lowest",
+    "tol": 1e-10
+  },
+  "weights": {
+    "configuration_valid": -3.478203297268,
+    "consecutive_failures": 2.610816946761,
+    "ledger_integrity_ok": -4.448113372274,
+    "listener_running": -2.99645049741,
+    "peer_allowlist_configured": -1.266585258865,
+    "queue_utilization": 3.89310567066,
+    "seconds_since_last_success": 3.566532861398,
+    "tls_enabled": -0.972874921067
+  }
+}

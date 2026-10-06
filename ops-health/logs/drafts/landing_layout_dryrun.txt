@@ -1,0 +1,66 @@
+# drafts: landing-layout dry run; started 2026-10-06T10:15:21Z; source HEAD ac5a2f88f6009ffba5e40bdcf3ef6d032dbbb87f
+staged: 137 files; sealed dir present: no
+du: 103M
+sha256 b0a64ff3f26ea284b0588de351ed7795a6089203b35fded0e7d82cbd4871aed9 *v2/ops-health/ops_health.py
+sha256 b830a5edca271d667ab09b378dd5d3ab505d71a7e3451de8d9ca2bacfeed977c *v2/ops-health/model.json
+sha256 442486a3b451f0ad765aac253830cdc5455bad3a34186b4cf73388cf207056f2 *v2/ops-health/artifact_receipt.json
+sha256 afa7c8e5081c682877ad489259592951f854ba2558d409fdcf071ba845d4fb63 *v2/ops-health/example_input.json
+
+## 1/3 $ PYTHONUTF8=1 python -B -m v2.research.make_data --verify   (expected to fail: sealed/ not staged)
+  File "C:\Users\steph\AppData\Local\Programs\Python\Python312\Lib\pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\steph\\AppData\\Local\\Temp\\claude\\C--Users-steph-szl-work\\7198a73f-5194-4649-9294-f38f408e26bd\\scratchpad\\stage\\ops-health\\v2\\data\\sealed\\test.jsonl'
+exit=1
+
+## 2/3 $ PYTHONUTF8=1 python -B -m unittest discover -s v2/tests -t .
+  File "C:\Users\steph\AppData\Local\Temp\claude\C--Users-steph-szl-work\7198a73f-5194-4649-9294-f38f408e26bd\scratchpad\stage\ops-health\v2\tests\test_mutation_suite.py", line 138, in test_artifact_mutant_pass1_refused_pass2_loads
+    self.assertFalse(p2["caught"], p2)
+AssertionError: True is not false : {'kernel': {'accepted': True, 'refusal': None}, 'verify_origin': {'accepted': False, 'refusal': 'OriginMismatch: source commit 92872f88193242b3fc0c1f604321d889d6988358 is not in the repository'}, 'caught': True}
+
+======================================================================
+FAIL: test_frozen_v2_pair_passes_the_integrity_layer (v2.tests.test_mutation_suite.IntegrityLayerTest.test_frozen_v2_pair_passes_the_integrity_layer)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\steph\AppData\Local\Temp\claude\C--Users-steph-szl-work\7198a73f-5194-4649-9294-f38f408e26bd\scratchpad\stage\ops-health\v2\tests\test_mutation_suite.py", line 108, in test_frozen_v2_pair_passes_the_integrity_layer
+    self.assertFalse(layer["caught"], layer)
+AssertionError: True is not false : {'kernel': {'accepted': True, 'refusal': None}, 'verify_origin': {'accepted': False, 'refusal': 'OriginMismatch: source commit 92872f88193242b3fc0c1f604321d889d6988358 is not in the repository'}, 'caught': True}
+
+======================================================================
+FAIL: test_report_is_the_render_of_the_recorded_run (v2.tests.test_readiness.RecordedRunTest.test_report_is_the_render_of_the_recorded_run)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\steph\AppData\Local\Temp\claude\C--Users-steph-szl-work\7198a73f-5194-4649-9294-f38f408e26bd\scratchpad\stage\ops-health\v2\tests\test_readiness.py", line 202, in test_report_is_the_render_of_the_recorded_run
+    self.assertEqual(page, M.render(self.r))
+AssertionError: '# OA[23202 chars].\n\n**Supplementary in-place run** (MEASURED;[11793 chars]\n\n' != '# OA[23202 chars].\n\nNo supplementary in-place test run exists[8638 chars]\n\n'
+Diff is 35337 characters long. Set self.maxDiff to None to see it.
+
+----------------------------------------------------------------------
+Ran 184 tests in 116.685s
+
+FAILED (failures=4, errors=4, skipped=1)
+exit=1
+
+## 3/3 $ PYTHONUTF8=1 python -B -m v2.research.final_analyze
+set test: rows 50000 bootstrap 417.43 s
+set pooled_shift: rows 50000 bootstrap 495.44 s
+set shift_queue_saturation: rows 12500 bootstrap 241.35 s
+set shift_failure_bursts: rows 12500 bootstrap 27.47 s
+set shift_clock_skew: rows 12500 bootstrap 101.21 s
+set shift_missing_tls: rows 12500 bootstrap 127.59 s
+set legacy_v1_test: rows 240 bootstrap 2.32 s
+wrote final_evaluation.json: 228286 bytes sha256 8fb20d389f91dadbe43cd8c42456227a5d42c4e7b95936403617da0101ec2c8c
+wrote reliability.svg: 13835 bytes sha256 a3c496261f90a39f270e1cae3d54d8387028ea6d9d490b7e055675ad4addde86
+wrote FINAL_RESULTS.md: 26371 bytes sha256 af6d2545087a0cb20094c88587a363821635875888466affc44114a318271ec4
+verdict: WIN (failed: [])
+exit=0
+
+## compare the rewritten final_evaluation.json with the committed one (numeric leaves)
+leaves committed 5018 rerun 5018; numeric compared 3884, identical 3884; timing fields excluded 7
+non-numeric leaves that differ: ['/generated_utc', '/inputs/analysis_script/git_head', '/inputs/analysis_script/sha256']
+verdict committed WIN rerun WIN
+git status after the run (files the analysis rewrote):
+ M ops-health/v2/results/FINAL_RESULTS.md
+ M ops-health/v2/results/final_evaluation.json
+?? committed_eval.json
+# finished 2026-10-06T10:41:59Z

@@ -1,0 +1,39 @@
+# stage-2 full suite after search/freeze/contenders/retrains, HEAD dff5ae5576581ef54ce47a18c888a529b52db639, 2026-09-29T15:22:53Z
+# git status --porcelain v2 runs: []
+# runs/TEST_OPENED.json present: no
+# cmd: PYTHONUTF8=1 py -3.12 -B -m unittest discover -s v2/tests -t .
+......................................................................................................E............................................
+======================================================================
+ERROR: test_bom_deep_nesting_and_size_are_refused (v2.tests.test_review_hardening.InputHardeningTest.test_bom_deep_nesting_and_size_are_refused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\steph\szl-work\oac-frontier\v2\tests\test_review_hardening.py", line 226, in test_bom_deep_nesting_and_size_are_refused
+    at_limit = (VALID_TXT + " " * (K.MAX_INPUT_BYTES - len(VALID_TXT))).encode("utf-8")
+                ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+MemoryError
+
+----------------------------------------------------------------------
+Ran 147 tests in 51.116s
+
+FAILED (errors=1)
+exit=1
+# make_data --verify (hash-only; regenerates in memory, hashes files on disk)
+      "disk_matches": true,
+      "regenerated_matches": true
+    },
+    "train": {
+      "disk_matches": true,
+      "regenerated_matches": true
+    },
+    "validation": {
+      "disk_matches": true,
+      "regenerated_matches": true
+    }
+  },
+  "ok": true,
+  "problems": []
+}
+exit=0
+145497789c7ad78a80a94cfd7f2b031ca9a20df49c06e0b3412af9070fa1ef4b *v2/PREREGISTRATION.md
+5152cd7f816c41e810861bbcd6489dee1d2598da89a36f6b418ef4a9867f181d *v2/AMENDMENTS.md
+# host memory probe appended 2026-09-29T15:25:25Z: FreePhysicalMemory_KB=1844624 TotalVisibleMemorySize_KB=33122300 FreeVirtualMemory_KB=3014328 (a probe right after the failure, ~15:23Z, read FreePhysicalMemory_KB=494496 FreeVirtualMemory_KB=602760)

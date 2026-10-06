@@ -1,0 +1,166 @@
+# stage-2 contenders, HEAD bd47a2acc48be99c56e360a12deb897aa5988d84, 2026-09-29T15:19:36Z
+# cmd: PYTHONUTF8=1 py -3.12 -B -m v2.research.stage2 contenders
+{
+  "contenders": {
+    "ABL-calibration": {
+      "kind": "not_applicable",
+      "reason": "the selected calibrator is none, so the selected model has no calibrator to remove; the search itself compared none, platt and isotonic (section 9)",
+      "status": "NOT_APPLICABLE"
+    },
+    "ABL-conformal": {
+      "coverage": {
+        "marginal": 0.900634765625,
+        "per_class": {
+          "0": 0.9011418269230769,
+          "1": 0.8984375
+        },
+        "rows": 4096
+      },
+      "keep": true,
+      "kind": "decision",
+      "rule": "keep the conformal layer only if validation coverage is >= 0.88 marginal and >= 0.85 for each class (PREREGISTRATION section 9, ABL-conformal)",
+      "source": "search_trace.json conformal block",
+      "status": "DECIDED_ON_VALIDATION",
+      "with_abstention": {
+        "abstained": 1701,
+        "abstention_rate": 0.415283203125,
+        "abstention_rate_both": 0.415283203125,
+        "abstention_rate_empty": 0.0,
+        "non_abstained": 2395,
+        "rows": 4096,
+        "selective_accuracy": 0.830062630480167,
+        "selective_balanced_accuracy": 0.8398501560011604
+      },
+      "without_abstention": {
+        "abstention_rate": 0.0,
+        "balanced_accuracy": 0.7686798878205128,
+        "rows": 4096
+      }
+    },
+    "ABL-data": {
+      "description": "selected recipe (l2=0.001, calibrator=none) on the first 768 rows of the registered train split",
+      "files": {
+        "v2/results/contenders/ABL-data/artifact_receipt.json": "876bde74b7289e0d7b0edcd4f720c4d1766777c857d14356a88bd3d43c67fa23",
+        "v2/results/contenders/ABL-data/model.json": "0cbe0e4a4d76184c6a53945a7ddfe8ab1ec16318e959296caafd5a0415d5d598"
+      },
+      "fit": {
+        "am2_converged": true,
+        "calibrator": {
+          "rows": 4096
+        },
+        "calibrator_kind": "none",
+        "irls": {
+          "converged": true,
+          "gradient_max_abs": 6.288372600415926e-18,
+          "iterations": 7,
+          "stop_reason": "CONVERGED"
+        }
+      },
+      "kind": "v2_artifact",
+      "model_sha256": "0cbe0e4a4d76184c6a53945a7ddfe8ab1ec16318e959296caafd5a0415d5d598",
+      "receipt_sha256": "876bde74b7289e0d7b0edcd4f720c4d1766777c857d14356a88bd3d43c67fa23",
+      "source_commit": "bd47a2acc48be99c56e360a12deb897aa5988d84",
+      "status": "FROZEN",
+      "train_rows": 768,
+      "train_sha256": "087260fac57d598da7bcfcf29e0ca4b7ada8d17f008417baef3395cb02d4b244",
+      "validation": {
+        "balanced_accuracy": 0.7614182692307693,
+        "balanced_accuracy_exact": [
+          1267,
+          1664
+        ],
+        "brier": 0.1070609633889244,
+        "confusion": {
+          "fn": 249,
+          "fp": 509,
+          "tn": 2819,
+          "tp": 519
+        },
+        "ece": 0.03926188721340555,
+        "f1": 0.5779510022271714,
+        "log_loss": 0.3550661253796087,
+        "negatives": 3328,
+        "positives": 768,
+        "precision": 0.504863813229572,
+        "recall": 0.67578125,
+        "roc_auc": 0.8318907908904247,
+        "rows": 4096,
+        "specificity": 0.8470552884615384,
+        "threshold": 0.16
+      }
+    },
+    "ABL-optimizer": {
+      "decision_threshold": 0.17,
+      "description": "v1 GD (2,400 epochs, lr 0.42, l2 0.01) on the full v2 train split; threshold by v1's own rule on validation",
+      "files": {
+        "v2/results/contenders/ABL-optimizer/params.json": "3a89941b066db919b10b608b3537ce4044872b2314761a732b7e828a975e4a1f"
+      },
+      "kind": "params_file",
+      "params_sha256": "3a89941b066db919b10b608b3537ce4044872b2314761a732b7e828a975e4a1f",
+      "status": "FROZEN",
+      "threshold_same_with_rounded_parameters": true,
+      "validation": {
+        "balanced_accuracy": 0.7592648237179487,
+        "balanced_accuracy_exact": [
+          15161,
+          19968
+        ],
+        "brier": 0.12288293700595888,
+        "confusion": {
+          "fn": 199,
+          "fp": 740,
+          "tn": 2588,
+          "tp": 569
+        },
+        "ece": 0.08989786269826074,
+        "f1": 0.5479056331246991,
+        "log_loss": 0.39987996777213686,
+        "negatives": 3328,
+        "positives": 768,
+        "precision": 0.4346829640947288,
+        "recall": 0.7408854166666666,
+        "roc_auc": 0.8318465795272436,
+        "rows": 4096,
+        "specificity": 0.7776442307692307,
+        "threshold": 0.17
+      }
+    }
+  },
+  "schema": "szl-oac/ops-health-contenders-index/v2",
+  "search_trace_sha256": "cc6d6809a5ae76083e42e97bb2eeca9024512fe1120da98dfa97a3f3c7d47eee",
+  "selected_recipe": {
+    "calibrator": "none",
+    "l2": 0.001
+  },
+  "selected_trial": "T07_l2_1e-3_none",
+  "splits": {
+    "calibration": {
+      "name": "calibration",
+      "purpose": "ABLATION",
+      "rows": 4096,
+      "sha256": "526d47c5e922aa35e3fba1f46f595fad6cc0fd4b3fd2e52114b5c99247e57b16"
+    },
+    "conformal": {
+      "name": "conformal",
+      "purpose": "ABLATION",
+      "rows": 4096,
+      "sha256": "bf317275e207e13ddd38d95b308eb7ff6a21d13e71b27622d8e65f4a4eb5f2dd"
+    },
+    "threshold": {
+      "name": "validation",
+      "purpose": "ABLATION",
+      "rows": 4096,
+      "sha256": "d0a37356784dcd60a4dbea68d760c55d56a7bd69b3a6f4dc833cfdbb38a951f3"
+    },
+    "train": {
+      "name": "train",
+      "purpose": "ABLATION",
+      "rows": 16384,
+      "sha256": "5211e7ec954ec00c743bd62dae107f7a80335e4e5962a31b788e7bf56ecf0adb"
+    }
+  },
+  "synthetic": true,
+  "truth_labels": "validation metrics MEASURED on the registered validation split; SYNTHETIC; no sealed split was read"
+}
+exit=0
+# finished 2026-09-29T15:21:43Z

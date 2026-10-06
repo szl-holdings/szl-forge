@@ -1,0 +1,8 @@
+# drafts: kernel CLI re-run for the v2 card's 'How to run' section
+# 2026-09-30T01:22:35Z git HEAD 8b8103d463d9fd54d3aab31480168c3094ee82c9
+$ py -3.12 -I -B v2/ops-health/ops_health.py --model v2/ops-health/model.json --receipt v2/ops-health/artifact_receipt.json --input v2/ops-health/example_input.json
+{"abstain_reason":null,"advisory":"NO_ALERT","authority":{"acknowledgement":false,"clinical_decision":false,"device_control":false,"result_interpretation":false,"result_release":false},"coverage_statement":"Mondrian split-conformal set at alpha=0.1: per-class coverage of at least 0.9 holds only for data exchangeable with the synthetic nominal conformal split; under distribution shift coverage is descriptive only. SYNTHETIC.","decision_threshold":0.2,"normalized_feature_contributions":{"configuration_valid":-2.821703311766,"consecutive_failures":0.0,"ledger_integrity_ok":-2.851449125324,"listener_running":-2.539293238803,"peer_allowlist_configured":-1.038997837438,"queue_utilization":0.324600552929,"seconds_since_last_success":5.922151e-06,"tls_enabled":-0.802793259351},"operator_attention_score":0.069311150989,"prediction_set":[0],"purpose":"synthetic_operational_transport_attention_only","schema":"szl-oac/ops-health-advisory/v2","score_semantics":"synthetic_attention_probability_estimate_not_production_calibrated","threshold_decision":false}
+exit=0
+$ (same, with a prohibited key probe: {"features":{...8 fields...},"patient_id":1})
+{"error": "prohibited non-operational field at input.patient_id (exact match)", "ok": false}
+exit=2

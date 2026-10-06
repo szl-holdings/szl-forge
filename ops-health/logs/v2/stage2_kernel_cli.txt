@@ -1,0 +1,30 @@
+# v2 kernel CLI on the frozen artifact, HEAD 92872f88193242b3fc0c1f604321d889d6988358, 2026-09-29T15:19:07Z
+# SYNTHETIC; advisory only
+Python 3.12.10
+## sha256
+b0a64ff3f26ea284b0588de351ed7795a6089203b35fded0e7d82cbd4871aed9 *v2/ops-health/ops_health.py
+b830a5edca271d667ab09b378dd5d3ab505d71a7e3451de8d9ca2bacfeed977c *v2/ops-health/model.json
+442486a3b451f0ad765aac253830cdc5455bad3a34186b4cf73388cf207056f2 *v2/ops-health/artifact_receipt.json
+afa7c8e5081c682877ad489259592951f854ba2558d409fdcf071ba845d4fb63 *v2/ops-health/example_input.json
+## example_input.json
+{
+  "features": {
+    "configuration_valid": 1,
+    "consecutive_failures": 0,
+    "ledger_integrity_ok": 1,
+    "listener_running": 1,
+    "peer_allowlist_configured": 1,
+    "queue_utilization": 0.12,
+    "seconds_since_last_success": 14.0,
+    "tls_enabled": 1
+  }
+}
+## cmd: py -3.12 -I -B v2/ops-health/ops_health.py --model v2/ops-health/model.json --receipt v2/ops-health/artifact_receipt.json --input v2/ops-health/example_input.json
+{"abstain_reason":null,"advisory":"NO_ALERT","authority":{"acknowledgement":false,"clinical_decision":false,"device_control":false,"result_interpretation":false,"result_release":false},"coverage_statement":"Mondrian split-conformal set at alpha=0.1: per-class coverage of at least 0.9 holds only for data exchangeable with the synthetic nominal conformal split; under distribution shift coverage is descriptive only. SYNTHETIC.","decision_threshold":0.2,"normalized_feature_contributions":{"configuration_valid":-2.821703311766,"consecutive_failures":0.0,"ledger_integrity_ok":-2.851449125324,"listener_running":-2.539293238803,"peer_allowlist_configured":-1.038997837438,"queue_utilization":0.324600552929,"seconds_since_last_success":5.922151e-06,"tls_enabled":-0.802793259351},"operator_attention_score":0.069311150989,"prediction_set":[0],"purpose":"synthetic_operational_transport_attention_only","schema":"szl-oac/ops-health-advisory/v2","score_semantics":"synthetic_attention_probability_estimate_not_production_calibrated","threshold_decision":false}
+exit=0
+## degraded input via stdin (listener down, ledger integrity failed, 7 consecutive failures)
+{"abstain_reason":null,"advisory":"ALERT","authority":{"acknowledgement":false,"clinical_decision":false,"device_control":false,"result_interpretation":false,"result_release":false},"coverage_statement":"Mondrian split-conformal set at alpha=0.1: per-class coverage of at least 0.9 holds only for data exchangeable with the synthetic nominal conformal split; under distribution shift coverage is descriptive only. SYNTHETIC.","decision_threshold":0.2,"normalized_feature_contributions":{"configuration_valid":-2.821703311766,"consecutive_failures":0.601352440352,"ledger_integrity_ok":0.0,"listener_running":0.0,"peer_allowlist_configured":-1.038997837438,"queue_utilization":2.164003686192,"seconds_since_last_success":0.001522838767,"tls_enabled":-0.802793259351},"operator_attention_score":0.994705065389,"prediction_set":[1],"purpose":"synthetic_operational_transport_attention_only","schema":"szl-oac/ops-health-advisory/v2","score_semantics":"synthetic_attention_probability_estimate_not_production_calibrated","threshold_decision":true}
+exit=0
+## fail-closed probe via stdin (prohibited key with a dummy numeric value)
+{"error": "prohibited non-operational field at input.features.patient_id (exact match)", "ok": false}
+exit=2
