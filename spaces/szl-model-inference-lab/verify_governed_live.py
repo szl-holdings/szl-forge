@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.util
 import json
 import sys
 import time
@@ -12,7 +13,18 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
-from public_transcript_export import PublicExportHold, validate_public_body
+# This verifier is also loaded with runpy.run_path() from the repository root.
+# Resolve the policy beside this file, independent of the caller's sys.path.
+_policy_path = Path(__file__).resolve().with_name("public_transcript_export.py")
+_policy_spec = importlib.util.spec_from_file_location(
+    "szl_forge_public_transcript_export", _policy_path
+)
+if _policy_spec is None or _policy_spec.loader is None:
+    raise ImportError(f"public export policy is unavailable: {_policy_path}")
+_policy = importlib.util.module_from_spec(_policy_spec)
+_policy_spec.loader.exec_module(_policy)
+PublicExportHold = _policy.PublicExportHold
+validate_public_body = _policy.validate_public_body
 
 PROMPT = "Answer with exactly this status, then cite evidence: Lambda remains Conjecture 1, advisory only."
 FORGE_CONTROLLER_REVISION = "9f227f6a10dac178b29130c742c98451b6ed8391"

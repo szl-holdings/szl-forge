@@ -21,6 +21,6 @@
     "tests/test_governed_app.py": "6fd43b7b7de56a2ebca65e04bfab19b018bd4a9fa0e3a1fc03b541699cc758e7",
     "tests/test_formula_atlas_contract.py": "b279915e12b27b2a087f0c2681bd9c20d21501e6b7d6249019779727120c0bc0",
     "verify_execution_record.py": "7f6a1052cda52b862fab2cb897d84ed271d938bb19bf505cf45a9dfde20c22c2",
-    "verify_governed_live.py": "a89ec7ef11e5596e286b307aa6171653093ac36082b6d0ba607abfe9c0594be5"
+    "verify_governed_live.py": "ac58ded943886f17ab90aa535e97b5053dfb20ac798bfff51250ac21d17f7e6d"
   }
 }
