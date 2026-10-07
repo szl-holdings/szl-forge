@@ -4,8 +4,10 @@ SYNTHETIC.  The v2 research code reads v1's published kernel, model and receipt 
 ``hub/oac-v1/`` under its root (``registry.V1_HUB_DIR``): the final analysis re-hashes them, the
 legacy-source record cross-checks v1's receipt, and some tests load v1's kernel.  v1's files are
 already staged in this repository, in the one directory matching
-``*/huggingface/model/oac-system-health-v1/`` (it mirrors the Hub model at
-``registry.V1_HUB_REVISION``), so they are copied, not committed a second time.
+``*/huggingface/model/oac-system-health-v1/``, so they are copied, not committed a second time.
+Five of the six staged files are byte-identical to the Hub model at ``registry.V1_HUB_REVISION``.
+The sixth, README.md, is v1's current card: it was corrected after that revision, and no v2
+record binds it.
 
 Before copying, every file that v2's committed records bind is checked against those records:
 ``v2/results/final/MANIFEST.json`` (``contenders.v1.files``) binds v1's kernel, model and receipt.
