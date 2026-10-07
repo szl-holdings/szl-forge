@@ -16,6 +16,7 @@ Usage (from the szl-forge repository root):
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import sys
@@ -42,6 +43,60 @@ def _test_id(test) -> str:
     return test.id()
 
 
+def _readiness_differences(limit: int = 64) -> dict:
+    """Diagnose an exact recorded-readiness failure without changing the test verdict."""
+    from v2.research import mutation  # noqa: PLC0415
+
+    recorded = json.loads(mutation.RESULTS_PATH.read_text(encoding="utf-8"))
+    good = {fid: fx["gates"] for fid, fx in recorded["known_good"].items()}
+    broken = {m["id"]: m["pass2_behavior"]["gates"] for m in recorded["artifact_mutants"]}
+    actual = mutation.readiness(good, broken)
+    expected = recorded["readiness"]
+    items: list[dict] = []
+    count = 0
+
+    def show(value):
+        if isinstance(value, float):
+            return {"decimal": repr(value), "hex": value.hex()}
+        if value is None or isinstance(value, (bool, int)):
+            return value
+        if isinstance(value, str) and value in ("KEEP", "REJECTED"):
+            return value
+        if isinstance(value, str):
+            return {"type": "str", "chars": len(value),
+                    "sha256_prefix": hashlib.sha256(value.encode("utf-8")).hexdigest()[:16]}
+        return {"type": type(value).__name__}
+
+    def note(path: str, recorded_value, recomputed_value) -> None:
+        nonlocal count
+        count += 1
+        if len(items) < limit:
+            items.append({"path": path[:160], "recorded": show(recorded_value),
+                          "recomputed": show(recomputed_value)})
+
+    def walk(path: str, left, right) -> None:
+        if type(left) is not type(right):
+            note(path, left, right)
+        elif isinstance(left, dict):
+            for key in sorted(left.keys() | right.keys()):
+                child = f"{path}.{str(key)[:64]}"
+                if key not in left or key not in right:
+                    note(child, left.get(key, "<missing>"), right.get(key, "<missing>"))
+                else:
+                    walk(child, left[key], right[key])
+        elif isinstance(left, list):
+            if len(left) != len(right):
+                note(f"{path}.length", len(left), len(right))
+            for index, (a, b) in enumerate(zip(left, right)):
+                walk(f"{path}[{index}]", a, b)
+        elif left != right:
+            note(path, left, right)
+
+    walk("readiness", expected, actual)
+    return {"difference_count": count, "shown": items, "limit": limit,
+            "truncated": count > limit}
+
+
 def run(root: Path) -> dict:
     os.chdir(root)
     sys.path.insert(0, str(root))
@@ -65,7 +120,7 @@ def run(root: Path) -> dict:
         missing = [s for s in expected if s not in skips]
         problems.append(f"skips differ from the declared origin skips: unexpected {unexpected}, "
                         f"missing {missing}")
-    return {
+    report = {
         "schema": "szl-oac/ops-health-v2-tests/v1",
         "ok": not problems,
         "problems": problems,
@@ -77,6 +132,13 @@ def run(root: Path) -> dict:
         "python": sys.version.split()[0],
         "seconds": round(time.perf_counter() - started, 3),
     }
+    if any(_test_id(test).endswith("RecordedRunTest.test_aggregation_recomputes")
+           for test, _traceback in result.failures):
+        try:
+            report["readiness_diagnostics"] = _readiness_differences()
+        except Exception as exc:  # diagnosis must not mask the original failing test
+            report["readiness_diagnostics"] = {"error_type": type(exc).__name__}
+    return report
 
 
 def main(argv: list[str] | None = None) -> int:
