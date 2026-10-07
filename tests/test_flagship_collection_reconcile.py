@@ -56,6 +56,43 @@ def test_live_plan_accepts_a_verified_single_removal() -> None:
     assert plan["removed_since_baseline"] == 1
 
 
+@pytest.mark.parametrize("live", [None, [], "", False, 0])
+def test_live_plan_rejects_non_object_collection(live) -> None:
+    with pytest.raises(ValueError, match="collection must be a JSON object"):
+        plan_live(load_manifest(), live)
+
+
+@pytest.mark.parametrize("items", [None, "", {}, False, 0, [None], [[]], [""], [0]])
+def test_live_plan_rejects_malformed_membership(items) -> None:
+    manifest = load_manifest()
+    live = observed_collection_from_manifest()
+    live.update(manifest["target"])
+    live["items"] = items
+    with pytest.raises(ValueError, match="items must be an explicit list of JSON objects"):
+        plan_live(manifest, live)
+
+
+def test_live_plan_rejects_missing_membership_even_with_aligned_metadata() -> None:
+    manifest = load_manifest()
+    live = observed_collection_from_manifest()
+    live.update(manifest["target"])
+    del live["items"]
+    with pytest.raises(ValueError, match="items must be an explicit list of JSON objects"):
+        plan_live(manifest, live)
+
+
+def test_live_plan_accepts_explicit_empty_membership_with_aligned_metadata() -> None:
+    manifest = load_manifest()
+    live = observed_collection_from_manifest()
+    live.update(manifest["target"])
+    live["items"] = []
+    plan = plan_live(manifest, live)
+    assert plan["state"] == "ALIGNED"
+    assert plan["remaining_flagship_items"] == 0
+    assert plan["removed_since_baseline"] == 26
+    assert plan["hub_write"] == "NONE"
+
+
 def test_live_plan_rejects_unknown_or_replaced_item() -> None:
     live = observed_collection_from_manifest()
     live["items"][0]["id"] = "SZLHOLDINGS/unreviewed-new-item"
@@ -208,3 +245,56 @@ def test_metadata_write_requires_empty_shelf_and_reads_back() -> None:
     assert hub.writes == ["metadata"]
     assert receipt["remaining_flagship_items"] == 0
     assert receipt["metadata_aligned"] is True
+
+
+@pytest.mark.parametrize("shape", ["missing", "null", "string", "object", "boolean", "number", "row"])
+def test_metadata_rejects_incomplete_membership_before_provider_access(shape) -> None:
+    hub = FakeHub(observed_collection_from_manifest())
+    if shape == "missing":
+        del hub.collection["items"]
+    else:
+        hub.collection["items"] = {
+            "null": None, "string": "", "object": {}, "boolean": False,
+            "number": 0, "row": [None],
+        }[shape]
+
+    def unexpected_provider_access():
+        pytest.fail("malformed baseline must be rejected before provider access")
+
+    hub.whoami = unexpected_provider_access
+    with pytest.raises(ValueError, match="items must be an explicit list of JSON objects"):
+        apply_one(
+            load_manifest(),
+            mode="metadata",
+            target_id=None,
+            expected_last_updated=hub.collection["lastUpdated"],
+            api=hub,
+            read_collection=lambda: copy.deepcopy(hub.collection),
+        )
+    assert hub.writes == []
+
+
+@pytest.mark.parametrize("shape", ["missing", "null", "string", "object", "row"])
+def test_malformed_post_write_readback_remains_unknown_without_retry(shape) -> None:
+    hub = FakeHub(observed_collection_from_manifest())
+    hub.collection["items"] = []
+
+    def read_collection():
+        live = copy.deepcopy(hub.collection)
+        if hub.writes:
+            if shape == "missing":
+                del live["items"]
+            else:
+                live["items"] = {"null": None, "string": "", "object": {}, "row": [None]}[shape]
+        return live
+
+    with pytest.raises(UnknownAfterAttempt, match="readback failed ValueError; inspect Hub before retry"):
+        apply_one(
+            load_manifest(),
+            mode="metadata",
+            target_id=None,
+            expected_last_updated=hub.collection["lastUpdated"],
+            api=hub,
+            read_collection=read_collection,
+        )
+    assert hub.writes == ["metadata"]
