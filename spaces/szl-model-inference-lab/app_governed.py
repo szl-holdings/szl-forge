@@ -24,6 +24,11 @@ from inference import (
     production_infer,
 )
 from inference.production import canonical_sha256, text_sha256
+from public_transcript_export import (
+    PublicExportHold,
+    hold_public_result,
+    project_public_result,
+)
 
 
 FORGE_CONTROLLER_REVISION = "9f227f6a10dac178b29130c742c98451b6ed8391"
@@ -656,6 +661,14 @@ def governed_infer(request: GovernedInferenceRequest) -> JSONResponse:
         witness=components["witness"],
         observer=_observe_anatomy,
     )
+    try:
+        public_result = project_public_result(result)
+    except PublicExportHold:
+        return JSONResponse(
+            hold_public_result(),
+            status_code=503,
+            headers=_governed_headers(),
+        )
     status_code = {
         "PROPOSAL": 200,
         "ABSTAIN": 422,
@@ -663,7 +676,7 @@ def governed_infer(request: GovernedInferenceRequest) -> JSONResponse:
         "BLOCKED": 503,
     }.get(str(result.get("state")), 500)
     return JSONResponse(
-        result,
+        public_result,
         status_code=status_code,
         headers=_governed_headers(),
     )

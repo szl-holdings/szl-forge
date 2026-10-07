@@ -1,3 +1,5 @@
+import copy
+import hashlib
 import json
 import os
 import unittest
@@ -6,7 +8,114 @@ from unittest import mock
 
 import app
 import app_governed as governed
+import verify_governed_live as live_verifier
 from inference import ProductionBoundaryError
+
+
+def synthetic_controller_result():
+    """Run the real controller with synthetic, in-process components only."""
+    evidence_text = "Synthetic public evidence about the locked eight."
+    evidence_digest = governed.text_sha256(evidence_text)
+    evidence = [{"node_id": "synthetic:1", "source": "synthetic", "sha256": evidence_digest}]
+    source_revision = "f" * 40
+
+    def retriever(query, k=6):
+        return {
+            "ready": True,
+            "content_access": "HANDLES_ONLY",
+            "handles": [
+                {"nodeId": "synthetic:1", "nodeKind": "INDEX", "label": "SAMPLE", "note": "synthetic"}
+            ],
+            "evidence": evidence,
+            "evidence_set_sha256": governed.canonical_sha256(evidence),
+            "ranking_receipt": {"mode": "SYNTHETIC", "k": k},
+        }
+
+    def hydrator(handles, *, principal_id, tenant_id, policy_revision):
+        return {
+            "state": "AUTHORIZED_CONTENT_READY",
+            "ready": True,
+            "content_access": "CONTROLLER_ONLY",
+            "principal_id_sha256": governed.text_sha256(principal_id),
+            "tenant_id_sha256": governed.text_sha256(tenant_id),
+            "policy_revision": policy_revision,
+            "evidence_set_sha256": governed.canonical_sha256(evidence),
+            "documents": [{**evidence[0], "content": evidence_text}],
+            "raw_graph_nodes_admitted_to_gradients": 0,
+        }
+
+    class Generator:
+        def identity(self):
+            return {
+                "model": {
+                    "id": app.OPENAI_MODEL_ID,
+                    "revision": app.MODEL_REVISION,
+                    "adapter_revision": "NONE",
+                    "tokenizer_revision": app.MODEL_REVISION,
+                    "template_revision": source_revision,
+                    "quantization_revision": "sha256:" + app.MODEL_SHA256,
+                },
+                "runtime": {
+                    "engine": "synthetic",
+                    "version": "1.0",
+                    "hardware_fingerprint": "synthetic:cpu",
+                },
+            }
+
+        def __call__(self, context):
+            answer = "Synthetic résumé [synthetic:1]."
+            return {
+                "text": answer,
+                "output_schema": "szl.answer-with-node-citations/v2",
+                "claims": [
+                    {
+                        "label": "MODELED",
+                        "statement_sha256": governed.text_sha256(answer),
+                        "supporting_node_ids": ["synthetic:1"],
+                    }
+                ],
+                "citations": ["synthetic:1"],
+                "identity": self.identity(),
+                "metrics": {
+                    "elapsed_ms": 1.0,
+                    "prompt_tokens": 2,
+                    "completion_tokens": 3,
+                    "finish_reason": "stop",
+                    "nemo_text_witness": {
+                        "decision": "ALLOW",
+                        "rule_version": "doctrine-v11/R1-R5",
+                        "input_hash": "sha256:" + "a" * 64,
+                        "violated_rules": [],
+                        "reasons": [],
+                    },
+                },
+            }
+
+    def witness(envelope):
+        return {
+            "decision": "ALLOW",
+            "rule_version": "doctrine-v11/E1-E10",
+            "input_hash": "sha256:" + governed.canonical_sha256(envelope),
+            "violated_rules": [],
+            "reasons": [],
+        }
+
+    return governed.production_infer(
+        {
+            "request_id": "synthetic-public-projection",
+            "prompt": "Summarize synthetic evidence.",
+            "principal_id": governed.PUBLIC_PRINCIPAL,
+            "tenant_id": governed.PUBLIC_TENANT,
+            "policy_revision": governed.PUBLIC_POLICY_REVISION,
+            "grounding_required": True,
+            "formula_applications": [],
+        },
+        retriever=retriever,
+        hydrator=hydrator,
+        generator=Generator(),
+        witness=witness,
+        observer=lambda event: None,
+    )
 
 
 class GovernedSpaceTests(unittest.TestCase):
@@ -79,10 +188,13 @@ class GovernedSpaceTests(unittest.TestCase):
         app.state.update(
             {"status": "READY", "llama_cpp_version": "0.3.21"}
         )
-        with mock.patch.dict(
-            os.environ,
-            {app.SOURCE_REVISION_ENV: "f" * 40},
-            clear=False,
+        with (
+            mock.patch.dict(
+                os.environ,
+                {app.SOURCE_REVISION_ENV: "f" * 40},
+                clear=False,
+            ),
+            mock.patch.object(governed.platform, "machine", return_value="synthetic-cpu"),
         ):
             identity = governed.SpaceLlamaGenerator(
                 24,
@@ -302,11 +414,9 @@ class GovernedSpaceTests(unittest.TestCase):
         app.state.update(
             {"status": "READY", "llama_cpp_version": "0.3.21"}
         )
-        controlled = {
-            "state": "PROPOSAL",
-            "schema": "szl.forge.production-governed-inference/v2",
-            "executed": False,
-        }
+        controlled = synthetic_controller_result()
+        self.assertEqual(controlled["state"], "PROPOSAL")
+        controlled["continuation"]["reasoning_blob"] = "SYNTHETIC_PRIVATE_CONTINUATION"
         with (
             mock.patch.dict(
                 os.environ,
@@ -336,6 +446,14 @@ class GovernedSpaceTests(unittest.TestCase):
                 )
             )
         self.assertEqual(response.status_code, 200)
+        public = json.loads(response.body)
+        self.assertNotIn("continuation", public)
+        self.assertNotIn("SYNTHETIC_PRIVATE_CONTINUATION", response.body.decode())
+        self.assertEqual(public["public_export_receipt"]["state"], "EXPORTED")
+        self.assertEqual(
+            controlled["continuation"]["reasoning_blob"],
+            "SYNTHETIC_PRIVATE_CONTINUATION",
+        )
         payload = infer.call_args.args[0]
         self.assertEqual(payload["principal_id"], governed.PUBLIC_PRINCIPAL)
         self.assertEqual(payload["tenant_id"], governed.PUBLIC_TENANT)
@@ -348,6 +466,178 @@ class GovernedSpaceTests(unittest.TestCase):
             infer.call_args.kwargs["generator"],
             governed.SpaceLlamaGenerator,
         )
+
+    def test_public_export_holds_unknown_nested_provider_fields_without_echo(self):
+        unsafe = synthetic_controller_result()
+        self.assertEqual(unsafe["state"], "PROPOSAL")
+        unsafe["metrics"]["encrypted_reasoning"] = "SYNTHETIC_OPAQUE_BLOB"
+        unsafe["continuation"]["private"] = "SYNTHETIC_PRIVATE_CONTINUATION"
+        with self.assertRaises(governed.PublicExportHold):
+            governed.project_public_result(unsafe)
+        public = governed.hold_public_result()
+        serialized = json.dumps(public)
+        self.assertEqual(public["state"], "HOLD")
+        self.assertFalse(public["publication_eligible"])
+        self.assertNotIn("SYNTHETIC_OPAQUE_BLOB", serialized)
+        self.assertNotIn("SYNTHETIC_PRIVATE_CONTINUATION", serialized)
+        self.assertEqual(
+            unsafe["metrics"]["encrypted_reasoning"], "SYNTHETIC_OPAQUE_BLOB"
+        )
+
+    def test_governed_endpoint_holds_opaque_provider_response(self):
+        app.state.update({"status": "READY", "llama_cpp_version": "0.3.21"})
+        unsafe = synthetic_controller_result()
+        unsafe["metrics"]["thinking_signature"] = "SYNTHETIC_OPAQUE_BLOB"
+        with (
+            mock.patch.dict(os.environ, {app.SOURCE_REVISION_ENV: "f" * 40}),
+            mock.patch.object(
+                governed,
+                "_components",
+                return_value={"retriever": object(), "hydrator": object(), "witness": object()},
+            ),
+            mock.patch.object(governed, "production_infer", return_value=unsafe),
+        ):
+            response = governed.governed_infer(
+                governed.GovernedInferenceRequest(prompt="Synthetic test prompt")
+            )
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(json.loads(response.body)["state"], "HOLD")
+        self.assertNotIn("SYNTHETIC_OPAQUE_BLOB", response.body.decode())
+
+    def test_governed_endpoint_holds_missing_observation_event(self):
+        app.state.update({"status": "READY", "llama_cpp_version": "0.3.21"})
+        unsafe = synthetic_controller_result()
+        del unsafe["anatomy_observation"]["event"]
+        unsafe["continuation"]["reasoning_blob"] = "SYNTHETIC_PRIVATE_CONTINUATION"
+        with (
+            mock.patch.dict(os.environ, {app.SOURCE_REVISION_ENV: "f" * 40}),
+            mock.patch.object(
+                governed,
+                "_components",
+                return_value={"retriever": object(), "hydrator": object(), "witness": object()},
+            ),
+            mock.patch.object(governed, "production_infer", return_value=unsafe),
+        ):
+            response = governed.governed_infer(
+                governed.GovernedInferenceRequest(prompt="Synthetic test prompt")
+            )
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(json.loads(response.body)["state"], "HOLD")
+        self.assertNotIn("SYNTHETIC_PRIVATE_CONTINUATION", response.body.decode())
+
+    def test_public_export_holds_other_missing_nested_required_fields(self):
+        base = synthetic_controller_result()
+        cases = []
+        missing_claim = copy.deepcopy(base)
+        del missing_claim["claims"][0]["supporting_node_ids"]
+        cases.append(missing_claim)
+        missing_handle = copy.deepcopy(base)
+        del missing_handle["evidence_handles"][0]["note"]
+        cases.append(missing_handle)
+        missing_receipt_formula = copy.deepcopy(base)
+        del missing_receipt_formula["receipt"]["payload"]["formula_binding"]["locked_proven_ids"]
+        missing_receipt_formula["receipt"]["receipt_sha256"] = governed.canonical_sha256(
+            missing_receipt_formula["receipt"]["payload"]
+        )
+        cases.append(missing_receipt_formula)
+        for unsafe in cases:
+            with self.subTest(keys=set(unsafe["claims"][0])):
+                with self.assertRaises(governed.PublicExportHold):
+                    governed.project_public_result(unsafe)
+
+    def test_public_export_holds_unknown_top_level_and_bad_receipt(self):
+        base = synthetic_controller_result()
+        with self.assertRaises(governed.PublicExportHold):
+            governed.project_public_result({**base, "provider_trace": "SYNTHETIC"})
+        bad = copy.deepcopy(base)
+        bad["receipt"]["receipt_sha256"] = "0" * 64
+        with self.assertRaises(governed.PublicExportHold):
+            governed.project_public_result(bad)
+
+    def test_public_export_unicode_digest_and_live_verifier(self):
+        private = synthetic_controller_result()
+        self.assertEqual(private["state"], "PROPOSAL")
+        public = governed.project_public_result(private)
+        self.assertIn("résumé", public["output"])
+        self.assertNotIn("continuation", public)
+        self.assertIn("continuation", private)
+        body = dict(public)
+        export_receipt = body.pop("public_export_receipt")
+        utf8_digest = hashlib.sha256(
+            json.dumps(body, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
+        escaped_digest = hashlib.sha256(
+            json.dumps(body, ensure_ascii=True, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
+        self.assertEqual(export_receipt["public_sha256"], utf8_digest)
+        self.assertNotEqual(export_receipt["public_sha256"], escaped_digest)
+        self.assertEqual(live_verifier.verify_public_export(public), utf8_digest)
+        self.assertEqual(
+            live_verifier.verify_inference(
+                public, {"x-szl-governed-inference": "v2"}, "f" * 40
+            )["public_export_sha256"],
+            utf8_digest,
+        )
+
+    def test_live_verifier_rejects_public_continuation_or_export_receipt_drift(self):
+        public = governed.project_public_result(synthetic_controller_result())
+        cases = []
+        with_continuation = copy.deepcopy(public)
+        with_continuation["continuation"] = {"reasoning_blob": "SYNTHETIC_PRIVATE"}
+        cases.append(with_continuation)
+        for field, value in (
+            ("schema", "wrong"),
+            ("policy", "wrong"),
+            ("public_sha256", "0" * 64),
+        ):
+            changed = copy.deepcopy(public)
+            changed["public_export_receipt"][field] = value
+            cases.append(changed)
+        missing = copy.deepcopy(public)
+        del missing["public_export_receipt"]
+        cases.append(missing)
+        opaque_with_recomputed_digest = copy.deepcopy(public)
+        opaque_with_recomputed_digest["metrics"]["encrypted_reasoning"] = (
+            "SYNTHETIC_OPAQUE_BLOB"
+        )
+        opaque_body = dict(opaque_with_recomputed_digest)
+        del opaque_body["public_export_receipt"]
+        opaque_with_recomputed_digest["public_export_receipt"]["public_sha256"] = (
+            live_verifier.canonical_sha256(opaque_body)
+        )
+        cases.append(opaque_with_recomputed_digest)
+        for changed in cases:
+            with self.subTest(changed=changed.get("public_export_receipt")):
+                with self.assertRaises(live_verifier.VerificationError):
+                    live_verifier.verify_public_export(changed)
+                with self.assertRaises(live_verifier.VerificationError):
+                    live_verifier.verify_inference(
+                        changed, {"x-szl-governed-inference": "v2"}, "f" * 40
+                    )
+
+    def test_public_export_rejects_opaque_known_field_and_receipt_metadata_drift(self):
+        base = synthetic_controller_result()
+        changed = copy.deepcopy(base)
+        changed["metrics"]["finish_reason"] = "SYNTHETIC_OPAQUE_BLOB"
+        with self.assertRaises(governed.PublicExportHold):
+            governed.project_public_result(changed)
+        for path, value in (
+            (("algorithm",), "sha3-256"),
+            (("canonicalization",), "ascii-json"),
+            (("signature", "must_be_signed_before_consequential_action"), False),
+        ):
+            changed = copy.deepcopy(base)
+            target = changed["receipt"]
+            for key in path[:-1]:
+                target = target[key]
+            target[path[-1]] = value
+            with self.subTest(path=path):
+                with self.assertRaises(governed.PublicExportHold):
+                    governed.project_public_result(changed)
+        changed = copy.deepcopy(base)
+        del changed["output"]
+        with self.assertRaises(governed.PublicExportHold):
+            governed.project_public_result(changed)
 
     def test_docker_and_requirements_pin_the_governed_entrypoint_and_sources(self):
         root = Path(__file__).resolve().parents[1]
@@ -386,6 +676,7 @@ class GovernedSpaceTests(unittest.TestCase):
         manifest = app.load_release_manifest()
         for path in (
             "app_governed.py",
+            "public_transcript_export.py",
             "tests/test_governed_app.py",
             "verify_governed_live.py",
         ):

@@ -12,6 +12,8 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
+from public_transcript_export import PublicExportHold, validate_public_body
+
 PROMPT = "Answer with exactly this status, then cite evidence: Lambda remains Conjecture 1, advisory only."
 FORGE_CONTROLLER_REVISION = "9f227f6a10dac178b29130c742c98451b6ed8391"
 SECOND_BRAIN_REVISION = "1d3960c69235f117b7ec2b5ea97472f81fb588f5"
@@ -108,6 +110,35 @@ def request_json(
 def require(condition: bool, message: str) -> None:
     if not condition:
         raise VerificationError(message)
+
+
+def verify_public_export(result: dict[str, Any]) -> str:
+    """Check that the live response is the public projection, not a continuation."""
+    require("continuation" not in result, "private continuation reached public response")
+    receipt = result.get("public_export_receipt")
+    require(isinstance(receipt, dict), "public export receipt missing")
+    require(
+        set(receipt)
+        == {"schema", "state", "policy", "source_schema", "public_sha256", "signature_status"},
+        "public export receipt shape drift",
+    )
+    require(
+        receipt.get("schema") == "szl.forge.public-transcript-export-receipt/v1"
+        and receipt.get("state") == "EXPORTED"
+        and receipt.get("policy") == "strict-v1-private-continuation-omitted"
+        and receipt.get("source_schema") == "szl.forge.production-governed-inference/v2"
+        and receipt.get("signature_status") == "UNSIGNED_LOCAL",
+        "public export receipt metadata drift",
+    )
+    public_without_receipt = dict(result)
+    del public_without_receipt["public_export_receipt"]
+    try:
+        validate_public_body(public_without_receipt)
+    except PublicExportHold as exc:
+        raise VerificationError("public export schema drift") from exc
+    expected_digest = canonical_sha256(public_without_receipt)
+    require(receipt.get("public_sha256") == expected_digest, "public export digest mismatch")
+    return expected_digest
 
 
 def walk_banned_keys(value: Any, path: str = "$") -> list[str]:
@@ -426,6 +457,7 @@ def verify_inference(
     headers: dict[str, str],
     expected_source_revision: str,
 ) -> dict[str, Any]:
+    public_export_digest = verify_public_export(result)
     require(result.get("state") == "PROPOSAL", "live inference is not PROPOSAL")
     require(result.get("executed") is False, "Forge executed a tool")
     require(
@@ -510,6 +542,7 @@ def verify_inference(
         "governed response header missing",
     )
     return {
+        "public_export_sha256": public_export_digest,
         "output_sha256": result["output_sha256"],
         "receipt_sha256": receipt["receipt_sha256"],
         "claims_sha256": result["claims_sha256"],
