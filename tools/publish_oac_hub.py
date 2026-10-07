@@ -4,7 +4,8 @@
 
 A closed profile registry binds each Hub repository to one staged szl-forge
 directory, its exact file set and an explicit replace list (HF upgrade plan D1
-and P9: one committed writer per asset, no latent create path). Without
+and P9: one committed writer per asset). A create-enabled profile may only add
+its complete package to an empty target or accept a byte-identical target. Without
 ``--publish`` the run is a dry-run that reads the Hub anonymously and writes
 nothing. With ``--publish`` the run must own current protected ``main``; it
 makes at most one ``create_commit`` whose ``parent_commit`` is the Hub head it
@@ -117,6 +118,7 @@ def _check_registry(profiles: Mapping[str, HubProfile]) -> None:
             or not profile.files
             or not profile.replace_paths <= profile.files
             or profile.files & HUB_METADATA
+            or (profile.allow_create and profile.replace_paths)
         ):
             raise PublicationRefused(f"closed profile registry is inconsistent: {key}")
 
@@ -434,7 +436,22 @@ def plan_delta(
     staged: Mapping[str, bytes],
     hub_files: Mapping[str, bytes],
 ) -> list[str]:
-    """Paths to write; a staged file missing on the Hub is a delta path."""
+    """Plan an exact delta, never overwriting a create-enabled target."""
+    if profile.allow_create:
+        # The creation grant is one-time admission for a new closed package,
+        # not permission to repair or overwrite a target someone already wrote.
+        # hub_snapshot has already rejected unexpected paths and read every
+        # present staged path at the inspected parent revision.
+        if not hub_files:
+            return sorted(staged)
+        if set(hub_files) != set(staged):
+            raise PublicationRefused("create-enabled target has a partial staged package")
+        mismatched = sorted(path for path in staged if hub_files[path] != staged[path])
+        if mismatched:
+            raise PublicationRefused(
+                "create-enabled target has differing staged bytes: " + ", ".join(mismatched)
+            )
+        return []
     delta = sorted(path for path in staged if hub_files.get(path) != staged[path])
     outside = [path for path in delta if path not in profile.replace_paths]
     if outside:
@@ -562,6 +579,16 @@ def execute(
     report["delta"] = delta
     report["artifacts_unchanged"] = set(delta) <= CARD_PATHS
     if not delta:
+        # The byte reads above were pinned to parent. A concurrent Hub writer
+        # can move main while those reads run, so confirm the mutable head
+        # still names that exact snapshot before reporting NO_CHANGE.
+        unchanged_info = lookup_target(api, profile, not_found=not_found)
+        if unchanged_info is None:
+            raise PublicationRefused("target repository disappeared before NO_CHANGE confirmation")
+        head = check_identity(unchanged_info, profile)
+        report["head_after"] = head
+        if head != parent:
+            raise PublicationRefused("Hub head moved before NO_CHANGE confirmation")
         report["state"] = "NO_CHANGE"
         return report
     if not publish:

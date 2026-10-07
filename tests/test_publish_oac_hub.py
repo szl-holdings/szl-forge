@@ -29,6 +29,7 @@ CREATED = "e" * 40
 MAIN = "refs/heads/main"
 MODEL = publisher.PROFILES["oac-v1-model"]
 DATASET = publisher.PROFILES["oac-v1-dataset"]
+CREATE_ONLY = dataclasses.replace(MODEL, allow_create=True, replace_paths=frozenset())
 CARD = b"---\nlicense: apache-2.0\n---\n\n# Synthetic card\n"
 NEW_CARD = b"---\nlicense: apache-2.0\n---\n\n# Synthetic card, revised\n"
 PUBLISH_IF = (
@@ -250,6 +251,7 @@ def test_registry_is_closed_and_matches_the_alignment_verifier() -> None:
         {"repo_type": "space"},
         {"files": MODEL.files | {".gitattributes"}},
         {"key": "renamed"},
+        {"allow_create": True},
     ],
 )
 def test_registry_check_refuses_inconsistent_profiles(change: dict) -> None:
@@ -479,8 +481,29 @@ def test_identical_hub_is_no_change_without_a_commit(publish: bool) -> None:
     assert report["state"] == "NO_CHANGE"
     assert report["delta"] == []
     assert report["parent_revision"] == PARENT
+    assert report["head_after"] == PARENT
+    assert api.names().count("repo_info") == 2
     assert fresh == ([SOURCE] if publish else [])
     assert "create_commit" not in api.names()
+
+
+@pytest.mark.parametrize("publish", [False, True])
+def test_no_change_refuses_a_hub_head_that_moves_during_snapshot(publish: bool) -> None:
+    api = FakeApi(DATASET, package(DATASET))
+    original = api.read_file
+    moved = False
+
+    def concurrent_writer(profile, path, revision):
+        nonlocal moved
+        raw = original(profile, path, revision)
+        if not moved:
+            api.head = "f" * 40
+            moved = True
+        return raw
+
+    api.read_file = concurrent_writer
+    refused(DATASET, api, "Hub head moved before NO_CHANGE confirmation", publish=publish)
+    assert api.names().count("repo_info") == 2
 
 
 @pytest.mark.parametrize("publish", [False, True])
@@ -491,18 +514,16 @@ def test_absent_target_without_create_permission_is_refused(publish: bool) -> No
 
 
 def test_dry_run_reports_create_for_a_create_profile_without_creating() -> None:
-    creator = dataclasses.replace(MODEL, allow_create=True, replace_paths=MODEL.files)
-    api = FakeApi(creator, None)
-    report, _ = run(creator, api, publish=False)
+    api = FakeApi(CREATE_ONLY, None)
+    report, _ = run(CREATE_ONLY, api, publish=False)
     assert report["state"] == "CREATE"
     assert report["delta"] == sorted(MODEL.files)
     assert "create_repo" not in api.names()
 
 
 def test_publish_creates_only_in_the_not_found_branch_then_commits() -> None:
-    creator = dataclasses.replace(MODEL, allow_create=True, replace_paths=MODEL.files)
-    api = FakeApi(creator, None)
-    report, _ = run(creator, api, publish=True)
+    api = FakeApi(CREATE_ONLY, None)
+    report, _ = run(CREATE_ONLY, api, publish=True)
     assert ("create_repo", MODEL.repo_id, "model", False, False) in api.calls
     assert report["repository_created"] is True
     assert report["parent_revision"] == CREATED
@@ -513,21 +534,50 @@ def test_publish_creates_only_in_the_not_found_branch_then_commits() -> None:
 
 
 def test_concurrent_create_is_refused_by_exist_ok_false() -> None:
-    creator = dataclasses.replace(MODEL, allow_create=True, replace_paths=MODEL.files)
-    api = FakeApi(creator, None, create_error=RuntimeError("synthetic 409: repository exists"))
+    api = FakeApi(CREATE_ONLY, None, create_error=RuntimeError("synthetic 409: repository exists"))
     with pytest.raises(RuntimeError, match="409"):
-        run(creator, api, publish=True)
+        run(CREATE_ONLY, api, publish=True)
     assert api.names().count("create_repo") == 1
     assert "create_commit" not in api.names()
 
 
 def test_an_existing_empty_repository_is_adopted_not_recreated() -> None:
-    creator = dataclasses.replace(MODEL, allow_create=True, replace_paths=MODEL.files)
-    api = FakeApi(creator, {})
-    report, _ = run(creator, api, publish=True)
+    api = FakeApi(CREATE_ONLY, {})
+    report, _ = run(CREATE_ONLY, api, publish=True)
     assert "create_repo" not in api.names()
     assert report["repository_created"] is False
+    assert report["delta"] == sorted(CREATE_ONLY.files)
     assert report["state"] == "PUBLISHED"
+
+
+@pytest.mark.parametrize("publish", [False, True])
+def test_an_existing_exact_create_target_is_no_change(publish: bool) -> None:
+    api = FakeApi(CREATE_ONLY, package(CREATE_ONLY))
+    report, _ = run(CREATE_ONLY, api, publish=publish)
+    assert report["state"] == "NO_CHANGE" and report["delta"] == []
+    assert report["head_after"] == PARENT
+    assert "create_repo" not in api.names() and "create_commit" not in api.names()
+
+
+@pytest.mark.parametrize("publish", [False, True])
+def test_create_profile_refuses_a_partially_populated_target(publish: bool) -> None:
+    api = FakeApi(CREATE_ONLY, {"README.md": CARD})
+    refused(CREATE_ONLY, api, "partial staged package", publish=publish)
+    assert "create_repo" not in api.names()
+
+
+@pytest.mark.parametrize("publish", [False, True])
+def test_create_profile_refuses_changed_existing_bytes(publish: bool) -> None:
+    api = FakeApi(CREATE_ONLY, package(CREATE_ONLY, **{"model.json": b"synthetic drift\n"}))
+    refused(CREATE_ONLY, api, "differing staged bytes: model.json", publish=publish)
+    assert "create_repo" not in api.names()
+
+
+def test_create_profile_never_overwrites_even_if_replace_paths_is_broadened() -> None:
+    broad = dataclasses.replace(CREATE_ONLY, replace_paths=CREATE_ONLY.files)
+    api = FakeApi(broad, package(broad, **{"README.md": NEW_CARD}))
+    refused(broad, api, "differing staged bytes: README.md", publish=True)
+    assert "create_repo" not in api.names()
 
 
 def test_an_extra_hub_file_is_refused_because_nothing_is_deleted() -> None:
