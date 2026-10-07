@@ -9,7 +9,14 @@
     "doctrine": "v6",
     "orcid": "0009-0001-0110-4173",
     "entry_count": 68,
-    "note": "STAGED-ADVISORY: line numbers are sampled from repo; re-verify against lake build output"
+    "note": "STAGED-ADVISORY: line numbers are sampled from repo; re-verify against lake build output",
+    "corrections": [
+      {
+        "date": "2026-10-06",
+        "entries": ["TH10"],
+        "summary": "TH10 re-labelled GREEN -> TRACKED: its proof claim is withdrawn and lean_theorem now names the real TH10-labelled declaration (see the entry's correction field). The historical meta fields above are kept as generated. No other entry was changed or re-verified by this correction."
+      }
+    ]
   },
   "entries": [
     {
@@ -114,15 +121,32 @@
       "id": "TH10",
       "thesis_section": "§4.1",
       "title": "TH10 — Uniqueness of Lutar Invariant",
-      "description": "Any function satisfying A1–A4 equals Λ_k (the geometric mean). Proof via Cauchy 1821 functional equation + Aczel 1966.",
+      "description": "Claim as originally indexed, not proved: any function satisfying A1–A4 equals Λ_k (the geometric mean). As stated, this claim is disproved (Conjecture 1 boundary; see correction). The earlier 'Proof via Cauchy 1821 functional equation + Aczel 1966' wording is withdrawn.",
       "lean_file": "Lutar/Uniqueness.lean",
-      "lean_theorem": "Lutar.uniqueness",
+      "lean_theorem": "Lutar.lutar_unique",
       "lean_sha": "7329cfb3",
-      "status": "GREEN",
+      "status": "TRACKED",
       "runtime_gate": "a11oy-core/src/governance/uniqueness-assertion.ts",
       "test_file": "vitest/anchor/th10-uniqueness.test.ts",
       "axiom_deps": [],
-      "zenodo_doi": "10.5281/zenodo.20434276"
+      "zenodo_doi": "10.5281/zenodo.20434276",
+      "correction": {
+        "date": "2026-10-06",
+        "previous_status": "GREEN",
+        "previous_lean_theorem": "Lutar.uniqueness",
+        "summary": "TH10 was indexed GREEN with a proof claim. The TH10-labelled Lean declaration rests on a sorry, and the szl-papers boundary text records the statement as disproved as stated, so the entry is re-labelled TRACKED with the existing status vocabulary. Statuses in this index remain declarations; this correction did not run Lean.",
+        "lean_ref": "szl-holdings/lutar-lean@04f904ecd5683753a481ab2b1ded69ac01a7a661",
+        "evidence": [
+          "Lutar.uniqueness is not declared at lutar-lean 04f904e, nor at the meta lean_commit c4d13795. The declaration labelled 'Theorem TH10' is Lutar.lutar_unique (Lutar/Uniqueness.lean:218). It is built from Lutar.lutar_is_geomean, whose proof ends in sorry (Lutar/Uniqueness.lean:215) under an in-file note that the unconditional statement is false under A1–A5.",
+          "Lutar.Round13.maxAgg_ne_Lambda (Lutar/Round13/Lambda_Uniqueness.lean:188) mechanizes the separation maxAgg ≠ Λ 2. The maxAgg A2/A3/A5 facts are mechanized (:179, :174, :154); its A1/A4 membership is argued in prose (:145-146).",
+          "Conditional Theorem U form: Lutar.Round13.lambda_unique_of_separable (Lutar/Round13/LambdaSeparable.lean:93) assumes separable, slice-multiplicative per-axis slices. docs/FRONTIER.md:40 lists it as EXPERIMENTAL · CI-green (experimental tier, not the locked set). It does not discharge TH10 as stated.",
+          "szl-holdings/szl-papers@5f2f75f109bfdadfc167c00bab5808a7a76ac3e2 bounty/README.md:9: 'Conjecture 1 is disproved as stated ... the weaker-condition uniqueness question remains open.' bounty/README.md:6 applies the same boundary to the original A1–A4 uniqueness statement."
+        ],
+        "lean_build": "NOT_RUN",
+        "print_axioms": "NOT_RUN",
+        "method": "Lean and szl-papers source text read with git show at the pinned commits.",
+        "not_reverified": ["lean_sha", "runtime_gate", "test_file", "axiom_deps"]
+      }
     },
     {
       "id": "TH11",

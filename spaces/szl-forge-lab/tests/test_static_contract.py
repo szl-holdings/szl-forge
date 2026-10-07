@@ -94,6 +94,17 @@ class StaticForgeContractTests(unittest.TestCase):
             all(item["autonomy_eligible"] is False for item in portfolio["artifacts"])
         )
 
+    def test_lambda_uniqueness_entry_is_not_declared_green(self) -> None:
+        # Doctrine: Λ = Conjecture 1, never a theorem. TH10 is the packaged
+        # Λ-uniqueness entry; its historical GREEN label was corrected 2026-10-06.
+        index = json.loads(
+            (ROOT / "thesis_formula_index.json").read_text(encoding="utf-8")
+        )
+        th10 = [entry for entry in index["entries"] if entry.get("id") == "TH10"]
+        self.assertEqual(1, len(th10))
+        self.assertNotEqual("GREEN", th10[0]["status"])
+        self.assertEqual("GREEN", th10[0]["correction"]["previous_status"])
+
     def test_atelier_lock_keeps_snapshot_from_becoming_a_studio(self) -> None:
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         index = (ROOT / "index.html").read_text(encoding="utf-8")
