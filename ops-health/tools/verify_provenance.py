@@ -232,10 +232,10 @@ def _check_cited(value: str, b: dict) -> list[str]:
     if not b.get("research_path") or not b.get("reason"):
         problems.append(f"{value[:16]}: citation lacks research_path or reason")
     commit = b.get("research_commit")
-    if commit is not None and not HEX40.match(commit):
+    if commit is not None and not HEX40.fullmatch(commit):
         problems.append(f"{value[:16]}: research_commit is not a full sha")
     blob = b.get("research_blob")
-    if blob is not None and not HEX40.match(blob):
+    if blob is not None and not HEX40.fullmatch(blob):
         problems.append(f"{value[:16]}: research_blob is not a full blob id")
     return problems
 
@@ -253,7 +253,7 @@ def check_files(root: Path, prov: dict) -> list[str]:
         if b"\r" in data:
             problems.append(f"{rel}: carries CR bytes")
         for key in ("research_commit", "research_blob"):
-            if not HEX40.match(info.get(key, "")):
+            if not HEX40.fullmatch(info.get(key, "")):
                 problems.append(f"{rel}: {key} is not a full sha")
     for rel in prov["overlay"]:
         if not (root / rel).is_file():
