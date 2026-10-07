@@ -84,6 +84,15 @@ stores every file here with LF line endings. A copy with CRLF line endings is re
 exits with code 2 because its self-hash no longer matches the receipt
 (`logs/drafts/kernel_line_ending_check.txt`).
 
+The recorded mutation-readiness JSON was written on Windows. Its research test compares every
+recomputed floating-point bit, including values formed with `math.log` and `math.exp`, which can
+differ across platform math libraries. On Linux, the Forge test runner substitutes only that
+one assertion with a path-aware comparison. The cutoff, keys, types, list lengths, counts,
+classifications, verdict, AND/min/mean scores, and unknown fields stay exact. Only nontrivial
+Lambda aggregates and their derived margin, minimum-good, and maximum-broken values may differ
+by at most `1e-14` in absolute value. The runner reports its comparison mode and bounded
+field-level differences. The frozen research test and recorded result bytes are unchanged.
+
 **Recompute the test-set numbers (optional, slow).** After `materialize_v1_hub.py`, run
 `python -B -m v2.research.final_analyze` inside `ops-health/`. It reads only the saved score
 files under `v2/results/final/`, never a data split, takes tens of minutes, and **rewrites**
