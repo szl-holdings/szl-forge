@@ -244,6 +244,60 @@ python -I -B -m unittest discover -s frontier/qwen35-receiptagent-v4-json -p tes
 
 ## Still required before training
 
+### Non-authorizing sidecar preparation
+
+`signed_admission.py` and `schemas/training-admission.schema.json` describe a
+closed, prospective `SUPERVISED_GPU_SMOKE` sidecar profile. This is DECLARED
+software preparation, not an issued admission, signature verification, training
+runner, completed model or permission to execute. The fixed byte profile is
+`SZL_RECEIPTAGENT_V4_ASCII_JSON_V1`, not RFC 8785 or NeMo's `szl.lambda/v1`.
+
+The module accepts retained bytes and explicit caller-supplied complete expected
+payload bytes, independently pinned public key observations, time, revocation
+state and maximum age. It checks exact context equality, closed fields, frozen
+curriculum/base identity, canonical ASCII JSON and bounded parsing before
+allocation/conversion. The entire document cap is 65,536 bytes; root container
+depth is 1, maximum container depth 12, decoded strings 8,192 bytes, object
+fields 128 and array entries 1,024. Integers are exactly 0 through
+9,223,372,036,854,775,807; field-specific bounds are additional. An exact ASCII
+domain plus NUL is declared for a later Ed25519 verification lane, not verified
+by this implementation. Clock, revocation and trust provenance belong to the
+caller; matching self-supplied observations is not authentication.
+
+Only observations and stable value-free rejection reasons are returned. Boolean
+conversion raises rather than treating an observation as permission; this is
+accidental-misuse prevention, not an unforgeable security boundary. No
+launch token, reusable capability, callback, nonce claim, file/network access,
+signing, private-key reading or model/tokenizer import is supplied. Closure
+member IDs are labels, not resolved paths. Claims of resource/budget adequacy
+or independently witnessed provenance cannot follow from equality checks.
+Expiry is exclusive; maximum age and runner qualification age are inclusive.
+The separate supervisor would need durable one-use state before any launch.
+
+Cryptographic readiness remains **NOT_READY** and verification **NOT_RUN**:
+the current v4 dependency profile has no admitted Ed25519 backend or verified
+positive canonical-domain fixture. `signature_matches` is always `None`, never
+stubbed true. A structurally correct signature is not a valid signature. No
+backend is imported or selected from ambient packages. Scoped tests skip actual
+cryptographic mismatch and valid-signature/current-policy scenarios honestly.
+All three flags in `candidate.json` remain false. A later genuine valid signature
+would still not grant execution, training, evaluation or publication authority.
+
+The new suite uses only SIMULATED shape/context fixtures. Run it separately,
+without model dependencies, held-out cases or broad test discovery:
+
+```sh
+python -I -B -m unittest discover -s frontier/qwen35-receiptagent-v4-json -p test_signed_admission.py -v
+```
+
+The JSON schema is a description of structural constraints, not a general
+schema-engine implementation. The pure module enforces this closed profile and
+additional duplicate-closure, time-order, coverage and canonical-byte checks;
+the scoped suite checks schema-description parity. No remote schema resolution
+is used. A future qualified backend/dependency lock, authentic public fixture,
+token qualification and supervisor each need separate source and authority
+review. No current GPU or Hub operation is admitted here.
+
 1. Obtain protected source merge/readback and owner-signed curriculum admission;
    immutable source references and peer textual checks are not authorization.
 2. Keep final-gate cases out of gradients and development. Do not inherit the old
