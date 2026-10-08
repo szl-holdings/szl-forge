@@ -535,11 +535,14 @@ def execute(
     publish: bool,
     not_found: type[BaseException],
     operation_factory: Callable[..., Any],
+    allow_create_grant: bool = False,
     fresh_main: Callable[[str], None] | None = None,
     git: Callable[[list[str]], bytes] | None = None,
 ) -> dict[str, Any]:
     """Run one profile; ``report`` keeps partial evidence when a step refuses."""
     require_sha(source_revision, "source revision")
+    if allow_create_grant and not profile.allow_create:
+        raise PublicationRefused("--allow-create is outside this profile's authority")
     fresh_main = fresh_main or assert_current_main
     git = git or _git
     if publish:
@@ -560,6 +563,8 @@ def execute(
             report["artifacts_unchanged"] = False
             report["state"] = "CREATE"
             return report
+        if not allow_create_grant:
+            raise PublicationRefused("create-enabled publication requires --allow-create")
         # exist_ok=False refuses a concurrent creator rather than adopting it.
         api.create_repo(
             profile.repo_id, repo_type=profile.repo_type, private=False, exist_ok=False
@@ -594,6 +599,9 @@ def execute(
     if not publish:
         report["state"] = "DELTA"
         return report
+
+    if profile.allow_create and not allow_create_grant:
+        raise PublicationRefused("create-enabled publication requires --allow-create")
 
     fresh_main(source_revision)
     operations = [
@@ -697,6 +705,10 @@ def main(argv: list[str] | None = None, *, environ: Mapping[str, str] | None = N
     parser.add_argument("--report", required=True, type=Path)
     parser.add_argument("--publish", action="store_true")
     parser.add_argument(
+        "--allow-create", action="store_true",
+        help="explicitly authorize additions for a create-enabled profile when publishing",
+    )
+    parser.add_argument(
         "--expect-delta-since",
         metavar="BASE_SHA",
         help=(
@@ -726,6 +738,8 @@ def main(argv: list[str] | None = None, *, environ: Mapping[str, str] | None = N
     exit_code = 1
     try:
         require_sha(source_revision, "source revision")
+        if args.allow_create and (not args.publish or not profile.allow_create):
+            raise PublicationRefused("--allow-create requires a create-enabled publish profile")
         if args.publish:
             if args.expect_delta_since or args.expect_parent:
                 raise PublicationRefused(
@@ -754,6 +768,7 @@ def main(argv: list[str] | None = None, *, environ: Mapping[str, str] | None = N
                 publish=args.publish,
                 not_found=clients["not_found"],
                 operation_factory=clients["operation_factory"],
+                allow_create_grant=args.allow_create,
             )
         if args.expect_parent:
             assert_expected_parent(args.expect_parent.strip(), report)

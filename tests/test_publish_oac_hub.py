@@ -197,7 +197,7 @@ class FakeApi:
         return [call[0] for call in self.calls]
 
 
-def run(profile, api, *, publish, staged=None, fresh=None, git=None):
+def run(profile, api, *, publish, staged=None, fresh=None, git=None, grant=None):
     staged = package(profile) if staged is None else staged
     git = git or FakeGit({SOURCE: tree(profile, staged)})
     fresh_calls: list[str] = []
@@ -205,7 +205,8 @@ def run(profile, api, *, publish, staged=None, fresh=None, git=None):
     publisher.execute(
         profile, SOURCE, report,
         api=api, read_file=api.read_file, publish=publish, not_found=Missing,
-        operation_factory=Operation, fresh_main=fresh or fresh_calls.append, git=git,
+        operation_factory=Operation, allow_create_grant=profile.allow_create if grant is None else grant,
+        fresh_main=fresh or fresh_calls.append, git=git,
     )
     return report, fresh_calls
 
@@ -944,3 +945,61 @@ def test_cli_profile_choices_are_the_closed_registry() -> None:
     with pytest.raises(SystemExit):
         publisher.main(["--profile", "operator-chosen", "--source-revision", SOURCE,
                         "--report", "unused.json"], environ={})
+
+
+def test_create_enabled_publish_requires_an_explicit_grant_before_any_write() -> None:
+    for hub_files in (None, {}):
+        api = FakeApi(CREATE_ONLY, hub_files)
+        dry_report, _ = run(CREATE_ONLY, api, publish=False, grant=False)
+        assert dry_report["state"] == ("CREATE" if hub_files is None else "DELTA")
+        with pytest.raises(publisher.PublicationRefused, match="requires --allow-create"):
+            run(CREATE_ONLY, api, publish=True, grant=False)
+        assert "create_repo" not in api.names()
+        assert "create_commit" not in api.names()
+
+    exact = FakeApi(CREATE_ONLY, package(CREATE_ONLY))
+    unchanged, _ = run(CREATE_ONLY, exact, publish=True, grant=False)
+    assert unchanged["state"] == "NO_CHANGE"
+    assert "create_repo" not in exact.names()
+    assert "create_commit" not in exact.names()
+
+
+@pytest.mark.parametrize("initial_files", [None, {}])
+def test_cli_allow_create_is_scoped_to_create_enabled_publication(
+    monkeypatch, tmp_path, initial_files
+) -> None:
+    for suffix, flags, expected in (
+        ("v1", ["--publish", "--allow-create"], "create-enabled publish profile"),
+        ("dry-run", ["--allow-create"], "create-enabled publish profile"),
+    ):
+        output = tmp_path / f"{suffix}.json"
+        code = publisher.main(["--profile", "oac-v1-model", "--source-revision", SOURCE,
+                               *flags, "--report", str(output)], environ=CI)
+        report = json.loads(output.read_text(encoding="utf-8"))
+        assert code == 1 and report["state"] == "REFUSED"
+        assert expected in report["refusal"]
+
+    monkeypatch.setattr(publisher, "PROFILES", {CREATE_ONLY.key: CREATE_ONLY})
+    head = real_head()
+    api = FakeApi(CREATE_ONLY, initial_files)
+    fake_clients(monkeypatch, api)
+    observed_main: list[str] = []
+    monkeypatch.setattr(publisher, "assert_current_main", observed_main.append)
+    no_grant = tmp_path / "no-grant.json"
+    code = publisher.main(["--profile", CREATE_ONLY.key, "--source-revision", head,
+                           "--publish", "--report", str(no_grant)], environ=CI)
+    report = json.loads(no_grant.read_text(encoding="utf-8"))
+    assert code == 1 and report["state"] == "REFUSED"
+    assert "requires --allow-create" in report["refusal"]
+    assert "create_repo" not in api.names()
+    assert "create_commit" not in api.names()
+
+    with_grant = tmp_path / "with-grant.json"
+    code = publisher.main(["--profile", CREATE_ONLY.key, "--source-revision", head,
+                           "--publish", "--allow-create", "--report", str(with_grant)],
+                          environ=CI)
+    report = json.loads(with_grant.read_text(encoding="utf-8"))
+    assert code == 0 and report["state"] == "PUBLISHED"
+    assert ("create_repo" in api.names()) is (initial_files is None)
+    assert "create_commit" in api.names()
+    assert observed_main == [head, head, head]
