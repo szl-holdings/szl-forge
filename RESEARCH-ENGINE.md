@@ -119,5 +119,38 @@ The separately merged `inference.research_cycle` evaluates typed retrieval
 recipes with a fixed synthetic evaluator. This source investigator does not
 replace or alter it. The investigator formulates hypotheses from pinned sources;
 the existing evaluator tests its specific three-parameter recipe contract.
-No automatic conversion from a free-text experiment to executable evaluation is
-implemented. Any future bridge must preserve that typed admission boundary.
+`inference.research_admission.admit` is a narrow local bridge for the existing
+`lexical_retrieval_v1` synthetic evaluator. It takes exact bytes for three JSON
+files: an investigator report, a public synthetic suite, and a caller-written
+manifest. The manifest has exactly `schema` (`szl.research-admission-manifest/v1`),
+`kind` (`lexical_retrieval_v1`), `review_assertion` (`OPERATOR_REVIEWED`),
+`investigator_report_sha256`, `suite_sha256`, and `recipe`. The recipe has only
+`title_weight`, `body_weight`, and `normalize_length` under the existing strict
+cycle contract. The two SHA256 values bind the exact input file bytes, including
+whitespace. The caller must compute them after choosing the files.
+
+The bridge requires the investigator report's `PROPOSAL_REQUIRES_REVIEW` state
+and its non-executed, non-eligible fields. It validates the suite and recipe
+with the existing cycle, then calls that fixed evaluator once with the typed
+recipe. Its nested `SYNTHETIC_REPLAY` mode names the evaluator mechanism; the
+recipe origin is explicitly `CALLER_SUPPLIED_AFTER_REVIEW`. The review claim is
+`CALLER_ASSERTED_NOT_AUTHENTICATED`: this code does not verify an operator's
+identity, the report's authorship, source truth, or whether the prose really
+supports the selected recipe. It never parses prose into code or parameters.
+The unsigned result includes hashes, the underlying evaluator receipt and
+validation outcome, and a `HOLD` production disposition. Public validation can
+be reused and overfit; there is no persistent one-use registry. This interface
+grants no training, publishing, autonomy, or production admission.
+
+```python
+from pathlib import Path
+from inference.research_admission import admit
+
+result = admit(Path("manifest.json").read_bytes(),
+               Path("investigator-report.json").read_bytes(),
+               Path("public-suite.json").read_bytes())
+```
+
+This is a bounded experiment on synthetic retrieval data, not automatic
+conversion from a free-text experiment into an executable experiment. Test it
+with `python -m pytest -q tests/test_research_admission.py`.
