@@ -147,7 +147,8 @@ class FakeApi:
 
     def __init__(self, profile: publisher.HubProfile, files: dict[str, bytes] | None, *,
                  resolved_id: str | None = None, private: bool | None = False,
-                 create_error: Exception | None = None, commit_lands: bool = True) -> None:
+                 create_error: Exception | None = None, commit_lands: bool = True,
+                 hidden: bool = False) -> None:
         self.profile = profile
         self.revisions: dict[str, dict[str, bytes]] = {}
         self.head: str | None = None
@@ -158,6 +159,7 @@ class FakeApi:
         self.private = private
         self.create_error = create_error
         self.commit_lands = commit_lands
+        self.hidden = hidden
         self.calls: list[tuple] = []
         self.commit_kwargs: dict | None = None
         self.after_commit = None
@@ -165,7 +167,7 @@ class FakeApi:
     def repo_info(self, repo_id, *, repo_type, revision):
         self.calls.append(("repo_info", repo_id, repo_type, revision))
         assert (repo_id, repo_type, revision) == (self.profile.repo_id, self.profile.repo_type, "main")
-        if self.head is None:
+        if self.head is None or self.hidden:
             raise Missing(repo_id)
         return SimpleNamespace(id=self.resolved_id, private=self.private, sha=self.head)
 
@@ -563,9 +565,38 @@ def test_absent_target_without_create_permission_is_refused(publish: bool) -> No
 def test_dry_run_reports_create_for_a_create_profile_without_creating() -> None:
     api = FakeApi(CREATE_ONLY, None)
     report, _ = run(CREATE_ONLY, api, publish=False)
-    assert report["state"] == "CREATE"
+    assert report["state"] == "CREATE_CANDIDATE_UNVERIFIED"
+    assert report["target_observation"] == "UNRESOLVED_PRIVATE_OR_MISSING"
+    assert report["hub_before"] is None and report["parent_revision"] is None
     assert report["delta"] == sorted(MODEL.files)
     assert "create_repo" not in api.names()
+
+
+@pytest.mark.parametrize("hidden_existing", [False, True])
+def test_anonymous_not_found_is_unverified_even_for_a_hidden_existing_target(
+    hidden_existing: bool,
+) -> None:
+    staged = package(V2_MODEL)
+    api = FakeApi(V2_MODEL, staged if hidden_existing else None, hidden=hidden_existing)
+    git = FakeGit({BASE: {}, SOURCE: tree(V2_MODEL, staged)})
+    report, _ = run(V2_MODEL, api, publish=False, staged=staged, git=git)
+    publisher.assert_expected_delta(V2_MODEL, BASE, SOURCE, report, git=git)
+    assert report["state"] == "CREATE_CANDIDATE_UNVERIFIED"
+    assert report["expected_delta_since"] == {
+        "base_revision": BASE, "parent_revision": None,
+        "hub_equals_base": None, "hub_drift": None,
+        "delta": sorted(V2_MODEL.files), "verification": "UNAVAILABLE",
+    }
+    assert "create_repo" not in api.names() and "create_commit" not in api.names()
+
+
+def test_unresolved_target_cannot_verify_a_nonempty_base() -> None:
+    staged = package(V2_MODEL)
+    git = FakeGit({BASE: tree(V2_MODEL, staged), SOURCE: tree(V2_MODEL, staged)})
+    report, _ = run(V2_MODEL, FakeApi(V2_MODEL, None), publish=False, staged=staged, git=git)
+    with pytest.raises(publisher.PublicationRefused, match="base has staged files"):
+        publisher.assert_expected_delta(V2_MODEL, BASE, SOURCE, report, git=git)
+    assert report["expected_delta_since"]["hub_equals_base"] is None
 
 
 def test_publish_creates_only_in_the_not_found_branch_then_commits() -> None:
@@ -582,10 +613,25 @@ def test_publish_creates_only_in_the_not_found_branch_then_commits() -> None:
 
 def test_concurrent_create_is_refused_by_exist_ok_false() -> None:
     api = FakeApi(CREATE_ONLY, None, create_error=RuntimeError("synthetic 409: repository exists"))
-    with pytest.raises(RuntimeError, match="409"):
+    with pytest.raises(publisher.PublicationRefused, match="atomically created"):
         run(CREATE_ONLY, api, publish=True)
     assert api.names().count("create_repo") == 1
     assert "create_commit" not in api.names()
+
+
+def test_main_moving_before_create_prevents_the_external_effect() -> None:
+    api = FakeApi(V2_MODEL, None)
+    calls: list[str] = []
+
+    def stale_before_create(revision: str) -> None:
+        calls.append(revision)
+        if len(calls) == 2:
+            raise publisher.PublicationRefused("publication source no longer owns current main")
+
+    with pytest.raises(publisher.PublicationRefused, match="no longer owns"):
+        run(V2_MODEL, api, publish=True, fresh=stale_before_create)
+    assert calls == [SOURCE, SOURCE]
+    assert "create_repo" not in api.names() and "create_commit" not in api.names()
 
 
 def test_an_existing_empty_repository_is_adopted_not_recreated() -> None:
@@ -857,6 +903,35 @@ def fake_clients(monkeypatch, api, *, version="1.23.0"):
     return seen
 
 
+def test_hidden_target_create_collision_has_blocked_secret_free_receipt(
+    monkeypatch, tmp_path,
+) -> None:
+    class CreateDenied(RuntimeError):
+        def __init__(self) -> None:
+            super().__init__(f"synthetic provider rejection containing {TOKEN}")
+            self.response = SimpleNamespace(status_code=409)
+
+    head = real_head()
+    api = FakeApi(V2_MODEL, package(V2_MODEL), hidden=True, create_error=CreateDenied())
+    fake_clients(monkeypatch, api)
+    monkeypatch.setattr(publisher, "assert_current_main", lambda _: None)
+    output = tmp_path / "hidden-collision.json"
+    code = publisher.main([
+        "--profile", V2_MODEL.key, "--source-revision", head,
+        "--publish", "--allow-create", "--report", str(output),
+    ], environ=CI)
+    raw = output.read_text(encoding="utf-8")
+    report = json.loads(raw)
+    assert code == 1 and report["state"] == "BLOCKED"
+    assert report["target_observation"] == "UNRESOLVED_PRIVATE_OR_MISSING"
+    assert report["target_create_failure_type"] == "CreateDenied"
+    assert report["target_create_status_code"] == 409
+    assert report["repository_created"] is False and report["commit_attempted"] is False
+    assert api.names().count("create_repo") == 1
+    assert "create_commit" not in api.names()
+    assert TOKEN not in raw and report["secret_values_recorded"] is False
+
+
 def test_cli_dry_run_is_anonymous_and_records_the_real_staged_package(monkeypatch, tmp_path) -> None:
     head = real_head()
     api = FakeApi(MODEL, publisher.staged_package(MODEL, head))
@@ -997,7 +1072,9 @@ def test_create_enabled_publish_requires_an_explicit_grant_before_any_write() ->
     for hub_files in (None, {}):
         api = FakeApi(CREATE_ONLY, hub_files)
         dry_report, _ = run(CREATE_ONLY, api, publish=False, grant=False)
-        assert dry_report["state"] == ("CREATE" if hub_files is None else "DELTA")
+        assert dry_report["state"] == (
+            "CREATE_CANDIDATE_UNVERIFIED" if hub_files is None else "DELTA"
+        )
         with pytest.raises(publisher.PublicationRefused, match="requires --allow-create"):
             run(CREATE_ONLY, api, publish=True, grant=False)
         assert "create_repo" not in api.names()
@@ -1048,4 +1125,4 @@ def test_cli_allow_create_is_scoped_to_create_enabled_publication(
     assert code == 0 and report["state"] == "PUBLISHED"
     assert ("create_repo" in api.names()) is (initial_files is None)
     assert "create_commit" in api.names()
-    assert observed_main == [head, head, head]
+    assert observed_main == ([head] * (4 if initial_files is None else 3))
