@@ -262,7 +262,8 @@ class PublicationContracts(unittest.TestCase):
                 RepositoryNotFoundError=type("AbsentRepository", (Exception,), {})
             )
             release = SimpleNamespace(
-                verify_release=mock.Mock(return_value={"complete": True})
+                verify_release=mock.Mock(return_value={"complete": True}),
+                verify_v2_release=mock.Mock(return_value={"complete": True}),
             )
             modules = {
                 "publish_hf_space": helper,
@@ -297,6 +298,7 @@ class PublicationContracts(unittest.TestCase):
             inspection=inspection
         )
         self.assertTrue(succeeded)
+        self.assertTrue(report["v2_source_verification"]["complete"])
         self.assertEqual(api.create_commit.call_args.kwargs["parent_commit"], "1" * 40)
         self.assertEqual(api.create_commit.call_args.kwargs["repo_id"], MODULE.TARGET)
         self.assertEqual(
