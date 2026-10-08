@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # The one committed writer for the OAC Hub packages (HF upgrade plan D1 and P9).
 # Pull requests and dispatches with publish=false run an anonymous dry-run only.
-# A push to main, or a main-only dispatch with publish=true, publishes each
-# closed profile under its per-asset lock (D3) with a parent-commit CAS.
+# Existing v1 profiles publish on main push or main-only publish dispatch.
+# The new v2 model is create-once and publishes only on an explicit main dispatch.
+# Every writer holds its per-asset lock (D3) and a parent-commit CAS.
 name: Publish OAC Hub packages
 
 on:
@@ -11,6 +12,7 @@ on:
     paths:
       - "clinical-gateway/huggingface/**"
       - "ops-health/huggingface/**"
+      - "publishing/oac-ops-health-v2/**"
       - "tools/publish_oac_hub.py"
       - "tests/test_publish_oac_hub.py"
       - "tools/acquire_hf_publisher_token.py"
@@ -22,6 +24,7 @@ on:
     paths:
       - "clinical-gateway/huggingface/**"
       - "ops-health/huggingface/**"
+      - "publishing/oac-ops-health-v2/**"
       - "tools/publish_oac_hub.py"
       - "tests/test_publish_oac_hub.py"
       - "tools/acquire_hf_publisher_token.py"
@@ -97,7 +100,7 @@ jobs:
             git fetch --no-tags --depth=1 origin "${BASE_REVISION}"
             expect=(--expect-delta-since "${BASE_REVISION}")
           fi
-          for profile in oac-v1-model oac-v1-dataset; do
+          for profile in oac-v1-model oac-v1-dataset oac-v2-model; do
             python tools/publish_oac_hub.py \
               --profile "${profile}" \
               --source-revision "${SOURCE_REVISION}" \
@@ -372,6 +375,182 @@ jobs:
           path: |
             reports/oac-v1-dataset-credential.json
             reports/oac-v1-dataset-publication.json
+          if-no-files-found: error
+          retention-days: 90
+
+  publish-oac-v2-model:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'workflow_dispatch' && inputs.publish
+    name: Explicitly publish the synthetic OAC v2 model package
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    concurrency:
+      group: hf-write/model/SZLHOLDINGS/oac-ops-health-v2
+      cancel-in-progress: false
+    outputs:
+      hub_revision: ${{ steps.result.outputs.hub_revision }}
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - name: Check out exact protected-main revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install exact publication clients
+        run: >-
+          python -m pip install --disable-pip-version-check --no-cache-dir
+          "huggingface-hub==1.23.0" "pytest==9.1.1"
+
+      - name: Prove local publisher and credential contracts
+        run: >-
+          python -m pytest -q
+          tests/test_publish_oac_hub.py
+          tests/test_acquire_hf_publisher_token.py
+          tests/test_hf_org_token1_fallback.py
+          tests/test_hf_write_locks.py
+
+      - name: Refuse a superseded protected-main source
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin main
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" || {
+            echo "::error::This publication run no longer owns current protected main."
+            exit 1
+          }
+
+      - name: Bind this job to the closed profile registry
+        env:
+          PROFILE: oac-v2-model
+          TARGET_REPO: SZLHOLDINGS/oac-ops-health-v2
+          TARGET_TYPE: model
+          JOB_ID: ${{ github.job }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import os
+          from tools.publish_oac_hub import resolve_profile
+
+          profile = resolve_profile(os.environ["PROFILE"])
+          observed = (profile.repo_id, profile.repo_type, profile.job_id)
+          expected = (os.environ["TARGET_REPO"], os.environ["TARGET_TYPE"], os.environ["JOB_ID"])
+          if observed != expected or not profile.allow_create:
+              raise SystemExit("workflow target drifted from the closed create-once profile")
+          PY
+
+      - name: Acquire and actively validate the target credential
+        env:
+          HF_ORG_TOKEN_CANDIDATE: ${{ secrets.HF_ORG_TOKEN }}
+          HF_ORG_TOKEN1_CANDIDATE: ${{ secrets.HF_ORG_TOKEN1 }}
+          HF_WRITE_TOKEN_CANDIDATE: ${{ secrets.HF_WRITE_TOKEN }}
+          HF_TOKEN_CANDIDATE: ${{ secrets.HF_TOKEN }}
+          HUGGINGFACE_TOKEN_CANDIDATE: ${{ secrets.HUGGINGFACE_TOKEN }}
+          HUGGING_FACE_HUB_TOKEN_CANDIDATE: ${{ secrets.HUGGING_FACE_HUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          python tools/acquire_hf_publisher_token.py \
+            --target-repo SZLHOLDINGS/oac-ops-health-v2 \
+            --target-type model --allow-create \
+            --github-env "${GITHUB_ENV}" \
+            --report reports/oac-v2-model-credential.json
+
+      - name: Create once and verify every Hub byte
+        run: |
+          set -euo pipefail
+          python tools/publish_oac_hub.py \
+            --profile oac-v2-model \
+            --source-revision "${GITHUB_SHA}" \
+            --publish --allow-create \
+            --report reports/oac-v2-model-publication.json
+
+      - name: Export the verified Hub revision
+        id: result
+        run: |
+          set -euo pipefail
+          python - <<'PY' >> "${GITHUB_OUTPUT}"
+          import json
+
+          report = json.load(open("reports/oac-v2-model-publication.json", encoding="utf-8"))
+          revision = {"PUBLISHED": report["new_revision"], "NO_CHANGE": report["parent_revision"]}[report["state"]]
+          print(f"hub_revision={revision}")
+          PY
+
+      - name: Retain secret-free publication evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: oac-v2-model-publication-${{ github.run_id }}
+          path: |
+            reports/oac-v2-model-credential.json
+            reports/oac-v2-model-publication.json
+          if-no-files-found: error
+          retention-days: 90
+
+  alignment-v2:
+    needs: [publish-oac-v2-model]
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'workflow_dispatch' && inputs.publish
+    name: Read back the pinned synthetic OAC v2 package
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - name: Check out exact protected-main revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install exact read-only client
+        run: python -m pip install --disable-pip-version-check --no-cache-dir "huggingface-hub==1.23.0"
+
+      - name: Require complete package parity at the published Hub revision
+        env:
+          MODEL_REVISION: ${{ needs.publish-oac-v2-model.outputs.hub_revision }}
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          python tools/publish_oac_hub.py \
+            --profile oac-v2-model \
+            --source-revision "${GITHUB_SHA}" \
+            --expect-parent "${MODEL_REVISION}" \
+            --report reports/oac-v2-model-alignment.json
+          python - <<'PY'
+          import json
+
+          report = json.load(open("reports/oac-v2-model-alignment.json", encoding="utf-8"))
+          if report["state"] != "NO_CHANGE" or report["head_after"] != report["parent_revision"]:
+              raise SystemExit("v2 Hub bytes do not equal the protected source package")
+          PY
+
+      - name: Retain parity evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: oac-v2-model-alignment-${{ github.run_id }}
+          path: reports/oac-v2-model-alignment.json
           if-no-files-found: error
           retention-days: 90
 

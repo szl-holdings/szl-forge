@@ -79,6 +79,24 @@ PROFILES: Mapping[str, HubProfile] = {
         replace_paths=frozenset({"README.md"}),
         allow_create=False,
     ),
+    "oac-v2-model": HubProfile(
+        key="oac-v2-model",
+        repo_id="SZLHOLDINGS/oac-ops-health-v2",
+        repo_type="model",
+        staged_dir="publishing/oac-ops-health-v2",
+        files=frozenset(
+            {
+                "LICENSE",
+                "README.md",
+                "artifact_receipt.json",
+                "example_input.json",
+                "model.json",
+                "ops_health.py",
+            }
+        ),
+        replace_paths=frozenset(),
+        allow_create=True,
+    ),
     "oac-v1-dataset": HubProfile(
         key="oac-v1-dataset",
         repo_id="SZLHOLDINGS/oac-clinical-transport-observability-synthetic",
