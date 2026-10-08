@@ -39,7 +39,7 @@ jobs:
       - name: Install verification-only dependencies
         run: >-
           python -m pip install --disable-pip-version-check
-          "cryptography==49.0.0"
+          "cryptography==50.0.0"
           "fastapi==0.139.0"
           "httpx==0.28.1"
           "huggingface-hub==1.23.0" "requests==2.33.0"
@@ -166,6 +166,7 @@ jobs:
             tools/test_authorize_invariants_release.py \
             tools/test_publish_szl_invariants.py
           PYTHONPATH=tools python tools/test_publish_model_source_bindings.py
+          python -B -m unittest discover -s tests -p test_published_artifact_bytes.py -v
           python tools/test_model_binding_workflow.py
           python tools/test_model_kernel_frontier_workflow.py
           PYTHONPATH=tools python tools/test_publish_hf_space.py
@@ -331,7 +332,7 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
           python -m pip install --disable-pip-version-check `
-            "cryptography==49.0.0" `
+            "cryptography==50.0.0" `
             "huggingface-hub==1.23.0" `
             "jsonschema==4.26.0"
           if ($LASTEXITCODE -ne 0) {

@@ -16,6 +16,7 @@ from .models import AdvisoryMLP, metrics
 
 
 def verify_source(expected_revision: str) -> dict:
+    """Check local Git identity; hidden-index/sparse checkouts are unsupported."""
     import re
     if not re.fullmatch(r"[0-9a-f]{40}", expected_revision):
         raise ValueError("full_source_revision_required")
@@ -26,6 +27,12 @@ def verify_source(expected_revision: str) -> dict:
         return result.stdout.strip()
     root = Path(git("rev-parse", "--show-toplevel")).resolve()
     actual = git("rev-parse", "HEAD")
+    # :/ covers the whole checkout although Git is invoked from the package.
+    # S is skip-worktree; lowercase -v tags indicate assume-unchanged.
+    # Reject the state without clearing flags or changing Git's EOL semantics.
+    index_entries = git("ls-files", "-v", "-z", "--", ":/").split("\0")
+    if any(entry and (entry[0] == "S" or entry[0].islower()) for entry in index_entries):
+        raise ValueError("source_hidden_index_flags_rejected")
     if actual != expected_revision or git("status", "--porcelain", "--untracked-files=all"):
         raise ValueError("source_revision_mismatch_or_dirty_checkout")
     sources = {}

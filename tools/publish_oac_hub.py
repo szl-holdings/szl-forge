@@ -79,6 +79,24 @@ PROFILES: Mapping[str, HubProfile] = {
         replace_paths=frozenset({"README.md"}),
         allow_create=False,
     ),
+    "oac-v2-model": HubProfile(
+        key="oac-v2-model",
+        repo_id="SZLHOLDINGS/oac-ops-health-v2",
+        repo_type="model",
+        staged_dir="publishing/oac-ops-health-v2",
+        files=frozenset(
+            {
+                "LICENSE",
+                "README.md",
+                "artifact_receipt.json",
+                "example_input.json",
+                "model.json",
+                "ops_health.py",
+            }
+        ),
+        replace_paths=frozenset({"README.md"}),
+        allow_create=False,
+    ),
     "oac-v1-dataset": HubProfile(
         key="oac-v1-dataset",
         repo_id="SZLHOLDINGS/oac-clinical-transport-observability-synthetic",
@@ -271,20 +289,37 @@ def assert_expected_delta(
     *,
     git: Callable[[list[str]], bytes] | None = None,
 ) -> None:
-    """Dry-run assertion that the Hub sits at the base and the delta is this change.
+    """Dry-run assertion of source delta and, when visible, Hub/base parity.
 
-    Two conditions, both recorded under ``report["expected_delta_since"]``:
-    the Hub bytes of every staged path at the inspected parent equal the
-    base revision's staged bytes, with no path present on one side only
-    (``hub_equals_base``); and the dry-run delta equals the staged paths whose
-    bytes changed between the base and the source revision. The parent sha
-    itself is not derivable from Git; ``--expect-parent`` pins it.
+    A visible Hub snapshot must equal the base revision's staged bytes and the
+    dry-run delta must equal the staged source change. A create-enabled target
+    that returns RepositoryNotFoundError is unobservable: only an empty base
+    and the source delta can be checked, while ``hub_equals_base`` stays null.
+    The parent sha itself is not derivable from Git; ``--expect-parent`` pins it.
     """
     require_sha(base_revision, "base revision")
     base = evidence_for(_read_tree(base_revision, profile.staged_dir, git or _git))
-    hub = report.get("hub_before") or {}
-    drift = sorted(path for path in set(base) | set(hub) if base.get(path) != hub.get(path))
     expected = staged_change_since(profile, base_revision, source_revision, git=git)
+    if report.get("target_observation") == "UNRESOLVED_PRIVATE_OR_MISSING":
+        report["expected_delta_since"] = {
+            "base_revision": base_revision,
+            "parent_revision": None,
+            "hub_equals_base": None,
+            "hub_drift": None,
+            "delta": expected,
+            "verification": "UNAVAILABLE",
+        }
+        if base:
+            raise PublicationRefused("Hub target is unresolved while the base has staged files")
+        if report.get("delta") != expected:
+            raise PublicationRefused(
+                "dry-run delta differs from the staged change since the base revision"
+            )
+        return
+    hub = report.get("hub_before")
+    if not isinstance(hub, dict):
+        raise PublicationRefused("Hub snapshot is unavailable for expected-delta verification")
+    drift = sorted(path for path in set(base) | set(hub) if base.get(path) != hub.get(path))
     report["expected_delta_since"] = {
         "base_revision": base_revision,
         "parent_revision": report.get("parent_revision"),
@@ -502,6 +537,7 @@ def base_report(profile: HubProfile, source_revision: str, publish: bool) -> dic
             "lock_group": profile.lock_group,
         },
         "resolved_repo_id": None,
+        "target_observation": "UNKNOWN",
         "repository_created": False,
         "parent_revision": None,
         "hub_files": None,
@@ -536,11 +572,14 @@ def execute(
     not_found: type[BaseException],
     operation_factory: Callable[..., Any],
     allow_create_grant: bool = False,
+    expected_parent: str | None = None,
     fresh_main: Callable[[str], None] | None = None,
     git: Callable[[list[str]], bytes] | None = None,
 ) -> dict[str, Any]:
     """Run one profile; ``report`` keeps partial evidence when a step refuses."""
     require_sha(source_revision, "source revision")
+    if expected_parent is not None:
+        require_sha(expected_parent, "expected parent")
     if allow_create_grant and not profile.allow_create:
         raise PublicationRefused("--allow-create is outside this profile's authority")
     fresh_main = fresh_main or assert_current_main
@@ -554,29 +593,49 @@ def execute(
 
     info = lookup_target(api, profile, not_found=not_found)
     if info is None:
+        # The Hub uses one not-found exception for missing and inaccessible
+        # private repositories. An anonymous read proves neither condition.
+        report["target_observation"] = "UNRESOLVED_PRIVATE_OR_MISSING"
+        if expected_parent is not None:
+            raise PublicationRefused("target is unavailable at the pinned Hub parent")
         if not profile.allow_create:
             raise PublicationRefused(
-                "target repository was not found and this profile may not create it"
+                "target repository is unresolved and this profile may not create it"
             )
         if not publish:
             report["delta"] = sorted(staged)
             report["artifacts_unchanged"] = False
-            report["state"] = "CREATE"
+            report["state"] = "CREATE_CANDIDATE_UNVERIFIED"
             return report
         if not allow_create_grant:
             raise PublicationRefused("create-enabled publication requires --allow-create")
-        # exist_ok=False refuses a concurrent creator rather than adopting it.
-        api.create_repo(
-            profile.repo_id, repo_type=profile.repo_type, private=False, exist_ok=False
-        )
+        # This is an external effect. Check protected main immediately before
+        # the one atomic create; a hidden target cannot be adopted.
+        fresh_main(source_revision)
+        try:
+            api.create_repo(
+                profile.repo_id, repo_type=profile.repo_type, private=False, exist_ok=False
+            )
+        except Exception as error:
+            report["state"] = "BLOCKED"
+            report["target_create_failure_type"] = type(error).__name__
+            response = getattr(error, "response", None)
+            status_code = getattr(response, "status_code", None)
+            if isinstance(status_code, int):
+                report["target_create_status_code"] = status_code
+            raise PublicationRefused("unresolved target could not be atomically created") from error
         report["repository_created"] = True
         info = lookup_target(api, profile, not_found=not_found)
         if info is None:
+            report["state"] = "BLOCKED"
             raise PublicationRefused("created repository is not visible to the lookup")
 
     parent = check_identity(info, profile)
     report["resolved_repo_id"] = str(info.id)
+    report["target_observation"] = "PUBLIC"
     report["parent_revision"] = parent
+    if expected_parent is not None:
+        assert_expected_parent(expected_parent, report)
     listing, hub_files = hub_snapshot(api, profile, parent, read_file)
     report["hub_files"] = listing
     report["hub_before"] = evidence_for(hub_files)
@@ -719,7 +778,7 @@ def main(argv: list[str] | None = None, *, environ: Mapping[str, str] | None = N
     parser.add_argument(
         "--expect-parent",
         metavar="HUB_SHA",
-        help="dry-run only: require the inspected Hub head to be exactly HUB_SHA",
+        help="require the inspected Hub head before publication to be exactly HUB_SHA",
     )
     args = parser.parse_args(argv)
     environ = os.environ if environ is None else environ
@@ -741,10 +800,8 @@ def main(argv: list[str] | None = None, *, environ: Mapping[str, str] | None = N
         if args.allow_create and (not args.publish or not profile.allow_create):
             raise PublicationRefused("--allow-create requires a create-enabled publish profile")
         if args.publish:
-            if args.expect_delta_since or args.expect_parent:
-                raise PublicationRefused(
-                    "--expect-delta-since and --expect-parent are dry-run assertions"
-                )
+            if args.expect_delta_since:
+                raise PublicationRefused("--expect-delta-since is a dry-run assertion")
             assert_publish_environment(environ)
             token: str | bool = str(environ.get("HF_TOKEN", "")).strip()
             if not token:
@@ -769,14 +826,19 @@ def main(argv: list[str] | None = None, *, environ: Mapping[str, str] | None = N
                 not_found=clients["not_found"],
                 operation_factory=clients["operation_factory"],
                 allow_create_grant=args.allow_create,
+                expected_parent=args.expect_parent.strip() if args.publish and args.expect_parent else None,
             )
-        if args.expect_parent:
+        if args.expect_parent and not args.publish:
             assert_expected_parent(args.expect_parent.strip(), report)
         if args.expect_delta_since:
             assert_expected_delta(profile, args.expect_delta_since.strip(), source_revision, report)
         exit_code = 0
     except PublicationRefused as error:
-        report["state"] = "FAILED" if report["commit_attempted"] else "REFUSED"
+        if report["state"] != "BLOCKED":
+            report["state"] = (
+                "FAILED" if report["commit_attempted"] else
+                "BLOCKED" if report["repository_created"] else "REFUSED"
+            )
         report["refusal"] = str(error)
     except Exception as error:  # evidence only; never reflect provider text
         report["state"] = "FAILED"

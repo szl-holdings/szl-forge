@@ -1,5 +1,10 @@
 # Live governed inference v2 — promotion contract
 
+> Historical contract. The public v2 POST is retired with HTTP 410 because its
+> response included a controller-only continuation. The proposed public successor
+> is documented in [Live governed inference v3](LIVE-GOVERNED-INFERENCE-V3.md).
+> This source change does not establish a deployed or verified v3 runtime.
+
 This document records the exact promotion boundary for the SZL Model Inference
 Lab. It is a deployment contract, not evidence that the public runtime is live;
 live status is established only by the protected-main publisher and its retained

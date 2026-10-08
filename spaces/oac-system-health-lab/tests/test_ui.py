@@ -30,6 +30,7 @@ class BrowserScriptTests(unittest.TestCase):
         )
         application = app.Application(ROOT, "b" * 40)
         self.assertTrue(application.ready)
+        self.assertTrue(application.v2_ready)
         healthy = {
             "listener_running": True,
             "tls_enabled": True,
@@ -50,10 +51,24 @@ class BrowserScriptTests(unittest.TestCase):
             "ledger_integrity_ok": False,
             "configuration_valid": False,
         }
+        ambiguous = {
+            "listener_running": True,
+            "tls_enabled": True,
+            "peer_allowlist_configured": True,
+            "queue_utilization": 0.1,
+            "consecutive_failures": 5,
+            "seconds_since_last_success": 1,
+            "ledger_integrity_ok": True,
+            "configuration_valid": True,
+        }
         fixtures = {
             "identity": application.identity(),
             "healthy": application.score(app.canonical({"features": healthy})),
             "degraded": application.score(app.canonical({"features": degraded})),
+            "v2_identity": application.v2_identity(),
+            "v2_healthy": application.score_v2(app.canonical({"features": healthy})),
+            "v2_degraded": application.score_v2(app.canonical({"features": degraded})),
+            "v2_ambiguous": application.score_v2(app.canonical({"features": ambiguous})),
             "healthy_features": healthy,
             "degraded_features": degraded,
         }
@@ -71,6 +86,9 @@ class BrowserScriptTests(unittest.TestCase):
         self.assertEqual(report["actual_backend_fixtures"], 2)
         self.assertGreaterEqual(report["malformed_contracts_rejected"], 81)
         self.assertGreaterEqual(report["interaction_checks"], 15)
+        self.assertEqual(report["actual_v2_backend_fixtures"], 3)
+        self.assertGreaterEqual(report["v2_malformed_contracts_rejected"], 8)
+        self.assertGreaterEqual(report["v2_interaction_checks"], 20)
         self.assertEqual(report["scope"], "LOCAL_SCRIPT_CONTRACT_ONLY")
         print("OAC UI contract: " + result.stdout.strip())
 

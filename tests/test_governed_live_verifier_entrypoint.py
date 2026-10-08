@@ -1,13 +1,16 @@
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 
 import pytest
 
 from tools.run_governed_live_verifier import (
     VerifierEntrypointError,
+    bind_release_manifest,
     invoke,
     load_main,
+    main,
 )
 
 
@@ -59,3 +62,29 @@ def test_non_integer_exit_fails_closed(tmp_path: Path) -> None:
     )
     with pytest.raises(VerifierEntrypointError, match="return an integer"):
         invoke(script, [])
+
+
+def test_cli_binds_checkout_manifest_digest_to_governed_verifier(tmp_path: Path) -> None:
+    script = tmp_path / "verify_governed_live.py"
+    script.write_text(
+        "def main(argv=None):\n"
+        "    return 0 if '--expected-release-manifest-sha256' in argv else 7\n",
+        encoding="utf-8",
+    )
+    manifest = tmp_path / "release.json"
+    manifest.write_bytes(b'{"schema":"fixture"}\r\n')
+    expected = hashlib.sha256(b'{"schema":"fixture"}\n').hexdigest()
+    assert bind_release_manifest(script, ["--probe", "ok"]) == [
+        "--probe", "ok", "--expected-release-manifest-sha256", expected,
+    ]
+    assert main(["--script", str(script), "--probe", "ok"]) == 0
+
+
+def test_cli_rejects_manifest_digest_override_or_absence(tmp_path: Path) -> None:
+    script = tmp_path / "verify_governed_live.py"
+    script.write_text("def main(argv=None):\n    return 0\n", encoding="utf-8")
+    with pytest.raises(VerifierEntrypointError, match="unavailable"):
+        bind_release_manifest(script, [])
+    (tmp_path / "release.json").write_text("{}\n", encoding="utf-8")
+    with pytest.raises(VerifierEntrypointError, match="override"):
+        bind_release_manifest(script, ["--expected-release-manifest-sha256", "0" * 64])

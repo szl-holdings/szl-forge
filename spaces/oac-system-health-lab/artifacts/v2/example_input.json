@@ -1,0 +1,12 @@
+{
+  "features": {
+    "configuration_valid": 1,
+    "consecutive_failures": 0,
+    "ledger_integrity_ok": 1,
+    "listener_running": 1,
+    "peer_allowlist_configured": 1,
+    "queue_utilization": 0.12,
+    "seconds_since_last_success": 14.0,
+    "tls_enabled": 1
+  }
+}
