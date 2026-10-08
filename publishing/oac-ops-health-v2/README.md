@@ -38,8 +38,10 @@ The receipt records a research-origin commit
 `92872f88193242b3fc0c1f604321d889d6988358` from an unpublished local
 repository. The public source verifies the landed bytes and the kernel's
 self-hash, but seven origin-layer tests remain unavailable to an independent
-public checkout. A receipt attests to integrity and origin under its stated
-boundary, not real-world accuracy or authorization.
+public checkout. This unsigned receipt records file digests and a declared
+local research origin. Matching digests support byte integrity against this
+record; the receipt does not authenticate that origin or establish accuracy
+or authorization.
 
 ## Evidence and limits
 
