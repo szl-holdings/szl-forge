@@ -14,7 +14,7 @@ The public [SZL Flagship Models collection](https://huggingface.co/collections/S
    py -3 -B -m publishing.flagship_collection_reconcile --live
    ```
 
-   The second command makes no write. It fails closed on unknown, duplicate, private, non-model, or replaced collection items. A changed model card or collection membership requires a new source review before applying.
+   The second command makes no write. It requires a JSON object with an explicit `items` list of JSON objects; only an explicit empty list is evidence of an empty shelf. Missing or malformed membership is not normalized to empty. It also fails closed on unknown, duplicate, private, non-model, or replaced collection items. A changed model card or collection membership requires a new source review before applying.
 3. Confirm `hf auth whoami` identifies `betterwithage` as a `SZLHOLDINGS` administrator with collection-write authority. The connected OAuth reader has only read scopes; it is not a collection publisher. The operator uses the local Hugging Face credential and never prints it. A repository write preflight alone does not establish collection management authority.
 4. The operator verifies the local clean `main` against the exact remote protected `main` and checks its commit signature. GitHub web merge commits may require importing [GitHub’s published web-flow public key](https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification) locally before `git verify-commit HEAD` can verify them:
 
