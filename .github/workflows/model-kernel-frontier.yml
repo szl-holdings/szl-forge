@@ -166,6 +166,7 @@ jobs:
             tools/test_authorize_invariants_release.py \
             tools/test_publish_szl_invariants.py
           PYTHONPATH=tools python tools/test_publish_model_source_bindings.py
+          python -B -m unittest discover -s tests -p test_published_artifact_bytes.py -v
           python tools/test_model_binding_workflow.py
           python tools/test_model_kernel_frontier_workflow.py
           PYTHONPATH=tools python tools/test_publish_hf_space.py
