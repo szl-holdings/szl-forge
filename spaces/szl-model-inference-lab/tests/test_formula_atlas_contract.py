@@ -140,7 +140,10 @@ class FormulaAtlasContractTests(unittest.TestCase):
             source_payload["components"]["formula_atlas"]["git_blob_sha"],
             formula.ATLAS_GIT_BLOB_SHA,
         )
-        witness.verify_source_contract(source_payload, "f" * 40)
+        expected_manifest = app.sha256_source_file(app.SOURCE_ROOT / "release.json")
+        witness.verify_source_contract(source_payload, "f" * 40, expected_manifest)
+        with self.assertRaisesRegex(witness.VerificationError, "manifest digest mismatch"):
+            witness.verify_source_contract(source_payload, "f" * 40, "0" * 64)
         evidence = witness.verify_formula_atlas(payload)
         self.assertEqual(evidence["atlas_revision"], formula.ATLAS_REVISION)
         route_paths = {route.path for route in governed.app.routes}
