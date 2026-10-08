@@ -1,0 +1,208 @@
+{
+  "inputs": {
+    "final_evaluation_sha256": "36b494bd043ae0973f4cfce98be2218e33c72c74fc840a790d32b3236688bebe",
+    "numpy": "2.4.6",
+    "python": "3.11.9",
+    "score_manifest_sha256": "a8dd49bfb74b44aa8d038d0f583c1eb65d36cf1577ee1d8bf3215340f5131299",
+    "script": "logs/v2/final_verify_independent.py",
+    "script_sha256": "c1f600fc7caf83a519530ed0e1e8453e878fd732dbd9681dad952d74c406740b"
+  },
+  "note": "written after the single opening; reads only the saved score files and final_evaluation.json; Parts A and B are independent re-computations of registered quantities, Part C is a NOT-registered descriptive sensitivity analysis that cannot change the registered verdict",
+  "part_A_B": {
+    "W3": {
+      "brier_v1": 0.1157646768785255,
+      "brier_v2": 0.10132962987948113,
+      "ece_v1": 0.08477546809508847,
+      "ece_v2": 0.030599228691026395,
+      "holds": true
+    },
+    "independent_verdict": "WIN",
+    "matches_final_evaluation": true,
+    "max_abs_diff_vs_evaluation": 5.551115123125783e-17,
+    "sets": {
+      "pooled_shift": {
+        "intervals": {
+          "ba:majority": [
+            0.5,
+            0.5
+          ],
+          "ba:rule": [
+            0.5392328288839192,
+            0.5483224006398175
+          ],
+          "ba:v1": [
+            0.7018872746457827,
+            0.7087256247263286
+          ],
+          "ba:v2": [
+            0.7541702715844737,
+            0.7617748409846116
+          ],
+          "brier:v1": [
+            0.17387874300909673,
+            0.1778165104469204
+          ],
+          "brier:v2": [
+            0.14269476167218753,
+            0.14635617889269387
+          ],
+          "diff_v2_minus_v1:ba": [
+            0.04983291750989458,
+            0.05570106558597354
+          ],
+          "diff_v2_minus_v1:brier": [
+            -0.03216684796446388,
+            -0.03044237203490709
+          ],
+          "diff_v2_minus_v1:ece": [
+            -0.07241899341023865,
+            -0.06703577477742853
+          ],
+          "ece:v1": [
+            0.1215848380537433,
+            0.12843518527189274
+          ],
+          "ece:v2": [
+            0.05228829027485499,
+            0.05817740447808984
+          ]
+        },
+        "max_abs_diff_vs_evaluation": 5.551115123125783e-17,
+        "points": {
+          "ba:ABL-data": 0.7522753277771717,
+          "ba:ABL-optimizer": 0.7112511350805795,
+          "ba:majority": 0.5,
+          "ba:rule": 0.5438748536791682,
+          "ba:v1": 0.7052894036484036,
+          "ba:v2": 0.7581051939964223,
+          "brier:v1": 0.1758446337119763,
+          "brier:v2": 0.14452605465977117,
+          "ece:v1": 0.12507338720944122,
+          "ece:v2": 0.054901413377849595
+        },
+        "rows": 50000,
+        "w_rule": {
+          "majority": {
+            "holds": true,
+            "margin": 0.2541702715844737,
+            "other_upper": 0.5,
+            "v2_lower": 0.7541702715844737
+          },
+          "rule": {
+            "holds": true,
+            "margin": 0.20584787094465617,
+            "other_upper": 0.5483224006398175,
+            "v2_lower": 0.7541702715844737
+          },
+          "v1": {
+            "holds": true,
+            "margin": 0.04544464685814509,
+            "other_upper": 0.7087256247263286,
+            "v2_lower": 0.7541702715844737
+          }
+        }
+      },
+      "test": {
+        "intervals": {
+          "ba:majority": [
+            0.5,
+            0.5
+          ],
+          "ba:rule": [
+            0.5262201474707618,
+            0.5369938351189977
+          ],
+          "ba:v1": [
+            0.7494349214990459,
+            0.7588395691623412
+          ],
+          "ba:v2": [
+            0.7591587272929082,
+            0.7694767620320558
+          ],
+          "brier:v1": [
+            0.11401680907024274,
+            0.11757409515234395
+          ],
+          "brier:v2": [
+            0.09950676006767167,
+            0.10313968127581684
+          ],
+          "diff_v2_minus_v1:ba": [
+            0.006559440073731363,
+            0.014191093069305565
+          ],
+          "diff_v2_minus_v1:brier": [
+            -0.015052682431346002,
+            -0.013818184626739895
+          ],
+          "diff_v2_minus_v1:ece": [
+            -0.05601084691852822,
+            -0.05236953823622299
+          ],
+          "ece:v1": [
+            0.08192197310315275,
+            0.0877303344429128
+          ],
+          "ece:v2": [
+            0.027748448439190197,
+            0.03335560307344762
+          ]
+        },
+        "max_abs_diff_vs_evaluation": 2.7755575615628914e-17,
+        "points": {
+          "ba:ABL-data": 0.7588389813263344,
+          "ba:ABL-optimizer": 0.7552442331883427,
+          "ba:majority": 0.5,
+          "ba:rule": 0.5316926941018643,
+          "ba:v1": 0.7540151933067296,
+          "ba:v2": 0.7643954843922256,
+          "brier:v1": 0.1157646768785255,
+          "brier:v2": 0.10132962987948113,
+          "ece:v1": 0.08477546809508847,
+          "ece:v2": 0.030599228691026395
+        },
+        "rows": 50000,
+        "w_rule": {
+          "majority": {
+            "holds": true,
+            "margin": 0.25915872729290823,
+            "other_upper": 0.5,
+            "v2_lower": 0.7591587272929082
+          },
+          "rule": {
+            "holds": true,
+            "margin": 0.22216489217391056,
+            "other_upper": 0.5369938351189977,
+            "v2_lower": 0.7591587272929082
+          },
+          "v1": {
+            "holds": true,
+            "margin": 0.00031915813056704323,
+            "other_upper": 0.7588395691623412,
+            "v2_lower": 0.7591587272929082
+          }
+        }
+      }
+    },
+    "tolerance": 1e-12,
+    "within_tolerance": true
+  },
+  "part_C_post_hoc_sensitivity": {
+    "fraction_holds": 1.0,
+    "margin_max": 0.0009401872354518614,
+    "margin_mean": 0.0005214215272185185,
+    "margin_median": 0.0005220125856175151,
+    "margin_min": 8.138087670750416e-05,
+    "margin_sd": 0.00018724420957169294,
+    "registered": false,
+    "registered_stream_margin": 0.00031915813056704323,
+    "streams": "numpy.random.default_rng(seed) PCG64, seeds 1..100",
+    "streams_count": 100,
+    "streams_where_w1_v1_holds": 100,
+    "what": "W1 comparison v2 vs v1 on nominal test (lower 2.5th percentile of BA v2 minus upper 97.5th percentile of BA v1), 2,000 resamples, type 7, repeated with other resample streams"
+  },
+  "post_hoc": true,
+  "schema": "szl-oac/ops-health-final-robustness/v2",
+  "synthetic": true
+}

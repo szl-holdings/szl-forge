@@ -151,7 +151,9 @@ def validate_token(
     except RepositoryNotFoundError:
         if source == "TRUSTED_PUBLISHER" or not allow_create:
             raise
-        target_access = "CREATE_OR_RECOVER_REQUIRED"
+        # The target may be absent or private to this identity. This lookup
+        # establishes neither absence nor create authority.
+        target_access = "TARGET_UNRESOLVED"
 
     return ValidationResult(
         source=source,

@@ -106,12 +106,17 @@ def fetch_public_collection() -> dict[str, Any]:
 def plan_live(manifest: dict[str, Any], collection: dict[str, Any]) -> dict[str, Any]:
     """Compare live membership with the approved baseline without changing it."""
     validate_manifest(manifest)
+    if not isinstance(collection, dict):
+        raise ValueError("collection must be a JSON object")
     if collection.get("slug") != COLLECTION or collection.get("private") is not False:
         raise ValueError("collection identity or visibility drift")
+    items = collection.get("items")
+    if not isinstance(items, list) or any(not isinstance(item, dict) for item in items):
+        raise ValueError("collection items must be an explicit list of JSON objects")
     by_id = {item["hub_id"]: item for item in manifest["items"]}
     remaining: list[str] = []
     seen: set[str] = set()
-    for item in collection.get("items", []):
+    for item in items:
         hub_id = item.get("id", "")
         baseline = by_id.get(hub_id)
         if baseline is None or hub_id in seen or item.get("type") != "model" or item.get("private") is not False:

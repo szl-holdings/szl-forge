@@ -1,0 +1,15 @@
+# logs/v2/final_analyze_run.txt -- final analysis from the saved score files (reads only v2/results/final; opens no split). MEASURED; SYNTHETIC.
+# started 2026-09-29T21:15:49Z; HEAD 3b0912a8ae7d088c1b807acb207423b1203051e2; free disk 4360249344 bytes
+$ PYTHONUTF8=1 py -3.12 -B -m v2.research.final_analyze
+set test: rows 50000 bootstrap 123.08 s
+set pooled_shift: rows 50000 bootstrap 124.22 s
+set shift_queue_saturation: rows 12500 bootstrap 24.84 s
+set shift_failure_bursts: rows 12500 bootstrap 20.58 s
+set shift_clock_skew: rows 12500 bootstrap 20.36 s
+set shift_missing_tls: rows 12500 bootstrap 30.44 s
+set legacy_v1_test: rows 240 bootstrap 0.63 s
+wrote final_evaluation.json: 228283 bytes sha256 36b494bd043ae0973f4cfce98be2218e33c72c74fc840a790d32b3236688bebe
+wrote reliability.svg: 13835 bytes sha256 a3c496261f90a39f270e1cae3d54d8387028ea6d9d490b7e055675ad4addde86
+wrote FINAL_RESULTS.md: 19657 bytes sha256 af07e6d1d6908bd5202d179f42980d71e39c9348090b6e9b48f629f267b1840f
+verdict: WIN (failed: [])
+exit=0 finished 2026-09-29T21:22:04Z

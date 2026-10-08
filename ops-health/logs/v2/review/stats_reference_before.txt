@@ -1,0 +1,40 @@
+# v2 statistics review (lens b) -- SYNTHETIC, DEV data only
+python 3.11.9  numpy 2.4.6  scipy 1.17.1
+DEV rows: train 4096, calibration 2048, conformal 4096, threshold 2048, eval 20000
+[PASS] normalization_parity: max|diff| = 0 over 32768 values
+[PASS] irls_vs_scipy_l2=0: max|theta_v2 - theta_scipy| = 6.742e-08; v2 iters 7 CONVERGED, v2 grad 4.89e-17; scipy 'A bad approximation caused failure to predict improvement.' grad 5.88e-11; objective v2 0.334595128503579 scipy 0.334595128503579
+[PASS] irls_vs_scipy_l2=0.0001: max|theta_v2 - theta_scipy| = 4.122e-11; v2 iters 7 CONVERGED, v2 grad 1.22e-16; scipy 'A bad approximation caused failure to predict improvement.' grad 5.44e-14; objective v2 0.338107892280160 scipy 0.338107892280160
+[PASS] irls_vs_scipy_l2=0.001: max|theta_v2 - theta_scipy| = 5.329e-15; v2 iters 7 CONVERGED, v2 grad 5.69e-17; scipy 'Optimization terminated successfully.' grad 2.78e-17; objective v2 0.359818615563403 scipy 0.359818615563403
+[PASS] irls_vs_scipy_l2=0.01: max|theta_v2 - theta_scipy| = 2.438e-13; v2 iters 6 CONVERGED, v2 grad 8.67e-18; scipy 'A bad approximation caused failure to predict improvement.' grad 4.95e-14; objective v2 0.422929019491220 scipy 0.422929019491220
+[PASS] raw_score_parity_numpy: max|raw_numpy - raw_kernel| = 3.331e-16
+[PASS] platt_vs_scipy: v2 (a,b)=(1.290618547768, 0.449994300927); scipy (a,b)=(1.290618540933, 0.449994297481); max|diff| = 6.835e-09
+[PASS] isotonic_dev_calibration_raw: 2048 rows, 2048 tie blocks (2048 in v2), 20 fitted blocks; max|v2 - scipy| = 4.88e-13, max|v2 - PAV| = 4.88e-13
+[PASS] isotonic_step_prediction_dev_calibration_raw: 2049 between-key probes; max|diff| = 4.88e-13
+[PASS] isotonic_dev_rounded_2dp_heavy_ties: 2048 rows, 92 tie blocks (92 in v2), 21 fitted blocks; max|v2 - scipy| = 4.83e-13, max|v2 - PAV| = 4.83e-13
+[PASS] isotonic_step_prediction_dev_rounded_2dp_heavy_ties: 93 between-key probes; max|diff| = 4.83e-13
+[PASS] isotonic_hand_ties: 9 rows, 5 tie blocks (5 in v2), 2 fitted blocks; max|v2 - scipy| = 3.33e-13, max|v2 - PAV| = 3.33e-13
+[PASS] isotonic_step_prediction_hand_ties: 6 between-key probes; max|diff| = 3.33e-13
+[PASS] ece_bin_edges: 33 edge/nextafter scores; bins agree: True; score 1.0 -> bin 9, 0.3 -> 3, nextafter(0.3,-) -> 2
+[PASS] ece_edges_value: ref np.float64(0.48181818181818187) v2 0.4818181818181818
+[PASS] ece_dev_eval: ref 0.009955423264890 v2 0.009955423264890
+[PASS] auroc_dev_eval: 0 tied values; scipy MWU 0.835148345094667; sklearn 0.835148345094667; metrics.py 0.835148345094667; weighted(ones) 0.835148345094667
+[PASS] auroc_weighted_dev_eval: 5 random count vectors (materialized rows) max|diff| = 0.00e+00
+[PASS] auroc_dev_eval_rounded_2dp: 19902 tied values; scipy MWU 0.835092857073122; sklearn 0.835092857073122; metrics.py 0.835092857073122; weighted(ones) 0.835092857073122
+[PASS] auroc_weighted_dev_eval_rounded_2dp: 5 random count vectors (materialized rows) max|diff| = 0.00e+00
+[PASS] bootstrap_pairing: both contenders saw identical count vectors in all 2000 resamples
+[PASS] bootstrap_draws_equal_random_choices: 2000 resamples re-drawn with random.Random(20260927).choices(range(n), k=n); max|BA_v2 - BA_ref| = 0.0e+00 (both contenders)
+[PASS] bootstrap_percentile_a: v2 [0.752343702164642, 0.768094240197918] numpy linear [0.752343702164642, 0.768094240197918]; h_lo = 1999*0.025 = 49.975 between order stats #50 0.752323542445 and #51 0.752344219081; h_hi = 1949.025 between #1950 0.768093951529 and #1951 0.768105498268
+[PASS] bootstrap_percentile_b: v2 [0.521561427190209, 0.537576830989270] numpy linear [0.521561427190209, 0.537576830989270]; h_lo = 1999*0.025 = 49.975 between order stats #50 0.521491836847 and #51 0.521563211558; h_hi = 1949.025 between #1950 0.537575645949 and #1951 0.537623047549
+[PASS] bootstrap_percentile_a-b: v2 [0.220095852332426, 0.241763637765185] numpy linear [0.220095852332426, 0.241763637765185]; h_lo = 1999*0.025 = 49.975 between order stats #50 0.220023001738 and #51 0.220097720296; h_hi = 1949.025 between #1950 0.241762858546 and #1951 0.241794027313
+[PASS] bootstrap_strata: 50 stratified resamples (4 x 5000) equal per-stratum random.choices draws; every stratum keeps its size
+(bootstrap v2 time for 2000 resamples x 2 BA stats on 20000 rows: 11.2 s)
+[PASS] mondrian_none: class 0: n=3348 k=ceil((n+1)*0.9)=3015 q_exact=0.241217853088474 np.inverted_cdf=0.241217853088474 stored=0.241217853089; class 1: n=748 k=ceil((n+1)*0.9)=675 q_exact=0.912874362768904 np.inverted_cdf=0.912874362768904 stored=0.912874362769; DEV eval coverage marginal 0.9050, class0 0.9038, class1 0.9102 (ref 0.9050/0.9038/0.9102)
+[PASS] mondrian_platt: class 0: n=3348 k=ceil((n+1)*0.9)=3015 q_exact=0.263263877414216 np.inverted_cdf=0.263263877414216 stored=0.263263877415; class 1: n=748 k=ceil((n+1)*0.9)=675 q_exact=0.929693293831303 np.inverted_cdf=0.929693293831303 stored=0.929693293832; DEV eval coverage marginal 0.9050, class0 0.9038, class1 0.9102 (ref 0.9050/0.9038/0.9102)
+[PASS] mondrian_isotonic: class 0: n=3348 k=ceil((n+1)*0.9)=3015 q_exact=0.245098039216000 np.inverted_cdf=0.245098039216000 stored=0.245098039216; class 1: n=748 k=ceil((n+1)*0.9)=675 q_exact=0.941176470588000 np.inverted_cdf=0.941176470588000 stored=0.941176470588; DEV eval coverage marginal 0.9090, class0 0.9085, class1 0.9110 (ref 0.9090/0.9085/0.9110)
+[PASS] invalid_baseline_constant_alert: failed ['iii_decisions_not_constant']; per_class_rates=INVALID_BASELINE
+[PASS] majority_ba_0_5_and_invalid: BA 0.5, per_class_rates INVALID_BASELINE
+[PASS] invalid_baseline_i_ii_iv: first 40 rows, receipt False, 3/4 probes: failed ['i_receipt_verifies', 'ii_min_rows_per_class', 'iv_refused_all_probes'] (class counts {'0': 37, '1': 3})
+[FAIL] invalid_baseline_rates_not_derivable: INVALID fixture report exposes BA, accuracy and prevalence; solving gives sensitivity 0.324390911580 (true 0.324390911580), specificity 0.734691380681
+[PASS] threshold_selection_bruteforce: numpy brute force picks k=21, v2 picks k=21 (BA 0.770249850568)
+
+SUMMARY: 33/34 checks PASS; FAIL: ['invalid_baseline_rates_not_derivable']  (25.3 s)

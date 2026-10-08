@@ -1,0 +1,40 @@
+{
+  "contenders": {
+    "ABL-data": {
+      "v2/results/contenders/ABL-data/artifact_receipt.json": "876bde74b7289e0d7b0edcd4f720c4d1766777c857d14356a88bd3d43c67fa23",
+      "v2/results/contenders/ABL-data/model.json": "0cbe0e4a4d76184c6a53945a7ddfe8ab1ec16318e959296caafd5a0415d5d598"
+    },
+    "ABL-optimizer": {
+      "v2/results/contenders/ABL-optimizer/params.json": "3a89941b066db919b10b608b3537ce4044872b2314761a732b7e828a975e4a1f"
+    },
+    "majority": {
+      "v2/research/final_score.py": "8372f8818defc1224d1906529f7a6c806b0367a53c6b5ce25d3969857476636d"
+    },
+    "rule": {
+      "v2/research/final_score.py": "8372f8818defc1224d1906529f7a6c806b0367a53c6b5ce25d3969857476636d"
+    },
+    "v1": {
+      "hub/oac-v1/artifact_receipt.json": "23239bb39b0a5b6db1e41284e6372f352cee61d7938da1e84472246dcdaf95a1",
+      "hub/oac-v1/model.json": "f111b7fc65db561c80763b25e538366a19bed18526ca881915777487935d9557",
+      "hub/oac-v1/oac_operational_health.py": "2fd8ffd3fd3ca8d0f960d4e0d471593b86e6cccb03607116390cbe9300992669"
+    },
+    "v2": {
+      "v2/ops-health/artifact_receipt.json": "442486a3b451f0ad765aac253830cdc5455bad3a34186b4cf73388cf207056f2",
+      "v2/ops-health/model.json": "b830a5edca271d667ab09b378dd5d3ab505d71a7e3451de8d9ca2bacfeed977c",
+      "v2/ops-health/ops_health.py": "b0a64ff3f26ea284b0588de351ed7795a6089203b35fded0e7d82cbd4871aed9"
+    }
+  },
+  "data_manifest_sha256": "c0d2fa0a924162e42c4d50c8eaf7d155f3e991f8f47ca518b1b87c3927ad7252",
+  "git_head": "30d50b5b4537e4262489c160351feaaed08e33aa",
+  "opened_utc": "2026-09-29T21:13:47Z",
+  "purpose": "FINAL_TEST_OPENING",
+  "rule": "single opening; any later opening is refused",
+  "schema": "szl-oac/ops-health-test-opening/v2",
+  "sealed_splits_sha256": {
+    "shift_clock_skew": "d98e19e8fd1e9d3c5e8c2c1c808492d8c0f6be378ef0d89cc50569afb9c74823",
+    "shift_failure_bursts": "4199085505a0e3ea3ead9b282eb28d4c8c0060a3034fdee713eb845ee97a8c0e",
+    "shift_missing_tls": "a4a96189c864c93906649ab629f3ed979b395b9252df8dc5bb777fc8acf0bedc",
+    "shift_queue_saturation": "c647bb89be02205fa8961a9ed3209c1498cc0f7524224365c2af6596baae85da",
+    "test": "6479d0bffab20771ba1f5976f95dec8825e8edf0aa4e4faa559d77d57fec1f3b"
+  }
+}

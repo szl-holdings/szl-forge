@@ -31,6 +31,10 @@ from verify_release import (  # noqa: E402
     SHA1,
     SOURCE_DIRECTORY,
     SOURCE_REPOSITORY,
+    V2_ARTIFACTS,
+    V2_SOURCE_DIRECTORY,
+    V2_SOURCE_REVISION,
+    V2_HUB_REVISION,
     ReleaseVerificationError,
     _closed,
     _git,
@@ -38,6 +42,7 @@ from verify_release import (  # noqa: E402
     strict_json,
     utc_now,
     verify_release,
+    verify_v2_release,
     write_report,
 )
 
@@ -79,6 +84,21 @@ CASES = (
             "seconds_since_last_success": 7200,
             "ledger_integrity_ok": 0,
             "configuration_valid": 0,
+        },
+    ),
+)
+V2_CASES = CASES + (
+    (
+        "authored_ambiguous_synthetic",
+        {
+            "listener_running": 1,
+            "tls_enabled": 1,
+            "peer_allowlist_configured": 1,
+            "queue_utilization": 0.1,
+            "consecutive_failures": 5,
+            "seconds_since_last_success": 1,
+            "ledger_integrity_ok": 1,
+            "configuration_valid": 1,
         },
     ),
 )
@@ -195,7 +215,10 @@ class Transport:
             ("GET", "/readyz"),
             ("GET", "/api/build-info"),
             ("GET", "/api/v1/identity"),
+            ("GET", "/api/v2/readyz"),
+            ("GET", "/api/v2/identity"),
             ("POST", "/api/score"),
+            ("POST", "/api/v2/score"),
         }:
             raise LiveVerificationError("REQUEST_NOT_ALLOWED")
         deadline = time.monotonic() + REQUEST_SECONDS
@@ -364,6 +387,49 @@ def _load_kernel(
             sys.modules[name] = prior
 
 
+def _load_v2_scorer(repository_root: Path) -> Any:
+    """Independently score from v2's immutable Git blobs, never app.py."""
+    immutable = {}
+    for name, expected in V2_ARTIFACTS.items():
+        raw = _git(
+            repository_root,
+            "show",
+            f"{V2_SOURCE_REVISION}:{V2_SOURCE_DIRECTORY}/{name}",
+        )
+        if len(raw) > MAX_ARTIFACT_BYTES or hashlib.sha256(raw).hexdigest() != expected:
+            raise LiveVerificationError("V2_CANONICAL_ARTIFACT_MISMATCH")
+        immutable[name] = raw
+    name = "_szl_oac_live_verifier_v2"
+    module = types.ModuleType(name)
+    prior = sys.modules.get(name)
+    sys.modules[name] = module
+    try:
+        exec(compile(immutable["ops_health.py"], "<immutable-oac-v2>", "exec"), module.__dict__)
+        receipt = module.validate_receipt(
+            module.loads_strict(
+                immutable["artifact_receipt.json"].decode("utf-8"),
+                module.ModelArtifactError,
+            )
+        )
+        if (
+            receipt["kernel_sha256"] != V2_ARTIFACTS["ops_health.py"]
+            or receipt["model_sha256"] != V2_ARTIFACTS["model.json"]
+        ):
+            raise LiveVerificationError("V2_RECEIPT_BINDING_MISMATCH")
+        artifact = module.loads_strict(
+            immutable["model.json"].decode("utf-8"), module.ModelArtifactError
+        )
+        scorer = module.ArtifactScorer(artifact)
+        if scorer._artifact["generator"]["source_sha256"] != receipt["generator_sha256"]:
+            raise LiveVerificationError("V2_GENERATOR_BINDING_MISMATCH")
+        return scorer
+    finally:
+        if prior is None:
+            sys.modules.pop(name, None)
+        else:
+            sys.modules[name] = prior
+
+
 def verify_live(
     *,
     origin: str,
@@ -372,6 +438,7 @@ def verify_live(
     repository_root: Path,
     allow_localhost: bool = False,
     transport: Transport | None = None,
+    verify_v2: bool = False,
 ) -> dict[str, Any]:
     report: dict[str, Any] = {
         "schema": REPORT_SCHEMA,
@@ -518,6 +585,105 @@ def verify_live(
                 "observed_at": utc_now(),
             }
         )
+        if verify_v2:
+            report["v2_release_verification"] = verify_v2_release(
+                space_root, repository_root
+            )
+            v2_scorer = _load_v2_scorer(repository_root)
+            v2_identity = {
+                "schema": "szl.oac-health-space-identity/v2",
+                "state": "READY",
+                "application": {
+                    "repository": SOURCE_REPOSITORY,
+                    "revision": expected_source_sha,
+                },
+                "artifact_source": {
+                    "repository": SOURCE_REPOSITORY,
+                    "revision": V2_SOURCE_REVISION,
+                    "directory": V2_SOURCE_DIRECTORY,
+                },
+                "hub_model": {
+                    "repo_id": "SZLHOLDINGS/oac-ops-health-v2",
+                    "revision": V2_HUB_REVISION,
+                },
+                "artifacts": V2_ARTIFACTS,
+                "synthetic_training_data": True,
+                "clinical_use_authorized": False,
+                "production_promotion_allowed": False,
+                "authority": {name: False for name in AUTHORITY_KEYS},
+                "receipt_minted": False,
+            }
+            for path, expected in (
+                (
+                    "/api/v2/readyz",
+                    {"state": "READY", "error": None, "receipt_minted": False},
+                ),
+                ("/api/v2/identity", v2_identity),
+            ):
+                observed = _json(client.request("GET", path))
+                if canonical(observed) != canonical(expected):
+                    raise LiveVerificationError("V2_IDENTITY_OR_READINESS_MISMATCH")
+                checks.append(
+                    {
+                        "name": path,
+                        "method": "GET",
+                        "status": "PASS",
+                        "http_status": 200,
+                        "response_sha256": digest(observed),
+                        "observed_at": utc_now(),
+                    }
+                )
+            for label, features in V2_CASES:
+                expected_advisory = v2_scorer.advise({"features": dict(features)})
+                observed = _json(
+                    client.request("POST", "/api/v2/score", {"features": dict(features)})
+                )
+                if canonical(observed) != canonical(
+                    {
+                        "ok": True,
+                        "advisory": expected_advisory,
+                        "identity": v2_identity,
+                        "receipt_minted": False,
+                        "input_sha256": digest(features),
+                        "output_sha256": digest(expected_advisory),
+                    }
+                ):
+                    raise LiveVerificationError("V2_CANONICAL_SCORE_MISMATCH")
+                if (
+                    set(expected_advisory["authority"]) != AUTHORITY_KEYS
+                    or any(expected_advisory["authority"].values())
+                ):
+                    raise LiveVerificationError("V2_AUTHORITY_BOUNDARY_MISMATCH")
+                checks.append(
+                    {
+                        "name": "v2_" + label,
+                        "method": "POST",
+                        "status": "PASS",
+                        "http_status": 200,
+                        "input_sha256": digest(features),
+                        "output_sha256": digest(expected_advisory),
+                        "observed_at": utc_now(),
+                    }
+                )
+            forbidden = {"features": dict(CASES[0][1], patient_id=REJECTION_MARKER)}
+            refused = _json(
+                client.request("POST", "/api/v2/score", forbidden), status=400
+            )
+            if (
+                refused != {"ok": False, "error": "INVALID_SCORE_INPUT"}
+                or REJECTION_MARKER.encode() in canonical(refused)
+            ):
+                raise LiveVerificationError("V2_FORBIDDEN_INPUT_REFUSAL_MISMATCH")
+            checks.append(
+                {
+                    "name": "v2_clinical_like_extra_field_refused_without_echo",
+                    "method": "POST",
+                    "status": "PASS",
+                    "http_status": 400,
+                    "observed_at": utc_now(),
+                }
+            )
+            report["v2_synthetic_case_count"] = len(V2_CASES)
         report.update(
             {"complete": True, "status": "PASS", "synthetic_case_count": len(CASES)}
         )
@@ -557,6 +723,9 @@ def main(argv: list[str] | None = None) -> int:
         help="Test-only: permit explicit HTTP loopback origin; never a provider deployment proof.",
     )
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--verify-v2", action="store_true", help="Also require the opt-in v2 runtime witness"
+    )
     args = parser.parse_args(argv)
     report = verify_live(
         origin=args.origin,
@@ -564,6 +733,7 @@ def main(argv: list[str] | None = None) -> int:
         space_root=args.space_root,
         repository_root=args.repository_root,
         allow_localhost=args.allow_localhost,
+        verify_v2=args.verify_v2,
     )
     write_report(args.output, report)
     print(

@@ -1,0 +1,39 @@
+# receipts-dir verification, HEAD 064481f0d603416c851073f0aad1f93ab9da16c2, 2026-09-29T15:16:54Z
+ouroboros_adapter 1.0.1 verify_run_dir(runs/receipts/v2-registered-search)
+errors: 0 []
+files: 14
+  0768975dfed5f681b097d7e41267f2fbea0e2d757be111f533a12dd146158c9b  000000-22ec3e4930b3.json
+  afa2928be919ab87a77be0aac06df3b86ae5d933e2f5108d7ec7b8ef88ec15c0  000001-88603b73b600.json
+  fa66b081c6b66d394ad633f6a1aafbd6abd06312ab2588cbc2913e0baf7d58ee  000002-7efa238d957c.json
+  3cb9dd5ea7592b4417ad5a4f9e8bac200c7dd96e6cc24792459059aa264e9a2f  000003-4df01b31fc7b.json
+  e23e2e9c65a19bd6aeec51c73d40754564945e421a81a80ccd9d8de9c2d31a50  000004-e502e1fbd971.json
+  a52dda9101b3f6512c8a3edda9039b18d75cf33da7c75fef56f769fece69e267  000005-e34b6df74106.json
+  2e3564ae8a757bddc14efed083998f32a4e4a4f6bfa06c542b244295ab5585b3  000006-fa3902284111.json
+  ad529ad22e30a172e9eef01db209ea75dcdd4b56f8e2d95e0e71fecebc369157  000007-686b6f32009f.json
+  a1b06e3703eac54bab0ffb38c0bbe1f653358608e7ed731d4b004b3fc995d94e  000008-516471be86d7.json
+  982e84c76d93a63a052ef220aeff818226cf5447484e40fbc57cbaf15df0644f  000009-9b7458b63811.json
+  781019cb7f2c54696263c36b6598b88cd410d3ea498b7c8f6acc7afd03557540  000010-256e569d85a4.json
+  febe38889da0d47ecd1162998b98d52a3097996074f6d532bdce0213310b3986  000011-759496325125.json
+  9f9ac04df3d3d8e1c2762831405b61f8280617950d765dd6c4023253277e1f57  000012-c14c39e50e26.json
+  449c2827a36ec9a07a7d12ac0e0fa8e4d4e7b51a719da488a9650d71af225241  trace.json
+directory digest: 7bc24c31dfb7f7c18b972718411f1799a533e97f74e90069d738549567181555
+trace dir digest: 7bc24c31dfb7f7c18b972718411f1799a533e97f74e90069d738549567181555 equal: True
+search_trace.json sha256: cc6d6809a5ae76083e42e97bb2eeca9024512fe1120da98dfa97a3f3c7d47eee
+receipt schema source: spec-file:C:\Users\steph\szl-work\oac-frontier\src\governed-receipt-spec\schema\governed-receipt.schema.json
+chain errors: []
+per-receipt schema/digest/envelope errors: 0
+seq: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] actions: ['bounded-loop-summary', 'hyperparameter-trial']
+cand files:
+  T01_l2_0_none c2e6ea05ecca36ab6acca156021202e474869b9d05b171e8945fe8c7073ba1ee match=True
+  T02_l2_0_platt 0b05c9971b27d5765c8c57f67a427c9aa32dc7ce22d62b5e9f6050bd13bbe562 match=True
+  T03_l2_0_isotonic 3eb45b59f54c37b76b7b8c3c3ac25e16b116be40a26aa3ade0e6da63fa02be7f match=True
+  T04_l2_1e-4_none c684dedc10907e7ddf7225bac7ef1b30d8de41e0a9de7c2799e2b21232442ef0 match=True
+  T05_l2_1e-4_platt e686d3f95399db8b1f983dae28fb2b6bbd9cfb3e60a49e9e073c4a2a2082f28e match=True
+  T06_l2_1e-4_isotonic eb5a458f854cda1c7c547dd76887c5e84b11bb49a5df6c482257bbd9a73a61eb match=True
+  T07_l2_1e-3_none b830a5edca271d667ab09b378dd5d3ab505d71a7e3451de8d9ca2bacfeed977c match=True
+  T08_l2_1e-3_platt 50123138cd90eb267b194871a13f7815725cf4f3e1e23a2afb9bb14b59fe3e43 match=True
+  T09_l2_1e-3_isotonic 9b5073c81af7074cf072e2789eca10b4e87b4d14dec7e9817f94ff9d2fe3ccd3 match=True
+  T10_l2_1e-2_none 89b4af5548f0d6c1eabf1ca23ea6bfcd95b26906d0a6bcfa06075a28862aa344 match=True
+  T11_l2_1e-2_platt a1c968ca7715342fbfc2d42bebe3faea7babaee300dfa74674c4f6405cf6e326 match=True
+  T12_l2_1e-2_isotonic f906500387283fdd7d712bfacfab976228f17e49a9fa313accd4cb916ad9363a match=True
+exit=0

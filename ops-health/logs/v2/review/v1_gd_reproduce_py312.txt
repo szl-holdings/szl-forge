@@ -1,0 +1,68 @@
+{
+  "all_equal_at_12dp": true,
+  "epochs": 2400,
+  "l2_penalty": 0.01,
+  "learning_rate": 0.42,
+  "max_abs_diff_unrounded_vs_published": 4.606315329169774e-13,
+  "parameters": {
+    "configuration_valid": {
+      "equal_at_12dp": true,
+      "published": -1.461266877987,
+      "rounded_12": -1.461266877987,
+      "unrounded": -1.4612668779868192
+    },
+    "consecutive_failures": {
+      "equal_at_12dp": true,
+      "published": 0.863860283722,
+      "rounded_12": 0.863860283722,
+      "unrounded": 0.8638602837215393
+    },
+    "intercept": {
+      "equal_at_12dp": true,
+      "published": 2.966862310261,
+      "rounded_12": 2.966862310261,
+      "unrounded": 2.966862310261277
+    },
+    "ledger_integrity_ok": {
+      "equal_at_12dp": true,
+      "published": -1.128984575692,
+      "rounded_12": -1.128984575692,
+      "unrounded": -1.1289845756921988
+    },
+    "listener_running": {
+      "equal_at_12dp": true,
+      "published": -1.61910172338,
+      "rounded_12": -1.61910172338,
+      "unrounded": -1.6191017233795588
+    },
+    "peer_allowlist_configured": {
+      "equal_at_12dp": true,
+      "published": -0.527177146666,
+      "rounded_12": -0.527177146666,
+      "unrounded": -0.5271771466655412
+    },
+    "queue_utilization": {
+      "equal_at_12dp": true,
+      "published": 0.908924629176,
+      "rounded_12": 0.908924629176,
+      "unrounded": 0.9089246291756448
+    },
+    "seconds_since_last_success": {
+      "equal_at_12dp": true,
+      "published": 0.053938998373,
+      "rounded_12": 0.053938998373,
+      "unrounded": 0.05393899837306583
+    },
+    "tls_enabled": {
+      "equal_at_12dp": true,
+      "published": -0.262108043211,
+      "rounded_12": -0.262108043211,
+      "unrounded": -0.26210804321081244
+    }
+  },
+  "python": "3.12.10",
+  "seconds": 1.987,
+  "train_rows": 768,
+  "train_sha256": "b868acce6a2e6a8f6a5e5edb3f5b45c4f2e7e7b33c1bc56d22128620aab8b1f6"
+}
+exit=0

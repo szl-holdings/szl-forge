@@ -1,0 +1,25 @@
+# drafts: unit suite in the staged ops-health/ layout of logs/drafts/landing_layout_dryrun.sh (same stage, outputs restored with git checkout). MEASURED; DEV data only; no sealed file is staged. started 2026-10-06T10:42:16Z
+$ PYTHONUTF8=1 py -3.12 -B -m unittest discover -s v2/tests -t .
+exit=1
+## FAIL/ERROR headers and their last message line
+ERROR: setUpClass (v2.tests.test_final_analyze.FinalAnalyzeDevTest)
+    v2.research.final_score.FinalScoreRefused: pre-opening checks failed: ['receipt_verified:v2', 'receipt_verified:ABL-data']; nothing was opened
+ERROR: setUpClass (v2.tests.test_final_score.FinalScoreDryRunTest)
+    v2.research.final_score.FinalScoreRefused: pre-opening checks failed: ['receipt_verified:v2', 'receipt_verified:ABL-data']; nothing was opened
+ERROR: test_receipt_catalogue (v2.tests.test_mutation_suite.CatalogueTest.test_receipt_catalogue)
+    subprocess.CalledProcessError: Command '['git', '-C', 'C:\\Users\\steph\\AppData\\Local\\Temp\\claude\\C--Users-steph-szl-work\\7198a73f-5194-4649-9294-f38f408e26bd\\scratchpad\\stage\\ops-health', 'rev-parse', '92872f88193242b3fc0c1f604321d889d6988358^']' returned non-zero exit status 128.
+ERROR: test_registered_receipt_mutants_are_caught (v2.tests.test_mutation_suite.IntegrityLayerTest.test_registered_receipt_mutants_are_caught)
+    subprocess.CalledProcessError: Command '['git', '-C', 'C:\\Users\\steph\\AppData\\Local\\Temp\\claude\\C--Users-steph-szl-work\\7198a73f-5194-4649-9294-f38f408e26bd\\scratchpad\\stage\\ops-health', 'rev-parse', '92872f88193242b3fc0c1f604321d889d6988358^']' returned non-zero exit status 128.
+FAIL: test_broken_baselines_are_invalid_without_per_class_rates (v2.tests.test_mutation_suite.BehaviorAndBaselineTest.test_broken_baselines_are_invalid_without_per_class_rates) (fixture='constant_alert')
+    AssertionError: Lists differ: ['i_receipt_verifies', 'iii_decisions_not_constant'] != ['iii_decisions_not_constant']
+FAIL: test_artifact_mutant_pass1_refused_pass2_loads (v2.tests.test_mutation_suite.IntegrityLayerTest.test_artifact_mutant_pass1_refused_pass2_loads)
+    AssertionError: True is not false : {'kernel': {'accepted': True, 'refusal': None}, 'verify_origin': {'accepted': False, 'refusal': 'OriginMismatch: source commit 92872f88193242b3fc0c1f604321d889d6988358 is not in the repository'}, 'caught': True}
+FAIL: test_frozen_v2_pair_passes_the_integrity_layer (v2.tests.test_mutation_suite.IntegrityLayerTest.test_frozen_v2_pair_passes_the_integrity_layer)
+    AssertionError: True is not false : {'kernel': {'accepted': True, 'refusal': None}, 'verify_origin': {'accepted': False, 'refusal': 'OriginMismatch: source commit 92872f88193242b3fc0c1f604321d889d6988358 is not in the repository'}, 'caught': True}
+FAIL: test_report_is_the_render_of_the_recorded_run (v2.tests.test_readiness.RecordedRunTest.test_report_is_the_render_of_the_recorded_run)
+    AssertionError: '# OA[23202 chars].\n\n**Supplementary in-place run** (MEASURED;[11793 chars]\n\n' != '# OA[23202 chars].\n\nNo supplementary in-place test run exists[8638 chars]\n\n'
+## summary
+Ran 184 tests in 146.372s
+
+FAILED (failures=4, errors=4, skipped=1)
+# finished 2026-10-06T10:44:46Z

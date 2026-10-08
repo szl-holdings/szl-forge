@@ -29,15 +29,24 @@ CREATED = "e" * 40
 MAIN = "refs/heads/main"
 MODEL = publisher.PROFILES["oac-v1-model"]
 DATASET = publisher.PROFILES["oac-v1-dataset"]
+V2_MODEL = publisher.PROFILES["oac-v2-model"]
+CREATE_ONLY = dataclasses.replace(MODEL, allow_create=True, replace_paths=frozenset())
+# Exercise the generic create path without granting the published v2 profile create authority.
+CREATE_V2 = dataclasses.replace(V2_MODEL, allow_create=True, replace_paths=frozenset())
 CARD = b"---\nlicense: apache-2.0\n---\n\n# Synthetic card\n"
 NEW_CARD = b"---\nlicense: apache-2.0\n---\n\n# Synthetic card, revised\n"
 PUBLISH_IF = (
     "github.ref == 'refs/heads/main' && "
     "(github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))"
 )
+V2_PUBLISH_IF = (
+    "github.ref == 'refs/heads/main' && "
+    "github.event_name == 'workflow_dispatch' && inputs.publish"
+)
 WATCHED_PATHS = [
     "clinical-gateway/huggingface/**",
     "ops-health/huggingface/**",
+    "publishing/oac-ops-health-v2/**",
     "tools/publish_oac_hub.py",
     "tests/test_publish_oac_hub.py",
     "tools/acquire_hf_publisher_token.py",
@@ -140,7 +149,8 @@ class FakeApi:
 
     def __init__(self, profile: publisher.HubProfile, files: dict[str, bytes] | None, *,
                  resolved_id: str | None = None, private: bool | None = False,
-                 create_error: Exception | None = None, commit_lands: bool = True) -> None:
+                 create_error: Exception | None = None, commit_lands: bool = True,
+                 hidden: bool = False) -> None:
         self.profile = profile
         self.revisions: dict[str, dict[str, bytes]] = {}
         self.head: str | None = None
@@ -151,6 +161,7 @@ class FakeApi:
         self.private = private
         self.create_error = create_error
         self.commit_lands = commit_lands
+        self.hidden = hidden
         self.calls: list[tuple] = []
         self.commit_kwargs: dict | None = None
         self.after_commit = None
@@ -158,7 +169,7 @@ class FakeApi:
     def repo_info(self, repo_id, *, repo_type, revision):
         self.calls.append(("repo_info", repo_id, repo_type, revision))
         assert (repo_id, repo_type, revision) == (self.profile.repo_id, self.profile.repo_type, "main")
-        if self.head is None:
+        if self.head is None or self.hidden:
             raise Missing(repo_id)
         return SimpleNamespace(id=self.resolved_id, private=self.private, sha=self.head)
 
@@ -196,7 +207,8 @@ class FakeApi:
         return [call[0] for call in self.calls]
 
 
-def run(profile, api, *, publish, staged=None, fresh=None, git=None):
+def run(profile, api, *, publish, staged=None, fresh=None, git=None, grant=None,
+        expected_parent=None):
     staged = package(profile) if staged is None else staged
     git = git or FakeGit({SOURCE: tree(profile, staged)})
     fresh_calls: list[str] = []
@@ -204,7 +216,9 @@ def run(profile, api, *, publish, staged=None, fresh=None, git=None):
     publisher.execute(
         profile, SOURCE, report,
         api=api, read_file=api.read_file, publish=publish, not_found=Missing,
-        operation_factory=Operation, fresh_main=fresh or fresh_calls.append, git=git,
+        operation_factory=Operation, allow_create_grant=profile.allow_create if grant is None else grant,
+        expected_parent=expected_parent,
+        fresh_main=fresh or fresh_calls.append, git=git,
     )
     return report, fresh_calls
 
@@ -222,7 +236,7 @@ def test_registry_is_closed_and_matches_the_alignment_verifier() -> None:
     alignment = load_module(
         "oac_verify_hub_alignment", ROOT / "clinical-gateway" / "tools" / "verify_hub_alignment.py"
     )
-    assert set(publisher.PROFILES) == {"oac-v1-model", "oac-v1-dataset"}
+    assert set(publisher.PROFILES) == {"oac-v1-model", "oac-v1-dataset", "oac-v2-model"}
     assert (MODEL.repo_id, MODEL.repo_type) == (alignment.MODEL_ID, "model")
     assert (DATASET.repo_id, DATASET.repo_type) == (alignment.DATASET_ID, "dataset")
     assert MODEL.files == alignment.MODEL_FILES
@@ -238,6 +252,16 @@ def test_registry_is_closed_and_matches_the_alignment_verifier() -> None:
     assert DATASET.lock_group == (
         "hf-write/dataset/SZLHOLDINGS/oac-clinical-transport-observability-synthetic"
     )
+    assert (V2_MODEL.repo_id, V2_MODEL.repo_type) == (
+        "SZLHOLDINGS/oac-ops-health-v2", "model"
+    )
+    assert V2_MODEL.staged_dir == "publishing/oac-ops-health-v2"
+    assert V2_MODEL.files == {
+        "LICENSE", "README.md", "artifact_receipt.json", "example_input.json",
+        "model.json", "ops_health.py",
+    }
+    assert not V2_MODEL.allow_create and V2_MODEL.replace_paths == {"README.md"}
+    assert V2_MODEL.lock_group == "hf-write/model/SZLHOLDINGS/oac-ops-health-v2"
     with pytest.raises(publisher.PublicationRefused, match="unknown OAC Hub profile"):
         publisher.resolve_profile("operator-chosen-target")
 
@@ -250,6 +274,7 @@ def test_registry_is_closed_and_matches_the_alignment_verifier() -> None:
         {"repo_type": "space"},
         {"files": MODEL.files | {".gitattributes"}},
         {"key": "renamed"},
+        {"allow_create": True},
     ],
 )
 def test_registry_check_refuses_inconsistent_profiles(change: dict) -> None:
@@ -265,7 +290,8 @@ def test_workflow_binds_one_locked_publish_job_per_profile() -> None:
     for profile in publisher.PROFILES.values():
         job = jobs[profile.job_id]
         assert job["concurrency"] == {"group": profile.lock_group, "cancel-in-progress": False}
-        assert " ".join(job["if"].split()) == PUBLISH_IF
+        expected_if = V2_PUBLISH_IF if profile is V2_MODEL else PUBLISH_IF
+        assert " ".join(job["if"].split()) == expected_if
         text = steps_text(job)
         assert f"--profile {profile.key}" in text
         assert f"--target-repo {profile.repo_id}" in text
@@ -315,9 +341,40 @@ def test_only_publish_jobs_see_credentials_or_publish() -> None:
         assert profile.key in text
     assert '--expect-delta-since "${BASE_REVISION}"' in text
     alignment = jobs["alignment"]
-    assert set(alignment["needs"]) == {p.job_id for p in publisher.PROFILES.values()}
+    assert set(alignment["needs"]) == {MODEL.job_id, DATASET.job_id}
     assert " ".join(alignment["if"].split()) == PUBLISH_IF
     assert "clinical-gateway/tools/verify_hub_alignment.py" in steps_text(alignment)
+    v2_alignment = jobs["alignment-v2"]
+    assert v2_alignment["needs"] == [V2_MODEL.job_id]
+    assert " ".join(v2_alignment["if"].split()) == V2_PUBLISH_IF
+    assert "--profile oac-v2-model" in steps_text(v2_alignment)
+    assert '--expect-parent "${MODEL_REVISION}"' in steps_text(v2_alignment)
+    assert 'report["state"] != "NO_CHANGE"' in steps_text(v2_alignment)
+
+
+def test_v2_staged_bytes_and_card_bind_the_protected_research_merge() -> None:
+    staged = ROOT / V2_MODEL.staged_dir
+    source = ROOT / "ops-health" / "v2" / "ops-health"
+    expected_hashes = {
+        "LICENSE": "145a78cf10c6cfd87e99b94dd7ede2839a9103ba2293e287ed5fdc1674f81ac6",
+        "ops_health.py": "b0a64ff3f26ea284b0588de351ed7795a6089203b35fded0e7d82cbd4871aed9",
+        "model.json": "b830a5edca271d667ab09b378dd5d3ab505d71a7e3451de8d9ca2bacfeed977c",
+        "artifact_receipt.json": "442486a3b451f0ad765aac253830cdc5455bad3a34186b4cf73388cf207056f2",
+        "example_input.json": "afa7c8e5081c682877ad489259592951f854ba2558d409fdcf071ba845d4fb63",
+    }
+    for name, expected in expected_hashes.items():
+        raw = (staged / name).read_bytes()
+        assert hashlib.sha256(raw).hexdigest() == expected
+        if name != "LICENSE":
+            assert raw == (source / name).read_bytes()
+    card = (staged / "README.md").read_text(encoding="utf-8")
+    assert "56a00821858825f529c40c7322c2f1584608d6e5" in card
+    assert "SYNTHETIC" in card.upper()
+    assert "unpublished" in card.lower()
+    assert "proposal-only" in card.lower()
+    assert "not a clinical" in card.lower()
+    assert "unsigned receipt" in card.lower()
+    assert "does not authenticate that origin" in card.lower()
 
 
 def test_every_publish_job_holds_its_canonical_lock() -> None:
@@ -479,8 +536,29 @@ def test_identical_hub_is_no_change_without_a_commit(publish: bool) -> None:
     assert report["state"] == "NO_CHANGE"
     assert report["delta"] == []
     assert report["parent_revision"] == PARENT
+    assert report["head_after"] == PARENT
+    assert api.names().count("repo_info") == 2
     assert fresh == ([SOURCE] if publish else [])
     assert "create_commit" not in api.names()
+
+
+@pytest.mark.parametrize("publish", [False, True])
+def test_no_change_refuses_a_hub_head_that_moves_during_snapshot(publish: bool) -> None:
+    api = FakeApi(DATASET, package(DATASET))
+    original = api.read_file
+    moved = False
+
+    def concurrent_writer(profile, path, revision):
+        nonlocal moved
+        raw = original(profile, path, revision)
+        if not moved:
+            api.head = "f" * 40
+            moved = True
+        return raw
+
+    api.read_file = concurrent_writer
+    refused(DATASET, api, "Hub head moved before NO_CHANGE confirmation", publish=publish)
+    assert api.names().count("repo_info") == 2
 
 
 @pytest.mark.parametrize("publish", [False, True])
@@ -491,18 +569,45 @@ def test_absent_target_without_create_permission_is_refused(publish: bool) -> No
 
 
 def test_dry_run_reports_create_for_a_create_profile_without_creating() -> None:
-    creator = dataclasses.replace(MODEL, allow_create=True, replace_paths=MODEL.files)
-    api = FakeApi(creator, None)
-    report, _ = run(creator, api, publish=False)
-    assert report["state"] == "CREATE"
+    api = FakeApi(CREATE_ONLY, None)
+    report, _ = run(CREATE_ONLY, api, publish=False)
+    assert report["state"] == "CREATE_CANDIDATE_UNVERIFIED"
+    assert report["target_observation"] == "UNRESOLVED_PRIVATE_OR_MISSING"
+    assert report["hub_before"] is None and report["parent_revision"] is None
     assert report["delta"] == sorted(MODEL.files)
     assert "create_repo" not in api.names()
 
 
+@pytest.mark.parametrize("hidden_existing", [False, True])
+def test_anonymous_not_found_is_unverified_even_for_a_hidden_existing_target(
+    hidden_existing: bool,
+) -> None:
+    staged = package(CREATE_V2)
+    api = FakeApi(CREATE_V2, staged if hidden_existing else None, hidden=hidden_existing)
+    git = FakeGit({BASE: {}, SOURCE: tree(CREATE_V2, staged)})
+    report, _ = run(CREATE_V2, api, publish=False, staged=staged, git=git)
+    publisher.assert_expected_delta(CREATE_V2, BASE, SOURCE, report, git=git)
+    assert report["state"] == "CREATE_CANDIDATE_UNVERIFIED"
+    assert report["expected_delta_since"] == {
+        "base_revision": BASE, "parent_revision": None,
+        "hub_equals_base": None, "hub_drift": None,
+        "delta": sorted(CREATE_V2.files), "verification": "UNAVAILABLE",
+    }
+    assert "create_repo" not in api.names() and "create_commit" not in api.names()
+
+
+def test_unresolved_target_cannot_verify_a_nonempty_base() -> None:
+    staged = package(CREATE_V2)
+    git = FakeGit({BASE: tree(CREATE_V2, staged), SOURCE: tree(CREATE_V2, staged)})
+    report, _ = run(CREATE_V2, FakeApi(CREATE_V2, None), publish=False, staged=staged, git=git)
+    with pytest.raises(publisher.PublicationRefused, match="base has staged files"):
+        publisher.assert_expected_delta(CREATE_V2, BASE, SOURCE, report, git=git)
+    assert report["expected_delta_since"]["hub_equals_base"] is None
+
+
 def test_publish_creates_only_in_the_not_found_branch_then_commits() -> None:
-    creator = dataclasses.replace(MODEL, allow_create=True, replace_paths=MODEL.files)
-    api = FakeApi(creator, None)
-    report, _ = run(creator, api, publish=True)
+    api = FakeApi(CREATE_ONLY, None)
+    report, _ = run(CREATE_ONLY, api, publish=True)
     assert ("create_repo", MODEL.repo_id, "model", False, False) in api.calls
     assert report["repository_created"] is True
     assert report["parent_revision"] == CREATED
@@ -513,21 +618,65 @@ def test_publish_creates_only_in_the_not_found_branch_then_commits() -> None:
 
 
 def test_concurrent_create_is_refused_by_exist_ok_false() -> None:
-    creator = dataclasses.replace(MODEL, allow_create=True, replace_paths=MODEL.files)
-    api = FakeApi(creator, None, create_error=RuntimeError("synthetic 409: repository exists"))
-    with pytest.raises(RuntimeError, match="409"):
-        run(creator, api, publish=True)
+    api = FakeApi(CREATE_ONLY, None, create_error=RuntimeError("synthetic 409: repository exists"))
+    with pytest.raises(publisher.PublicationRefused, match="atomically created"):
+        run(CREATE_ONLY, api, publish=True)
     assert api.names().count("create_repo") == 1
     assert "create_commit" not in api.names()
 
 
+def test_main_moving_before_create_prevents_the_external_effect() -> None:
+    api = FakeApi(CREATE_V2, None)
+    calls: list[str] = []
+
+    def stale_before_create(revision: str) -> None:
+        calls.append(revision)
+        if len(calls) == 2:
+            raise publisher.PublicationRefused("publication source no longer owns current main")
+
+    with pytest.raises(publisher.PublicationRefused, match="no longer owns"):
+        run(CREATE_V2, api, publish=True, fresh=stale_before_create)
+    assert calls == [SOURCE, SOURCE]
+    assert "create_repo" not in api.names() and "create_commit" not in api.names()
+
+
 def test_an_existing_empty_repository_is_adopted_not_recreated() -> None:
-    creator = dataclasses.replace(MODEL, allow_create=True, replace_paths=MODEL.files)
-    api = FakeApi(creator, {})
-    report, _ = run(creator, api, publish=True)
+    api = FakeApi(CREATE_ONLY, {})
+    report, _ = run(CREATE_ONLY, api, publish=True)
     assert "create_repo" not in api.names()
     assert report["repository_created"] is False
+    assert report["delta"] == sorted(CREATE_ONLY.files)
     assert report["state"] == "PUBLISHED"
+
+
+@pytest.mark.parametrize("publish", [False, True])
+def test_an_existing_exact_create_target_is_no_change(publish: bool) -> None:
+    api = FakeApi(CREATE_ONLY, package(CREATE_ONLY))
+    report, _ = run(CREATE_ONLY, api, publish=publish)
+    assert report["state"] == "NO_CHANGE" and report["delta"] == []
+    assert report["head_after"] == PARENT
+    assert "create_repo" not in api.names() and "create_commit" not in api.names()
+
+
+@pytest.mark.parametrize("publish", [False, True])
+def test_create_profile_refuses_a_partially_populated_target(publish: bool) -> None:
+    api = FakeApi(CREATE_ONLY, {"README.md": CARD})
+    refused(CREATE_ONLY, api, "partial staged package", publish=publish)
+    assert "create_repo" not in api.names()
+
+
+@pytest.mark.parametrize("publish", [False, True])
+def test_create_profile_refuses_changed_existing_bytes(publish: bool) -> None:
+    api = FakeApi(CREATE_ONLY, package(CREATE_ONLY, **{"model.json": b"synthetic drift\n"}))
+    refused(CREATE_ONLY, api, "differing staged bytes: model.json", publish=publish)
+    assert "create_repo" not in api.names()
+
+
+def test_create_profile_never_overwrites_even_if_replace_paths_is_broadened() -> None:
+    broad = dataclasses.replace(CREATE_ONLY, replace_paths=CREATE_ONLY.files)
+    api = FakeApi(broad, package(broad, **{"README.md": NEW_CARD}))
+    refused(broad, api, "differing staged bytes: README.md", publish=True)
+    assert "create_repo" not in api.names()
 
 
 def test_an_extra_hub_file_is_refused_because_nothing_is_deleted() -> None:
@@ -760,6 +909,36 @@ def fake_clients(monkeypatch, api, *, version="1.23.0"):
     return seen
 
 
+def test_hidden_target_create_collision_has_blocked_secret_free_receipt(
+    monkeypatch, tmp_path,
+) -> None:
+    class CreateDenied(RuntimeError):
+        def __init__(self) -> None:
+            super().__init__(f"synthetic provider rejection containing {TOKEN}")
+            self.response = SimpleNamespace(status_code=409)
+
+    head = real_head()
+    api = FakeApi(CREATE_V2, package(CREATE_V2), hidden=True, create_error=CreateDenied())
+    fake_clients(monkeypatch, api)
+    monkeypatch.setattr(publisher, "PROFILES", {CREATE_V2.key: CREATE_V2})
+    monkeypatch.setattr(publisher, "assert_current_main", lambda _: None)
+    output = tmp_path / "hidden-collision.json"
+    code = publisher.main([
+        "--profile", CREATE_V2.key, "--source-revision", head,
+        "--publish", "--allow-create", "--report", str(output),
+    ], environ=CI)
+    raw = output.read_text(encoding="utf-8")
+    report = json.loads(raw)
+    assert code == 1 and report["state"] == "BLOCKED"
+    assert report["target_observation"] == "UNRESOLVED_PRIVATE_OR_MISSING"
+    assert report["target_create_failure_type"] == "CreateDenied"
+    assert report["target_create_status_code"] == 409
+    assert report["repository_created"] is False and report["commit_attempted"] is False
+    assert api.names().count("create_repo") == 1
+    assert "create_commit" not in api.names()
+    assert TOKEN not in raw and report["secret_values_recorded"] is False
+
+
 def test_cli_dry_run_is_anonymous_and_records_the_real_staged_package(monkeypatch, tmp_path) -> None:
     head = real_head()
     api = FakeApi(MODEL, publisher.staged_package(MODEL, head))
@@ -873,12 +1052,81 @@ def test_cli_publish_success_never_records_the_credential(monkeypatch, tmp_path)
     assert fresh == [head, head]
 
 
-@pytest.mark.parametrize("flag", ["--expect-delta-since", "--expect-parent"])
-def test_cli_refuses_expectation_flags_when_publishing(flag, tmp_path) -> None:
+def test_cli_refuses_delta_since_when_publishing(tmp_path) -> None:
     output = tmp_path / "publish.json"
     code = publisher.main(["--profile", "oac-v1-model", "--source-revision", SOURCE, "--publish",
-                           flag, BASE, "--report", str(output)], environ=CI)
-    assert code == 1 and "dry-run assertions" in json.loads(output.read_text(encoding="utf-8"))["refusal"]
+                           "--expect-delta-since", BASE, "--report", str(output)], environ=CI)
+    assert code == 1 and "dry-run assertion" in json.loads(output.read_text(encoding="utf-8"))["refusal"]
+
+
+def test_pinned_v2_parent_refuses_wrong_head_before_any_write() -> None:
+    staged = package(V2_MODEL)
+    api = FakeApi(V2_MODEL, staged)
+    with pytest.raises(publisher.PublicationRefused, match="expected parent revision"):
+        run(V2_MODEL, api, publish=True, staged=staged, expected_parent=NEW)
+    assert "create_repo" not in api.names() and "create_commit" not in api.names()
+
+
+def test_pinned_v2_parent_refuses_missing_target_before_any_write() -> None:
+    api = FakeApi(V2_MODEL, None)
+    with pytest.raises(publisher.PublicationRefused, match="pinned Hub parent"):
+        run(V2_MODEL, api, publish=True, expected_parent=PARENT)
+    assert "create_repo" not in api.names() and "create_commit" not in api.names()
+
+
+def test_cli_publish_checks_pinned_parent_before_effect(monkeypatch, tmp_path) -> None:
+    head = real_head()
+    api = FakeApi(V2_MODEL, publisher.staged_package(V2_MODEL, head))
+    fake_clients(monkeypatch, api)
+    monkeypatch.setattr(publisher, "assert_current_main", lambda _: None)
+    output = tmp_path / "wrong-parent.json"
+    code = publisher.main([
+        "--profile", V2_MODEL.key, "--source-revision", head, "--publish",
+        "--expect-parent", NEW, "--report", str(output),
+    ], environ=CI)
+    report = json.loads(output.read_text(encoding="utf-8"))
+    assert code == 1 and report["state"] == "REFUSED"
+    assert report["expected_parent"] == {
+        "revision": NEW, "observed": PARENT, "matches": False,
+    }
+    assert "create_repo" not in api.names() and "create_commit" not in api.names()
+
+
+def test_pinned_v2_correction_changes_only_readme_and_uses_hub_cas() -> None:
+    staged = package(V2_MODEL, **{"README.md": NEW_CARD})
+    prior = {**staged, "README.md": CARD}
+    api = FakeApi(V2_MODEL, prior)
+    report, _ = run(V2_MODEL, api, publish=True, staged=staged, expected_parent=PARENT)
+    assert report["state"] == "PUBLISHED" and report["delta"] == ["README.md"]
+    assert report["expected_parent"]["matches"] is True
+    assert report["readback"] and all(x["matches"] for x in report["readback"].values())
+    assert api.commit_kwargs["parent_commit"] == PARENT
+    assert [op.path_in_repo for op in api.commit_kwargs["operations"]] == ["README.md"]
+    assert "create_repo" not in api.names()
+
+
+def test_pinned_v2_correction_refuses_artifact_drift() -> None:
+    staged = package(V2_MODEL, **{"README.md": NEW_CARD})
+    prior = {**staged, "README.md": CARD, "model.json": b"synthetic drift\n"}
+    api = FakeApi(V2_MODEL, prior)
+    with pytest.raises(publisher.PublicationRefused, match="outside replace_paths: model.json"):
+        run(V2_MODEL, api, publish=True, staged=staged, expected_parent=PARENT)
+    assert "create_commit" not in api.names()
+
+
+def test_pinned_v2_correction_refuses_a_parent_race() -> None:
+    staged = package(V2_MODEL, **{"README.md": NEW_CARD})
+    api = FakeApi(V2_MODEL, {**staged, "README.md": CARD})
+    original = api.read_file
+
+    def concurrent_writer(profile, path, revision):
+        api.head = "f" * 40
+        return original(profile, path, revision)
+
+    api.read_file = concurrent_writer
+    with pytest.raises(RuntimeError, match="412"):
+        run(V2_MODEL, api, publish=True, staged=staged, expected_parent=PARENT)
+    assert NEW not in api.revisions
 
 
 def test_cli_never_overwrites_an_existing_report(tmp_path) -> None:
@@ -894,3 +1142,63 @@ def test_cli_profile_choices_are_the_closed_registry() -> None:
     with pytest.raises(SystemExit):
         publisher.main(["--profile", "operator-chosen", "--source-revision", SOURCE,
                         "--report", "unused.json"], environ={})
+
+
+def test_create_enabled_publish_requires_an_explicit_grant_before_any_write() -> None:
+    for hub_files in (None, {}):
+        api = FakeApi(CREATE_ONLY, hub_files)
+        dry_report, _ = run(CREATE_ONLY, api, publish=False, grant=False)
+        assert dry_report["state"] == (
+            "CREATE_CANDIDATE_UNVERIFIED" if hub_files is None else "DELTA"
+        )
+        with pytest.raises(publisher.PublicationRefused, match="requires --allow-create"):
+            run(CREATE_ONLY, api, publish=True, grant=False)
+        assert "create_repo" not in api.names()
+        assert "create_commit" not in api.names()
+
+    exact = FakeApi(CREATE_ONLY, package(CREATE_ONLY))
+    unchanged, _ = run(CREATE_ONLY, exact, publish=True, grant=False)
+    assert unchanged["state"] == "NO_CHANGE"
+    assert "create_repo" not in exact.names()
+    assert "create_commit" not in exact.names()
+
+
+@pytest.mark.parametrize("initial_files", [None, {}])
+def test_cli_allow_create_is_scoped_to_create_enabled_publication(
+    monkeypatch, tmp_path, initial_files
+) -> None:
+    for suffix, flags, expected in (
+        ("v1", ["--publish", "--allow-create"], "create-enabled publish profile"),
+        ("dry-run", ["--allow-create"], "create-enabled publish profile"),
+    ):
+        output = tmp_path / f"{suffix}.json"
+        code = publisher.main(["--profile", "oac-v1-model", "--source-revision", SOURCE,
+                               *flags, "--report", str(output)], environ=CI)
+        report = json.loads(output.read_text(encoding="utf-8"))
+        assert code == 1 and report["state"] == "REFUSED"
+        assert expected in report["refusal"]
+
+    monkeypatch.setattr(publisher, "PROFILES", {CREATE_ONLY.key: CREATE_ONLY})
+    head = real_head()
+    api = FakeApi(CREATE_ONLY, initial_files)
+    fake_clients(monkeypatch, api)
+    observed_main: list[str] = []
+    monkeypatch.setattr(publisher, "assert_current_main", observed_main.append)
+    no_grant = tmp_path / "no-grant.json"
+    code = publisher.main(["--profile", CREATE_ONLY.key, "--source-revision", head,
+                           "--publish", "--report", str(no_grant)], environ=CI)
+    report = json.loads(no_grant.read_text(encoding="utf-8"))
+    assert code == 1 and report["state"] == "REFUSED"
+    assert "requires --allow-create" in report["refusal"]
+    assert "create_repo" not in api.names()
+    assert "create_commit" not in api.names()
+
+    with_grant = tmp_path / "with-grant.json"
+    code = publisher.main(["--profile", CREATE_ONLY.key, "--source-revision", head,
+                           "--publish", "--allow-create", "--report", str(with_grant)],
+                          environ=CI)
+    report = json.loads(with_grant.read_text(encoding="utf-8"))
+    assert code == 0 and report["state"] == "PUBLISHED"
+    assert ("create_repo" in api.names()) is (initial_files is None)
+    assert "create_commit" in api.names()
+    assert observed_main == ([head] * (4 if initial_files is None else 3))

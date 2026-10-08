@@ -1,0 +1,121 @@
+{
+  "all_checks_pass": true,
+  "comparison": {
+    "expected_metadata_differences": [
+      "generated_utc",
+      "inputs.analysis_script.git_head",
+      "inputs.analysis_script.sha256"
+    ],
+    "leaves_committed": 5018,
+    "leaves_rechecked": 5018,
+    "max_abs_numeric_diff": 0.0,
+    "numeric_fields_compared": 3884,
+    "numeric_fields_identical": 3884,
+    "timing_fields_excluded": 7,
+    "unexpected_differences": [],
+    "verdict_committed": "WIN",
+    "verdict_rechecked": "WIN"
+  },
+  "imports": {
+    "changed_in_commits": [],
+    "changed_in_worktree": [],
+    "files": [
+      "v2/research/bootstrap.py",
+      "v2/research/metrics.py",
+      "v2/research/registry.py",
+      "v2/research/truth.py"
+    ],
+    "since": "30d50b5",
+    "unchanged": true
+  },
+  "inputs": {
+    "analysis_script_sha256": "afe518d439309816c8ec2d2eb76850d369d5d7e3a06a9a5c19e9d59bc0d5c130",
+    "committed_evaluation_sha256": "36b494bd043ae0973f4cfce98be2218e33c72c74fc840a790d32b3236688bebe",
+    "git_head": "d677d347e0664e17eb6b59c90ad3714190449e30",
+    "log": "logs/v2/final_reanalyze_check.txt",
+    "python": "3.12.10",
+    "rechecked_evaluation_path": "scratch/v2_final_recheck/final_evaluation.json (git-ignored)",
+    "rechecked_evaluation_sha256": "2765aa14d36869a76b992b64da9e615892d9b3987ab4d07f584bc51e2918bcd8",
+    "score_manifest_sha256": "a8dd49bfb74b44aa8d038d0f583c1eb65d36cf1577ee1d8bf3215340f5131299",
+    "script": "logs/v2/final_reanalyze_check.py",
+    "script_sha256": "34c0d5bd4f084ec7cfe3b7a1d93983af4d8d052c4cfeaa663173c22431e3f6a3"
+  },
+  "note": "written after the single opening; a full re-run of the registered analysis from the saved score files, compared field by field with the committed final_evaluation.json; it opens no data split",
+  "post_hoc": true,
+  "schema": "szl-oac/ops-health-final-recheck/v2",
+  "seconds": 806.9,
+  "static": {
+    "added": [
+      "DISAGG_FEATURES",
+      "POST_OPENING_CHANGES",
+      "RECHECK_JSON",
+      "ROBUSTNESS_JSON",
+      "_ordered",
+      "corrections_lines",
+      "deciding_comparison",
+      "load_recheck",
+      "load_robustness",
+      "not_distinguishable",
+      "render_only",
+      "reporting_order",
+      "robustness_lines"
+    ],
+    "analysis_path_identical": true,
+    "analysis_time_script": {
+      "commit": "cbac497",
+      "crlf": true,
+      "sha256": "a53252460d8210ca5bf9227868e27298e6300627231d01d7108e0a0a9d26bedf"
+    },
+    "changed": [
+      "main",
+      "render_md",
+      "write_outputs"
+    ],
+    "current_script": {
+      "crlf": false,
+      "sha256": "afe518d439309816c8ec2d2eb76850d369d5d7e3a06a9a5c19e9d59bc0d5c130"
+    },
+    "identical": [
+      "AnalysisError",
+      "BASELINES_W",
+      "CONTENDERS",
+      "DIFF_BA_AGAINST",
+      "EVAL_SCHEMA",
+      "LEGACY",
+      "LEVEL",
+      "MANIFEST_NAME",
+      "MODEL_FILES",
+      "OUT_JSON",
+      "OUT_MD",
+      "OUT_SVG",
+      "PARTS_DIR",
+      "POOLED",
+      "RESAMPLES",
+      "SCORED",
+      "SCORE_DIR",
+      "SCRIPT_REL",
+      "SEED",
+      "TEST",
+      "_ci",
+      "_f",
+      "_git_head",
+      "_json_bytes",
+      "_utc",
+      "_validity",
+      "ablations",
+      "analyze",
+      "analyze_set",
+      "disaggregate_test",
+      "evaluation_sets",
+      "interval_rule",
+      "load_scores",
+      "render_svg",
+      "sha256_bytes",
+      "truth_recovery",
+      "validity_summary",
+      "win_conditions"
+    ],
+    "removed": []
+  },
+  "synthetic": true
+}

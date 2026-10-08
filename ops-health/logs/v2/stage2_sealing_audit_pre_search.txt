@@ -1,0 +1,25 @@
+# stage-2 sealing audit of the test suite, clean tree at 5ff18027bf78e7afe7cedec5477bd9b976806a7b, 2026-09-29T15:11:34Z
+# cmd: PYTHONUTF8=1 py -3.12 -B logs/v2/review/sealing_audit.py
+----------------------------------------------------------------------
+Ran 147 tests in 71.587s
+
+OK
+# sealing audit (lens c): opens under v2/data during the in-process v2 test suite
+python 3.12.10; tests run 147, failures 0, errors 0
+  v2/data/MANIFEST.json | mode r | research/freeze.py:build_receipt | x82
+  v2/data/MANIFEST.json | mode r | tests/_support.py:sha256_file | x1
+  v2/data/MANIFEST.json | mode r | tests/test_review_hardening.py:test_origin_is_verified_against_committed_blobs | x1
+  v2/data/MANIFEST.json | mode r | tests/test_search.py:test_amendments_digest_is_verified | x1
+  v2/data/legacy_v1/SOURCE.json | mode r | tests/test_generator_parity.py:setUpClass | x1
+  v2/data/legacy_v1/test.jsonl | mode r | tests/test_generator_parity.py:test_v1_parity_byte_for_byte | x1
+  v2/data/legacy_v1/train.jsonl | mode r | research/dataio.py:load_rows | x2
+  v2/data/legacy_v1/train.jsonl | mode r | research/v1_gd.py:legacy_train_xy | x2
+  v2/data/legacy_v1/train.jsonl | mode r | tests/test_generator_parity.py:test_nominal_draws_match_v1_draw_order | x1
+  v2/data/legacy_v1/train.jsonl | mode r | tests/test_generator_parity.py:test_v1_parity_byte_for_byte | x1
+  v2/data/legacy_v1/validation.jsonl | mode r | research/dataio.py:load_rows | x1
+  v2/data/legacy_v1/validation.jsonl | mode r | tests/test_generator_parity.py:test_v1_parity_byte_for_byte | x1
+opens under v2/data/sealed/: 0 []
+opens of the registered validation split: 0 []
+note: subprocesses spawned by tests (CLI / determinism) are not covered by this hook
+VERDICT: PASS
+exit=0

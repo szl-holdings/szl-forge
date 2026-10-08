@@ -1,0 +1,64 @@
+[2026-09-29T17:22:25] start: pin 929677d, module v2.tests.test_mutation_suite, variants ['control', 'A-scale0.5-tls_enabled', 'A-scale0.5-queue_utilization', 'A-scale0.5-consecutive_failures', 'A-scale0.5-seconds_since_last_success', 'A-scale1.5-tls_enabled', 'A-scale1.5-queue_utilization', 'A-scale1.5-consecutive_failures', 'A-scale1.5-seconds_since_last_success', 'A-threshold+0.1', 'A-threshold-0.1', 'R-source-commit-other']; TEST_OPENED.json exists before: True
+[2026-09-29T17:23:50] control (attempt 1): ran 14 in 83.3s; OK; failing []; host_problem False
+[2026-09-29T17:25:18] A-scale0.5-tls_enabled (attempt 1): ran 14 in 84.1s; OK; failing []; host_problem False
+[2026-09-29T17:26:42] A-scale0.5-queue_utilization (attempt 1): ran 14 in 81.8s; OK; failing []; host_problem False
+[2026-09-29T17:28:21] A-scale0.5-consecutive_failures (attempt 1): ran 14 in 95.6s; OK; failing []; host_problem False
+[2026-09-29T17:29:50] A-scale0.5-seconds_since_last_success (attempt 1): ran 14 in 83.7s; OK; failing []; host_problem False
+[2026-09-29T17:31:26] A-scale1.5-tls_enabled (attempt 1): ran 14 in 94.5s; OK; failing []; host_problem False
+[2026-09-29T17:31:26] disk free 948621312 bytes < 1 GiB; waiting 60 s
+[2026-09-29T17:32:26] disk free 0 bytes < 1 GiB; waiting 60 s
+[2026-09-29T17:33:26] disk free 95150080 bytes < 1 GiB; waiting 60 s
+[2026-09-29T17:34:26] disk free 456523776 bytes < 1 GiB; waiting 60 s
+[2026-09-29T17:35:26] disk free 452550656 bytes < 1 GiB; waiting 60 s
+[2026-09-29T17:36:26] disk free 560115712 bytes < 1 GiB; waiting 60 s
+[2026-09-29T17:37:26] disk free 460034048 bytes < 1 GiB; waiting 60 s
+[2026-09-29T17:38:26] disk free 400515072 bytes < 1 GiB; waiting 60 s
+[2026-09-29T17:39:26] disk free 304697344 bytes < 1 GiB; waiting 60 s
+[2026-09-29T17:40:26] disk free 266608640 bytes < 1 GiB; waiting 60 s
+[2026-09-29T17:44:24] start: pin 929677d, module v2.tests.test_mutation_suite, variants ['control', 'A-scale0.5-tls_enabled', 'A-scale0.5-queue_utilization', 'A-scale0.5-consecutive_failures', 'A-scale0.5-seconds_since_last_success', 'A-scale1.5-tls_enabled', 'A-scale1.5-queue_utilization', 'A-scale1.5-consecutive_failures', 'A-scale1.5-seconds_since_last_success', 'A-threshold+0.1', 'A-threshold-0.1', 'R-source-commit-other']; TEST_OPENED.json exists before: True
+[2026-09-29T17:44:24] control: complete in a previous invocation, kept
+[2026-09-29T17:44:24] A-scale0.5-tls_enabled: complete in a previous invocation, kept
+[2026-09-29T17:44:24] A-scale0.5-queue_utilization: complete in a previous invocation, kept
+[2026-09-29T17:44:24] A-scale0.5-consecutive_failures: complete in a previous invocation, kept
+[2026-09-29T17:44:24] A-scale0.5-seconds_since_last_success: complete in a previous invocation, kept
+[2026-09-29T17:44:24] A-scale1.5-tls_enabled: complete in a previous invocation, kept
+[2026-09-29T17:44:24] disk free 249810944 bytes < 268435456 bytes; waiting 60 s
+[2026-09-29T17:45:24] disk free 237031424 bytes < 268435456 bytes; waiting 60 s
+[2026-09-29T17:46:24] disk free 217227264 bytes < 268435456 bytes; waiting 60 s
+[2026-09-29T17:48:53] A-scale1.5-queue_utilization (attempt 1): ran 14 in 84.8s; OK; failing []; host_problem False
+[2026-09-29T17:50:43] A-scale1.5-consecutive_failures (attempt 1): ran 14 in 105.8s; OK; failing []; host_problem False
+[2026-09-29T17:52:58] A-scale1.5-seconds_since_last_success (attempt 1): ran 14 in 130.2s; OK; failing []; host_problem False
+[2026-09-29T17:55:53] A-threshold+0.1 (attempt 1): ran 14 in 168.3s; OK; failing []; host_problem False
+[2026-09-29T17:55:53] disk free 235429888 bytes < 268435456 bytes; waiting 60 s
+[2026-09-29T17:56:53] disk free 193409024 bytes < 268435456 bytes; waiting 60 s
+[2026-09-29T17:57:53] disk free 182947840 bytes < 268435456 bytes; waiting 60 s
+[2026-09-29T17:58:53] disk free 156135424 bytes < 268435456 bytes; waiting 60 s
+[2026-09-29T17:59:54] disk free 69193728 bytes < 268435456 bytes; waiting 60 s
+[2026-09-29T18:00:54] disk free 0 bytes < 268435456 bytes; waiting 60 s
+[2026-09-29T18:01:54] disk free 0 bytes < 268435456 bytes; waiting 60 s
+[2026-09-29T18:10:53] start: pin 929677d, module v2.tests.test_mutation_suite, variants ['control', 'A-scale0.5-tls_enabled', 'A-scale0.5-queue_utilization', 'A-scale0.5-consecutive_failures', 'A-scale0.5-seconds_since_last_success', 'A-scale1.5-tls_enabled', 'A-scale1.5-queue_utilization', 'A-scale1.5-consecutive_failures', 'A-scale1.5-seconds_since_last_success', 'A-threshold+0.1', 'A-threshold-0.1', 'R-source-commit-other']; TEST_OPENED.json exists before: True
+[2026-09-29T18:10:53] control: complete in a previous invocation, kept
+[2026-09-29T18:10:53] A-scale0.5-tls_enabled: complete in a previous invocation, kept
+[2026-09-29T18:10:53] A-scale0.5-queue_utilization: complete in a previous invocation, kept
+[2026-09-29T18:10:53] A-scale0.5-consecutive_failures: complete in a previous invocation, kept
+[2026-09-29T18:10:53] A-scale0.5-seconds_since_last_success: complete in a previous invocation, kept
+[2026-09-29T18:10:53] A-scale1.5-tls_enabled: complete in a previous invocation, kept
+[2026-09-29T18:10:53] A-scale1.5-queue_utilization: complete in a previous invocation, kept
+[2026-09-29T18:10:53] A-scale1.5-consecutive_failures: complete in a previous invocation, kept
+[2026-09-29T18:10:53] A-scale1.5-seconds_since_last_success: complete in a previous invocation, kept
+[2026-09-29T18:10:53] A-threshold+0.1: complete in a previous invocation, kept
+[2026-09-29T21:17:36] start: pin 929677d, module v2.tests.test_mutation_suite, variants ['control', 'A-scale0.5-tls_enabled', 'A-scale0.5-queue_utilization', 'A-scale0.5-consecutive_failures', 'A-scale0.5-seconds_since_last_success', 'A-scale1.5-tls_enabled', 'A-scale1.5-queue_utilization', 'A-scale1.5-consecutive_failures', 'A-scale1.5-seconds_since_last_success', 'A-threshold+0.1', 'A-threshold-0.1', 'R-source-commit-other']; TEST_OPENED.json exists before: True
+[2026-09-29T21:17:36] control: complete in a previous invocation, kept
+[2026-09-29T21:17:36] A-scale0.5-tls_enabled: complete in a previous invocation, kept
+[2026-09-29T21:17:36] A-scale0.5-queue_utilization: complete in a previous invocation, kept
+[2026-09-29T21:17:36] A-scale0.5-consecutive_failures: complete in a previous invocation, kept
+[2026-09-29T21:17:36] A-scale0.5-seconds_since_last_success: complete in a previous invocation, kept
+[2026-09-29T21:17:36] A-scale1.5-tls_enabled: complete in a previous invocation, kept
+[2026-09-29T21:17:36] A-scale1.5-queue_utilization: complete in a previous invocation, kept
+[2026-09-29T21:17:36] A-scale1.5-consecutive_failures: complete in a previous invocation, kept
+[2026-09-29T21:17:36] A-scale1.5-seconds_since_last_success: complete in a previous invocation, kept
+[2026-09-29T21:17:36] A-threshold+0.1: complete in a previous invocation, kept
+[2026-09-29T21:17:47] A-threshold-0.1 (attempt 1): ran 14 in 10.9s; FAILED (errors=2); failing ['v2.tests.test_mutation_suite.CatalogueTest.test_artifact_catalogue_on_frozen_v2', 'v2.tests.test_mutation_suite.IntegrityLayerTest.test_artifact_mutant_pass1_refused_pass2_loads']; host_problem False
+[2026-09-29T21:17:55] R-source-commit-other (attempt 1): ran 14 in 7.1s; OK; failing []; host_problem False
+[2026-09-29T21:17:55] control ok: True; in-place suite fails for ['A-threshold-0.1']; passes for 10 of 11; TEST_OPENED.json exists after: True
+[2026-09-29T21:17:55] DONE

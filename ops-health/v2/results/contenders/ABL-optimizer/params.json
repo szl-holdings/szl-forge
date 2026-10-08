@@ -1,0 +1,90 @@
+{
+  "algorithm": "batch_gradient_descent_logistic_regression (v2.research.v1_gd.train_v1_gd, v1 operation order)",
+  "calibrator": "none",
+  "conformal": "none",
+  "decision_threshold": 0.17,
+  "description": "v1's exact training algorithm (PREREGISTRATION section 9) retrained on the full registered v2 train split",
+  "epochs": 2400,
+  "feature_order": [
+    "listener_running",
+    "tls_enabled",
+    "peer_allowlist_configured",
+    "queue_utilization",
+    "consecutive_failures",
+    "seconds_since_last_success",
+    "ledger_integrity_ok",
+    "configuration_valid"
+  ],
+  "initialization": "zeros",
+  "intercept": 2.36608014915,
+  "l2_penalty": 0.01,
+  "learning_rate": 0.42,
+  "name": "ABL-optimizer",
+  "parameters_rounding": "12 decimals, as v1 publishes its model.json",
+  "schema": "szl-oac/ops-health-contender-params/v2",
+  "scoring": "score = sigmoid(intercept + w . x) with v1 normalization, accumulated in kernel order (intercept, then each w_j * x_j in feature_order); ALERT iff score >= decision_threshold",
+  "search_trace_sha256": "cc6d6809a5ae76083e42e97bb2eeca9024512fe1120da98dfa97a3f3c7d47eee",
+  "source": {
+    "commit": "bd47a2acc48be99c56e360a12deb897aa5988d84",
+    "python": "3.12.10",
+    "tree_clean": true,
+    "v1_gd_sha256": "c55da512aa9045df1083266711352ded6718d3e7c7d63fdea78ec6c7ebf72db7"
+  },
+  "splits": {
+    "threshold": {
+      "name": "validation",
+      "purpose": "ABLATION",
+      "rows": 4096,
+      "sha256": "d0a37356784dcd60a4dbea68d760c55d56a7bd69b3a6f4dc833cfdbb38a951f3"
+    },
+    "train": {
+      "name": "train",
+      "purpose": "ABLATION",
+      "rows": 16384,
+      "sha256": "5211e7ec954ec00c743bd62dae107f7a80335e4e5962a31b788e7bf56ecf0adb"
+    }
+  },
+  "synthetic": true,
+  "threshold_rule": "v1 choose_threshold: t = k/100, k = 5..95; maximize (round(BA,12), round(F1,12), -|t-0.5|); equal ranks keep the lower t; scores from the unrounded parameters in v1 trainer order",
+  "threshold_rule_rank": {
+    "balanced_accuracy": 0.759264823718,
+    "f1": 0.547905633125
+  },
+  "threshold_same_with_rounded_parameters": true,
+  "truth_label": "validation metrics MEASURED; SYNTHETIC",
+  "validation": {
+    "balanced_accuracy": 0.7592648237179487,
+    "balanced_accuracy_exact": [
+      15161,
+      19968
+    ],
+    "brier": 0.12288293700595888,
+    "confusion": {
+      "fn": 199,
+      "fp": 740,
+      "tn": 2588,
+      "tp": 569
+    },
+    "ece": 0.08989786269826074,
+    "f1": 0.5479056331246991,
+    "log_loss": 0.39987996777213686,
+    "negatives": 3328,
+    "positives": 768,
+    "precision": 0.4346829640947288,
+    "recall": 0.7408854166666666,
+    "roc_auc": 0.8318465795272436,
+    "rows": 4096,
+    "specificity": 0.7776442307692307,
+    "threshold": 0.17
+  },
+  "weights": {
+    "configuration_valid": -1.297936779734,
+    "consecutive_failures": 0.443632542628,
+    "ledger_integrity_ok": -0.796260425097,
+    "listener_running": -1.365169263383,
+    "peer_allowlist_configured": -0.507243280497,
+    "queue_utilization": 0.842131891021,
+    "seconds_since_last_success": 0.004986993159,
+    "tls_enabled": -0.416853029561
+  }
+}

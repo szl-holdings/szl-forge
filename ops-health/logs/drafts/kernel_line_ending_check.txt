@@ -1,0 +1,16 @@
+# drafts: does the v2 kernel refuse to load when line endings are converted? (copies in a scratch dir; frozen files untouched)
+# 2026-10-06T09:34:55Z git HEAD 6102fedd71aa7795ee4d831a02402ad7730bb137
+# frozen files in v2/ops-health/: CRLF count via python bytes.count(b'\r\n'):
+#   ops_health.py: crlf=0 lf=836 sha256=b0a64ff3f26ea284b0588de351ed7795a6089203b35fded0e7d82cbd4871aed9
+#   model.json: crlf=0 lf=133 sha256=b830a5edca271d667ab09b378dd5d3ab505d71a7e3451de8d9ca2bacfeed977c
+#   artifact_receipt.json: crlf=0 lf=29 sha256=442486a3b451f0ad765aac253830cdc5455bad3a34186b4cf73388cf207056f2
+#   example_input.json: crlf=0 lf=12 sha256=afa7c8e5081c682877ad489259592951f854ba2558d409fdcf071ba845d4fb63
+$ [lf] py -3.12 -I -B ops_health.py --model model.json --receipt artifact_receipt.json --input example_input.json
+{"abstain_reason":null,"advisory":"NO_ALERT","authority":{"acknowledgement":false,"clinical_decision":false,"device_control":false,"result_interpretation":false,"result_release":false},"coverage_statement":"Mondrian split-conformal set at alpha=0.1: per-class coverage of at least 0.9 holds only for 
+exit=0
+$ [crlf_kernel] py -3.12 -I -B ops_health.py --model model.json --receipt artifact_receipt.json --input example_input.json
+{"error": "kernel sha256 does not match receipt", "ok": false}
+exit=2
+$ [crlf_model] py -3.12 -I -B ops_health.py --model model.json --receipt artifact_receipt.json --input example_input.json
+{"error": "model artifact hash does not match receipt", "ok": false}
+exit=2
