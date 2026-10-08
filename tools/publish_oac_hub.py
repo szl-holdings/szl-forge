@@ -4,7 +4,8 @@
 
 A closed profile registry binds each Hub repository to one staged szl-forge
 directory, its exact file set and an explicit replace list (HF upgrade plan D1
-and P9: one committed writer per asset, no latent create path). Without
+and P9: one committed writer per asset). A create-enabled profile may only add
+its complete package to an empty target or accept a byte-identical target. Without
 ``--publish`` the run is a dry-run that reads the Hub anonymously and writes
 nothing. With ``--publish`` the run must own current protected ``main``; it
 makes at most one ``create_commit`` whose ``parent_commit`` is the Hub head it
@@ -117,6 +118,7 @@ def _check_registry(profiles: Mapping[str, HubProfile]) -> None:
             or not profile.files
             or not profile.replace_paths <= profile.files
             or profile.files & HUB_METADATA
+            or (profile.allow_create and profile.replace_paths)
         ):
             raise PublicationRefused(f"closed profile registry is inconsistent: {key}")
 
@@ -434,7 +436,22 @@ def plan_delta(
     staged: Mapping[str, bytes],
     hub_files: Mapping[str, bytes],
 ) -> list[str]:
-    """Paths to write; a staged file missing on the Hub is a delta path."""
+    """Plan an exact delta, never overwriting a create-enabled target."""
+    if profile.allow_create:
+        # The creation grant is one-time admission for a new closed package,
+        # not permission to repair or overwrite a target someone already wrote.
+        # hub_snapshot has already rejected unexpected paths and read every
+        # present staged path at the inspected parent revision.
+        if not hub_files:
+            return sorted(staged)
+        if set(hub_files) != set(staged):
+            raise PublicationRefused("create-enabled target has a partial staged package")
+        mismatched = sorted(path for path in staged if hub_files[path] != staged[path])
+        if mismatched:
+            raise PublicationRefused(
+                "create-enabled target has differing staged bytes: " + ", ".join(mismatched)
+            )
+        return []
     delta = sorted(path for path in staged if hub_files.get(path) != staged[path])
     outside = [path for path in delta if path not in profile.replace_paths]
     if outside:
@@ -518,11 +535,14 @@ def execute(
     publish: bool,
     not_found: type[BaseException],
     operation_factory: Callable[..., Any],
+    allow_create_grant: bool = False,
     fresh_main: Callable[[str], None] | None = None,
     git: Callable[[list[str]], bytes] | None = None,
 ) -> dict[str, Any]:
     """Run one profile; ``report`` keeps partial evidence when a step refuses."""
     require_sha(source_revision, "source revision")
+    if allow_create_grant and not profile.allow_create:
+        raise PublicationRefused("--allow-create is outside this profile's authority")
     fresh_main = fresh_main or assert_current_main
     git = git or _git
     if publish:
@@ -543,6 +563,8 @@ def execute(
             report["artifacts_unchanged"] = False
             report["state"] = "CREATE"
             return report
+        if not allow_create_grant:
+            raise PublicationRefused("create-enabled publication requires --allow-create")
         # exist_ok=False refuses a concurrent creator rather than adopting it.
         api.create_repo(
             profile.repo_id, repo_type=profile.repo_type, private=False, exist_ok=False
@@ -562,11 +584,24 @@ def execute(
     report["delta"] = delta
     report["artifacts_unchanged"] = set(delta) <= CARD_PATHS
     if not delta:
+        # The byte reads above were pinned to parent. A concurrent Hub writer
+        # can move main while those reads run, so confirm the mutable head
+        # still names that exact snapshot before reporting NO_CHANGE.
+        unchanged_info = lookup_target(api, profile, not_found=not_found)
+        if unchanged_info is None:
+            raise PublicationRefused("target repository disappeared before NO_CHANGE confirmation")
+        head = check_identity(unchanged_info, profile)
+        report["head_after"] = head
+        if head != parent:
+            raise PublicationRefused("Hub head moved before NO_CHANGE confirmation")
         report["state"] = "NO_CHANGE"
         return report
     if not publish:
         report["state"] = "DELTA"
         return report
+
+    if profile.allow_create and not allow_create_grant:
+        raise PublicationRefused("create-enabled publication requires --allow-create")
 
     fresh_main(source_revision)
     operations = [
@@ -670,6 +705,10 @@ def main(argv: list[str] | None = None, *, environ: Mapping[str, str] | None = N
     parser.add_argument("--report", required=True, type=Path)
     parser.add_argument("--publish", action="store_true")
     parser.add_argument(
+        "--allow-create", action="store_true",
+        help="explicitly authorize additions for a create-enabled profile when publishing",
+    )
+    parser.add_argument(
         "--expect-delta-since",
         metavar="BASE_SHA",
         help=(
@@ -699,6 +738,8 @@ def main(argv: list[str] | None = None, *, environ: Mapping[str, str] | None = N
     exit_code = 1
     try:
         require_sha(source_revision, "source revision")
+        if args.allow_create and (not args.publish or not profile.allow_create):
+            raise PublicationRefused("--allow-create requires a create-enabled publish profile")
         if args.publish:
             if args.expect_delta_since or args.expect_parent:
                 raise PublicationRefused(
@@ -727,6 +768,7 @@ def main(argv: list[str] | None = None, *, environ: Mapping[str, str] | None = N
                 publish=args.publish,
                 not_found=clients["not_found"],
                 operation_factory=clients["operation_factory"],
+                allow_create_grant=args.allow_create,
             )
         if args.expect_parent:
             assert_expected_parent(args.expect_parent.strip(), report)
