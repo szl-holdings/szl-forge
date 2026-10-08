@@ -39,7 +39,7 @@ jobs:
       - name: Install verification-only dependencies
         run: >-
           python -m pip install --disable-pip-version-check
-          "cryptography==49.0.0"
+          "cryptography==50.0.0"
           "fastapi==0.139.0"
           "httpx==0.28.1"
           "huggingface-hub==1.23.0" "requests==2.33.0"
@@ -332,7 +332,7 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
           python -m pip install --disable-pip-version-check `
-            "cryptography==49.0.0" `
+            "cryptography==50.0.0" `
             "huggingface-hub==1.23.0" `
             "jsonschema==4.26.0"
           if ($LASTEXITCODE -ne 0) {
