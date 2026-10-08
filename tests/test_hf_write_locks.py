@@ -29,6 +29,7 @@ LOCKED_WRITERS = {
     ("publish-model-inference-lab.yml", "deploy"): "hf-write/space/SZLHOLDINGS/szl-model-inference-lab",
     ("publish-model-inference-lab.yml", "publish-bindings"): ORG_LOCK,
     ("publish-chaski-card.yml", "publish"): "hf-write/model/${{ matrix.repo_id }}",
+    ("publish-oac-hub.yml", "publish-oac-v2-model"): "hf-write/model/SZLHOLDINGS/oac-ops-health-v2",
 }
 
 

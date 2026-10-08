@@ -29,6 +29,7 @@ CREATED = "e" * 40
 MAIN = "refs/heads/main"
 MODEL = publisher.PROFILES["oac-v1-model"]
 DATASET = publisher.PROFILES["oac-v1-dataset"]
+V2_MODEL = publisher.PROFILES["oac-v2-model"]
 CREATE_ONLY = dataclasses.replace(MODEL, allow_create=True, replace_paths=frozenset())
 CARD = b"---\nlicense: apache-2.0\n---\n\n# Synthetic card\n"
 NEW_CARD = b"---\nlicense: apache-2.0\n---\n\n# Synthetic card, revised\n"
@@ -36,9 +37,14 @@ PUBLISH_IF = (
     "github.ref == 'refs/heads/main' && "
     "(github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))"
 )
+V2_PUBLISH_IF = (
+    "github.ref == 'refs/heads/main' && "
+    "github.event_name == 'workflow_dispatch' && inputs.publish"
+)
 WATCHED_PATHS = [
     "clinical-gateway/huggingface/**",
     "ops-health/huggingface/**",
+    "publishing/oac-ops-health-v2/**",
     "tools/publish_oac_hub.py",
     "tests/test_publish_oac_hub.py",
     "tools/acquire_hf_publisher_token.py",
@@ -224,7 +230,7 @@ def test_registry_is_closed_and_matches_the_alignment_verifier() -> None:
     alignment = load_module(
         "oac_verify_hub_alignment", ROOT / "clinical-gateway" / "tools" / "verify_hub_alignment.py"
     )
-    assert set(publisher.PROFILES) == {"oac-v1-model", "oac-v1-dataset"}
+    assert set(publisher.PROFILES) == {"oac-v1-model", "oac-v1-dataset", "oac-v2-model"}
     assert (MODEL.repo_id, MODEL.repo_type) == (alignment.MODEL_ID, "model")
     assert (DATASET.repo_id, DATASET.repo_type) == (alignment.DATASET_ID, "dataset")
     assert MODEL.files == alignment.MODEL_FILES
@@ -240,6 +246,16 @@ def test_registry_is_closed_and_matches_the_alignment_verifier() -> None:
     assert DATASET.lock_group == (
         "hf-write/dataset/SZLHOLDINGS/oac-clinical-transport-observability-synthetic"
     )
+    assert (V2_MODEL.repo_id, V2_MODEL.repo_type) == (
+        "SZLHOLDINGS/oac-ops-health-v2", "model"
+    )
+    assert V2_MODEL.staged_dir == "publishing/oac-ops-health-v2"
+    assert V2_MODEL.files == {
+        "LICENSE", "README.md", "artifact_receipt.json", "example_input.json",
+        "model.json", "ops_health.py",
+    }
+    assert V2_MODEL.allow_create and not V2_MODEL.replace_paths
+    assert V2_MODEL.lock_group == "hf-write/model/SZLHOLDINGS/oac-ops-health-v2"
     with pytest.raises(publisher.PublicationRefused, match="unknown OAC Hub profile"):
         publisher.resolve_profile("operator-chosen-target")
 
@@ -268,7 +284,8 @@ def test_workflow_binds_one_locked_publish_job_per_profile() -> None:
     for profile in publisher.PROFILES.values():
         job = jobs[profile.job_id]
         assert job["concurrency"] == {"group": profile.lock_group, "cancel-in-progress": False}
-        assert " ".join(job["if"].split()) == PUBLISH_IF
+        expected_if = V2_PUBLISH_IF if profile is V2_MODEL else PUBLISH_IF
+        assert " ".join(job["if"].split()) == expected_if
         text = steps_text(job)
         assert f"--profile {profile.key}" in text
         assert f"--target-repo {profile.repo_id}" in text
@@ -318,9 +335,38 @@ def test_only_publish_jobs_see_credentials_or_publish() -> None:
         assert profile.key in text
     assert '--expect-delta-since "${BASE_REVISION}"' in text
     alignment = jobs["alignment"]
-    assert set(alignment["needs"]) == {p.job_id for p in publisher.PROFILES.values()}
+    assert set(alignment["needs"]) == {MODEL.job_id, DATASET.job_id}
     assert " ".join(alignment["if"].split()) == PUBLISH_IF
     assert "clinical-gateway/tools/verify_hub_alignment.py" in steps_text(alignment)
+    v2_alignment = jobs["alignment-v2"]
+    assert v2_alignment["needs"] == [V2_MODEL.job_id]
+    assert " ".join(v2_alignment["if"].split()) == V2_PUBLISH_IF
+    assert "--profile oac-v2-model" in steps_text(v2_alignment)
+    assert '--expect-parent "${MODEL_REVISION}"' in steps_text(v2_alignment)
+    assert 'report["state"] != "NO_CHANGE"' in steps_text(v2_alignment)
+
+
+def test_v2_staged_bytes_and_card_bind_the_protected_research_merge() -> None:
+    staged = ROOT / V2_MODEL.staged_dir
+    source = ROOT / "ops-health" / "v2" / "ops-health"
+    expected_hashes = {
+        "LICENSE": "145a78cf10c6cfd87e99b94dd7ede2839a9103ba2293e287ed5fdc1674f81ac6",
+        "ops_health.py": "b0a64ff3f26ea284b0588de351ed7795a6089203b35fded0e7d82cbd4871aed9",
+        "model.json": "b830a5edca271d667ab09b378dd5d3ab505d71a7e3451de8d9ca2bacfeed977c",
+        "artifact_receipt.json": "442486a3b451f0ad765aac253830cdc5455bad3a34186b4cf73388cf207056f2",
+        "example_input.json": "afa7c8e5081c682877ad489259592951f854ba2558d409fdcf071ba845d4fb63",
+    }
+    for name, expected in expected_hashes.items():
+        raw = (staged / name).read_bytes()
+        assert hashlib.sha256(raw).hexdigest() == expected
+        if name != "LICENSE":
+            assert raw == (source / name).read_bytes()
+    card = (staged / "README.md").read_text(encoding="utf-8")
+    assert "56a00821858825f529c40c7322c2f1584608d6e5" in card
+    assert "SYNTHETIC" in card.upper()
+    assert "unpublished" in card.lower()
+    assert "proposal-only" in card.lower()
+    assert "not a clinical" in card.lower()
 
 
 def test_every_publish_job_holds_its_canonical_lock() -> None:
