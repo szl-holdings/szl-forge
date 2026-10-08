@@ -202,7 +202,7 @@
       <section class="card v2-preview" id="v2-panel" aria-labelledby="v2-title">
         <div class="head-row"><h2 id="v2-title">Optional v2 research advisory</h2><span class="badge">Synthetic · no authority</span></div>
         <p>v1 above remains the default. To use v2, explicitly check its pinned identity, then score the same invented eight fields. No patient, site, device, specimen, order, or result data.</p>
-        <div class="v2-actions"><button class="small-button" id="v2-enable" type="button">Check v2 identity</button><button class="small-button" id="v2-score" type="button" disabled>Request v2 advisory</button><a href="https://huggingface.co/SZLHOLDINGS/oac-ops-health-v2/tree/ff107198aa257ce1bb1841377d553bee3f90be41" target="_blank" rel="noopener noreferrer">Pinned v2 package ↗</a></div>
+        <div class="v2-actions"><button class="small-button" id="v2-enable" type="button">Check v2 identity</button><button class="small-button" id="v2-score" type="button" disabled>Request v2 advisory</button><a href="https://huggingface.co/SZLHOLDINGS/oac-ops-health-v2/tree/a824a32d91a383d33a1e1e595f11b8362d1b4efa" target="_blank" rel="noopener noreferrer">Pinned v2 package ↗</a></div>
         <p class="v2-status" id="v2-status" data-state="idle" role="status" aria-live="polite">Not enabled. No v2 request has been sent.</p>
         <p class="v2-result" id="v2-result" role="status" aria-live="polite">No v2 advisory requested.</p>
       </section>
@@ -266,7 +266,7 @@
     const v2AdvisoryKeys = ["schema", "advisory", "abstain_reason", "prediction_set", "operator_attention_score", "threshold_decision", "decision_threshold", "score_semantics", "purpose", "authority", "normalized_feature_contributions", "coverage_statement"];
     const v2Pins = {
       artifact_source: {repository:"szl-holdings/szl-forge",revision:"56a00821858825f529c40c7322c2f1584608d6e5",directory:"ops-health/v2/ops-health"},
-      hub_model: {repo_id:"SZLHOLDINGS/oac-ops-health-v2",revision:"ff107198aa257ce1bb1841377d553bee3f90be41"},
+      hub_model: {repo_id:"SZLHOLDINGS/oac-ops-health-v2",revision:"a824a32d91a383d33a1e1e595f11b8362d1b4efa"},
       artifacts: {"ops_health.py":"b0a64ff3f26ea284b0588de351ed7795a6089203b35fded0e7d82cbd4871aed9","model.json":"b830a5edca271d667ab09b378dd5d3ab505d71a7e3451de8d9ca2bacfeed977c","artifact_receipt.json":"442486a3b451f0ad765aac253830cdc5455bad3a34186b4cf73388cf207056f2","example_input.json":"afa7c8e5081c682877ad489259592951f854ba2558d409fdcf071ba845d4fb63"}
     };
     function validateV2Identity(value) {

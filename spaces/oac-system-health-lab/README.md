@@ -41,7 +41,7 @@ false. No response acknowledges a transport message, controls a device,
 interprets or releases a result, or makes a care decision.
 
 The v2 Space package is pinned to the public
-[`SZLHOLDINGS/oac-ops-health-v2` revision `ff107198aa257ce1bb1841377d553bee3f90be41`](https://huggingface.co/SZLHOLDINGS/oac-ops-health-v2/tree/ff107198aa257ce1bb1841377d553bee3f90be41)
+[`SZLHOLDINGS/oac-ops-health-v2` revision `a824a32d91a383d33a1e1e595f11b8362d1b4efa`](https://huggingface.co/SZLHOLDINGS/oac-ops-health-v2/tree/a824a32d91a383d33a1e1e595f11b8362d1b4efa)
 and exact Forge artifact bytes at `56a00821858825f529c40c7322c2f1584608d6e5`.
 `release_v2.json` binds the kernel, JSON coefficients, receipt, and authored
 example by SHA-256. The kernel is a deterministic standard-library numeric
