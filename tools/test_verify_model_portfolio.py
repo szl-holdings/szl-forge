@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import copy
 from contextlib import redirect_stdout
+import hashlib
 import io
 import json
 import subprocess
@@ -886,6 +887,78 @@ class ArtifactCompletenessTests(unittest.TestCase):
                     self.assertIn(code, str(result))
                 self.assertNotIn("placeholder", str(result).lower())
 
+    def test_config_inventory_revision_controls_adapter_lineage(self):
+        documents = {"adapter_config.json": self.parsed({
+            "peft_type": "LORA", "base_model_name_or_path": "exact/base",
+            "revision": "c" * 40,
+        })}
+        for revision in (None, "main", "b" * 40, self.REVISION):
+            with self.subTest(revision=revision):
+                files = [
+                    {"path": "adapter_config.json", "revision": revision, "size": 8},
+                    {"path": "adapter_model.safetensors", "revision": self.REVISION, "size": 8},
+                ]
+                result = verifier.classify_artifact_completeness(
+                    revision=self.REVISION, inventory_complete=True, files=files,
+                    json_observations=documents,
+                )
+                bound = revision == self.REVISION
+                expected = "COMPLETE_STRUCTURE" if bound else "UNKNOWN_STRUCTURE"
+                self.assertEqual(expected, result["status"])
+                self.assertEqual(expected, result["packages"][0]["status"])
+                adapter = result["adapter_groups"][0]
+                self.assertEqual("RECORDED" if bound else "UNKNOWN", adapter["lineage_status"])
+                self.assertEqual("exact/base" if bound else None, adapter["base_model_name_or_path"])
+                if not bound:
+                    self.assertIn({"code": "FILE_REVISION_MISMATCH", "path": "adapter_config.json"}, result["packages"][0]["issues"])
+
+    def test_conflicting_payload_and_index_revisions_invalidate_local_package(self):
+        paths = ["config.json", "model.safetensors.index.json", "shards/part.safetensors"]
+        documents = self.model_documents({"tensor": "shards/part.safetensors"})
+        for conflict in paths:
+            with self.subTest(conflict=conflict):
+                files = [{"path": path, "revision": "b" * 40 if path == conflict else self.REVISION, "size": 8} for path in paths]
+                result = verifier.classify_artifact_completeness(
+                    revision=self.REVISION, inventory_complete=True, files=files,
+                    json_observations=documents,
+                )
+                self.assertEqual("UNKNOWN_STRUCTURE", result["status"])
+                package = next(item for item in result["packages"] if item.get("directory") == "")
+                self.assertEqual("UNKNOWN_STRUCTURE", package["status"])
+                self.assertIn({"code": "FILE_REVISION_MISMATCH", "path": conflict}, package["issues"])
+
+    def test_gguf_header_cannot_qualify_a_conflicting_inventory_revision(self):
+        result = verifier.classify_artifact_completeness(
+            revision=self.REVISION, inventory_complete=True,
+            files=[{"path": "model.gguf", "revision": "b" * 40, "size": 8}],
+            gguf_header_observations={"model.gguf": self.parsed({"quantization": "QUANTIZED"})},
+        )
+        self.assertEqual("UNKNOWN_STRUCTURE", result["packages"][0]["status"])
+        self.assertEqual("UNKNOWN", result["gguf_quantization"][0]["status"])
+        self.assertIn({"code": "FILE_REVISION_MISMATCH", "path": "model.gguf"}, result["gguf_quantization"][0]["issues"])
+
+    def test_duplicate_inventory_cannot_establish_local_claims_in_either_order(self):
+        documents = {"adapter_config.json": self.parsed({
+            "peft_type": "LORA", "base_model_name_or_path": "exact/base", "revision": "c" * 40,
+        })}
+        for path in ("adapter_config.json", "adapter_model.safetensors"):
+            for reversed_order in (False, True):
+                with self.subTest(path=path, reversed_order=reversed_order):
+                    files = [{"path": item, "revision": self.REVISION, "size": 8} for item in
+                             ("adapter_config.json", "adapter_model.safetensors")]
+                    files.append({"path": path, "revision": "b" * 40, "size": 8})
+                    if reversed_order:
+                        files.reverse()
+                    result = verifier.classify_artifact_completeness(
+                        revision=self.REVISION, inventory_complete=True, files=files,
+                        json_observations=documents,
+                    )
+                    package = result["packages"][0]
+                    self.assertEqual("UNKNOWN_STRUCTURE", package["status"])
+                    self.assertIn({"code": "DUPLICATE_FILE_OBSERVATION", "path": path}, package["issues"])
+                    if path == "adapter_config.json":
+                        self.assertEqual("UNKNOWN", result["adapter_groups"][0]["lineage_status"])
+
     def test_mmproj_is_auxiliary_and_gguf_needs_no_external_config(self):
         for path in ("mmproj.gguf", "vision/mmproj-model-f16.gguf", "MMProj.gguf"):
             with self.subTest(path=path):
@@ -1022,6 +1095,181 @@ class ArtifactCompletenessTests(unittest.TestCase):
         self.assertIn("quantized_model has no weight artifact", result["errors"])
         self.assertEqual("quantized_model", result["kind"])
         self.assertEqual("HELD_TEST_ONLY", result["maturity"])
+
+
+class ArtifactObservationCliTests(unittest.TestCase):
+    """Exercise local metadata through the executable CLI, without providers."""
+
+    def observation(self):
+        revision = "a" * 40
+        return {
+            "schema": "szl.artifact-observation/v1", "revision": revision,
+            "inventory_complete": True,
+            "files": [{"path": path, "revision": revision, "size": 8} for path in
+                      ("adapter_config.json", "adapter_model.safetensors")],
+            "json_observations": {"adapter_config.json": {
+                "revision": revision, "state": "PARSED", "data": {
+                    "peft_type": "LORA", "base_model_name_or_path": "exact/base",
+                    "revision": "c" * 40,
+                },
+            }},
+        }
+
+    def invoke(self, source, *extra):
+        # The child forbids network, provider imports and external processes.
+        bootstrap = """import runpy, sys
+class NoProvider:
+    def find_spec(self, fullname, *args):
+        if fullname.split('.')[0] in {'huggingface_hub', 'cryptography', 'torch'}:
+            raise AssertionError('provider import forbidden')
+sys.meta_path.insert(0, NoProvider())
+def audit(event, args):
+    if event in {'socket.connect', 'subprocess.Popen'}:
+        raise AssertionError('external execution forbidden')
+sys.addaudithook(audit)
+script = sys.argv.pop(1)
+sys.argv[0] = script
+runpy.run_path(script, run_name='__main__')
+"""
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "observation.json"
+            report = Path(directory) / "report.json"
+            path.write_bytes(source)
+            args = [str(path) if item == "INPUT" else item for item in extra]
+            completed = subprocess.run([
+                sys.executable, "-B", "-c", bootstrap, str(Path(verifier.__file__).resolve()),
+                "--artifact-observation", str(path), "--report", str(report), *args,
+            ], capture_output=True, text=True, timeout=15, check=False)
+            self.assertEqual(source, path.read_bytes(), "input evidence was modified")
+            saved = report.read_text(encoding="utf-8") if report.exists() else None
+        if saved is not None:
+            self.assertEqual(completed.stdout, saved)
+        return completed, saved
+
+    def test_complete_metadata_cli_preserves_exact_hash_and_unassessed_limits(self):
+        source = (json.dumps(self.observation(), indent=2) + "\n").encode()
+        completed, saved = self.invoke(source, "--portfolio", "missing-portfolio.json")
+        self.assertEqual(0, completed.returncode, completed.stderr + completed.stdout)
+        report = json.loads(saved)
+        self.assertEqual("szl.artifact-observation-report/v1", report["schema"])
+        self.assertEqual(hashlib.sha256(source).hexdigest(), report["observation_sha256"])
+        self.assertTrue(report["ok"])
+        self.assertEqual("principal-weight package metadata closure only", report["ok_scope"])
+        self.assertEqual("NOT_EVALUATED", report["metadata_structure"]["artifact_validity"])
+        self.assertEqual("NOT_EVALUATED", report["metadata_structure"]["runtime_validity"])
+
+    def test_unknown_and_incomplete_metadata_exit_nonzero_with_diagnostics(self):
+        for kind, code, status in (
+            ("revision", "FILE_REVISION_MISMATCH", "UNKNOWN_STRUCTURE"),
+            ("empty", "EMPTY_PAYLOAD", "INCOMPLETE_STRUCTURE"),
+            ("inventory", "INVENTORY_COMPLETENESS_UNPROVEN", "UNKNOWN_STRUCTURE"),
+        ):
+            with self.subTest(kind=kind):
+                document = self.observation()
+                if kind == "revision":
+                    document["files"][0]["revision"] = "b" * 40
+                elif kind == "empty":
+                    document["files"][1]["size"] = 0
+                else:
+                    document["inventory_complete"] = None
+                completed, saved = self.invoke(json.dumps(document).encode())
+                self.assertEqual(1, completed.returncode, completed.stderr)
+                report = json.loads(saved)
+                self.assertFalse(report["ok"])
+                self.assertEqual(status, report["metadata_structure"]["status"])
+                self.assertIn(code, saved)
+                if kind == "revision":
+                    self.assertEqual("UNKNOWN", report["metadata_structure"]["adapter_groups"][0]["lineage_status"])
+
+    def test_invalid_json_or_envelopes_fail_without_echoing_source(self):
+        valid = json.dumps(self.observation())
+        malformed = [b'private-marker', b'\xff', b'null', b'[]', b'{}',
+                     valid.encode('utf-16'),
+                     valid.encode().replace(b'exact/base', b'\xed\xa0\x80'),
+                     valid.replace('exact/base', '\\ud800').encode(),
+                     valid.replace('"size": 8', '"\\ud800": 8', 1).encode(),
+                     valid.replace('"szl.artifact-observation/v1"', '"wrong"').encode(),
+                     valid.replace('"inventory_complete": true', '"inventory_complete": "true"').encode(),
+                     valid.replace('"size": 8', '"size": NaN', 1).encode(),
+                     valid.replace('"size": 8', '"size": Infinity', 1).encode(),
+                     valid.replace('"size": 8', '"size": 1e400', 1).encode(),
+                     valid.replace('"size": 8', '"size": 8, "size": 9', 1).encode(),
+                     valid.replace('"files": [', '"files": [], "files": [', 1).encode()]
+        for source in malformed:
+            with self.subTest(source=source[:50]):
+                completed, saved = self.invoke(source)
+                self.assertEqual(1, completed.returncode, completed.stderr)
+                report = json.loads(saved)
+                self.assertEqual("ARTIFACT_OBSERVATION_FAILED", report["fatal"])
+                self.assertNotIn("observation_sha256", report)
+                self.assertNotIn("private-marker", saved)
+
+    def test_valid_paired_unicode_remains_usable_metadata(self):
+        document = self.observation()
+        document["json_observations"]["adapter_config.json"]["data"]["model_note"] = "\U0001f680"
+        for escape in (False, True):
+            with self.subTest(escape=escape):
+                source = json.dumps(document, ensure_ascii=escape).encode("utf-8")
+                completed, saved = self.invoke(source)
+                self.assertEqual(0, completed.returncode, completed.stderr)
+                self.assertEqual(hashlib.sha256(source).hexdigest(), json.loads(saved)["observation_sha256"])
+
+    def test_incompatible_modes_and_input_overwrite_are_rejected(self):
+        for extra in (("--offline",), ("--live",), ("--estate-snapshot", "INPUT"), ("--report", "INPUT")):
+            with self.subTest(extra=extra):
+                completed, saved = self.invoke(json.dumps(self.observation()).encode(), *extra)
+                self.assertEqual(2, completed.returncode, completed.stdout)
+                self.assertIsNone(saved)
+
+    def test_missing_input_fails_without_publishing_a_source_digest(self):
+        completed, saved = self.invoke(
+            json.dumps(self.observation()).encode(), "--artifact-observation",
+            "missing-private-observation.json",
+        )
+        self.assertEqual(1, completed.returncode, completed.stderr)
+        report = json.loads(saved)
+        self.assertEqual("ARTIFACT_OBSERVATION_FAILED", report["fatal"])
+        self.assertNotIn("observation_sha256", report)
+        self.assertNotIn("missing-private-observation", saved)
+
+    def test_oversized_input_is_rejected_before_classification(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "observation.json"
+            path.write_bytes(b" " * 65)
+            with mock.patch.object(verifier, "MAX_ESTATE_SNAPSHOT_BYTES", 64), \
+                 mock.patch.object(verifier, "classify_artifact_completeness", side_effect=AssertionError("classification forbidden")):
+                with self.assertRaises(verifier.PortfolioError):
+                    verifier.build_artifact_observation_report(path)
+
+    def test_existing_hard_link_report_cannot_overwrite_input(self):
+        source = json.dumps(self.observation()).encode()
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "observation.json"
+            alias = Path(directory) / "report.json"
+            path.write_bytes(source)
+            alias.hardlink_to(path)
+            with mock.patch.object(sys, "argv", ["verify_model_portfolio.py",
+                                  "--artifact-observation", str(path), "--report", str(alias)]), \
+                 mock.patch("sys.stderr", new_callable=io.StringIO):
+                with self.assertRaises(SystemExit) as stopped:
+                    verifier.main()
+            self.assertEqual(2, stopped.exception.code)
+            self.assertEqual(source, path.read_bytes())
+            self.assertEqual(source, alias.read_bytes())
+
+    def test_existing_portfolio_modes_retain_their_report_route(self):
+        for mode in ("--offline", "--live"):
+            with self.subTest(mode=mode), tempfile.TemporaryDirectory() as directory:
+                path = Path(directory) / "portfolio.json"
+                path.write_text('{}', encoding="utf-8")
+                output = io.StringIO()
+                with mock.patch.object(sys, "argv", ["verify_model_portfolio.py", mode, "--portfolio", str(path)]), \
+                     mock.patch.object(verifier, "build_report", return_value={"ok": True}) as builder, \
+                     mock.patch.object(verifier, "build_artifact_observation_report", side_effect=AssertionError("wrong route")), \
+                     redirect_stdout(output):
+                    self.assertEqual(0, verifier.main())
+                builder.assert_called_once_with({}, live=mode == "--live")
+                self.assertEqual({"ok": True}, json.loads(output.getvalue()))
 
 
 if __name__ == "__main__":
