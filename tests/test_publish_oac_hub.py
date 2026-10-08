@@ -31,6 +31,8 @@ MODEL = publisher.PROFILES["oac-v1-model"]
 DATASET = publisher.PROFILES["oac-v1-dataset"]
 V2_MODEL = publisher.PROFILES["oac-v2-model"]
 CREATE_ONLY = dataclasses.replace(MODEL, allow_create=True, replace_paths=frozenset())
+# Exercise the generic create path without granting the published v2 profile create authority.
+CREATE_V2 = dataclasses.replace(V2_MODEL, allow_create=True, replace_paths=frozenset())
 CARD = b"---\nlicense: apache-2.0\n---\n\n# Synthetic card\n"
 NEW_CARD = b"---\nlicense: apache-2.0\n---\n\n# Synthetic card, revised\n"
 PUBLISH_IF = (
@@ -205,7 +207,8 @@ class FakeApi:
         return [call[0] for call in self.calls]
 
 
-def run(profile, api, *, publish, staged=None, fresh=None, git=None, grant=None):
+def run(profile, api, *, publish, staged=None, fresh=None, git=None, grant=None,
+        expected_parent=None):
     staged = package(profile) if staged is None else staged
     git = git or FakeGit({SOURCE: tree(profile, staged)})
     fresh_calls: list[str] = []
@@ -214,6 +217,7 @@ def run(profile, api, *, publish, staged=None, fresh=None, git=None, grant=None)
         profile, SOURCE, report,
         api=api, read_file=api.read_file, publish=publish, not_found=Missing,
         operation_factory=Operation, allow_create_grant=profile.allow_create if grant is None else grant,
+        expected_parent=expected_parent,
         fresh_main=fresh or fresh_calls.append, git=git,
     )
     return report, fresh_calls
@@ -256,7 +260,7 @@ def test_registry_is_closed_and_matches_the_alignment_verifier() -> None:
         "LICENSE", "README.md", "artifact_receipt.json", "example_input.json",
         "model.json", "ops_health.py",
     }
-    assert V2_MODEL.allow_create and not V2_MODEL.replace_paths
+    assert not V2_MODEL.allow_create and V2_MODEL.replace_paths == {"README.md"}
     assert V2_MODEL.lock_group == "hf-write/model/SZLHOLDINGS/oac-ops-health-v2"
     with pytest.raises(publisher.PublicationRefused, match="unknown OAC Hub profile"):
         publisher.resolve_profile("operator-chosen-target")
@@ -369,6 +373,8 @@ def test_v2_staged_bytes_and_card_bind_the_protected_research_merge() -> None:
     assert "unpublished" in card.lower()
     assert "proposal-only" in card.lower()
     assert "not a clinical" in card.lower()
+    assert "unsigned receipt" in card.lower()
+    assert "does not authenticate that origin" in card.lower()
 
 
 def test_every_publish_job_holds_its_canonical_lock() -> None:
@@ -576,26 +582,26 @@ def test_dry_run_reports_create_for_a_create_profile_without_creating() -> None:
 def test_anonymous_not_found_is_unverified_even_for_a_hidden_existing_target(
     hidden_existing: bool,
 ) -> None:
-    staged = package(V2_MODEL)
-    api = FakeApi(V2_MODEL, staged if hidden_existing else None, hidden=hidden_existing)
-    git = FakeGit({BASE: {}, SOURCE: tree(V2_MODEL, staged)})
-    report, _ = run(V2_MODEL, api, publish=False, staged=staged, git=git)
-    publisher.assert_expected_delta(V2_MODEL, BASE, SOURCE, report, git=git)
+    staged = package(CREATE_V2)
+    api = FakeApi(CREATE_V2, staged if hidden_existing else None, hidden=hidden_existing)
+    git = FakeGit({BASE: {}, SOURCE: tree(CREATE_V2, staged)})
+    report, _ = run(CREATE_V2, api, publish=False, staged=staged, git=git)
+    publisher.assert_expected_delta(CREATE_V2, BASE, SOURCE, report, git=git)
     assert report["state"] == "CREATE_CANDIDATE_UNVERIFIED"
     assert report["expected_delta_since"] == {
         "base_revision": BASE, "parent_revision": None,
         "hub_equals_base": None, "hub_drift": None,
-        "delta": sorted(V2_MODEL.files), "verification": "UNAVAILABLE",
+        "delta": sorted(CREATE_V2.files), "verification": "UNAVAILABLE",
     }
     assert "create_repo" not in api.names() and "create_commit" not in api.names()
 
 
 def test_unresolved_target_cannot_verify_a_nonempty_base() -> None:
-    staged = package(V2_MODEL)
-    git = FakeGit({BASE: tree(V2_MODEL, staged), SOURCE: tree(V2_MODEL, staged)})
-    report, _ = run(V2_MODEL, FakeApi(V2_MODEL, None), publish=False, staged=staged, git=git)
+    staged = package(CREATE_V2)
+    git = FakeGit({BASE: tree(CREATE_V2, staged), SOURCE: tree(CREATE_V2, staged)})
+    report, _ = run(CREATE_V2, FakeApi(CREATE_V2, None), publish=False, staged=staged, git=git)
     with pytest.raises(publisher.PublicationRefused, match="base has staged files"):
-        publisher.assert_expected_delta(V2_MODEL, BASE, SOURCE, report, git=git)
+        publisher.assert_expected_delta(CREATE_V2, BASE, SOURCE, report, git=git)
     assert report["expected_delta_since"]["hub_equals_base"] is None
 
 
@@ -620,7 +626,7 @@ def test_concurrent_create_is_refused_by_exist_ok_false() -> None:
 
 
 def test_main_moving_before_create_prevents_the_external_effect() -> None:
-    api = FakeApi(V2_MODEL, None)
+    api = FakeApi(CREATE_V2, None)
     calls: list[str] = []
 
     def stale_before_create(revision: str) -> None:
@@ -629,7 +635,7 @@ def test_main_moving_before_create_prevents_the_external_effect() -> None:
             raise publisher.PublicationRefused("publication source no longer owns current main")
 
     with pytest.raises(publisher.PublicationRefused, match="no longer owns"):
-        run(V2_MODEL, api, publish=True, fresh=stale_before_create)
+        run(CREATE_V2, api, publish=True, fresh=stale_before_create)
     assert calls == [SOURCE, SOURCE]
     assert "create_repo" not in api.names() and "create_commit" not in api.names()
 
@@ -912,12 +918,13 @@ def test_hidden_target_create_collision_has_blocked_secret_free_receipt(
             self.response = SimpleNamespace(status_code=409)
 
     head = real_head()
-    api = FakeApi(V2_MODEL, package(V2_MODEL), hidden=True, create_error=CreateDenied())
+    api = FakeApi(CREATE_V2, package(CREATE_V2), hidden=True, create_error=CreateDenied())
     fake_clients(monkeypatch, api)
+    monkeypatch.setattr(publisher, "PROFILES", {CREATE_V2.key: CREATE_V2})
     monkeypatch.setattr(publisher, "assert_current_main", lambda _: None)
     output = tmp_path / "hidden-collision.json"
     code = publisher.main([
-        "--profile", V2_MODEL.key, "--source-revision", head,
+        "--profile", CREATE_V2.key, "--source-revision", head,
         "--publish", "--allow-create", "--report", str(output),
     ], environ=CI)
     raw = output.read_text(encoding="utf-8")
@@ -1045,12 +1052,81 @@ def test_cli_publish_success_never_records_the_credential(monkeypatch, tmp_path)
     assert fresh == [head, head]
 
 
-@pytest.mark.parametrize("flag", ["--expect-delta-since", "--expect-parent"])
-def test_cli_refuses_expectation_flags_when_publishing(flag, tmp_path) -> None:
+def test_cli_refuses_delta_since_when_publishing(tmp_path) -> None:
     output = tmp_path / "publish.json"
     code = publisher.main(["--profile", "oac-v1-model", "--source-revision", SOURCE, "--publish",
-                           flag, BASE, "--report", str(output)], environ=CI)
-    assert code == 1 and "dry-run assertions" in json.loads(output.read_text(encoding="utf-8"))["refusal"]
+                           "--expect-delta-since", BASE, "--report", str(output)], environ=CI)
+    assert code == 1 and "dry-run assertion" in json.loads(output.read_text(encoding="utf-8"))["refusal"]
+
+
+def test_pinned_v2_parent_refuses_wrong_head_before_any_write() -> None:
+    staged = package(V2_MODEL)
+    api = FakeApi(V2_MODEL, staged)
+    with pytest.raises(publisher.PublicationRefused, match="expected parent revision"):
+        run(V2_MODEL, api, publish=True, staged=staged, expected_parent=NEW)
+    assert "create_repo" not in api.names() and "create_commit" not in api.names()
+
+
+def test_pinned_v2_parent_refuses_missing_target_before_any_write() -> None:
+    api = FakeApi(V2_MODEL, None)
+    with pytest.raises(publisher.PublicationRefused, match="pinned Hub parent"):
+        run(V2_MODEL, api, publish=True, expected_parent=PARENT)
+    assert "create_repo" not in api.names() and "create_commit" not in api.names()
+
+
+def test_cli_publish_checks_pinned_parent_before_effect(monkeypatch, tmp_path) -> None:
+    head = real_head()
+    api = FakeApi(V2_MODEL, publisher.staged_package(V2_MODEL, head))
+    fake_clients(monkeypatch, api)
+    monkeypatch.setattr(publisher, "assert_current_main", lambda _: None)
+    output = tmp_path / "wrong-parent.json"
+    code = publisher.main([
+        "--profile", V2_MODEL.key, "--source-revision", head, "--publish",
+        "--expect-parent", NEW, "--report", str(output),
+    ], environ=CI)
+    report = json.loads(output.read_text(encoding="utf-8"))
+    assert code == 1 and report["state"] == "REFUSED"
+    assert report["expected_parent"] == {
+        "revision": NEW, "observed": PARENT, "matches": False,
+    }
+    assert "create_repo" not in api.names() and "create_commit" not in api.names()
+
+
+def test_pinned_v2_correction_changes_only_readme_and_uses_hub_cas() -> None:
+    staged = package(V2_MODEL, **{"README.md": NEW_CARD})
+    prior = {**staged, "README.md": CARD}
+    api = FakeApi(V2_MODEL, prior)
+    report, _ = run(V2_MODEL, api, publish=True, staged=staged, expected_parent=PARENT)
+    assert report["state"] == "PUBLISHED" and report["delta"] == ["README.md"]
+    assert report["expected_parent"]["matches"] is True
+    assert report["readback"] and all(x["matches"] for x in report["readback"].values())
+    assert api.commit_kwargs["parent_commit"] == PARENT
+    assert [op.path_in_repo for op in api.commit_kwargs["operations"]] == ["README.md"]
+    assert "create_repo" not in api.names()
+
+
+def test_pinned_v2_correction_refuses_artifact_drift() -> None:
+    staged = package(V2_MODEL, **{"README.md": NEW_CARD})
+    prior = {**staged, "README.md": CARD, "model.json": b"synthetic drift\n"}
+    api = FakeApi(V2_MODEL, prior)
+    with pytest.raises(publisher.PublicationRefused, match="outside replace_paths: model.json"):
+        run(V2_MODEL, api, publish=True, staged=staged, expected_parent=PARENT)
+    assert "create_commit" not in api.names()
+
+
+def test_pinned_v2_correction_refuses_a_parent_race() -> None:
+    staged = package(V2_MODEL, **{"README.md": NEW_CARD})
+    api = FakeApi(V2_MODEL, {**staged, "README.md": CARD})
+    original = api.read_file
+
+    def concurrent_writer(profile, path, revision):
+        api.head = "f" * 40
+        return original(profile, path, revision)
+
+    api.read_file = concurrent_writer
+    with pytest.raises(RuntimeError, match="412"):
+        run(V2_MODEL, api, publish=True, staged=staged, expected_parent=PARENT)
+    assert NEW not in api.revisions
 
 
 def test_cli_never_overwrites_an_existing_report(tmp_path) -> None:

@@ -2,7 +2,8 @@
 # The one committed writer for the OAC Hub packages (HF upgrade plan D1 and P9).
 # Pull requests and dispatches with publish=false run an anonymous dry-run only.
 # Existing v1 profiles publish on main push or main-only publish dispatch.
-# The new v2 model is create-once and publishes only on an explicit main dispatch.
+# The v2 package exists; its sole writer permits a reviewed README correction
+# only on explicit main dispatch at the pinned Hub parent.
 # Every writer holds its per-asset lock (D3) and a parent-commit CAS.
 name: Publish OAC Hub packages
 
@@ -96,7 +97,7 @@ jobs:
             # Each dry-run must find the Hub's staged-path bytes at the inspected
             # parent equal to the base's staged bytes, and a delta equal to
             # exactly what this pull request changes. The parent sha is not
-            # pinned here; the merger pins it with --expect-parent before merging.
+            # pinned here; the locked main writer pins it before any effect.
             git fetch --no-tags --depth=1 origin "${BASE_REVISION}"
             expect=(--expect-delta-since "${BASE_REVISION}")
           fi
@@ -445,8 +446,8 @@ jobs:
           profile = resolve_profile(os.environ["PROFILE"])
           observed = (profile.repo_id, profile.repo_type, profile.job_id)
           expected = (os.environ["TARGET_REPO"], os.environ["TARGET_TYPE"], os.environ["JOB_ID"])
-          if observed != expected or not profile.allow_create:
-              raise SystemExit("workflow target drifted from the closed create-once profile")
+          if observed != expected or profile.allow_create or profile.replace_paths != {"README.md"}:
+              raise SystemExit("workflow target drifted from the closed README-only profile")
           PY
 
       - name: Acquire and actively validate the target credential
@@ -461,17 +462,18 @@ jobs:
           set -euo pipefail
           python tools/acquire_hf_publisher_token.py \
             --target-repo SZLHOLDINGS/oac-ops-health-v2 \
-            --target-type model --allow-create \
+            --target-type model \
             --github-env "${GITHUB_ENV}" \
             --report reports/oac-v2-model-credential.json
 
-      - name: Create once and verify every Hub byte
+      - name: Correct only the card at the reviewed parent and verify every Hub byte
         run: |
           set -euo pipefail
           python tools/publish_oac_hub.py \
             --profile oac-v2-model \
             --source-revision "${GITHUB_SHA}" \
-            --publish --allow-create \
+            --publish \
+            --expect-parent ff107198aa257ce1bb1841377d553bee3f90be41 \
             --report reports/oac-v2-model-publication.json
 
       - name: Export the verified Hub revision

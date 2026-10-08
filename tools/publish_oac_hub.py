@@ -94,8 +94,8 @@ PROFILES: Mapping[str, HubProfile] = {
                 "ops_health.py",
             }
         ),
-        replace_paths=frozenset(),
-        allow_create=True,
+        replace_paths=frozenset({"README.md"}),
+        allow_create=False,
     ),
     "oac-v1-dataset": HubProfile(
         key="oac-v1-dataset",
@@ -572,11 +572,14 @@ def execute(
     not_found: type[BaseException],
     operation_factory: Callable[..., Any],
     allow_create_grant: bool = False,
+    expected_parent: str | None = None,
     fresh_main: Callable[[str], None] | None = None,
     git: Callable[[list[str]], bytes] | None = None,
 ) -> dict[str, Any]:
     """Run one profile; ``report`` keeps partial evidence when a step refuses."""
     require_sha(source_revision, "source revision")
+    if expected_parent is not None:
+        require_sha(expected_parent, "expected parent")
     if allow_create_grant and not profile.allow_create:
         raise PublicationRefused("--allow-create is outside this profile's authority")
     fresh_main = fresh_main or assert_current_main
@@ -593,6 +596,8 @@ def execute(
         # The Hub uses one not-found exception for missing and inaccessible
         # private repositories. An anonymous read proves neither condition.
         report["target_observation"] = "UNRESOLVED_PRIVATE_OR_MISSING"
+        if expected_parent is not None:
+            raise PublicationRefused("target is unavailable at the pinned Hub parent")
         if not profile.allow_create:
             raise PublicationRefused(
                 "target repository is unresolved and this profile may not create it"
@@ -629,6 +634,8 @@ def execute(
     report["resolved_repo_id"] = str(info.id)
     report["target_observation"] = "PUBLIC"
     report["parent_revision"] = parent
+    if expected_parent is not None:
+        assert_expected_parent(expected_parent, report)
     listing, hub_files = hub_snapshot(api, profile, parent, read_file)
     report["hub_files"] = listing
     report["hub_before"] = evidence_for(hub_files)
@@ -771,7 +778,7 @@ def main(argv: list[str] | None = None, *, environ: Mapping[str, str] | None = N
     parser.add_argument(
         "--expect-parent",
         metavar="HUB_SHA",
-        help="dry-run only: require the inspected Hub head to be exactly HUB_SHA",
+        help="require the inspected Hub head before publication to be exactly HUB_SHA",
     )
     args = parser.parse_args(argv)
     environ = os.environ if environ is None else environ
@@ -793,10 +800,8 @@ def main(argv: list[str] | None = None, *, environ: Mapping[str, str] | None = N
         if args.allow_create and (not args.publish or not profile.allow_create):
             raise PublicationRefused("--allow-create requires a create-enabled publish profile")
         if args.publish:
-            if args.expect_delta_since or args.expect_parent:
-                raise PublicationRefused(
-                    "--expect-delta-since and --expect-parent are dry-run assertions"
-                )
+            if args.expect_delta_since:
+                raise PublicationRefused("--expect-delta-since is a dry-run assertion")
             assert_publish_environment(environ)
             token: str | bool = str(environ.get("HF_TOKEN", "")).strip()
             if not token:
@@ -821,8 +826,9 @@ def main(argv: list[str] | None = None, *, environ: Mapping[str, str] | None = N
                 not_found=clients["not_found"],
                 operation_factory=clients["operation_factory"],
                 allow_create_grant=args.allow_create,
+                expected_parent=args.expect_parent.strip() if args.publish and args.expect_parent else None,
             )
-        if args.expect_parent:
+        if args.expect_parent and not args.publish:
             assert_expected_parent(args.expect_parent.strip(), report)
         if args.expect_delta_since:
             assert_expected_delta(profile, args.expect_delta_since.strip(), source_revision, report)
