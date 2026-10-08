@@ -16,3 +16,4 @@ khipu/*.jsonl text eol=lf
 khipu/khipu.schema.json text eol=lf
 receiptagent/*.jsonl text eol=lf
 receiptagent/receiptagent.schema.json text eol=lf
+tests/fixtures/receiptagent_v3_card/** text eol=lf

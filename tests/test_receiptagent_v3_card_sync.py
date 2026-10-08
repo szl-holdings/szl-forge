@@ -43,20 +43,9 @@ def records():
 
 
 def hub_fixture():
-    return (
-        "---\nlicense: apache-2.0\nszl:\n"
-        + card.OLD_EVALS
-        + "\n  publication_eligible: false\n---\n"
-        "Unmanaged hero and loader guidance.\n"
-        + card.OLD_CLAIM
-        + "\nSome unrelated paragraph.\n"
-        + card.OLD_EXPLANATION
-        + "\n"
-        + card.OLD_EVIDENCE
-        + "\nUnmanaged legal and release HOLD notes.\n"
-        + card.OLD_SOURCE_NOTE
-        + "\n"
-    ).encode("utf-8")
+    return (ROOT / "tests" / "fixtures" / "receiptagent_v3_card" / "d674c37.README.md").read_bytes() + (
+        b"\nUnmanaged hero and loader guidance.\nUnmanaged legal and release HOLD notes.\n"
+    )
 
 
 class ReceiptAgentV3CardSyncTests(unittest.TestCase):
@@ -72,8 +61,8 @@ class ReceiptAgentV3CardSyncTests(unittest.TestCase):
     def test_surgical_candidate_preserves_every_unmanaged_byte(self):
         before = hub_fixture()
         after = card.candidate(before)
-        self.assertEqual(after.count(b"11/12"), 4)
-        self.assertIn(b"12/12", after)
+        self.assertEqual(after.count(b"11/12"), before.count(b"11/12"))
+        self.assertEqual(after.count(b"12/12"), before.count(b"12/12"))
         self.assertNotIn(b"contradicts the committed receipt", after)
         self.assertIn(b"Unmanaged hero and loader guidance.", after)
         self.assertIn(b"Unmanaged legal and release HOLD notes.", after)
@@ -83,11 +72,8 @@ class ReceiptAgentV3CardSyncTests(unittest.TestCase):
         self.assertNotIn(card.OLD_EVALS.encode(), after)
         self.assertNotIn(card.OLD_SOURCE_NOTE.encode(), after)
         for old, new in (
-            (card.OLD_EVALS, card.NEW_EVALS),
-            (card.OLD_CLAIM, card.NEW_CLAIM),
-            (card.OLD_EXPLANATION, card.NEW_EXPLANATION),
-            (card.OLD_EVIDENCE, card.NEW_EVIDENCE),
-            (card.OLD_SOURCE_NOTE, card.NEW_SOURCE_NOTE),
+            (card.OLD_LOAD_SECTION, card.NEW_LOAD_SECTION),
+            (card.OLD_LOADER_PHRASE, card.NEW_LOADER_PHRASE),
         ):
             after = after.replace(new.encode("utf-8"), old.encode("utf-8"), 1)
         self.assertEqual(after, before)
@@ -95,12 +81,11 @@ class ReceiptAgentV3CardSyncTests(unittest.TestCase):
     def test_partial_duplicate_or_already_edited_hub_card_fails_closed(self):
         fixture = hub_fixture()
         for body in (
-            fixture.replace(card.OLD_CLAIM.encode(), b"missing", 1),
-            fixture + card.OLD_CLAIM.encode(),
-            fixture.replace(card.OLD_EVALS.encode(), b"missing", 1),
-            fixture + card.OLD_SOURCE_NOTE.encode(),
-            fixture.replace(card.OLD_SOURCE_NOTE.encode(), b"missing", 1),
-            fixture.replace(card.OLD_EXPLANATION.encode(), card.NEW_EXPLANATION.encode(), 1),
+            fixture.replace(card.OLD_LOAD_SECTION.encode(), b"missing", 1),
+            fixture + card.OLD_LOAD_SECTION.encode(),
+            fixture.replace(card.OLD_LOADER_PHRASE.encode(), b"missing", 1),
+            fixture + card.OLD_LOADER_PHRASE.encode(),
+            fixture.replace(card.OLD_LOAD_SECTION.encode(), card.NEW_LOAD_SECTION.encode(), 1),
             fixture.replace(b"\n", b"\r\n"),
         ):
             with self.subTest(body_length=len(body)):
@@ -144,7 +129,8 @@ class ReceiptAgentV3CardSyncTests(unittest.TestCase):
         self.assertEqual(receipt["disposition"], "REVIEW_ONLY_NO_HUB_WRITE")
         self.assertEqual(receipt["release_status"], "UNQUALIFIED")
         self.assertEqual(receipt["candidate_readme_sha256"], card.digest(changed))
-        self.assertIn("+| Additive adapter-bound development check", diff)
+        self.assertEqual(receipt["candidate_kind"], "LOADER_EXAMPLE_WITHDRAWAL_ONLY")
+        self.assertIn("+Executable loading guidance is withdrawn", diff)
 
     def test_unreviewed_candidate_digest_fails_closed(self):
         revision = subprocess.run(
@@ -153,7 +139,7 @@ class ReceiptAgentV3CardSyncTests(unittest.TestCase):
         ).stdout.strip()
         historical, additive = records()
         with patch.object(card, "read_hub_parent", return_value=(hub_fixture(), historical, additive)):
-            with self.assertRaisesRegex(card.CardSyncError, "five-anchor Hub candidate"):
+            with self.assertRaisesRegex(card.CardSyncError, "two-span loader-withdrawal Hub candidate"):
                 card.prepare(ROOT, revision)
 
 

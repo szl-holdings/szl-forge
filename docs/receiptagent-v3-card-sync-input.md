@@ -1,5 +1,71 @@
 # ReceiptAgent v3 public-card correction input
 
+## Current candidate: loader guidance withdrawal
+
+The historical five-span DEV correction below was consumed by the existing
+publisher. Its resulting public Hub parent is
+`d674c37cae7127021ba36820ea7a6774cec06255`, whose README is 10,885 UTF-8/LF bytes,
+SHA-256 `79fa68b40bcd8cdfff3c4c0a50a7f4c452bf62b080fa95080baffb02a9430555`.
+Do not dispatch that earlier parent or reuse its confirmation.
+
+The new preparer changes exactly two spans in that current README: it withdraws
+the unqualified executable Load recipe and replaces the banner's claim that the
+merged artifact is loadable with Transformers. Loader compatibility remains
+`UNKNOWN`. The replacement uses the canonical authoring card's distinction
+between the conditional-generation adapter base class and the merged
+`Qwen3_5ForCausalLM` configuration. No model is loaded or evaluated by this work.
+Both owner-run DEV records, base `UNRECORDED`, all qualification and rights holds,
+`publication_eligible: false`, `autonomy_eligible: false` and
+`promotion_effect=NONE` remain byte-for-byte unchanged.
+
+The `LOADER_EXAMPLE_WITHDRAWAL_ONLY` candidate is 11,072 UTF-8/LF bytes,
+SHA-256 `21f74eebf9a1033054bfd6bc9306c3322ade2a134a3b88125a895e2f6006dd9c`.
+The committed public fixture is the exact prior card, not a training or held-out
+dataset. Offline tests bind both hashes and verify that reversing the two edits
+restores every original byte. Missing, duplicated, partially changed or consumed
+anchors and any observed parent/digest drift still fail closed.
+
+Run from the exact source checkout:
+
+```sh
+python -B -m unittest discover -s tests -p 'test_*receiptagent_v3*card*.py' -v
+python -B tools/prepare_receiptagent_v3_card_sync.py --source-revision <40-hex-git-commit>
+```
+
+The default preparer is read-only and returns `REVIEW_ONLY_NO_HUB_WRITE` and
+`UNQUALIFIED`. It binds the authoring card, not an uncommitted writer or protected
+release. Review, exact-head CI, signed protected merge, fresh target write
+authorization and one-writer coordination remain separate prerequisites.
+
+Only after those prerequisites are verified, the new manual dispatch intent is:
+
+```sh
+gh workflow run publish-receiptagent-v3-public-card.yml \
+  --repo szl-holdings/szl-forge --ref main \
+  -f source_revision=<current-main-40-hex-sha> \
+  -f expected_hub_parent=d674c37cae7127021ba36820ea7a6774cec06255 \
+  -f confirmation=README_ONLY_LOADER_WITHDRAWAL
+```
+
+This command is documentation, not evidence of a dispatch. The workflow exposes
+only the `HF_ORG_TOKEN` candidate to the unchanged shared credential selector.
+No later credential, OIDC resource or repository-create grant is supplied; an
+access failure stops this workflow rather than rotating identities. A configured
+secret and its historical successful preflight do not prove current authority.
+
+The publisher rejects malformed identity names and configured-token echoes before
+the commit. Receipts retain only `publisher_identity_sha256`, not the raw name.
+The exact-source binding, manual first-attempt intent, per-model concurrency,
+reviewed SDK 1.23.0 origin marker, single README parent-CAS, immutable byte readback
+and no-retry rules below are unchanged. README publication never grants model,
+runtime, training, deployment or autonomous-execution qualification.
+
+## Historical consumed DEV correction (not a current dispatch recipe)
+
+The remainder records the earlier candidate and its release controls. Its parent,
+candidate bytes and `README_ONLY_UNQUALIFIED` confirmation are retired for this
+new correction. They are retained for history, not to authorize a repeated write.
+
 The preparer is a review input, not a model publication or release. The public
 `SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3` Hub card at immutable revision
 `f4b28d75e1bdbbbf299bb8f5beceb8f141f38baf` correctly retains the historical

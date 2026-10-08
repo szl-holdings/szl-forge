@@ -1,7 +1,7 @@
 """Prepare, but never publish, the bounded ReceiptAgent v3 Hub-card correction.
 
 The public Hub README and the Forge authoring card have different layouts. This
-one-shot preparer changes five reviewed spans in the exact observed Hub
+one-shot preparer withdraws two reviewed loader spans in the exact observed Hub
 README and preserves every other byte. It has no credential or Hub write path.
 """
 
@@ -21,9 +21,10 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE_CARD = "receiptagent-v3/card/README.md"
 SOURCE_CARD_SHA256 = "d15037c8a084b9ea2e0b9f0c71324632f6e97cc177f93120e8485dbb8d8931ea"
 HUB_REPO = "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3"
-HUB_PARENT = "f4b28d75e1bdbbbf299bb8f5beceb8f141f38baf"
-HUB_README_SHA256 = "bfa0fac0f1f9ddf03fe2fd9444b8091f0a1f5a08bdf991ff75d23a09ff57cd07"
-CANDIDATE_README_SHA256 = "79fa68b40bcd8cdfff3c4c0a50a7f4c452bf62b080fa95080baffb02a9430555"
+HUB_PARENT = "d674c37cae7127021ba36820ea7a6774cec06255"
+HUB_README_SHA256 = "79fa68b40bcd8cdfff3c4c0a50a7f4c452bf62b080fa95080baffb02a9430555"
+CANDIDATE_README_SHA256 = "21f74eebf9a1033054bfd6bc9306c3322ade2a134a3b88125a895e2f6006dd9c"
+CANDIDATE_KIND = "LOADER_EXAMPLE_WITHDRAWAL_ONLY"
 ADAPTER_SHA256 = "90b82ade0b2c84eca92e90cdeb56137d61d7da4b4863ff4d29fa75e9dc037870"
 MAX_REMOTE_BYTES = 1_000_000
 
@@ -150,16 +151,43 @@ NEW_SOURCE_NOTE = (
     "it from the separate additive adapter-bound 12/12 DEV record)."
 )
 
+# The preceding evidence strings describe the already published correction.
+# This new one-shot candidate preserves those results and release boundaries.
+OLD_LOAD_SECTION = (
+    "## Load\n\n"
+    "Untested in this card pass. Adapter path (the declared artifact):\n\n"
+    "```python\n"
+    "from peft import PeftModel\n"
+    "from transformers import AutoModelForCausalLM, AutoTokenizer\n\n"
+    'base_id = "Qwen/Qwen3.5-0.8B"\n'
+    "tok = AutoTokenizer.from_pretrained(base_id)\n"
+    "base = AutoModelForCausalLM.from_pretrained(base_id)\n"
+    'model = PeftModel.from_pretrained(base, "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3")\n'
+    "```\n\n"
+    "The root also contains `config.json` and the merged `model.safetensors`; callers must verify "
+    "which path their library selects rather than relying on loader precedence.\n\n"
+)
+NEW_LOAD_SECTION = (
+    "## Load\n\n"
+    "Executable loading guidance is withdrawn pending exact-lineage and loader qualification.\n\n"
+    "Use only for isolated, reviewed research with explicitly pinned model, base and runtime identities. "
+    "The root contains both adapter and merged artifacts, so select the load path explicitly. "
+    "Before publishing an executable load recipe, establish the matching immutable base revision and "
+    "qualify the exact Transformers/PEFT versions and architecture class. The adapter configuration "
+    "references a conditional-generation base class while the merged configuration names "
+    "`Qwen3_5ForCausalLM`; do not hide this distinction behind a generic loader example.\n\n"
+    "Loader compatibility is UNKNOWN. No weights were loaded and no inference was run in this card review.\n\n"
+)
+OLD_LOADER_PHRASE = "(`model.safetensors` + `config.json`, loadable with `transformers`)"
+NEW_LOADER_PHRASE = "(`model.safetensors` + `config.json`; loader compatibility UNKNOWN)"
+
 
 def candidate(readme: bytes) -> bytes:
     if b"\r\n" in readme:
         raise CardSyncError("Hub line endings changed from reviewed LF")
     updated = readme
-    for old, new in ((OLD_EVALS, NEW_EVALS),
-                     (OLD_CLAIM, NEW_CLAIM),
-                     (OLD_EXPLANATION, NEW_EXPLANATION),
-                     (OLD_EVIDENCE, NEW_EVIDENCE),
-                     (OLD_SOURCE_NOTE, NEW_SOURCE_NOTE)):
+    for old, new in ((OLD_LOAD_SECTION, NEW_LOAD_SECTION),
+                     (OLD_LOADER_PHRASE, NEW_LOADER_PHRASE)):
         before, after = old.encode("utf-8"), new.encode("utf-8")
         if updated.count(before) != 1 or updated.count(after):
             raise CardSyncError("Hub card anchor is absent, duplicated, or already edited")
@@ -173,7 +201,7 @@ def prepare(root: Path, source_revision: str) -> tuple[bytes, str, dict]:
     validate_dev_records(historical, additive)
     changed = candidate(readme)
     if digest(changed) != CANDIDATE_README_SHA256:
-        raise CardSyncError("reviewed five-anchor Hub candidate bytes changed")
+        raise CardSyncError("reviewed two-span loader-withdrawal Hub candidate bytes changed")
     diff = "".join(difflib.unified_diff(
         readme.decode("utf-8").splitlines(keepends=True),
         changed.decode("utf-8").splitlines(keepends=True),
@@ -190,6 +218,7 @@ def prepare(root: Path, source_revision: str) -> tuple[bytes, str, dict]:
         "observed_hub_parent": HUB_PARENT,
         "observed_readme_sha256": digest(readme),
         "candidate_readme_sha256": digest(changed),
+        "candidate_kind": CANDIDATE_KIND,
         "changed_paths": ["README.md"],
         "disposition": "REVIEW_ONLY_NO_HUB_WRITE",
         "release_status": "UNQUALIFIED",

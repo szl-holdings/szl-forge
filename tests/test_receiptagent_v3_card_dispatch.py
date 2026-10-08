@@ -22,7 +22,7 @@ def valid_environment() -> dict[str, str]:
         "GITHUB_SHA": SOURCE,
         "CARD_SOURCE_REVISION": SOURCE,
         "CARD_EXPECTED_HUB_PARENT": dispatch.writer.card.HUB_PARENT,
-        "CARD_CONFIRMATION": "README_ONLY_UNQUALIFIED",
+        "CARD_CONFIRMATION": "README_ONLY_LOADER_WITHDRAWAL",
     }
 
 
@@ -37,6 +37,7 @@ class ManualDispatchTests(unittest.TestCase):
         self.assertEqual(result["source_revision"], SOURCE)
         self.assertEqual(result["expected_hub_parent"], dispatch.writer.card.HUB_PARENT)
         self.assertEqual(result["state"], "MANUAL_INTENT_AND_SOURCE_VERIFIED")
+        self.assertEqual(result["candidate_kind"], "LOADER_EXAMPLE_WITHDRAWAL_ONLY")
         self.current.assert_called_once_with(SOURCE)
         self.committed.assert_called_once_with(SOURCE)
 
@@ -49,7 +50,7 @@ class ManualDispatchTests(unittest.TestCase):
             "GITHUB_SHA": ["short", "A" * 40, ""],
             "CARD_SOURCE_REVISION": ["b" * 40, SOURCE + " ", ""],
             "CARD_EXPECTED_HUB_PARENT": ["b" * 40, ""],
-            "CARD_CONFIRMATION": ["publish", ""],
+            "CARD_CONFIRMATION": ["publish", "README_ONLY_UNQUALIFIED", ""],
         }
         for name, values in cases.items():
             for value in values:
@@ -95,6 +96,11 @@ class ManualDispatchTests(unittest.TestCase):
         self.assertIn("persist-credentials: false", text)
         self.assertIn("cancel-in-progress: false", text)
         self.assertIn("huggingface-hub==1.23.0", text)
+        self.assertIn("README_ONLY_LOADER_WITHDRAWAL", text)
+        self.assertEqual(text.count("${{ secrets."), 1)
+        self.assertIn("HF_ORG_TOKEN_CANDIDATE: ${{ secrets.HF_ORG_TOKEN }}", text)
+        self.assertNotIn("--allow-create", text)
+        self.assertNotIn("--oidc-resource", text)
         self.assertIn("mkdir -p reports", text)
         for name, input_name in (
             ("CARD_SOURCE_REVISION", "source_revision"),
