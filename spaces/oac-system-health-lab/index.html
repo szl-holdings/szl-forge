@@ -107,6 +107,11 @@
     .identity-grid dt { font-size:.7rem; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
     .identity-grid dd { font-family:ui-monospace,SFMono-Regular,Consolas,monospace; font-size:.75rem; overflow-wrap:anywhere; margin:5px 0 0; color:var(--ink); }
     .identity-note { font-size:.74rem; color:var(--muted); margin-top:18px; }
+    .v2-preview { margin-top:28px; padding:24px 28px; --rim-start:var(--violet); --rim-end:var(--line); }
+    .v2-preview p { color:var(--muted); font-size:.82rem; margin-top:10px; }
+    .v2-actions { display:flex; gap:12px; flex-wrap:wrap; margin-top:18px; align-items:center; }
+    .v2-status[data-state="ready"] { color:var(--green); } .v2-status[data-state="unavailable"] { color:var(--red); }
+    .v2-result { min-height:2.5em; }
     .foot { display:flex; justify-content:space-between; gap:24px; align-items:start; padding:30px 0 38px; font-size:.74rem; color:var(--muted); flex-wrap:wrap; }
     .foot p { max-width:670px; } .foot span { white-space:normal; }
     .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
@@ -194,6 +199,13 @@
           <aside class="limits" aria-label="Authority prohibitions"><h3>This advisory cannot authorize</h3><ul><li>Message acknowledgement</li><li>Device control</li><li>Clinical decisions</li><li>Result interpretation</li><li>Result release</li><li>Production promotion</li></ul></aside>
         </section>
       </section>
+      <section class="card v2-preview" id="v2-panel" aria-labelledby="v2-title">
+        <div class="head-row"><h2 id="v2-title">Optional v2 research advisory</h2><span class="badge">Synthetic · no authority</span></div>
+        <p>v1 above remains the default. To use v2, explicitly check its pinned identity, then score the same invented eight fields. No patient, site, device, specimen, order, or result data.</p>
+        <div class="v2-actions"><button class="small-button" id="v2-enable" type="button">Check v2 identity</button><button class="small-button" id="v2-score" type="button" disabled>Request v2 advisory</button><a href="https://huggingface.co/SZLHOLDINGS/oac-ops-health-v2/tree/a824a32d91a383d33a1e1e595f11b8362d1b4efa" target="_blank" rel="noopener noreferrer">Pinned v2 package ↗</a></div>
+        <p class="v2-status" id="v2-status" data-state="idle" role="status" aria-live="polite">Not enabled. No v2 request has been sent.</p>
+        <p class="v2-result" id="v2-result" role="status" aria-live="polite">No v2 advisory requested.</p>
+      </section>
       <section class="card provenance" id="provenance" aria-labelledby="source-title">
         <div class="provenance-top"><h2 id="source-title"><span class="panel-index" aria-hidden="true">03</span>Source &amp; artifact identity</h2><button class="small-button" id="refresh-identity" type="button">Refresh identity</button></div>
         <p class="provenance-intro">Canonical Python source in GitHub. Model and synthetic dataset in Hugging Face. Revisions below are returned by the running service.</p>
@@ -216,6 +228,8 @@
     let serviceReady = false;
     let busy = false;
     let identityBusy = false;
+    let v2Busy = false;
+    let v2Identity = null;
     const isObject = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
     const isFiniteNumber = (value) => typeof value === "number" && Number.isFinite(value);
     const gitRevision = (value) => typeof value === "string" && /^[a-f0-9]{40}$/.test(value);
@@ -248,6 +262,28 @@
       }
       return advisory;
     }
+    const v2IdentityKeys = ["schema", "state", "application", "artifact_source", "hub_model", "artifacts", "synthetic_training_data", "clinical_use_authorized", "production_promotion_allowed", "authority", "receipt_minted"];
+    const v2AdvisoryKeys = ["schema", "advisory", "abstain_reason", "prediction_set", "operator_attention_score", "threshold_decision", "decision_threshold", "score_semantics", "purpose", "authority", "normalized_feature_contributions", "coverage_statement"];
+    const v2Pins = {
+      artifact_source: {repository:"szl-holdings/szl-forge",revision:"56a00821858825f529c40c7322c2f1584608d6e5",directory:"ops-health/v2/ops-health"},
+      hub_model: {repo_id:"SZLHOLDINGS/oac-ops-health-v2",revision:"a824a32d91a383d33a1e1e595f11b8362d1b4efa"},
+      artifacts: {"ops_health.py":"b0a64ff3f26ea284b0588de351ed7795a6089203b35fded0e7d82cbd4871aed9","model.json":"b830a5edca271d667ab09b378dd5d3ab505d71a7e3451de8d9ca2bacfeed977c","artifact_receipt.json":"442486a3b451f0ad765aac253830cdc5455bad3a34186b4cf73388cf207056f2","example_input.json":"afa7c8e5081c682877ad489259592951f854ba2558d409fdcf071ba845d4fb63"}
+    };
+    function validateV2Identity(value) {
+      const pinsMatch = Object.entries(v2Pins).every(([section, expected]) => exactKeys(value[section], Object.keys(expected)) && Object.entries(expected).every(([key, pin]) => value[section][key] === pin));
+      if (!exactKeys(value, v2IdentityKeys) || value.schema !== "szl.oac-health-space-identity/v2" || value.state !== "READY" || !exactKeys(value.application, ["repository", "revision"]) || value.application.repository !== "szl-holdings/szl-forge" || !gitRevision(value.application.revision) || !pinsMatch || value.synthetic_training_data !== true || value.clinical_use_authorized !== false || value.production_promotion_allowed !== false || value.receipt_minted !== false || !exactKeys(value.authority, authorityNames) || !Object.values(value.authority).every((flag) => flag === false)) throw new Error("The pinned v2 identity is unavailable.");
+      return value;
+    }
+    function validateV2Score(value) {
+      if (!exactKeys(value, scoreKeys) || value.ok !== true || value.receipt_minted !== false || !digestPattern(value.input_sha256) || !digestPattern(value.output_sha256)) throw new Error("The v2 response is unavailable.");
+      const identity = validateV2Identity(value.identity);
+      if (!v2Identity || identity.application.revision !== v2Identity.application.revision) throw new Error("The v2 source changed after opt-in.");
+      const advisory = value.advisory;
+      const set = advisory && advisory.prediction_set;
+      const outcomeMatchesSet = Array.isArray(set) && ((advisory.advisory === "NO_ALERT" && advisory.abstain_reason === null && set.length === 1 && set[0] === 0) || (advisory.advisory === "ALERT" && advisory.abstain_reason === null && set.length === 1 && set[0] === 1) || (advisory.advisory === "ABSTAIN" && advisory.abstain_reason === "BOTH" && set.length === 2 && set[0] === 0 && set[1] === 1) || (advisory.advisory === "ABSTAIN" && advisory.abstain_reason === "EMPTY" && set.length === 0));
+      if (!exactKeys(advisory, v2AdvisoryKeys) || advisory.schema !== "szl-oac/ops-health-advisory/v2" || !outcomeMatchesSet || !isFiniteNumber(advisory.operator_attention_score) || advisory.operator_attention_score < 0 || advisory.operator_attention_score > 1 || typeof advisory.threshold_decision !== "boolean" || !isFiniteNumber(advisory.decision_threshold) || advisory.decision_threshold < 0 || advisory.decision_threshold > 1 || advisory.score_semantics !== "synthetic_attention_probability_estimate_not_production_calibrated" || advisory.purpose !== "synthetic_operational_transport_attention_only" || !exactKeys(advisory.authority, authorityNames) || !Object.values(advisory.authority).every((flag) => flag === false) || !exactKeys(advisory.normalized_feature_contributions, featureNames) || !Object.values(advisory.normalized_feature_contributions).every(isFiniteNumber) || typeof advisory.coverage_statement !== "string" || !advisory.coverage_statement.includes("SYNTHETIC.") || advisory.coverage_statement.length > 512) throw new Error("The v2 advisory failed its synthetic-only contract.");
+      return advisory;
+    }
     async function requestJSON(path, options = {}) {
       const controller = new AbortController();
       const deadline = setTimeout(() => controller.abort(), 10000);
@@ -276,13 +312,16 @@
       } finally {clearTimeout(deadline);}
     }
     function updateControls() {
-      el("score-button").disabled = !serviceReady || busy || identityBusy;
-      el("feature-fields").disabled = busy;
-      el("preset-healthy").disabled = busy;
-      el("preset-degraded").disabled = busy;
-      el("refresh-identity").disabled = busy || identityBusy;
+      el("score-button").disabled = !serviceReady || busy || identityBusy || v2Busy;
+      el("feature-fields").disabled = busy || v2Busy;
+      el("preset-healthy").disabled = busy || v2Busy;
+      el("preset-degraded").disabled = busy || v2Busy;
+      el("refresh-identity").disabled = busy || identityBusy || v2Busy;
       el("score-button").textContent = busy ? "Requesting…" : "Request advisory";
       el("advisory-panel").setAttribute("aria-busy", String(busy));
+      el("v2-enable").disabled = busy || identityBusy || v2Busy;
+      el("v2-score").disabled = !v2Identity || busy || identityBusy || v2Busy;
+      el("v2-panel").setAttribute("aria-busy", String(v2Busy));
     }
     function serviceStatus(state, text) {el("service-status").dataset.state = state; el("service-status-text").textContent = text;}
     function addPair(container, key, value) {
@@ -346,6 +385,41 @@
       if (!isFiniteNumber(features.queue_utilization) || features.queue_utilization < 0 || features.queue_utilization > 1 || !Number.isInteger(features.consecutive_failures) || features.consecutive_failures < 0 || features.consecutive_failures > 20 || !Number.isInteger(features.seconds_since_last_success) || features.seconds_since_last_success < 0 || features.seconds_since_last_success > 86400) throw new Error("Use valid counters within the displayed ranges.");
       return features;
     }
+    el("v2-enable").addEventListener("click", async () => {
+      if (busy || identityBusy || v2Busy) return;
+      v2Identity = null;
+      v2Busy = true;
+      updateControls();
+      el("v2-status").dataset.state = "checking";
+      el("v2-status").textContent = "Checking pinned v2 identity…";
+      el("v2-result").textContent = "No v2 advisory requested.";
+      try {
+        v2Identity = validateV2Identity(await requestJSON("/api/v2/identity"));
+        el("v2-status").dataset.state = "ready";
+        el("v2-status").textContent = "v2 identity ready · synthetic research advisory only";
+      } catch (error) {
+        el("v2-status").dataset.state = "unavailable";
+        el("v2-status").textContent = "v2 unavailable · no advisory can be requested";
+      } finally {v2Busy = false; updateControls();}
+    });
+    el("v2-score").addEventListener("click", async () => {
+      if (!v2Identity || busy || identityBusy || v2Busy || !form.reportValidity()) return;
+      let features;
+      try {features = readFeatures();} catch (error) {el("v2-result").textContent = "Invalid synthetic counters; no result displayed."; return;}
+      v2Busy = true;
+      updateControls();
+      el("v2-result").textContent = "Requesting v2 synthetic advisory…";
+      try {
+        const response = await requestJSON("/api/v2/score", {method:"POST", headers:{"Content-Type":"application/json", "X-SZL-Preview":"1"}, body:JSON.stringify({features})});
+        const advisory = validateV2Score(response);
+        el("v2-result").textContent = advisory.advisory === "ABSTAIN" ? "v2 ABSTAIN (" + advisory.abstain_reason + ") · no determination or action suggested. Synthetic score " + advisory.operator_attention_score.toFixed(3) + "; no clinical or device authority." : "v2 " + advisory.advisory + " · synthetic attention score " + advisory.operator_attention_score.toFixed(3) + ". Advisory only; no clinical, result, acknowledgement, or device authority.";
+      } catch (error) {
+        v2Identity = null;
+        el("v2-status").dataset.state = "unavailable";
+        el("v2-status").textContent = "v2 unavailable · recheck identity before another request";
+        el("v2-result").textContent = "No v2 result displayed; the response failed the pinned contract.";
+      } finally {v2Busy = false; updateControls();}
+    });
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       if (!serviceReady || busy || identityBusy || !form.reportValidity()) return;
@@ -380,7 +454,7 @@
         resetResult("unavailable", error instanceof Error ? error.message : "The request failed. No result is displayed.");
       } finally {busy = false; updateControls();}
     });
-    form.addEventListener("input", () => {if (!busy && !identityBusy) resetResult("idle", "Inputs changed. Request a new advisory; the previous result is no longer displayed.");});
+    form.addEventListener("input", () => {if (!busy && !identityBusy && !v2Busy) {resetResult("idle", "Inputs changed. Request a new advisory; the previous result is no longer displayed."); el("v2-result").textContent = "Inputs changed. Request a new v2 advisory if desired.";}});
     function preset(degraded) {
       if (busy) return;
       for (const name of binaryNames) el(name).checked = !degraded;
@@ -388,6 +462,7 @@
       el("consecutive_failures").value = degraded ? "12" : "0";
       el("seconds_since_last_success").value = degraded ? "21600" : "20";
       resetResult("idle", (degraded ? "Degraded" : "Healthy") + " synthetic example loaded. No live device data is used. Request an advisory to score it.");
+      el("v2-result").textContent = "Synthetic preset changed. Request a new v2 advisory if desired.";
     }
     el("preset-healthy").addEventListener("click", () => preset(false));
     el("preset-degraded").addEventListener("click", () => preset(true));
