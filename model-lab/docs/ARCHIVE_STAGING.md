@@ -104,7 +104,12 @@ szl-model-lab archive-candidate --candidate '<stage root>/candidate-001'
 This last command accepts only the five-file Model Lab candidate format with
 its exact small safetensors layout and a bound archive stage. It excludes
 extra files, rejects suspicious text metadata, copies into a new archive
-directory, rehashes the local copies, and writes `archive-copy-receipt.json`.
+pending directory, rehashes the local copies and receipt, then renames the
+complete directory to `candidate-<manifest hash prefix>`. A failed copy leaves
+its `.pending-*` directory as incomplete evidence; a retry can create a new
+pending directory without treating the failed one as a candidate. Review any
+pending directory before manual cleanup. Only the final directory with its
+receipt represents a locally verified copy.
 The receipt records `LOCAL_COPY_VERIFIED_REMOTE_UNVERIFIED` and
 `checkpoint_completeness: NOT_RESTARTABLE`. It is **not** a multi-GB model
 backup, a resumable training checkpoint, or an independent remote-byte restore.
