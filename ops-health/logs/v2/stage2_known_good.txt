@@ -1,0 +1,192 @@
+# stage-2 known-good retrains (AM-4), HEAD 8c9ecb3d2b8ce120d2ff8da693fe1d6bf8cf1bf3, 2026-09-29T15:22:02Z
+# cmd: PYTHONUTF8=1 py -3.12 -B -m v2.research.stage2 known-good
+k1: train sha256 68860affab3b74d8e19cbb4a88cb5ea3a862f3a7e5342ce05581f88e95134d4e model 58cbfe92905075607ed1f5677f5792cd7297054076b3058a2080ebadd896f273 threshold 0.19 am2_converged True
+k2: train sha256 1be3d6898edac4ab412b5c2675543006a79e83132aae3382ba7b7b78105913df model 504c8a1d03240d7ff04f7f850a7f4c29c1f4120ebb6c9e49054ae36694109147 threshold 0.18 am2_converged True
+k3: train sha256 a21ddeff822a6be1e34a071678b68db84d6eb27d06dc5dfb23a1b641472c5725 model 49a56b3612bdaa22bb2bd63f9fc92ea8d96078b9c0ce3f601db96672199d884a threshold 0.19 am2_converged True
+k4: train sha256 49630c78c510f31d8838eef57970990150d257bd9f9cf431cee0e50c0dfa95d8 model 7734a817f202017189027dd1b689dc72b4ab81167a226a20250d6c77e999e6d3 threshold 0.19 am2_converged True
+k5: train sha256 33744d8e6cae2bff7262b3f2a5b963280febd5fec5086a84e84178e75883b477 model 7773d9f4f2e360738a1f96915101dcb086fa8f256857936398702146468e7e0c threshold 0.2 am2_converged True
+{
+  "amendment": "AM-4",
+  "note": "hashes recorded before any section 10/11 gate is evaluated; the train splits are nominal, 16,384 rows, not sealed",
+  "retrains": {
+    "k1": {
+      "decision_threshold": 0.19,
+      "files": {
+        "v2/results/known_good/k1/artifact_receipt.json": "d0fbc3d954b1b49be7f0c47a6c7368d26e5af967efdea3b8c82fcf064cb58b8d",
+        "v2/results/known_good/k1/model.json": "58cbfe92905075607ed1f5677f5792cd7297054076b3058a2080ebadd896f273"
+      },
+      "fit": {
+        "am2_converged": true,
+        "calibrator": {
+          "rows": 4096
+        },
+        "calibrator_kind": "none",
+        "irls": {
+          "converged": true,
+          "gradient_max_abs": 1.115876969548079e-16,
+          "iterations": 7,
+          "stop_reason": "CONVERGED"
+        }
+      },
+      "k": 1,
+      "model_sha256": "58cbfe92905075607ed1f5677f5792cd7297054076b3058a2080ebadd896f273",
+      "receipt_sha256": "d0fbc3d954b1b49be7f0c47a6c7368d26e5af967efdea3b8c82fcf064cb58b8d",
+      "seed": 12884575537372217300,
+      "seed_material": "oac-ops-health-v2:20260927:train",
+      "source_commit": "8c9ecb3d2b8ce120d2ff8da693fe1d6bf8cf1bf3",
+      "train": {
+        "bytes": 6190316,
+        "path": "v2/results/known_good/k1/train.jsonl",
+        "rows": 16384,
+        "sha256": "68860affab3b74d8e19cbb4a88cb5ea3a862f3a7e5342ce05581f88e95134d4e"
+      }
+    },
+    "k2": {
+      "decision_threshold": 0.18,
+      "files": {
+        "v2/results/known_good/k2/artifact_receipt.json": "d36a9318a8bebdead47bd517801ca22041bfd36992ef2e5ea077bfd825c24079",
+        "v2/results/known_good/k2/model.json": "504c8a1d03240d7ff04f7f850a7f4c29c1f4120ebb6c9e49054ae36694109147"
+      },
+      "fit": {
+        "am2_converged": true,
+        "calibrator": {
+          "rows": 4096
+        },
+        "calibrator_kind": "none",
+        "irls": {
+          "converged": true,
+          "gradient_max_abs": 6.760678171804924e-17,
+          "iterations": 7,
+          "stop_reason": "CONVERGED"
+        }
+      },
+      "k": 2,
+      "model_sha256": "504c8a1d03240d7ff04f7f850a7f4c29c1f4120ebb6c9e49054ae36694109147",
+      "receipt_sha256": "d36a9318a8bebdead47bd517801ca22041bfd36992ef2e5ea077bfd825c24079",
+      "seed": 138773271134495649,
+      "seed_material": "oac-ops-health-v2:20260928:train",
+      "source_commit": "8c9ecb3d2b8ce120d2ff8da693fe1d6bf8cf1bf3",
+      "train": {
+        "bytes": 6190433,
+        "path": "v2/results/known_good/k2/train.jsonl",
+        "rows": 16384,
+        "sha256": "1be3d6898edac4ab412b5c2675543006a79e83132aae3382ba7b7b78105913df"
+      }
+    },
+    "k3": {
+      "decision_threshold": 0.19,
+      "files": {
+        "v2/results/known_good/k3/artifact_receipt.json": "06288cbb2a8f765d1c2c0068a7c9dc0d158a716801c66c07816218e756d2aa33",
+        "v2/results/known_good/k3/model.json": "49a56b3612bdaa22bb2bd63f9fc92ea8d96078b9c0ce3f601db96672199d884a"
+      },
+      "fit": {
+        "am2_converged": true,
+        "calibrator": {
+          "rows": 4096
+        },
+        "calibrator_kind": "none",
+        "irls": {
+          "converged": true,
+          "gradient_max_abs": 5.637851296924623e-18,
+          "iterations": 7,
+          "stop_reason": "CONVERGED"
+        }
+      },
+      "k": 3,
+      "model_sha256": "49a56b3612bdaa22bb2bd63f9fc92ea8d96078b9c0ce3f601db96672199d884a",
+      "receipt_sha256": "06288cbb2a8f765d1c2c0068a7c9dc0d158a716801c66c07816218e756d2aa33",
+      "seed": 2331677925896360407,
+      "seed_material": "oac-ops-health-v2:20260929:train",
+      "source_commit": "8c9ecb3d2b8ce120d2ff8da693fe1d6bf8cf1bf3",
+      "train": {
+        "bytes": 6190486,
+        "path": "v2/results/known_good/k3/train.jsonl",
+        "rows": 16384,
+        "sha256": "a21ddeff822a6be1e34a071678b68db84d6eb27d06dc5dfb23a1b641472c5725"
+      }
+    },
+    "k4": {
+      "decision_threshold": 0.19,
+      "files": {
+        "v2/results/known_good/k4/artifact_receipt.json": "96060e7388b4a7848736e30548617dd0ad9d7f2587ec4697e935e3442a08ad64",
+        "v2/results/known_good/k4/model.json": "7734a817f202017189027dd1b689dc72b4ab81167a226a20250d6c77e999e6d3"
+      },
+      "fit": {
+        "am2_converged": true,
+        "calibrator": {
+          "rows": 4096
+        },
+        "calibrator_kind": "none",
+        "irls": {
+          "converged": true,
+          "gradient_max_abs": 5.827586677109586e-17,
+          "iterations": 7,
+          "stop_reason": "CONVERGED"
+        }
+      },
+      "k": 4,
+      "model_sha256": "7734a817f202017189027dd1b689dc72b4ab81167a226a20250d6c77e999e6d3",
+      "receipt_sha256": "96060e7388b4a7848736e30548617dd0ad9d7f2587ec4697e935e3442a08ad64",
+      "seed": 9125488946636186615,
+      "seed_material": "oac-ops-health-v2:20260930:train",
+      "source_commit": "8c9ecb3d2b8ce120d2ff8da693fe1d6bf8cf1bf3",
+      "train": {
+        "bytes": 6190330,
+        "path": "v2/results/known_good/k4/train.jsonl",
+        "rows": 16384,
+        "sha256": "49630c78c510f31d8838eef57970990150d257bd9f9cf431cee0e50c0dfa95d8"
+      }
+    },
+    "k5": {
+      "decision_threshold": 0.2,
+      "files": {
+        "v2/results/known_good/k5/artifact_receipt.json": "3204c9f1ff02d6090a1ae04fb8e8897eaf862498f7295966d8d9c4d82b833967",
+        "v2/results/known_good/k5/model.json": "7773d9f4f2e360738a1f96915101dcb086fa8f256857936398702146468e7e0c"
+      },
+      "fit": {
+        "am2_converged": true,
+        "calibrator": {
+          "rows": 4096
+        },
+        "calibrator_kind": "none",
+        "irls": {
+          "converged": true,
+          "gradient_max_abs": 8.3292561351778e-17,
+          "iterations": 7,
+          "stop_reason": "CONVERGED"
+        }
+      },
+      "k": 5,
+      "model_sha256": "7773d9f4f2e360738a1f96915101dcb086fa8f256857936398702146468e7e0c",
+      "receipt_sha256": "3204c9f1ff02d6090a1ae04fb8e8897eaf862498f7295966d8d9c4d82b833967",
+      "seed": 14118132051478272757,
+      "seed_material": "oac-ops-health-v2:20260931:train",
+      "source_commit": "8c9ecb3d2b8ce120d2ff8da693fe1d6bf8cf1bf3",
+      "train": {
+        "bytes": 6190147,
+        "path": "v2/results/known_good/k5/train.jsonl",
+        "rows": 16384,
+        "sha256": "33744d8e6cae2bff7262b3f2a5b963280febd5fec5086a84e84178e75883b477"
+      }
+    }
+  },
+  "schema": "szl-oac/ops-health-known-good-index/v2",
+  "search_trace_sha256": "cc6d6809a5ae76083e42e97bb2eeca9024512fe1120da98dfa97a3f3c7d47eee",
+  "selected_recipe": {
+    "calibrator": "none",
+    "l2": 0.001
+  },
+  "selected_trial": "T07_l2_1e-3_none",
+  "synthetic": true
+}
+exit=0
+# finished 2026-09-29T15:22:20Z
+## derivation check (appended 2026-09-29T15:22:30Z): k=0 regenerates the registered train split; k=1..5 are distinct
+k=0 seed material oac-ops-health-v2:20260926:train sha256 5211e7ec954ec00c743bd62dae107f7a80335e4e5962a31b788e7bf56ecf0adb == MANIFEST train: True
+k=1..5 train sha256 distinct: True none equals registered train: True
+k1 oac-ops-health-v2:20260927:train seed 12884575537372217300 rows 16384 file sha256 matches INDEX: True
+k2 oac-ops-health-v2:20260928:train seed 138773271134495649 rows 16384 file sha256 matches INDEX: True
+k3 oac-ops-health-v2:20260929:train seed 2331677925896360407 rows 16384 file sha256 matches INDEX: True
+k4 oac-ops-health-v2:20260930:train seed 9125488946636186615 rows 16384 file sha256 matches INDEX: True
+k5 oac-ops-health-v2:20260931:train seed 14118132051478272757 rows 16384 file sha256 matches INDEX: True
+exit=0

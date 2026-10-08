@@ -1,0 +1,34 @@
+$ cd ROOT && PYTHONUTF8=1 py -3.12 -B -m unittest discover -s v2/tests -t .   # 2026-09-29T12:05:23-04:00, HEAD bb8d56f + uncommitted: v2/research/mutation.py (render-only), v2/results/mutation_readiness.json, v2/results/MUTATION_READINESS.md
+.............................................................................................F................................................F................................
+======================================================================
+FAIL: test_scope_and_sealing (v2.tests.test_readiness.RecordedRunTest.test_scope_and_sealing)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\steph\szl-work\oac-frontier\v2\tests\test_readiness.py", line 129, in test_scope_and_sealing
+    self.assertEqual(list(r["known_good"]), ["v2", "k1", "k2", "k3", "k4", "k5"])
+AssertionError: Lists differ: ['k1', 'k2', 'k3', 'k4', 'k5', 'v2'] != ['v2', 'k1', 'k2', 'k3', 'k4', 'k5']
+
+First differing element 0:
+'k1'
+'v2'
+
+- ['k1', 'k2', 'k3', 'k4', 'k5', 'v2']
+?                              ------
+
++ ['v2', 'k1', 'k2', 'k3', 'k4', 'k5']
+?  ++++++
+
+
+======================================================================
+FAIL: test_only_the_guard_and_make_data_name_sealed_splits (v2.tests.test_sealed_guard.SealedGuardTest.test_only_the_guard_and_make_data_name_sealed_splits) (module='mutation.py')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\steph\szl-work\oac-frontier\v2\tests\test_sealed_guard.py", line 135, in test_only_the_guard_and_make_data_name_sealed_splits
+    self.assertIsNone(pattern.search(path.read_text(encoding="utf-8")))
+AssertionError: <re.Match object; span=(319, 326), match='sealed/'> is not None
+
+----------------------------------------------------------------------
+Ran 175 tests in 53.362s
+
+FAILED (failures=2)
+exit code: 1

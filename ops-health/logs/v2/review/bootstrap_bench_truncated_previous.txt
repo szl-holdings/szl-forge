@@ -1,0 +1,4 @@
+# logs/v2/bootstrap_bench.txt -- MEASURED 2026-09-26T21:25:42-04:00; timing benchmark on 50,000 DEV rows (SYNTHETIC, DEV only; intervals are NOT results)
+# HEAD: 7c7226a4091bc0ef9b78dd840890165a3cb39112 (stage-1 code uncommitted at run time)
+# command: cd ROOT && PYTHONUTF8=1 py -3.12 -B -m v2.research.bench_bootstrap
+

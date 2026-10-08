@@ -1,0 +1,85 @@
+# logs/v2/final_opening_run.txt -- the SINGLE final opening of the sealed splits (ws v2-final-opening). MEASURED; SYNTHETIC.
+# started 2026-09-29T21:11:26Z; HEAD 30d50b5b4537e4262489c160351feaaed08e33aa; free disk 5898502144 bytes
+$ PYTHONUTF8=1 py -3.12 -B -m v2.research.final_score --final --confirm FINAL_TEST_OPENING
+check cwd_is_repository_root: ok "the marker records contender paths relative to the repository root"
+check marker_absent: ok "TEST_OPENED.json"
+check output_dir_empty: ok "final"
+check tree_clean_v2_runs: ok {"first": [], "porcelain_lines": 0}
+check git_head: ok "30d50b5b4537e4262489c160351feaaed08e33aa"
+check disk_free: ok {"free_bytes": 5923459072, "minimum_bytes": 2147483648}
+check memory_available: FAILED {"available_commit_bytes": 1034559488, "minimum_bytes": 1073741824}
+check python_3_12: ok "3.12.10"
+check preregistration_sha256: ok {"path": "v2/PREREGISTRATION.md", "sha256": "145497789c7ad78a80a94cfd7f2b031ca9a20df49c06e0b3412af9070fa1ef4b"}
+check amendments_sha256: ok {"path": "v2/AMENDMENTS.md", "sha256": "5152cd7f816c41e810861bbcd6489dee1d2598da89a36f6b418ef4a9867f181d"}
+check data_manifest_sha256: ok {"path": "v2/data/MANIFEST.json", "sha256": "c0d2fa0a924162e42c4d50c8eaf7d155f3e991f8f47ca518b1b87c3927ad7252"}
+check legacy_v1_test_sha256: ok {"path": "v2/data/legacy_v1/test.jsonl", "sha256": "7fc6ea635fcc501d56eed6a8b9e4f5f3a9057d0aa04505502759197150d79679"}
+check contenders_index_sha256: ok {"path": "v2/results/contenders/INDEX.json", "sha256": "086dbca90c69b9a2026bdedeb9fa9657f51af036884d79a839707c64a54b5718"}
+check mutation_readiness_present: ok "v2/results/mutation_readiness.json"
+check file_sha256:v2/ops-health/model.json: ok {"path": "v2/ops-health/model.json", "sha256": "b830a5edca271d667ab09b378dd5d3ab505d71a7e3451de8d9ca2bacfeed977c"}
+check file_sha256:v2/ops-health/artifact_receipt.json: ok {"path": "v2/ops-health/artifact_receipt.json", "sha256": "442486a3b451f0ad765aac253830cdc5455bad3a34186b4cf73388cf207056f2"}
+check file_sha256:v2/ops-health/ops_health.py: ok {"path": "v2/ops-health/ops_health.py", "sha256": "b0a64ff3f26ea284b0588de351ed7795a6089203b35fded0e7d82cbd4871aed9"}
+check file_sha256:hub/oac-v1/model.json: ok {"path": "hub/oac-v1/model.json", "sha256": "f111b7fc65db561c80763b25e538366a19bed18526ca881915777487935d9557"}
+check file_sha256:hub/oac-v1/artifact_receipt.json: ok {"path": "hub/oac-v1/artifact_receipt.json", "sha256": "23239bb39b0a5b6db1e41284e6372f352cee61d7938da1e84472246dcdaf95a1"}
+check file_sha256:hub/oac-v1/oac_operational_health.py: ok {"path": "hub/oac-v1/oac_operational_health.py", "sha256": "2fd8ffd3fd3ca8d0f960d4e0d471593b86e6cccb03607116390cbe9300992669"}
+check file_sha256:v2/results/contenders/ABL-data/model.json: ok {"path": "v2/results/contenders/ABL-data/model.json", "sha256": "0cbe0e4a4d76184c6a53945a7ddfe8ab1ec16318e959296caafd5a0415d5d598"}
+check file_sha256:v2/results/contenders/ABL-data/artifact_receipt.json: ok {"path": "v2/results/contenders/ABL-data/artifact_receipt.json", "sha256": "876bde74b7289e0d7b0edcd4f720c4d1766777c857d14356a88bd3d43c67fa23"}
+check file_sha256:v2/results/contenders/ABL-optimizer/params.json: ok {"path": "v2/results/contenders/ABL-optimizer/params.json", "sha256": "3a89941b066db919b10b608b3537ce4044872b2314761a732b7e828a975e4a1f"}
+check contenders_index_consistent: ok {"ABL-calibration_not_applicable": true, "ABL-conformal_keep": true, "ABL-data_files": true, "ABL-optimizer_files": true}
+check contenders_load: ok "v2 and ABL-data pairs accepted by the v2 kernel; v1 pair accepted by the Hub kernel"
+check receipt_verified:v2: ok "v2 kernel OpsHealthKernel (receipt, kernel self-hash, model hash) and freeze.verify_origin (committed blobs)"
+check receipt_verified:ABL-data: ok "v2 kernel OpsHealthKernel (receipt, kernel self-hash, model hash) and freeze.verify_origin (committed blobs)"
+check v1_threshold: ok 0.16
+check thresholds: ok {"ABL-data": 0.16, "ABL-optimizer": 0.17, "v1": 0.16, "v2": 0.2}
+check v1_reproduces_published_legacy_test_confusion: ok {"published": {"fn": 11, "fp": 57, "tn": 132, "tp": 40}, "rows": 240, "v1_confusion": {"fn": 11, "fp": 57, "tn": 132, "tp": 40}}
+check v2_example_input: ok ["NO_ALERT", 0.069311]
+check validity_inputs: ok {"ABL-data": {"probes_refused": 66, "probes_total": 66, "receipt_verified": true}, "ABL-optimizer": {"probes_refused": 66, "probes_total": 66, "receipt_verified": false}, "majority": {"probes_refused": 0, "probes_total": 66, "receipt_verified": false}, "rule": {"probes_refused": 3, "probes_total": 66, "receipt_verified": false}, "v1": {"probes_refused": 65, "probes_total": 66, "receipt_verified": true}, "v2": {"probes_refused": 66, "probes_total": 66, "receipt_verified": true}}
+REFUSED: pre-opening checks failed: ['memory_available']; nothing was opened
+exit=2 finished 2026-09-29T21:12:10Z
+# attempt 1 above REFUSED before any opening (fail-closed pre-opening check memory_available: 1,034,559,488 < 1,073,741,824 bytes available commit; host load from other processes).
+# verified after the refusal: runs/ holds only receipts (no TEST_OPENED.json); v2/results/final absent; v2/ and runs/ clean. Nothing was opened or written.
+# memory probe 2026-09-29T21:12:56Z: available commit 2896646144 bytes
+## attempt 2 (the opening itself has not happened yet) started 2026-09-29T21:13:04Z; HEAD 30d50b5b4537e4262489c160351feaaed08e33aa; free disk 5653200896 bytes
+$ PYTHONUTF8=1 py -3.12 -B -m v2.research.final_score --final --confirm FINAL_TEST_OPENING
+check cwd_is_repository_root: ok "the marker records contender paths relative to the repository root"
+check marker_absent: ok "TEST_OPENED.json"
+check output_dir_empty: ok "final"
+check tree_clean_v2_runs: ok {"first": [], "porcelain_lines": 0}
+check git_head: ok "30d50b5b4537e4262489c160351feaaed08e33aa"
+check disk_free: ok {"free_bytes": 5550288896, "minimum_bytes": 2147483648}
+check memory_available: ok {"available_commit_bytes": 2616823808, "minimum_bytes": 1073741824}
+check python_3_12: ok "3.12.10"
+check preregistration_sha256: ok {"path": "v2/PREREGISTRATION.md", "sha256": "145497789c7ad78a80a94cfd7f2b031ca9a20df49c06e0b3412af9070fa1ef4b"}
+check amendments_sha256: ok {"path": "v2/AMENDMENTS.md", "sha256": "5152cd7f816c41e810861bbcd6489dee1d2598da89a36f6b418ef4a9867f181d"}
+check data_manifest_sha256: ok {"path": "v2/data/MANIFEST.json", "sha256": "c0d2fa0a924162e42c4d50c8eaf7d155f3e991f8f47ca518b1b87c3927ad7252"}
+check legacy_v1_test_sha256: ok {"path": "v2/data/legacy_v1/test.jsonl", "sha256": "7fc6ea635fcc501d56eed6a8b9e4f5f3a9057d0aa04505502759197150d79679"}
+check contenders_index_sha256: ok {"path": "v2/results/contenders/INDEX.json", "sha256": "086dbca90c69b9a2026bdedeb9fa9657f51af036884d79a839707c64a54b5718"}
+check mutation_readiness_present: ok "v2/results/mutation_readiness.json"
+check file_sha256:v2/ops-health/model.json: ok {"path": "v2/ops-health/model.json", "sha256": "b830a5edca271d667ab09b378dd5d3ab505d71a7e3451de8d9ca2bacfeed977c"}
+check file_sha256:v2/ops-health/artifact_receipt.json: ok {"path": "v2/ops-health/artifact_receipt.json", "sha256": "442486a3b451f0ad765aac253830cdc5455bad3a34186b4cf73388cf207056f2"}
+check file_sha256:v2/ops-health/ops_health.py: ok {"path": "v2/ops-health/ops_health.py", "sha256": "b0a64ff3f26ea284b0588de351ed7795a6089203b35fded0e7d82cbd4871aed9"}
+check file_sha256:hub/oac-v1/model.json: ok {"path": "hub/oac-v1/model.json", "sha256": "f111b7fc65db561c80763b25e538366a19bed18526ca881915777487935d9557"}
+check file_sha256:hub/oac-v1/artifact_receipt.json: ok {"path": "hub/oac-v1/artifact_receipt.json", "sha256": "23239bb39b0a5b6db1e41284e6372f352cee61d7938da1e84472246dcdaf95a1"}
+check file_sha256:hub/oac-v1/oac_operational_health.py: ok {"path": "hub/oac-v1/oac_operational_health.py", "sha256": "2fd8ffd3fd3ca8d0f960d4e0d471593b86e6cccb03607116390cbe9300992669"}
+check file_sha256:v2/results/contenders/ABL-data/model.json: ok {"path": "v2/results/contenders/ABL-data/model.json", "sha256": "0cbe0e4a4d76184c6a53945a7ddfe8ab1ec16318e959296caafd5a0415d5d598"}
+check file_sha256:v2/results/contenders/ABL-data/artifact_receipt.json: ok {"path": "v2/results/contenders/ABL-data/artifact_receipt.json", "sha256": "876bde74b7289e0d7b0edcd4f720c4d1766777c857d14356a88bd3d43c67fa23"}
+check file_sha256:v2/results/contenders/ABL-optimizer/params.json: ok {"path": "v2/results/contenders/ABL-optimizer/params.json", "sha256": "3a89941b066db919b10b608b3537ce4044872b2314761a732b7e828a975e4a1f"}
+check contenders_index_consistent: ok {"ABL-calibration_not_applicable": true, "ABL-conformal_keep": true, "ABL-data_files": true, "ABL-optimizer_files": true}
+check contenders_load: ok "v2 and ABL-data pairs accepted by the v2 kernel; v1 pair accepted by the Hub kernel"
+check receipt_verified:v2: ok "v2 kernel OpsHealthKernel (receipt, kernel self-hash, model hash) and freeze.verify_origin (committed blobs)"
+check receipt_verified:ABL-data: ok "v2 kernel OpsHealthKernel (receipt, kernel self-hash, model hash) and freeze.verify_origin (committed blobs)"
+check v1_threshold: ok 0.16
+check thresholds: ok {"ABL-data": 0.16, "ABL-optimizer": 0.17, "v1": 0.16, "v2": 0.2}
+check v1_reproduces_published_legacy_test_confusion: ok {"published": {"fn": 11, "fp": 57, "tn": 132, "tp": 40}, "rows": 240, "v1_confusion": {"fn": 11, "fp": 57, "tn": 132, "tp": 40}}
+check v2_example_input: ok ["NO_ALERT", 0.069311]
+check validity_inputs: ok {"ABL-data": {"probes_refused": 66, "probes_total": 66, "receipt_verified": true}, "ABL-optimizer": {"probes_refused": 66, "probes_total": 66, "receipt_verified": false}, "majority": {"probes_refused": 0, "probes_total": 66, "receipt_verified": false}, "rule": {"probes_refused": 3, "probes_total": 66, "receipt_verified": false}, "v1": {"probes_refused": 65, "probes_total": 66, "receipt_verified": true}, "v2": {"probes_refused": 66, "probes_total": 66, "receipt_verified": true}}
+opening: sealed purpose FINAL_TEST_OPENING (FINAL) at 2026-09-29T21:13:47Z
+opened: marker TEST_OPENED.json sha256 273c43b6afa86bc5f82fcbe99c3f7815fd76115eb097c2f2d679adc3ffae849a
+wrote scores_test.jsonl: rows 50000 positives 9096 bytes 30537167 sha256 922690d0769ac6c9ed49731e8dc28cbbc54bd487fca654d29271a4fd389a1094
+wrote scores_shift_queue_saturation.jsonl: rows 12500 positives 6378 bytes 8154386 sha256 9e9d5a7207a304bdbe8bcb8eb75977f11387f42cd87ac1cb0382b388fa75b64c
+wrote scores_shift_failure_bursts.jsonl: rows 12500 positives 3178 bytes 8117008 sha256 aa5b9843e4d23bbb80cdd3821001096d7a2fc6e6ae45d390d656b355b85e0c38
+wrote scores_shift_clock_skew.jsonl: rows 12500 positives 2279 bytes 7980689 sha256 52d325bbb2ed7f1299081e947fc4c570be2b752e897378b76a97cd0dc5f2558a
+wrote scores_shift_missing_tls.jsonl: rows 12500 positives 3378 bytes 8004793 sha256 fdd2dc950bab681e667c59578c3e5bac4d1e0b1f7d281d6c5221f6f23bb76967
+wrote scores_legacy_v1_test.jsonl: rows 240 positives 51 bytes 149437 sha256 0bb6345095f739ce4bda3d11b27c49ea7bc4fb28d894365b6df16e1f2d64b033
+wrote MANIFEST.json: sha256 a8dd49bfb74b44aa8d038d0f583c1eb65d36cf1577ee1d8bf3215340f5131299
+final: done; manifest sha256 a8dd49bfb74b44aa8d038d0f583c1eb65d36cf1577ee1d8bf3215340f5131299
+exit=0 finished 2026-09-29T21:14:05Z

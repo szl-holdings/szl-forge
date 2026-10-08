@@ -1,0 +1,75 @@
+# logs/v2/final_reanalyze_check.txt -- full re-run of the registered final analysis from the saved score files, compared with the committed final_evaluation.json (post-opening; opens no split). MEASURED; SYNTHETIC.
+# started 2026-09-30T01:30:48Z; HEAD 8b8103d463d9fd54d3aab31480168c3094ee82c9; script sha256 a1ff8a5ef7e262c007f55b4e20cbd2893a801085266d808e975eff5573030922; final_analyze.py sha256 d72595adb2beac66ea632eb95affa09a4fe207a2269e85ed23ca59cbf63ba1fb
+$ PYTHONUTF8=1 py -3.12 -B logs/v2/final_reanalyze_check.py
+free disk 3255324672 bytes
+[static] analysis-time script a53252460d8210ca... (crlf=True) vs current d72595adb2beac66... (crlf=False)
+[static] identical: AnalysisError, BASELINES_W, CONTENDERS, DIFF_BA_AGAINST, EVAL_SCHEMA, LEGACY, LEVEL, MANIFEST_NAME, MODEL_FILES, OUT_JSON, OUT_MD, OUT_SVG, PARTS_DIR, POOLED, RESAMPLES, SCORED, SCORE_DIR, SCRIPT_REL, SEED, TEST, _ci, _f, _git_head, _json_bytes, _utc, _validity, ablations, analyze, analyze_set, disaggregate_test, evaluation_sets, interval_rule, load_scores, render_svg, sha256_bytes, truth_recovery, validity_summary, win_conditions
+[static] changed: main, render_md, write_outputs; added: POST_OPENING_CHANGES, RECHECK_JSON, ROBUSTNESS_JSON, corrections_lines, deciding_comparison, load_recheck, load_robustness, not_distinguishable, render_only, robustness_lines; removed: none
+[static] every analysis-path definition identical: True
+[imports] v2/research/bootstrap.py, v2/research/metrics.py, v2/research/registry.py, v2/research/truth.py changed since 30d50b5: commits none, worktree none
+[analyze] MemoryError; retry 1/20 in 30 s
+[analyze] MemoryError; retry 2/20 in 30 s
+[analyze] set test: rows 50000 bootstrap 96.9 s
+[analyze] set pooled_shift: rows 50000 bootstrap 104.07 s
+[analyze] set shift_queue_saturation: rows 12500 bootstrap 28.21 s
+[analyze] set shift_failure_bursts: rows 12500 bootstrap 26.24 s
+[analyze] set shift_clock_skew: rows 12500 bootstrap 34.09 s
+[analyze] set shift_missing_tls: rows 12500 bootstrap 28.77 s
+[analyze] set legacy_v1_test: rows 240 bootstrap 0.3 s
+Traceback (most recent call last):
+  File "C:\Users\steph\szl-work\oac-frontier\logs\v2\final_reanalyze_check.py", line 233, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "C:\Users\steph\szl-work\oac-frontier\logs\v2\final_reanalyze_check.py", line 189, in main
+    (OUT_DIR / "final_evaluation.json").write_bytes(scratch_bytes)
+  File "C:\Users\steph\AppData\Local\Programs\Python\Python312\Lib\pathlib.py", line 1037, in write_bytes
+    return f.write(view)
+           ^^^^^^^^^^^^^
+OSError: [Errno 28] No space left on device
+exit=1 finished 2026-09-30T01:40:05Z
+# run 1 above: the analysis completed, then the scratch write hit ENOSPC (host disk at 0 bytes); nothing was compared or written. The script then gained waits for disk space, ENOSPC-retrying writes and a retrying log stream; the analysis code it calls is unchanged.
+## run 2 started 2026-09-30T01:41:32Z; HEAD 6102fedd71aa7795ee4d831a02402ad7730bb137; script sha256 34c0d5bd4f084ec7cfe3b7a1d93983af4d8d052c4cfeaa663173c22431e3f6a3; final_analyze.py sha256 d72595adb2beac66ea632eb95affa09a4fe207a2269e85ed23ca59cbf63ba1fb
+$ PYTHONUTF8=1 py -3.12 -B logs/v2/final_reanalyze_check.py
+free disk 843046912 bytes
+[static] analysis-time script a53252460d8210ca... (crlf=True) vs current d72595adb2beac66... (crlf=False)
+[static] identical: AnalysisError, BASELINES_W, CONTENDERS, DIFF_BA_AGAINST, EVAL_SCHEMA, LEGACY, LEVEL, MANIFEST_NAME, MODEL_FILES, OUT_JSON, OUT_MD, OUT_SVG, PARTS_DIR, POOLED, RESAMPLES, SCORED, SCORE_DIR, SCRIPT_REL, SEED, TEST, _ci, _f, _git_head, _json_bytes, _utc, _validity, ablations, analyze, analyze_set, disaggregate_test, evaluation_sets, interval_rule, load_scores, render_svg, sha256_bytes, truth_recovery, validity_summary, win_conditions
+[static] changed: main, render_md, write_outputs; added: POST_OPENING_CHANGES, RECHECK_JSON, ROBUSTNESS_JSON, corrections_lines, deciding_comparison, load_recheck, load_robustness, not_distinguishable, render_only, robustness_lines; removed: none
+[static] every analysis-path definition identical: True
+[imports] v2/research/bootstrap.py, v2/research/metrics.py, v2/research/registry.py, v2/research/truth.py changed since 30d50b5: commits none, worktree none
+[analyze] set test: rows 50000 bootstrap 116.6 s
+[analyze] set pooled_shift: rows 50000 bootstrap 132.55 s
+[analyze] set shift_queue_saturation: rows 12500 bootstrap 31.04 s
+[analyze] set shift_failure_bursts: rows 12500 bootstrap 30.36 s
+[analyze] set shift_clock_skew: rows 12500 bootstrap 23.57 s
+[analyze] set shift_missing_tls: rows 12500 bootstrap 28.94 s
+[analyze] set legacy_v1_test: rows 240 bootstrap 0.58 s
+[compare] leaves 5018 committed / 5018 rechecked; numeric compared 3884, identical 3884, max abs diff 0.000e+00; timing fields excluded 7
+[compare] run-metadata differences: ['generated_utc', 'inputs.analysis_script.git_head', 'inputs.analysis_script.sha256']
+[compare] unexpected differences: 0
+[compare] verdict committed WIN, rechecked WIN
+wrote v2/results/final_recheck.json: 3378 bytes sha256 0bb4b5d8fc45e0f489f39003edbd79bb121894e8047e956b8c55f7738f04d07f
+all checks pass: True (374 s)
+exit=0 finished 2026-09-30T01:47:48Z
+# run 2 above passed with final_analyze.py sha256 d72595ad...; afterwards --render-only was found to list sets, splits, contenders and features alphabetically (final_evaluation.json is written with sorted keys), so render_only gained reporting_order() (rendering only) and the script's sha256 changed; run 3 re-proves the numbers with that version.
+## run 3 started 2026-10-06T09:33:33Z; HEAD 6102fedd71aa7795ee4d831a02402ad7730bb137; script sha256 34c0d5bd4f084ec7cfe3b7a1d93983af4d8d052c4cfeaa663173c22431e3f6a3; final_analyze.py sha256 afe518d439309816c8ec2d2eb76850d369d5d7e3a06a9a5c19e9d59bc0d5c130
+$ PYTHONUTF8=1 py -3.12 -B logs/v2/final_reanalyze_check.py
+free disk 87788167168 bytes
+[static] analysis-time script a53252460d8210ca... (crlf=True) vs current afe518d439309816... (crlf=False)
+[static] identical: AnalysisError, BASELINES_W, CONTENDERS, DIFF_BA_AGAINST, EVAL_SCHEMA, LEGACY, LEVEL, MANIFEST_NAME, MODEL_FILES, OUT_JSON, OUT_MD, OUT_SVG, PARTS_DIR, POOLED, RESAMPLES, SCORED, SCORE_DIR, SCRIPT_REL, SEED, TEST, _ci, _f, _git_head, _json_bytes, _utc, _validity, ablations, analyze, analyze_set, disaggregate_test, evaluation_sets, interval_rule, load_scores, render_svg, sha256_bytes, truth_recovery, validity_summary, win_conditions
+[static] changed: main, render_md, write_outputs; added: DISAGG_FEATURES, POST_OPENING_CHANGES, RECHECK_JSON, ROBUSTNESS_JSON, _ordered, corrections_lines, deciding_comparison, load_recheck, load_robustness, not_distinguishable, render_only, reporting_order, robustness_lines; removed: none
+[static] every analysis-path definition identical: True
+[imports] v2/research/bootstrap.py, v2/research/metrics.py, v2/research/registry.py, v2/research/truth.py changed since 30d50b5: commits none, worktree none
+[analyze] set test: rows 50000 bootstrap 419.29 s
+[analyze] set pooled_shift: rows 50000 bootstrap 144.34 s
+[analyze] set shift_queue_saturation: rows 12500 bootstrap 43.61 s
+[analyze] set shift_failure_bursts: rows 12500 bootstrap 44.08 s
+[analyze] set shift_clock_skew: rows 12500 bootstrap 44.59 s
+[analyze] set shift_missing_tls: rows 12500 bootstrap 53.35 s
+[analyze] set legacy_v1_test: rows 240 bootstrap 1.06 s
+[compare] leaves 5018 committed / 5018 rechecked; numeric compared 3884, identical 3884, max abs diff 0.000e+00; timing fields excluded 7
+[compare] run-metadata differences: ['generated_utc', 'inputs.analysis_script.git_head', 'inputs.analysis_script.sha256']
+[compare] unexpected differences: 0
+[compare] verdict committed WIN, rechecked WIN
+wrote v2/results/final_recheck.json: 3446 bytes sha256 f47b624e463a6ad0d70c2884b3927a7d3c5b23fa19a504a8d2cb0d554112e645
+all checks pass: True (808 s)
+exit=0 finished 2026-10-06T09:47:18Z

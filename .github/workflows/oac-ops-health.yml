@@ -1,0 +1,118 @@
+name: OAC Ops Health v2
+
+# SYNTHETIC. Checks the ops-health/ component from its committed bytes: LF storage, provenance of
+# every bound hash, byte-exact regeneration of the uncommitted data splits, v1's staged files,
+# the kernel CLI and the unit suite. Read-only: no secrets, no publish, no Hub access.
+
+on:
+  pull_request:
+    paths:
+      - "ops-health/**"
+      - ".github/workflows/oac-ops-health.yml"
+  push:
+    branches: [main]
+    paths:
+      - "ops-health/**"
+      - ".github/workflows/oac-ops-health.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: oac-ops-health-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Ops health v2 (${{ matrix.os }}, Python ${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python: "3.11"
+          - os: ubuntu-latest
+            python: "3.12"
+          - os: ubuntu-latest
+            python: "3.13"
+          - os: windows-latest
+            python: "3.12"
+    defaults:
+      run:
+        shell: bash
+    env:
+      PYTHONUTF8: "1"
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Every file under ops-health/ is stored with LF line endings
+        run: |
+          set -euo pipefail
+          listing="$(git ls-files --eol -- ops-health)"
+          test -n "$listing"
+          bad="$(printf '%s\n' "$listing" | awk '$1 != "i/lf" && $1 != "i/none"' || true)"
+          if [ -n "$bad" ]; then
+            echo "::error::files under ops-health/ not stored as LF text"
+            printf '%s\n' "$bad"
+            exit 1
+          fi
+          printf '%s\n' "$listing" | awk '$1 == "i/none" {print $NF}' | while read -r path; do
+            if [ -s "$path" ]; then
+              echo "::error::$path is not empty but has no line ending"
+              exit 1
+            fi
+          done
+          printf '%s\n' "$listing" | awk '{print $1, $2}' | sort | uniq -c
+
+      - name: Provenance of every landed file and bound hash
+        run: python -B ops-health/tools/verify_provenance.py --report reports/ops-health-provenance.json
+
+      - name: Regenerate the registered data splits byte-exact
+        run: python -B ops-health/tools/regenerate_data.py --verify-against ops-health/v2/data/MANIFEST.json --report reports/ops-health-regenerate-data.json
+
+      - name: Legacy v1 split copies match their source record
+        env:
+          PYTHONPATH: ops-health
+        run: python -B -m v2.research.legacy_v1_source --verify
+
+      - name: Materialize v1's published files from the staged v1 model directory
+        run: python -B ops-health/tools/materialize_v1_hub.py
+
+      - name: Kernel CLI reproduces the recorded advisory
+        run: |
+          set -euo pipefail
+          out="$(python -I -B ops-health/v2/ops-health/ops_health.py \
+            --model ops-health/v2/ops-health/model.json \
+            --receipt ops-health/v2/ops-health/artifact_receipt.json \
+            --input ops-health/v2/ops-health/example_input.json | tr -d '\r')"
+          expected="$(sed -n '4p' ops-health/logs/drafts/kernel_cli_rerun.txt)"
+          printf '%s\n' "$out"
+          test "$out" = "$expected"
+
+      - name: Unit suite (only the declared origin-layer skips)
+        run: python -B ops-health/tools/run_v2_tests.py --report reports/ops-health-v2-tests.json
+
+      - name: Retain reports
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ops-health-${{ matrix.os }}-python-${{ matrix.python }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: reports/
+          if-no-files-found: warn
+          retention-days: 30

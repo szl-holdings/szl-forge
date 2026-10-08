@@ -1,0 +1,55 @@
+{
+  "dataset_receipt": {
+    "generator_sha256": "4d7e5e6571d2e7369afec532edfd8f10639c5f85c90a2747c5bb757ed48e4a4f",
+    "git_blob_sha1": "fe35898b247a9236373b7e876a22c9f33e815022",
+    "seed": 2500,
+    "sha256": "5b3d5e5dc633587fab4d8316ec4c38971c0d96048100af68c9f12d28f0d2fb16",
+    "source_path": "{V1_GATEWAY_PACKAGE_DIR}/operational-model/artifacts/dataset-receipt.json",
+    "split_rows": {
+      "test": 240,
+      "train": 768,
+      "validation": 192
+    }
+  },
+  "files": {
+    "test.jsonl": {
+      "byte_identical_to_committed_blob": true,
+      "bytes": 87312,
+      "git_blob_sha1": "8ea667b4138d7830917a7a603df6561169009e34",
+      "matches_dataset_receipt": true,
+      "rows": 240,
+      "sha256": "7fc6ea635fcc501d56eed6a8b9e4f5f3a9057d0aa04505502759197150d79679",
+      "source_path": "{V1_GATEWAY_PACKAGE_DIR}/operational-model/data/test.jsonl"
+    },
+    "train.jsonl": {
+      "byte_identical_to_committed_blob": true,
+      "bytes": 280183,
+      "git_blob_sha1": "58a6d40a84426d7c37a2079c0618d62485b86f65",
+      "matches_dataset_receipt": true,
+      "rows": 768,
+      "sha256": "b868acce6a2e6a8f6a5e5edb3f5b45c4f2e7e7b33c1bc56d22128620aab8b1f6",
+      "source_path": "{V1_GATEWAY_PACKAGE_DIR}/operational-model/data/train.jsonl"
+    },
+    "validation.jsonl": {
+      "byte_identical_to_committed_blob": true,
+      "bytes": 71002,
+      "git_blob_sha1": "9f8dd2d38aa7684185d600ac0d5cd06a02d33328",
+      "matches_dataset_receipt": true,
+      "rows": 192,
+      "sha256": "4557220a73b7f8efbb59ab41d043785cebaff71eac4d9fef8c59800a4f8f5abf",
+      "source_path": "{V1_GATEWAY_PACKAGE_DIR}/operational-model/data/validation.jsonl"
+    }
+  },
+  "license": "Apache-2.0",
+  "license_note": "same organization (SZL Holdings); upstream LICENSE is Apache License 2.0",
+  "recorded_by": "v2/research/legacy_v1_source.py",
+  "recorded_utc": "2026-09-26T21:57:50Z",
+  "schema": "szl-oac/ops-health-legacy-source/v2",
+  "source_commit": "9a6fdd2c7bdb1660de009cef974d7df46866960a",
+  "source_path_convention": "{V1_GATEWAY_PACKAGE_DIR} is the v1 gateway package directory of szl-forge at source_commit; its legacy name is not repeated in v2 files. Resolve any path with `git -C src/szl-forge ls-tree -r <source_commit> | grep <git_blob_sha1>`.",
+  "source_repository": "szl-holdings/szl-forge",
+  "truth_label": "MEASURED",
+  "v1_hub_model_revision": "dd7d109813abcd90c5250106dc2eabd2804e7ac3",
+  "v1_hub_receipt_dataset_receipt_sha256_matches": true,
+  "what": "byte-exact copies of the v1 public synthetic splits (SYNTHETIC)"
+}
