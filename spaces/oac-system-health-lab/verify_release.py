@@ -26,6 +26,15 @@ SOURCE_DIRECTORY = "clinical-gateway/huggingface/model/oac-system-health-v1"
 MODEL_REPOSITORY = "SZLHOLDINGS/oac-system-health-v1"
 DATASET_REPOSITORY = "SZLHOLDINGS/oac-clinical-transport-observability-synthetic"
 ARTIFACT_NAMES = ("oac_operational_health.py", "model.json", "artifact_receipt.json")
+V2_SOURCE_REVISION = "56a00821858825f529c40c7322c2f1584608d6e5"
+V2_SOURCE_DIRECTORY = "ops-health/v2/ops-health"
+V2_HUB_REVISION = "ff107198aa257ce1bb1841377d553bee3f90be41"
+V2_ARTIFACTS = {
+    "ops_health.py": "b0a64ff3f26ea284b0588de351ed7795a6089203b35fded0e7d82cbd4871aed9",
+    "model.json": "b830a5edca271d667ab09b378dd5d3ab505d71a7e3451de8d9ca2bacfeed977c",
+    "artifact_receipt.json": "442486a3b451f0ad765aac253830cdc5455bad3a34186b4cf73388cf207056f2",
+    "example_input.json": "afa7c8e5081c682877ad489259592951f854ba2558d409fdcf071ba845d4fb63",
+}
 MAX_MANIFEST_BYTES = 16_384
 MAX_ARTIFACT_BYTES = 1_048_576
 MAX_JSON_DEPTH = 32
@@ -278,6 +287,111 @@ def verify_release(space_root: Path, repository_root: Path) -> dict[str, Any]:
     }
 
 
+def verify_v2_release(space_root: Path, repository_root: Path) -> dict[str, Any]:
+    """Verify the separate synthetic v2 package against literal Git blobs.
+
+    This does not turn a Hub model listing into runtime or quality evidence.
+    The Hub revision is a closed release pin; provider readback is a separate
+    publication observation.
+    """
+    root = Path(space_root).absolute()
+    _regular(root)
+    manifest = strict_json(_read(root / "release_v2.json", MAX_MANIFEST_BYTES))
+    expected = {
+        "schema": "szl.oac-health-space-release/v2",
+        "artifact_source": {
+            "repository": SOURCE_REPOSITORY,
+            "revision": V2_SOURCE_REVISION,
+            "directory": V2_SOURCE_DIRECTORY,
+        },
+        "hub_model": {
+            "repo_id": "SZLHOLDINGS/oac-ops-health-v2",
+            "revision": V2_HUB_REVISION,
+        },
+        "artifacts": V2_ARTIFACTS,
+        "synthetic_training_data": True,
+        "clinical_use_authorized": False,
+        "production_promotion_allowed": False,
+    }
+    if manifest != expected or any(
+        type(manifest.get(key)) is not bool
+        for key in (
+            "synthetic_training_data",
+            "clinical_use_authorized",
+            "production_promotion_allowed",
+        )
+    ):
+        raise ReleaseVerificationError("v2 release pin or closed schema mismatch")
+    artifact_dir = root / "artifacts" / "v2"
+    _regular(artifact_dir)
+    if not artifact_dir.is_dir():
+        raise ReleaseVerificationError("v2 artifact directory unavailable")
+    remote = (
+        _git(repository_root, "config", "--get", "remote.origin.url")
+        .decode("utf-8")
+        .strip()
+    )
+    if remote not in {
+        "https://github.com/szl-holdings/szl-forge.git",
+        "https://github.com/szl-holdings/szl-forge",
+        "git@github.com:szl-holdings/szl-forge.git",
+        "ssh://git@github.com/szl-holdings/szl-forge.git",
+    }:
+        raise ReleaseVerificationError("v2 Git origin is not canonical")
+    resolved = _git(
+        repository_root, "rev-parse", "--verify", f"{V2_SOURCE_REVISION}^{{commit}}"
+    ).decode("ascii").strip()
+    if resolved != V2_SOURCE_REVISION:
+        raise ReleaseVerificationError("v2 immutable source revision mismatch")
+    evidence = {}
+    for name, expected_hash in V2_ARTIFACTS.items():
+        local = _read(artifact_dir / name, MAX_ARTIFACT_BYTES)
+        if hashlib.sha256(local).hexdigest() != expected_hash:
+            raise ReleaseVerificationError(f"v2 local artifact hash mismatch: {name}")
+        source_path = f"{V2_SOURCE_DIRECTORY}/{name}"
+        object_name = f"{V2_SOURCE_REVISION}:{source_path}"
+        try:
+            size = int(_git(repository_root, "cat-file", "-s", object_name).strip())
+        except ValueError as exc:
+            raise ReleaseVerificationError("invalid v2 immutable artifact size") from exc
+        if not 0 < size <= MAX_ARTIFACT_BYTES:
+            raise ReleaseVerificationError("v2 immutable artifact byte limit exceeded")
+        immutable = _git(repository_root, "show", object_name)
+        if len(immutable) != size or immutable != local:
+            raise ReleaseVerificationError(f"v2 immutable Git artifact mismatch: {name}")
+        evidence[name] = {
+            "sha256": expected_hash,
+            "bytes": size,
+            "local_hash_matched": True,
+            "immutable_git_blob_matched": True,
+            "source_path": source_path,
+        }
+    receipt = strict_json(_read(artifact_dir / "artifact_receipt.json", 16384))
+    if (
+        not isinstance(receipt, dict)
+        or receipt.get("schema") != "szl-oac/ops-health-artifact-receipt/v2"
+        or receipt.get("kernel_sha256") != V2_ARTIFACTS["ops_health.py"]
+        or receipt.get("model_sha256") != V2_ARTIFACTS["model.json"]
+    ):
+        raise ReleaseVerificationError("v2 receipt does not bind the pinned kernel/model")
+    return {
+        "schema": "szl.oac-health-space-release-verification/v2",
+        "generated_at": utc_now(),
+        "complete": True,
+        "status": "PASS",
+        "scope": "IMMUTABLE_GIT_ARTIFACT_PARITY",
+        "artifact_source": manifest["artifact_source"],
+        "hub_model": manifest["hub_model"],
+        "artifacts": evidence,
+        "source_parity_count": len(V2_ARTIFACTS),
+        "provider_parity_claimed": False,
+        "training_performed": False,
+        "clinical_use_authorized": False,
+        "production_promotion_allowed": False,
+        "receipt_minted": False,
+    }
+
+
 def write_report(output: Path, report: dict[str, Any]) -> None:
     """An existing receipt is never overwritten."""
     with Path(output).open("x", encoding="utf-8", newline="\n") as handle:
@@ -302,6 +416,9 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         report = verify_release(args.space_root, args.repository_root)
+        report["v2_release"] = verify_v2_release(
+            args.space_root, args.repository_root
+        )
     except ReleaseVerificationError as exc:
         report = {
             "schema": REPORT_SCHEMA,

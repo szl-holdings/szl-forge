@@ -189,6 +189,104 @@ async function main() {
   await elements.get("score-form").listeners.submit({preventDefault() {}});
   check(elements.get("score-value").textContent, "—", "non-JSON response cannot display score");
   check(elements.get("score-button").disabled, true, "non-JSON response disables scoring");
-  console.log(JSON.stringify({complete:true, actual_backend_fixtures:2, malformed_contracts_rejected:rejected, interaction_checks:interactions, scope:"LOCAL_SCRIPT_CONTRACT_ONLY"}));
+
+  // The v1 script starts by itself, while v2 makes no request until opt-in.
+  let v2Interactions = 0;
+  let v2Rejected = 0;
+  function checkV2(actual, expected, label) {assert.equal(actual, expected, label); v2Interactions += 1;}
+  function rejectV2Identity(label, mutate) {
+    const value = clone(fixtures.v2_identity);
+    mutate(value);
+    assert.throws(() => run("validateV2Identity(candidate)", value), /v2 identity/, label);
+    v2Rejected += 1;
+  }
+  function rejectV2Score(label, mutate) {
+    const value = clone(fixtures.v2_healthy);
+    mutate(value);
+    assert.throws(() => run("validateV2Score(candidate)", value), /v2/, label);
+    v2Rejected += 1;
+  }
+  checkV2(requests.filter(request => request.path.startsWith("/api/v2/")).length, 0, "v2 never auto-enables");
+  checkV2(elements.get("v2-score").disabled, true, "v2 score is disabled by default");
+  queuedContentType = "application/json";
+  queuedResponse = fixtures.identity;
+  await elements.get("refresh-identity").listeners.click();
+  checkV2(elements.get("score-button").disabled, false, "v1 can recover independently");
+  queuedResponse = fixtures.v2_identity;
+  await elements.get("v2-enable").listeners.click();
+  checkV2(requests.at(-1).path, "/api/v2/identity", "opt-in requests only v2 identity");
+  checkV2(requests.at(-1).options.credentials, "omit", "v2 identity omits credentials");
+  checkV2(elements.get("v2-status").dataset.state, "ready", "pinned v2 identity is ready");
+  checkV2(elements.get("v2-score").disabled, false, "opt-in enables v2 score");
+  checkV2(elements.get("score-button").disabled, false, "v1 remains independently available");
+  assert.equal(run("validateV2Identity(candidate)", fixtures.v2_identity), fixtures.v2_identity);
+  for (const name of ["v2_healthy", "v2_degraded", "v2_ambiguous"]) {
+    assert.equal(run("validateV2Score(candidate)", fixtures[name]), fixtures[name].advisory);
+  }
+  rejectV2Identity("changed Hub revision", value => {value.hub_model.revision = "a".repeat(40);});
+  rejectV2Identity("numeric false is not authority false", value => {value.authority.device_control = 0;});
+  rejectV2Identity("unexpected clinical field", value => {value.patient_id = "not-allowed";});
+  rejectV2Score("wrong prediction set for no alert", value => {value.advisory.prediction_set = [1];});
+  rejectV2Score("wrong abstention reason for no alert", value => {value.advisory.abstain_reason = "EMPTY";});
+  rejectV2Score("minted receipt", value => {value.receipt_minted = true;});
+  rejectV2Score("clinical authority", value => {value.advisory.authority.clinical_decision = true;});
+  rejectV2Score("additional advisory field", value => {value.advisory.patient_id = "not-allowed";});
+  rejectV2Score("changed embedded Hub revision", value => {value.identity.hub_model.revision = "a".repeat(40);});
+  const both = clone(fixtures.v2_ambiguous);
+  assert.deepEqual(both.advisory.prediction_set, [0, 1], "backend fixture reaches BOTH");
+  checkV2(both.advisory.advisory, "ABSTAIN", "BOTH is an abstention");
+  checkV2(run("validateV2Score(candidate)", both).abstain_reason, "BOTH", "UI accepts canonical BOTH abstention");
+  // EMPTY is a canonical v2 response shape even if not reached by this authored input.
+  const empty = clone(fixtures.v2_healthy);
+  empty.advisory.advisory = "ABSTAIN";
+  empty.advisory.abstain_reason = "EMPTY";
+  empty.advisory.prediction_set = [];
+  checkV2(run("validateV2Score(candidate)", empty).abstain_reason, "EMPTY", "UI accepts canonical EMPTY abstention");
+  const wrongEmpty = clone(empty);
+  wrongEmpty.advisory.prediction_set = [0];
+  assert.throws(() => run("validateV2Score(candidate)", wrongEmpty), /v2 advisory/);
+  v2Rejected += 1;
+  const wrongBoth = clone(both);
+  wrongBoth.advisory.prediction_set = [1, 0];
+  assert.throws(() => run("validateV2Score(candidate)", wrongBoth), /v2 advisory/);
+  v2Rejected += 1;
+
+  await elements.get("preset-healthy").listeners.click();
+  queuedResponse = fixtures.v2_healthy;
+  await elements.get("v2-score").listeners.click();
+  checkV2(requests.at(-1).path, "/api/v2/score", "v2 uses its distinct score route");
+  checkV2(requests.at(-1).options.headers["X-SZL-Preview"], "1", "v2 request stays preview-only");
+  assert.deepEqual(JSON.parse(requests.at(-1).options.body), {features:fixtures.healthy_features});
+  checkV2(elements.get("v2-result").textContent.includes("v2 NO_ALERT"), true, "v2 no-alert rendered");
+  checkV2(elements.get("v2-score").disabled, false, "v2 scoring remains available after valid response");
+  await elements.get("preset-degraded").listeners.click();
+  queuedResponse = fixtures.v2_degraded;
+  await elements.get("v2-score").listeners.click();
+  assert.deepEqual(JSON.parse(requests.at(-1).options.body), {features:fixtures.degraded_features});
+  checkV2(elements.get("v2-result").textContent.includes("v2 ALERT"), true, "v2 alert rendered as advisory only");
+  queuedResponse = both;
+  await elements.get("v2-score").listeners.click();
+  checkV2(elements.get("v2-result").textContent.includes("no determination or action suggested"), true, "BOTH renders no determination");
+  queuedResponse = empty;
+  await elements.get("v2-score").listeners.click();
+  checkV2(elements.get("v2-result").textContent.includes("no determination or action suggested"), true, "EMPTY renders no determination");
+  queuedResponse = wrongEmpty;
+  await elements.get("v2-score").listeners.click();
+  checkV2(elements.get("v2-status").dataset.state, "unavailable", "malformed v2 response refuses closed");
+  checkV2(elements.get("v2-score").disabled, true, "malformed v2 response disables v2 scoring");
+  checkV2(elements.get("v2-result").textContent.includes("No v2 result displayed"), true, "malformed v2 clears result");
+  checkV2(elements.get("score-button").disabled, false, "v2 refusal does not disable v1");
+  const afterV2Failure = requests.length;
+  await new Promise(setImmediate);
+  checkV2(requests.length, afterV2Failure, "v2 refuses without automatic retry");
+  queuedResponse = fixtures.v2_identity;
+  await elements.get("v2-enable").listeners.click();
+  checkV2(elements.get("v2-score").disabled, false, "explicit v2 recheck restores opt-in");
+  queuedContentType = "text/html";
+  queuedResponse = fixtures.v2_healthy;
+  await elements.get("v2-score").listeners.click();
+  checkV2(elements.get("v2-score").disabled, true, "non-JSON v2 response disables scoring");
+  checkV2(elements.get("score-button").disabled, false, "v1 remains available after v2 transport refusal");
+  console.log(JSON.stringify({complete:true, actual_backend_fixtures:2, malformed_contracts_rejected:rejected, interaction_checks:interactions, actual_v2_backend_fixtures:3, v2_malformed_contracts_rejected:v2Rejected, v2_interaction_checks:v2Interactions, scope:"LOCAL_SCRIPT_CONTRACT_ONLY"}));
 }
 main().catch(error => {console.error(error.stack); process.exitCode = 1;});

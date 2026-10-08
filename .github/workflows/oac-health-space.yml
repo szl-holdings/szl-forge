@@ -110,11 +110,12 @@ jobs:
           python -I -B spaces/oac-system-health-lab/publish_space.py
           --source-revision "${{ github.sha }}" --wait-seconds 900
           --report reports/oac-space-publication.json
-      - name: Witness exact-source scoring and forbidden-input refusal
+      - name: Witness exact-source v1/v2 scoring and forbidden-input refusal
         run: >-
           python -I -B spaces/oac-system-health-lab/verify_live.py
           --origin https://szlholdings-oac-system-health-lab.hf.space
           --expected-source-sha "${{ github.sha }}"
+          --verify-v2
           --output reports/oac-live-verification.json
       - name: Retain success and failure evidence
         if: always()

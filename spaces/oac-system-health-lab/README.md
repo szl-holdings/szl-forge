@@ -9,16 +9,17 @@ license: apache-2.0
 suggested_hardware: cpu-basic
 models:
   - SZLHOLDINGS/oac-system-health-v1
+  - SZLHOLDINGS/oac-ops-health-v2
 datasets:
   - SZLHOLDINGS/oac-clinical-transport-observability-synthetic
-short_description: Synthetic telemetry scoring with verified source binding.
+short_description: Synthetic v1 and opt-in v2 telemetry advisories.
 ---
 
 <p><a href="https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab"><img src="https://raw.githubusercontent.com/szl-holdings/.github/main/profile/assets/szl/logos/szl_mark_holographic.svg" alt="SZL Holdings" width="112" /></a></p>
 
 # OAC System Health Lab
 
-Explore a fixed synthetic operational telemetry model through bounded stateless inputs.
+Explore fixed synthetic operational telemetry models through bounded stateless inputs.
 
 **Artifact:** Synthetic telemetry demonstration · **Stage:** Research preview
 
@@ -28,6 +29,29 @@ Explore a fixed synthetic operational telemetry model through bounded stateless 
 
 - Do not submit clinical or sensitive data; this is not a PHI detector or a clinical decision system.
 - No device connection, training, input persistence, receipt signing or medical authority is supplied.
+
+## Opt-in v2 research preview
+
+The existing v1 UI and `POST /api/score` remain the default. The separate v2
+control must be explicitly enabled before this page requests
+`GET /api/v2/identity` or `POST /api/v2/score`. v2 accepts the same eight bounded
+synthetic operational fields inside exactly `{"features": {...}}` and returns an
+`ALERT`, `NO_ALERT`, or `ABSTAIN` **advisory only**. All five authority flags are
+false. No response acknowledges a transport message, controls a device,
+interprets or releases a result, or makes a care decision.
+
+The v2 Space package is pinned to the public
+[`SZLHOLDINGS/oac-ops-health-v2` revision `ff107198aa257ce1bb1841377d553bee3f90be41`](https://huggingface.co/SZLHOLDINGS/oac-ops-health-v2/tree/ff107198aa257ce1bb1841377d553bee3f90be41)
+and exact Forge artifact bytes at `56a00821858825f529c40c7322c2f1584608d6e5`.
+`release_v2.json` binds the kernel, JSON coefficients, receipt, and authored
+example by SHA-256. The kernel is a deterministic standard-library numeric
+scorer, not a transformer checkpoint. Its evaluation is **REPORTED for
+generated synthetic data only**; it has not been independently qualified for
+real transports or clinical workflows. The source receipt's origin commit is
+from an unpublished local repository; the public release verifies landed
+bytes, not that private origin. `GET /api/v2/readyz` is v2-specific; v1
+`GET /readyz` remains unchanged. A valid source binding and a successful score
+are not production promotion or clinical validation.
 
 <details>
 <summary>Technical details and original evidence</summary>

@@ -142,9 +142,12 @@ def publish(api, revision, report, *, wait_seconds=900):
     from huggingface_hub import CommitOperationAdd
     from huggingface_hub.utils import RepositoryNotFoundError
     from requests import Session
-    from verify_release import verify_release
+    from verify_release import verify_release, verify_v2_release
 
     report["source_verification"] = verify_release(SPACE_ROOT, REPOSITORY_ROOT)
+    report["v2_source_verification"] = verify_v2_release(
+        SPACE_ROOT, REPOSITORY_ROOT
+    )
     plan = build_plan(SPACE_ROOT, TARGET, revision, static=False)
     immutable_files = verify_head_and_bytes(revision, plan)
     report["card_validation"] = validate_space_readme(immutable_files["README.md"])

@@ -37,6 +37,22 @@ ARTIFACTS = {
     "model.json": "f111b7fc65db561c80763b25e538366a19bed18526ca881915777487935d9557",
     "artifact_receipt.json": "23239bb39b0a5b6db1e41284e6372f352cee61d7938da1e84472246dcdaf95a1",
 }
+V2_ARTIFACT_REVISION = "56a00821858825f529c40c7322c2f1584608d6e5"
+V2_MODEL_ID = "SZLHOLDINGS/oac-ops-health-v2"
+V2_MODEL_REVISION = "ff107198aa257ce1bb1841377d553bee3f90be41"
+V2_ARTIFACTS = {
+    "ops_health.py": "b0a64ff3f26ea284b0588de351ed7795a6089203b35fded0e7d82cbd4871aed9",
+    "model.json": "b830a5edca271d667ab09b378dd5d3ab505d71a7e3451de8d9ca2bacfeed977c",
+    "artifact_receipt.json": "442486a3b451f0ad765aac253830cdc5455bad3a34186b4cf73388cf207056f2",
+    "example_input.json": "afa7c8e5081c682877ad489259592951f854ba2558d409fdcf071ba845d4fb63",
+}
+V2_AUTHORITY = {
+    "acknowledgement": False,
+    "clinical_decision": False,
+    "device_control": False,
+    "result_interpretation": False,
+    "result_release": False,
+}
 FEATURES = frozenset(
     {
         "listener_running",
@@ -147,6 +163,30 @@ def kernel_from_snapshots(kernel_type, model_bytes: bytes, receipt_bytes: bytes)
     return SnapshotKernel()
 
 
+def v2_scorer_from_verified_bytes(module, source: bytes, model: bytes, receipt: bytes):
+    """Apply the pinned v2 constructor's checks to one immutable byte snapshot.
+
+    Unlike v1, v2's OpsHealthKernel resolves and reopens local Paths. Its
+    canonical receipt validator and ArtifactScorer are used here after the
+    same kernel/model/generator checks, so neither model nor receipt can race
+    a second disk read. The scoring math is unchanged canonical code.
+    """
+    record = module.validate_receipt(
+        module.loads_strict(receipt.decode("utf-8"), module.ModelArtifactError)
+    )
+    if hashlib.sha256(source).hexdigest() != record["kernel_sha256"]:
+        raise InvalidInput("v2 kernel receipt hash")
+    if hashlib.sha256(model).hexdigest() != record["model_sha256"]:
+        raise InvalidInput("v2 model receipt hash")
+    artifact = module.loads_strict(
+        model.decode("utf-8"), module.ModelArtifactError
+    )
+    scorer = module.ArtifactScorer(artifact)
+    if scorer._artifact["generator"]["source_sha256"] != record["generator_sha256"]:
+        raise InvalidInput("v2 generator receipt hash")
+    return scorer
+
+
 def strict_json(raw: bytes, maximum: int = MAX_BODY_BYTES) -> Any:
     if len(raw) > maximum:
         raise InvalidInput("size")
@@ -205,7 +245,7 @@ def strict_json(raw: bytes, maximum: int = MAX_BODY_BYTES) -> Any:
 
 
 class Application:
-    """One verified fixed model, with no network or persistence operations."""
+    """Independent v1 and opt-in v2 fixed models; no network or persistence."""
 
     def __init__(self, root: Path = ROOT, source_revision: str | None = None):
         self.root = Path(root)
@@ -293,10 +333,129 @@ class Application:
             self.failure_code = (
                 None if self.source_revision else "SOURCE_BINDING_UNAVAILABLE"
             )
+        # The v2 research preview has its own readiness. A bad or absent v2
+        # package cannot make the already-published v1 path unavailable.
+        self.v2_release = None
+        self.v2_kernel = None
+        self.v2_artifacts_verified = False
+        try:
+            release = strict_json(
+                bounded_file(self.root / "release_v2.json", 16384), 16384
+            )
+            expected = {
+                "schema": "szl.oac-health-space-release/v2",
+                "artifact_source": {
+                    "repository": SOURCE_REPOSITORY,
+                    "revision": V2_ARTIFACT_REVISION,
+                    "directory": "ops-health/v2/ops-health",
+                },
+                "hub_model": {
+                    "repo_id": V2_MODEL_ID,
+                    "revision": V2_MODEL_REVISION,
+                },
+                "artifacts": V2_ARTIFACTS,
+                "synthetic_training_data": True,
+                "clinical_use_authorized": False,
+                "production_promotion_allowed": False,
+            }
+            if release != expected or any(
+                type(release.get(key)) is not bool
+                for key in (
+                    "synthetic_training_data",
+                    "clinical_use_authorized",
+                    "production_promotion_allowed",
+                )
+            ):
+                raise InvalidInput("v2 release mismatch")
+            artifact_dir = self.root / "artifacts" / "v2"
+            if artifact_dir.is_symlink():
+                raise InvalidInput("v2 artifact directory")
+            paths = {name: artifact_dir / name for name in V2_ARTIFACTS}
+            verified_bytes = {}
+            for name, path in paths.items():
+                raw = bounded_file(path, 131072)
+                if hashlib.sha256(raw).hexdigest() != V2_ARTIFACTS[name]:
+                    raise InvalidInput("v2 artifact digest")
+                verified_bytes[name] = raw
+            receipt = strict_json(verified_bytes["artifact_receipt.json"], 16384)
+            if (
+                receipt.get("kernel_sha256") != V2_ARTIFACTS["ops_health.py"]
+                or receipt.get("model_sha256") != V2_ARTIFACTS["model.json"]
+                or receipt.get("schema") != "szl-oac/ops-health-artifact-receipt/v2"
+            ):
+                raise InvalidInput("v2 receipt binding")
+            module_name = "_szl_oac_ops_v2_" + V2_ARTIFACTS["ops_health.py"][:16]
+            spec = importlib.util.spec_from_file_location(
+                module_name, paths["ops_health.py"]
+            )
+            if spec is None or spec.loader is None:
+                raise InvalidInput("v2 kernel load")
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[module_name] = module
+            try:
+                # Execute only the bytes already hashed, without loading an
+                # unverified cached bytecode file. The v2 constructor reopens
+                # disk paths, so the equivalent admission checks below use the
+                # canonical validator and scorer against these same snapshots.
+                exec(
+                    compile(
+                        verified_bytes["ops_health.py"],
+                        str(paths["ops_health.py"]),
+                        "exec",
+                    ),
+                    module.__dict__,
+                )
+                if module.AUTHORITY_MAP != V2_AUTHORITY:
+                    raise InvalidInput("v2 authority boundary")
+                kernel = v2_scorer_from_verified_bytes(
+                    module,
+                    verified_bytes["ops_health.py"],
+                    verified_bytes["model.json"],
+                    verified_bytes["artifact_receipt.json"],
+                )
+                example = strict_json(verified_bytes["example_input.json"])
+                if kernel.advise(example).get("authority") != V2_AUTHORITY:
+                    raise InvalidInput("v2 example authority boundary")
+            except Exception:
+                sys.modules.pop(module_name, None)
+                raise
+            self.v2_kernel = kernel
+            self.v2_release = release
+            self.v2_artifacts_verified = True
+        except Exception:
+            # Do not expose request content, filenames, or kernel exceptions.
+            self.v2_failure_code = "V2_ARTIFACT_VERIFICATION_FAILED"
+        else:
+            self.v2_failure_code = (
+                None if self.source_revision else "SOURCE_BINDING_UNAVAILABLE"
+            )
 
     @property
     def ready(self) -> bool:
         return self.artifacts_verified and self.source_revision is not None
+
+    @property
+    def v2_ready(self) -> bool:
+        return self.v2_artifacts_verified and self.source_revision is not None
+
+    def v2_identity(self) -> dict[str, Any]:
+        release = self.v2_release or {}
+        return {
+            "schema": "szl.oac-health-space-identity/v2",
+            "state": "READY" if self.v2_ready else "UNAVAILABLE",
+            "application": {
+                "repository": SOURCE_REPOSITORY,
+                "revision": self.source_revision,
+            },
+            "artifact_source": release.get("artifact_source"),
+            "hub_model": release.get("hub_model"),
+            "artifacts": release.get("artifacts"),
+            "synthetic_training_data": True,
+            "clinical_use_authorized": False,
+            "production_promotion_allowed": False,
+            "authority": dict(V2_AUTHORITY),
+            "receipt_minted": False,
+        }
 
     def identity(self) -> dict[str, Any]:
         release = self.release or {}
@@ -354,6 +513,40 @@ class Application:
             "ok": True,
             "advisory": advisory,
             "identity": self.identity(),
+            "receipt_minted": False,
+            "input_sha256": digest(value["features"]),
+            "output_sha256": digest(advisory),
+        }
+
+    def score_v2(self, raw: bytes) -> dict[str, Any]:
+        if not self.v2_ready:
+            raise RuntimeError("v2 unavailable")
+        value = strict_json(raw)
+        if (
+            not isinstance(value, dict)
+            or set(value) != {"features"}
+            or not isinstance(value["features"], dict)
+            or set(value["features"]) != FEATURES
+            or any(
+                not isinstance(item, (bool, int, float))
+                for item in value["features"].values()
+            )
+        ):
+            raise InvalidInput("closed v2 schema")
+        try:
+            advisory = self.v2_kernel.advise(value)
+        except (ValueError, OverflowError, TypeError) as exc:
+            raise InvalidInput("v2 feature contract") from exc
+        if (
+            advisory.get("schema") != "szl-oac/ops-health-advisory/v2"
+            or advisory.get("advisory") not in {"ALERT", "NO_ALERT", "ABSTAIN"}
+            or advisory.get("authority") != V2_AUTHORITY
+        ):
+            raise RuntimeError("v2 advisory boundary")
+        return {
+            "ok": True,
+            "advisory": advisory,
+            "identity": self.v2_identity(),
             "receipt_minted": False,
             "input_sha256": digest(value["features"]),
             "output_sha256": digest(advisory),
@@ -494,6 +687,17 @@ class Handler(BaseHTTPRequestHandler):
             self._json(200, app.build_info())
         elif self.path == "/api/v1/identity":
             self._json(200, app.identity())
+        elif self.path == "/api/v2/identity":
+            self._json(200, app.v2_identity())
+        elif self.path == "/api/v2/readyz":
+            self._json(
+                200 if app.v2_ready else 503,
+                {
+                    "state": "READY" if app.v2_ready else "UNAVAILABLE",
+                    "error": app.v2_failure_code,
+                    "receipt_minted": False,
+                },
+            )
         elif self.path in ("/", "/index.html"):
             try:
                 html = bounded_file(app.root / "index.html", 262144)
@@ -506,10 +710,11 @@ class Handler(BaseHTTPRequestHandler):
             self._json(404, {"ok": False, "error": "NOT_FOUND"})
 
     def do_POST(self):
-        if self.path != "/api/score":
+        if self.path not in ("/api/score", "/api/v2/score"):
             self._json(404, {"ok": False, "error": "NOT_FOUND"})
             return
-        if not self.server.application.ready:
+        application = self.server.application
+        if not (application.ready if self.path == "/api/score" else application.v2_ready):
             self._json(503, {"ok": False, "error": "SERVICE_UNAVAILABLE"})
             return
         if self.headers.get_all("X-SZL-Preview", []) != ["1"]:
@@ -539,11 +744,17 @@ class Handler(BaseHTTPRequestHandler):
                 raise InvalidInput("incomplete")
             if time.monotonic() >= self.deadline:
                 raise TimeoutError("deadline")
-            result = self.server.application.score(raw)
+            result = (
+                application.score(raw)
+                if self.path == "/api/score"
+                else application.score_v2(raw)
+            )
         except (TimeoutError, socket.timeout):
             self._json(408, {"ok": False, "error": "REQUEST_TIMEOUT"})
         except (InvalidInput, RequestLimit):
             self._json(400, {"ok": False, "error": "INVALID_SCORE_INPUT"})
+        except RuntimeError:
+            self._json(503, {"ok": False, "error": "SERVICE_UNAVAILABLE"})
         except OSError:
             self.close_connection = True
         else:
