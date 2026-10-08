@@ -71,7 +71,8 @@
     "controller_package": "szl-forge-inference",
     "controller_version": "0.2.0",
     "legacy_endpoint_status": "UNWITNESSED_LEGACY",
-    "governed_endpoint": "/api/v2/governed-infer",
+    "governed_endpoint": "/api/v3/governed-infer",
+    "retired_public_post": "/api/v2/governed-infer",
     "tool_execution": "EXTERNAL_A11OY_ONLY"
   },
   "remaining_promotion_blockers": [

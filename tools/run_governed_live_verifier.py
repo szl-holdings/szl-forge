@@ -4,12 +4,13 @@
 This prevents script-mode call-order bugs when a verifier's ``if __name__ ==
 '__main__'`` guard appears before helper definitions. The target is loaded with
 a non-main run name, so every definition is installed before ``main(argv)`` is
-called. The wrapper does not alter the verifier's network, hashing, or failure
-semantics.
+called. For the governed Space verifier, it also binds the expected release
+manifest digest from the local exact-source checkout before any network probe.
 """
 from __future__ import annotations
 
 import argparse
+import hashlib
 import runpy
 import sys
 from collections.abc import Callable, Sequence
@@ -42,11 +43,33 @@ def invoke(script: Path, argv: Sequence[str]) -> int:
     return result
 
 
+def bind_release_manifest(script: Path, forwarded: Sequence[str]) -> list[str]:
+    """Pass the checkout's canonical manifest digest to the Space verifier."""
+    result = list(forwarded)
+    if script.name != "verify_governed_live.py":
+        return result
+    if any(
+        argument == "--expected-release-manifest-sha256"
+        or argument.startswith("--expected-release-manifest-sha256=")
+        for argument in result
+    ):
+        raise VerifierEntrypointError("manifest digest override is not allowed")
+    manifest = script.resolve().with_name("release.json")
+    if not manifest.is_file() or manifest.is_symlink():
+        raise VerifierEntrypointError("governed release manifest is unavailable")
+    try:
+        canonical_bytes = manifest.read_bytes().replace(b"\r\n", b"\n")
+    except OSError as exc:
+        raise VerifierEntrypointError("governed release manifest is unreadable") from exc
+    digest = hashlib.sha256(canonical_bytes).hexdigest()
+    return result + ["--expected-release-manifest-sha256", digest]
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--script", required=True, type=Path)
     args, forwarded = parser.parse_known_args(argv)
-    return invoke(args.script, forwarded)
+    return invoke(args.script, bind_release_manifest(args.script, forwarded))
 
 
 if __name__ == "__main__":
