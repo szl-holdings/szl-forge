@@ -7,6 +7,7 @@ import argparse
 import base64
 import hashlib
 import json
+import math
 import re
 import subprocess
 import sys
@@ -334,7 +335,7 @@ def reconcile_estate_snapshot(
     }
 
 
-def read_estate_snapshot(path: Path) -> tuple[Any, str]:
+def read_estate_snapshot(path: Path, *, require_utf8: bool = False) -> tuple[Any, str]:
     """Bound the input and reject duplicate keys before privacy filtering."""
 
     try:
@@ -359,7 +360,7 @@ def read_estate_snapshot(path: Path) -> tuple[Any, str]:
 
     try:
         snapshot = json.loads(
-            source,
+            source.decode("utf-8") if require_utf8 else source,
             object_pairs_hook=unique_keys,
             parse_constant=reject_non_json_constant,
         )
@@ -458,6 +459,7 @@ def classify_artifact_completeness(
     if inventory_complete is not True:
         issues.append(issue("INVENTORY_COMPLETENESS_UNPROVEN"))
     records: dict[str, dict[str, Any]] = {}
+    duplicate_paths: set[str] = set()
     roles: list[dict[str, str]] = []
     groups: dict[tuple[str, str], dict[str, Any]] = {}
     ggufs: list[str] = []
@@ -479,6 +481,7 @@ def classify_artifact_completeness(
             issues.append(issue("FILE_REVISION_MISMATCH", path))
         if path in records:
             issues.append(issue("DUPLICATE_FILE_OBSERVATION", path))
+            duplicate_paths.add(path)
             continue
         records[path] = row
         directory, _, name = path.rpartition("/")
@@ -541,6 +544,16 @@ def classify_artifact_completeness(
                 issues.append(issue("DOCUMENT_NOT_IN_INVENTORY", path))
 
     def read_observation(path: str, observations: dict[str, dict[str, Any]], local: list[dict[str, Any]]) -> Any:
+        if path in duplicate_paths:
+            local.append(issue("DUPLICATE_FILE_OBSERVATION", path))
+            return None
+        row = records.get(path)
+        if row is None:
+            local.append(issue("DOCUMENT_NOT_IN_INVENTORY", path))
+            return None
+        if not immutable(row.get("revision")) or row.get("revision") != revision:
+            local.append(issue("FILE_REVISION_MISMATCH", path))
+            return None
         observation = observations.get(path)
         if not isinstance(observation, dict):
             local.append(issue("NOT_OBSERVED", path))
@@ -566,9 +579,15 @@ def classify_artifact_completeness(
         return data
 
     def require_payload(path: str, local: list[dict[str, Any]]) -> None:
+        if path in duplicate_paths:
+            local.append(issue("DUPLICATE_FILE_OBSERVATION", path))
+            return
         row = records.get(path)
         if row is None:
             local.append(issue("ABSENT_AT_COMPLETE_INVENTORY" if absence_supported else "PRESENCE_UNKNOWN", path))
+            return
+        if not immutable(row.get("revision")) or row.get("revision") != revision:
+            local.append(issue("FILE_REVISION_MISMATCH", path))
             return
         size = row.get("size")
         if isinstance(size, int) and not isinstance(size, bool) and size == 0:
@@ -905,18 +924,90 @@ def build_report(document: dict[str, Any], *, live: bool) -> dict[str, Any]:
     }
 
 
+def build_artifact_observation_report(path: Path) -> dict[str, Any]:
+    """Check supplied local metadata; never resolve a repository or load payloads."""
+    document, source_sha256 = read_estate_snapshot(path, require_utf8=True)
+    required = {"schema", "revision", "inventory_complete", "files"}
+    optional = {"json_observations", "gguf_header_observations"}
+    if (
+        not isinstance(document, dict)
+        or not required <= document.keys()
+        or document.keys() - required - optional
+        or document["schema"] != "szl.artifact-observation/v1"
+        or (document["revision"] is not None and not isinstance(document["revision"], str))
+        or (document["inventory_complete"] is not None and type(document["inventory_complete"]) is not bool)
+        or not isinstance(document["files"], list)
+        or any(not isinstance(document[key], dict) for key in optional if key in document)
+    ):
+        raise PortfolioError("invalid artifact observation envelope")
+    # JSON numeric overflow (e.g. 1e400) is not caught by parse_constant.
+    pending = [document]
+    while pending:
+        value = pending.pop()
+        if isinstance(value, float) and not math.isfinite(value):
+            raise PortfolioError("artifact observation contains a non-finite number")
+        if isinstance(value, str) and any(0xD800 <= ord(character) <= 0xDFFF for character in value):
+            raise PortfolioError("artifact observation contains an unpaired surrogate")
+        if isinstance(value, dict):
+            pending.extend(value.keys())
+            pending.extend(value.values())
+        elif isinstance(value, list):
+            pending.extend(value)
+    structure = classify_artifact_completeness(
+        revision=document["revision"], inventory_complete=document["inventory_complete"],
+        files=document["files"], json_observations=document.get("json_observations"),
+        gguf_header_observations=document.get("gguf_header_observations"),
+    )
+    return {
+        "schema": "szl.artifact-observation-report/v1", "mode": "OFFLINE_METADATA",
+        "observation_sha256": source_sha256, "metadata_structure": structure,
+        "ok": structure["status"] == "COMPLETE_STRUCTURE", "ok_scope": structure["scope"],
+        "source_authenticity": "NOT_EVALUATED",
+    }
+
+
+def emit_report(report: dict[str, Any], output_path: str | None) -> int:
+    rendered = json.dumps(report, indent=2, sort_keys=True) + "\n"
+    if output_path:
+        output = Path(output_path)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(rendered, encoding="utf-8")
+    print(rendered, end="")
+    return 0 if report.get("ok") else 1
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--portfolio", default=str(DEFAULT_PORTFOLIO))
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--offline", action="store_true")
     mode.add_argument("--live", action="store_true")
+    mode.add_argument(
+        "--artifact-observation", metavar="PATH",
+        help="check a local szl.artifact-observation/v1 metadata envelope without Hub or payload access",
+    )
     parser.add_argument(
         "--estate-snapshot",
         help="reconcile against a local enriched Hugging Face repository JSON array",
     )
     parser.add_argument("--report")
     args = parser.parse_args()
+    if args.artifact_observation is not None:
+        if args.estate_snapshot is not None:
+            parser.error("--estate-snapshot cannot be combined with --artifact-observation")
+        source = Path(args.artifact_observation)
+        if args.report:
+            output = Path(args.report)
+            if output.resolve() == source.resolve() or (
+                output.exists() and source.exists() and output.samefile(source)
+            ):
+                parser.error("--report must not overwrite the artifact observation")
+        try:
+            report = build_artifact_observation_report(source)
+        except Exception:  # no caller paths or malformed source excerpts in diagnostics
+            report = {"schema": "szl.artifact-observation-report/v1", "mode": "OFFLINE_METADATA",
+                      "ok": False, "fatal": "ARTIFACT_OBSERVATION_FAILED"}
+        return emit_report(report, args.report)
     try:
         document = json.loads(Path(args.portfolio).read_text(encoding="utf-8"))
         snapshot_and_hash = (
@@ -968,13 +1059,7 @@ def main() -> int:
                 else f"{type(exc).__name__}: {exc}"
             ),
         }
-    rendered = json.dumps(report, indent=2, sort_keys=True) + "\n"
-    if args.report:
-        output = Path(args.report)
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(rendered, encoding="utf-8")
-    print(rendered, end="")
-    return 0 if report.get("ok") else 1
+    return emit_report(report, args.report)
 
 
 if __name__ == "__main__":
