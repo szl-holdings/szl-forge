@@ -139,9 +139,10 @@ requires a new reviewed candidate and digest, not a forced write. Existing
 license, lineage, consent, privacy, training-suitability, deployment and model
 promotion holds remain untouched.
 
-## Manual GitHub publication workflow
+### Historical manual workflow — retired
 
-After this source is merged, `publish-receiptagent-v3-public-card.yml` offers
+The earlier, consumed source offered the following workflow intent; this is
+historical documentation, not a current dispatch recipe. It offered
 one explicit dispatch on current protected `main`. It has no push or PR writer.
 Supply the exact current main SHA, the reviewed Hub parent above, and the literal
 `README_ONLY_UNQUALIFIED` confirmation. The workflow validates all three before
