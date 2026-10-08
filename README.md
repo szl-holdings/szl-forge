@@ -174,6 +174,11 @@ Publication is performed only from protected `main` by the dependent
 after that same workflow verifies the exact live Space revision and using the
 repository's encrypted Hugging Face organization credential.
 
+The [immutable ReceiptAgent v2 byte verifier](docs/published-artifact-byte-verification.md)
+replays the repository-declared Ed25519 receipt chain against external OpenSSL
+and hashes the actual opaque adapter bytes. It reports source, artifact and
+signature integrity separately from signer trust and production authority.
+
 ## First-class kernel publication and signature
 
 `.github/workflows/publish-szl-kernels.yml` is the sole publication gateway for
