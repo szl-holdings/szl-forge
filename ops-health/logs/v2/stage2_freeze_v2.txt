@@ -1,0 +1,48 @@
+# stage-2 freeze-v2, HEAD 92872f88193242b3fc0c1f604321d889d6988358, 2026-09-29T15:18:11Z
+# cmd: PYTHONUTF8=1 py -3.12 -B -m v2.research.stage2 freeze-v2
+{
+  "files": {
+    "v2/ops-health/artifact_receipt.json": "442486a3b451f0ad765aac253830cdc5455bad3a34186b4cf73388cf207056f2",
+    "v2/ops-health/example_input.json": "afa7c8e5081c682877ad489259592951f854ba2558d409fdcf071ba845d4fb63",
+    "v2/ops-health/model.json": "b830a5edca271d667ab09b378dd5d3ab505d71a7e3451de8d9ca2bacfeed977c"
+  },
+  "freeze": {
+    "commit": "92872f88193242b3fc0c1f604321d889d6988358",
+    "model_sha256": "b830a5edca271d667ab09b378dd5d3ab505d71a7e3451de8d9ca2bacfeed977c",
+    "receipt_sha256": "442486a3b451f0ad765aac253830cdc5455bad3a34186b4cf73388cf207056f2",
+    "tree_clean": true
+  },
+  "rebuild": {
+    "byte_identical": true,
+    "model_sha256": "b830a5edca271d667ab09b378dd5d3ab505d71a7e3451de8d9ca2bacfeed977c"
+  },
+  "search_trace_sha256": "cc6d6809a5ae76083e42e97bb2eeca9024512fe1120da98dfa97a3f3c7d47eee",
+  "selected_trial": "T07_l2_1e-3_none",
+  "selection": {
+    "amendments_sha256": "5152cd7f816c41e810861bbcd6489dee1d2598da89a36f6b418ef4a9867f181d",
+    "conformal_keep": true,
+    "procedure": "PREREGISTRATION section 6 registered search: 12 trials in a bounded loop (hard cap 12), AM-2 eligibility, validation BA with the registered tie rules",
+    "receipts_dir_sha256": "7bc24c31dfb7f7c18b972718411f1799a533e97f74e90069d738549567181555",
+    "search_trace_sha256": "cc6d6809a5ae76083e42e97bb2eeca9024512fe1120da98dfa97a3f3c7d47eee",
+    "selected_trial": "T07_l2_1e-3_none",
+    "selection_split": "validation",
+    "stop_reason": "SEARCH_SPACE_EXHAUSTED",
+    "trials": 12
+  },
+  "trace_check": {
+    "dir_sha256": "7bc24c31dfb7f7c18b972718411f1799a533e97f74e90069d738549567181555",
+    "receipts_dir": "runs/receipts/v2-registered-search",
+    "verify_errors": []
+  },
+  "verify_origin": {
+    "commit": "92872f88193242b3fc0c1f604321d889d6988358",
+    "verified": {
+      "data_manifest_sha256": "c0d2fa0a924162e42c4d50c8eaf7d155f3e991f8f47ca518b1b87c3927ad7252",
+      "generator_sha256": "a502d3644534ec599663d8678b8066b390e612396b25350f33fa987194b44384",
+      "kernel_sha256": "b0a64ff3f26ea284b0588de351ed7795a6089203b35fded0e7d82cbd4871aed9",
+      "preregistration_sha256": "145497789c7ad78a80a94cfd7f2b031ca9a20df49c06e0b3412af9070fa1ef4b",
+      "selection.amendments_sha256": "5152cd7f816c41e810861bbcd6489dee1d2598da89a36f6b418ef4a9867f181d"
+    }
+  }
+}
+exit=0

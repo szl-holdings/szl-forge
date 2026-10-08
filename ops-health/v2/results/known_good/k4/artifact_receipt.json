@@ -1,0 +1,29 @@
+{
+  "attests": "integrity and origin only; not quality",
+  "authority": "advisory_only_no_ack_release_device_or_care_authority",
+  "data_manifest_sha256": "c0d2fa0a924162e42c4d50c8eaf7d155f3e991f8f47ca518b1b87c3927ad7252",
+  "generator_sha256": "a502d3644534ec599663d8678b8066b390e612396b25350f33fa987194b44384",
+  "kernel_sha256": "b0a64ff3f26ea284b0588de351ed7795a6089203b35fded0e7d82cbd4871aed9",
+  "model_sha256": "7734a817f202017189027dd1b689dc72b4ab81167a226a20250d6c77e999e6d3",
+  "preregistration_sha256": "145497789c7ad78a80a94cfd7f2b031ca9a20df49c06e0b3412af9070fa1ef4b",
+  "purpose": "synthetic_operational_transport_attention_only",
+  "schema": "szl-oac/ops-health-artifact-receipt/v2",
+  "selection": {
+    "amendments_sha256": "5152cd7f816c41e810861bbcd6489dee1d2598da89a36f6b418ef4a9867f181d",
+    "conformal_keep": true,
+    "procedure": "AM-4 known-good retrain k4: the selected recipe T07_l2_1e-3_none end to end on a fresh nominal train split (seed material oac-ops-health-v2:20260930:train); calibrator, threshold and conformal on the registered splits",
+    "receipts_dir_sha256": "7bc24c31dfb7f7c18b972718411f1799a533e97f74e90069d738549567181555",
+    "search_trace_sha256": "cc6d6809a5ae76083e42e97bb2eeca9024512fe1120da98dfa97a3f3c7d47eee",
+    "selected_trial": "T07_l2_1e-3_none",
+    "selection_split": "validation",
+    "stop_reason": null,
+    "trials": 1
+  },
+  "source": {
+    "base_v1_source": "SZLHOLDINGS/oac-system-health-v1@dd7d109813abcd90c5250106dc2eabd2804e7ac3:oac_operational_health.py",
+    "commit": "8c9ecb3d2b8ce120d2ff8da693fe1d6bf8cf1bf3",
+    "repository": "szl-work/oac-frontier (local git repository; unpublished)",
+    "tree_clean": true,
+    "v1_hub_revision": "dd7d109813abcd90c5250106dc2eabd2804e7ac3"
+  }
+}

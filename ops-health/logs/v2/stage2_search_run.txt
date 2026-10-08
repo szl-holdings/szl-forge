@@ -1,0 +1,26 @@
+# registered search run, HEAD 064481f0d603416c851073f0aad1f93ab9da16c2, 2026-09-29T15:13:02Z
+# cmd: PYTHONUTF8=1 py -3.12 -B -m v2.research.search --run
+registered search | run_id v2-registered-search | HEAD 064481f0d603416c851073f0aad1f93ab9da16c2 | python 3.12.10 | SYNTHETIC
+  train       <- train       rows=16384 sha256=5211e7ec954ec00c743bd62dae107f7a80335e4e5962a31b788e7bf56ecf0adb
+  calibration <- calibration rows=4096 sha256=526d47c5e922aa35e3fba1f46f595fad6cc0fd4b3fd2e52114b5c99247e57b16
+  conformal   <- conformal   rows=4096 sha256=bf317275e207e13ddd38d95b308eb7ff6a21d13e71b27622d8e65f4a4eb5f2dd
+  threshold   <- validation  rows=4096 sha256=d0a37356784dcd60a4dbea68d760c55d56a7bd69b3a6f4dc833cfdbb38a951f3
+  trial  1/12 T01_l2_0_none          eligible=True t=0.19 BA=0.767027 Brier=0.101309 ECE=0.009819 F1=0.587640 irls=CONVERGED/7 (1.4s)
+  trial  2/12 T02_l2_0_platt         eligible=True t=0.19 BA=0.766126 Brier=0.101234 ECE=0.009375 F1=0.585666 irls=CONVERGED/7 (3.0s)
+  trial  3/12 T03_l2_0_isotonic      eligible=True t=0.28 BA=0.765675 Brier=0.101476 ECE=0.012656 F1=0.598688 irls=CONVERGED/7 (75.4s)
+  trial  4/12 T04_l2_1e-4_none       eligible=True t=0.19 BA=0.767278 Brier=0.101378 ECE=0.015547 F1=0.588832 irls=CONVERGED/7 (9.2s)
+  trial  5/12 T05_l2_1e-4_platt      eligible=True t=0.19 BA=0.767127 Brier=0.101172 ECE=0.010826 F1=0.588501 irls=CONVERGED/7 (19.0s)
+  trial  6/12 T06_l2_1e-4_isotonic   eligible=True t=0.22 BA=0.765675 Brier=0.101333 ECE=0.012843 F1=0.582825 irls=CONVERGED/7 (17.7s)
+  trial  7/12 T07_l2_1e-3_none       eligible=True t=0.20 BA=0.768680 Brier=0.103556 ECE=0.034658 F1=0.601539 irls=CONVERGED/7 (4.0s)
+  trial  8/12 T08_l2_1e-3_platt      eligible=True t=0.20 BA=0.768179 Brier=0.101575 ECE=0.016405 F1=0.601067 irls=CONVERGED/7 (14.0s)
+  trial  9/12 T09_l2_1e-3_isotonic   eligible=True t=0.17 BA=0.765825 Brier=0.101545 ECE=0.010452 F1=0.577754 irls=CONVERGED/7 (12.2s)
+  trial 10/12 T10_l2_1e-2_none       eligible=True t=0.17 BA=0.756510 Brier=0.122499 ECE=0.088117 F1=0.544841 irls=CONVERGED/6 (15.2s)
+  trial 11/12 T11_l2_1e-2_platt      eligible=True t=0.15 BA=0.760266 Brier=0.106628 ECE=0.033731 F1=0.557179 irls=CONVERGED/6 (14.8s)
+  trial 12/12 T12_l2_1e-2_isotonic   eligible=True t=0.18 BA=0.756861 Brier=0.105018 ECE=0.011163 F1=0.543717 irls=CONVERGED/6 (13.5s)
+stop_reason SEARCH_SPACE_EXHAUSTED | iterations 12 | receipts verified True (0 errors)
+receipts dir sha256 7bc24c31dfb7f7c18b972718411f1799a533e97f74e90069d738549567181555
+ineligible []
+selected T07_l2_1e-3_none (decided by validation_balanced_accuracy)
+conformal coverage marginal 0.900635 per_class {'0': 0.9011418269230769, '1': 0.8984375} keep True
+search_trace.json sha256 cc6d6809a5ae76083e42e97bb2eeca9024512fe1120da98dfa97a3f3c7d47eee
+exit=0

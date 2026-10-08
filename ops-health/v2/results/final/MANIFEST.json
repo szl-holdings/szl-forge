@@ -1,0 +1,700 @@
+{
+  "completed_utc": "2026-09-29T21:14:02Z",
+  "consistency": {
+    "legacy_v1_test": {
+      "regime_as_registered": true,
+      "rows_as_registered": true
+    },
+    "shift_clock_skew": {
+      "regime_as_registered": true,
+      "rows_as_registered": true
+    },
+    "shift_failure_bursts": {
+      "regime_as_registered": true,
+      "rows_as_registered": true
+    },
+    "shift_missing_tls": {
+      "regime_as_registered": true,
+      "rows_as_registered": true
+    },
+    "shift_queue_saturation": {
+      "regime_as_registered": true,
+      "rows_as_registered": true
+    },
+    "test": {
+      "regime_as_registered": true,
+      "rows_as_registered": true
+    }
+  },
+  "contenders": {
+    "ABL-calibration": {
+      "kind": "not_applicable",
+      "reason": "the selected calibrator is none, so the selected model has no calibrator to remove; the search itself compared none, platt and isotonic (section 9)",
+      "status": "NOT_APPLICABLE"
+    },
+    "ABL-conformal": {
+      "keep": true,
+      "kind": "decision",
+      "note": "evaluated from v2's own advisory fields (with and without abstention)",
+      "status": "DECIDED_ON_VALIDATION"
+    },
+    "ABL-data": {
+      "decision_threshold": 0.16,
+      "files": {
+        "v2/results/contenders/ABL-data/artifact_receipt.json": "876bde74b7289e0d7b0edcd4f720c4d1766777c857d14356a88bd3d43c67fa23",
+        "v2/results/contenders/ABL-data/model.json": "0cbe0e4a4d76184c6a53945a7ddfe8ab1ec16318e959296caafd5a0415d5d598"
+      },
+      "kind": "v2_artifact",
+      "score": "calibrated_score from the v2 kernel's evaluate with the ABL-data pair"
+    },
+    "ABL-optimizer": {
+      "decision_threshold": 0.17,
+      "files": {
+        "v2/results/contenders/ABL-optimizer/params.json": "3a89941b066db919b10b608b3537ce4044872b2314761a732b7e828a975e4a1f"
+      },
+      "kind": "params_file",
+      "score": "stage2.v1_kernel_order_scores with the params file's intercept and weights; decision = score >= decision_threshold"
+    },
+    "majority": {
+      "definition": "always NO_ALERT (decision 0); no score",
+      "files": {
+        "v2/research/final_score.py": "8372f8818defc1224d1906529f7a6c806b0367a53c6b5ce25d3969857476636d"
+      },
+      "kind": "baseline"
+    },
+    "rule": {
+      "definition": "ALERT iff consecutive_failures > 0; no score",
+      "files": {
+        "v2/research/final_score.py": "8372f8818defc1224d1906529f7a6c806b0367a53c6b5ce25d3969857476636d"
+      },
+      "kind": "baseline"
+    },
+    "v1": {
+      "decision_threshold": 0.16,
+      "files": {
+        "hub/oac-v1/artifact_receipt.json": "23239bb39b0a5b6db1e41284e6372f352cee61d7938da1e84472246dcdaf95a1",
+        "hub/oac-v1/model.json": "f111b7fc65db561c80763b25e538366a19bed18526ca881915777487935d9557",
+        "hub/oac-v1/oac_operational_health.py": "2fd8ffd3fd3ca8d0f960d4e0d471593b86e6cccb03607116390cbe9300992669"
+      },
+      "hub_revision": "dd7d109813abcd90c5250106dc2eabd2804e7ac3",
+      "kind": "hub_kernel",
+      "score": "operator_attention_score exactly as the Hub kernel emits it (12 decimals; AM-5, no recalibration); decision = operator_attention_required"
+    },
+    "v2": {
+      "decision_threshold": 0.2,
+      "files": {
+        "v2/ops-health/artifact_receipt.json": "442486a3b451f0ad765aac253830cdc5455bad3a34186b4cf73388cf207056f2",
+        "v2/ops-health/model.json": "b830a5edca271d667ab09b378dd5d3ab505d71a7e3451de8d9ca2bacfeed977c",
+        "v2/ops-health/ops_health.py": "b0a64ff3f26ea284b0588de351ed7795a6089203b35fded0e7d82cbd4871aed9"
+      },
+      "kind": "v2_artifact",
+      "score": "calibrated_score from the v2 kernel's evaluate (unrounded); decision = score >= decision_threshold; conformal advisory, abstain reason and set",
+      "selected_trial": "T07_l2_1e-3_none"
+    }
+  },
+  "files": {
+    "legacy_v1_test": {
+      "bytes": 149437,
+      "expected_regime": "legacy_v1",
+      "expected_rows": 240,
+      "file": "scores_legacy_v1_test.jsonl",
+      "positives": 51,
+      "regimes": [
+        "legacy_v1"
+      ],
+      "rows": 240,
+      "sha256": "0bb6345095f739ce4bda3d11b27c49ea7bc4fb28d894365b6df16e1f2d64b033",
+      "source_sha256": "7fc6ea635fcc501d56eed6a8b9e4f5f3a9057d0aa04505502759197150d79679"
+    },
+    "shift_clock_skew": {
+      "bytes": 7980689,
+      "expected_regime": "clock_skew",
+      "expected_rows": 12500,
+      "file": "scores_shift_clock_skew.jsonl",
+      "positives": 2279,
+      "regimes": [
+        "clock_skew"
+      ],
+      "rows": 12500,
+      "sha256": "52d325bbb2ed7f1299081e947fc4c570be2b752e897378b76a97cd0dc5f2558a",
+      "source_sha256": "d98e19e8fd1e9d3c5e8c2c1c808492d8c0f6be378ef0d89cc50569afb9c74823"
+    },
+    "shift_failure_bursts": {
+      "bytes": 8117008,
+      "expected_regime": "failure_bursts",
+      "expected_rows": 12500,
+      "file": "scores_shift_failure_bursts.jsonl",
+      "positives": 3178,
+      "regimes": [
+        "failure_bursts"
+      ],
+      "rows": 12500,
+      "sha256": "aa5b9843e4d23bbb80cdd3821001096d7a2fc6e6ae45d390d656b355b85e0c38",
+      "source_sha256": "4199085505a0e3ea3ead9b282eb28d4c8c0060a3034fdee713eb845ee97a8c0e"
+    },
+    "shift_missing_tls": {
+      "bytes": 8004793,
+      "expected_regime": "missing_tls",
+      "expected_rows": 12500,
+      "file": "scores_shift_missing_tls.jsonl",
+      "positives": 3378,
+      "regimes": [
+        "missing_tls"
+      ],
+      "rows": 12500,
+      "sha256": "fdd2dc950bab681e667c59578c3e5bac4d1e0b1f7d281d6c5221f6f23bb76967",
+      "source_sha256": "a4a96189c864c93906649ab629f3ed979b395b9252df8dc5bb777fc8acf0bedc"
+    },
+    "shift_queue_saturation": {
+      "bytes": 8154386,
+      "expected_regime": "queue_saturation",
+      "expected_rows": 12500,
+      "file": "scores_shift_queue_saturation.jsonl",
+      "positives": 6378,
+      "regimes": [
+        "queue_saturation"
+      ],
+      "rows": 12500,
+      "sha256": "9e9d5a7207a304bdbe8bcb8eb75977f11387f42cd87ac1cb0382b388fa75b64c",
+      "source_sha256": "c647bb89be02205fa8961a9ed3209c1498cc0f7524224365c2af6596baae85da"
+    },
+    "test": {
+      "bytes": 30537167,
+      "expected_regime": "nominal",
+      "expected_rows": 50000,
+      "file": "scores_test.jsonl",
+      "positives": 9096,
+      "regimes": [
+        "nominal"
+      ],
+      "rows": 50000,
+      "sha256": "922690d0769ac6c9ed49731e8dc28cbbc54bd487fca654d29271a4fd389a1094",
+      "source_sha256": "6479d0bffab20771ba1f5976f95dec8825e8edf0aa4e4faa559d77d57fec1f3b"
+    }
+  },
+  "mode": "FINAL",
+  "opening": {
+    "marker": {
+      "contenders": {
+        "ABL-data": {
+          "v2/results/contenders/ABL-data/artifact_receipt.json": "876bde74b7289e0d7b0edcd4f720c4d1766777c857d14356a88bd3d43c67fa23",
+          "v2/results/contenders/ABL-data/model.json": "0cbe0e4a4d76184c6a53945a7ddfe8ab1ec16318e959296caafd5a0415d5d598"
+        },
+        "ABL-optimizer": {
+          "v2/results/contenders/ABL-optimizer/params.json": "3a89941b066db919b10b608b3537ce4044872b2314761a732b7e828a975e4a1f"
+        },
+        "majority": {
+          "v2/research/final_score.py": "8372f8818defc1224d1906529f7a6c806b0367a53c6b5ce25d3969857476636d"
+        },
+        "rule": {
+          "v2/research/final_score.py": "8372f8818defc1224d1906529f7a6c806b0367a53c6b5ce25d3969857476636d"
+        },
+        "v1": {
+          "hub/oac-v1/artifact_receipt.json": "23239bb39b0a5b6db1e41284e6372f352cee61d7938da1e84472246dcdaf95a1",
+          "hub/oac-v1/model.json": "f111b7fc65db561c80763b25e538366a19bed18526ca881915777487935d9557",
+          "hub/oac-v1/oac_operational_health.py": "2fd8ffd3fd3ca8d0f960d4e0d471593b86e6cccb03607116390cbe9300992669"
+        },
+        "v2": {
+          "v2/ops-health/artifact_receipt.json": "442486a3b451f0ad765aac253830cdc5455bad3a34186b4cf73388cf207056f2",
+          "v2/ops-health/model.json": "b830a5edca271d667ab09b378dd5d3ab505d71a7e3451de8d9ca2bacfeed977c",
+          "v2/ops-health/ops_health.py": "b0a64ff3f26ea284b0588de351ed7795a6089203b35fded0e7d82cbd4871aed9"
+        }
+      },
+      "data_manifest_sha256": "c0d2fa0a924162e42c4d50c8eaf7d155f3e991f8f47ca518b1b87c3927ad7252",
+      "git_head": "30d50b5b4537e4262489c160351feaaed08e33aa",
+      "opened_utc": "2026-09-29T21:13:47Z",
+      "purpose": "FINAL_TEST_OPENING",
+      "rule": "single opening; any later opening is refused",
+      "schema": "szl-oac/ops-health-test-opening/v2",
+      "sealed_splits_sha256": {
+        "shift_clock_skew": "d98e19e8fd1e9d3c5e8c2c1c808492d8c0f6be378ef0d89cc50569afb9c74823",
+        "shift_failure_bursts": "4199085505a0e3ea3ead9b282eb28d4c8c0060a3034fdee713eb845ee97a8c0e",
+        "shift_missing_tls": "a4a96189c864c93906649ab629f3ed979b395b9252df8dc5bb777fc8acf0bedc",
+        "shift_queue_saturation": "c647bb89be02205fa8961a9ed3209c1498cc0f7524224365c2af6596baae85da",
+        "test": "6479d0bffab20771ba1f5976f95dec8825e8edf0aa4e4faa559d77d57fec1f3b"
+      }
+    },
+    "marker_file": "TEST_OPENED.json",
+    "marker_sha256": "273c43b6afa86bc5f82fcbe99c3f7815fd76115eb097c2f2d679adc3ffae849a"
+  },
+  "pooled_shift_suite": [
+    "shift_queue_saturation",
+    "shift_failure_bursts",
+    "shift_clock_skew",
+    "shift_missing_tls"
+  ],
+  "pre_opening_checks": {
+    "amendments_sha256": {
+      "detail": {
+        "path": "v2/AMENDMENTS.md",
+        "sha256": "5152cd7f816c41e810861bbcd6489dee1d2598da89a36f6b418ef4a9867f181d"
+      },
+      "ok": true
+    },
+    "contenders_index_consistent": {
+      "detail": {
+        "ABL-calibration_not_applicable": true,
+        "ABL-conformal_keep": true,
+        "ABL-data_files": true,
+        "ABL-optimizer_files": true
+      },
+      "ok": true
+    },
+    "contenders_index_sha256": {
+      "detail": {
+        "path": "v2/results/contenders/INDEX.json",
+        "sha256": "086dbca90c69b9a2026bdedeb9fa9657f51af036884d79a839707c64a54b5718"
+      },
+      "ok": true
+    },
+    "contenders_load": {
+      "detail": "v2 and ABL-data pairs accepted by the v2 kernel; v1 pair accepted by the Hub kernel",
+      "ok": true
+    },
+    "cwd_is_repository_root": {
+      "detail": "the marker records contender paths relative to the repository root",
+      "ok": true
+    },
+    "data_manifest_sha256": {
+      "detail": {
+        "path": "v2/data/MANIFEST.json",
+        "sha256": "c0d2fa0a924162e42c4d50c8eaf7d155f3e991f8f47ca518b1b87c3927ad7252"
+      },
+      "ok": true
+    },
+    "disk_free": {
+      "detail": {
+        "free_bytes": 5550288896,
+        "minimum_bytes": 2147483648
+      },
+      "ok": true
+    },
+    "file_sha256:hub/oac-v1/artifact_receipt.json": {
+      "detail": {
+        "path": "hub/oac-v1/artifact_receipt.json",
+        "sha256": "23239bb39b0a5b6db1e41284e6372f352cee61d7938da1e84472246dcdaf95a1"
+      },
+      "ok": true
+    },
+    "file_sha256:hub/oac-v1/model.json": {
+      "detail": {
+        "path": "hub/oac-v1/model.json",
+        "sha256": "f111b7fc65db561c80763b25e538366a19bed18526ca881915777487935d9557"
+      },
+      "ok": true
+    },
+    "file_sha256:hub/oac-v1/oac_operational_health.py": {
+      "detail": {
+        "path": "hub/oac-v1/oac_operational_health.py",
+        "sha256": "2fd8ffd3fd3ca8d0f960d4e0d471593b86e6cccb03607116390cbe9300992669"
+      },
+      "ok": true
+    },
+    "file_sha256:v2/ops-health/artifact_receipt.json": {
+      "detail": {
+        "path": "v2/ops-health/artifact_receipt.json",
+        "sha256": "442486a3b451f0ad765aac253830cdc5455bad3a34186b4cf73388cf207056f2"
+      },
+      "ok": true
+    },
+    "file_sha256:v2/ops-health/model.json": {
+      "detail": {
+        "path": "v2/ops-health/model.json",
+        "sha256": "b830a5edca271d667ab09b378dd5d3ab505d71a7e3451de8d9ca2bacfeed977c"
+      },
+      "ok": true
+    },
+    "file_sha256:v2/ops-health/ops_health.py": {
+      "detail": {
+        "path": "v2/ops-health/ops_health.py",
+        "sha256": "b0a64ff3f26ea284b0588de351ed7795a6089203b35fded0e7d82cbd4871aed9"
+      },
+      "ok": true
+    },
+    "file_sha256:v2/results/contenders/ABL-data/artifact_receipt.json": {
+      "detail": {
+        "path": "v2/results/contenders/ABL-data/artifact_receipt.json",
+        "sha256": "876bde74b7289e0d7b0edcd4f720c4d1766777c857d14356a88bd3d43c67fa23"
+      },
+      "ok": true
+    },
+    "file_sha256:v2/results/contenders/ABL-data/model.json": {
+      "detail": {
+        "path": "v2/results/contenders/ABL-data/model.json",
+        "sha256": "0cbe0e4a4d76184c6a53945a7ddfe8ab1ec16318e959296caafd5a0415d5d598"
+      },
+      "ok": true
+    },
+    "file_sha256:v2/results/contenders/ABL-optimizer/params.json": {
+      "detail": {
+        "path": "v2/results/contenders/ABL-optimizer/params.json",
+        "sha256": "3a89941b066db919b10b608b3537ce4044872b2314761a732b7e828a975e4a1f"
+      },
+      "ok": true
+    },
+    "git_head": {
+      "detail": "30d50b5b4537e4262489c160351feaaed08e33aa",
+      "ok": true
+    },
+    "legacy_v1_test_sha256": {
+      "detail": {
+        "path": "v2/data/legacy_v1/test.jsonl",
+        "sha256": "7fc6ea635fcc501d56eed6a8b9e4f5f3a9057d0aa04505502759197150d79679"
+      },
+      "ok": true
+    },
+    "marker_absent": {
+      "detail": "TEST_OPENED.json",
+      "ok": true
+    },
+    "memory_available": {
+      "detail": {
+        "available_commit_bytes": 2616823808,
+        "minimum_bytes": 1073741824
+      },
+      "ok": true
+    },
+    "mutation_readiness_present": {
+      "detail": "v2/results/mutation_readiness.json",
+      "ok": true
+    },
+    "output_dir_empty": {
+      "detail": "final",
+      "ok": true
+    },
+    "preregistration_sha256": {
+      "detail": {
+        "path": "v2/PREREGISTRATION.md",
+        "sha256": "145497789c7ad78a80a94cfd7f2b031ca9a20df49c06e0b3412af9070fa1ef4b"
+      },
+      "ok": true
+    },
+    "python_3_12": {
+      "detail": "3.12.10",
+      "ok": true
+    },
+    "receipt_verified:ABL-data": {
+      "detail": "v2 kernel OpsHealthKernel (receipt, kernel self-hash, model hash) and freeze.verify_origin (committed blobs)",
+      "ok": true
+    },
+    "receipt_verified:v2": {
+      "detail": "v2 kernel OpsHealthKernel (receipt, kernel self-hash, model hash) and freeze.verify_origin (committed blobs)",
+      "ok": true
+    },
+    "thresholds": {
+      "detail": {
+        "ABL-data": 0.16,
+        "ABL-optimizer": 0.17,
+        "v1": 0.16,
+        "v2": 0.2
+      },
+      "ok": true
+    },
+    "tree_clean_v2_runs": {
+      "detail": {
+        "first": [],
+        "porcelain_lines": 0
+      },
+      "ok": true
+    },
+    "v1_reproduces_published_legacy_test_confusion": {
+      "detail": {
+        "published": {
+          "fn": 11,
+          "fp": 57,
+          "tn": 132,
+          "tp": 40
+        },
+        "rows": 240,
+        "v1_confusion": {
+          "fn": 11,
+          "fp": 57,
+          "tn": 132,
+          "tp": 40
+        }
+      },
+      "ok": true
+    },
+    "v1_threshold": {
+      "detail": 0.16,
+      "ok": true
+    },
+    "v2_example_input": {
+      "detail": [
+        "NO_ALERT",
+        0.069311
+      ],
+      "ok": true
+    },
+    "validity_inputs": {
+      "detail": {
+        "ABL-data": {
+          "probes_refused": 66,
+          "probes_total": 66,
+          "receipt_verified": true
+        },
+        "ABL-optimizer": {
+          "probes_refused": 66,
+          "probes_total": 66,
+          "receipt_verified": false
+        },
+        "majority": {
+          "probes_refused": 0,
+          "probes_total": 66,
+          "receipt_verified": false
+        },
+        "rule": {
+          "probes_refused": 3,
+          "probes_total": 66,
+          "receipt_verified": false
+        },
+        "v1": {
+          "probes_refused": 65,
+          "probes_total": 66,
+          "receipt_verified": true
+        },
+        "v2": {
+          "probes_refused": 66,
+          "probes_total": 66,
+          "receipt_verified": true
+        }
+      },
+      "ok": true
+    }
+  },
+  "record_format": {
+    "encoding": "one JSON object per line: json.dumps(record, sort_keys=True, separators=(',', ':'), allow_nan=False) + '\\n', utf-8",
+    "fields": {
+      "ABL-data": "score, decision",
+      "ABL-optimizer": "score, decision",
+      "features": "the eight observed feature values as stored in the data file",
+      "label": "1 iff operator_attention_required",
+      "majority": "decision",
+      "regime": "data regime (legacy rows: legacy_v1)",
+      "rule": "decision",
+      "sample_id": "row id from the data file",
+      "split": "split name",
+      "v1": "score (as emitted, 12 decimals), decision",
+      "v2": "score, decision, advisory, abstain_reason, prediction_set"
+    },
+    "schema": "szl-oac/ops-health-final-score-row/v2"
+  },
+  "schema": "szl-oac/ops-health-final-scores-manifest/v2",
+  "script": {
+    "argv": [
+      "--final",
+      "--confirm",
+      "FINAL_TEST_OPENING"
+    ],
+    "git_head_at_run": "30d50b5b4537e4262489c160351feaaed08e33aa",
+    "path": "v2/research/final_score.py",
+    "python": "3.12.10",
+    "sha256": "8372f8818defc1224d1906529f7a6c806b0367a53c6b5ce25d3969857476636d"
+  },
+  "splits": [
+    "test",
+    "shift_queue_saturation",
+    "shift_failure_bursts",
+    "shift_clock_skew",
+    "shift_missing_tls",
+    "legacy_v1_test"
+  ],
+  "started_utc": "2026-09-29T21:13:22Z",
+  "synthetic": true,
+  "truth_label": "MEASURED: written by v2/research/final_score.py in the process that performed the opening; SYNTHETIC data; scores only (no metric here)",
+  "validity_inputs": {
+    "ABL-data": {
+      "probes": {
+        "escaped": [],
+        "method": "v2 kernel OpsHealthKernel.advise with the ABL-data pair",
+        "refused": 66,
+        "total": 66
+      },
+      "receipt_check": "v2 kernel OpsHealthKernel (receipt, kernel self-hash, model hash) and freeze.verify_origin (committed blobs)",
+      "receipt_verified": true
+    },
+    "ABL-optimizer": {
+      "probes": {
+        "escaped": [],
+        "method": "v2 kernel input path (unwrap_payload, normalize_features) then the params arithmetic",
+        "refused": 66,
+        "total": 66
+      },
+      "receipt_check": "params file bound by sha256 in contenders/INDEX.json; it has no artifact receipt and no kernel",
+      "receipt_verified": false
+    },
+    "majority": {
+      "probes": {
+        "escaped": [
+          "missing_field",
+          "extra_field",
+          "nan_continuous",
+          "inf_continuous",
+          "neg_inf_continuous",
+          "nan_binary",
+          "out_of_range_high",
+          "out_of_range_low",
+          "out_of_range_failures",
+          "huge_integer",
+          "text_instead_of_number",
+          "text_instead_of_binary",
+          "bool_for_continuous",
+          "binary_not_0_1",
+          "binary_float",
+          "null_value",
+          "list_value",
+          "unwrapped_features",
+          "extra_wrapper_key",
+          "features_not_object",
+          "top_level_not_object",
+          "too_deep",
+          "unscreened_extra_name",
+          "exact_address",
+          "exact_date_of_birth",
+          "exact_dob",
+          "exact_email",
+          "exact_fhir",
+          "exact_hl7",
+          "exact_mrn",
+          "exact_name",
+          "exact_obx",
+          "exact_order",
+          "exact_order_id",
+          "exact_patient",
+          "exact_patient_id",
+          "exact_phone",
+          "exact_pid",
+          "exact_result",
+          "exact_result_value",
+          "exact_specimen",
+          "exact_specimen_id",
+          "exact_ssn",
+          "case_upper_patient",
+          "case_mixed_hl7",
+          "hyphen_patient_id",
+          "space_order_id",
+          "padded_mrn",
+          "hyphen_result_value",
+          "token_hl7",
+          "token_order",
+          "token_result",
+          "token_name",
+          "token_email",
+          "token_pid",
+          "token_dob",
+          "substring_patient",
+          "substring_hl7",
+          "substring_fhir",
+          "substring_specimen",
+          "substring_mrn",
+          "prohibited_replaces_field",
+          "prohibited_replaces_binary",
+          "nested_prohibited",
+          "nested_list_prohibited",
+          "wrapper_level_prohibited"
+        ],
+        "method": "constant NO_ALERT callable (as in mutation.py)",
+        "refused": 0,
+        "total": 66
+      },
+      "receipt_check": "no artifact, no receipt, no kernel",
+      "receipt_verified": false
+    },
+    "rule": {
+      "probes": {
+        "escaped": [
+          "missing_field",
+          "extra_field",
+          "nan_continuous",
+          "inf_continuous",
+          "neg_inf_continuous",
+          "nan_binary",
+          "out_of_range_high",
+          "out_of_range_low",
+          "out_of_range_failures",
+          "huge_integer",
+          "text_instead_of_number",
+          "text_instead_of_binary",
+          "bool_for_continuous",
+          "binary_not_0_1",
+          "binary_float",
+          "null_value",
+          "list_value",
+          "extra_wrapper_key",
+          "too_deep",
+          "unscreened_extra_name",
+          "exact_address",
+          "exact_date_of_birth",
+          "exact_dob",
+          "exact_email",
+          "exact_fhir",
+          "exact_hl7",
+          "exact_mrn",
+          "exact_name",
+          "exact_obx",
+          "exact_order",
+          "exact_order_id",
+          "exact_patient",
+          "exact_patient_id",
+          "exact_phone",
+          "exact_pid",
+          "exact_result",
+          "exact_result_value",
+          "exact_specimen",
+          "exact_specimen_id",
+          "exact_ssn",
+          "case_upper_patient",
+          "case_mixed_hl7",
+          "hyphen_patient_id",
+          "space_order_id",
+          "padded_mrn",
+          "hyphen_result_value",
+          "token_hl7",
+          "token_order",
+          "token_result",
+          "token_name",
+          "token_email",
+          "token_pid",
+          "token_dob",
+          "substring_patient",
+          "substring_hl7",
+          "substring_fhir",
+          "substring_specimen",
+          "substring_mrn",
+          "prohibited_replaces_field",
+          "prohibited_replaces_binary",
+          "nested_prohibited",
+          "nested_list_prohibited",
+          "wrapper_level_prohibited"
+        ],
+        "method": "the one-line rule on the wrapped payload, no input screen",
+        "refused": 3,
+        "total": 66
+      },
+      "receipt_check": "no artifact, no receipt, no kernel",
+      "receipt_verified": false
+    },
+    "v1": {
+      "probes": {
+        "escaped": [
+          "unwrapped_features"
+        ],
+        "method": "v1 Hub kernel CLI input path: json.dumps(payload) read by _read_cli_input('-'), then OperationalHealthKernel.score",
+        "refused": 65,
+        "total": 66
+      },
+      "receipt_check": "Hub kernel OperationalHealthKernel accepted its receipt (schema, purpose, model sha256); files pinned by sha256",
+      "receipt_verified": true
+    },
+    "v2": {
+      "probes": {
+        "escaped": [],
+        "method": "v2 kernel OpsHealthKernel.advise on each gates.FAILCLOSED_PROBES payload",
+        "refused": 66,
+        "total": 66
+      },
+      "receipt_check": "v2 kernel OpsHealthKernel (receipt, kernel self-hash, model hash) and freeze.verify_origin (committed blobs)",
+      "receipt_verified": true
+    }
+  }
+}

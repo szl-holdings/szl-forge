@@ -1,0 +1,26 @@
+# stage-2 full suite after search/freeze/contenders/retrains (re-run after a MemoryError under host memory pressure), HEAD dff5ae5576581ef54ce47a18c888a529b52db639, 2026-09-29T15:24:09Z
+# git status --porcelain v2 runs: []
+# runs/TEST_OPENED.json present: no
+# host memory before run: \FreePhysicalMemory_KB=$($o.FreePhysicalMemory) FreeVirtualMemory_KB=$($o.FreeVirtualMemory)\ : The term 
+'\FreePhysicalMemory_KB=$($o.FreePhysicalMemory) FreeVirtualMemory_KB=$($o.FreeVirtualMemory)\' is not recognized as 
+the name of a cmdlet, function, script file, or operable program. Check the spelling of the name, or if a path was 
+included, verify that the path is correct and try again.
+At line:1 char:43
++ ... tingSystem; \"FreePhysicalMemory_KB=$($o.FreePhysicalMemory) FreeVirt ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (\FreePhysicalMe...VirtualMemory)\:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+ 
+# cmd: PYTHONUTF8=1 py -3.12 -B -m unittest discover -s v2/tests -t .
+...................................................................................................................................................
+----------------------------------------------------------------------
+Ran 147 tests in 58.657s
+
+OK
+exit=0
+# make_data --verify (hash-only)
+  "ok": true,
+  "problems": []
+exit=0
+145497789c7ad78a80a94cfd7f2b031ca9a20df49c06e0b3412af9070fa1ef4b *v2/PREREGISTRATION.md
+5152cd7f816c41e810861bbcd6489dee1d2598da89a36f6b418ef4a9867f181d *v2/AMENDMENTS.md

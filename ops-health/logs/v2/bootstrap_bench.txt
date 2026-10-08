@@ -1,0 +1,90 @@
+# logs/v2/bootstrap_bench.txt -- MEASURED 2026-09-29T06:19:10-04:00; timing benchmark on 50,000 DEV rows (SYNTHETIC, DEV only; intervals are NOT results)
+# HEAD: b75785c1d6c9069bd16408bc8d31542b0a792b64 (guarded paths clean: yes)
+# command: cd ROOT && PYTHONUTF8=1 py -3.12 -B -m v2.research.bench_bootstrap
+{
+  "platform": "Windows-11-10.0.26200-SP0",
+  "prep_seconds": 1.23,
+  "processor": "Intel64 Family 6 Model 197 Stepping 2, GenuineIntel",
+  "python": "3.12.10",
+  "rows": 50000,
+  "runs": {
+    "stratified_4x12500": {
+      "dev_only_intervals_not_results": {
+        "ba:dev_fixture": {
+          "level": 0.95,
+          "lower": 0.7563786767885068,
+          "method": "percentile_type7",
+          "n_defined": 2000,
+          "n_undefined": 0,
+          "upper": 0.7667241143948864
+        },
+        "ba:dev_fixture-v1": {
+          "level": 0.95,
+          "lower": 0.007871486707126561,
+          "method": "percentile_type7",
+          "n_defined": 2000,
+          "n_undefined": 0,
+          "upper": 0.013822606816736329
+        },
+        "ba:v1": {
+          "level": 0.95,
+          "lower": 0.7457514573317274,
+          "method": "percentile_type7",
+          "n_defined": 2000,
+          "n_undefined": 0,
+          "upper": 0.7555378276481882
+        }
+      },
+      "ms_per_resample": 46.88,
+      "resamples": 2000,
+      "seconds": 93.76,
+      "statistics_per_resample": 12,
+      "undefined_values": 0
+    },
+    "unstratified": {
+      "dev_only_intervals_not_results": {
+        "ba:dev_fixture": {
+          "level": 0.95,
+          "lower": 0.7566421737670855,
+          "method": "percentile_type7",
+          "n_defined": 2000,
+          "n_undefined": 0,
+          "upper": 0.7667243548222539
+        },
+        "ba:dev_fixture-v1": {
+          "level": 0.95,
+          "lower": 0.007915120248380501,
+          "method": "percentile_type7",
+          "n_defined": 2000,
+          "n_undefined": 0,
+          "upper": 0.013758775911655585
+        },
+        "ba:v1": {
+          "level": 0.95,
+          "lower": 0.745723924871316,
+          "method": "percentile_type7",
+          "n_defined": 2000,
+          "n_undefined": 0,
+          "upper": 0.7555728133188867
+        }
+      },
+      "ms_per_resample": 41.24,
+      "resamples": 2000,
+      "seconds": 82.47,
+      "statistics_per_resample": 12,
+      "undefined_values": 0
+    }
+  },
+  "seed": 20260927,
+  "setup_seconds": 0.39,
+  "weighted_equals_metrics_py_at_unit_weights": {
+    "auroc:v1": true,
+    "ba:dev_fixture": true,
+    "brier:v1": true,
+    "ece:v1": true,
+    "log_loss:v1": true
+  },
+  "what": "paired bootstrap timing benchmark on 50,000 DEV rows (SYNTHETIC, DEV only)"
+}
+# exit=0 wall_seconds=179 finished=2026-09-29T06:22:09-04:00
+# note (added after the run): ps -W at 2026-09-29T06:22:01-04:00 listed several other sessions' Python processes running concurrently on this machine; timings were measured under that shared load.

@@ -1,0 +1,132 @@
+# logs/v2/final_preflight.txt -- pre-flight of the single final opening (ws v2-final-opening). MEASURED; SYNTHETIC.
+# started 2026-09-29T20:28:08Z; HEAD f9c55882c52fcf2ed217d14b8332f2cc5a091e2e
+## 1. marker absent
+$ ls runs/
+receipts
+RESULT: ok (runs/TEST_OPENED.json absent)
+## 2. git tree clean for v2/ and runs/
+$ git status --porcelain --untracked-files=all -- v2 runs | wc -l
+0
+RESULT: ok (clean)
+## 3. free disk
+$ df -B1 /c
+Filesystem         1B-blocks          Used  Available Use% Mounted on
+C:             1021821579264 1018544734208 3276845056 100% /c
+## 4. full v2 suite on the clean tree
+$ PYTHONUTF8=1 py -3.12 -B -m unittest discover -s v2/tests -t .
+----------------------------------------------------------------------
+Ran 183 tests in 211.133s
+
+FAILED (failures=1, errors=1)
+exit=1 finished 2026-09-29T20:32:09Z
+# note (added 2026-09-29T20:34:30Z): the run above FAILED (failures=1, errors=1). Only its last lines were
+# logged, so the failing test names and tracebacks were NOT captured (logging mistake). An immediate re-run on the
+# same clean tree passed: "Ran 183 tests in 107.406s / OK", exit 0 (output kept outside the repository). Free disk
+# at that re-run: about 230 MB (df -h). The failure cause is UNKNOWN; the host disk has been intermittently full
+# (CONJECTURE: a temporary-file write hit ENOSPC). The suite is re-run below with full output before the opening.
+## (resume 2026-09-29T21:03:30Z, new agent) state at resume
+$ git rev-parse HEAD
+30d50b5b4537e4262489c160351feaaed08e33aa
+$ ls runs/
+receipts
+$ ls v2/results/final
+ls: cannot access 'v2/results/final': No such file or directory
+$ git status --porcelain --untracked-files=all -- v2 runs | wc -l
+0
+$ df -B1 /c
+Filesystem         1B-blocks          Used  Available Use% Mounted on
+C:             1021821579264 1015659274240 6162305024 100% /c
+## 4b. full v2 suite on the clean tree, FULL output (started 2026-09-29T21:02:52Z, finished 2026-09-29T21:03:22Z)
+$ PYTHONUTF8=1 py -3.12 -B -m unittest discover -s v2/tests -t .
+....................................................................................................................................................................................................
+----------------------------------------------------------------------
+Ran 196 tests in 29.519s
+
+OK
+exit=0
+## 5-8. scorer pre-opening checks, strict (v2 artifact verifies with its kernel + freeze.verify_origin; every contender in contenders/INDEX.json and the v1 Hub kernel hash-verify; prereg + AMENDMENTS sha256; mutation_readiness.json present; validation parity) -- 2026-09-29T21:03:50Z
+# note: HEAD moved 7a3ea7c -> 30d50b5 during this resume through two commits by another workstream (orchestrator-cli: oac_frontier.py, tests/, logs/cli/, progress/); neither touches v2/ or runs/ (git show --stat).
+$ PYTHONUTF8=1 py -3.12 -B -m v2.research.final_score --preflight
+check cwd_is_repository_root: ok "the marker records contender paths relative to the repository root"
+check marker_absent: ok "TEST_OPENED.json"
+check output_dir_empty: ok "final"
+check tree_clean_v2_runs: ok {"first": [], "porcelain_lines": 0}
+check git_head: ok "30d50b5b4537e4262489c160351feaaed08e33aa"
+check disk_free: ok {"free_bytes": 6160416768, "minimum_bytes": 2147483648}
+check memory_available: ok {"available_commit_bytes": 5534658560, "minimum_bytes": 1073741824}
+check python_3_12: ok "3.12.10"
+check preregistration_sha256: ok {"path": "v2/PREREGISTRATION.md", "sha256": "145497789c7ad78a80a94cfd7f2b031ca9a20df49c06e0b3412af9070fa1ef4b"}
+check amendments_sha256: ok {"path": "v2/AMENDMENTS.md", "sha256": "5152cd7f816c41e810861bbcd6489dee1d2598da89a36f6b418ef4a9867f181d"}
+check data_manifest_sha256: ok {"path": "v2/data/MANIFEST.json", "sha256": "c0d2fa0a924162e42c4d50c8eaf7d155f3e991f8f47ca518b1b87c3927ad7252"}
+check legacy_v1_test_sha256: ok {"path": "v2/data/legacy_v1/test.jsonl", "sha256": "7fc6ea635fcc501d56eed6a8b9e4f5f3a9057d0aa04505502759197150d79679"}
+check contenders_index_sha256: ok {"path": "v2/results/contenders/INDEX.json", "sha256": "086dbca90c69b9a2026bdedeb9fa9657f51af036884d79a839707c64a54b5718"}
+check mutation_readiness_present: ok "v2/results/mutation_readiness.json"
+check file_sha256:v2/ops-health/model.json: ok {"path": "v2/ops-health/model.json", "sha256": "b830a5edca271d667ab09b378dd5d3ab505d71a7e3451de8d9ca2bacfeed977c"}
+check file_sha256:v2/ops-health/artifact_receipt.json: ok {"path": "v2/ops-health/artifact_receipt.json", "sha256": "442486a3b451f0ad765aac253830cdc5455bad3a34186b4cf73388cf207056f2"}
+check file_sha256:v2/ops-health/ops_health.py: ok {"path": "v2/ops-health/ops_health.py", "sha256": "b0a64ff3f26ea284b0588de351ed7795a6089203b35fded0e7d82cbd4871aed9"}
+check file_sha256:hub/oac-v1/model.json: ok {"path": "hub/oac-v1/model.json", "sha256": "f111b7fc65db561c80763b25e538366a19bed18526ca881915777487935d9557"}
+check file_sha256:hub/oac-v1/artifact_receipt.json: ok {"path": "hub/oac-v1/artifact_receipt.json", "sha256": "23239bb39b0a5b6db1e41284e6372f352cee61d7938da1e84472246dcdaf95a1"}
+check file_sha256:hub/oac-v1/oac_operational_health.py: ok {"path": "hub/oac-v1/oac_operational_health.py", "sha256": "2fd8ffd3fd3ca8d0f960d4e0d471593b86e6cccb03607116390cbe9300992669"}
+check file_sha256:v2/results/contenders/ABL-data/model.json: ok {"path": "v2/results/contenders/ABL-data/model.json", "sha256": "0cbe0e4a4d76184c6a53945a7ddfe8ab1ec16318e959296caafd5a0415d5d598"}
+check file_sha256:v2/results/contenders/ABL-data/artifact_receipt.json: ok {"path": "v2/results/contenders/ABL-data/artifact_receipt.json", "sha256": "876bde74b7289e0d7b0edcd4f720c4d1766777c857d14356a88bd3d43c67fa23"}
+check file_sha256:v2/results/contenders/ABL-optimizer/params.json: ok {"path": "v2/results/contenders/ABL-optimizer/params.json", "sha256": "3a89941b066db919b10b608b3537ce4044872b2314761a732b7e828a975e4a1f"}
+check contenders_index_consistent: ok {"ABL-calibration_not_applicable": true, "ABL-conformal_keep": true, "ABL-data_files": true, "ABL-optimizer_files": true}
+check contenders_load: ok "v2 and ABL-data pairs accepted by the v2 kernel; v1 pair accepted by the Hub kernel"
+check receipt_verified:v2: ok "v2 kernel OpsHealthKernel (receipt, kernel self-hash, model hash) and freeze.verify_origin (committed blobs)"
+check receipt_verified:ABL-data: ok "v2 kernel OpsHealthKernel (receipt, kernel self-hash, model hash) and freeze.verify_origin (committed blobs)"
+check v1_threshold: ok 0.16
+check thresholds: ok {"ABL-data": 0.16, "ABL-optimizer": 0.17, "v1": 0.16, "v2": 0.2}
+check v1_reproduces_published_legacy_test_confusion: ok {"published": {"fn": 11, "fp": 57, "tn": 132, "tp": 40}, "rows": 240, "v1_confusion": {"fn": 11, "fp": 57, "tn": 132, "tp": 40}}
+check v2_example_input: ok ["NO_ALERT", 0.069311]
+check validity_inputs: ok {"ABL-data": {"probes_refused": 66, "probes_total": 66, "receipt_verified": true}, "ABL-optimizer": {"probes_refused": 66, "probes_total": 66, "receipt_verified": false}, "majority": {"probes_refused": 0, "probes_total": 66, "receipt_verified": false}, "rule": {"probes_refused": 3, "probes_total": 66, "receipt_verified": false}, "v1": {"probes_refused": 65, "probes_total": 66, "receipt_verified": true}, "v2": {"probes_refused": 66, "probes_total": 66, "receipt_verified": true}}
+check validation_parity: ok {"ABL-data": {"got": {"fn": 249, "fp": 509, "tn": 2819, "tp": 519}, "ok": true, "recorded": {"fn": 249, "fp": 509, "tn": 2819, "tp": 519}}, "ABL-optimizer": {"got": {"fn": 199, "fp": 740, "tn": 2588, "tp": 569}, "ok": true, "recorded": {"fn": 199, "fp": 740, "tn": 2588, "tp": 569}}, "purpose": "ABLATION", "rows": 4096, "v2": {"got": {"fn": 260, "fp": 413, "tn": 2915, "tp": 508}, "ok": true, "recorded": {"fn": 260, "fp": 413, "tn": 2915, "tp": 508}}}
+preflight: PASS failed=[]
+exit=0
+## 9. full-size DEV stand-in dry run (50,000 + 4 x 12,500 DEV rows named dev-standin-<split>; output in the session scratchpad, outside v2/, runs/ and v2/data/; no sealed file touched) -- started 2026-09-29T21:03:55Z
+$ PYTHONUTF8=1 py -3.12 -B -m v2.research.final_score --dry-run --out <scratchpad>/dry_full
+opening: sealed purpose FINAL_TEST_OPENING (DRY_RUN_DEV_STANDIN) at 2026-09-29T21:03:57Z
+opened: marker TEST_OPENED.json sha256 58d719e4137002158c5fec83fa4699ed02a75762f51a00024752bf0f285a7e4d
+wrote scores_test.jsonl: rows 50000 positives 8997 bytes 31136937 sha256 5f8cf13d058116436906f7e67684b69f121dc45b2c7c4baf15ec7e459507ce48
+wrote scores_shift_queue_saturation.jsonl: rows 12500 positives 6383 bytes 8303683 sha256 5369da485da0f9cf097a6b13792d8384f2b562fdd4a8b8ab97ee082eb9b74fc6
+wrote scores_shift_failure_bursts.jsonl: rows 12500 positives 3134 bytes 8266338 sha256 eb8e84bdb7301daf09486bdcee61128f37a7a3c4ed432fd744774aa88dc7f8e2
+wrote scores_shift_clock_skew.jsonl: rows 12500 positives 2292 bytes 8130514 sha256 54f6532f19fd2a015cdbb55091f93369ce02e7bc7a58182bfa93961c5d7a4a61
+wrote scores_shift_missing_tls.jsonl: rows 12500 positives 3310 bytes 8154934 sha256 095da4d4b185a7253de85de2d57f3a9b2c4a5e5a5e3e4692d9f80b0c4779989e
+wrote scores_legacy_v1_test.jsonl: rows 240 positives 51 bytes 149437 sha256 0bb6345095f739ce4bda3d11b27c49ea7bc4fb28d894365b6df16e1f2d64b033
+wrote MANIFEST.json: sha256 029a2890ae8054c23fc933165bf7398d68a148018d863af71a70eea8350745f3
+dry-run: done; manifest sha256 029a2890ae8054c23fc933165bf7398d68a148018d863af71a70eea8350745f3
+
+real	0m9.585s
+user	0m0.031s
+sys	0m0.046s
+exit=0
+(the 32 "check ..." lines of this dry run: all ok; the preflight above had 33 because it adds validation_parity)
+$ grep -c '^check .*: ok' ; grep -c '^check .*: FAILED'
+32
+0
+## 10. full 2,000-resample analysis of the DEV dry-run scores (timing and rendering rehearsal; DEV numbers are NOT results)
+$ PYTHONUTF8=1 py -3.12 -B -m v2.research.final_analyze --score-dir <scratchpad>/dry_full/final --out-dir <scratchpad>/dry_full/analysis
+set test: rows 50000 bootstrap 68.33 s
+set pooled_shift: rows 50000 bootstrap 78.95 s
+set shift_queue_saturation: rows 12500 bootstrap 19.7 s
+set shift_failure_bursts: rows 12500 bootstrap 21.52 s
+set shift_clock_skew: rows 12500 bootstrap 21.67 s
+set shift_missing_tls: rows 12500 bootstrap 21.25 s
+set legacy_v1_test: rows 240 bootstrap 0.34 s
+wrote final_evaluation.json: 228287 bytes sha256 44b5cb501632ef19d53d122c068dbce92850915eeb51d123e404cc746b7472ef
+wrote reliability.svg: 13835 bytes sha256 5263373234f8b2a52edb83b91d88b145426d5dcb37e4e50239b36492255170bf
+wrote FINAL_RESULTS.md: 19768 bytes sha256 1dd31a7febb6830e0afbf924b9e7c155cdea4003d50892f3fda5dca31ddb78e3
+verdict: WIN (failed: [])
+
+real	3m59.041s
+user	0m0.046s
+sys	0m0.015s
+exit=0
+## after the rehearsals (2026-09-29T21:09:44Z)
+$ ls runs/
+receipts
+$ git status --porcelain --untracked-files=all -- v2 runs | wc -l
+0
+$ df -B1 /c
+Filesystem         1B-blocks          Used   Available Use% Mounted on
+C:             1021821579264 1009742192640 12079386624  99% /c
+PRE-FLIGHT RESULT: PASS (marker absent; v2/ and runs/ clean; disk >= 2 GB; suite 196 OK; artifacts, contenders, v1 Hub kernel, prereg, amendments verified; mutation_readiness.json present)

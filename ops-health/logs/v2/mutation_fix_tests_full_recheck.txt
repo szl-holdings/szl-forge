@@ -1,0 +1,8 @@
+$ cd ROOT && PYTHONUTF8=1 py -3.12 -B -m unittest discover -s v2/tests -t .   # 2026-10-06T05:30:56-04:00, HEAD 6102fedd71aa7795ee4d831a02402ad7730bb137, dirty entries under v2/research v2/ops-health v2/tests v2/results math:  M v2/research/final_analyze.py; M v2/results/FINAL_RESULTS.md; M v2/tests/test_final_analyze.py;?? math/inventory.md;?? math/lean_claims.json;?? math/tools/;?? v2/results/COMPLIANCE.md;?? v2/results/final_recheck.json;?? v2/results/final_robustness.json;
+...............................................................................................................................................................................................................
+----------------------------------------------------------------------
+Ran 207 tests in 315.429s
+
+OK
+exit code: 0
+runs/TEST_OPENED.json exists: yes (re-check run, after the single final opening; no sealed re-open)

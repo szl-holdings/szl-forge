@@ -1,0 +1,3 @@
+train sha256 5211e7ec954ec00c743bd62dae107f7a80335e4e5962a31b788e7bf56ecf0adb rows 16384 label counts {'{"operator_attention_required": false}': 13444, '{"operator_attention_required": true}': 2940}
+calibration sha256 526d47c5e922aa35e3fba1f46f595fad6cc0fd4b3fd2e52114b5c99247e57b16 rows 4096 label counts {'{"operator_attention_required": false}': 3352, '{"operator_attention_required": true}': 744}
+conformal sha256 bf317275e207e13ddd38d95b308eb7ff6a21d13e71b27622d8e65f4a4eb5f2dd rows 4096 label counts {'{"operator_attention_required": false}': 3346, '{"operator_attention_required": true}': 750}

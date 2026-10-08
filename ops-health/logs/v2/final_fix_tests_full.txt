@@ -1,0 +1,9 @@
+# logs/v2/final_fix_tests_full.txt -- full v2 test suite after the post-opening render-only changes (v2-final-fix). MEASURED; DEV data only; opens no sealed split.
+# started 2026-10-06T09:48:56Z; HEAD d677d347e0664e17eb6b59c90ad3714190449e30; final_analyze.py sha256 afe518d439309816c8ec2d2eb76850d369d5d7e3a06a9a5c19e9d59bc0d5c130; test_final_analyze.py sha256 725e17159c361fb2c0add3f2c8a08f604769c1059ff8ca7bbf9c331c57b5f361
+$ PYTHONUTF8=1 py -3.12 -B -m unittest discover -s v2/tests -t .
+................................................................................................................................................................................................................
+----------------------------------------------------------------------
+Ran 208 tests in 247.285s
+
+OK
+exit=0 finished 2026-10-06T09:53:19Z

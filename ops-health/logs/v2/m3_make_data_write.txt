@@ -1,0 +1,82 @@
+## 2026-09-26T22:04:11Z PYTHONUTF8=1 py -3.12 -B -m v2.research.make_data --write
+{
+  "created_utc": "2026-09-26T22:04:19Z",
+  "generator_sha256": "a502d3644534ec599663d8678b8066b390e612396b25350f33fa987194b44384",
+  "ok": true,
+  "seconds": 3.203,
+  "splits": {
+    "calibration": {
+      "path": "v2/data/calibration.jsonl",
+      "regime": "nominal",
+      "rows": 4096,
+      "sealed": false,
+      "seed": 6351044219371024610,
+      "sha256": "526d47c5e922aa35e3fba1f46f595fad6cc0fd4b3fd2e52114b5c99247e57b16"
+    },
+    "conformal": {
+      "path": "v2/data/conformal.jsonl",
+      "regime": "nominal",
+      "rows": 4096,
+      "sealed": false,
+      "seed": 683173496067957898,
+      "sha256": "bf317275e207e13ddd38d95b308eb7ff6a21d13e71b27622d8e65f4a4eb5f2dd"
+    },
+    "shift_clock_skew": {
+      "path": "v2/data/sealed/shift_clock_skew.jsonl",
+      "regime": "clock_skew",
+      "rows": 12500,
+      "sealed": true,
+      "seed": 10336912638686902450,
+      "sha256": "d98e19e8fd1e9d3c5e8c2c1c808492d8c0f6be378ef0d89cc50569afb9c74823"
+    },
+    "shift_failure_bursts": {
+      "path": "v2/data/sealed/shift_failure_bursts.jsonl",
+      "regime": "failure_bursts",
+      "rows": 12500,
+      "sealed": true,
+      "seed": 11998683465433162904,
+      "sha256": "4199085505a0e3ea3ead9b282eb28d4c8c0060a3034fdee713eb845ee97a8c0e"
+    },
+    "shift_missing_tls": {
+      "path": "v2/data/sealed/shift_missing_tls.jsonl",
+      "regime": "missing_tls",
+      "rows": 12500,
+      "sealed": true,
+      "seed": 5694392190820653994,
+      "sha256": "a4a96189c864c93906649ab629f3ed979b395b9252df8dc5bb777fc8acf0bedc"
+    },
+    "shift_queue_saturation": {
+      "path": "v2/data/sealed/shift_queue_saturation.jsonl",
+      "regime": "queue_saturation",
+      "rows": 12500,
+      "sealed": true,
+      "seed": 9028177002387601968,
+      "sha256": "c647bb89be02205fa8961a9ed3209c1498cc0f7524224365c2af6596baae85da"
+    },
+    "test": {
+      "path": "v2/data/sealed/test.jsonl",
+      "regime": "nominal",
+      "rows": 50000,
+      "sealed": true,
+      "seed": 18282787856133816583,
+      "sha256": "6479d0bffab20771ba1f5976f95dec8825e8edf0aa4e4faa559d77d57fec1f3b"
+    },
+    "train": {
+      "path": "v2/data/train.jsonl",
+      "regime": "nominal",
+      "rows": 16384,
+      "sealed": false,
+      "seed": 9794697682753307980,
+      "sha256": "5211e7ec954ec00c743bd62dae107f7a80335e4e5962a31b788e7bf56ecf0adb"
+    },
+    "validation": {
+      "path": "v2/data/validation.jsonl",
+      "regime": "nominal",
+      "rows": 4096,
+      "sealed": false,
+      "seed": 17969648428127654506,
+      "sha256": "d0a37356784dcd60a4dbea68d760c55d56a7bd69b3a6f4dc833cfdbb38a951f3"
+    }
+  }
+}
+exit=0

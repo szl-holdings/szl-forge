@@ -1,0 +1,13 @@
+{
+  "schema": "szl-oac/ops-health-v2-preregistration-receipt/v1",
+  "preregistration_path": "v2/PREREGISTRATION.md",
+  "preregistration_sha256": "145497789c7ad78a80a94cfd7f2b031ca9a20df49c06e0b3412af9070fa1ef4b",
+  "contract_sha256": "dd0e5acdff504490ad1eb6a1eb9a3840d31c15f2fa7bb16716d0915cba1cfdce",
+  "registered_utc": "2026-09-26T21:23:41Z",
+  "v1_hub_revision": "dd7d109813abcd90c5250106dc2eabd2804e7ac3",
+  "v1_generator_source": "szl-holdings/szl-forge@9a6fdd2c7bdb1660de009cef974d7df46866960a:clinical-gateway/tools/train_operational_health_model.py",
+  "v2_code_exists": false,
+  "v2_data_exists": false,
+  "pilot_runs": 0,
+  "attests": "integrity and ordering of the registration text only; not quality"
+}

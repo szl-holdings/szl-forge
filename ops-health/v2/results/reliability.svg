@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 420" width="760" height="420" role="img" aria-labelledby="t d">
+<title id="t">Reliability of v2 and v1 (SYNTHETIC)</title>
+<desc id="d">Mean predicted score against observed fraction positive in 10 equal-width bins, for v2 and v1, on the nominal test split and the pooled shift suite. SYNTHETIC data. Values are in v2/results/final_evaluation.json.</desc>
+<style>svg{--surface:#fcfcfb;--ink:#0b0b0b;--ink2:#52514e;--grid:#d9d8d4;--series-1:#2a78d6;--series-2:#eb6834;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}@media (prefers-color-scheme:dark){svg{--surface:#1a1a19;--ink:#ffffff;--ink2:#c3c2b7;--grid:#3a3a37;--series-1:#3987e5;--series-2:#d95926}}.t{fill:var(--ink);font-size:14px;font-weight:600}.l{fill:var(--ink2);font-size:11px}.a{stroke:var(--grid);stroke-width:1}.d{stroke:var(--ink2);stroke-width:1;stroke-dasharray:4 4}</style>
+<rect x="0" y="0" width="760" height="420" fill="var(--surface)"/>
+<text class="t" x="56" y="24">Reliability, 10 equal-width bins (SYNTHETIC)</text>
+<line x1="56" y1="42" x2="74" y2="42" stroke="var(--series-1)" stroke-width="2"/>
+<circle cx="65" cy="42" r="4" fill="var(--series-1)"/>
+<text class="l" x="80" y="46">v2 (T07, uncalibrated LR)</text>
+<line x1="286" y1="42" x2="304" y2="42" stroke="var(--series-2)" stroke-width="2"/>
+<circle cx="295" cy="42" r="4" fill="var(--series-2)"/>
+<text class="l" x="310" y="46">v1 as-is (Hub kernel score)</text>
+<line class="d" x1="516" y1="42" x2="534" y2="42"/><text class="l" x="540" y="46">perfect calibration</text>
+<text class="t" x="56" y="72">Nominal test</text>
+<line class="a" x1="56.0" y1="380.0" x2="356.0" y2="380.0"/>
+<text class="l" x="50.0" y="384.0" text-anchor="end">0.0</text>
+<text class="l" x="56.0" y="396.0" text-anchor="middle">0.0</text>
+<line class="a" x1="56.0" y1="320.0" x2="356.0" y2="320.0"/>
+<text class="l" x="50.0" y="324.0" text-anchor="end">0.2</text>
+<text class="l" x="116.0" y="396.0" text-anchor="middle">0.2</text>
+<line class="a" x1="56.0" y1="260.0" x2="356.0" y2="260.0"/>
+<text class="l" x="50.0" y="264.0" text-anchor="end">0.4</text>
+<text class="l" x="176.0" y="396.0" text-anchor="middle">0.4</text>
+<line class="a" x1="56.0" y1="200.0" x2="356.0" y2="200.0"/>
+<text class="l" x="50.0" y="204.0" text-anchor="end">0.6</text>
+<text class="l" x="236.0" y="396.0" text-anchor="middle">0.6</text>
+<line class="a" x1="56.0" y1="140.0" x2="356.0" y2="140.0"/>
+<text class="l" x="50.0" y="144.0" text-anchor="end">0.8</text>
+<text class="l" x="296.0" y="396.0" text-anchor="middle">0.8</text>
+<line class="a" x1="56.0" y1="80.0" x2="356.0" y2="80.0"/>
+<text class="l" x="50.0" y="84.0" text-anchor="end">1.0</text>
+<text class="l" x="356.0" y="396.0" text-anchor="middle">1.0</text>
+<line class="d" x1="56.0" y1="380.0" x2="356.0" y2="80.0"/>
+<text class="l" x="206.0" y="412.0" text-anchor="middle">mean predicted score in bin</text>
+<text class="l" transform="translate(18.0,230.0) rotate(-90)" text-anchor="middle">observed fraction positive</text>
+<path d="M77.8,366.0 L97.6,340.6 L127.9,294.8 L158.5,249.4 L192.1,220.8 L220.5,189.6 L250.2,161.6 L280.3,119.7 L308.5,98.3 L339.8,91.3" fill="none" stroke="var(--series-1)" stroke-width="2"/>
+<circle cx="77.8" cy="366.0" r="4.5" fill="var(--series-1)" stroke="var(--surface)" stroke-width="2"><title>v2 (T07, uncalibrated LR), bin [0.0, 0.1): n=23210, mean score 0.0727, fraction positive 0.0467</title></circle>
+<circle cx="97.6" cy="340.6" r="4.5" fill="var(--series-1)" stroke="var(--surface)" stroke-width="2"><title>v2 (T07, uncalibrated LR), bin [0.1, 0.2): n=15680, mean score 0.1388, fraction positive 0.1312</title></circle>
+<circle cx="127.9" cy="294.8" r="4.5" fill="var(--series-1)" stroke="var(--surface)" stroke-width="2"><title>v2 (T07, uncalibrated LR), bin [0.2, 0.3): n=3811, mean score 0.2396, fraction positive 0.2839</title></circle>
+<circle cx="158.5" cy="249.4" r="4.5" fill="var(--series-1)" stroke="var(--surface)" stroke-width="2"><title>v2 (T07, uncalibrated LR), bin [0.3, 0.4): n=1116, mean score 0.3415, fraction positive 0.4355</title></circle>
+<circle cx="192.1" cy="220.8" r="4.5" fill="var(--series-1)" stroke="var(--surface)" stroke-width="2"><title>v2 (T07, uncalibrated LR), bin [0.4, 0.5): n=1327, mean score 0.4537, fraction positive 0.5305</title></circle>
+<circle cx="220.5" cy="189.6" r="4.5" fill="var(--series-1)" stroke="var(--surface)" stroke-width="2"><title>v2 (T07, uncalibrated LR), bin [0.5, 0.6): n=1754, mean score 0.5485, fraction positive 0.6345</title></circle>
+<circle cx="250.2" cy="161.6" r="4.5" fill="var(--series-1)" stroke="var(--surface)" stroke-width="2"><title>v2 (T07, uncalibrated LR), bin [0.6, 0.7): n=1313, mean score 0.6474, fraction positive 0.7281</title></circle>
+<circle cx="280.3" cy="119.7" r="4.5" fill="var(--series-1)" stroke="var(--surface)" stroke-width="2"><title>v2 (T07, uncalibrated LR), bin [0.7, 0.8): n=1006, mean score 0.7476, fraction positive 0.8678</title></circle>
+<circle cx="308.5" cy="98.3" r="4.5" fill="var(--series-1)" stroke="var(--surface)" stroke-width="2"><title>v2 (T07, uncalibrated LR), bin [0.8, 0.9): n=491, mean score 0.8418, fraction positive 0.9389</title></circle>
+<circle cx="339.8" cy="91.3" r="4.5" fill="var(--series-1)" stroke="var(--surface)" stroke-width="2"><title>v2 (T07, uncalibrated LR), bin [0.9, 1.0]: n=292, mean score 0.9460, fraction positive 0.9623</title></circle>
+<path d="M99.3,353.3 L125.3,272.0 L163.7,174.0 L188.7,183.1 L217.1,119.6 L248.3,93.1 L282.3,92.3 L305.1,80.0 L341.1,80.0" fill="none" stroke="var(--series-2)" stroke-width="2"/>
+<circle cx="99.3" cy="353.3" r="4.5" fill="var(--series-2)" stroke="var(--surface)" stroke-width="2"><title>v1 as-is (Hub kernel score), bin [0.1, 0.2): n=40320, mean score 0.1443, fraction positive 0.0889</title></circle>
+<circle cx="125.3" cy="272.0" r="4.5" fill="var(--series-2)" stroke="var(--surface)" stroke-width="2"><title>v1 as-is (Hub kernel score), bin [0.2, 0.3): n=3944, mean score 0.2309, fraction positive 0.3600</title></circle>
+<circle cx="163.7" cy="174.0" r="4.5" fill="var(--series-2)" stroke="var(--surface)" stroke-width="2"><title>v1 as-is (Hub kernel score), bin [0.3, 0.4): n=1407, mean score 0.3590, fraction positive 0.6866</title></circle>
+<circle cx="188.7" cy="183.1" r="4.5" fill="var(--series-2)" stroke="var(--surface)" stroke-width="2"><title>v1 as-is (Hub kernel score), bin [0.4, 0.5): n=3164, mean score 0.4424, fraction positive 0.6564</title></circle>
+<circle cx="217.1" cy="119.6" r="4.5" fill="var(--series-2)" stroke="var(--surface)" stroke-width="2"><title>v1 as-is (Hub kernel score), bin [0.5, 0.6): n=781, mean score 0.5370, fraction positive 0.8681</title></circle>
+<circle cx="248.3" cy="93.1" r="4.5" fill="var(--series-2)" stroke="var(--surface)" stroke-width="2"><title>v1 as-is (Hub kernel score), bin [0.6, 0.7): n=206, mean score 0.6410, fraction positive 0.9563</title></circle>
+<circle cx="282.3" cy="92.3" r="4.5" fill="var(--series-2)" stroke="var(--surface)" stroke-width="2"><title>v1 as-is (Hub kernel score), bin [0.7, 0.8): n=146, mean score 0.7543, fraction positive 0.9589</title></circle>
+<circle cx="305.1" cy="80.0" r="4.5" fill="var(--series-2)" stroke="var(--surface)" stroke-width="2"><title>v1 as-is (Hub kernel score), bin [0.8, 0.9): n=31, mean score 0.8302, fraction positive 1.0000</title></circle>
+<circle cx="341.1" cy="80.0" r="4.5" fill="var(--series-2)" stroke="var(--surface)" stroke-width="2"><title>v1 as-is (Hub kernel score), bin [0.9, 1.0]: n=1, mean score 0.9502, fraction positive 1.0000</title></circle>
+<text class="l" x="62.0" y="94.0">ECE v2 0.0306, v1 0.0848</text>
+<text class="t" x="436" y="72">Pooled shift suite</text>
+<line class="a" x1="436.0" y1="380.0" x2="736.0" y2="380.0"/>
+<text class="l" x="430.0" y="384.0" text-anchor="end">0.0</text>
+<text class="l" x="436.0" y="396.0" text-anchor="middle">0.0</text>
+<line class="a" x1="436.0" y1="320.0" x2="736.0" y2="320.0"/>
+<text class="l" x="430.0" y="324.0" text-anchor="end">0.2</text>
+<text class="l" x="496.0" y="396.0" text-anchor="middle">0.2</text>
+<line class="a" x1="436.0" y1="260.0" x2="736.0" y2="260.0"/>
+<text class="l" x="430.0" y="264.0" text-anchor="end">0.4</text>
+<text class="l" x="556.0" y="396.0" text-anchor="middle">0.4</text>
+<line class="a" x1="436.0" y1="200.0" x2="736.0" y2="200.0"/>
+<text class="l" x="430.0" y="204.0" text-anchor="end">0.6</text>
+<text class="l" x="616.0" y="396.0" text-anchor="middle">0.6</text>
+<line class="a" x1="436.0" y1="140.0" x2="736.0" y2="140.0"/>
+<text class="l" x="430.0" y="144.0" text-anchor="end">0.8</text>
+<text class="l" x="676.0" y="396.0" text-anchor="middle">0.8</text>
+<line class="a" x1="436.0" y1="80.0" x2="736.0" y2="80.0"/>
+<text class="l" x="430.0" y="84.0" text-anchor="end">1.0</text>
+<text class="l" x="736.0" y="396.0" text-anchor="middle">1.0</text>
+<line class="d" x1="436.0" y1="380.0" x2="736.0" y2="80.0"/>
+<text class="l" x="586.0" y="412.0" text-anchor="middle">mean predicted score in bin</text>
+<text class="l" transform="translate(398.0,230.0) rotate(-90)" text-anchor="middle">observed fraction positive</text>
+<path d="M458.0,365.4 L479.6,336.9 L509.9,289.2 L540.2,235.3 L568.0,200.4 L600.1,175.7 L630.6,144.9 L660.8,118.4 L691.5,96.1 L718.3,84.3" fill="none" stroke="var(--series-1)" stroke-width="2"/>
+<circle cx="458.0" cy="365.4" r="4.5" fill="var(--series-1)" stroke="var(--surface)" stroke-width="2"><title>v2 (T07, uncalibrated LR), bin [0.0, 0.1): n=11977, mean score 0.0733, fraction positive 0.0486</title></circle>
+<circle cx="479.6" cy="336.9" r="4.5" fill="var(--series-1)" stroke="var(--surface)" stroke-width="2"><title>v2 (T07, uncalibrated LR), bin [0.1, 0.2): n=14953, mean score 0.1453, fraction positive 0.1437</title></circle>
+<circle cx="509.9" cy="289.2" r="4.5" fill="var(--series-1)" stroke="var(--surface)" stroke-width="2"><title>v2 (T07, uncalibrated LR), bin [0.2, 0.3): n=7773, mean score 0.2462, fraction positive 0.3027</title></circle>
+<circle cx="540.2" cy="235.3" r="4.5" fill="var(--series-1)" stroke="var(--surface)" stroke-width="2"><title>v2 (T07, uncalibrated LR), bin [0.3, 0.4): n=5417, mean score 0.3472, fraction positive 0.4822</title></circle>
+<circle cx="568.0" cy="200.4" r="4.5" fill="var(--series-1)" stroke="var(--surface)" stroke-width="2"><title>v2 (T07, uncalibrated LR), bin [0.4, 0.5): n=2981, mean score 0.4401, fraction positive 0.5988</title></circle>
+<circle cx="600.1" cy="175.7" r="4.5" fill="var(--series-1)" stroke="var(--surface)" stroke-width="2"><title>v2 (T07, uncalibrated LR), bin [0.5, 0.6): n=1843, mean score 0.5471, fraction positive 0.6810</title></circle>
+<circle cx="630.6" cy="144.9" r="4.5" fill="var(--series-1)" stroke="var(--surface)" stroke-width="2"><title>v2 (T07, uncalibrated LR), bin [0.6, 0.7): n=1474, mean score 0.6486, fraction positive 0.7836</title></circle>
+<circle cx="660.8" cy="118.4" r="4.5" fill="var(--series-1)" stroke="var(--surface)" stroke-width="2"><title>v2 (T07, uncalibrated LR), bin [0.7, 0.8): n=1335, mean score 0.7495, fraction positive 0.8719</title></circle>
+<circle cx="691.5" cy="96.1" r="4.5" fill="var(--series-1)" stroke="var(--surface)" stroke-width="2"><title>v2 (T07, uncalibrated LR), bin [0.8, 0.9): n=1419, mean score 0.8515, fraction positive 0.9464</title></circle>
+<circle cx="718.3" cy="84.3" r="4.5" fill="var(--series-1)" stroke="var(--surface)" stroke-width="2"><title>v2 (T07, uncalibrated LR), bin [0.9, 1.0]: n=828, mean score 0.9411, fraction positive 0.9855</title></circle>
+<path d="M482.2,343.2 L505.7,238.5 L539.5,156.0 L571.0,163.4 L599.9,104.7 L626.5,90.4 L659.2,81.7 L687.9,80.0 L712.7,80.0" fill="none" stroke="var(--series-2)" stroke-width="2"/>
+<circle cx="482.2" cy="343.2" r="4.5" fill="var(--series-2)" stroke="var(--surface)" stroke-width="2"><title>v1 as-is (Hub kernel score), bin [0.1, 0.2): n=30637, mean score 0.1540, fraction positive 0.1225</title></circle>
+<circle cx="505.7" cy="238.5" r="4.5" fill="var(--series-2)" stroke="var(--surface)" stroke-width="2"><title>v1 as-is (Hub kernel score), bin [0.2, 0.3): n=12447, mean score 0.2324, fraction positive 0.4718</title></circle>
+<circle cx="539.5" cy="156.0" r="4.5" fill="var(--series-2)" stroke="var(--surface)" stroke-width="2"><title>v1 as-is (Hub kernel score), bin [0.3, 0.4): n=1876, mean score 0.3451, fraction positive 0.7468</title></circle>
+<circle cx="571.0" cy="163.4" r="4.5" fill="var(--series-2)" stroke="var(--surface)" stroke-width="2"><title>v1 as-is (Hub kernel score), bin [0.4, 0.5): n=2497, mean score 0.4499, fraction positive 0.7221</title></circle>
+<circle cx="599.9" cy="104.7" r="4.5" fill="var(--series-2)" stroke="var(--surface)" stroke-width="2"><title>v1 as-is (Hub kernel score), bin [0.5, 0.6): n=1689, mean score 0.5462, fraction positive 0.9177</title></circle>
+<circle cx="626.5" cy="90.4" r="4.5" fill="var(--series-2)" stroke="var(--surface)" stroke-width="2"><title>v1 as-is (Hub kernel score), bin [0.6, 0.7): n=575, mean score 0.6349, fraction positive 0.9652</title></circle>
+<circle cx="659.2" cy="81.7" r="4.5" fill="var(--series-2)" stroke="var(--surface)" stroke-width="2"><title>v1 as-is (Hub kernel score), bin [0.7, 0.8): n=176, mean score 0.7440, fraction positive 0.9943</title></circle>
+<circle cx="687.9" cy="80.0" r="4.5" fill="var(--series-2)" stroke="var(--surface)" stroke-width="2"><title>v1 as-is (Hub kernel score), bin [0.8, 0.9): n=88, mean score 0.8396, fraction positive 1.0000</title></circle>
+<circle cx="712.7" cy="80.0" r="4.5" fill="var(--series-2)" stroke="var(--surface)" stroke-width="2"><title>v1 as-is (Hub kernel score), bin [0.9, 1.0]: n=15, mean score 0.9222, fraction positive 1.0000</title></circle>
+<text class="l" x="442.0" y="94.0">ECE v2 0.0549, v1 0.1251</text>
+</svg>

@@ -1,0 +1,99 @@
+$ py -3.12 -B -m v2.research.mutation kernel-tests --kernel <temp copy>/ops_health.py --summary <temp> v2.tests.test_failclosed_probes v2.tests.test_receipt.ReceiptTest v2.tests.test_review_hardening.ArtifactHardeningTest v2.tests.test_review_hardening.InputHardeningTest v2.tests.test_review_hardening.EchoBoundTest v2.tests.test_gates.GateTest.test_integrity_gate
+kernel copy sha256: 84d9e7ce0f3ba21b83a3a7765171d10d0a238312c4deda1ee880e004b5c96636
+exit code: 0
+--- stdout ---
+test_cli_refuses_with_exit_code_2 (v2.tests.test_failclosed_probes.FailClosedProbeTest.test_cli_refuses_with_exit_code_2) ... FAIL
+test_contract_2_6_probe_classes_are_present (v2.tests.test_failclosed_probes.FailClosedProbeTest.test_contract_2_6_probe_classes_are_present) ... ok
+test_every_probe_is_refused_with_expected_message (v2.tests.test_failclosed_probes.FailClosedProbeTest.test_every_probe_is_refused_with_expected_message) ... 
+  test_every_probe_is_refused_with_expected_message (v2.tests.test_failclosed_probes.FailClosedProbeTest.test_every_probe_is_refused_with_expected_message) (probe='nan_continuous') ... FAIL
+  test_every_probe_is_refused_with_expected_message (v2.tests.test_failclosed_probes.FailClosedProbeTest.test_every_probe_is_refused_with_expected_message) (probe='inf_continuous') ... FAIL
+  test_every_probe_is_refused_with_expected_message (v2.tests.test_failclosed_probes.FailClosedProbeTest.test_every_probe_is_refused_with_expected_message) (probe='neg_inf_continuous') ... FAIL
+test_exactly_eight_fields (v2.tests.test_failclosed_probes.FailClosedProbeTest.test_exactly_eight_fields) ... ok
+test_gate_counts_every_probe (v2.tests.test_failclosed_probes.FailClosedProbeTest.test_gate_counts_every_probe) ... FAIL
+test_match_kinds (v2.tests.test_failclosed_probes.FailClosedProbeTest.test_match_kinds) ... ok
+test_prohibited_screen_runs_before_schema_check (v2.tests.test_failclosed_probes.FailClosedProbeTest.test_prohibited_screen_runs_before_schema_check) ... ok
+test_valid_input_is_accepted_with_all_false_authority (v2.tests.test_failclosed_probes.FailClosedProbeTest.test_valid_input_is_accepted_with_all_false_authority) ... ok
+test_bad_commit_is_refused (v2.tests.test_receipt.ReceiptTest.test_bad_commit_is_refused) ... ok
+test_bad_digest_format_and_attestation_are_refused (v2.tests.test_receipt.ReceiptTest.test_bad_digest_format_and_attestation_are_refused) ... ok
+test_cli_refuses_tampered_model (v2.tests.test_receipt.ReceiptTest.test_cli_refuses_tampered_model) ... ok
+test_consistent_receipt_for_invalid_model_is_still_refused (v2.tests.test_receipt.ReceiptTest.test_consistent_receipt_for_invalid_model_is_still_refused) ... ok
+test_duplicate_receipt_key_is_refused (v2.tests.test_receipt.ReceiptTest.test_duplicate_receipt_key_is_refused) ... ok
+test_extra_or_missing_receipt_key_is_refused (v2.tests.test_receipt.ReceiptTest.test_extra_or_missing_receipt_key_is_refused) ... ok
+test_generator_digest_must_match_model (v2.tests.test_receipt.ReceiptTest.test_generator_digest_must_match_model) ... ok
+test_kernel_byte_flip_is_refused (v2.tests.test_receipt.ReceiptTest.test_kernel_byte_flip_is_refused) ... ok
+test_missing_model_and_missing_receipt_are_refused (v2.tests.test_receipt.ReceiptTest.test_missing_model_and_missing_receipt_are_refused) ... ok
+test_missing_receipt_key_is_refused (v2.tests.test_receipt.ReceiptTest.test_missing_receipt_key_is_refused) ... ok
+test_model_byte_flip_is_refused (v2.tests.test_receipt.ReceiptTest.test_model_byte_flip_is_refused) ... ok
+test_tree_clean_false_via_test_override_is_refused (v2.tests.test_receipt.ReceiptTest.test_tree_clean_false_via_test_override_is_refused) ... ok
+test_valid_pair_loads_and_binds_everything (v2.tests.test_receipt.ReceiptTest.test_valid_pair_loads_and_binds_everything) ... ok
+test_wrong_schema_is_refused (v2.tests.test_receipt.ReceiptTest.test_wrong_schema_is_refused) ... ok
+test_alpha_must_be_registered (v2.tests.test_review_hardening.ArtifactHardeningTest.test_alpha_must_be_registered) ... ok
+test_cli_subprocess_never_prints_a_traceback (v2.tests.test_review_hardening.ArtifactHardeningTest.test_cli_subprocess_never_prints_a_traceback) ... ok
+test_l2_must_be_on_registered_grid (v2.tests.test_review_hardening.ArtifactHardeningTest.test_l2_must_be_on_registered_grid) ... ok
+test_receipt_preregistration_digest_is_pinned (v2.tests.test_review_hardening.ArtifactHardeningTest.test_receipt_preregistration_digest_is_pinned) ... ok
+test_unexpected_internal_error_is_a_refusal_without_traceback (v2.tests.test_review_hardening.ArtifactHardeningTest.test_unexpected_internal_error_is_a_refusal_without_traceback) ... ok
+test_unhashable_stop_reason_is_refused_cleanly (v2.tests.test_review_hardening.ArtifactHardeningTest.test_unhashable_stop_reason_is_refused_cleanly) ... ok
+test_bom_deep_nesting_and_size_are_refused (v2.tests.test_review_hardening.InputHardeningTest.test_bom_deep_nesting_and_size_are_refused) ... ok
+test_duplicate_keys_refused_everywhere (v2.tests.test_review_hardening.InputHardeningTest.test_duplicate_keys_refused_everywhere) ... ok
+test_long_keys_are_truncated_in_messages (v2.tests.test_review_hardening.InputHardeningTest.test_long_keys_are_truncated_in_messages) ... ok
+test_look_alike_and_padded_feature_names_are_refused (v2.tests.test_review_hardening.InputHardeningTest.test_look_alike_and_padded_feature_names_are_refused) ... ok
+test_negative_zero_is_canonical (v2.tests.test_review_hardening.InputHardeningTest.test_negative_zero_is_canonical) ... ok
+test_numeric_edge_cases (v2.tests.test_review_hardening.InputHardeningTest.test_numeric_edge_cases) ... ok
+test_unicode_folded_prohibited_keys (v2.tests.test_review_hardening.InputHardeningTest.test_unicode_folded_prohibited_keys) ... ok
+test_calibrator_kind_value_is_not_echoed (v2.tests.test_review_hardening.EchoBoundTest.test_calibrator_kind_value_is_not_echoed) ... ok
+test_cli_subprocess_receipt_extra_long_key_stderr_bytes (v2.tests.test_review_hardening.EchoBoundTest.test_cli_subprocess_receipt_extra_long_key_stderr_bytes) ... ok
+test_deep_path_of_long_keys_is_bounded (v2.tests.test_review_hardening.EchoBoundTest.test_deep_path_of_long_keys_is_bounded) ... ok
+test_many_extra_keys_are_counted_not_listed (v2.tests.test_review_hardening.EchoBoundTest.test_many_extra_keys_are_counted_not_listed) ... ok
+test_model_extra_long_key_with_consistent_receipt (v2.tests.test_review_hardening.EchoBoundTest.test_model_extra_long_key_with_consistent_receipt) ... ok
+test_nested_artifact_extra_long_keys (v2.tests.test_review_hardening.EchoBoundTest.test_nested_artifact_extra_long_keys) ... ok
+test_receipt_extra_long_key (v2.tests.test_review_hardening.EchoBoundTest.test_receipt_extra_long_key) ... ok
+test_refusal_line_is_byte_bounded_ascii_json (v2.tests.test_review_hardening.EchoBoundTest.test_refusal_line_is_byte_bounded_ascii_json) ... ok
+test_integrity_gate (v2.tests.test_gates.GateTest.test_integrity_gate) ... ok
+
+======================================================================
+FAIL: test_cli_refuses_with_exit_code_2 (v2.tests.test_failclosed_probes.FailClosedProbeTest.test_cli_refuses_with_exit_code_2)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\steph\szl-work\oac-frontier\v2\tests\test_failclosed_probes.py", line 145, in test_cli_refuses_with_exit_code_2
+    self.assertEqual(code, 2, name)
+AssertionError: 0 != 2 : nan_constant
+
+======================================================================
+FAIL: test_every_probe_is_refused_with_expected_message (v2.tests.test_failclosed_probes.FailClosedProbeTest.test_every_probe_is_refused_with_expected_message) (probe='nan_continuous')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\steph\szl-work\oac-frontier\v2\tests\test_failclosed_probes.py", line 66, in test_every_probe_is_refused_with_expected_message
+    with self.assertRaises(K.ModelInputError) as ctx:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ModelInputError not raised
+
+======================================================================
+FAIL: test_every_probe_is_refused_with_expected_message (v2.tests.test_failclosed_probes.FailClosedProbeTest.test_every_probe_is_refused_with_expected_message) (probe='inf_continuous')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\steph\szl-work\oac-frontier\v2\tests\test_failclosed_probes.py", line 68, in test_every_probe_is_refused_with_expected_message
+    self.assertIn(fragment, str(ctx.exception))
+AssertionError: 'seconds_since_last_success must be finite' not found in 'seconds_since_last_success must be between 0 and 86400'
+
+======================================================================
+FAIL: test_every_probe_is_refused_with_expected_message (v2.tests.test_failclosed_probes.FailClosedProbeTest.test_every_probe_is_refused_with_expected_message) (probe='neg_inf_continuous')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\steph\szl-work\oac-frontier\v2\tests\test_failclosed_probes.py", line 68, in test_every_probe_is_refused_with_expected_message
+    self.assertIn(fragment, str(ctx.exception))
+AssertionError: 'consecutive_failures must be finite' not found in 'consecutive_failures must be between 0 and 20'
+
+======================================================================
+FAIL: test_gate_counts_every_probe (v2.tests.test_failclosed_probes.FailClosedProbeTest.test_gate_counts_every_probe)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\steph\szl-work\oac-frontier\v2\tests\test_failclosed_probes.py", line 123, in test_gate_counts_every_probe
+    self.assertEqual(value, 1.0)
+AssertionError: 0.9848484848484849 != 1.0
+
+----------------------------------------------------------------------
+Ran 44 tests in 4.831s
+
+FAILED (failures=5)
+
+--- stderr ---
