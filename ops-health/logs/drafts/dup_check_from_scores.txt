@@ -1,0 +1,52 @@
+# started 2026-10-06T10:13:34Z; HEAD ac5a2f88f6009ffba5e40bdcf3ef6d032dbbb87f
+$ PYTHONUTF8=1 py -3.12 -B logs/drafts/dup_check_from_scores.py
+# drafts: post-hoc cross-split duplicate check (exact 8-feature vectors). MEASURED, post hoc, NOT registered; SYNTHETIC. No file under v2/data/sealed/ is read.
+input v2/data/train.jsonl sha256 5211e7ec954ec00c743bd62dae107f7a80335e4e5962a31b788e7bf56ecf0adb
+input v2/data/calibration.jsonl sha256 526d47c5e922aa35e3fba1f46f595fad6cc0fd4b3fd2e52114b5c99247e57b16
+input v2/data/conformal.jsonl sha256 bf317275e207e13ddd38d95b308eb7ff6a21d13e71b27622d8e65f4a4eb5f2dd
+input v2/data/validation.jsonl sha256 d0a37356784dcd60a4dbea68d760c55d56a7bd69b3a6f4dc833cfdbb38a951f3
+input v2/results/final/scores_legacy_v1_test.jsonl sha256 0bb6345095f739ce4bda3d11b27c49ea7bc4fb28d894365b6df16e1f2d64b033
+input v2/results/final/scores_shift_clock_skew.jsonl sha256 52d325bbb2ed7f1299081e947fc4c570be2b752e897378b76a97cd0dc5f2558a
+input v2/results/final/scores_shift_failure_bursts.jsonl sha256 aa5b9843e4d23bbb80cdd3821001096d7a2fc6e6ae45d390d656b355b85e0c38
+input v2/results/final/scores_shift_missing_tls.jsonl sha256 fdd2dc950bab681e667c59578c3e5bac4d1e0b1f7d281d6c5221f6f23bb76967
+input v2/results/final/scores_shift_queue_saturation.jsonl sha256 9e9d5a7207a304bdbe8bcb8eb75977f11387f42cd87ac1cb0382b388fa75b64c
+input v2/results/final/scores_test.jsonl sha256 922690d0769ac6c9ed49731e8dc28cbbc54bd487fca654d29271a4fd389a1094
+train: rows 16384 unique feature vectors 16384
+calibration: rows 4096 unique feature vectors 4096
+conformal: rows 4096 unique feature vectors 4096
+validation: rows 4096 unique feature vectors 4096
+scores_legacy_v1_test: rows 240 unique feature vectors 240
+scores_shift_clock_skew: rows 12500 unique feature vectors 12500
+scores_shift_failure_bursts: rows 12500 unique feature vectors 12500
+scores_shift_missing_tls: rows 12500 unique feature vectors 12500
+scores_shift_queue_saturation: rows 12500 unique feature vectors 12500
+scores_test: rows 50000 unique feature vectors 50000
+scores_legacy_v1_test: exact matches against train/calibration/conformal/validation: 0
+scores_shift_clock_skew: exact matches against train/calibration/conformal/validation: 0
+scores_shift_failure_bursts: exact matches against train/calibration/conformal/validation: 0
+scores_shift_missing_tls: exact matches against train/calibration/conformal/validation: 0
+scores_shift_queue_saturation: exact matches against train/calibration/conformal/validation: 0
+scores_test: exact matches against train/calibration/conformal/validation: 0
+dev pair train x calibration: shared vectors 0
+dev pair train x conformal: shared vectors 0
+dev pair train x validation: shared vectors 0
+dev pair calibration x conformal: shared vectors 0
+dev pair calibration x validation: shared vectors 0
+dev pair conformal x validation: shared vectors 0
+scored pair scores_legacy_v1_test x scores_shift_clock_skew: shared vectors 0
+scored pair scores_legacy_v1_test x scores_shift_failure_bursts: shared vectors 0
+scored pair scores_legacy_v1_test x scores_shift_missing_tls: shared vectors 0
+scored pair scores_legacy_v1_test x scores_shift_queue_saturation: shared vectors 0
+scored pair scores_legacy_v1_test x scores_test: shared vectors 0
+scored pair scores_shift_clock_skew x scores_shift_failure_bursts: shared vectors 0
+scored pair scores_shift_clock_skew x scores_shift_missing_tls: shared vectors 0
+scored pair scores_shift_clock_skew x scores_shift_queue_saturation: shared vectors 0
+scored pair scores_shift_clock_skew x scores_test: shared vectors 0
+scored pair scores_shift_failure_bursts x scores_shift_missing_tls: shared vectors 0
+scored pair scores_shift_failure_bursts x scores_shift_queue_saturation: shared vectors 0
+scored pair scores_shift_failure_bursts x scores_test: shared vectors 0
+scored pair scores_shift_missing_tls x scores_shift_queue_saturation: shared vectors 0
+scored pair scores_shift_missing_tls x scores_test: shared vectors 0
+scored pair scores_shift_queue_saturation x scores_test: shared vectors 0
+SUMMARY scored rows 100240 in 6 sets; development rows 28672; exact matches scored-vs-development 0
+exit=0 finished 2026-10-06T10:13:52Z

@@ -1,0 +1,8 @@
+# Generated locally, never committed: the materialized v1 files, the registered data splits and
+# AM-4 train splits that tools/regenerate_data.py can write, and analysis scratch output.
+/hub/
+/scratch/
+/v2/data/*.jsonl
+/v2/data/sealed/
+/v2/results/known_good/k*/train.jsonl
+__pycache__/

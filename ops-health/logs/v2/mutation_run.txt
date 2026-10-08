@@ -1,0 +1,189 @@
+$ PYTHONUTF8=1 py -3.12 -B -m v2.research.mutation run   # 2026-09-29T11:59:37-04:00, HEAD bb8d56f5d73cfbcce6ab8dfa9322531c5a3418ee
+validation split opened (purpose GATES): {'split': 'validation', 'purpose': 'GATES', 'rows': 4096, 'positives': 768, 'negatives': 3328, 'rows_sha256': 'd0a37356784dcd60a4dbea68d760c55d56a7bd69b3a6f4dc833cfdbb38a951f3'}
+v2 gates: {'g_integrity': 1.0, 'g_failclosed': 1.0, 'g_truth_sign': 1.0, 'g_monotone': 1.0, 'g_validation': 1.0, 'g_calibration': 1.0, 'g_baseline_valid': 1.0}
+known-good k1 gates: {'g_integrity': 1.0, 'g_failclosed': 1.0, 'g_truth_sign': 0.875, 'g_monotone': 0.8367346938775511, 'g_validation': 1.0, 'g_calibration': 1.0, 'g_baseline_valid': 1.0}
+known-good k2 gates: {'g_integrity': 1.0, 'g_failclosed': 1.0, 'g_truth_sign': 0.875, 'g_monotone': 0.8367346938775511, 'g_validation': 1.0, 'g_calibration': 1.0, 'g_baseline_valid': 1.0}
+known-good k3 gates: {'g_integrity': 1.0, 'g_failclosed': 1.0, 'g_truth_sign': 0.875, 'g_monotone': 0.8367346938775511, 'g_validation': 1.0, 'g_calibration': 1.0, 'g_baseline_valid': 1.0}
+known-good k4 gates: {'g_integrity': 1.0, 'g_failclosed': 1.0, 'g_truth_sign': 1.0, 'g_monotone': 1.0, 'g_validation': 1.0, 'g_calibration': 1.0, 'g_baseline_valid': 1.0}
+known-good k5 gates: {'g_integrity': 1.0, 'g_failclosed': 1.0, 'g_truth_sign': 1.0, 'g_monotone': 1.0, 'g_validation': 1.0, 'g_calibration': 1.0, 'g_baseline_valid': 1.0}
+A-scale0.5-listener_running: pass1 caught=True pass2 below=['g_validation', 'g_calibration']
+A-scale0.5-tls_enabled: pass1 caught=True pass2 below=[]
+A-scale0.5-peer_allowlist_configured: pass1 caught=True pass2 below=['g_calibration']
+A-scale0.5-queue_utilization: pass1 caught=True pass2 below=[]
+A-scale0.5-consecutive_failures: pass1 caught=True pass2 below=[]
+A-scale0.5-seconds_since_last_success: pass1 caught=True pass2 below=[]
+A-scale0.5-ledger_integrity_ok: pass1 caught=True pass2 below=['g_validation', 'g_calibration']
+A-scale0.5-configuration_valid: pass1 caught=True pass2 below=['g_validation', 'g_calibration']
+A-scale1.5-listener_running: pass1 caught=True pass2 below=['g_calibration']
+A-scale1.5-tls_enabled: pass1 caught=True pass2 below=[]
+A-scale1.5-peer_allowlist_configured: pass1 caught=True pass2 below=['g_calibration']
+A-scale1.5-queue_utilization: pass1 caught=True pass2 below=[]
+A-scale1.5-consecutive_failures: pass1 caught=True pass2 below=[]
+A-scale1.5-seconds_since_last_success: pass1 caught=True pass2 below=[]
+A-scale1.5-ledger_integrity_ok: pass1 caught=True pass2 below=['g_validation', 'g_calibration']
+A-scale1.5-configuration_valid: pass1 caught=True pass2 below=['g_validation', 'g_calibration']
+A-signflip-listener_running: pass1 caught=True pass2 below=['g_truth_sign', 'g_monotone', 'g_validation', 'g_calibration', 'g_baseline_valid']
+A-signflip-tls_enabled: pass1 caught=True pass2 below=['g_truth_sign', 'g_monotone', 'g_validation', 'g_calibration']
+A-signflip-peer_allowlist_configured: pass1 caught=True pass2 below=['g_truth_sign', 'g_monotone', 'g_validation', 'g_calibration']
+A-signflip-queue_utilization: pass1 caught=True pass2 below=['g_truth_sign', 'g_monotone', 'g_validation', 'g_calibration']
+A-signflip-consecutive_failures: pass1 caught=True pass2 below=['g_truth_sign', 'g_monotone']
+A-signflip-seconds_since_last_success: pass1 caught=True pass2 below=['g_truth_sign', 'g_monotone']
+A-signflip-ledger_integrity_ok: pass1 caught=True pass2 below=['g_truth_sign', 'g_monotone', 'g_validation', 'g_calibration', 'g_baseline_valid']
+A-signflip-configuration_valid: pass1 caught=True pass2 below=['g_truth_sign', 'g_monotone', 'g_validation', 'g_calibration', 'g_baseline_valid']
+A-drop-listener_running: pass1 caught=True pass2 below=['g_truth_sign', 'g_validation', 'g_calibration', 'g_baseline_valid']
+A-drop-tls_enabled: pass1 caught=True pass2 below=['g_truth_sign', 'g_calibration']
+A-drop-peer_allowlist_configured: pass1 caught=True pass2 below=['g_truth_sign', 'g_validation', 'g_calibration']
+A-drop-queue_utilization: pass1 caught=True pass2 below=['g_truth_sign', 'g_calibration']
+A-drop-consecutive_failures: pass1 caught=True pass2 below=['g_truth_sign']
+A-drop-seconds_since_last_success: pass1 caught=True pass2 below=['g_truth_sign']
+A-drop-ledger_integrity_ok: pass1 caught=True pass2 below=['g_truth_sign', 'g_validation', 'g_calibration', 'g_baseline_valid']
+A-drop-configuration_valid: pass1 caught=True pass2 below=['g_truth_sign', 'g_validation', 'g_calibration', 'g_baseline_valid']
+A-intercept+1: pass1 caught=True pass2 below=['g_validation', 'g_calibration']
+A-intercept-1: pass1 caught=True pass2 below=['g_calibration']
+A-threshold+0.1: pass1 caught=True pass2 below=[]
+A-threshold-0.1: pass1 caught=True pass2 below=[]
+R-model-hash-flip: caught=True
+R-wrong-schema: caught=True
+R-source-commit-altered: caught=True
+R-source-commit-other: caught=False
+R-metrics-added: caught=True
+kernel control: integrity accepted=True tests ok=True
+K-no-finiteness: integrity caught=True tests=FAILED
+K-no-range: integrity caught=True tests=FAILED
+K-no-prohibited-screen: integrity caught=True tests=FAILED
+K-inverted-model-hash: integrity caught=True tests=FAILED
+K-inverted-self-hash: integrity caught=False tests=FAILED
+broken baselines evaluated
+COMPLETE: counts {'artifact_mutants': 36, 'artifact_pass1_caught_by_integrity': 36, 'artifact_pass2_caught_by_behavior': 26, 'receipt_mutants': 5, 'receipt_caught': 4, 'kernel_mutants': 5, 'kernel_caught_by_integrity': 4, 'kernel_caught_by_tests': 5, 'blind_spots': 11}; lambda REJECTED
+{
+  "blind_spots": [
+    {
+      "id": "A-scale0.5-tls_enabled",
+      "kind": "artifact",
+      "layer": "behavioral gates, integrity bypassed (pass 2)"
+    },
+    {
+      "id": "A-scale0.5-queue_utilization",
+      "kind": "artifact",
+      "layer": "behavioral gates, integrity bypassed (pass 2)"
+    },
+    {
+      "id": "A-scale0.5-consecutive_failures",
+      "kind": "artifact",
+      "layer": "behavioral gates, integrity bypassed (pass 2)"
+    },
+    {
+      "id": "A-scale0.5-seconds_since_last_success",
+      "kind": "artifact",
+      "layer": "behavioral gates, integrity bypassed (pass 2)"
+    },
+    {
+      "id": "A-scale1.5-tls_enabled",
+      "kind": "artifact",
+      "layer": "behavioral gates, integrity bypassed (pass 2)"
+    },
+    {
+      "id": "A-scale1.5-queue_utilization",
+      "kind": "artifact",
+      "layer": "behavioral gates, integrity bypassed (pass 2)"
+    },
+    {
+      "id": "A-scale1.5-consecutive_failures",
+      "kind": "artifact",
+      "layer": "behavioral gates, integrity bypassed (pass 2)"
+    },
+    {
+      "id": "A-scale1.5-seconds_since_last_success",
+      "kind": "artifact",
+      "layer": "behavioral gates, integrity bypassed (pass 2)"
+    },
+    {
+      "id": "A-threshold+0.1",
+      "kind": "artifact",
+      "layer": "behavioral gates, integrity bypassed (pass 2)"
+    },
+    {
+      "id": "A-threshold-0.1",
+      "kind": "artifact",
+      "layer": "behavioral gates, integrity bypassed (pass 2)"
+    },
+    {
+      "id": "R-source-commit-other",
+      "kind": "receipt",
+      "layer": "integrity (kernel + verify_origin)",
+      "supplementary": true
+    }
+  ],
+  "counts": {
+    "artifact_mutants": 36,
+    "artifact_pass1_caught_by_integrity": 36,
+    "artifact_pass2_caught_by_behavior": 26,
+    "blind_spots": 11,
+    "kernel_caught_by_integrity": 4,
+    "kernel_caught_by_tests": 5,
+    "kernel_mutants": 5,
+    "receipt_caught": 4,
+    "receipt_mutants": 5
+  },
+  "lambda": {
+    "no_more_misclassifications_than": {
+      "AND": false,
+      "mean": true,
+      "min": false
+    },
+    "rule": "KEEP only if Lambda's margin is strictly greater than every baseline's AND its misclassifications at the cut are no more than every baseline's (section 11)",
+    "strictly_better_margin_than": {
+      "AND": true,
+      "mean": false,
+      "min": true
+    },
+    "verdict": "REJECTED"
+  },
+  "separation": {
+    "AND": {
+      "auroc": 0.6111111111111112,
+      "broken_marked_ready": 10,
+      "good_marked_not_ready": 3,
+      "margin": -1.0,
+      "max_broken": 1.0,
+      "min_good": 0.0,
+      "misclassifications": 13,
+      "n_broken": 36,
+      "n_good": 6
+    },
+    "lambda": {
+      "auroc": 0.7222222222222222,
+      "broken_marked_ready": 11,
+      "good_marked_not_ready": 3,
+      "margin": -0.04356260679507662,
+      "max_broken": 1.0,
+      "min_good": 0.9564373932049234,
+      "misclassifications": 14,
+      "n_broken": 36,
+      "n_good": 6
+    },
+    "mean": {
+      "auroc": 0.7222222222222222,
+      "broken_marked_ready": 11,
+      "good_marked_not_ready": 3,
+      "margin": -0.04118075801749277,
+      "max_broken": 1.0,
+      "min_good": 0.9588192419825072,
+      "misclassifications": 14,
+      "n_broken": 36,
+      "n_good": 6
+    },
+    "min": {
+      "auroc": 0.7222222222222222,
+      "broken_marked_ready": 10,
+      "good_marked_not_ready": 3,
+      "margin": -0.16326530612244894,
+      "max_broken": 1.0,
+      "min_good": 0.8367346938775511,
+      "misclassifications": 13,
+      "n_broken": 36,
+      "n_good": 6
+    }
+  }
+}
+exit code: 0

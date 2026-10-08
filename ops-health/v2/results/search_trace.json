@@ -1,0 +1,1501 @@
+{
+  "candidates_dir_relpath": "v2/results/search_candidates",
+  "conformal": {
+    "alpha": 0.1,
+    "coverage": {
+      "marginal": 0.900634765625,
+      "per_class": {
+        "0": 0.9011418269230769,
+        "1": 0.8984375
+      },
+      "rows": 4096
+    },
+    "keep": true,
+    "labels": "MEASURED on the threshold (validation) rows; SYNTHETIC",
+    "n_calibration": {
+      "0": 3346,
+      "1": 750
+    },
+    "q_hat": {
+      "0": 0.223684755436,
+      "1": 0.911152623366
+    },
+    "rule": "keep the conformal layer only if validation coverage is >= 0.88 marginal and >= 0.85 for each class (PREREGISTRATION section 9, ABL-conformal)",
+    "thresholds": {
+      "marginal": 0.88,
+      "per_class": 0.85
+    },
+    "trial_id": "T07_l2_1e-3_none",
+    "with_abstention": {
+      "abstained": 1701,
+      "abstention_rate": 0.415283203125,
+      "abstention_rate_both": 0.415283203125,
+      "abstention_rate_empty": 0.0,
+      "non_abstained": 2395,
+      "rows": 4096,
+      "selective_accuracy": 0.830062630480167,
+      "selective_balanced_accuracy": 0.8398501560011604
+    },
+    "without_abstention": {
+      "abstention_rate": 0.0,
+      "balanced_accuracy": 0.7686798878205128,
+      "rows": 4096
+    }
+  },
+  "finished_utc": "2026-09-29T15:16:26Z",
+  "loop": {
+    "iterations_run": 12,
+    "label": "oac-ops-health-v2.registered-search",
+    "max_iterations": 12,
+    "order": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "run_id": "v2-registered-search",
+    "search_space_digest": "65d3d724b909bf3ead7d6ba284b2043f3dade90dc0a853450ebc676b4abd66ea",
+    "search_space_size": 12,
+    "semantics": "mirrors szl-holdings/ouroboros@0f030741 bounded-loop contract (see module docstring); receipts attest integrity/origin only",
+    "stop_reason": "SEARCH_SPACE_EXHAUSTED",
+    "summary_receipt_digest": "c14c39e50e26df70205e8cef7d5c789d29be13a449b099214724f3650c1b8f7d",
+    "summary_receipt_file": "000012-c14c39e50e26.json",
+    "total_duration_ms": 199752.23830000323
+  },
+  "protocol": {
+    "adapters": {
+      "git_tracked": false,
+      "math/ouroboros_adapter.py": "67ccb2a0711c19887f3b753996f5cd50fb22f38e0856171b4f3f5cc819e6ec43",
+      "math/receipt_adapter.py": "db75a7e7ae82343fc1eea4b44095ad4e1bac8fc3f1524578b835b7b8bc6655ce",
+      "note": "math/ is not tracked by git in this repository; the sha256 values above identify the adapter bytes that ran"
+    },
+    "amendments_sha256": "5152cd7f816c41e810861bbcd6489dee1d2598da89a36f6b418ef4a9867f181d",
+    "data_manifest_sha256": "c0d2fa0a924162e42c4d50c8eaf7d155f3e991f8f47ca518b1b87c3927ad7252",
+    "dirty": [],
+    "generator_sha256": "a502d3644534ec599663d8678b8066b390e612396b25350f33fa987194b44384",
+    "git_head": "064481f0d603416c851073f0aad1f93ab9da16c2",
+    "kernel_sha256": "b0a64ff3f26ea284b0588de351ed7795a6089203b35fded0e7d82cbd4871aed9",
+    "pipeline_module_sha256": "17f2a923a53a9279feda9b2d75167600df5a2c382bf643418fdc8c7035866394",
+    "preregistration_sha256": "145497789c7ad78a80a94cfd7f2b031ca9a20df49c06e0b3412af9070fa1ef4b",
+    "python": "3.12.10",
+    "search_module_sha256": "a1f7718ca58df5ee1898a82114643fa6bcad0200dcdce381cb8a6838918dd5be",
+    "test_opened_marker_present": false,
+    "tree_clean": true
+  },
+  "receipts": {
+    "dir": "C:/Users/steph/szl-work/oac-frontier/runs/receipts/v2-registered-search",
+    "dir_digest": {
+      "files": {
+        "000000-22ec3e4930b3.json": "0768975dfed5f681b097d7e41267f2fbea0e2d757be111f533a12dd146158c9b",
+        "000001-88603b73b600.json": "afa2928be919ab87a77be0aac06df3b86ae5d933e2f5108d7ec7b8ef88ec15c0",
+        "000002-7efa238d957c.json": "fa66b081c6b66d394ad633f6a1aafbd6abd06312ab2588cbc2913e0baf7d58ee",
+        "000003-4df01b31fc7b.json": "3cb9dd5ea7592b4417ad5a4f9e8bac200c7dd96e6cc24792459059aa264e9a2f",
+        "000004-e502e1fbd971.json": "e23e2e9c65a19bd6aeec51c73d40754564945e421a81a80ccd9d8de9c2d31a50",
+        "000005-e34b6df74106.json": "a52dda9101b3f6512c8a3edda9039b18d75cf33da7c75fef56f769fece69e267",
+        "000006-fa3902284111.json": "2e3564ae8a757bddc14efed083998f32a4e4a4f6bfa06c542b244295ab5585b3",
+        "000007-686b6f32009f.json": "ad529ad22e30a172e9eef01db209ea75dcdd4b56f8e2d95e0e71fecebc369157",
+        "000008-516471be86d7.json": "a1b06e3703eac54bab0ffb38c0bbe1f653358608e7ed731d4b004b3fc995d94e",
+        "000009-9b7458b63811.json": "982e84c76d93a63a052ef220aeff818226cf5447484e40fbc57cbaf15df0644f",
+        "000010-256e569d85a4.json": "781019cb7f2c54696263c36b6598b88cd410d3ea498b7c8f6acc7afd03557540",
+        "000011-759496325125.json": "febe38889da0d47ecd1162998b98d52a3097996074f6d532bdce0213310b3986",
+        "000012-c14c39e50e26.json": "9f9ac04df3d3d8e1c2762831405b61f8280617950d765dd6c4023253277e1f57",
+        "trace.json": "449c2827a36ec9a07a7d12ac0e0fa8e4d4e7b51a719da488a9650d71af225241"
+      },
+      "method": "sha256 of UTF-8 lines '<sha256>  <name>\\n' over every file, sorted by name",
+      "sha256": "7bc24c31dfb7f7c18b972718411f1799a533e97f74e90069d738549567181555"
+    },
+    "verified": true,
+    "verify_run_dir_errors": []
+  },
+  "receipts_dir_relpath": "runs/receipts/v2-registered-search",
+  "schema": "szl-oac/ops-health-search-trace/v2",
+  "search_space": [
+    {
+      "calibrator": "none",
+      "l2": 0.0,
+      "trial_id": "T01_l2_0_none"
+    },
+    {
+      "calibrator": "platt",
+      "l2": 0.0,
+      "trial_id": "T02_l2_0_platt"
+    },
+    {
+      "calibrator": "isotonic",
+      "l2": 0.0,
+      "trial_id": "T03_l2_0_isotonic"
+    },
+    {
+      "calibrator": "none",
+      "l2": 0.0001,
+      "trial_id": "T04_l2_1e-4_none"
+    },
+    {
+      "calibrator": "platt",
+      "l2": 0.0001,
+      "trial_id": "T05_l2_1e-4_platt"
+    },
+    {
+      "calibrator": "isotonic",
+      "l2": 0.0001,
+      "trial_id": "T06_l2_1e-4_isotonic"
+    },
+    {
+      "calibrator": "none",
+      "l2": 0.001,
+      "trial_id": "T07_l2_1e-3_none"
+    },
+    {
+      "calibrator": "platt",
+      "l2": 0.001,
+      "trial_id": "T08_l2_1e-3_platt"
+    },
+    {
+      "calibrator": "isotonic",
+      "l2": 0.001,
+      "trial_id": "T09_l2_1e-3_isotonic"
+    },
+    {
+      "calibrator": "none",
+      "l2": 0.01,
+      "trial_id": "T10_l2_1e-2_none"
+    },
+    {
+      "calibrator": "platt",
+      "l2": 0.01,
+      "trial_id": "T11_l2_1e-2_platt"
+    },
+    {
+      "calibrator": "isotonic",
+      "l2": 0.01,
+      "trial_id": "T12_l2_1e-2_isotonic"
+    }
+  ],
+  "selection": {
+    "decided_by": "validation_balanced_accuracy",
+    "eligible_trials": [
+      "T01_l2_0_none",
+      "T02_l2_0_platt",
+      "T03_l2_0_isotonic",
+      "T04_l2_1e-4_none",
+      "T05_l2_1e-4_platt",
+      "T06_l2_1e-4_isotonic",
+      "T07_l2_1e-3_none",
+      "T08_l2_1e-3_platt",
+      "T09_l2_1e-3_isotonic",
+      "T10_l2_1e-2_none",
+      "T11_l2_1e-2_platt",
+      "T12_l2_1e-2_isotonic"
+    ],
+    "ineligible_trials": [],
+    "ranking": [
+      "T07_l2_1e-3_none",
+      "T08_l2_1e-3_platt",
+      "T04_l2_1e-4_none",
+      "T05_l2_1e-4_platt",
+      "T01_l2_0_none",
+      "T02_l2_0_platt",
+      "T09_l2_1e-3_isotonic",
+      "T06_l2_1e-4_isotonic",
+      "T03_l2_0_isotonic",
+      "T11_l2_1e-2_platt",
+      "T12_l2_1e-2_isotonic",
+      "T10_l2_1e-2_none"
+    ],
+    "rule": "eligible trials only (AM-2: IRLS and Platt fits converged); maximize validation balanced accuracy at the trial's own threshold (exact fractions); ties to lower validation Brier, then lower validation ECE, then larger l2, then calibrator order none < platt < isotonic",
+    "selected_trial": "T07_l2_1e-3_none",
+    "status": "SELECTED"
+  },
+  "splits": {
+    "calibration": {
+      "name": "calibration",
+      "purpose": "CALIBRATION",
+      "rows": 4096,
+      "sha256": "526d47c5e922aa35e3fba1f46f595fad6cc0fd4b3fd2e52114b5c99247e57b16"
+    },
+    "conformal": {
+      "name": "conformal",
+      "purpose": "CONFORMAL",
+      "rows": 4096,
+      "sha256": "bf317275e207e13ddd38d95b308eb7ff6a21d13e71b27622d8e65f4a4eb5f2dd"
+    },
+    "threshold": {
+      "name": "validation",
+      "purpose": "REGISTERED_SEARCH",
+      "rows": 4096,
+      "sha256": "d0a37356784dcd60a4dbea68d760c55d56a7bd69b3a6f4dc833cfdbb38a951f3"
+    },
+    "train": {
+      "name": "train",
+      "purpose": "TRAIN",
+      "rows": 16384,
+      "sha256": "5211e7ec954ec00c743bd62dae107f7a80335e4e5962a31b788e7bf56ecf0adb"
+    }
+  },
+  "started_utc": "2026-09-29T15:13:03Z",
+  "synthetic": true,
+  "trials": [
+    {
+      "duration_ms": 1361.6985999979079,
+      "iteration": 0,
+      "receipt_digest": "22ec3e4930b33ab13323490afcfe51e1f35aa7d31340ae0a9053a0a16c9de73e",
+      "receipt_file": "000000-22ec3e4930b3.json",
+      "record": {
+        "calibrator": "none",
+        "conformal_fit": {
+          "n_calibration": {
+            "0": 3346,
+            "1": 750
+          },
+          "q_hat": {
+            "0": 0.247080880106,
+            "1": 0.930538284379
+          },
+          "q_hat_exact": {
+            "0": 0.24708088010533605,
+            "1": 0.9305382843785641
+          },
+          "rank": {
+            "0": 3013,
+            "1": 676
+          }
+        },
+        "eligible": true,
+        "fit": {
+          "calibrator": {
+            "rows": 4096
+          },
+          "irls": {
+            "converged": true,
+            "gradient_max_abs": 9.404310351832958e-17,
+            "iterations": 7,
+            "last_newton_step_max_abs": 9.903527782863271e-15,
+            "objective": 0.33729433498968897,
+            "solvers": [
+              "cholesky"
+            ],
+            "step_halvings": 0,
+            "stop_reason": "CONVERGED"
+          }
+        },
+        "ineligible_reasons": [],
+        "intercept": 9.662086343808,
+        "l2": 0.0,
+        "labels": "MEASURED on the threshold (validation) rows; SYNTHETIC",
+        "model_sha256": "c2e6ea05ecca36ab6acca156021202e474869b9d05b171e8945fe8c7073ba1ee",
+        "threshold_selection": {
+          "balanced_accuracy": 0.7670272435897436,
+          "f1": 0.5876404494382023,
+          "grid_index": 19,
+          "threshold": 0.19
+        },
+        "trial_id": "T01_l2_0_none",
+        "validation": {
+          "balanced_accuracy": 0.7670272435897436,
+          "balanced_accuracy_exact": [
+            3829,
+            4992
+          ],
+          "brier": 0.10130871843768594,
+          "confusion": {
+            "fn": 245,
+            "fp": 489,
+            "tn": 2839,
+            "tp": 523
+          },
+          "ece": 0.009819018603324455,
+          "f1": 0.5876404494382023,
+          "log_loss": 0.3405389563559251,
+          "negatives": 3328,
+          "positives": 768,
+          "precision": 0.516798418972332,
+          "recall": 0.6809895833333334,
+          "roc_auc": 0.8363690498547677,
+          "rows": 4096,
+          "specificity": 0.8530649038461539,
+          "threshold": 0.19
+        },
+        "weights": {
+          "configuration_valid": -3.478203297268,
+          "consecutive_failures": 2.610816946761,
+          "ledger_integrity_ok": -4.448113372274,
+          "listener_running": -2.99645049741,
+          "peer_allowlist_configured": -1.266585258865,
+          "queue_utilization": 3.89310567066,
+          "seconds_since_last_success": 3.566532861398,
+          "tls_enabled": -0.972874921067
+        }
+      }
+    },
+    {
+      "duration_ms": 2991.9991999995545,
+      "iteration": 1,
+      "receipt_digest": "88603b73b6006e16adc9281b78766302eb03a519798648d6359306ef19d5c87c",
+      "receipt_file": "000001-88603b73b600.json",
+      "record": {
+        "calibrator": "platt",
+        "conformal_fit": {
+          "n_calibration": {
+            "0": 3346,
+            "1": 750
+          },
+          "q_hat": {
+            "0": 0.249777638558,
+            "1": 0.931321355707
+          },
+          "q_hat_exact": {
+            "0": 0.2497776385574595,
+            "1": 0.9313213557061991
+          },
+          "rank": {
+            "0": 3013,
+            "1": 676
+          }
+        },
+        "eligible": true,
+        "fit": {
+          "calibrator": {
+            "converged": true,
+            "gradient_max_abs": 2.4596354480607187e-17,
+            "iterations": 7,
+            "rows": 4096,
+            "stop_reason": "CONVERGED"
+          },
+          "irls": {
+            "converged": true,
+            "gradient_max_abs": 9.404310351832958e-17,
+            "iterations": 7,
+            "last_newton_step_max_abs": 9.903527782863271e-15,
+            "objective": 0.33729433498968897,
+            "solvers": [
+              "cholesky"
+            ],
+            "step_halvings": 0,
+            "stop_reason": "CONVERGED"
+          }
+        },
+        "ineligible_reasons": [],
+        "intercept": 9.662086343808,
+        "l2": 0.0,
+        "labels": "MEASURED on the threshold (validation) rows; SYNTHETIC",
+        "model_sha256": "0b05c9971b27d5765c8c57f67a427c9aa32dc7ce22d62b5e9f6050bd13bbe562",
+        "threshold_selection": {
+          "balanced_accuracy": 0.7661258012820513,
+          "f1": 0.5856662933930571,
+          "grid_index": 19,
+          "threshold": 0.19
+        },
+        "trial_id": "T02_l2_0_platt",
+        "validation": {
+          "balanced_accuracy": 0.7661258012820513,
+          "balanced_accuracy_exact": [
+            7649,
+            9984
+          ],
+          "brier": 0.10123445735309992,
+          "confusion": {
+            "fn": 245,
+            "fp": 495,
+            "tn": 2833,
+            "tp": 523
+          },
+          "ece": 0.009374704123103176,
+          "f1": 0.5856662933930571,
+          "log_loss": 0.34036600568852166,
+          "negatives": 3328,
+          "positives": 768,
+          "precision": 0.5137524557956779,
+          "recall": 0.6809895833333334,
+          "roc_auc": 0.8363690498547677,
+          "rows": 4096,
+          "specificity": 0.8512620192307693,
+          "threshold": 0.19
+        },
+        "weights": {
+          "configuration_valid": -3.478203297268,
+          "consecutive_failures": 2.610816946761,
+          "ledger_integrity_ok": -4.448113372274,
+          "listener_running": -2.99645049741,
+          "peer_allowlist_configured": -1.266585258865,
+          "queue_utilization": 3.89310567066,
+          "seconds_since_last_success": 3.566532861398,
+          "tls_enabled": -0.972874921067
+        }
+      }
+    },
+    {
+      "duration_ms": 75352.62809999404,
+      "iteration": 2,
+      "receipt_digest": "7efa238d957c5d80257cbe3973523a236ec5ca1d13266dbd780b8c1fd5264604",
+      "receipt_file": "000002-7efa238d957c.json",
+      "record": {
+        "calibrator": "isotonic",
+        "conformal_fit": {
+          "n_calibration": {
+            "0": 3346,
+            "1": 750
+          },
+          "q_hat": {
+            "0": 0.304054054054,
+            "1": 0.937413073713
+          },
+          "q_hat_exact": {
+            "0": 0.304054054054,
+            "1": 0.937413073713
+          },
+          "rank": {
+            "0": 3013,
+            "1": 676
+          }
+        },
+        "eligible": true,
+        "fit": {
+          "calibrator": {
+            "block_counts": [
+              31,
+              136,
+              682,
+              110,
+              321,
+              719,
+              181,
+              212,
+              52,
+              231,
+              322,
+              202,
+              13,
+              85,
+              148,
+              33,
+              58,
+              72,
+              2,
+              138,
+              10,
+              35,
+              78,
+              86,
+              25,
+              83,
+              31
+            ],
+            "blocks": 27,
+            "rows": 4096,
+            "tie_blocks": 4096
+          },
+          "irls": {
+            "converged": true,
+            "gradient_max_abs": 9.404310351832958e-17,
+            "iterations": 7,
+            "last_newton_step_max_abs": 9.903527782863271e-15,
+            "objective": 0.33729433498968897,
+            "solvers": [
+              "cholesky"
+            ],
+            "step_halvings": 0,
+            "stop_reason": "CONVERGED"
+          }
+        },
+        "ineligible_reasons": [],
+        "intercept": 9.662086343808,
+        "l2": 0.0,
+        "labels": "MEASURED on the threshold (validation) rows; SYNTHETIC",
+        "model_sha256": "3eb45b59f54c37b76b7b8c3c3ac25e16b116be40a26aa3ade0e6da63fa02be7f",
+        "threshold_selection": {
+          "balanced_accuracy": 0.7656750801282052,
+          "f1": 0.5986881335718545,
+          "grid_index": 28,
+          "threshold": 0.28
+        },
+        "trial_id": "T03_l2_0_isotonic",
+        "validation": {
+          "balanced_accuracy": 0.7656750801282052,
+          "balanced_accuracy_exact": [
+            15289,
+            19968
+          ],
+          "brier": 0.1014757920565353,
+          "confusion": {
+            "fn": 266,
+            "fp": 407,
+            "tn": 2921,
+            "tp": 502
+          },
+          "ece": 0.012656393643064942,
+          "f1": 0.5986881335718545,
+          "log_loss": 0.35620888762800057,
+          "negatives": 3328,
+          "positives": 768,
+          "precision": 0.5522552255225522,
+          "recall": 0.6536458333333334,
+          "roc_auc": 0.8362242869841747,
+          "rows": 4096,
+          "specificity": 0.8777043269230769,
+          "threshold": 0.28
+        },
+        "weights": {
+          "configuration_valid": -3.478203297268,
+          "consecutive_failures": 2.610816946761,
+          "ledger_integrity_ok": -4.448113372274,
+          "listener_running": -2.99645049741,
+          "peer_allowlist_configured": -1.266585258865,
+          "queue_utilization": 3.89310567066,
+          "seconds_since_last_success": 3.566532861398,
+          "tls_enabled": -0.972874921067
+        }
+      }
+    },
+    {
+      "duration_ms": 9201.13180000044,
+      "iteration": 3,
+      "receipt_digest": "4df01b31fc7b168b0917d3a11ba1c9a757f6c9753e49d984b3846fbf01a0a2e1",
+      "receipt_file": "000003-4df01b31fc7b.json",
+      "record": {
+        "calibrator": "none",
+        "conformal_fit": {
+          "n_calibration": {
+            "0": 3346,
+            "1": 750
+          },
+          "q_hat": {
+            "0": 0.242781341704,
+            "1": 0.928507197164
+          },
+          "q_hat_exact": {
+            "0": 0.24278134170350074,
+            "1": 0.9285071971637905
+          },
+          "rank": {
+            "0": 3013,
+            "1": 676
+          }
+        },
+        "eligible": true,
+        "fit": {
+          "calibrator": {
+            "rows": 4096
+          },
+          "irls": {
+            "converged": true,
+            "gradient_max_abs": 4.824360854381593e-17,
+            "iterations": 7,
+            "last_newton_step_max_abs": 8.412688207475729e-16,
+            "objective": 0.3404698687019376,
+            "solvers": [
+              "cholesky"
+            ],
+            "step_halvings": 0,
+            "stop_reason": "CONVERGED"
+          }
+        },
+        "ineligible_reasons": [],
+        "intercept": 9.252496384191,
+        "l2": 0.0001,
+        "labels": "MEASURED on the threshold (validation) rows; SYNTHETIC",
+        "model_sha256": "c684dedc10907e7ddf7225bac7ef1b30d8de41e0a9de7c2799e2b21232442ef0",
+        "threshold_selection": {
+          "balanced_accuracy": 0.7672776442307693,
+          "f1": 0.5888324873096447,
+          "grid_index": 19,
+          "threshold": 0.19
+        },
+        "trial_id": "T04_l2_1e-4_none",
+        "validation": {
+          "balanced_accuracy": 0.7672776442307693,
+          "balanced_accuracy_exact": [
+            5107,
+            6656
+          ],
+          "brier": 0.10137788717438538,
+          "confusion": {
+            "fn": 246,
+            "fp": 483,
+            "tn": 2845,
+            "tp": 522
+          },
+          "ece": 0.015546700009311517,
+          "f1": 0.5888324873096447,
+          "log_loss": 0.34062482134690636,
+          "negatives": 3328,
+          "positives": 768,
+          "precision": 0.5194029850746269,
+          "recall": 0.6796875,
+          "roc_auc": 0.8366648356119791,
+          "rows": 4096,
+          "specificity": 0.8548677884615384,
+          "threshold": 0.19
+        },
+        "weights": {
+          "configuration_valid": -3.383705362955,
+          "consecutive_failures": 2.471868018195,
+          "ledger_integrity_ok": -4.140004754222,
+          "listener_running": -2.932250528655,
+          "peer_allowlist_configured": -1.232539704031,
+          "queue_utilization": 3.710061089983,
+          "seconds_since_last_success": 0.339419819768,
+          "tls_enabled": -0.9469533836
+        }
+      }
+    },
+    {
+      "duration_ms": 18958.66190000379,
+      "iteration": 4,
+      "receipt_digest": "e502e1fbd97166376508aff0144571f66f58d93ae4dd5d3fbe23c2ddb8d3b825",
+      "receipt_file": "000004-e502e1fbd971.json",
+      "record": {
+        "calibrator": "platt",
+        "conformal_fit": {
+          "n_calibration": {
+            "0": 3346,
+            "1": 750
+          },
+          "q_hat": {
+            "0": 0.246748031117,
+            "1": 0.931919780724
+          },
+          "q_hat_exact": {
+            "0": 0.24674803111682425,
+            "1": 0.9319197807239669
+          },
+          "rank": {
+            "0": 3013,
+            "1": 676
+          }
+        },
+        "eligible": true,
+        "fit": {
+          "calibrator": {
+            "converged": true,
+            "gradient_max_abs": 1.0532854699107225e-17,
+            "iterations": 7,
+            "rows": 4096,
+            "stop_reason": "CONVERGED"
+          },
+          "irls": {
+            "converged": true,
+            "gradient_max_abs": 4.824360854381593e-17,
+            "iterations": 7,
+            "last_newton_step_max_abs": 8.412688207475729e-16,
+            "objective": 0.3404698687019376,
+            "solvers": [
+              "cholesky"
+            ],
+            "step_halvings": 0,
+            "stop_reason": "CONVERGED"
+          }
+        },
+        "ineligible_reasons": [],
+        "intercept": 9.252496384191,
+        "l2": 0.0001,
+        "labels": "MEASURED on the threshold (validation) rows; SYNTHETIC",
+        "model_sha256": "e686d3f95399db8b1f983dae28fb2b6bbd9cfb3e60a49e9e073c4a2a2082f28e",
+        "threshold_selection": {
+          "balanced_accuracy": 0.7671274038461539,
+          "f1": 0.588500563697858,
+          "grid_index": 19,
+          "threshold": 0.19
+        },
+        "trial_id": "T05_l2_1e-4_platt",
+        "validation": {
+          "balanced_accuracy": 0.7671274038461539,
+          "balanced_accuracy_exact": [
+            2553,
+            3328
+          ],
+          "brier": 0.10117161906072873,
+          "confusion": {
+            "fn": 246,
+            "fp": 484,
+            "tn": 2844,
+            "tp": 522
+          },
+          "ece": 0.010825702090276227,
+          "f1": 0.588500563697858,
+          "log_loss": 0.3400633450349924,
+          "negatives": 3328,
+          "positives": 768,
+          "precision": 0.5188866799204771,
+          "recall": 0.6796875,
+          "roc_auc": 0.8366648356119791,
+          "rows": 4096,
+          "specificity": 0.8545673076923077,
+          "threshold": 0.19
+        },
+        "weights": {
+          "configuration_valid": -3.383705362955,
+          "consecutive_failures": 2.471868018195,
+          "ledger_integrity_ok": -4.140004754222,
+          "listener_running": -2.932250528655,
+          "peer_allowlist_configured": -1.232539704031,
+          "queue_utilization": 3.710061089983,
+          "seconds_since_last_success": 0.339419819768,
+          "tls_enabled": -0.9469533836
+        }
+      }
+    },
+    {
+      "duration_ms": 17715.723799999978,
+      "iteration": 5,
+      "receipt_digest": "e34b6df74106614bb67d9b44ece60c1d1dddcd9ad71c9976e9e87979d25d3ade",
+      "receipt_file": "000005-e34b6df74106.json",
+      "record": {
+        "calibrator": "isotonic",
+        "conformal_fit": {
+          "n_calibration": {
+            "0": 3346,
+            "1": 750
+          },
+          "q_hat": {
+            "0": 0.28,
+            "1": 0.938775510204
+          },
+          "q_hat_exact": {
+            "0": 0.28,
+            "1": 0.938775510204
+          },
+          "rank": {
+            "0": 3013,
+            "1": 676
+          }
+        },
+        "eligible": true,
+        "fit": {
+          "calibrator": {
+            "block_counts": [
+              16,
+              59,
+              442,
+              376,
+              303,
+              882,
+              83,
+              232,
+              263,
+              348,
+              12,
+              11,
+              61,
+              5,
+              117,
+              8,
+              61,
+              50,
+              112,
+              120,
+              60,
+              132,
+              35,
+              80,
+              90,
+              9,
+              25,
+              76,
+              28
+            ],
+            "blocks": 29,
+            "rows": 4096,
+            "tie_blocks": 4096
+          },
+          "irls": {
+            "converged": true,
+            "gradient_max_abs": 4.824360854381593e-17,
+            "iterations": 7,
+            "last_newton_step_max_abs": 8.412688207475729e-16,
+            "objective": 0.3404698687019376,
+            "solvers": [
+              "cholesky"
+            ],
+            "step_halvings": 0,
+            "stop_reason": "CONVERGED"
+          }
+        },
+        "ineligible_reasons": [],
+        "intercept": 9.252496384191,
+        "l2": 0.0001,
+        "labels": "MEASURED on the threshold (validation) rows; SYNTHETIC",
+        "model_sha256": "eb5a458f854cda1c7c547dd76887c5e84b11bb49a5df6c482257bbd9a73a61eb",
+        "threshold_selection": {
+          "balanced_accuracy": 0.7656750801282052,
+          "f1": 0.582825484764543,
+          "grid_index": 22,
+          "threshold": 0.22
+        },
+        "trial_id": "T06_l2_1e-4_isotonic",
+        "validation": {
+          "balanced_accuracy": 0.7656750801282052,
+          "balanced_accuracy_exact": [
+            15289,
+            19968
+          ],
+          "brier": 0.10133303620239242,
+          "confusion": {
+            "fn": 242,
+            "fp": 511,
+            "tn": 2817,
+            "tp": 526
+          },
+          "ece": 0.01284293949603467,
+          "f1": 0.582825484764543,
+          "log_loss": 0.35571172177540805,
+          "negatives": 3328,
+          "positives": 768,
+          "precision": 0.5072324011571842,
+          "recall": 0.6848958333333334,
+          "roc_auc": 0.8367747771434295,
+          "rows": 4096,
+          "specificity": 0.8464543269230769,
+          "threshold": 0.22
+        },
+        "weights": {
+          "configuration_valid": -3.383705362955,
+          "consecutive_failures": 2.471868018195,
+          "ledger_integrity_ok": -4.140004754222,
+          "listener_running": -2.932250528655,
+          "peer_allowlist_configured": -1.232539704031,
+          "queue_utilization": 3.710061089983,
+          "seconds_since_last_success": 0.339419819768,
+          "tls_enabled": -0.9469533836
+        }
+      }
+    },
+    {
+      "duration_ms": 4035.32780000387,
+      "iteration": 6,
+      "receipt_digest": "fa39022841116a696e3707901631348e0bd927531348654c549a13188971a144",
+      "receipt_file": "000006-fa3902284111.json",
+      "record": {
+        "calibrator": "none",
+        "conformal_fit": {
+          "n_calibration": {
+            "0": 3346,
+            "1": 750
+          },
+          "q_hat": {
+            "0": 0.223684755436,
+            "1": 0.911152623366
+          },
+          "q_hat_exact": {
+            "0": 0.2236847554359916,
+            "1": 0.9111526233651891
+          },
+          "rank": {
+            "0": 3013,
+            "1": 676
+          }
+        },
+        "eligible": true,
+        "fit": {
+          "calibrator": {
+            "rows": 4096
+          },
+          "irls": {
+            "converged": true,
+            "gradient_max_abs": 5.655469582227513e-17,
+            "iterations": 7,
+            "last_newton_step_max_abs": 4.929585168083675e-16,
+            "objective": 0.36053452191100965,
+            "solvers": [
+              "cholesky"
+            ],
+            "step_halvings": 0,
+            "stop_reason": "CONVERGED"
+          }
+        },
+        "ineligible_reasons": [],
+        "intercept": 7.132311089958,
+        "l2": 0.001,
+        "labels": "MEASURED on the threshold (validation) rows; SYNTHETIC",
+        "model_sha256": "b830a5edca271d667ab09b378dd5d3ab505d71a7e3451de8d9ca2bacfeed977c",
+        "threshold_selection": {
+          "balanced_accuracy": 0.7686798878205128,
+          "f1": 0.6015393724097099,
+          "grid_index": 20,
+          "threshold": 0.2
+        },
+        "trial_id": "T07_l2_1e-3_none",
+        "validation": {
+          "balanced_accuracy": 0.7686798878205128,
+          "balanced_accuracy_exact": [
+            15349,
+            19968
+          ],
+          "brier": 0.10355647966137198,
+          "confusion": {
+            "fn": 260,
+            "fp": 413,
+            "tn": 2915,
+            "tp": 508
+          },
+          "ece": 0.03465804021631515,
+          "f1": 0.6015393724097099,
+          "log_loss": 0.3473329493003732,
+          "negatives": 3328,
+          "positives": 768,
+          "precision": 0.5515743756786102,
+          "recall": 0.6614583333333334,
+          "roc_auc": 0.836729000776242,
+          "rows": 4096,
+          "specificity": 0.8759014423076923,
+          "threshold": 0.2
+        },
+        "weights": {
+          "configuration_valid": -2.821703311766,
+          "consecutive_failures": 1.718149829576,
+          "ledger_integrity_ok": -2.851449125324,
+          "listener_running": -2.539293238803,
+          "peer_allowlist_configured": -1.038997837438,
+          "queue_utilization": 2.70500460774,
+          "seconds_since_last_success": 0.0365481304,
+          "tls_enabled": -0.802793259351
+        }
+      }
+    },
+    {
+      "duration_ms": 14001.01509999513,
+      "iteration": 7,
+      "receipt_digest": "686b6f32009f365f51fc4ea81888ecc0bcd85bd26c3db86edb1c4126f3cb70b4",
+      "receipt_file": "000007-686b6f32009f.json",
+      "record": {
+        "calibrator": "platt",
+        "conformal_fit": {
+          "n_calibration": {
+            "0": 3346,
+            "1": 750
+          },
+          "q_hat": {
+            "0": 0.230615711676,
+            "1": 0.930439624628
+          },
+          "q_hat_exact": {
+            "0": 0.2306157116754659,
+            "1": 0.9304396246273288
+          },
+          "rank": {
+            "0": 3013,
+            "1": 676
+          }
+        },
+        "eligible": true,
+        "fit": {
+          "calibrator": {
+            "converged": true,
+            "gradient_max_abs": 2.5837873170710476e-17,
+            "iterations": 7,
+            "rows": 4096,
+            "stop_reason": "CONVERGED"
+          },
+          "irls": {
+            "converged": true,
+            "gradient_max_abs": 5.655469582227513e-17,
+            "iterations": 7,
+            "last_newton_step_max_abs": 4.929585168083675e-16,
+            "objective": 0.36053452191100965,
+            "solvers": [
+              "cholesky"
+            ],
+            "step_halvings": 0,
+            "stop_reason": "CONVERGED"
+          }
+        },
+        "ineligible_reasons": [],
+        "intercept": 7.132311089958,
+        "l2": 0.001,
+        "labels": "MEASURED on the threshold (validation) rows; SYNTHETIC",
+        "model_sha256": "50123138cd90eb267b194871a13f7815725cf4f3e1e23a2afb9bb14b59fe3e43",
+        "threshold_selection": {
+          "balanced_accuracy": 0.7681790865384616,
+          "f1": 0.6010669828097214,
+          "grid_index": 20,
+          "threshold": 0.2
+        },
+        "trial_id": "T08_l2_1e-3_platt",
+        "validation": {
+          "balanced_accuracy": 0.7681790865384616,
+          "balanced_accuracy_exact": [
+            5113,
+            6656
+          ],
+          "brier": 0.1015746520743607,
+          "confusion": {
+            "fn": 261,
+            "fp": 412,
+            "tn": 2916,
+            "tp": 507
+          },
+          "ece": 0.016405119793351207,
+          "f1": 0.6010669828097214,
+          "log_loss": 0.3408127532666405,
+          "negatives": 3328,
+          "positives": 768,
+          "precision": 0.5516866158868335,
+          "recall": 0.66015625,
+          "roc_auc": 0.836729000776242,
+          "rows": 4096,
+          "specificity": 0.8762019230769231,
+          "threshold": 0.2
+        },
+        "weights": {
+          "configuration_valid": -2.821703311766,
+          "consecutive_failures": 1.718149829576,
+          "ledger_integrity_ok": -2.851449125324,
+          "listener_running": -2.539293238803,
+          "peer_allowlist_configured": -1.038997837438,
+          "queue_utilization": 2.70500460774,
+          "seconds_since_last_success": 0.0365481304,
+          "tls_enabled": -0.802793259351
+        }
+      }
+    },
+    {
+      "duration_ms": 12236.57159999857,
+      "iteration": 8,
+      "receipt_digest": "516471be86d7907c5de8d6357c0e14d0e7d5def3d195b5db7f2e552e8d722876",
+      "receipt_file": "000008-516471be86d7.json",
+      "record": {
+        "calibrator": "isotonic",
+        "conformal_fit": {
+          "n_calibration": {
+            "0": 3346,
+            "1": 750
+          },
+          "q_hat": {
+            "0": 0.26582278481,
+            "1": 0.939233817701
+          },
+          "q_hat_exact": {
+            "0": 0.26582278481,
+            "1": 0.939233817701
+          },
+          "rank": {
+            "0": 3013,
+            "1": 676
+          }
+        },
+        "eligible": true,
+        "fit": {
+          "calibrator": {
+            "block_counts": [
+              18,
+              45,
+              137,
+              308,
+              391,
+              300,
+              757,
+              29,
+              358,
+              32,
+              368,
+              68,
+              236,
+              29,
+              26,
+              199,
+              79,
+              6,
+              79,
+              40,
+              45,
+              62,
+              38,
+              126,
+              56,
+              59,
+              98,
+              30,
+              57,
+              20
+            ],
+            "blocks": 30,
+            "rows": 4096,
+            "tie_blocks": 4096
+          },
+          "irls": {
+            "converged": true,
+            "gradient_max_abs": 5.655469582227513e-17,
+            "iterations": 7,
+            "last_newton_step_max_abs": 4.929585168083675e-16,
+            "objective": 0.36053452191100965,
+            "solvers": [
+              "cholesky"
+            ],
+            "step_halvings": 0,
+            "stop_reason": "CONVERGED"
+          }
+        },
+        "ineligible_reasons": [],
+        "intercept": 7.132311089958,
+        "l2": 0.001,
+        "labels": "MEASURED on the threshold (validation) rows; SYNTHETIC",
+        "model_sha256": "9b5073c81af7074cf072e2789eca10b4e87b4d14dec7e9817f94ff9d2fe3ccd3",
+        "threshold_selection": {
+          "balanced_accuracy": 0.7658253205128205,
+          "f1": 0.5777537796976242,
+          "grid_index": 17,
+          "threshold": 0.17
+        },
+        "trial_id": "T09_l2_1e-3_isotonic",
+        "validation": {
+          "balanced_accuracy": 0.7658253205128205,
+          "balanced_accuracy_exact": [
+            3823,
+            4992
+          ],
+          "brier": 0.10154457536579237,
+          "confusion": {
+            "fn": 233,
+            "fp": 549,
+            "tn": 2779,
+            "tp": 535
+          },
+          "ece": 0.01045228748267993,
+          "f1": 0.5777537796976242,
+          "log_loss": 0.35566988685920675,
+          "negatives": 3328,
+          "positives": 768,
+          "precision": 0.4935424354243542,
+          "recall": 0.6966145833333334,
+          "roc_auc": 0.8355262951973157,
+          "rows": 4096,
+          "specificity": 0.8350360576923077,
+          "threshold": 0.17
+        },
+        "weights": {
+          "configuration_valid": -2.821703311766,
+          "consecutive_failures": 1.718149829576,
+          "ledger_integrity_ok": -2.851449125324,
+          "listener_running": -2.539293238803,
+          "peer_allowlist_configured": -1.038997837438,
+          "queue_utilization": 2.70500460774,
+          "seconds_since_last_success": 0.0365481304,
+          "tls_enabled": -0.802793259351
+        }
+      }
+    },
+    {
+      "duration_ms": 15173.861700000998,
+      "iteration": 9,
+      "receipt_digest": "9b7458b638119fc3950bca9d1e4a3ac2ea7c1538a9181869b2368dfc921bc99d",
+      "receipt_file": "000009-9b7458b63811.json",
+      "record": {
+        "calibrator": "none",
+        "conformal_fit": {
+          "n_calibration": {
+            "0": 3346,
+            "1": 750
+          },
+          "q_hat": {
+            "0": 0.200038580191,
+            "1": 0.862920215037
+          },
+          "q_hat_exact": {
+            "0": 0.20003858019063372,
+            "1": 0.8629202150366689
+          },
+          "rank": {
+            "0": 3013,
+            "1": 676
+          }
+        },
+        "eligible": true,
+        "fit": {
+          "calibrator": {
+            "rows": 4096
+          },
+          "irls": {
+            "converged": true,
+            "gradient_max_abs": 1.734723475976807e-18,
+            "iterations": 6,
+            "last_newton_step_max_abs": 1.3874448237263702e-16,
+            "objective": 0.41953994316242316,
+            "solvers": [
+              "cholesky"
+            ],
+            "step_halvings": 0,
+            "stop_reason": "CONVERGED"
+          }
+        },
+        "ineligible_reasons": [],
+        "intercept": 2.461743406969,
+        "l2": 0.01,
+        "labels": "MEASURED on the threshold (validation) rows; SYNTHETIC",
+        "model_sha256": "89b4af5548f0d6c1eabf1ca23ea6bfcd95b26906d0a6bcfa06075a28862aa344",
+        "threshold_selection": {
+          "balanced_accuracy": 0.7565104166666666,
+          "f1": 0.5448408871745419,
+          "grid_index": 17,
+          "threshold": 0.17
+        },
+        "trial_id": "T10_l2_1e-2_none",
+        "validation": {
+          "balanced_accuracy": 0.7565104166666666,
+          "balanced_accuracy_exact": [
+            581,
+            768
+          ],
+          "brier": 0.12249893493218672,
+          "confusion": {
+            "fn": 203,
+            "fp": 741,
+            "tn": 2587,
+            "tp": 565
+          },
+          "ece": 0.08811679331106537,
+          "f1": 0.5448408871745419,
+          "log_loss": 0.39896562148516307,
+          "negatives": 3328,
+          "positives": 768,
+          "precision": 0.4326186830015314,
+          "recall": 0.7356770833333334,
+          "roc_auc": 0.8314901498647836,
+          "rows": 4096,
+          "specificity": 0.77734375,
+          "threshold": 0.17
+        },
+        "weights": {
+          "configuration_valid": -1.318131764375,
+          "consecutive_failures": 0.442306661336,
+          "ledger_integrity_ok": -0.828991390327,
+          "listener_running": -1.381036175839,
+          "peer_allowlist_configured": -0.523510284771,
+          "queue_utilization": 0.835697458104,
+          "seconds_since_last_success": 0.004470732582,
+          "tls_enabled": -0.430419638462
+        }
+      }
+    },
+    {
+      "duration_ms": 14781.618200002413,
+      "iteration": 10,
+      "receipt_digest": "256e569d85a496eb742f01bc4cfdf9aa421c51190de13292b2e15a1abc90b017",
+      "receipt_file": "000010-256e569d85a4.json",
+      "record": {
+        "calibrator": "platt",
+        "conformal_fit": {
+          "n_calibration": {
+            "0": 3346,
+            "1": 750
+          },
+          "q_hat": {
+            "0": 0.211155580458,
+            "1": 0.921321787835
+          },
+          "q_hat_exact": {
+            "0": 0.21115558045730012,
+            "1": 0.9213217878341281
+          },
+          "rank": {
+            "0": 3013,
+            "1": 676
+          }
+        },
+        "eligible": true,
+        "fit": {
+          "calibrator": {
+            "converged": true,
+            "gradient_max_abs": 9.31667420552766e-18,
+            "iterations": 7,
+            "rows": 4096,
+            "stop_reason": "CONVERGED"
+          },
+          "irls": {
+            "converged": true,
+            "gradient_max_abs": 1.734723475976807e-18,
+            "iterations": 6,
+            "last_newton_step_max_abs": 1.3874448237263702e-16,
+            "objective": 0.41953994316242316,
+            "solvers": [
+              "cholesky"
+            ],
+            "step_halvings": 0,
+            "stop_reason": "CONVERGED"
+          }
+        },
+        "ineligible_reasons": [],
+        "intercept": 2.461743406969,
+        "l2": 0.01,
+        "labels": "MEASURED on the threshold (validation) rows; SYNTHETIC",
+        "model_sha256": "a1c968ca7715342fbfc2d42bebe3faea7babaee300dfa74674c4f6405cf6e326",
+        "threshold_selection": {
+          "balanced_accuracy": 0.7602664262820513,
+          "f1": 0.5571788413098236,
+          "grid_index": 15,
+          "threshold": 0.15
+        },
+        "trial_id": "T11_l2_1e-2_platt",
+        "validation": {
+          "balanced_accuracy": 0.7602664262820513,
+          "balanced_accuracy_exact": [
+            15181,
+            19968
+          ],
+          "brier": 0.1066282514120643,
+          "confusion": {
+            "fn": 215,
+            "fp": 664,
+            "tn": 2664,
+            "tp": 553
+          },
+          "ece": 0.03373092623166231,
+          "f1": 0.5571788413098236,
+          "log_loss": 0.35385121949497816,
+          "negatives": 3328,
+          "positives": 768,
+          "precision": 0.45439605587510273,
+          "recall": 0.7200520833333334,
+          "roc_auc": 0.8314901498647836,
+          "rows": 4096,
+          "specificity": 0.8004807692307693,
+          "threshold": 0.15
+        },
+        "weights": {
+          "configuration_valid": -1.318131764375,
+          "consecutive_failures": 0.442306661336,
+          "ledger_integrity_ok": -0.828991390327,
+          "listener_running": -1.381036175839,
+          "peer_allowlist_configured": -0.523510284771,
+          "queue_utilization": 0.835697458104,
+          "seconds_since_last_success": 0.004470732582,
+          "tls_enabled": -0.430419638462
+        }
+      }
+    },
+    {
+      "duration_ms": 13499.121699998796,
+      "iteration": 11,
+      "receipt_digest": "7594963251258c20ddd842c04b577b42765714ef66cc473f44898d2a63f9314c",
+      "receipt_file": "000011-759496325125.json",
+      "record": {
+        "calibrator": "isotonic",
+        "conformal_fit": {
+          "n_calibration": {
+            "0": 3346,
+            "1": 750
+          },
+          "q_hat": {
+            "0": 0.262857142857,
+            "1": 0.938511326861
+          },
+          "q_hat_exact": {
+            "0": 0.262857142857,
+            "1": 0.938511326861
+          },
+          "rank": {
+            "0": 3013,
+            "1": 676
+          }
+        },
+        "eligible": true,
+        "fit": {
+          "calibrator": {
+            "block_counts": [
+              18,
+              44,
+              145,
+              707,
+              301,
+              618,
+              121,
+              189,
+              185,
+              297,
+              176,
+              443,
+              21,
+              175,
+              6,
+              61,
+              11,
+              2,
+              29,
+              73,
+              152,
+              118,
+              3,
+              34,
+              33,
+              100,
+              19,
+              15
+            ],
+            "blocks": 28,
+            "rows": 4096,
+            "tie_blocks": 4096
+          },
+          "irls": {
+            "converged": true,
+            "gradient_max_abs": 1.734723475976807e-18,
+            "iterations": 6,
+            "last_newton_step_max_abs": 1.3874448237263702e-16,
+            "objective": 0.41953994316242316,
+            "solvers": [
+              "cholesky"
+            ],
+            "step_halvings": 0,
+            "stop_reason": "CONVERGED"
+          }
+        },
+        "ineligible_reasons": [],
+        "intercept": 2.461743406969,
+        "l2": 0.01,
+        "labels": "MEASURED on the threshold (validation) rows; SYNTHETIC",
+        "model_sha256": "f906500387283fdd7d712bfacfab976228f17e49a9fa313accd4cb916ad9363a",
+        "threshold_selection": {
+          "balanced_accuracy": 0.7568609775641025,
+          "f1": 0.5437171524128046,
+          "grid_index": 18,
+          "threshold": 0.18
+        },
+        "trial_id": "T12_l2_1e-2_isotonic",
+        "validation": {
+          "balanced_accuracy": 0.7568609775641025,
+          "balanced_accuracy_exact": [
+            15113,
+            19968
+          ],
+          "brier": 0.1050179761638162,
+          "confusion": {
+            "fn": 199,
+            "fp": 756,
+            "tn": 2572,
+            "tp": 569
+          },
+          "ece": 0.011162859941860108,
+          "f1": 0.5437171524128046,
+          "log_loss": 0.364374782025073,
+          "negatives": 3328,
+          "positives": 768,
+          "precision": 0.4294339622641509,
+          "recall": 0.7408854166666666,
+          "roc_auc": 0.8309629391401242,
+          "rows": 4096,
+          "specificity": 0.7728365384615384,
+          "threshold": 0.18
+        },
+        "weights": {
+          "configuration_valid": -1.318131764375,
+          "consecutive_failures": 0.442306661336,
+          "ledger_integrity_ok": -0.828991390327,
+          "listener_running": -1.381036175839,
+          "peer_allowlist_configured": -0.523510284771,
+          "queue_utilization": 0.835697458104,
+          "seconds_since_last_success": 0.004470732582,
+          "tls_enabled": -0.430419638462
+        }
+      }
+    }
+  ],
+  "truth_labels": {
+    "metrics": "MEASURED on the registered validation split (threshold rows); SYNTHETIC",
+    "receipts": "attest integrity and origin of each trial record only; not quality"
+  }
+}

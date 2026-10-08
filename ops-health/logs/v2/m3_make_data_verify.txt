@@ -1,0 +1,46 @@
+## 2026-09-26T22:05:27Z PYTHONUTF8=1 py -3.12 -B -m v2.research.make_data --verify   (hash-only)
+{
+  "checked": {
+    "calibration": {
+      "disk_matches": true,
+      "regenerated_matches": true
+    },
+    "conformal": {
+      "disk_matches": true,
+      "regenerated_matches": true
+    },
+    "shift_clock_skew": {
+      "disk_matches": true,
+      "regenerated_matches": true
+    },
+    "shift_failure_bursts": {
+      "disk_matches": true,
+      "regenerated_matches": true
+    },
+    "shift_missing_tls": {
+      "disk_matches": true,
+      "regenerated_matches": true
+    },
+    "shift_queue_saturation": {
+      "disk_matches": true,
+      "regenerated_matches": true
+    },
+    "test": {
+      "disk_matches": true,
+      "regenerated_matches": true
+    },
+    "train": {
+      "disk_matches": true,
+      "regenerated_matches": true
+    },
+    "validation": {
+      "disk_matches": true,
+      "regenerated_matches": true
+    }
+  },
+  "ok": true,
+  "problems": []
+}
+exit=0
+## sha256sum v2/data/MANIFEST.json
+c0d2fa0a924162e42c4d50c8eaf7d155f3e991f8f47ca518b1b87c3927ad7252 *v2/data/MANIFEST.json

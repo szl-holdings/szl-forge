@@ -1,0 +1,53 @@
+# logs/v2/final_verify_independent.txt -- post-hoc independent check of the final verdict (written after the opening). MEASURED; SYNTHETIC.
+# started 2026-09-29T21:26:19Z; HEAD d9c5fb3a403a2ab8a87b8c1ddbf38d3c16d62df8; script sha256 c0a250429e54dcf8f8117313a9f710e6e55aed1840a27b84a3c7b4ffb1b35c68
+$ PYTHONUTF8=1 python -B logs/v2/final_verify_independent.py   # Python 3.11.9, numpy 2.4.6 (pre-installed)
+[A+B] test: rows 50000; max |independent - final_evaluation| = 2.776e-17; W rule vs v1 margin 0.000319158 holds=True; vs rule holds=True; vs majority holds=True (28 s)
+[A+B] pooled_shift: rows 50000; max |independent - final_evaluation| = 5.551e-17; W rule vs v1 margin 0.045444647 holds=True; vs rule holds=True; vs majority holds=True (52 s)
+[A+B] independent verdict WIN; final_evaluation verdict WIN; max abs diff 5.551e-17 (tolerance 1e-12)
+Traceback (most recent call last):
+  File "C:\Users\steph\szl-work\oac-frontier\logs\v2\final_verify_independent.py", line 267, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "C:\Users\steph\szl-work\oac-frontier\logs\v2\final_verify_independent.py", line 226, in main
+    idx = rng.integers(0, n, size=(100, n))
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "numpy/random/_generator.pyx", line 674, in numpy.random._generator.Generator.integers
+  File "numpy/random/_bounded_integers.pyx", line 2719, in numpy.random._bounded_integers._rand_int64
+numpy._core._exceptions._ArrayMemoryError: Unable to allocate 38.1 MiB for an array with shape (100, 50000) and data type int64
+exit=1 finished 2026-09-29T21:43:07Z
+# run 1 above: Parts A+B completed; Part C died with MemoryError while the host disk was at ~238 MB free (commit charge exhausted). Part C was then made memory-light (int32 indices, int8 indicators, 25 resamples per chunk), checkpointed per stream in scratch/, and cut to 100 streams (seeds 1..100); Part B chunk 50 -> 20. Nothing else changed.
+## run 2 started 2026-09-29T21:49:11Z; HEAD d07b314173e1164f327b5ab35816f357476524c1; free disk 4610150400 bytes; script sha256 1e2ecc79eefa27fe48b758e0ca6796c30ed2bf33092b485e6216ca17b661c093
+$ PYTHONUTF8=1 python -B logs/v2/final_verify_independent.py
+[A+B] test: rows 50000; max |independent - final_evaluation| = 2.776e-17; W rule vs v1 margin 0.000319158 holds=True; vs rule holds=True; vs majority holds=True (44 s)
+[A+B] pooled_shift: rows 50000; max |independent - final_evaluation| = 5.551e-17; W rule vs v1 margin 0.045444647 holds=True; vs rule holds=True; vs majority holds=True (83 s)
+[A+B] independent verdict WIN; final_evaluation verdict WIN; max abs diff 5.551e-17 (tolerance 1e-12)
+[C] reusing 0 checkpointed streams
+[C] stream 10: holds so far 10/10 (153 s)
+Traceback (most recent call last):
+  File "C:\Users\steph\szl-work\oac-frontier\logs\v2\final_verify_independent.py", line 291, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "C:\Users\steph\szl-work\oac-frontier\logs\v2\final_verify_independent.py", line 245, in main
+    pos = y8[idx].sum(axis=1, dtype=np.int64)
+          ~~^^^^^
+numpy._core._exceptions._ArrayMemoryError: Unable to allocate 1.19 MiB for an array with shape (25, 50000) and data type int8
+exit=1 finished 2026-09-29T21:53:14Z
+## run 3 started 2026-09-30T01:18:07Z; HEAD 8b8103d463d9fd54d3aab31480168c3094ee82c9; free disk 11745099776 bytes; script sha256 c1f600fc7caf83a519530ed0e1e8453e878fd732dbd9681dad952d74c406740b
+$ PYTHONUTF8=1 python -B logs/v2/final_verify_independent.py
+[A+B] test: rows 50000; max |independent - final_evaluation| = 2.776e-17; W rule vs v1 margin 0.000319158 holds=True; vs rule holds=True; vs majority holds=True (23 s)
+[A+B] pooled_shift: rows 50000; max |independent - final_evaluation| = 5.551e-17; W rule vs v1 margin 0.045444647 holds=True; vs rule holds=True; vs majority holds=True (60 s)
+[A+B] independent verdict WIN; final_evaluation verdict WIN; max abs diff 5.551e-17 (tolerance 1e-12)
+[C] reusing 15 checkpointed streams
+[C] stream 10: holds so far 10/10 (60 s)
+[C] stream 20: holds so far 20/20 (73 s)
+[C] stream 30: holds so far 30/30 (105 s)
+[C] stream 40: holds so far 40/40 (138 s)
+[C] stream 50: holds so far 50/50 (168 s)
+[C] stream 60: holds so far 60/60 (201 s)
+[C] stream 70: holds so far 70/70 (237 s)
+[C] stream 80: holds so far 80/80 (272 s)
+[C] stream 90: holds so far 90/90 (307 s)
+[C] stream 100: holds so far 100/100 (353 s)
+[C, post-hoc, NOT registered] W1 v2-vs-v1 holds in 100/100 other streams; margin min 0.000081 median 0.000522 max 0.000940 sd 0.000187; registered stream margin 0.000319 (353 s)
+wrote v2/results/final_robustness.json: 6479 bytes sha256 de51069017a578a6717e44e6e25812fbf082f9bfa6e42682354671c414387269
+exit=0 finished 2026-09-30T01:24:08Z

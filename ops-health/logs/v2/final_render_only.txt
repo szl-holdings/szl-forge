@@ -1,0 +1,16 @@
+# logs/v2/final_render_only.txt -- re-render of FINAL_RESULTS.md and reliability.svg from the saved final_evaluation.json (post-opening; recomputes nothing; opens no split). MEASURED; SYNTHETIC.
+# started 2026-10-06T09:30:23Z; HEAD 6102fedd71aa7795ee4d831a02402ad7730bb137; final_analyze.py sha256 d72595adb2beac66ea632eb95affa09a4fe207a2269e85ed23ca59cbf63ba1fb; final_evaluation.json sha256 before 36b494bd043ae0973f4cfce98be2218e33c72c74fc840a790d32b3236688bebe
+$ PYTHONUTF8=1 py -3.12 -B -m v2.research.final_analyze --render-only
+wrote reliability.svg: 13835 bytes sha256 a3c496261f90a39f270e1cae3d54d8387028ea6d9d490b7e055675ad4addde86
+wrote FINAL_RESULTS.md: 26772 bytes sha256 c6c63b798db8ca02d0ce26094996c7cf00f15aead406a92c2739500c5051f356
+verdict (unchanged, from the saved evaluation): WIN
+final_evaluation.json sha256 after 36b494bd043ae0973f4cfce98be2218e33c72c74fc840a790d32b3236688bebe
+exit=0 finished 2026-10-06T09:30:25Z
+# run 1 above (final_analyze.py d72595ad...) listed sets, splits, contenders and features alphabetically because final_evaluation.json is written with sorted keys; render_only then gained reporting_order() and the numbers were re-proved (logs/v2/final_reanalyze_check.txt run 3). Run 1's page is superseded by run 2's.
+## run 2 started 2026-10-06T09:47:42Z; HEAD d677d347e0664e17eb6b59c90ad3714190449e30; final_analyze.py sha256 afe518d439309816c8ec2d2eb76850d369d5d7e3a06a9a5c19e9d59bc0d5c130; final_evaluation.json sha256 before 36b494bd043ae0973f4cfce98be2218e33c72c74fc840a790d32b3236688bebe
+$ PYTHONUTF8=1 py -3.12 -B -m v2.research.final_analyze --render-only
+wrote reliability.svg: 13835 bytes sha256 a3c496261f90a39f270e1cae3d54d8387028ea6d9d490b7e055675ad4addde86
+wrote FINAL_RESULTS.md: 26848 bytes sha256 86f815587b85bf9c26845f08b188ef4144f17d86ce9214c3525255cf0486810c
+verdict (unchanged, from the saved evaluation): WIN
+final_evaluation.json sha256 after 36b494bd043ae0973f4cfce98be2218e33c72c74fc840a790d32b3236688bebe
+exit=0 finished 2026-10-06T09:47:59Z

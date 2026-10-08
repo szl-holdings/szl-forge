@@ -1,0 +1,46 @@
+{
+  "action": "hyperparameter-trial",
+  "digest": "22ec3e4930b33ab13323490afcfe51e1f35aa7d31340ae0a9053a0a16c9de73e",
+  "dsse": {
+    "_dsse": "DSSEv1",
+    "_pae_sha256": "f40b05ac42607f0386445270be707409dfc655241cccbc58790757709396b0cf",
+    "honesty": "UNSIGNED - content-bound by DSSE PAE sha256 only; no signature, so origin is asserted, not cryptographically proven.",
+    "payload": "eyJhY3Rpb24iOiJoeXBlcnBhcmFtZXRlci10cmlhbCIsImRpZ2VzdCI6IjIyZWMzZTQ5MzBiMzNhYjEzMzIzNDkwYWZjZmU1MWUxZjM1YWE3ZDMxMzQwYWUwYTkwNTNhMGExNmM5ZGU3M2UiLCJob25lc3R5IjoiSW50ZWdyaXR5IGFuZCBvcmlnaW4gb25seTogYmluZHMgYSBwYXlsb2FkIFNIQS0yNTYgdG8gYSBwb3NpdGlvbiBpbiBhIGhhc2ggY2hhaW4gZW1pdHRlZCBieSBvYWMtZnJvbnRpZXIvbWF0aC9yZWNlaXB0X2FkYXB0ZXIucHkuIFVOU0lHTkVEIChubyBzaWduYXR1cmUsIG9yaWdpbiBhc3NlcnRlZCBub3QgcHJvdmVuKS4gTm90IGEgY2xhaW0gYWJvdXQgcXVhbGl0eSwgY29ycmVjdG5lc3MsIGNhbGlicmF0aW9uIG9yIHNhZmV0eS4iLCJsb29wIjp7Iml0ZXJhdGlvbiI6MCwibGFiZWwiOiJvYWMtb3BzLWhlYWx0aC12Mi5yZWdpc3RlcmVkLXNlYXJjaCIsIm1heF9pdGVyYXRpb25zIjoxMiwib3JkZXJfZGlnZXN0IjoiYmMwNGFkZjViY2VmYjRkMGQ2ZDkyNTQ4YzA0ODg2N2E5OGU5MTM0ZDhjZWRiNTNhYzVlYTEwMTBkNTAxNjgwMSIsIm9yZGVyX3NlZWQiOm51bGwsInJ1bl9pZCI6InYyLXJlZ2lzdGVyZWQtc2VhcmNoIiwic2VhcmNoX3NwYWNlX2RpZ2VzdCI6IjY1ZDNkNzI0YjkwOWJmM2VhZDdkNmJhMjg0YjIwNDNmM2RhZGU5MGRjMGE4NTM0NTBlYmM2NzZiNGFiZDY2ZWEiLCJzZWFyY2hfc3BhY2Vfc2l6ZSI6MTJ9LCJucyI6Im9hYy1mcm9udGllciIsIm9yaWdpbiI6eyJhZGFwdGVyX3ZlcnNpb24iOiIxLjAuMCIsImFtZW5kbWVudHNfc2hhMjU2IjoiNTE1MmNkN2Y4MTZjNDFlODEwODYxYmJjZDY0ODlkZWUxZDI1OThkYTg5YTM2ZjZiNDE4ZWY0YTk4NjdmMTgxZCIsImRhdGFfbWFuaWZlc3Rfc2hhMjU2IjoiYzBkMmZhMGE5MjQxNjJlNDJjNGQ1MGM4ZWFmN2QxNTVmM2U5OTFmOGY0N2NhNTE4YjFiODdjMzkyN2FkNzI1MiIsImdpdF9oZWFkIjoiMDY0NDgxZjBkNjAzNDE2Yzg1MTA3M2YwYWFkMWY5M2FiOWRhMTZjMiIsImtlcm5lbF9zaGEyNTYiOiJiMGE2NGZmM2YyNmVhMjg0YjA1ODhkZTM1MWVkNzc5NWE2MDg5MjAzYjM1ZmRlZDBlN2Q4MmNiZDQ4NzFhZWQ5IiwibWlycm9ycyI6InN6bC1ob2xkaW5ncy9vdXJvYm9yb3NAMGYwMzA3NDEiLCJwcmVyZWdpc3RyYXRpb25fc2hhMjU2IjoiMTQ1NDk3Nzg5YzdhZDc4YTgwYTk0Y2ZkN2YyYjAzMWNhOWEyMGRmNDljMDZlMGIzNDEyYWY5MDcwZmExZWY0YiIsInByb2NlZHVyZSI6IlBSRVJFR0lTVFJBVElPTiBzZWN0aW9uIDYgcmVnaXN0ZXJlZCBzZWFyY2ggKEFNLTIgZWxpZ2liaWxpdHkpIiwicnVubmVyIjoib2FjLWZyb250aWVyL21hdGgvb3Vyb2Jvcm9zX2FkYXB0ZXIucHkiLCJydW5uZXJfdmVyc2lvbiI6IjEuMC4xIiwic2VhcmNoX21vZHVsZV9zaGEyNTYiOiJhMWY3NzE4Y2E1OGRmNWVlMTg5OGE4MjExNDY0M2ZhNmJjYWQwMjAwZGNkY2UzODFjYjhhNjgzODkxOGRkNWJlIiwic3BlYyI6InN6bC1ob2xkaW5ncy9nb3Zlcm5lZC1yZWNlaXB0LXNwZWNAMmM4MjMyMGEiLCJ0b29sIjoib2FjLWZyb250aWVyL21hdGgvcmVjZWlwdF9hZGFwdGVyLnB5IiwidHJlZV9jbGVhbiI6dHJ1ZX0sInBheWxvYWRfZGlnZXN0IjoiYTlmM2RhYWJlYmQ0MDU0MDE5Mjg4NjBkNDk0OWEyM2ZlNGQ4MWFlMWNkMTM0ZDMyODVkY2VhNmZlNWM2OTgwNCIsInByZXYiOiIwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwIiwic2NoZW1hIjoib2FjLWZyb250aWVyLmdvdmVybmVkLXJlY2VpcHQvdjEiLCJzZXEiOjAsInRzIjoiMjAyNi0wOS0yOVQxNToxMzowNC44MDI3NDhaIn0=",
+    "payloadType": "application/vnd.oac-frontier.receipt+json",
+    "signatures": [],
+    "signed": false
+  },
+  "honesty": "Integrity and origin only: binds a payload SHA-256 to a position in a hash chain emitted by oac-frontier/math/receipt_adapter.py. UNSIGNED (no signature, origin asserted not proven). Not a claim about quality, correctness, calibration or safety.",
+  "loop": {
+    "iteration": 0,
+    "label": "oac-ops-health-v2.registered-search",
+    "max_iterations": 12,
+    "order_digest": "bc04adf5bcefb4d0d6d92548c048867a98e9134d8cedb53ac5ea1010d5016801",
+    "order_seed": null,
+    "run_id": "v2-registered-search",
+    "search_space_digest": "65d3d724b909bf3ead7d6ba284b2043f3dade90dc0a853450ebc676b4abd66ea",
+    "search_space_size": 12
+  },
+  "ns": "oac-frontier",
+  "origin": {
+    "adapter_version": "1.0.0",
+    "amendments_sha256": "5152cd7f816c41e810861bbcd6489dee1d2598da89a36f6b418ef4a9867f181d",
+    "data_manifest_sha256": "c0d2fa0a924162e42c4d50c8eaf7d155f3e991f8f47ca518b1b87c3927ad7252",
+    "git_head": "064481f0d603416c851073f0aad1f93ab9da16c2",
+    "kernel_sha256": "b0a64ff3f26ea284b0588de351ed7795a6089203b35fded0e7d82cbd4871aed9",
+    "mirrors": "szl-holdings/ouroboros@0f030741",
+    "preregistration_sha256": "145497789c7ad78a80a94cfd7f2b031ca9a20df49c06e0b3412af9070fa1ef4b",
+    "procedure": "PREREGISTRATION section 6 registered search (AM-2 eligibility)",
+    "runner": "oac-frontier/math/ouroboros_adapter.py",
+    "runner_version": "1.0.1",
+    "search_module_sha256": "a1f7718ca58df5ee1898a82114643fa6bcad0200dcdce381cb8a6838918dd5be",
+    "spec": "szl-holdings/governed-receipt-spec@2c82320a",
+    "tool": "oac-frontier/math/receipt_adapter.py",
+    "tree_clean": true
+  },
+  "payload_digest": "a9f3daabebd405401928860d4949a23fe4d81ae1cd134d3285dcea6fe5c69804",
+  "prev": "0000000000000000000000000000000000000000000000000000000000000000",
+  "schema": "oac-frontier.governed-receipt/v1",
+  "seq": 0,
+  "ts": "2026-09-29T15:13:04.802748Z"
+}

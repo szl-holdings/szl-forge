@@ -1,0 +1,193 @@
+cmd: PYTHONUTF8=1 py -3.12 -B logs/v2/review/kernel_attack.py ; HEAD=ec7874b (kernel unmodified; extended script, echo probes) ; 2026-09-29T06:39:26-04:00
+# v2 kernel adversarial review (lens a) -- SYNTHETIC, DEV data only
+python: 3.12.10  kernel: v2/ops-health/ops_health.py
+kernel_sha256: b0215162e19e7f8c8b97beac38bb7646e1f21cdc9b922202811c60124f8917e5
+echo bound: stderr_len <= 1100 bytes for every refusal
+DEV artifact model_sha256: 0a578f030fee092e442aacceae2f740ed5960e1ac9555218eab456ddcf69d182
+
+## input probes (CLI subprocess)
+id | expect | exit | traceback | outcome | stderr_len | stderr/stdout prefix
+control_valid | accept | 0 | False | OK | stderr_len=0 | {"abstain_reason":null,"advisory":"NO_ALERT","authority":{"acknowledgement":false,"clinical_decision":false,"device_control":false,"result_interpretation":false
+control_json_bools_for_binary | accept | 0 | False | OK | stderr_len=0 | {"abstain_reason":"BOTH","advisory":"ABSTAIN","authority":{"acknowledgement":false,"clinical_decision":false,"device_control":false,"result_interpretation":fals
+c26_missing_field | refuse | 2 | False | OK | stderr_len=76 | {"error": "feature schema mismatch: missing=['tls_enabled']", "ok": false}
+ 
+c26_extra_field | refuse | 2 | False | OK | stderr_len=82 | {"error": "feature schema mismatch: unexpected=['uptime_seconds']", "ok": false}
+ 
+c26_nan | refuse | 2 | False | OK | stderr_len=60 | {"error": "queue_utilization must be finite", "ok": false}
+ 
+c26_inf | refuse | 2 | False | OK | stderr_len=69 | {"error": "seconds_since_last_success must be finite", "ok": false}
+ 
+c26_neg_inf | refuse | 2 | False | OK | stderr_len=63 | {"error": "consecutive_failures must be finite", "ok": false}
+ 
+c26_out_of_range | refuse | 2 | False | OK | stderr_len=69 | {"error": "queue_utilization must be between 0 and 1", "ok": false}
+ 
+c26_string_for_number | refuse | 2 | False | OK | stderr_len=115 | {"error": "text values are not accepted at input.features.queue_utilization; input is numeric only", "ok": false}
+ 
+c26_prohibited_patient | refuse | 2 | False | OK | stderr_len=100 | {"error": "prohibited non-operational field at input.features.patient (exact match)", "ok": false}
+ 
+c26_prohibited_hl7 | refuse | 2 | False | OK | stderr_len=96 | {"error": "prohibited non-operational field at input.features.hl7 (exact match)", "ok": false}
+ 
+c26_prohibited_fhir | refuse | 2 | False | OK | stderr_len=97 | {"error": "prohibited non-operational field at input.features.fhir (exact match)", "ok": false}
+ 
+c26_prohibited_specimen | refuse | 2 | False | OK | stderr_len=101 | {"error": "prohibited non-operational field at input.features.specimen (exact match)", "ok": false}
+ 
+c26_prohibited_order | refuse | 2 | False | OK | stderr_len=98 | {"error": "prohibited non-operational field at input.features.order (exact match)", "ok": false}
+ 
+c26_prohibited_result | refuse | 2 | False | OK | stderr_len=99 | {"error": "prohibited non-operational field at input.features.result (exact match)", "ok": false}
+ 
+c26_prohibited_mrn | refuse | 2 | False | OK | stderr_len=96 | {"error": "prohibited non-operational field at input.features.mrn (exact match)", "ok": false}
+ 
+dup_key_inner | refuse | 2 | False | OK | stderr_len=81 | {"error": "duplicate JSON key 'listener_running' is not accepted", "ok": false}
+ 
+dup_key_inner_conflicting | refuse | 2 | False | OK | stderr_len=82 | {"error": "duplicate JSON key 'queue_utilization' is not accepted", "ok": false}
+ 
+dup_key_wrapper | refuse | 2 | False | OK | stderr_len=73 | {"error": "duplicate JSON key 'features' is not accepted", "ok": false}
+ 
+num_1e308 | refuse | 2 | False | OK | stderr_len=82 | {"error": "seconds_since_last_success must be between 0 and 86400", "ok": false}
+ 
+num_neg_1e308 | refuse | 2 | False | OK | stderr_len=82 | {"error": "seconds_since_last_success must be between 0 and 86400", "ok": false}
+ 
+num_1e400_literal | refuse | 2 | False | OK | stderr_len=69 | {"error": "seconds_since_last_success must be finite", "ok": false}
+ 
+num_neg_zero_continuous | accept | 0 | False | OK | stderr_len=0 | {"abstain_reason":null,"advisory":"NO_ALERT","authority":{"acknowledgement":false,"clinical_decision":false,"device_control":false,"result_interpretation":false
+num_neg_zero_binary | refuse | 2 | False | OK | stderr_len=70 | {"error": "tls_enabled must be boolean or integer 0/1", "ok": false}
+ 
+num_float_binary | refuse | 2 | False | OK | stderr_len=70 | {"error": "tls_enabled must be boolean or integer 0/1", "ok": false}
+ 
+num_subnormal_negative | refuse | 2 | False | OK | stderr_len=69 | {"error": "queue_utilization must be between 0 and 1", "ok": false}
+ 
+num_huge_int_digits | refuse | 2 | False | OK | stderr_len=190 | {"error": "unable to parse JSON: Exceeds the limit (4300 digits) for integer string conversion: value has 5001 digits; use sys.set_int_max_str_digits() to increase the limit", "ok": false}
+ 
+num_int_10e400 | refuse | 2 | False | OK | stderr_len=72 | {"error": "consecutive_failures must be a finite number", "ok": false}
+ 
+num_as_string | refuse | 2 | False | OK | stderr_len=118 | {"error": "text values are not accepted at input.features.consecutive_failures; input is numeric only", "ok": false}
+ 
+num_as_string_nan | refuse | 2 | False | OK | stderr_len=115 | {"error": "text values are not accepted at input.features.queue_utilization; input is numeric only", "ok": false}
+ 
+num_null | refuse | 2 | False | OK | stderr_len=69 | {"error": "queue_utilization must be a finite number", "ok": false}
+ 
+key_fullwidth_patient_extra | refuse | 2 | False | OK | stderr_len=151 | {"error": "prohibited non-operational field at input.features.\uff50\uff41\uff54\uff49\uff45\uff4e\uff54 (exact, unicode-folded match)", "ok": false}
+ 
+key_fullwidth_PATIENT_extra | refuse | 2 | False | OK | stderr_len=151 | {"error": "prohibited non-operational field at input.features.\uff30\uff21\uff34\uff29\uff25\uff2e\uff34 (exact, unicode-folded match)", "ok": false}
+ 
+key_zero_width_space_in_patient | refuse | 2 | False | OK | stderr_len=122 | {"error": "prohibited non-operational field at input.features.pat\u200bient (exact, unicode-folded match)", "ok": false}
+ 
+key_zero_width_joiner_in_patient_id | refuse | 2 | False | OK | stderr_len=113 | {"error": "prohibited non-operational field at input.features.patient\u200d_id (substring match)", "ok": false}
+ 
+key_soft_hyphen_in_mrn | refuse | 2 | False | OK | stderr_len=118 | {"error": "prohibited non-operational field at input.features.m\u00adrn (exact, unicode-folded match)", "ok": false}
+ 
+key_bom_in_specimen | refuse | 2 | False | OK | stderr_len=111 | {"error": "prohibited non-operational field at input.features.\ufeffspecimen (substring match)", "ok": false}
+ 
+key_cyrillic_homoglyph_patient | refuse | 2 | False | OK | stderr_len=85 | {"error": "feature schema mismatch: unexpected=['\u0440\u0430tient']", "ok": false}
+ 
+key_zero_width_in_feature_name | refuse | 2 | False | OK | stderr_len=121 | {"error": "feature schema mismatch: missing=['listener_running'], unexpected=['listener\\u200b_running']", "ok": false}
+ 
+key_trailing_space_feature_name | refuse | 2 | False | OK | stderr_len=105 | {"error": "feature schema mismatch: missing=['tls_enabled'], unexpected=['tls_enabled ']", "ok": false}
+ 
+key_fullwidth_feature_name | refuse | 2 | False | OK | stderr_len=109 | {"error": "feature schema mismatch: missing=['tls_enabled'], unexpected=['\uff54ls_enabled']", "ok": false}
+ 
+key_trailing_space_patient | refuse | 2 | False | OK | stderr_len=101 | {"error": "prohibited non-operational field at input.features.patient  (exact match)", "ok": false}
+ 
+key_nbsp_patient | refuse | 2 | False | OK | stderr_len=112 | {"error": "prohibited non-operational field at input.features.patient\u00a0id (substring match)", "ok": false}
+ 
+key_ansi_escape | refuse | 2 | False | OK | stderr_len=80 | {"error": "feature schema mismatch: unexpected=['\\x1b[31mred']", "ok": false}
+ 
+key_lone_surrogate | refuse | 2 | False | OK | stderr_len=75 | {"error": "feature schema mismatch: unexpected=['\\ud800']", "ok": false}
+ 
+key_long_1k | refuse | 2 | False | OK | stderr_len=147 | {"error": "feature schema mismatch: unexpected=['kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk...(+936 chars)']", "ok": false}
+ 
+deep_nesting_list_20000 | refuse | 2 | False | OK | stderr_len=132 | {"error": "unable to parse JSON: maximum recursion depth exceeded while decoding a JSON array from a unicode string", "ok": false}
+ 
+deep_nesting_dict_200 | refuse | 2 | False | OK | stderr_len=141 | {"error": "input nesting exceeds 32 levels at input.features.x.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a", "ok": false}
+ 
+size_exactly_limit | accept | 0 | False | OK | stderr_len=0 | {"abstain_reason":null,"advisory":"NO_ALERT","authority":{"acknowledgement":false,"clinical_decision":false,"device_control":false,"result_interpretation":false
+size_limit_plus_1 | refuse | 2 | False | OK | stderr_len=55 | {"error": "input exceeds 1000000 bytes", "ok": false}
+ 
+size_huge_5MB | refuse | 2 | False | OK | stderr_len=55 | {"error": "input exceeds 1000000 bytes", "ok": false}
+ 
+bom_utf8 | refuse | 2 | False | OK | stderr_len=121 | {"error": "unable to parse JSON: Unexpected UTF-8 BOM (decode using utf-8-sig): line 1 column 1 (char 0)", "ok": false}
+ 
+utf16 | refuse | 2 | False | OK | stderr_len=125 | {"error": "unable to read input JSON: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte", "ok": false}
+ 
+invalid_utf8 | refuse | 2 | False | OK | stderr_len=127 | {"error": "unable to read input JSON: 'utf-8' codec can't decode byte 0xff in position 227: invalid start byte", "ok": false}
+ 
+empty | refuse | 2 | False | OK | stderr_len=91 | {"error": "unable to parse JSON: Expecting value: line 1 column 1 (char 0)", "ok": false}
+ 
+json_null | refuse | 2 | False | OK | stderr_len=89 | {"error": "input must be a JSON object of the form {\"features\": {...}}", "ok": false}
+ 
+json_list | refuse | 2 | False | OK | stderr_len=89 | {"error": "input must be a JSON object of the form {\"features\": {...}}", "ok": false}
+ 
+json_number | refuse | 2 | False | OK | stderr_len=89 | {"error": "input must be a JSON object of the form {\"features\": {...}}", "ok": false}
+ 
+json_string | refuse | 2 | False | OK | stderr_len=89 | {"error": "input must be a JSON object of the form {\"features\": {...}}", "ok": false}
+ 
+trailing_garbage | refuse | 2 | False | OK | stderr_len=90 | {"error": "unable to parse JSON: Extra data: line 1 column 231 (char 230)", "ok": false}
+ 
+two_documents | refuse | 2 | False | OK | stderr_len=90 | {"error": "unable to parse JSON: Extra data: line 1 column 230 (char 229)", "ok": false}
+ 
+js_comment | refuse | 2 | False | OK | stderr_len=91 | {"error": "unable to parse JSON: Expecting value: line 1 column 1 (char 0)", "ok": false}
+ 
+single_quotes | refuse | 2 | False | OK | stderr_len=125 | {"error": "unable to parse JSON: Expecting property name enclosed in double quotes: line 1 column 2 (char 1)", "ok": false}
+ 
+unwrapped | refuse | 2 | False | OK | stderr_len=74 | {"error": "input must be wrapped as {\"features\": {...}}", "ok": false}
+ 
+nested_prohibited | refuse | 2 | False | OK | stderr_len=101 | {"error": "prohibited non-operational field at input.features.meta.mrn (exact match)", "ok": false}
+ 
+echo_input_extra_100000_char_key | refuse | 2 | False | OK | stderr_len=149 | {"error": "feature schema mismatch: unexpected=['iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii...(+99936 chars)']", "ok": false}
+ 
+echo_input_60000_extra_short_keys | refuse | 2 | False | FINDING | stderr_len=600064 | {"error": "feature schema mismatch: unexpected=['x00000', 'x00001', 'x00002', 'x00003', 'x00004', 'x00005', 'x00006', 'x00007', 'x00008', 'x00009', 'x00010', 'x00011', 'x00012', 'x00013', 'x00014', 'x
+echo_input_long_keys_deep_path | refuse | 2 | False | FINDING | stderr_len=2637 | {"error": "input nesting exceeds 32 levels at input.features.nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn...(+936 chars).nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+echo_input_long_keys_path_to_text | refuse | 2 | False | FINDING | stderr_len=2577 | {"error": "text values are not accepted at input.features.tttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt...(+936 chars).tttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt
+
+## artifact/receipt attacks (consistent receipts; CLI subprocess with the valid input)
+id | expect | exit | traceback | outcome | stderr_len | stderr prefix
+control_consistent | accept | 0 | False | OK | stderr_len=0 | {"abstain_reason":null,"advisory":"NO_ALERT","authority":{"acknowledgement":false,"clinical_decision":false,"device_control":false,"result_interpretation":false
+stop_reason_list | refuse | 2 | False | OK | stderr_len=60 | {"error": "training stop provenance invalid", "ok": false}
+ 
+stop_reason_dict | refuse | 2 | False | OK | stderr_len=60 | {"error": "training stop provenance invalid", "ok": false}
+ 
+calibrator_kind_list | refuse | 2 | False | OK | stderr_len=65 | {"error": "unsupported calibrator kind ['platt']", "ok": false}
+ 
+conformal_method_list | refuse | 2 | False | OK | stderr_len=56 | {"error": "unsupported conformal method", "ok": false}
+ 
+weight_1e308 | refuse | 2 | False | OK | stderr_len=92 | {"error": "weight.tls_enabled is not a bounded finite number in [-100, 100]", "ok": false}
+ 
+intercept_string | refuse | 2 | False | OK | stderr_len=53 | {"error": "intercept must be numeric", "ok": false}
+ 
+threshold_off_grid | refuse | 2 | False | OK | stderr_len=89 | {"error": "decision_threshold must lie on the registered 0.01..0.99 grid", "ok": false}
+ 
+alpha_0_5_not_registered | refuse | 2 | False | OK | stderr_len=71 | {"error": "conformal.alpha must be the registered 0.10", "ok": false}
+ 
+l2_0_5_not_on_grid | refuse | 2 | False | OK | stderr_len=92 | {"error": "training.l2 must be on the registered grid {0, 1e-4, 1e-3, 1e-2}", "ok": false}
+ 
+model_duplicate_key | refuse | 2 | False | OK | stderr_len=74 | {"error": "duplicate JSON key 'intercept' is not accepted", "ok": false}
+ 
+model_nan | refuse | 2 | False | OK | stderr_len=72 | {"error": "non-finite JSON constant NaN is not accepted", "ok": false}
+ 
+model_bom | refuse | 2 | False | OK | stderr_len=121 | {"error": "unable to parse JSON: Unexpected UTF-8 BOM (decode using utf-8-sig): line 1 column 1 (char 0)", "ok": false}
+ 
+receipt_bom | refuse | 2 | False | OK | stderr_len=121 | {"error": "unable to parse JSON: Unexpected UTF-8 BOM (decode using utf-8-sig): line 1 column 1 (char 0)", "ok": false}
+ 
+receipt_prereg_sha_altered | refuse | 2 | False | OK | stderr_len=89 | {"error": "receipt preregistration digest is not the registered protocol", "ok": false}
+ 
+receipt_manifest_sha_altered | origin | 0 | False | OK | stderr_len=0 | {"abstain_reason":null,"advisory":"NO_ALERT","authority":{"acknowledgement":false,"clinical_decision":false,"device_control":false,"result_interpretation":false
+receipt_commit_altered | origin | 0 | False | OK | stderr_len=0 | {"abstain_reason":null,"advisory":"NO_ALERT","authority":{"acknowledgement":false,"clinical_decision":false,"device_control":false,"result_interpretation":false
+receipt_stop_reason_list | refuse | 2 | False | OK | stderr_len=105 | {"error": "receipt.selection.stop_reason must be a non-empty string of at most 128 chars", "ok": false}
+ 
+receipt_kernel_sha_altered | refuse | 2 | False | OK | stderr_len=64 | {"error": "kernel sha256 does not match receipt", "ok": false}
+ 
+receipt_metrics_key_added | refuse | 2 | False | OK | stderr_len=96 | {"error": "artifact receipt fields mismatch: missing=[], unexpected=['metrics']", "ok": false}
+ 
+echo_receipt_extra_100000_char_key | refuse | 2 | False | FINDING | stderr_len=100089 | {"error": "artifact receipt fields mismatch: missing=[], unexpected=['rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
+echo_receipt_20000_extra_short_keys | refuse | 2 | False | FINDING | stderr_len=200085 | {"error": "artifact receipt fields mismatch: missing=[], unexpected=['r00000', 'r00001', 'r00002', 'r00003', 'r00004', 'r00005', 'r00006', 'r00007', 'r00008', 'r00009', 'r00010', 'r00011', 'r00012', '
+echo_model_extra_100000_char_key | refuse | 2 | False | FINDING | stderr_len=100087 | {"error": "model artifact fields mismatch: missing=[], unexpected=['mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+echo_model_20000_extra_short_keys | refuse | 2 | False | FINDING | stderr_len=200083 | {"error": "model artifact fields mismatch: missing=[], unexpected=['m00000', 'm00001', 'm00002', 'm00003', 'm00004', 'm00005', 'm00006', 'm00007', 'm00008', 'm00009', 'm00010', 'm00011', 'm00012', 'm0
+echo_weights_extra_100000_char_key | refuse | 2 | False | FINDING | stderr_len=100080 | {"error": "weights fields mismatch: missing=[], unexpected=['wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww
+echo_calibrator_kind_100000_char_value | refuse | 2 | False | FINDING | stderr_len=100058 | {"error": "unsupported calibrator kind 'kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+echo_calibrator_kind_big_list | refuse | 2 | False | FINDING | stderr_len=104056 | {"error": "unsupported calibrator kind ['kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk', 'kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+echo_calibrator_params_extra_100000_char_key | refuse | 2 | False | FINDING | stderr_len=100090 | {"error": "calibrator.params fields mismatch: missing=[], unexpected=['ppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp
+receipt_duplicate_key | refuse | 2 | False | OK | stderr_len=72 | {"error": "duplicate JSON key 'attests' is not accepted", "ok": false}
+ 
+
+SUMMARY: 11 finding(s): ['echo_input_60000_extra_short_keys', 'echo_input_long_keys_deep_path', 'echo_input_long_keys_path_to_text', 'artifact:echo_receipt_extra_100000_char_key', 'artifact:echo_receipt_20000_extra_short_keys', 'artifact:echo_model_extra_100000_char_key', 'artifact:echo_model_20000_extra_short_keys', 'artifact:echo_weights_extra_100000_char_key', 'artifact:echo_calibrator_kind_100000_char_value', 'artifact:echo_calibrator_kind_big_list', 'artifact:echo_calibrator_params_extra_100000_char_key']
+EXIT=0
