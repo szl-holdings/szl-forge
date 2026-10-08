@@ -10,6 +10,7 @@ import app
 import app_governed as governed
 import verify_governed_live as live_verifier
 from inference import ProductionBoundaryError
+from inference import production as production_module
 
 
 def synthetic_controller_result():
@@ -344,7 +345,25 @@ class GovernedSpaceTests(unittest.TestCase):
     def test_governed_contract_keeps_runtime_unselected_and_tools_disabled(self):
         payload = json.loads(governed.governed_contract().body)
         self.assertEqual(
-            payload["endpoint"]["path"], "/api/v2/governed-infer"
+            payload["schema"], "szl.model-inference-lab.governed-contract/v3"
+        )
+        self.assertEqual(
+            payload["endpoint"]["path"], "/api/v3/governed-infer"
+        )
+        self.assertEqual(payload["endpoint"]["response_schema"], governed.PUBLIC_SCHEMA)
+        self.assertEqual(
+            payload["retired_public_post"],
+            {
+                "path": "/api/v2/governed-infer",
+                "status_code": 410,
+                "continuation_available": False,
+            },
+        )
+        deployment = production_module.load_production_contract()["deployment"]
+        self.assertEqual(deployment["governed_endpoint"], payload["endpoint"]["path"])
+        self.assertEqual(
+            deployment["retired_public_post"],
+            payload["retired_public_post"]["path"],
         )
         self.assertFalse(payload["endpoint"]["tools"])
         self.assertEqual(
@@ -447,6 +466,8 @@ class GovernedSpaceTests(unittest.TestCase):
             )
         self.assertEqual(response.status_code, 200)
         public = json.loads(response.body)
+        self.assertEqual(public["schema"], governed.PUBLIC_SCHEMA)
+        self.assertEqual(response.headers["x-szl-governed-inference"], "v3")
         self.assertNotIn("continuation", public)
         self.assertNotIn("SYNTHETIC_PRIVATE_CONTINUATION", response.body.decode())
         self.assertEqual(public["public_export_receipt"]["state"], "EXPORTED")
@@ -466,6 +487,97 @@ class GovernedSpaceTests(unittest.TestCase):
             infer.call_args.kwargs["generator"],
             governed.SpaceLlamaGenerator,
         )
+
+    def test_v2_public_post_is_static_retirement_without_controller_call(self):
+        routes = {
+            route.path: route.endpoint
+            for route in governed.app.routes
+            if getattr(route, "path", "") in {
+                "/api/v2/governed-infer", "/api/v3/governed-infer"
+            }
+        }
+        self.assertEqual(routes["/api/v2/governed-infer"], governed.governed_infer_v2_retired)
+        self.assertEqual(routes["/api/v3/governed-infer"], governed.governed_infer)
+        with mock.patch.object(governed, "production_infer") as infer:
+            response = routes["/api/v2/governed-infer"]()
+        infer.assert_not_called()
+        self.assertEqual(response.status_code, 410)
+        self.assertEqual(response.headers["cache-control"], "no-store")
+        body = json.loads(response.body)
+        self.assertEqual(
+            body,
+            {
+                "schema": "szl.model-inference-lab.governed-endpoint-retired/v1",
+                "state": "BLOCKED",
+                "reason_code": "PUBLIC_V2_CONTINUATION_RETIRED",
+                "successor": "/api/v3/governed-infer",
+            },
+        )
+        self.assertNotIn("continuation", body)
+        live_verifier.verify_retired_public_post(
+            response.status_code,
+            body,
+            dict(response.headers),
+        )
+
+    def test_v2_retirement_probe_is_invalid_for_the_old_controller(self):
+        probe = live_verifier.retired_post_probe_payload()
+        self.assertEqual(probe, {})
+        with self.assertRaises(ValueError):
+            governed.GovernedInferenceRequest.model_validate(probe)
+        with self.assertRaisesRegex(live_verifier.VerificationError, "not retired"):
+            live_verifier.verify_retired_public_post(422, {"detail": "invalid"}, {})
+
+    def test_v3_public_terminal_states_preserve_status_and_private_boundary(self):
+        safe = production_module._normalize_request(
+            {
+                "prompt": "Synthetic terminal request",
+                "principal_id": governed.PUBLIC_PRINCIPAL,
+                "tenant_id": governed.PUBLIC_TENANT,
+                "policy_revision": governed.PUBLIC_POLICY_REVISION,
+                "grounding_required": True,
+                "k": 2,
+                "formula_applications": [],
+            }
+        )
+        contract = production_module.load_production_contract()
+        for state, status_code in (("ABSTAIN", 422), ("REVIEW", 409), ("BLOCKED", 503)):
+            with self.subTest(state=state):
+                internal = production_module._terminal(
+                    safe,
+                    contract,
+                    state=state,
+                    authority_state="NONE",
+                    reason_codes=["SYNTHETIC_TERMINAL"],
+                    evidence_digest=governed.canonical_sha256([]),
+                    ranking_digest=governed.canonical_sha256({}),
+                )
+                with (
+                    mock.patch.dict(os.environ, {app.SOURCE_REVISION_ENV: "f" * 40}),
+                    mock.patch.object(governed, "_components", return_value={
+                        "retriever": object(), "hydrator": object(), "witness": object(),
+                    }),
+                    mock.patch.object(governed, "production_infer", return_value=internal),
+                ):
+                    app.state["status"] = "READY"
+                    response = governed.governed_infer(
+                        governed.GovernedInferenceRequest(prompt="Synthetic terminal request")
+                    )
+                public = json.loads(response.body)
+                self.assertEqual(response.status_code, status_code)
+                self.assertEqual(public["schema"], governed.PUBLIC_SCHEMA)
+                self.assertEqual(public["state"], state)
+                self.assertNotIn("continuation", public)
+                self.assertIsNone(public["output"])
+                self.assertEqual(
+                    public["receipt"]["payload"]["schema"],
+                    "szl.forge.production-governed-inference/v2",
+                )
+                self.assertEqual(
+                    public["public_export_receipt"]["source_schema"],
+                    "szl.forge.production-governed-inference/v2",
+                )
+                live_verifier.verify_public_export(public)
 
     def test_public_export_holds_unknown_nested_provider_fields_without_echo(self):
         unsafe = synthetic_controller_result()
@@ -554,6 +666,36 @@ class GovernedSpaceTests(unittest.TestCase):
         with self.assertRaises(governed.PublicExportHold):
             governed.project_public_result(bad)
 
+    def test_public_export_binds_receipt_payload_and_observation_to_result(self):
+        base = synthetic_controller_result()
+        receipt_drift = copy.deepcopy(base)
+        receipt_drift["receipt"]["payload"]["request_id"] = "synthetic-other-request"
+        receipt_drift["receipt"]["receipt_sha256"] = governed.canonical_sha256(
+            receipt_drift["receipt"]["payload"]
+        )
+        claim_drift = copy.deepcopy(base)
+        claim_drift["claims"][0]["label"] = "SAMPLE"
+        observation_drift = copy.deepcopy(base)
+        observation_drift["anatomy_observation"]["event"]["request_id"] = (
+            "synthetic-other-request"
+        )
+        for unsafe in (receipt_drift, claim_drift, observation_drift):
+            with self.subTest(unsafe=unsafe["request_id"]):
+                with self.assertRaises(governed.PublicExportHold):
+                    governed.project_public_result(unsafe)
+
+        public = governed.project_public_result(base)
+        public["request_id"] = "synthetic-other-request"
+        body = dict(public)
+        del body["public_export_receipt"]
+        public["public_export_receipt"]["public_sha256"] = (
+            live_verifier.canonical_sha256(body)
+        )
+        with self.assertRaisesRegex(
+            live_verifier.VerificationError, "public export schema drift"
+        ):
+            live_verifier.verify_public_export(public)
+
     def test_public_export_unicode_digest_and_live_verifier(self):
         private = synthetic_controller_result()
         self.assertEqual(private["state"], "PROPOSAL")
@@ -571,10 +713,15 @@ class GovernedSpaceTests(unittest.TestCase):
         ).hexdigest()
         self.assertEqual(export_receipt["public_sha256"], utf8_digest)
         self.assertNotEqual(export_receipt["public_sha256"], escaped_digest)
+        self.assertEqual(body["schema"], governed.PUBLIC_SCHEMA)
+        self.assertEqual(
+            body["receipt"]["payload"]["schema"],
+            "szl.forge.production-governed-inference/v2",
+        )
         self.assertEqual(live_verifier.verify_public_export(public), utf8_digest)
         self.assertEqual(
             live_verifier.verify_inference(
-                public, {"x-szl-governed-inference": "v2"}, "f" * 40
+                public, {"x-szl-governed-inference": "v3"}, "f" * 40
             )["public_export_sha256"],
             utf8_digest,
         )
@@ -612,7 +759,7 @@ class GovernedSpaceTests(unittest.TestCase):
                     live_verifier.verify_public_export(changed)
                 with self.assertRaises(live_verifier.VerificationError):
                     live_verifier.verify_inference(
-                        changed, {"x-szl-governed-inference": "v2"}, "f" * 40
+                        changed, {"x-szl-governed-inference": "v3"}, "f" * 40
                     )
 
     def test_public_export_rejects_opaque_known_field_and_receipt_metadata_drift(self):

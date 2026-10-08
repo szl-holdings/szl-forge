@@ -119,6 +119,15 @@ It requires no provider token or Space secret and is intended for the Hub's free
 
 ## Boundaries
 
+The proposed governed public POST is `/api/v3/governed-infer`, described by
+`/.well-known/szl-governed-inference-contract.json`. It projects an internal v2
+controller result into `szl.forge.public-governed-inference/v3` without the
+private continuation; its export and inference receipts remain unsigned. The
+former `/api/v2/governed-infer` POST returns HTTP 410 with the successor path.
+This source contract does not establish that the v3 route has been published or
+verified on the hosted Space. The read-only v2 health, Formula Atlas, and
+Anatomy routes remain separate.
+
 - One inference at a time; excess concurrent calls receive HTTP 429.
 - POST bodies are capped at 8 KiB across ASGI chunks with one absolute
   10-second read deadline; slow/incomplete bodies receive HTTP 408.

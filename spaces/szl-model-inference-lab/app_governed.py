@@ -25,6 +25,7 @@ from inference import (
 )
 from inference.production import canonical_sha256, text_sha256
 from public_transcript_export import (
+    PUBLIC_SCHEMA,
     PublicExportHold,
     hold_public_result,
     project_public_result,
@@ -52,7 +53,7 @@ PUBLIC_POLICY_REVISION = "sha256:" + canonical_sha256(
 )
 
 app = legacy.app
-app.version = "2.0.0"
+app.version = "3.0.0"
 
 _components_lock = threading.Lock()
 _components_cache: dict[str, Any] | None = None
@@ -402,6 +403,10 @@ def _governed_headers() -> dict[str, str]:
     }
 
 
+def _public_v3_headers() -> dict[str, str]:
+    return {**_governed_headers(), "X-SZL-Governed-Inference": "v3"}
+
+
 def _unavailable_formula_response() -> JSONResponse:
     return JSONResponse(
         {
@@ -565,16 +570,22 @@ def governed_contract() -> JSONResponse:
     contract = load_production_contract()
     return JSONResponse(
         {
-            "schema": "szl.model-inference-lab.governed-contract/v2",
+            "schema": "szl.model-inference-lab.governed-contract/v3",
             "status": "OPERATIONAL_WHEN_GOVERNED_HEALTH_IS_READY",
             "endpoint": {
                 "method": "POST",
-                "path": "/api/v2/governed-infer",
+                "path": "/api/v3/governed-infer",
+                "response_schema": PUBLIC_SCHEMA,
                 "authentication": "PUBLIC_PROJECTION_FIXED_SCOPE",
                 "tools": False,
                 "max_input_chars": legacy.MAX_INPUT_CHARS,
                 "max_completion_tokens": legacy.MAX_NEW_TOKENS,
                 "max_retrieval_handles": MAX_GOVERNED_K,
+            },
+            "retired_public_post": {
+                "path": "/api/v2/governed-infer",
+                "status_code": 410,
+                "continuation_available": False,
             },
             "public_read_only_endpoints": {
                 "formula_atlas": "/api/v2/formula-atlas",
@@ -619,7 +630,7 @@ def governed_contract() -> JSONResponse:
                 "platform_logging_outside_source": "NOT_ASSERTED",
             },
         },
-        headers=_governed_headers(),
+        headers=_public_v3_headers(),
     )
 
 
@@ -636,6 +647,21 @@ def anatomy_last() -> JSONResponse:
 
 
 @app.post("/api/v2/governed-infer")
+def governed_infer_v2_retired() -> JSONResponse:
+    """Never regenerate the old public response containing a continuation."""
+    return JSONResponse(
+        {
+            "schema": "szl.model-inference-lab.governed-endpoint-retired/v1",
+            "state": "BLOCKED",
+            "reason_code": "PUBLIC_V2_CONTINUATION_RETIRED",
+            "successor": "/api/v3/governed-infer",
+        },
+        status_code=410,
+        headers=_governed_headers(),
+    )
+
+
+@app.post("/api/v3/governed-infer")
 def governed_infer(request: GovernedInferenceRequest) -> JSONResponse:
     if legacy.state["status"] != "READY":
         raise HTTPException(status_code=503, detail="model runtime is not ready")
@@ -667,7 +693,7 @@ def governed_infer(request: GovernedInferenceRequest) -> JSONResponse:
         return JSONResponse(
             hold_public_result(),
             status_code=503,
-            headers=_governed_headers(),
+            headers=_public_v3_headers(),
         )
     status_code = {
         "PROPOSAL": 200,
@@ -678,7 +704,7 @@ def governed_infer(request: GovernedInferenceRequest) -> JSONResponse:
     return JSONResponse(
         public_result,
         status_code=status_code,
-        headers=_governed_headers(),
+        headers=_public_v3_headers(),
     )
 
 
@@ -700,4 +726,5 @@ __all__ = [
     "governed_contract",
     "governed_health",
     "governed_infer",
+    "governed_infer_v2_retired",
 ]

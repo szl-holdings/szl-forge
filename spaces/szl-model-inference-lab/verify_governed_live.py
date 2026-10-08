@@ -273,12 +273,27 @@ def verify_health(
 
 
 def verify_contract(contract: dict[str, Any]) -> None:
+    require(
+        contract.get("schema") == "szl.model-inference-lab.governed-contract/v3",
+        "governed contract schema drift",
+    )
     endpoint = contract.get("endpoint") or {}
     require(
-        endpoint.get("path") == "/api/v2/governed-infer",
+        endpoint.get("path") == "/api/v3/governed-infer"
+        and endpoint.get("response_schema")
+        == "szl.forge.public-governed-inference/v3",
         "governed endpoint path drift",
     )
     require(endpoint.get("tools") is False, "public tools must remain disabled")
+    require(
+        contract.get("retired_public_post")
+        == {
+            "path": "/api/v2/governed-infer",
+            "status_code": 410,
+            "continuation_available": False,
+        },
+        "v2 public POST retirement drift",
+    )
     require(
         contract.get("public_read_only_endpoints")
         == {
@@ -423,7 +438,9 @@ def verify_formula_atlas(atlas: dict[str, Any]) -> dict[str, Any]:
 
 
 def verify_source_contract(
-    source: dict[str, Any], expected_source_revision: str
+    source: dict[str, Any],
+    expected_source_revision: str,
+    expected_release_manifest_sha256: str,
 ) -> None:
     require(
         source.get("schema") == "szl.model-inference-lab.source/v1",
@@ -439,10 +456,12 @@ def verify_source_contract(
         service.get("revision") == expected_source_revision,
         "source revision mismatch",
     )
-    require(bool(service.get("release_id")), "source release identity missing")
     require(
-        len(str(service.get("release_manifest_sha256") or "")) == 64,
-        "source release manifest digest missing",
+        bool(service.get("release_id")), "source release identity missing"
+    )
+    require(
+        service.get("release_manifest_sha256") == expected_release_manifest_sha256,
+        "source release manifest digest mismatch",
     )
     components = source.get("components") or {}
     require(
@@ -550,7 +569,7 @@ def verify_inference(
     banned = walk_banned_keys(result)
     require(not banned, f"forbidden persisted fields: {banned}")
     require(
-        headers.get("x-szl-governed-inference") == "v2",
+        headers.get("x-szl-governed-inference") == "v3",
         "governed response header missing",
     )
     return {
@@ -575,18 +594,47 @@ def write_report(path: Path, report: dict[str, Any]) -> None:
     )
 
 
+def verify_retired_public_post(
+    status: int, result: dict[str, Any], headers: dict[str, str]
+) -> None:
+    """The superseded public route must not invoke or serialize the controller."""
+    require(status == 410, "v2 public POST was not retired")
+    require(
+        result
+        == {
+            "schema": "szl.model-inference-lab.governed-endpoint-retired/v1",
+            "state": "BLOCKED",
+            "reason_code": "PUBLIC_V2_CONTINUATION_RETIRED",
+            "successor": "/api/v3/governed-infer",
+        },
+        "v2 retirement body drift",
+    )
+    require(
+        headers.get("x-szl-governed-inference") == "v2"
+        and headers.get("cache-control") == "no-store",
+        "v2 retirement headers drift",
+    )
+
+
+def retired_post_probe_payload() -> dict[str, Any]:
+    """The old v2 request model rejects this before its controller is invoked."""
+    return {}
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--base-url", required=True)
     parser.add_argument("--expected-source-revision", required=True)
+    parser.add_argument("--expected-release-manifest-sha256", required=True)
     parser.add_argument("--report", required=True, type=Path)
     args = parser.parse_args(argv)
     base_url = args.base_url.rstrip("/")
     report: dict[str, Any] = {
-        "schema": "szl.model-inference-lab.live-verification/v2",
+        "schema": "szl.model-inference-lab.live-verification/v3",
         "state": "FAILED",
         "base_url_sha256": text_sha256(base_url),
         "expected_source_revision": args.expected_source_revision,
+        "expected_release_manifest_sha256": args.expected_release_manifest_sha256,
         "prompt_sha256": text_sha256(PROMPT),
         "prompt_or_output_text_persisted": False,
     }
@@ -595,6 +643,14 @@ def main(argv: list[str] | None = None) -> int:
             len(args.expected_source_revision) == 40
             and all(character in "0123456789abcdef" for character in args.expected_source_revision),
             "expected source revision must be a lowercase 40-character Git SHA",
+        )
+        require(
+            len(args.expected_release_manifest_sha256) == 64
+            and all(
+                character in "0123456789abcdef"
+                for character in args.expected_release_manifest_sha256
+            ),
+            "expected release manifest digest must be lowercase SHA-256",
         )
         health, health_headers = wait_for_ready(
             base_url,
@@ -618,7 +674,11 @@ def main(argv: list[str] | None = None) -> int:
             f"{base_url}/api/source", timeout=30.0
         )
         require(status == 200, "source contract endpoint failed")
-        verify_source_contract(source_contract, args.expected_source_revision)
+        verify_source_contract(
+            source_contract,
+            args.expected_source_revision,
+            args.expected_release_manifest_sha256,
+        )
         status, well_known_source, _ = request_json(
             f"{base_url}/.well-known/szl-source.json", timeout=30.0
         )
@@ -628,12 +688,19 @@ def main(argv: list[str] | None = None) -> int:
             "source contract aliases returned different payloads",
         )
 
+        retired_status, retired_body, retired_headers = request_json(
+            f"{base_url}/api/v2/governed-infer",
+            payload=retired_post_probe_payload(),
+            timeout=30.0,
+        )
+        verify_retired_public_post(retired_status, retired_body, retired_headers)
+
         last_status = 0
         inference: dict[str, Any] = {}
         inference_headers: dict[str, str] = {}
         for attempt in range(1, 4):
             last_status, inference, inference_headers = request_json(
-                f"{base_url}/api/v2/governed-infer",
+                f"{base_url}/api/v3/governed-infer",
                 payload={"prompt": PROMPT, "max_new_tokens": 32, "k": 3},
                 timeout=120.0,
             )

@@ -18,6 +18,10 @@ class PublicExportHold(ValueError):
     """The response cannot be projected under the pinned public schema."""
 
 
+SOURCE_SCHEMA = "szl.forge.production-governed-inference/v2"
+PUBLIC_SCHEMA = "szl.forge.public-governed-inference/v3"
+
+
 _TEXT = (str,)
 _OPTIONAL_TEXT = (str, type(None))
 _BOOL = (bool,)
@@ -192,7 +196,7 @@ def validate_public_body(result: Mapping[str, Any]) -> dict[str, Any]:
     """Validate the exact recursive public schema; return an independent copy."""
     public = _project(result, _PUBLIC_RESULT)
     if (
-        public.get("schema") != "szl.forge.production-governed-inference/v2"
+        public.get("schema") != PUBLIC_SCHEMA
         or public.get("state") not in {"PROPOSAL", "ABSTAIN", "REVIEW", "BLOCKED"}
         or public.get("executed") is not False
     ):
@@ -248,7 +252,7 @@ def validate_public_body(result: Mapping[str, Any]) -> dict[str, Any]:
         or receipt["algorithm"] != "sha256"
         or receipt["canonicalization"] != "utf8-json-sort-keys-compact"
         or set(receipt["payload"]) != set(_RECEIPT_PAYLOAD)
-        or receipt["payload"]["schema"] != public["schema"]
+        or receipt["payload"]["schema"] != SOURCE_SCHEMA
         or receipt["payload"]["state"] != state
         or receipt["payload"]["executed"] is not False
         or receipt["receipt_sha256"]
@@ -265,6 +269,21 @@ def validate_public_body(result: Mapping[str, Any]) -> dict[str, Any]:
         or (payload["runtime"] is not None and set(payload["runtime"]) != set(_RUNTIME))
     ):
         raise PublicExportHold("receipt payload shape mismatch")
+    # The v2 receipt remains source-bound, but every field it shares with the
+    # v3 public body must describe the same result. A self-consistent receipt
+    # hash alone does not establish that binding.
+    if any(
+        payload[key] != public[key]
+        for key in _RECEIPT_PAYLOAD
+        if key != "schema"
+    ):
+        raise PublicExportHold("receipt payload result mismatch")
+    if (
+        public["claims_sha256"] != hashlib.sha256(_canonical(public["claims"])).hexdigest()
+        or public["citations_sha256"]
+        != hashlib.sha256(_canonical(public["citations"])).hexdigest()
+    ):
+        raise PublicExportHold("claim or citation digest mismatch")
     observation = public["anatomy_observation"]
     if set(observation) != {"delivery", "event"}:
         raise PublicExportHold("observation shape mismatch")
@@ -281,6 +300,27 @@ def validate_public_body(result: Mapping[str, Any]) -> dict[str, Any]:
         or anatomy["observer_authority"] != "NONE"
     ):
         raise PublicExportHold("observation mismatch")
+    for key in (
+        "request_id", "state", "authority_state", "prompt_sha256",
+        "principal_id_sha256", "tenant_id_sha256", "policy_revision",
+        "evidence_set_sha256", "output_sha256", "claims_sha256",
+        "tool_intent_sha256",
+    ):
+        if anatomy[key] != public[key]:
+            raise PublicExportHold("observation result mismatch")
+    if (
+        anatomy["formula_ids"] != public["formula_binding"]["requested_ids"]
+        or anatomy["model_revision"]
+        != (public["model"] or {}).get("revision")
+        or anatomy["runtime_engine"]
+        != (public["runtime"] or {}).get("engine")
+        or anatomy["nemo_decisions"]
+        != [
+            {"stage": item["stage"], "decision": item["decision"]}
+            for item in public["nemo"]
+        ]
+    ):
+        raise PublicExportHold("observation result mismatch")
     return public
 
 
@@ -288,11 +328,16 @@ def project_public_result(result: Mapping[str, Any]) -> dict[str, Any]:
     """Return only public, schema-known fields; leave private continuation intact."""
     if not isinstance(result, Mapping):
         raise PublicExportHold("schema mismatch")
+    if result.get("schema") != SOURCE_SCHEMA:
+        raise PublicExportHold("unsupported source schema")
     if set(result) - set(_PUBLIC_RESULT) - {"continuation"}:
         raise PublicExportHold("unknown public field")
-    public = validate_public_body(
-        {key: value for key, value in result.items() if key != "continuation"}
+    public = _project(
+        {key: value for key, value in result.items() if key != "continuation"},
+        _PUBLIC_RESULT,
     )
+    public["schema"] = PUBLIC_SCHEMA
+    public = validate_public_body(public)
     if public["state"] == "PROPOSAL":
         continuation = result.get("continuation")
         if (
@@ -304,7 +349,7 @@ def project_public_result(result: Mapping[str, Any]) -> dict[str, Any]:
         "schema": "szl.forge.public-transcript-export-receipt/v1",
         "state": "EXPORTED",
         "policy": "strict-v1-private-continuation-omitted",
-        "source_schema": public["schema"],
+        "source_schema": SOURCE_SCHEMA,
         "public_sha256": hashlib.sha256(_canonical(public)).hexdigest(),
         "signature_status": "UNSIGNED_LOCAL",
     }

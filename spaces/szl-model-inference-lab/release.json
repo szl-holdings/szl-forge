@@ -5,22 +5,22 @@
     ".dockerignore": "dba1fb4c6538a44cd8d7e77f133af90a8e7927d3dee23f8694fe6d867238333c",
     "Dockerfile": "9750d8e6f8ba36f96cb77afebb5ec121760aad9ade07d921e36e98b1efe6b45a",
     "LICENSE": "0a41cda63c0751e5cdb240864525fc8bf29b2d3f2cb5c6406b9bae97f1e1407b",
-    "README.md": "403a01ac5ac0dcef45b56857e80e07d12a0dd6fbb6736a560804430dd1080314",
+    "README.md": "2e675f5f2f6d5eb8a59b684e6f3149ed903cecd409b2edf1860451ea0428d5b5",
     "app.py": "99e856be51756ee88cb3709a1b8c86ea715846e8f9dd34062d2b50062a2175e8",
-    "app_governed.py": "5bbf156badf1e3796e45142ef8abc1baccb12158508b29c5285dcae34f87e203",
+    "app_governed.py": "f148a48f567d9bdf96b12358ebac6ac1a130be1692ec5f047def82b602a1e47c",
     "download_artifacts.py": "aa9f98b3d19753953864beae167b5e74872270c880e78430bb345a5f06b4ef36",
     "formula_atlas/formula-atlas.v1.json": "765b9e5c9dd8d4fc5c7518a5b2f70cd6008918591cfa5edfc9868453cb30b7a2",
     "formula_atlas/source-formula-ledger-corpus.json": "c0b6dfee3233097307c518a57c076e5ba3ea9013f34ab454bef92aeddf0f3634",
     "formula_atlas_contract.py": "a3976d4b341672cc3f9a8c577fbb20d4c8b55797c99a8fa8ec896def56a3aeba",
-    "public_transcript_export.py": "67123479105db416b172ff9ac50d09179e95b4a9cb598ea465d96c6326d9e09e",
+    "public_transcript_export.py": "1669cfe1b6998c63cd1b1e47612741c0926b06387df6f42e2963a82db7052da3",
     "requirements.txt": "0fbdb25326826741cdb8864cf5285054ef3897328d44e2305c4e94f71547acb1",
     "szl/SOURCE.json": "5cfe994c4ea5060aec217f250bf049b57f2063bbd2cf74ef67d16b086e1965b3",
     "szl/logos/szl_favicon.svg": "4b154f0de21f71b111bde98bc564ddeef082d888d44f0b50b5a5247e3badf190",
     "szl/szl-design-system.css": "9e5e6e3ae2a5c6f5a2a3c6bf4c607406dc39db3fbe9115e91a1865054678493e",
     "tests/test_app.py": "55e8acf97ea8f65cfcf6234d685b12fa41dc7d41ff80afa595a2755a43c9ce2e",
-    "tests/test_governed_app.py": "6fd43b7b7de56a2ebca65e04bfab19b018bd4a9fa0e3a1fc03b541699cc758e7",
-    "tests/test_formula_atlas_contract.py": "b279915e12b27b2a087f0c2681bd9c20d21501e6b7d6249019779727120c0bc0",
+    "tests/test_governed_app.py": "d6aedbf0b79af91e300e253a8f36ac5a05b29f434b7ad1823f91f36fb9d71cd8",
+    "tests/test_formula_atlas_contract.py": "fdb4a12ae157bab2dcd779af7a3e0f3fb76abc24f9d10e9a6c1d30d86c770576",
     "verify_execution_record.py": "7f6a1052cda52b862fab2cb897d84ed271d938bb19bf505cf45a9dfde20c22c2",
-    "verify_governed_live.py": "ac58ded943886f17ab90aa535e97b5053dfb20ac798bfff51250ac21d17f7e6d"
+    "verify_governed_live.py": "5b8fdb5351fafdc5a323da26224218f45c84527cd9107e90864a3ace540aec6b"
   }
 }
