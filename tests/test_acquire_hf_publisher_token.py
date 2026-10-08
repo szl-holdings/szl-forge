@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import json
+import sys
 import tempfile
+import types
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from tools import acquire_hf_publisher_token as auth
 
@@ -53,7 +56,7 @@ class PublisherCredentialSelectionTests(unittest.TestCase):
             validated.append((source, token))
             if source == "HF_ORG_TOKEN":
                 raise RuntimeError("expired credential")
-            return self._result(source, "CREATE_OR_RECOVER_REQUIRED")
+            return self._result(source, "TARGET_UNRESOLVED")
 
         token, selected, attempts = auth.select_credential(
             resource=None,
@@ -126,6 +129,35 @@ class PublisherCredentialSelectionTests(unittest.TestCase):
         self.assertFalse(payload["token_persisted"])
         self.assertFalse(payload["token_logged"])
         self.assertEqual("HF_WRITE_TOKEN", payload["selected"]["source"])
+
+    def test_not_found_auth_check_does_not_prove_create_authority(self) -> None:
+        class Missing(Exception):
+            pass
+
+        class Api:
+            def whoami(self):
+                return {"name": "synthetic-owner"}
+
+            def auth_check(self, **kwargs):
+                raise Missing("private or missing")
+
+        hub = types.ModuleType("huggingface_hub")
+        hub.HfApi = lambda token: Api()
+        utils = types.ModuleType("huggingface_hub.utils")
+        utils.RepositoryNotFoundError = Missing
+        with patch.dict(sys.modules, {"huggingface_hub": hub, "huggingface_hub.utils": utils}):
+            result = auth.validate_token(
+                WRITE_TOKEN, source="HF_WRITE_TOKEN",
+                target_repo="SZLHOLDINGS/oac-ops-health-v2", target_type="model",
+                allow_create=True,
+            )
+            self.assertEqual("TARGET_UNRESOLVED", result.target_access)
+            with self.assertRaises(Missing):
+                auth.validate_token(
+                    WRITE_TOKEN, source="HF_WRITE_TOKEN",
+                    target_repo="SZLHOLDINGS/oac-ops-health-v2", target_type="model",
+                    allow_create=False,
+                )
 
     def test_github_environment_contains_only_selected_credential(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
