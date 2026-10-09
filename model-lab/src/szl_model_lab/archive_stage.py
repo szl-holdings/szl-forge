@@ -13,6 +13,7 @@ import re
 import shutil
 import stat
 import struct
+import tempfile
 
 from .safeio import canonical_bytes, read_regular, strict_json, write_new
 from .catalog import track_for
@@ -299,8 +300,13 @@ def verify_stage(manifest_path: Path, expected_manifest_sha256: str,
     if not _hex(expected_manifest_sha256):
         raise ValueError("stage_manifest_digest_required")
     manifest_path = manifest_path.absolute()
-    if manifest_path.name != "stage-manifest.json" or data_path.absolute() != manifest_path.parent / "data.jsonl":
+    data_path = data_path.absolute()
+    if manifest_path.name != "stage-manifest.json" or data_path != manifest_path.parent / "data.jsonl":
         raise ValueError("stage_paths_mismatch")
+    if _file_attributes(data_path) & _UNMATERIALIZED:
+        raise ValueError("stage_data_not_fully_materialized")
+    _safe_existing_path(manifest_path)
+    _safe_existing_path(data_path)
     if {p.name for p in manifest_path.parent.iterdir()} != {"data.jsonl", "stage-manifest.json"}:
         raise ValueError("stage_contains_unexpected_files")
     raw = read_regular(manifest_path, 65536)
@@ -320,8 +326,6 @@ def verify_stage(manifest_path: Path, expected_manifest_sha256: str,
             or any(not _hex(manifest[key]) for key in ("data_sha256", "request_sha256", *_REVIEW_KEYS))
             or any(manifest[key] != value for key, value in _GATE_STATUS.items())):
         raise ValueError("stage_manifest_invalid")
-    if _file_attributes(data_path) & _UNMATERIALIZED:
-        raise ValueError("stage_data_not_fully_materialized")
     data = read_regular(data_path, 10 * 1024 * 1024)
     if len(data) != manifest["data_bytes"] or _sha(data) != manifest["data_sha256"]:
         raise ValueError("stage_data_mismatch")
@@ -381,8 +385,11 @@ def archive_candidate(candidate: Path, archive_root: Path, local_root: Path) -> 
         raise ValueError("archive_root_unavailable_or_source_inside_archive")
     if {p.name for p in candidate.iterdir()} != set(_CANDIDATE_LIMITS):
         raise ValueError("candidate_file_allowlist_mismatch")
-    if any(_file_attributes(candidate / name) & _UNMATERIALIZED for name in _CANDIDATE_LIMITS):
-        raise ValueError("candidate_not_fully_materialized")
+    for name in _CANDIDATE_LIMITS:
+        path = candidate / name
+        if _file_attributes(path) & _UNMATERIALIZED:
+            raise ValueError("candidate_not_fully_materialized")
+        _safe_existing_path(path)
     bodies = {name: read_regular(candidate / name, limit)
               for name, limit in _CANDIDATE_LIMITS.items()}
     _verify_small_safetensors(bodies["model.safetensors"])
@@ -444,10 +451,13 @@ def archive_candidate(candidate: Path, archive_root: Path, local_root: Path) -> 
     parent.mkdir(exist_ok=True)
     _safe_existing_path(parent, allow_cloud=True)
     destination = parent / ("candidate-" + _sha(bodies["manifest.json"])[:16])
-    destination.mkdir(exist_ok=False)
+    if destination.exists() or destination.is_symlink():
+        raise FileExistsError("archive_candidate_destination_exists")
+    pending = Path(tempfile.mkdtemp(prefix=".pending-" + destination.name + "-", dir=parent))
+    _safe_existing_path(pending, allow_cloud=True)
     for name, raw in bodies.items():
-        write_new(destination / name, raw)
-        if _sha(_read_archive_regular(destination / name, _CANDIDATE_LIMITS[name])) != _sha(raw):
+        write_new(pending / name, raw)
+        if _sha(_read_archive_regular(pending / name, _CANDIDATE_LIMITS[name])) != _sha(raw):
             raise ValueError("local_archive_copy_mismatch")
     receipt = {"schema": COPY_SCHEMA, "state": "LOCAL_COPY_VERIFIED_REMOTE_UNVERIFIED",
                "local_copy_verified": True, "remote_restore_verified": False,
@@ -458,5 +468,11 @@ def archive_candidate(candidate: Path, archive_root: Path, local_root: Path) -> 
                "files": {name: {"bytes": len(raw), "sha256": _sha(raw)}
                          for name, raw in sorted(bodies.items())},
                "publication_eligible": False}
-    write_new(destination / "archive-copy-receipt.json", canonical_bytes(receipt))
+    receipt_raw = canonical_bytes(receipt)
+    write_new(pending / "archive-copy-receipt.json", receipt_raw)
+    if _sha(_read_archive_regular(pending / "archive-copy-receipt.json", 65536)) != _sha(receipt_raw):
+        raise ValueError("local_archive_receipt_mismatch")
+    if destination.exists() or destination.is_symlink():
+        raise FileExistsError("archive_candidate_destination_exists")
+    pending.rename(destination)
     return receipt

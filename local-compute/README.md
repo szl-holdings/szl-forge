@@ -133,6 +133,76 @@ uncertain lock and original execution error, and still attempts bounded failure
 evidence. File sync is not a portable directory/crash-durability guarantee. A
 saved report is still local evidence, not publication or promotion authority.
 
+### Private archive copy of a completed ReceiptAgent adapter
+
+`archive_receiptagent.py` is a separate, standard-library-only copy step for a
+**completed** native continuation. It accepts one immediate child of
+`local-compute/results/`, verifies `training-report.json` and the exact
+`candidate_files` inventory under its `adapter/` directory, then copies the
+report and adapter to a new directory beneath a private local archive root.
+It does not rerun the trainer, import a model, read the curriculum, copy Trackio
+data, or change a source run. The source run must remain on plain local storage.
+The archive root may be in a sync folder: hydrated Microsoft Cloud Files
+ancestors are admitted using their native tag and placeholder state; symlinks,
+junctions, unknown reparses, offline/recall entries, and unavailable metadata
+are refused. A sync-folder copy is still only a local copy.
+
+The operator keeps the request JSON outside the checkout and archive. Its
+review digests and statuses are **operator assertions**, not independently
+verified signatures or proof of rights. The report hash must be computed from
+the completed `training-report.json` bytes, and the source and runner hashes
+must agree with that report. A request has these exact keys:
+
+```json
+{
+  "schema": "szl.native-archive-request/v1",
+  "report_sha256": "<64 lowercase hex characters>",
+  "source_revision": "<40 lowercase hex characters>",
+  "runner_sha256": "<64 lowercase hex characters>",
+  "source_provenance_sha256": "<64 lowercase hex characters>",
+  "rights_review_sha256": "<64 lowercase hex characters>",
+  "leakage_review_sha256": "<64 lowercase hex characters>",
+  "owner_release_sha256": "<64 lowercase hex characters>",
+  "rights_status": "APPROVED_FOR_PRIVATE_ARCHIVE",
+  "leakage_status": "PASS",
+  "owner_release_status": "RELEASED_FOR_PRIVATE_ARCHIVE"
+}
+```
+
+After the reviews and a completed run, a future authorized local operator can
+use portable paths without recording an account or private URL in Git:
+
+```powershell
+$env:SZL_ARCHIVE_ROOT = '<private local archive root>'
+python -I -B local-compute/archive_receiptagent.py `
+  --run 'local-compute/results/<completed-run>' `
+  --request '<private local review request.json>'
+```
+
+The sidecar caps the report at 1 MiB, the adapter at 64 files and 512 MiB
+including the report, each file at 384 MiB, and streams one MiB at a time.
+The earlier measured adapter weights were 43,346,432 bytes. It checks free
+space on both the plain-local temporary staging volume and archive volume.
+Each source file is first copied and hash-verified in that temporary stage so
+changed source bytes cannot reach the sync directory before validation. It
+refuses undeclared files and known executable-serialization extensions,
+scans for common private path/email/token patterns, and rehashes each local
+destination. Unknown top-level report fields fail closed. The pattern scan is
+a guard, not a comprehensive secret review;
+the byte copy does not parse safetensors or establish model validity.
+The archive is built in a unique `.pending-*` sibling. A failed copy leaves
+that pending directory for diagnosis, with no automatic deletion or overwrite;
+a retry uses a new sibling. Only after all copied bytes and
+`archive-copy-receipt.json` pass local readback is the directory renamed to
+`candidate-<report SHA-256>`. The receipt records
+`LOCAL_COPY_VERIFIED_REMOTE_UNVERIFIED`, `remote_restore_verified: false`,
+`checkpoint_completeness: NOT_RESTARTABLE`, and no promotion claim. Adapter
+bytes plus the report do not include optimizer state or a full base model.
+Keep the original run until the storage owner independently restores and
+rehashes remote bytes. Hugging Face publication and the `a-11-oy.com` and
+`a11oy.net` public surfaces have separate release and evidence gates; this
+local receipt does not change their status.
+
 ## Docker, Tailscale and llama.cpp
 
 Offline contracts can run in an existing trusted Python container with no

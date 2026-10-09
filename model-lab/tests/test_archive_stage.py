@@ -336,7 +336,7 @@ class ArchiveStageTests(unittest.TestCase):
                     with self.assertRaises(ValueError):
                         module._read_archive_regular(source, 65536)
 
-    def test_candidate_archive_is_local_copy_only(self):
+    def _small_candidate(self):
         result = stage_archive(self.archive, self.request, self.stage, self.local)
         binding = verify_stage(self.stage / "stage-manifest.json", result["manifest_sha256"],
                                self.stage / "data.jsonl", "router")
@@ -364,6 +364,10 @@ class ArchiveStageTests(unittest.TestCase):
         (candidate / "manifest.json").write_text(json.dumps({"schema": "szl.model-lab.candidate/v1",
             "files": {name: digest(raw) for name, raw in bodies.items()}, "signed": False,
             "publication_eligible": False}), encoding="utf-8")
+        return candidate
+
+    def test_candidate_archive_is_local_copy_only(self):
+        candidate = self._small_candidate()
         result = archive_candidate(candidate, self.archive, self.local)
         self.assertEqual(result["state"], "LOCAL_COPY_VERIFIED_REMOTE_UNVERIFIED")
         self.assertFalse(result["remote_restore_verified"])
@@ -384,6 +388,64 @@ class ArchiveStageTests(unittest.TestCase):
         (candidate / "manifest.json").write_text(json.dumps(manifest))
         with self.assertRaisesRegex(ValueError, "candidate_safetensors_invalid"):
             archive_candidate(candidate, self.archive, self.local)
+
+    def test_stage_and_candidate_reparse_checks_precede_payload_reads(self):
+        from unittest.mock import patch
+        import szl_model_lab.archive_stage as module
+
+        candidate = self._small_candidate()
+        real_attributes = module._file_attributes
+        stage_manifest = self.stage / "stage-manifest.json"
+        stage_data = self.stage / "data.jsonl"
+        stage_digest = digest(stage_manifest.read_bytes())
+        for suspect in (stage_manifest, stage_data):
+            with self.subTest(path=suspect.name):
+                with (patch.object(module, "_file_attributes", side_effect=lambda path:
+                                   0x400 if path == suspect else real_attributes(path)),
+                      patch.object(module, "_reparse_tag", return_value=0xa0000003),
+                      patch.object(module, "read_regular", side_effect=AssertionError("payload read")),
+                      patch.object(Path, "iterdir", side_effect=AssertionError("directory enumerated"))):
+                    with self.assertRaisesRegex(ValueError, "symlink_or_reparse"):
+                        verify_stage(stage_manifest, stage_digest, stage_data, "router")
+
+        suspect = candidate / "model.safetensors"
+        with (patch.object(module, "_file_attributes", side_effect=lambda path:
+                           0x400 if path == suspect else real_attributes(path)),
+              patch.object(module, "_reparse_tag", return_value=0xa0000003),
+              patch.object(module, "read_regular", side_effect=AssertionError("payload read"))):
+            with self.assertRaisesRegex(ValueError, "symlink_or_reparse"):
+                archive_candidate(candidate, self.archive, self.local)
+
+    def test_failed_candidate_copy_stays_pending_and_can_retry(self):
+        from unittest.mock import patch
+        import szl_model_lab.archive_stage as module
+
+        candidate = self._small_candidate()
+        real_write = module.write_new
+        writes = 0
+
+        def fail_second_write(path, raw):
+            nonlocal writes
+            writes += 1
+            if writes == 2:
+                raise OSError("synthetic copy interruption")
+            return real_write(path, raw)
+
+        with patch.object(module, "write_new", side_effect=fail_second_write):
+            with self.assertRaisesRegex(OSError, "synthetic copy interruption"):
+                archive_candidate(candidate, self.archive, self.local)
+        parent = self.archive / "model-lab-candidates"
+        self.assertFalse(any(p.name.startswith("candidate-") for p in parent.iterdir()))
+        self.assertEqual(len([p for p in parent.iterdir() if p.name.startswith(".pending-")]), 1)
+
+        receipt = archive_candidate(candidate, self.archive, self.local)
+        finals = [p for p in parent.iterdir() if p.name.startswith("candidate-")]
+        self.assertEqual(len(finals), 1)
+        self.assertEqual({p.name for p in finals[0].iterdir()},
+                         {"config.json", "model.safetensors", "metrics.json", "README.md",
+                          "manifest.json", "archive-copy-receipt.json"})
+        self.assertEqual(json.loads((finals[0] / "archive-copy-receipt.json").read_text()), receipt)
+        self.assertFalse(receipt["remote_restore_verified"])
 
     def test_candidate_archive_rejects_unlisted_secret_file(self):
         candidate = self.local / "candidate"
@@ -419,6 +481,83 @@ class ArchiveStageTests(unittest.TestCase):
                             for name, value in original_model.state_dict().items()))
         self.assertIs(json.loads((archived / "archive-copy-receipt.json").read_text())[
             "remote_restore_verified"], False)
+
+    @unittest.skipUnless(importlib.util.find_spec("torch") and importlib.util.find_spec("safetensors")
+                         and importlib.util.find_spec("pydantic"),
+                         "Model Lab writer and dataset dependencies are not installed")
+    def test_synthetic_trainer_handoff_without_fitting(self):
+        """Exercise the real dataset, writer, loader, and archive boundaries."""
+        from unittest.mock import patch
+        import szl_model_lab.archive_stage as archive_module
+        import szl_model_lab.training as training
+        from szl_model_lab.artifacts import load_candidate
+        from szl_model_lab.models import AdvisoryMLP
+
+        rows = []
+        for split in ("train", "validation", "test"):
+            for label in (False, True):
+                ident = f"synthetic-{split}-{int(label)}"
+                rows.append({"example_id": ident, "group_id": ident,
+                             "case_sha256": digest(ident.encode()), "split": split,
+                             "features": {name: float(0.8 if label else 0.2)
+                                          for name in TRACKS["router"].features},
+                             "label": label,
+                             "provenance": {"source_id": ident, "rights_basis": "test-fixture",
+                                            "synthetic": True,
+                                            "feature_time": "2026-09-01T00:00:00Z",
+                                            "outcome_time": "2026-09-01T00:01:00Z",
+                                            "normalization_id": "synthetic-fixture"}})
+        self.payload = b"".join(json.dumps(row, separators=(",", ":")).encode() + b"\n"
+                                for row in rows)
+        (self.archive / "curated" / "tiny.jsonl").write_bytes(self.payload)
+        self.spec["bytes"] = len(self.payload)
+        self.spec["sha256"] = digest(self.payload)
+        self.write_request()
+        staged = stage_archive(self.archive, self.request, self.stage, self.local)
+        source = {"verification": "GIT_CLEAN", "revision": "a" * 40}
+        observed = []
+
+        def no_fit(dataset, **budget):
+            observed.append((dataset.sha256, dataset.counts, budget))
+            self.assertTrue(dataset.summary()["all_synthetic"])
+            return AdvisoryMLP("router"), {"fixture_observations": 2}
+
+        candidate = self.local / "trainer-fixture"
+        real_verify_stage = archive_module.verify_stage
+        with (patch.dict(os.environ, {"SZL_ARCHIVE_ROOT": str(self.archive),
+                                   "SZL_STAGE_ROOT": str(self.local)}),
+              patch.object(training, "verify_source", return_value=source) as source_check,
+              patch.object(training, "fit", side_effect=no_fit) as fit_check,
+              patch.object(archive_module, "verify_stage", wraps=real_verify_stage) as stage_check):
+            training.train_candidate(self.stage / "data.jsonl", "router", candidate,
+                                     "a" * 40, 1, 7, 2,
+                                     archive_stage_manifest=self.stage / "stage-manifest.json",
+                                     archive_stage_sha256=staged["manifest_sha256"])
+        self.assertEqual(source_check.call_count, 2)
+        self.assertEqual(stage_check.call_count, 2)
+        fit_check.assert_called_once()
+        self.assertEqual(observed, [(digest(self.payload),
+                                     {"train": 2, "validation": 2, "test": 2},
+                                     {"epochs": 1, "seed": 7, "batch_size": 2})])
+
+        original, config, manifest_digest = load_candidate(candidate)
+        self.assertEqual(config["dataset"]["archive_stage"]["stage_manifest_sha256"],
+                         staged["manifest_sha256"])
+        self.assertEqual(config["dataset"]["dataset_sha256"], digest(self.payload))
+        receipt = archive_candidate(candidate, self.archive, self.local)
+        archived = next(p for p in (self.archive / "model-lab-candidates").iterdir()
+                        if p.name.startswith("candidate-"))
+        restored, restored_config, restored_digest = load_candidate(archived)
+        self.assertEqual(restored_config, config)
+        self.assertEqual(restored_digest, manifest_digest)
+        self.assertTrue(all(value.equal(restored.state_dict()[name])
+                            for name, value in original.state_dict().items()))
+        self.assertEqual(receipt["candidate_manifest_sha256"], manifest_digest)
+        for name, metadata in receipt["files"].items():
+            self.assertEqual(metadata["sha256"], digest((candidate / name).read_bytes()))
+            self.assertEqual(metadata["sha256"], digest((archived / name).read_bytes()))
+        self.assertEqual(receipt["state"], "LOCAL_COPY_VERIFIED_REMOTE_UNVERIFIED")
+        self.assertFalse(receipt["remote_restore_verified"])
 
 
 if __name__ == "__main__":
