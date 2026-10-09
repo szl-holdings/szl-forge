@@ -45,6 +45,8 @@ REQUIRED_HOLD_MARKERS = (
     b"No autonomy, deployment, promotion, or flagship selection",
     card.NEW_EVALS.encode("utf-8"),
     card.NEW_SOURCE_NOTE.encode("utf-8"),
+    card.NEW_LOAD_SECTION.encode("utf-8"),
+    card.NEW_LOADER_PHRASE.encode("utf-8"),
 )
 
 
@@ -65,6 +67,7 @@ class ReceiptFile:
             "expected_hub_parent": card.HUB_PARENT,
             "expected_old_readme_sha256": card.HUB_README_SHA256,
             "candidate_readme_sha256": card.CANDIDATE_README_SHA256,
+            "candidate_kind": card.CANDIDATE_KIND,
             "changed_paths": ["README.md"],
             "release_status": "UNQUALIFIED",
             "commit_attempted": False,
@@ -151,12 +154,30 @@ def assert_candidate_hold(candidate: bytes, review: dict[str, Any]) -> None:
         or review.get("changed_paths") != ["README.md"]
         or review.get("release_status") != "UNQUALIFIED"
         or review.get("disposition") != "REVIEW_ONLY_NO_HUB_WRITE"
+        or review.get("candidate_kind") != card.CANDIDATE_KIND
+        or review.get("candidate_readme_sha256") != card.digest(candidate)
     ):
         raise PublicationError("reviewed README-only candidate identity changed")
     if any(marker not in candidate for marker in REQUIRED_HOLD_MARKERS):
         raise PublicationError("non-promotion boundary is absent from candidate")
     if card.OLD_SOURCE_NOTE.encode("utf-8") in candidate or card.OLD_EVALS.encode("utf-8") in candidate:
         raise PublicationError("stale card summary remains in candidate")
+    if b"AutoModelForCausalLM" in candidate or card.OLD_LOADER_PHRASE.encode("utf-8") in candidate:
+        raise PublicationError("unqualified executable loader remains in candidate")
+
+
+def publisher_identity_sha256(identity: Any, token: str) -> str:
+    """Reject malformed identities and credential echoes before a commit."""
+    name = identity.get("name") if isinstance(identity, dict) else None
+    if (
+        not isinstance(name, str)
+        or not token
+        or token in name
+        or re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,95}", name) is None
+    ):
+        # Neither the response nor a provider-controlled name reaches receipts.
+        raise PublicationError("publisher identity unavailable or unqualified")
+    return card.digest(name.encode("ascii"))
 
 
 def _provider_module() -> Any:
@@ -190,9 +211,7 @@ def publish(*, source_revision: str, token: str, receipt: ReceiptFile) -> dict[s
             raise PublicationError("publisher requires reviewed huggingface_hub 1.23.0")
         api = provider.HfApi(token=token)
         api.auth_check(repo_id=TARGET_REPOSITORY, repo_type="model", write=True)
-        identity = str((api.whoami() or {}).get("name") or "").strip()
-        if not identity:
-            raise PublicationError("publisher identity unavailable")
+        identity_hash = publisher_identity_sha256(api.whoami(), token)
         if _repo_head(api) != card.HUB_PARENT:
             raise PublicationError("Hub parent drifted after candidate preparation")
         operation = provider.CommitOperationAdd(path_in_repo="README.md", path_or_fileobj=candidate)
@@ -213,15 +232,16 @@ def publish(*, source_revision: str, token: str, receipt: ReceiptFile) -> dict[s
             create_pr=False,
             parent_commit=card.HUB_PARENT,
             operations=[operation],
-            commit_message=f"docs: reconcile ReceiptAgent v3 public card from szl-forge@{source_revision}",
-            commit_description="README-only historical and additive DEV evidence correction; no model promotion",
+            commit_message=f"docs: withdraw ReceiptAgent v3 loader example from szl-forge@{source_revision}",
+            commit_description="README-only loader withdrawal; DEV evidence and model promotion holds unchanged",
         )
         if getattr(operation, "_is_committed", None) is not True:
             raise PublicationError("expected-parent server commit was not confirmed")
         revision = str(getattr(commit, "oid", "") or "").strip().lower()
         if FULL_SHA.fullmatch(revision) is None or revision == card.HUB_PARENT:
             raise PublicationError("Hub commit did not return a new exact revision")
-        receipt.transition("COMMITTED_READBACK_PENDING", hub_revision=revision, publisher=identity)
+        receipt.transition("COMMITTED_READBACK_PENDING", hub_revision=revision,
+                           publisher_identity_sha256=identity_hash)
         observed = card._get(f"https://huggingface.co/{TARGET_REPOSITORY}/raw/{revision}/README.md")
         if observed != candidate:
             raise PublicationError("immutable Hub README byte readback mismatch")

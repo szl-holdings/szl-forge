@@ -28,7 +28,7 @@ def validate_dispatch(environment: Mapping[str, str]) -> dict:
         "GITHUB_REF": "refs/heads/main",
         "GITHUB_RUN_ATTEMPT": "1",
         "CARD_EXPECTED_HUB_PARENT": writer.card.HUB_PARENT,
-        "CARD_CONFIRMATION": "README_ONLY_UNQUALIFIED",
+        "CARD_CONFIRMATION": "README_ONLY_LOADER_WITHDRAWAL",
     }
     for name, expected in required.items():
         if environment.get(name) != expected:
@@ -48,6 +48,7 @@ def validate_dispatch(environment: Mapping[str, str]) -> dict:
         "target_repository": writer.TARGET_REPOSITORY,
         "expected_hub_parent": writer.card.HUB_PARENT,
         "changed_paths": ["README.md"],
+        "candidate_kind": writer.card.CANDIDATE_KIND,
         "commit_attempted": False,
         "release_status": "UNQUALIFIED",
     }

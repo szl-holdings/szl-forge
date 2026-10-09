@@ -89,6 +89,7 @@ def synthetic_review(candidate: bytes) -> dict:
         "release_status": "UNQUALIFIED",
         "disposition": "REVIEW_ONLY_NO_HUB_WRITE",
         "candidate_readme_sha256": writer.card.digest(candidate),
+        "candidate_kind": writer.card.CANDIDATE_KIND,
     }
 
 
@@ -102,7 +103,7 @@ class PublicCardPublisherTests(unittest.TestCase):
         self.patches = [
             patch.object(writer.card, "CANDIDATE_README_SHA256", writer.card.digest(self.candidate)),
             patch.object(writer.card, "prepare", return_value=(
-                self.candidate, "five exact anchors", synthetic_review(self.candidate),
+                self.candidate, "two exact loader spans", synthetic_review(self.candidate),
             )),
             patch.object(writer, "assert_current_main"),
             patch.object(writer, "assert_writer_files_committed"),
@@ -219,6 +220,54 @@ class PublicCardPublisherTests(unittest.TestCase):
         with self.assertRaises(FileExistsError):
             writer.ReceiptFile(self.receipt_path, SOURCE)
         self.assertEqual(self.on_disk()["state"], "NOT_ATTEMPTED")
+
+    def test_publisher_receipt_contains_only_identity_hash_not_raw_name(self):
+        self.provider.readback = self.candidate
+        result = self.attempt()
+        self.assertEqual(result["publisher_identity_sha256"],
+                         writer.card.digest(b"synthetic-owner"))
+        self.assertNotIn("publisher", result)
+        self.assertNotIn("synthetic-owner", self.receipt_path.read_text(encoding="utf-8"))
+
+    def test_token_echo_identity_blocks_before_any_commit(self):
+        for name in ("offline-test-token", "prefix-offline-test-token-suffix"):
+            with self.subTest(name=name), patch.object(self.provider, "whoami", return_value={"name": name}):
+                with self.assertRaisesRegex(writer.PublicationError, "identity") as raised:
+                    self.attempt()
+                self.assertNotIn("offline-test-token", str(raised.exception))
+                self.assertEqual(self.provider.commits, [])
+                self.assertEqual(self.on_disk()["state"], "BLOCKED_NO_WRITE")
+                self.assertIs(self.on_disk()["commit_attempted"], False)
+                self.assertNotIn(name, self.receipt_path.read_text(encoding="utf-8"))
+
+    def test_malformed_identity_blocks_before_any_commit(self):
+        for identity in (None, [], {"name": 123}, {"name": ""}, {"name": " owner"},
+                         {"name": "owner\n"}, {"name": "x" * 97}, {"name": "owner/other"},
+                         {"name": "owner@example"}, {"name": "ow\u200bner"}):
+            with self.subTest(identity=identity), patch.object(self.provider, "whoami", return_value=identity):
+                with self.assertRaisesRegex(writer.PublicationError, "identity"):
+                    self.attempt()
+                self.assertEqual(self.provider.commits, [])
+                self.assertEqual(self.on_disk()["state"], "BLOCKED_NO_WRITE")
+                self.assertIs(self.on_disk()["commit_attempted"], False)
+
+    def test_other_candidate_kind_is_not_publication_authority(self):
+        review = synthetic_review(self.candidate)
+        review["candidate_kind"] = "HISTORICAL_DEV_RECONCILIATION"
+        self.mocks[1].return_value = (self.candidate, "unreviewed kind", review)
+        with self.assertRaisesRegex(writer.PublicationError, "candidate identity changed"):
+            self.attempt()
+        self.mocks[4].assert_not_called()
+        self.assertEqual(self.provider.commits, [])
+
+    def test_review_digest_mismatch_blocks_before_provider_import(self):
+        review = synthetic_review(self.candidate)
+        review["candidate_readme_sha256"] = "0" * 64
+        self.mocks[1].return_value = (self.candidate, "unreviewed digest", review)
+        with self.assertRaisesRegex(writer.PublicationError, "candidate identity changed"):
+            self.attempt()
+        self.mocks[4].assert_not_called()
+        self.assertEqual(self.provider.commits, [])
 
 
 if __name__ == "__main__":
