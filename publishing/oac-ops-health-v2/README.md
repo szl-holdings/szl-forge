@@ -19,6 +19,12 @@ transport message, control a device, interpret a result, release a result, or
 make a care decision. Do not submit patient information, laboratory results,
 specimens, orders, or device identifiers.
 
+<!-- SZL-NATIVE-PRESENTATION:v1 -->
+<p><a href="https://huggingface.co/SZLHOLDINGS"><img src="https://raw.githubusercontent.com/szl-holdings/szl-brand/27d12e77fc0f9f1a0e5fae8b34adf2380d51d070/kit/logos/orbit-v2/suite/szl-icon-32.svg" alt="SZL Holdings" width="48" height="48" /></a></p>
+
+[Command Lab](https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab) · [Canonical source](https://github.com/szl-holdings/szl-forge/tree/main/ops-health/v2) · [Evidence and limits](#evidence-and-limits)
+<!-- /SZL-NATIVE-PRESENTATION:v1 -->
+
 ## Source and files
 
 The four executable/data files in this repository are byte copies of
@@ -63,3 +69,7 @@ python -I -B ops_health.py --model model.json --receipt artifact_receipt.json --
 
 The command emits an advisory for local inspection. It has no network,
 device-control, result-delivery, or authorization effect.
+
+<!-- SZL-NATIVE-ARTWORK:v1 -->
+SZL Orbit artwork: [source](https://github.com/szl-holdings/szl-brand/blob/27d12e77fc0f9f1a0e5fae8b34adf2380d51d070/kit/logos/orbit-v2/suite/szl-icon-32.svg) · [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Software and artifact licensing remain declared above.
+<!-- /SZL-NATIVE-ARTWORK:v1 -->
