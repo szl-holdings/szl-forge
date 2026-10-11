@@ -49,7 +49,7 @@ class StaticForgeContractTests(unittest.TestCase):
         self.assertIn('<link rel="stylesheet" href="szl/szl-design-system.css">', index)
         self.assertIn('<link rel="stylesheet" href="szl/szl-console.css">', index)
         source = json.loads((szl / "SOURCE.json").read_text(encoding="utf-8"))
-        self.assertEqual("1.1.0", source["version"])
+        self.assertEqual("1.3.0", source["version"])
         vendored = sorted(
             path.relative_to(szl).as_posix()
             for path in szl.rglob("*")

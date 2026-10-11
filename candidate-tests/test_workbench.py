@@ -91,7 +91,7 @@ def test_vendored_szl_asset_served_exactly_behind_same_boundary(client, route):
     assert response.headers["content-type"] == media_type
     assert response.content == (VENDORED / relative).read_bytes()
     pinned = json.loads((VENDORED / "SOURCE.json").read_text(encoding="utf-8"))
-    assert pinned["name"] == "szl-kanchay" and pinned["version"] == "1.1.0"
+    assert pinned["name"] == "szl-kanchay" and pinned["version"] == "1.3.0"
     assert hashlib.sha256(response.content).hexdigest() == pinned["sha256"][relative]
     assert response.headers["content-security-policy"] == CSP
     assert response.headers["x-content-type-options"] == "nosniff"

@@ -960,7 +960,7 @@ class SzlAssetRouteTests(unittest.TestCase):
 
     def test_allowlist_is_exactly_the_stylesheet_and_the_favicon(self):
         self.assertEqual({self.STYLESHEET, self.FAVICON}, set(app.SZL_ASSETS))
-        self.assertEqual("1.1.0", self.export["version"])
+        self.assertEqual("1.3.0", self.export["version"])
         vendored = {
             path.relative_to(app.SZL_ROOT).as_posix()
             for path in app.SZL_ROOT.rglob("*")

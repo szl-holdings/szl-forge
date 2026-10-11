@@ -442,7 +442,7 @@ class PreviewTests(unittest.TestCase):
     def test_vendored_szl_files_match_the_export_manifest(self):
         folder = preview.HERE / "retrieval_web" / "szl"
         source = json.loads((folder / "SOURCE.json").read_text(encoding="utf-8"))
-        self.assertEqual("1.1.0", source["version"])
+        self.assertEqual("1.3.0", source["version"])
         for name in SZL_ASSET_ROUTES.values():
             relative = name.removeprefix("szl/")
             with self.subTest(name=relative):
