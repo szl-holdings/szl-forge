@@ -23,8 +23,8 @@ EXPECTED = {
     "/szl/szl-design-system.css": ("szl-design-system.css", "text/css; charset=utf-8"),
     "/szl/szl-console.css": ("szl-console.css", "text/css; charset=utf-8"),
 }
-DESIGN_SYSTEM_SHA256 = "9e5e6e3ae2a5c6f5a2a3c6bf4c607406dc39db3fbe9115e91a1865054678493e"
-CONSOLE_SHA256 = "7ef6a0908302c6c2d83d637d1aa4fcac36ae2740a5c8e9cac0608c3cdb2c9928"
+DESIGN_SYSTEM_SHA256 = "da310be5cbe23dfc4054d1bb07e5b37e1a62a510e43902171e217af5c1ff0ec7"
+CONSOLE_SHA256 = "df066d54d0b8b6bb2f5bf281cd990f65055b32bc71309bb2fc5868b6e40b6c6b"
 PAGES = ["/", "/pool", "/corpus-review", "/compute", "/storage"]
 LINKS = ('<link rel="stylesheet" href="/szl/szl-design-system.css">\n'
          '<link rel="stylesheet" href="/szl/szl-console.css">\n')
@@ -118,7 +118,7 @@ def test_vendored_folder_is_the_exact_export_closure():
     files = {p.relative_to(VENDORED).as_posix() for p in VENDORED.rglob("*") if p.is_file()}
     assert files == {"szl-design-system.css", "szl-console.css", "SOURCE.json"}
     source = json.loads((VENDORED / "SOURCE.json").read_text(encoding="utf-8"))
-    assert source["version"] == "1.1.0"
+    assert source["version"] == "1.3.0"
     assert source["sha256"]["szl-design-system.css"] == DESIGN_SYSTEM_SHA256
     assert source["sha256"]["szl-console.css"] == CONSOLE_SHA256
     for name in files - {"SOURCE.json"}:

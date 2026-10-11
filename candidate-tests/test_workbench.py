@@ -91,7 +91,7 @@ def test_vendored_szl_asset_served_exactly_behind_same_boundary(client, route):
     assert response.headers["content-type"] == media_type
     assert response.content == (VENDORED / relative).read_bytes()
     pinned = json.loads((VENDORED / "SOURCE.json").read_text(encoding="utf-8"))
-    assert pinned["name"] == "szl-kanchay" and pinned["version"] == "1.1.0"
+    assert pinned["name"] == "szl-kanchay" and pinned["version"] == "1.3.0"
     assert hashlib.sha256(response.content).hexdigest() == pinned["sha256"][relative]
     assert response.headers["content-security-policy"] == CSP
     assert response.headers["x-content-type-options"] == "nosniff"
@@ -120,7 +120,7 @@ def test_page_loads_szl_before_surface_stylesheet(client):
     page = response.text
     system = page.index('<link rel="stylesheet" href="/assets/szl/szl-design-system.css">')
     assert system < page.index('<link rel="stylesheet" href="/assets/workbench.css">')
-    assert '<a class="skip-link" href="#main">Skip to content</a><main id="main">' in page
+    assert '<a class="skip-link" href="#main">Skip to content</a><main id="main" tabindex="-1">' in page
     assert page.count("btn-primary") == 1
     assert "style=" not in page and "fonts.googleapis" not in page and "woff2" not in page
 

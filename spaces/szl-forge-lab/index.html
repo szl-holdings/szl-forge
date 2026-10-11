@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="szl/szl-design-system.css">
 <link rel="stylesheet" href="szl/szl-console.css">
 <style>
-/* SZL Forge Lab on SZL KANCHAY v1.1.0 (founder direction), dark operator surface.
+/* SZL Forge Lab on SZL KANCHAY v1.3.0 (founder direction), dark operator surface.
    Every color, face, size, space and radius is a token from szl/szl-design-system.css or szl/szl-console.css.
    The single coral moment is the hero node. */
 b,strong{font-weight:var(--weight-semibold);color:var(--text)}
@@ -115,7 +115,7 @@ footer .links a{display:inline-flex;align-items:center;min-block-size:var(--targ
     <a class="nav__link" href="https://huggingface.co/SZLHOLDINGS" target="_blank" rel="noopener">SZLHOLDINGS</a>
   </nav>
 </header>
-<main id="main">
+<main id="main" tabindex="-1">
 <section class="hero">
   <div class="hero__orbit" aria-hidden="true"></div>
   <span class="hero__node" aria-hidden="true"></span>
@@ -148,7 +148,7 @@ footer .links a{display:inline-flex;align-items:center;min-block-size:var(--targ
     <div class="vcheck"><span class="st wait" id="r-eval">WAITING</span> — <code>eval_receipt.json</code> receipt hash, same rule</div>
     <div class="vcheck"><span class="st wait" id="r-files">WAITING</span> — packaged artifacts re-hashed vs manifest declarations</div>
   </div>
-  <div class="panel scroll stack-top" tabindex="0" role="region" aria-label="Integrity table"><table class="table" id="integrity"><tr><th>Declared input</th><th>Packaged here as</th><th>State</th><th>Expected SHA-256</th><th>Recomputed in this browser</th></tr></table>
+  <div class="panel scroll stack-top" tabindex="0" role="region" aria-label="Integrity table"><table class="table" id="integrity"><tr><th scope="col">Declared input</th><th scope="col">Packaged here as</th><th scope="col">State</th><th scope="col">Expected SHA-256</th><th scope="col">Recomputed in this browser</th></tr></table>
   <p class="panel-note">A matching hash proves byte identity only. Inputs marked NOT&nbsp;PACKAGED live on the owner&rsquo;s training host and are intentionally not shipped (e.g. training data) — their absence is stated, not hidden.</p></div>
 </section>
 
@@ -157,7 +157,7 @@ footer .links a{display:inline-flex;align-items:center;min-block-size:var(--targ
   <h2>Deterministic fixture checks — scoped, not a benchmark</h2>
   <div class="panel scroll" tabindex="0" role="region" aria-label="Evaluation table">
     <p class="panel-lede" id="eval-summary">loading…</p>
-    <table class="table" id="eval"><tr><th>Case</th><th>Category</th><th>Result</th><th>Response SHA-256</th></tr></table>
+    <table class="table" id="eval"><tr><th scope="col">Case</th><th scope="col">Category</th><th scope="col">Result</th><th scope="col">Response SHA-256</th></tr></table>
   </div>
 </section>
 
@@ -352,7 +352,7 @@ const PACKAGED={"thesis_formula_index.json":"thesis_formula_index.json","science
    const s=e.status||e.proof_status||"—";
    if(st!=="ALL"&&s!==st)return false;
    return !q||JSON.stringify(e).toLowerCase().includes(q);}).slice(0,60);
-  document.getElementById("formulas").innerHTML="<tr><th>ID</th><th>Title</th><th>Declared status</th><th>Lean theorem</th></tr>"+
+  document.getElementById("formulas").innerHTML="<tr><th scope=\"col\">ID</th><th scope=\"col\">Title</th><th scope=\"col\">Declared status</th><th scope=\"col\">Lean theorem</th></tr>"+
    rows.map(e=>`<tr><td>${esc(e.id)}</td><td>${esc(e.title||"")}</td><td>${esc(e.status||e.proof_status||"—")}</td><td><code>${esc(e.lean_theorem||e.lean||"—")}</code></td></tr>`).join("");
  }
  document.getElementById("fq").oninput=renderF;fsSel.onchange=renderF;renderF();
@@ -366,14 +366,14 @@ const PACKAGED={"thesis_formula_index.json":"thesis_formula_index.json","science
  function renderS(){
   const d=sdSel.value,dc=sdecSel.value;
   const rows=srcs.filter(s=>(d==="ALL"||s.domain===d)&&(dc==="ALL"||s.decision===dc)).slice(0,80);
-  document.getElementById("sources").innerHTML="<tr><th>Source</th><th>Domain</th><th>Decision</th><th>License</th></tr>"+
+  document.getElementById("sources").innerHTML="<tr><th scope=\"col\">Source</th><th scope=\"col\">Domain</th><th scope=\"col\">Decision</th><th scope=\"col\">License</th></tr>"+
    rows.map(s=>`<tr><td><a href="${esc(s.canonical_url)}" target="_blank" rel="noopener">${esc(s.name)}</a></td><td>${esc(s.domain)}</td><td>${esc(s.decision)}</td><td>${esc(s.license_expression||"—")}</td></tr>`).join("");
  }
  sdSel.onchange=renderS;sdecSel.onchange=renderS;renderS();
 
  /* curriculum */
  const stages=curr.stages||[];
- document.getElementById("curr").innerHTML="<tr><th>Stage</th><th>Domains</th><th>Goal</th><th>Tasks</th><th>Evaluations</th></tr>"+
+ document.getElementById("curr").innerHTML="<tr><th scope=\"col\">Stage</th><th scope=\"col\">Domains</th><th scope=\"col\">Goal</th><th scope=\"col\">Tasks</th><th scope=\"col\">Evaluations</th></tr>"+
   stages.map(s=>`<tr><td>${esc(s.stage_id||"")}</td><td>${esc((s.domains||[]).join(", "))}</td><td>${esc(s.goal||"")}</td><td>${(s.tasks||[]).length}</td><td>${(s.evaluations||[]).length}</td></tr>`).join("");
 })();
 
