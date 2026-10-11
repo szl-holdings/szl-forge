@@ -25,7 +25,7 @@ footer{margin-top:var(--space-8);border-top:var(--border-hairline) solid var(--h
 <header><span class="eyebrow">SZL Holdings / Forge / Research</span><h1 class="page-head__title">Models, with boundaries.</h1>
 <p class="page-head__lead">Two advisory model recipes. Your existing pool remains in control. No training, remote generation, or publication runs from this interface.</p>
 <nav aria-label="Workbench"><a class="nav__link" href="/">Model tracks</a><a class="nav__link" href="/compute">Inspect configured compute</a><a class="nav__link" href="/pool#pool">Canonical pool snapshot</a><a class="nav__link" href="/corpus-review#corpus">Corpus review</a><a class="nav__link" href="/storage">Storage-aware research</a><a class="nav__link" href="/api/catalog">Catalog JSON</a></nav></header>
-<section aria-labelledby="tracks"><h2 id="tracks">Model tracks</h2><div class="grid">
+<section aria-labelledby="tracks"><h2 id="tracks" tabindex="-1">Model tracks</h2><div class="grid">
 {% for track in tracks %}<article class="card"><h3 class="card-title">{{ track.display_name }}</h3><span class="state chip">{{ track.state }}</span>
 <p>{{ track.boundary if track.boundary is defined else track.reason }}</p>
 {% if track.proposed_hf_id %}<p class="meta">Proposed or existing-name candidate, not publication proof:<br><code>{{ track.proposed_hf_id }}</code></p>{% endif %}

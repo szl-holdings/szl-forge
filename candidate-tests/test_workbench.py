@@ -120,7 +120,7 @@ def test_page_loads_szl_before_surface_stylesheet(client):
     page = response.text
     system = page.index('<link rel="stylesheet" href="/assets/szl/szl-design-system.css">')
     assert system < page.index('<link rel="stylesheet" href="/assets/workbench.css">')
-    assert '<a class="skip-link" href="#main">Skip to content</a><main id="main">' in page
+    assert '<a class="skip-link" href="#main">Skip to content</a><main id="main" tabindex="-1">' in page
     assert page.count("btn-primary") == 1
     assert "style=" not in page and "fonts.googleapis" not in page and "woff2" not in page
 

@@ -6,7 +6,7 @@
     "Dockerfile": "9750d8e6f8ba36f96cb77afebb5ec121760aad9ade07d921e36e98b1efe6b45a",
     "LICENSE": "0a41cda63c0751e5cdb240864525fc8bf29b2d3f2cb5c6406b9bae97f1e1407b",
     "README.md": "2e675f5f2f6d5eb8a59b684e6f3149ed903cecd409b2edf1860451ea0428d5b5",
-    "app.py": "99e856be51756ee88cb3709a1b8c86ea715846e8f9dd34062d2b50062a2175e8",
+    "app.py": "b5db770eefd52738497253cd07c18ca3db0506d4b6ba627c9e168671cee238cf",
     "app_governed.py": "f148a48f567d9bdf96b12358ebac6ac1a130be1692ec5f047def82b602a1e47c",
     "download_artifacts.py": "aa9f98b3d19753953864beae167b5e74872270c880e78430bb345a5f06b4ef36",
     "formula_atlas/formula-atlas.v1.json": "765b9e5c9dd8d4fc5c7518a5b2f70cd6008918591cfa5edfc9868453cb30b7a2",

@@ -20,7 +20,7 @@ from .specs import candidate_spec, candidate_specs, mesh_declaration
 from .blueprint import blueprint_plan
 
 SZL_DIR = Path(__file__).resolve().parent / "assets" / "szl"
-# Vendored SZL KANCHAY v1.1.0 (byte-for-byte, see SOURCE.json). Fixed allowlist:
+# Vendored SZL KANCHAY v1.3.0 (byte-for-byte, see SOURCE.json). Fixed allowlist:
 # no path parameter reaches the filesystem, no directory mount, no listing.
 SZL_ASSETS = {
     "/assets/szl/szl-design-system.css": ("szl-design-system.css", "text/css; charset=utf-8"),
@@ -84,7 +84,7 @@ def render_page(key: str) -> str:
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SZL model candidates</title><link rel="stylesheet" href="/assets/szl/szl-design-system.css">
 <link rel="stylesheet" href="/assets/workbench.css">
-</head><body><a class="skip-link" href="#main">Skip to content</a><main id="main"><header><p class="eyebrow">SZL FORGE / LOCAL RESEARCH</p>
+</head><body><a class="skip-link" href="#main">Skip to content</a><main id="main" tabindex="-1"><header><p class="eyebrow">SZL FORGE / LOCAL RESEARCH</p>
 <h1>Kernels to learned models.</h1>
 <p>Three trainable architectures. No trained release is claimed. This local workbench
 inspects source recipes; it does not control your hardware or change Hugging Face.

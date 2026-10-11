@@ -109,7 +109,7 @@ async function initialize() {
     const fields = {"Encoder": summary.models.encoder, "Reader": summary.models.reader, "Execution device": summary.execution_device || "Unrecorded", "Recorded GPU": summary.device || "None", "Run": summary.run_id, "Evaluation completed": summary.completed_at, "Source fingerprint": summary.freeze_sha256, "Result fingerprint": summary.result_sha256};
     for (const [label, value] of Object.entries(fields)) { addText(el("provenance"), "dt", label); addText(el("provenance"), "dd", String(value)); }
     ready = true; controls(); message("Ready. Choose an example or ask your own question.");
-  } catch (error) { el("health").textContent = "Runtime unavailable"; el("health").classList.add("error"); message(error.message, "error"); }
+  } catch (error) { el("health").textContent = "Runtime unavailable"; el("health").classList.add("error"); el("record-limits").textContent = "Evaluation record unavailable. No frozen result or model provenance was observed from the local runtime."; message(error.message, "error"); }
 }
 el("corpus-tab").addEventListener("click", () => switchMode("corpus")); el("context-tab").addEventListener("click", () => switchMode("context"));
 for (const id of ["corpus-tab", "context-tab"]) el(id).addEventListener("keydown", (event) => { if (["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key) && !busy) { event.preventDefault(); switchMode(event.key === "Home" ? "corpus" : event.key === "End" ? "context" : mode === "corpus" ? "context" : "corpus"); el(mode === "corpus" ? "corpus-tab" : "context-tab").focus(); } });
