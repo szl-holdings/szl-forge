@@ -35,8 +35,18 @@ function element(tag, text, className) {
   return node;
 }
 async function api(path, options) {
-  const response = await fetch(path, options);
-  const raw = await response.text();
+  // Bound read-only discovery; a timed-out read must not leave a stale Ready label.
+  // Trial submission retains the server's existing execution/deadline contract.
+  const readOnly = !options || !options.method || options.method === 'GET';
+  const controller = readOnly ? new AbortController() : null;
+  const timeout = controller ? setTimeout(() => controller.abort(), 10000) : null;
+  let response, raw;
+  try {
+    response = await fetch(path, controller ? {...options, signal: controller.signal} : options);
+    raw = await response.text();
+  } finally {
+    if (timeout !== null) clearTimeout(timeout);
+  }
   let data;
   try { data = JSON.parse(raw); } catch (_) { throw new Error('The workbench returned no readable record.'); }
   if (!response.ok) {
@@ -73,7 +83,10 @@ async function refresh() {
     ready = false;
     byId('connection').textContent = 'Workbench unavailable';
     byId('connection-dot').className = 'dot';
-    byId('status-message').textContent = 'The on-demand workbench may be waking or unavailable. Reload to check again.';
+    byId('sources').textContent = 'Unavailable';
+    byId('checkpoints').textContent = '—';
+    byId('loaded').textContent = '—';
+    byId('status-message').textContent = 'The on-demand workbench may be waking or unavailable. Use Check availability to try again.';
     byId('run-trial').disabled = true;
   }
 }
