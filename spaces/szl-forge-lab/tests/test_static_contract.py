@@ -94,6 +94,46 @@ class StaticForgeContractTests(unittest.TestCase):
             all(item["autonomy_eligible"] is False for item in portfolio["artifacts"])
         )
 
+    def test_lambda_uniqueness_entry_is_not_declared_green(self) -> None:
+        # Doctrine: Λ = Conjecture 1, never a theorem. TH10 is the packaged
+        # Λ-uniqueness entry; its historical GREEN label was corrected 2026-10-06.
+        # The repository-root snapshot (read by conjecture_machine.py) is checked
+        # too when this test runs from a full checkout; the published Space has
+        # no root copy.
+        copies = [("space", ROOT / "thesis_formula_index.json")]
+        root_copy = ROOT.parents[1] / "thesis_formula_index.json"
+        if root_copy.is_file():
+            copies.append(("repository root", root_copy))
+        for label, path in copies:
+            with self.subTest(copy=label):
+                index = json.loads(path.read_text(encoding="utf-8"))
+                th10 = [
+                    entry for entry in index["entries"] if entry.get("id") == "TH10"
+                ]
+                self.assertEqual(1, len(th10))
+                self.assertNotEqual("GREEN", th10[0]["status"])
+                self.assertEqual("GREEN", th10[0]["correction"]["previous_status"])
+
+    def test_run_manifest_receipt_is_not_reminted(self) -> None:
+        # run_manifest.json is the 2026-07-11 MEASURED run receipt. A later
+        # correction to a packaged input is shown by the console as a hash
+        # MISMATCH against this receipt; it is not hidden by rewriting the pin
+        # and recomputing receipt_sha256.
+        manifest = json.loads(
+            (ROOT / "run_manifest.json").read_text(encoding="utf-8")
+        )
+        unsigned = {k: v for k, v in manifest.items() if k != "receipt_sha256"}
+        recomputed = hashlib.sha256(
+            json.dumps(
+                unsigned, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+            ).encode("utf-8")
+        ).hexdigest()
+        self.assertEqual(manifest["receipt_sha256"], recomputed)
+        self.assertEqual(
+            "0c0a23e292d09ced43830c8de80a387a40c988a4b62c53f52fda0e78809fa3c4",
+            manifest["receipt_sha256"],
+        )
+
     def test_atelier_lock_keeps_snapshot_from_becoming_a_studio(self) -> None:
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         index = (ROOT / "index.html").read_text(encoding="utf-8")

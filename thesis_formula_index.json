@@ -9,7 +9,14 @@
     "doctrine": "v6",
     "orcid": "0009-0001-0110-4173",
     "entry_count": 68,
-    "note": "STAGED-ADVISORY: line numbers are sampled from repo; re-verify against lake build output"
+    "note": "STAGED-ADVISORY: line numbers are sampled from repo; re-verify against lake build output",
+    "corrections": [
+      {
+        "date": "2026-10-06",
+        "entries": ["TH10"],
+        "summary": "TH10 re-labelled GREEN -> TRACKED: its proof claim is withdrawn and lean_theorem now names lutar-lean's statement-only Conjecture 1 declaration (see the entry's correction field). The historical meta fields above are kept as generated. No other entry was changed or re-verified by this correction."
+      }
+    ]
   },
   "entries": [
     {
@@ -114,15 +121,42 @@
       "id": "TH10",
       "thesis_section": "§4.1",
       "title": "TH10 — Uniqueness of Lutar Invariant",
-      "description": "Any function satisfying A1–A4 equals Λ_k (the geometric mean). Proof via Cauchy 1821 functional equation + Aczel 1966.",
-      "lean_file": "Lutar/Uniqueness.lean",
-      "lean_theorem": "Lutar.uniqueness",
-      "lean_sha": "7329cfb3",
-      "status": "GREEN",
+      "description": "Claim as originally indexed, not proved: any function satisfying A1–A4 equals Λ_k (the geometric mean). As stated, this claim is disproved (Conjecture 1 boundary; see correction). The earlier 'Proof via Cauchy 1821 functional equation + Aczel 1966' wording is withdrawn.",
+      "lean_file": "Lutar/Uniqueness/Identifiability.lean",
+      "lean_theorem": "Lutar.Uniqueness.Conjecture1_LambdaUnique",
+      "lean_sha": "7f756b8d",
+      "status": "TRACKED",
       "runtime_gate": "a11oy-core/src/governance/uniqueness-assertion.ts",
       "test_file": "vitest/anchor/th10-uniqueness.test.ts",
       "axiom_deps": [],
-      "zenodo_doi": "10.5281/zenodo.20434276"
+      "zenodo_doi": "10.5281/zenodo.20434276",
+      "correction": {
+        "date": "2026-10-06",
+        "previous_status": "GREEN",
+        "previous_lean_file": "Lutar/Uniqueness.lean",
+        "previous_lean_theorem": "Lutar.uniqueness",
+        "previous_lean_sha": "7329cfb3",
+        "summary": "TH10 was indexed GREEN with a proof claim. lutar-lean's locked-claims file records Lambda uniqueness as Conjecture 1, open and false as stated, and ships only a statement-only declaration for it. The TH10-labelled theorem Lutar.lutar_unique rests on a sorry. The entry is re-labelled TRACKED with the existing status vocabulary, and lean_theorem names the statement-only Conjecture 1 declaration, which carries no proof. Statuses in this index remain declarations; this correction did not run Lean.",
+        "lean_ref": "szl-holdings/lutar-lean@04f904ecd5683753a481ab2b1ded69ac01a7a661",
+        "pointer_note": "lean_file, lean_theorem and lean_sha refer to lean_ref (lean_sha is the git blob id prefix of lean_file at that commit), not to meta.lean_commit c4d13795, where Lutar/Uniqueness/Identifiability.lean does not exist. previous_lean_sha 7329cfb3 is the blob of Lutar/Uniqueness.lean at c4d13795.",
+        "related_declarations": [
+          "Lutar.lutar_unique (Lutar/Uniqueness.lean:218): docstring 'Theorem TH10'; built from Lutar.lutar_is_geomean, whose proof ends in sorry (:215). Not used as lean_theorem because its statement is false as stated.",
+          "Lutar.Round13.maxAgg_ne_Lambda (Lutar/Round13/Lambda_Uniqueness.lean:188): the counterexample the locked-claims file names.",
+          "Lutar.Round13.lambda_unique_of_separable (Lutar/Round13/LambdaSeparable.lean:93): a conditional form, experimental tier."
+        ],
+        "evidence": [
+          "szl-holdings/lutar-lean@04f904e claims/locked-formulas.v1.json:31-37 (authority COMPILED_LOCKED_SURFACE), lambda block: status CONJECTURE_1_OPEN_FALSE_AS_STATED, unconditional_declaration Conjecture1_LambdaUnique, counterexample maxAgg_ne_Lambda, conditional_results TheoremU_LambdaUnique and lambda_unique_of_separable. Its public_wording: 'Lambda uniqueness is Conjecture 1. Unconditional uniqueness under bare A1-A5 is machine-checked false. Conditional uniqueness is experimental, outside the locked eight.'",
+          "Lutar.Uniqueness.Conjecture1_LambdaUnique (Lutar/Uniqueness/Identifiability.lean:152-161, namespace Lutar.Uniqueness) is a def of type Prop with no proof. Its docstring says no proof is shipped because, as stated, it is machine-checked false, and that Lambda stays Conjecture 1.",
+          "Lutar.uniqueness is not declared at lutar-lean 04f904e, nor at the meta lean_commit c4d13795. The declaration labelled 'Theorem TH10' is Lutar.lutar_unique (Lutar/Uniqueness.lean:218). It is built from Lutar.lutar_is_geomean, whose proof ends in sorry (Lutar/Uniqueness.lean:215) under an in-file note that the unconditional statement is false under A1–A5.",
+          "Lutar.Round13.maxAgg_ne_Lambda (Lutar/Round13/Lambda_Uniqueness.lean:188) mechanizes the separation maxAgg ≠ Λ 2. The maxAgg A2/A3/A5 facts are mechanized (:179, :174, :154); its A1/A4 membership is argued in prose (:145-146).",
+          "Conditional Theorem U form: Lutar.Round13.lambda_unique_of_separable (Lutar/Round13/LambdaSeparable.lean:93) assumes separable, slice-multiplicative per-axis slices. docs/FRONTIER.md:40 lists it as EXPERIMENTAL · CI-green (experimental tier, not the locked set). It does not discharge TH10 as stated.",
+          "szl-holdings/szl-papers@5f2f75f109bfdadfc167c00bab5808a7a76ac3e2 bounty/README.md:9: 'Conjecture 1 is disproved as stated ... the weaker-condition uniqueness question remains open.' bounty/README.md:6 applies the same boundary to the original A1–A4 uniqueness statement."
+        ],
+        "lean_build": "NOT_RUN",
+        "print_axioms": "NOT_RUN",
+        "method": "Lean and szl-papers source text read with git show at the pinned commits.",
+        "not_reverified": ["runtime_gate", "test_file", "axiom_deps"]
+      }
     },
     {
       "id": "TH11",
