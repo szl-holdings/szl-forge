@@ -7,12 +7,15 @@
   <meta name="description" content="A non-authoritative OAC synthetic operational health model preview. No patient or clinical data.">
   <title>OAC Health Lab · SZL</title>
   <style>
+    /* Native palette projection of KANCHAY 1.3.0 at szl-brand@27d12e77fc0f9f1a0e5fae8b34adf2380d51d070.
+       Source CSS SHA256 da310be5cbe23dfc4054d1bb07e5b37e1a62a510e43902171e217af5c1ff0ec7.
+       Native status semantics and the self-contained CSP contract are retained. */
     :root {
-      --paper:#071019; --surface:#111927; --surface-soft:#151f30;
-      --ink:#eaf4f7; --muted:#aabccd; --line:#35445c; --control:#8a9bb1;
-      --green:#72e7d2; --green-soft:#16342f; --violet:#d0b5ff;
+      --paper:#080b12; --surface:#111722; --surface-soft:#141b27;
+      --ink:#f1f4f8; --muted:#aab7c9; --line:#2b3749; --control:#71829b;
+      --green:#8fd9d5; --green-soft:#052827; --silver:#e9eef6;
       --amber:#ffd28a; --amber-soft:#3a2b15; --red:#ffb8bf; --red-soft:#42222b;
-      --focus:#72e7d2; --radius:24px;
+      --focus:#34aaa4; --radius:20px;
     }
     * { box-sizing:border-box; }
     body { margin:0; background:var(--paper); color:var(--ink); font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; line-height:1.6; }
@@ -27,7 +30,8 @@
     .wrap { width:min(1240px,calc(100% - 48px)); margin:auto; }
     .masthead { display:flex; justify-content:space-between; align-items:center; gap:20px; padding:20px 0; border-bottom:1px solid var(--line); flex-wrap:wrap; }
     .brand { display:flex; align-items:center; gap:12px; font-size:.87rem; font-weight:700; letter-spacing:.11em; }
-    .brand-mark { width:36px; height:36px; border:1px solid var(--green); border-radius:12px; display:grid; place-items:center; color:var(--green); font-size:.7rem; letter-spacing:-.04em; }
+    .brand-mark { width:40px; height:40px; display:grid; place-items:center; flex:none; }
+    .brand-mark svg { display:block; width:40px; height:40px; }
     .masthead nav { display:flex; gap:12px; font-size:.83rem; }
     .masthead nav a { display:inline-flex; align-items:center; min-height:44px; padding:0 10px; text-decoration:none; }
     .skip-link { position:absolute; left:16px; top:-100px; padding:12px 18px; background:var(--surface); z-index:2; }
@@ -35,20 +39,20 @@
     .hero { display:grid; grid-template-columns:minmax(0,1.25fr) minmax(0,.75fr); gap:54px; padding:58px 0 38px; align-items:center; }
     .eyebrow { font-size:.71rem; letter-spacing:.15em; font-weight:700; text-transform:uppercase; color:var(--green); margin-bottom:18px; }
     .hero-text { margin-top:24px; color:var(--muted); max-width:590px; font-size:1rem; }
-    .hero-detail { margin-top:18px; color:var(--violet); font-size:.77rem; letter-spacing:.04em; }
+    .hero-detail { margin-top:18px; color:var(--silver); font-size:.77rem; letter-spacing:.04em; }
     .scope { max-width:380px; justify-self:end; }
     .scope p { font-size:.85rem; color:var(--muted); margin-top:8px; } .scope strong { font-size:.88rem; }
     /* A static eight-spoke design motif, never a simulated device reading. */
-    .signal-lens { position:relative; width:180px; aspect-ratio:1; margin:0 0 24px; border:1px solid var(--line); border-radius:50%; background:radial-gradient(circle,transparent 43%,#72e7d233 44%,transparent 45%,transparent 65%,#d0b5ff44 66%,transparent 67%),repeating-conic-gradient(from 22.5deg,transparent 0deg 43deg,#72e7d244 43deg 45deg); }
+    .signal-lens { position:relative; width:180px; aspect-ratio:1; margin:0 0 24px; border:1px solid var(--line); border-radius:50%; background:radial-gradient(circle,transparent 43%,#8fd9d533 44%,transparent 45%,transparent 65%,#9aa7bd44 66%,transparent 67%),repeating-conic-gradient(from 22.5deg,transparent 0deg 43deg,#8fd9d544 43deg 45deg); }
     .signal-lens::before { content:""; position:absolute; inset:22px; border:1px solid var(--control); border-radius:50%; }
     .signal-lens::after { content:""; position:absolute; inset:58px; border:1px solid var(--green); border-radius:14px; transform:rotate(45deg); background:var(--paper); }
-    .lens-axis { position:absolute; inset:0; border-radius:50%; border-top:2px solid var(--green); border-bottom:2px solid var(--violet); transform:rotate(-35deg); }
+    .lens-axis { position:absolute; inset:0; border-radius:50%; border-top:2px solid var(--green); border-bottom:2px solid var(--silver); transform:rotate(-35deg); }
     .status-line { display:flex; align-items:center; gap:10px; color:var(--muted); font-size:.8rem; margin-bottom:20px; min-height:28px; }
     .dot { height:8px; width:8px; border-radius:50%; background:var(--control); flex-shrink:0; }
     .status-line[data-state="ready"] .dot { background:var(--green); } .status-line[data-state="unavailable"] .dot { background:var(--red); }
     .workspace { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,.88fr); gap:24px; align-items:start; }
-    .card { --rim-start:var(--green); --rim-end:var(--violet); background:linear-gradient(var(--surface),var(--surface)) padding-box,linear-gradient(115deg,var(--rim-start),var(--rim-end),var(--line)) border-box; border:1px solid transparent; border-top-width:2px; border-radius:var(--radius); min-width:0; overflow:hidden; }
-    #advisory-panel { --rim-start:var(--violet); --rim-end:var(--green); }
+    .card { --rim-start:var(--green); --rim-end:var(--silver); background:linear-gradient(var(--surface),var(--surface)) padding-box,linear-gradient(115deg,var(--rim-start),var(--rim-end),var(--line)) border-box; border:1px solid transparent; border-top-width:2px; border-radius:var(--radius); min-width:0; overflow:hidden; }
+    #advisory-panel { --rim-start:var(--silver); --rim-end:var(--green); }
     .card-head { padding:26px 28px 20px; border-bottom:1px solid var(--line); }
     .card-head p { font-size:.84rem; color:var(--muted); margin-top:6px; }
     .head-row { display:flex; justify-content:space-between; gap:16px; align-items:center; flex-wrap:wrap; }
@@ -107,13 +111,15 @@
     .identity-grid dt { font-size:.7rem; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
     .identity-grid dd { font-family:ui-monospace,SFMono-Regular,Consolas,monospace; font-size:.75rem; overflow-wrap:anywhere; margin:5px 0 0; color:var(--ink); }
     .identity-note { font-size:.74rem; color:var(--muted); margin-top:18px; }
-    .v2-preview { margin-top:28px; padding:24px 28px; --rim-start:var(--violet); --rim-end:var(--line); }
+    .v2-preview { margin-top:28px; padding:24px 28px; --rim-start:var(--silver); --rim-end:var(--line); }
     .v2-preview p { color:var(--muted); font-size:.82rem; margin-top:10px; }
     .v2-actions { display:flex; gap:12px; flex-wrap:wrap; margin-top:18px; align-items:center; }
     .v2-status[data-state="ready"] { color:var(--green); } .v2-status[data-state="unavailable"] { color:var(--red); }
     .v2-result { min-height:2.5em; }
     .foot { display:flex; justify-content:space-between; gap:24px; align-items:start; padding:30px 0 38px; font-size:.74rem; color:var(--muted); flex-wrap:wrap; }
     .foot p { max-width:670px; } .foot span { white-space:normal; }
+    .foot a { display:inline-flex; align-items:center; min-height:44px; }
+    #workspace,#provenance { scroll-margin-top:24px; }
     .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
     [hidden] { display:none!important; }
     @media(max-width:850px) {
@@ -142,14 +148,15 @@
       .limits ul { grid-template-columns:1fr; } .score-row { flex-wrap:wrap; } .threshold { text-align:left; }
     }
     @media(prefers-reduced-motion:reduce) { .score-fill { transition:none; } }
-    @media(forced-colors:active) { .signal-lens { display:none; } .scope { display:block; } .card { border:1px solid CanvasText; } }
+    @media(forced-colors:active) { .signal-lens { display:none; } .scope { display:block; } .card { border:1px solid CanvasText; background:Canvas; color:CanvasText; } .primary-button,.small-button { border:1px solid ButtonText; background:ButtonFace; color:ButtonText; } :focus-visible { outline:3px solid Highlight; } .score-track,.score-fill { border:1px solid CanvasText; } }
   </style>
 </head>
 <body>
   <a class="skip-link" href="#workspace">Skip to health lab</a>
   <div class="wrap">
     <header class="masthead">
-      <div class="brand"><span class="brand-mark" aria-hidden="true">SZL</span><span>OAC / HEALTH LAB</span></div>
+      <div class="brand"><span class="brand-mark" aria-hidden="true"><!-- SZL Orbit icon: szl-holdings/szl-brand@27d12e77fc0f9f1a0e5fae8b34adf2380d51d070 / kit/logos/orbit-v2/suite/szl-icon-32.svg; source SHA256 6e2b7d72a3af3d9602b79de41df0194ede6496a9661f057108ec224c0efc92e6; CC BY 4.0. Exact source SVG follows. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" role="img" aria-labelledby="szl-icon-32-title szl-icon-32-desc"><title id="szl-icon-32-title">SZL Holdings</title><desc id="szl-icon-32-desc">SZL letters, one orbit and the coral node, for placements of 24 to 48 pixels.</desc><rect width="600" height="600" rx="120" fill="#030F29"/><ellipse cx="300" cy="300" rx="262" ry="122" fill="none" stroke="#9AA7BD" stroke-width="22" transform="rotate(-22 300 300)"/><g transform="translate(300 300) scale(1.2) translate(-299.8 -299.1)"><g fill="#030F29" stroke="#030F29" stroke-width="18.33" stroke-linejoin="round"><path d="M228.256 331.049Q228.256 353.967 211.26 366.091Q194.265 378.214 161.383 378.214Q131.378 378.214 114.328 367.586Q97.278 356.957 92.406 335.367L123.96 330.163Q127.171 342.564 136.471 348.155Q145.771 353.746 162.268 353.746Q196.48 353.746 196.48 332.931Q196.48 326.288 192.549 321.97Q188.619 317.652 181.478 314.774Q174.336 311.895 154.075 307.798Q136.582 303.702 129.718 301.211Q122.853 298.72 117.317 295.343Q111.781 291.966 107.906 287.205Q104.031 282.444 101.872 276.023Q99.713 269.601 99.713 261.297Q99.713 240.15 115.601 228.913Q131.489 217.675 161.825 217.675Q190.833 217.675 205.392 226.754Q219.952 235.833 224.159 256.758L192.494 261.076Q190.058 251.001 182.585 245.908Q175.111 240.815 161.161 240.815Q131.489 240.815 131.489 259.415Q131.489 265.505 134.644 269.38Q137.8 273.255 144 275.967Q150.2 278.68 169.133 282.776Q191.608 287.537 201.296 291.578Q210.984 295.62 216.63 300.989Q222.277 306.359 225.266 313.833Q228.256 321.306 228.256 331.049Z"/><path d="M369.087 376H243.867V352.86L328.233 245.576H252.281V220H364.548V242.697L280.182 350.424H369.087Z"/><path d="M390.788 376V220H423.449V350.757H507.151V376Z"/></g><g fill="#FFFFFF"><path d="M228.256 331.049Q228.256 353.967 211.26 366.091Q194.265 378.214 161.383 378.214Q131.378 378.214 114.328 367.586Q97.278 356.957 92.406 335.367L123.96 330.163Q127.171 342.564 136.471 348.155Q145.771 353.746 162.268 353.746Q196.48 353.746 196.48 332.931Q196.48 326.288 192.549 321.97Q188.619 317.652 181.478 314.774Q174.336 311.895 154.075 307.798Q136.582 303.702 129.718 301.211Q122.853 298.72 117.317 295.343Q111.781 291.966 107.906 287.205Q104.031 282.444 101.872 276.023Q99.713 269.601 99.713 261.297Q99.713 240.15 115.601 228.913Q131.489 217.675 161.825 217.675Q190.833 217.675 205.392 226.754Q219.952 235.833 224.159 256.758L192.494 261.076Q190.058 251.001 182.585 245.908Q175.111 240.815 161.161 240.815Q131.489 240.815 131.489 259.415Q131.489 265.505 134.644 269.38Q137.8 273.255 144 275.967Q150.2 278.68 169.133 282.776Q191.608 287.537 201.296 291.578Q210.984 295.62 216.63 300.989Q222.277 306.359 225.266 313.833Q228.256 321.306 228.256 331.049Z"/><path d="M369.087 376H243.867V352.86L328.233 245.576H252.281V220H364.548V242.697L280.182 350.424H369.087Z"/><path d="M390.788 376V220H423.449V350.757H507.151V376Z"/></g></g><circle cx="373.69" cy="154.05" r="30" fill="#DF735F"/></svg></span><span>OAC / HEALTH LAB</span></div>
       <nav aria-label="Page navigation"><a href="#workspace">Preview</a><a href="#provenance">Source</a></nav>
     </header>
     <main>
@@ -157,8 +164,8 @@
         <div><p class="eyebrow">Operational model · Synthetic preview</p><h1 id="page-title">Signals made<br>legible.</h1><p class="hero-text">Explore how eight operational counters influence the OAC model’s operator-attention advisory. The Python service scores your input; this page does not simulate a result.</p><p class="hero-detail">Eight inputs. A fixed model. An inspectable source ledger.</p></div>
         <aside class="scope" aria-label="Model scope"><div class="signal-lens" aria-hidden="true"><span class="lens-axis"></span></div><div class="scope-copy"><strong>Operational telemetry only.</strong><p>No patient, specimen, order, assay, or result data. This model is trained on synthetic examples, is not production-calibrated, and has no clinical or device authority.</p></div></aside>
       </section>
-      <div class="status-line" id="service-status" data-state="checking"><span class="dot" aria-hidden="true"></span><span id="service-status-text">Checking service identity…</span></div>
-      <section class="workspace" id="workspace" aria-label="Operational advisory preview">
+      <div class="status-line" id="service-status" data-state="checking" role="status" aria-live="polite" aria-atomic="true"><span class="dot" aria-hidden="true"></span><span id="service-status-text">Checking service identity…</span></div>
+      <section class="workspace" id="workspace" tabindex="-1" aria-label="Operational advisory preview">
         <div class="card">
           <div class="card-head"><div class="head-row"><h2><span class="panel-index" aria-hidden="true">01</span>Operational inputs</h2><span class="badge">No clinical data</span></div><p>Invented defaults. Change counters, then request an advisory.</p></div>
           <form id="score-form">
@@ -206,7 +213,7 @@
         <p class="v2-status" id="v2-status" data-state="idle" role="status" aria-live="polite">Not enabled. No v2 request has been sent.</p>
         <p class="v2-result" id="v2-result" role="status" aria-live="polite">No v2 advisory requested.</p>
       </section>
-      <section class="card provenance" id="provenance" aria-labelledby="source-title">
+      <section class="card provenance" id="provenance" tabindex="-1" aria-labelledby="source-title">
         <div class="provenance-top"><h2 id="source-title"><span class="panel-index" aria-hidden="true">03</span>Source &amp; artifact identity</h2><button class="small-button" id="refresh-identity" type="button">Refresh identity</button></div>
         <p class="provenance-intro">Canonical Python source in GitHub. Model and synthetic dataset in Hugging Face. Revisions below are returned by the running service.</p>
         <div class="source-links"><a href="https://github.com/szl-holdings/szl-forge/tree/main/spaces/oac-system-health-lab" target="_blank" rel="noopener noreferrer">Canonical GitHub source ↗</a><a href="https://huggingface.co/SZLHOLDINGS/oac-system-health-v1" target="_blank" rel="noopener noreferrer">Model &amp; kernel ↗</a><a href="https://huggingface.co/datasets/SZLHOLDINGS/oac-clinical-transport-observability-synthetic" target="_blank" rel="noopener noreferrer">Synthetic dataset ↗</a><a href="/api/v1/identity" target="_blank" rel="noopener noreferrer">Identity manifest ↗</a><a href="/readyz" target="_blank" rel="noopener noreferrer">Readiness endpoint ↗</a></div>
@@ -214,7 +221,7 @@
         <p class="identity-note">A reported revision and a matching local artifact hash are not independent deployment attestation, clinical validation, or proof of physical device compatibility. No signed operational receipt is minted by this preview. This page checks the response hashes’ format; the independent release verifier checks their equality against canonical inputs and outputs.</p>
       </section>
     </main>
-    <footer class="foot"><p>Synthetic examples establish implementation behavior only. Real-world performance, regulatory qualification, site acceptance, and clinical result paths require separate evidence.</p><span>SZL · OAC System Health v1</span></footer>
+    <footer class="foot"><p>Synthetic examples establish implementation behavior only. Real-world performance, regulatory qualification, site acceptance, and clinical result paths require separate evidence.</p><span>SZL · OAC System Health v1<br><a href="https://github.com/szl-holdings/szl-brand">SZL visual identity</a> · <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a></span></footer>
   </div>
   <noscript><p class="wrap">JavaScript is required to request a server advisory. No score is computed without it. The source and identity links remain available.</p></noscript>
   <script>
