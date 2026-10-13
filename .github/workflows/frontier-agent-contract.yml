@@ -44,7 +44,7 @@ jobs:
           python -I -B tools/szl_frontier_agent.py --help
           python -I -B examples/frontier_agent/prepare_powershell_repair.py --help
           git diff --check
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
         with:
           name: frontier-agent-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.os }}-${{ matrix.python }}

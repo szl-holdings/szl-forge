@@ -78,7 +78,7 @@ jobs:
           python -m tools.evaluate_peft_fsdp > "$RUNNER_TEMP/peft-evidence/fsdp.json"
       - name: Preserve exact-run evidence even on failure
         if: ${{ always() }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: peft-cpu-${{ matrix.python-version }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/peft-evidence/
@@ -123,7 +123,7 @@ jobs:
           "$RUNNER_TEMP/interop-venv/bin/python" -m tools.evaluate_peft_export_interop > "$RUNNER_TEMP/interop-evidence/interop.json"
       - name: Preserve isolated interoperability evidence
         if: ${{ always() }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: peft-interop-0.7-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/interop-evidence/
