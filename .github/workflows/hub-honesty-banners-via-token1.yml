@@ -61,10 +61,7 @@ jobs:
       - name: Re-run joblib quarantine
         run: |
           set -euo pipefail
-          python tools/quarantine_hub_joblib.py --repo-id SZLHOLDINGS/szl-blocked
-          python tools/quarantine_hub_joblib.py --repo-id SZLHOLDINGS/szl-provctl
           python tools/quarantine_hub_joblib.py --repo-id SZLHOLDINGS/szl-formulas
-          python tools/quarantine_hub_joblib.py --repo-id SZLHOLDINGS/szl-ouroboros
           python tools/quarantine_hub_joblib.py --repo-id SZLHOLDINGS/szl-nemo
 
       - name: Upload sanitized credential report

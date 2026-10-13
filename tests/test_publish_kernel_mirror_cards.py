@@ -2,18 +2,21 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
 
 from tools.publish_kernel_mirror_cards import (
     FAMILY_WRITE_SET,
+    KERNEL_REPO_OWNED_TARGETS,
     KERNEL_WRITE_SET,
     PROFILES,
     SOURCE_REPOSITORY,
     TARGET_REPO_TYPE,
     WRITE_SET,
     Asset,
+    Profile,
     PublicationError,
     canonical_json,
     collect_assets,
@@ -29,13 +32,25 @@ from tools.publish_kernel_mirror_cards import (
 
 ROOT = Path(__file__).resolve().parents[1]
 KERNEL_EXPECTED = {
-    "szl-blocked": "SZLHOLDINGS/szl-blocked",
     "szl-formulas": "SZLHOLDINGS/szl-formulas",
-    "szl-govsign": "SZLHOLDINGS/szl-govsign",
-    "szl-invariants": "SZLHOLDINGS/szl-invariants",
-    "szl-ouroboros": "SZLHOLDINGS/szl-ouroboros",
-    "szl-provctl": "SZLHOLDINGS/szl-provctl",
 }
+# Each converged kernel repo's own hf-kernel-publish.yml is the single writer
+# of these Hub repos (kernel surface and model twin). Forge must not write them.
+KERNEL_REPO_OWNERS = {
+    "SZLHOLDINGS/szl-kernels": "szl-holdings/szl-kernels",
+    "SZLHOLDINGS/szl-invariants": "szl-holdings/szl-invariants",
+    "SZLHOLDINGS/szl-govsign": "szl-holdings/szl-govsign",
+    "SZLHOLDINGS/szl-maskmod": "szl-holdings/szl-maskmod",
+    "SZLHOLDINGS/szl-receipt-attn": "szl-holdings/szl-receipt-attn",
+    "SZLHOLDINGS/szl-blocked": "szl-holdings/szl-blocked",
+    "SZLHOLDINGS/szl-ouroboros": "szl-holdings/szl-ouroboros",
+    "SZLHOLDINGS/szl-provctl": "szl-holdings/szl-provctl",
+    "SZLHOLDINGS/szl-block-kv": "szl-holdings/szl-block-kv",
+    "SZLHOLDINGS/YARQA-ATTN": "szl-holdings/YARQA-ATTN",
+    "SZLHOLDINGS/szl-lambda-gate": "szl-holdings/szl-lambda-gate",
+    "SZLHOLDINGS/szl-governed-norm": "szl-holdings/szl-lambda-gate",
+}
+WORKFLOW = ROOT / ".github" / "workflows" / "publish-kernel-mirror-cards.yml"
 FAMILY_EXPECTED = {
     "khipu-gguf": "SZLHOLDINGS/SZL-Khipu-1.5B-GGUF",
     "nemo": "SZLHOLDINGS/szl-nemo",
@@ -108,6 +123,80 @@ def test_registry_and_write_set_are_closed() -> None:
     assert PROFILES["receiptagent"].library_name == "transformers"
 
 
+def test_kernel_repo_owned_targets_are_closed_and_never_profiles() -> None:
+    assert KERNEL_REPO_OWNED_TARGETS == KERNEL_REPO_OWNERS
+    targeted = {profile.repo_id for profile in PROFILES.values()}
+    assert targeted.isdisjoint(KERNEL_REPO_OWNED_TARGETS)
+    assert {name for name in PROFILES if name in {
+        repo_id.split("/", 1)[1] for repo_id in KERNEL_REPO_OWNED_TARGETS
+    }} == set()
+
+
+@pytest.mark.parametrize("repo_id", sorted(KERNEL_REPO_OWNERS))
+def test_kernel_repo_owned_target_is_refused_before_any_provider_call(
+    repo_id: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    name = repo_id.split("/", 1)[1]
+    profile = Profile(name=name, source_dir=name, repo_id=repo_id)
+    owner = KERNEL_REPO_OWNERS[repo_id]
+    with pytest.raises(PublicationError, match=re.escape(owner)):
+        publish(
+            profile=profile,
+            source_revision=SOURCE_REVISION,
+            assets=[],
+            token="masked",
+            credential_source="HF_TOKEN",
+        )
+    monkeypatch.setitem(PROFILES, name, profile)
+    with pytest.raises(PublicationError, match="hf-kernel-publish"):
+        resolve_profile(name)
+
+
+@pytest.mark.parametrize(
+    "profile_name",
+    ["szl-blocked", "szl-govsign", "szl-invariants", "szl-ouroboros", "szl-provctl"],
+)
+def test_retired_kernel_profiles_are_rejected_by_the_cli(
+    profile_name: str, tmp_path: Path
+) -> None:
+    with pytest.raises(SystemExit):
+        main(
+            [
+                "--profile",
+                profile_name,
+                "--source-revision",
+                SOURCE_REVISION,
+                "--root",
+                str(ROOT),
+                "--report",
+                str(tmp_path / "report.json"),
+            ]
+        )
+    assert not (tmp_path / "report.json").exists()
+
+
+def test_workflow_targets_only_forge_owned_profiles() -> None:
+    text = WORKFLOW.read_text(encoding="utf-8")
+    matrix = dict(
+        re.findall(
+            r"(?m)^ {10}- profile: (\S+)\n {12}repo_id: (\S+)$",
+            text,
+        )
+    )
+    publishable = {
+        name: profile.repo_id
+        for name, profile in PROFILES.items()
+        if not profile.gated
+    }
+    assert matrix == publishable
+    dry_run = text.split("for profile in \\\n", 1)[1].split("          do\n", 1)[0]
+    assert set(re.findall(r"(?m)^ {12}([a-z0-9-]+)(?: \\)?$", dry_run)) == set(PROFILES)
+    for repo_id in KERNEL_REPO_OWNERS:
+        assert repo_id not in text
+        name = repo_id.split("/", 1)[1]
+        assert f'"{name}/README.md"' not in text
+
+
 @pytest.mark.parametrize("profile_name", sorted(EXPECTED))
 def test_all_admitted_repository_assets_validate(profile_name: str) -> None:
     profile = resolve_profile(profile_name)
@@ -125,10 +214,10 @@ def test_all_admitted_repository_assets_validate(profile_name: str) -> None:
 
 
 def test_readme_requires_exact_profile_banner() -> None:
-    profile = resolve_profile("szl-blocked")
+    profile = resolve_profile("szl-formulas")
     validate_readme(profile, _readme(profile.name))
 
-    foreign = _readme("szl-formulas")
+    foreign = _readme("khipu-gguf")
     with pytest.raises(PublicationError):
         validate_readme(profile, foreign)
 
@@ -147,7 +236,7 @@ def test_readme_requires_exact_profile_banner() -> None:
 )
 def test_readme_rejects_unbound_or_active_content(payload: bytes) -> None:
     with pytest.raises(PublicationError):
-        validate_readme(resolve_profile("szl-blocked"), payload)
+        validate_readme(resolve_profile("szl-formulas"), payload)
 
 
 def test_svg_accepts_static_fragment_references() -> None:
@@ -205,7 +294,7 @@ def test_current_matches_is_byte_exact(tmp_path: Path) -> None:
         return str(mapping[str(kwargs["filename"])])
 
     assert current_matches(
-        repo_id="SZLHOLDINGS/szl-blocked",
+        repo_id="SZLHOLDINGS/szl-formulas",
         revision="2" * 40,
         sibling_paths=mapping,
         assets=[readme, banner],
@@ -213,7 +302,7 @@ def test_current_matches_is_byte_exact(tmp_path: Path) -> None:
         download_fn=download_fn,
     )
     assert not current_matches(
-        repo_id="SZLHOLDINGS/szl-blocked",
+        repo_id="SZLHOLDINGS/szl-formulas",
         revision="2" * 40,
         sibling_paths={"README.md"},
         assets=[readme, banner],
@@ -223,7 +312,7 @@ def test_current_matches_is_byte_exact(tmp_path: Path) -> None:
 
     hub_banner.write_bytes(b"different")
     assert not current_matches(
-        repo_id="SZLHOLDINGS/szl-blocked",
+        repo_id="SZLHOLDINGS/szl-formulas",
         revision="2" * 40,
         sibling_paths=mapping,
         assets=[readme, banner],
@@ -236,7 +325,7 @@ def test_reports_are_secret_free_and_card_only(tmp_path: Path) -> None:
     asset = _asset(tmp_path, "README.md", "README.md", b"safe")
     error = PublicationError("sensitive-looking hf_example_secret")
     report = publication_report(
-        profile=resolve_profile("szl-blocked"),
+        profile=resolve_profile("szl-formulas"),
         source_revision=SOURCE_REVISION,
         assets=[asset],
         status="FAILED_CLOSED",
@@ -272,7 +361,7 @@ def test_dry_run_cli_writes_machine_readable_evidence(tmp_path: Path) -> None:
     result = main(
         [
             "--profile",
-            "szl-blocked",
+            "szl-formulas",
             "--source-revision",
             SOURCE_REVISION,
             "--root",
@@ -284,7 +373,7 @@ def test_dry_run_cli_writes_machine_readable_evidence(tmp_path: Path) -> None:
     assert result == 0
     payload = json.loads(report_path.read_text(encoding="utf-8"))
     assert payload["status"] == "VALIDATED_NOT_PUBLISHED"
-    assert payload["target"]["repo_id"] == EXPECTED["szl-blocked"]
+    assert payload["target"]["repo_id"] == EXPECTED["szl-formulas"]
     assert payload["publication"]["exact_readback"] is False
     assert payload["scope"]["promotion_effect"] == "NONE"
     assert {item["path_in_repo"] for item in payload["files"]} == {

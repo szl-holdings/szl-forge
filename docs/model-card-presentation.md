@@ -25,7 +25,7 @@ promise about future availability. No new card header claims hosted inference.
 
 | Publisher | Profiles | Source disposition |
 | --- | ---: | --- |
-| `publish-kernel-mirror-cards.yml` | 12 | Eleven public profiles; ReceiptAgent 1.5B remains gated |
+| `publish-kernel-mirror-cards.yml` | 7 | Six public profiles; ReceiptAgent 1.5B remains gated. The five converged kernel twins moved to their own repositories' `hf-kernel-publish.yml` on 2026-10-13 |
 | `publish-khipu-card.yml` | 2 | Research cards with their abstention release blockers visible |
 | `publish-chaski-card.yml` | 4 | Research cards with failed, quarantined, or not-promotable states visible |
 

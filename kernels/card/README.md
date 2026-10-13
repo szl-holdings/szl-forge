@@ -138,11 +138,11 @@ Canonical GitHub: [`szl-holdings/szl-kernels`](https://github.com/szl-holdings/s
 **Canonical source:** [`szl-holdings/szl-kernels`](https://github.com/szl-holdings/szl-kernels).
 The protected `main` workflow verifies the kernel suite, replays the MiniEmbed
 artifact within its declared tolerance, and checks the source-binding contract
-against the public Hugging Face artifact. Exact publication is performed by the
-authorized release gateway in
-[`szl-holdings/szl-forge`](https://github.com/szl-holdings/szl-forge/blob/main/.github/workflows/publish-szl-kernels.yml).
-That gateway checks out an exact protected Git revision, publishes the declared
-file set, and reads every byte back at the resulting immutable Hub revision.
+against the public Hugging Face artifact. The first-class kernel repo is
+published only by that repository's own
+[`hf-kernel-publish.yml`](https://github.com/szl-holdings/szl-kernels/blob/main/.github/workflows/hf-kernel-publish.yml),
+which builds from an exact Git revision, pushes the declared tree, and verifies
+it anonymously with `get_kernel` at the resulting Hub revision.
 The exact Git source revision is written to `publication.json`.
 
 This is a governed kernel suite with a receipted word-embedding companion. It is

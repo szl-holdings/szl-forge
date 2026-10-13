@@ -49,7 +49,7 @@ jobs:
         run: |
           set -euo pipefail
           python tools/acquire_hf_publisher_token.py \
-            --target-repo SZLHOLDINGS/szl-blocked \
+            --target-repo SZLHOLDINGS/szl-formulas \
             --target-type model \
             --allow-create \
             --github-env "${GITHUB_ENV}" \
@@ -58,10 +58,7 @@ jobs:
       - name: Quarantine joblib on C4 Hub models
         run: |
           set -euo pipefail
-          python tools/quarantine_hub_joblib.py --repo-id SZLHOLDINGS/szl-blocked
-          python tools/quarantine_hub_joblib.py --repo-id SZLHOLDINGS/szl-provctl
           python tools/quarantine_hub_joblib.py --repo-id SZLHOLDINGS/szl-formulas
-          python tools/quarantine_hub_joblib.py --repo-id SZLHOLDINGS/szl-ouroboros
           python tools/quarantine_hub_joblib.py --repo-id SZLHOLDINGS/szl-nemo
 
       - name: Upload sanitized credential report

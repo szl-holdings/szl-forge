@@ -1,0 +1,130 @@
+{
+  "schema": "szl.kernel-hub-ownership/v1",
+  "effective": "2026-10-13",
+  "policy": "Each listed Hub target has exactly one writer, in its kernel source repository. szl-forge writes none of them: no workflow, tool, profile or manifest in this repository may name one of these repo ids as a Hub write target.",
+  "kernel_writer": ".github/workflows/hf-kernel-publish.yml",
+  "targets": [
+    {
+      "repo_id": "SZLHOLDINGS/szl-kernels",
+      "owner": "szl-holdings/szl-kernels",
+      "kernel_repo": "kernels/SZLHOLDINGS/szl-kernels",
+      "model_repo_writer": "szl-holdings/szl-kernels model-repo source-binding publisher (no model twin configured; the model repo also hosts SZL-MiniEmbed)",
+      "retired_forge_writers": [
+        ".github/workflows/publish-szl-kernels.yml",
+        "tools/publish_szl_kernels.py",
+        "tools/verify_szl_kernel_runtime.py",
+        "tools/authorize_kernels_release.py",
+        "tools/kernels_keyless_credentials.py",
+        "tools/install_patched_kernel_builder.sh",
+        ".github/workflows/kernel-0161-qualification.yml"
+      ]
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-invariants",
+      "owner": "szl-holdings/szl-invariants",
+      "kernel_repo": "kernels/SZLHOLDINGS/szl-invariants",
+      "model_repo_writer": "szl-holdings/szl-invariants hf-kernel-publish.yml (model twin pointer)",
+      "retired_forge_writers": [
+        ".github/workflows/publish-szl-invariants.yml",
+        "tools/publish_szl_invariants.py",
+        "tools/verify_invariants_hub_bytes.py",
+        "tools/authorize_invariants_release.py",
+        "tools/invariants_keyless_credentials.py",
+        "tools/inspect_invariants_release_evidence.py",
+        ".github/workflows/publish-kernel-mirror-cards.yml profile szl-invariants",
+        ".github/workflows/reconcile-kernel-provenance.yml"
+      ]
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-govsign",
+      "owner": "szl-holdings/szl-govsign",
+      "kernel_repo": "kernels/SZLHOLDINGS/szl-govsign",
+      "model_repo_writer": "szl-holdings/szl-govsign hf-kernel-publish.yml (model twin pointer)",
+      "retired_forge_writers": [
+        ".github/workflows/publish-kernel-mirror-cards.yml profile szl-govsign",
+        ".github/workflows/reconcile-kernel-provenance.yml"
+      ]
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-maskmod",
+      "owner": "szl-holdings/szl-maskmod",
+      "kernel_repo": "kernels/SZLHOLDINGS/szl-maskmod",
+      "model_repo_writer": "szl-holdings/szl-maskmod hf-kernel-publish.yml (model twin pointer)",
+      "retired_forge_writers": []
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-receipt-attn",
+      "owner": "szl-holdings/szl-receipt-attn",
+      "kernel_repo": "kernels/SZLHOLDINGS/szl-receipt-attn",
+      "model_repo_writer": "szl-holdings/szl-receipt-attn hf-kernel-publish.yml (model twin pointer)",
+      "retired_forge_writers": []
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-blocked",
+      "owner": "szl-holdings/szl-blocked",
+      "kernel_repo": "kernels/SZLHOLDINGS/szl-blocked",
+      "model_repo_writer": "szl-holdings/szl-blocked hf-kernel-publish.yml (model twin pointer)",
+      "retired_forge_writers": [
+        ".github/workflows/publish-kernel-mirror-cards.yml profile szl-blocked",
+        ".github/workflows/reconcile-kernel-provenance.yml",
+        ".github/workflows/hub-joblib-quarantine-via-token1.yml entry szl-blocked",
+        ".github/workflows/hub-honesty-banners-via-token1.yml entry szl-blocked"
+      ]
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-ouroboros",
+      "owner": "szl-holdings/szl-ouroboros",
+      "kernel_repo": "kernels/SZLHOLDINGS/szl-ouroboros",
+      "model_repo_writer": "szl-holdings/szl-ouroboros hf-kernel-publish.yml (model twin pointer)",
+      "retired_forge_writers": [
+        ".github/workflows/publish-kernel-mirror-cards.yml profile szl-ouroboros",
+        ".github/workflows/reconcile-kernel-provenance.yml",
+        ".github/workflows/hub-joblib-quarantine-via-token1.yml entry szl-ouroboros",
+        ".github/workflows/hub-honesty-banners-via-token1.yml entry szl-ouroboros"
+      ]
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-provctl",
+      "owner": "szl-holdings/szl-provctl",
+      "kernel_repo": "kernels/SZLHOLDINGS/szl-provctl",
+      "model_repo_writer": "szl-holdings/szl-provctl hf-kernel-publish.yml (model twin pointer)",
+      "retired_forge_writers": [
+        ".github/workflows/publish-kernel-mirror-cards.yml profile szl-provctl",
+        ".github/workflows/reconcile-kernel-provenance.yml",
+        ".github/workflows/hub-joblib-quarantine-via-token1.yml entry szl-provctl",
+        ".github/workflows/hub-honesty-banners-via-token1.yml entry szl-provctl"
+      ]
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-block-kv",
+      "owner": "szl-holdings/szl-block-kv",
+      "kernel_repo": "kernels/SZLHOLDINGS/szl-block-kv",
+      "model_repo_writer": "szl-holdings/szl-block-kv hf-kernel-publish.yml (model twin pointer)",
+      "retired_forge_writers": []
+    },
+    {
+      "repo_id": "SZLHOLDINGS/YARQA-ATTN",
+      "owner": "szl-holdings/YARQA-ATTN",
+      "kernel_repo": "kernels/SZLHOLDINGS/YARQA-ATTN",
+      "model_repo_writer": "szl-holdings/YARQA-ATTN hf-kernel-publish.yml (model twin pointer)",
+      "retired_forge_writers": []
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-lambda-gate",
+      "owner": "szl-holdings/szl-lambda-gate",
+      "kernel_repo": "kernels/SZLHOLDINGS/szl-lambda-gate",
+      "model_repo_writer": "szl-holdings/szl-lambda-gate hf-kernel-publish.yml (model twin pointer)",
+      "retired_forge_writers": []
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-governed-norm",
+      "owner": "szl-holdings/szl-lambda-gate",
+      "kernel_repo": "kernels/SZLHOLDINGS/szl-governed-norm",
+      "model_repo_writer": "szl-holdings/szl-lambda-gate hf-kernel-publish.yml (model twin pointer)",
+      "retired_forge_writers": [
+        ".github/workflows/publish-compatibility-kernels.yml",
+        "tools/publish_compatibility_kernels.py"
+      ]
+    }
+  ]
+}

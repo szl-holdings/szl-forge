@@ -180,68 +180,30 @@ replays the repository-declared Ed25519 receipt chain against external OpenSSL
 and hashes the actual opaque adapter bytes. It reports source, artifact and
 signature integrity separately from signer trust and production authority.
 
-## First-class kernel publication and signature
+## Kernel Hub ownership
 
-`.github/workflows/publish-szl-kernels.yml` is the sole publication gateway for
-`SZLHOLDINGS/szl-kernels`. It authorizes exact protected-main revisions of both
-the source and this publisher before provider authority is acquired. The
-publication job exchanges GitHub OIDC separately for the exact model resource
-and the exact first-class Kernel resource. Hugging Face defines each successful
-repository Trusted Publisher exchange as a short-lived write grant to exactly
-that resource; the two grants must be distinct and both exchanges must succeed
-before publication continues. The helper does not route these synthetic OIDC
-grants through `HfApi.auth_check`, which is a separate user-token endpoint.
-Provider-supported structural reads establish the current parents and file
-sets, but are not claimed as independent write proof. Actual write authority is
-exercised only by the typed Kernel upload and the parent-bound model
-`create_commit`, followed by exact immutable readback.
+szl-forge does not publish to the converged SZL kernel Hub repositories. Since
+2026-10-13 each kernel source repository's own
+`.github/workflows/hf-kernel-publish.yml` is the single writer of its
+first-class kernel repo (`huggingface.co/kernels/SZLHOLDINGS/<name>`) and of its
+same-named model twin, which it keeps as a pointer card.
 
-The trusted publisher stages the Kernel Hub package, embeds a digest covering
-every executable and source-binding file, and signs `metadata.json` with
-Sigstore keyless signing. Authority remains separated by job and purpose: the
-signing job uses GitHub OIDC only for Sigstore and is required to have no
-Hugging Face token; the publication job uses GitHub OIDC only to obtain the two
-exact Hub grants, then removes the OIDC request variables before any provider
-read or write. Only `cosign sign-blob` receives the OIDC request variables among
-subprocesses launched by the signer; version and verification probes are
-credentialless, and the Kernel uploader receives only its Kernel grant plus a
-small operating-system environment allowlist. There is no PAT, cached-token, or
-broad organization-token fallback.
+| Hub target | Owner (single writer) |
+| --- | --- |
+| `kernels/SZLHOLDINGS/szl-kernels` | `szl-holdings/szl-kernels` `hf-kernel-publish.yml`; the `SZLHOLDINGS/szl-kernels` model repo (SZL-MiniEmbed host, no twin) is written by that repository's own source-binding publisher |
+| `szl-invariants`, `szl-govsign`, `szl-maskmod`, `szl-receipt-attn`, `szl-blocked`, `szl-ouroboros`, `szl-provctl`, `szl-block-kv`, `YARQA-ATTN` (kernel repo and model twin) | the same-named `szl-holdings/<name>` repository's `hf-kernel-publish.yml` |
+| `szl-lambda-gate`, `szl-governed-norm` (kernel repos and model twins) | `szl-holdings/szl-lambda-gate` `hf-kernel-publish.yml` |
 
-Before upload, Forge verifies the signature against exactly
-`szl-holdings/szl-forge/.github/workflows/publish-szl-kernels.yml@refs/heads/main`
-and the GitHub Actions OIDC issuer, repository, `refs/heads/main`,
-`workflow_dispatch` trigger, and exact publisher commit SHA. A bound signature
-bundle is the only signing output transferred between jobs. Both jobs rebuild
-the same deterministic authorization projection and staged metadata; any source,
-publisher, authorization fact, or observed Hub-parent drift invalidates the
-transfer before a provider write. Forge then rechecks both mutable Hub branch
-parents, uploads, reads the signed bundle and all declared bytes back from the
-new immutable revisions, and runs the existing credentialless runtime witness.
-The `v1` readback also closes the complete provider file inventory to
-`.gitattributes`, `LICENSE`, `README.md`, and the staged package files; an
-undeclared root payload or competing compatible `build/*` variant is terminal.
-The signed first-class source binding is explicitly versioned as
-`szl.hf-first-class-kernel-binding/v2`; its `authorization_binding` is the
-deterministic exact-head projection used across the two jobs. The legacy model
-publication retains the established `szl.hf-kernel-source-binding/v2`
-`authorization` observation contract.
-
-Kernel upload failure receipts retain only an allowlisted numeric `http_status`
-and fixed `http_error_class` from a recognized first upstream error cause.
-Unrecognized or ambiguous output remains `UNKNOWN`; a `FORBIDDEN` class does
-not infer a numeric 403 or establish which provider permission is missing.
-Raw stderr, provider URLs, response bodies, headers, and tokens are never added
-to these fields. Diagnostics do not change authorization, upload acceptance,
-file readback, or runtime gates.
-
-This source contract does not assert that an older Hub revision is signed or
-that a new revision has been published. The `kernels` client does not yet make
-signature verification a load-time guarantee, and its default verification
-policy curates upstream publishers rather than automatically trusting this SZL
-workflow. Forge therefore enforces the exact Cosign identity itself. The
-detached bundle is additional integrity and publisher-identity evidence, not a
-performance, safety, or production-authorization claim.
+The closed registry is [`publishing/kernel-hub-ownership.json`](publishing/kernel-hub-ownership.json).
+`tests/test_kernel_hub_ownership.py` fails if a tracked workflow or tool that
+can write to the Hub names one of these targets, or if a retired writer
+returns, and `tools/publish_kernel_mirror_cards.py` refuses any profile that
+targets them. The retired Forge writers were `publish-szl-kernels.yml`,
+`publish-szl-invariants.yml`, `reconcile-kernel-provenance.yml`,
+`publish-compatibility-kernels.yml`, the five converged kernel profiles of
+`publish-kernel-mirror-cards.yml`, and the converged twins in the joblib
+quarantine workflows, together with their authorizers, credential helpers,
+verifiers and tests. Git history keeps them.
 
 ## Doctrine gate (dataset content)
 
