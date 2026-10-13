@@ -15,6 +15,9 @@ tags:
   - willay
 ---
 
+<p><img src="https://raw.githubusercontent.com/szl-holdings/szl-brand/27d12e77fc0f9f1a0e5fae8b34adf2380d51d070/kit/logos/orbit-v2/suite/szl-icon-32.svg" alt="SZL Holdings" width="40" height="40" /></p>
+
+
 <p align="center">
   <img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/ad20ac2c24859156891c391108a86d4f05163f83/willay/card/holo-banner.svg" alt="WILLAY — holographic herald banner" width="100%"/>
 </p>
@@ -62,3 +65,5 @@ The authoring source is [`szl-holdings/szl-forge/willay/card/README.md`](https:/
 Apache-2.0 is declared and a standalone [LICENSE](https://huggingface.co/SZLHOLDINGS/WILLAY/blob/e04bd728f20857c75e7c831d19d7190affd29133/LICENSE) is listed. The reviewed [status record](https://huggingface.co/SZLHOLDINGS/WILLAY/blob/e04bd728f20857c75e7c831d19d7190affd29133/status.json) still blocks artifact lineage, consent, privacy, training suitability and deployment, with `production_ready=false`. [provenance.json](https://huggingface.co/SZLHOLDINGS/WILLAY/blob/e04bd728f20857c75e7c831d19d7190affd29133/provenance.json) says ownership and relicensing authority were not independently established by license-file publication. Preserve those blocks; this card grants no rights clearance or publication/production promotion.
 
 Copyright 2026 SZL Holdings. Stephen P. Lutar Jr. ORCID [0009-0001-0110-4173](https://orcid.org/0009-0001-0110-4173).
+
+Artwork: SZL Orbit · © 2026 SZL Holdings / Stephen Lutar · [CC BY 4.0](https://github.com/szl-holdings/szl-brand/blob/27d12e77fc0f9f1a0e5fae8b34adf2380d51d070/kit/LICENSE) · [Trademark notice](https://github.com/szl-holdings/szl-brand/blob/27d12e77fc0f9f1a0e5fae8b34adf2380d51d070/NOTICE).
