@@ -37,6 +37,7 @@ CARD_PATHS = frozenset({"README.md"})
 MAX_FILE_BYTES = 2 * 1024 * 1024
 REVIEWED_HUB_CLIENT = "1.23.0"
 REPORT_SCHEMA = "szl.oac-hub-publication/v1"
+REVIEWED_CARD_APPROVAL_SHA256 = "038d27b45900fad3f0b77a21fda3e236b2c7a393d5f872e62748d1daa11cafc7"
 
 
 @dataclass(frozen=True)
@@ -390,6 +391,29 @@ def assert_reviewed_card_reconciliation(
         "parent_revision": parent,
         "delta": ["README.md"],
     }
+
+
+def parse_reviewed_card_approval(raw: bytes) -> dict[str, Any]:
+    """Pin the independently inspected receipt, not merely its candidate path."""
+    if len(raw) > 16384 or sha256_bytes(raw) != REVIEWED_CARD_APPROVAL_SHA256:
+        raise PublicationRefused("reviewed-parent approval differs from its reviewed digest")
+    approval = json.loads(raw)
+    if not isinstance(approval, dict):
+        raise PublicationRefused("reviewed-parent approval must be an object")
+    return approval
+
+
+def confirm_reviewed_parent(api: Any, profile: HubProfile, report: dict[str, Any],
+                            *, not_found: type[BaseException]) -> None:
+    """Confirm the mutable head still names the reviewed immutable snapshot."""
+    info = lookup_target(api, profile, not_found=not_found)
+    if info is None:
+        raise PublicationRefused("target disappeared before reviewed-parent confirmation")
+    head = check_identity(info, profile)
+    report["head_after"] = head
+    if head != report["parent_revision"]:
+        raise PublicationRefused("Hub head moved before reviewed-parent confirmation")
+    report["expected_delta_since"]["reviewed_reconciliation"]["live_head_reconfirmed"] = head
 
 
 def assert_expected_parent(expected_parent: str, report: dict[str, Any]) -> None:
@@ -861,11 +885,7 @@ def main(argv: list[str] | None = None, *, environ: Mapping[str, str] | None = N
                     or args.reviewed_parent_approval != "docs/oac-v2-card-parent-2026-10-13.json"):
                 raise PublicationRefused("reviewed-parent approval is restricted to the named dry-run evidence")
             raw = _git(["show", f"{source_revision}:{args.reviewed_parent_approval}"])
-            if len(raw) > 16384:
-                raise PublicationRefused("reviewed-parent approval exceeds its size bound")
-            approval = json.loads(raw)
-            if not isinstance(approval, dict):
-                raise PublicationRefused("reviewed-parent approval must be an object")
+            approval = parse_reviewed_card_approval(raw)
         if args.allow_create and (not args.publish or not profile.allow_create):
             raise PublicationRefused("--allow-create requires a create-enabled publish profile")
         if args.publish:
@@ -902,6 +922,9 @@ def main(argv: list[str] | None = None, *, environ: Mapping[str, str] | None = N
         if args.expect_delta_since:
             assert_expected_delta(profile, args.expect_delta_since.strip(), source_revision, report,
                                   reviewed_parent=approval)
+            if report["expected_delta_since"].get("reviewed_reconciliation"):
+                confirm_reviewed_parent(clients["api"], profile, report,
+                                        not_found=clients["not_found"])
         exit_code = 0
     except PublicationRefused as error:
         if report["state"] != "BLOCKED":
