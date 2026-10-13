@@ -37,6 +37,7 @@ CARD_PATHS = frozenset({"README.md"})
 MAX_FILE_BYTES = 2 * 1024 * 1024
 REVIEWED_HUB_CLIENT = "1.23.0"
 REPORT_SCHEMA = "szl.oac-hub-publication/v1"
+REVIEWED_CARD_APPROVAL_SHA256 = "038d27b45900fad3f0b77a21fda3e236b2c7a393d5f872e62748d1daa11cafc7"
 
 
 @dataclass(frozen=True)
@@ -288,6 +289,7 @@ def assert_expected_delta(
     report: dict[str, Any],
     *,
     git: Callable[[list[str]], bytes] | None = None,
+    reviewed_parent: dict[str, Any] | None = None,
 ) -> None:
     """Dry-run assertion of source delta and, when visible, Hub/base parity.
 
@@ -328,6 +330,9 @@ def assert_expected_delta(
         "delta": expected,
     }
     if drift:
+        if reviewed_parent is not None:
+            assert_reviewed_card_reconciliation(profile, base, expected, report, reviewed_parent)
+            return
         raise PublicationRefused(
             "Hub bytes at the inspected parent differ from the base revision's staged "
             "bytes: " + ", ".join(drift)
@@ -336,6 +341,79 @@ def assert_expected_delta(
         raise PublicationRefused(
             "dry-run delta differs from the staged change since the base revision"
         )
+
+
+def assert_reviewed_card_reconciliation(
+    profile: HubProfile, base: dict[str, Any], expected: list[str],
+    report: dict[str, Any], approval: dict[str, Any],
+) -> None:
+    """Prove the exact already-accepted v2 card pending publication.
+
+    This dry-run exception cannot admit a candidate package change. It binds
+    all six base/staged and immutable-parent files, while honestly retaining
+    hub_equals_base=False. Publication still uses the ordinary fixed-parent CAS.
+    """
+    if (profile != PROFILES["oac-v2-model"] or expected
+            or report.get("mode") != "dry_run"
+            or approval.get("schema") != "szl.oac-v2-reviewed-card-parent/v1"
+            or approval.get("profile") != profile.key
+            or approval.get("target") != profile.repo_id
+            or approval.get("permitted_delta") != ["README.md"]
+            or report.get("delta") != ["README.md"]):
+        raise PublicationRefused("reviewed card reconciliation is outside its closed scope")
+    require_sha(approval.get("source_revision", ""), "reviewed source revision")
+    parent = approval.get("reviewed_parent", "")
+    require_sha(parent, "reviewed parent revision")
+    assert_expected_parent(parent, report)
+    rows = approval.get("files")
+    if not isinstance(rows, list):
+        raise PublicationRefused("reviewed card evidence is malformed")
+    evidence = {}
+    for kind, revision in (("live", parent), ("source", approval["source_revision"])):
+        selected = [row for row in rows if isinstance(row, dict) and row.get("kind") == kind]
+        if (len(selected) != len(profile.files)
+                or {row.get("path") for row in selected} != set(profile.files)
+                or any(row.get("revision") != revision for row in selected)):
+            raise PublicationRefused("reviewed card evidence has a different closed file set")
+        evidence[kind] = {
+            row["path"]: {"bytes": row.get("bytes"), "sha256": row.get("sha256")}
+            for row in selected
+        }
+    if (evidence["live"] != report.get("hub_before")
+            or evidence["source"] != base or evidence["source"] != report.get("staged")
+            or any(evidence["live"][path] != evidence["source"][path]
+                   for path in profile.files if path != "README.md")
+            or sorted(approval.get("live_inventory", [])) != report.get("hub_files")):
+        raise PublicationRefused("reviewed card parent or accepted source bytes differ")
+    report["expected_delta_since"]["reviewed_reconciliation"] = {
+        "state": "EXACT_PRIOR_ACCEPTED_CARD_VERIFIED",
+        "source_revision": approval["source_revision"],
+        "parent_revision": parent,
+        "delta": ["README.md"],
+    }
+
+
+def parse_reviewed_card_approval(raw: bytes) -> dict[str, Any]:
+    """Pin the independently inspected receipt, not merely its candidate path."""
+    if len(raw) > 16384 or sha256_bytes(raw) != REVIEWED_CARD_APPROVAL_SHA256:
+        raise PublicationRefused("reviewed-parent approval differs from its reviewed digest")
+    approval = json.loads(raw)
+    if not isinstance(approval, dict):
+        raise PublicationRefused("reviewed-parent approval must be an object")
+    return approval
+
+
+def confirm_reviewed_parent(api: Any, profile: HubProfile, report: dict[str, Any],
+                            *, not_found: type[BaseException]) -> None:
+    """Confirm the mutable head still names the reviewed immutable snapshot."""
+    info = lookup_target(api, profile, not_found=not_found)
+    if info is None:
+        raise PublicationRefused("target disappeared before reviewed-parent confirmation")
+    head = check_identity(info, profile)
+    report["head_after"] = head
+    if head != report["parent_revision"]:
+        raise PublicationRefused("Hub head moved before reviewed-parent confirmation")
+    report["expected_delta_since"]["reviewed_reconciliation"]["live_head_reconfirmed"] = head
 
 
 def assert_expected_parent(expected_parent: str, report: dict[str, Any]) -> None:
@@ -780,6 +858,10 @@ def main(argv: list[str] | None = None, *, environ: Mapping[str, str] | None = N
         metavar="HUB_SHA",
         help="require the inspected Hub head before publication to be exactly HUB_SHA",
     )
+    parser.add_argument(
+        "--reviewed-parent-approval",
+        help="dry-run only: committed immutable evidence for an already accepted v2 card",
+    )
     args = parser.parse_args(argv)
     environ = os.environ if environ is None else environ
     profile = resolve_profile(args.profile)
@@ -797,6 +879,13 @@ def main(argv: list[str] | None = None, *, environ: Mapping[str, str] | None = N
     exit_code = 1
     try:
         require_sha(source_revision, "source revision")
+        approval = None
+        if args.reviewed_parent_approval:
+            if (args.publish or not args.expect_delta_since
+                    or args.reviewed_parent_approval != "docs/oac-v2-card-parent-2026-10-13.json"):
+                raise PublicationRefused("reviewed-parent approval is restricted to the named dry-run evidence")
+            raw = _git(["show", f"{source_revision}:{args.reviewed_parent_approval}"])
+            approval = parse_reviewed_card_approval(raw)
         if args.allow_create and (not args.publish or not profile.allow_create):
             raise PublicationRefused("--allow-create requires a create-enabled publish profile")
         if args.publish:
@@ -831,7 +920,11 @@ def main(argv: list[str] | None = None, *, environ: Mapping[str, str] | None = N
         if args.expect_parent and not args.publish:
             assert_expected_parent(args.expect_parent.strip(), report)
         if args.expect_delta_since:
-            assert_expected_delta(profile, args.expect_delta_since.strip(), source_revision, report)
+            assert_expected_delta(profile, args.expect_delta_since.strip(), source_revision, report,
+                                  reviewed_parent=approval)
+            if report["expected_delta_since"].get("reviewed_reconciliation"):
+                confirm_reviewed_parent(clients["api"], profile, report,
+                                        not_found=clients["not_found"])
         exit_code = 0
     except PublicationRefused as error:
         if report["state"] != "BLOCKED":

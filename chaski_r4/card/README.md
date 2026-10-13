@@ -32,7 +32,7 @@ szl:
 ---
 
 <!-- SZL-CARD-PRESENTATION:v1 -->
-<p><a href="https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab"><img src="https://raw.githubusercontent.com/szl-holdings/.github/main/profile/assets/szl/logos/szl_mark_holographic.svg" alt="SZL Holdings" width="112" /></a></p>
+<p><a href="https://huggingface.co/SZLHOLDINGS"><img src="https://raw.githubusercontent.com/szl-holdings/szl-brand/27d12e77fc0f9f1a0e5fae8b34adf2380d51d070/kit/logos/orbit-v2/suite/szl-icon-32.svg" alt="SZL Holdings" width="48" height="48" /></a></p>
 
 # Chaski-R4
 
@@ -40,7 +40,7 @@ A public bf16 LoRA research artifact with a bounded named-N evaluation record.
 
 **Artifact:** LoRA adapter · **Stage:** Experimental · NOT PROMOTABLE
 
-[Explore in Command Lab](https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab) · [Build](https://github.com/szl-holdings/szl-forge/tree/main/chaski_r4) · [Evidence](https://github.com/szl-holdings/szl-forge/blob/2b4d7a0f69e68d60cb0f35f09c9bac837d66acdc/chaski_r4/card/README.md)
+[Command Lab](https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab) · [Canonical source](https://github.com/szl-holdings/szl-forge/tree/main/chaski_r4) · [Reviewed evidence](https://github.com/szl-holdings/szl-forge/blob/2b4d7a0f69e68d60cb0f35f09c9bac837d66acdc/chaski_r4/card/README.md)
 
 ## Before you use it
 
@@ -143,3 +143,7 @@ Doctrine v11 LOCKED. Λ = Conjecture 1, advisory, never a theorem.
 
 <!-- SZL-CARD-TECHNICAL:v1:END -->
 </details>
+
+<!-- SZL-NATIVE-ARTWORK:v1 -->
+SZL Orbit artwork: [source](https://github.com/szl-holdings/szl-brand/blob/27d12e77fc0f9f1a0e5fae8b34adf2380d51d070/kit/logos/orbit-v2/suite/szl-icon-32.svg) · [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Software and artifact licensing remain declared above.
+<!-- /SZL-NATIVE-ARTWORK:v1 -->
