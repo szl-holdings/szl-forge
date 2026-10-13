@@ -43,7 +43,7 @@ class VisualContractTests(unittest.TestCase):
         root = re.search(r":root\s*\{([^}]+)\}", self.html).group(1)
         tokens = dict(re.findall(r"--([a-z-]+)\s*:\s*(#[0-9a-f]{6})\s*;", root))
         pairs = []
-        for foreground in ("ink", "muted", "green", "violet"):
+        for foreground in ("ink", "muted", "green", "silver"):
             for background in ("paper", "surface", "surface-soft"):
                 pairs.append((foreground, background, 4.5))
         pairs.extend([
