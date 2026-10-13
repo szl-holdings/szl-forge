@@ -45,6 +45,12 @@ The model cannot:
 - authorize clinical use; or
 - establish regulatory, privacy, security, or site acceptance.
 
+<!-- SZL-NATIVE-PRESENTATION:v1 -->
+<p><a href="https://huggingface.co/SZLHOLDINGS"><img src="https://raw.githubusercontent.com/szl-holdings/szl-brand/27d12e77fc0f9f1a0e5fae8b34adf2380d51d070/kit/logos/orbit-v2/suite/szl-icon-32.svg" alt="SZL Holdings" width="48" height="48" /></a></p>
+
+[Command Lab](https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab) · [Canonical source](https://github.com/szl-holdings/szl-forge/tree/main/clinical-gateway) · [Evidence](#provenance)
+<!-- /SZL-NATIVE-PRESENTATION:v1 -->
+
 ## Provenance
 
 - **Artifact revision.** `model.json`, `artifact_receipt.json`,
@@ -257,3 +263,7 @@ own item id. The item text is SZL's paraphrase, not a quotation. Totals:
 ## License
 
 Apache-2.0. See `LICENSE`.
+
+<!-- SZL-NATIVE-ARTWORK:v1 -->
+SZL Orbit artwork: [source](https://github.com/szl-holdings/szl-brand/blob/27d12e77fc0f9f1a0e5fae8b34adf2380d51d070/kit/logos/orbit-v2/suite/szl-icon-32.svg) · [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Software and artifact licensing remain declared above.
+<!-- /SZL-NATIVE-ARTWORK:v1 -->
