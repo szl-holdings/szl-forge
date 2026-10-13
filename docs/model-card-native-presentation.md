@@ -71,7 +71,9 @@ alternate cards. A watched card change can trigger that whole matrix. This
 change touches none of its watched card paths, profile registry or workflow;
 it does not use a different card edit to overwrite those nano bodies.
 Both existing writer configurations remain intact pending explicit source
-conflict resolution.
+conflict resolution. (On 2026-10-13 the five converged kernel profiles were
+removed from this matrix because their kernel repositories now own their
+model twins; the nano profiles were not changed.)
 
 The historical `publishing/model-card-presentation.v1.json` and separate
 review-route records are preserved as historical evidence. Their old hashes

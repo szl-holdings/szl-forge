@@ -14,7 +14,7 @@ class ModelKernelFrontierWorkflowTests(unittest.TestCase):
         cls.workflow = WORKFLOW.read_text(encoding="utf-8")
         cls.offline_region = cls.workflow.split(
             "      - name: Compile and run offline contracts", 1
-        )[1].split("      - name: Build the stable Kernel runtime image", 1)[0]
+        )[1].split("      - name: Acquire validated private-Hub read credential", 1)[0]
         cls.live_region = cls.workflow.split(
             "      - name: Acquire validated private-Hub read credential", 1
         )[1].split("      - name: Upload audit evidence", 1)[0]

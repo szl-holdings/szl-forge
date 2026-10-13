@@ -38,6 +38,44 @@ FAMILY_WRITE_SET: tuple[tuple[str, str], ...] = (
 )
 WRITE_SET = KERNEL_WRITE_SET
 
+# Hub model repos (and their same-named first-class kernel repos) whose single
+# canonical writer is the kernel source repository's own hf-kernel-publish.yml.
+# This publisher must never target them: it would overwrite the model-twin
+# pointer card that pipeline maintains. The closed registry is repository data so
+# that tests and documentation share one source of ownership truth.
+KERNEL_HUB_OWNERSHIP = (
+    Path(__file__).resolve().parents[1] / "publishing" / "kernel-hub-ownership.json"
+)
+KERNEL_HUB_OWNERSHIP_SCHEMA = "szl.kernel-hub-ownership/v1"
+
+
+def load_kernel_repo_owned_targets(path: Path = KERNEL_HUB_OWNERSHIP) -> dict[str, str]:
+    """Return Hub repo id -> owning GitHub repository; fail closed if malformed."""
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict) or payload.get("schema") != KERNEL_HUB_OWNERSHIP_SCHEMA:
+        raise RuntimeError("unsupported kernel Hub ownership registry")
+    targets = payload.get("targets")
+    if not isinstance(targets, list) or not targets:
+        raise RuntimeError("kernel Hub ownership registry has no targets")
+    owned: dict[str, str] = {}
+    for target in targets:
+        repo_id = target.get("repo_id") if isinstance(target, dict) else None
+        owner = target.get("owner") if isinstance(target, dict) else None
+        if (
+            not isinstance(repo_id, str)
+            or re.fullmatch(r"SZLHOLDINGS/[A-Za-z0-9._-]+", repo_id) is None
+            or repo_id in owned
+            or not isinstance(owner, str)
+            or re.fullmatch(r"szl-holdings/[A-Za-z0-9._-]+", owner) is None
+            or owner == SOURCE_REPOSITORY
+        ):
+            raise RuntimeError("malformed kernel Hub ownership registry entry")
+        owned[repo_id] = owner
+    return owned
+
+
+KERNEL_REPO_OWNED_TARGETS: dict[str, str] = load_kernel_repo_owned_targets()
+
 
 class PublicationError(RuntimeError):
     """Raised when publication cannot be proven safe and exact."""
@@ -70,35 +108,10 @@ class Asset:
 
 
 PROFILES: dict[str, Profile] = {
-    "szl-blocked": Profile(
-        name="szl-blocked",
-        source_dir="szl-blocked",
-        repo_id="SZLHOLDINGS/szl-blocked",
-    ),
     "szl-formulas": Profile(
         name="szl-formulas",
         source_dir="szl-formulas",
         repo_id="SZLHOLDINGS/szl-formulas",
-    ),
-    "szl-govsign": Profile(
-        name="szl-govsign",
-        source_dir="szl-govsign",
-        repo_id="SZLHOLDINGS/szl-govsign",
-    ),
-    "szl-invariants": Profile(
-        name="szl-invariants",
-        source_dir="szl-invariants",
-        repo_id="SZLHOLDINGS/szl-invariants",
-    ),
-    "szl-ouroboros": Profile(
-        name="szl-ouroboros",
-        source_dir="szl-ouroboros",
-        repo_id="SZLHOLDINGS/szl-ouroboros",
-    ),
-    "szl-provctl": Profile(
-        name="szl-provctl",
-        source_dir="szl-provctl",
-        repo_id="SZLHOLDINGS/szl-provctl",
     ),
     "khipu-gguf": Profile(
         name="khipu-gguf",
@@ -154,11 +167,21 @@ def sha256_bytes(payload: bytes) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
+def ensure_forge_owned_target(profile: Profile) -> Profile:
+    owner = KERNEL_REPO_OWNED_TARGETS.get(profile.repo_id)
+    if owner is not None:
+        raise PublicationError(
+            f"{profile.repo_id} is written only by {owner} hf-kernel-publish.yml"
+        )
+    return profile
+
+
 def resolve_profile(name: str) -> Profile:
     try:
-        return PROFILES[name]
+        profile = PROFILES[name]
     except KeyError as error:
         raise PublicationError(f"unknown closed profile: {name}") from error
+    return ensure_forge_owned_target(profile)
 
 
 def validate_source_revision(revision: str) -> str:
@@ -428,6 +451,7 @@ def publish(
     token: str,
     credential_source: str | None,
 ) -> dict[str, Any]:
+    ensure_forge_owned_target(profile)
     if profile.gated:
         raise PublicationError(
             "gated target requires owner publish_rights=true; no workaround"

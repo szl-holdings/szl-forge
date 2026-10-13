@@ -2,7 +2,9 @@
 
 Owner: `szl-holdings/szl-forge`.
 Companion collector (do not replace): `tools/observe_public_estate_files.py`.
-Companion release authorizer (do not replace): `tools/authorize_invariants_release.py`.
+The former companion `tools/authorize_invariants_release.py` was retired on
+2026-10-13 with the Forge szl-invariants publisher; `szl-holdings/szl-invariants`
+now owns its Hub publication.
 
 `szl_payload_contract.py` is an offline second-reader for digest-bound census ZIPs
 and fixed-k consistency matrices. It is not a collector, publisher, runtime probe,
