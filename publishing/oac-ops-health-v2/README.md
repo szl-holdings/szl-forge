@@ -74,8 +74,9 @@ Under a protocol registered before any v2 code or data existed
 v1 as shipped and two trivial baselines. **v2 is a WIN on its preregistered synthetic
 benchmark, and only there.** One condition held by 0.000319 in balanced accuracy.
 
-The primary metric is the balanced accuracy (BA) of the binary decision at threshold
-0.20. It is computed on 50,000 sealed nominal test rows and on a pooled suite of four
+The primary metric is the balanced accuracy (BA) of each contender's binary decision: v2's
+selected threshold 0.20, v1's shipped threshold 0.16, and the fixed decisions of the majority
+(always no alert) and rule (`consecutive_failures > 0`) baselines. It is computed on 50,000 sealed nominal test rows and on a pooled suite of four
 sealed synthetic shift regimes (4 × 12,500 rows), opened once
 ([opening record][opened]). Intervals are 95% percentile intervals from 2,000 paired
 bootstrap resamples (seed 20260927). v2 wins only if all three conditions hold:
@@ -109,8 +110,10 @@ Source: [`FINAL_RESULTS.md`][results] and [`final_evaluation.json`][eval].
 - **Not distinguishable from v1.** Under clock skew (paired +0.0066 [−0.0013, +0.0146]) and
   on v1's own 240-row public test split (paired +0.0251 [−0.0237, +0.0708]), the paired
   interval includes zero. No BA advantage over v1 is claimed on either.
-- **Queue saturation fails for every contender.** There v2's BA is 0.5928 and its
-  specificity 0.2269: it alerts on most rows that need no attention when queues run hot.
+- **Queue saturation degrades every contender.** No pass/fail rule is registered for this
+  single regime. The measured BAs there are v2 0.5928, v1 0.5311, rule 0.5373 and majority
+  0.5000. v2's specificity there is 0.2269: it alerts on most rows that need no attention
+  when queues run hot.
 - **Many alerts are false.** On nominal test, v2's precision is 0.5361, its recall 0.6548
   and its specificity 0.8740, so 46% of its threshold-decision alerts are false.
 - **Per-class rates are withheld for v1, majority and rule** (`INVALID_BASELINE`): each
@@ -164,7 +167,7 @@ Source: [`FINAL_RESULTS.md`][results].
   guaranteed only for data exchangeable with the nominal conformal split (MODELED). Under
   queue saturation, class-0 coverage is 0.2994.
 
-## Underspecification: one weight is not identified
+## Underspecification: one weight is weakly identified
 
 `seconds_since_last_success` has a generator weight of +2.20 on its normalized scale
 ([`final_evaluation.json`][eval]). In nominal data its values sit near zero on the
@@ -208,7 +211,9 @@ All mutants ran on the validation split, before the test opening
 ## Compliance with the preregistration
 
 - **Order.** The preregistration was committed on 2026-09-26, before any v2 code or data.
-  Amendments AM-1 to AM-6 were committed before any search, fit or opening, and none changes
+  Amendments AM-1 to AM-6 were committed before the registered search, every fit on the
+  registered splits, and the opening (stage-1 unit and smoke fits on DEV-only data came
+  earlier), and none changes
   the question, metric, win rule, splits, seeds, search space or shifts
   ([`AMENDMENTS.md`][amend]).
 - **Selection on validation only.** A registered 12-trial search (penalty × calibrator)
@@ -221,7 +226,8 @@ All mutants ran on the validation split, before the test opening
   the splits, the seeds, the search space or the shift regimes. One example: the
   preregistration did not say how to interpolate a percentile, and the implementation uses
   type-7 percentiles ([`COMPLIANCE.md`][compliance]).
-- **After the opening.** Every later change is listed, and a full re-analysis from the saved
+- **After the opening.** Every later change to code or tracked files on the final
+  evaluation's path is listed, and a full re-analysis from the saved
   score files reproduced all 3,884 numeric fields of `final_evaluation.json` exactly
   ([`FINAL_RESULTS.md`][results]).
 
