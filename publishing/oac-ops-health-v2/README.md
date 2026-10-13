@@ -110,7 +110,7 @@ Source: [`FINAL_RESULTS.md`][results] and [`final_evaluation.json`][eval].
 - **Not distinguishable from v1.** Under clock skew (paired +0.0066 [−0.0013, +0.0146]) and
   on v1's own 240-row public test split (paired +0.0251 [−0.0237, +0.0708]), the paired
   interval includes zero. No BA advantage over v1 is claimed on either.
-- **Queue saturation degrades every contender.** No pass/fail rule is registered for this
+- **Queue saturation degrades v2 and v1.** No pass/fail rule is registered for this
   single regime. The measured BAs there are v2 0.5928, v1 0.5311, rule 0.5373 and majority
   0.5000. v2's specificity there is 0.2269: it alerts on most rows that need no attention
   when queues run hot.
