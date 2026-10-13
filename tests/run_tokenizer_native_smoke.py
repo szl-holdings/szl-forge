@@ -35,7 +35,7 @@ def main() -> int:
     # Import only inside this explicit synthetic test action.
     from tokenizers import Tokenizer, models, normalizers, pre_tokenizers, processors
     identity = M.runtime_identity()
-    M.require(identity["version"] == "0.23.2", "NATIVE_CONTROL_VERSION")
+    M.require(identity["version"] == "0.23.3", "NATIVE_CONTROL_VERSION")
     vocab = {s: i for i, s in enumerate(["[UNK]", "[PAD]", "[BOS]", "[EOS]",
         "hello", "world", "café", "雪", "paired", "print", "x", "=", "1", "(", ")", "<", ">", "|"])}
     engine = Tokenizer(models.WordLevel(vocab=vocab, unk_token="[UNK]"))
