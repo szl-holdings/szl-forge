@@ -616,3 +616,22 @@ def test_dataset_card_presentation_preserves_original_dynamic_bytes(
     assert "File hashes; unsigned" in presentation
     assert f"/blob/{revision}/frontier/evaluation/runner.py" in presentation
     assert "README-only publication" not in presentation
+
+
+def test_live_evaluation_preserves_main_gate_and_excludes_untrusted_pr_credentials() -> None:
+    workflow = (ROOT / ".github/workflows/frontier-evaluation-runner.yml").read_text()
+    live_job = workflow.split("  real-evaluation:", 1)[1]
+    condition = re.search(r"    if: >-\n(.*?)    runs-on:", live_job, re.S).group(1)
+    assert " ".join(condition.split()) == (
+        "github.event_name != 'pull_request' || "
+        "(github.event.pull_request.head.repo.full_name == github.repository && "
+        "github.event.pull_request.user.login != 'dependabot[bot]')"
+    )
+    # Main, schedule and explicit dispatch retain real credential checks.
+    assert "--target-model" in live_job
+    assert "tools/acquire_hf_inference_token.py" in live_job
+    assert "pull_request_target" not in workflow
+    offline_job = workflow.split("  contract:", 1)[1].split("  real-evaluation:", 1)[0]
+    assert "    if:" not in offline_job
+    assert "secrets." not in offline_job
+    assert "tests/test_acquire_hf_inference_token.py" in offline_job

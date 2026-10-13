@@ -1773,7 +1773,7 @@ class PublishSzlKernelsTests(unittest.TestCase):
         self.assertIn("--signature-bundle-input", publish_job)
         self.assertIn("--signature-manifest-input", publish_job)
         self.assertIn(
-            "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c",
+            "actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333",
             publish_job,
         )
         uploader = publish_job.index(
