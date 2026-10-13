@@ -1,0 +1,169 @@
+{
+  "observed_at": "2026-10-13T16:28:12.544567+00:00",
+  "source_revision": "cd66836ac2df83ecbebb101d40047a63ad3de463",
+  "files": [
+    {
+      "kind": "old",
+      "revision": "ff107198aa257ce1bb1841377d553bee3f90be41",
+      "path": "LICENSE",
+      "bytes": 11346,
+      "sha256": "145a78cf10c6cfd87e99b94dd7ede2839a9103ba2293e287ed5fdc1674f81ac6"
+    },
+    {
+      "kind": "old",
+      "revision": "ff107198aa257ce1bb1841377d553bee3f90be41",
+      "path": "README.md",
+      "bytes": 3165,
+      "sha256": "92dba0c3c5182bc4de66898d5a88257c2ffbfe9d044498216247053ba0df4952"
+    },
+    {
+      "kind": "old",
+      "revision": "ff107198aa257ce1bb1841377d553bee3f90be41",
+      "path": "artifact_receipt.json",
+      "bytes": 1715,
+      "sha256": "442486a3b451f0ad765aac253830cdc5455bad3a34186b4cf73388cf207056f2"
+    },
+    {
+      "kind": "old",
+      "revision": "ff107198aa257ce1bb1841377d553bee3f90be41",
+      "path": "example_input.json",
+      "bytes": 270,
+      "sha256": "afa7c8e5081c682877ad489259592951f854ba2558d409fdcf071ba845d4fb63"
+    },
+    {
+      "kind": "old",
+      "revision": "ff107198aa257ce1bb1841377d553bee3f90be41",
+      "path": "model.json",
+      "bytes": 3572,
+      "sha256": "b830a5edca271d667ab09b378dd5d3ab505d71a7e3451de8d9ca2bacfeed977c"
+    },
+    {
+      "kind": "old",
+      "revision": "ff107198aa257ce1bb1841377d553bee3f90be41",
+      "path": "ops_health.py",
+      "bytes": 37428,
+      "sha256": "b0a64ff3f26ea284b0588de351ed7795a6089203b35fded0e7d82cbd4871aed9"
+    },
+    {
+      "kind": "live",
+      "revision": "a824a32d91a383d33a1e1e595f11b8362d1b4efa",
+      "path": "LICENSE",
+      "bytes": 11346,
+      "sha256": "145a78cf10c6cfd87e99b94dd7ede2839a9103ba2293e287ed5fdc1674f81ac6"
+    },
+    {
+      "kind": "live",
+      "revision": "a824a32d91a383d33a1e1e595f11b8362d1b4efa",
+      "path": "README.md",
+      "bytes": 3282,
+      "sha256": "8f63155003dff012cd319708ceee532e360bf9f716b9c75a19b8baf2d898de5a"
+    },
+    {
+      "kind": "live",
+      "revision": "a824a32d91a383d33a1e1e595f11b8362d1b4efa",
+      "path": "artifact_receipt.json",
+      "bytes": 1715,
+      "sha256": "442486a3b451f0ad765aac253830cdc5455bad3a34186b4cf73388cf207056f2"
+    },
+    {
+      "kind": "live",
+      "revision": "a824a32d91a383d33a1e1e595f11b8362d1b4efa",
+      "path": "example_input.json",
+      "bytes": 270,
+      "sha256": "afa7c8e5081c682877ad489259592951f854ba2558d409fdcf071ba845d4fb63"
+    },
+    {
+      "kind": "live",
+      "revision": "a824a32d91a383d33a1e1e595f11b8362d1b4efa",
+      "path": "model.json",
+      "bytes": 3572,
+      "sha256": "b830a5edca271d667ab09b378dd5d3ab505d71a7e3451de8d9ca2bacfeed977c"
+    },
+    {
+      "kind": "live",
+      "revision": "a824a32d91a383d33a1e1e595f11b8362d1b4efa",
+      "path": "ops_health.py",
+      "bytes": 37428,
+      "sha256": "b0a64ff3f26ea284b0588de351ed7795a6089203b35fded0e7d82cbd4871aed9"
+    },
+    {
+      "kind": "source",
+      "revision": "cd66836ac2df83ecbebb101d40047a63ad3de463",
+      "path": "LICENSE",
+      "bytes": 11346,
+      "sha256": "145a78cf10c6cfd87e99b94dd7ede2839a9103ba2293e287ed5fdc1674f81ac6"
+    },
+    {
+      "kind": "source",
+      "revision": "cd66836ac2df83ecbebb101d40047a63ad3de463",
+      "path": "README.md",
+      "bytes": 4156,
+      "sha256": "a91ddfa82ac42640e06fa4c485980492cffeb36ba99fa418d2dab00dff7535a0"
+    },
+    {
+      "kind": "source",
+      "revision": "cd66836ac2df83ecbebb101d40047a63ad3de463",
+      "path": "artifact_receipt.json",
+      "bytes": 1715,
+      "sha256": "442486a3b451f0ad765aac253830cdc5455bad3a34186b4cf73388cf207056f2"
+    },
+    {
+      "kind": "source",
+      "revision": "cd66836ac2df83ecbebb101d40047a63ad3de463",
+      "path": "example_input.json",
+      "bytes": 270,
+      "sha256": "afa7c8e5081c682877ad489259592951f854ba2558d409fdcf071ba845d4fb63"
+    },
+    {
+      "kind": "source",
+      "revision": "cd66836ac2df83ecbebb101d40047a63ad3de463",
+      "path": "model.json",
+      "bytes": 3572,
+      "sha256": "b830a5edca271d667ab09b378dd5d3ab505d71a7e3451de8d9ca2bacfeed977c"
+    },
+    {
+      "kind": "source",
+      "revision": "cd66836ac2df83ecbebb101d40047a63ad3de463",
+      "path": "ops_health.py",
+      "bytes": 37428,
+      "sha256": "b0a64ff3f26ea284b0588de351ed7795a6089203b35fded0e7d82cbd4871aed9"
+    }
+  ],
+  "old_to_live_delta": [
+    "README.md"
+  ],
+  "live_to_source_delta": [
+    "README.md"
+  ],
+  "old_inventory": [
+    ".gitattributes",
+    "LICENSE",
+    "README.md",
+    "artifact_receipt.json",
+    "example_input.json",
+    "model.json",
+    "ops_health.py"
+  ],
+  "live_inventory": [
+    ".gitattributes",
+    "LICENSE",
+    "README.md",
+    "artifact_receipt.json",
+    "example_input.json",
+    "model.json",
+    "ops_health.py"
+  ],
+  "schema": "szl.oac-v2-reviewed-card-parent/v1",
+  "evidence_class": "UNSIGNED_IMMUTABLE_BYTE_OBSERVATION",
+  "target": "SZLHOLDINGS/oac-ops-health-v2",
+  "workflow": ".github/workflows/publish-oac-hub.yml",
+  "profile": "oac-v2-model",
+  "permitted_delta": [
+    "README.md"
+  ],
+  "prior_card_change": "Clarifies that the unsigned receipt supports byte-integrity comparison but does not authenticate research origin or establish accuracy/authorization.",
+  "planned_card_change": "Already admitted PR589 adds native icon, navigation and artwork attribution; synthetic-only and non-clinical boundaries remain unchanged.",
+  "publication_gate": "Explicit main dispatch, exact current Git source, fixed live parent and Hub compare-and-swap retained. This record authorizes no changed artifact, repository creation, clinical use, or promotion.",
+  "previous_expected_parent": "ff107198aa257ce1bb1841377d553bee3f90be41",
+  "reviewed_parent": "a824a32d91a383d33a1e1e595f11b8362d1b4efa"
+}
