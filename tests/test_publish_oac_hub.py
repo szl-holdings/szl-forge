@@ -49,6 +49,7 @@ WATCHED_PATHS = [
     "publishing/oac-ops-health-v2/**",
     "tools/publish_oac_hub.py",
     "tests/test_publish_oac_hub.py",
+    "docs/oac-v2-card-parent-2026-10-13.json",
     "tools/acquire_hf_publisher_token.py",
     "tests/test_acquire_hf_publisher_token.py",
     "tests/test_hf_org_token1_fallback.py",
@@ -481,6 +482,56 @@ def test_expected_delta_refuses_a_hub_that_drifted_from_the_base() -> None:
         publisher.assert_expected_delta(MODEL, BASE, SOURCE, report, git=git)
     assert report["expected_delta_since"]["hub_equals_base"] is False
     assert report["expected_delta_since"]["hub_drift"] == ["README.md"]
+
+
+def reconciliation_fixture():
+    accepted = package(V2_MODEL, **{"README.md": NEW_CARD})
+    live = package(V2_MODEL)
+    report, git, api = dry_run_since(V2_MODEL, base=accepted, head=accepted, hub=live)
+    approval = {
+        "schema": "szl.oac-v2-reviewed-card-parent/v1", "profile": V2_MODEL.key,
+        "target": V2_MODEL.repo_id, "permitted_delta": ["README.md"],
+        "source_revision": BASE, "reviewed_parent": PARENT,
+        "live_inventory": report["hub_files"],
+        "files": [dict(kind=kind, revision=revision, path=path, **evidence)
+                  for kind, revision, data in (("live", PARENT, live), ("source", BASE, accepted))
+                  for path, evidence in publisher.evidence_for(data).items()],
+    }
+    return report, git, api, approval
+
+
+def test_reviewed_reconciliation_proves_prior_accepted_card_without_claiming_base_parity():
+    report, git, api, approval = reconciliation_fixture()
+    publisher.assert_expected_delta(V2_MODEL, BASE, SOURCE, report, git=git, reviewed_parent=approval)
+    evidence = report["expected_delta_since"]
+    assert evidence["hub_equals_base"] is False
+    assert evidence["delta"] == []
+    assert evidence["reviewed_reconciliation"]["delta"] == ["README.md"]
+    assert "create_commit" not in api.names()
+
+
+@pytest.mark.parametrize("mutation", ["parent", "live_hash", "source_hash", "missing", "duplicate", "extra_inventory", "target", "publish"])
+def test_reviewed_reconciliation_refuses_any_bound_evidence_drift(mutation):
+    report, git, _, approval = reconciliation_fixture()
+    if mutation == "parent": approval["reviewed_parent"] = NEW
+    elif mutation == "live_hash": approval["files"][0]["sha256"] = "0" * 64
+    elif mutation == "source_hash": approval["files"][-1]["sha256"] = "0" * 64
+    elif mutation == "missing": approval["files"].pop()
+    elif mutation == "duplicate": approval["files"].append(approval["files"][0])
+    elif mutation == "extra_inventory": approval["live_inventory"] = approval["live_inventory"] + ["unexpected"]
+    elif mutation == "target": approval["target"] = "another/repo"
+    elif mutation == "publish": report["mode"] = "publish"
+    with pytest.raises(publisher.PublicationRefused):
+        publisher.assert_expected_delta(V2_MODEL, BASE, SOURCE, report, git=git, reviewed_parent=approval)
+
+
+def test_reviewed_reconciliation_refuses_new_candidate_package_changes():
+    report, _, _, approval = reconciliation_fixture()
+    accepted = package(V2_MODEL, **{"README.md": NEW_CARD})
+    candidate = package(V2_MODEL, **{"README.md": HAND_EDIT})
+    report, git, _ = dry_run_since(V2_MODEL, base=accepted, head=candidate, hub=package(V2_MODEL))
+    with pytest.raises(publisher.PublicationRefused, match="outside its closed scope"):
+        publisher.assert_expected_delta(V2_MODEL, BASE, SOURCE, report, git=git, reviewed_parent=approval)
 
 
 @pytest.mark.parametrize(
