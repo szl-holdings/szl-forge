@@ -127,7 +127,7 @@ class PackageContractTests(unittest.TestCase):
                 "jsonschema": "4.26.0",
                 "jsonschema-specifications": "2025.9.1",
                 "referencing": "0.37.0",
-                "rpds-py": "2026.6.3",
+                "rpds-py": "2026.9.1",
                 "typing-extensions": "4.16.0",
             },
         )
