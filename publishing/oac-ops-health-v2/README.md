@@ -194,12 +194,17 @@ All mutants ran on the validation split, before the test opening
   regenerated so that the hash check passes, the behavioral gates caught 26 of 36.
 - **Receipt mutants:** 4 of 5 caught. **Kernel-source mutants:** integrity caught 4 of 5,
   and the tests caught 5 of 5.
-- **11 `BLIND_SPOT` mutants.** Ten are artifact mutants that no behavioral gate caught once
-  the hash check was bypassed: ×0.5 and ×1.5 scaling of `tls_enabled`,
+- **11 `BLIND_SPOT` mutants in registered pass 2.** Ten are artifact mutants that no
+  registered behavioral gate caught once the hash check was bypassed: ×0.5 and ×1.5 scaling
+  of `tls_enabled`,
   `queue_utilization`, `consecutive_failures` and `seconds_since_last_success`, and the
   threshold ±0.1. The eleventh, `R-source-commit-other`, is a receipt re-pointed to a parent
-  commit whose bound files are identical, and the integrity layer accepted it. With the
-  gates as registered, only the hash check detects a modified model (MODELED).
+  commit whose bound files are identical, and the integrity layer accepted it. For those
+  ten artifact blind spots, only the original hash binding detects the modification;
+  a consistently regenerated receipt defeats that integrity witness (MODELED).
+  The supplementary in-place test suite incidentally catches `A-threshold-0.1`, so the
+  literal count undetected by any layer is 10; the registered pass-2 count remains 11
+  ([`MUTATION_READINESS.md`][mutation]).
 - **Broken baselines.** A constant-`ALERT` model, a fail-open kernel and majority all return
   `INVALID_BASELINE`, with no per-class rates.
 - **Λ REJECTED.** The registered comparison set SZL's Λ readiness aggregator against AND,
