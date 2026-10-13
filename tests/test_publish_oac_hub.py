@@ -534,6 +534,33 @@ def test_reviewed_reconciliation_refuses_new_candidate_package_changes():
         publisher.assert_expected_delta(V2_MODEL, BASE, SOURCE, report, git=git, reviewed_parent=approval)
 
 
+def test_reviewed_approval_is_independently_digest_pinned():
+    raw = (ROOT / "docs/oac-v2-card-parent-2026-10-13.json").read_bytes()
+    approval = publisher.parse_reviewed_card_approval(raw)
+    assert approval["reviewed_parent"] == "a824a32d91a383d33a1e1e595f11b8362d1b4efa"
+    forged = dict(approval, reviewed_parent=NEW)
+    with pytest.raises(publisher.PublicationRefused, match="reviewed digest"):
+        publisher.parse_reviewed_card_approval(json.dumps(forged).encode())
+
+
+@pytest.mark.parametrize("new_head", [NEW, None])
+def test_reconciliation_requires_the_mutable_head_to_stay_at_the_snapshot(new_head):
+    report, git, api, approval = reconciliation_fixture()
+    publisher.assert_expected_delta(V2_MODEL, BASE, SOURCE, report, git=git, reviewed_parent=approval)
+    api.head = new_head
+    with pytest.raises(publisher.PublicationRefused, match="reviewed-parent confirmation"):
+        publisher.confirm_reviewed_parent(api, V2_MODEL, report, not_found=Missing)
+    assert "create_commit" not in api.names()
+
+
+def test_reconciliation_reconfirms_current_parent_without_writing():
+    report, git, api, approval = reconciliation_fixture()
+    publisher.assert_expected_delta(V2_MODEL, BASE, SOURCE, report, git=git, reviewed_parent=approval)
+    publisher.confirm_reviewed_parent(api, V2_MODEL, report, not_found=Missing)
+    assert report["expected_delta_since"]["reviewed_reconciliation"]["live_head_reconfirmed"] == PARENT
+    assert "create_commit" not in api.names()
+
+
 @pytest.mark.parametrize(
     ("base_drop", "hub_drop", "drift"),
     [
