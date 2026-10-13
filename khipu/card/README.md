@@ -23,7 +23,7 @@ szl:
 ---
 
 <!-- SZL-CARD-PRESENTATION:v1 -->
-<p><a href="https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab"><img src="https://raw.githubusercontent.com/szl-holdings/.github/main/profile/assets/szl/logos/szl_mark_holographic.svg" alt="SZL Holdings" width="112" /></a></p>
+<p><a href="https://huggingface.co/SZLHOLDINGS"><img src="https://raw.githubusercontent.com/szl-holdings/szl-brand/27d12e77fc0f9f1a0e5fae8b34adf2380d51d070/kit/logos/orbit-v2/suite/szl-icon-32.svg" alt="SZL Holdings" width="48" height="48" /></a></p>
 
 # Khipu 1.5B
 
@@ -31,7 +31,7 @@ A Qwen2.5-1.5B-Instruct fine-tune for proposal-only retrieval plans over supplie
 
 **Artifact:** Fine-tuned checkpoint · **Stage:** Research · release blocked
 
-[Explore in Command Lab](https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab) · [Build](https://github.com/szl-holdings/szl-forge/tree/main/khipu) · [Evidence](https://github.com/szl-holdings/szl-forge/blob/2b4d7a0f69e68d60cb0f35f09c9bac837d66acdc/khipu/card/README.md)
+[Command Lab](https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab) · [Canonical source](https://github.com/szl-holdings/szl-forge/tree/main/khipu) · [Reviewed evidence](https://github.com/szl-holdings/szl-forge/blob/2b4d7a0f69e68d60cb0f35f09c9bac837d66acdc/khipu/card/README.md)
 
 Provider compatibility support [requested on 4 October 2026](https://huggingface.co/spaces/huggingface/InferenceSupport/discussions/12781). No provider was listed in the dated Hub observation; adoption and use qualification remain unchanged.
 
@@ -483,3 +483,7 @@ verifiable from the committed files; runtime deployment status is a separate cla
 
 <!-- SZL-CARD-TECHNICAL:v1:END -->
 </details>
+
+<!-- SZL-NATIVE-ARTWORK:v1 -->
+SZL Orbit artwork: [source](https://github.com/szl-holdings/szl-brand/blob/27d12e77fc0f9f1a0e5fae8b34adf2380d51d070/kit/logos/orbit-v2/suite/szl-icon-32.svg) · [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Software and artifact licensing remain declared above.
+<!-- /SZL-NATIVE-ARTWORK:v1 -->
