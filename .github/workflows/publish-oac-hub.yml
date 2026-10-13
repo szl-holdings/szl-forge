@@ -482,7 +482,7 @@ jobs:
             --profile oac-v2-model \
             --source-revision "${GITHUB_SHA}" \
             --publish \
-            --expect-parent a824a32d91a383d33a1e1e595f11b8362d1b4efa \
+            --expect-parent 114638ea01e40fc511b43d07d355e36579de4a2f \
             --report reports/oac-v2-model-publication.json
 
       - name: Export the verified Hub revision

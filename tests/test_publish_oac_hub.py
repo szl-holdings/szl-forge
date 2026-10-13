@@ -373,7 +373,10 @@ def test_v2_staged_bytes_and_card_bind_the_protected_research_merge() -> None:
     assert "SYNTHETIC" in card.upper()
     assert "unpublished" in card.lower()
     assert "proposal-only" in card.lower()
-    assert "not a clinical" in card.lower()
+    # The card names no health-care use at all; its boundary is stated generically.
+    assert "clinical" not in card.lower()
+    assert "not a health-care" in card.lower()
+    assert "every authority flag is false" in card.lower()
     assert "unsigned receipt" in card.lower()
     assert "does not authenticate that origin" in card.lower()
 
