@@ -114,6 +114,17 @@ for f in run_manifest.json eval_receipt.json training_summary.json \
 done
 ```
 
+**Expected `thesis_formula_index.json` mismatch.** `thesis_formula_index.json` was
+intentionally corrected on 2026-10-06: TH10 is no longer marked GREEN (see
+`meta.corrections` and the TH10 `correction` field in that file, and
+[szl-holdings/szl-forge#594](https://github.com/szl-holdings/szl-forge/pull/594)).
+The July 2026 run receipt in `run_manifest.json` is kept byte-identical as a
+historical record and is not re-minted, so it still pins the pre-correction
+SHA-256 `5dbe4405b50672d150437fdcfa941213c6ed88f07979370f91fd60d3f65a13c2`. The
+console therefore shows MISMATCH for this file and `get_integrity()` reports
+DRIFT; that reflects a documented post-receipt correction, not tampering. No
+receipt covers the corrected bytes, and this note does not verify them.
+
 ## Local validation
 
 ```bash

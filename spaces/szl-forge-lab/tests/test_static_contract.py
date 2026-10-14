@@ -16,6 +16,13 @@ REQUIRED_EVIDENCE = (
     "curriculum.json",
     "model_portfolio.json",
 )
+# Pins from the 2026-07-11 MEASURED run receipt (run_manifest.json).
+RUN_MANIFEST_RECEIPT_SHA256 = (
+    "0c0a23e292d09ced43830c8de80a387a40c988a4b62c53f52fda0e78809fa3c4"
+)
+RECEIPT_INDEX_SHA256 = (
+    "5dbe4405b50672d150437fdcfa941213c6ed88f07979370f91fd60d3f65a13c2"
+)
 
 
 class StaticForgeContractTests(unittest.TestCase):
@@ -129,9 +136,59 @@ class StaticForgeContractTests(unittest.TestCase):
             ).encode("utf-8")
         ).hexdigest()
         self.assertEqual(manifest["receipt_sha256"], recomputed)
-        self.assertEqual(
-            "0c0a23e292d09ced43830c8de80a387a40c988a4b62c53f52fda0e78809fa3c4",
-            manifest["receipt_sha256"],
+        self.assertEqual(RUN_MANIFEST_RECEIPT_SHA256, manifest["receipt_sha256"])
+
+    def test_post_receipt_index_correction_is_explained_not_hidden(self) -> None:
+        # The 2026-10-06 TH10 correction (szl-forge#594) changed the packaged
+        # thesis_formula_index.json after the July receipt. The console keeps
+        # the computed MISMATCH and explains it under the integrity table; the
+        # receipt and its pin stay unchanged.
+        index = (ROOT / "index.html").read_text(encoding="utf-8")
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        table = index.index('<table class="table" id="integrity">')
+        note = index.index('id="integrity-correction-note"')
+        self.assertLess(table, note)
+        self.assertLess(note, index.index("</section>", table))
+        self.assertIn('<span class="st fail">MISMATCH</span>', index)
+        note_text = index[note:index.index("</p>", note)]
+        for surface, blob in (("index", note_text), ("readme", readme)):
+            blob = " ".join(blob.split())
+            with self.subTest(surface=surface):
+                for phrase in (
+                    "thesis_formula_index.json",
+                    "2026-10-06",
+                    "TH10 is no longer marked GREEN",
+                    "meta.corrections",
+                    "szl-holdings/szl-forge#594",
+                    "kept byte-identical as a historical record",
+                    "not re-minted",
+                    "documented post-receipt correction, not tampering",
+                    "this note does not verify them",
+                ):
+                    self.assertIn(phrase, blob)
+        manifest = json.loads(
+            (ROOT / "run_manifest.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(RUN_MANIFEST_RECEIPT_SHA256, manifest["receipt_sha256"])
+        pins = [
+            artifact["sha256"]
+            for artifact in manifest["payload"]["artifacts"]
+            if artifact["path"] == "thesis_formula_index.json"
+        ]
+        self.assertEqual([RECEIPT_INDEX_SHA256], pins)
+        corrected = (ROOT / "thesis_formula_index.json").read_bytes()
+        corrected = corrected.replace(b"\r\n", b"\n")
+        self.assertNotEqual(
+            RECEIPT_INDEX_SHA256, hashlib.sha256(corrected).hexdigest()
+        )
+        formula_index = json.loads(corrected.decode("utf-8"))
+        self.assertIn(
+            "TH10",
+            [
+                entry_id
+                for correction in formula_index["meta"]["corrections"]
+                for entry_id in correction["entries"]
+            ],
         )
 
     def test_atelier_lock_keeps_snapshot_from_becoming_a_studio(self) -> None:
