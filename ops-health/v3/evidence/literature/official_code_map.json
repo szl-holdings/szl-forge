@@ -1,0 +1,17 @@
+{
+ "_note": "Repositories that a paper's own arXiv abstract or LaTeX source names as its code (context reviewed by hand in logs/C/code/<key>__links.json). license = GitHub license API spdx_id via `gh api` GET on 2026-09-29 (logs/C/code_links_summary.json, logs/C/code/gh_extra.txt). Links to other people's code found in the same sources are NOT listed.",
+ "repos": [
+  {"repo": "aangelopoulos/conformal-prediction", "keys": ["gentle_conformal"], "stated_as": "notebooks accompanying the paper", "license": "MIT"},
+  {"repo": "aangelopoulos/conformal-risk", "keys": ["conformal_risk_control"], "stated_as": "code to reproduce examples", "license": "MIT"},
+  {"repo": "ryantibs/conformal", "keys": ["split_conformal_lei", "conformal_covariate_shift"], "stated_as": "code to reproduce results (R)", "license": "GPL-2.0"},
+  {"repo": "AnanyaKumar/verified_calibration", "keys": ["kumar_verified_calibration"], "stated_as": "updated code", "license": "MIT"},
+  {"repo": "gpleiss/temperature_scaling", "keys": ["guo_calibration"], "stated_as": "example implementation (footnote)", "license": "MIT"},
+  {"repo": "hendrycks/error-detection", "keys": ["hendrycks_msp_baseline"], "stated_as": "code (author footnote)", "license": "MIT"},
+  {"repo": "rgeirhos/shortcut-perspective", "keys": ["shortcut_learning"], "stated_as": "code for the toy example", "license": "none (no license file; GitHub license null)"},
+  {"repo": "p-lambda/wilds", "keys": ["wilds"], "stated_as": "open-source package", "license": "MIT"},
+  {"repo": "schneiderkamplab/syntheval", "keys": ["synth_syntheval"], "stated_as": "library", "license": "MIT"},
+  {"repo": "statice/anonymeter", "keys": ["synth_privacy_risk"], "stated_as": "open-source library", "license": "NOASSERTION on GitHub; LICENSE.md text is 'The Clear BSD License' (logs/C/code/gh_extra.txt)"},
+  {"repo": "HLasse/data-centric-synthetic-data", "keys": ["synth_datacentric_benchmark"], "stated_as": "analysis code (one of two mirrors)", "license": "MIT"},
+  {"repo": "vanderschaarlab/data-centric-synthetic-data", "keys": ["synth_datacentric_benchmark"], "stated_as": "analysis code (one of two mirrors)", "license": "MIT"}
+ ]
+}

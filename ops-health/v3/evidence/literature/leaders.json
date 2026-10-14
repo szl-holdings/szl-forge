@@ -1,0 +1,520 @@
+[
+  {
+    "author": "Larissa Shamseer",
+    "papers": 2,
+    "citations": 119876,
+    "topics": [
+      "calibration classifier reliability",
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Yann LeCun",
+    "papers": 2,
+    "citations": 119868,
+    "topics": [
+      "distribution shift evaluation benchmark",
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Léon Bottou",
+    "papers": 2,
+    "citations": 119868,
+    "topics": [
+      "distribution shift evaluation benchmark",
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Yoshua Bengio",
+    "papers": 2,
+    "citations": 119868,
+    "topics": [
+      "distribution shift evaluation benchmark",
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Patrick Haffner",
+    "papers": 2,
+    "citations": 119868,
+    "topics": [
+      "distribution shift evaluation benchmark",
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Seyed Mohammad Mirjalili",
+    "papers": 6,
+    "citations": 116100,
+    "topics": [
+      "distribution shift evaluation benchmark",
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Cynthia D. Mulrow",
+    "papers": 2,
+    "citations": 114995,
+    "topics": [
+      "mutation testing deep learning",
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Jennifer Tetzlaff",
+    "papers": 2,
+    "citations": 113502,
+    "topics": [
+      "datasheets for datasets",
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Alex Krizhevsky",
+    "papers": 1,
+    "citations": 109835,
+    "topics": [
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Ilya Sutskever",
+    "papers": 1,
+    "citations": 109835,
+    "topics": [
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Geoffrey E. Hinton",
+    "papers": 1,
+    "citations": 109835,
+    "topics": [
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Matthew James Page",
+    "papers": 1,
+    "citations": 106363,
+    "topics": [
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Joanne E. McKenzie",
+    "papers": 1,
+    "citations": 106363,
+    "topics": [
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Patrick M. Bossuyt",
+    "papers": 1,
+    "citations": 106363,
+    "topics": [
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Isabelle Boutron",
+    "papers": 1,
+    "citations": 106363,
+    "topics": [
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Tammy Hoffmann",
+    "papers": 1,
+    "citations": 106363,
+    "topics": [
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "John Jumper",
+    "papers": 2,
+    "citations": 95168,
+    "topics": [
+      "mutation testing deep learning",
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Richard Evans",
+    "papers": 2,
+    "citations": 95168,
+    "topics": [
+      "mutation testing deep learning",
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Alexander Pritzel",
+    "papers": 2,
+    "citations": 95168,
+    "topics": [
+      "mutation testing deep learning",
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Tim Green",
+    "papers": 2,
+    "citations": 95168,
+    "topics": [
+      "mutation testing deep learning",
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Michael Figurnov",
+    "papers": 2,
+    "citations": 95168,
+    "topics": [
+      "mutation testing deep learning",
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Olaf Ronneberger",
+    "papers": 2,
+    "citations": 95168,
+    "topics": [
+      "mutation testing deep learning",
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Kathryn Tunyasuvunakool",
+    "papers": 2,
+    "citations": 95168,
+    "topics": [
+      "mutation testing deep learning",
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Russ Bates",
+    "papers": 2,
+    "citations": 95168,
+    "topics": [
+      "mutation testing deep learning",
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Diederik P. Kingma",
+    "papers": 1,
+    "citations": 84542,
+    "topics": [
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Jimmy Lei Ba",
+    "papers": 1,
+    "citations": 84542,
+    "topics": [
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Pauli Virtanen",
+    "papers": 3,
+    "citations": 82996,
+    "topics": [
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Ralf Gommers",
+    "papers": 3,
+    "citations": 82996,
+    "topics": [
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "David Cournapeau",
+    "papers": 3,
+    "citations": 82996,
+    "topics": [
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Gonçalo R. Abecasis",
+    "papers": 4,
+    "citations": 81904,
+    "topics": [
+      "mutation testing deep learning",
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Jakubův, Jan",
+    "papers": 1,
+    "citations": 79058,
+    "topics": [
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Chvalovský, Karel",
+    "papers": 1,
+    "citations": 79058,
+    "topics": [
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Goertzel, Zarathustra",
+    "papers": 1,
+    "citations": 79058,
+    "topics": [
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Kaliszyk, Cezary",
+    "papers": 1,
+    "citations": 79058,
+    "topics": [
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Olšák, Mirek",
+    "papers": 1,
+    "citations": 79058,
+    "topics": [
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Piotrowski, Bartosz",
+    "papers": 1,
+    "citations": 79058,
+    "topics": [
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Schulz, Stephan",
+    "papers": 1,
+    "citations": 79058,
+    "topics": [
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Suda, Martin",
+    "papers": 1,
+    "citations": 79058,
+    "topics": [
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Corinna Cortes",
+    "papers": 2,
+    "citations": 75578,
+    "topics": [
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Vladimir N. Vapnik",
+    "papers": 2,
+    "citations": 75578,
+    "topics": [
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Paolo Giannozzi",
+    "papers": 2,
+    "citations": 58912,
+    "topics": [
+      "distribution shift evaluation benchmark",
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Stefano Baroni",
+    "papers": 2,
+    "citations": 58912,
+    "topics": [
+      "distribution shift evaluation benchmark",
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Nicola Bonini",
+    "papers": 2,
+    "citations": 58912,
+    "topics": [
+      "distribution shift evaluation benchmark",
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Matteo Calandra",
+    "papers": 2,
+    "citations": 58912,
+    "topics": [
+      "distribution shift evaluation benchmark",
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Roberto Car",
+    "papers": 2,
+    "citations": 58912,
+    "topics": [
+      "distribution shift evaluation benchmark",
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Carlo Cavazzoni",
+    "papers": 2,
+    "citations": 58912,
+    "topics": [
+      "distribution shift evaluation benchmark",
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Davide Ceresoli",
+    "papers": 2,
+    "citations": 58912,
+    "topics": [
+      "distribution shift evaluation benchmark",
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "G. Chiarotti",
+    "papers": 2,
+    "citations": 58912,
+    "topics": [
+      "distribution shift evaluation benchmark",
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Carlos Guestrin",
+    "papers": 2,
+    "citations": 54518,
+    "topics": [
+      "metamorphic testing machine learning",
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Paul Flicek",
+    "papers": 4,
+    "citations": 54050,
+    "topics": [
+      "distribution shift evaluation benchmark",
+      "mutation testing deep learning",
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Tianqi Chen",
+    "papers": 1,
+    "citations": 53618,
+    "topics": [
+      "reporting standards machine learning based science"
+    ]
+  },
+  {
+    "author": "Mandi, Jayanta",
+    "papers": 1,
+    "citations": 50123,
+    "topics": [
+      "metamorphic testing machine learning"
+    ]
+  },
+  {
+    "author": "Canoy, Rocsildes",
+    "papers": 1,
+    "citations": 50123,
+    "topics": [
+      "metamorphic testing machine learning"
+    ]
+  },
+  {
+    "author": "Bucarey, Víctor",
+    "papers": 1,
+    "citations": 50123,
+    "topics": [
+      "metamorphic testing machine learning"
+    ]
+  },
+  {
+    "author": "Guns, Tias",
+    "papers": 1,
+    "citations": 50123,
+    "topics": [
+      "metamorphic testing machine learning"
+    ]
+  },
+  {
+    "author": "Geert J. S. Litjens",
+    "papers": 3,
+    "citations": 46092,
+    "topics": [
+      "distribution shift evaluation benchmark",
+      "mutation testing deep learning",
+      "shortcut learning"
+    ]
+  },
+  {
+    "author": "Thijs Kooi",
+    "papers": 3,
+    "citations": 46092,
+    "topics": [
+      "distribution shift evaluation benchmark",
+      "mutation testing deep learning",
+      "shortcut learning"
+    ]
+  },
+  {
+    "author": "Babak Ehteshami Bejnordi",
+    "papers": 3,
+    "citations": 46092,
+    "topics": [
+      "distribution shift evaluation benchmark",
+      "mutation testing deep learning",
+      "shortcut learning"
+    ]
+  },
+  {
+    "author": "Arnaud A. A. Setio",
+    "papers": 3,
+    "citations": 46092,
+    "topics": [
+      "distribution shift evaluation benchmark",
+      "mutation testing deep learning",
+      "shortcut learning"
+    ]
+  },
+  {
+    "author": "Francesco Ciompi",
+    "papers": 3,
+    "citations": 46092,
+    "topics": [
+      "distribution shift evaluation benchmark",
+      "mutation testing deep learning",
+      "shortcut learning"
+    ]
+  }
+]

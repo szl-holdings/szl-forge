@@ -1,0 +1,2409 @@
+[
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4404959202",
+    "doi": "10.1007/s10618-024-01081-4",
+    "arxiv": null,
+    "title": "Syntheval: a framework for detailed utility and privacy evaluation of tabular synthetic data",
+    "year": 2024,
+    "venue": "Data Mining and Knowledge Discovery",
+    "authors": [
+      "Anton D. Lautrup",
+      "Tobias Hyrup",
+      "Arthur Zimek",
+      "Peter Schneider–Kamp"
+    ],
+    "cited_by": 40,
+    "is_oa": true,
+    "oa_status": "green",
+    "oa_license": "other-oa",
+    "mag": null,
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4409746746",
+    "doi": "10.3389/fdgth.2025.1576290",
+    "arxiv": null,
+    "title": "Comprehensive evaluation framework for synthetic tabular data in health: fidelity, utility and privacy analysis of generative models with and without privacy guarantees",
+    "year": 2025,
+    "venue": "Frontiers in Digital Health",
+    "authors": [
+      "Mikel Hernandez",
+      "Pablo A. Osorio-Marulanda",
+      "Mikel Catalina",
+      "Lorea Loinaz",
+      "Gorka Epelde",
+      "Naiara Aginako"
+    ],
+    "cited_by": 33,
+    "is_oa": true,
+    "oa_status": "gold",
+    "oa_license": "cc-by",
+    "mag": null,
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4415196534",
+    "doi": "10.1016/j.jbi.2025.104939",
+    "arxiv": null,
+    "title": "A comprehensive evaluation framework for synthetic medical tabular data generation",
+    "year": 2025,
+    "venue": "Journal of Biomedical Informatics",
+    "authors": [
+      "Anastasia Kurakova",
+      "Hajar Homayouni"
+    ],
+    "cited_by": 6,
+    "is_oa": false,
+    "oa_status": "closed",
+    "oa_license": null,
+    "mag": null,
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4407938111",
+    "doi": "10.5220/0013383700003899",
+    "arxiv": null,
+    "title": "FEST: A Unified Framework for Evaluating Synthetic Tabular Data",
+    "year": 2025,
+    "venue": null,
+    "authors": [
+      "Weijie Niu",
+      "Alberto Huertas Celdrán",
+      "Karoline Siarsky",
+      "Burkhard Stiller"
+    ],
+    "cited_by": 4,
+    "is_oa": true,
+    "oa_status": "gold",
+    "oa_license": "cc-by-nc-nd",
+    "mag": null,
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4392710543",
+    "doi": "10.1016/j.ijmedinf.2024.105413",
+    "arxiv": null,
+    "title": "Can I trust my fake data – A comprehensive quality assessment framework for synthetic tabular data in healthcare",
+    "year": 2024,
+    "venue": "International Journal of Medical Informatics",
+    "authors": [
+      "Vibeke Binz Vallevik",
+      "Aleksandar Babić",
+      "Serena Marshall",
+      "Severin Elvatun",
+      "Helga Maria Bergem Brøgger",
+      "Sharmini Alagaratnam",
+      "Bjørn Edwin",
+      "Narasimha Raghavan Veeraragavan"
+    ],
+    "cited_by": 61,
+    "is_oa": true,
+    "oa_status": "hybrid",
+    "oa_license": "cc-by-nc",
+    "mag": null,
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4323349011",
+    "doi": "10.56553/popets-2023-0055",
+    "arxiv": null,
+    "title": "A Unified Framework for Quantifying Privacy Risk in Synthetic Data",
+    "year": 2023,
+    "venue": "Proceedings on Privacy Enhancing Technologies",
+    "authors": [
+      "M. Giomi",
+      "Franziska Boenisch",
+      "Christoph Wehmeyer",
+      "Borbála Tasnádi"
+    ],
+    "cited_by": 84,
+    "is_oa": true,
+    "oa_status": "hybrid",
+    "oa_license": "cc-by",
+    "mag": null,
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4395483776",
+    "doi": "10.48550/arxiv.2404.15821",
+    "arxiv": "2404.15821",
+    "title": "SynthEval: A Framework for Detailed Utility and Privacy Evaluation of Tabular Synthetic Data",
+    "year": 2024,
+    "venue": "arXiv (Cornell University)",
+    "authors": [
+      "Anton D. Lautrup",
+      "Tobias Hyrup",
+      "Arthur Zimek",
+      "Peter Schneider–Kamp"
+    ],
+    "cited_by": 3,
+    "is_oa": true,
+    "oa_status": "green",
+    "oa_license": "cc-by",
+    "mag": null,
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4290012325",
+    "doi": "10.1109/jbhi.2022.3196697",
+    "arxiv": null,
+    "title": "Synthetic Patient Data Generation and Evaluation in Disease Prediction Using Small and Imbalanced Datasets",
+    "year": 2022,
+    "venue": "IEEE Journal of Biomedical and Health Informatics",
+    "authors": [
+      "Antonio J. Rodríguez-Almeida",
+      "Himar A. Fabelo",
+      "Samuel Ortega",
+      "Alejandro Déniz",
+      "Francisco Balea-Fernandez",
+      "Eduardo Quevedo",
+      "Cristina Soguero-Ruíz",
+      "Ana María Wägner"
+    ],
+    "cited_by": 54,
+    "is_oa": false,
+    "oa_status": "closed",
+    "oa_license": null,
+    "mag": null,
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4408031728",
+    "doi": "10.1016/j.compbiomed.2025.109834",
+    "arxiv": null,
+    "title": "Generative AI for synthetic data across multiple medical modalities: A systematic review of recent developments and challenges",
+    "year": 2025,
+    "venue": "Computers in Biology and Medicine",
+    "authors": [
+      "Mahmoud K. Ibrahim",
+      "Yasmina Al Khalil",
+      "Sina Amirrajab",
+      "Chang Fu Sun",
+      "Marcel M. Breeuwer",
+      "Josien P. W. Pluim",
+      "Bart Elen",
+      "Gökhan Ertaylan"
+    ],
+    "cited_by": 119,
+    "is_oa": true,
+    "oa_status": "hybrid",
+    "oa_license": "cc-by",
+    "mag": null,
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4410716777",
+    "doi": "10.1007/s41060-025-00816-w",
+    "arxiv": null,
+    "title": "Synthetic Data Generation for Healthcare: Exploring Generative Adversarial Networks Variants for Medical Tabular Data",
+    "year": 2025,
+    "venue": "International Journal of Data Science and Analytics",
+    "authors": [
+      "Halal Abdulrahman Ahmed",
+      "Juan A. Nepomuceno",
+      "Belén Vega-Márquez",
+      "Isabel A. Nepomuceno-Chamorro"
+    ],
+    "cited_by": 26,
+    "is_oa": true,
+    "oa_status": "hybrid",
+    "oa_license": "cc-by",
+    "mag": null,
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4400375396",
+    "doi": "10.1145/3742435",
+    "arxiv": "2407.02549",
+    "title": "Diffusion Models for Tabular Data Imputation and Synthetic Data Generation",
+    "year": 2025,
+    "venue": "ACM Transactions on Knowledge Discovery from Data",
+    "authors": [
+      "Mario Villaizán-Vallelado",
+      "Matteo Salvatori",
+      "Carlos Segura",
+      "Ioannis Arapakis"
+    ],
+    "cited_by": 19,
+    "is_oa": true,
+    "oa_status": "bronze",
+    "oa_license": null,
+    "mag": null,
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4391529419",
+    "doi": "10.1371/journal.pone.0297271",
+    "arxiv": null,
+    "title": "Assessment of differentially private synthetic data for utility and fairness in end-to-end machine learning pipelines for tabular data",
+    "year": 2024,
+    "venue": "PLoS ONE",
+    "authors": [
+      "Mayana Wanderley Pereira",
+      "Meghana Kshirsagar",
+      "Sumit Mukherjee",
+      "Rahul M. Dodhia",
+      "Juan Lavista Ferres",
+      "Rafael T. de Sousa"
+    ],
+    "cited_by": 26,
+    "is_oa": true,
+    "oa_status": "gold",
+    "oa_license": "cc-by",
+    "mag": null,
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4361765033",
+    "doi": "10.1007/978-3-031-27077-2_34",
+    "arxiv": null,
+    "title": "Generation of Synthetic Tabular Healthcare Data Using Generative Adversarial Networks",
+    "year": 2023,
+    "venue": "Lecture notes in computer science",
+    "authors": [
+      "Alireza Nik",
+      "Michael Alexander Riegler",
+      "Pål Halvorsen",
+      "Andrea Marheim Storås"
+    ],
+    "cited_by": 14,
+    "is_oa": true,
+    "oa_status": "green",
+    "oa_license": "other-oa",
+    "mag": null,
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4405865167",
+    "doi": "10.1016/j.cmpb.2024.108571",
+    "arxiv": null,
+    "title": "Preserving privacy in healthcare: A systematic review of deep learning approaches for synthetic data generation",
+    "year": 2024,
+    "venue": "Computer Methods and Programs in Biomedicine",
+    "authors": [
+      "Yintong Liu",
+      "U. Rajendra Acharya",
+      "Jen Hong Tan"
+    ],
+    "cited_by": 57,
+    "is_oa": false,
+    "oa_status": "closed",
+    "oa_license": null,
+    "mag": null,
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W3175134484",
+    "doi": "10.3389/fdata.2021.679939",
+    "arxiv": null,
+    "title": "Holdout-Based Empirical Assessment of Mixed-Type Synthetic Data",
+    "year": 2021,
+    "venue": "Frontiers in Big Data",
+    "authors": [
+      "Michael Platzer",
+      "Thomas Reutterer"
+    ],
+    "cited_by": 47,
+    "is_oa": true,
+    "oa_status": "gold",
+    "oa_license": "cc-by",
+    "mag": "3175134484",
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4391512775",
+    "doi": "10.1016/j.asoc.2024.111353",
+    "arxiv": null,
+    "title": "Peak and ultimate stress-strain model of confined ultra-high-performance concrete (UHPC) using hybrid machine learning model with conditional tabular generative adversarial network",
+    "year": 2024,
+    "venue": "Applied Soft Computing",
+    "authors": [
+      "Tadesse Gemeda Wakjira",
+      "M. Shahria Alam"
+    ],
+    "cited_by": 77,
+    "is_oa": true,
+    "oa_status": "hybrid",
+    "oa_license": "cc-by-nc-nd",
+    "mag": null,
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4392933229",
+    "doi": "10.48550/arxiv.2403.10424",
+    "arxiv": "2403.10424",
+    "title": "Structured Evaluation of Synthetic Tabular Data",
+    "year": 2024,
+    "venue": "arXiv (Cornell University)",
+    "authors": [
+      "Scott Cheng‐Hsin Yang",
+      "Baxter Eaves",
+      "Michael H. Schmidt",
+      "Ken Swanson",
+      "Patrick Shafto"
+    ],
+    "cited_by": 3,
+    "is_oa": true,
+    "oa_status": "green",
+    "oa_license": "cc-by",
+    "mag": null,
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4387994974",
+    "doi": "10.48550/arxiv.2310.16981",
+    "arxiv": "2310.16981",
+    "title": "Reimagining Synthetic Tabular Data Generation through Data-Centric AI: A Comprehensive Benchmark",
+    "year": 2023,
+    "venue": "arXiv (Cornell University)",
+    "authors": [
+      "Lasse Hansen",
+      "Nabeel Seedat",
+      "Mihaela van der Schaar",
+      "Andrija Petrović"
+    ],
+    "cited_by": 8,
+    "is_oa": true,
+    "oa_status": "green",
+    "oa_license": "cc-by",
+    "mag": null,
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4391092637",
+    "doi": "10.1109/access.2024.3356913",
+    "arxiv": null,
+    "title": "CasTGAN: Cascaded Generative Adversarial Network for Realistic Tabular Data Synthesis",
+    "year": 2024,
+    "venue": "IEEE Access",
+    "authors": [
+      "Abdallah Alshantti",
+      "Damiano Varagnolo",
+      "Adil Rasheed",
+      "A Rahmati",
+      "Frank Westad"
+    ],
+    "cited_by": 16,
+    "is_oa": true,
+    "oa_status": "gold",
+    "oa_license": "cc-by-nc-nd",
+    "mag": null,
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4283396845",
+    "doi": "10.48550/arxiv.2206.11104",
+    "arxiv": "2206.11104",
+    "title": "OpenXAI: Towards a Transparent Evaluation of Model Explanations",
+    "year": 2022,
+    "venue": "arXiv (Cornell University)",
+    "authors": [
+      "Chirag Agarwal",
+      "Ley, Dan",
+      "Satyapriya Krishna",
+      "Eshika Saxena",
+      "Martin Pawelczyk",
+      "Nari Johnson",
+      "Isha Puri",
+      "Marinka Žitnik"
+    ],
+    "cited_by": 82,
+    "is_oa": true,
+    "oa_status": "green",
+    "oa_license": null,
+    "mag": null,
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W7130659492",
+    "doi": "10.3390/electronics15040883",
+    "arxiv": null,
+    "title": "Synthetic Data Augmentation for Imbalanced Tabular Data: A Comparative Study of Generation Methods",
+    "year": 2026,
+    "venue": "Electronics",
+    "authors": [
+      "Dong-Hyun Won",
+      "Kwang-Seong Shin",
+      "Sungkwan Youm"
+    ],
+    "cited_by": 7,
+    "is_oa": true,
+    "oa_status": "gold",
+    "oa_license": "cc-by",
+    "mag": null,
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4402494919",
+    "doi": "10.1007/978-3-031-69651-0_13",
+    "arxiv": null,
+    "title": "Evaluation of Synthetic Data Generators on Complex Tabular Data",
+    "year": 2024,
+    "venue": "Lecture notes in computer science",
+    "authors": [
+      "Oscar Thees",
+      "Jiří Novák",
+      "Matthias Templ"
+    ],
+    "cited_by": 4,
+    "is_oa": false,
+    "oa_status": "closed",
+    "oa_license": null,
+    "mag": null,
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4383987205",
+    "doi": "10.48550/arxiv.2307.03577",
+    "arxiv": "2307.03577",
+    "title": "CuTS: Customizable Tabular Synthetic Data Generation",
+    "year": 2023,
+    "venue": "arXiv (Cornell University)",
+    "authors": [
+      "Mark Vero",
+      "Mislav Balunović",
+      "Martin Vechev"
+    ],
+    "cited_by": 4,
+    "is_oa": true,
+    "oa_status": "green",
+    "oa_license": "cc-by",
+    "mag": null,
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4287120898",
+    "doi": "10.48550/arxiv.2106.06468",
+    "arxiv": "2106.06468",
+    "title": "Locally Sparse Neural Networks for Tabular Biomedical Data",
+    "year": 2021,
+    "venue": "arXiv (Cornell University)",
+    "authors": [
+      "Junchen Yang",
+      "Ofir Lindenbaum",
+      "Yuval Kluger"
+    ],
+    "cited_by": 11,
+    "is_oa": true,
+    "oa_status": "green",
+    "oa_license": null,
+    "mag": null,
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4414125611",
+    "doi": "10.5753/sbseg_estendido.2025.12113",
+    "arxiv": "2511.00361",
+    "title": "MalDataGen: A Modular Framework for Synthetic Tabular Data Generation in Malware Detection",
+    "year": 2025,
+    "venue": null,
+    "authors": [
+      "Kayuã Oleques Paim",
+      "Angelo Gaspar Diniz Nogueira",
+      "Diego Kreutz",
+      "Weverton Luis Da Costa Cordeiro",
+      "Rodrigo Brandão Mansilha"
+    ],
+    "cited_by": 3,
+    "is_oa": true,
+    "oa_status": "gold",
+    "oa_license": null,
+    "mag": null,
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "arxiv",
+    "id": "2403.10424v2",
+    "arxiv": "2403.10424",
+    "code_links_stated": [],
+    "doi": null,
+    "title": "Structured Evaluation of Synthetic Tabular Data",
+    "year": 2024,
+    "venue": "arXiv",
+    "authors": [
+      "Scott Cheng-Hsin Yang",
+      "Baxter Eaves",
+      "Michael Schmidt",
+      "Ken Swanson",
+      "Patrick Shafto"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "arxiv",
+    "id": "2508.16254v1",
+    "arxiv": "2508.16254",
+    "code_links_stated": [],
+    "doi": null,
+    "title": "FEST: A Unified Framework for Evaluating Synthetic Tabular Data",
+    "year": 2025,
+    "venue": "arXiv",
+    "authors": [
+      "Weijie Niu",
+      "Alberto Huertas Celdran",
+      "Karoline Siarsky",
+      "Burkhard Stiller"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "arxiv",
+    "id": "2404.15821v1",
+    "arxiv": "2404.15821",
+    "code_links_stated": [],
+    "doi": "10.1007/s10618-024-01081-4",
+    "title": "SynthEval: A Framework for Detailed Utility and Privacy Evaluation of Tabular Synthetic Data",
+    "year": 2024,
+    "venue": "arXiv",
+    "authors": [
+      "Anton Danholt Lautrup",
+      "Tobias Hyrup",
+      "Arthur Zimek",
+      "Peter Schneider-Kamp"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "arxiv",
+    "id": "2512.19718v1",
+    "arxiv": "2512.19718",
+    "code_links_stated": [],
+    "doi": null,
+    "title": "Synthetic Data Blueprint (SDB): A modular framework for the statistical, structural, and graph-based evaluation of synthetic tabular data",
+    "year": 2025,
+    "venue": "arXiv",
+    "authors": [
+      "Vasileios C. Pezoulas",
+      "Nikolaos S. Tachos",
+      "Eleni Georga",
+      "Kostas Marias",
+      "Manolis Tsiknakis",
+      "Dimitrios I. Fotiadis"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "arxiv",
+    "id": "2604.13125v1",
+    "arxiv": "2604.13125",
+    "code_links_stated": [
+      "https://github.com/bhavana3/synthetic-data-experiments"
+    ],
+    "doi": "10.5281/zenodo.19545114",
+    "title": "Synthetic Tabular Generators Fail to Preserve Behavioral Fraud Patterns: A Benchmark on Temporal, Velocity, and Multi-Account Signals",
+    "year": 2026,
+    "venue": "arXiv",
+    "authors": [
+      "Bhavana Sajja"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "arxiv",
+    "id": "2605.28198v2",
+    "arxiv": "2605.28198",
+    "code_links_stated": [],
+    "doi": null,
+    "title": "Hierarchical Synthetic Tabular Data Generation: A Hybrid Top-Down and Bottom-Up Framework",
+    "year": 2026,
+    "venue": "arXiv",
+    "authors": [
+      "Junfeng Nie",
+      "Alvin Jin",
+      "Xiaohui Chen"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "arxiv",
+    "id": "2606.16488v2",
+    "arxiv": "2606.16488",
+    "code_links_stated": [],
+    "doi": null,
+    "title": "An Energy-Driven Framework for Privacy-Aware Synthetic Data Generation",
+    "year": 2026,
+    "venue": "arXiv",
+    "authors": [
+      "Pierpaolo Massoli",
+      "Fabio Spagnuolo"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "arxiv",
+    "id": "2504.01908v1",
+    "arxiv": "2504.01908",
+    "code_links_stated": [
+      "https://github.com/mostly-ai/mostlyai-qa"
+    ],
+    "doi": null,
+    "title": "Benchmarking Synthetic Tabular Data: A Multi-Dimensional Evaluation Framework",
+    "year": 2025,
+    "venue": "arXiv",
+    "authors": [
+      "Andrey Sidorenko",
+      "Michael Platzer",
+      "Mario Scriminaci",
+      "Paul Tiwald"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "arxiv",
+    "id": "2507.19211v1",
+    "arxiv": "2507.19211",
+    "code_links_stated": [],
+    "doi": null,
+    "title": "Dependency-aware synthetic tabular data generation",
+    "year": 2025,
+    "venue": "arXiv",
+    "authors": [
+      "Chaithra Umesh",
+      "Kristian Schultz",
+      "Manjunath Mahendra",
+      "Saptarshi Bej",
+      "Olaf Wolkenhauer"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "arxiv",
+    "id": "2511.00361v1",
+    "arxiv": "2511.00361",
+    "code_links_stated": [],
+    "doi": "10.5753/sbseg_estendido.2025.12113",
+    "title": "MalDataGen: A Modular Framework for Synthetic Tabular Data Generation in Malware Detection",
+    "year": 2025,
+    "venue": "arXiv",
+    "authors": [
+      "Kayua Oleques Paim",
+      "Angelo Gaspar Diniz Nogueira",
+      "Diego Kreutz",
+      "Weverton Cordeiro",
+      "Rodrigo Brandao Mansilha"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "arxiv",
+    "id": "2404.14445v2",
+    "arxiv": "2404.14445",
+    "code_links_stated": [],
+    "doi": null,
+    "title": "A Multi-Faceted Evaluation Framework for Assessing Synthetic Data Generated by Large Language Models",
+    "year": 2024,
+    "venue": "arXiv",
+    "authors": [
+      "Yefeng Yuan",
+      "Yuhong Liu",
+      "Liang Cheng"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "arxiv",
+    "id": "2410.01933v2",
+    "arxiv": "2410.01933",
+    "code_links_stated": [
+      "https://github.com/BetterdataLabs/taegan"
+    ],
+    "doi": null,
+    "title": "TAEGAN: Generating Synthetic Tabular Data For Data Augmentation",
+    "year": 2024,
+    "venue": "arXiv",
+    "authors": [
+      "Jiayu Li",
+      "Zilong Zhao",
+      "Kevin Yee",
+      "Uzair Javaid",
+      "Biplab Sikdar"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "arxiv",
+    "id": "2507.11590v1",
+    "arxiv": "2507.11590",
+    "code_links_stated": [],
+    "doi": null,
+    "title": "Synthetic Tabular Data Generation: A Comparative Survey for Modern Techniques",
+    "year": 2025,
+    "venue": "arXiv",
+    "authors": [
+      "Raju Challagundla",
+      "Mohsen Dorodchi",
+      "Pu Wang",
+      "Minwoo Lee"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "arxiv",
+    "id": "2307.03577v4",
+    "arxiv": "2307.03577",
+    "code_links_stated": [],
+    "doi": null,
+    "title": "CuTS: Customizable Tabular Synthetic Data Generation",
+    "year": 2023,
+    "venue": "arXiv",
+    "authors": [
+      "Mark Vero",
+      "Mislav Balunović",
+      "Martin Vechev"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "arxiv",
+    "id": "2405.16971v2",
+    "arxiv": "2405.16971",
+    "code_links_stated": [
+      "https://github.com/vuhoangminh/TabGen-Framework"
+    ],
+    "doi": null,
+    "title": "A Unified Framework for Tabular Generative Modeling: Loss Functions, Benchmarks, and Improved Multi-objective Bayesian Optimization Approaches",
+    "year": 2024,
+    "venue": "Transactions on Machine Learning Research (TMLR), 2026. https://openreview.net/forum?id=RPZ0EW0lz0",
+    "authors": [
+      "Minh H. Vu",
+      "Daniel Edler",
+      "Carl Wibom",
+      "Tommy Löfstedt",
+      "Beatrice Melin",
+      "Martin Rosvall"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "synthetic tabular data evaluation framework"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4409746746",
+    "doi": "10.3389/fdgth.2025.1576290",
+    "arxiv": null,
+    "title": "Comprehensive evaluation framework for synthetic tabular data in health: fidelity, utility and privacy analysis of generative models with and without privacy guarantees",
+    "year": 2025,
+    "venue": "Frontiers in Digital Health",
+    "authors": [
+      "Mikel Hernandez",
+      "Pablo A. Osorio-Marulanda",
+      "Mikel Catalina",
+      "Lorea Loinaz",
+      "Gorka Epelde",
+      "Naiara Aginako"
+    ],
+    "cited_by": 33,
+    "is_oa": true,
+    "oa_status": "gold",
+    "oa_license": "cc-by",
+    "mag": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4404959202",
+    "doi": "10.1007/s10618-024-01081-4",
+    "arxiv": null,
+    "title": "Syntheval: a framework for detailed utility and privacy evaluation of tabular synthetic data",
+    "year": 2024,
+    "venue": "Data Mining and Knowledge Discovery",
+    "authors": [
+      "Anton D. Lautrup",
+      "Tobias Hyrup",
+      "Arthur Zimek",
+      "Peter Schneider–Kamp"
+    ],
+    "cited_by": 40,
+    "is_oa": true,
+    "oa_status": "green",
+    "oa_license": "other-oa",
+    "mag": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4405865167",
+    "doi": "10.1016/j.cmpb.2024.108571",
+    "arxiv": null,
+    "title": "Preserving privacy in healthcare: A systematic review of deep learning approaches for synthetic data generation",
+    "year": 2024,
+    "venue": "Computer Methods and Programs in Biomedicine",
+    "authors": [
+      "Yintong Liu",
+      "U. Rajendra Acharya",
+      "Jen Hong Tan"
+    ],
+    "cited_by": 57,
+    "is_oa": false,
+    "oa_status": "closed",
+    "oa_license": null,
+    "mag": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4388994349",
+    "doi": "10.1145/3604237.3626876",
+    "arxiv": null,
+    "title": "FinDiff: Diffusion Models for Financial Tabular Data Generation",
+    "year": 2023,
+    "venue": null,
+    "authors": [
+      "Timur Sattarov",
+      "Marco Schreyer",
+      "Damian Borth"
+    ],
+    "cited_by": 35,
+    "is_oa": true,
+    "oa_status": "gold",
+    "oa_license": "cc-by",
+    "mag": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4395483776",
+    "doi": "10.48550/arxiv.2404.15821",
+    "arxiv": "2404.15821",
+    "title": "SynthEval: A Framework for Detailed Utility and Privacy Evaluation of Tabular Synthetic Data",
+    "year": 2024,
+    "venue": "arXiv (Cornell University)",
+    "authors": [
+      "Anton D. Lautrup",
+      "Tobias Hyrup",
+      "Arthur Zimek",
+      "Peter Schneider–Kamp"
+    ],
+    "cited_by": 3,
+    "is_oa": true,
+    "oa_status": "green",
+    "oa_license": "cc-by",
+    "mag": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4411910806",
+    "doi": "10.3171/2025.4.focus25225",
+    "arxiv": null,
+    "title": "Synthetic neurosurgical data generation with generative adversarial networks and large language models:an investigation on fidelity, utility, and privacy",
+    "year": 2025,
+    "venue": "Neurosurgical FOCUS",
+    "authors": [
+      "Austin A. Barr",
+      "Eddie Guo",
+      "Brij S. Karmur",
+      "Emre Sezgın"
+    ],
+    "cited_by": 5,
+    "is_oa": true,
+    "oa_status": "diamond",
+    "oa_license": "cc-by-nc-nd",
+    "mag": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4405514668",
+    "doi": "10.3390/bioengineering11121288",
+    "arxiv": null,
+    "title": "GAN-Based Novel Approach for Generating Synthetic Medical Tabular Data",
+    "year": 2024,
+    "venue": "Bioengineering",
+    "authors": [
+      "Rashid Nasimov",
+      "Nigorakhon Nasimova",
+      "Sanjar Mirzakhalilov",
+      "Gül Tokdemir",
+      "Mohammad Rizwan",
+      "Akmalbek Bobomirzaevich Abdusalomov",
+      "Young Im Cho"
+    ],
+    "cited_by": 8,
+    "is_oa": true,
+    "oa_status": "gold",
+    "oa_license": "cc-by",
+    "mag": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W7159676202",
+    "doi": "10.55220/2576-6821.v10.928",
+    "arxiv": null,
+    "title": "Synthetic Data Meets Finance: Generative Models for Privacy Preserving Analytics",
+    "year": 2026,
+    "venue": "Journal of Banking and Financial Dynamics",
+    "authors": [
+      "Yongbin Yang",
+      "Jingyun Yang"
+    ],
+    "cited_by": 9,
+    "is_oa": false,
+    "oa_status": "closed",
+    "oa_license": null,
+    "mag": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4412568381",
+    "doi": "10.1109/ichi64645.2025.00011",
+    "arxiv": null,
+    "title": "A Text-to-tabular Approach to Generate Synthetic Patient Data using LLMs",
+    "year": 2025,
+    "venue": null,
+    "authors": [
+      "Margaux Törnqvist",
+      "Jean‐Daniel Zucker",
+      "Tristan Fauvel",
+      "Nicolas Lambert",
+      "Mathilde Berthelot",
+      "Antoine Movschin"
+    ],
+    "cited_by": 7,
+    "is_oa": false,
+    "oa_status": "closed",
+    "oa_license": null,
+    "mag": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4414881106",
+    "doi": "10.1080/09540091.2025.2565163",
+    "arxiv": null,
+    "title": "Innovative synthetic EHR data generation: diffusion models for enhanced privacy and clinical utility in multimorbidity clustering",
+    "year": 2025,
+    "venue": "Connection Science",
+    "authors": [
+      "Francis John Kita",
+      "Gadde Srinivasa Rao",
+      "Peter Josephat Kirigiti"
+    ],
+    "cited_by": 5,
+    "is_oa": true,
+    "oa_status": "gold",
+    "oa_license": "cc-by-nc",
+    "mag": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W7120077181",
+    "doi": "10.1016/j.knosys.2026.115303",
+    "arxiv": null,
+    "title": "Bridging stability and utility in synthetic tabular data: The sTableGAN model",
+    "year": 2026,
+    "venue": "Knowledge-Based Systems",
+    "authors": [
+      "Mustafa Hakan Bozkurt"
+    ],
+    "cited_by": 2,
+    "is_oa": false,
+    "oa_status": "closed",
+    "oa_license": null,
+    "mag": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W7167620694",
+    "doi": "10.1371/journal.pdig.0001522",
+    "arxiv": null,
+    "title": "Evaluating the quality of tabular synthetic data in health care",
+    "year": 2026,
+    "venue": "PLOS Digital Health",
+    "authors": [
+      "Ivana Nanevski",
+      "Maryam Mohebi",
+      "Sebastian Jäger",
+      "Karen Otte",
+      "Fabian Prasser",
+      "Matthias Schulte‐Althoff",
+      "Daniel Fürstenau",
+      "Felix Bießmann"
+    ],
+    "cited_by": 2,
+    "is_oa": true,
+    "oa_status": "gold",
+    "oa_license": "cc-by",
+    "mag": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4403296887",
+    "doi": "10.1109/jetcas.2024.3477976",
+    "arxiv": null,
+    "title": "Auditing and Generating Synthetic Data with Controllable Trust Trade-offs",
+    "year": 2024,
+    "venue": "IEEE Journal on Emerging and Selected Topics in Circuits and Systems",
+    "authors": [
+      "Brian M. Belgodere",
+      "Pierre Dognin",
+      "Adam Ivankay",
+      "Igor V. Melnyk",
+      "Youssef Mroueh",
+      "Aleksandra Mojsilović",
+      "Jiří Navrátil",
+      "Apoorva Nitsure"
+    ],
+    "cited_by": 12,
+    "is_oa": true,
+    "oa_status": "hybrid",
+    "oa_license": "cc-by",
+    "mag": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4416176407",
+    "doi": "10.48550/arxiv.2508.06647",
+    "arxiv": "2508.06647",
+    "title": "Privacy-Preserving Tabular Synthetic Data Generation Using TabularARGN",
+    "year": 2025,
+    "venue": "arXiv (Cornell University)",
+    "authors": [
+      "Andrey Sidorenko",
+      "Paul Tiwald"
+    ],
+    "cited_by": 1,
+    "is_oa": true,
+    "oa_status": "green",
+    "oa_license": null,
+    "mag": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4416409141",
+    "doi": "10.1016/j.patcog.2026.113819",
+    "arxiv": "2507.19211",
+    "title": "Dependency-aware synthetic tabular data generation",
+    "year": 2026,
+    "venue": "Pattern Recognition",
+    "authors": [
+      "Chaithra Umesh",
+      "Kristian Schultz",
+      "Manjunath Mahendra",
+      "Saptarshi Bej",
+      "Olaf Wolkenhauer"
+    ],
+    "cited_by": 2,
+    "is_oa": true,
+    "oa_status": "hybrid",
+    "oa_license": "cc-by-nc-nd",
+    "mag": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W7106666582",
+    "doi": "10.48550/arxiv.2511.17590",
+    "arxiv": "2511.17590",
+    "title": "SHAP Distance: An Explainability-Aware Metric for Evaluating the Semantic Fidelity of Synthetic Tabular Data",
+    "year": 2025,
+    "venue": "arXiv (Cornell University)",
+    "authors": [
+      "Yu, Ke",
+      "Ishikura, Shigeru",
+      "Usukura, Yukari",
+      "Shigoku, Yuki",
+      "Hayashi, Teruaki"
+    ],
+    "cited_by": 1,
+    "is_oa": true,
+    "oa_status": "green",
+    "oa_license": null,
+    "mag": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W7118190400",
+    "doi": "10.3390/a19010039",
+    "arxiv": null,
+    "title": "Benchmarking Statistical and Deep Generative Models for Privacy-Preserving Synthetic Student Data in Educational Data Mining",
+    "year": 2026,
+    "venue": "Algorithms",
+    "authors": [
+      "Georgios Kostopoulos",
+      "Maria Tsiakmaki",
+      "Sotiris B. Kotsiantis"
+    ],
+    "cited_by": 3,
+    "is_oa": true,
+    "oa_status": "gold",
+    "oa_license": "cc-by",
+    "mag": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4414955969",
+    "doi": "10.1109/access.2025.3619091",
+    "arxiv": null,
+    "title": "Generative Private Synthetic Student Data for Learning Analytics: An Empirical Study",
+    "year": 2025,
+    "venue": "IEEE Access",
+    "authors": [
+      "Divine Iloh",
+      "Oluwakemi Temitope Olayinka",
+      "Faith Iyere",
+      "Sanath Chilakala"
+    ],
+    "cited_by": 6,
+    "is_oa": true,
+    "oa_status": "gold",
+    "oa_license": "cc-by",
+    "mag": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4411011671",
+    "doi": "10.1007/s44206-025-00200-y",
+    "arxiv": null,
+    "title": "Unraveling the Regimes of Synthetic Data Metrics: Expectations, Ethics, and Politics",
+    "year": 2025,
+    "venue": "Digital Society",
+    "authors": [
+      "Louis Ravn",
+      "Vassilis Galanos",
+      "Matthew Archer",
+      "Danielle Shanley"
+    ],
+    "cited_by": 5,
+    "is_oa": true,
+    "oa_status": "hybrid",
+    "oa_license": "cc-by",
+    "mag": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4412346371",
+    "doi": "10.1109/dsn64029.2025.00019",
+    "arxiv": null,
+    "title": "GTV: Generating Tabular Data via Vertical Federated Learning",
+    "year": 2025,
+    "venue": null,
+    "authors": [
+      "Zilong Zhao",
+      "Han Wu",
+      "Aad van Moorsel",
+      "Lydia Y. Chen"
+    ],
+    "cited_by": 3,
+    "is_oa": true,
+    "oa_status": "green",
+    "oa_license": null,
+    "mag": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4319323601",
+    "doi": "10.48550/arxiv.2302.01706",
+    "arxiv": "2302.01706",
+    "title": "VT-GAN: Cooperative Tabular Data Synthesis using Vertical Federated Learning",
+    "year": 2023,
+    "venue": "arXiv (Cornell University)",
+    "authors": [
+      "Zilong Zhao",
+      "Han Wu",
+      "Aad van Moorsel",
+      "Lydia Y. Chen"
+    ],
+    "cited_by": 3,
+    "is_oa": true,
+    "oa_status": "green",
+    "oa_license": null,
+    "mag": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4386556676",
+    "doi": "10.48550/arxiv.2309.01472",
+    "arxiv": "2309.01472",
+    "title": "FinDiff: Diffusion Models for Financial Tabular Data Generation",
+    "year": 2023,
+    "venue": "RePEc: Research Papers in Economics",
+    "authors": [
+      "Timur Sattarov",
+      "Marco Schreyer",
+      "Damian Borth"
+    ],
+    "cited_by": 2,
+    "is_oa": true,
+    "oa_status": "green",
+    "oa_license": "cc-by-nc-nd",
+    "mag": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4366851007",
+    "doi": "10.48550/arxiv.2304.10819",
+    "arxiv": "2304.10819",
+    "title": "Auditing and Generating Synthetic Data with Controllable Trust Trade-offs",
+    "year": 2023,
+    "venue": "arXiv (Cornell University)",
+    "authors": [
+      "Brian M. Belgodere",
+      "Pierre Dognin",
+      "Adam Ivankay",
+      "Igor V. Melnyk",
+      "Youssef Mroueh",
+      "Aleksandra Mojsilović",
+      "Navratil, Jiri",
+      "Apoorva Nitsure"
+    ],
+    "cited_by": 4,
+    "is_oa": true,
+    "oa_status": "green",
+    "oa_license": null,
+    "mag": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4390897376",
+    "doi": "10.48550/arxiv.2401.06263",
+    "arxiv": "2401.06263",
+    "title": "FedTabDiff: Federated Learning of Diffusion Probabilistic Models for Synthetic Mixed-Type Tabular Data Generation",
+    "year": 2024,
+    "venue": "arXiv (Cornell University)",
+    "authors": [
+      "Timur Sattarov",
+      "Marco Schreyer",
+      "Damian Borth"
+    ],
+    "cited_by": 1,
+    "is_oa": true,
+    "oa_status": "green",
+    "oa_license": "cc-by-nc-nd",
+    "mag": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4395444049",
+    "doi": "10.48550/arxiv.2404.14445",
+    "arxiv": "2404.14445",
+    "title": "A Multi-Faceted Evaluation Framework for Assessing Synthetic Data Generated by Large Language Models",
+    "year": 2024,
+    "venue": "arXiv (Cornell University)",
+    "authors": [
+      "Yefeng Yuan",
+      "Yuhong Liu",
+      "Liang Cheng"
+    ],
+    "cited_by": 2,
+    "is_oa": true,
+    "oa_status": "green",
+    "oa_license": null,
+    "mag": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "arxiv",
+    "id": "2404.15821v1",
+    "arxiv": "2404.15821",
+    "code_links_stated": [],
+    "doi": "10.1007/s10618-024-01081-4",
+    "title": "SynthEval: A Framework for Detailed Utility and Privacy Evaluation of Tabular Synthetic Data",
+    "year": 2024,
+    "venue": "arXiv",
+    "authors": [
+      "Anton Danholt Lautrup",
+      "Tobias Hyrup",
+      "Arthur Zimek",
+      "Peter Schneider-Kamp"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "arxiv",
+    "id": "2508.06647v1",
+    "arxiv": "2508.06647",
+    "code_links_stated": [],
+    "doi": null,
+    "title": "Privacy-Preserving Tabular Synthetic Data Generation Using TabularARGN",
+    "year": 2025,
+    "venue": "arXiv",
+    "authors": [
+      "Andrey Sidorenko",
+      "Paul Tiwald"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "arxiv",
+    "id": "2503.05954v2",
+    "arxiv": "2503.05954",
+    "code_links_stated": [],
+    "doi": null,
+    "title": "A Survey on Deep Learning Approaches for Tabular Data Generation: Utility, Alignment, Fidelity, Privacy, Diversity, and Beyond",
+    "year": 2025,
+    "venue": "arXiv",
+    "authors": [
+      "Mihaela Cătălina Stoian",
+      "Eleonora Giunchiglia",
+      "Thomas Lukasiewicz"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "arxiv",
+    "id": "2506.11026v1",
+    "arxiv": "2506.11026",
+    "code_links_stated": [],
+    "doi": null,
+    "title": "Evaluating Privacy-Utility Tradeoffs in Synthetic Smart Grid Data",
+    "year": 2025,
+    "venue": "arXiv",
+    "authors": [
+      "Andre Catarino",
+      "Rui Melo",
+      "Rui Abreu",
+      "Luis Cruz"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "arxiv",
+    "id": "2511.17590v1",
+    "arxiv": "2511.17590",
+    "code_links_stated": [],
+    "doi": null,
+    "title": "SHAP Distance: An Explainability-Aware Metric for Evaluating the Semantic Fidelity of Synthetic Tabular Data",
+    "year": 2025,
+    "venue": "arXiv",
+    "authors": [
+      "Ke Yu",
+      "Shigeru Ishikura",
+      "Yukari Usukura",
+      "Yuki Shigoku",
+      "Teruaki Hayashi"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "arxiv",
+    "id": "2606.16488v2",
+    "arxiv": "2606.16488",
+    "code_links_stated": [],
+    "doi": null,
+    "title": "An Energy-Driven Framework for Privacy-Aware Synthetic Data Generation",
+    "year": 2026,
+    "venue": "arXiv",
+    "authors": [
+      "Pierpaolo Massoli",
+      "Fabio Spagnuolo"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "arxiv",
+    "id": "2607.15606v3",
+    "arxiv": "2607.15606",
+    "code_links_stated": [],
+    "doi": "10.1145/3799682.3841108",
+    "title": "Seq2Synth: Benchmarking Temporal Fidelity in Synthetic Sequential Tabular Data",
+    "year": 2026,
+    "venue": "arXiv",
+    "authors": [
+      "Kiwan Kwon",
+      "Kangmin Kim",
+      "Hojin Lee",
+      "Yeseong Jung",
+      "Hyeongwoo Kong",
+      "Vamsi K. Potluru",
+      "Saerom Park",
+      "Yongjae Lee"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "arxiv",
+    "id": "2507.17066v1",
+    "arxiv": "2507.17066",
+    "code_links_stated": [],
+    "doi": null,
+    "title": "Risk In Context: Benchmarking Privacy Leakage of Foundation Models in Synthetic Tabular Data Generation",
+    "year": 2025,
+    "venue": "arXiv",
+    "authors": [
+      "Jessup Byun",
+      "Xiaofeng Lin",
+      "Joshua Ward",
+      "Guang Cheng"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "arxiv",
+    "id": "2507.11590v1",
+    "arxiv": "2507.11590",
+    "code_links_stated": [],
+    "doi": null,
+    "title": "Synthetic Tabular Data Generation: A Comparative Survey for Modern Techniques",
+    "year": 2025,
+    "venue": "arXiv",
+    "authors": [
+      "Raju Challagundla",
+      "Mohsen Dorodchi",
+      "Pu Wang",
+      "Minwoo Lee"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "arxiv",
+    "id": "2401.06263v1",
+    "arxiv": "2401.06263",
+    "code_links_stated": [],
+    "doi": null,
+    "title": "FedTabDiff: Federated Learning of Diffusion Probabilistic Models for Synthetic Mixed-Type Tabular Data Generation",
+    "year": 2024,
+    "venue": "arXiv",
+    "authors": [
+      "Timur Sattarov",
+      "Marco Schreyer",
+      "Damian Borth"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "arxiv",
+    "id": "2412.16083v2",
+    "arxiv": "2412.16083",
+    "code_links_stated": [],
+    "doi": null,
+    "title": "Federated Diffusion Modeling with Differential Privacy for Tabular Data Synthesis",
+    "year": 2024,
+    "venue": "arXiv",
+    "authors": [
+      "Timur Sattarov",
+      "Marco Schreyer",
+      "Damian Borth"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "arxiv",
+    "id": "2608.12805v2",
+    "arxiv": "2608.12805",
+    "code_links_stated": [],
+    "doi": null,
+    "title": "CoMedBench: A Multi-Source Benchmark of Synthetic Medical Data Fidelity and Downstream Utility",
+    "year": 2026,
+    "venue": "arXiv",
+    "authors": [
+      "Akanta Das",
+      "Farhad Al-Amin Dipto",
+      "Mrinmoy Sarkar Anto",
+      "David Rehkopf",
+      "Ayin Vala",
+      "Tanmoy Sarkar Pias"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "arxiv",
+    "id": "2607.03926v1",
+    "arxiv": "2607.03926",
+    "code_links_stated": [],
+    "doi": null,
+    "title": "TabQueryBench: A Query-Centric Benchmark for Synthetic Tabular Data",
+    "year": 2026,
+    "venue": "arXiv",
+    "authors": [
+      "Jialin Zhang",
+      "Fenghao Dong",
+      "Yajie Zhou",
+      "Vyas Sekar",
+      "Shinan Liu"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "arxiv",
+    "id": "2507.19211v1",
+    "arxiv": "2507.19211",
+    "code_links_stated": [],
+    "doi": null,
+    "title": "Dependency-aware synthetic tabular data generation",
+    "year": 2025,
+    "venue": "arXiv",
+    "authors": [
+      "Chaithra Umesh",
+      "Kristian Schultz",
+      "Manjunath Mahendra",
+      "Saptarshi Bej",
+      "Olaf Wolkenhauer"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "arxiv",
+    "id": "2602.06390v1",
+    "arxiv": "2602.06390",
+    "code_links_stated": [],
+    "doi": null,
+    "title": "Generating High-quality Privacy-preserving Synthetic Data",
+    "year": 2026,
+    "venue": "arXiv",
+    "authors": [
+      "David Yavo",
+      "Richard Khoury",
+      "Christophe Pere",
+      "Sadoune Ait Kaci Azzou"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "evaluating synthetic tabular data fidelity utility privacy"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4283396845",
+    "doi": "10.48550/arxiv.2206.11104",
+    "arxiv": "2206.11104",
+    "title": "OpenXAI: Towards a Transparent Evaluation of Model Explanations",
+    "year": 2022,
+    "venue": "arXiv (Cornell University)",
+    "authors": [
+      "Chirag Agarwal",
+      "Ley, Dan",
+      "Satyapriya Krishna",
+      "Eshika Saxena",
+      "Martin Pawelczyk",
+      "Nari Johnson",
+      "Isha Puri",
+      "Marinka Žitnik"
+    ],
+    "cited_by": 82,
+    "is_oa": true,
+    "oa_status": "green",
+    "oa_license": null,
+    "mag": null,
+    "query": "benchmark synthetic data generators tabular evaluation metrics"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4412774404",
+    "doi": "10.29328/journal.jairi.1001004",
+    "arxiv": null,
+    "title": "Generative Adversarial Networks for Synthetic Data Generation in Deep Learning Applications",
+    "year": 2025,
+    "venue": "Journal of Artificial Intelligence Research and Innovation",
+    "authors": [
+      "Mohamed Islam Keskes"
+    ],
+    "cited_by": 5,
+    "is_oa": true,
+    "oa_status": "hybrid",
+    "oa_license": "cc-by",
+    "mag": null,
+    "query": "benchmark synthetic data generators tabular evaluation metrics"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4416017160",
+    "doi": "10.1145/3746252.3760967",
+    "arxiv": null,
+    "title": "CondFairGen A Fair Conditional Generator for Tabular Data via Adaptive Sampling",
+    "year": 2025,
+    "venue": null,
+    "authors": [
+      "Sanchez David",
+      "Anantaa Kotal"
+    ],
+    "cited_by": 1,
+    "is_oa": true,
+    "oa_status": "gold",
+    "oa_license": "cc-by",
+    "mag": null,
+    "query": "benchmark synthetic data generators tabular evaluation metrics"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4403155585",
+    "doi": "10.1007/s41060-024-00653-3",
+    "arxiv": null,
+    "title": "A comparative exploration of two diffusion generative models on tabular data synthesis",
+    "year": 2024,
+    "venue": "International Journal of Data Science and Analytics",
+    "authors": [
+      "Neetu Kumari",
+      "Enayat Rajabi"
+    ],
+    "cited_by": 1,
+    "is_oa": false,
+    "oa_status": "closed",
+    "oa_license": null,
+    "mag": null,
+    "query": "benchmark synthetic data generators tabular evaluation metrics"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4410328301",
+    "doi": "10.20944/preprints202505.0836.v1",
+    "arxiv": null,
+    "title": "Generative Adversarial Networks for Synthetic Data Generation in Deep Learning Applications",
+    "year": 2025,
+    "venue": "Preprints.org",
+    "authors": [
+      "Mohamed Islam Keskes"
+    ],
+    "cited_by": 1,
+    "is_oa": true,
+    "oa_status": "green",
+    "oa_license": "cc-by",
+    "mag": null,
+    "query": "benchmark synthetic data generators tabular evaluation metrics"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W7172207321",
+    "doi": "10.1007/978-3-032-34377-2_10",
+    "arxiv": null,
+    "title": "SynGenEva: A Generator-Agnostic Evaluation Protocol for Synthetic Tabular Data",
+    "year": 2026,
+    "venue": "Lecture notes in computer science",
+    "authors": [
+      "Yi Chen",
+      "Verena Kantere"
+    ],
+    "cited_by": 0,
+    "is_oa": false,
+    "oa_status": "closed",
+    "oa_license": null,
+    "mag": null,
+    "query": "benchmark synthetic data generators tabular evaluation metrics"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W7169923061",
+    "doi": "10.1145/3799682.3841108",
+    "arxiv": "2607.15606",
+    "title": "Seq2Synth: Benchmarking Temporal Fidelity in Synthetic Sequential Tabular Data",
+    "year": 2026,
+    "venue": "arXiv (Cornell University)",
+    "authors": [
+      "Kiwan Kwon",
+      "Kangmin Kim",
+      "Hojin Lee",
+      "Y. Jung",
+      "Hyeongwoo Kong",
+      "Vamsi K. Potluru",
+      "Saerom Park",
+      "Yongjae Lee"
+    ],
+    "cited_by": 0,
+    "is_oa": true,
+    "oa_status": "green",
+    "oa_license": null,
+    "mag": null,
+    "query": "benchmark synthetic data generators tabular evaluation metrics"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W7169772333",
+    "doi": "10.48550/arxiv.2607.15606",
+    "arxiv": "2607.15606",
+    "title": "Seq2Synth: Benchmarking Temporal Fidelity in Synthetic Sequential Tabular Data",
+    "year": 2026,
+    "venue": "arXiv (Cornell University)",
+    "authors": [
+      "Kiwan Kwon",
+      "Kangmin Kim",
+      "Hojin Lee",
+      "Y. Jung",
+      "Hyeongwoo Kong",
+      "Vamsi K. Potluru",
+      "Saerom Park",
+      "Yongjae Lee"
+    ],
+    "cited_by": 0,
+    "is_oa": true,
+    "oa_status": "green",
+    "oa_license": "cc-by",
+    "mag": null,
+    "query": "benchmark synthetic data generators tabular evaluation metrics"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W7154595785",
+    "doi": "10.48550/arxiv.2604.13125",
+    "arxiv": "2604.13125",
+    "title": "Synthetic Tabular Generators Fail to Preserve Behavioral Fraud Patterns: A Benchmark on Temporal, Velocity, and Multi-Account Signals",
+    "year": 2026,
+    "venue": "arXiv (Cornell University)",
+    "authors": [
+      "Bhavana Sajja"
+    ],
+    "cited_by": 0,
+    "is_oa": true,
+    "oa_status": "green",
+    "oa_license": "cc-by",
+    "mag": null,
+    "query": "benchmark synthetic data generators tabular evaluation metrics"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W7154180985",
+    "doi": "10.5281/zenodo.19545113",
+    "arxiv": null,
+    "title": "Synthetic Tabular Generators Fail to Preserve Behavioral Fraud Patterns: A Benchmark on Temporal, Velocity, and Multi-Account Signals",
+    "year": 2026,
+    "venue": "Zenodo (CERN European Organization for Nuclear Research)",
+    "authors": [
+      "Bhavana Sajja"
+    ],
+    "cited_by": 0,
+    "is_oa": true,
+    "oa_status": "green",
+    "oa_license": "cc-by",
+    "mag": null,
+    "query": "benchmark synthetic data generators tabular evaluation metrics"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W7154147625",
+    "doi": "10.5281/zenodo.19545114",
+    "arxiv": "2604.13125",
+    "title": "Synthetic Tabular Generators Fail to Preserve Behavioral Fraud Patterns: A Benchmark on Temporal, Velocity, and Multi-Account Signals",
+    "year": 2026,
+    "venue": "arXiv (Cornell University)",
+    "authors": [
+      "Bhavana Sajja"
+    ],
+    "cited_by": 0,
+    "is_oa": true,
+    "oa_status": "green",
+    "oa_license": "cc-by",
+    "mag": null,
+    "query": "benchmark synthetic data generators tabular evaluation metrics"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4415089296",
+    "doi": "10.48550/arxiv.2509.11950",
+    "arxiv": "2509.11950",
+    "title": "TabStruct: Measuring Structural Fidelity of Tabular Data",
+    "year": 2025,
+    "venue": "arXiv (Cornell University)",
+    "authors": [
+      "Xiangjian Jiang",
+      "Nikola Simidjievski",
+      "Mateja Jamnik"
+    ],
+    "cited_by": 0,
+    "is_oa": true,
+    "oa_status": "green",
+    "oa_license": null,
+    "mag": null,
+    "query": "benchmark synthetic data generators tabular evaluation metrics"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W7213977994",
+    "doi": "10.1007/978-3-032-30960-0_4",
+    "arxiv": null,
+    "title": "AeroSyn-ML: Synthetic Tabular Training for Pre-tactical Flight Forecasting",
+    "year": 2026,
+    "venue": "Lecture notes in networks and systems",
+    "authors": [
+      "Baddipadiga Praneethreddy"
+    ],
+    "cited_by": 0,
+    "is_oa": false,
+    "oa_status": "closed",
+    "oa_license": null,
+    "mag": null,
+    "query": "benchmark synthetic data generators tabular evaluation metrics"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4414750899",
+    "doi": "10.48550/arxiv.2509.18014",
+    "arxiv": "2509.18014",
+    "title": "Synth-MIA: A Testbed for Auditing Privacy Leakage in Tabular Data Synthesis",
+    "year": 2025,
+    "venue": "arXiv (Cornell University)",
+    "authors": [
+      "Joshua Ward",
+      "Xiaofeng Lin",
+      "Chi-Hua Wang",
+      "Guang Cheng"
+    ],
+    "cited_by": 0,
+    "is_oa": true,
+    "oa_status": "green",
+    "oa_license": null,
+    "mag": null,
+    "query": "benchmark synthetic data generators tabular evaluation metrics"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W7161734905",
+    "doi": "10.5281/zenodo.20285362",
+    "arxiv": null,
+    "title": "D3.3 Technologies for de-identification and synthetic data generation v1",
+    "year": 2024,
+    "venue": "Zenodo (CERN European Organization for Nuclear Research)",
+    "authors": [
+      "University of Turku",
+      "Eurecat Centre Tecnològic",
+      "KU Leuven",
+      "Inesc Tec",
+      "VTT",
+      "Turku University of Applied Sciences"
+    ],
+    "cited_by": 0,
+    "is_oa": true,
+    "oa_status": "green",
+    "oa_license": "cc-by",
+    "mag": null,
+    "query": "benchmark synthetic data generators tabular evaluation metrics"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W7161702268",
+    "doi": "10.5281/zenodo.20285363",
+    "arxiv": null,
+    "title": "D3.3 Technologies for de-identification and synthetic data generation v1",
+    "year": 2024,
+    "venue": "Zenodo (CERN European Organization for Nuclear Research)",
+    "authors": [
+      "University of Turku",
+      "Eurecat Centre Tecnològic",
+      "KU Leuven",
+      "Inesc Tec",
+      "VTT",
+      "Turku University of Applied Sciences"
+    ],
+    "cited_by": 0,
+    "is_oa": true,
+    "oa_status": "green",
+    "oa_license": "cc-by",
+    "mag": null,
+    "query": "benchmark synthetic data generators tabular evaluation metrics"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W4416054353",
+    "doi": "10.63345/wjftcse.v1.i4.203",
+    "arxiv": null,
+    "title": "Synthetic Data Generation for Privacy-Preserving AI Models",
+    "year": 2025,
+    "venue": "World Journal of Future Technologies in Computer Science and Engineering",
+    "authors": [
+      "Ma Xin"
+    ],
+    "cited_by": 0,
+    "is_oa": true,
+    "oa_status": "hybrid",
+    "oa_license": "cc-by-nc-nd",
+    "mag": null,
+    "query": "benchmark synthetic data generators tabular evaluation metrics"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W7202339523",
+    "doi": "10.1007/s00170-026-18892-y",
+    "arxiv": null,
+    "title": "Multi-output machine-learning benchmark and Pareto-based decision support for electron-beam welding of thin-walled titanium structures with comparative synthetic-data augmentation",
+    "year": 2026,
+    "venue": "The International Journal of Advanced Manufacturing Technology",
+    "authors": [
+      "Valeriya V. Tynchenko",
+      "Sergei Olegovich Kurashkin",
+      "Vladimir V. Bukhtoyarov",
+      "Tee Connie",
+      "Aleksei S. Borodulin",
+      "Artem. Y. Mikhailov",
+      "В С Тынченко"
+    ],
+    "cited_by": 0,
+    "is_oa": false,
+    "oa_status": "closed",
+    "oa_license": null,
+    "mag": null,
+    "query": "benchmark synthetic data generators tabular evaluation metrics"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W7142368303",
+    "doi": "10.54941/ahfe1007219",
+    "arxiv": null,
+    "title": "Quantifying CTGAN Training Dynamics: A Convergence-Aware Self-Adaptive Framework",
+    "year": 2026,
+    "venue": "AHFE international",
+    "authors": [
+      "Andrea Gregores Coto",
+      "Andrea Fernández Martínez",
+      "Ramon Angosto Artigues",
+      "Santiago Muiños Landín",
+      "Jonathan Josue Torrez Herrera"
+    ],
+    "cited_by": 0,
+    "is_oa": false,
+    "oa_status": "closed",
+    "oa_license": null,
+    "mag": null,
+    "query": "benchmark synthetic data generators tabular evaluation metrics"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W7167401614",
+    "doi": null,
+    "arxiv": null,
+    "title": "A Comparative Study of Generative Oversampling Methods for Imbalanced Fraud Classification",
+    "year": 2025,
+    "venue": "NORMA",
+    "authors": [
+      "Jisoo Park"
+    ],
+    "cited_by": 0,
+    "is_oa": true,
+    "oa_status": "green",
+    "oa_license": null,
+    "mag": null,
+    "query": "benchmark synthetic data generators tabular evaluation metrics"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W7128316653",
+    "doi": "10.5281/zenodo.18525114",
+    "arxiv": null,
+    "title": "Intelligent Computational System for Constraint - First Governance of Subcritical Thorium - U233 Reactors",
+    "year": 2026,
+    "venue": "Zenodo (CERN European Organization for Nuclear Research)",
+    "authors": [
+      "Aurnab Dutta Roy"
+    ],
+    "cited_by": 0,
+    "is_oa": true,
+    "oa_status": "green",
+    "oa_license": "cc-by",
+    "mag": null,
+    "query": "benchmark synthetic data generators tabular evaluation metrics"
+  },
+  {
+    "source": "openalex",
+    "id": "https://openalex.org/W7128316624",
+    "doi": "10.5281/zenodo.18525115",
+    "arxiv": null,
+    "title": "Intelligent Computational System for Constraint - First Governance of Subcritical Thorium - U233 Reactors",
+    "year": 2026,
+    "venue": "Zenodo (CERN European Organization for Nuclear Research)",
+    "authors": [
+      "Aurnab Dutta Roy"
+    ],
+    "cited_by": 0,
+    "is_oa": true,
+    "oa_status": "green",
+    "oa_license": "cc-by",
+    "mag": null,
+    "query": "benchmark synthetic data generators tabular evaluation metrics"
+  },
+  {
+    "source": "arxiv",
+    "id": "2604.13125v1",
+    "arxiv": "2604.13125",
+    "code_links_stated": [
+      "https://github.com/bhavana3/synthetic-data-experiments"
+    ],
+    "doi": "10.5281/zenodo.19545114",
+    "title": "Synthetic Tabular Generators Fail to Preserve Behavioral Fraud Patterns: A Benchmark on Temporal, Velocity, and Multi-Account Signals",
+    "year": 2026,
+    "venue": "arXiv",
+    "authors": [
+      "Bhavana Sajja"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "benchmark synthetic data generators tabular evaluation metrics"
+  },
+  {
+    "source": "arxiv",
+    "id": "2607.15606v3",
+    "arxiv": "2607.15606",
+    "code_links_stated": [],
+    "doi": "10.1145/3799682.3841108",
+    "title": "Seq2Synth: Benchmarking Temporal Fidelity in Synthetic Sequential Tabular Data",
+    "year": 2026,
+    "venue": "arXiv",
+    "authors": [
+      "Kiwan Kwon",
+      "Kangmin Kim",
+      "Hojin Lee",
+      "Yeseong Jung",
+      "Hyeongwoo Kong",
+      "Vamsi K. Potluru",
+      "Saerom Park",
+      "Yongjae Lee"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "benchmark synthetic data generators tabular evaluation metrics"
+  },
+  {
+    "source": "arxiv",
+    "id": "2504.01908v1",
+    "arxiv": "2504.01908",
+    "code_links_stated": [
+      "https://github.com/mostly-ai/mostlyai-qa"
+    ],
+    "doi": null,
+    "title": "Benchmarking Synthetic Tabular Data: A Multi-Dimensional Evaluation Framework",
+    "year": 2025,
+    "venue": "arXiv",
+    "authors": [
+      "Andrey Sidorenko",
+      "Michael Platzer",
+      "Mario Scriminaci",
+      "Paul Tiwald"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "benchmark synthetic data generators tabular evaluation metrics"
+  },
+  {
+    "source": "arxiv",
+    "id": "2406.08311v3",
+    "arxiv": "2406.08311",
+    "code_links_stated": [],
+    "doi": null,
+    "title": "Causality for Tabular Data Synthesis: A High-Order Structure Causal Benchmark Framework",
+    "year": 2024,
+    "venue": "arXiv",
+    "authors": [
+      "Zineb Senane",
+      "Axel Karlsson",
+      "Lele Cao",
+      "Oleg Smirnov",
+      "Cheng Zhang",
+      "Sahar Asadi",
+      "Hedvig Kjellström",
+      "Gustav Eje Henter"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "benchmark synthetic data generators tabular evaluation metrics"
+  },
+  {
+    "source": "arxiv",
+    "id": "2511.00361v1",
+    "arxiv": "2511.00361",
+    "code_links_stated": [],
+    "doi": "10.5753/sbseg_estendido.2025.12113",
+    "title": "MalDataGen: A Modular Framework for Synthetic Tabular Data Generation in Malware Detection",
+    "year": 2025,
+    "venue": "arXiv",
+    "authors": [
+      "Kayua Oleques Paim",
+      "Angelo Gaspar Diniz Nogueira",
+      "Diego Kreutz",
+      "Weverton Cordeiro",
+      "Rodrigo Brandao Mansilha"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "benchmark synthetic data generators tabular evaluation metrics"
+  },
+  {
+    "source": "arxiv",
+    "id": "2507.21340v1",
+    "arxiv": "2507.21340",
+    "code_links_stated": [
+      "https://github.com/ibm/struct-text"
+    ],
+    "doi": null,
+    "title": "StructText: A Synthetic Table-to-Text Approach for Benchmark Generation with Multi-Dimensional Evaluation",
+    "year": 2025,
+    "venue": "arXiv",
+    "authors": [
+      "Satyananda Kashyap",
+      "Sola Shirai",
+      "Nandana Mihindukulasooriya",
+      "Horst Samulowitz"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "benchmark synthetic data generators tabular evaluation metrics"
+  },
+  {
+    "source": "arxiv",
+    "id": "2510.24375v1",
+    "arxiv": "2510.24375",
+    "code_links_stated": [],
+    "doi": null,
+    "title": "A Comprehensive Evaluation Framework for Synthetic Trip Data Generation in Public Transport",
+    "year": 2025,
+    "venue": "arXiv",
+    "authors": [
+      "Yuanyuan Wu",
+      "Zhenlin Qin",
+      "Zhenliang Ma"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "benchmark synthetic data generators tabular evaluation metrics"
+  },
+  {
+    "source": "arxiv",
+    "id": "2509.11950v2",
+    "arxiv": "2509.11950",
+    "code_links_stated": [
+      "https://github.com/SilenceX12138/TabStruct"
+    ],
+    "doi": null,
+    "title": "TabStruct: Measuring Structural Fidelity of Tabular Data",
+    "year": 2025,
+    "venue": "arXiv",
+    "authors": [
+      "Xiangjian Jiang",
+      "Nikola Simidjievski",
+      "Mateja Jamnik"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "benchmark synthetic data generators tabular evaluation metrics"
+  },
+  {
+    "source": "arxiv",
+    "id": "2505.22533v2",
+    "arxiv": "2505.22533",
+    "code_links_stated": [],
+    "doi": "10.1038/s41598-026-62434-1",
+    "title": "TabularQGAN: A quantum generative model for tabular data synthesis",
+    "year": 2025,
+    "venue": "Sci. Rep. 16, 23555 (2026)1-19",
+    "authors": [
+      "Pallavi Bhardwaj",
+      "Caitlin Jones",
+      "Lasse Dierich",
+      "Aleksandar Vučković"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "benchmark synthetic data generators tabular evaluation metrics"
+  },
+  {
+    "source": "arxiv",
+    "id": "2604.15961v1",
+    "arxiv": "2604.15961",
+    "code_links_stated": [],
+    "doi": null,
+    "title": "Evaluating quality in synthetic data generation for large tabular health datasets",
+    "year": 2026,
+    "venue": "arXiv",
+    "authors": [
+      "Jean-Baptiste Escudié",
+      "Benjamin Barnes",
+      "Stefan Meisegeier",
+      "Klaus Kraywinkel",
+      "Fabian Prasser",
+      "Nils Körber"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "benchmark synthetic data generators tabular evaluation metrics"
+  },
+  {
+    "source": "arxiv",
+    "id": "2401.13716v1",
+    "arxiv": "2401.13716",
+    "code_links_stated": [],
+    "doi": "10.1016/j.ijmedinf.2024.105413",
+    "title": "Can I trust my fake data -- A comprehensive quality assessment framework for synthetic tabular data in healthcare",
+    "year": 2024,
+    "venue": "Int. J. Med. Inform.185 (2024)",
+    "authors": [
+      "Vibeke Binz Vallevik",
+      "Aleksandar Babic",
+      "Serena Elizabeth Marshall",
+      "Severin Elvatun",
+      "Helga Brøgger",
+      "Sharmini Alagaratnam",
+      "Bjørn Edwin",
+      "Narasimha Raghavan Veeraragavan"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "benchmark synthetic data generators tabular evaluation metrics"
+  },
+  {
+    "source": "arxiv",
+    "id": "2512.16284v2",
+    "arxiv": "2512.16284",
+    "code_links_stated": [],
+    "doi": null,
+    "title": "Empirical Evaluation of Structured Synthetic Data Privacy Metrics: Novel experimental framework",
+    "year": 2025,
+    "venue": "arXiv",
+    "authors": [
+      "Milton Nicolás Plasencia Palacios",
+      "Alexander Boudewijn",
+      "Sebastiano Saccani",
+      "Andrea Filippo Ferraris",
+      "Diana Sofronieva",
+      "Giuseppe D'Acquisto",
+      "Filiberto Brozzetti",
+      "Daniele Panfilo"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "benchmark synthetic data generators tabular evaluation metrics"
+  },
+  {
+    "source": "arxiv",
+    "id": "2405.16971v2",
+    "arxiv": "2405.16971",
+    "code_links_stated": [
+      "https://github.com/vuhoangminh/TabGen-Framework"
+    ],
+    "doi": null,
+    "title": "A Unified Framework for Tabular Generative Modeling: Loss Functions, Benchmarks, and Improved Multi-objective Bayesian Optimization Approaches",
+    "year": 2024,
+    "venue": "Transactions on Machine Learning Research (TMLR), 2026. https://openreview.net/forum?id=RPZ0EW0lz0",
+    "authors": [
+      "Minh H. Vu",
+      "Daniel Edler",
+      "Carl Wibom",
+      "Tommy Löfstedt",
+      "Beatrice Melin",
+      "Martin Rosvall"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "benchmark synthetic data generators tabular evaluation metrics"
+  },
+  {
+    "source": "arxiv",
+    "id": "2509.18014v1",
+    "arxiv": "2509.18014",
+    "code_links_stated": [],
+    "doi": null,
+    "title": "Synth-MIA: A Testbed for Auditing Privacy Leakage in Tabular Data Synthesis",
+    "year": 2025,
+    "venue": "arXiv",
+    "authors": [
+      "Joshua Ward",
+      "Xiaofeng Lin",
+      "Chi-Hua Wang",
+      "Guang Cheng"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "benchmark synthetic data generators tabular evaluation metrics"
+  },
+  {
+    "source": "arxiv",
+    "id": "2011.05537v1",
+    "arxiv": "2011.05537",
+    "code_links_stated": [],
+    "doi": null,
+    "title": "Differentially Private Synthetic Data: Applied Evaluations and Enhancements",
+    "year": 2020,
+    "venue": "arXiv",
+    "authors": [
+      "Lucas Rosenblatt",
+      "Xiaoyan Liu",
+      "Samira Pouyanfar",
+      "Eduardo de Leon",
+      "Anuj Desai",
+      "Joshua Allen"
+    ],
+    "cited_by": null,
+    "license": null,
+    "query": "benchmark synthetic data generators tabular evaluation metrics"
+  }
+]

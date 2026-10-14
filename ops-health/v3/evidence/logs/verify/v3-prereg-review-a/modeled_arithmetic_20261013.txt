@@ -1,0 +1,106 @@
+v3-prereg-review-a: adversarial methodologist A (statistics and design), 2026-10-13
+Target: v3/PREREGISTRATION.DRAFT.md and v3/DESIGN_RATIONALE.md at commit 63a5f0d. SYNTHETIC.
+
+How the numbers below were produced
+- Closed-form arithmetic and one-dimensional quadrature over known distributions, run as an
+  inline Python 3.12 calculator (`py -3.12 -I -`). No data file opened, no random draw, no fit,
+  no file written by the calculator. v2's sealed data was not opened.
+- Every number about v3 below is MODELED (approximation). v2 inputs carry their own label and
+  file. The float check in section 6 is MEASURED (IEEE arithmetic evaluated by the calculator).
+
+1. H2 known-good false alarms (prereg §7 H2, §11.3; rationale D5, D6)
+- Inputs from the draft: tol = max(floor, 4 * sqrt(2) * SD_hat), SD_hat from 20 band retrains,
+  20 known-good fixtures plus the reference, 9 parameters + threshold + BA_gates.
+- With SD_hat estimated from 20 retrains, (kg - ref)/(sqrt(2) * SD_hat) follows t with 19 df.
+  - P(|Z| > 4) = 6.33e-5 (the draft's "about 6e-5 per statistic").
+  - P(|t_19| > 4) = 7.66e-4, 12 times larger (MODELED).
+  - P(|t_19| > 3.5) = 2.40e-3; P(|t_99| > 4) = 1.22e-4.
+- P(at least one false alarm on the 9 parameter bands over the 20 known-good fixtures), with
+  the reference offset and SD_hat shared by all 20 fixtures (quadrature over both):
+  - SD known (the draft's normal approximation): 0.0105.
+  - SD from 20 band retrains (registered design): 0.0871.
+  - SD from 100 band retrains: 0.0185.
+- Threshold band (0.01 grid, floor 0.02), rough discrete model, latent threshold SD
+  0.004 / 0.006 / 0.0075 / 0.010: P(any kg alarm) = 0.0007 / 0.0082 / 0.0089 / 0.0094.
+- Total registered-design false-alarm chance, parameters + threshold (+ BA small): about 0.09-0.10
+  (MODELED), against the draft's "about 1-2% (normal approximation)" (prereg §7 H2).
+- Detection side (ρ values are the draft's, rationale D5): band miss probability P(S > ρ/4),
+  S = sqrt(chi2_19/19):
+  - tls_enabled, ρ 5.4 at 32,768 rows: 0.016 (g_ba_rel is the backup);
+  - consecutive_failures, ρ 7.1: about 0;
+  - tls_enabled at 16,384 rows, ρ 3.8: 0.58;
+  - tls_enabled ×0.75 (descriptive mutant), ρ about 2.7: 0.98 (the band would miss it).
+- Reading (MODELED): the binding H2 risk is known-good false alarms, not detection margins.
+
+2. P1 and the calibration of d (prereg §8; rationale D10)
+- v2 − v1 nominal paired BA 0.010380 [0.006559, 0.014191] (MEASURED: v2/results/FINAL_RESULTS.md)
+  implies SE 0.001947 and disagreement d 0.113 with n1 9,096, n0 40,904 (MEASURED counts, same file).
+- 100,000 rows, prevalence 0.182: SE 0.00092 / 0.00136 / 0.00159 at d 0.05 / 0.11 / 0.15.
+  Power at true difference 0: 1.000 / 0.957 / 0.883. At true −0.002: 0.906 / 0.598 / 0.472.
+  These reproduce the draft's table (verified).
+- P2 at a true pooled difference of −0.003: power about 0.82 if SE 0.0007, about 0.47 at the
+  draft's SE 0.00106. The draft states P2 power only at a true difference of 0.
+
+3. H3 BA arm on 25,000 twin pairs (prereg §7 H3; power table "≈ 0.99"; no derivation in D8/D10)
+- n1 about 4,550, n0 about 20,450. v3 skew shift in logits: E[dz] 0.0917, E[dz^2] 0.0112
+  (truth weight 2.2 per 86,400 s, skew U(0, 7200) s: v2/PREREGISTRATION.md §2-§3, REPORTED).
+- Flip rate (decisions that differ between latent and skewed twins) 1.8% / 2.75% / 3.5%,
+  20% of flips class 1: SE of the paired ΔBA difference 0.00113 / 0.00139 / 0.00156,
+  so the 95% upper bound sits 0.0022 / 0.0027 / 0.0031 above the true value.
+- Expected true ΔBA_skew(v3): second-order term 0.25 * g * E[dz^2] = 0.0007-0.0011
+  (g = 0.25-0.40 per logit, read from v2's reliability table, MEASURED table in
+  v2/results/FINAL_RESULTS.md), plus a first-order term of up to ±0.0012-0.0018 when the selected
+  threshold sits about 0.1 logit from the BA optimum.
+- Power of "upper bound ≤ 0.005" at true ΔBA 0 / 0.001 / 0.0015 / 0.002 / 0.0025:
+  flip 1.8%: 0.99 / 0.94 / 0.87 / 0.76 / 0.60
+  flip 2.75%: 0.95 / 0.82 / 0.71 / 0.58 / 0.44
+  flip 3.5%: 0.89 / 0.73 / 0.61 / 0.48 / 0.36
+- Brier arm: mean about 1.5e-4, SE about 4.9e-5, upper bound about 2.5e-4 against a margin of
+  0.002 (about 13 times the modeled effect).
+- With 100,000 pairs the SE halves (about 0.0007), and power at a true 0.002 is about 0.99.
+
+4. H4 calibration-split noise (prereg §7 H4)
+- Realized per-class coverage given one calibration split, α 0.10: SD sqrt(0.09/(n+2)).
+  v2 frozen quantiles: n1 750 → 0.0109, n0 3,346 → 0.0052 (n: v2/results/STAGE2_SEARCH.md,
+  MEASURED). v3 and TRUTH on 8,192 conformal rows: n1 about 1,490 → 0.0078, n0 about 6,700 → 0.0037.
+- Abstention moves about 2.4-3.0 points per point of class-1 coverage and about 1.1 points per
+  point of class-0 coverage (slopes MODELED from v2's reliability table and its BOTH band
+  [0.0888, 0.2237]: v2/results/FINAL_RESULTS.md, v2/results/STAGE2_SEARCH.md, MEASURED inputs).
+- Abstention SD from the calibration draw alone: v2 2.7-3.3 points; v3 or TRUTH 1.9-2.4 points;
+  v3 − v2 3.3-4.1 points. The registered paired bootstrap resamples test rows only and holds
+  every quantile fixed, so none of this enters the H4 intervals.
+- P(H4a "reduction < −0.02" from calibration luck alone, no ranking change): about 0.27-0.31.
+- H4a's "coverage ≥ 0.89 per class": class-1 coverage SD about 0.0081 (calibration plus test),
+  so a perfect method fails it about 10% of the time.
+
+5. Non-inferiority margin (prereg §8 "keeps most of that gain")
+- δ 0.005 against v2 − v1 0.0104 [0.0066, 0.0142] (MEASURED: v2/results/FINAL_RESULTS.md):
+  a v3 at the margin keeps 52% of the point estimate and 24% of the lower bound.
+
+6. Threshold-band floating-point ties (prereg §11.2-§11.3), MEASURED by the calculator
+- For grid values i/100 (i = 1..98), 67 of the 96 pairs that differ by two steps give
+  |t(f) − t(ref)| > 0.02 in floating point (for example 0.05 vs 0.03), and 29 give ≤ 0.02
+  (for example 0.21 vs 0.19 → 0.01999999999999999). At the 0.02 floor, the same two-step
+  difference is caught or not depending on where it sits on the grid.
+
+7. Bootstrap endpoint Monte Carlo error (prereg §8 FRAGILE rule)
+- 2,000 resamples: SD of the 2.5th-percentile endpoint about 0.060 × the statistic's SE.
+  For P1 (SE 0.0009-0.0016) that is about 5e-5 to 1e-4, so FRAGILE fires only within roughly
+  1e-4 to 2e-4 of a boundary. The rule is well defined.
+
+8. Arithmetic in the draft that was re-checked and holds (MODELED)
+- β/SE 0.93 at 16,384 nominal rows; P(wrong sign) 0.18; P(≥ 3 of 5) 0.044.
+- D-mixture seconds SD 22,172 s; β/SE about 32 at 32,768 rows; SD(r) about 0.03.
+- Penalty shrinkage factors: min-max no D about 0.011; min-max with D about 0.87; s/900 about 0.99.
+- ρ table of rationale D5 (5.4 / 12.1 / 7.1 / 11.4 at 32,768 rows).
+- ABL-D: P(wrong sign) 0.095 per fit, about 2 of 21; SD(r) about 0.76.
+- 149,000 nominal rows for 20 of 20 correct signs at 0.95.
+- v2 known-good BA SD 0.00128 and threshold SD 0.0071 (from MEASURED values in
+  v2/results/MUTATION_READINESS.md and v2/results/STAGE2_SEARCH.md).
+- Blind-spot BA drops in rationale D6 equal the MEASURED values in
+  v2/results/MUTATION_READINESS.md (0.0139 / 0.0232, 0.0315 / 0.0149, 0.0063 / 0.0024,
+  0.0007 / 0.0000, 0.0302 / 0.0601).
+
+9. Revised overall WIN chance if every lever behaves as modeled (CONJECTURE)
+- About 0.55-0.8, against the draft's 0.7-0.85, mainly from the H2 false alarms (section 1) and
+  H3's power (section 3).

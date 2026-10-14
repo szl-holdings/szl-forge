@@ -1,0 +1,3694 @@
+{
+  "generated_utc": "2026-09-29T10:38:22Z",
+  "user_agent_has_mailto": true,
+  "matching_rules": "v2",
+  "status_rules": "VERIFIED   >= 2 independent sources return a record whose normalised title\n             matches the anchor (similarity >= 0.90 to each other) with the\n             expected first-author surname among the authors.\n  MISMATCH   sources were found but disagree (title/author), or a seed id from\n             the contract resolves to a different work than described.\n  UNRESOLVED fewer than 2 sources returned a matching record.\n\nMatching rules (v2, 2026-09-29; run 1 used v1 and is archived in logs/C/anchors_run1/)\n  A search candidate matches when its first-author-list contains the expected surname and\n  either (a) normalised title similarity to the query >= 0.90, or (b) >= 80% of the\n  query's content words appear in the title AND >= 70% of the title's content words\n  appear in the query. v1 used 0.85 for (a) and had no title-side check in (b); v1\n  produced a false VERIFIED (chandola_anomaly_survey matched a different survey) and\n  three MISMATCHes caused by related-but-different works (Wild-Time, a 2026 conformal\n  risk control follow-up, an isolation-forest extension).\n  A candidate fetched by an id (contract seed id, or a DOI/arXiv id carried by another\n  source's matching record) may also match when the query starts with its title (some\n  registries store the title without its subtitle).\n  Crossref titles include the Crossref \"subtitle\" field when present.\n  Cross-source agreement: titles agree when similarity >= 0.90 or one normalised title is a\n  prefix (>= 2 words) of the other (a registry that drops the subtitle).",
+  "counts": {
+    "VERIFIED": 51,
+    "MISMATCH": 0,
+    "UNRESOLVED": 0
+  },
+  "n_dropped_unresolved_non_seed": 2,
+  "anchors": [
+    {
+      "key": "model_cards",
+      "topic": "model reporting",
+      "query": "Model Cards for Model Reporting",
+      "expected_first_author_surname": "Mitchell",
+      "contract_seed_ids": {
+        "arxiv": "1810.03993"
+      },
+      "contract_claim": "FAT* 2019",
+      "status": "VERIFIED",
+      "sources_matched": [
+        "arxiv",
+        "crossref",
+        "openalex",
+        "s2"
+      ],
+      "ids": {
+        "doi": "10.1145/3287560.3287596",
+        "doi_all": [
+          "10.1145/3287560.3287596"
+        ],
+        "arxiv": "1810.03993",
+        "openalex": "https://openalex.org/W2897042519",
+        "s2": "7365f887c938ca21a6adbef08b5a520ebbd4638f",
+        "s2_corpus": 52946140,
+        "mag": "2897042519"
+      },
+      "title": "Model Cards for Model Reporting",
+      "title_by_source": {
+        "arxiv": "Model Cards for Model Reporting",
+        "openalex": "Model Cards for Model Reporting",
+        "crossref": "Model Cards for Model Reporting",
+        "s2": "Model Cards for Model Reporting"
+      },
+      "year_by_source": {
+        "arxiv": 2018,
+        "openalex": 2019,
+        "crossref": 2019,
+        "s2": 2018
+      },
+      "venue_by_source": {
+        "arxiv": "FAT* '19: Conference on Fairness, Accountability, and Transparency, January 29--31, 2019, Atlanta, GA, USA",
+        "openalex": null,
+        "crossref": "Proceedings of the Conference on Fairness, Accountability, and Transparency",
+        "s2": "FAT"
+      },
+      "crossref_type": "proceedings-article",
+      "authors_first8": [
+        "Margaret Mitchell",
+        "Simone Wu",
+        "Andrew Zaldivar",
+        "Parker Barnes",
+        "Lucy Vasserman",
+        "Ben Hutchinson",
+        "Elena Spitzer",
+        "Inioluwa Deborah Raji"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        "https://openalex.org/A5118595929",
+        null,
+        null
+      ],
+      "citations_by_source": {
+        "openalex": 2072,
+        "crossref": 2137,
+        "s2": 3268
+      },
+      "open_access": {
+        "openalex_is_oa": true,
+        "openalex_oa_status": "green",
+        "openalex_license": null,
+        "s2_is_oa": true,
+        "s2_license": null,
+        "crossref_license_urls": [
+          "https://www.acm.org/publications/policies/copyright_policy#Background"
+        ],
+        "arxiv_license": null
+      },
+      "arxiv_version_id": "1810.03993v2",
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:11:23Z",
+      "seed_anchor": true
+    },
+    {
+      "key": "reforms",
+      "topic": "ML-based-science reporting standards",
+      "query": "REFORMS consensus-based recommendations machine-learning-based science",
+      "expected_first_author_surname": "Kapoor",
+      "contract_seed_ids": {
+        "doi": "10.1126/sciadv.adk3452"
+      },
+      "contract_claim": "Science Advances 2024",
+      "status": "VERIFIED",
+      "sources_matched": [
+        "crossref",
+        "openalex",
+        "s2"
+      ],
+      "ids": {
+        "doi": "10.1126/sciadv.adk3452",
+        "doi_all": [
+          "10.1126/sciadv.adk3452"
+        ],
+        "arxiv": null,
+        "openalex": "https://openalex.org/W4396541948",
+        "s2": "2b2158fb639c41cb343ce9315c9c01dbd1f62cbe",
+        "s2_corpus": 269501011,
+        "mag": null
+      },
+      "title": "REFORMS: Consensus-based Recommendations for Machine-learning-based Science",
+      "title_by_source": {
+        "crossref": "REFORMS: Consensus-based Recommendations for Machine-learning-based Science",
+        "openalex": "REFORMS: Consensus-based Recommendations for Machine-learning-based Science",
+        "s2": "REFORMS: Consensus-based Recommendations for Machine-learning-based Science"
+      },
+      "year_by_source": {
+        "crossref": 2024,
+        "openalex": 2024,
+        "s2": 2024
+      },
+      "venue_by_source": {
+        "crossref": "Science Advances",
+        "openalex": "Science Advances",
+        "s2": "Science Advances"
+      },
+      "crossref_type": "journal-article",
+      "authors_first8": [
+        "Sayash Kapoor",
+        "Emily M. Cantrell",
+        "Kenny Peng",
+        "Thanh Hien Pham",
+        "Christopher A. Bail",
+        "Odd Erik Gundersen",
+        "Jake M. Hofman",
+        "Jessica R. Hullman"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5063345981",
+        "https://openalex.org/A5091145637",
+        "https://openalex.org/A5011644423",
+        "https://openalex.org/A5016767555",
+        "https://openalex.org/A5023997241",
+        "https://openalex.org/A5022601333",
+        "https://openalex.org/A5081429241",
+        "https://openalex.org/A5068008545"
+      ],
+      "citations_by_source": {
+        "crossref": 126,
+        "openalex": 120,
+        "s2": 143
+      },
+      "open_access": {
+        "openalex_is_oa": true,
+        "openalex_oa_status": "gold",
+        "openalex_license": "cc-by-nc",
+        "s2_is_oa": true,
+        "s2_license": "CCBYNC",
+        "crossref_license_urls": [],
+        "arxiv_license": null
+      },
+      "arxiv_version_id": null,
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:11:27Z",
+      "seed_anchor": true
+    },
+    {
+      "key": "reforms_arxiv",
+      "topic": "ML-based-science reporting standards (open preprint)",
+      "query": "REFORMS Reporting Standards for Machine Learning Based Science",
+      "expected_first_author_surname": "Kapoor",
+      "contract_seed_ids": {
+        "arxiv": "2308.07832"
+      },
+      "contract_claim": "arXiv 2308.07832 (orchestrator-supplied id)",
+      "status": "VERIFIED",
+      "sources_matched": [
+        "arxiv",
+        "s2"
+      ],
+      "ids": {
+        "doi": "10.48550/arxiv.2308.07832",
+        "doi_all": [
+          "10.48550/arxiv.2308.07832"
+        ],
+        "arxiv": "2308.07832",
+        "openalex": null,
+        "s2": "dc509b8bd75d93c5d7753bb730c08aacda8c8aa3",
+        "s2_corpus": 260900052,
+        "mag": null
+      },
+      "title": "REFORMS: Reporting Standards for Machine Learning Based Science",
+      "title_by_source": {
+        "arxiv": "REFORMS: Reporting Standards for Machine Learning Based Science",
+        "s2": "REFORMS: Reporting Standards for Machine Learning Based Science"
+      },
+      "year_by_source": {
+        "arxiv": 2023,
+        "s2": 2023
+      },
+      "venue_by_source": {
+        "arxiv": "arXiv",
+        "s2": "arXiv.org"
+      },
+      "crossref_type": null,
+      "authors_first8": [
+        "Sayash Kapoor",
+        "Emily F. Cantrell",
+        "Kenny Peng",
+        "Thanh Hien Pham",
+        "C. Bail",
+        "Odd Erik Gundersen",
+        "J. Hofman",
+        "J. Hullman"
+      ],
+      "authors_source": "s2",
+      "openalex_author_ids_first8": [],
+      "citations_by_source": {
+        "s2": 31
+      },
+      "open_access": {
+        "openalex_is_oa": null,
+        "openalex_oa_status": null,
+        "openalex_license": null,
+        "s2_is_oa": true,
+        "s2_license": null,
+        "crossref_license_urls": null,
+        "arxiv_license": null
+      },
+      "arxiv_version_id": "2308.07832v2",
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:13:38Z",
+      "seed_anchor": false
+    },
+    {
+      "key": "datasheets",
+      "topic": "dataset documentation",
+      "query": "Datasheets for Datasets",
+      "expected_first_author_surname": "Gebru",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "arxiv",
+        "crossref",
+        "openalex",
+        "s2"
+      ],
+      "ids": {
+        "doi": "10.1145/3458723",
+        "doi_all": [
+          "10.1145/3458723"
+        ],
+        "arxiv": "1803.09010",
+        "openalex": "https://openalex.org/W2795038878",
+        "s2": "0df347f5e3118fac7c351917e3a497899b071d1e",
+        "s2_corpus": 4421027,
+        "mag": "2795038878"
+      },
+      "title": "Datasheets for datasets",
+      "title_by_source": {
+        "openalex": "Datasheets for datasets",
+        "crossref": "Datasheets for datasets",
+        "s2": "Datasheets for datasets",
+        "arxiv": "Datasheets for Datasets"
+      },
+      "year_by_source": {
+        "openalex": 2021,
+        "crossref": 2021,
+        "s2": 2018,
+        "arxiv": 2018
+      },
+      "venue_by_source": {
+        "openalex": "Communications of the ACM",
+        "crossref": "Communications of the ACM",
+        "s2": "Communications of the ACM",
+        "arxiv": "arXiv"
+      },
+      "crossref_type": "journal-article",
+      "authors_first8": [
+        "Timnit Gebru",
+        "Jamie Morgenstern",
+        "Briana Vecchione",
+        "Jennifer Wortman Vaughan",
+        "Hanna Wallach",
+        "Hal Daumé",
+        "Kate Crawford"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5089275971",
+        "https://openalex.org/A5045592180",
+        "https://openalex.org/A5069421536",
+        "https://openalex.org/A5043117896",
+        "https://openalex.org/A5046348432",
+        "https://openalex.org/A5019928111",
+        "https://openalex.org/A5033954307"
+      ],
+      "citations_by_source": {
+        "openalex": 2064,
+        "crossref": 1725,
+        "s2": 3566
+      },
+      "open_access": {
+        "openalex_is_oa": true,
+        "openalex_oa_status": "green",
+        "openalex_license": null,
+        "s2_is_oa": true,
+        "s2_license": null,
+        "crossref_license_urls": [
+          "https://www.acm.org/publications/policies/copyright_policy#Background"
+        ],
+        "arxiv_license": null
+      },
+      "arxiv_version_id": "1803.09010v8",
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:13:56Z",
+      "seed_anchor": true
+    },
+    {
+      "key": "data_cards",
+      "topic": "dataset documentation",
+      "query": "Data Cards purposeful transparent dataset documentation responsible AI",
+      "expected_first_author_surname": "Pushkarna",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "arxiv",
+        "crossref",
+        "openalex",
+        "s2"
+      ],
+      "ids": {
+        "doi": "10.1145/3531146.3533231",
+        "doi_all": [
+          "10.1145/3531146.3533231"
+        ],
+        "arxiv": "2204.01075",
+        "openalex": "https://openalex.org/W4283155630",
+        "s2": "8bbde3f9f7ff295bf089627b07f9c7215fe11fc1",
+        "s2_corpus": 247940068,
+        "mag": null
+      },
+      "title": "Data Cards: Purposeful and Transparent Dataset Documentation for Responsible AI",
+      "title_by_source": {
+        "openalex": "Data Cards: Purposeful and Transparent Dataset Documentation for Responsible AI",
+        "crossref": "Data Cards: Purposeful and Transparent Dataset Documentation for Responsible AI",
+        "s2": "Data Cards: Purposeful and Transparent Dataset Documentation for Responsible AI",
+        "arxiv": "Data Cards: Purposeful and Transparent Dataset Documentation for Responsible AI"
+      },
+      "year_by_source": {
+        "openalex": 2022,
+        "crossref": 2022,
+        "s2": 2022,
+        "arxiv": 2022
+      },
+      "venue_by_source": {
+        "openalex": "2022 ACM Conference on Fairness, Accountability, and Transparency",
+        "crossref": "2022 ACM Conference on Fairness Accountability and Transparency",
+        "s2": "Conference on Fairness, Accountability and Transparency",
+        "arxiv": "arXiv"
+      },
+      "crossref_type": "proceedings-article",
+      "authors_first8": [
+        "Mahima Pushkarna",
+        "Andrew Zaldivar",
+        "Oddur Kjartansson"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5007386215",
+        "https://openalex.org/A5071598960",
+        "https://openalex.org/A5024402566"
+      ],
+      "citations_by_source": {
+        "openalex": 205,
+        "crossref": 201,
+        "s2": 379
+      },
+      "open_access": {
+        "openalex_is_oa": true,
+        "openalex_oa_status": "hybrid",
+        "openalex_license": "cc-by",
+        "s2_is_oa": true,
+        "s2_license": "CCBY",
+        "crossref_license_urls": [
+          "https://creativecommons.org/licenses/by/4.0/"
+        ],
+        "arxiv_license": null
+      },
+      "arxiv_version_id": "2204.01075v1",
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:14:15Z",
+      "seed_anchor": true
+    },
+    {
+      "key": "tripod_ai",
+      "topic": "reporting standards (clinical prediction; reporting pattern only)",
+      "query": "TRIPOD+AI statement updated guidance reporting prediction models regression machine learning",
+      "expected_first_author_surname": "Collins",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "crossref",
+        "openalex",
+        "s2"
+      ],
+      "ids": {
+        "doi": "10.1136/bmj-2023-078378",
+        "doi_all": [
+          "10.1136/bmj-2023-078378"
+        ],
+        "arxiv": null,
+        "openalex": "https://openalex.org/W4394857110",
+        "s2": "1b0f498d3d314d69850046574272404c52539302",
+        "s2_corpus": 269184445,
+        "mag": null
+      },
+      "title": "TRIPOD+AI statement: updated guidance for reporting clinical prediction models that use regression or machine learning methods",
+      "title_by_source": {
+        "openalex": "TRIPOD+AI statement: updated guidance for reporting clinical prediction models that use regression or machine learning methods",
+        "crossref": "TRIPOD+AI statement: updated guidance for reporting clinical prediction models that use regression or machine learning methods",
+        "s2": "TRIPOD+AI statement: updated guidance for reporting clinical prediction models that use regression or machine learning methods"
+      },
+      "year_by_source": {
+        "openalex": 2024,
+        "crossref": 2024,
+        "s2": 2024
+      },
+      "venue_by_source": {
+        "openalex": "BMJ",
+        "crossref": "BMJ",
+        "s2": "British medical journal"
+      },
+      "crossref_type": "journal-article",
+      "authors_first8": [
+        "Professor Gary S. Collins",
+        "Karel G.M. Moons",
+        "Paula Dhiman",
+        "Richard D Riley",
+        "Andrew L. Beam",
+        "Ben Van Calster",
+        "Marzyeh Ghassemi",
+        "Xiaoxuan Liu"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5060891981",
+        "https://openalex.org/A5083104697",
+        "https://openalex.org/A5059901188",
+        "https://openalex.org/A5040942978",
+        "https://openalex.org/A5077007622",
+        "https://openalex.org/A5086320066",
+        "https://openalex.org/A5070063054",
+        "https://openalex.org/A5041641749"
+      ],
+      "citations_by_source": {
+        "openalex": 3686,
+        "crossref": 3938,
+        "s2": 3699
+      },
+      "open_access": {
+        "openalex_is_oa": true,
+        "openalex_oa_status": "hybrid",
+        "openalex_license": "cc-by",
+        "s2_is_oa": true,
+        "s2_license": "CCBY",
+        "crossref_license_urls": [
+          "http://creativecommons.org/licenses/by/4.0/"
+        ],
+        "arxiv_license": null
+      },
+      "arxiv_version_id": null,
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:14:33Z",
+      "seed_anchor": true
+    },
+    {
+      "key": "leakage_kapoor",
+      "topic": "leakage / reproducibility",
+      "query": "Leakage and the reproducibility crisis in machine-learning-based science",
+      "expected_first_author_surname": "Kapoor",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "crossref",
+        "openalex",
+        "s2"
+      ],
+      "ids": {
+        "doi": "10.1016/j.patter.2023.100804",
+        "doi_all": [
+          "10.1016/j.patter.2023.100804"
+        ],
+        "arxiv": null,
+        "openalex": "https://openalex.org/W4385576721",
+        "s2": "02882aa74675b324808096609037a2dffb24c713",
+        "s2_corpus": 260663045,
+        "mag": null
+      },
+      "title": "Leakage and the reproducibility crisis in machine-learning-based science",
+      "title_by_source": {
+        "openalex": "Leakage and the reproducibility crisis in machine-learning-based science",
+        "crossref": "Leakage and the reproducibility crisis in machine-learning-based science",
+        "s2": "Leakage and the reproducibility crisis in machine-learning-based science"
+      },
+      "year_by_source": {
+        "openalex": 2023,
+        "crossref": 2023,
+        "s2": 2023
+      },
+      "venue_by_source": {
+        "openalex": "Patterns",
+        "crossref": "Patterns",
+        "s2": "Patterns"
+      },
+      "crossref_type": "journal-article",
+      "authors_first8": [
+        "Sayash Kapoor",
+        "Arvind Narayanan"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5063345981",
+        "https://openalex.org/A5058102069"
+      ],
+      "citations_by_source": {
+        "openalex": 1081,
+        "crossref": 1078,
+        "s2": 1127
+      },
+      "open_access": {
+        "openalex_is_oa": true,
+        "openalex_oa_status": "gold",
+        "openalex_license": "cc-by",
+        "s2_is_oa": true,
+        "s2_license": "CCBY",
+        "crossref_license_urls": [
+          "https://www.elsevier.com/tdm/userlicense/1.0/",
+          "https://www.elsevier.com/legal/tdmrep-license",
+          "http://creativecommons.org/licenses/by/4.0/"
+        ],
+        "arxiv_license": null
+      },
+      "arxiv_version_id": null,
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:15:00Z",
+      "seed_anchor": true
+    },
+    {
+      "key": "shortcut_learning",
+      "topic": "shortcut learning",
+      "query": "Shortcut learning in deep neural networks",
+      "expected_first_author_surname": "Geirhos",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "arxiv",
+        "crossref",
+        "openalex",
+        "s2"
+      ],
+      "ids": {
+        "doi": "10.1038/s42256-020-00257-z",
+        "doi_all": [
+          "10.1038/s42256-020-00257-z"
+        ],
+        "arxiv": "2004.07780",
+        "openalex": "https://openalex.org/W3016970897",
+        "s2": "1b04936c2599e59b120f743fbb30df2eed3fd782",
+        "s2_corpus": 215786368,
+        "mag": "3016970897"
+      },
+      "title": "Shortcut learning in deep neural networks",
+      "title_by_source": {
+        "openalex": "Shortcut learning in deep neural networks",
+        "crossref": "Shortcut learning in deep neural networks",
+        "s2": "Shortcut learning in deep neural networks",
+        "arxiv": "Shortcut Learning in Deep Neural Networks"
+      },
+      "year_by_source": {
+        "openalex": 2020,
+        "crossref": 2020,
+        "s2": 2020,
+        "arxiv": 2020
+      },
+      "venue_by_source": {
+        "openalex": "Nature Machine Intelligence",
+        "crossref": "Nature Machine Intelligence",
+        "s2": "Nature Machine Intelligence",
+        "arxiv": "arXiv"
+      },
+      "crossref_type": "journal-article",
+      "authors_first8": [
+        "Robert Geirhos",
+        "Jörn-Henrik Jacobsen",
+        "Claudio Michaelis",
+        "Richard S. Zemel",
+        "Wieland Brendel",
+        "Matthias Bethge",
+        "Felix A. Wichmann"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5043113119",
+        "https://openalex.org/A5109463535",
+        "https://openalex.org/A5076080916",
+        "https://openalex.org/A5000111344",
+        "https://openalex.org/A5086801305",
+        "https://openalex.org/A5061457780",
+        "https://openalex.org/A5043258699"
+      ],
+      "citations_by_source": {
+        "openalex": 2144,
+        "crossref": 1878,
+        "s2": 3557
+      },
+      "open_access": {
+        "openalex_is_oa": true,
+        "openalex_oa_status": "green",
+        "openalex_license": null,
+        "s2_is_oa": true,
+        "s2_license": null,
+        "crossref_license_urls": [
+          "https://www.springernature.com/gp/researchers/text-and-data-mining",
+          "https://www.springernature.com/gp/researchers/text-and-data-mining"
+        ],
+        "arxiv_license": null
+      },
+      "arxiv_version_id": "2004.07780v5",
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:15:59Z",
+      "seed_anchor": true
+    },
+    {
+      "key": "underspecification",
+      "topic": "underspecification",
+      "query": "Underspecification presents challenges for credibility in modern machine learning",
+      "expected_first_author_surname": "D'Amour",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "arxiv",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.48550/arxiv.2011.03395",
+        "doi_all": [
+          "10.48550/arxiv.2011.03395"
+        ],
+        "arxiv": "2011.03395",
+        "openalex": "https://openalex.org/W3100511085",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": "3100511085"
+      },
+      "title": "Underspecification Presents Challenges for Credibility in Modern Machine Learning",
+      "title_by_source": {
+        "openalex": "Underspecification Presents Challenges for Credibility in Modern Machine Learning",
+        "arxiv": "Underspecification Presents Challenges for Credibility in Modern Machine Learning"
+      },
+      "year_by_source": {
+        "openalex": 2020,
+        "arxiv": 2020
+      },
+      "venue_by_source": {
+        "openalex": "arXiv (Cornell University)",
+        "arxiv": "arXiv"
+      },
+      "crossref_type": null,
+      "authors_first8": [
+        "Alexander D’Amour",
+        "Katherine Heller",
+        "DAN I. MOLDOVAN",
+        "Ben Adlam",
+        "Babak Alipanahi",
+        "Alex Beutel",
+        "Christina Chen",
+        "Jonathan Deaton"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5060694111",
+        "https://openalex.org/A5014018142",
+        "https://openalex.org/A5043094101",
+        "https://openalex.org/A5048167471",
+        "https://openalex.org/A5026092995",
+        "https://openalex.org/A5080988309",
+        "https://openalex.org/A5101585585",
+        "https://openalex.org/A5086270414"
+      ],
+      "citations_by_source": {
+        "openalex": 424
+      },
+      "open_access": {
+        "openalex_is_oa": true,
+        "openalex_oa_status": "green",
+        "openalex_license": null,
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": null,
+        "arxiv_license": null
+      },
+      "arxiv_version_id": "2011.03395v2",
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:16:28Z",
+      "seed_anchor": true
+    },
+    {
+      "key": "guo_calibration",
+      "topic": "calibration",
+      "query": "On calibration of modern neural networks",
+      "expected_first_author_surname": "Guo",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "arxiv",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.48550/arxiv.1706.04599",
+        "doi_all": [
+          "10.48550/arxiv.1706.04599"
+        ],
+        "arxiv": "1706.04599",
+        "openalex": "https://openalex.org/W2626967530",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": "2626967530"
+      },
+      "title": "On Calibration of Modern Neural Networks",
+      "title_by_source": {
+        "openalex": "On Calibration of Modern Neural Networks",
+        "arxiv": "On Calibration of Modern Neural Networks"
+      },
+      "year_by_source": {
+        "openalex": 2017,
+        "arxiv": 2017
+      },
+      "venue_by_source": {
+        "openalex": "arXiv (Cornell University)",
+        "arxiv": "arXiv"
+      },
+      "crossref_type": null,
+      "authors_first8": [
+        "Chuan Jun Guo",
+        "Geoff Pleiss",
+        "Yu Sun",
+        "Kilian Q. Weinberger"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5069524591",
+        "https://openalex.org/A5065203625",
+        "https://openalex.org/A5100772262",
+        "https://openalex.org/A5006380227"
+      ],
+      "citations_by_source": {
+        "openalex": 2595
+      },
+      "open_access": {
+        "openalex_is_oa": true,
+        "openalex_oa_status": "green",
+        "openalex_license": null,
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": null,
+        "arxiv_license": null
+      },
+      "arxiv_version_id": "1706.04599v2",
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:16:42Z",
+      "seed_anchor": true
+    },
+    {
+      "key": "gentle_conformal",
+      "topic": "conformal prediction",
+      "query": "A gentle introduction to conformal prediction and distribution-free uncertainty quantification",
+      "expected_first_author_surname": "Angelopoulos",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "arxiv",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.48550/arxiv.2107.07511",
+        "doi_all": [
+          "10.48550/arxiv.2107.07511"
+        ],
+        "arxiv": "2107.07511",
+        "openalex": "https://openalex.org/W3180462067",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": "3180462067"
+      },
+      "title": "A Gentle Introduction to Conformal Prediction and Distribution-Free Uncertainty Quantification",
+      "title_by_source": {
+        "openalex": "A Gentle Introduction to Conformal Prediction and Distribution-Free Uncertainty Quantification",
+        "arxiv": "A Gentle Introduction to Conformal Prediction and Distribution-Free Uncertainty Quantification"
+      },
+      "year_by_source": {
+        "openalex": 2021,
+        "arxiv": 2021
+      },
+      "venue_by_source": {
+        "openalex": "arXiv (Cornell University)",
+        "arxiv": "arXiv"
+      },
+      "crossref_type": null,
+      "authors_first8": [
+        "Anastasios N. Angelopoulos",
+        "Stephen Bates"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5019661690",
+        "https://openalex.org/A5045046961"
+      ],
+      "citations_by_source": {
+        "openalex": 28
+      },
+      "open_access": {
+        "openalex_is_oa": true,
+        "openalex_oa_status": "green",
+        "openalex_license": null,
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": null,
+        "arxiv_license": null
+      },
+      "arxiv_version_id": "2107.07511v6",
+      "code_links_stated_in_arxiv": [
+        "https://github.com/aangelopoulos/conformal-prediction"
+      ],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:16:46Z",
+      "seed_anchor": true
+    },
+    {
+      "key": "deepmutation",
+      "topic": "ML mutation testing",
+      "query": "DeepMutation mutation testing of deep learning systems",
+      "expected_first_author_surname": "Ma",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "arxiv",
+        "crossref",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.1109/issre.2018.00021",
+        "doi_all": [
+          "10.1109/issre.2018.00021"
+        ],
+        "arxiv": "1805.05206",
+        "openalex": "https://openalex.org/W2799640043",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": "2799640043"
+      },
+      "title": "DeepMutation: Mutation Testing of Deep Learning Systems",
+      "title_by_source": {
+        "openalex": "DeepMutation: Mutation Testing of Deep Learning Systems",
+        "crossref": "DeepMutation: Mutation Testing of Deep Learning Systems",
+        "arxiv": "DeepMutation: Mutation Testing of Deep Learning Systems"
+      },
+      "year_by_source": {
+        "openalex": 2018,
+        "crossref": 2018,
+        "arxiv": 2018
+      },
+      "venue_by_source": {
+        "openalex": null,
+        "crossref": "2018 IEEE 29th International Symposium on Software Reliability Engineering (ISSRE)",
+        "arxiv": "DeepMutation: Mutation Testing of Deep Learning Systems. In Proceedings of the 29th IEEE International Symposium on Software Reliability Engineering (ISSRE 2018), October 15-18, 2018, Memphis, USA"
+      },
+      "crossref_type": "proceedings-article",
+      "authors_first8": [
+        "Lei Ma",
+        "Fuyuan Zhang",
+        "Jiyuan Sun",
+        "Minhui Xue",
+        "Bo Li",
+        "Felix Juefei-Xu",
+        "Chao Xie",
+        "Li Li"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5101468661",
+        "https://openalex.org/A5101905312",
+        "https://openalex.org/A5102860446",
+        "https://openalex.org/A5009850797",
+        "https://openalex.org/A5100374381",
+        "https://openalex.org/A5034751153",
+        "https://openalex.org/A5045231545",
+        "https://openalex.org/A5106407830"
+      ],
+      "citations_by_source": {
+        "openalex": 371,
+        "crossref": 267
+      },
+      "open_access": {
+        "openalex_is_oa": false,
+        "openalex_oa_status": "closed",
+        "openalex_license": null,
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": [
+          "https://doi.org/10.15223/policy-029",
+          "https://doi.org/10.15223/policy-037"
+        ],
+        "arxiv_license": null
+      },
+      "arxiv_version_id": "1805.05206v2",
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:16:50Z",
+      "seed_anchor": true
+    },
+    {
+      "key": "split_conformal_lei",
+      "topic": "conformal prediction (split conformal)",
+      "query": "Distribution-free predictive inference for regression",
+      "expected_first_author_surname": "Lei",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "arxiv",
+        "crossref",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.1080/01621459.2017.1307116",
+        "doi_all": [
+          "10.1080/01621459.2017.1307116"
+        ],
+        "arxiv": "1604.04173",
+        "openalex": "https://openalex.org/W2964060211",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": "2964060211"
+      },
+      "title": "Distribution-Free Predictive Inference for Regression",
+      "title_by_source": {
+        "openalex": "Distribution-Free Predictive Inference for Regression",
+        "crossref": "Distribution-Free Predictive Inference for Regression",
+        "arxiv": "Distribution-Free Predictive Inference For Regression"
+      },
+      "year_by_source": {
+        "openalex": 2017,
+        "crossref": 2018,
+        "arxiv": 2016
+      },
+      "venue_by_source": {
+        "openalex": "Journal of the American Statistical Association",
+        "crossref": "Journal of the American Statistical Association",
+        "arxiv": "arXiv"
+      },
+      "crossref_type": "journal-article",
+      "authors_first8": [
+        "Jing Lei",
+        "Max G’Sell",
+        "Alessandro Rinaldo",
+        "Ryan J. Tibshirani",
+        "Larry Wasserman"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5085887576",
+        "https://openalex.org/A5008167016",
+        "https://openalex.org/A5112007828",
+        "https://openalex.org/A5076708141",
+        "https://openalex.org/A5103096586"
+      ],
+      "citations_by_source": {
+        "openalex": 904,
+        "crossref": 776
+      },
+      "open_access": {
+        "openalex_is_oa": false,
+        "openalex_oa_status": "closed",
+        "openalex_license": null,
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": [],
+        "arxiv_license": null
+      },
+      "arxiv_version_id": "1604.04173v2",
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:16:55Z",
+      "seed_anchor": false
+    },
+    {
+      "key": "isotonic_zadrozny",
+      "topic": "calibration (isotonic)",
+      "query": "Transforming classifier scores into accurate multiclass probability estimates",
+      "expected_first_author_surname": "Zadrozny",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "crossref",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.1145/775047.775151",
+        "doi_all": [
+          "10.1145/775047.775151"
+        ],
+        "arxiv": null,
+        "openalex": "https://openalex.org/W2012942264",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": "2012942264"
+      },
+      "title": "Transforming classifier scores into accurate multiclass probability estimates",
+      "title_by_source": {
+        "openalex": "Transforming classifier scores into accurate multiclass probability estimates",
+        "crossref": "Transforming classifier scores into accurate multiclass probability estimates"
+      },
+      "year_by_source": {
+        "openalex": 2002,
+        "crossref": 2002
+      },
+      "venue_by_source": {
+        "openalex": null,
+        "crossref": "Proceedings of the eighth ACM SIGKDD international conference on Knowledge discovery and data mining"
+      },
+      "crossref_type": "proceedings-article",
+      "authors_first8": [
+        "Bianca Zadrozny",
+        "Charles Elkan"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5006347550",
+        "https://openalex.org/A5038246567"
+      ],
+      "citations_by_source": {
+        "openalex": 1214,
+        "crossref": 928
+      },
+      "open_access": {
+        "openalex_is_oa": false,
+        "openalex_oa_status": "closed",
+        "openalex_license": null,
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": [
+          "https://www.acm.org/publications/policies/copyright_policy#Background"
+        ],
+        "arxiv_license": null
+      },
+      "arxiv_version_id": null,
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:17:03Z",
+      "seed_anchor": false
+    },
+    {
+      "key": "niculescu_caruana",
+      "topic": "calibration (Platt vs isotonic comparison)",
+      "query": "Predicting good probabilities with supervised learning",
+      "expected_first_author_surname": "Niculescu-Mizil",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "crossref",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.1145/1102351.1102430",
+        "doi_all": [
+          "10.1145/1102351.1102430"
+        ],
+        "arxiv": null,
+        "openalex": "https://openalex.org/W2098824882",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": "2098824882"
+      },
+      "title": "Predicting good probabilities with supervised learning",
+      "title_by_source": {
+        "openalex": "Predicting good probabilities with supervised learning",
+        "crossref": "Predicting good probabilities with supervised learning"
+      },
+      "year_by_source": {
+        "openalex": 2005,
+        "crossref": 2005
+      },
+      "venue_by_source": {
+        "openalex": null,
+        "crossref": "Proceedings of the 22nd international conference on Machine learning  - ICML '05"
+      },
+      "crossref_type": "proceedings-article",
+      "authors_first8": [
+        "Alexandru Niculescu-Mizil",
+        "Rich Caruana"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5029480393",
+        "https://openalex.org/A5083893060"
+      ],
+      "citations_by_source": {
+        "openalex": 1800,
+        "crossref": 1259
+      },
+      "open_access": {
+        "openalex_is_oa": false,
+        "openalex_oa_status": "closed",
+        "openalex_license": null,
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": [
+          "https://www.acm.org/publications/policies/copyright_policy#Background"
+        ],
+        "arxiv_license": null
+      },
+      "arxiv_version_id": null,
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:17:07Z",
+      "seed_anchor": false
+    },
+    {
+      "key": "brier_score",
+      "topic": "calibration (Brier score)",
+      "query": "Verification of forecasts expressed in terms of probability",
+      "expected_first_author_surname": "Brier",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "crossref",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.1175/1520-0493(1950)078<0001:vofeit>2.0.co;2",
+        "doi_all": [
+          "10.1175/1520-0493(1950)078<0001:vofeit>2.0.co;2"
+        ],
+        "arxiv": null,
+        "openalex": "https://openalex.org/W2073241381",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": "2073241381"
+      },
+      "title": "VERIFICATION OF FORECASTS EXPRESSED IN TERMS OF PROBABILITY",
+      "title_by_source": {
+        "openalex": "VERIFICATION OF FORECASTS EXPRESSED IN TERMS OF PROBABILITY",
+        "crossref": "VERIFICATION OF FORECASTS EXPRESSED IN TERMS OF PROBABILITY"
+      },
+      "year_by_source": {
+        "openalex": 1950,
+        "crossref": 1950
+      },
+      "venue_by_source": {
+        "openalex": "Monthly Weather Review",
+        "crossref": "Monthly Weather Review"
+      },
+      "crossref_type": "journal-article",
+      "authors_first8": [
+        "Glenn W. Brier"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5084844519"
+      ],
+      "citations_by_source": {
+        "openalex": 5534,
+        "crossref": 1992
+      },
+      "open_access": {
+        "openalex_is_oa": false,
+        "openalex_oa_status": "closed",
+        "openalex_license": null,
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": [],
+        "arxiv_license": null
+      },
+      "arxiv_version_id": null,
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:17:12Z",
+      "seed_anchor": false
+    },
+    {
+      "key": "ece_naeini",
+      "topic": "calibration (expected calibration error)",
+      "query": "Obtaining well calibrated probabilities using Bayesian binning",
+      "expected_first_author_surname": "Naeini",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "crossref",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.1609/aaai.v29i1.9602",
+        "doi_all": [
+          "10.1609/aaai.v29i1.9602"
+        ],
+        "arxiv": null,
+        "openalex": "https://openalex.org/W2254249950",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": "2254249950"
+      },
+      "title": "Obtaining Well Calibrated Probabilities Using Bayesian Binning",
+      "title_by_source": {
+        "openalex": "Obtaining Well Calibrated Probabilities Using Bayesian Binning",
+        "crossref": "Obtaining Well Calibrated Probabilities Using Bayesian Binning"
+      },
+      "year_by_source": {
+        "openalex": 2015,
+        "crossref": 2015
+      },
+      "venue_by_source": {
+        "openalex": "Proceedings of the AAAI Conference on Artificial Intelligence",
+        "crossref": "Proceedings of the AAAI Conference on Artificial Intelligence"
+      },
+      "crossref_type": "journal-article",
+      "authors_first8": [
+        "Mahdi Pakdaman Naeini",
+        "Gregory F. Cooper",
+        "Miloš Hauskrecht"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5000623954",
+        "https://openalex.org/A5102879081",
+        "https://openalex.org/A5012461386"
+      ],
+      "citations_by_source": {
+        "openalex": 983,
+        "crossref": 397
+      },
+      "open_access": {
+        "openalex_is_oa": true,
+        "openalex_oa_status": "diamond",
+        "openalex_license": null,
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": [],
+        "arxiv_license": null
+      },
+      "arxiv_version_id": null,
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:17:17Z",
+      "seed_anchor": false
+    },
+    {
+      "key": "selective_geifman",
+      "topic": "selective classification",
+      "query": "Selective classification for deep neural networks",
+      "expected_first_author_surname": "Geifman",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "arxiv",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.48550/arxiv.1705.08500",
+        "doi_all": [
+          "10.48550/arxiv.1705.08500"
+        ],
+        "arxiv": "1705.08500",
+        "openalex": "https://openalex.org/W2618169590",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": "2618169590"
+      },
+      "title": "Selective Classification for Deep Neural Networks",
+      "title_by_source": {
+        "openalex": "Selective Classification for Deep Neural Networks",
+        "arxiv": "Selective Classification for Deep Neural Networks"
+      },
+      "year_by_source": {
+        "openalex": 2017,
+        "arxiv": 2017
+      },
+      "venue_by_source": {
+        "openalex": "arXiv (Cornell University)",
+        "arxiv": "arXiv"
+      },
+      "crossref_type": null,
+      "authors_first8": [
+        "Yonatan Geifman",
+        "Ran El‐Yaniv"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5061409282",
+        "https://openalex.org/A5025669300"
+      ],
+      "citations_by_source": {
+        "openalex": 178
+      },
+      "open_access": {
+        "openalex_is_oa": true,
+        "openalex_oa_status": "green",
+        "openalex_license": null,
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": null,
+        "arxiv_license": null
+      },
+      "arxiv_version_id": "1705.08500v2",
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:17:21Z",
+      "seed_anchor": false
+    },
+    {
+      "key": "reject_chow",
+      "topic": "selective classification (reject option)",
+      "query": "On optimum recognition error and reject tradeoff",
+      "expected_first_author_surname": "Chow",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "crossref",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.1109/tit.1970.1054406",
+        "doi_all": [
+          "10.1109/tit.1970.1054406"
+        ],
+        "arxiv": null,
+        "openalex": "https://openalex.org/W2118377301",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": "2118377301"
+      },
+      "title": "On optimum recognition error and reject tradeoff",
+      "title_by_source": {
+        "openalex": "On optimum recognition error and reject tradeoff",
+        "crossref": "On optimum recognition error and reject tradeoff"
+      },
+      "year_by_source": {
+        "openalex": 1970,
+        "crossref": 1970
+      },
+      "venue_by_source": {
+        "openalex": "IEEE Transactions on Information Theory",
+        "crossref": "IEEE Transactions on Information Theory"
+      },
+      "crossref_type": "journal-article",
+      "authors_first8": [
+        "C. Chow"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        null
+      ],
+      "citations_by_source": {
+        "openalex": 924,
+        "crossref": 704
+      },
+      "open_access": {
+        "openalex_is_oa": true,
+        "openalex_oa_status": "green",
+        "openalex_license": "cc-by-nc",
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": [
+          "https://ieeexplore.ieee.org/Xplorehelp/downloads/license-information/IEEE.html",
+          "https://doi.org/10.15223/policy-029",
+          "https://doi.org/10.15223/policy-037"
+        ],
+        "arxiv_license": null
+      },
+      "arxiv_version_id": null,
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:17:25Z",
+      "seed_anchor": false
+    },
+    {
+      "key": "metamorphic_xie",
+      "topic": "metamorphic testing of ML",
+      "query": "Testing and validating machine learning classifiers by metamorphic testing",
+      "expected_first_author_surname": "Xie",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "crossref",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.1016/j.jss.2010.11.920",
+        "doi_all": [
+          "10.1016/j.jss.2010.11.920"
+        ],
+        "arxiv": null,
+        "openalex": "https://openalex.org/W2041650849",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": "2041650849"
+      },
+      "title": "Testing and validating machine learning classifiers by metamorphic testing",
+      "title_by_source": {
+        "openalex": "Testing and validating machine learning classifiers by metamorphic testing",
+        "crossref": "Testing and validating machine learning classifiers by metamorphic testing"
+      },
+      "year_by_source": {
+        "openalex": 2010,
+        "crossref": 2011
+      },
+      "venue_by_source": {
+        "openalex": "Journal of Systems and Software",
+        "crossref": "Journal of Systems and Software"
+      },
+      "crossref_type": "journal-article",
+      "authors_first8": [
+        "Xiaoyuan Xie",
+        "Joshua W. K. Ho",
+        "Christian Murphy",
+        "Gail E. Kaiser",
+        "Baowen Xu",
+        "Tsong Yueh Chen"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5100746280",
+        "https://openalex.org/A5028008500",
+        "https://openalex.org/A5002151898",
+        "https://openalex.org/A5090171418",
+        "https://openalex.org/A5100331400",
+        "https://openalex.org/A5035107113"
+      ],
+      "citations_by_source": {
+        "openalex": 402,
+        "crossref": 325
+      },
+      "open_access": {
+        "openalex_is_oa": true,
+        "openalex_oa_status": "green",
+        "openalex_license": null,
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": [
+          "https://www.elsevier.com/tdm/userlicense/1.0/"
+        ],
+        "arxiv_license": null
+      },
+      "arxiv_version_id": null,
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:19:11Z",
+      "seed_anchor": false
+    },
+    {
+      "key": "bootstrap_ci_diciccio",
+      "topic": "bootstrap confidence intervals",
+      "query": "Bootstrap confidence intervals",
+      "expected_first_author_surname": "DiCiccio",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "crossref",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.1214/ss/1032280214",
+        "doi_all": [
+          "10.1214/ss/1032280214"
+        ],
+        "arxiv": null,
+        "openalex": "https://openalex.org/W1507985183",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": "1507985183"
+      },
+      "title": "Bootstrap confidence intervals",
+      "title_by_source": {
+        "openalex": "Bootstrap confidence intervals",
+        "crossref": "Bootstrap confidence intervals"
+      },
+      "year_by_source": {
+        "openalex": 1996,
+        "crossref": 1996
+      },
+      "venue_by_source": {
+        "openalex": "Statistical Science",
+        "crossref": "Statistical Science"
+      },
+      "crossref_type": "journal-article",
+      "authors_first8": [
+        "Thomas J. DiCiccio",
+        "Bradley Efron"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5013596280",
+        "https://openalex.org/A5108567924"
+      ],
+      "citations_by_source": {
+        "openalex": 2358,
+        "crossref": 1774
+      },
+      "open_access": {
+        "openalex_is_oa": true,
+        "openalex_oa_status": "bronze",
+        "openalex_license": null,
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": [],
+        "arxiv_license": null
+      },
+      "arxiv_version_id": null,
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:20:56Z",
+      "seed_anchor": false
+    },
+    {
+      "key": "bootstrap_bca_efron",
+      "topic": "bootstrap confidence intervals",
+      "query": "Better bootstrap confidence intervals",
+      "expected_first_author_surname": "Efron",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "crossref",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.1080/01621459.1987.10478410",
+        "doi_all": [
+          "10.1080/01621459.1987.10478410"
+        ],
+        "arxiv": null,
+        "openalex": "https://openalex.org/W2126728600",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": "2126728600"
+      },
+      "title": "Better Bootstrap Confidence Intervals",
+      "title_by_source": {
+        "openalex": "Better Bootstrap Confidence Intervals",
+        "crossref": "Better Bootstrap Confidence Intervals"
+      },
+      "year_by_source": {
+        "openalex": 1987,
+        "crossref": 1987
+      },
+      "venue_by_source": {
+        "openalex": "Journal of the American Statistical Association",
+        "crossref": "Journal of the American Statistical Association"
+      },
+      "crossref_type": "journal-article",
+      "authors_first8": [
+        "Bradley Efron"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5108567924"
+      ],
+      "citations_by_source": {
+        "openalex": 3401,
+        "crossref": 2909
+      },
+      "open_access": {
+        "openalex_is_oa": false,
+        "openalex_oa_status": "closed",
+        "openalex_license": null,
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": [],
+        "arxiv_license": null
+      },
+      "arxiv_version_id": null,
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:22:42Z",
+      "seed_anchor": false
+    },
+    {
+      "key": "cox_calibration_slope",
+      "topic": "calibration (logistic recalibration slope/intercept)",
+      "query": "Two further applications of a model for binary regression",
+      "expected_first_author_surname": "Cox",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "crossref",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.1093/biomet/45.3-4.562",
+        "doi_all": [
+          "10.1093/biomet/45.3-4.562"
+        ],
+        "arxiv": null,
+        "openalex": "https://openalex.org/W2060374620",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": "2060374620"
+      },
+      "title": "Two further applications of a model for binary regression",
+      "title_by_source": {
+        "openalex": "Two further applications of a model for binary regression",
+        "crossref": "Two further applications of a model for binary regression"
+      },
+      "year_by_source": {
+        "openalex": 1958,
+        "crossref": 1958
+      },
+      "venue_by_source": {
+        "openalex": "Biometrika",
+        "crossref": "Biometrika"
+      },
+      "crossref_type": "journal-article",
+      "authors_first8": [
+        "David Roxbee Cox"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5103803344"
+      ],
+      "citations_by_source": {
+        "openalex": 513,
+        "crossref": 404
+      },
+      "open_access": {
+        "openalex_is_oa": false,
+        "openalex_oa_status": "closed",
+        "openalex_license": null,
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": [],
+        "arxiv_license": null
+      },
+      "arxiv_version_id": null,
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:24:27Z",
+      "seed_anchor": false
+    },
+    {
+      "key": "gneiting_scoring_rules",
+      "topic": "calibration (proper scoring rules)",
+      "query": "Strictly proper scoring rules prediction and estimation",
+      "expected_first_author_surname": "Gneiting",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "crossref",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.1198/016214506000001437",
+        "doi_all": [
+          "10.1198/016214506000001437"
+        ],
+        "arxiv": null,
+        "openalex": "https://openalex.org/W2025720061",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": "2025720061"
+      },
+      "title": "Strictly Proper Scoring Rules, Prediction, and Estimation",
+      "title_by_source": {
+        "openalex": "Strictly Proper Scoring Rules, Prediction, and Estimation",
+        "crossref": "Strictly Proper Scoring Rules, Prediction, and Estimation"
+      },
+      "year_by_source": {
+        "openalex": 2007,
+        "crossref": 2007
+      },
+      "venue_by_source": {
+        "openalex": "Journal of the American Statistical Association",
+        "crossref": "Journal of the American Statistical Association"
+      },
+      "crossref_type": "journal-article",
+      "authors_first8": [
+        "Tilmann Gneiting",
+        "Adrian E. Raftery"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5046150465",
+        "https://openalex.org/A5064414755"
+      ],
+      "citations_by_source": {
+        "openalex": 5844,
+        "crossref": 4543
+      },
+      "open_access": {
+        "openalex_is_oa": false,
+        "openalex_oa_status": "closed",
+        "openalex_license": null,
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": [],
+        "arxiv_license": null
+      },
+      "arxiv_version_id": null,
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:26:13Z",
+      "seed_anchor": false
+    },
+    {
+      "key": "venn_abers",
+      "topic": "calibration (Venn-Abers predictors)",
+      "query": "Venn-Abers predictors",
+      "expected_first_author_surname": "Vovk",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "arxiv",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.48550/arxiv.1211.0025",
+        "doi_all": [
+          "10.48550/arxiv.1211.0025"
+        ],
+        "arxiv": "1211.0025",
+        "openalex": "https://openalex.org/W2232432533",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": "2232432533"
+      },
+      "title": "Venn-Abers predictors",
+      "title_by_source": {
+        "openalex": "Venn-Abers predictors",
+        "arxiv": "Venn-Abers predictors"
+      },
+      "year_by_source": {
+        "openalex": 2012,
+        "arxiv": 2012
+      },
+      "venue_by_source": {
+        "openalex": "arXiv (Cornell University)",
+        "arxiv": "arXiv"
+      },
+      "crossref_type": null,
+      "authors_first8": [
+        "Vladimir Vovk",
+        "Ivan Petej"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5063978613",
+        "https://openalex.org/A5058156768"
+      ],
+      "citations_by_source": {
+        "openalex": 4
+      },
+      "open_access": {
+        "openalex_is_oa": true,
+        "openalex_oa_status": "green",
+        "openalex_license": null,
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": null,
+        "arxiv_license": null
+      },
+      "arxiv_version_id": "1211.0025v2",
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:30:21Z",
+      "seed_anchor": false
+    },
+    {
+      "key": "kumar_verified_calibration",
+      "topic": "calibration (ECE estimator bias)",
+      "query": "Verified uncertainty calibration",
+      "expected_first_author_surname": "Kumar",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "arxiv",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.48550/arxiv.1909.10155",
+        "doi_all": [
+          "10.48550/arxiv.1909.10155"
+        ],
+        "arxiv": "1909.10155",
+        "openalex": "https://openalex.org/W2974098375",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": "2974098375"
+      },
+      "title": "Verified Uncertainty Calibration",
+      "title_by_source": {
+        "openalex": "Verified Uncertainty Calibration",
+        "arxiv": "Verified Uncertainty Calibration"
+      },
+      "year_by_source": {
+        "openalex": 2019,
+        "arxiv": 2019
+      },
+      "venue_by_source": {
+        "openalex": "arXiv (Cornell University)",
+        "arxiv": "arXiv"
+      },
+      "crossref_type": null,
+      "authors_first8": [
+        "Ananya Kumar",
+        "Percy Liang",
+        "Tengyu Ma"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5014379995",
+        "https://openalex.org/A5025255782",
+        "https://openalex.org/A5101821970"
+      ],
+      "citations_by_source": {
+        "openalex": 87
+      },
+      "open_access": {
+        "openalex_is_oa": true,
+        "openalex_oa_status": "green",
+        "openalex_license": null,
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": null,
+        "arxiv_license": null
+      },
+      "arxiv_version_id": "1909.10155v2",
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:30:37Z",
+      "seed_anchor": false
+    },
+    {
+      "key": "nixon_measuring_calibration",
+      "topic": "calibration (ECE measurement)",
+      "query": "Measuring calibration in deep learning",
+      "expected_first_author_surname": "Nixon",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "arxiv",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.48550/arxiv.1904.01685",
+        "doi_all": [
+          "10.48550/arxiv.1904.01685"
+        ],
+        "arxiv": "1904.01685",
+        "openalex": "https://openalex.org/W2933254221",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": "2933254221"
+      },
+      "title": "Measuring Calibration in Deep Learning",
+      "title_by_source": {
+        "openalex": "Measuring Calibration in Deep Learning",
+        "arxiv": "Measuring Calibration in Deep Learning"
+      },
+      "year_by_source": {
+        "openalex": 2019,
+        "arxiv": 2019
+      },
+      "venue_by_source": {
+        "openalex": "arXiv (Cornell University)",
+        "arxiv": "arXiv"
+      },
+      "crossref_type": null,
+      "authors_first8": [
+        "Jeremy Nixon",
+        "Mike Dusenberry",
+        "Ghassen Jerfel",
+        "Timothy Nguyen",
+        "Jeremiah Zhe Liu",
+        "Linchuan Zhang",
+        "Dustin Tran"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5110890879",
+        "https://openalex.org/A5074231760",
+        "https://openalex.org/A5048204767",
+        "https://openalex.org/A5101103754",
+        "https://openalex.org/A5073573091",
+        "https://openalex.org/A5045476053",
+        "https://openalex.org/A5081819708"
+      ],
+      "citations_by_source": {
+        "openalex": 157
+      },
+      "open_access": {
+        "openalex_is_oa": true,
+        "openalex_oa_status": "green",
+        "openalex_license": null,
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": null,
+        "arxiv_license": null
+      },
+      "arxiv_version_id": "1904.01685v2",
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:30:40Z",
+      "seed_anchor": false
+    },
+    {
+      "key": "learn_then_test",
+      "topic": "risk control (threshold selection)",
+      "query": "Learn then test calibrating predictive algorithms to achieve risk control",
+      "expected_first_author_surname": "Angelopoulos",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "crossref",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.1214/24-aoas1998",
+        "doi_all": [
+          "10.1214/24-aoas1998"
+        ],
+        "arxiv": null,
+        "openalex": "https://openalex.org/W4410803261",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": null
+      },
+      "title": "Learn then test: Calibrating predictive algorithms to achieve risk control",
+      "title_by_source": {
+        "openalex": "Learn then test: Calibrating predictive algorithms to achieve risk control",
+        "crossref": "Learn then test: Calibrating predictive algorithms to achieve risk control"
+      },
+      "year_by_source": {
+        "openalex": 2025,
+        "crossref": 2025
+      },
+      "venue_by_source": {
+        "openalex": "The Annals of Applied Statistics",
+        "crossref": "The Annals of Applied Statistics"
+      },
+      "crossref_type": "journal-article",
+      "authors_first8": [
+        "Anastasios N. Angelopoulos",
+        "Stephen Bates",
+        "Emmanuel J. Candès",
+        "Michael I. Jordan",
+        "Lihua Lei"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5019661690",
+        "https://openalex.org/A5045046961",
+        "https://openalex.org/A5072495084",
+        "https://openalex.org/A5049812527",
+        "https://openalex.org/A5032933169"
+      ],
+      "citations_by_source": {
+        "openalex": 29,
+        "crossref": 33
+      },
+      "open_access": {
+        "openalex_is_oa": false,
+        "openalex_oa_status": "closed",
+        "openalex_license": null,
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": [],
+        "arxiv_license": null
+      },
+      "arxiv_version_id": null,
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:30:44Z",
+      "seed_anchor": false
+    },
+    {
+      "key": "conformal_risk_control",
+      "topic": "conformal risk control",
+      "query": "Conformal risk control",
+      "expected_first_author_surname": "Angelopoulos",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "arxiv",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.48550/arxiv.2208.02814",
+        "doi_all": [
+          "10.48550/arxiv.2208.02814"
+        ],
+        "arxiv": "2208.02814",
+        "openalex": "https://openalex.org/W4290055968",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": null
+      },
+      "title": "Conformal Risk Control",
+      "title_by_source": {
+        "openalex": "Conformal Risk Control",
+        "arxiv": "Conformal Risk Control"
+      },
+      "year_by_source": {
+        "openalex": 2022,
+        "arxiv": 2022
+      },
+      "venue_by_source": {
+        "openalex": "arXiv (Cornell University)",
+        "arxiv": "arXiv"
+      },
+      "crossref_type": null,
+      "authors_first8": [
+        "Anastasios N. Angelopoulos",
+        "Stephen Bates",
+        "Adam J Fisch",
+        "Lihua Lei",
+        "Tal Schuster"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5019661690",
+        "https://openalex.org/A5057257463",
+        "https://openalex.org/A5079422282",
+        "https://openalex.org/A5032933169",
+        "https://openalex.org/A5058037733"
+      ],
+      "citations_by_source": {
+        "openalex": 26
+      },
+      "open_access": {
+        "openalex_is_oa": true,
+        "openalex_oa_status": "green",
+        "openalex_license": null,
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": null,
+        "arxiv_license": null
+      },
+      "arxiv_version_id": "2208.02814v4",
+      "code_links_stated_in_arxiv": [
+        "https://github.com/aangelopoulos/conformal-risk"
+      ],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:30:49Z",
+      "seed_anchor": false
+    },
+    {
+      "key": "mondrian_conditional_validity",
+      "topic": "conformal prediction (label-conditional / Mondrian)",
+      "query": "Conditional validity of inductive conformal predictors",
+      "expected_first_author_surname": "Vovk",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "arxiv",
+        "crossref",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.1007/s10994-013-5355-6",
+        "doi_all": [
+          "10.1007/s10994-013-5355-6"
+        ],
+        "arxiv": "1209.2673",
+        "openalex": "https://openalex.org/W2166693382",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": "2166693382"
+      },
+      "title": "Conditional validity of inductive conformal predictors",
+      "title_by_source": {
+        "openalex": "Conditional validity of inductive conformal predictors",
+        "crossref": "Conditional validity of inductive conformal predictors",
+        "arxiv": "Conditional validity of inductive conformal predictors"
+      },
+      "year_by_source": {
+        "openalex": 2013,
+        "crossref": 2013,
+        "arxiv": 2012
+      },
+      "venue_by_source": {
+        "openalex": "Machine Learning",
+        "crossref": "Machine Learning",
+        "arxiv": "arXiv"
+      },
+      "crossref_type": "journal-article",
+      "authors_first8": [
+        "Vladimir Vovk"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5063978613"
+      ],
+      "citations_by_source": {
+        "openalex": 184,
+        "crossref": 114
+      },
+      "open_access": {
+        "openalex_is_oa": true,
+        "openalex_oa_status": "bronze",
+        "openalex_license": null,
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": [
+          "http://www.springer.com/tdm"
+        ],
+        "arxiv_license": null
+      },
+      "arxiv_version_id": "1209.2673v2",
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:30:52Z",
+      "seed_anchor": false
+    },
+    {
+      "key": "conformal_covariate_shift",
+      "topic": "conformal prediction under shift",
+      "query": "Conformal prediction under covariate shift",
+      "expected_first_author_surname": "Tibshirani",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "arxiv",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.48550/arxiv.1904.06019",
+        "doi_all": [
+          "10.48550/arxiv.1904.06019"
+        ],
+        "arxiv": "1904.06019",
+        "openalex": "https://openalex.org/W2936788460",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": "2936788460"
+      },
+      "title": "Conformal Prediction Under Covariate Shift",
+      "title_by_source": {
+        "openalex": "Conformal Prediction Under Covariate Shift",
+        "arxiv": "Conformal Prediction Under Covariate Shift"
+      },
+      "year_by_source": {
+        "openalex": 2019,
+        "arxiv": 2019
+      },
+      "venue_by_source": {
+        "openalex": "arXiv (Cornell University)",
+        "arxiv": "arXiv"
+      },
+      "crossref_type": null,
+      "authors_first8": [
+        "Ryan J. Tibshirani",
+        "Rina Foygel Barber",
+        "Emmanuel J. Candès",
+        "Aaditya Ramdas"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5076708141",
+        "https://openalex.org/A5048658972",
+        "https://openalex.org/A5072495084",
+        "https://openalex.org/A5032389695"
+      ],
+      "citations_by_source": {
+        "openalex": 53
+      },
+      "open_access": {
+        "openalex_is_oa": true,
+        "openalex_oa_status": "green",
+        "openalex_license": null,
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": null,
+        "arxiv_license": null
+      },
+      "arxiv_version_id": "1904.06019v3",
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:30:56Z",
+      "seed_anchor": false
+    },
+    {
+      "key": "conformal_beyond_exchangeability",
+      "topic": "conformal prediction under shift",
+      "query": "Conformal prediction beyond exchangeability",
+      "expected_first_author_surname": "Barber",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "arxiv",
+        "crossref",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.1214/23-aos2276",
+        "doi_all": [
+          "10.1214/23-aos2276"
+        ],
+        "arxiv": "2202.13415",
+        "openalex": "https://openalex.org/W4380490520",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": null
+      },
+      "title": "Conformal prediction beyond exchangeability",
+      "title_by_source": {
+        "openalex": "Conformal prediction beyond exchangeability",
+        "crossref": "Conformal prediction beyond exchangeability",
+        "arxiv": "Conformal prediction beyond exchangeability"
+      },
+      "year_by_source": {
+        "openalex": 2023,
+        "crossref": 2023,
+        "arxiv": 2022
+      },
+      "venue_by_source": {
+        "openalex": "The Annals of Statistics",
+        "crossref": "The Annals of Statistics",
+        "arxiv": "arXiv"
+      },
+      "crossref_type": "journal-article",
+      "authors_first8": [
+        "Rina Foygel Barber",
+        "Emmanuel J. Candès",
+        "Aaditya Ramdas",
+        "Ryan J. Tibshirani"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5048658972",
+        "https://openalex.org/A5072495084",
+        "https://openalex.org/A5032389695",
+        "https://openalex.org/A5076708141"
+      ],
+      "citations_by_source": {
+        "openalex": 274,
+        "crossref": 288
+      },
+      "open_access": {
+        "openalex_is_oa": true,
+        "openalex_oa_status": "bronze",
+        "openalex_license": null,
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": [],
+        "arxiv_license": null
+      },
+      "arxiv_version_id": "2202.13415v5",
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:31:04Z",
+      "seed_anchor": false
+    },
+    {
+      "key": "hendrycks_msp_baseline",
+      "topic": "abstention / misclassification detection baseline",
+      "query": "A baseline for detecting misclassified and out-of-distribution examples in neural networks",
+      "expected_first_author_surname": "Hendrycks",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "arxiv",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.48550/arxiv.1610.02136",
+        "doi_all": [
+          "10.48550/arxiv.1610.02136"
+        ],
+        "arxiv": "1610.02136",
+        "openalex": "https://openalex.org/W2531327146",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": "2531327146"
+      },
+      "title": "A Baseline for Detecting Misclassified and Out-of-Distribution Examples in Neural Networks",
+      "title_by_source": {
+        "openalex": "A Baseline for Detecting Misclassified and Out-of-Distribution Examples in Neural Networks",
+        "arxiv": "A Baseline for Detecting Misclassified and Out-of-Distribution Examples in Neural Networks"
+      },
+      "year_by_source": {
+        "openalex": 2016,
+        "arxiv": 2016
+      },
+      "venue_by_source": {
+        "openalex": "arXiv (Cornell University)",
+        "arxiv": "International Conference on Learning Representations 2017"
+      },
+      "crossref_type": null,
+      "authors_first8": [
+        "Dan Hendrycks",
+        "Kevin Gimpel"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5020400986",
+        "https://openalex.org/A5081022650"
+      ],
+      "citations_by_source": {
+        "openalex": 1613
+      },
+      "open_access": {
+        "openalex_is_oa": true,
+        "openalex_oa_status": "green",
+        "openalex_license": null,
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": null,
+        "arxiv_license": null
+      },
+      "arxiv_version_id": "1610.02136v3",
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:32:27Z",
+      "seed_anchor": false
+    },
+    {
+      "key": "page_cusum",
+      "topic": "operational anomaly detection (change detection)",
+      "query": "Continuous inspection schemes",
+      "expected_first_author_surname": "Page",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "crossref",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.1093/biomet/41.1-2.100",
+        "doi_all": [
+          "10.1093/biomet/41.1-2.100"
+        ],
+        "arxiv": null,
+        "openalex": "https://openalex.org/W2051903196",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": "2051903196"
+      },
+      "title": "CONTINUOUS INSPECTION SCHEMES",
+      "title_by_source": {
+        "openalex": "CONTINUOUS INSPECTION SCHEMES",
+        "crossref": "CONTINUOUS INSPECTION SCHEMES"
+      },
+      "year_by_source": {
+        "openalex": 1954,
+        "crossref": 1954
+      },
+      "venue_by_source": {
+        "openalex": "Biometrika",
+        "crossref": "Biometrika"
+      },
+      "crossref_type": "journal-article",
+      "authors_first8": [
+        "E. S. Page"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5042292094"
+      ],
+      "citations_by_source": {
+        "openalex": 4782,
+        "crossref": 3116
+      },
+      "open_access": {
+        "openalex_is_oa": false,
+        "openalex_oa_status": "closed",
+        "openalex_license": null,
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": [],
+        "arxiv_license": null
+      },
+      "arxiv_version_id": null,
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:32:30Z",
+      "seed_anchor": false
+    },
+    {
+      "key": "isolation_forest",
+      "topic": "operational anomaly detection",
+      "query": "Isolation forest",
+      "expected_first_author_surname": "Liu",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "crossref",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.1109/icdm.2008.17",
+        "doi_all": [
+          "10.1109/icdm.2008.17"
+        ],
+        "arxiv": null,
+        "openalex": "https://openalex.org/W2296719434",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": "2296719434"
+      },
+      "title": "Isolation Forest",
+      "title_by_source": {
+        "openalex": "Isolation Forest",
+        "crossref": "Isolation Forest"
+      },
+      "year_by_source": {
+        "openalex": 2008,
+        "crossref": 2008
+      },
+      "venue_by_source": {
+        "openalex": null,
+        "crossref": "2008 Eighth IEEE International Conference on Data Mining"
+      },
+      "crossref_type": "proceedings-article",
+      "authors_first8": [
+        "Fei Tony Liu",
+        "Kai Ming Ting",
+        "Zhi‐Hua Zhou"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5042335244",
+        "https://openalex.org/A5001601850",
+        "https://openalex.org/A5100621138"
+      ],
+      "citations_by_source": {
+        "openalex": 6153,
+        "crossref": 5606
+      },
+      "open_access": {
+        "openalex_is_oa": false,
+        "openalex_oa_status": "closed",
+        "openalex_license": null,
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": [],
+        "arxiv_license": null
+      },
+      "arxiv_version_id": null,
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:32:34Z",
+      "seed_anchor": false
+    },
+    {
+      "key": "chandola_anomaly_survey",
+      "topic": "operational anomaly detection (survey)",
+      "query": "Anomaly detection a survey",
+      "expected_first_author_surname": "Chandola",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "crossref",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.1145/1541880.1541882",
+        "doi_all": [
+          "10.1145/1541880.1541882"
+        ],
+        "arxiv": null,
+        "openalex": "https://openalex.org/W2122646361",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": "2122646361"
+      },
+      "title": "Anomaly detection",
+      "title_by_source": {
+        "openalex": "Anomaly detection",
+        "crossref": "Anomaly detection: A survey"
+      },
+      "year_by_source": {
+        "openalex": 2009,
+        "crossref": 2009
+      },
+      "venue_by_source": {
+        "openalex": "ACM Computing Surveys",
+        "crossref": "ACM Computing Surveys"
+      },
+      "crossref_type": "journal-article",
+      "authors_first8": [
+        "Varun Chandola",
+        "Arindam Banerjee",
+        "Vipin Kumar"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5003851078",
+        "https://openalex.org/A5014459472",
+        "https://openalex.org/A5100645812"
+      ],
+      "citations_by_source": {
+        "openalex": 11650,
+        "crossref": 9738
+      },
+      "open_access": {
+        "openalex_is_oa": false,
+        "openalex_oa_status": "closed",
+        "openalex_license": null,
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": [
+          "https://www.acm.org/publications/policies/copyright_policy#Background"
+        ],
+        "arxiv_license": null
+      },
+      "arxiv_version_id": null,
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:35:43Z",
+      "seed_anchor": false
+    },
+    {
+      "key": "numenta_nab",
+      "topic": "operational anomaly detection (benchmark)",
+      "query": "Evaluating real-time anomaly detection algorithms the Numenta Anomaly Benchmark",
+      "expected_first_author_surname": "Lavin",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "arxiv",
+        "crossref",
+        "openalex",
+        "s2"
+      ],
+      "ids": {
+        "doi": "10.1109/icmla.2015.141",
+        "doi_all": [
+          "10.1109/icmla.2015.141"
+        ],
+        "arxiv": "1510.03336",
+        "openalex": "https://openalex.org/W2191950414",
+        "s2": "08f886674d0a0a9d8eb87d3c4f57a31c4f5d132e",
+        "s2_corpus": 6842305,
+        "mag": "2191950414"
+      },
+      "title": "Evaluating Real-Time Anomaly Detection Algorithms -- The Numenta Anomaly Benchmark",
+      "title_by_source": {
+        "openalex": "Evaluating Real-Time Anomaly Detection Algorithms -- The Numenta Anomaly Benchmark",
+        "crossref": "Evaluating Real-Time Anomaly Detection Algorithms -- The Numenta Anomaly Benchmark",
+        "s2": "Evaluating Real-Time Anomaly Detection Algorithms -- The Numenta Anomaly Benchmark",
+        "arxiv": "Evaluating Real-time Anomaly Detection Algorithms - the Numenta Anomaly Benchmark"
+      },
+      "year_by_source": {
+        "openalex": 2015,
+        "crossref": 2015,
+        "s2": 2015,
+        "arxiv": 2015
+      },
+      "venue_by_source": {
+        "openalex": null,
+        "crossref": "2015 IEEE 14th International Conference on Machine Learning and Applications (ICMLA)",
+        "s2": "International Conference on Machine Learning and Applications",
+        "arxiv": "arXiv"
+      },
+      "crossref_type": "proceedings-article",
+      "authors_first8": [
+        "Alexander Lavin",
+        "Subutai Ahmad"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5000311824",
+        "https://openalex.org/A5049553911"
+      ],
+      "citations_by_source": {
+        "openalex": 463,
+        "crossref": 347,
+        "s2": 528
+      },
+      "open_access": {
+        "openalex_is_oa": true,
+        "openalex_oa_status": "green",
+        "openalex_license": null,
+        "s2_is_oa": true,
+        "s2_license": null,
+        "crossref_license_urls": [],
+        "arxiv_license": null
+      },
+      "arxiv_version_id": "1510.03336v4",
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:37:37Z",
+      "seed_anchor": false
+    },
+    {
+      "key": "ts_anomaly_benchmarks_flawed",
+      "topic": "operational anomaly detection (benchmark critique)",
+      "query": "Current time series anomaly detection benchmarks are flawed and are creating the illusion of progress",
+      "expected_first_author_surname": "Wu",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "crossref",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.1109/tkde.2021.3112126",
+        "doi_all": [
+          "10.1109/tkde.2021.3112126"
+        ],
+        "arxiv": "2009.13807",
+        "openalex": "https://openalex.org/W3091751937",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": "3091751937"
+      },
+      "title": "Current Time Series Anomaly Detection Benchmarks are Flawed and are Creating the Illusion of Progress",
+      "title_by_source": {
+        "openalex": "Current Time Series Anomaly Detection Benchmarks are Flawed and are Creating the Illusion of Progress",
+        "crossref": "Current Time Series Anomaly Detection Benchmarks are Flawed and are Creating the Illusion of Progress"
+      },
+      "year_by_source": {
+        "openalex": 2021,
+        "crossref": 2021
+      },
+      "venue_by_source": {
+        "openalex": "IEEE Transactions on Knowledge and Data Engineering",
+        "crossref": "IEEE Transactions on Knowledge and Data Engineering"
+      },
+      "crossref_type": "journal-article",
+      "authors_first8": [
+        "Renjie Wu",
+        "Eamonn Keogh"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        null,
+        null
+      ],
+      "citations_by_source": {
+        "openalex": 149,
+        "crossref": 151
+      },
+      "open_access": {
+        "openalex_is_oa": true,
+        "openalex_oa_status": "green",
+        "openalex_license": null,
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": [],
+        "arxiv_license": null
+      },
+      "arxiv_version_id": null,
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:35:48Z",
+      "seed_anchor": false
+    },
+    {
+      "key": "wilds",
+      "topic": "distribution shift benchmark",
+      "query": "WILDS a benchmark of in-the-wild distribution shifts",
+      "expected_first_author_surname": "Koh",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "arxiv",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.48550/arxiv.2012.07421",
+        "doi_all": [
+          "10.48550/arxiv.2012.07421"
+        ],
+        "arxiv": "2012.07421",
+        "openalex": "https://openalex.org/W3112486745",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": "3112486745"
+      },
+      "title": "WILDS: A Benchmark of in-the-Wild Distribution Shifts",
+      "title_by_source": {
+        "openalex": "WILDS: A Benchmark of in-the-Wild Distribution Shifts",
+        "arxiv": "WILDS: A Benchmark of in-the-Wild Distribution Shifts"
+      },
+      "year_by_source": {
+        "openalex": 2020,
+        "arxiv": 2020
+      },
+      "venue_by_source": {
+        "openalex": "CaltechAUTHORS (California Institute of Technology)",
+        "arxiv": "arXiv"
+      },
+      "crossref_type": null,
+      "authors_first8": [
+        "Pang Wei Koh",
+        "Shiori Sagawa",
+        "Henrik Marklund",
+        "Sang Michael Xie",
+        "Marvin Zhang",
+        "Akshay Balsubramani",
+        "Weihua Hu",
+        "Michihiro Yasunaga"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5079904764",
+        "https://openalex.org/A5028645925",
+        "https://openalex.org/A5000779244",
+        "https://openalex.org/A5069097726",
+        "https://openalex.org/A5056012604",
+        "https://openalex.org/A5030737597",
+        "https://openalex.org/A5102025770",
+        "https://openalex.org/A5005898634"
+      ],
+      "citations_by_source": {
+        "openalex": 284
+      },
+      "open_access": {
+        "openalex_is_oa": true,
+        "openalex_oa_status": "green",
+        "openalex_license": null,
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": null,
+        "arxiv_license": null
+      },
+      "arxiv_version_id": "2012.07421v3",
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:35:52Z",
+      "seed_anchor": false
+    },
+    {
+      "key": "kaufman_leakage",
+      "topic": "leakage",
+      "query": "Leakage in data mining formulation detection and avoidance",
+      "expected_first_author_surname": "Kaufman",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "crossref",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.1145/2382577.2382579",
+        "doi_all": [
+          "10.1145/2382577.2382579"
+        ],
+        "arxiv": null,
+        "openalex": "https://openalex.org/W2736287575",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": "2736287575"
+      },
+      "title": "Leakage in data mining",
+      "title_by_source": {
+        "openalex": "Leakage in data mining",
+        "crossref": "Leakage in data mining: Formulation, detection, and avoidance"
+      },
+      "year_by_source": {
+        "openalex": 2012,
+        "crossref": 2012
+      },
+      "venue_by_source": {
+        "openalex": "ACM Transactions on Knowledge Discovery from Data",
+        "crossref": "ACM Transactions on Knowledge Discovery from Data"
+      },
+      "crossref_type": "journal-article",
+      "authors_first8": [
+        "Shachar Kaufman",
+        "Saharon Rosset",
+        "Claudia Perlich",
+        "Ori Stitelman"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5048628578",
+        "https://openalex.org/A5039021124",
+        "https://openalex.org/A5003651471",
+        "https://openalex.org/A5009948451"
+      ],
+      "citations_by_source": {
+        "openalex": 716,
+        "crossref": 674
+      },
+      "open_access": {
+        "openalex_is_oa": false,
+        "openalex_oa_status": "closed",
+        "openalex_license": null,
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": [
+          "https://www.acm.org/publications/policies/copyright_policy#Background"
+        ],
+        "arxiv_license": null
+      },
+      "arxiv_version_id": null,
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:35:55Z",
+      "seed_anchor": false
+    },
+    {
+      "key": "ml_testing_survey",
+      "topic": "ML testing (survey)",
+      "query": "Machine learning testing survey landscapes and horizons",
+      "expected_first_author_surname": "Zhang",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "arxiv",
+        "crossref",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.1109/tse.2019.2962027",
+        "doi_all": [
+          "10.1109/tse.2019.2962027"
+        ],
+        "arxiv": "1906.10742",
+        "openalex": "https://openalex.org/W3007157104",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": "3007157104"
+      },
+      "title": "Machine Learning Testing: Survey, Landscapes and Horizons",
+      "title_by_source": {
+        "openalex": "Machine Learning Testing: Survey, Landscapes and Horizons",
+        "crossref": "Machine Learning Testing: Survey, Landscapes and Horizons",
+        "arxiv": "Machine Learning Testing: Survey, Landscapes and Horizons"
+      },
+      "year_by_source": {
+        "openalex": 2020,
+        "crossref": 2022,
+        "arxiv": 2019
+      },
+      "venue_by_source": {
+        "openalex": "IEEE Transactions on Software Engineering",
+        "crossref": "IEEE Transactions on Software Engineering",
+        "arxiv": "arXiv"
+      },
+      "crossref_type": "journal-article",
+      "authors_first8": [
+        "Jie M. Zhang",
+        "Mark Harman",
+        "Lei Ma",
+        "Yang Liu"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5088708850",
+        "https://openalex.org/A5000019783",
+        "https://openalex.org/A5101468661",
+        "https://openalex.org/A5100355692"
+      ],
+      "citations_by_source": {
+        "openalex": 854,
+        "crossref": 609
+      },
+      "open_access": {
+        "openalex_is_oa": false,
+        "openalex_oa_status": "closed",
+        "openalex_license": null,
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": [
+          "https://ieeexplore.ieee.org/Xplorehelp/downloads/license-information/IEEE.html",
+          "https://doi.org/10.15223/policy-029",
+          "https://doi.org/10.15223/policy-037"
+        ],
+        "arxiv_license": null
+      },
+      "arxiv_version_id": "1906.10742v2",
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:36:00Z",
+      "seed_anchor": false
+    },
+    {
+      "key": "mutation_survey_jia",
+      "topic": "mutation testing (survey)",
+      "query": "An analysis and survey of the development of mutation testing",
+      "expected_first_author_surname": "Jia",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "crossref",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.1109/tse.2010.62",
+        "doi_all": [
+          "10.1109/tse.2010.62"
+        ],
+        "arxiv": null,
+        "openalex": "https://openalex.org/W2135841285",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": "2135841285"
+      },
+      "title": "An Analysis and Survey of the Development of Mutation Testing",
+      "title_by_source": {
+        "openalex": "An Analysis and Survey of the Development of Mutation Testing",
+        "crossref": "An Analysis and Survey of the Development of Mutation Testing"
+      },
+      "year_by_source": {
+        "openalex": 2010,
+        "crossref": 2011
+      },
+      "venue_by_source": {
+        "openalex": "IEEE Transactions on Software Engineering",
+        "crossref": "IEEE Transactions on Software Engineering"
+      },
+      "crossref_type": "journal-article",
+      "authors_first8": [
+        "Yue Jia",
+        "Mark Harman"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5100725712",
+        "https://openalex.org/A5000019783"
+      ],
+      "citations_by_source": {
+        "openalex": 1742,
+        "crossref": 1331
+      },
+      "open_access": {
+        "openalex_is_oa": false,
+        "openalex_oa_status": "closed",
+        "openalex_license": null,
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": [
+          "https://ieeexplore.ieee.org/Xplorehelp/downloads/license-information/IEEE.html"
+        ],
+        "arxiv_license": null
+      },
+      "arxiv_version_id": null,
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:36:04Z",
+      "seed_anchor": false
+    },
+    {
+      "key": "deepcrime",
+      "topic": "ML mutation testing (real-fault operators)",
+      "query": "DeepCrime mutation testing of deep learning systems based on real faults",
+      "expected_first_author_surname": "Humbatova",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "crossref",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.1145/3460319.3464825",
+        "doi_all": [
+          "10.1145/3460319.3464825"
+        ],
+        "arxiv": null,
+        "openalex": "https://openalex.org/W3178469298",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": "3178469298"
+      },
+      "title": "DeepCrime: mutation testing of deep learning systems based on real faults",
+      "title_by_source": {
+        "openalex": "DeepCrime: mutation testing of deep learning systems based on real faults",
+        "crossref": "DeepCrime: mutation testing of deep learning systems based on real faults"
+      },
+      "year_by_source": {
+        "openalex": 2021,
+        "crossref": 2021
+      },
+      "venue_by_source": {
+        "openalex": null,
+        "crossref": "Proceedings of the 30th ACM SIGSOFT International Symposium on Software Testing and Analysis"
+      },
+      "crossref_type": "proceedings-article",
+      "authors_first8": [
+        "Nargiz Humbatova",
+        "Gunel Jahangirova",
+        "Paolo Tonella"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5076282301",
+        "https://openalex.org/A5085228874",
+        "https://openalex.org/A5025438762"
+      ],
+      "citations_by_source": {
+        "openalex": 123,
+        "crossref": 124
+      },
+      "open_access": {
+        "openalex_is_oa": false,
+        "openalex_oa_status": "closed",
+        "openalex_license": null,
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": [
+          "https://www.acm.org/publications/policies/copyright_policy#Background"
+        ],
+        "arxiv_license": null
+      },
+      "arxiv_version_id": null,
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:36:09Z",
+      "seed_anchor": false
+    },
+    {
+      "key": "metamorphic_review_chen",
+      "topic": "metamorphic testing (review)",
+      "query": "Metamorphic testing a review of challenges and opportunities",
+      "expected_first_author_surname": "Chen",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "crossref",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.1145/3143561",
+        "doi_all": [
+          "10.1145/3143561"
+        ],
+        "arxiv": null,
+        "openalex": "https://openalex.org/W2782311202",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": "2782311202"
+      },
+      "title": "Metamorphic Testing",
+      "title_by_source": {
+        "openalex": "Metamorphic Testing",
+        "crossref": "Metamorphic Testing: A Review of Challenges and Opportunities"
+      },
+      "year_by_source": {
+        "openalex": 2018,
+        "crossref": 2019
+      },
+      "venue_by_source": {
+        "openalex": "ACM Computing Surveys",
+        "crossref": "ACM Computing Surveys"
+      },
+      "crossref_type": "journal-article",
+      "authors_first8": [
+        "Tsong Yueh Chen",
+        "Fei‐Ching Kuo",
+        "Huai Liu",
+        "Pak‐Lok Poon",
+        "Dave Towey",
+        "T.H. Tse",
+        "Zhi Quan Zhou"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5035107113",
+        "https://openalex.org/A5026939136",
+        "https://openalex.org/A5033550181",
+        "https://openalex.org/A5051828363",
+        "https://openalex.org/A5049154334",
+        "https://openalex.org/A5049494347",
+        "https://openalex.org/A5069910503"
+      ],
+      "citations_by_source": {
+        "openalex": 671,
+        "crossref": 444
+      },
+      "open_access": {
+        "openalex_is_oa": true,
+        "openalex_oa_status": "green",
+        "openalex_license": null,
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": [
+          "https://www.acm.org/publications/policies/copyright_policy#Background"
+        ],
+        "arxiv_license": null
+      },
+      "arxiv_version_id": null,
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:36:13Z",
+      "seed_anchor": false
+    },
+    {
+      "key": "metamorphic_survey_segura",
+      "topic": "metamorphic testing (survey)",
+      "query": "A survey on metamorphic testing",
+      "expected_first_author_surname": "Segura",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "crossref",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.1109/tse.2016.2532875",
+        "doi_all": [
+          "10.1109/tse.2016.2532875"
+        ],
+        "arxiv": null,
+        "openalex": "https://openalex.org/W2324595780",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": "2324595780"
+      },
+      "title": "A Survey on Metamorphic Testing",
+      "title_by_source": {
+        "openalex": "A Survey on Metamorphic Testing",
+        "crossref": "A Survey on Metamorphic Testing"
+      },
+      "year_by_source": {
+        "openalex": 2016,
+        "crossref": 2016
+      },
+      "venue_by_source": {
+        "openalex": "IEEE Transactions on Software Engineering",
+        "crossref": "IEEE Transactions on Software Engineering"
+      },
+      "crossref_type": "journal-article",
+      "authors_first8": [
+        "Sergio Segura",
+        "Gordon Fraser",
+        "Ana B. Sánchez",
+        "Antonio Ruiz–Cortés"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5057070358",
+        "https://openalex.org/A5079261847",
+        "https://openalex.org/A5006570510",
+        "https://openalex.org/A5072611940"
+      ],
+      "citations_by_source": {
+        "openalex": 568,
+        "crossref": 511
+      },
+      "open_access": {
+        "openalex_is_oa": true,
+        "openalex_oa_status": "green",
+        "openalex_license": "cc-by-nc-nd",
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": [
+          "https://ieeexplore.ieee.org/Xplorehelp/downloads/license-information/IEEE.html"
+        ],
+        "arxiv_license": null
+      },
+      "arxiv_version_id": null,
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:36:17Z",
+      "seed_anchor": false
+    },
+    {
+      "key": "factsheets",
+      "topic": "model reporting (supplier declarations)",
+      "query": "FactSheets increasing trust in AI services through supplier's declarations of conformity",
+      "expected_first_author_surname": "Arnold",
+      "contract_seed_ids": {},
+      "contract_claim": null,
+      "status": "VERIFIED",
+      "sources_matched": [
+        "crossref",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.1147/jrd.2019.2942288",
+        "doi_all": [
+          "10.1147/jrd.2019.2942288"
+        ],
+        "arxiv": "1808.07261",
+        "openalex": "https://openalex.org/W2911599914",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": "2911599914"
+      },
+      "title": "FactSheets: Increasing trust in AI services through supplier's declarations of conformity",
+      "title_by_source": {
+        "openalex": "FactSheets: Increasing trust in AI services through supplier's declarations of conformity",
+        "crossref": "FactSheets: Increasing trust in AI services through supplier's declarations of conformity"
+      },
+      "year_by_source": {
+        "openalex": 2019,
+        "crossref": 2019
+      },
+      "venue_by_source": {
+        "openalex": "IBM Journal of Research and Development",
+        "crossref": "IBM Journal of Research and Development"
+      },
+      "crossref_type": "journal-article",
+      "authors_first8": [
+        "Matthew G. Arnold",
+        "Rachel Bellamy",
+        "Michael Hind",
+        "Stephanie Houde",
+        "Sameep Mehta",
+        "Aleksandra Mojsilović",
+        "Ravi Nair",
+        "Karthikeyan Natesan Ramamurthy"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5017107088",
+        "https://openalex.org/A5054098149",
+        "https://openalex.org/A5048793009",
+        "https://openalex.org/A5074805097",
+        "https://openalex.org/A5046646390",
+        "https://openalex.org/A5072597892",
+        "https://openalex.org/A5073916432",
+        "https://openalex.org/A5081874896"
+      ],
+      "citations_by_source": {
+        "openalex": 436,
+        "crossref": 307
+      },
+      "open_access": {
+        "openalex_is_oa": true,
+        "openalex_oa_status": "green",
+        "openalex_license": null,
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": [],
+        "arxiv_license": null
+      },
+      "arxiv_version_id": null,
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:36:21Z",
+      "seed_anchor": false
+    },
+    {
+      "key": "synth_syntheval",
+      "topic": "synthetic tabular data evaluation (utility + privacy framework)",
+      "query": "SynthEval: A Framework for Detailed Utility and Privacy Evaluation of Tabular Synthetic Data",
+      "expected_first_author_surname": "Lautrup",
+      "contract_seed_ids": {},
+      "contract_claim": "selected from API results in literature/synthetic_eval_candidates.json (--discover run 2026-09-27)",
+      "status": "VERIFIED",
+      "sources_matched": [
+        "arxiv",
+        "crossref",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.1007/s10618-024-01081-4",
+        "doi_all": [
+          "10.1007/s10618-024-01081-4"
+        ],
+        "arxiv": "2404.15821",
+        "openalex": "https://openalex.org/W4404959202",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": null
+      },
+      "title": "Syntheval: a framework for detailed utility and privacy evaluation of tabular synthetic data",
+      "title_by_source": {
+        "openalex": "Syntheval: a framework for detailed utility and privacy evaluation of tabular synthetic data",
+        "crossref": "Syntheval: a framework for detailed utility and privacy evaluation of tabular synthetic data",
+        "arxiv": "SynthEval: A Framework for Detailed Utility and Privacy Evaluation of Tabular Synthetic Data"
+      },
+      "year_by_source": {
+        "openalex": 2024,
+        "crossref": 2025,
+        "arxiv": 2024
+      },
+      "venue_by_source": {
+        "openalex": "Data Mining and Knowledge Discovery",
+        "crossref": "Data Mining and Knowledge Discovery",
+        "arxiv": "arXiv"
+      },
+      "crossref_type": "journal-article",
+      "authors_first8": [
+        "Anton D. Lautrup",
+        "Tobias Hyrup",
+        "Arthur Zimek",
+        "Peter Schneider–Kamp"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5093229388",
+        "https://openalex.org/A5093229389",
+        "https://openalex.org/A5047196019",
+        "https://openalex.org/A5058200123"
+      ],
+      "citations_by_source": {
+        "openalex": 40,
+        "crossref": 45
+      },
+      "open_access": {
+        "openalex_is_oa": true,
+        "openalex_oa_status": "green",
+        "openalex_license": "other-oa",
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": [
+          "https://www.springernature.com/gp/researchers/text-and-data-mining",
+          "https://www.springernature.com/gp/researchers/text-and-data-mining"
+        ],
+        "arxiv_license": null
+      },
+      "arxiv_version_id": "2404.15821v1",
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:36:25Z",
+      "seed_anchor": false
+    },
+    {
+      "key": "synth_holdout_assessment",
+      "topic": "synthetic tabular data evaluation (holdout-based fidelity/privacy)",
+      "query": "Holdout-Based Empirical Assessment of Mixed-Type Synthetic Data",
+      "expected_first_author_surname": "Platzer",
+      "contract_seed_ids": {},
+      "contract_claim": "selected from API results in literature/synthetic_eval_candidates.json (--discover run 2026-09-27)",
+      "status": "VERIFIED",
+      "sources_matched": [
+        "crossref",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.3389/fdata.2021.679939",
+        "doi_all": [
+          "10.3389/fdata.2021.679939"
+        ],
+        "arxiv": null,
+        "openalex": "https://openalex.org/W3175134484",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": "3175134484"
+      },
+      "title": "Holdout-Based Empirical Assessment of Mixed-Type Synthetic Data",
+      "title_by_source": {
+        "openalex": "Holdout-Based Empirical Assessment of Mixed-Type Synthetic Data",
+        "crossref": "Holdout-Based Empirical Assessment of Mixed-Type Synthetic Data"
+      },
+      "year_by_source": {
+        "openalex": 2021,
+        "crossref": 2021
+      },
+      "venue_by_source": {
+        "openalex": "Frontiers in Big Data",
+        "crossref": "Frontiers in Big Data"
+      },
+      "crossref_type": "journal-article",
+      "authors_first8": [
+        "Michael Platzer",
+        "Thomas Reutterer"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5086683790",
+        "https://openalex.org/A5086992083"
+      ],
+      "citations_by_source": {
+        "openalex": 47,
+        "crossref": 46
+      },
+      "open_access": {
+        "openalex_is_oa": true,
+        "openalex_oa_status": "gold",
+        "openalex_license": "cc-by",
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": [
+          "https://creativecommons.org/licenses/by/4.0/"
+        ],
+        "arxiv_license": null
+      },
+      "arxiv_version_id": null,
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:36:28Z",
+      "seed_anchor": false
+    },
+    {
+      "key": "synth_structured_eval",
+      "topic": "synthetic tabular data evaluation (structured metric framework)",
+      "query": "Structured Evaluation of Synthetic Tabular Data",
+      "expected_first_author_surname": "Yang",
+      "contract_seed_ids": {},
+      "contract_claim": "selected from API results in literature/synthetic_eval_candidates.json (--discover run 2026-09-27)",
+      "status": "VERIFIED",
+      "sources_matched": [
+        "arxiv",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.48550/arxiv.2403.10424",
+        "doi_all": [
+          "10.48550/arxiv.2403.10424"
+        ],
+        "arxiv": "2403.10424",
+        "openalex": "https://openalex.org/W4392933229",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": null
+      },
+      "title": "Structured Evaluation of Synthetic Tabular Data",
+      "title_by_source": {
+        "openalex": "Structured Evaluation of Synthetic Tabular Data",
+        "arxiv": "Structured Evaluation of Synthetic Tabular Data"
+      },
+      "year_by_source": {
+        "openalex": 2024,
+        "arxiv": 2024
+      },
+      "venue_by_source": {
+        "openalex": "arXiv (Cornell University)",
+        "arxiv": "arXiv"
+      },
+      "crossref_type": null,
+      "authors_first8": [
+        "Scott Cheng‐Hsin Yang",
+        "Baxter Eaves",
+        "Schmidt, Michael",
+        "Ken Swanson",
+        "Patrick Shafto"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5065866283",
+        "https://openalex.org/A5020328989",
+        null,
+        "https://openalex.org/A5094186775",
+        "https://openalex.org/A5015419380"
+      ],
+      "citations_by_source": {
+        "openalex": 3
+      },
+      "open_access": {
+        "openalex_is_oa": true,
+        "openalex_oa_status": "green",
+        "openalex_license": "cc-by",
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": null,
+        "arxiv_license": null
+      },
+      "arxiv_version_id": "2403.10424v2",
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:36:32Z",
+      "seed_anchor": false
+    },
+    {
+      "key": "synth_privacy_risk",
+      "topic": "synthetic data evaluation (privacy risk)",
+      "query": "A Unified Framework for Quantifying Privacy Risk in Synthetic Data",
+      "expected_first_author_surname": "Giomi",
+      "contract_seed_ids": {},
+      "contract_claim": "selected from API results in literature/synthetic_eval_candidates.json (--discover run 2026-09-27)",
+      "status": "VERIFIED",
+      "sources_matched": [
+        "arxiv",
+        "crossref",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.56553/popets-2023-0055",
+        "doi_all": [
+          "10.56553/popets-2023-0055"
+        ],
+        "arxiv": "2211.10459",
+        "openalex": "https://openalex.org/W4323349011",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": null
+      },
+      "title": "A Unified Framework for Quantifying Privacy Risk in Synthetic Data",
+      "title_by_source": {
+        "openalex": "A Unified Framework for Quantifying Privacy Risk in Synthetic Data",
+        "crossref": "A Unified Framework for Quantifying Privacy Risk in Synthetic Data",
+        "arxiv": "A Unified Framework for Quantifying Privacy Risk in Synthetic Data"
+      },
+      "year_by_source": {
+        "openalex": 2023,
+        "crossref": 2023,
+        "arxiv": 2022
+      },
+      "venue_by_source": {
+        "openalex": "Proceedings on Privacy Enhancing Technologies",
+        "crossref": "Proceedings on Privacy Enhancing Technologies",
+        "arxiv": "arXiv"
+      },
+      "crossref_type": "journal-article",
+      "authors_first8": [
+        "M. Giomi",
+        "Franziska Boenisch",
+        "Christoph Wehmeyer",
+        "Borbála Tasnádi"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5086017246",
+        "https://openalex.org/A5039583147",
+        "https://openalex.org/A5012092373",
+        "https://openalex.org/A5022338608"
+      ],
+      "citations_by_source": {
+        "openalex": 84,
+        "crossref": 81
+      },
+      "open_access": {
+        "openalex_is_oa": true,
+        "openalex_oa_status": "hybrid",
+        "openalex_license": "cc-by",
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": [
+          "https://creativecommons.org/licenses/by/4.0/"
+        ],
+        "arxiv_license": null
+      },
+      "arxiv_version_id": "2211.10459v1",
+      "code_links_stated_in_arxiv": [
+        "https://github.com/statice/anonymeter"
+      ],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:36:36Z",
+      "seed_anchor": false
+    },
+    {
+      "key": "synth_datacentric_benchmark",
+      "topic": "synthetic tabular data evaluation (benchmark)",
+      "query": "Reimagining Synthetic Tabular Data Generation through Data-Centric AI: A Comprehensive Benchmark",
+      "expected_first_author_surname": "Hansen",
+      "contract_seed_ids": {},
+      "contract_claim": "selected from API results in literature/synthetic_eval_candidates.json (--discover run 2026-09-27)",
+      "status": "VERIFIED",
+      "sources_matched": [
+        "arxiv",
+        "crossref",
+        "openalex"
+      ],
+      "ids": {
+        "doi": "10.52202/075280-1466",
+        "doi_all": [
+          "10.52202/075280-1466"
+        ],
+        "arxiv": "2310.16981",
+        "openalex": "https://openalex.org/W7133243500",
+        "s2": null,
+        "s2_corpus": null,
+        "mag": null
+      },
+      "title": "Reimagining Synthetic Tabular Data Generation through Data-Centric AI: A Comprehensive Benchmark",
+      "title_by_source": {
+        "openalex": "Reimagining Synthetic Tabular Data Generation through Data-Centric AI: A Comprehensive Benchmark",
+        "crossref": "Reimagining Synthetic Tabular Data Generation through Data-Centric AI: A Comprehensive Benchmark",
+        "arxiv": "Reimagining Synthetic Tabular Data Generation through Data-Centric AI: A Comprehensive Benchmark"
+      },
+      "year_by_source": {
+        "openalex": 2023,
+        "crossref": 2023,
+        "arxiv": 2023
+      },
+      "venue_by_source": {
+        "openalex": null,
+        "crossref": "Advances in Neural Information Processing Systems 36",
+        "arxiv": "arXiv"
+      },
+      "crossref_type": "proceedings-article",
+      "authors_first8": [
+        "Lasse Hansen",
+        "Nabeel Seedat",
+        "Mihaela Van Der Schaar",
+        "Andrija Petrovic"
+      ],
+      "authors_source": "openalex",
+      "openalex_author_ids_first8": [
+        "https://openalex.org/A5127821191",
+        "https://openalex.org/A5067213867",
+        "https://openalex.org/A5127834912",
+        "https://openalex.org/A5127799447"
+      ],
+      "citations_by_source": {
+        "openalex": 5,
+        "crossref": 6
+      },
+      "open_access": {
+        "openalex_is_oa": false,
+        "openalex_oa_status": "closed",
+        "openalex_license": null,
+        "s2_is_oa": null,
+        "s2_license": null,
+        "crossref_license_urls": [],
+        "arxiv_license": null
+      },
+      "arxiv_version_id": "2310.16981v1",
+      "code_links_stated_in_arxiv": [],
+      "notes": [],
+      "resolved_utc": "2026-09-29T10:36:40Z",
+      "seed_anchor": false
+    }
+  ],
+  "dropped": [
+    {
+      "key": "platt_scaling",
+      "topic": "calibration (Platt scaling)",
+      "query": "Probabilistic outputs for support vector machines and comparisons to regularized likelihood methods",
+      "status": "UNRESOLVED",
+      "sources_matched": [
+        "s2"
+      ],
+      "notes": [
+        "matching record found in 1 source(s): ['s2']"
+      ],
+      "resolved_utc": "2026-09-29T10:38:09Z"
+    },
+    {
+      "key": "selective_foundations_elyaniv",
+      "topic": "selective classification (theory)",
+      "query": "On the foundations of noise-free selective classification",
+      "status": "UNRESOLVED",
+      "sources_matched": [],
+      "notes": [
+        "matching record found in 0 source(s): []"
+      ],
+      "resolved_utc": "2026-09-29T10:38:22Z"
+    }
+  ]
+}

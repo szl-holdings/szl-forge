@@ -1,0 +1,301 @@
+{
+  "generated_utc": "2026-09-29T16:08:33Z",
+  "source": {
+    "kind": "arXiv preprint (primary open source)",
+    "arxiv_id": "2308.07832",
+    "version": "v2",
+    "versions_listed_on_abs_page": [
+      "v1",
+      "v2"
+    ],
+    "abs_url": "https://arxiv.org/abs/2308.07832",
+    "versioned_url": "https://arxiv.org/abs/2308.07832v2",
+    "eprint_url_fetched": "https://arxiv.org/e-print/2308.07832",
+    "versioned_eprint_check": {
+      "url": "https://arxiv.org/e-print/2308.07832v2",
+      "fetched_utc": "2026-09-29 (C-verify)",
+      "file": "logs/C/verify/raw/reforms_eprint_2308.07832v2.bin",
+      "sha256": "867ffdd49094b8c52abeec79823110634895d76f2bf2fa1da181819ba7ed40e2",
+      "note": "MEASURED: equal sha256 means the parsed e-print is exactly v2"
+    },
+    "copy_check": "logs/C/verify/reforms_check.json (scripts/verify_c_reforms.py): longest shared word run and trigram share per item vs the source item and the whole main.tex",
+    "eprint_sha256": "867ffdd49094b8c52abeec79823110634895d76f2bf2fa1da181819ba7ed40e2",
+    "main_tex_sha256": "6202c83e2b31588971093e8dcaa38ecdd6a8e83a2bbc19d20b8830bc9a04a0f0",
+    "fetch_log": "logs/C/reforms/fetch_info.json",
+    "location_in_source": "main.tex, checklist table (label table:checklist); module headings '\\section*{Module N: ...}'",
+    "license": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+    "license_note": "arXiv non-exclusive distribution license grants no reuse rights; items are therefore paraphrased, not quoted.",
+    "published_version": "Science Advances, doi 10.1126/sciadv.adk3452 (see literature/anchors.json key 'reforms'); whether its checklist wording equals arXiv v2 is UNKNOWN (not compared this session)."
+  },
+  "n_items": 32,
+  "modules": {
+    "1": "Study goals",
+    "2": "Computational reproducibility",
+    "3": "Data quality",
+    "4": "Data preprocessing",
+    "5": "Modeling",
+    "6": "Data leakage",
+    "7": "Metrics and uncertainty quantification",
+    "8": "Generalizability and limitations"
+  },
+  "items": [
+    {
+      "id": "1a",
+      "module_number": 1,
+      "module": "Study goals",
+      "paraphrase": "State the population or distribution the scientific claim is meant to generalize to.",
+      "paraphrase_words": 13,
+      "paraphrase_is_own_wording": true
+    },
+    {
+      "id": "1b",
+      "module_number": 1,
+      "module": "Study goals",
+      "paraphrase": "Explain why that particular population or distribution was chosen.",
+      "paraphrase_words": 9,
+      "paraphrase_is_own_wording": true
+    },
+    {
+      "id": "1c",
+      "module_number": 1,
+      "module": "Study goals",
+      "paraphrase": "Explain why machine learning is an appropriate tool for the study's question.",
+      "paraphrase_words": 12,
+      "paraphrase_is_own_wording": true
+    },
+    {
+      "id": "2a",
+      "module_number": 2,
+      "module": "Computational reproducibility",
+      "paraphrase": "Share the training and evaluation data with a persistent link or identifier pinning the exact dataset.",
+      "paraphrase_words": 16,
+      "paraphrase_is_own_wording": true
+    },
+    {
+      "id": "2b",
+      "module_number": 2,
+      "module": "Computational reproducibility",
+      "paraphrase": "Share training, evaluation and results code with a link or identifier fixing the exact code version.",
+      "paraphrase_words": 16,
+      "paraphrase_is_own_wording": true
+    },
+    {
+      "id": "2c",
+      "module_number": 2,
+      "module": "Computational reproducibility",
+      "paraphrase": "Describe the hardware and software environment the computations ran on.",
+      "paraphrase_words": 10,
+      "paraphrase_is_own_wording": true
+    },
+    {
+      "id": "2d",
+      "module_number": 2,
+      "module": "Computational reproducibility",
+      "paraphrase": "Provide a README explaining how to regenerate the reported results from the shared data and code.",
+      "paraphrase_words": 16,
+      "paraphrase_is_own_wording": true
+    },
+    {
+      "id": "2e",
+      "module_number": 2,
+      "module": "Computational reproducibility",
+      "paraphrase": "Provide one script that regenerates every reported result end to end.",
+      "paraphrase_words": 11,
+      "paraphrase_is_own_wording": true
+    },
+    {
+      "id": "3a",
+      "module_number": 3,
+      "module": "Data quality",
+      "paraphrase": "Document where training and evaluation data came from, when collected, and how ground-truth labels were produced.",
+      "paraphrase_words": 16,
+      "paraphrase_is_own_wording": true
+    },
+    {
+      "id": "3b",
+      "module_number": 3,
+      "module": "Data quality",
+      "paraphrase": "Describe the sampling frame, i.e. the distribution or set the dataset was drawn from.",
+      "paraphrase_words": 14,
+      "paraphrase_is_own_wording": true
+    },
+    {
+      "id": "3c",
+      "module_number": 3,
+      "module": "Data quality",
+      "paraphrase": "Argue concretely why this dataset suits the modeling task.",
+      "paraphrase_words": 9,
+      "paraphrase_is_own_wording": true
+    },
+    {
+      "id": "3d",
+      "module_number": 3,
+      "module": "Data quality",
+      "paraphrase": "Define the target the model predicts and summarise it statistically, per class if the target is categorical.",
+      "paraphrase_words": 17,
+      "paraphrase_is_own_wording": true
+    },
+    {
+      "id": "3e",
+      "module_number": 3,
+      "module": "Data quality",
+      "paraphrase": "Report the sample size and how often each outcome occurs.",
+      "paraphrase_words": 10,
+      "paraphrase_is_own_wording": true
+    },
+    {
+      "id": "3f",
+      "module_number": 3,
+      "module": "Data quality",
+      "paraphrase": "Report the share of missing values, split by class for categorical outcomes.",
+      "paraphrase_words": 12,
+      "paraphrase_is_own_wording": true
+    },
+    {
+      "id": "3g",
+      "module_number": 3,
+      "module": "Data quality",
+      "paraphrase": "Argue that the sampling frame represents the population targeted by the claim.",
+      "paraphrase_words": 12,
+      "paraphrase_is_own_wording": true
+    },
+    {
+      "id": "4a",
+      "module_number": 4,
+      "module": "Data preprocessing",
+      "paraphrase": "State whether any samples were excluded and give the reason.",
+      "paraphrase_words": 10,
+      "paraphrase_is_own_wording": true
+    },
+    {
+      "id": "4b",
+      "module_number": 4,
+      "module": "Data preprocessing",
+      "paraphrase": "Explain how impossible or corrupted samples were handled.",
+      "paraphrase_words": 8,
+      "paraphrase_is_own_wording": true
+    },
+    {
+      "id": "4c",
+      "module_number": 4,
+      "module": "Data preprocessing",
+      "paraphrase": "List every transformation from raw data to model input, such as missing-value handling and scaling, ideally diagrammed.",
+      "paraphrase_words": 17,
+      "paraphrase_is_own_wording": true
+    },
+    {
+      "id": "5a",
+      "module_number": 5,
+      "module": "Modeling",
+      "paraphrase": "Describe every trained model in detail.",
+      "paraphrase_words": 6,
+      "paraphrase_is_own_wording": true
+    },
+    {
+      "id": "5b",
+      "module_number": 5,
+      "module": "Modeling",
+      "paraphrase": "Justify the chosen model families.",
+      "paraphrase_words": 5,
+      "paraphrase_is_own_wording": true
+    },
+    {
+      "id": "5c",
+      "module_number": 5,
+      "module": "Modeling",
+      "paraphrase": "Explain the evaluation procedure, e.g. how data were partitioned for training versus testing or how folds were formed.",
+      "paraphrase_words": 18,
+      "paraphrase_is_own_wording": true
+    },
+    {
+      "id": "5d",
+      "module_number": 5,
+      "module": "Modeling",
+      "paraphrase": "Describe how the reported model or models were selected among candidates.",
+      "paraphrase_words": 11,
+      "paraphrase_is_own_wording": true
+    },
+    {
+      "id": "5e",
+      "module_number": 5,
+      "module": "Modeling",
+      "paraphrase": "Give hyperparameter tuning details for the reported model or models.",
+      "paraphrase_words": 10,
+      "paraphrase_is_own_wording": true
+    },
+    {
+      "id": "5f",
+      "module_number": 5,
+      "module": "Modeling",
+      "paraphrase": "Justify that the baselines used for comparison are appropriate.",
+      "paraphrase_words": 9,
+      "paraphrase_is_own_wording": true
+    },
+    {
+      "id": "6a",
+      "module_number": 6,
+      "module": "Data leakage",
+      "paraphrase": "Show that preprocessing and modeling used only training data, never test data.",
+      "paraphrase_words": 12,
+      "paraphrase_is_own_wording": true
+    },
+    {
+      "id": "6b",
+      "module_number": 6,
+      "module": "Data leakage",
+      "paraphrase": "Explain how dependencies or duplicates across train and test partitions were handled, e.g. grouping related samples together.",
+      "paraphrase_words": 17,
+      "paraphrase_is_own_wording": true
+    },
+    {
+      "id": "6c",
+      "module_number": 6,
+      "module": "Data leakage",
+      "paraphrase": "Argue why every input used by the model is legitimately available and cannot reveal the label.",
+      "paraphrase_words": 16,
+      "paraphrase_is_own_wording": true
+    },
+    {
+      "id": "7a",
+      "module_number": 7,
+      "module": "Metrics and uncertainty quantification",
+      "paraphrase": "Report every performance metric and justify the one used to pick the final model.",
+      "paraphrase_words": 14,
+      "paraphrase_is_own_wording": true
+    },
+    {
+      "id": "7b",
+      "module_number": 7,
+      "module": "Metrics and uncertainty quantification",
+      "paraphrase": "Report uncertainty estimates such as confidence intervals and explain how they were computed.",
+      "paraphrase_words": 13,
+      "paraphrase_is_own_wording": true
+    },
+    {
+      "id": "7c",
+      "module_number": 7,
+      "module": "Metrics and uncertainty quantification",
+      "paraphrase": "Justify any statistical tests used and check that their assumptions hold.",
+      "paraphrase_words": 11,
+      "paraphrase_is_own_wording": true
+    },
+    {
+      "id": "8a",
+      "module_number": 8,
+      "module": "Generalizability and limitations",
+      "paraphrase": "Provide evidence that the results hold beyond the study data (external validity).",
+      "paraphrase_words": 12,
+      "paraphrase_is_own_wording": true
+    },
+    {
+      "id": "8b",
+      "module_number": 8,
+      "module": "Generalizability and limitations",
+      "paraphrase": "State the settings in which the findings are not expected to hold.",
+      "paraphrase_words": 12,
+      "paraphrase_is_own_wording": true
+    }
+  ],
+  "problems": [],
+  "truth_label": "MEASURED (ids/modules parsed from the fetched e-print this session); paraphrases are our own wording"
+}

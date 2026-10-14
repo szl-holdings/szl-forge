@@ -1,0 +1,204 @@
+# v3-prereg-review-b evidence: command outputs (MEASURED, read-only greps), 2026-10-13
+# Reviewed commit: 63a5f0d7eda553cab0e877eede4289428e5d85e6
+
+## 1. v2 protocol files unchanged (expected 14549778...ef4b / 5152cd7f...181d)
+145497789c7ad78a80a94cfd7f2b031ca9a20df49c06e0b3412af9070fa1ef4b *v2/PREREGISTRATION.md
+5152cd7f816c41e810861bbcd6489dee1d2598da89a36f6b418ef4a9867f181d *v2/AMENDMENTS.md
+git diff 63a5f0d~1..63a5f0d -- v2/ : []
+
+## 2. Line endings (CR bytes) and commit trailer
+v3/PREREGISTRATION.DRAFT.md CR=0
+v3/DESIGN_RATIONALE.md CR=0
+progress/v3-prereg-draft.md CR=0
+
+
+## 3. Banned-word / off-limits scan of v3 files (no hits expected except substrings)
+v3/PREREGISTRATION.DRAFT.md:615:## 14. Public provenance plan (described here; no remote action is taken by this draft)
+v3/DESIGN_RATIONALE.md:301:### D7. Origin binding, public provenance and the seal
+
+## 4. Eponym scan (method names)
+     15 Brier
+     10 Mondrian
+      5 Platt
+
+## 5. Draft status block
+# OAC Ops Health v3: Preregistration (DRAFT)
+
+<!-- status:begin -->
+Status: **DRAFT. NOT registered.** This file binds nothing yet. It may change, and every change
+is a commit. Registration happens only after Stephen's explicit green light, by one commit that
+renames this file to `v3/PREREGISTRATION.md` and changes nothing except the lines between the
+`status:begin` and `status:end` markers. At registration those lines will record: the
+registration date, the commit of the last draft, the sealed-salt commitment `sha256(SALT)`
+(section 3.4), and the public commit that holds the same bytes (section 14). Any other byte
+difference between the last draft and the registered file is a defect that blocks registration.
+<!-- status:end -->
+DESIGN_RATIONALE.md lines 1-6:
+# OAC Ops Health v3: design rationale
+
+This file explains each choice in `v3/PREREGISTRATION.DRAFT.md`: why it was made, which v2
+evidence it answers, and which literature anchor supports it. It also says what v3 does not
+attempt. It holds **no v3 result**: no v3 code, data or fit exists. Every number about v3 is a
+prediction or an approximation, labeled MODELED or CONJECTURE. Everything is SYNTHETIC.
+
+## 6. 'every contender degrades' claims in v3 vs the cited evidence
+v3/PREREGISTRATION.DRAFT.md:727:  and class-0 coverage 0.2994, and every contender degrades (MEASURED:
+v3/DESIGN_RATIONALE.md:38:| Queue saturation degrades every contender (MEASURED, `REPORT.md` §6.3) | the nominal-chosen threshold is misplaced under a large covariate and prevalence shift | measured again; not attempted | §5 |
+v3/DESIGN_RATIONALE.md:579:  - Every contender degrades there; v2 has BA 0.5928 and class-0 coverage 0.2994 (MEASURED:
+-- v2/results/FINAL_RESULTS.md rule and majority rows:
+68:| rule | 0.5317 [0.5262, 0.5370] | 0.5439 [0.5392, 0.5483] |
+129:| test | majority | 0.5000 | INVALID_BASELINE (i_receipt_verifies, iii_decisions_not_constant, iv_refused_all_probes) | – | – | – | – | – |
+130:| test | rule | 0.5317 | INVALID_BASELINE (i_receipt_verifies, iv_refused_all_probes) | – | – | – | – | – |
+141:| shift_queue_saturation | majority | 0.5000 | INVALID_BASELINE (i_receipt_verifies, iii_decisions_not_constant, iv_refused_all_probes) | – | – | – | – | – |
+142:| shift_queue_saturation | rule | 0.5373 | INVALID_BASELINE (i_receipt_verifies, iv_refused_all_probes) | – | – | – | – | – |
+153:| shift_clock_skew | majority | 0.5000 | INVALID_BASELINE (i_receipt_verifies, iii_decisions_not_constant, iv_refused_all_probes) | – | – | – | – | – |
+154:| shift_clock_skew | rule | 0.5336 | INVALID_BASELINE (i_receipt_verifies, iv_refused_all_probes) | – | – | – | – | – |
+177:| rule | False | 3/66 | missing_field, extra_field, nan_continuous, inf_continuous, neg_inf_continuous, nan_binary … |
+-- REPORT.md 6.3 line 500:
+**The weakest cells.** Queue saturation is the worst regime for v2, v1, ABL-data (0.5842) and ABL-optimizer (0.5693). The rule's worst regime is clock skew (0.5336). Majority is constant at 0.5000. On the listener_running = 0 subgroup, both models make a constant decision. [MEASURED: same; worst-regime check in `logs/report-fix/checks_20261006.txt` §5]
+-- REPORT.md 7.2 caveat 18:
+18. **OPEN, added by the final-verdict fix: one headline sentence on the live v2 card is inaccurate.**
+    - Line 113 of the live card at `832b27f6` (sha256 `d17943a3…667a`, re-fetched anonymously at 21:10Z) says: "Queue saturation degrades every contender." [MEASURED: `logs/final-verdict-fix/remeasure_20261013.txt` §F2]
+    - The measured values contradict it for two of the four contenders that the paragraph goes on to list. [MEASURED, SYNTHETIC: `v2/results/FINAL_RESULTS.md` lines 67-68 and 139-154; §6.3]
+      - Majority is 0.5000 in every regime.
+      - The rule's BA is 0.5317 on nominal test and 0.5373 under queue saturation. Its worst regime is clock skew (0.5336).
+      - Queue saturation is the worst regime for v2 (0.5928) and v1 (0.5311).
+    - The rest of that paragraph gives the right figures: v2 0.5928, v1 0.5311, rule 0.5373 and majority 0.5000. [MEASURED: `logs/final-verdict-fix/remeasure_20261013.txt` §F2]
+
+## 7. Kernel-contract terms in v3 files
+-- stdlib: 0 in prereg, 0 in rationale
+-- standard library: 1 in prereg, 0 in rationale
+-- duplicate: 0 in prereg, 0 in rationale
+-- authority: 0 in prereg, 0 in rationale
+-- prohibited: 1 in prereg, 0 in rationale
+-- exact eight: 0 in prereg, 0 in rationale
+-- byte-identical model: 0 in prereg, 0 in rationale
+-- determinis: 1 in prereg, 0 in rationale
+-- ABSTAIN: 3 in prereg, 1 in rationale
+186:fit by IRLS in the Python standard library with deterministic operation order. Convergence and
+499:  - `g_failclosed`, on v2's 66-probe suite plus probes for v3's transform table;
+552:- prohibited-key screening removed;
+555:- transform-table check bypassed: the kernel ignores the artifact's declared seconds scale.
+-- CONTRACT.md requirements:
+The v2 inference kernel must stay dependency-free (standard library only). torch is allowed only in
+offline research scripts, never in the shipped kernel.
+- Fresh folder name: ops-health/. No "[REDACTED]" anywhere in paths, names, or cards.
+- Keep the exact eight input fields and the fail-closed behavior. Add probes as tests.
+- Keep the all-false authority map. Add an ABSTAIN outcome.
+- Pin the source commit SHA inside artifact_receipt.json.
+- Tests: `python -m unittest discover -s v2/tests` must cover fail-closed probes, receipt mismatch,
+  the broken baseline, the mutation suite, metric recomputation, and determinism (same seed gives
+  byte-identical model.json).
+-- v2 probe suite is dict payloads; duplicate-key refusal and authority map are checked in tests:
+Fail-closed probes: CONTRACT section 2.6 classes (missing field, extra field, NaN, +/-inf,
+out-of-range, text instead of number, and prohibited field names) plus v2 variants (case,
+hyphen, space, token and substring variants; a prohibited name replacing a field; nested and
+wrapper-level prohibited names; unwrapped or malformed payloads).  Field names are used with
+dummy numeric values only.
+v2/tests/test_failclosed_probes.py
+v2/tests/test_receipt.py
+v2/tests/test_review_hardening.py
+28:    def test_valid_input_is_accepted_with_all_false_authority(self):
+157:            self.assertTrue(all(v is False for v in result["authority"].values()))
+
+## 8. k1-k3 weight label in the source
+264:MEASURED; weights REPORTED from each model.json.
+v3/PREREGISTRATION.DRAFT.md:248:  `v2/PREREGISTRATION.md` §2). Three of five known-good retrains have a negative weight
+v3/PREREGISTRATION.DRAFT.md:748:| A9 | Known-good k1–k3 seconds weights −0.003455, −0.009359, −0.013441; each fails g_truth_sign and g_monotone (3,200 of 19,600 checks, all raise:seconds) | MEASURED | `v2/results/MUTATION_READINESS.md` |
+v3/DESIGN_RATIONALE.md:106:- k1 to k3 have negative weights (MEASURED: same file).
+
+## 9. Origin binding text and merge practice
+4. **Origin binding (v3 `verify_origin`).** For a receipt naming commit C, all of these must hold:
+   - (a) C is reachable from a public `oac-v3-*` tag.
+   - (b) At C, the kernel, generator, manifest, preregistration and amendments blobs match the
+     receipt's digests (v2's rule).
+   - (c) At C, the trace that the receipt binds (the fit trace, or a retrain's trace) and the
+     receipts directory match the receipt's digests.
+   - (d) At C's first parent, that trace is absent or different.
+
+   (c) and (d) together make C the unique commit that introduced the trace. Re-pointing to a
+   parent or to a descendant therefore fails. That is the v2 blind spot `R-source-commit-other`
+   (MEASURED: `v2/results/MUTATION_READINESS.md`).
+5. **Publicly verifiable origin, unlike v2.** A fresh clone of the public tag must run every
+   origin test with 0 skipped. A skip counts as a failure, not as UNAVAILABLE. For contrast, v2
+   skips 7 origin tests in szl-forge (MEASURED: `REPORT.md` §7.2 caveat 1).
+6. **Merge safety.** Tags keep the receipt commits reachable even if a later squash merge leaves
+   the branch history out of `main`. The branch is not deleted while a tag depends on it. Tag
+   protection for `oac-v3-*` is a repository setting, and Stephen decides on it.
+33:the merge is a squash
+
+## 10. Public layout vs v3 citations
+5. **v2 layout in szl-forge.** `ops-health/` mirrors the research root:
+   - `ops-health/v2/**`, `ops-health/runs/**`, `ops-health/math/*`, and the cited `ops-health/logs/**`;
+   - all hash-bound bytes land unchanged, because `registry.ROOT = parents[2]` (MEASURED: §5.0);
+ROOT git remotes: 0
+ROOT-only files cited by v3:
+v3/DESIGN_RATIONALE.md:18:`literature/anchors.json`
+v3/DESIGN_RATIONALE.md:19:`literature/evidence_matrix.md`
+v3/DESIGN_RATIONALE.md:24:`REPORT.md`
+v3/DESIGN_RATIONALE.md:26:`REPORT.md`
+v3/DESIGN_RATIONALE.md:312:`REPORT.md`
+v3/DESIGN_RATIONALE.md:318:`REPORT.md`
+v3/DESIGN_RATIONALE.md:38:`REPORT.md`
+v3/DESIGN_RATIONALE.md:39:`REPORT.md`
+v3/DESIGN_RATIONALE.md:536:`drafts/forum_thread.md`
+v3/PREREGISTRATION.DRAFT.md:488:`REPORT.md`
+v3/PREREGISTRATION.DRAFT.md:619:`COORDINATION.md`
+v3/PREREGISTRATION.DRAFT.md:648:`REPORT.md`
+v3/PREREGISTRATION.DRAFT.md:746:`REPORT.md`
+v3/PREREGISTRATION.DRAFT.md:757:`REPORT.md`
+8:registration date, the commit of the last draft, the sealed-salt commitment `sha256(SALT)`
+594:   the last draft commit; `sha256(SALT)`; the sha256 of v2's generator, kernel, model and receipt;
+620:   later). This repository keeps the drafting history. After registration, the public branch is
+
+## 11. Salt custody, ABANDONED, retrain non-convergence, DEV window
+v3/PREREGISTRATION.DRAFT.md:131:material template) with `sha256(SALT)`. The salt is generated at registration and held by
+v3/PREREGISTRATION.DRAFT.md:658:8. **Seal custody.** Stephen holds SALT from registration to the opening, outside every
+v3/PREREGISTRATION.DRAFT.md:659:   repository. If he declines, the research process generates and holds it. The commitment still
+v3/DESIGN_RATIONALE.md:61:  - The salt turns "the code refuses sealed files" into "the sealed rows do not exist yet". If
+v3/DESIGN_RATIONALE.md:62:    Stephen holds the salt, that holds against the research process itself.
+- **Reasoning (MODELED).**
+  - Fresh seeds remove test-set reuse.
+  - The salt turns "the code refuses sealed files" into "the sealed rows do not exist yet". If
+    Stephen holds the salt, that holds against the research process itself.
+- **Reasons that end the attempt without a verdict on the hypotheses:**
+  - **NO_ELIGIBLE_FIT:** the main fit does not converge (section 6.1).
+  - **SEAL_COMPROMISED:** SALT was disclosed before the opening, or a sealed split existed before
+    the opening run. The verdict cannot be WIN.
+  - **ABANDONED:** the protocol cannot be completed as registered, for example because the host
+    runs out of disk or memory. This is reported as "not run", never as evidence about H1–H4.
+- **H4 never makes v3 negative.**
+188:`LINE_SEARCH_FAILED` are non-converged, and a non-converged fit is not eligible (REPORTED:
+189:`v2/PREREGISTRATION.md` §6, `v2/AMENDMENTS.md` AM-2). If the main fit is not eligible, v3 does
+190:not exist, and the verdict is DOES_NOT_WIN with reason NO_ELIGIBLE_FIT.
+713:  - **NO_ELIGIBLE_FIT:** the main fit does not converge (section 6.1).
+3. **Items that no amendment may change after the first v3 data commit (step 3):**
+   - the question, the generator truth, and the sealed-split definitions, sizes, seeds and salt
+     commitment;
+   - the primary metric and the margins δ;
+   - the P and H criteria and the verdict rule;
+   - the gate definitions, c and the floors;
+   - the mutation classes.
+
+   Between registration and step 3, a change to one of these needs a written reason, and the
+   report must disclose it.
+2. **v3 code and tests on DEV data:** generator, guards, kernel v3, gates v3, mutation v3, and
+   bootstrap reuse. The parity and guard tests of section 3.3 pass.
+
+## 12. False-alarm statement
+v3/PREREGISTRATION.DRAFT.md:308:  The chance of at least one known-good false alarm is about 1–2% (normal approximation).
+v3/PREREGISTRATION.DRAFT.md:470:| ABL-G | v2's seven gates and absolute tolerances, on v3's fixtures and mutants | the gate set | H2 contrast (blind spots and false alarms, both ways) |
+v3/PREREGISTRATION.DRAFT.md:707:    separate these mutants from known-good retrains. The escaping mutants or false alarms are
+v3/DESIGN_RATIONALE.md:232:  fixtures, the chance of a false alarm would be about 10%, so H2's zero-misclassification
+v3/DESIGN_RATIONALE.md:241:    known-good retrains used to count false alarms.
+v3/DESIGN_RATIONALE.md:270:  exists. c = 4 fixes the false-alarm rate, about 6e-5 per statistic under a normal
+v3/DESIGN_RATIONALE.md:284:- **False alarms.** Each fixture has about 11 band statistics, so the false-alarm chance is about
+v3/DESIGN_RATIONALE.md:290:  freedom).** At the same false-alarm rate, its cut is about 29, against ρ² for a
+v3/DESIGN_RATIONALE.md:298:  arXiv:1909.10155, ADAPT), so such a gate would raise false alarms.
+v3/DESIGN_RATIONALE.md:564:| H2 | all 36 artifact, 6 receipt and 6 kernel mutants caught; 0 known-good false alarms | any escape or false alarm |
+
+## 13. Disk now
+C:              952G  941G   12G  99% /c
+
+## 2b. Commit trailer (re-read; tail -1 above printed the trailing blank line)
+27:Co-Authored-By: Claude Opus 5.5 <[REDACTED-EMAIL]>

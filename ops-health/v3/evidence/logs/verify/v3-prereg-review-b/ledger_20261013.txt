@@ -1,0 +1,79 @@
+# v3-prereg-review-b: check ledger for commit 63a5f0d (SYNTHETIC program; no v3 data exists)
+# Labels: MEASURED = read-only grep output in checks_20261013.txt; REPORTED = read from the named
+# file; MODELED = reviewer arithmetic or reasoning. No code was run, no data was opened, no fit,
+# no network write. v2 sealed data was not opened.
+
+## A. v2 facts re-checked against the cited files (REPORTED from each file)
+OK  A1-A6, A8, A10-A24 of the draft's Appendix A: every number equals its source.
+OK  Section 5 digests and quantiles (STAGE2_SEARCH.md); section 7 H3/H4 numbers (FINAL_RESULTS.md).
+OK  Rationale D2 trial span 0.756510-0.768680, T05 Brier 0.101172; D6 BA drops (all 10 rows);
+    D6 known-good BA SD 0.001280 and threshold SD 0.00707 (recomputed from the five values);
+    D8 half-widths 0.0080 / 0.0038; D9 BOTH band [0.0888, 0.2237]; D10 SE 0.00195, d ~ 0.11.
+FAIL prereg line 727, rationale lines 38 and 579: "every contender degrades" under queue
+    saturation, labeled MEASURED. FINAL_RESULTS.md rows 130/142: rule 0.5317 -> 0.5373 (rises);
+    rows 129/141: majority 0.5000 -> 0.5000. REPORT.md 6.3 (cited by rationale line 38) says the
+    rule's worst regime is clock skew. REPORT.md 7.2 caveat 18 records this sentence as inaccurate.
+FAIL label: k1-k3 seconds weight values labeled MEASURED (prereg H1 and A9; rationale D3 line 106);
+    the source says "(MEASURED; weights REPORTED from each model.json.)".
+WEAK label: rationale D13 "All six ... were clarifications (MEASURED: COMPLIANCE check C)": check C
+    measures commit order only; AM-2 adds an eligibility rule.
+WEAK provenance: rationale D10 "5.2 GB free (MEASURED: df in this drafting session)": no saved log
+    under logs/ (CONTRACT section 0 truth rule: save output under logs/). Now 12G free (MEASURED).
+
+## B. Generator-derived constants (REPORTED from v2/research/generator.py source, code only)
+OK  tls 0.90 -> var 0.09; queue Beta(1.25, 4.5) -> var 0.02520; failures weighted draw -> var/400
+    = 6.0278/400 = 0.01507; seconds Exp(mean 900) capped at 86400; skew U(0, 7200).
+
+## C. MODELED arithmetic re-derived (reviewer, by hand)
+OK  beta/SE 0.93 at 16,384; P(wrong sign) 0.18; P(>=3 of 5) 0.044; n for 20/20 signs ~149,000.
+OK  D-arm sigma ~22,170 s; beta 0.565; beta/SE ~32 at 32,768; shrinkage 1.1e-5/(1.1e-5+1e-3) ~1%.
+OK  rho table of D5 (3.8/5.4, 8.6/12.1, 5.0/7.1, 8.1/11.4, 0.33/0.47).
+OK  P1 power 1.00 / 0.96 / 0.88 / 0.60; P2 0.997.
+GAP false alarms: c = 4 is applied to an SD estimated from 20 band retrains (19 df). Student t with
+    19 df: two-sided critical values 3.883 (p = 0.001) and about 4.14 (p = 0.0005), so
+    P(|t19| > 4) is about 5e-4 to 1e-3, against 6.3e-5 under the normal approximation (8x-16x).
+    With ~11 statistics per fixture and 20 known-good fixtures, the chance of >= 1 known-good false
+    alarm is roughly 10-20% (independence approximation), not "about 1-2%" (prereg line 308).
+
+## D. Fail-closed kernel contract (CONTRACT.md lines 339-340, 353-359)
+MISSING in v3 text (MEASURED counts in checks section 7): stdlib-only kernel (0), duplicate-key
+    refusal (0), all-false authority map (0), exact eight input fields as a kernel rule (0),
+    determinism test "same seed gives byte-identical model.json" (0). Prohibited-key screening
+    appears only as a kernel-source mutant. g_failclosed's 66 probes are dict payloads (gates.py
+    docstring), so they cannot exercise duplicate keys and do not check the authority map; v2
+    checks those in v2/tests (MEASURED file list).
+NEW SURFACE: the v3 artifact declares an (offset, scale) table the kernel applies (prereg 6.2).
+    No rule says the kernel refuses a table other than the registered constants, and no
+    registered artifact mutant changes the declared scale. g_coef_band compares theta "on the
+    model's own feature scale", so a scale-only change with a consistent receipt leaves theta
+    unchanged and would pass it (MODELED).
+
+## E. Origin binding (prereg 14.4) under the lane's squash-merge practice
+GAP (MODELED): a squash-merge commit S of the branch into main, or a merge commit M, holds the
+    trace with identical bytes while its first parent (main) lacks it, so S or M satisfies (b), (c)
+    and (d); once any later oac-v3-* tag sits on a descendant of S or M, (a) holds too. COORDINATION.md
+    line 33 (REPORTED) says the lane merges by squash, and prereg 14.6 anticipates "a later squash
+    merge". "(c) and (d) together make C the unique commit" is therefore overstated, and the six
+    registered receipt mutants do not include this re-pointing.
+
+## F. Public home and citations
+GAP: v3 cites ROOT-only files (REPORT.md, COORDINATION.md, literature/*, drafts/forum_thread.md;
+    checks section 10). LANDING_PLAN.md line 66 lands ops-health/v2/**, runs/**, math/*, cited
+    logs/** only, and ROOT has 0 git remotes. The status block and receipt record "the commit of
+    the last draft", which would be a ROOT commit unless specified otherwise.
+
+## G. Other
+OK  banned words: 0 hits for "[REDACTED]", "proven", [REDACTED], [REDACTED], external parties.
+OK  eponyms are method names from v2's registered protocol (Brier 15, Mondrian 10, Platt 5);
+    the summary's "only personal-name match is Brier" omits Platt and Mondrian (nit).
+OK  status block: DRAFT, NOT registered; rationale header has no draft/unregistered status line (nit).
+OK  v2/PREREGISTRATION.md and v2/AMENDMENTS.md sha256 unchanged; commit touches no v2 path.
+OK  LF only (0 CR); commit trailer present; nothing in the draft requires an action now.
+GAP salt custody: who generates SALT is unstated (prereg 3.4, 14.8); rationale D1 claims the seal
+    holds "against the research process itself" if Stephen holds it.
+GAP negative path: ABANDONED is "never evidence about H1-H4" although H1 and H2 are committed before
+    the opening; no rule for a non-converged band or known-good retrain; no rule that a failed H1
+    or H2 still proceeds to the opening; the registered 100-stream FRAGILE check has no compute
+    budget although v2's 100-stream W1-only check hit MemoryError twice (FINAL_RESULTS.md corr. 5).
+GAP DEV window: between registration and step 3, P/H criteria, margins, c and floors may still change
+    "with a written reason" (prereg 15.3) while step 2 runs v3 code on DEV data.

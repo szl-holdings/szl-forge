@@ -1,0 +1,17 @@
+[
+ {"key": "synth_syntheval", "topic": "synthetic tabular data evaluation (utility + privacy framework)",
+  "q": "SynthEval: A Framework for Detailed Utility and Privacy Evaluation of Tabular Synthetic Data", "au": "Lautrup",
+  "claim": "selected from API results in literature/synthetic_eval_candidates.json (--discover run 2026-09-27)"},
+ {"key": "synth_holdout_assessment", "topic": "synthetic tabular data evaluation (holdout-based fidelity/privacy)",
+  "q": "Holdout-Based Empirical Assessment of Mixed-Type Synthetic Data", "au": "Platzer",
+  "claim": "selected from API results in literature/synthetic_eval_candidates.json (--discover run 2026-09-27)"},
+ {"key": "synth_structured_eval", "topic": "synthetic tabular data evaluation (structured metric framework)",
+  "q": "Structured Evaluation of Synthetic Tabular Data", "au": "Yang",
+  "claim": "selected from API results in literature/synthetic_eval_candidates.json (--discover run 2026-09-27)"},
+ {"key": "synth_privacy_risk", "topic": "synthetic data evaluation (privacy risk)",
+  "q": "A Unified Framework for Quantifying Privacy Risk in Synthetic Data", "au": "Giomi",
+  "claim": "selected from API results in literature/synthetic_eval_candidates.json (--discover run 2026-09-27)"},
+ {"key": "synth_datacentric_benchmark", "topic": "synthetic tabular data evaluation (benchmark)",
+  "q": "Reimagining Synthetic Tabular Data Generation through Data-Centric AI: A Comprehensive Benchmark", "au": "Hansen",
+  "claim": "selected from API results in literature/synthetic_eval_candidates.json (--discover run 2026-09-27)"}
+]
