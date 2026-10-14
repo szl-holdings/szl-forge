@@ -110,6 +110,18 @@
       "retired_forge_writers": []
     },
     {
+      "repo_id": "SZLHOLDINGS/szl-formulas",
+      "owner": "szl-holdings/szl-formulas",
+      "kernel_repo": "kernels/SZLHOLDINGS/szl-formulas",
+      "model_repo_writer": "szl-holdings/szl-formulas hf-kernel-publish.yml (model twin pointer)",
+      "retired_forge_writers": [
+        ".github/workflows/publish-kernel-mirror-cards.yml profile szl-formulas",
+        ".github/workflows/reconcile-kernel-provenance.yml",
+        ".github/workflows/hub-joblib-quarantine-via-token1.yml entry szl-formulas",
+        ".github/workflows/hub-honesty-banners-via-token1.yml entry szl-formulas"
+      ]
+    },
+    {
       "repo_id": "SZLHOLDINGS/szl-lambda-gate",
       "owner": "szl-holdings/szl-lambda-gate",
       "kernel_repo": "kernels/SZLHOLDINGS/szl-lambda-gate",

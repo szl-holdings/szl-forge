@@ -31,9 +31,6 @@ from tools.publish_kernel_mirror_cards import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
-KERNEL_EXPECTED = {
-    "szl-formulas": "SZLHOLDINGS/szl-formulas",
-}
 # Each converged kernel repo's own hf-kernel-publish.yml is the single writer
 # of these Hub repos (kernel surface and model twin). Forge must not write them.
 KERNEL_REPO_OWNERS = {
@@ -47,6 +44,7 @@ KERNEL_REPO_OWNERS = {
     "SZLHOLDINGS/szl-provctl": "szl-holdings/szl-provctl",
     "SZLHOLDINGS/szl-block-kv": "szl-holdings/szl-block-kv",
     "SZLHOLDINGS/YARQA-ATTN": "szl-holdings/YARQA-ATTN",
+    "SZLHOLDINGS/szl-formulas": "szl-holdings/szl-formulas",
     "SZLHOLDINGS/szl-lambda-gate": "szl-holdings/szl-lambda-gate",
     "SZLHOLDINGS/szl-governed-norm": "szl-holdings/szl-lambda-gate",
 }
@@ -61,12 +59,26 @@ FAMILY_EXPECTED = {
 GATED_EXPECTED = {
     "receiptagent": "SZLHOLDINGS/SZL-Forge-1.5B-ReceiptAgent",
 }
-EXPECTED = {**KERNEL_EXPECTED, **FAMILY_EXPECTED, **GATED_EXPECTED}
+EXPECTED = {**FAMILY_EXPECTED, **GATED_EXPECTED}
 SOURCE_REVISION = "1" * 40
+# No real profile has the kernel-style shape any more (README.md at the source
+# root, library_name: kernels): szl-formulas, the last one, converged onto its
+# own hf-kernel-publish.yml. This synthetic profile keeps that code path
+# covered. It is never registered outside a test, never passed to publish(),
+# and its repo id is not a Hub target.
+KERNEL_FIXTURE = Profile(
+    name="kernel-card-fixture",
+    source_dir="kernel-card-fixture",
+    repo_id="SZLHOLDINGS/kernel-card-fixture",
+)
+FIXTURE_SVG = (
+    b'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8">'
+    b'<defs><linearGradient id="g"/></defs>'
+    b'<rect width="8" height="8" fill="url(#g)"/></svg>'
+)
 
 
-def _readme(profile_name: str) -> bytes:
-    profile = resolve_profile(profile_name)
+def _readme(profile: Profile) -> bytes:
     banner = (
         f"https://raw.githubusercontent.com/{SOURCE_REPOSITORY}/main/"
         f"{profile.source_dir}/card/holo-banner.svg"
@@ -78,6 +90,13 @@ def _readme(profile_name: str) -> bytes:
         "---\n\n"
         f'<img src="{banner}" alt="{profile.name}"/>\n'
     ).encode("utf-8")
+
+
+def _write_kernel_fixture(root: Path) -> None:
+    source = root / KERNEL_FIXTURE.source_dir
+    (source / "card").mkdir(parents=True)
+    (source / "README.md").write_bytes(_readme(KERNEL_FIXTURE))
+    (source / "card" / "holo-banner.svg").write_bytes(FIXTURE_SVG)
 
 
 def _asset(tmp_path: Path, name: str, path_in_repo: str, payload: bytes) -> Asset:
@@ -105,10 +124,12 @@ def test_registry_and_write_set_are_closed() -> None:
         ("card/README.md", "README.md"),
         ("card/holo-banner.svg", "card/holo-banner.svg"),
     )
-    for name in KERNEL_EXPECTED:
-        assert PROFILES[name].write_set == KERNEL_WRITE_SET
-        assert PROFILES[name].library_name == "kernels"
-        assert PROFILES[name].gated is False
+    # The kernel-style shape remains the Profile default.
+    assert KERNEL_FIXTURE.write_set == KERNEL_WRITE_SET
+    assert KERNEL_FIXTURE.library_name == "kernels"
+    assert KERNEL_FIXTURE.gated is False
+    assert KERNEL_FIXTURE.repo_id not in KERNEL_REPO_OWNED_TARGETS
+    assert KERNEL_FIXTURE.name not in PROFILES
     for name in FAMILY_EXPECTED:
         assert PROFILES[name].write_set == FAMILY_WRITE_SET
         assert PROFILES[name].gated is False
@@ -154,7 +175,14 @@ def test_kernel_repo_owned_target_is_refused_before_any_provider_call(
 
 @pytest.mark.parametrize(
     "profile_name",
-    ["szl-blocked", "szl-govsign", "szl-invariants", "szl-ouroboros", "szl-provctl"],
+    [
+        "szl-blocked",
+        "szl-formulas",
+        "szl-govsign",
+        "szl-invariants",
+        "szl-ouroboros",
+        "szl-provctl",
+    ],
 )
 def test_retired_kernel_profiles_are_rejected_by_the_cli(
     profile_name: str, tmp_path: Path
@@ -207,19 +235,34 @@ def test_all_admitted_repository_assets_validate(profile_name: str) -> None:
     ]
     assert all(asset.data for asset in assets)
     assert all(len(asset.evidence()["sha256"]) == 64 for asset in assets)
-    if profile_name in KERNEL_EXPECTED:
-        assert assets[0].relative_source_path == f"{profile_name}/README.md"
-    else:
-        assert assets[0].relative_source_path == f"{profile_name}/card/README.md"
+    assert assets[0].relative_source_path == f"{profile_name}/card/README.md"
+
+
+def test_kernel_style_profile_assets_validate(tmp_path: Path) -> None:
+    _write_kernel_fixture(tmp_path)
+    assets = collect_assets(tmp_path, KERNEL_FIXTURE)
+    assert [asset.path_in_repo for asset in assets] == [
+        "README.md",
+        "card/holo-banner.svg",
+    ]
+    assert [asset.relative_source_path for asset in assets] == [
+        "kernel-card-fixture/README.md",
+        "kernel-card-fixture/card/holo-banner.svg",
+    ]
+    assert all(len(asset.evidence()["sha256"]) == 64 for asset in assets)
 
 
 def test_readme_requires_exact_profile_banner() -> None:
-    profile = resolve_profile("szl-formulas")
-    validate_readme(profile, _readme(profile.name))
+    profile = KERNEL_FIXTURE
+    validate_readme(profile, _readme(profile))
 
-    foreign = _readme("khipu-gguf")
-    with pytest.raises(PublicationError):
+    foreign = _readme(resolve_profile("khipu-gguf"))
+    with pytest.raises(PublicationError, match="exact Forge banner path"):
         validate_readme(profile, foreign)
+
+    both = _readme(profile) + foreign.split(b"---\n\n", 1)[1]
+    with pytest.raises(PublicationError, match="another mirror's banner path"):
+        validate_readme(profile, both)
 
 
 @pytest.mark.parametrize(
@@ -236,7 +279,7 @@ def test_readme_requires_exact_profile_banner() -> None:
 )
 def test_readme_rejects_unbound_or_active_content(payload: bytes) -> None:
     with pytest.raises(PublicationError):
-        validate_readme(resolve_profile("szl-formulas"), payload)
+        validate_readme(KERNEL_FIXTURE, payload)
 
 
 def test_svg_accepts_static_fragment_references() -> None:
@@ -294,7 +337,7 @@ def test_current_matches_is_byte_exact(tmp_path: Path) -> None:
         return str(mapping[str(kwargs["filename"])])
 
     assert current_matches(
-        repo_id="SZLHOLDINGS/szl-formulas",
+        repo_id=KERNEL_FIXTURE.repo_id,
         revision="2" * 40,
         sibling_paths=mapping,
         assets=[readme, banner],
@@ -302,7 +345,7 @@ def test_current_matches_is_byte_exact(tmp_path: Path) -> None:
         download_fn=download_fn,
     )
     assert not current_matches(
-        repo_id="SZLHOLDINGS/szl-formulas",
+        repo_id=KERNEL_FIXTURE.repo_id,
         revision="2" * 40,
         sibling_paths={"README.md"},
         assets=[readme, banner],
@@ -312,7 +355,7 @@ def test_current_matches_is_byte_exact(tmp_path: Path) -> None:
 
     hub_banner.write_bytes(b"different")
     assert not current_matches(
-        repo_id="SZLHOLDINGS/szl-formulas",
+        repo_id=KERNEL_FIXTURE.repo_id,
         revision="2" * 40,
         sibling_paths=mapping,
         assets=[readme, banner],
@@ -325,7 +368,7 @@ def test_reports_are_secret_free_and_card_only(tmp_path: Path) -> None:
     asset = _asset(tmp_path, "README.md", "README.md", b"safe")
     error = PublicationError("sensitive-looking hf_example_secret")
     report = publication_report(
-        profile=resolve_profile("szl-formulas"),
+        profile=KERNEL_FIXTURE,
         source_revision=SOURCE_REVISION,
         assets=[asset],
         status="FAILED_CLOSED",
@@ -356,16 +399,21 @@ def test_source_revision_must_be_exact_lowercase_sha(revision: str) -> None:
     assert validate_source_revision(SOURCE_REVISION) == SOURCE_REVISION
 
 
-def test_dry_run_cli_writes_machine_readable_evidence(tmp_path: Path) -> None:
+def test_dry_run_cli_writes_machine_readable_evidence(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    source_root = tmp_path / "source"
+    _write_kernel_fixture(source_root)
+    monkeypatch.setitem(PROFILES, KERNEL_FIXTURE.name, KERNEL_FIXTURE)
     report_path = tmp_path / "report.json"
     result = main(
         [
             "--profile",
-            "szl-formulas",
+            KERNEL_FIXTURE.name,
             "--source-revision",
             SOURCE_REVISION,
             "--root",
-            str(ROOT),
+            str(source_root),
             "--report",
             str(report_path),
         ]
@@ -373,12 +421,12 @@ def test_dry_run_cli_writes_machine_readable_evidence(tmp_path: Path) -> None:
     assert result == 0
     payload = json.loads(report_path.read_text(encoding="utf-8"))
     assert payload["status"] == "VALIDATED_NOT_PUBLISHED"
-    assert payload["target"]["repo_id"] == EXPECTED["szl-formulas"]
+    assert payload["target"]["repo_id"] == KERNEL_FIXTURE.repo_id
     assert payload["publication"]["exact_readback"] is False
     assert payload["scope"]["promotion_effect"] == "NONE"
-    assert {item["path_in_repo"] for item in payload["files"]} == {
-        "README.md",
-        "card/holo-banner.svg",
+    assert {item["path_in_repo"]: item["source_path"] for item in payload["files"]} == {
+        "README.md": "kernel-card-fixture/README.md",
+        "card/holo-banner.svg": "kernel-card-fixture/card/holo-banner.svg",
     }
 
 

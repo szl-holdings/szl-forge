@@ -4,7 +4,8 @@
 On 2026-10-13 each kernel source repository's own ``hf-kernel-publish.yml``
 became the single canonical writer of its first-class kernel repo
 (``huggingface.co/kernels/SZLHOLDINGS/<name>``) and of its same-named model
-twin pointer card. Forge's former writers for those targets were retired, and
+twin pointer card; szl-formulas followed once its own publisher was live.
+Forge's former writers for those targets were retired, and
 ``publishing/kernel-hub-ownership.json`` records who owns each target now.
 
 These are source assertions over the files tracked in this repository. They do
@@ -37,6 +38,7 @@ KERNEL_REPO_OWNERS = {
     "SZLHOLDINGS/szl-provctl": "szl-holdings/szl-provctl",
     "SZLHOLDINGS/szl-block-kv": "szl-holdings/szl-block-kv",
     "SZLHOLDINGS/YARQA-ATTN": "szl-holdings/YARQA-ATTN",
+    "SZLHOLDINGS/szl-formulas": "szl-holdings/szl-formulas",
     "SZLHOLDINGS/szl-lambda-gate": "szl-holdings/szl-lambda-gate",
     "SZLHOLDINGS/szl-governed-norm": "szl-holdings/szl-lambda-gate",
 }
@@ -141,14 +143,46 @@ def test_marker_and_target_patterns_detect_a_kernel_writer() -> None:
     assert WRITE_MARKERS.search("huggingface-cli upload SZLHOLDINGS/x .")
     assert WRITE_MARKERS.search("git push https://huggingface.co/SZLHOLDINGS/x main")
     assert WRITE_MARKERS.search("python tools/quarantine_hub_joblib.py") is None
+    assert TARGET.search("SZLHOLDINGS/szl-formulas").group(1) == "szl-formulas"
     # Distinct, longer repo ids are not converged targets.
     assert TARGET.search("SZLHOLDINGS/szl-kernels-extra") is None
-    assert TARGET.search("SZLHOLDINGS/szl-formulas") is None
+    # A Forge-owned family card target is not a converged kernel target.
+    assert TARGET.search("SZLHOLDINGS/szl-nemo") is None
 
 
 @pytest.mark.parametrize("relative", RETIRED_WRITERS)
 def test_retired_kernel_writer_is_absent(relative: str) -> None:
     assert not (ROOT / relative).exists()
+
+
+def test_retired_profile_and_entry_writers_stay_out_of_their_files() -> None:
+    # Some writers were retired by removing one profile or one target line from
+    # a file that stays. The registry names them "<path> profile|entry <name>";
+    # each must still be gone from that file.
+    from tools.publish_kernel_mirror_cards import PROFILES
+
+    payload = json.loads(REGISTRY.read_text(encoding="utf-8"))
+    checked = 0
+    for target in payload["targets"]:
+        repo_id = target["repo_id"]
+        for writer in target["retired_forge_writers"]:
+            if " " not in writer:
+                continue
+            path, kind, name = writer.split(" ")
+            assert repo_id == f"SZLHOLDINGS/{name}", writer
+            text = (ROOT / path).read_text(encoding="utf-8")
+            assert re.search(re.escape(repo_id) + r"(?![\w.-])", text) is None, writer
+            if kind == "profile":
+                assert name not in PROFILES, writer
+                assert f'"{name}/README.md"' not in text, writer
+                assert (
+                    re.search(rf"(?m)^ +(?:- profile: )?{re.escape(name)}(?: \\)?$", text)
+                    is None
+                ), writer
+            else:
+                assert kind == "entry", writer
+            checked += 1
+    assert checked
 
 
 def test_no_forge_hub_writer_names_a_converged_kernel_target() -> None:
