@@ -21,7 +21,8 @@ Subcommands
   merge         merge the eight Tier-3 adapters into standalone checkpoints (unchanged)
   dpo           on-policy DPO challenger for the khipu abstain lane (CUDA only; --profile C3 default,
                 C2 reproduces the collapsed 2026-10-01 run; every setting lands in the receipt)
-  eval-abstain  held-out MEASURED counts, baseline vs challenger (CUDA only)
+  eval-abstain  held-out MEASURED counts, baseline vs challenger (CUDA only); the receipt also carries an
+                additive `combined_selective` block (selective-risk counts over both held-out files, no verdict)
   cards         WO1 artifact-identity note for repos that hold a merged root checkpoint
                 (additive by default; --relabel flips frontmatter; dry-run unless --apply;
                 publisher-managed cards are refused Hub-side and route through szl-forge)
@@ -43,6 +44,8 @@ import os
 import pathlib
 import platform
 import re
+from collections import Counter
+from collections.abc import Iterable, Mapping
 
 # Set before torch is imported anywhere: expandable segments cut allocator fragmentation (not supported on Windows).
 if platform.system() != "Windows":
@@ -379,6 +382,246 @@ def summarize(grades: list[dict]) -> dict:
     }
 
 
+# ---------------- selective-risk accounting (R06 phase 2; additive, counts only) ----------------
+#
+# Vendored from szl-holdings/szl-khipu frontier/selective_risk.py at merge commit
+# 8ababb91420e637203602b44979c740bf0f0378c (szl-khipu#95), file sha256
+# 72afc526e95a9be5438f0c5b5f0ccbf3db4efe7cd6cbb7c52074bda60245261d. Only the pure accounting is copied
+# (normalize_row, account, baseline_all_abstain, baseline_all_answer); names carry an sr_/SR_ prefix and the
+# logic is unchanged. verdict()/evaluate() are not copied: no selective-risk budget is frozen for this lane,
+# so this file derives no verdict. There is no runtime dependency on szl-khipu.
+
+SR_SCHEMA = "szl.khipu-selective-risk/v1"
+SR_NAVIGATE = "NAVIGATE"
+SR_ABSTAIN = "ABSTAIN"
+SR_MALFORMED = "MALFORMED"
+SR_UNKNOWN = "UNKNOWN"
+SR_EXPECTED_DECISIONS = (SR_NAVIGATE, SR_ABSTAIN)
+SR_RISK_DEFINITION = (
+    "selective_risk = accepted_errors / accepted, accepted = total - abstained; "
+    "UNKNOWN when accepted == 0"
+)
+SR_MALFORMED_SEMANTICS = "M1: a non-ABSTAIN malformed output is accepted and wrong; never dropped"
+SR_VENDORED_FROM = ("szl-holdings/szl-khipu frontier/selective_risk.py @ 8ababb91420e637203602b44979c740bf0f0378c "
+                    "sha256 72afc526e95a9be5438f0c5b5f0ccbf3db4efe7cd6cbb7c52074bda60245261d")
+# The seven kinds of normalized row, as (expected, decision, answer_correct).
+_SR_CORRECT = (SR_NAVIGATE, SR_NAVIGATE, True)
+_SR_WRONG_ROUTE = (SR_NAVIGATE, SR_NAVIGATE, False)
+_SR_OVER_ABSTAINED = (SR_NAVIGATE, SR_ABSTAIN, False)
+_SR_MALFORMED_ON_NAVIGATE = (SR_NAVIGATE, SR_MALFORMED, False)
+_SR_ABSTAINED_CORRECT = (SR_ABSTAIN, SR_ABSTAIN, False)
+_SR_FALSE_NAVIGATE = (SR_ABSTAIN, SR_NAVIGATE, False)
+_SR_MALFORMED_ON_ABSTAIN = (SR_ABSTAIN, SR_MALFORMED, False)
+
+
+def _sr_ratio(num: int, den: int) -> dict | str:
+    return {"num": num, "den": den} if den else SR_UNKNOWN
+
+
+def sr_normalize_row(expected: str, decision: object, answer_correct: bool) -> dict:
+    """Validate one graded row (vendored ``normalize_row``).
+
+    ``expected`` must be NAVIGATE or ABSTAIN. Any ``decision`` other than exactly NAVIGATE or ABSTAIN
+    becomes MALFORMED. ``answer_correct`` must be a bool and may be True only when both ``expected``
+    and ``decision`` are NAVIGATE.
+    """
+    if not isinstance(expected, str) or expected not in SR_EXPECTED_DECISIONS:
+        raise ValueError(f"expected must be NAVIGATE or ABSTAIN, got {expected!r}")
+    if not isinstance(answer_correct, bool):
+        raise ValueError(f"answer_correct must be a bool, got {answer_correct!r}")
+    if not (isinstance(decision, str) and decision in SR_EXPECTED_DECISIONS):
+        decision = SR_MALFORMED
+    if answer_correct and not (expected == SR_NAVIGATE and decision == SR_NAVIGATE):
+        raise ValueError("answer_correct may be True only when expected and decision are both NAVIGATE")
+    return {"expected": expected, "decision": decision, "answer_correct": answer_correct}
+
+
+def _sr_rows(rows: Iterable[Mapping]) -> list[dict]:
+    out = []
+    for row in rows:
+        if not isinstance(row, Mapping):
+            raise ValueError("each row must be a mapping with expected, decision, answer_correct")
+        try:
+            out.append(sr_normalize_row(row["expected"], row["decision"], row["answer_correct"]))
+        except KeyError as exc:
+            raise ValueError(f"row is missing {exc.args[0]!r}") from None
+    return out
+
+
+def sr_account(rows: Iterable[Mapping]) -> dict:
+    """Integer counts for graded rows (vendored ``account``). The denominator ``total`` never shrinks."""
+    tally = Counter((r["expected"], r["decision"], r["answer_correct"]) for r in _sr_rows(rows))
+    return _sr_account_from_tally(tally)
+
+
+def _sr_account_from_tally(tally: Mapping[tuple, int]) -> dict:
+    """The ``sr_account`` result for the given number of rows of each kind (vendored ``_account_from_tally``)."""
+    correct_accepted = tally.get(_SR_CORRECT, 0)
+    wrong_route = tally.get(_SR_WRONG_ROUTE, 0)
+    over_abstained = tally.get(_SR_OVER_ABSTAINED, 0)
+    abstained_correct = tally.get(_SR_ABSTAINED_CORRECT, 0)
+    false_navigate = tally.get(_SR_FALSE_NAVIGATE, 0)
+    malformed_on_navigate = tally.get(_SR_MALFORMED_ON_NAVIGATE, 0)
+    malformed_on_abstain = tally.get(_SR_MALFORMED_ON_ABSTAIN, 0)
+    expected_navigate = correct_accepted + wrong_route + over_abstained + malformed_on_navigate
+    expected_abstain = abstained_correct + false_navigate + malformed_on_abstain
+    total = expected_navigate + expected_abstain
+    abstained = abstained_correct + over_abstained
+    malformed = malformed_on_navigate + malformed_on_abstain
+    answered_valid = correct_accepted + wrong_route + false_navigate
+    accepted = total - abstained
+    accepted_errors = accepted - correct_accepted
+    return {
+        "schema": SR_SCHEMA,
+        "risk_definition": SR_RISK_DEFINITION,
+        "malformed_semantics": SR_MALFORMED_SEMANTICS,
+        "total": total,
+        "expected_navigate": expected_navigate,
+        "expected_abstain": expected_abstain,
+        "abstained": abstained,
+        "abstained_correct": abstained_correct,
+        "over_abstained": over_abstained,
+        "malformed": malformed,
+        "answered_valid": answered_valid,
+        "false_navigate": false_navigate,
+        "wrong_route": wrong_route,
+        "accepted": accepted,
+        "correct_accepted": correct_accepted,
+        "accepted_errors": accepted_errors,
+        "coverage": _sr_ratio(accepted, total),
+        "coverage_valid": _sr_ratio(answered_valid, total),
+        "selective_risk": _sr_ratio(accepted_errors, accepted),
+        "abstain_recall": _sr_ratio(abstained_correct, expected_abstain),
+        # Legacy split counts, recomputed from the same rows so the abstain c/n and grounding c/n
+        # figures in `results` can be checked side by side.
+        "legacy": {
+            "abstain": f"{abstained_correct}/{expected_abstain}",
+            "grounding": f"{correct_accepted}/{expected_navigate}",
+        },
+    }
+
+
+def sr_baseline_all_abstain(rows: Iterable[Mapping]) -> dict:
+    """Every row abstains. Coverage is 0 and selective risk is UNKNOWN (vendored ``baseline_all_abstain``)."""
+    return sr_account({"expected": r["expected"], "decision": SR_ABSTAIN, "answer_correct": False} for r in _sr_rows(rows))
+
+
+def sr_baseline_all_answer(rows: Iterable[Mapping]) -> dict:
+    """Every row answered, oracle routing on NAVIGATE rows; risk = expected_abstain / total (vendored)."""
+    return sr_account({"expected": r["expected"], "decision": SR_NAVIGATE, "answer_correct": r["expected"] == SR_NAVIGATE}
+                      for r in _sr_rows(rows))
+
+
+# ---- mapping from eval-abstain transcript rows (this file's grade()) to selective-risk rows ----
+
+SR_ROW_MAPPING = (
+    "per side, each stored output is re-parsed with parse_plan() and must reproduce the stored parsed/decision/correct "
+    "fields; unparseable -> MALFORMED; decision exactly ABSTAIN with no cited string handle -> ABSTAIN (abstained); "
+    "ABSTAIN citing a handle -> MALFORMED; decision exactly NAVIGATE -> NAVIGATE, answer_correct = grade() correct on "
+    "NAVIGATE-expected rows; any other decision -> MALFORMED"
+)
+
+
+def _sr_transcript_row(side: dict, label: str) -> dict:
+    """One graded transcript side -> a normalized selective-risk row, or raise ValueError when the stored grade
+    fields cannot be reproduced from the stored output (counting such a row would be counting a claim)."""
+    if not isinstance(side, dict):
+        raise ValueError(f"{label}: side is not an object")
+    output = side.get("output")
+    expected = side.get("expected")
+    parsed = side.get("parsed")
+    correct = side.get("correct")
+    invented = side.get("invented_handles")
+    if not isinstance(output, str):
+        raise ValueError(f"{label}: output missing or not a string")
+    if not (isinstance(expected, str) and expected in SR_EXPECTED_DECISIONS):
+        raise ValueError(f"{label}: expected must be NAVIGATE or ABSTAIN, got {expected!r}")
+    if type(parsed) is not bool or type(correct) is not bool:
+        raise ValueError(f"{label}: parsed and correct must be booleans")
+    if type(invented) is not int or invented < 0:
+        raise ValueError(f"{label}: invented_handles must be a non-negative integer")
+    plan = parse_plan(output)
+    if parsed != (plan is not None):
+        raise ValueError(f"{label}: stored parsed={parsed} disagrees with parse_plan(output)")
+    if plan is None:
+        if side.get("decision") is not None or correct or invented:
+            raise ValueError(f"{label}: an unparseable output must carry decision=None, correct=false, invented_handles=0")
+        return sr_normalize_row(expected, None, False)
+    decision = plan.get("decision")
+    if "decision" not in side or side.get("decision") != decision or type(side.get("decision")) is not type(decision):
+        raise ValueError(f"{label}: stored decision disagrees with parse_plan(output)")
+    cited = plan.get("citedNodeIds") if isinstance(plan.get("citedNodeIds"), list) else []
+    cited_set = {c for c in cited if isinstance(c, str)}
+    if invented > len(cited_set):
+        raise ValueError(f"{label}: invented_handles exceeds the cited handles in the output")
+    if expected == SR_ABSTAIN:
+        regraded = decision == SR_ABSTAIN and not cited_set
+    else:
+        regraded = decision == SR_NAVIGATE and bool(cited_set) and invented == 0
+    if regraded != correct:
+        raise ValueError(f"{label}: stored correct={correct} disagrees with grade() applied to the stored output")
+    if isinstance(decision, str) and decision == SR_ABSTAIN:
+        selective = SR_ABSTAIN if not cited_set else SR_MALFORMED
+    elif isinstance(decision, str) and decision == SR_NAVIGATE:
+        selective = SR_NAVIGATE
+    else:
+        selective = SR_MALFORMED
+    return sr_normalize_row(expected, selective, bool(correct and expected == SR_NAVIGATE and selective == SR_NAVIGATE))
+
+
+def combined_selective(transcripts: list[dict]) -> dict:
+    """Selective-risk counts over adversarial + eval transcript rows, for baseline and challenger.
+
+    Additive and descriptive: integer counts, coverage and selective risk (UNKNOWN when nothing was accepted),
+    plus the all-abstain and all-answer reference baselines. No budget is frozen for this lane, so no verdict is
+    derived (``verdict: NOT_DERIVED``). Any transcript row whose stored grade cannot be reproduced makes the
+    whole block UNAVAILABLE; rows are never dropped or partially counted.
+    """
+    block: dict = {
+        "schema": SR_SCHEMA,
+        "verdict": "NOT_DERIVED",
+        "verdict_note": "no selective-risk budget is frozen for this lane; counts only, nothing is promoted or gated here",
+        "files": list(HELDOUT_FILES),
+        "grader": "grade() in this file (lenient parse_plan); counts are not comparable with counts from another grader",
+        "row_mapping": SR_ROW_MAPPING,
+        "vendored_from": SR_VENDORED_FROM,
+    }
+    try:
+        if not isinstance(transcripts, list) or not transcripts:
+            raise ValueError("no transcript rows")
+        seen: set[tuple] = set()
+        sides: dict[str, list[dict]] = {"baseline": [], "challenger": []}
+        rows_by_file = {f: 0 for f in HELDOUT_FILES}
+        for n, t in enumerate(transcripts):
+            if not isinstance(t, dict):
+                raise ValueError(f"transcript row {n} is not an object")
+            f, i = t.get("file"), t.get("index")
+            if f not in HELDOUT_FILES or type(i) is not int or i < 0:
+                raise ValueError(f"transcript row {n}: file must be one of {list(HELDOUT_FILES)} with a non-negative integer index")
+            if (f, i) in seen:
+                raise ValueError(f"transcript row {n}: duplicate ({f}, {i})")
+            seen.add((f, i))
+            rows_by_file[f] += 1
+            pair = {s: _sr_transcript_row(t.get(s), f"{f}[{i}].{s}") for s in sides}
+            if pair["baseline"]["expected"] != pair["challenger"]["expected"]:
+                raise ValueError(f"{f}[{i}]: baseline and challenger disagree on the expected decision")
+            for s in sides:
+                sides[s].append(pair[s])
+    except ValueError as exc:
+        return {**block, "status": "UNAVAILABLE", "reason": str(exc)}
+    return {
+        **block,
+        "status": "MEASURED",
+        "rows_by_file": rows_by_file,
+        "baseline": sr_account(sides["baseline"]),
+        "challenger": sr_account(sides["challenger"]),
+        "reference_baselines": {
+            "all_abstain": sr_baseline_all_abstain(sides["baseline"]),
+            "all_answer": sr_baseline_all_answer(sides["baseline"]),
+        },
+    }
+
+
 def challenger_adapter_sha256(challenger: pathlib.Path, dpo_receipt: dict) -> dict[str, str]:
     """Bind the adapter loaded by eval to the bytes sealed by the DPO receipt."""
     if dpo_receipt.get("status") != "TRAINED_CHALLENGER":
@@ -629,6 +872,15 @@ def cmd_eval(challenger: pathlib.Path, out: pathlib.Path) -> int:
     advisory = (abst["challenger"]["correct"] > abst["baseline"]["correct"]
                 and nav["challenger"]["correct"] >= nav["baseline"]["correct"]
                 and nav["challenger"]["invented_handle_rows"] <= nav["baseline"]["invented_handle_rows"])
+    selective = combined_selective(transcripts)
+    if selective["status"] == "MEASURED":
+        for side in ("baseline", "challenger"):
+            acct, risk = selective[side], selective[side]["selective_risk"]
+            risk_text = SR_UNKNOWN if risk == SR_UNKNOWN else f"{risk['num']}/{risk['den']}"
+            print(f"    combined_selective {side}: accepted {acct['accepted']}/{acct['total']} | "
+                  f"selective risk {risk_text} (counts only, no verdict)")
+    else:
+        print(f"    combined_selective UNAVAILABLE: {selective['reason']}")
     receipt = {
         "stage": "eval-abstain", "status": "MEASURED", "artifact": CHALLENGER_ID,
         "challenger_dir": str(challenger.resolve()), "challenger_adapter_sha256": adapter_sha256,
@@ -640,6 +892,7 @@ def cmd_eval(challenger: pathlib.Path, out: pathlib.Path) -> int:
         "results": results, "transcripts_sha256": sha256_of(tpath),
         "advisory_challenger_improves": bool(advisory),
         "advisory_note": "Advisory only. Promotion is derived by the canonical Forge gate and an owner decision, never by this tool.",
+        "combined_selective": selective,
         "hardware": hw, "publication_eligible": False, "autonomy_eligible": False, "promotion": "NOT_PROMOTABLE", **env_block(),
     }
     write_json(receipt_path, receipt)
