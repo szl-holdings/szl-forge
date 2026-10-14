@@ -23,6 +23,11 @@ RUN_MANIFEST_RECEIPT_SHA256 = (
 RECEIPT_INDEX_SHA256 = (
     "5dbe4405b50672d150437fdcfa941213c6ed88f07979370f91fd60d3f65a13c2"
 )
+# GREEN entries whose cited lean_theorem was found declared, without sorry, in
+# szl-holdings/lutar-lean main cd20ff9 by the 2026-10-14 static audit.
+AUDITED_GREEN_ENTRIES = frozenset(
+    {"TH1", "TH2", "TH2b", "TH11", "R1-G1", "TH-COMP", "TH-SHANNON", "TH-WHEELER"}
+)
 
 
 class StaticForgeContractTests(unittest.TestCase):
@@ -139,7 +144,8 @@ class StaticForgeContractTests(unittest.TestCase):
         self.assertEqual(RUN_MANIFEST_RECEIPT_SHA256, manifest["receipt_sha256"])
 
     def test_post_receipt_index_correction_is_explained_not_hidden(self) -> None:
-        # The 2026-10-06 TH10 correction (szl-forge#594) changed the packaged
+        # The 2026-10-06 TH10 correction (szl-forge#594) and the 2026-10-14
+        # unresolved-Lean-pointer correction changed the packaged
         # thesis_formula_index.json after the July receipt. The console keeps
         # the computed MISMATCH and explains it under the integrity table; the
         # receipt and its pin stay unchanged.
@@ -160,9 +166,11 @@ class StaticForgeContractTests(unittest.TestCase):
                     "TH10 is no longer marked GREEN",
                     "meta.corrections",
                     "szl-holdings/szl-forge#594",
+                    "2026-10-14",
+                    "re-labelled from GREEN to TRACKED",
                     "kept byte-identical as a historical record",
                     "not re-minted",
-                    "documented post-receipt correction, not tampering",
+                    "documented post-receipt corrections, not tampering",
                     "this note does not verify them",
                 ):
                     self.assertIn(phrase, blob)
@@ -182,14 +190,61 @@ class StaticForgeContractTests(unittest.TestCase):
             RECEIPT_INDEX_SHA256, hashlib.sha256(corrected).hexdigest()
         )
         formula_index = json.loads(corrected.decode("utf-8"))
-        self.assertIn(
-            "TH10",
-            [
-                entry_id
-                for correction in formula_index["meta"]["corrections"]
-                for entry_id in correction["entries"]
-            ],
-        )
+        corrected_ids = [
+            entry_id
+            for correction in formula_index["meta"]["corrections"]
+            for entry_id in correction["entries"]
+        ]
+        self.assertIn("TH10", corrected_ids)
+        self.assertIn("TH-PUBLIC-CLAIMS", corrected_ids)
+
+    def test_unresolved_lean_pointers_are_not_declared_green(self) -> None:
+        # 2026-10-14 audit: 64 GREEN entries cited a lean_theorem that
+        # szl-holdings/lutar-lean does not declare (main cd20ff9, and the index's
+        # own meta.lean_commit c4d13795). Each was re-labelled TRACKED with a
+        # dated correction field; only the eight audited entries whose cited
+        # declaration exists may still be GREEN. Re-promoting any other entry
+        # needs a new audit, and this list, to change together.
+        copies = [("space", ROOT / "thesis_formula_index.json")]
+        root_copy = ROOT.parents[1] / "thesis_formula_index.json"
+        if root_copy.is_file():
+            copies.append(("repository root", root_copy))
+        for label, path in copies:
+            with self.subTest(copy=label):
+                index = json.loads(path.read_text(encoding="utf-8"))
+                records = [
+                    record
+                    for record in index["meta"]["corrections"]
+                    if record["date"] == "2026-10-14"
+                ]
+                self.assertEqual(1, len(records))
+                listed = records[0]["entries"]
+                self.assertEqual(64, len(listed))
+                self.assertEqual(len(listed), len(set(listed)))
+                dated = [
+                    entry
+                    for entry in index["entries"]
+                    if entry.get("correction", {}).get("date") == "2026-10-14"
+                ]
+                self.assertEqual(listed, [entry["id"] for entry in dated])
+                for entry in dated:
+                    correction = entry["correction"]
+                    self.assertEqual("TRACKED", entry["status"])
+                    self.assertEqual("GREEN", correction["previous_status"])
+                    self.assertNotEqual(
+                        correction["previous_lean_theorem"], entry["lean_theorem"]
+                    )
+                    self.assertTrue(
+                        correction["lean_ref"].startswith("szl-holdings/lutar-lean@")
+                    )
+                    self.assertEqual("NOT_RUN", correction["lean_build"])
+                    self.assertEqual("NOT_RUN", correction["print_axioms"])
+                green = {
+                    entry["id"]
+                    for entry in index["entries"]
+                    if entry["status"] == "GREEN"
+                }
+                self.assertLessEqual(green, AUDITED_GREEN_ENTRIES)
 
     def test_atelier_lock_keeps_snapshot_from_becoming_a_studio(self) -> None:
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
