@@ -242,6 +242,36 @@ python -I -B -m unittest discover -s frontier/qwen35-receiptagent-v4-json -p tes
 python -I -B -m unittest discover -s frontier/qwen35-receiptagent-v4-json -p test_training_data.py -v
 ```
 
+### Exact train-token and loss-mask conformance
+
+`training_tokens.check_training_tokens(snapshot, binding, encode, decode)` adds a
+pure, train-only check between byte retention and a future admitted runner. It
+checks all 360 examples sequentially against the declared immutable base,
+tokenizer/template/policy digests and resource limits. The trusted adapter must
+return the actual rendered text, character offsets, input IDs, attention mask
+and unshifted collator labels. Complete assistant JSON and the exact declared
+termination sequence must be supervised; prompt and right-padding positions
+must be masked. Packing, truncation, ambiguous offsets and extra assistant text
+fail closed. Python character offsets are required, not UTF-8 byte offsets.
+
+The result is an immutable ordered hash ledger, not target text or token IDs.
+Digests bind declarations and observed tensors but do not authenticate downloaded
+assets, make hashes confidential or prove that another process consumed those
+tensors. The future worker must freshly capture input, authenticate its runtime
+and tokenizer, and retain/use the exact checked tensors or requalify them.
+Callbacks are trusted Python code, not a sandbox. Fixed three-message framing is
+deliberately restrictive; actual tokenizer compatibility is UNKNOWN until tested.
+All training, publication and execution flags remain false. No model, tokenizer,
+optimizer, network client, AirLLM runtime or GPU is imported or launched here.
+
+The software tests use SIMULATED character-tokenizer fixtures, including Unicode,
+shared EOS/padding IDs and multi-token endings. Passing them is not a real-model
+evaluation, runtime qualification or a training permit:
+
+```sh
+python -I -B -m unittest discover -s frontier/qwen35-receiptagent-v4-json -p test_training_tokens.py -v
+```
+
 ## Still required before training
 
 1. Obtain protected source merge/readback and owner-signed curriculum admission;
