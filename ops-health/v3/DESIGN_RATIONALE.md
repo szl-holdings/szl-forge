@@ -1,10 +1,12 @@
 # OAC Ops Health v3: design rationale
 
-Status: DRAFT companion to `v3/PREREGISTRATION.DRAFT.md`, which is NOT registered. Both files may
-change before registration, and every change is a commit. Stephen gave the green light on
-2026-10-13; the decisions are recorded in `v3/DECISIONS_FOR_GREEN_LIGHT.md` and prereg §18.
+Status: companion to `v3/PREREGISTRATION.md`, which was registered on 2026-10-14 (its status
+block). This file is not registered and binds nothing; it explains the registered text. A
+correction to it is a dated commit, and the registration receipt records the sha256 of the
+version that accompanied registration. Stephen gave the green light on 2026-10-13; the decisions
+are recorded in `v3/DECISIONS_FOR_GREEN_LIGHT.md` and prereg §18.
 
-This file explains each choice in `v3/PREREGISTRATION.DRAFT.md`: why it was made, which v2
+This file explains each choice in `v3/PREREGISTRATION.md`: why it was made, which v2
 evidence it answers, and which literature anchor supports it. It also says what v3 does not
 attempt. It holds **no v3 result**: no v3 code, data or fit exists. Every number about v3 is a
 prediction or an approximation, labeled MODELED or CONJECTURE. Everything is SYNTHETIC.
@@ -984,8 +986,9 @@ cost beyond the margin. Only the last may be called a cost or a trade-off.
   UNKNOWN before any v3 code exists). Missing it is no longer free: if any registered round
   passes before the freeze is sealed, the verdict carries the label "frozen after round R's
   randomness, a full sealed-equivalent sample, was public", and the fix window is already closed
-  (prereg §15.3, §15.6). Before registration, the draft's target instant can still be moved at no
-  cost; that is the only clean way to buy time.
+  (prereg §15.3, §15.6). Until registration, the draft's target instant could be moved at no
+  cost. Since the registration of 2026-10-14 it moves only by a disclosed seal re-registration
+  while R's scheduled time is still in the future (prereg §15.3).
 - **Rejected.**
   - A secret held by Stephen or by any session: custody that nobody can audit, and none was
     supplied.
@@ -1083,8 +1086,8 @@ that file). v3 answers each.
 - **No receipt signing** (D7; a founder decision).
 - **No live monitoring or change detection** (EM-33, ADOPT for live data). There is no live data.
 - **No Hugging Face card or publish** until a verdict exists and a separate change is approved.
-- **No reference to any external person or organization.** No outreach, and no remote write
-  from this draft.
+- **No reference to any external person or organization.** No outreach; the only remote writes
+  are those of the approved provenance plan (prereg §14).
 
 ## 6. Risks to running the plan
 
@@ -1145,5 +1148,5 @@ On 2026-10-14 the orchestrating session decided, under the same reply, the timin
 opening window and the relay rule, and the fixing run adjusted the cutoff and added the archive
 record with the reasons in D15 (prereg §18 items 9–12).
 
-The draft is still NOT registered. Before registration, the check of cited paths in prereg §14.2
-is repeated.
+The preregistration was registered on 2026-10-14 (prereg status block). Before the public part
+of registration (prereg §13 step 1, §14.2), the check of cited paths in prereg §14.2 is repeated.

@@ -1,17 +1,21 @@
 # OAC Ops Health v3: Preregistration
 
 <!-- status:begin -->
-Status: **DRAFT. NOT registered.** This is the last draft. Stephen gave the green light on
-2026-10-13: he replied "do all your recommendations" to `v3/DECISIONS_FOR_GREEN_LIGHT.md`
-(REPORTED; section 18). Registration fixes this text by one commit that renames this file to
-`v3/PREREGISTRATION.md` and changes nothing in it except the lines between the `status:begin`
-and `status:end` markers. The registration receipt `v3/PREREGISTRATION.receipt.json` records
-the registered file's sha256. The public part of registration (section 13 step 1, section 14.2)
-commits the last draft and then the registered bytes, unchanged, to szl-forge. Commit ids are
-recorded in the receipts, never in these lines, so that the registered bytes are the same in
-every repository. The seal is fixed in the body (section 3.4: a future drand beacon round), so
-no secret, and no commitment that a person supplies, enters these lines. Any other byte
-difference between the last draft and the registered file is a defect that blocks registration.
+Status: **REGISTERED on 2026-10-14.** The commit that renamed `v3/PREREGISTRATION.DRAFT.md` to
+this file fixed this text. It changed nothing in the file except the lines between the
+`status:begin` and `status:end` markers, and the commit before it holds the last draft. The
+registration receipt `v3/PREREGISTRATION.receipt.json` records this file's sha256, the beacon
+seal and the v2 digests that v3 is compared against. Stephen gave the green light on 2026-10-13
+(REPORTED; section 18). The text was registered first in the drafting repository. The public
+part of registration (section 13 step 1, section 14.2) commits the last draft and then these
+bytes, unchanged, to szl-forge, adds the receipt with the public commit ids and places the
+annotated tag `oac-v3-registered`. Where this file says "before registration" about a public
+step or check, it means before that public part. For every rule that compares the registration
+with a beacon round, its time is T_fwd of the registration digest's attesting block (section
+3.5), not the date above. Commit ids are recorded in the receipts, never in these lines, so that
+the registered bytes are the same in every repository. The seal is fixed in the body (section
+3.4: drand round R = 6578966, scheduled 2026-10-24T00:00:00Z), so no secret, and no commitment
+that a person supplies, enters these lines.
 <!-- status:end -->
 
 Everything here is SYNTHETIC. No result from this protocol may be generalized to any real

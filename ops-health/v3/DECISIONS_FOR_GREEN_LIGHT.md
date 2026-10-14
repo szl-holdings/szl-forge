@@ -8,8 +8,9 @@ to this list (REPORTED: the orchestrating session's record of his reply; his mes
 verbatim to the amending run reads "al ll your ecoemdatiosn do it"). Each item below keeps the
 recommendation he approved, then the decision as recorded. Item 5 differs: Stephen gave no salt,
 so the orchestrating session decided the seal under his reply (ORCHESTRATOR DECISION).
-The draft records the same decisions in `v3/PREREGISTRATION.DRAFT.md` §18. The draft is still
-NOT registered: registration is the public commits and tags of prereg §14.2.
+The preregistration records the same decisions in `v3/PREREGISTRATION.md` §18. It was
+registered on 2026-10-14 by the commit that renamed `v3/PREREGISTRATION.DRAFT.md` to that file;
+the public part of registration is the commits and tags of prereg §13 step 1 and §14.2.
 
 **Update 2026-10-14.** An adversarial review of the beacon-seal amendment found that item 5's
 timing proof (GitHub's server record of the tag push) expires and does not name the tag's
@@ -109,8 +110,9 @@ and `v3/REVIEW_DISPUTES.md` (second part) hold the details.
        included, must be public, and the freeze digest submitted, by about 2026-10-22, 8 days
        after 2026-10-14. If the freeze is sealed only after a registered round's time, the verdict
        carries the label "frozen after round R's randomness, a full sealed-equivalent sample, was
-       public" and no fix is allowed (prereg §15.3). Missing the seal is no longer free. Before
-       registration, the target instant can still be moved in the draft at no cost (rationale
+       public" and no fix is allowed (prereg §15.3). Missing the seal is no longer free. Since
+       the registration of 2026-10-14, the target instant moves only by a disclosed seal
+       re-registration while R's scheduled time is still in the future (prereg §15.3; rationale
        D15).
      - Trust model and limits: the drand threshold network (collusion of enough operators could
        compute R early, undetectably here); Bitcoin's header times under an honest majority, and

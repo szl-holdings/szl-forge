@@ -1,0 +1,510 @@
+{
+  "schema": "oac-frontier/v3-preregistration-receipt/v1",
+  "synthetic": true,
+  "attests": "integrity and ordering of the registration text only; not quality",
+  "signed": false,
+  "registered_utc": "2026-10-14T10:40:19Z",
+  "registration": {
+    "kind": "local (drafting repository)",
+    "registration_commit": "the commit that adds this receipt and renames v3/PREREGISTRATION.DRAFT.md to v3/PREREGISTRATION.md; a commit cannot name its own id",
+    "last_draft_commit": "e3d78ca3e8712edcb30481737672de28c1e8d13f",
+    "last_draft_commit_note": "drafting-repository commit, information only (prereg 14.2); it is the registration commit's parent",
+    "public_part": {
+      "status": "PENDING",
+      "steps": "prereg 13 step 1 and 14.2: preconditions (tag protection ruleset for oac-v3-* in force; evidence files published under ops-health/v3/evidence/; cited-path check repeated; chain info re-fetched and round R still in the future), then the szl-forge commit adding the last draft unchanged, the rename commit with these registered bytes, the receipt with the public commit ids, the annotated tag oac-v3-registered, and the OpenTimestamps proof of the registration digest (prereg 3.5), whose T_fwd must be earlier than round R's scheduled time",
+      "public_last_draft_commit": null,
+      "public_registration_commit": null,
+      "tag_oac_v3_registered_object": null,
+      "tag_protection_ruleset": {
+        "id": null,
+        "enforcement": null
+      },
+      "registration_digest_ots": null
+    }
+  },
+  "preregistration": {
+    "path": "v3/PREREGISTRATION.md",
+    "sha256": "24c239e7e57049180b609b70e1b283b1d3f61253122e9e189232c69a1a3e1d0e",
+    "bytes": 121138,
+    "last_draft": {
+      "path": "v3/PREREGISTRATION.DRAFT.md",
+      "commit": "e3d78ca3e8712edcb30481737672de28c1e8d13f",
+      "sha256": "ccee2a58dd19883415fd70812481e738fa6115b3751373a07286f6dc1214f358",
+      "bytes": 120809
+    },
+    "outside_status_block_sha256": "11b158544d83661bc49737a764430f23340db8e55ad80e71349178262a43df1f",
+    "differs_from_last_draft_only_inside_status_block": true,
+    "line_endings": "LF"
+  },
+  "rationale": {
+    "path": "v3/DESIGN_RATIONALE.md",
+    "sha256": "e7fdd4f6ecd773d5daca318234db3e89ca634fcac728425379b63b04030d7b98",
+    "bytes": 81975
+  },
+  "decisions": {
+    "path": "v3/DECISIONS_FOR_GREEN_LIGHT.md",
+    "sha256": "359573cff3855e144f77bf1b73f6f6caa3929eaad9c0f65bd1f6cbb799b90018",
+    "bytes": 11960
+  },
+  "review_disputes": {
+    "path": "v3/REVIEW_DISPUTES.md",
+    "sha256": "29d59d3fd835ef7fd2d082e95e359863492de9341191bc776ef42d7c12d1c255",
+    "bytes": 14089
+  },
+  "beacon": {
+    "network": "drand default mainnet chain (beacon id 'default')",
+    "chain_hash": "8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce",
+    "public_key": "868f005eb8e6e4ca0a47c8a77ceaa5309a47978a7c71bc5cce96366b5d7a569937c529eeda66c7293784a9402801af31",
+    "scheme": "pedersen-bls-chained",
+    "group_hash": "176f93498eac9ca337150b46d21dd58673ea4e3581185f869672e59fa4cb390a",
+    "period": 30,
+    "genesis_time": 1595431050,
+    "genesis_time_utc": "2020-07-22T15:17:30Z",
+    "target_utc": "2026-10-24T00:00:00Z",
+    "target_unix": 1792800000,
+    "round": 6578966,
+    "round_rule": "first round whose scheduled time genesis_time + (R - 1) * period is at or after the target instant (prereg 3.4)",
+    "round_time_unix": 1792800000,
+    "round_time_utc": "2026-10-24T00:00:00Z",
+    "salt_rule": "SALT = round R's randomness as 64 lower-case hex characters; sealed splits are generated only inside the opening run (prereg 3.2, 13 step 9)",
+    "relays": [
+      "https://api.drand.sh",
+      "https://drand.cloudflare.com",
+      "https://api2.drand.sh"
+    ],
+    "relay_rule": "answers from drand.cloudflare.com and from at least one of api.drand.sh and api2.drand.sh are required; every answering relay must agree on round, randomness, signature and previous signature; randomness = sha256(signature); round R + 1's previous signature = round R's signature (prereg 3.4)",
+    "verification_level_minimum": "HASH_AND_RELAY_AGREEMENT; BLS_VERIFIED only if the frozen tree holds a standard-library verifier (prereg 3.4)",
+    "parameters_source": "MEASURED: fetched live 2026-10-13T23:48Z from /info and /{chain hash}/info at all three relays (six identical responses); /{chain hash}/info re-fetched 2026-10-14T00:04Z and 2026-10-14T10:29Z, byte-identical"
+  },
+  "registration_check_20261014T1029Z": {
+    "record": {
+      "path": "logs/v3/register/regcheck_20261014T1029Z.txt",
+      "sha256": "37f9dfabb995cd01ef665b20832c03199d1daf712226701e4242a2ea45364ad8",
+      "bytes": 979
+    },
+    "chain_info_matches_registered": true,
+    "latest_round": 6551425,
+    "latest_round_scheduled_utc": "2026-10-14T10:29:30Z",
+    "round_R_in_future": true,
+    "relays_checked": [
+      "https://drand.cloudflare.com",
+      "https://api.drand.sh"
+    ]
+  },
+  "beacon_responses_saved_while_drafting": [
+    {
+      "path": "logs/v3/register/chaininfo_api.drand.sh_20261013.json",
+      "sha256": "fcf35be5d74f73c785df566af0914881d18a5c5c9c875d530407295620cbd927",
+      "bytes": 372,
+      "url": "https://api.drand.sh/8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce/info"
+    },
+    {
+      "path": "logs/v3/register/chaininfo_api2.drand.sh_20261013.json",
+      "sha256": "fcf35be5d74f73c785df566af0914881d18a5c5c9c875d530407295620cbd927",
+      "bytes": 372,
+      "url": "https://api2.drand.sh/8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce/info"
+    },
+    {
+      "path": "logs/v3/register/chaininfo_drand.cloudflare.com_20261013.json",
+      "sha256": "e82b548c8ccfe4173cbb82c5241734348fee2b8d9b2f7e5190aa40a984be5ff1",
+      "bytes": 373,
+      "url": "https://drand.cloudflare.com/8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce/info"
+    },
+    {
+      "path": "logs/v3/register/chains_api.drand.sh_20261013.json",
+      "sha256": "d5bb527d143876c1361b9a5f70ec5b71b648ff7c8c2d271105c1dc2d3136ecf3",
+      "bytes": 202,
+      "url": "https://api.drand.sh/chains"
+    },
+    {
+      "path": "logs/v3/register/info_api.drand.sh_20261013.json",
+      "sha256": "fcf35be5d74f73c785df566af0914881d18a5c5c9c875d530407295620cbd927",
+      "bytes": 372,
+      "url": "https://api.drand.sh/info"
+    },
+    {
+      "path": "logs/v3/register/info_api.drand.sh_headers_20261013.txt",
+      "sha256": "02b48a8f786ae8845c76c773205c12af458c003f37819c7cb4012a1b53f8493e",
+      "bytes": 201,
+      "url": "https://api.drand.sh/info (response headers)"
+    },
+    {
+      "path": "logs/v3/register/info_api2.drand.sh_20261013.json",
+      "sha256": "fcf35be5d74f73c785df566af0914881d18a5c5c9c875d530407295620cbd927",
+      "bytes": 372,
+      "url": "https://api2.drand.sh/info"
+    },
+    {
+      "path": "logs/v3/register/info_api2.drand.sh_headers_20261013.txt",
+      "sha256": "9fcb99891dd66a02864643cefd59e383df4ecb4b4fa13572c713e296612374cc",
+      "bytes": 201,
+      "url": "https://api2.drand.sh/info (response headers)"
+    },
+    {
+      "path": "logs/v3/register/info_drand.cloudflare.com_20261013.json",
+      "sha256": "e82b548c8ccfe4173cbb82c5241734348fee2b8d9b2f7e5190aa40a984be5ff1",
+      "bytes": 373,
+      "url": "https://drand.cloudflare.com/info"
+    },
+    {
+      "path": "logs/v3/register/info_drand.cloudflare.com_headers_20261013.txt",
+      "sha256": "322cdc8653fa1b034047c6ffb5e03061e25e4ee998de4ae3954f5723f671d569",
+      "bytes": 410,
+      "url": "https://drand.cloudflare.com/info (response headers)"
+    },
+    {
+      "path": "logs/v3/register/latest_api.drand.sh_20261013.json",
+      "sha256": "4b891b1551fc2b6d064405e3e0d07c4d677c358b9d742f1b7a2fc4e2662020a3",
+      "bytes": 520,
+      "url": "https://api.drand.sh/8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce/public/latest"
+    },
+    {
+      "path": "logs/v3/register/latest_api2.drand.sh_20261013.json",
+      "sha256": "4b891b1551fc2b6d064405e3e0d07c4d677c358b9d742f1b7a2fc4e2662020a3",
+      "bytes": 520,
+      "url": "https://api2.drand.sh/8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce/public/latest"
+    },
+    {
+      "path": "logs/v3/register/latest_drand.cloudflare.com_20261013.json",
+      "sha256": "3ff9ac900ecffe8592a4a5db6b5f598195057c8c91b1183c42e52504e98c326a",
+      "bytes": 520,
+      "url": "https://drand.cloudflare.com/8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce/public/latest"
+    },
+    {
+      "path": "logs/v3/register/probe_latest_api.drand.sh_20261013.json",
+      "sha256": "ada6282adf0a133762646d938576971ab5df6cfdd03ee1d3e71e23a438dcf6f2",
+      "bytes": 520,
+      "url": "https://api.drand.sh/8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce/public/latest",
+      "url_note": "clock probe; the drafting run did not record the path form (/public/latest or /{chain hash}/public/latest; both serve the default chain)"
+    },
+    {
+      "path": "logs/v3/register/probe_latest_api.drand.sh_headers_20261013.txt",
+      "sha256": "52ad6765b59d81e673f62ba95d7f465e1ba8ebd732321b0c6303e7e7052dd3bd",
+      "bytes": 87,
+      "url": "https://api.drand.sh/8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce/public/latest (response headers)",
+      "url_note": "clock probe; the drafting run did not record the path form (/public/latest or /{chain hash}/public/latest; both serve the default chain)"
+    },
+    {
+      "path": "logs/v3/register/probe_latest_drand.cloudflare.com_20261013.json",
+      "sha256": "2196bd0e81a9c47571bf493ad690866b9d8a731cbd48e21df7ed1e5bff8e1edc",
+      "bytes": 520,
+      "url": "https://drand.cloudflare.com/8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce/public/latest",
+      "url_note": "clock probe; the drafting run did not record the path form (/public/latest or /{chain hash}/public/latest; both serve the default chain)"
+    },
+    {
+      "path": "logs/v3/register/probe_latest_drand.cloudflare.com_headers_20261013.txt",
+      "sha256": "560ee9ec56729eb65c92fb0cb570be5ab62e7c15f4939fa4dfd92606f20af70d",
+      "bytes": 109,
+      "url": "https://drand.cloudflare.com/8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce/public/latest (response headers)",
+      "url_note": "clock probe; the drafting run did not record the path form (/public/latest or /{chain hash}/public/latest; both serve the default chain)"
+    },
+    {
+      "path": "logs/v3/register/recheck_info_api.drand.sh_20261014T0004Z.json",
+      "sha256": "fcf35be5d74f73c785df566af0914881d18a5c5c9c875d530407295620cbd927",
+      "bytes": 372,
+      "url": "https://api.drand.sh/8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce/info"
+    },
+    {
+      "path": "logs/v3/register/recheck_info_api.drand.sh_headers_20261014T0004Z.txt",
+      "sha256": "f67a862cc3e4167e0cb41a6d7dcc90aace84a264735986613a5148541d3faa4e",
+      "bytes": 201,
+      "url": "https://api.drand.sh/8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce/info (response headers)"
+    },
+    {
+      "path": "logs/v3/register/recheck_info_drand.cloudflare.com_20261014T0004Z.json",
+      "sha256": "e82b548c8ccfe4173cbb82c5241734348fee2b8d9b2f7e5190aa40a984be5ff1",
+      "bytes": 373,
+      "url": "https://drand.cloudflare.com/8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce/info"
+    },
+    {
+      "path": "logs/v3/register/recheck_info_drand.cloudflare.com_headers_20261014T0004Z.txt",
+      "sha256": "e546641ac66538efbd73aac40d36654cacda964326d316b204985f743a7a7264",
+      "bytes": 410,
+      "url": "https://drand.cloudflare.com/8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce/info (response headers)"
+    },
+    {
+      "path": "logs/v3/register/regcheck_20261014T1029Z.txt",
+      "sha256": "37f9dfabb995cd01ef665b20832c03199d1daf712226701e4242a2ea45364ad8",
+      "bytes": 979,
+      "kind": "computation record (no URL)"
+    },
+    {
+      "path": "logs/v3/register/regcheck_info_api.drand.sh_20261014T1029Z.json",
+      "sha256": "fcf35be5d74f73c785df566af0914881d18a5c5c9c875d530407295620cbd927",
+      "bytes": 372,
+      "url": "https://api.drand.sh/8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce/info"
+    },
+    {
+      "path": "logs/v3/register/regcheck_info_api.drand.sh_headers_20261014T1029Z.txt",
+      "sha256": "8d14c85f878836703edc3b6455f059dfcfc80c2f9d9bf732fa9a3811a0f6ba8f",
+      "bytes": 201,
+      "url": "https://api.drand.sh/8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce/info (response headers)"
+    },
+    {
+      "path": "logs/v3/register/regcheck_info_drand.cloudflare.com_20261014T1029Z.json",
+      "sha256": "e82b548c8ccfe4173cbb82c5241734348fee2b8d9b2f7e5190aa40a984be5ff1",
+      "bytes": 373,
+      "url": "https://drand.cloudflare.com/8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce/info"
+    },
+    {
+      "path": "logs/v3/register/regcheck_info_drand.cloudflare.com_headers_20261014T1029Z.txt",
+      "sha256": "e47a4648fb87eb0118b9154a186f36d9ac90088f4fc1d52e1c470ecff119fc4b",
+      "bytes": 410,
+      "url": "https://drand.cloudflare.com/8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce/info (response headers)"
+    },
+    {
+      "path": "logs/v3/register/regcheck_latest_api.drand.sh_20261014T1029Z.json",
+      "sha256": "491b30cc1f11eef2379ab212960f5d55d06fa31e96c8a73fca6c336963398a92",
+      "bytes": 520,
+      "url": "https://api.drand.sh/8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce/public/latest"
+    },
+    {
+      "path": "logs/v3/register/regcheck_latest_api.drand.sh_headers_20261014T1029Z.txt",
+      "sha256": "b43e68f0fc4759318872918c63aad96163fd994f1f8c06cc8ca2edbcb81b9af8",
+      "bytes": 253,
+      "url": "https://api.drand.sh/8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce/public/latest (response headers)"
+    },
+    {
+      "path": "logs/v3/register/regcheck_latest_drand.cloudflare.com_20261014T1029Z.json",
+      "sha256": "792327460dc96d2635c5f78cceb4851ee643567f73ce5ab709e2cb2ce54bafa6",
+      "bytes": 520,
+      "url": "https://drand.cloudflare.com/8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce/public/latest"
+    },
+    {
+      "path": "logs/v3/register/regcheck_latest_drand.cloudflare.com_headers_20261014T1029Z.txt",
+      "sha256": "8499285bf1e02eb463dae47119603f480dec23541b5d504c4d3efbc453479dba",
+      "bytes": 426,
+      "url": "https://drand.cloudflare.com/8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce/public/latest (response headers)"
+    },
+    {
+      "path": "logs/v3/register/round_R_20261013.txt",
+      "sha256": "91d9993e925b9265d5aa503c018d267d03a2cdff5de82f9499db26a8877f0969",
+      "bytes": 2049,
+      "kind": "computation record (no URL)"
+    }
+  ],
+  "timing_proof_services": {
+    "opentimestamps_calendars": {
+      "group_1_at_least_one_of": [
+        "https://a.pool.opentimestamps.org",
+        "https://b.pool.opentimestamps.org"
+      ],
+      "group_2_at_least_one_of": [
+        "https://a.pool.eternitywall.com",
+        "https://ots.btc.catallaxy.com"
+      ]
+    },
+    "bitcoin_header_explorers": [
+      "https://blockstream.info/api",
+      "https://mempool.space/api"
+    ],
+    "archives": [
+      "https://archive.softwareheritage.org/api/1/ (visit of https://github.com/szl-holdings/szl-forge)",
+      "Internet Archive captures of https://api.github.com/repos/szl-holdings/szl-forge/git/ref/tags/oac-v3-frozen and of the same URL for oac-v3-seal"
+    ],
+    "t1_cutoff_utc": "2026-10-23T22:00:00Z",
+    "t2_cutoff_utc": "2026-10-23T23:00:00Z",
+    "freeze_digest_planned_by_utc": "2026-10-22T00:00:00Z"
+  },
+  "runtime_pins": {
+    "python": "CPython 3.12.10",
+    "invocation": "python -I",
+    "PYTHONHASHSEED": "0",
+    "preflight_min_free_disk": "2 GB",
+    "preflight_min_free_memory": "4 GiB"
+  },
+  "v2_frozen_artifacts_compared_against": [
+    {
+      "path": "v2/research/generator.py",
+      "sha256": "a502d3644534ec599663d8678b8066b390e612396b25350f33fa987194b44384",
+      "bytes": 10075,
+      "role": "generator ops-health-generator/2.0.0 (prereg 3.1; A17)",
+      "recorded_in": "v2/results/STAGE2_SEARCH.md",
+      "matches_recorded": true
+    },
+    {
+      "path": "v2/ops-health/ops_health.py",
+      "sha256": "b0a64ff3f26ea284b0588de351ed7795a6089203b35fded0e7d82cbd4871aed9",
+      "bytes": 37428,
+      "role": "v2 kernel of the contender 'v2 as-is' (prereg 5; A17)",
+      "recorded_in": "v2/results/STAGE2_SEARCH.md",
+      "matches_recorded": true
+    },
+    {
+      "path": "v2/ops-health/model.json",
+      "sha256": "b830a5edca271d667ab09b378dd5d3ab505d71a7e3451de8d9ca2bacfeed977c",
+      "bytes": 3572,
+      "role": "v2 model of the contender 'v2 as-is' (prereg 5; A17)",
+      "recorded_in": "v2/results/STAGE2_SEARCH.md",
+      "matches_recorded": true
+    },
+    {
+      "path": "v2/ops-health/artifact_receipt.json",
+      "sha256": "442486a3b451f0ad765aac253830cdc5455bad3a34186b4cf73388cf207056f2",
+      "bytes": 1715,
+      "role": "v2 receipt of the contender 'v2 as-is' (prereg 5; A17)",
+      "recorded_in": "v2/results/STAGE2_SEARCH.md",
+      "matches_recorded": true
+    },
+    {
+      "path": "v2/PREREGISTRATION.md",
+      "sha256": "145497789c7ad78a80a94cfd7f2b031ca9a20df49c06e0b3412af9070fa1ef4b",
+      "bytes": 13327,
+      "role": "v2 registered protocol (read only; never edited)",
+      "recorded_in": "v2/results/STAGE2_SEARCH.md",
+      "matches_recorded": true
+    },
+    {
+      "path": "v2/AMENDMENTS.md",
+      "sha256": "5152cd7f816c41e810861bbcd6489dee1d2598da89a36f6b418ef4a9867f181d",
+      "bytes": 3638,
+      "role": "v2 amendments AM-1..AM-6 (read only; never edited)",
+      "recorded_in": "v2/results/STAGE2_SEARCH.md",
+      "matches_recorded": true
+    },
+    {
+      "path": "v2/data/MANIFEST.json",
+      "sha256": "c0d2fa0a924162e42c4d50c8eaf7d155f3e991f8f47ca518b1b87c3927ad7252",
+      "bytes": 5353,
+      "role": "v2 data manifest: digest targets of the v2 non-sealed parity test (prereg 3.3); hashed as a file, no sealed split opened",
+      "recorded_in": "v2/results/STAGE2_SEARCH.md",
+      "matches_recorded": true
+    }
+  ],
+  "v2_cited_records": [
+    {
+      "path": "v2/results/FINAL_RESULTS.md",
+      "sha256": "86f815587b85bf9c26845f08b188ef4144f17d86ce9214c3525255cf0486810c",
+      "bytes": 26848
+    },
+    {
+      "path": "v2/results/MUTATION_READINESS.md",
+      "sha256": "6b3b9d5f26937bb6c1cd1610cf546b9d97aa53cd24f7b1fef47c37a4768bce80",
+      "bytes": 34802
+    },
+    {
+      "path": "v2/results/STAGE2_SEARCH.md",
+      "sha256": "100c501387d69c366997a9b2187c01b90266ac4714b09d4f1399965a29466aed",
+      "bytes": 17213
+    },
+    {
+      "path": "v2/results/COMPLIANCE.md",
+      "sha256": "f00664ac41f57f69324934b52dd7ff062ee1b453457d80514f0d31d3ce2637ae",
+      "bytes": 13232
+    }
+  ],
+  "evidence_to_publish": [
+    {
+      "path": "literature/HARVEST_NOTES.md",
+      "sha256": "69e87a69e58098f7f61579d8f8c1c418788baf6589bb4749a8e287b1a2e58827",
+      "bytes": 22430,
+      "publish_as": "ops-health/v3/evidence/literature/HARVEST_NOTES.md"
+    },
+    {
+      "path": "literature/VERIFICATION.md",
+      "sha256": "9d418802e30392c37306977f24ee4376fbb88330a4241ca9b0f921ad09edfe9a",
+      "bytes": 18736,
+      "publish_as": "ops-health/v3/evidence/literature/VERIFICATION.md"
+    },
+    {
+      "path": "literature/anchors.json",
+      "sha256": "fbf9ab6e4f3dd6916124c07aeee4c3b2887afa1d3a38355a84a05f5c91ddd99c",
+      "bytes": 121294,
+      "publish_as": "ops-health/v3/evidence/literature/anchors.json"
+    },
+    {
+      "path": "literature/evidence_matrix.md",
+      "sha256": "7b022201fa8b394006e70ad11b3d1d3cb6624bf1f36d1e7fcb0facaf0bdffff6",
+      "bytes": 28142,
+      "publish_as": "ops-health/v3/evidence/literature/evidence_matrix.md"
+    },
+    {
+      "path": "literature/leaders.json",
+      "sha256": "a9a3a96a00f2cbe9c51c2bfa92295731704b2df390fb32eb19f426644d341c18",
+      "bytes": 11862,
+      "publish_as": "ops-health/v3/evidence/literature/leaders.json"
+    },
+    {
+      "path": "literature/leaders.md",
+      "sha256": "00f101ccb7abc1efad61dec1af1959325c4023976ed70b01c93e296aee5f5768",
+      "bytes": 29989,
+      "publish_as": "ops-health/v3/evidence/literature/leaders.md"
+    },
+    {
+      "path": "literature/leaders_verified.json",
+      "sha256": "016dc11f3abb0922605d28baa3b83d05dd7d51fec4b41745aaa3b1524d80dd2c",
+      "bytes": 263490,
+      "publish_as": "ops-health/v3/evidence/literature/leaders_verified.json"
+    },
+    {
+      "path": "literature/official_code_map.json",
+      "sha256": "ac0b9156fe1617df0c7d4f1f89f42a7594cc49a366070813bd0cfe0d95c2a6c1",
+      "bytes": 2162,
+      "publish_as": "ops-health/v3/evidence/literature/official_code_map.json"
+    },
+    {
+      "path": "literature/raw.json",
+      "sha256": "4f2c5a98a1119614f335bc402438351c21816a914b2b3f3e4e7d72eb366e6390",
+      "bytes": 426316,
+      "publish_as": "ops-health/v3/evidence/literature/raw.json"
+    },
+    {
+      "path": "literature/reforms_items.json",
+      "sha256": "70d31d0e27a39dbdcf6e5f631240b52b0bdf4784f5422faef4c395122bcb9e7d",
+      "bytes": 11081,
+      "publish_as": "ops-health/v3/evidence/literature/reforms_items.json"
+    },
+    {
+      "path": "literature/synthetic_eval_candidates.json",
+      "sha256": "2ba2d2b56c53400b9c9d77d6c9919ce3e7862fab730b6270379f996d6ee3f352",
+      "bytes": 71461,
+      "publish_as": "ops-health/v3/evidence/literature/synthetic_eval_candidates.json"
+    },
+    {
+      "path": "literature/synthetic_eval_selected.json",
+      "sha256": "f4ed85e0d798dedfb1bac3a64d145a85326b7d9556efc7ae3bae1bde1ff2779f",
+      "bytes": 1583,
+      "publish_as": "ops-health/v3/evidence/literature/synthetic_eval_selected.json"
+    },
+    {
+      "path": "drafts/forum_thread.md",
+      "sha256": "1acc5ef64a9beaf65ae3e1630c06ed333e759df4b10aa03ec0fc299c855e4606",
+      "bytes": 7362,
+      "publish_as": "ops-health/v3/evidence/drafts/forum_thread.md"
+    },
+    {
+      "path": "logs/verify/v3-prereg-review-a/modeled_arithmetic_20261013.txt",
+      "sha256": "ad6eabd7033e51eddc32babfdc96421e692b983b27e717d46fd780e904d7f922",
+      "bytes": 7475,
+      "publish_as": "ops-health/v3/evidence/logs/verify/v3-prereg-review-a/modeled_arithmetic_20261013.txt"
+    },
+    {
+      "path": "logs/verify/v3-prereg-review-b/checks_20261013.txt",
+      "sha256": "ea44f27bc8d05534022974c9d72e5844799d32b822e8c579475225fb3ff83f40",
+      "bytes": 14376,
+      "publish_as": "ops-health/v3/evidence/logs/verify/v3-prereg-review-b/checks_20261013.txt"
+    },
+    {
+      "path": "logs/verify/v3-prereg-review-b/ledger_20261013.txt",
+      "sha256": "fcce7934fabca9aee23f2220921ea9d185969cc2376d2b3d97ee47e604f9cad0",
+      "bytes": 6286,
+      "publish_as": "ops-health/v3/evidence/logs/verify/v3-prereg-review-b/ledger_20261013.txt"
+    }
+  ],
+  "drafting_helpers": [
+    {
+      "path": "scripts/v3_beacon_round.py",
+      "sha256": "db72981c40f37f4ab6f052a2ad7fa0ccd50ed48995a7a98487c7bef3f9e35d98",
+      "bytes": 3711
+    }
+  ],
+  "state_at_registration": {
+    "v3_code_exists": false,
+    "v3_code_note": "no v3 generator, kernel, gate, mutation, scorer or analyzer code exists; scripts/v3_beacon_round.py is a drafting helper that computed R from saved chain info",
+    "v3_data_exists": false,
+    "pilot_runs": 0,
+    "dev_runs": 0,
+    "v2_sealed_data_opened": false,
+    "remote_writes_by_this_registration": "none (local commit only)"
+  }
+}
