@@ -25,7 +25,7 @@ promise about future availability. No new card header claims hosted inference.
 
 | Publisher | Profiles | Source disposition |
 | --- | ---: | --- |
-| `publish-kernel-mirror-cards.yml` | 7 | Six public profiles; ReceiptAgent 1.5B remains gated. The five converged kernel twins moved to their own repositories' `hf-kernel-publish.yml` on 2026-10-13 |
+| `publish-kernel-mirror-cards.yml` | 6 | Five public profiles; ReceiptAgent 1.5B remains gated. The six converged kernel twins moved to their own repositories' `hf-kernel-publish.yml`: five on 2026-10-13, then szl-formulas once its own publisher was live |
 | `publish-khipu-card.yml` | 2 | Research cards with their abstention release blockers visible |
 | `publish-chaski-card.yml` | 4 | Research cards with failed, quarantined, or not-promotable states visible |
 

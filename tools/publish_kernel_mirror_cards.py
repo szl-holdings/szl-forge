@@ -107,12 +107,11 @@ class Asset:
         }
 
 
+# No current profile uses the kernel-style default shape (README.md at the
+# source root, library_name: kernels): its last user, szl-formulas, converged
+# onto its own hf-kernel-publish.yml. The shape stays for a future kernel card
+# that is not in KERNEL_REPO_OWNED_TARGETS.
 PROFILES: dict[str, Profile] = {
-    "szl-formulas": Profile(
-        name="szl-formulas",
-        source_dir="szl-formulas",
-        repo_id="SZLHOLDINGS/szl-formulas",
-    ),
     "khipu-gguf": Profile(
         name="khipu-gguf",
         source_dir="khipu-gguf",
