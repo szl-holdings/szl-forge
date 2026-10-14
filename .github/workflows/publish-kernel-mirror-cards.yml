@@ -5,16 +5,15 @@ name: Publish kernel mirror cards
 # current protected main. workflow_dispatch exists so a later main can
 # finish remaining family cards after a mid-matrix main move.
 #
-# Converged kernel twins (szl-blocked, szl-govsign, szl-invariants,
-# szl-ouroboros, szl-provctl) are not profiles here: each kernel repo's own
-# hf-kernel-publish.yml is the single writer of its kernel repo and model twin.
+# Converged kernel twins (szl-blocked, szl-formulas, szl-govsign,
+# szl-invariants, szl-ouroboros, szl-provctl) are not profiles here: each kernel
+# repo's own hf-kernel-publish.yml is the single writer of its kernel repo and
+# model twin.
 on:
   workflow_dispatch:
   pull_request:
     branches: [main]
     paths:
-      - "szl-formulas/README.md"
-      - "szl-formulas/card/holo-banner.svg"
       - "khipu-gguf/card/README.md"
       - "khipu-gguf/card/holo-banner.svg"
       - "nemo/card/README.md"
@@ -38,8 +37,6 @@ on:
   push:
     branches: [main]
     paths:
-      - "szl-formulas/README.md"
-      - "szl-formulas/card/holo-banner.svg"
       - "khipu-gguf/card/README.md"
       - "khipu-gguf/card/holo-banner.svg"
       - "nemo/card/README.md"
@@ -111,7 +108,6 @@ jobs:
             tools/publish_kernel_mirror_cards.py \
             tools/acquire_hf_publisher_token.py
           for profile in \
-            szl-formulas \
             khipu-gguf \
             nemo \
             tinykhipu-nano \
@@ -146,9 +142,6 @@ jobs:
       max-parallel: 1
       matrix:
         include:
-          - profile: szl-formulas
-            repo_id: SZLHOLDINGS/szl-formulas
-            receipt: szl-formulas-card
           - profile: khipu-gguf
             repo_id: SZLHOLDINGS/SZL-Khipu-1.5B-GGUF
             receipt: khipu-gguf-card

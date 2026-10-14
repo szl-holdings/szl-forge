@@ -192,6 +192,7 @@ same-named model twin, which it keeps as a pointer card.
 | --- | --- |
 | `kernels/SZLHOLDINGS/szl-kernels` | `szl-holdings/szl-kernels` `hf-kernel-publish.yml`; the `SZLHOLDINGS/szl-kernels` model repo (SZL-MiniEmbed host, no twin) is written by that repository's own source-binding publisher |
 | `szl-invariants`, `szl-govsign`, `szl-maskmod`, `szl-receipt-attn`, `szl-blocked`, `szl-ouroboros`, `szl-provctl`, `szl-block-kv`, `YARQA-ATTN` (kernel repo and model twin) | the same-named `szl-holdings/<name>` repository's `hf-kernel-publish.yml` |
+| `szl-formulas` kernel repo + model twin | `szl-holdings/szl-formulas` `hf-kernel-publish.yml` |
 | `szl-lambda-gate`, `szl-governed-norm` (kernel repos and model twins) | `szl-holdings/szl-lambda-gate` `hf-kernel-publish.yml` |
 
 The closed registry is [`publishing/kernel-hub-ownership.json`](publishing/kernel-hub-ownership.json).
@@ -200,10 +201,11 @@ can write to the Hub names one of these targets, or if a retired writer
 returns, and `tools/publish_kernel_mirror_cards.py` refuses any profile that
 targets them. The retired Forge writers were `publish-szl-kernels.yml`,
 `publish-szl-invariants.yml`, `reconcile-kernel-provenance.yml`,
-`publish-compatibility-kernels.yml`, the five converged kernel profiles of
-`publish-kernel-mirror-cards.yml`, and the converged twins in the joblib
-quarantine workflows, together with their authorizers, credential helpers,
-verifiers and tests. Git history keeps them.
+`publish-compatibility-kernels.yml`, the six converged kernel profiles of
+`publish-kernel-mirror-cards.yml` (szl-formulas last, once its own publisher
+was live), and the converged twins in the joblib quarantine workflows,
+together with their authorizers, credential helpers, verifiers and tests. Git
+history keeps them.
 
 ## Doctrine gate (dataset content)
 

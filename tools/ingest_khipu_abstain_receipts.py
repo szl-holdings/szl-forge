@@ -46,6 +46,8 @@ KNOWN_PIPELINE_SHA256 = {
     "ef3a9049ca8ebd9f48cfecb1c039792360d220cc101bd638f2e563ed84432da2": "szl-forge huggingface@3dee2933 (#469 pure-bf16 lane; produced bundle 20261001-a989dd523998)",
     "2e242ac68e8fe925d3cbb9c77feb9ffc908bbfc1c8f0ed841cfeeafc2bb56316": "szl-forge huggingface@0aa28b8f (#473 DPO profiles C2/C3)",
     "0093753bd18510ee79f1d99f20a143951e44fa90b117c674b1d85c4d7acd491d": "szl-forge huggingface@f4c9bab8 (#474 knob probe + kernel stack on the C2/C3 profiles)",
+    "d23132854815bcede6fff2d8bda5d3d367752b0bd78c12018c993696920a28ae": "szl-forge main@cbde8af8 (#529 eval binds the challenger adapter bytes)",
+    "023e9384e0b6981a025207fb84f0f9182f61ae7349eacac9711f200ef2cb5bea": "szl-forge frontier-v2/khipu-forge-selective-20261014 (R06 phase 2: additive combined_selective eval block)",
 }
 
 
