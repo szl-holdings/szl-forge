@@ -22,7 +22,7 @@ import time
 from typing import BinaryIO
 import uuid
 
-VERSION = "1.2.1"
+VERSION = "1.3.0"
 SPEC_COMMIT = "7840aaba1989c6deeefede1d77d5aaf8f52b947e"
 # Provider-reported FROM identities in the inspected owner recovery report.
 # These are NOT installed-tag digests and NOT claims about current local files.
@@ -39,6 +39,11 @@ MAX_ARRAY_ITEMS = 2_000_000
 MAX_VALUE_NODES = 4_000_000
 # Only the unquantized F16/F32 tensor types relevant to this investigation.
 TENSOR_TYPES = {0: ("F32", 4), 1: ("F16", 2)}
+# Opt-in only; never part of the default allowlist above. At SPEC_COMMIT,
+# include/ggml.h defines GGML_TYPE_BF16 = 30 and ggml_bf16_t as one uint16_t;
+# src/ggml.c type_traits gives blck_size 1, type_size sizeof(ggml_bf16_t).
+# Admitted only when a caller passes allow_bf16=True (CLI: --allow-bf16).
+OPT_IN_BF16 = {30: ("BF16", 2)}
 PRIMITIVES = {0: "B", 1: "b", 2: "H", 3: "h", 4: "I", 5: "i",
               6: "f", 7: "B", 10: "Q", 11: "q", 12: "d"}
 
@@ -52,9 +57,16 @@ def require(ok: bool, code: str) -> None:
         raise ForensicsError(code)
 
 
+def admitted_tensor_types(allow_bf16: bool) -> dict:
+    """Default F32/F16 table, plus BF16 only on an explicit boolean opt-in."""
+    require(type(allow_bf16) is bool, "OPT_IN_FLAG_BOUND")
+    return {**TENSOR_TYPES, **OPT_IN_BF16} if allow_bf16 else dict(TENSOR_TYPES)
+
+
 class UnsupportedTensorType(ForensicsError):
     """A bounded header observation, not an authenticated file/weight result."""
-    def __init__(self, kind: int, tensor_index: int, type_field_offset: int):
+    def __init__(self, kind: int, tensor_index: int, type_field_offset: int,
+                 admitted: dict | None = None):
         require(type(kind) is int and 0 <= kind <= 0xffffffff,
                 "INVALID_TENSOR_TYPE_OBSERVATION")
         require(type(tensor_index) is int and 0 <= tensor_index < MAX_TENSORS,
@@ -67,7 +79,7 @@ class UnsupportedTensorType(ForensicsError):
             "ggml_type_id": kind,
             "tensor_index_zero_based": tensor_index,
             "type_field_byte_offset": type_field_offset,
-            "supported_ggml_type_ids": sorted(TENSOR_TYPES),
+            "supported_ggml_type_ids": sorted(TENSOR_TYPES if admitted is None else admitted),
             "scope": "PARTIAL_HEADER_NOT_FULL_FILE_AUTHENTICATED",
             "historical_blob_sha256_verification": "NOT_COMPLETED",
             "inferred_from_model_label": False,
@@ -232,8 +244,14 @@ class Reader:
             count -= len(block)
 
 
-def fingerprint_stream(stream: BinaryIO, size: int, seconds: float = 600) -> dict:
-    """Parse an admitted little-endian GGUF v2/v3, retaining only hashes/counts."""
+def fingerprint_stream(stream: BinaryIO, size: int, seconds: float = 600, *,
+                       allow_bf16: bool = False) -> dict:
+    """Parse an admitted little-endian GGUF v2/v3, retaining only hashes/counts.
+
+    BF16 descriptors are rejected exactly as before unless allow_bf16 is True.
+    Opting in changes the admitted width table only; no value is decoded.
+    """
+    types = admitted_tensor_types(allow_bf16)
     require(type(size) is int and 24 <= size <= MAX_FILE, "FILE_SIZE_BOUND")
     require(type(seconds) in (int, float) and math.isfinite(seconds)
             and 0 < seconds <= 1800, "DEADLINE_BOUND")
@@ -284,14 +302,14 @@ def fingerprint_stream(stream: BinaryIO, size: int, seconds: float = 600) -> dic
         shape = [r.number("Q") for _ in range(dimensions)]
         require(all(0 < x <= 2**31 for x in shape), "DIMENSION_SIZE_BOUND")
         kind = r.number("I")
-        if kind not in TENSOR_TYPES:
-            raise UnsupportedTensorType(kind, len(tensors), r.offset - 4)
+        if kind not in types:
+            raise UnsupportedTensorType(kind, len(tensors), r.offset - 4, types)
         offset = r.number("Q")
-        nbytes = math.prod(shape) * TENSOR_TYPES[kind][1]
+        nbytes = math.prod(shape) * types[kind][1]
         require(nbytes <= MAX_FILE and offset <= MAX_FILE and offset % alignment == 0,
                 "TENSOR_RANGE_OR_ALIGNMENT")
         tensors.append({"name_sha256": digest(name.encode()), "shape": shape,
-                        "type": TENSOR_TYPES[kind][0], "bytes": nbytes, "offset": offset})
+                        "type": types[kind][0], "bytes": nbytes, "offset": offset})
     r.header = False
     data_start = ((r.offset + alignment - 1) // alignment) * alignment
     require(data_start <= size, "TRUNCATED_PADDING")
@@ -313,17 +331,25 @@ def fingerprint_stream(stream: BinaryIO, size: int, seconds: float = 600) -> dic
     metadata = {name: {"fields": len(entries),
                        "sha256": digest(canonical(sorted(entries))) if entries else None}
                 for name, entries in groups.items()}
-    return {"gguf_version": version, "architecture": architecture, "bytes": size,
-            "container_sha256": r.file_hash.hexdigest(), "tensor_count": len(tensors),
-            "tensor_bytes": sum(t["bytes"] for t in tensors),
-            "tensor_set_sha256": digest(canonical(tensors)), "tensors": tensors,
-            "metadata_fingerprints": metadata,
-            "tensor_values_or_health_checked": False,
-            "boundary": "Bitwise F16/F32 comparison only; no numerical, provenance or model-quality qualification."}
+    result = {"gguf_version": version, "architecture": architecture, "bytes": size,
+              "container_sha256": r.file_hash.hexdigest(), "tensor_count": len(tensors),
+              "tensor_bytes": sum(t["bytes"] for t in tensors),
+              "tensor_set_sha256": digest(canonical(tensors)), "tensors": tensors,
+              "metadata_fingerprints": metadata,
+              "tensor_values_or_health_checked": False,
+              "boundary": "Bitwise F16/F32 comparison only; no numerical, provenance or model-quality qualification."}
+    if allow_bf16:
+        # Recorded only on opt-in so the default result stays byte-identical to v1.2.1.
+        result["opt_in_tensor_types"] = ["BF16"]
+        result["boundary"] = ("Bitwise F16/F32/BF16 comparison only (BF16 explicitly opted in); "
+                              "no numerical, provenance or model-quality qualification.")
+    return result
 
 
-def inspect_file(path: Path, expected: str, seconds: float = 600) -> dict:
+def inspect_file(path: Path, expected: str, seconds: float = 600, *,
+                 allow_bf16: bool = False) -> dict:
     """Bind parsed bytes to a historical blob digest, not just a filename."""
+    admitted_tensor_types(allow_bf16)  # refuse a non-boolean opt-in before any I/O
     require(re.fullmatch(r"[a-f0-9]{64}", expected) is not None, "EXPECTED_DIGEST_REQUIRED")
     require(plain_path(path), "LINKED_INPUT_REFUSED")
     before = path.stat()
@@ -333,7 +359,9 @@ def inspect_file(path: Path, expected: str, seconds: float = 600) -> dict:
     with os.fdopen(fd, "rb") as stream:
         opened = os.fstat(stream.fileno())
         require_stat_match(before, opened, "INPUT_CHANGED_AT_OPEN", same_api=False)
-        result = fingerprint_stream(stream, opened.st_size, seconds)
+        # The default path keeps the exact v1.2.1 call; the keyword exists only on opt-in.
+        result = (fingerprint_stream(stream, opened.st_size, seconds, allow_bf16=True)
+                  if allow_bf16 else fingerprint_stream(stream, opened.st_size, seconds))
         require_stat_match(opened, os.fstat(stream.fileno()),
                            "INPUT_CHANGED_DURING_READ", same_api=True)
     require(plain_path(path), "INPUT_CHANGED_AFTER_READ:linked_path")
@@ -399,10 +427,19 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--inspect-blobs", action="store_true", help="Explicitly read both historical blobs; CPU/disk only")
     parser.add_argument("--blob-root", type=Path, help="Owner-selected local blob directory; defaults to ~/.ollama/models/blobs")
+    parser.add_argument("--allow-bf16", action="store_true",
+                        help="Opt in: also admit GGML type 30 (BF16) tensor layouts. Off by default; "
+                             "not model authentication, loading or qualification")
     args = parser.parse_args(argv)
+    opt_in = ["BF16"] if args.allow_bf16 else []
+    # Default reads keep the exact v1.2.1 inspect_file call; the keyword exists only on opt-in.
+    read_options = {"allow_bf16": True} if args.allow_bf16 else {}
     if not args.inspect_blobs:
-        print(json.dumps({"state": "PLAN_ONLY_NO_BLOB_READ", "targets": list(BLOBS),
-                          "inference": False, "training": False}))
+        plan = {"state": "PLAN_ONLY_NO_BLOB_READ", "targets": list(BLOBS),
+                "inference": False, "training": False}
+        if opt_in:
+            plan["opt_in_tensor_types"] = opt_in
+        print(json.dumps(plan))
         return 0
     require(os.name == "nt" and os.environ.get("COMPUTERNAME", "").casefold() == "betterwithage",
             "BETTERWITHAGE_WINDOWS_ONLY")
@@ -423,7 +460,7 @@ def main(argv: list[str] | None = None) -> int:
               "inference": False, "training": False, "model_weights_changed": False,
               "paired_attempts_touched": False, "publication_eligible": False,
               "expected_historical_blobs": dict(BLOBS), "active_model": None,
-              "automatic_resume_authorized": False}
+              "automatic_resume_authorized": False, "opt_in_tensor_types": opt_in}
     checkpoint(out, report, 0, "INSPECTION_PLANNED")
     print("Evidence directory:", out, flush=True)
     for index, (name, expected) in enumerate(BLOBS.items(), start=1):
@@ -432,7 +469,8 @@ def main(argv: list[str] | None = None) -> int:
         print("Reading historical blob for " + name + " (no inference).", flush=True)
         try:
             report["models"][name] = {"state": "BYTE_IDENTITY_VERIFIED_LAYOUT_INSPECTED",
-                                      **inspect_file(root / ("sha256-" + expected), expected)}
+                                      **inspect_file(root / ("sha256-" + expected), expected,
+                                                     **read_options)}
         except (ForensicsError, OSError, ValueError, struct.error) as error:
             report["models"][name] = rejected_model(error)
         report["active_model"] = None

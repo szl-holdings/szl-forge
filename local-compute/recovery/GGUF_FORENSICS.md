@@ -32,6 +32,8 @@ Supported: single-file little-endian GGUF v2/v3, `general.architecture=qwen2`,
 unquantized F16/F32 tensors. These are the representations needed for the observed
 failures. Quantized/BF16 tensor types, big-endian, split models, unknown versions,
 overlapping or out-of-file tensor ranges and oversized structures are refused.
+BF16 can only be admitted by the explicit `--allow-bf16` opt-in described in the
+forensic v1.3.0 section below. Without the opt-in, it is refused exactly as before.
 This is intentionally **not** a general GGUF reader or an inference loader.
 Nonzero padding/trailing bytes participate in the whole-file hash but not tensor
 fingerprints; accepting a layout is not asserting full format conformance.
@@ -163,3 +165,73 @@ recovery workflow discovers it without changing workflow or security controls.
 
 Primary write-durability reference:
 https://docs.python.org/3.12/library/os.html#os.fsync
+
+## Opt-in BF16 layouts (forensic v1.3.0)
+
+This is a recovery-only parser increment for #264. It does not load, repair or
+qualify a model, and it does not add a new owner observation. Issue #264 stays
+OPEN/HOLD.
+
+**Default unchanged.** `TENSOR_TYPES` is still exactly `{0: (F32, 4), 1: (F16, 2)}`.
+Without the opt-in, a type-30 descriptor raises the same
+`UNSUPPORTED_TENSOR_TYPE:ggml_type_id=30` rejection as v1.2.1. It has the same
+bounded observation (`PARTIAL_HEADER_NOT_FULL_FILE_AUTHENTICATED`, blob
+verification `NOT_COMPLETED`), and no read goes past the type field. Default
+F32/F16 fingerprint results and default rejection records are pinned in the tests
+to digests produced by the unmodified v1.2.1 source. Default reads also keep the
+parent's exact internal call shape.
+
+**Opt-in.** `--allow-bf16` (or `allow_bf16=True` in code) adds one entry,
+`OPT_IN_BF16 = {30: (BF16, 2)}`. This follows the pinned primary definitions at
+`ggml-org/ggml@7840aaba1989c6deeefede1d77d5aaf8f52b947e`:
+- `include/ggml.h` defines `GGML_TYPE_BF16 = 30` and declares `ggml_bf16_t` as a
+  single `uint16_t`.
+- `src/ggml.c` type traits give `blck_size = 1` and
+  `type_size = sizeof(ggml_bf16_t)`.
+
+The flag must be a real boolean. Otherwise the call is refused with
+`OPT_IN_FLAG_BOUND` before any file access. Opting in changes only the admitted
+width table. All other types, including quantized, integer, F64, removed and
+unknown IDs, still reject, and the rejection records the admitted IDs `[0, 1, 30]`.
+
+Opted-in results and reports record `opt_in_tensor_types: ["BF16"]`. The final
+report and checkpoints always carry the field (empty without the opt-in). A BF16
+tensor's declared type is bound into its fingerprint. The same bytes declared as
+F16 and as BF16 are different tensors.
+
+**No values decoded.** The parser still only hashes payload bytes. It never
+converts BF16 to F32, checks finiteness or evaluates weights. The full-file
+SHA-256 gate against the historical FROM digest, the stable-identity checks, the
+bounds, the checkpoints and the BETTERWITHAGE host gate are unchanged and apply
+in opt-in mode too.
+
+**Independent fixtures.** `test_gguf_bf16_opt_in.py` assembles its own GGUF bytes
+and does not reuse the other test builders. BF16 payloads are hand-written hex
+literals. Before any parser call, their decoded values are checked two
+independent ways:
+- bf16 to f32 as a 16-bit left shift;
+- equality with the upper two little-endian bytes of the exactly representable
+  binary32 value.
+
+The tests cover a pure BF16 file and a mixed F32/F16/BF16 file. They also cover
+tight packing that proves the 2-byte width (16 elements fit, 17 overlap), every
+truncation point, trailing bytes, default rejection, unknown types under the
+opt-in, non-boolean flags, full-file authentication and CLI threading.
+
+**Not claimed.** The following remain open:
+- authentication of either complete historical blob, and the current artifact
+  location on the owner device;
+- normal load or generation;
+- frozen held-out behavioral qualification.
+
+Numeric type 30 in a partial header does not authenticate a full file, and it
+does not diagnose the repeated-`@` output. This change never runs a model,
+downloads or converts weights, touches Hugging Face, trains or replaces anything,
+or changes `szl_recovery.py`, its manifest or the once-only ReceiptAgent
+experiment. ReceiptAgent failures remain a separate matter. A new owner
+inspection, if one is admitted, still needs the existing pre-run reads of
+reports, claims, locks and workload.
+
+```powershell
+py -3.12 -I -B -m unittest discover -s local-compute/recovery -p 'test_gguf_bf16_opt_in.py' -v
+```
