@@ -11,8 +11,6 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
-      TASK_ROOT: ${{ runner.temp }}/szl-airllm-cpu-${{ github.run_id }}-${{ github.run_attempt }}
-      RECEIPT_ROOT: ${{ runner.temp }}/szl-airllm-receipts-${{ github.run_id }}-${{ github.run_attempt }}
       PIP_DISABLE_PIP_VERSION_CHECK: '1'
       PYTHONDONTWRITEBYTECODE: '1'
     steps:
@@ -22,6 +20,11 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.11'
+      - name: Bind task directories to runner temp
+        shell: bash
+        run: |
+          printf 'TASK_ROOT=%s\n' "$RUNNER_TEMP/szl-airllm-cpu-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" >> "$GITHUB_ENV"
+          printf 'RECEIPT_ROOT=%s\n' "$RUNNER_TEMP/szl-airllm-receipts-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" >> "$GITHUB_ENV"
       - name: Fetch the exact public checkpoint and AirLLM wheel
         shell: bash
         run: |
@@ -54,6 +57,6 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: airllm-hosted-cpu-receipts-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ env.RECEIPT_ROOT }}/*.json
+          path: ${{ runner.temp }}/szl-airllm-receipts-${{ github.run_id }}-${{ github.run_attempt }}/*.json
           if-no-files-found: warn
           retention-days: 30
