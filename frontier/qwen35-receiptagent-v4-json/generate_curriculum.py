@@ -201,7 +201,9 @@ def _read_small(path: Path, limit: int) -> bytes:
     before = path.lstat()
     if before.st_size > limit:
         raise contract.ContractError("bounded file oversized")
-    identity = lambda item: (item.st_dev, item.st_ino, item.st_size, item.st_mtime_ns, item.st_ctime_ns)
+    # Compare ctime only within the same stat view. On Windows, path lstat and
+    # descriptor fstat can expose different ctime clocks for the same file.
+    identity = lambda item: (item.st_dev, item.st_ino, item.st_size, item.st_mtime_ns, item.st_nlink)
     descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
     try:
         opened = os.fstat(descriptor)
@@ -212,8 +214,9 @@ def _read_small(path: Path, limit: int) -> bytes:
             data = stream.read(limit + 1)
         after, current = os.fstat(descriptor), path.lstat()
         if (len(data) != before.st_size or len(data) > limit
-                or any(identity(item) != identity(before) or item.st_nlink != 1
-                       for item in (after, current))):
+                or identity(after) != identity(opened) or after.st_ctime_ns != opened.st_ctime_ns
+                or identity(current) != identity(before) or current.st_ctime_ns != before.st_ctime_ns
+                or any(item.st_nlink != 1 for item in (after, current))):
             raise contract.ContractError("bounded file changed during read")
         return data
     finally:
