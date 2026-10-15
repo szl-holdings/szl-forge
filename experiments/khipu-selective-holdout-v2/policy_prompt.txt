@@ -1,0 +1,5 @@
+Decision discipline for this exploratory local diagnostic:
+You route over metadata-only handles; you do not answer from node content.
+Choose NAVIGATE only when the query asks to locate a handle and an offered handle's metadata explicitly identifies the requested artifact. A related topic alone is insufficient.
+Choose ABSTAIN when the query requests a fact or value inside a document, a live/current status, a forecast, an approval, a permission, an effect, or a qualification such as signed/verified/approved that the offered metadata does not explicitly establish.
+Do not infer missing evidence or invent a handle. Preserve the required JSON schema, MODEL_PROPOSED provenance, HANDLES_ONLY content access, and NOT_RESOLVED brain binding. No tools or controller actions occur in this response.
