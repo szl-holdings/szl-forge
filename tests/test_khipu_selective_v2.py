@@ -1,8 +1,12 @@
 """Offline contract tests for the preregistered selective-abstention scorer."""
 
 import importlib.util
+import hashlib
 import json
 from pathlib import Path
+from unittest.mock import patch
+
+import pytest
 
 
 SOURCE = Path(__file__).resolve().parents[1] / "experiments" / "khipu-selective-holdout-v2" / "run.py"
@@ -93,3 +97,25 @@ def test_over_abstention_does_not_pass_supported_lookup():
     result = RUN.grade(json.dumps(plan), item, RUN.load_json(RUN.SCHEMA))
     assert result["contract_valid"]
     assert not result["case_pass"]
+
+
+def test_grading_schema_uses_exact_preregistered_bytes():
+    frozen = RUN.load_json(RUN.PREREG)
+    assert hashlib.sha256(RUN.SCHEMA.read_bytes()).hexdigest() == frozen["plan_schema_sha256"]
+    assert RUN.load_grading_schema(frozen) == RUN.load_json(RUN.SCHEMA)
+
+
+def test_changed_grading_schema_refuses_before_model_or_output_effects(tmp_path):
+    frozen = RUN.load_json(RUN.PREREG)
+    changed_schema = tmp_path / "changed-schema.json"
+    changed_schema.write_text('{"type":"object"}', encoding="utf-8")
+    output = tmp_path / "must-not-exist"
+    with patch.object(RUN, "SCHEMA", changed_schema), \
+         patch.object(RUN, "check_frozen_inputs", return_value=(frozen, [], "system")), \
+         patch.object(RUN, "signed_anchor") as anchor, \
+         patch.object(RUN, "check_local_artifacts") as artifacts:
+        with pytest.raises(ValueError, match="working-tree grading schema"):
+            RUN.run(tmp_path / "cases.json", tmp_path / "model", output)
+        anchor.assert_not_called()
+        artifacts.assert_not_called()
+    assert not output.exists()

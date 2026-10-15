@@ -54,6 +54,21 @@ def git_bytes(commit: str, path: str) -> bytes:
     ).stdout
 
 
+def load_grading_schema(frozen: dict) -> dict:
+    """Read the exact preregistered schema that will grade this run.
+
+    Historical Git-blob verification alone does not bind a later checkout's
+    working-tree schema. Hash and parse the same bytes before model effects.
+    """
+    raw = SCHEMA.read_bytes()
+    if hashlib.sha256(raw).hexdigest() != frozen.get("plan_schema_sha256"):
+        raise ValueError("working-tree grading schema differs from preregistration")
+    schema = strict_json(raw.decode("utf-8"))
+    if not isinstance(schema, dict):
+        raise ValueError("grading schema must be a JSON object")
+    return schema
+
+
 def signed_anchor() -> str:
     head = subprocess.run(
         ["git", "-C", str(ROOT), "rev-parse", "HEAD"],
@@ -191,6 +206,7 @@ def check_frozen_inputs(cases_path: Path) -> tuple[dict, list[dict], str]:
         raise ValueError("tool access must remain disabled")
     if frozen.get("arms") != ["baseline", "policy"]:
         raise ValueError("paired arm contract changed")
+    load_grading_schema(frozen)
     signed_anchor()
     return frozen, cases, system
 
@@ -327,6 +343,7 @@ def grade(raw: str, case: dict, schema: dict) -> dict:
 
 def run(cases_path: Path, model_dir: Path, output_dir: Path) -> None:
     frozen, cases, system = check_frozen_inputs(cases_path)
+    schema = load_grading_schema(frozen)
     anchor = signed_anchor()
     if output_dir.exists():
         raise FileExistsError(f"output directory already exists: {output_dir}")
@@ -360,7 +377,6 @@ def run(cases_path: Path, model_dir: Path, output_dir: Path) -> None:
         if type(model).__name__ != "Qwen2ForCausalLM":
             raise RuntimeError(f"unexpected loaded model class: {type(model).__name__}")
         model.eval()
-        schema = load_json(SCHEMA)
         policy = POLICY.read_text(encoding="utf-8").strip()
         with partial.open("x", encoding="utf-8", newline="\n") as stream:
             for index, case in enumerate(cases):

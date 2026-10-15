@@ -9,6 +9,8 @@ The policy arm tests whether an explicit decision rule changes proposals on this
 
 The runner rejects duplicate JSON keys and non-JSON constants, validates the plan schema, checks the exact query and offered candidates, requires cited and traversed handles to be offered, and scores NAVIGATE and ABSTAIN separately. It does not grade the semantic truth of free-text rationales. Khipu only proposes JSON; A11oy/Alloy controls resolution and effects. The experiment loads no node content, exposes no tools to the model, and performs no controller action.
 
+Preflight and inference both require the working-tree grading schema to match the preregistered schema hash. The same checked bytes are parsed and retained for grading before any output directory or model work begins. The source-review repair updated the preregistered runner hash before inference; it does not create a model result or alter the sealed case commitment.
+
 From a **clean, signed** Forge checkout containing the preregistration, with the sealed fixture outside the checkout:
 
 ```powershell

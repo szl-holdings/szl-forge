@@ -43,7 +43,7 @@
   "policy_prompt_sha256": "bfa994d9697b6a9d7cb7855ea110cb604eeb9e1f40877d070101a9a7d6dd3f0c",
   "promotion_eligible": false,
   "purpose": "Exploratory paired diagnostic of fixed inference-time abstention instruction versus canonical prompt on a separately sealed fictional 8 NAV/8 ABS fixture.",
-  "runner_sha256": "b77afb9b81e2c2eb323dcec5199c9ffbeb044fa765a51b5f5a3379f1dabe8875",
+  "runner_sha256": "dad177546072324cbd3fa3d6299c2952ae0dc2df73daefc5eabb9e272c2f4e55",
   "schema": "szl.khipu.selective-holdout.preregister/v2",
   "source_base_commit": "bee2c9991d05f4c52f247e2028cc75a3356d7beb",
   "source_binding_sha256": "8af4797e253f3dc1e11f511a96c8ab50353d153f1fcb9a5b2614419d5dd885e0",
