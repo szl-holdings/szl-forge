@@ -1,0 +1,55 @@
+{
+  "actual_training_implementation_revision": "UNKNOWN",
+  "arm_order": "alternate_within_case_by_index",
+  "arms": [
+    "baseline",
+    "policy"
+  ],
+  "checkpoint_form": "original_merged_model_safetensors",
+  "curriculum_manifest_sha256": "eac81722cfd461c7eefec013057b25ba4838bf6ccc7d61127c3298af07264107",
+  "dataset_sha256": "587168fb972032fe3b5dacd2f43a6c0c7752230ceaa9f8304302f606f897cf8a",
+  "declared_lineage_base_revision": "989aa7980e4cf806f80c7fef2b1adb7bc71aa306",
+  "evidence_class": "SIMULATED",
+  "expected_support_sha256": {
+    "adapter/adapter_config.json": "cc50f223578f679cf6f16efe3cbbaae425214bbc8cc37777a3870ac54f6134af",
+    "config.json": "8718e25a3b3a273c00de8a3c1fea610f90bda8f7ccaaa5b436009d71932eaa42",
+    "generation_config.json": "04854bf0d93528223c699846e38fb959efb833c7ba4e24ac489b3ba81854e011",
+    "tokenizer.json": "6b4360dd6a184650ffc48056c2569bc603f896c5adfe94b10f1c79f809638aa5",
+    "tokenizer_config.json": "ab812a40b9dfc657b6da8863435ed9d7baf29be93f80d261e0d1f1724bbea6e8"
+  },
+  "expected_weight_sha256": {
+    "adapter/adapter_model.safetensors": "0a71b3a28b9f77ca3651f38c8caa1e34121934f5584dae24454d4c6eea823a66",
+    "model.safetensors": "6f9f5b9df2a877c999e33faf542dc6e62ce63f4a2bf6b358fc48a4b6b113c3c9"
+  },
+  "frozen_at_utc_self_reported": "2026-10-15T10:33:53.852091+00:00",
+  "generation": {
+    "do_sample": false,
+    "max_new_tokens": 640,
+    "seed": 161803,
+    "temperature": 0,
+    "tool_access": false
+  },
+  "historical_public_owner_result": {
+    "abstention_correct": 2,
+    "abstention_total": 6,
+    "comparable_to_new_cases": false,
+    "dataset": "khipu/adversarial.jsonl",
+    "evidence_class": "REPORTED"
+  },
+  "hub_repo_id": "SZLHOLDINGS/SZL-Khipu-1.5B",
+  "hub_revision": "8a5c666c4fc1ec75a51b8bd9784b4504e807757a",
+  "interpretation": "Do not promote, claim production, or substitute this set for the owner's public 2/6 gate. Prompt assistance is separate from model-weight quality.",
+  "plan_schema_sha256": "b95f9927366dae7c5d36cfb7de6e229eb605524318ab642a6aa2292a212170d0",
+  "policy_prompt_sha256": "bfa994d9697b6a9d7cb7855ea110cb604eeb9e1f40877d070101a9a7d6dd3f0c",
+  "promotion_eligible": false,
+  "purpose": "Exploratory paired diagnostic of fixed inference-time abstention instruction versus canonical prompt on a separately sealed fictional 8 NAV/8 ABS fixture.",
+  "runner_sha256": "dad177546072324cbd3fa3d6299c2952ae0dc2df73daefc5eabb9e272c2f4e55",
+  "schema": "szl.khipu.selective-holdout.preregister/v2",
+  "source_base_commit": "bee2c9991d05f4c52f247e2028cc75a3356d7beb",
+  "source_binding_sha256": "8af4797e253f3dc1e11f511a96c8ab50353d153f1fcb9a5b2614419d5dd885e0",
+  "source_repository": "szl-holdings/szl-forge",
+  "system_prompt_sha256": "719272cd6b6e6924093b38432b98ad10e800ae13577d6de0640719ccb824acbe",
+  "training_eligible": false,
+  "training_receipt_canonical_sha256": "242b52435df315aecefb42f0ae1f87bf10acc83f9af42976986b4f0f34efc081",
+  "training_receipt_file_sha256": "7af76dd4f26dcd122012bfd1e47a0f55481a952b86aee28956cf7cfaaf59bd04"
+}
