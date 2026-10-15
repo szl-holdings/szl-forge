@@ -1,0 +1,59 @@
+name: AirLLM hosted CPU smoke
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  one-token-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      TASK_ROOT: ${{ runner.temp }}/szl-airllm-cpu-${{ github.run_id }}-${{ github.run_attempt }}
+      RECEIPT_ROOT: ${{ runner.temp }}/szl-airllm-receipts-${{ github.run_id }}-${{ github.run_attempt }}
+      PIP_DISABLE_PIP_VERSION_CHECK: '1'
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.11'
+      - name: Fetch the exact public checkpoint and AirLLM wheel
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -I -B frontier/airllm-qualification-lab/hosted_cpu_smoke.py \
+            --prepare --root "$TASK_ROOT" --receipt "$RECEIPT_ROOT/PREPARE.json"
+      - name: Install pinned CPU dependencies and the verified wheel
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$TASK_ROOT/cache/tmp"
+          export TMPDIR="$TASK_ROOT/cache/tmp"
+          python -m pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu 'torch==2.6.0'
+          python -m pip install --no-cache-dir \
+            'transformers==4.57.3' 'accelerate==1.12.0' 'safetensors==0.7.0' \
+            'huggingface-hub==0.36.0' 'scipy==1.15.3' 'sentencepiece==0.2.1' 'tqdm==4.67.1'
+          printf '%s  %s\n' \
+            '155e7c286acbfb5f82a358970d980efcefff1e3fcd8a4ebf3c5850137a31d841' \
+            "$TASK_ROOT/wheel/airllm-4.0.0-py3-none-any.whl" | sha256sum --check --status
+          python -m pip install --no-cache-dir --no-deps "$TASK_ROOT/wheel/airllm-4.0.0-py3-none-any.whl"
+          python -m pip check
+      - name: Run one offline synthetic token with a hard timeout
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -I -B frontier/airllm-qualification-lab/hosted_cpu_smoke.py \
+            --run --root "$TASK_ROOT" --receipt "$RECEIPT_ROOT/SMOKE.json"
+      - name: Keep prepare and smoke receipts on pass or failure
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: airllm-hosted-cpu-receipts-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.RECEIPT_ROOT }}/*.json
+          if-no-files-found: warn
+          retention-days: 30
