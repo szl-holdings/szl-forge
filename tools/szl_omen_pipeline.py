@@ -260,6 +260,36 @@ def _user_prompt(row: dict) -> str:
     return row["messages"][1]["content"]
 
 
+def _unique_json_object(pairs: list[tuple[str, object]]) -> dict:
+    obj = {}
+    for key, value in pairs:
+        if key in obj:
+            raise ValueError("duplicate JSON key")
+        obj[key] = value
+    return obj
+
+
+def _reject_nonfinite(value: str):
+    raise ValueError("non-finite JSON constant")
+
+
+def _prompt_identity(row: dict) -> str:
+    """Compare the JSON question, not its whitespace or object-key ordering.
+
+    This guards only exact semantic JSON identity. Paraphrases and previously
+    exposed prompts still require a separately governed hidden-set review.
+    """
+    try:
+        prompt = json.loads(_user_prompt(row), object_pairs_hook=_unique_json_object,
+                            parse_constant=_reject_nonfinite)
+        if not isinstance(prompt, dict):
+            raise ValueError("user prompt must be a JSON object")
+        return json.dumps(prompt, sort_keys=True, separators=(",", ":"),
+                          ensure_ascii=False, allow_nan=False)
+    except (KeyError, IndexError, TypeError, ValueError) as exc:
+        raise RuntimeError("HELD-OUT IDENTITY INVALID: user prompt must be unique-key JSON") from exc
+
+
 def _gold_plan(row: dict) -> dict:
     return json.loads(row["messages"][-1]["content"])
 
@@ -283,11 +313,19 @@ def load_split(revision: str) -> dict:
         rows, d = _download_rows(f, revision)
         digests[f] = d
         heldout[f] = rows
-    train_prompts = {_user_prompt(r) for r in train_rows}
+    train_prompts = {_prompt_identity(r) for r in train_rows}
+    heldout_seen: set[str] = set()
     for f, rows in heldout.items():
-        overlap = train_prompts & {_user_prompt(r) for r in rows}
+        identities = [_prompt_identity(r) for r in rows]
+        unique = set(identities)
+        if len(unique) != len(identities):
+            raise RuntimeError(f"HELD-OUT CONTAMINATION: duplicate prompt(s) inside {f}")
+        overlap = train_prompts & unique
         if overlap:
             raise RuntimeError(f"HELD-OUT CONTAMINATION: {len(overlap)} prompt(s) shared between train and {f}")
+        if heldout_seen & unique:
+            raise RuntimeError(f"HELD-OUT CONTAMINATION: prompt(s) shared across held-out files at {f}")
+        heldout_seen.update(unique)
     return {
         "train_rows": train_rows, "heldout": heldout, "digests": digests,
         "counts": {"train": len(train_rows), **{f: len(r) for f, r in heldout.items()}},

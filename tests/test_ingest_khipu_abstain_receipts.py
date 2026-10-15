@@ -81,7 +81,7 @@ def laptop(tmp_path: pathlib.Path) -> tuple[pathlib.Path, pathlib.Path]:
     (chal / "eval").mkdir(parents=True)
     (chal / "dpo_receipt.json").write_text(json.dumps(_dpo(), indent=2), encoding="utf-8")
     transcripts = _transcripts()
-    (chal / "eval" / "eval_transcripts.jsonl").write_text(transcripts, encoding="utf-8")
+    (chal / "eval" / "eval_transcripts.jsonl").write_bytes(transcripts.encode("utf-8"))
     (chal / "eval" / "eval_receipt.json").write_text(json.dumps(_eval(hashlib.sha256(transcripts.encode()).hexdigest()), indent=2), encoding="utf-8")
     cards = tmp_path / "cards"
     cards.mkdir()

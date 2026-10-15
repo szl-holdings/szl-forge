@@ -48,6 +48,7 @@ KNOWN_PIPELINE_SHA256 = {
     "0093753bd18510ee79f1d99f20a143951e44fa90b117c674b1d85c4d7acd491d": "szl-forge huggingface@f4c9bab8 (#474 knob probe + kernel stack on the C2/C3 profiles)",
     "d23132854815bcede6fff2d8bda5d3d367752b0bd78c12018c993696920a28ae": "szl-forge main@cbde8af8 (#529 eval binds the challenger adapter bytes)",
     "023e9384e0b6981a025207fb84f0f9182f61ae7349eacac9711f200ef2cb5bea": "szl-forge frontier-v2/khipu-forge-selective-20261014 (R06 phase 2: additive combined_selective eval block)",
+    "502fc0b307664b914d1d253faecd2a6165dec811270759e4d2589acf2657a933": "szl-forge feat/khipu-heldout-identity-20261014 (canonical JSON split and duplicate held-out guard)",
 }
 
 
