@@ -216,6 +216,16 @@ def _ui_response(
     handler.wfile.write(body)
 
 
+def _unique_json_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    value: dict[str, Any] = {}
+    for key, item in pairs:
+        if key in value:
+            # Do not echo an untrusted key: requests must not contain clinical data.
+            raise ValueError("duplicate JSON key")
+        value[key] = item
+    return value
+
+
 def _read_json_body(handler: BaseHTTPRequestHandler) -> dict[str, Any]:
     try:
         size = int(handler.headers.get("Content-Length", "0") or 0)
@@ -229,7 +239,7 @@ def _read_json_body(handler: BaseHTTPRequestHandler) -> dict[str, Any]:
     if not raw.strip():
         return {}
     try:
-        value = json.loads(raw)
+        value = json.loads(raw, object_pairs_hook=_unique_json_object)
         if not isinstance(value, dict):
             raise ValueError("JSON payload must be an object")
         return value
