@@ -133,7 +133,10 @@ class LocalAirLLMTests(unittest.TestCase):
         self._write("config.json", {"model_type": "llama", "architectures": ["LlamaForCausalLM"],
                                     "transformers_version": "99.0.0"})
         self.manifest = self._manifest()
+        installed = {name: "1.0.0" for name in ("safetensors", "huggingface_hub", "scipy", "sentencepiece", "tqdm")}
+        installed.update({"torch": "2.10.0", "transformers": "5.5.0", "accelerate": "1.14.0"})
         with patch.object(run, "_check_airllm_wheel", return_value={"version": "4.0.0"}), \
+             patch.object(run.importlib.metadata, "version", side_effect=lambda name: installed[name]), \
              patch.object(run, "_available_ram", return_value=20 * run.GIB), \
              patch.object(run, "_gpu_free_bytes", return_value=8 * run.GIB), \
              patch.object(run.shutil, "disk_usage", return_value=SimpleNamespace(free=20 * run.GIB)):
