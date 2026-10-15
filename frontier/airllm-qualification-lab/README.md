@@ -117,6 +117,35 @@ The attempted run records pre/post free disk and RAM when observable. A future
 qualification must compare native-resident and AirLLM logits/tokens on
 identical assets; this one-token smoke does not perform that comparison.
 
+## Manual hosted CPU plumbing smoke
+
+`airllm-hosted-cpu-smoke.yml` is a separate, manually dispatched GitHub Actions
+experiment on `main`; it never runs for a pull request. It exercises AirLLM
+4.0.0 on the public Apache-2.0 `HuggingFaceTB/SmolLM2-135M-Instruct` base at
+immutable revision `12fd25f77366fa6b3b4b768ec3050bf629380bac`. This is not
+the MiniCPM checkpoint above and does not change its failed/HOLD result.
+
+`hosted_cpu_smoke.py` binds exactly eight top-level files by size and SHA-256,
+including the 269,060,552-byte safetensors file. It rejects extra files,
+Python/pickle checkpoint files, `auto_map` anywhere in the selected JSON, an
+unreviewed architecture or tokenizer, a different installed AirLLM package,
+and insufficient fresh disk/RAM. The AirLLM wheel is the same pinned PyPI wheel
+and source commit identified above. Dependencies are exact-version observed,
+but their full transitive hash closure is **not verified**.
+
+After acquisition and rehashing, the worker sets Hub/Transformers offline mode
+before importing AirLLM, uses CPU float32, a fixed synthetic prompt, exactly
+one new token, `delete_original=False`, task-specific cache/split directories,
+and a 240-second subprocess timeout. The runner retains separate prepare and
+attempt receipts as an artifact, including source SHA, selected bytes, package
+versions, free disk/RAM, elapsed time, and only a hash of token IDs. Failed and
+timed-out attempts stay `BLOCKED` or `UNKNOWN_AFTER_ATTEMPT`; the split remains
+for inspection until the ephemeral runner ends.
+
+A pass establishes only one hosted CPU plumbing smoke. It does not establish
+native-versus-AirLLM parity, QLoRA support, model quality, held-out abstention,
+GPU fit, energy, training, Hugging Face publication, or production authority.
+
 ## Reproduce the software checks
 
 From this directory with Python 3.11 or later; no third-party packages are needed:
