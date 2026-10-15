@@ -1,9 +1,10 @@
 # Independent AirLLM qualification lab
 
-This Forge research component contains independently written, provider-free
-qualification controls for memory residency and LoRA recomputation. It studies
-mechanisms described by AirLLM and the cited prior art. It does not load or train
-a real model, and it does not change any published model or candidate gate.
+This Forge research component contains independently written qualification
+controls for memory residency and LoRA recomputation. It also has an opt-in,
+local-only AirLLM inference smoke path. It studies mechanisms described by
+AirLLM and the cited prior art. It does not train a real model or change any
+published model or candidate gate.
 
 ## Evidence boundary
 
@@ -13,9 +14,9 @@ a real model, and it does not change any published model or candidate gate.
   evidence. They do not qualify an AirLLM package, CUDA backend or real model.
 - Every result keeps `training_eligible=false`, `publication_eligible=false`
   and `execution_authority=false`.
-- No model/tokenizer files, training curriculum or held-out gate are loaded.
-  No remote code, provider API, dependency installation, GPU call, signing key,
-  container mutation or cleanup is used by this lab.
+- The modeled controls do not load model/tokenizer files, training curriculum or
+  held-out gates. They use no remote code, provider API, dependency installation,
+  GPU call, signing key, container mutation or cleanup.
 - Proposal hashes identify these supplied declarations, not verified weight
   bytes. Manifest completeness and real numerical parity remain UNKNOWN.
 - This adds no locked formula or Lean proof; established mathematical and
@@ -49,6 +50,101 @@ LoRA algebra fixture. Its resident and recomputing paths, finite-difference
 gradient oracle, explicit supervision masks and checkpoint/optimizer checks
 are artificial software controls. They are not Qwen, PEFT, Transformers or the
 production AirLLM `_StreamedModule` path, and cannot substitute for those tests.
+
+## Opt-in local AirLLM smoke
+
+`local_airllm.py` is a separate executable seam. It accepts only the exact
+`openbmb/MiniCPM5-2B` revision and eight file hashes in Forge's
+`frontier/minicpm5/evidence/2026-09-07-a10g-smoke.json`. That source evidence
+reports `SMOKE_FAIL` and `HOLD`; matching bytes do not turn it into a qualified
+model. The smoke uses the base checkpoint only. It does not load an SZL adapter,
+run a held-out gate, or replace the recommended v4 Qwen3.5 comparison above.
+
+The manifest must enumerate those eight files and give absolute paths for the
+existing local snapshot, a fresh split directory, a task-owned scratch root,
+the AirLLM wheel and a GPU UUID. The scratch root must already contain
+`.szl-airllm-task-owned.json` with schema `szl.airllm.scratch-owner/v1` and the
+same model ID and revision; the split directory must be a nonexistent direct
+child. It must live under the task work parent as a sibling of the Forge
+checkout. The marker is a **DECLARED** ownership assertion, not proof of
+exclusive filesystem access. The receipt must be outside the checkpoint and
+scratch root. There is no
+automatic download, installation, cleanup or deletion. `delete_original` is
+always `False`; its appearance as a manifest field is refused.
+
+AirLLM is pinned to [v4.0.0](https://github.com/lyogavin/airllm/tree/ff35db207a0c559af9aa95d686057c3fe84f1d40).
+The [PyPI wheel](https://pypi.org/project/airllm/4.0.0/) SHA-256 is
+`155e7c286acbfb5f82a358970d980efcefff1e3fcd8a4ebf3c5850137a31d841`.
+Preflight checks that wheel and every installed `airllm/` package file against
+it. Other dependency versions are observed, not hash-locked. Numerical parity
+and package behavior remain unqualified.
+
+Upstream [AutoModel](https://github.com/lyogavin/airllm/blob/ff35db207a0c559af9aa95d686057c3fe84f1d40/air_llm/airllm/auto_model.py)
+sets `trust_remote_code=True`; its base loader and tokenizer can also use that
+setting. The guard therefore accepts only the byte-pinned, local built-in
+`LlamaForCausalLM` configuration, rejects `auto_map` in every JSON file,
+rejects `.py` and pickle-format checkpoint files, and sets Hub/Transformers
+offline variables before import. The worker rehashes the files before loading.
+This restricts the known dynamic-code paths for this exact snapshot; an
+unreviewed model ID, tokenizer class, or mutable shared snapshot is refused.
+
+The source's [splitter](https://github.com/lyogavin/airllm/blob/ff35db207a0c559af9aa95d686057c3fe84f1d40/air_llm/airllm/utils.py)
+loads an entire safetensors shard into host RAM. This checkpoint has a single
+5,033,557,096-byte shard, so low GPU memory does not imply low host RAM or
+disk. Preflight measures current free disk, available host RAM and UUID-bound
+GPU memory. Conservative MODELED bounds require `2 × weight bytes + 4 GiB`
+free disk, at least the larger of `2 × weight bytes + 2 GiB` and `largest shard
++ 4 GiB` available host RAM, and 3 GiB free GPU memory. A passing bound only
+permits an isolated experiment; it is not a guarantee that the run will fit.
+
+Run preflight with the local manifest and a fresh receipt path:
+
+```shell
+python -I -B local_airllm.py --manifest /absolute/manifest.json --receipt /absolute/PREFLIGHT.json
+```
+
+Add `--run` only when preflight is `READY_FOR_LOCAL_EXPERIMENT_ONLY` and the
+checkpoint/scratch ownership is still current. The worker runs offline, binds
+the GPU UUID, gives AirLLM a task-owned layer path and `delete_original=False`,
+then generates **one token** from a fixed synthetic prompt under a five-minute
+timeout. Its token hash, elapsed time and CUDA peak are a local software smoke,
+not a quality score, energy measurement, model release or execution authority.
+Common Hugging Face, Torch, Triton, CUDA and temporary cache paths are directed
+under task scratch before imports; third-party shared-cache mutation remains
+`UNKNOWN`. A timeout is `UNKNOWN_AFTER_ATTEMPT`, and partial split files remain
+for inspection without automatic cleanup.
+The attempted run records pre/post free disk and RAM when observable. A future
+qualification must compare native-resident and AirLLM logits/tokens on
+identical assets; this one-token smoke does not perform that comparison.
+
+## Manual hosted CPU plumbing smoke
+
+`airllm-hosted-cpu-smoke.yml` is a separate, manually dispatched GitHub Actions
+experiment on `main`; it never runs for a pull request. It exercises AirLLM
+4.0.0 on the public Apache-2.0 `HuggingFaceTB/SmolLM2-135M-Instruct` base at
+immutable revision `12fd25f77366fa6b3b4b768ec3050bf629380bac`. This is not
+the MiniCPM checkpoint above and does not change its failed/HOLD result.
+
+`hosted_cpu_smoke.py` binds exactly eight top-level files by size and SHA-256,
+including the 269,060,552-byte safetensors file. It rejects extra files,
+Python/pickle checkpoint files, `auto_map` anywhere in the selected JSON, an
+unreviewed architecture or tokenizer, a different installed AirLLM package,
+and insufficient fresh disk/RAM. The AirLLM wheel is the same pinned PyPI wheel
+and source commit identified above. Dependencies are exact-version observed,
+but their full transitive hash closure is **not verified**.
+
+After acquisition and rehashing, the worker sets Hub/Transformers offline mode
+before importing AirLLM, uses CPU float32, a fixed synthetic prompt, exactly
+one new token, `delete_original=False`, task-specific cache/split directories,
+and a 240-second subprocess timeout. The runner retains separate prepare and
+attempt receipts as an artifact, including source SHA, selected bytes, package
+versions, free disk/RAM, elapsed time, and only a hash of token IDs. Failed and
+timed-out attempts stay `BLOCKED` or `UNKNOWN_AFTER_ATTEMPT`; the split remains
+for inspection until the ephemeral runner ends.
+
+A pass establishes only one hosted CPU plumbing smoke. It does not establish
+native-versus-AirLLM parity, QLoRA support, model quality, held-out abstention,
+GPU fit, energy, training, Hugging Face publication, or production authority.
 
 ## Reproduce the software checks
 
