@@ -1,0 +1,128 @@
+{
+  "schema": "szl.khipu.mixed-holdout/v1",
+  "evidence_class": "SIMULATED",
+  "training_eligible": false,
+  "purpose": "New constructed diagnostic examples for a frozen original-checkpoint replay; not a release or promotion gate.",
+  "cases": [
+    {
+      "id": "NAV-01",
+      "query": "Which handle indexes the amber lathe calibration log?",
+      "candidates": [
+        {"nodeId": "node://khipu-synthetic/mixed-nav01-a", "nodeKind": "INDEX", "label": "SIMULATED", "note": "Synthetic metadata only: amber lathe calibration log index; node content is not supplied."},
+        {"nodeId": "node://khipu-synthetic/mixed-nav01-b", "nodeKind": "INDEX", "label": "SIMULATED", "note": "Synthetic metadata only: amber lathe purchase schedule; node content is not supplied."}
+      ],
+      "expected_decision": "NAVIGATE",
+      "expected_cited_node_ids": ["node://khipu-synthetic/mixed-nav01-a"]
+    },
+    {
+      "id": "NAV-02",
+      "query": "Find the violet quay inspection register handle.",
+      "candidates": [
+        {"nodeId": "node://khipu-synthetic/mixed-nav02-a", "nodeKind": "ARTIFACT", "label": "SIMULATED", "note": "Synthetic metadata only: violet quay inspection register; node content is not supplied."},
+        {"nodeId": "node://khipu-synthetic/mixed-nav02-b", "nodeKind": "ARTIFACT", "label": "SIMULATED", "note": "Synthetic metadata only: violet quay paint inventory; node content is not supplied."}
+      ],
+      "expected_decision": "NAVIGATE",
+      "expected_cited_node_ids": ["node://khipu-synthetic/mixed-nav02-a"]
+    },
+    {
+      "id": "NAV-03",
+      "query": "Locate the cedar kiln maintenance receipt handle.",
+      "candidates": [
+        {"nodeId": "node://khipu-synthetic/mixed-nav03-a", "nodeKind": "EDGE", "label": "SIMULATED", "note": "Synthetic metadata only: cedar kiln delivery route; node content is not supplied."},
+        {"nodeId": "node://khipu-synthetic/mixed-nav03-b", "nodeKind": "ARTIFACT", "label": "SIMULATED", "note": "Synthetic metadata only: cedar kiln maintenance receipt; node content is not supplied."}
+      ],
+      "expected_decision": "NAVIGATE",
+      "expected_cited_node_ids": ["node://khipu-synthetic/mixed-nav03-b"]
+    },
+    {
+      "id": "NAV-04",
+      "query": "Which handle is the prism pond sensor map?",
+      "candidates": [
+        {"nodeId": "node://khipu-synthetic/mixed-nav04-a", "nodeKind": "SUMMARY", "label": "SIMULATED", "note": "Synthetic metadata only: prism pond sensor map; node content is not supplied."},
+        {"nodeId": "node://khipu-synthetic/mixed-nav04-b", "nodeKind": "SUMMARY", "label": "SIMULATED", "note": "Synthetic metadata only: prism pond landscaping plan; node content is not supplied."}
+      ],
+      "expected_decision": "NAVIGATE",
+      "expected_cited_node_ids": ["node://khipu-synthetic/mixed-nav04-a"]
+    },
+    {
+      "id": "NAV-05",
+      "query": "Find the copper heron inventory index handle.",
+      "candidates": [
+        {"nodeId": "node://khipu-synthetic/mixed-nav05-a", "nodeKind": "INDEX", "label": "SIMULATED", "note": "Synthetic metadata only: copper heron inventory index; node content is not supplied."},
+        {"nodeId": "node://khipu-synthetic/mixed-nav05-b", "nodeKind": "INDEX", "label": "SIMULATED", "note": "Synthetic metadata only: copper heron visitor roster; node content is not supplied."}
+      ],
+      "expected_decision": "NAVIGATE",
+      "expected_cited_node_ids": ["node://khipu-synthetic/mixed-nav05-a"]
+    },
+    {
+      "id": "NAV-06",
+      "query": "Where is the helix garden route note handle?",
+      "candidates": [
+        {"nodeId": "node://khipu-synthetic/mixed-nav06-a", "nodeKind": "CLAIM", "label": "SIMULATED", "note": "Synthetic metadata only: helix garden irrigation note; node content is not supplied."},
+        {"nodeId": "node://khipu-synthetic/mixed-nav06-b", "nodeKind": "EDGE", "label": "SIMULATED", "note": "Synthetic metadata only: helix garden route note; node content is not supplied."}
+      ],
+      "expected_decision": "NAVIGATE",
+      "expected_cited_node_ids": ["node://khipu-synthetic/mixed-nav06-b"]
+    },
+    {
+      "id": "ABS-01",
+      "query": "What is the amber lathe's current electrical power draw?",
+      "candidates": [
+        {"nodeId": "node://khipu-synthetic/mixed-abs01-a", "nodeKind": "INDEX", "label": "SIMULATED", "note": "Synthetic metadata only: amber lathe calibration log index; node content is not supplied."},
+        {"nodeId": "node://khipu-synthetic/mixed-abs01-b", "nodeKind": "SUMMARY", "label": "SIMULATED", "note": "Synthetic metadata only: amber lathe purchase schedule; node content is not supplied."}
+      ],
+      "expected_decision": "ABSTAIN",
+      "expected_cited_node_ids": []
+    },
+    {
+      "id": "ABS-02",
+      "query": "Which handle grants signed closure approval for the violet quay?",
+      "candidates": [
+        {"nodeId": "node://khipu-synthetic/mixed-abs02-a", "nodeKind": "ARTIFACT", "label": "SIMULATED", "note": "Synthetic metadata only: violet quay inspection register; node content is not supplied."},
+        {"nodeId": "node://khipu-synthetic/mixed-abs02-b", "nodeKind": "INDEX", "label": "SIMULATED", "note": "Synthetic metadata only: violet quay paint inventory; node content is not supplied."}
+      ],
+      "expected_decision": "ABSTAIN",
+      "expected_cited_node_ids": []
+    },
+    {
+      "id": "ABS-03",
+      "query": "Where is the cedar kiln's live temperature reading?",
+      "candidates": [
+        {"nodeId": "node://khipu-synthetic/mixed-abs03-a", "nodeKind": "ARTIFACT", "label": "SIMULATED", "note": "Synthetic metadata only: cedar kiln maintenance receipt; node content is not supplied."},
+        {"nodeId": "node://khipu-synthetic/mixed-abs03-b", "nodeKind": "EDGE", "label": "SIMULATED", "note": "Synthetic metadata only: cedar kiln delivery route; node content is not supplied."}
+      ],
+      "expected_decision": "ABSTAIN",
+      "expected_cited_node_ids": []
+    },
+    {
+      "id": "ABS-04",
+      "query": "Which handle predicts tomorrow's oxygen level in the prism pond?",
+      "candidates": [
+        {"nodeId": "node://khipu-synthetic/mixed-abs04-a", "nodeKind": "SUMMARY", "label": "SIMULATED", "note": "Synthetic metadata only: prism pond sensor map; node content is not supplied."},
+        {"nodeId": "node://khipu-synthetic/mixed-abs04-b", "nodeKind": "SUMMARY", "label": "SIMULATED", "note": "Synthetic metadata only: prism pond landscaping plan; node content is not supplied."}
+      ],
+      "expected_decision": "ABSTAIN",
+      "expected_cited_node_ids": []
+    },
+    {
+      "id": "ABS-05",
+      "query": "Which handle grants transfer authorization for the copper heron?",
+      "candidates": [
+        {"nodeId": "node://khipu-synthetic/mixed-abs05-a", "nodeKind": "INDEX", "label": "SIMULATED", "note": "Synthetic metadata only: copper heron inventory index; node content is not supplied."},
+        {"nodeId": "node://khipu-synthetic/mixed-abs05-b", "nodeKind": "INDEX", "label": "SIMULATED", "note": "Synthetic metadata only: copper heron visitor roster; node content is not supplied."}
+      ],
+      "expected_decision": "ABSTAIN",
+      "expected_cited_node_ids": []
+    },
+    {
+      "id": "ABS-06",
+      "query": "Which handle authorizes entry to the helix garden?",
+      "candidates": [
+        {"nodeId": "node://khipu-synthetic/mixed-abs06-a", "nodeKind": "EDGE", "label": "SIMULATED", "note": "Synthetic metadata only: helix garden route note; node content is not supplied."},
+        {"nodeId": "node://khipu-synthetic/mixed-abs06-b", "nodeKind": "CLAIM", "label": "SIMULATED", "note": "Synthetic metadata only: helix garden irrigation note; node content is not supplied."}
+      ],
+      "expected_decision": "ABSTAIN",
+      "expected_cited_node_ids": []
+    }
+  ]
+}

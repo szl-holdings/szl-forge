@@ -1,0 +1,45 @@
+{
+  "schema": "szl.khipu.mixed-holdout.preregister/v1",
+  "frozen_at_utc": "2026-10-15T02:21:45.778074+00:00",
+  "source_repository": "szl-holdings/szl-forge",
+  "source_base_commit": "f4688d2233ed4123995fab7861b9a074f60cc3d5",
+  "hub_repo_id": "SZLHOLDINGS/SZL-Khipu-1.5B",
+  "hub_revision": "8a5c666c4fc1ec75a51b8bd9784b4504e807757a",
+  "evidence_class": "SIMULATED_CONSTRUCTED_FIXTURE",
+  "training_eligible": false,
+  "promotion_eligible": false,
+  "purpose": "Local diagnostic replay of the original merged checkpoint on six new metadata-supported routes and six constructed near-miss abstentions. The public owner-reported 2/6 is a distinct set and is not a comparator score for these cases.",
+  "runner_sha256": "c2498ec5cdfb63ca625f0a0af52eaed995231d6874711b25b76d55916499504c",
+  "cases_sha256": "ab19127b68f089e379457e3ea70c14a4c88217136b18fadb1f994542b6ad75dc",
+  "plan_schema_sha256": "b95f9927366dae7c5d36cfb7de6e229eb605524318ab642a6aa2292a212170d0",
+  "training_receipt_file_sha256": "7af76dd4f26dcd122012bfd1e47a0f55481a952b86aee28956cf7cfaaf59bd04",
+  "training_receipt_canonical_sha256": "242b52435df315aecefb42f0ae1f87bf10acc83f9af42976986b4f0f34efc081",
+  "source_binding_sha256": "1a6430358ea5c8d96c1add317637dd0e931c8c4a91ba21340bb5c134499e9291",
+  "curriculum_manifest_sha256": "5bb552db1e48af0224765d219f7e1162265f24f8380a6ab5ce34ad33cff8bca0",
+  "system_prompt_sha256": "719272cd6b6e6924093b38432b98ad10e800ae13577d6de0640719ccb824acbe",
+  "expected_weight_sha256": {
+    "model.safetensors": "6f9f5b9df2a877c999e33faf542dc6e62ce63f4a2bf6b358fc48a4b6b113c3c9",
+    "adapter/adapter_model.safetensors": "0a71b3a28b9f77ca3651f38c8caa1e34121934f5584dae24454d4c6eea823a66"
+  },
+  "expected_support_sha256": {
+    "config.json": "8718e25a3b3a273c00de8a3c1fea610f90bda8f7ccaaa5b436009d71932eaa42",
+    "generation_config.json": "04854bf0d93528223c699846e38fb959efb833c7ba4e24ac489b3ba81854e011",
+    "tokenizer.json": "6b4360dd6a184650ffc48056c2569bc603f896c5adfe94b10f1c79f809638aa5",
+    "tokenizer_config.json": "ab812a40b9dfc657b6da8863435ed9d7baf29be93f80d261e0d1f1724bbea6e8",
+    "adapter/adapter_config.json": "cc50f223578f679cf6f16efe3cbbaae425214bbc8cc37777a3870ac54f6134af"
+  },
+  "generation": {
+    "seed": 142857,
+    "temperature": 0,
+    "do_sample": false,
+    "max_new_tokens": 640,
+    "tool_access": false
+  },
+  "historical_public_owner_result": {
+    "evidence_class": "REPORTED",
+    "dataset": "khipu/adversarial.jsonl",
+    "abstention_correct": 2,
+    "abstention_total": 6,
+    "comparable_to_new_cases": false
+  }
+}

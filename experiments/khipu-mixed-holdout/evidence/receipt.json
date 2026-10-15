@@ -1,0 +1,59 @@
+{
+  "adapter_coverage": {
+    "adapter_applied_to_merged_inference": false,
+    "adapter_matched_module_pairs": 196,
+    "adapter_tensor_count": 392,
+    "merged_tensor_count": 338,
+    "numerical_equivalence_of_adapter_and_merged": "UNKNOWN",
+    "training_base_immutable_revision": "UNKNOWN"
+  },
+  "carbon": "ROADMAP",
+  "energy_joules": "UNAVAILABLE",
+  "expected_weight_sha256": {
+    "adapter/adapter_model.safetensors": "0a71b3a28b9f77ca3651f38c8caa1e34121934f5584dae24454d4c6eea823a66",
+    "model.safetensors": "6f9f5b9df2a877c999e33faf542dc6e62ce63f4a2bf6b358fc48a4b6b113c3c9"
+  },
+  "finished_at_utc": "2026-10-15T02:31:50.170309+00:00",
+  "fixture_sha256": "ab19127b68f089e379457e3ea70c14a4c88217136b18fadb1f994542b6ad75dc",
+  "generation": {
+    "do_sample": false,
+    "max_new_tokens": 640,
+    "seed": 142857,
+    "temperature": 0,
+    "tool_access": false
+  },
+  "hardware": {
+    "gpu": "NVIDIA GeForce RTX 5050 Laptop GPU",
+    "vram_free_before_load_bytes": 7413432320,
+    "vram_total_bytes": 8546484224
+  },
+  "hub_repo_id": "SZLHOLDINGS/SZL-Khipu-1.5B",
+  "hub_revision": "8a5c666c4fc1ec75a51b8bd9784b4504e807757a",
+  "independent_replay": "NOT_RUN",
+  "metrics": {
+    "abstention_correct": 0,
+    "abstention_total": 6,
+    "navigation_correct": 3,
+    "navigation_total": 6,
+    "plan_contract_valid": 7,
+    "total": 12
+  },
+  "outputs_sha256": "190f18728ac0d0cf7401ed2f4553176ffc60b1681abbbe1697c3f499a0f92313",
+  "plan_schema_sha256": "b95f9927366dae7c5d36cfb7de6e229eb605524318ab642a6aa2292a212170d0",
+  "preregister_sha256": "33781211baf1e4fa4446593eb0f0766fa6ece2725c9cfa68729f0fa15b824b5d",
+  "promotion_eligible": false,
+  "runner_sha256": "c2498ec5cdfb63ca625f0a0af52eaed995231d6874711b25b76d55916499504c",
+  "schema": "szl.khipu.mixed-holdout.local-receipt/v1",
+  "signed": false,
+  "software": {
+    "python": "3.12.10",
+    "torch": "2.10.0+cu130",
+    "transformers": "5.5.0"
+  },
+  "source_base_commit": "f4688d2233ed4123995fab7861b9a074f60cc3d5",
+  "source_binding_sha256": "1a6430358ea5c8d96c1add317637dd0e931c8c4a91ba21340bb5c134499e9291",
+  "started_at_utc": "2026-10-15T02:26:35.245039+00:00",
+  "status": "MEASURED_LOCAL_ORIGINAL_MERGED_CHECKPOINT",
+  "training_receipt_canonical_sha256": "242b52435df315aecefb42f0ae1f87bf10acc83f9af42976986b4f0f34efc081",
+  "training_receipt_file_sha256": "7af76dd4f26dcd122012bfd1e47a0f55481a952b86aee28956cf7cfaaf59bd04"
+}
