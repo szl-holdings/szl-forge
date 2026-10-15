@@ -1,0 +1,191 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "planId": {
+      "description": "Opaque plan id. In this example it is obviously synthetic.",
+      "type": "string"
+    },
+    "capabilityProfile": {
+      "description": "The governed capability profile contracted to emit this plan.",
+      "type": "string",
+      "const": "SZL-Khipu-1.5B-BrainNavigator"
+    },
+    "provenance": {
+      "description": "Honest origin: SYNTHETIC = an illustrative example not produced by any model; MODEL_PROPOSED = a real plan proposed by the Khipu model. A plan can never claim any other origin.",
+      "type": "string",
+      "enum": [
+        "SYNTHETIC",
+        "MODEL_PROPOSED"
+      ]
+    },
+    "query": {
+      "description": "The retrieval question the plan routes for.",
+      "type": "string"
+    },
+    "contentAccess": {
+      "description": "The model sees ONLY node handles + synthetic metadata, never node text — so it cannot answer from baked-in content.",
+      "type": "string",
+      "const": "HANDLES_ONLY"
+    },
+    "candidates": {
+      "description": "The handle set offered to the model to route over.",
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "nodeId": {
+            "description": "Opaque Brain node HANDLE (a pointer, not content). In curriculum + this example it is a self-evidently synthetic node://khipu-synthetic/<hash>.",
+            "type": "string",
+            "minLength": 1
+          },
+          "nodeKind": {
+            "description": "Metadata shape of the referenced node — never its contents.",
+            "type": "string",
+            "enum": [
+              "ARTIFACT",
+              "CLAIM",
+              "EDGE",
+              "INDEX",
+              "SUMMARY"
+            ]
+          },
+          "label": {
+            "description": "The handle's OWN honesty tier — what kind of reference it is, not a measurement captured in this synthetic example.",
+            "type": "string",
+            "enum": [
+              "MEASURED",
+              "REPORTED",
+              "DECLARED",
+              "SIMULATED",
+              "UNKNOWN",
+              "UNAVAILABLE"
+            ]
+          },
+          "note": {
+            "description": "Synthetic metadata (e.g. a topic tag) the model routes on — deliberately NOT node content; real content is resolved by the controller.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "nodeId",
+          "nodeKind",
+          "label",
+          "note"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "decision": {
+      "description": "NAVIGATE = at least one offered handle supports the query, so the plan routes + cites it; ABSTAIN = no offered handle supports it, so the plan refuses rather than fabricate grounding.",
+      "type": "string",
+      "enum": [
+        "NAVIGATE",
+        "ABSTAIN"
+      ]
+    },
+    "steps": {
+      "description": "Ordered traversal plan over the candidates. Empty when abstaining.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "description": "The proposed traversal action over a candidate handle — the controller actually executes it OUTSIDE the weights.",
+            "type": "string",
+            "enum": [
+              "RETRIEVE",
+              "EXPAND",
+              "CITE"
+            ]
+          },
+          "nodeId": {
+            "description": "The candidate handle this step acts on — must be one offered above.",
+            "type": "string",
+            "minLength": 1
+          },
+          "rationale": {
+            "description": "Why this handle is on the retrieval path — routing rationale, not content.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action",
+          "nodeId",
+          "rationale"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "citedNodeIds": {
+      "description": "The handles the plan grounds its routing on — always a subset of the offered candidates (a cited-but-not-offered handle is a hallucinated citation and is unrepresentable).",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "groundedOnly": {
+      "description": "The plan cites ONLY offered handles; it never invents a node id.",
+      "type": "boolean",
+      "const": true
+    },
+    "brainBinding": {
+      "description": "How the plan relates to real Brain content — NOT_RESOLVED until the controller resolves handles outside the weights.",
+      "type": "object",
+      "properties": {
+        "protocol": {
+          "description": "The retrieval protocol the controller would run this plan through.",
+          "type": "string",
+          "const": "khipu-retrieval"
+        },
+        "status": {
+          "description": "A proposed plan has NOT resolved any node content; the controller resolves handles OUTSIDE the weights. The plan never claims to hold node text.",
+          "type": "string",
+          "const": "NOT_RESOLVED"
+        },
+        "note": {
+          "description": "Why the plan holds no resolved content.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "protocol",
+        "status",
+        "note"
+      ],
+      "additionalProperties": false
+    },
+    "controllerBoundary": {
+      "description": "States the A11oy runtime boundary — the controller validates the plan, resolves handles, and returns content OUTSIDE the weights; the model only proposes the route.",
+      "type": "string"
+    },
+    "abstainReason": {
+      "description": "Non-null iff decision=ABSTAIN — the honest reason no offered handle supports the query. Null for a NAVIGATE plan.",
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "planId",
+    "capabilityProfile",
+    "provenance",
+    "query",
+    "contentAccess",
+    "candidates",
+    "decision",
+    "steps",
+    "citedNodeIds",
+    "groundedOnly",
+    "brainBinding",
+    "controllerBoundary",
+    "abstainReason"
+  ],
+  "additionalProperties": false
+}
