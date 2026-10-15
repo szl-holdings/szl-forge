@@ -151,6 +151,53 @@ class HandlerBoundaryTests(unittest.TestCase):
         self.assertEqual(rejected_statuses, [400])
         self.assertNotIn("SECRET", rejected.wfile.getvalue().decode("utf-8"))
 
+    def test_operational_model_endpoint_rejects_duplicate_json_keys(self) -> None:
+        artifacts = Path(__file__).resolve().parents[1] / "operational-model" / "artifacts"
+        api.OACStackHandler._operational_kernel = OperationalHealthKernel(
+            artifacts / "model.json", artifacts / "model-receipt.json"
+        )
+        features = {
+            "listener_running": 1,
+            "tls_enabled": 1,
+            "peer_allowlist_configured": 1,
+            "queue_utilization": 0.05,
+            "consecutive_failures": 0,
+            "seconds_since_last_success": 10.0,
+            "ledger_integrity_ok": 1,
+            "configuration_valid": 1,
+        }
+        valid_features = json.dumps(features, separators=(",", ":"))
+        duplicate_feature = valid_features.replace(
+            '"tls_enabled":1', '"tls_enabled":0,"tls_enabled":1', 1
+        )
+        self.assertNotEqual(valid_features, duplicate_feature)
+        cases = {
+            "duplicate_wrapper": (
+                '{"features":{"patient_id":"SYNTHETIC_SENSITIVE_MARKER"},'
+                f'"features":{valid_features}}}'
+            ),
+            "duplicate_feature": f'{{"features":{duplicate_feature}}}',
+        }
+        for name, raw in cases.items():
+            with self.subTest(case=name):
+                encoded = raw.encode("utf-8")
+                handler, _headers, statuses = _bare_handler(
+                    "/api/operational-health/score"
+                )
+                handler.headers = {  # type: ignore[assignment]
+                    "Authorization": "Bearer correct-secret",
+                    "Content-Length": str(len(encoded)),
+                }
+                handler.rfile = BytesIO(encoded)  # type: ignore[assignment]
+                handler.do_POST()
+                self.assertEqual([400], statuses)
+                response = handler.wfile.getvalue().decode("utf-8")
+                self.assertNotIn("SYNTHETIC_SENSITIVE_MARKER", response)
+                self.assertEqual(
+                    {"ok": False, "error": "duplicate JSON key"},
+                    json.loads(response),
+                )
+
     def test_cors_only_reflects_an_explicitly_allowed_origin(self) -> None:
         handler, headers, _statuses = _bare_handler()
         handler.headers = {"Origin": "https://console.example"}  # type: ignore[assignment]

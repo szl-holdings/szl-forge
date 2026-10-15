@@ -8,6 +8,7 @@ import tempfile
 import unittest
 from collections import Counter
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -97,6 +98,54 @@ class FreshCurriculumTests(unittest.TestCase):
 
 
 class MaterializationTests(unittest.TestCase):
+    def test_read_small_keeps_path_and_descriptor_ctime_domains_separate(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "manifest.json"
+            path.write_bytes(b"stable bounded bytes\n")
+            original_lstat, original_fstat = Path.lstat, generator.os.fstat
+
+            def with_ctime(info, value):
+                return SimpleNamespace(
+                    st_dev=info.st_dev, st_ino=info.st_ino, st_mode=info.st_mode,
+                    st_size=info.st_size, st_mtime_ns=info.st_mtime_ns,
+                    st_ctime_ns=value, st_nlink=info.st_nlink,
+                    st_file_attributes=getattr(info, "st_file_attributes", 0),
+                )
+
+            def path_lstat(candidate):
+                info = original_lstat(candidate)
+                return with_ctime(info, info.st_ctime_ns + 1) if candidate == path else info
+
+            def descriptor_fstat(descriptor):
+                info = original_fstat(descriptor)
+                return with_ctime(info, info.st_ctime_ns + 2)
+
+            with patch.object(Path, "lstat", autospec=True, side_effect=path_lstat), \
+                 patch.object(generator.os, "fstat", side_effect=descriptor_fstat):
+                self.assertEqual(generator._read_small(path, 64), b"stable bounded bytes\n")
+
+    def test_read_small_still_rejects_descriptor_metadata_change(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "manifest.json"
+            path.write_bytes(b"stable bounded bytes\n")
+            original_fstat = generator.os.fstat
+            calls = 0
+
+            def changed_descriptor_fstat(descriptor):
+                nonlocal calls
+                calls += 1
+                info = original_fstat(descriptor)
+                return SimpleNamespace(
+                    st_dev=info.st_dev, st_ino=info.st_ino, st_mode=info.st_mode,
+                    st_size=info.st_size, st_mtime_ns=info.st_mtime_ns,
+                    st_ctime_ns=info.st_ctime_ns + calls, st_nlink=info.st_nlink,
+                    st_file_attributes=getattr(info, "st_file_attributes", 0),
+                )
+
+            with patch.object(generator.os, "fstat", side_effect=changed_descriptor_fstat):
+                with self.assertRaises(contract.ContractError):
+                    generator._read_small(path, 64)
+
     def test_exclusive_write_check_and_never_overwrite(self):
         outputs = {"train.jsonl": b"synthetic reference bytes\n", "dev.jsonl": b"different reference bytes\n"}
         with tempfile.TemporaryDirectory() as temporary:
