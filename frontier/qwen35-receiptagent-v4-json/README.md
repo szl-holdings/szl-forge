@@ -272,6 +272,36 @@ evaluation, runtime qualification or a training permit:
 python -I -B -m unittest discover -s frontier/qwen35-receiptagent-v4-json -p test_training_tokens.py -v
 ```
 
+An optional offline base-tokenizer precheck exercises the committed **train
+split only** with the seven pinned tokenizer/template files for the planned
+`unsloth/Qwen3.5-0.8B` revision. It requires isolated `transformers==5.5.0`,
+`huggingface-hub==1.5.0`, `tokenizers==0.22.2`, and `jinja2==3.1.6`. Supply a
+local directory containing exactly those seven files; the script verifies
+their byte hashes and loads a private copy in offline mode with remote code
+loading disabled. Installed libraries are trusted Python code: version checks
+are not library-byte authentication or an OS sandbox against reads/network.
+The supplied tokenizer directory must be on a local fixed drive without
+symlink/reparse-point components. It must be controlled by a trusted writer:
+this precheck does not defend against concurrent hostile filesystem mutation.
+It checks all 360 train rows for fixed framing, complete character offsets,
+non-straddling assistant supervision boundaries, exact decoding, and the
+declared ending IDs. It emits a redacted, locally `MEASURED` precheck record
+with a chained token/offset digest and unsigned full-record checksum:
+
+```sh
+python -I -B frontier/qwen35-receiptagent-v4-json/probe_base_tokenizer.py \
+  --tokenizer-dir /absolute/path/to/pinned/tokenizer-files
+```
+
+This is not `check_training_tokens` with a fresh Nemo-admitted snapshot and
+actual trainer collator. It does not authenticate the model configuration or
+weights, qualify GPU resources, run an optimizer or open dev/final-gate cases.
+The record explicitly keeps training, publication and execution false. The
+source binding is `DECLARED`; signatures and independent replay are
+`UNAVAILABLE`. A different tokenizer asset byte set requires a reviewed binding
+change; a different library build needs fresh qualification, even if its version
+string matches.
+
 ## Still required before training
 
 1. Obtain protected source merge/readback and owner-signed curriculum admission;
