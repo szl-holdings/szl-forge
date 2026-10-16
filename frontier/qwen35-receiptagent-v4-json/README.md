@@ -302,6 +302,34 @@ source binding is `DECLARED`; signatures and independent replay are
 change; a different library build needs fresh qualification, even if its version
 string matches.
 
+### Pinned base-config boundary (separate offline precheck)
+
+The optional `probe_base_config.py` reads only the seven pinned tokenizer files
+and the exact `config.json` bytes from the **same** planned base revision. Pass
+that config file separately; the tokenizer directory must still contain exactly
+seven files. It checks the declared text architecture, context limit and two
+vocabulary sizes against the loaded tokenizer, without importing weights or
+opening any curriculum split:
+
+```sh
+python -I -B frontier/qwen35-receiptagent-v4-json/probe_base_config.py \
+  --tokenizer-dir /absolute/path/to/seven/pinned/tokenizer-files \
+  --model-config /absolute/path/to/pinned/config.json
+```
+
+At revision `23c69c53358a07516b5827588b3fdb12ae78fd65`, the text-model
+config declares EOS ID `248044` (`<|endoftext|>`), while the chat tokenizer
+declares EOS ID `248046` (`<|im_end|>`), and the train template terminates with
+`248046, 198`. The model's padded vocabulary is 248320 entries, versus 248077
+loaded tokenizer entries. These are observed, distinct declarations, **not** a
+runtime generation stop-policy qualification or evidence of an incompatible
+weight tensor. A future runner must bind its explicit stop/padding policy to its
+actual loader and held-out decode; silently inheriting one EOS field is unsafe.
+The output retains `runtime_stop_policy=UNQUALIFIED_REQUIRES_EXPLICIT_BINDING`
+and all eligibility and authority flags false. Its `MEASURED` label covers only
+this offline config/tokenizer readback; the asset-to-revision source binding is
+`DECLARED`, unsigned and not independently replayed.
+
 ## Still required before training
 
 1. Obtain protected source merge/readback and owner-signed curriculum admission;
