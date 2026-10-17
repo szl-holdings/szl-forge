@@ -635,3 +635,71 @@ def test_live_evaluation_preserves_main_gate_and_excludes_untrusted_pr_credentia
     assert "    if:" not in offline_job
     assert "secrets." not in offline_job
     assert "tests/test_acquire_hf_inference_token.py" in offline_job
+    assert "admission" not in live_job
+
+
+class _FakeResponse:
+    status = 200
+    headers = {}
+
+    def read(self, _limit: int) -> bytes:
+        return b'{"ok":true}'
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_args) -> bool:
+        return False
+
+
+def test_paid_router_post_never_opens_a_socket_without_admission(monkeypatch) -> None:
+    def opened(*_args, **_kwargs):
+        raise AssertionError("urlopen must not run")
+
+    monkeypatch.setattr(core.urllib.request, "urlopen", opened)
+    assert provider.ROUTER_URL == core.PAID_ROUTER_CHAT_URL
+    with pytest.raises(core.PaidAdmissionError, match="per-run admission missing"):
+        core.http_json(provider.ROUTER_URL, payload={"model": "x"}, token="not-a-real-token")
+    with pytest.raises(core.PaidAdmissionError, match="owner or run_id"):
+        core.http_json(
+            provider.ROUTER_URL,
+            payload={"model": "x"},
+            token="not-a-real-token",
+            admission={"owner": "other", "run_id": "run-1", "max_calls": 1},
+        )
+
+
+def test_paid_router_budget_stops_the_second_call(monkeypatch) -> None:
+    opened = {"n": 0}
+
+    def fake_urlopen(*_args, **_kwargs):
+        opened["n"] += 1
+        return _FakeResponse()
+
+    monkeypatch.setattr(core.urllib.request, "urlopen", fake_urlopen)
+    admission = {
+        "owner": core.PAID_ROUTER_OWNER,
+        "run_id": "run-test-1",
+        "max_calls": 1,
+    }
+    first = core.http_json(
+        provider.ROUTER_URL,
+        payload={"model": "x"},
+        token="not-a-real-token",
+        admission=admission,
+    )
+    assert first.ok is True
+    assert opened["n"] == 1
+    with pytest.raises(core.PaidAdmissionError, match="budget exhausted"):
+        core.http_json(
+            provider.ROUTER_URL,
+            payload={"model": "x"},
+            token="not-a-real-token",
+            admission=admission,
+        )
+    assert opened["n"] == 1
+
+
+def test_runner_does_not_supply_a_paid_admission() -> None:
+    source = (ROOT / "frontier" / "evaluation" / "runner.py").read_text()
+    assert "admission=" not in source
