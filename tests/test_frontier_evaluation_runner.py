@@ -622,12 +622,12 @@ def test_live_evaluation_preserves_main_gate_and_excludes_untrusted_pr_credentia
     workflow = (ROOT / ".github/workflows/frontier-evaluation-runner.yml").read_text()
     live_job = workflow.split("  real-evaluation:", 1)[1]
     condition = re.search(r"    if: >-\n(.*?)    runs-on:", live_job, re.S).group(1)
-    assert " ".join(condition.split()) == (
-        "github.event_name != 'pull_request' || "
-        "(github.event.pull_request.head.repo.full_name == github.repository && "
-        "github.event.pull_request.user.login != 'dependabot[bot]')"
-    )
-    # Main, schedule and explicit dispatch retain real credential checks.
+    # Paid provider calls need an explicit owner dispatch (F03 C5): no schedule,
+    # push or pull request reaches the paid job.
+    assert " ".join(condition.split()) == "github.event_name == 'workflow_dispatch'"
+    assert "  schedule:" not in workflow
+    assert "cron:" not in workflow
+    # Explicit dispatch retains real credential checks.
     assert "--target-model" in live_job
     assert "tools/acquire_hf_inference_token.py" in live_job
     assert "pull_request_target" not in workflow
