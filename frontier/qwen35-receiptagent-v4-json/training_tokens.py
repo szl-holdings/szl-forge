@@ -15,7 +15,7 @@ supported; sequence packing, target truncation and extra assistant text are not.
 """
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 import hashlib
 import re
 from typing import Callable
@@ -96,6 +96,28 @@ class TokenReport:
     training_eligible: bool = False
     publication_eligible: bool = False
     execution_authority: bool = False
+
+
+@dataclass(frozen=True, slots=True)
+class TrainingTensorRow:
+    """Checked immutable tensors; deliberately omitted from object representations."""
+
+    input_ids: tuple[int, ...] = field(repr=False)
+    attention_mask: tuple[int, ...] = field(repr=False)
+    labels: tuple[int, ...] = field(repr=False)
+
+
+@dataclass(frozen=True, slots=True)
+class RetainedTrainingTokens:
+    """All checked train tensors and their redacted ledger, never a launch permit.
+
+    The tensors contain private training content. Do not serialize or publish
+    this object; publish only its separately redacted ``report`` if appropriate.
+    Frozen containers are a trusted-process interface, not a security boundary.
+    """
+
+    rows: tuple[TrainingTensorRow, ...] = field(repr=False)
+    report: TokenReport
 
 
 def _require(condition: bool, message: str) -> None:
@@ -272,10 +294,47 @@ def _row(index: int, messages: tuple[tuple[str, str], ...], row: EncodedRow,
                      _digest(rendered_raw), _digest(target.encode("utf-8")), _json_digest(tensors))
 
 
+def _check_training_tokens(snapshot: admission.TrainOnlySnapshot, binding: TokenBinding,
+                           encode: Callable[[tuple[tuple[str, str], ...]], EncodedRow],
+                           decode: Callable[[tuple[int, ...]], str], *,
+                           retain: bool) -> tuple[TokenReport, tuple[TrainingTensorRow, ...]]:
+    limit, special = _binding(binding)
+    _require(callable(encode) and callable(decode), "trusted encode/decode adapters are required")
+    messages = training_data.training_messages(snapshot)
+    _require(len(messages) == admission.MAX_ROWS, "all 360 training rows are required")
+    rows: list[RowLedger] = []
+    retained: list[TrainingTensorRow] = []
+    total = 0
+    for index, message in enumerate(messages):
+        try:
+            encoded = encode(message)
+        except Exception:
+            raise admission.AdmissionError("trusted encoder/collator failed; details redacted") from None
+        _require(type(encoded) is EncodedRow, "adapter must return an exact EncodedRow")
+        # Detach the wrapper before invoking the decoder. Every nested value is
+        # checked below for exact immutable types before any tensor is retained;
+        # a callback cannot swap fields on its original wrapper after validation.
+        checked = EncodedRow(encoded.rendered, encoded.input_ids, encoded.attention_mask,
+                             encoded.offsets, encoded.labels, encoded.message_spans,
+                             encoded.termination_span)
+        ledger = _row(index, message, checked, binding, special, limit, decode)
+        total += ledger.sequence_tokens
+        _require(total <= binding.total_token_limit, "aggregate token capacity exceeded")
+        rows.append(ledger)
+        if retain:
+            retained.append(TrainingTensorRow(checked.input_ids, checked.attention_mask,
+                                              checked.labels))
+    report = TokenReport(_json_digest(asdict(binding)), _digest(snapshot.manifest_bytes),
+                         _digest(snapshot.train_bytes), _digest(snapshot.conformance_report_bytes),
+                         limit, total, tuple(rows),
+                         _json_digest(tuple((row.index, row.tensors_sha256) for row in rows)))
+    return report, tuple(retained)
+
+
 def check_training_tokens(snapshot: admission.TrainOnlySnapshot, binding: TokenBinding,
                           encode: Callable[[tuple[tuple[str, str], ...]], EncodedRow],
                           decode: Callable[[tuple[int, ...]], str]) -> TokenReport:
-    """Check every train row sequentially and return only an immutable hash ledger.
+    """Check all train rows and return only the compatible redacted hash ledger.
 
     ``encode`` must return actual collator labels and reliable offsets, not a
     self-reported pass flag. Both callbacks are trusted Python code, not a sandbox.
@@ -285,22 +344,21 @@ def check_training_tokens(snapshot: admission.TrainOnlySnapshot, binding: TokenB
     adapter process or requalify them. This function alone cannot prevent a later
     retokenization. The fixed three-message framing is deliberately restrictive.
     """
-    limit, special = _binding(binding)
-    _require(callable(encode) and callable(decode), "trusted encode/decode adapters are required")
-    messages = training_data.training_messages(snapshot)
-    _require(len(messages) == admission.MAX_ROWS, "all 360 training rows are required")
-    rows: list[RowLedger] = []
-    total = 0
-    for index, message in enumerate(messages):
-        try:
-            encoded = encode(message)
-        except Exception:
-            raise admission.AdmissionError("trusted encoder/collator failed; details redacted") from None
-        ledger = _row(index, message, encoded, binding, special, limit, decode)
-        total += ledger.sequence_tokens
-        _require(total <= binding.total_token_limit, "aggregate token capacity exceeded")
-        rows.append(ledger)
-    return TokenReport(_json_digest(asdict(binding)), _digest(snapshot.manifest_bytes),
-                       _digest(snapshot.train_bytes), _digest(snapshot.conformance_report_bytes),
-                       limit, total, tuple(rows),
-                       _json_digest(tuple((row.index, row.tensors_sha256) for row in rows)))
+    report, _ = _check_training_tokens(snapshot, binding, encode, decode, retain=False)
+    return report
+
+
+def retain_training_tokens(snapshot: admission.TrainOnlySnapshot, binding: TokenBinding,
+                           encode: Callable[[tuple[tuple[str, str], ...]], EncodedRow],
+                           decode: Callable[[tuple[int, ...]], str]) -> RetainedTrainingTokens:
+    """Return all exact checked tensors only after every train row passes.
+
+    Each row is encoded once, checked by the same conformance/capacity path as
+    ``check_training_tokens``, and retained as immutable integer tuples. No
+    partial result is returned on failure. The caller must consume these tensors
+    without changing or retokenizing them in its separately admitted runtime.
+    This function adds no loader, optimizer, device, signing or launch interface.
+    Its redacted report preserves all false eligibility/authority fields.
+    """
+    report, rows = _check_training_tokens(snapshot, binding, encode, decode, retain=True)
+    return RetainedTrainingTokens(rows, report)
