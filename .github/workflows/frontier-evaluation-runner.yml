@@ -37,8 +37,8 @@ on:
         required: true
         default: true
         type: boolean
-  schedule:
-    - cron: "17 6 * * 0"
+  # F03 C5 hold: no weekly schedule. Paid Inference Providers calls run only on an
+  # explicit owner dispatch; pull requests and pushes run the offline contract only.
 
 permissions:
   contents: read
@@ -92,9 +92,7 @@ jobs:
     name: real candidate vs Khipu
     needs: contract
     if: >-
-      github.event_name != 'pull_request' ||
-      (github.event.pull_request.head.repo.full_name == github.repository &&
-       github.event.pull_request.user.login != 'dependabot[bot]')
+      github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:

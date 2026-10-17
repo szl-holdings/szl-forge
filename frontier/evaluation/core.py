@@ -18,6 +18,40 @@ from dataclasses import dataclass
 from typing import Any, Mapping, Sequence
 
 DECISIONS = {"ANSWER", "ABSTAIN", "ESCALATE"}
+PAID_ROUTER_CHAT_URL = "https://router.huggingface.co/v1/chat/completions"
+PAID_ROUTER_OWNER = "stephenlutar2-hash"
+
+
+class PaidAdmissionError(PermissionError):
+    """A paid router call was refused before a socket was opened."""
+
+
+def admit_paid_router_call(url: str, payload: Mapping[str, Any] | None, admission: Mapping[str, Any] | None) -> None:
+    """Require an explicit owner budget for one paid chat POST.
+
+    workflow_dispatch does not satisfy this. The admission object has to be
+    supplied by the caller for that run, and this function never reads the
+    environment. GET requests and non-router URLs are unchanged.
+    """
+
+    if payload is None or url != PAID_ROUTER_CHAT_URL:
+        return
+    if not isinstance(admission, Mapping):
+        raise PaidAdmissionError("paid router call refused: per-run admission missing")
+    owner = admission.get("owner")
+    run_id = admission.get("run_id")
+    max_calls = admission.get("max_calls")
+    used = admission.get("calls_used", 0)
+    if owner != PAID_ROUTER_OWNER or not isinstance(run_id, str) or not run_id.strip():
+        raise PaidAdmissionError("paid router call refused: owner or run_id is not admitted")
+    if isinstance(max_calls, bool) or not isinstance(max_calls, int) or max_calls < 1:
+        raise PaidAdmissionError("paid router call refused: max_calls is not a positive integer")
+    if isinstance(used, bool) or not isinstance(used, int) or used < 0 or used >= max_calls:
+        raise PaidAdmissionError("paid router call refused: per-run call budget exhausted")
+    if isinstance(admission, dict):
+        admission["calls_used"] = used + 1
+    else:
+        raise PaidAdmissionError("paid router call refused: admission budget cannot be counted")
 SYSTEM_PROMPT = (
     "Use only the supplied EVIDENCE. Return one compact JSON object with exactly "
     'these keys: {"decision":"ANSWER|ABSTAIN|ESCALATE","answer":"string",'
@@ -79,7 +113,9 @@ def http_json(
     payload: Mapping[str, Any] | None = None,
     token: str | None = None,
     timeout: float = 120.0,
+    admission: Mapping[str, Any] | None = None,
 ) -> HttpResult:
+    admit_paid_router_call(url, payload, admission)
     headers = {"accept": "application/json"}
     secrets: tuple[str, ...] = ()
     if token:
@@ -264,6 +300,7 @@ def execute_case(
     token: str | None,
     max_tokens: int,
     timeout: float,
+    admission: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     payload = {
         "model": model,
@@ -272,7 +309,7 @@ def execute_case(
         "temperature": 0,
         "stream": False,
     }
-    result = http_json(url, payload=payload, token=token, timeout=timeout)
+    result = http_json(url, payload=payload, token=token, timeout=timeout, admission=admission)
     record: dict[str, Any] = {
         "case_id": case["id"],
         "category": case.get("category"),
