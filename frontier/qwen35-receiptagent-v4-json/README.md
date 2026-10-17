@@ -330,6 +330,44 @@ and all eligibility and authority flags false. Its `MEASURED` label covers only
 this offline config/tokenizer readback; the asset-to-revision source binding is
 `DECLARED`, unsigned and not independently replayed.
 
+### Fresh train-only tensor reference precheck (not a trainer)
+
+`probe_train_token_tensors.py` connects a **fresh** source-bound Nemo R1–R5
+capture of the explicit 360-row train file to `check_training_tokens` using the
+eight pinned local base files (seven tokenizer files plus separate `config.json`)
+and the exact dependency versions above. It never opens dev or held-out cases.
+The reference adapter renders with the actual `Qwen2Tokenizer`, builds unshifted
+assistant-only labels, and checks every token/character offset, loss mask,
+termination token and exact decode. The pinned chat template inserts an empty
+`<think>\n\n</think>\n\n` block before assistant JSON even with
+`enable_thinking=False`; the bound static framing includes it. Dropping that
+block fails the full-render check.
+
+Use a trusted local fixed-drive asset directory containing exactly the seven
+tokenizer files, a separate exact `config.json`, and an explicit pinned Nemo
+source checkout as described above. The local precheck caps are 2,048 tokens
+per row and 400,000 tokens in total; they are **not** signed resource admission.
+
+```sh
+python -I -B frontier/qwen35-receiptagent-v4-json/probe_train_token_tensors.py \
+  --tokenizer-dir /absolute/path/to/seven/pinned/tokenizer-files \
+  --model-config /absolute/path/to/pinned/config.json \
+  --train frontier/qwen35-receiptagent-v4-json/train.jsonl \
+  --manifest frontier/qwen35-receiptagent-v4-json/curriculum-manifest.json \
+  --nemo-source-root /absolute/path/to/pinned/szl-nemo-checkout
+python -I -B -m unittest discover -s frontier/qwen35-receiptagent-v4-json \
+  -p test_probe_train_token_tensors.py -v
+```
+
+The emitted local `MEASURED` record is redacted to counts and hashes. It binds
+the freshly checked train bytes and reference tensors, but not the future
+trainer's collator, weight loader, GPU, generation stop policy, signer trust or
+optimizer. The source-to-Hub asset binding remains `DECLARED`; signatures and
+independent replay remain `UNAVAILABLE`. All eligibility/authority fields stay
+false. A future trainer must use these exact retained tensors in its own
+separately admitted runtime, or requalify its actual tensors; copying this
+precheck record is never a launch permit.
+
 ## Still required before training
 
 1. Obtain protected source merge/readback and owner-signed curriculum admission;
