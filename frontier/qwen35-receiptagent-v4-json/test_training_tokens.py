@@ -75,11 +75,11 @@ class TrainingTokenTests(unittest.TestCase):
                              for row in rows)
         cls.first = encode(cls.messages[0])
 
-    def check(self, *, policy=None, encoder=encode, decoder=decode, snapshot=None):
+    def check(self, *, policy=None, encoder=encode, decoder=decode, snapshot=None, retain=False):
         with patch.object(admission, "MANIFEST_SHA256", hashlib.sha256(self.manifest_raw).hexdigest()):
-            return tokens.check_training_tokens(self.snapshot if snapshot is None else snapshot,
-                                                binding() if policy is None else policy,
-                                                encoder, decoder)
+            check = tokens.retain_training_tokens if retain else tokens.check_training_tokens
+            return check(self.snapshot if snapshot is None else snapshot,
+                         binding() if policy is None else policy, encoder, decoder)
 
     def reject_row(self, row):
         with self.assertRaises(admission.AdmissionError):
@@ -332,6 +332,120 @@ class TrainingTokenTests(unittest.TestCase):
         self.assertEqual(first.total_tokens - changed_tensors.total_tokens, 360 * 2)
         self.assertEqual(tuple(row.target_sha256 for row in first.rows),
                          tuple(row.target_sha256 for row in changed_tensors.rows))
+
+    def test_retained_rows_are_exact_once_encoded_and_match_redacted_report(self):
+        encoded = []
+
+        def recording(messages):
+            row = encode(messages)
+            encoded.append(row)
+            return row
+
+        with patch("builtins.open", side_effect=AssertionError("unexpected file read")), \
+             patch.object(io, "open", side_effect=AssertionError("unexpected file read")), \
+             patch.object(admission, "run_gates", side_effect=AssertionError("unexpected gate run")):
+            retained = self.check(encoder=recording, retain=True)
+        self.assertIs(type(retained), tokens.RetainedTrainingTokens)
+        self.assertIs(type(retained.rows), tuple)
+        self.assertEqual(len(encoded), 360)
+        self.assertEqual(len(retained.rows), 360)
+        for original, row, ledger in zip(encoded, retained.rows, retained.report.rows):
+            self.assertIs(type(row), tokens.TrainingTensorRow)
+            # The exact checked immutable tuple objects are retained, with no
+            # second encode, padding, collation or conversion pass.
+            self.assertIs(row.input_ids, original.input_ids)
+            self.assertIs(row.attention_mask, original.attention_mask)
+            self.assertIs(row.labels, original.labels)
+            self.assertEqual(ledger.tensors_sha256,
+                             tokens._json_digest((row.input_ids, row.attention_mask, row.labels)))
+        self.assertEqual(retained.report, self.check())
+        self.assertNotIn("input_ids", repr(retained))
+        self.assertNotIn("input_ids", asdict(retained.report))
+        self.assertNotIn(self.messages[0][-1][1], repr(retained))
+        for key in ("assets_authenticated", "training_eligible", "publication_eligible", "execution_authority"):
+            self.assertIs(getattr(retained.report, key), False)
+
+    def test_retained_containers_and_nested_integer_tuples_reject_mutation(self):
+        retained = self.check(retain=True)
+        with self.assertRaises(FrozenInstanceError):
+            retained.rows = ()
+        with self.assertRaises(FrozenInstanceError):
+            retained.report = None
+        with self.assertRaises(TypeError):
+            retained.rows[0] = retained.rows[1]
+        for field in ("input_ids", "attention_mask", "labels"):
+            with self.subTest(field=field):
+                with self.assertRaises(FrozenInstanceError):
+                    setattr(retained.rows[0], field, ())
+                with self.assertRaises(TypeError):
+                    getattr(retained.rows[0], field)[0] = 0
+
+    def test_retention_rejects_mutable_aliases_and_exact_integer_substitutions(self):
+        for field in ("input_ids", "attention_mask", "labels"):
+            for replacement in (list(getattr(self.first, field)),
+                                change_at(getattr(self.first, field), 0, True)):
+                with self.subTest(field=field, replacement_type=type(replacement)), \
+                     self.assertRaises(admission.AdmissionError):
+                    self.check(encoder=lambda messages: replace(self.first, **{field: replacement}),
+                               retain=True)
+
+    def test_callback_wrapper_reassignment_cannot_replace_checked_retained_tuples(self):
+        originals = []
+        expected_first = self.first
+
+        def recording(messages):
+            row = encode(messages)
+            originals.append(row)
+            return row
+
+        def wrapper_mutation(ids):
+            # Trusted Python can bypass frozen dataclasses. The check detaches
+            # the wrapper before callbacks, retaining only validated immutable
+            # tuple contents even if that original wrapper is later reassigned.
+            object.__setattr__(originals[-1], "input_ids", (0,))
+            object.__setattr__(originals[-1], "attention_mask", (0,))
+            object.__setattr__(originals[-1], "labels", (0,))
+            return decode(ids)
+
+        retained = self.check(encoder=recording, decoder=wrapper_mutation, retain=True)
+        self.assertEqual(originals[0].input_ids, (0,))
+        self.assertEqual(retained.rows[0].input_ids, expected_first.input_ids)
+        self.assertEqual(retained.rows[0].attention_mask, expected_first.attention_mask)
+        self.assertEqual(retained.rows[0].labels, expected_first.labels)
+        self.assertEqual(retained.report, self.check())
+
+    def test_final_row_failure_returns_no_partial_retained_result(self):
+        calls = []
+
+        def fail_last(messages):
+            calls.append(messages)
+            row = encode(messages)
+            if len(calls) == 360:
+                return replace(row, labels=change_at(row.labels, len(row.labels) - 3, -100))
+            return row
+
+        retained = None
+        with self.assertRaises(admission.AdmissionError):
+            retained = self.check(encoder=fail_last, retain=True)
+        self.assertIsNone(retained)
+        self.assertEqual(tuple(calls), self.messages)
+
+    def test_retention_enforces_sequence_and_aggregate_caps_before_return(self):
+        for field in ("tokenizer_limit", "model_limit", "admitted_limit"):
+            with self.subTest(field=field), self.assertRaises(admission.AdmissionError):
+                self.check(policy=binding(**{field: 2, "total_token_limit": 720}), retain=True)
+        calls = []
+
+        def recording(messages):
+            calls.append(messages)
+            return encode(messages)
+
+        retained = None
+        with self.assertRaisesRegex(admission.AdmissionError, "aggregate"):
+            retained = self.check(policy=binding(total_token_limit=len(self.first.input_ids)),
+                                  encoder=recording, retain=True)
+        self.assertIsNone(retained)
+        self.assertEqual(len(calls), 2)
 
 
 if __name__ == "__main__":

@@ -264,6 +264,20 @@ deliberately restrictive; actual tokenizer compatibility is UNKNOWN until tested
 All training, publication and execution flags remain false. No model, tokenizer,
 optimizer, network client, AirLLM runtime or GPU is imported or launched here.
 
+`training_tokens.retain_training_tokens(snapshot, binding, encode, decode)` uses
+the same checks and returns all 360 rows' exact immutable `input_ids`,
+`attention_mask` and unshifted `labels` tuples together with the same redacted
+`TokenReport`. Each row is encoded once; the returned tuples are the ones that
+passed conformance and capacity checks. Any failure returns no partial result.
+The adapter wrapper is detached before decoder callbacks, and mutable tensor
+containers or non-integer values are rejected. Object representations omit the
+tensors, but explicitly serializing the retained object exposes training content:
+keep it private and serialize only `result.report` when a redacted report is
+needed. A future separately admitted worker must consume these retained tensors
+without retokenizing or modifying them. This trusted-process interface supplies
+no model loader, optimizer, runtime qualification, admission or launch authority;
+all eligibility and authority flags in its report remain false.
+
 The software tests use SIMULATED character-tokenizer fixtures, including Unicode,
 shared EOS/padding IDs and multi-token endings. Passing them is not a real-model
 evaluation, runtime qualification or a training permit:
