@@ -1,0 +1,3 @@
+# Verification-only dependency; aligns with the existing Forge offline CI lane.
+# This version pin is not a wheel-byte attestation or a training/runtime lock.
+cryptography==50.0.0

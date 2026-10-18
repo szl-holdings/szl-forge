@@ -382,6 +382,40 @@ false. A future trainer must use these exact retained tensors in its own
 separately admitted runtime, or requalify its actual tensors; copying this
 precheck record is never a launch permit.
 
+## Signed sidecar integrity observations
+
+`signed_admission.observe_admission(...)` checks one closed canonical ASCII
+sidecar and its fixed Ed25519 domain plus NUL plus canonical payload bytes.
+`requirements-admission.txt` deliberately aligns its `cryptography==50.0.0`
+profile with existing Forge CI; it is not a latest-version claim, wheel-byte
+authentication, runtime lock or security certification. The module has no
+private-key, signing, file/network, nonce-consumption or launch interface.
+An unavailable, unsupported or differently versioned backend leaves signature
+verification NOT_RUN. Invalid signatures are reported as mismatches.
+
+The caller must supply the complete expected canonical payload bytes, bounded
+raw-public-key mapping, trust classification, clock, revocation state and maximum
+age independently of the sidecar. `INDEPENDENTLY_PINNED` is a caller assertion
+observed by this function; the module does not establish its provenance. Signature,
+context, trust, time and revocation observations stay separate. The immutable
+result cannot be used as a boolean and contains no permit or eligibility fields.
+Even every matching observation cannot change the current false candidate policy
+or establish owner approval, durable single use, containment or training authority.
+
+The fixed positive and wrong-domain fixtures are SIMULATED software data signed
+only with the already-public [RFC 8032 section 7.1 TEST 1 seed](https://www.rfc-editor.org/rfc/rfc8032#section-7.1).
+The test-only `fixtures/generate_simulated_ed25519_fixture.py` prints deterministic
+fixture data and never generates a key or writes a file; production imports none
+of it. Its public test key must never enter an owner trust policy. The tests also
+replay the published RFC primitive vector and retain the actual false candidate
+flags. This raw-Ed25519 sidecar profile is distinct from canonical `szl-receipt`
+DSSE/ECDSA-P256-SHA256 and v3 authenticated-receipt signatures; no format equivalence
+or algorithm migration is claimed. [Maintained verification API](https://cryptography.io/en/50.0.0/hazmat/primitives/asymmetric/ed25519/).
+
+```sh
+python -I -B -m unittest discover -s frontier/qwen35-receiptagent-v4-json -p test_signed_admission.py -v
+```
+
 ## Still required before training
 
 1. Obtain protected source merge/readback and owner-signed curriculum admission;
