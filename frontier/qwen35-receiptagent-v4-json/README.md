@@ -431,10 +431,93 @@ python -I -B -m unittest discover -s frontier/qwen35-receiptagent-v4-json -p tes
    new Hub identity; signed predecessor SKUs stay intact. No promotion is
    inferred from loss, schema checks, file presence or a serving HTTP response.
 
-No training launcher is supplied here: reusing the v3 launcher would still bind
-the v3 curriculum and targets. `training_eligible` deliberately stays false.
-The next source phase is a separately reviewed, fully bound curriculum/runtime,
-not a manual override of the contract-only state.
+The native worker and supervisor below are guarded source components, not an
+admitted training launcher. Reusing the v3 launcher would bind the wrong
+curriculum and targets. `training_eligible` deliberately stays false. The next
+release phase requires separately reviewed admission/runtime compatibility, not
+a manual override of the contract-only state.
+
+## Native worker and supervisor: source implementation, launch BLOCKED
+
+`native_worker.py` implements one train-only supervised-smoke update, not a full
+training schedule. It freshly captures all 360 train rows through both curriculum
+gates, retains the tokenizer's exact immutable IDs/masks/labels, verifies their
+signed ledger and policies, and only right-pads with ignored labels. It sums
+causally shifted supervised-token cross entropies across every microbatch and
+divides by the global supervised-token count. Unequal-length row means are not
+averaged equally. There is one gradient clip and one AdamW step after all 360
+rows, with finite loss/gradient/parameter checks and exact optimizer coverage.
+No dev or held-out input, generation, tool execution, Hub upload or signing API
+is provided.
+
+The explicit loader is `Qwen3_5ForConditionalGeneration`, with local safetensors,
+no remote code and no fallback loader. The recipe is NF4/double-quant/bfloat16,
+LoRA rank 16/alpha 32/dropout 0/no bias, and AdamW at 1e-4. Only the seven named
+`q_proj`, `k_proj`, `v_proj`, `o_proj`, `gate_proj`, `up_proj`, `down_proj` suffixes
+under `model.language_model.layers` are eligible. This deliberately does not
+claim adaptation of Qwen3.5's linear-attention projection modules. The exact
+qualified full-name inventory, actual quantized module classes, frozen base,
+trainable LoRA parameters and optimizer object identities must agree. Missing,
+unexpected or mismatched loader keys and loader errors deny. Export is two
+data-only LoRA files and a narrow REPORTED result, never a signed SKU or a model
+evaluation. Local CPU math fixtures are not qualification of this GPU recipe.
+
+`native_supervisor.py` implements fixed-command Linux systemd/cgroup-v2
+supervision helpers: durable single-use nonce consumption, a release handshake,
+actual unit/cgroup/resource-property readback, bounded process logs, telemetry,
+memory, time, disk/output/artifact caps, cost qualification and owned-unit drain.
+An occupied GPU denies; there is no stop, unload, eviction or sharing exception
+for Bonsai or any other workload. The child gets no inherited Hub, SSH, Python
+path or tracking credentials. The boundary is explicitly
+`TRUSTED_SOURCE_BOUND_PROCESS_NOT_HOSTILE_SAME_UID_SANDBOX`; source hashes,
+systemd property strings and a Python object are not a hostile-code sandbox.
+Missing independently pinned barrier qualification or live readback denies.
+The fsynced receipt chain provides byte integrity, not a signature or independent
+witness. No NVML energy integration is implemented: joules remain UNAVAILABLE.
+
+`native_runtime.py` accepts a closed request (`schema`, `paths`) and requires an
+owner-policy SHA-256 supplied out of band, not by that request or its sidecar.
+It rejects public RFC test pins, stale/revoked/mismatched admission observations,
+unknown closure IDs, aliases/hardlinks, changing control files, unbounded limits
+and qualification mismatches. A policy file calling itself independently pinned
+does not establish that provenance. The current source's false eligibility flags
+deny before reading model assets, consuming a nonce, probing telemetry, spawning
+a process or importing model frameworks. Frozen manifest/conformance/token
+reports remain non-authorizing and are not rewritten as permits.
+
+There is also an explicit **CONTAINER_IDENTITY_UNAVAILABLE** hold even if a
+future protected source transition makes the candidate eligible. The existing
+v1 signed profile binds `runtime.container_sha256`; this native systemd runner
+has no live qualified OCI-identity adapter. A native filesystem-tree hash must
+not be relabeled as that container identity. A governed versioned native-runtime
+profile or a real measured container adapter, exact dependency/runtime identity,
+independently pinned owner admission, dedicated available compute and supervised
+qualification remain required. The production loader intentionally returns no
+`BoundRun` while this compatibility hold exists. Helpers exercised with synthetic
+objects are not a route around it. There is no CLI override.
+The worker also has a separate **DEPENDENCY_IDENTITY_UNAVAILABLE** hold: no
+installed wheel/package-tree identity adapter has yet been qualified. Version
+strings, a wheel lock file or a qualification record describing its own digest
+do not authenticate the actually imported dependency bytes. Neither hold is
+cleared by unit tests, property strings or an owner-policy label.
+
+Current command interfaces (not launch authorization):
+
+```sh
+python -I -B frontier/qwen35-receiptagent-v4-json/native_supervisor.py \
+  --check-readiness --bound-run /absolute/request.json \
+  --owner-policy-sha256 OUT_OF_BAND_VERIFIED_SHA256
+python -I -B -m unittest discover -s frontier/qwen35-receiptagent-v4-json -p 'test_native*.py' -v
+```
+
+`--supervise-smoke` uses the same mandatory denial path. The worker additionally
+requires the exact supervisor stdin marker and independently rechecks its
+cgroup and bound context. These interfaces do not rent compute or launch an HF
+Job. Full training, frozen 180-case evaluation, independent replay, publication
+to a new candidate Hub identity and end-to-end Agent Studio acceptance are
+separate, still-unavailable release stages. AirLLM remains a separately studied
+low-memory inference option, not a training method, quality result or deployment
+proof. No signed predecessor model is changed by these components.
 
 ## Prior art
 
