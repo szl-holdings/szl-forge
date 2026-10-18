@@ -519,6 +519,31 @@ separate, still-unavailable release stages. AirLLM remains a separately studied
 low-memory inference option, not a training method, quality result or deployment
 proof. No signed predecessor model is changed by these components.
 
+### Native file-byte identity prerequisite
+
+`native_identity.verify_native_file_manifest(root, manifest_path,
+expected_manifest_sha256=...)` compares an exact directory inventory with a
+separately supplied manifest digest. The closed canonical JSON profile is
+`szl.receiptagent.native-file-manifest/v1`, with sorted `files` entries containing
+only `path`, `size_bytes` and `sha256`. The manifest must live outside the tree.
+Regular files are streamed under fixed file/total/count limits; missing or extra
+files, extra empty directories, aliases, hardlinks and observed changes deny.
+Startup files and native libraries are treated as opaque bytes, never imported
+or executed. Synthetic tests also exercise an isolated `-I -S -B` subprocess.
+
+This is a data comparison prerequisite, not an installed-wheel provenance or
+complete-runtime authentication adapter. The caller still needs a reviewed
+complete dependency inventory, authenticated interpreter/stdlib/native libraries,
+a qualified bootstrap before Python site initialization, read-only consumption,
+and the separate native admission profile. The verifier assumes a trusted single
+writer, not hostile concurrent filesystem control. It does not supply a production
+manifest, owner pin, signature, permit, launch route or import-path change. Both
+existing runtime identity holds and all candidate flags stay unchanged.
+
+```sh
+python -I -S -B -m unittest discover -s frontier/qwen35-receiptagent-v4-json -p test_native_identity.py -v
+```
+
 ## Prior art
 
 This uses existing open standards and maintained software, not a claimed new
