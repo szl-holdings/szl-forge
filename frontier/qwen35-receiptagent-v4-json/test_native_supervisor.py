@@ -1,5 +1,6 @@
 """CPU-only fault fixtures. No GPU, framework, network or credentials."""
 from __future__ import annotations
+from contextlib import ExitStack
 import hashlib
 import importlib.util
 import json
@@ -122,6 +123,38 @@ class TelemetryFixtures(unittest.TestCase):
                 supervisor.assert_gpu_exclusive(Path("/usr/bin/nvidia-smi"))
         with mock.patch.object(supervisor, "bounded_command", return_value=b"\n"):
             supervisor.assert_gpu_exclusive(Path("/usr/bin/nvidia-smi"))
+
+    def test_occupied_gpu_denies_before_nonce_launch_writes_or_signals(self):
+        # SIMULATED ordering fixture only. Mocked earlier checks are not real
+        # admission/qualification; keep the actual GPU denial and supervise flow.
+        import native_runtime as runtime
+        with tempfile.TemporaryDirectory(prefix="szl-v4-occupied-gpu-") as temporary, ExitStack() as patches:
+            run_dir = Path(temporary) / ("a" * 64)
+            run = SimpleNamespace(nonce=run_dir.name, payload={"bounds": {}},
+                path=lambda name: run_dir if name == "run_dir" else run_dir / "output")
+            patches.enter_context(mock.patch.object(supervisor.sys, "platform", "linux"))
+            patches.enter_context(mock.patch.object(runtime, "revalidate_bound_run"))
+            for name in ("validate_bounds", "qualification_matches"):
+                patches.enter_context(mock.patch.object(supervisor, name))
+            patches.enter_context(mock.patch.object(supervisor, "private_directory", side_effect=lambda path: path))
+            query = patches.enter_context(mock.patch.object(supervisor, "bounded_command",
+                return_value=b"7289, " + GPU.encode() + b"\n"))
+            untouched = [patches.enter_context(mock.patch.object(supervisor, name)) for name in (
+                "sample_gpu", "_check_disk", "consume_nonce", "_allocate_reserve",
+                "ReceiptChain", "drain_owned_unit", "_control_command", "fsync_directory")]
+            untouched.extend(patches.enter_context(mock.patch.object(target, name, create=True))
+                for target, name in ((supervisor.subprocess, "Popen"), (supervisor.os, "mkdir"),
+                                     (supervisor.os, "kill"), (supervisor.os, "killpg")))
+            models = ("torch", "transformers", "peft", "bitsandbytes", "native_worker")
+            before_modules = {name: sys.modules.get(name) for name in models}
+            with self.assertRaisesRegex(supervisor.SupervisorError, "GPU_ALREADY_HAS_COMPUTE_PROCESS"):
+                supervisor.supervise(run)
+            query.assert_called_once_with((str(supervisor.NVIDIA_SMI), "--query-compute-apps=pid,gpu_uuid",
+                                           "--format=csv,noheader,nounits"), maximum=4096)
+            for effect in untouched:
+                effect.assert_not_called()
+            self.assertEqual({name: sys.modules.get(name) for name in models}, before_modules)
+            self.assertEqual(list(Path(temporary).iterdir()), [])
 
 
 class ContainmentFixtures(unittest.TestCase):

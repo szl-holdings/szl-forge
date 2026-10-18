@@ -585,6 +585,72 @@ remain required. Both production identity holds and candidate flags stay unchang
 python -I -S -B -m unittest discover -s frontier/qwen35-receiptagent-v4-json -p test_native_wheel_identity.py -v
 ```
 
+### Pre-site, verify-only bootstrap
+
+`native_bootstrap.py` is a standalone byte-observation entry point. Start it
+with `-I -S -B`: isolated startup, no automatic `site` initialization, and no
+bytecode writes. It first checks the actual interpreter flags, then captures
+and checks both adjacent helper source files against separately supplied
+SHA-256 pins before executing either retained source buffer. It does not load
+helper bytecode, search for alternative helpers, add package paths, run `.pth`
+files, or import the candidate dependency tree. All supplied input paths must
+be absolute and pass the helpers' bounded plain-file/tree checks.
+
+```sh
+python -I -S -B /absolute/source/native_bootstrap.py \
+  --wheel-root /absolute/wheels \
+  --inventory /absolute/wheel-inventory.json \
+  --installed-root /absolute/installed-tree \
+  --native-manifest /absolute/native-manifest.json \
+  --inventory-sha256 OUT_OF_BAND_WHEEL_INVENTORY_SHA256 \
+  --native-manifest-sha256 OUT_OF_BAND_NATIVE_MANIFEST_SHA256 \
+  --native-identity-sha256 REVIEWED_NATIVE_IDENTITY_SOURCE_SHA256 \
+  --native-wheel-identity-sha256 REVIEWED_NATIVE_WHEEL_IDENTITY_SOURCE_SHA256
+python -I -S -B -m unittest discover -s frontier/qwen35-receiptagent-v4-json -p test_native_bootstrap.py -v
+```
+
+A successful observation means only that the supplied wheel/tree bytes matched
+the supplied commitments during this invocation. The pins must come from a
+separately trusted source; generating pins from arbitrary local files does not
+authenticate those files. The bootstrap itself, executing interpreter, standard
+library, native loader and prior startup environment remain externally trusted
+inputs, not identities established by the bootstrap. In particular, rejecting
+an invocation without `-S` cannot undo startup code that already ran. Mutable
+files are not made immutable by successful hashing. The trusted-single-writer
+assumption remains in force.
+
+This entry point never returns a `BoundRun`, consumes a nonce, launches a worker,
+loads a model, touches the GPU, or grants training/publication/execution authority.
+The existing worker and supervisor do not yet consume it as an admission gate;
+both production identity holds and all candidate flags remain unchanged.
+Software tests use SIMULATED wheel/package fixtures, not a qualified production
+runtime or model evaluation.
+
+### Remaining native admission bindings
+
+Native admission requires a separately versioned native profile and signature
+domain. The current container profile must remain unchanged: a native tree hash
+cannot fill `runtime.container_sha256`. Before any production `BoundRun` can be
+returned, the signed context must be compared with actual observed inputs:
+
+- Candidate and publishing-policy bytes, exact executable source closure,
+  supervisor policy and canonical worker-closure commitment.
+- Every contract, preregistration, gate, harness, schema, validator and Nemo
+  source commitment, plus the exact loader/architecture semantics.
+- Complete transitive installed dependencies and wheel/platform qualification,
+  authenticated interpreter/stdlib/native libraries, controlled imports, and
+  qualified read-only consumption after pre-site verification.
+- Actual runner/device identity, fresh containment and resource qualification,
+  evidence/receipt/durability/drain/terminal/anti-replay policy commitments.
+- An independently pinned training public key with trust provenance, current
+  revocation/freshness policy and an owner-signed bounded smoke admission.
+
+These are unfinished bindings, not reachable training bypasses: current source
+eligibility and the unconditional identity holds still deny. Neither a Git/SSH
+key nor the public RFC test key may be repurposed as the training signer. The
+occupied-GPU denial also stays in force; keeping Bonsai running requires a
+separate, exclusively admitted compute allocation for ReceiptAgent training.
+
 ## Prior art
 
 This uses existing open standards and maintained software, not a claimed new
