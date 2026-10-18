@@ -544,6 +544,47 @@ existing runtime identity holds and all candidate flags stay unchanged.
 python -I -S -B -m unittest discover -s frontier/qwen35-receiptagent-v4-json -p test_native_identity.py -v
 ```
 
+### Pinned wheel byte comparison prerequisite
+
+`native_wheel_identity.verify_native_wheel_inventory(wheel_root, inventory_path,
+installed_root, native_manifest_path, expected_inventory_sha256=...,
+expected_native_manifest_sha256=...)` compares a separately pinned wheel set with
+the pinned native manifest and actual directory. The closed canonical profile is
+`szl.receiptagent.native-wheel-inventory/v1`, containing `schema`,
+`native_manifest_sha256`, and sorted `wheels` entries with only `path` (a wheel
+basename), `size_bytes`, and `sha256`. Both external pins are mandatory; a digest
+inside the inventory is not a trust anchor. Results are immutable counts and
+digests, not a capability to import, launch, train or serve.
+
+This deliberately narrow profile supports exact root-layout copies of ZIP32
+STORED/DEFLATED wheels. It rejects `.data` relocation, rewritten metadata,
+generated wrappers/bytecode, unexplained installed files, encrypted or special
+entries, ambiguous paths, overlapping file destinations and unsupported archive
+features. Directory namespaces may be shared only with disjoint file paths.
+Every file, including `.dist-info/RECORD`, startup files and native libraries, is
+compared as opaque bytes. `RECORD` and distribution metadata confer no trust.
+There is no installer, extraction, package discovery, dependency resolution,
+network access, or package import. Standard installer transformations are not
+silently exempted; this is not a generic audit of an arbitrary pip environment.
+
+Archive hashes are checked before ZIP parsing. Raw central-directory and
+local-header interpretation and metadata limits are checked before constructing
+`ZipFile`; payload reads are separately bounded. No ZIP64, multi-disk archives,
+comments, extras, data
+descriptors, preambles, gaps or trailing overlays are accepted by this version.
+The same verified file handle is used through parsing and streaming, with
+change checks under the trusted-single-writer assumption. This still does not
+establish immutable consumption or hostile-same-UID containment.
+
+No production wheel inventory is supplied or qualified here. Complete dependency
+selection, compatible wheel tags, publisher provenance, interpreter/stdlib/native
+library identity, a pre-site bootstrap and separately trusted native admission
+remain required. Both production identity holds and candidate flags stay unchanged.
+
+```sh
+python -I -S -B -m unittest discover -s frontier/qwen35-receiptagent-v4-json -p test_native_wheel_identity.py -v
+```
+
 ## Prior art
 
 This uses existing open standards and maintained software, not a claimed new
@@ -552,6 +593,9 @@ JSON format or proof system:
 - [JSON Schema validation, Draft 2020-12](https://json-schema.org/draft/2020-12/json-schema-validation).
 - [Python JSON decoder hooks and finite-number handling](https://docs.python.org/3/library/json.html).
 - [jsonschema validation and format checking](https://python-jsonschema.readthedocs.io/en/stable/validate/).
+- [PyPA wheel layout and installation transformations](https://packaging.python.org/en/latest/specifications/binary-distribution-format/).
+- [Python ZIP archive behavior and decompression pitfalls](https://docs.python.org/3/library/zipfile.html).
+- [Existing AirLLM qualification package-byte comparison](../airllm-qualification-lab/local_airllm.py), a studied comparison pattern rather than a training or runtime admission result.
 
 The SZL-specific contribution is the versioned proposal/withhold contract,
 fail-closed request/evidence bindings, and preservation of historical evidence.
