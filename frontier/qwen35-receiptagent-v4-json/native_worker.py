@@ -491,7 +491,6 @@ def _run(request_path: Path, owner_policy_sha256: str) -> dict:
     # artifacts and runtime qualifications are checked before framework imports.
     import native_runtime as runtime
     import probe_base_config as config_probe
-    import probe_base_tokenizer as tokenizer_probe
     import probe_train_token_tensors as reference
 
     run = runtime.load_bound_run(request_path, owner_policy_sha256=owner_policy_sha256, role="worker")
