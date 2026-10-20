@@ -511,7 +511,11 @@ python -I -B -m unittest discover -s frontier/qwen35-receiptagent-v4-json -p 'te
 ```
 
 `--supervise-smoke` uses the same mandatory denial path. The worker additionally
-requires the exact supervisor stdin marker and independently rechecks its
+is dispatched by the supervisor with the exact `-I -B` startup flags. `-I`
+suppresses the user site while retaining the separately qualified system
+dependency closure required by `curriculum_admission` and `jsonschema`; `-S`
+is reserved for the stdlib-only pre-site bootstrap and byte-observation tools.
+The worker requires the exact supervisor stdin marker and independently rechecks its
 cgroup and bound context. These interfaces do not rent compute or launch an HF
 Job. Full training, frozen 180-case evaluation, independent replay, publication
 to a new candidate Hub identity and end-to-end Agent Studio acceptance are
@@ -622,7 +626,9 @@ assumption remains in force.
 This entry point never returns a `BoundRun`, consumes a nonce, launches a worker,
 loads a model, touches the GPU, or grants training/publication/execution authority.
 The existing worker and supervisor do not yet consume it as an admission gate;
-both production identity holds and all candidate flags remain unchanged.
+they only enforce the observed interpreter startup flags before path-dependent
+runtime imports. Both production identity holds and all candidate flags remain
+unchanged.
 Software tests use SIMULATED wheel/package fixtures, not a qualified production
 runtime or model evaluation.
 
