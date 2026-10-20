@@ -90,6 +90,22 @@ class DurableFixtures(unittest.TestCase):
         self.assertNotIn("PYTHONPATH", result)
         self.assertEqual(result["CUDA_VISIBLE_DEVICES"], GPU)
 
+    def test_worker_argv_uses_exact_isolated_startup(self):
+        output = self.directory / "output"
+        bounds = {"host_memory_bytes": 1024, "wall_seconds": 10,
+                  "kill_seconds": 2}
+        run = SimpleNamespace(
+            nonce="a" * 64, payload={"bounds": bounds, "runner": {"device_id": GPU}},
+            readonly_paths=(), worker_python=Path("/usr/bin/python3"),
+            worker_path=Path("/src/native_worker.py"),
+            request_path=Path("/run/request.json"), owner_policy_sha256="b" * 64,
+            path=lambda name: output,
+        )
+        argv = supervisor.worker_argv(run, description="szl-ra4-owned-" + "c" * 64)
+        marker = (str(run.worker_python), "-I", "-S", "-B", str(run.worker_path))
+        start = argv.index(str(run.worker_python))
+        self.assertEqual(argv[start:start + len(marker)], marker)
+
 
 class TelemetryFixtures(unittest.TestCase):
     def test_exact_gpu_sample_and_bounds(self):

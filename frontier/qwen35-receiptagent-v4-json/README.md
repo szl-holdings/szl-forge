@@ -504,14 +504,15 @@ cleared by unit tests, property strings or an owner-policy label.
 Current command interfaces (not launch authorization):
 
 ```sh
-python -I -B frontier/qwen35-receiptagent-v4-json/native_supervisor.py \
+python -I -S -B frontier/qwen35-receiptagent-v4-json/native_supervisor.py \
   --check-readiness --bound-run /absolute/request.json \
   --owner-policy-sha256 OUT_OF_BAND_VERIFIED_SHA256
-python -I -B -m unittest discover -s frontier/qwen35-receiptagent-v4-json -p 'test_native*.py' -v
+python -I -S -B -m unittest discover -s frontier/qwen35-receiptagent-v4-json -p 'test_native*.py' -v
 ```
 
 `--supervise-smoke` uses the same mandatory denial path. The worker additionally
-requires the exact supervisor stdin marker and independently rechecks its
+is dispatched by the supervisor with the exact `-I -S -B` startup flags, requires
+the exact supervisor stdin marker and independently rechecks its
 cgroup and bound context. These interfaces do not rent compute or launch an HF
 Job. Full training, frozen 180-case evaluation, independent replay, publication
 to a new candidate Hub identity and end-to-end Agent Studio acceptance are
@@ -622,7 +623,9 @@ assumption remains in force.
 This entry point never returns a `BoundRun`, consumes a nonce, launches a worker,
 loads a model, touches the GPU, or grants training/publication/execution authority.
 The existing worker and supervisor do not yet consume it as an admission gate;
-both production identity holds and all candidate flags remain unchanged.
+they only enforce the observed interpreter startup flags before path-dependent
+runtime imports. Both production identity holds and all candidate flags remain
+unchanged.
 Software tests use SIMULATED wheel/package fixtures, not a qualified production
 runtime or model evaluation.
 
