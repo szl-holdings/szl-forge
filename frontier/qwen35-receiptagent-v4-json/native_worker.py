@@ -50,8 +50,8 @@ RESULT_SCHEMA = "szl.receiptagent.v4-native-worker-result/v1"
 
 
 def _require_startup_flags() -> None:
-    """Require the supervisor's exact isolated interpreter contract."""
-    _require(bool(sys.flags.isolated and sys.flags.no_site
+    """Require isolation without hiding the reviewed system dependency closure."""
+    _require(bool(sys.flags.isolated and sys.flags.no_user_site
                   and sys.flags.dont_write_bytecode),
              "NATIVE_STARTUP_FLAGS_REQUIRED")
 

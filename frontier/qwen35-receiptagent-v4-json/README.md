@@ -504,15 +504,18 @@ cleared by unit tests, property strings or an owner-policy label.
 Current command interfaces (not launch authorization):
 
 ```sh
-python -I -S -B frontier/qwen35-receiptagent-v4-json/native_supervisor.py \
+python -I -B frontier/qwen35-receiptagent-v4-json/native_supervisor.py \
   --check-readiness --bound-run /absolute/request.json \
   --owner-policy-sha256 OUT_OF_BAND_VERIFIED_SHA256
-python -I -S -B -m unittest discover -s frontier/qwen35-receiptagent-v4-json -p 'test_native*.py' -v
+python -I -B -m unittest discover -s frontier/qwen35-receiptagent-v4-json -p 'test_native*.py' -v
 ```
 
 `--supervise-smoke` uses the same mandatory denial path. The worker additionally
-is dispatched by the supervisor with the exact `-I -S -B` startup flags, requires
-the exact supervisor stdin marker and independently rechecks its
+is dispatched by the supervisor with the exact `-I -B` startup flags. `-I`
+suppresses the user site while retaining the separately qualified system
+dependency closure required by `curriculum_admission` and `jsonschema`; `-S`
+is reserved for the stdlib-only pre-site bootstrap and byte-observation tools.
+The worker requires the exact supervisor stdin marker and independently rechecks its
 cgroup and bound context. These interfaces do not rent compute or launch an HF
 Job. Full training, frozen 180-case evaluation, independent replay, publication
 to a new candidate Hub identity and end-to-end Agent Studio acceptance are

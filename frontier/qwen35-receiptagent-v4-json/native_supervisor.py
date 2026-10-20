@@ -495,7 +495,7 @@ def worker_argv(run, *, description: str) -> tuple[str, ...]:
     options.extend(("--", "/usr/bin/env", "-i"))
     env = minimal_environment(output, gpu_uuid=run.payload["runner"]["device_id"])
     options.extend(key + "=" + value for key, value in sorted(env.items()))
-    options.extend((str(run.worker_python), "-I", "-S", "-B", str(run.worker_path),
+    options.extend((str(run.worker_python), "-I", "-B", str(run.worker_path),
                     "--bound-run", str(run.request_path), "--owner-policy-sha256",
                     run.owner_policy_sha256, "--release-stdin"))
     return tuple(options)
@@ -865,7 +865,7 @@ def main(argv: list[str] | None = None) -> int:
     # telemetry or framework import. Dispatch wiring follows that shared API.
     previous = {}
     try:
-        require(bool(sys.flags.isolated and sys.flags.no_site
+        require(bool(sys.flags.isolated and sys.flags.no_user_site
                      and sys.flags.dont_write_bytecode),
                 "NATIVE_STARTUP_FLAGS_REQUIRED")
         for signum in (signal.SIGINT, signal.SIGTERM):

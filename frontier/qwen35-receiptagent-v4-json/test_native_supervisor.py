@@ -102,7 +102,7 @@ class DurableFixtures(unittest.TestCase):
             path=lambda name: output,
         )
         argv = supervisor.worker_argv(run, description="szl-ra4-owned-" + "c" * 64)
-        marker = (str(run.worker_python), "-I", "-S", "-B", str(run.worker_path))
+        marker = (str(run.worker_python), "-I", "-B", str(run.worker_path))
         start = argv.index(str(run.worker_python))
         self.assertEqual(argv[start:start + len(marker)], marker)
 

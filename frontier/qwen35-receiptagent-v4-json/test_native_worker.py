@@ -68,7 +68,7 @@ class PureWorkerTests(unittest.TestCase):
                       "code=native_worker.main(['--bound-run',sys.argv[2],'--owner-policy-sha256','0'*64,"
                       "'--release-stdin']); print('FRAMEWORKS_LOADED='+str(any(name in sys.modules "
                       "for name in ('torch','peft','transformers','bitsandbytes')))); sys.exit(code)")
-            result = subprocess.run([sys.executable, "-I", "-S", "-B", "-c", script,
+            result = subprocess.run([sys.executable, "-I", "-B", "-c", script,
                                      str(Path(worker.__file__).parent), str(request)],
                                     input=worker.RELEASE_MARKER, capture_output=True, timeout=30)
             self.assertEqual(result.returncode, 1)
