@@ -12,6 +12,14 @@
 [Product](https://a-11-oy.com) · [Proof](https://a11oy.net) · [GitHub organization](https://github.com/szl-holdings)
 <!-- /szl:header -->
 
+## Scope and data boundary
+
+`clinical-gateway/` is outside this statement. It is a separately bounded
+integration surface for synthetic and already-deidentified result traffic,
+described in the OAC Clinical Gateway section below. The rest of this kit is
+not for clinical use, and nothing in it may receive PHI, patient data or
+clinical result content.
+
 **Train, qualify, and publish bounded SZL model artifacts from explicit source and evidence.**
 
 SZL Forge is the canonical training-recipe, qualification, and publication
