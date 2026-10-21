@@ -15,11 +15,63 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  native-cpu-contracts:
+    name: ReceiptAgent v4 synthetic CPU worker contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: audit
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Install CPU fixture dependencies, not a training runtime
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check "torch==2.10.0" --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install --disable-pip-version-check "jsonschema==4.26.0"
+      - name: Require all eight synthetic CPU contracts, without skips
+        run: |
+          set -euo pipefail
+          python -I -B <<'PY'
+          import runpy
+          import unittest
+          import torch
+
+          if torch.__version__ != "2.10.0+cpu" or torch.version.cuda is not None:
+              raise SystemExit("The pinned CPU-only Torch build is required")
+          print(f"Synthetic CPU fixtures only; Torch {torch.__version__}")
+          namespace = runpy.run_path("frontier/qwen35-receiptagent-v4-json/test_native_worker.py")
+          suite = unittest.defaultTestLoader.loadTestsFromTestCase(namespace["CPUAutogradTests"])
+          if suite.countTestCases() != 8:
+              raise SystemExit("Expected exactly eight CPU worker contracts")
+          result = unittest.TextTestRunner(verbosity=2).run(suite)
+          if (result.testsRun != 8 or not result.wasSuccessful() or result.failures or result.errors
+                  or result.skipped or result.expectedFailures or result.unexpectedSuccesses):
+              raise SystemExit("All eight CPU contracts must execute and pass without skips")
+          PY
+
   verify:
     name: Receipts, source contracts, and portfolio
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    needs: native-cpu-contracts
+    if: ${{ always() }}
     steps:
+      - name: Require successful synthetic CPU contracts
+        env:
+          NATIVE_CPU_RESULT: ${{ needs.native-cpu-contracts.result }}
+        run: test "$NATIVE_CPU_RESULT" = success
+
       - name: Harden runner
         uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
