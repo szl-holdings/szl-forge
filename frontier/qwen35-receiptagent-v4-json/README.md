@@ -632,6 +632,21 @@ unchanged.
 Software tests use SIMULATED wheel/package fixtures, not a qualified production
 runtime or model evaluation.
 
+### Synthetic CPU worker CI
+
+The dedicated `ReceiptAgent v4 synthetic CPU worker contracts` CI job acquires
+pinned CPU-only Torch and jsonschema dependencies, then runs the eight existing
+`CPUAutogradTests` with a tiny synthetic model on CPU. Dependency acquisition
+uses the network; the fixture run does not download a model or contact a service.
+The job is bounded to ten minutes and rejects missing tests, skips, expected
+failures, unexpected successes and test errors. The dependency-light source
+verification job may still skip this optional test class, but its required
+status check explicitly fails unless the isolated CPU job succeeded. An always-run
+result check prevents a skipped dependency from silently satisfying protection.
+These are software-test results, not model quality, runtime qualification,
+training admission, held-out evaluation or Agent Studio operational readiness.
+No candidate eligibility or identity hold is changed by the CI result.
+
 ### Remaining native admission bindings
 
 Native admission requires a separately versioned native profile and signature

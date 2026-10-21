@@ -2,9 +2,15 @@
 """Blocking source-only CI ownership, no model launch or publishing permission."""
 from __future__ import annotations
 
+from contextlib import redirect_stdout
+import io
 import json
+import sys
+import textwrap
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
@@ -12,6 +18,77 @@ NEMO_REVISION = "f7b33e1b1fe8f3b9b729a27567bcba375e2e0d6e"
 
 
 class WorkflowBindingTests(unittest.TestCase):
+    def cpu_job(self):
+        workflow = (ROOT / ".github/workflows/model-kernel-frontier.yml").read_text(encoding="utf-8")
+        self.assertEqual(workflow.count("  native-cpu-contracts:\n"), 1)
+        return workflow.split("  native-cpu-contracts:\n", 1)[1].split("\n  verify:", 1)[0]
+
+    def cpu_script(self):
+        return textwrap.dedent(self.cpu_job().split("python -I -B <<'PY'\n", 1)[1].split("\n          PY", 1)[0])
+
+    def test_native_cpu_job_is_bounded_read_only_and_separate_from_admission(self):
+        job = self.cpu_job()
+        for text in (
+            "runs-on: ubuntu-latest", "timeout-minutes: 10", "contents: read",
+            "persist-credentials: false", 'python-version: "3.12"',
+            "step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25",
+            "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+            "actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
+            '"torch==2.10.0" --index-url https://download.pytorch.org/whl/cpu',
+            '"jsonschema==4.26.0"', "set -euo pipefail", "python -I -B <<'PY'",
+        ):
+            self.assertIn(text, job)
+        for text in ("continue-on-error", "if:", "secrets.", "||", "set +", "exit 0",
+                     "self-hosted", "train_candidate.py", "native_supervisor.py", "heldout/", "hf "):
+            self.assertNotIn(text, job)
+        script = self.cpu_script()
+        self.assertIn('runpy.run_path("frontier/qwen35-receiptagent-v4-json/test_native_worker.py")', script)
+        self.assertIn('namespace["CPUAutogradTests"]', script)
+        self.assertNotIn('__main__', script)
+
+    def run_cpu_script(self, *, count=8, version="2.10.0+cpu", cuda=None, **changes):
+        outcome = dict(testsRun=8, failures=[], errors=[], skipped=[], expectedFailures=[],
+                       unexpectedSuccesses=[], wasSuccessful=lambda: True)
+        outcome.update(changes)
+        suite = SimpleNamespace(countTestCases=lambda: count)
+        torch = SimpleNamespace(__version__=version, version=SimpleNamespace(cuda=cuda))
+        with redirect_stdout(io.StringIO()), patch.dict(sys.modules, {"torch": torch}), \
+                patch("runpy.run_path", return_value={"CPUAutogradTests": object}), \
+                patch.object(unittest.defaultTestLoader, "loadTestsFromTestCase", return_value=suite), \
+                patch.object(unittest, "TextTestRunner") as runner:
+            runner.return_value.run.return_value = SimpleNamespace(**outcome)
+            exec(compile(self.cpu_script(), "<native-cpu-ci>", "exec"), {})
+            runner.return_value.run.assert_called_once_with(suite)
+
+    def test_native_cpu_ci_accepts_only_eight_successful_unskipped_tests(self):
+        self.run_cpu_script()
+
+    def test_required_frontier_check_fails_when_cpu_job_does_not_succeed(self):
+        workflow = (ROOT / ".github/workflows/model-kernel-frontier.yml").read_text(encoding="utf-8")
+        required = workflow.split("\n  verify:\n", 1)[1].split("      - name: Harden runner", 1)[0]
+        self.assertEqual([line.strip() for line in required.splitlines() if line.strip()], [
+            "name: Receipts, source contracts, and portfolio",
+            "runs-on: ubuntu-latest",
+            "timeout-minutes: 20",
+            "needs: native-cpu-contracts",
+            "if: ${{ always() }}",
+            "steps:",
+            "- name: Require successful synthetic CPU contracts",
+            "env:",
+            "NATIVE_CPU_RESULT: ${{ needs.native-cpu-contracts.result }}",
+            'run: test "$NATIVE_CPU_RESULT" = success',
+        ])
+
+    def test_native_cpu_ci_rejects_incomplete_or_non_success_results(self):
+        cases = [{"count": 0}, {"count": 9}, {"testsRun": 0}, {"testsRun": 7},
+                 {"version": "2.9.0+cpu"}, {"cuda": "12.8"},
+                 {"wasSuccessful": lambda: False}]
+        cases.extend({name: [("fixture", "not a pass")]} for name in
+                     ("failures", "errors", "skipped", "expectedFailures", "unexpectedSuccesses"))
+        for case in cases:
+            with self.subTest(case=case), self.assertRaises(SystemExit):
+                self.run_cpu_script(**case)
+
     def test_nemo_lane_triggers_and_pins_reviewed_kernel(self):
         workflow = (ROOT / ".github/workflows/nemo-doctrine-gate.yml").read_text(encoding="utf-8")
         self.assertEqual(workflow.count('- "frontier/qwen35-receiptagent-v4-json/**"'), 2)
