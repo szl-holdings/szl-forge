@@ -1,0 +1,53 @@
+# OAC Ops Health v3: amendments (clarifications under section 15.4)
+
+Everything here is SYNTHETIC. The registered files are not edited:
+- `v3/PREREGISTRATION.md`, sha256 `24c239e7…1d0e`, registered at `970ce6ce`, tag
+  `oac-v3-registered`;
+- `v3/REREGISTRATION_r1.md`, at `80eeaf12`, tag `oac-v3-registered-r1`.
+
+Each entry decides a request in `v3/AMENDMENT_REQUESTS.md`. Each is a clarification under
+section 15.4: it fixes a detail the registered text leaves open and changes no frozen item. Each
+is decided and committed before the first protocol step it affects. The decider is the
+orchestrating session. Stephen approved publishing this record by name ("O1 Push AMENDMENTS",
+2026-10-23). The decision date is 2026-10-23, before section 13 step 4. No v3 fit, band
+retrain, known-good retrain or non-sealed split exists at this decision.
+
+## AC-1 (decides AR-1): segments and order of the 227 declared fits
+
+ACCEPTED as requested.
+
+- **Segment 1 (step 4), 7 fits:** main, ABL-D, ABL-R, ABL-DR, ABL-n, ABL-jitter, and
+  ABL-calibration's Platt fit.
+- **Segment 2 (step 5), 120 fits:**
+  - the 100 band retrains `train_band_001..100`, in index order;
+  - then ABL-n's 20 retrains on the first 16,384 rows of `train_band_001..020`, in index order.
+- **Segment 3 (step 6), 100 fits:**
+  - for k = 01..20 in order, the four H1 arms: v3 (`train_kg_k`), ABL-D (`train_kg_k_noD`),
+    ABL-R (`train_kg_k`) and ABL-DR (`train_kg_k_noD`);
+  - then ABL-n's 20 retrains on the first 16,384 rows of `train_kg_01..20`.
+
+The total stays 227 and the cap stays 227. ABL-n's retrains are descriptive. They enter neither
+the tolerance vector nor H1.
+
+## AC-2 (decides AR-2): a segment interrupted by a host-side failure
+
+ACCEPTED as requested.
+
+- **Recording.** A run stopped by a cause outside the code (a host restart, a full disk, a killed
+  session) gets stop reason `INTERRUPTED`. Its partial trace is committed as evidence. It counts
+  as no segment result.
+- **Re-run.** The whole segment re-runs from its first fit, at the same commit P, from a clean
+  tree, with the runtime pins.
+- **Reproduction check.** Every fit that completed in the interrupted attempt must give a
+  byte-identical `model.json` in the re-run. A difference is a defect under section 15.6.
+- **Reporting.** Every attempt is reported. The cap of 227 applies to each attempt.
+
+The segment's result is its first complete run. That run is fixed by P and the seeds, so it
+cannot be chosen against an earlier attempt.
+
+## AC-3 (decides AR-3): the freeze manifest lists every earlier `oac-v3-*` tag
+
+ACCEPTED as requested. The freeze manifest (section 3.5) lists every `oac-v3-*` tag that exists
+before `oac-v3-frozen`: `oac-v3-registered-r1`, any later `oac-v3-registered-rN`, and the
+section 3.5 tags. The manifest format (canonical JSON, the fields and the digest rule) is
+unchanged.
