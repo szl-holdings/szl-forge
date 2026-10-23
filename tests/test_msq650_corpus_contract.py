@@ -130,8 +130,10 @@ class ClosedProfileTests(unittest.TestCase):
             result.training_admitted = True
         for name in ("training_admitted", "execution_authority", "publication_eligible"):
             self.assertIs(getattr(result, name), False)
-            with self.assertRaises(ValueError):
+            # Python 3.14 uses TypeError; 3.11/3.12 use ValueError for init=False.
+            with self.assertRaises((ValueError, TypeError)):
                 replace(result, **{name: True})
+            self.assertIs(getattr(result, name), False)
         self.assertEqual(result.state, "BLOCKED")
         self.assertEqual(result.rights_admission, "UNAVAILABLE")
         self.assertEqual(result.semantic_overlap_clearance, "UNKNOWN")
