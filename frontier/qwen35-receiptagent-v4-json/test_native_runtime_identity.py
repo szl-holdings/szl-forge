@@ -243,6 +243,61 @@ class NativeRuntimeTests(unittest.TestCase):
         self.deny("ABSOLUTE_PATH_REQUIRED", runtime_root=Path("relative"))
         self.deny("PATH_TRAVERSAL_FORBIDDEN", runtime_root=self.parent / ".." / "runtime")
 
+    def deny_simulated_bind_alias(self, first, second):
+        """Normalize existing validated stamps as a bind alias, without mounting.
+
+        Both paths remain real, separately readable fixture files/directories.
+        Only their observed device/inode identity is made equal; path shape,
+        regular-file link counts, byte caps and before/after checks still run.
+        """
+        original = files._stable
+        first_meta, second_meta = first.lstat(), second.lstat()
+        first_id, second_id = original(first_meta)[:2], original(second_meta)[:2]
+        self.assertNotEqual(first_id, second_id)
+        if first.is_file():
+            self.assertEqual(first_meta.st_nlink, 1)
+        if second.is_file():
+            self.assertEqual(second_meta.st_nlink, 1)
+        def alias(meta):
+            stamp = original(meta)
+            return first_id + stamp[2:] if stamp[:2] == second_id else stamp
+        with mock.patch.object(files, "_stable", side_effect=alias), mock.patch.object(
+                files, "verify_native_file_manifest", side_effect=AssertionError("no byte verification")), \
+                mock.patch.object(wheels, "verify_native_wheel_inventory",
+                                  side_effect=AssertionError("no byte verification")):
+            self.deny("FILESYSTEM_IDENTITY_OVERLAP")
+
+    def test_cross_root_file_bind_aliases_reject_with_single_links(self):
+        roots = (self.runtime, self.wheel_root, self.installed)
+        self.assertEqual(len({(root.stat().st_dev, root.stat().st_ino) for root in roots}), 3)
+        paths = (self.runtime / "bin/python", next(self.wheel_root.iterdir()),
+                 self.installed / "package/__init__.py")
+        for index, first in enumerate(paths):
+            for second in paths[index + 1:]:
+                with self.subTest(first=first.name, second=second.name):
+                    self.deny_simulated_bind_alias(first, second)
+
+    def test_cross_root_directory_bind_aliases_reject(self):
+        self.deny_simulated_bind_alias(self.runtime / "lib", self.installed / "package")
+
+    def test_control_to_control_and_control_to_tree_bind_aliases_reject(self):
+        for first, second in ((self.descriptor, self.runtime_manifest),
+                              (self.runtime / "bin/python", self.descriptor)):
+            with self.subTest(first=first.name, second=second.name):
+                self.deny_simulated_bind_alias(first, second)
+
+    def test_within_tree_file_bind_aliases_reject(self):
+        self.deny_simulated_bind_alias(self.runtime / "bin/python", self.runtime / "lib/libpython.so")
+
+    def test_unavailable_underlying_identity_rejects(self):
+        original = files._stable
+        target = original((self.runtime / "bin/python").lstat())[:2]
+        def unavailable(meta):
+            stamp = original(meta)
+            return (stamp[0], 0, *stamp[2:]) if stamp[:2] == target else stamp
+        with mock.patch.object(files, "_stable", side_effect=unavailable):
+            self.deny("FILESYSTEM_IDENTITY_UNAVAILABLE")
+
     def test_hardlinks_deny(self):
         alias = self.parent / "alias.json"
         os.link(self.descriptor, alias)

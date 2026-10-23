@@ -679,7 +679,10 @@ separate, exclusively admitted compute allocation for ReceiptAgent training.
 runtime-file manifest, wheel inventory and installed-file manifest into one
 externally pinned `szl.receiptagent.native-runtime-descriptor/v1` document.
 Runtime, wheel and installed roots must be disjoint, with distinct control files
-outside every root. Runtime files must have an exact, disjoint role partition:
+outside every root. Captured device/inode identities must be available and unique
+across all inventoried files, directories and controls; lexical separation and
+single link counts alone do not exclude bind-mounted aliases. Runtime files must
+have an exact, disjoint role partition:
 one interpreter file and nonempty stdlib/native-library file sets. Every actual
 file is byte-checked through the existing bounded verifiers, including the exact
 wheel-root inventory, with cross-stage change checks. These role labels are

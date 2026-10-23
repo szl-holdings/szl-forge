@@ -45,6 +45,28 @@ def _require(condition, code):
         raise NativeRuntimeIdentityError(code)
 
 
+def _require_distinct_filesystem_identities(inventories, controls):
+    """Reject bind aliases as well as lexical overlap, using validated stamps.
+
+    Bind mounts can expose the same inode through distinct roots with nlink=1.
+    File and directory stamps come from the bounded plain-tree inventories;
+    control stamps come from bounded regular-file captures. Their existing
+    final revalidation also detects an identity change after this comparison.
+    """
+    seen = set()
+    groups = [controls]
+    for file_stamps, directory_stamps in inventories.values():
+        groups.extend((file_stamps, directory_stamps))
+    for group in groups:
+        for stamp in group.values():
+            device, inode = stamp[:2]
+            _require(type(device) is int and device >= 0 and type(inode) is int and inode > 0,
+                     "FILESYSTEM_IDENTITY_UNAVAILABLE")
+            identity = (device, inode)
+            _require(identity not in seen, "FILESYSTEM_IDENTITY_OVERLAP")
+            seen.add(identity)
+
+
 def _descriptor(raw):
     try:
         value = json.loads(raw.decode("ascii"), object_pairs_hook=native._pairs,
@@ -101,7 +123,9 @@ def verify_native_runtime_descriptor(runtime_root: Path, runtime_manifest_path: 
     """Verify one externally pinned, closed native byte descriptor.
 
     All roots must be separate plain directories. Descriptor/manifests/inventory
-    are distinct unaliased files outside every root. Every runtime-manifest file
+    are distinct unaliased files outside every root. Underlying file/directory
+    identities must be distinct too, including bind aliases with one link.
+    Every runtime-manifest file
     must have exactly one declared role; every installed file must be represented
     by the pinned root-layout wheel union. The wheel directory itself is closed,
     with no unlisted wheels, files or subdirectories. Role labels and matching
@@ -143,6 +167,7 @@ def verify_native_runtime_descriptor(runtime_root: Path, runtime_manifest_path: 
         wheel_entries = wheels._inventory(parsed["wheel_inventory_sha256"],
                                           descriptor["installed_manifest_sha256"])
         before = {root: native._inventory(root) for root in roots}
+        _require_distinct_filesystem_identities(before, captured)
         _require(set(before[wheel_root][0]) == {entry["path"] for entry in wheel_entries}
                  and set(before[wheel_root][1]) == {""}, "WHEEL_ROOT_INVENTORY_MISMATCH")
         runtime_result = native.verify_native_file_manifest(
