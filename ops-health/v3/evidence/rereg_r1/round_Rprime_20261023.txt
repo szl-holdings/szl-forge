@@ -1,0 +1,25 @@
+info_api.drand.sh_20261013.json sha256=fcf35be5d74f73c785df566af0914881d18a5c5c9c875d530407295620cbd927 bytes=372
+chaininfo_api.drand.sh_20261013.json sha256=fcf35be5d74f73c785df566af0914881d18a5c5c9c875d530407295620cbd927 bytes=372
+info_drand.cloudflare.com_20261013.json sha256=e82b548c8ccfe4173cbb82c5241734348fee2b8d9b2f7e5190aa40a984be5ff1 bytes=373
+chaininfo_drand.cloudflare.com_20261013.json sha256=e82b548c8ccfe4173cbb82c5241734348fee2b8d9b2f7e5190aa40a984be5ff1 bytes=373
+info_api2.drand.sh_20261013.json sha256=fcf35be5d74f73c785df566af0914881d18a5c5c9c875d530407295620cbd927 bytes=372
+chaininfo_api2.drand.sh_20261013.json sha256=fcf35be5d74f73c785df566af0914881d18a5c5c9c875d530407295620cbd927 bytes=372
+chain parameters identical across 6 responses: True
+hash = 8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce
+public_key = 868f005eb8e6e4ca0a47c8a77ceaa5309a47978a7c71bc5cce96366b5d7a569937c529eeda66c7293784a9402801af31
+period = 30
+genesis_time = 1595431050
+schemeID = pedersen-bls-chained
+groupHash = 176f93498eac9ca337150b46d21dd58673ea4e3581185f869672e59fa4cb390a
+beaconID = default
+genesis_time UTC = 2020-07-22T15:17:30Z
+target = 2026-11-21T00:00:00Z (unix 1795219200)
+R = 6659606
+R scheduled = 2026-11-21T00:00:00Z (unix 1795219200)
+R-1 scheduled = 2026-11-20T23:59:30Z
+latest_api.drand.sh_20261013.json sha256=f75500dd87b07200e05ed5c9cb5d025616beea06dd34266d2534ed9ba03630e1 round=6576422 scheduled=2026-10-23T02:48:00Z randomness==sha256(signature): True
+latest_drand.cloudflare.com_20261013.json sha256=c3e0c712e2e082a95e45b45835726433dbb55d22413170a5261188832f0ebf54 round=6576422 scheduled=2026-10-23T02:48:00Z randomness==sha256(signature): True
+latest_api2.drand.sh_20261013.json sha256=f75500dd87b07200e05ed5c9cb5d025616beea06dd34266d2534ed9ba03630e1 round=6576422 scheduled=2026-10-23T02:48:00Z randomness==sha256(signature): True
+latest round fields identical across relays: True
+rounds from latest saved round to R = 83184
+chain_hash = 8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce
