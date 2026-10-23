@@ -865,6 +865,9 @@ def main(argv: list[str] | None = None) -> int:
     # telemetry or framework import. Dispatch wiring follows that shared API.
     previous = {}
     try:
+        require(bool(sys.flags.isolated and sys.flags.no_user_site
+                     and sys.flags.dont_write_bytecode),
+                "NATIVE_STARTUP_FLAGS_REQUIRED")
         for signum in (signal.SIGINT, signal.SIGTERM):
             previous[signum] = signal.getsignal(signum)
             signal.signal(signum, _stop_requested)

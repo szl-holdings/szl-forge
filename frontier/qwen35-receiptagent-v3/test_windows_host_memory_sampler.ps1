@@ -47,6 +47,12 @@ foreach ($stamp in @('2026-01-01T07:00:00-05:00', '2026-01-01T12:00:06Z',
 
 $sampler = Join-Path $PSScriptRoot 'windows_host_memory_sampler.ps1'
 $samplerSha = (Get-FileHash -LiteralPath $sampler -Algorithm SHA256).Hash.ToLowerInvariant()
+# Deadlines are unchanged; they are named so emitted timing evidence states the
+# exact bound each cold child was measured against.
+$admissionDeadlineMs = 15000
+$firstLineDeadlineMs = 15000
+$cadenceDeadlineMs = 8000
+$eofExitDeadlineMs = 5000
 $executables = @(
     (Join-Path $env:SystemRoot 'System32/WindowsPowerShell/v1.0/powershell.exe'),
     (Join-Path $PSHOME 'pwsh.exe')
@@ -66,13 +72,17 @@ foreach ($executable in $executables) {
     $process = [System.Diagnostics.Process]::new()
     $process.StartInfo = $start
     try {
+        $clock = [System.Diagnostics.Stopwatch]::StartNew()
         if (-not $process.Start()) { throw 'native sampler did not start' }
         $stdout = $process.StandardOutput.ReadToEndAsync()
         $stderr = $process.StandardError.ReadToEndAsync()
-        if (-not $process.WaitForExit(15000)) {
+        if (-not $process.WaitForExit($admissionDeadlineMs)) {
+            $timedOutMs = $clock.ElapsedMilliseconds
             $process.Kill($true)
-            throw 'native sampler exceeded the admission deadline'
+            throw ('native sampler exceeded the admission deadline (executable={0}, elapsedMs={1}, deadlineMs={2})' -f
+                   [System.IO.Path]::GetFileName($executable), $timedOutMs, $admissionDeadlineMs)
         }
+        $onceElapsedMs = $clock.ElapsedMilliseconds
         if ($process.ExitCode -ne 0) { throw 'native sampler exited unsuccessfully' }
         $raw = $stdout.GetAwaiter().GetResult()
         if ($raw.Length -gt 4096) { throw 'native sample exceeded its size bound' }
@@ -103,6 +113,8 @@ foreach ($executable in $executables) {
             state = 'NATIVE_API_OBSERVER_VERIFIED'
             executable = [System.IO.Path]::GetFileName($executable)
             sample = $row
+            elapsedMs = $onceElapsedMs
+            admissionDeadlineMs = $admissionDeadlineMs
             trainingAttempted = $false
             wslInteropVerified = $false
             workerContainmentVerified = $false
@@ -129,24 +141,39 @@ foreach ($executable in $executables) {
     $process = [System.Diagnostics.Process]::new()
     $process.StartInfo = $start
     try {
+        $clock = [System.Diagnostics.Stopwatch]::StartNew()
         if (-not $process.Start()) { throw 'persistent native observer did not start' }
         $stderr = $process.StandardError.ReadToEndAsync()
         $firstLine = $process.StandardOutput.ReadLineAsync()
-        if (-not $firstLine.Wait(15000)) { throw 'persistent native observer was silent' }
+        if (-not $firstLine.Wait($firstLineDeadlineMs)) {
+            throw ('persistent native observer was silent (executable={0}, elapsedMs={1}, deadlineMs={2})' -f
+                   [System.IO.Path]::GetFileName($executable), $clock.ElapsedMilliseconds, $firstLineDeadlineMs)
+        }
+        $firstLineMs = $clock.ElapsedMilliseconds
+        $phase = [System.Diagnostics.Stopwatch]::StartNew()
         $first = $firstLine.GetAwaiter().GetResult() | ConvertFrom-Json
         if ($first.sequence -ne 0 -or $first.runId -cne $runId) {
             throw 'persistent native observer first identity differs'
         }
         $secondLine = $process.StandardOutput.ReadLineAsync()
-        if (-not $secondLine.Wait(8000)) { throw 'persistent native observer lost its cadence' }
+        if (-not $secondLine.Wait($cadenceDeadlineMs)) {
+            throw ('persistent native observer lost its cadence (executable={0}, elapsedMs={1}, deadlineMs={2})' -f
+                   [System.IO.Path]::GetFileName($executable), $phase.ElapsedMilliseconds, $cadenceDeadlineMs)
+        }
+        $cadenceMs = $phase.ElapsedMilliseconds
         $second = $secondLine.GetAwaiter().GetResult() | ConvertFrom-Json
         if ($second.sequence -ne 1 -or $second.runId -cne $runId -or
             $second.nativeMonotonicTicks -le $first.nativeMonotonicTicks -or
             $second.nativeMonotonicFrequency -ne $first.nativeMonotonicFrequency) {
             throw 'persistent native observer sequence differs'
         }
+        $phase = [System.Diagnostics.Stopwatch]::StartNew()
         $process.StandardInput.Close()
-        if (-not $process.WaitForExit(5000)) { throw 'native observer did not exit after helper pipe EOF' }
+        if (-not $process.WaitForExit($eofExitDeadlineMs)) {
+            throw ('native observer did not exit after helper pipe EOF (executable={0}, elapsedMs={1}, deadlineMs={2})' -f
+                   [System.IO.Path]::GetFileName($executable), $phase.ElapsedMilliseconds, $eofExitDeadlineMs)
+        }
+        $eofExitMs = $phase.ElapsedMilliseconds
         if ($process.ExitCode -ne 0) { throw 'native observer EOF exit was unsuccessful' }
         [ordered]@{
             schema = 'szl.windows-native-memory-lifetime-control/v1'
@@ -154,6 +181,12 @@ foreach ($executable in $executables) {
             executable = [System.IO.Path]::GetFileName($executable)
             firstSequence = $first.sequence
             secondSequence = $second.sequence
+            firstLineMs = $firstLineMs
+            cadenceMs = $cadenceMs
+            eofExitMs = $eofExitMs
+            firstLineDeadlineMs = $firstLineDeadlineMs
+            cadenceDeadlineMs = $cadenceDeadlineMs
+            eofExitDeadlineMs = $eofExitDeadlineMs
             sourceRevision = $SourceRevision
             samplerSourceSha256 = $samplerSha
             trainingAttempted = $false

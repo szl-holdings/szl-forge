@@ -22,13 +22,38 @@ import stat
 import sys
 
 # ``-I`` deliberately removes the script directory. Add only this exact reviewed
-# source directory, never cwd or an environment-supplied search path.
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-import curriculum_admission as admission
-import training_tokens as tokens
+# source directory, never cwd or an environment-supplied search path, and only
+# when a helper actually needs one of the reviewed local modules. Keeping these
+# imports lazy means a denied isolated CLI never imports curriculum/token code.
+class _LazyReviewedModule:
+    def __init__(self, name: str):
+        self._name = name
+        self._module = None
+
+    def _load(self):
+        if self._module is None:
+            source_dir = str(Path(__file__).resolve().parent)
+            if source_dir not in sys.path:
+                sys.path.insert(0, source_dir)
+            self._module = __import__(self._name)
+        return self._module
+
+    def __getattr__(self, name: str):
+        return getattr(self._load(), name)
+
+
+admission = _LazyReviewedModule("curriculum_admission")
+tokens = _LazyReviewedModule("training_tokens")
 
 RELEASE_MARKER = b"SZL-RA4-CONTAINMENT-VERIFIED\n"
 RESULT_SCHEMA = "szl.receiptagent.v4-native-worker-result/v1"
+
+
+def _require_startup_flags() -> None:
+    """Require isolation without hiding the reviewed system dependency closure."""
+    _require(bool(sys.flags.isolated and sys.flags.no_user_site
+                  and sys.flags.dont_write_bytecode),
+             "NATIVE_STARTUP_FLAGS_REQUIRED")
 
 
 class WorkerError(ValueError):
@@ -68,7 +93,8 @@ def _stream_asset_hash(path: Path, maximum: int = 8 * 1024**3) -> str:
     path_after = path.lstat()
     # Windows fstat and pathname stat can report different ctime semantics.
     # Compare each API's own before/after ctime and cross-compare stable fields.
-    identity = lambda value: (value.st_dev, value.st_ino, value.st_size, value.st_nlink, value.st_mtime_ns)
+    def identity(value):
+        return (value.st_dev, value.st_ino, value.st_size, value.st_nlink, value.st_mtime_ns)
     _require(identity(before) == identity(after) == identity(path_before) == identity(path_after)
              and before.st_ctime_ns == after.st_ctime_ns
              and path_before.st_ctime_ns == path_after.st_ctime_ns
@@ -575,6 +601,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--release-stdin", action="store_true", required=True)
     args = parser.parse_args(argv)
     try:
+        _require_startup_flags()
         read_supervisor_release(sys.stdin.buffer)
         record = _run(args.bound_run, args.owner_policy_sha256)
     except Exception:
