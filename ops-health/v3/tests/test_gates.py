@@ -42,10 +42,12 @@ class GateFormulaTest(unittest.TestCase):
         self.assertEqual(gates.g_baseline_valid({"valid": "yes"}), 0.0)
 
     def test_coef_band(self):
+        # binary fractions, so |d| is exact and the boundary case is tested exactly
         ref = [1.0] * 9
-        tol = [0.1] * 9
-        self.assertEqual(gates.g_coef_band([1.1] * 9, ref, tol), 1.0)  # boundary: |d| <= tol
-        self.assertEqual(gates.g_coef_band([1.0] * 8 + [1.2], ref, tol), 0.0)
+        tol = [0.125] * 9
+        self.assertEqual(gates.g_coef_band([1.125] * 9, ref, tol), 1.0)  # boundary: |d| <= tol
+        self.assertEqual(gates.g_coef_band([0.875] * 9, ref, tol), 1.0)
+        self.assertEqual(gates.g_coef_band([1.0] * 8 + [1.25], ref, tol), 0.0)
         self.assertEqual(gates.g_coef_band([1.0] * 8 + [math.nan], ref, tol), 0.0)
         self.assertEqual(gates.g_coef_band(None, ref, tol), 0.0)
         self.assertEqual(gates.g_coef_band([1.0] * 8, ref, tol), 0.0)

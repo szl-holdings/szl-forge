@@ -121,7 +121,15 @@ class SealedPathGuardTest(unittest.TestCase):
         offenders = []
         for path in sorted((registry.V3 / "research").glob("*.py")):
             tree = ast.parse(path.read_text(encoding="utf-8"))
+            docstrings = set()
             for node in ast.walk(tree):
+                body = getattr(node, "body", None)
+                if (isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef))
+                        and body and isinstance(body[0], ast.Expr) and isinstance(body[0].value, ast.Constant)):
+                    docstrings.add(id(body[0].value))  # documentation, not a path the code uses
+            for node in ast.walk(tree):
+                if id(node) in docstrings:
+                    continue
                 if isinstance(node, ast.Attribute) and node.attr == "V2_SEALED_DIR":
                     if path.name not in ("guards.py", "registry.py"):
                         offenders.append(f"{path.name}:{node.lineno}")

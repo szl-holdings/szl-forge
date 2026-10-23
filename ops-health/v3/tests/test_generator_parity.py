@@ -146,9 +146,12 @@ class TwinParityTest(unittest.TestCase):
             self.assertGreaterEqual(o["features"][SECONDS], l["features"][SECONDS])
             self.assertLessEqual(o["features"][SECONDS], min(86400.0, l["features"][SECONDS] + 7200.0) + 1e-6)
             moved += o["features"][SECONDS] > l["features"][SECONDS]
-            text = json.dumps(o) + json.dumps(l)
-            self.assertNotIn("skew\"", text)
-            self.assertNotIn("latent", text)
+            # neither the skew value nor any latent field is written: the rows carry exactly the
+            # v2 keys and the eight fields
+            for row in (o, l):
+                self.assertEqual(set(row), {"schema", "synthetic", "sample_id", "regime", "features", "label"})
+                self.assertEqual(set(row["features"]), set(gen.FEATURE_NAMES))
+                self.assertEqual(set(row["label"]), {"operator_attention_required"})
         self.assertGreater(moved, S.DEV_TWIN - 10)
 
     def test_twin_label_comes_from_latent_features(self):
