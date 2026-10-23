@@ -1,0 +1,27 @@
+{
+  "amendments_sha256": "3cfac7fe8bb770dda54138111e6e382f9e8905210a749ede2ddfdf479064f4e8",
+  "attests": "integrity and origin only; not quality",
+  "authority": "advisory_only_no_ack_release_device_or_care_authority",
+  "data_manifest_sha256": "f87e42c51482da5eedb810316f2bb4c9e386d1490393fad387dfc4477f92662a",
+  "fit": {
+    "declared_fit": "dev-fit (DEV data; not a registered fit)",
+    "receipts_dir_sha256": null,
+    "segment": 1,
+    "trace_sha256": "b86735680d52d4e47131bf908f3fe84058a3d7f850c58317b9583ee271e6e39b"
+  },
+  "generator_sha256": "90e5e320854045f118fda43a070d5c2d7c64ee0a8ddffc074f0a4f08e0d20587",
+  "kernel_sha256": "aefac1453fab45871075eb5be33f3ffea5cc186a722b4c2bc9d85018f44fef90",
+  "model_sha256": "aa40d47ee9e9e65dbf6e185d3e7115326de8aafca328cd3259fe68933ccb7efa",
+  "preregistration_sha256": "24c239e7e57049180b609b70e1b283b1d3f61253122e9e189232c69a1a3e1d0e",
+  "purpose": "synthetic_operational_transport_attention_only",
+  "reregistrations_sha256": [
+    "6c5f83ae92e89f91041e2f69dd0e43e3bf518d541006dc3e67dd04fa52b03ac3"
+  ],
+  "schema": "szl-oac/ops-health-artifact-receipt/v3",
+  "source": {
+    "commit": "0123456789abcdef0123456789abcdef01234567",
+    "repository": "https://github.com/szl-holdings/szl-forge",
+    "tag": "oac-v3-fit",
+    "tree_clean": true
+  }
+}

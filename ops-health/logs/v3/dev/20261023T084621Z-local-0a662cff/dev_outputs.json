@@ -1,0 +1,423 @@
+{
+  "advisories_sha256": "2768420d4d9aa33976d2f690aa064adf93a65178a69bc8771f185d76728e0f4e",
+  "bootstrap_count_vectors_sha256": {
+    "h3_twins": "f61be0005dee39e2bd22c47b6399e253faa50ddb5244e6199dcaced916d9d31a",
+    "legacy_v1_test": "cff89aa79b3964db9d69197d5c5c960976ed3f0dfad96a07ae6ff538364d2611",
+    "pooled_shift": "8bdc77c37f48694ee4549097ff73ff5fabbebc445a99694d10dda77bf7acd94d",
+    "test": "6a035f728f88b87b271ad1607d7a29050bb51d253c4ab21e6b9b08ecfe81aee7"
+  },
+  "dev": true,
+  "dev_fit": {
+    "intercept": 7.54872334191,
+    "iterations": 7,
+    "model_sha256": "aa40d47ee9e9e65dbf6e185d3e7115326de8aafca328cd3259fe68933ccb7efa",
+    "q_hat": {
+      "0": 0.266895531602,
+      "1": 0.897629436417
+    },
+    "receipt_sha256": "484ab595736445dd7dce5995815f2f0eb14bd16c1e4f8da04ff1a1e20cadb4b5",
+    "stop_reason": "CONVERGED",
+    "threshold_index": 16,
+    "train_rows": 512,
+    "weights": {
+      "configuration_valid": -2.44270489368,
+      "consecutive_failures": 2.620312314697,
+      "ledger_integrity_ok": -3.081640937128,
+      "listener_running": -3.221001961066,
+      "peer_allowlist_configured": -1.137885633077,
+      "queue_utilization": 3.034918838109,
+      "seconds_since_last_success": 0.011368160475,
+      "tls_enabled": -0.645936419078
+    }
+  },
+  "dev_ledger": {
+    "cap_per_regime": 2048,
+    "rows_per_regime": {
+      "clock_skew": 1792,
+      "failure_bursts": 1024,
+      "missing_tls": 1024,
+      "nominal": 2048,
+      "queue_saturation": 1024
+    },
+    "streams": [
+      {
+        "master_seed": 20260926,
+        "mode": "twin",
+        "namespace": "oac-ops-health-v2",
+        "regime": "clock_skew",
+        "rows": 512
+      },
+      {
+        "master_seed": 20261013,
+        "mode": "plain",
+        "namespace": "oac-ops-health-v3",
+        "regime": "clock_skew",
+        "rows": 256
+      },
+      {
+        "master_seed": 20261013,
+        "mode": "twin",
+        "namespace": "oac-ops-health-v3",
+        "regime": "clock_skew",
+        "rows": 512
+      },
+      {
+        "master_seed": 20261013,
+        "mode": "plain",
+        "namespace": "oac-ops-health-v3",
+        "regime": "failure_bursts",
+        "rows": 1024
+      },
+      {
+        "master_seed": 20261013,
+        "mode": "plain",
+        "namespace": "oac-ops-health-v3",
+        "regime": "missing_tls",
+        "rows": 1024
+      },
+      {
+        "master_seed": 20261013,
+        "mode": "D+noD",
+        "namespace": "oac-ops-health-v3",
+        "regime": "nominal",
+        "rows": 1024
+      },
+      {
+        "master_seed": 20261013,
+        "mode": "plain",
+        "namespace": "oac-ops-health-v3",
+        "regime": "nominal",
+        "rows": 1024
+      },
+      {
+        "master_seed": 20261013,
+        "mode": "plain",
+        "namespace": "oac-ops-health-v3",
+        "regime": "queue_saturation",
+        "rows": 1024
+      },
+      {
+        "master_seed": 20260926,
+        "mode": "v2-module-with-latent",
+        "namespace": "v2-module",
+        "regime": "clock_skew",
+        "rows": 512
+      }
+    ]
+  },
+  "dev_streams_sha256": {
+    "D_arm_512": "274fc62caa541f8533e4c85a7f1eed081dd9e11ceccdecb9c449c10026997133",
+    "clock_skew_256": "b640a2ce3bb4e49c5128c7680d35c544a71ad64fe9f0b281261acce9b941bbbc",
+    "failure_bursts_1024": "e9a54c0adcb05423b5afc9a35a0d49be770deee2e0e52054dc757eda78a6cd05",
+    "missing_tls_1024": "24f98af3d78ddede2b055a522aad4632c372690cee16a41c8a437f4fa3e1f124",
+    "noD_arm_512": "1e809e368113ee956a520bbf84f0ee5c8e9ade54ce60db80e2a176a02b403d2a",
+    "nominal_1024": "ebadae5f98a193f605ac8c3b8b24e3230b1aa8daa8858e0113cbc76c40f39258",
+    "queue_saturation_1024": "71c80c412d13810b71a521d9a4d602d74fe0ad47285048dbcd795a3818fe5c20",
+    "twin_latent_256": "38b7495b30824dd09d704119bb3af56bea463a6382a7336b3089293c9e200da7",
+    "twin_observed_256": "b640a2ce3bb4e49c5128c7680d35c544a71ad64fe9f0b281261acce9b941bbbc"
+  },
+  "gates_dev_plumbing": {
+    "balanced_accuracy_exact": [
+      15107,
+      19684
+    ],
+    "baseline_validity": "VALID",
+    "brier": 0.11369393761596636,
+    "ece": 0.0390126697347356,
+    "failclosed": {
+      "escaped": [],
+      "refused": 76,
+      "total": 76
+    },
+    "gates": {
+      "g_ba_rel": 1.0,
+      "g_baseline_valid": 1.0,
+      "g_calibration": 1.0,
+      "g_coef_band": 1.0,
+      "g_failclosed": 1.0,
+      "g_integrity": 1.0,
+      "g_monotone": 1.0,
+      "g_threshold_band": 1.0,
+      "g_truth_sign": 1.0,
+      "g_validation": 1.0
+    },
+    "monotone": {
+      "checks": 19600,
+      "failed_by_kind": {},
+      "passed": 19600
+    }
+  },
+  "mutation_catalogue": {
+    "artifact": [
+      {
+        "family": "weight x0.5",
+        "id": "A-scale0.5-listener_running"
+      },
+      {
+        "family": "weight x0.5",
+        "id": "A-scale0.5-tls_enabled"
+      },
+      {
+        "family": "weight x0.5",
+        "id": "A-scale0.5-peer_allowlist_configured"
+      },
+      {
+        "family": "weight x0.5",
+        "id": "A-scale0.5-queue_utilization"
+      },
+      {
+        "family": "weight x0.5",
+        "id": "A-scale0.5-consecutive_failures"
+      },
+      {
+        "family": "weight x0.5",
+        "id": "A-scale0.5-seconds_since_last_success"
+      },
+      {
+        "family": "weight x0.5",
+        "id": "A-scale0.5-ledger_integrity_ok"
+      },
+      {
+        "family": "weight x0.5",
+        "id": "A-scale0.5-configuration_valid"
+      },
+      {
+        "family": "weight x1.5",
+        "id": "A-scale1.5-listener_running"
+      },
+      {
+        "family": "weight x1.5",
+        "id": "A-scale1.5-tls_enabled"
+      },
+      {
+        "family": "weight x1.5",
+        "id": "A-scale1.5-peer_allowlist_configured"
+      },
+      {
+        "family": "weight x1.5",
+        "id": "A-scale1.5-queue_utilization"
+      },
+      {
+        "family": "weight x1.5",
+        "id": "A-scale1.5-consecutive_failures"
+      },
+      {
+        "family": "weight x1.5",
+        "id": "A-scale1.5-seconds_since_last_success"
+      },
+      {
+        "family": "weight x1.5",
+        "id": "A-scale1.5-ledger_integrity_ok"
+      },
+      {
+        "family": "weight x1.5",
+        "id": "A-scale1.5-configuration_valid"
+      },
+      {
+        "family": "sign flip",
+        "id": "A-signflip-listener_running"
+      },
+      {
+        "family": "sign flip",
+        "id": "A-signflip-tls_enabled"
+      },
+      {
+        "family": "sign flip",
+        "id": "A-signflip-peer_allowlist_configured"
+      },
+      {
+        "family": "sign flip",
+        "id": "A-signflip-queue_utilization"
+      },
+      {
+        "family": "sign flip",
+        "id": "A-signflip-consecutive_failures"
+      },
+      {
+        "family": "sign flip",
+        "id": "A-signflip-seconds_since_last_success"
+      },
+      {
+        "family": "sign flip",
+        "id": "A-signflip-ledger_integrity_ok"
+      },
+      {
+        "family": "sign flip",
+        "id": "A-signflip-configuration_valid"
+      },
+      {
+        "family": "drop feature",
+        "id": "A-drop-listener_running"
+      },
+      {
+        "family": "drop feature",
+        "id": "A-drop-tls_enabled"
+      },
+      {
+        "family": "drop feature",
+        "id": "A-drop-peer_allowlist_configured"
+      },
+      {
+        "family": "drop feature",
+        "id": "A-drop-queue_utilization"
+      },
+      {
+        "family": "drop feature",
+        "id": "A-drop-consecutive_failures"
+      },
+      {
+        "family": "drop feature",
+        "id": "A-drop-seconds_since_last_success"
+      },
+      {
+        "family": "drop feature",
+        "id": "A-drop-ledger_integrity_ok"
+      },
+      {
+        "family": "drop feature",
+        "id": "A-drop-configuration_valid"
+      },
+      {
+        "family": "intercept",
+        "id": "A-intercept+1"
+      },
+      {
+        "family": "intercept",
+        "id": "A-intercept-1"
+      },
+      {
+        "family": "threshold",
+        "id": "A-threshold+0.1"
+      },
+      {
+        "family": "threshold",
+        "id": "A-threshold-0.1"
+      },
+      {
+        "family": "transform table",
+        "id": "A-table-seconds-86400"
+      }
+    ],
+    "counts": {
+      "artifact": 37,
+      "descriptive": 21,
+      "kernel": 8,
+      "receipt": 7
+    },
+    "descriptive": [
+      "D-scale0.75-listener_running",
+      "D-scale0.75-tls_enabled",
+      "D-scale0.75-peer_allowlist_configured",
+      "D-scale0.75-queue_utilization",
+      "D-scale0.75-consecutive_failures",
+      "D-scale0.75-seconds_since_last_success",
+      "D-scale0.75-ledger_integrity_ok",
+      "D-scale0.75-configuration_valid",
+      "D-scale1.25-listener_running",
+      "D-scale1.25-tls_enabled",
+      "D-scale1.25-peer_allowlist_configured",
+      "D-scale1.25-queue_utilization",
+      "D-scale1.25-consecutive_failures",
+      "D-scale1.25-seconds_since_last_success",
+      "D-scale1.25-ledger_integrity_ok",
+      "D-scale1.25-configuration_valid",
+      "D-threshold+0.05",
+      "D-threshold-0.05",
+      "D-recipe-ABL-D",
+      "D-recipe-ABL-R",
+      "D-recipe-ABL-DR"
+    ],
+    "kernel": [
+      {
+        "id": "K-no-finiteness",
+        "source_sha256": "c22ff5c1637410ce91bfae4ded9a410067cbd3ddb0b49284765f443e829bec44"
+      },
+      {
+        "id": "K-no-range",
+        "source_sha256": "e0506e865d931c584c8b56236764cf1bab4ccccf0b9cff5c942f72005a60f77e"
+      },
+      {
+        "id": "K-no-prohibited-screen",
+        "source_sha256": "2e093acaa36df0f1980aca91258d202cb9cc0ba76ae3b9f8d462f8ab2b4e929b"
+      },
+      {
+        "id": "K-inverted-model-hash",
+        "source_sha256": "b1ed603441e7b5e4a83f3ee4a4430e6bf5c81d518605d597458816a8e5a8f53a"
+      },
+      {
+        "id": "K-inverted-self-hash",
+        "source_sha256": "097ab86adff11aeee64eaecc61fd0b44a1763eb567123dd296d20d32cda55708"
+      },
+      {
+        "id": "K-no-transform-table-check",
+        "source_sha256": "e49b1b8d909941152b5daccf0a1267d34de9157b851c4416e7330352e55c3786"
+      },
+      {
+        "id": "K-no-duplicate-key-refusal",
+        "source_sha256": "adfee259670f4538da8855c8bb86564a25abd8f0b0a450d4f5209e9582fd5566"
+      },
+      {
+        "id": "K-authority-true",
+        "source_sha256": "a2c63cafed19ef924f06dbe4a8dfcdb5192d381fd5c731266cd1dbe0472b4fe8"
+      }
+    ],
+    "receipt": [
+      "R-model-hash-flip",
+      "R-wrong-schema",
+      "R-source-commit-altered",
+      "R-metrics-added",
+      "R-first-parent",
+      "R-descendant",
+      "R-squash-duplicate"
+    ]
+  },
+  "note": "DEV plumbing only (prereg s.15.5): no P or H statistic, tolerance, detection ratio, power or WIN-chance quantity; hand-made plumbing tolerances",
+  "schema": "szl-oac/ops-health-dev-outputs/v3",
+  "sources_sha256": {
+    "v3/ops-health/ops_health.py": "aefac1453fab45871075eb5be33f3ffea5cc186a722b4c2bc9d85018f44fef90",
+    "v3/research/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "v3/research/bootstrap.py": "208adaf32f9108fe4575855b21913b84c51d06b69e3882d809b1708b81c96608",
+    "v3/research/freeze.py": "3a1535d1b90d5c8180e08968324cff9bdd3ab6e5e19670378b4c62ae29b13ea3",
+    "v3/research/gates.py": "5f840969d5d871c0976249b1266a54a4e6e318b09aae61b7c267c6d0045bb9ae",
+    "v3/research/generator.py": "90e5e320854045f118fda43a070d5c2d7c64ee0a8ddffc074f0a4f08e0d20587",
+    "v3/research/guards.py": "c7c37f1b4fa8341a8cd637aebeeeaae8c7a4e6f665d91eccc255db7e7db48933",
+    "v3/research/kernel_bridge.py": "3eb69aebcfa47cd187282068fc70eb0e4919c99363e50853761a6a5f425bf7f7",
+    "v3/research/mutation.py": "da9b1da9b136539b62ba21a224e1c94c4bd0dbca401c102fe21aa7fbb9d9022c",
+    "v3/research/pipeline.py": "6026a0edacc13fbad44e2335b9dafc8750998e19d9a8e75575636efa2dcab78b",
+    "v3/research/registry.py": "ecc43826c95e886ec2f2322c5752f8c38142d8db588880315f463b0670fc991d",
+    "v3/research/representation.py": "8ba94597f154a6f86566f1c9c05254ad5b4c113ce66fe19e78a4fe89bc7fe5e4",
+    "v3/research/tolerances.py": "43d4fc58dbb5803d02963e492ccf38b788772668200c918d2b8d169352b0df22"
+  },
+  "synthetic": true,
+  "v1_parity_sha256": {
+    "test": "7fc6ea635fcc501d56eed6a8b9e4f5f3a9057d0aa04505502759197150d79679",
+    "train": "b868acce6a2e6a8f6a5e5edb3f5b45c4f2e7e7b33c1bc56d22128620aab8b1f6",
+    "validation": "4557220a73b7f8efbb59ab41d043785cebaff71eac4d9fef8c59800a4f8f5abf"
+  },
+  "v2_parity": {
+    "calibration": {
+      "bytes": 1572227,
+      "rows": 4096,
+      "sha256": "526d47c5e922aa35e3fba1f46f595fad6cc0fd4b3fd2e52114b5c99247e57b16",
+      "split": "calibration"
+    },
+    "conformal": {
+      "bytes": 1564053,
+      "rows": 4096,
+      "sha256": "bf317275e207e13ddd38d95b308eb7ff6a21d13e71b27622d8e65f4a4eb5f2dd",
+      "split": "conformal"
+    },
+    "train": {
+      "bytes": 6190416,
+      "rows": 16384,
+      "sha256": "5211e7ec954ec00c743bd62dae107f7a80335e4e5962a31b788e7bf56ecf0adb",
+      "split": "train"
+    },
+    "validation": {
+      "bytes": 1568036,
+      "rows": 4096,
+      "sha256": "d0a37356784dcd60a4dbea68d760c55d56a7bd69b3a6f4dc833cfdbb38a951f3",
+      "split": "validation"
+    }
+  }
+}
