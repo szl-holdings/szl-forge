@@ -29,7 +29,8 @@ def availability() -> dict[str, Any]:
         "adapter": "LOCAL" if adapter_present else "UNAVAILABLE",
         "weights": "UNAVAILABLE" if not adapter_present else "LOCAL",
         "card_status": "CUTTING",
-        "status": "READY" if adapter_present else "UNAVAILABLE",
+        # A local filename does not qualify a loader; this stub cannot generate.
+        "status": "UNAVAILABLE",
     }
 
 
@@ -56,7 +57,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:  # noqa: N802
         state = availability()
-        if state["status"] != "READY":
+        if state["adapter"] != "LOCAL":
             self._send(
                 503,
                 {
