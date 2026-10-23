@@ -649,10 +649,11 @@ No candidate eligibility or identity hold is changed by the CI result.
 
 ### Remaining native admission bindings
 
-Native admission requires a separately versioned native profile and signature
-domain. The current container profile must remain unchanged: a native tree hash
-cannot fill `runtime.container_sha256`. Before any production `BoundRun` can be
-returned, the signed context must be compared with actual observed inputs:
+The native observation profile below is now separately versioned; production
+admission remains unavailable. The current container profile is unchanged: a
+native tree hash cannot fill `runtime.container_sha256`. Before any production
+`BoundRun` can be returned, the signed context must be compared with actual
+observed inputs:
 
 - Candidate and publishing-policy bytes, exact executable source closure,
   supervisor policy and canonical worker-closure commitment.
@@ -671,6 +672,70 @@ eligibility and the unconditional identity holds still deny. Neither a Git/SSH
 key nor the public RFC test key may be repurposed as the training signer. The
 occupied-GPU denial also stays in force; keeping Bonsai running requires a
 separate, exclusively admitted compute allocation for ReceiptAgent training.
+
+### Native runtime and signing-policy observations
+
+`native_runtime_identity.verify_native_runtime_descriptor(...)` binds the
+runtime-file manifest, wheel inventory and installed-file manifest into one
+externally pinned `szl.receiptagent.native-runtime-descriptor/v1` document.
+Runtime, wheel and installed roots must be disjoint, with distinct control files
+outside every root. Captured device/inode identities must be available and unique
+across all inventoried files, directories and controls; lexical separation and
+single link counts alone do not exclude bind-mounted aliases. Runtime files must
+have an exact, disjoint role partition:
+one interpreter file and nonempty stdlib/native-library file sets. Every actual
+file is byte-checked through the existing bounded verifiers, including the exact
+wheel-root inventory, with cross-stage change checks. These role labels are
+**DECLARED**, not proof that the chosen files are a complete usable runtime.
+
+`verify_native_payload_runtime(...)` takes the complete canonical native payload,
+checks its closed shape, obtains the expected descriptor hash from that payload,
+verifies actual directory bytes and compares all three manifest/inventory pins.
+It does not verify a signature or grant permission. Its result is a frozen byte
+observation, not a capability, and Boolean coercion is rejected. No tested
+artifact is imported, installed, executed or put on an import path.
+
+`native_signed_admission.observe_native_admission(...)` has the separate profile
+`SZL_RECEIPTAGENT_V4_NATIVE_ASCII_JSON_V1` and fixed NUL-terminated signature domain
+`SZL-RECEIPTAGENT-V4-NATIVE-SUPERVISED-GPU-SMOKE-V1`. It preserves the non-container
+source/curriculum/base/token/resource commitments, rejects `container_sha256`
+and binds native descriptor, runtime/installed manifests, wheel inventory,
+bootstrap, dependency-graph, import-policy and read-only-consumption commitments.
+The latter commitments still need actual source/runtime qualification; naming
+a hash is not proof of complete dependencies or an enforced consumption policy.
+
+The closed `szl.receiptagent.v4-native-signing-policy/v1` is pinned separately by
+the caller. The dependency is acyclic: external policy hash -> exact policy
+bytes -> scoped public keys; the signed payload includes that policy hash.
+The policy cannot describe its own trust or contain the final envelope/payload
+hash. Public-key fingerprints are recomputed from the raw 32-byte Ed25519 keys;
+key IDs and revocations are sorted/unique, with exact candidate/profile/purpose
+scope, validity windows, maximum admission age and bounded revocation age.
+The public RFC fixture key is rejected. There is no Git/SSH-key fallback, key
+enrollment, private-key use, nonce consumption or dispatch operation.
+
+Pin equality, caller-observed provenance, expected-context equality, key-policy
+checks and maintained-library signature verification are separate observations.
+The caller must independently obtain the trusted pin, context, clock and current
+revocation evidence. `policy_trust="INDEPENDENTLY_PINNED"` records that external
+assumption; neither this string nor a matching hash establishes it. All results
+remain non-authorizing, even when every observation matches.
+
+Bounded synthetic tests (the test signer is ephemeral, in-memory and **SIMULATED**):
+
+```bash
+python -I -S -B -m unittest discover -s frontier/qwen35-receiptagent-v4-json -p test_native_runtime_identity.py -v
+python -I -B -m unittest discover -s frontier/qwen35-receiptagent-v4-json -p test_native_signed_admission.py -v
+```
+
+The signature tests require the existing `cryptography==50.0.0` verification
+profile; missing or different crypto cannot silently skip positive checks.
+Existing source-only CI discovers these tests. Production `load_bound_run` and
+worker dependency holds remain unchanged, as do all candidate/preregistration
+eligibility flags. Executing-interpreter/ambient-loader authentication, complete
+dependency selection and qualified read-only consumption are not established by
+these tests. No model training, quality evaluation, GPU or Agent Studio readiness
+is claimed.
 
 ## Prior art
 
