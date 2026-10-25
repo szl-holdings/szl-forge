@@ -9,7 +9,7 @@ cryptography==50.0.0
 # app.py therefore fails startup unless llama.cpp prompt caching remains disabled.
 diskcache==5.6.3
 fastapi==0.139.0
-filelock==3.29.7
+filelock==4.2.1
 fsspec==2026.6.0
 h11==0.16.0
 hf-xet==1.5.1
