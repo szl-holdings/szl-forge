@@ -79,6 +79,57 @@ class HostedCpuSmokeControls(unittest.TestCase):
             with self.assertRaisesRegex(smoke.SmokeError, "outside"):
                 smoke._runner_paths(root, root / "receipt.json", prepare=False)
 
+    def _prepare_receipt(self, source_sha: str, **overrides) -> Path:
+        binding = smoke._generation_binding()
+        document = {
+            "airllm_source_commit": smoke.AIRLLM_SOURCE_COMMIT,
+            "delete_original": False,
+            "disposition": "MEASURED",
+            "evidence_class": "MEASURED",
+            "generation": smoke._generation_record(),
+            "harness_sha256": binding["harness_sha256"],
+            "input_sha256": binding["input_sha256"],
+            "model_id": smoke.MODEL_ID,
+            "model_revision": smoke.MODEL_REVISION,
+            "schema": smoke.SCHEMA,
+            "source": {"repository": "szl-holdings/szl-forge", "source_sha": source_sha},
+            "stage": "PREPARE",
+        }
+        document.update(overrides)
+        path = self.parent / "PREPARE.json"
+        path.write_text(json.dumps(document, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        return path
+
+    def test_run_receipt_binds_prepare_bytes_input_seed_and_harness(self):
+        binding = smoke._generation_binding()
+        self.assertEqual(binding["seed"], None)
+        self.assertFalse(binding["seed_applied"])
+        self.assertFalse(binding["do_sample"])
+        self.assertEqual(binding["input_sha256"], hashlib.sha256(smoke.PROMPT.encode("utf-8")).hexdigest())
+        self.assertEqual(binding["harness_sha256"], hashlib.sha256(Path(smoke.__file__).read_bytes()).hexdigest())
+        source_sha = "a" * 40
+        path = self._prepare_receipt(source_sha)
+        digest = smoke._bind_prepare_receipt(path, source_sha)
+        self.assertEqual(digest, hashlib.sha256(path.read_bytes()).hexdigest())
+        self.assertEqual(len(digest), 64)
+        with self.assertRaisesRegex(smoke.SmokeError, "source"):
+            smoke._bind_prepare_receipt(path, "b" * 40)
+        broken = self._prepare_receipt(source_sha, harness_sha256="0" * 64)
+        with self.assertRaisesRegex(smoke.SmokeError, "harness"):
+            smoke._bind_prepare_receipt(broken, source_sha)
+        with patch.object(smoke, "DO_SAMPLE", True):
+            with self.assertRaisesRegex(smoke.SmokeError, "greedy"):
+                smoke._generation_binding()
+        result = smoke._token_result([7, 9], 1, 1.2345, 12)
+        self.assertEqual(result["generated_token_count"], 1)
+        self.assertEqual(result["input_sha256"], binding["input_sha256"])
+        self.assertEqual(result["harness_sha256"], binding["harness_sha256"])
+        self.assertFalse(result["seed_applied"])
+        self.assertFalse(result["execution_authority"])
+        workflow = Path(smoke.__file__).resolve().parents[2] / ".github" / "workflows" / "airllm-hosted-cpu-smoke.yml"
+        text = workflow.read_text(encoding="utf-8")
+        self.assertIn('--prepare-receipt "$RECEIPT_ROOT/PREPARE.json"', text)
+
 
 if __name__ == "__main__":
     unittest.main()

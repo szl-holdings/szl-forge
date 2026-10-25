@@ -49,6 +49,10 @@ FILES = {
     "vocab.json": (800662, "82b84012e3add4d01d12ba14442026e49b8cbbaead1f79ecf3d919784f82dc79"),
 }
 MARKER = ".szl-airllm-hosted-task.json"
+PROMPT = "Two plus two equals"
+DO_SAMPLE = False
+GENERATION_SEED = None
+MAX_NEW_TOKENS = 1
 DEPENDENCIES = {"torch": "2.6.0", "transformers": "4.57.3", "accelerate": "1.12.0",
                 "safetensors": "0.7.0", "huggingface-hub": "0.36.0", "scipy": "1.15.3",
                 "sentencepiece": "0.2.1", "tqdm": "4.67.1"}
@@ -64,6 +68,54 @@ def _sha256(path: Path) -> str:
         for block in iter(lambda: stream.read(1 << 20), b""):
             digest.update(block)
     return digest.hexdigest()
+
+
+def _generation_binding() -> dict:
+    if DO_SAMPLE or GENERATION_SEED is not None or MAX_NEW_TOKENS != 1:
+        raise SmokeError("hosted smoke is greedy, unseeded, and limited to one token")
+    return {"do_sample": False, "max_new_tokens": 1, "seed": None, "seed_applied": False,
+            "input_sha256": hashlib.sha256(PROMPT.encode("utf-8")).hexdigest(),
+            "harness_sha256": _sha256(Path(__file__).resolve())}
+
+
+def _generation_record() -> dict:
+    binding = _generation_binding()
+    return {key: binding[key] for key in ("do_sample", "max_new_tokens", "seed", "seed_applied")}
+
+
+def _bind_prepare_receipt(path: Path, source_sha: str) -> str:
+    if not path.is_absolute() or not path.is_file() or path.is_symlink():
+        raise SmokeError("prepare receipt must be an absolute file")
+    raw = path.read_bytes()
+    document = json.loads(raw.decode("utf-8"))
+    binding = _generation_binding()
+    source = document.get("source") if isinstance(document.get("source"), dict) else {}
+    if (document.get("schema") != SCHEMA or document.get("stage") != "PREPARE"
+            or document.get("disposition") != "MEASURED" or document.get("evidence_class") != "MEASURED"):
+        raise SmokeError("prepare receipt is not a measured prepare stage")
+    if document.get("model_id") != MODEL_ID or document.get("model_revision") != MODEL_REVISION:
+        raise SmokeError("prepare receipt model binding differs")
+    if document.get("airllm_source_commit") != AIRLLM_SOURCE_COMMIT or document.get("delete_original") is not False:
+        raise SmokeError("prepare receipt AirLLM pin differs")
+    if source.get("repository") != "szl-holdings/szl-forge" or source.get("source_sha") != source_sha:
+        raise SmokeError("prepare receipt is not bound to this source")
+    if document.get("harness_sha256") != binding["harness_sha256"] or document.get("input_sha256") != binding["input_sha256"]:
+        raise SmokeError("prepare receipt harness or input hash differs")
+    if document.get("generation") != _generation_record():
+        raise SmokeError("prepare receipt generation binding differs")
+    return hashlib.sha256(raw).hexdigest()
+
+
+def _token_result(sequence: list, prompt_tokens: int, elapsed: float, peak) -> dict:
+    generated = len(sequence) - prompt_tokens
+    if generated != 1:
+        raise SmokeError("AirLLM did not generate exactly one token")
+    return {"status": "MEASURED", "scope": "HOSTED_CPU_ONE_TOKEN_SMOKE_ONLY",
+            "generated_token_count": generated,
+            "token_ids_sha256": hashlib.sha256(json.dumps(sequence, separators=(",", ":")).encode()).hexdigest(),
+            "elapsed_seconds": round(elapsed, 3), "peak_rss_kib": peak,
+            "model_quality": "UNKNOWN", "numerical_parity": "NOT_RUN", "execution_authority": False,
+            **_generation_binding()}
 
 
 def _runner_paths(root: Path, receipt: Path, *, prepare: bool) -> None:
@@ -274,21 +326,15 @@ def _worker(root: Path) -> int:
     model = AutoModel.from_pretrained(str(root / "snapshot"), device="cpu", dtype=torch.float32,
                                       layer_shards_saving_path=str(root / "split"),
                                       delete_original=False, prefetching=False)
-    tokenized = model.tokenizer(["Two plus two equals"], return_tensors="pt", return_attention_mask=False)
+    tokenized = model.tokenizer([PROMPT], return_tensors="pt", return_attention_mask=False)
     prompt_tokens = tokenized["input_ids"].shape[-1]
+    binding = _generation_binding()
     with torch.inference_mode():
-        result = model.generate(tokenized["input_ids"], max_new_tokens=1,
-                                do_sample=False, use_cache=True, return_dict_in_generate=True)
+        result = model.generate(tokenized["input_ids"], max_new_tokens=binding["max_new_tokens"],
+                                do_sample=binding["do_sample"], use_cache=True, return_dict_in_generate=True)
     sequence = result.sequences[0].tolist()
-    generated = len(sequence) - prompt_tokens
-    if generated != 1:
-        raise SmokeError("AirLLM did not generate exactly one token")
-    print(json.dumps({"status": "MEASURED", "scope": "HOSTED_CPU_ONE_TOKEN_SMOKE_ONLY",
-                      "generated_token_count": generated,
-                      "token_ids_sha256": hashlib.sha256(json.dumps(sequence, separators=(",", ":")).encode()).hexdigest(),
-                      "elapsed_seconds": round(time.monotonic() - started, 3),
-                      "peak_rss_kib": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss if resource else None,
-                      "model_quality": "UNKNOWN", "numerical_parity": "NOT_RUN", "execution_authority": False}))
+    peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss if resource else None
+    print(json.dumps(_token_result(sequence, prompt_tokens, time.monotonic() - started, peak)))
     return 0
 
 
@@ -307,8 +353,13 @@ def main() -> int:
     mode.add_argument("--worker", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--receipt", type=Path, required=True)
+    parser.add_argument("--prepare-receipt", type=Path)
     args = parser.parse_args()
     root, receipt = args.root.absolute(), args.receipt.absolute()
+    if args.prepare and args.prepare_receipt is not None:
+        raise SmokeError("prepare does not accept a prepare receipt")
+    if args.worker and args.prepare_receipt is not None:
+        raise SmokeError("worker does not accept a prepare receipt")
     if args.worker:
         _runner_paths(root, receipt, prepare=False)
         _source_binding()
@@ -344,12 +395,21 @@ def main() -> int:
             result["snapshot"] = _verify_snapshot(root / "snapshot")
             result["wheel_sha256"] = WHEEL_SHA256
             result["task_cache_root"] = str(root / "cache")
+            result.update(_generation_binding())
+            result["generation"] = _generation_record()
             result["disposition"] = "MEASURED"
             result["evidence_class"] = "MEASURED"
             result["measurement_scope"] = "PINNED_SOURCE_BYTES_PREPARED_ONLY"
             exit_code = 0
         else:
+            if args.prepare_receipt is None:
+                raise SmokeError("run requires the prepare receipt")
             _marker(root)
+            binding = _generation_binding()
+            result["prepare_receipt_sha256"] = _bind_prepare_receipt(args.prepare_receipt.absolute(), result["source"]["source_sha"])
+            result["input_sha256"] = binding["input_sha256"]
+            result["harness_sha256"] = binding["harness_sha256"]
+            result["generation"] = _generation_record()
             result["snapshot"] = _verify_snapshot(root / "snapshot")
             result["airllm"] = _verify_wheel(root / "wheel" / WHEEL_NAME)
             result["dependency_versions"] = _dependency_versions()
@@ -373,8 +433,12 @@ def main() -> int:
             if worker_exit_code:
                 raise SmokeError("AirLLM worker failed: " + worker_tail[-1200:])
             result["worker_result"] = json.loads(worker_tail.splitlines()[-1])
-            if result["worker_result"].get("generated_token_count") != 1:
+            worker_result = result["worker_result"]
+            if worker_result.get("generated_token_count") != 1:
                 raise SmokeError("worker returned no one-token result")
+            for key, expected in binding.items():
+                if worker_result.get(key) != expected:
+                    raise SmokeError("worker generation binding differs from harness")
             result["inference_run"] = "MEASURED"
             result["disposition"] = "MEASURED"
             result["evidence_class"] = "MEASURED"
