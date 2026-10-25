@@ -88,6 +88,8 @@ def _bind_prepare_receipt(path: Path, source_sha: str) -> str:
         raise SmokeError("prepare receipt must be an absolute file")
     raw = path.read_bytes()
     document = json.loads(raw.decode("utf-8"))
+    if not isinstance(document, dict):
+        raise SmokeError("prepare receipt must be a JSON object")
     binding = _generation_binding()
     source = document.get("source") if isinstance(document.get("source"), dict) else {}
     if (document.get("schema") != SCHEMA or document.get("stage") != "PREPARE"
