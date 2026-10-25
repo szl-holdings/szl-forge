@@ -62,7 +62,7 @@ jobs:
               environment = temporary / 'venv'
               venv.EnvBuilder(with_pip=True).create(environment)
               exe = environment / ('Scripts/python.exe' if os.name == 'nt' else 'bin/python')
-              run(exe, ['-m', 'pip', 'install', 'pytest==8.4.2', 'build==1.5.0', 'setuptools==83.0.0'], temporary)
+              run(exe, ['-m', 'pip', 'install', 'pytest==8.4.2', 'build==1.5.0', 'setuptools==84.1.0'], temporary)
               run(exe, ['-m', 'build', '--wheel', '--no-isolation', '--outdir', str(output), str(root / 'access-lab')], temporary)
               wheels = list(output.glob('szl_access_lab-*.whl'))
               if len(wheels) != 1:
