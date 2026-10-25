@@ -110,7 +110,31 @@ def test_llm_eligibility_is_conservative(op):
     assert op.llm_eligible({"tags": []}, ["README.md"])[0] is False
 
 
+def test_corpus_roots_extend_default_home_discovery(op, tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    default_root = home / "szl-default"
+    extra_root = tmp_path / "extra"
+    paths = {default_root / "default.jsonl", extra_root / "extra.jsonl"}
+    rows = [{"messages": [{"role": "user", "content": f"synthetic ticket {i}"},
+                          {"role": "assistant", "content": "synthetic answer"}]}
+            for i in range(20)]
+    for path in paths:
+        path.parent.mkdir(parents=True)
+        path.write_text("\n".join(json.dumps(row) for row in rows) + "\n", encoding="utf-8")
+    monkeypatch.setattr(op.pathlib.Path, "home", classmethod(lambda cls: home))
+    monkeypatch.setenv("SZL_CORPUS_ROOTS", str(extra_root))
+
+    corpora = op.scan_corpora()
+
+    assert {Path(corpus["path"]) for corpus in corpora} == paths
+    assert len(corpora) == 2, "explicit roots extend rather than replace home discovery"
+    assert all(corpus["rows"] == 20 for corpus in corpora)
+
+
 def test_candidate_generation_is_fail_closed(op, tmp_path, monkeypatch):
+    isolated_home = tmp_path / "isolated-home"
+    isolated_home.mkdir()
+    monkeypatch.setattr(op.pathlib.Path, "home", classmethod(lambda cls: isolated_home))
     corpus_dir = tmp_path / "szl-demo" / "output"
     corpus_dir.mkdir(parents=True)
     rows = [{"messages": [{"role": "user", "content": f"ticket {i} about invoices {i}"}, {"role": "assistant", "content": json.dumps({"label": "billing"})}],
