@@ -19,6 +19,8 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
+# Vendored from chaski/adapter_guard.py at 89f5d6b; exact normalized-copy tests bind it.
+ADAPTER_GUARD_SHA256 = "ad2cb8334cddf28782dc3d858d9ccfd5f0de7f892bc02b4447b7180fab525cd2"
 OUT = Path(os.environ.get("SZL_CANDIDATE_OUT") or (HERE / "out"))
 REFUSAL_MARKERS = ("REFUSE", "ABSTAIN", "INSUFFICIENT_EVIDENCE", "OUT_OF_POLICY", "CANNOT COMPLY")
 LOCK_PACKAGES = ("torch", "transformers", "peft", "trl", "datasets", "accelerate", "bitsandbytes",
@@ -331,7 +333,15 @@ def text_only_encode(tokenizer, messages, add_generation_prompt):
     return text, list(ids)
 
 
+def require_pinned_revision(revision):
+    """Reject mutable or malformed pins; syntax alone is not resolved identity."""
+    if not isinstance(revision, str) or re.fullmatch(r"[0-9a-f]{40}", revision) is None:
+        raise ValueError("BASE_REVISION_UNPINNED: expected an exact lowercase 40-hex commit")
+    return revision
+
+
 def load_tokenizer(repo_id, revision=None):
+    revision = require_pinned_revision(revision)
     from transformers import AutoTokenizer
     tok = AutoTokenizer.from_pretrained(repo_id, revision=revision)
     if tok.pad_token is None:
@@ -371,7 +381,7 @@ def load_base_model(cand, for_training, allow_cpu=False):
     Returns (model, tokenizer, backend)."""
     base = cand["actual_training_base"]
     recipe = cand["training_recipe"]
-    repo, rev = base["repo_id"], base.get("revision")
+    repo, rev = base["repo_id"], require_pinned_revision(base.get("revision"))
     import torch
     device_cuda = torch.cuda.is_available()
     if not device_cuda and not allow_cpu:
@@ -439,9 +449,64 @@ def load_base_model(cand, for_training, allow_cpu=False):
     return model, tok, "transformers+peft"
 
 
-def attach_adapter(model, adapter_dir):
+def _load_adapter_guard():
+    """Load only the packaged, pinned canonical guard; no import-path fallback.
+
+    The pin records reviewed source identity, not an external signature or runtime
+    authority. Compile the same bounded byte buffer that was verified.
+    """
+    import types
+
+    path = HERE / "adapter_guard.py"
+    try:
+        with path.open("rb") as handle:
+            source = handle.read(65537).replace(b"\r\n", b"\n")
+    except OSError:
+        raise RuntimeError("ADAPTER_GUARD_UNAVAILABLE: packaged guard is missing or unreadable") from None
+    if len(source) > 65536 or hashlib.sha256(source).hexdigest() != ADAPTER_GUARD_SHA256:
+        raise RuntimeError("ADAPTER_GUARD_UNAVAILABLE: packaged guard source differs from its pin")
+    guard = types.ModuleType("_szl_candidate_adapter_guard")
+    guard.__file__ = str(path)
+    exec(compile(source, str(path), "exec"), guard.__dict__)
+    return guard
+
+
+def _describe_guarded_loader(guard, model, report):
+    evidence = guard.describe_loader(model, report)
+    evidence["mode"] = "bare_base" if report is None else "adapter_structural_coverage"
+    evidence["adapter_guard"] = {
+        "canonical_source": "chaski/adapter_guard.py",
+        "source_commit": "89f5d6b5712327e677d3dab3d9b82011598c89c3",
+        "source_sha256": ADAPTER_GUARD_SHA256,
+        "digest_basis": "UTF-8 source bytes with CRLF normalized to LF",
+        "trust": "REPO_DECLARED",
+    }
+    return evidence
+
+
+def describe_base_loader(model):
+    """Describe an explicit bare-base run, without claiming adapter coverage."""
+    return _describe_guarded_loader(_load_adapter_guard(), model, None)
+
+
+def attach_adapter(model, adapter_dir, *, with_evidence=False):
+    """Reject incomplete/inactive adapters before evaluation or conversion.
+
+    Coverage is structural only; numerical tensor application stays UNKNOWN.
+    Preserve the model-only API used by export_gguf.py unless evidence is requested.
+    """
+    guard = _load_adapter_guard()
+    if not guard.checkpoint_keys(Path(adapter_dir)):
+        raise guard.AdapterNotApplied("ADAPTER_NOT_APPLIED: checkpoint has no tensors")
     from peft import PeftModel
-    return PeftModel.from_pretrained(model, str(adapter_dir))
+
+    wrapped = PeftModel.from_pretrained(
+        model, str(adapter_dir), adapter_name="default", is_trainable=False,
+    )
+    report = guard.assert_adapter_applied(wrapped, Path(adapter_dir), expected_adapter="default")
+    if with_evidence:
+        return wrapped, _describe_guarded_loader(guard, wrapped, report)
+    return wrapped
 
 
 def ece(confidences, corrects, bins=10):

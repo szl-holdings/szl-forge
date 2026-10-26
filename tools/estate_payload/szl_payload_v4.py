@@ -1401,6 +1401,10 @@ def gen_candidate(m, corpora, est, existing=None, repo_dir=None):
             "__OBSERVED_STATUS__": m["status"], "__TARGET__": cand["target_repo_id"]}
     for src in sorted(KIT_DIR.iterdir()):
         if src.is_file() and src.suffix in (".py", ".md"):
+            if src.name == "adapter_guard.py":
+                # Canonical vendored source, never a candidate substitution template.
+                (folder / src.name).write_bytes(src.read_bytes().replace(b"\r\n", b"\n"))
+                continue
             text = src.read_text(encoding="utf-8")
             for k, v in repl.items():
                 text = text.replace(k, v)

@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """Step 1 - qualify the runtime before any compute. Writes out/runtime_qualification.json.
 
-PASS means the environment is permitted to attempt a run; it is not evidence that anything trained.
+PASS covers environment and Hub-revision metadata checks, not compute/training authorization
+or loaded-artifact identity. Offline identity is UNKNOWN and cannot produce PASS.
 The first PASS freezes `runtime_lock` in candidate.json; later runs must match it or fail with RUNTIME_DRIFT
 (pass --relock to deliberately re-freeze after a documented environment change).
 """
@@ -14,22 +15,22 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import candidate_lib as lib  # noqa: E402
 
-HEX40 = 40
-
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--allow-cpu", action="store_true", help="permit a CPU-only contract smoke (tiny bases only)")
     ap.add_argument("--relock", action="store_true", help="re-freeze runtime_lock to the current environment")
-    ap.add_argument("--offline", action="store_true", help="skip the Hub reachability probe")
+    ap.add_argument("--offline", action="store_true", help="skip Hub lookup; identity stays UNKNOWN and qualification fails")
     args = ap.parse_args()
     cand = lib.load_candidate()
+    rev = lib.require_pinned_revision(cand["actual_training_base"].get("revision"))
     checks = []
 
     def check(name, ok, detail):
-        checks.append({"check": name, "status": "PASS" if ok else "FAIL", "detail": detail})
-        print(f"[qualify] {'PASS' if ok else 'FAIL'} {name}: {detail}")
-        return ok
+        status = "UNKNOWN" if ok is None else "PASS" if ok else "FAIL"
+        checks.append({"check": name, "status": status, "detail": detail})
+        print(f"[qualify] {status} {name}: {detail}")
+        return bool(ok)
 
     ok = True
     v = lib.installed_versions()
@@ -48,16 +49,20 @@ def main():
     ok &= check("disk_free", free_gib >= need_disk, f"{free_gib:.1f} GiB free under {lib.OUT.parent} (need {need_disk})")
 
     base = cand["actual_training_base"]
-    rev = base.get("revision")
-    ok &= check("base_revision_pinned", isinstance(rev, str) and len(rev) == HEX40,
-                f"{base['repo_id']}@{rev}" if rev else f"{base['repo_id']} has no 40-hex revision pin")
+    ok &= check("base_revision_pinned", True, f"{base['repo_id']}@{rev}")
     if not args.offline:
         try:
             from huggingface_hub import HfApi
             info = HfApi().model_info(base["repo_id"], revision=rev)
-            ok &= check("base_reachable", True, f"sha {info.sha}")
+            resolved = getattr(info, "sha", None)
+            ok &= check("base_reachable", True, "Hub metadata response received")
+            ok &= check("base_revision_resolved", type(resolved) is str and resolved == rev,
+                        f"requested {rev}; response sha {repr(resolved)[:80]} (metadata only)")
         except Exception as e:
             ok &= check("base_reachable", False, f"{type(e).__name__}: {str(e)[:200]}")
+            ok &= check("base_revision_resolved", False, "Hub revision resolution unavailable")
+    else:
+        ok &= check("base_revision_resolved", None, "offline: Hub revision resolution NOT RUN")
 
     lock = {k: v.get(k) for k in lib.LOCK_PACKAGES}
     lock["python"] = v["python"]
@@ -75,7 +80,8 @@ def main():
     report = {"kind": "szl.frontier-runtime-qualification/v1", "generated_utc": lib.now_utc(),
               "candidate_id": cand["candidate_id"], "verdict": "PASS" if ok else "FAIL", "checks": checks,
               "gpu": gpu, "versions": v, "host": lib.host_info(),
-              "meaning": "PASS permits an attempt. It is not evidence that training or evaluation happened."}
+              "meaning": "PASS covers environment and Hub-revision metadata checks only; "
+                         "not loaded-artifact identity or compute/training authorization."}
     lib.write_json(lib.OUT / "runtime_qualification.json", lib.stringify_floats(report))
     print(f"[qualify] verdict {report['verdict']} -> {lib.OUT / 'runtime_qualification.json'}")
     return 0 if ok else 2

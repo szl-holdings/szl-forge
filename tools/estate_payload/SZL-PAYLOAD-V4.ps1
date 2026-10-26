@@ -118,7 +118,7 @@ $PyFile  = Join-Path $OpDir 'szl_payload_v4.py'
 New-Item -ItemType Directory -Force -Path $Base, $OpDir | Out-Null
 
 Write-Host "`n=== FETCH OPERATOR $OperatorRepo@$OperatorRef ===" -ForegroundColor Cyan
-$Files = @('szl_payload_v4.py') + @('candidate_lib.py','qualify_runtime.py','curriculum.py','train_candidate.py','evaluate_candidate.py',
+$Files = @('szl_payload_v4.py') + @('candidate_lib.py','adapter_guard.py','qualify_runtime.py','curriculum.py','train_candidate.py','evaluate_candidate.py',
           'export_gguf.py','render_card.py','test_candidate_contract.py','README.md','MODEL_CARD.tmpl.md' | ForEach-Object { "kit/$_" })
 foreach ($f in $Files) {
     Get-RepoFile "$OperatorPath/$f" (Join-Path $OpDir ($f -replace '/','\'))
