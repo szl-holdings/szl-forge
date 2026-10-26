@@ -37,8 +37,11 @@ permissions:
   contents: read
 
 env:
-  BOM_OUT: bom/model-bom.cdx.json
-  MANIFEST_OUT: release/run-manifest.json
+  MODEL_REPO: ${{ inputs.model_repo }}
+  MODEL_DIR: ${{ inputs.model_dir }}
+  EVAL_CONFIG: ${{ inputs.eval_config }}
+  MIN_PASS_RATE: ${{ inputs.min_pass_rate }}
+  ALLOW_MAJOR: ${{ inputs.allow_major }}
 
 jobs:
   # ── Gate 0: secrets & artifact integrity ────────────────────────────────
@@ -46,11 +49,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
       - name: Secret pattern scan (fail-closed)
         run: python scripts/scan_publication_secrets.py
       - name: Reject pickle payloads
         run: |
-          if find "${{ inputs.model_dir }}" -name '*.pkl' -o -name '*.pt' -o -name 'pytorch_model.bin' | grep .; then
+          if find "${MODEL_DIR}" -name '*.pkl' -o -name '*.pt' -o -name 'pytorch_model.bin' | grep .; then
             echo "::error::Unpickleable artifacts found. Ship safetensors only."; exit 1
           fi
       - name: Static scan (semgrep)
@@ -63,6 +69,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
       - name: Recompute dataset digest
         run: |
           python scripts/dataset_digest.py \
@@ -75,107 +84,226 @@ jobs:
             --receipt receipts/dataset-admission.json
           # fail-closed: any mismatch blocks the pipeline
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with: { name: dataset-digest, path: /tmp/dataset.digest.json }
+        with:
+          name: dataset-digest-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/dataset.digest.json
+          if-no-files-found: error
 
   # ── Gate 2: held-out GENERATION eval (train loss is not eval) ───────────
   heldout-eval:
     needs: dataset-provenance
     runs-on: ubuntu-latest
+    outputs:
+      artifact_id: ${{ steps.upload.outputs.artifact-id }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Initialize fresh held-out evidence stage
+        env:
+          HELDOUT_STAGE: ${{ runner.temp }}/szl-gate-heldout-${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          set -euo pipefail
+          python scripts/release_artifact_handoff.py init --stage "${HELDOUT_STAGE}"
+          printf '%s\n' "HELDOUT_STAGE=${HELDOUT_STAGE}" >> "${GITHUB_ENV}"
       - name: Run held-out generation eval
         run: |
           python eval/run_heldout.py \
-            --model "${{ inputs.model_dir }}" \
-            --config "${{ inputs.eval_config }}" \
-            --out release/heldout-eval.json
+            --model "${MODEL_DIR}" \
+            --config "${EVAL_CONFIG}" \
+            --out "${HELDOUT_STAGE}/heldout-eval.json"
       - name: Gate on pass rate
         run: |
           python - <<'PY'
-          import json, sys
-          r = json.load(open('release/heldout-eval.json'))
-          need = float("${{ inputs.min_pass_rate }}")
+          import json, os, pathlib, sys
+          r = json.loads((pathlib.Path(os.environ["HELDOUT_STAGE"]) / "heldout-eval.json").read_text())
+          need = float(os.environ["MIN_PASS_RATE"])
           print(f"held-out pass rate: {r['pass_rate']:.4f} (required {need})")
           sys.exit(0 if r['pass_rate'] >= need else 1)
           PY
       - name: Refusal / abstention eval must not regress
-        run: python eval/run_refusal.py --model "${{ inputs.model_dir }}" --assert-no-regression
+        run: python eval/run_refusal.py --model "${MODEL_DIR}" --assert-no-regression
+      - name: Seal held-out transport evidence without changing gate verdicts
+        run: python scripts/release_artifact_handoff.py seal --stage "${HELDOUT_STAGE}" --profile heldout-eval
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with: { name: heldout-eval, path: release/heldout-eval.json }
+        id: upload
+        with:
+          name: heldout-eval-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.HELDOUT_STAGE }}
+          if-no-files-found: error
 
   # ── Gate 3: build the Model BOM (CycloneDX) ─────────────────────────────
   model-bom:
     needs: heldout-eval
     runs-on: ubuntu-latest
+    env:
+      HELDOUT_ARTIFACT_ID: ${{ needs.heldout-eval.outputs.artifact_id }}
+    outputs:
+      artifact_id: ${{ steps.upload.outputs.artifact-id }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Require producer identity and initialize fresh stages
+        env:
+          HELDOUT_STAGE: ${{ runner.temp }}/szl-gate-bom-heldout-${{ github.run_id }}-${{ github.run_attempt }}
+          BOM_STAGE: ${{ runner.temp }}/szl-gate-bom-${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          set -euo pipefail
+          python scripts/release_artifact_handoff.py check-artifact-id --artifact-id "${HELDOUT_ARTIFACT_ID}"
+          python scripts/release_artifact_handoff.py init --stage "${HELDOUT_STAGE}"
+          python scripts/release_artifact_handoff.py init --stage "${BOM_STAGE}"
+          printf '%s\n' "HELDOUT_STAGE=${HELDOUT_STAGE}" "BOM_STAGE=${BOM_STAGE}" >> "${GITHUB_ENV}"
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          artifact-ids: ${{ needs.heldout-eval.outputs.artifact_id }}
+          path: ${{ env.HELDOUT_STAGE }}
+          merge-multiple: true
+          digest-mismatch: error
+      - name: Verify same-source same-run held-out handoff
+        run: python scripts/release_artifact_handoff.py verify --stage "${HELDOUT_STAGE}" --profile heldout-eval
       - name: Generate Model BOM
         run: |
+          set -euo pipefail
           python scripts/build_model_bom.py \
-            --model-dir "${{ inputs.model_dir }}" \
-            --base-model "$(yq '.base_model' ${{ inputs.eval_config }})" \
+            --model-dir "${MODEL_DIR}" \
+            --base-model "$(yq '.base_model' "${EVAL_CONFIG}")" \
             --dataset-manifest data/dataset-manifest.json \
-            --eval release/heldout-eval.json \
+            --eval "${HELDOUT_STAGE}/heldout-eval.json" \
             --materials git://$(git rev-parse HEAD) \
-            --out "${BOM_OUT}"
+            --out "${BOM_STAGE}/model-bom.cdx.json"
       - name: Validate against CycloneDX schema
-        run: cyclonedx validate --input-file "${BOM_OUT}" --fail-on-errors
+        run: cyclonedx validate --input-file "${BOM_STAGE}/model-bom.cdx.json" --fail-on-errors
       - name: Vulnerability scan of the environment (grype)
         run: |
-          syft "${{ inputs.model_dir }}" -o cyclonedx-json=/tmp/env.cdx.json
+          syft "${MODEL_DIR}" -o cyclonedx-json=/tmp/env.cdx.json
           grype sbom:/tmp/env.cdx.json --fail-on high
+      - name: Seal Model BOM transport evidence
+        run: python scripts/release_artifact_handoff.py seal --stage "${BOM_STAGE}" --profile model-bom
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with: { name: model-bom, path: bom/ }
+        id: upload
+        with:
+          name: model-bom-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.BOM_STAGE }}
+          if-no-files-found: error
 
   # ── Gate 4: sign — run manifest, Model BOM, weights (Sigstore keyless) ──
   sign:
-    needs: model-bom
+    needs: [heldout-eval, model-bom]
     runs-on: ubuntu-latest
+    env:
+      HELDOUT_ARTIFACT_ID: ${{ needs.heldout-eval.outputs.artifact_id }}
+      BOM_ARTIFACT_ID: ${{ needs.model-bom.outputs.artifact_id }}
+    outputs:
+      artifact_id: ${{ steps.upload.outputs.artifact-id }}
     permissions:
       contents: read
       attestations: write
       id-token: write                  # Only this job can request signing identity
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Require producer identities and initialize fresh stages
+        env:
+          HELDOUT_STAGE: ${{ runner.temp }}/szl-gate-sign-heldout-${{ github.run_id }}-${{ github.run_attempt }}
+          BOM_STAGE: ${{ runner.temp }}/szl-gate-sign-bom-${{ github.run_id }}-${{ github.run_attempt }}
+          SIGNED_STAGE: ${{ runner.temp }}/szl-gate-signed-${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          set -euo pipefail
+          python scripts/release_artifact_handoff.py check-artifact-id --artifact-id "${HELDOUT_ARTIFACT_ID}"
+          python scripts/release_artifact_handoff.py check-artifact-id --artifact-id "${BOM_ARTIFACT_ID}"
+          python scripts/release_artifact_handoff.py init --stage "${HELDOUT_STAGE}"
+          python scripts/release_artifact_handoff.py init --stage "${BOM_STAGE}"
+          python scripts/release_artifact_handoff.py init --stage "${SIGNED_STAGE}"
+          printf '%s\n' "HELDOUT_STAGE=${HELDOUT_STAGE}" "BOM_STAGE=${BOM_STAGE}" "SIGNED_STAGE=${SIGNED_STAGE}" >> "${GITHUB_ENV}"
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          artifact-ids: ${{ needs.heldout-eval.outputs.artifact_id }}
+          path: ${{ env.HELDOUT_STAGE }}
+          merge-multiple: true
+          digest-mismatch: error
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          artifact-ids: ${{ needs.model-bom.outputs.artifact_id }}
+          path: ${{ env.BOM_STAGE }}
+          merge-multiple: true
+          digest-mismatch: error
+      - name: Verify same-source same-run signing inputs
+        run: |
+          set -euo pipefail
+          python scripts/release_artifact_handoff.py verify --stage "${HELDOUT_STAGE}" --profile heldout-eval
+          python scripts/release_artifact_handoff.py verify --stage "${BOM_STAGE}" --profile model-bom
       - name: Emit run manifest
         run: |
           python scripts/emit_run_manifest.py \
-            --model-dir "${{ inputs.model_dir }}" \
-            --eval release/heldout-eval.json \
-            --bom "${BOM_OUT}" \
+            --model-dir "${MODEL_DIR}" \
+            --eval "${HELDOUT_STAGE}/heldout-eval.json" \
+            --bom "${BOM_STAGE}/model-bom.cdx.json" \
             --git-sha "${GITHUB_SHA}" \
             --workflow-run "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
-            --out "${MANIFEST_OUT}"
+            --out "${SIGNED_STAGE}/run-manifest.json"
       - name: Sign manifest + BOM + weights digest (keyless)
         run: |
-          cosign sign-blob --yes "${MANIFEST_OUT}" \
-            --output-signature release/run-manifest.sig \
-            --output-certificate release/run-manifest.crt
-          cosign sign-blob --yes "${BOM_OUT}" \
-            --output-signature "${BOM_OUT}.sig" \
-            --output-certificate "${BOM_OUT}.crt"
-          sha256sum $(find "${{ inputs.model_dir }}" -name '*.safetensors') \
-            > release/weights.sha256
-          cosign sign-blob --yes release/weights.sha256 \
-            --output-signature release/weights.sha256.sig \
-            --output-certificate release/weights.sha256.crt
+          set -euo pipefail
+          cosign sign-blob --yes "${SIGNED_STAGE}/run-manifest.json" \
+            --output-signature "${SIGNED_STAGE}/run-manifest.sig" \
+            --output-certificate "${SIGNED_STAGE}/run-manifest.crt"
+          cosign sign-blob --yes "${BOM_STAGE}/model-bom.cdx.json" \
+            --output-signature "${SIGNED_STAGE}/model-bom.cdx.json.sig" \
+            --output-certificate "${SIGNED_STAGE}/model-bom.cdx.json.crt"
+          sha256sum $(find "${MODEL_DIR}" -name '*.safetensors') \
+            > "${SIGNED_STAGE}/weights.sha256"
+          cosign sign-blob --yes "${SIGNED_STAGE}/weights.sha256" \
+            --output-signature "${SIGNED_STAGE}/weights.sha256.sig" \
+            --output-certificate "${SIGNED_STAGE}/weights.sha256.crt"
       - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
-          subject-path: "${{ inputs.model_dir }}/*.safetensors"
+          subject-path: "${{ env.MODEL_DIR }}/*.safetensors"
+      - name: Seal signed-file transport without claiming signature verification
+        run: python scripts/release_artifact_handoff.py seal --stage "${SIGNED_STAGE}" --profile signed-release
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with: { name: signed-release, path: release/ }
+        id: upload
+        with:
+          name: signed-release-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.SIGNED_STAGE }}
+          if-no-files-found: error
 
   # ── Gate 5: adversarial conformance suite (14 vectors, incl. SIGv1 bug) ──
   conformance:
     needs: sign
     runs-on: ubuntu-latest
+    env:
+      SIGNED_ARTIFACT_ID: ${{ needs.sign.outputs.artifact_id }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Require producer identity and initialize fresh conformance input
+        env:
+          SIGNED_STAGE: ${{ runner.temp }}/szl-gate-conformance-signed-${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          set -euo pipefail
+          python scripts/release_artifact_handoff.py check-artifact-id --artifact-id "${SIGNED_ARTIFACT_ID}"
+          python scripts/release_artifact_handoff.py init --stage "${SIGNED_STAGE}"
+          printf '%s\n' "SIGNED_STAGE=${SIGNED_STAGE}" >> "${GITHUB_ENV}"
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          artifact-ids: ${{ needs.sign.outputs.artifact_id }}
+          path: ${{ env.SIGNED_STAGE }}
+          merge-multiple: true
+          digest-mismatch: error
+      - name: Verify same-source same-run conformance input
+        run: python scripts/release_artifact_handoff.py verify --stage "${SIGNED_STAGE}" --profile signed-release
       - name: Run receipt conformance vectors
         run: |
           python conformance/run_vectors.py \
             --vectors conformance/vectors/ \
-            --receipt release/run-manifest.json \
+            --receipt "${SIGNED_STAGE}/run-manifest.json" \
             --require-all-pass
           # Vectors: deletion, reorder, replay, cross-tenant, chain fork,
           # signer substitution, alg confusion, DSSE PAE malleation (V11 bug),
@@ -184,18 +312,63 @@ jobs:
 
   # ── Final gate: publication_eligible === true, then publish ─────────────
   publish:
-    needs: conformance
+    needs: [heldout-eval, model-bom, sign, conformance]
     runs-on: ubuntu-latest
     environment: hub-production           # requires required-approver review
+    env:
+      HELDOUT_ARTIFACT_ID: ${{ needs.heldout-eval.outputs.artifact_id }}
+      BOM_ARTIFACT_ID: ${{ needs.model-bom.outputs.artifact_id }}
+      SIGNED_ARTIFACT_ID: ${{ needs.sign.outputs.artifact_id }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Require producer identities and initialize fresh publication stages
+        env:
+          HELDOUT_STAGE: ${{ runner.temp }}/szl-gate-publish-heldout-${{ github.run_id }}-${{ github.run_attempt }}
+          BOM_STAGE: ${{ runner.temp }}/szl-gate-publish-bom-${{ github.run_id }}-${{ github.run_attempt }}
+          SIGNED_STAGE: ${{ runner.temp }}/szl-gate-publish-signed-${{ github.run_id }}-${{ github.run_attempt }}
+          PUBLICATION_STAGE: ${{ runner.temp }}/szl-gate-publication-${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          set -euo pipefail
+          python scripts/release_artifact_handoff.py check-artifact-id --artifact-id "${HELDOUT_ARTIFACT_ID}"
+          python scripts/release_artifact_handoff.py check-artifact-id --artifact-id "${BOM_ARTIFACT_ID}"
+          python scripts/release_artifact_handoff.py check-artifact-id --artifact-id "${SIGNED_ARTIFACT_ID}"
+          python scripts/release_artifact_handoff.py init --stage "${HELDOUT_STAGE}"
+          python scripts/release_artifact_handoff.py init --stage "${BOM_STAGE}"
+          python scripts/release_artifact_handoff.py init --stage "${SIGNED_STAGE}"
+          python scripts/release_artifact_handoff.py init --stage "${PUBLICATION_STAGE}"
+          printf '%s\n' "HELDOUT_STAGE=${HELDOUT_STAGE}" "BOM_STAGE=${BOM_STAGE}" "SIGNED_STAGE=${SIGNED_STAGE}" "PUBLICATION_STAGE=${PUBLICATION_STAGE}" >> "${GITHUB_ENV}"
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        with: { name: signed-release, path: release/ }
+        with:
+          artifact-ids: ${{ needs.heldout-eval.outputs.artifact_id }}
+          path: ${{ env.HELDOUT_STAGE }}
+          merge-multiple: true
+          digest-mismatch: error
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          artifact-ids: ${{ needs.model-bom.outputs.artifact_id }}
+          path: ${{ env.BOM_STAGE }}
+          merge-multiple: true
+          digest-mismatch: error
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          artifact-ids: ${{ needs.sign.outputs.artifact_id }}
+          path: ${{ env.SIGNED_STAGE }}
+          merge-multiple: true
+          digest-mismatch: error
+      - name: Verify same-source same-run final publication inputs
+        run: |
+          set -euo pipefail
+          python scripts/release_artifact_handoff.py verify --stage "${HELDOUT_STAGE}" --profile heldout-eval
+          python scripts/release_artifact_handoff.py verify --stage "${BOM_STAGE}" --profile model-bom
+          python scripts/release_artifact_handoff.py verify --stage "${SIGNED_STAGE}" --profile signed-release
       - name: Assert publication gate
         run: |
           python - <<'PY'
-          import json, sys
-          m = json.load(open('release/run-manifest.json'))
+          import json, os, pathlib, sys
+          m = json.loads((pathlib.Path(os.environ["SIGNED_STAGE"]) / "run-manifest.json").read_text())
           checks = {
             "heldout_eval_passed":  m["eval"]["heldout_passed"] is True,
             "refusal_no_regression": m["eval"]["refusal_no_regression"] is True,
@@ -203,41 +376,43 @@ jobs:
             "signed":                m["signatures"]["manifest"] is True,
             "conformance_passed":    m["conformance"]["all_vectors_passed"] is True,
             "major_approved":        (m["release"]["kind"] != "major")
-                                      or "${{ inputs.allow_major }}" == "yes",
+                                      or os.environ["ALLOW_MAJOR"] == "yes",
           }
           for k, v in checks.items():
             print(f"  {'PASS' if v else 'FAIL'}  {k}")
           eligible = all(checks.values())
           print(f"publication_eligible = {eligible}")
           json.dump({"publication_eligible": eligible, "checks": checks},
-                    open('release/publication-gate.json', 'w'), indent=2)
+                    (pathlib.Path(os.environ["PUBLICATION_STAGE"]) / "publication-gate.json").open('w'), indent=2)
           sys.exit(0 if eligible else 1)
           PY
       - name: Write model card from BOM + eval (no hand-written claims)
         run: |
           python scripts/render_model_card.py \
-            --bom bom/model-bom.cdx.json \
-            --eval release/heldout-eval.json \
-            --gate release/publication-gate.json \
+            --bom "${BOM_STAGE}/model-bom.cdx.json" \
+            --eval "${HELDOUT_STAGE}/heldout-eval.json" \
+            --gate "${PUBLICATION_STAGE}/publication-gate.json" \
             --template cards/model-card.md.tmpl \
-            --out release/README.md
+            --out "${PUBLICATION_STAGE}/README.md"
       - name: Upload to Hub (gated)
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN_PUBLISH }}
         run: |
-          huggingface-cli upload "${{ inputs.model_repo }}" \
-            "${{ inputs.model_dir }}" . \
+          huggingface-cli upload "${MODEL_REPO}" \
+            "${MODEL_DIR}" . \
             --commit-message "release $(git rev-parse --short $GITHUB_SHA) · held-out passed · gate green"
-          huggingface-cli upload "${{ inputs.model_repo }}" release/README.md README.md
+          huggingface-cli upload "${MODEL_REPO}" "${PUBLICATION_STAGE}/README.md" README.md
       - name: Anchor publication receipt on-chain (SZL ledger)
         run: |
           python scripts/anchor_receipt.py \
-            --receipt release/run-manifest.json \
+            --receipt "${SIGNED_STAGE}/run-manifest.json" \
             --event "model.published" \
-            --subject "${{ inputs.model_repo }}@${GITHUB_SHA}"
+            --subject "${MODEL_REPO}@${GITHUB_SHA}"
       - name: Deployment-equivalence check (optional, if a Space claims parity)
         if: ${{ vars.DEPLOYED_SPACE != '' }}
+        env:
+          DEPLOYED_SPACE: ${{ vars.DEPLOYED_SPACE }}
         run: |
           python scripts/check_deploy_equivalence.py \
-            --space "${{ vars.DEPLOYED_SPACE }}" \
-            --weights release/weights.sha256
+            --space "${DEPLOYED_SPACE}" \
+            --weights "${SIGNED_STAGE}/weights.sha256"
