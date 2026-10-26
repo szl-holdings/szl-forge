@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -12,6 +13,9 @@ from unittest import mock
 import publish_model_source_bindings as bindings
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
+# Existing workflows execute this module directly. Export the Git regression
+# case so unittest.main() includes it without adding a new workflow or job.
+from test_publisher_git_source import PublisherGitSourceTests  # noqa: F401
 
 
 class FakeApi:
@@ -286,11 +290,19 @@ class PublishModelSourceBindingsTests(unittest.TestCase):
                 encoding="utf-8",
             )
             report = root / "report.json"
+            subprocess.run(["git", "-c", "init.templateDir=", "init", "-q", str(root)], check=True)
+            subprocess.run(["git", "-C", str(root), "add", "source.txt", "contract.json"], check=True)
+            subprocess.run([
+                "git", "-C", str(root), "-c", "user.name=Synthetic fixture",
+                "-c", "user.email=fixture@example.invalid", "-c", "commit.gpgsign=false",
+                "commit", "-qm", "Synthetic source fixture",
+            ], check=True)
+            revision = subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip()
             with mock.patch.object(bindings, "ROOT", root):
                 payload = bindings.run(
                     contract_path=contract,
                     report_path=report,
-                    source_revision="c" * 40,
+                    source_revision=revision,
                     publish=False,
                     token=None,
                     api=FakeApi(),
@@ -671,6 +683,7 @@ class PublishModelSourceBindingsTests(unittest.TestCase):
         }
         with (
             mock.patch.object(bindings, "source_evidence", return_value=[]),
+            mock.patch.object(bindings, "verify_source_contract"),
             mock.patch.object(
                 bindings,
                 "hub_evidence",
@@ -684,6 +697,7 @@ class PublishModelSourceBindingsTests(unittest.TestCase):
             ),
             mock.patch.object(bindings, "publish_prepared") as publish_prepared,
         ):
+            contract["artifacts"] = [artifact]
             with self.assertRaisesRegex(
                 bindings.BindingError,
                 "exact runtime evidence is required but unavailable",
@@ -716,6 +730,8 @@ class PublishModelSourceBindingsTests(unittest.TestCase):
             report = Path(temporary) / "report.json"
             with (
                 mock.patch.object(bindings, "load_contract", return_value=contract),
+                mock.patch.object(bindings, "verify_source_contract"),
+                mock.patch.object(bindings, "source_evidence", return_value=[]),
                 mock.patch.object(
                     bindings, "prepare_one", return_value=prepared
                 ) as prepare,
@@ -754,6 +770,8 @@ class PublishModelSourceBindingsTests(unittest.TestCase):
             report = Path(temporary) / "report.json"
             with (
                 mock.patch.object(bindings, "load_contract", return_value=contract),
+                mock.patch.object(bindings, "verify_source_contract"),
+                mock.patch.object(bindings, "source_evidence", return_value=[]),
                 mock.patch.object(bindings, "prepare_one", side_effect=prepare),
                 mock.patch.object(bindings, "publish_prepared") as publish_prepared,
             ):
