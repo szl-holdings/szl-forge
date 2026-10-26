@@ -109,8 +109,10 @@ def main():
     if adapter is not None:
         if not adapter.is_dir():
             raise SystemExit(f"[eval] adapter dir missing: {adapter}")
-        model = lib.attach_adapter(model, adapter)
+        model, loader = lib.attach_adapter(model, adapter, with_evidence=True)
         adapter_sha = lib.sha256_dir(adapter)
+    else:
+        loader = lib.describe_base_loader(model)
     model.eval()
     preds, m = score_rows(model, tok, held, protocol, required_keys)
     adv_preds, am = (score_rows(model, tok, adv, protocol, required_keys) if adv else ([], None))
@@ -120,10 +122,11 @@ def main():
     comp = None
     if args.comparator:
         base_model, tok2, _ = lib.load_base_model(cand, for_training=False, allow_cpu=args.allow_cpu)
-        cmodel = lib.attach_adapter(base_model, Path(args.comparator))
+        cmodel, comparator_loader = lib.attach_adapter(base_model, Path(args.comparator), with_evidence=True)
         cmodel.eval()
         _, cm = score_rows(cmodel, tok2, held, protocol, required_keys)
-        comp = {"exact": cm["exact"], "n": cm["n"], "adapter_sha256": lib.sha256_dir(Path(args.comparator))}
+        comp = {"exact": cm["exact"], "n": cm["n"], "adapter_sha256": lib.sha256_dir(Path(args.comparator)),
+                "loader": comparator_loader}
 
     t = gates
     rights = str((cand["training_data"] or {}).get("rights", "UNDECLARED"))
@@ -160,7 +163,7 @@ def main():
     passed = sum(1 for g in G if g["status"] == "PASS")
     report = {"kind": "szl.frontier-evaluation-report/v1", "signed": False, "generated_utc": lib.now_utc(),
               "candidate_id": cand["candidate_id"], "split": args.split, "rows": m["n"], "adversarial_rows": 0 if am is None else am["n"],
-              "backend": backend, "adapterSha256": adapter_sha, "base": cand["actual_training_base"],
+              "backend": backend, "adapterSha256": adapter_sha, "base": cand["actual_training_base"], "loader": loader,
               "metrics": {"exact_match": rate(m["exact"], m["n"]), "schema_validity": rate(m["schema_ok"], m["n"]),
                           "true_abstain": rate(m["abstain_hit"], m["abstain_expected"]),
                           "false_abstain": rate(m["false_abstain"], m["answerable"]),

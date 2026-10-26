@@ -1,0 +1,52 @@
+# Candidate adapter structural guard
+
+This source slice covers newly generated estate payload kits and the explicitly
+updated `frontier/brain-navigator-r2-candidate-20261001` copy. It does not silently
+regenerate other candidates or alter their manifests, bases, recipes or gates.
+
+Before `attach_adapter` returns a model, the packaged canonical Chaski guard
+checks the strict checkpoint header, complete target-name coverage, and exactly
+one enabled, active, unmerged `default` namespace. Missing, malformed, empty,
+partially covered or inactive adapters fail before their scoring/conversion.
+The existing model-only API remains available for export callers. Evaluators
+request the loader/structural report for both candidate and comparator. Explicit
+bare-base runs instead record `mode=bare_base` and `adapter_keys=null`.
+
+The two vendored `adapter_guard.py` copies must equal `chaski/adapter_guard.py`
+after CRLF-to-LF normalization. Their SHA256 pin in `candidate_lib.py` identifies
+reviewed repository source, **not** an independent signature or authorization.
+The loader reads at most 65,537 bytes, verifies the normalized source digest and
+compiles that same buffer; it never falls back to an import-path shadow module.
+The bootstrap fetch list includes the guard. The generator copies it without
+candidate-template substitutions. Do not run the bootstrap/generator to test
+these source contracts: those entry points have external mutation lanes.
+
+Canonical provenance: `chaski/adapter_guard.py` at Forge commit
+`89f5d6b5712327e677d3dab3d9b82011598c89c3`; normalized SHA256
+`ad2cb8334cddf28782dc3d858d9ccfd5f0de7f892bc02b4447b7180fab525cd2`.
+
+## Boundary
+
+The inherited `applied`/`fully_applied` fields count parameter names, not tensor
+values. Successful reports retain `coverage_basis=parameter_names_and_model_status`
+and `numerical_application=UNKNOWN`. A source checksum is `REPO_DECLARED` trust.
+Real tensor application, immutable loaded-artifact identity, qualified native
+dependencies, runtime profile, model quality and publication remain separate
+gates. Existing backend/class/precision fallbacks are unchanged by this slice;
+they are not newly qualified. In particular, a misaligned loader can now fail
+structural coverage instead of being scored as if its adapter were applied.
+
+No trainer, inference, model evaluation, conversion, VM operation or publication
+is run by these tests. No budget/ledger or eligibility state is modified.
+
+## Offline source regressions
+
+```text
+python -I -S -B -m unittest discover -s tests -p test_candidate_adapter_attachment.py -v
+python -I -S -B -O -m unittest discover -s tests -p test_candidate_adapter_attachment.py -v
+```
+
+Tests use stdlib-only SIMULATED models, checkpoint headers, paths and report sinks
+in memory. They do not load actual weights or held-out/curriculum rows. The normal
+`base-python-ci` tests-directory suite also discovers them; no new workflow or
+remote job dispatch is necessary.
