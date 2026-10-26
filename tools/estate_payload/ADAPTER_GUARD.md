@@ -50,11 +50,20 @@ trimming, normalization or default-branch resolution is performed. CPU and
 offline flags do not bypass this boundary. Metadata-only `load_candidate` reads
 still permit an unbound candidate for source/card/curriculum inspection.
 
-This is syntax validation, not confirmation that the commit exists, that a Hub
-response resolves to that commit, or that loaded tensors/tokenizer match it.
-Those immutable-content and qualified-loader bindings remain separate gaps.
-Existing fallback behavior and runtime-lock semantics are unchanged. No existing
-candidate manifest, recipe, gate, signed artifact or authority is rewritten.
+The qualifier additionally compares the Hub response's SHA with the requested
+pin, using exact string equality. Wrong, missing, malformed or unavailable
+resolution fails qualification and cannot create or replace a runtime lock.
+`--offline` records identity as `UNKNOWN`, produces a non-PASS verdict and never
+locks, even with a matching existing lock or `--relock`. A matched response does
+not erase another failed prerequisite. The remaining lock comparison/relock
+behavior is preserved.
+
+The loaders' syntax checks and the qualifier's Hub metadata equality are not
+proof that loaded tensors/tokenizer bytes match the pin, nor compute/training
+authorization. Those immutable-content and qualified-loader bindings remain
+separate gaps. Existing fallback behavior is unchanged. No existing candidate
+manifest, recipe, gate, signed artifact or authority is rewritten by this source
+change; tests use mocked candidate/lock objects and write sinks only.
 
 ## Offline source regressions
 

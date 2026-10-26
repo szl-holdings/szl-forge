@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import builtins
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 import copy
 from pathlib import Path
 import sys
@@ -149,6 +149,109 @@ class CandidateRevisionBoundaryTests(unittest.TestCase):
                 backend = "unsloth-4bit" if directory == CONSUMERS[0] else "unsloth"
                 self.assertEqual(result, (model, tok, backend))
                 self.assertEqual(loader.call_args.kwargs["revision"], PIN)
+
+
+class QualifierResolvedRevisionTests(unittest.TestCase):
+    """All observed environments, Hub replies and write sinks are SIMULATED."""
+
+    def qualify(self, directory, metadata, *, offline=False, frozen=False,
+                relock=False, drift=False, environment_ok=True, error=None):
+        with consumer(directory, "qualify_runtime") as (lib, module):
+            value = candidate(PIN)
+            value["candidate_id"] = "SIMULATED_ONLY"
+            versions = {name: "SIMULATED" for name in lib.LOCK_PACKAGES}
+            versions["python"] = "SIMULATED_PYTHON"
+            if frozen:
+                value["runtime_lock"] = dict(versions)
+                if drift:
+                    value["runtime_lock"]["python"] = "SIMULATED_DRIFT"
+            initial = copy.deepcopy(value)
+            observed = dict(versions)
+            if not environment_ok:
+                observed["torch"] = None
+            query = Mock(return_value=metadata, side_effect=error)
+            factory = Mock(return_value=types.SimpleNamespace(model_info=query))
+            hub = types.SimpleNamespace(HfApi=factory)
+            argv = ["SIMULATED", *(["--offline"] if offline else []),
+                    *(["--relock"] if relock else [])]
+            with patch.object(lib, "load_candidate", return_value=value), \
+                    patch.object(lib, "installed_versions", return_value=observed), \
+                    patch.object(lib, "gpu_snapshot", return_value={
+                        "cuda_available": True, "free_gib": "8", "device": "SIMULATED"}), \
+                    patch.object(module.shutil, "disk_usage", return_value=types.SimpleNamespace(free=20 * 2**30)), \
+                    patch.object(lib, "host_info", return_value={"kind": "SIMULATED"}), \
+                    patch.object(lib, "save_candidate") as save, \
+                    patch.object(lib, "write_json") as write, \
+                    patch.object(sys, "argv", argv), \
+                    patch.dict(sys.modules, {"huggingface_hub": hub}), \
+                    patch("builtins.print"), \
+                    (no_framework_imports() if offline else nullcontext()):
+                code = module.main()
+            write.assert_called_once()
+            report = write.call_args.args[1]
+            return {"code": code, "report": report, "saved": save.call_count,
+                    "candidate": value, "initial": initial, "query": query, "factory": factory}
+
+    def assert_blocked(self, result):
+        self.assertNotEqual(result["code"], 0)
+        self.assertEqual(result["report"]["verdict"], "FAIL")
+        self.assertEqual(result["saved"], 0)
+        self.assertEqual(result["candidate"], result["initial"])
+
+    def test_wrong_missing_malformed_resolution_never_locks(self):
+        metadata = [types.SimpleNamespace()]
+        metadata += [types.SimpleNamespace(sha=value) for value in (*BAD, "b" * 40)]
+        for directory in CONSUMERS:
+            for item in metadata:
+                for frozen, relock in ((False, False), (True, False), (True, True), (False, True)):
+                    with self.subTest(consumer=directory, metadata=item, frozen=frozen, relock=relock):
+                        result = self.qualify(directory, item, frozen=frozen, relock=relock)
+                        self.assert_blocked(result)
+                        rows = {row["check"]: row for row in result["report"]["checks"]}
+                        self.assertEqual(rows["base_revision_resolved"]["status"], "FAIL")
+                        result["query"].assert_called_once_with("SAMPLE/base", revision=PIN)
+
+    def test_offline_unknown_never_qualifies_or_locks(self):
+        for directory in CONSUMERS:
+            for frozen, relock in ((False, False), (True, False), (True, True), (False, True)):
+                with self.subTest(consumer=directory, frozen=frozen, relock=relock):
+                    result = self.qualify(directory, types.SimpleNamespace(sha=PIN),
+                                          offline=True, frozen=frozen, relock=relock)
+                    self.assert_blocked(result)
+                    rows = {row["check"]: row for row in result["report"]["checks"]}
+                    self.assertEqual(rows["base_revision_resolved"]["status"], "UNKNOWN")
+                    result["factory"].assert_not_called()
+                    result["query"].assert_not_called()
+
+    def test_unavailable_hub_never_qualifies_or_locks(self):
+        for directory in CONSUMERS:
+            for frozen, relock in ((False, False), (True, False), (True, True)):
+                with self.subTest(consumer=directory, frozen=frozen, relock=relock):
+                    result = self.qualify(directory, None, error=RuntimeError("SIMULATED_UNAVAILABLE"),
+                                          frozen=frozen, relock=relock)
+                    self.assert_blocked(result)
+                    rows = {row["check"]: row for row in result["report"]["checks"]}
+                    self.assertEqual(rows["base_revision_resolved"]["status"], "FAIL")
+
+    def test_exact_resolution_retains_environment_and_lock_gates(self):
+        for directory in CONSUMERS:
+            for frozen, relock, drift, environment_ok in (
+                    (False, False, False, True), (True, False, False, True),
+                    (True, False, True, True), (True, True, True, True),
+                    (False, False, False, False), (True, True, False, False)):
+                with self.subTest(consumer=directory, frozen=frozen, relock=relock,
+                                  drift=drift, environment_ok=environment_ok):
+                    result = self.qualify(directory, types.SimpleNamespace(sha=PIN), frozen=frozen,
+                                          relock=relock, drift=drift, environment_ok=environment_ok)
+                    rows = {row["check"]: row for row in result["report"]["checks"]}
+                    self.assertEqual(rows["base_revision_resolved"]["status"], "PASS")
+                    result["query"].assert_called_once_with("SAMPLE/base", revision=PIN)
+                    if not environment_ok or (drift and not relock):
+                        self.assert_blocked(result)
+                    else:
+                        self.assertEqual(result["code"], 0)
+                        self.assertEqual(result["report"]["verdict"], "PASS")
+                        self.assertEqual(result["saved"], int(not frozen or relock))
 
 
 if __name__ == "__main__":
