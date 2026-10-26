@@ -78,3 +78,34 @@ Tests use stdlib-only SIMULATED models, checkpoint headers, paths and report sin
 in memory. They do not load actual weights or held-out/curriculum rows. The normal
 `base-python-ci` tests-directory suite also discovers them; no new workflow or
 remote job dispatch is necessary.
+
+## Explicit loader descriptor (source-only)
+
+`tools/estate_payload/loader_profile.py` adds a pure comparison API,
+`observe_loader_profile`. It accepts immutable UTF-8 JSON bytes up to 16 KiB,
+checks an externally supplied raw SHA256 before parsing, and requires exact
+candidate snapshot, recipe snapshot and purpose comparisons. It rejects
+duplicate, missing, unknown or mistyped fields and unsupported choices.
+Base and tokenizer identities, runtime-identity digest, one backend/factory,
+expected class/type/view, quantization/dtypes and CPU/CUDA placement are explicit.
+No-offload is the only supported descriptor policy in this first slice.
+
+Acceptance returns immutable `MODELED` / `BLOCKED` comparison evidence with
+`UNKNOWN` signing trust and permanently false execution, training and publication
+properties. Boolean coercion raises. These properties are not dataclass fields:
+future serialization must explicitly retain them; ordinary `asdict`/`repr` is
+not a complete evidence export. No serializer is introduced here.
+
+The module does not authenticate caller pins, read artifacts, import frameworks,
+load a model, observe actual tensors/precision/placement or choose a fallback.
+It is not integrated into existing loading entry points yet; actual loader
+selection and returned-model inspection remain separate work. No real profile,
+candidate ID, native dependency pin, signed SKU, runtime lock or grant is created.
+
+```text
+python -I -S -B -m unittest discover -s tests -p test_loader_profile_contract.py -v
+python -I -S -B -O -m unittest discover -s tests -p test_loader_profile_contract.py -v
+```
+
+The 13 tests use only in-memory SIMULATED descriptors. The existing tests-directory
+CI discovers them; test success is not runtime qualification or model evaluation.
