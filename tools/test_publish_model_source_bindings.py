@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -12,6 +13,9 @@ from unittest import mock
 import publish_model_source_bindings as bindings
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
+# Existing workflows execute this module directly. Export the Git regression
+# case so unittest.main() includes it without adding a new workflow or job.
+from test_publisher_git_source import PublisherGitSourceTests  # noqa: F401
 
 
 class FakeApi:
@@ -286,11 +290,19 @@ class PublishModelSourceBindingsTests(unittest.TestCase):
                 encoding="utf-8",
             )
             report = root / "report.json"
+            subprocess.run(["git", "-c", "init.templateDir=", "init", "-q", str(root)], check=True)
+            subprocess.run(["git", "-C", str(root), "add", "source.txt", "contract.json"], check=True)
+            subprocess.run([
+                "git", "-C", str(root), "-c", "user.name=Synthetic fixture",
+                "-c", "user.email=fixture@example.invalid", "-c", "commit.gpgsign=false",
+                "commit", "-qm", "Synthetic source fixture",
+            ], check=True)
+            revision = subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip()
             with mock.patch.object(bindings, "ROOT", root):
                 payload = bindings.run(
                     contract_path=contract,
                     report_path=report,
-                    source_revision="c" * 40,
+                    source_revision=revision,
                     publish=False,
                     token=None,
                     api=FakeApi(),
@@ -671,6 +683,7 @@ class PublishModelSourceBindingsTests(unittest.TestCase):
         }
         with (
             mock.patch.object(bindings, "source_evidence", return_value=[]),
+            mock.patch.object(bindings, "verify_source_contract"),
             mock.patch.object(
                 bindings,
                 "hub_evidence",
@@ -684,6 +697,7 @@ class PublishModelSourceBindingsTests(unittest.TestCase):
             ),
             mock.patch.object(bindings, "publish_prepared") as publish_prepared,
         ):
+            contract["artifacts"] = [artifact]
             with self.assertRaisesRegex(
                 bindings.BindingError,
                 "exact runtime evidence is required but unavailable",
@@ -716,6 +730,8 @@ class PublishModelSourceBindingsTests(unittest.TestCase):
             report = Path(temporary) / "report.json"
             with (
                 mock.patch.object(bindings, "load_contract", return_value=contract),
+                mock.patch.object(bindings, "verify_source_contract"),
+                mock.patch.object(bindings, "source_evidence", return_value=[]),
                 mock.patch.object(
                     bindings, "prepare_one", return_value=prepared
                 ) as prepare,
@@ -754,6 +770,8 @@ class PublishModelSourceBindingsTests(unittest.TestCase):
             report = Path(temporary) / "report.json"
             with (
                 mock.patch.object(bindings, "load_contract", return_value=contract),
+                mock.patch.object(bindings, "verify_source_contract"),
+                mock.patch.object(bindings, "source_evidence", return_value=[]),
                 mock.patch.object(bindings, "prepare_one", side_effect=prepare),
                 mock.patch.object(bindings, "publish_prepared") as publish_prepared,
             ):
@@ -846,6 +864,165 @@ class PublishModelSourceBindingsTests(unittest.TestCase):
         )
         self.assertEqual(revision, observed["hub_revision_after"])
         api.upload_file.assert_not_called()
+
+
+class PublicationHashSemanticsTests(unittest.TestCase):
+    """Generated binding bytes must not impersonate a preserved release file."""
+
+    def prepare(self, immutable=False):
+        artifact = {
+            "repo_id": "SZLHOLDINGS/synthetic-test",
+            "artifact_class": "fine_tuned_adapter",
+            "promotion_state": "NOT_PROMOTED_LIMITED_EVIDENCE",
+            "source_path": ".",
+            "role": "synthetic_test",
+            "maturity": "SAMPLE",
+            "limitations": ["synthetic fixture only"],
+        }
+        if immutable:
+            artifact.update(binding_mode="VERIFY_IMMUTABLE_RELEASE", hub_revision="a" * 40)
+        contract = {
+            "source_repository": "szl-holdings/szl-forge",
+            "artifacts": [artifact],
+            "policy": {
+                "artifact_equivalence": "NOT_CLAIMED",
+                "reproducible_build": "NOT_CLAIMED",
+                "statement": "synthetic fixture only",
+            },
+        }
+        receipts = {
+            "status": "DECLARED_KEY_SIGNATURES_VALID",
+            "held_out_evaluation": {},
+            "release_receipt_status": "SAMPLE",
+        }
+        with (
+            mock.patch.object(bindings, "verify_source_contract"),
+            mock.patch.object(bindings, "source_evidence", return_value=[]),
+            mock.patch.object(bindings, "hub_evidence", return_value=("a" * 40, [])),
+            mock.patch.object(bindings, "lineage_evidence", return_value=[]),
+            mock.patch.object(bindings, "adapter_config_evidence", return_value=None),
+            mock.patch.object(bindings, "signed_receipt_evidence", return_value=receipts),
+            mock.patch.object(bindings, "runtime_evidence", return_value=None),
+        ):
+            result, body = bindings.prepare_one(
+                mock.Mock(), contract, artifact, source_revision="c" * 40, token=None
+            )
+        return artifact, result, body
+
+    def test_prepared_digest_names_generated_bytes_without_claiming_effects(self):
+        _artifact, result, body = self.prepare()
+        digest = hashlib.sha256(body).hexdigest()
+        self.assertEqual(result["generated_binding_sha256"], digest)
+        self.assertEqual(result["publication_sha256"], digest)
+        self.assertEqual(result["publication_sha256_basis"], "GENERATED_CANONICAL_BINDING_JSON")
+        self.assertEqual(result["generated_binding_schema"], json.loads(body)["schema"])
+        self.assertFalse(result["generated_binding_uploaded"])
+        self.assertFalse(result["generated_binding_exact_byte_readback_verified"])
+        self.assertIsNone(result["generated_binding_hub_revision"])
+        self.assertIsNone(result["preserved_publication"])
+
+    def test_dry_run_never_claims_upload_or_immutable_preservation(self):
+        artifact, result, body = self.prepare(immutable=True)
+        with (
+            mock.patch.object(bindings, "prepare_one", return_value=(result, body)),
+            mock.patch.object(bindings, "publish_prepared") as publish,
+        ):
+            observed = bindings.publish_one(
+                mock.Mock(), {}, artifact, source_revision="c" * 40,
+                publish=False, token=None,
+            )
+        publish.assert_not_called()
+        self.assertFalse(observed["generated_binding_uploaded"])
+        self.assertFalse(observed["generated_binding_exact_byte_readback_verified"])
+        self.assertIsNone(observed["preserved_publication"])
+
+    def test_immutable_hash_is_not_the_preserved_publication_hash(self):
+        artifact, result, body = self.prepare(immutable=True)
+        preserved = b'{"schema":"synthetic.owner-publication/v1"}\n'
+        result.update(generated_binding_uploaded=True,
+                      generated_binding_exact_byte_readback_verified=True,
+                      generated_binding_hub_revision="f" * 40)
+        api = mock.Mock()
+        with mock.patch.object(bindings, "hf_hub_download") as download:
+            observed = bindings.publish_prepared(
+                api, artifact, result, body, source_revision="c" * 40, token="synthetic"
+            )
+        api.upload_file.assert_not_called()
+        download.assert_not_called()
+        self.assertNotEqual(hashlib.sha256(preserved).hexdigest(), observed["publication_sha256"])
+        self.assertEqual(observed["publication_sha256"], hashlib.sha256(body).hexdigest())
+        self.assertEqual(observed["publication_sha256"], observed["generated_binding_sha256"])
+        self.assertFalse(observed["generated_binding_uploaded"])
+        self.assertFalse(observed["generated_binding_exact_byte_readback_verified"])
+        self.assertIsNone(observed["generated_binding_hub_revision"])
+        self.assertEqual(observed["hub_revision_after"], "a" * 40)
+        self.assertEqual(observed["preserved_publication"], {
+            "status": "UNCHANGED_BY_THIS_INVOCATION",
+            "hub_revision": "a" * 40,
+            "sha256": None,
+            "sha256_status": "UNKNOWN_NOT_READ_BY_THIS_PRODUCER",
+        })
+
+    def test_immutable_revision_drift_still_rejects_without_effects(self):
+        artifact, result, body = self.prepare(immutable=True)
+        result["hub_revision_before"] = "b" * 40
+        api = mock.Mock()
+        with mock.patch.object(bindings, "hf_hub_download") as download:
+            with self.assertRaisesRegex(bindings.BindingError, "changed after preparation"):
+                bindings.publish_prepared(
+                    api, artifact, result, body, source_revision="c" * 40, token="synthetic"
+                )
+        api.upload_file.assert_not_called()
+        download.assert_not_called()
+        self.assertFalse(result["generated_binding_uploaded"])
+
+    def test_generated_upload_flags_follow_successful_exact_byte_readback(self):
+        artifact, result, body = self.prepare()
+        api = mock.Mock()
+        api.upload_file.return_value = SimpleNamespace(oid="d" * 40)
+        with (
+            mock.patch.object(bindings, "hf_hub_download", return_value="synthetic-unopened") as download,
+            mock.patch.object(Path, "read_bytes", return_value=body),
+        ):
+            observed = bindings.publish_prepared(
+                api, artifact, result, body, source_revision="c" * 40, token="synthetic"
+            )
+        self.assertTrue(observed["generated_binding_uploaded"])
+        self.assertTrue(observed["generated_binding_exact_byte_readback_verified"])
+        self.assertEqual(observed["generated_binding_hub_revision"], "d" * 40)
+        self.assertEqual(download.call_args.kwargs["revision"], "d" * 40)
+        self.assertEqual(api.upload_file.call_args.kwargs["path_or_fileobj"].getvalue(), body)
+        self.assertIsNone(observed["preserved_publication"])
+
+    def test_readback_mismatch_retains_upload_effect_without_verification(self):
+        artifact, result, body = self.prepare()
+        api = mock.Mock()
+        api.upload_file.return_value = SimpleNamespace(oid="d" * 40)
+        with (
+            mock.patch.object(bindings, "hf_hub_download", return_value="synthetic-unopened"),
+            mock.patch.object(Path, "read_bytes", return_value=b"different synthetic bytes"),
+        ):
+            with self.assertRaisesRegex(bindings.BindingError, "publication readback mismatch"):
+                bindings.publish_prepared(
+                    api, artifact, result, body, source_revision="c" * 40, token="synthetic"
+                )
+        self.assertTrue(result["generated_binding_uploaded"])
+        self.assertFalse(result["generated_binding_exact_byte_readback_verified"])
+        self.assertEqual(result["generated_binding_hub_revision"], "d" * 40)
+
+    def test_upload_exception_leaves_outcome_unknown_not_no_effect(self):
+        artifact, result, body = self.prepare()
+        api = mock.Mock()
+        api.upload_file.side_effect = RuntimeError("ambiguous synthetic transport failure")
+        with mock.patch.object(bindings, "hf_hub_download") as download:
+            with self.assertRaisesRegex(RuntimeError, "ambiguous synthetic"):
+                bindings.publish_prepared(
+                    api, artifact, result, body, source_revision="c" * 40, token="synthetic"
+                )
+        download.assert_not_called()
+        self.assertIsNone(result["generated_binding_uploaded"])
+        self.assertFalse(result["generated_binding_exact_byte_readback_verified"])
+        self.assertIsNone(result["generated_binding_hub_revision"])
 
 
 if __name__ == "__main__":

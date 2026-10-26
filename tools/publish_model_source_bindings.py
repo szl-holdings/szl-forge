@@ -11,10 +11,11 @@ import json
 import os
 import re
 import statistics
+import subprocess
 import time
 import urllib.request
 import urllib.error
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any, Callable, Iterable
 
 from huggingface_hub import HfApi, hf_hub_download
@@ -229,19 +230,107 @@ def load_contract(path: Path) -> dict[str, Any]:
     return payload
 
 
-def source_evidence(artifact: dict[str, Any]) -> list[dict[str, Any]]:
+def _source_git(*args: str) -> bytes:
+    """Read local Git evidence; never fetch missing objects or run external diffs."""
+    try:
+        result = subprocess.run(
+            ["git", "--literal-pathspecs", "-C", str(ROOT), *args],
+            capture_output=True,
+            timeout=20,
+            env={**os.environ, "GIT_OPTIONAL_LOCKS": "0", "GIT_NO_LAZY_FETCH": "1",
+                 "GIT_NO_REPLACE_OBJECTS": "1"},
+        )
+    except (OSError, subprocess.TimeoutExpired) as error:
+        raise BindingError("local source Git evidence is unavailable") from error
+    if result.returncode:
+        raise BindingError("local source Git evidence is unavailable")
+    return result.stdout
+
+
+def _require_source_revision(source_revision: str) -> None:
+    if not isinstance(source_revision, str) or FULL_SHA_RE.fullmatch(source_revision) is None:
+        raise BindingError("source revision must be an exact 40-character Git SHA")
+    if _source_git("rev-parse", "HEAD").decode("ascii").strip() != source_revision:
+        raise BindingError("source revision does not match checkout HEAD")
+
+
+def _committed_source_bytes(relative: str, source_revision: str) -> bytes:
+    """Reject changed selected inputs; hash Git blobs, not platform checkout bytes.
+
+    Git's clean comparison permits normal checkout transformations (e.g. CRLF).
+    It is not an attestation of literal working-tree bytes. Only the immutable
+    blob returned here contributes to the exact-source publication claim.
+    """
+    if (
+        not isinstance(relative, str)
+        or not relative
+        or "\\" in relative
+        or ":" in relative
+        or "\x00" in relative
+        or PurePosixPath(relative).is_absolute()
+        or PurePosixPath(relative).as_posix() != relative
+        or ".." in PurePosixPath(relative).parts
+    ):
+        raise BindingError("source path must be canonical and repository-relative")
+    root = ROOT.resolve()
+    path = root
+    for part in PurePosixPath(relative).parts:
+        path = path / part
+        if path.is_symlink() or getattr(path, "is_junction", lambda: False)():
+            raise BindingError(f"linked source path is not allowed: {relative}")
+    if not path.is_file() or not path.resolve().is_relative_to(root):
+        raise BindingError(f"source file is missing or outside the repository: {relative}")
+    entry = _source_git("ls-tree", "-z", source_revision, "--", relative)
+    header, separator, name = entry.rstrip(b"\x00").partition(b"\t")
+    if (
+        separator != b"\t"
+        or name != relative.encode("utf-8")
+        or header.split()[:2] not in ([b"100644", b"blob"], [b"100755", b"blob"])
+    ):
+        raise BindingError(f"source is not a committed regular file: {relative}")
+    if _source_git(
+        "diff", "--no-ext-diff", "--no-textconv", "--name-only", source_revision, "--", relative
+    ).strip():
+        raise BindingError(f"selected source working copy is modified: {relative}")
+    return _source_git("cat-file", "blob", f"{source_revision}:{relative}")
+
+
+def _source_json(payload: Any) -> str:
+    try:
+        return json.dumps(payload, sort_keys=True, ensure_ascii=False, allow_nan=False)
+    except (TypeError, ValueError) as error:
+        raise BindingError("source contract must contain finite JSON data") from error
+
+
+def verify_source_contract(
+    contract: dict[str, Any], source_revision: str, contract_path: Path | None = None
+) -> None:
+    _require_source_revision(source_revision)
+    path = contract_path if contract_path is not None else ROOT / "publishing/model-source-bindings.json"
+    try:
+        relative = path.absolute().relative_to(ROOT.resolve()).as_posix()
+    except ValueError as error:
+        raise BindingError("source contract must be inside the repository") from error
+    committed = _committed_source_bytes(relative, source_revision)
+    if _source_json(json.loads(committed)) != _source_json(contract):
+        raise BindingError("source contract differs from the committed contract")
+
+
+def source_evidence(artifact: dict[str, Any], source_revision: str) -> list[dict[str, Any]]:
+    _require_source_revision(source_revision)
     evidence: list[dict[str, Any]] = []
-    for relative in artifact["source_files"]:
-        path = (ROOT / relative).resolve()
-        if ROOT not in path.parents or not path.is_file():
-            raise BindingError(
-                f"{artifact['repo_id']}: source file is missing or outside the repository: {relative}"
-            )
+    paths = artifact.get("source_files")
+    if not isinstance(paths, list) or not paths or any(not isinstance(path, str) for path in paths):
+        raise BindingError("source_files must be a nonempty list of paths")
+    if len(set(paths)) != len(paths):
+        raise BindingError("source_files contains duplicate paths")
+    for relative in paths:
+        raw = _committed_source_bytes(relative, source_revision)
         evidence.append(
             {
-                "path": Path(relative).as_posix(),
-                "bytes": path.stat().st_size,
-                "sha256": file_sha256(path),
+                "path": relative,
+                "bytes": len(raw),
+                "sha256": hashlib.sha256(raw).hexdigest(),
             }
         )
     return evidence
@@ -747,6 +836,7 @@ def publication_payload(
             "revision": source_revision,
             "path": artifact["source_path"],
             "relation": "CANONICAL_SOURCE_CURRICULUM_SCHEMA_AND_SIGNED_RECEIPTS",
+            "file_digest_basis": "GIT_BLOB_BYTES",
         },
         "observed_hub_revision_before_binding": hub_revision_before,
         "source_files": source_files,
@@ -801,8 +891,13 @@ def prepare_one(
     requester: Callable[..., dict[str, Any]] = _json_request,
     expected_runtime_source_revision: str | None = None,
     require_runtime_evidence: bool = False,
+    contract_path: Path | None = None,
 ) -> tuple[dict[str, Any], bytes]:
-    source_files = source_evidence(artifact)
+    verify_source_contract(contract, source_revision, contract_path)
+    selected = [item for item in contract.get("artifacts", []) if item.get("repo_id") == artifact.get("repo_id")]
+    if len(selected) != 1 or _source_json(selected[0]) != _source_json(artifact):
+        raise BindingError("artifact differs from the committed contract")
+    source_files = source_evidence(artifact, source_revision)
     hub_revision_before, hub_files = hub_evidence(api, artifact)
     lineage = lineage_evidence(api, artifact)
     adapter_config = adapter_config_evidence(
@@ -829,6 +924,8 @@ def prepare_one(
         adapter_config,
         runtime,
     )
+    body = canonical_json(publication).encode("utf-8")
+    generated_sha256 = hashlib.sha256(body).hexdigest()
     result: dict[str, Any] = {
         "repo_id": artifact["repo_id"],
         "artifact_class": artifact["artifact_class"],
@@ -850,11 +947,17 @@ def prepare_one(
             "status", "NOT_QUALIFIED_NO_RUNTIME_PROBE"
         ),
         "release_receipt_status": receipts["release_receipt_status"],
-        "publication_sha256": hashlib.sha256(
-            canonical_json(publication).encode("utf-8")
-        ).hexdigest(),
+        # Legacy alias: immutable mode never uploads these generated bytes.
+        # This is not the digest of the preserved owner's publication.json.
+        "publication_sha256": generated_sha256,
+        "publication_sha256_basis": "GENERATED_CANONICAL_BINDING_JSON",
+        "generated_binding_sha256": generated_sha256,
+        "generated_binding_schema": publication["schema"],
+        "generated_binding_uploaded": False,
+        "generated_binding_exact_byte_readback_verified": False,
+        "generated_binding_hub_revision": None,
+        "preserved_publication": None,
     }
-    body = canonical_json(publication).encode("utf-8")
     return result, body
 
 
@@ -877,9 +980,28 @@ def publish_prepared(
             {
                 "status": "IMMUTABLE_RELEASE_VERIFIED_NO_MUTATION",
                 "hub_revision_after": expected_revision,
+                "generated_binding_uploaded": False,
+                "generated_binding_exact_byte_readback_verified": False,
+                "generated_binding_hub_revision": None,
+                "preserved_publication": {
+                    "status": "UNCHANGED_BY_THIS_INVOCATION",
+                    "hub_revision": expected_revision,
+                    "sha256": None,
+                    "sha256_status": "UNKNOWN_NOT_READ_BY_THIS_PRODUCER",
+                },
             }
         )
         return result
+    # An upload exception can have an ambiguous remote effect. Null means
+    # UNKNOWN, not no write. A failed aggregate report cannot prove no effects.
+    result.update(
+        {
+            "generated_binding_uploaded": None,
+            "generated_binding_exact_byte_readback_verified": False,
+            "generated_binding_hub_revision": None,
+            "preserved_publication": None,
+        }
+    )
     commit = api.upload_file(
         path_or_fileobj=io.BytesIO(body),
         path_in_repo="publication.json",
@@ -890,9 +1012,11 @@ def publish_prepared(
         token=token,
         commit_message=f"Bind canonical source {source_revision[:12]}",
     )
+    result["generated_binding_uploaded"] = True
     revision = getattr(commit, "oid", None) or api.model_info(
         artifact["repo_id"], token=token
     ).sha
+    result["generated_binding_hub_revision"] = revision
     downloaded = Path(
         hf_hub_download(
             artifact["repo_id"],
@@ -908,6 +1032,7 @@ def publish_prepared(
         {
             "status": "PUBLISHED_AND_READBACK_VERIFIED",
             "hub_revision_after": revision,
+            "generated_binding_exact_byte_readback_verified": True,
         }
     )
     return result
@@ -924,6 +1049,7 @@ def publish_one(
     downloader: Callable[..., str] = hf_hub_download,
     requester: Callable[..., dict[str, Any]] = _json_request,
     expected_runtime_source_revision: str | None = None,
+    contract_path: Path | None = None,
 ) -> dict[str, Any]:
     if publish and not token:
         raise BindingError("HF_TOKEN is required when --publish is used")
@@ -937,6 +1063,7 @@ def publish_one(
         requester=requester,
         expected_runtime_source_revision=expected_runtime_source_revision,
         require_runtime_evidence=publish,
+        contract_path=contract_path,
     )
     if not publish:
         return result
@@ -976,6 +1103,10 @@ def run(
                 "expected runtime source revision must be an exact 40-character Git SHA"
             )
     contract = load_contract(contract_path)
+    verify_source_contract(contract, source_revision, contract_path)
+    # Check every source before the first provider read/probe, not just upload.
+    for artifact in contract["artifacts"]:
+        source_evidence(artifact, source_revision)
     api = api or HfApi(token=token)
     if publish and not token:
         raise BindingError("HF_TOKEN is required when --publish is used")
@@ -991,6 +1122,7 @@ def run(
             requester=requester,
             expected_runtime_source_revision=expected_runtime_source_revision,
             require_runtime_evidence=publish,
+            contract_path=contract_path,
         )
         for artifact in contract["artifacts"]
     ]
