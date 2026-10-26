@@ -351,7 +351,8 @@ class EvaluatorAdapterEvidenceTests(unittest.TestCase):
                 comparator_model.status.enabled = False
             peft.from_pretrained.side_effect = [candidate_model, comparator_model]
             candidate = {
-                "candidate_id": "SIMULATED_ONLY", "actual_training_base": {"id": "SIMULATED_BASE"},
+                "candidate_id": "SIMULATED_ONLY",
+                "actual_training_base": {"id": "SIMULATED_BASE", "revision": "a" * 40},
                 "training_data": {"rights": "UNDECLARED"},
                 "evaluation_protocol": {"required_strict_case_improvement_over_predecessor": 1,
                                         "claim_scope": "SIMULATED_TEST_ONLY"},

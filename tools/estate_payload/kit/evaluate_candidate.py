@@ -86,6 +86,7 @@ def main():
     ap.add_argument("--limit", type=int, default=0)
     args = ap.parse_args()
     cand = lib.load_candidate()
+    lib.require_pinned_revision(cand["actual_training_base"].get("revision"))
     gates = lib.load_gates(cand)
     protocol = cand["evaluation_protocol"]
     leak = lib.require_report("leakage_receipt.json")

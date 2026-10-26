@@ -39,6 +39,7 @@ def main():
     ap.add_argument("--allow-cpu", action="store_true")
     args = ap.parse_args()
     cand = lib.load_candidate()
+    revision = lib.require_pinned_revision(cand["actual_training_base"].get("revision"))
     gates = lib.load_gates(cand)
     rep = lib.require_report("training_report.json", "state", ("TRAINED_CHALLENGER_UNSIGNED", "SMOKE_ONLY_NOT_A_CHALLENGER"))
     adapter = Path(args.adapter or rep["adapter_dir"])
@@ -50,10 +51,10 @@ def main():
     import torch
     base = cand["actual_training_base"]
     from transformers import AutoModelForCausalLM
-    model = AutoModelForCausalLM.from_pretrained(base["repo_id"], revision=base.get("revision"),
+    model = AutoModelForCausalLM.from_pretrained(base["repo_id"], revision=revision,
                                                  dtype=torch.float16 if torch.cuda.is_available() else torch.float32)
     model = lib.attach_adapter(model, adapter).merge_and_unload()
-    tok = lib.load_tokenizer(base["repo_id"], base.get("revision"))
+    tok = lib.load_tokenizer(base["repo_id"], revision)
     model.save_pretrained(str(merged), safe_serialization=True)
     tok.save_pretrained(str(merged))
     manifest = {"kind": "szl.quant-manifest/v1", "generated_utc": lib.now_utc(), "candidate_id": cand["candidate_id"],

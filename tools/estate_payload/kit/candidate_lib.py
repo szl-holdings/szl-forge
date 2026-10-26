@@ -333,7 +333,15 @@ def text_only_encode(tokenizer, messages, add_generation_prompt):
     return text, list(ids)
 
 
+def require_pinned_revision(revision):
+    """Reject mutable or malformed pins; syntax alone is not resolved identity."""
+    if not isinstance(revision, str) or re.fullmatch(r"[0-9a-f]{40}", revision) is None:
+        raise ValueError("BASE_REVISION_UNPINNED: expected an exact lowercase 40-hex commit")
+    return revision
+
+
 def load_tokenizer(repo_id, revision=None):
+    revision = require_pinned_revision(revision)
     from transformers import AutoTokenizer
     tok = AutoTokenizer.from_pretrained(repo_id, revision=revision)
     if tok.pad_token is None:
@@ -373,7 +381,7 @@ def load_base_model(cand, for_training, allow_cpu=False):
     transformers+peft bf16 full precision. Returns (model, tokenizer, backend); backend names the path that worked."""
     base = cand["actual_training_base"]
     recipe = cand["training_recipe"]
-    repo, rev = base["repo_id"], base.get("revision")
+    repo, rev = base["repo_id"], require_pinned_revision(base.get("revision"))
     import torch
     device_cuda = torch.cuda.is_available()
     if not device_cuda and not allow_cpu:

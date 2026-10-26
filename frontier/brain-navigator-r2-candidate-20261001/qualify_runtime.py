@@ -14,8 +14,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import candidate_lib as lib  # noqa: E402
 
-HEX40 = 40
-
 
 def main():
     ap = argparse.ArgumentParser()
@@ -24,6 +22,7 @@ def main():
     ap.add_argument("--offline", action="store_true", help="skip the Hub reachability probe")
     args = ap.parse_args()
     cand = lib.load_candidate()
+    rev = lib.require_pinned_revision(cand["actual_training_base"].get("revision"))
     checks = []
 
     def check(name, ok, detail):
@@ -47,9 +46,7 @@ def main():
     ok &= check("disk_free", free_gib >= 5.0, f"{free_gib:.1f} GiB free under {lib.OUT.parent}")
 
     base = cand["actual_training_base"]
-    rev = base.get("revision")
-    ok &= check("base_revision_pinned", isinstance(rev, str) and len(rev) == HEX40,
-                f"{base['repo_id']}@{rev}" if rev else f"{base['repo_id']} has no 40-hex revision pin")
+    ok &= check("base_revision_pinned", True, f"{base['repo_id']}@{rev}")
     if not args.offline:
         try:
             from huggingface_hub import HfApi

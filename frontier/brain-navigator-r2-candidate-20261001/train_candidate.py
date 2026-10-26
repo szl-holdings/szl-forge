@@ -81,6 +81,7 @@ def main():
     args = ap.parse_args()
 
     cand = lib.load_candidate()
+    lib.require_pinned_revision(cand["actual_training_base"].get("revision"))
     recipe = cand["training_recipe"]
     td = cand["training_data"]
     lib.require_report("runtime_qualification.json")

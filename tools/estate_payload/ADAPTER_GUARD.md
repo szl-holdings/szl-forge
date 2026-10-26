@@ -39,11 +39,30 @@ structural coverage instead of being scored as if its adapter were applied.
 No trainer, inference, model evaluation, conversion, VM operation or publication
 is run by these tests. No budget/ledger or eligibility state is modified.
 
+## Base revision boundary
+
+Both consumer copies reject a missing, mutable or malformed base revision before
+the tokenizer/model loader imports its framework. Training, evaluation, export
+and runtime qualification also validate immediately after reading candidate
+metadata, before data/report reads, GPU/package probes, network access or output
+creation. Only an exact lowercase 40-hex string is accepted, unchanged; no
+trimming, normalization or default-branch resolution is performed. CPU and
+offline flags do not bypass this boundary. Metadata-only `load_candidate` reads
+still permit an unbound candidate for source/card/curriculum inspection.
+
+This is syntax validation, not confirmation that the commit exists, that a Hub
+response resolves to that commit, or that loaded tensors/tokenizer match it.
+Those immutable-content and qualified-loader bindings remain separate gaps.
+Existing fallback behavior and runtime-lock semantics are unchanged. No existing
+candidate manifest, recipe, gate, signed artifact or authority is rewritten.
+
 ## Offline source regressions
 
 ```text
 python -I -S -B -m unittest discover -s tests -p test_candidate_adapter_attachment.py -v
 python -I -S -B -O -m unittest discover -s tests -p test_candidate_adapter_attachment.py -v
+python -I -S -B -m unittest discover -s tests -p test_candidate_revision_boundary.py -v
+python -I -S -B -O -m unittest discover -s tests -p test_candidate_revision_boundary.py -v
 ```
 
 Tests use stdlib-only SIMULATED models, checkpoint headers, paths and report sinks
