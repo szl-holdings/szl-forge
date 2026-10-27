@@ -3,6 +3,7 @@
 import hashlib
 import json
 from pathlib import Path
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -78,6 +79,114 @@ class HostedCpuSmokeControls(unittest.TestCase):
                 smoke._runner_paths(root, receipt, prepare=True)
             with self.assertRaisesRegex(smoke.SmokeError, "outside"):
                 smoke._runner_paths(root, root / "receipt.json", prepare=False)
+
+    def _prepare_receipt(self, source_sha: str, **overrides) -> Path:
+        binding = smoke._generation_binding()
+        document = {
+            "airllm_source_commit": smoke.AIRLLM_SOURCE_COMMIT,
+            "delete_original": False,
+            "disposition": "MEASURED",
+            "evidence_class": "MEASURED",
+            "generation": smoke._generation_record(),
+            "harness_sha256": binding["harness_sha256"],
+            "input_sha256": binding["input_sha256"],
+            "model_id": smoke.MODEL_ID,
+            "model_revision": smoke.MODEL_REVISION,
+            "schema": smoke.SCHEMA,
+            "source": {"repository": "szl-holdings/szl-forge", "source_sha": source_sha},
+            "stage": "PREPARE",
+        }
+        document.update(overrides)
+        path = self.parent / "PREPARE.json"
+        path.write_text(json.dumps(document, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        return path
+
+    def test_run_receipt_binds_prepare_bytes_input_seed_and_harness(self):
+        binding = smoke._generation_binding()
+        self.assertEqual(binding["seed"], None)
+        self.assertFalse(binding["seed_applied"])
+        self.assertFalse(binding["do_sample"])
+        self.assertEqual(binding["input_sha256"], hashlib.sha256(smoke.PROMPT.encode("utf-8")).hexdigest())
+        self.assertEqual(binding["harness_sha256"], hashlib.sha256(Path(smoke.__file__).read_bytes()).hexdigest())
+        source_sha = "a" * 40
+        path = self._prepare_receipt(source_sha)
+        digest = smoke._bind_prepare_receipt(path, source_sha)
+        self.assertEqual(digest, hashlib.sha256(path.read_bytes()).hexdigest())
+        self.assertEqual(len(digest), 64)
+        with self.assertRaisesRegex(smoke.SmokeError, "source"):
+            smoke._bind_prepare_receipt(path, "b" * 40)
+        broken = self._prepare_receipt(source_sha, harness_sha256="0" * 64)
+        with self.assertRaisesRegex(smoke.SmokeError, "harness"):
+            smoke._bind_prepare_receipt(broken, source_sha)
+        for payload in (b"[]", b'"receipt"', b"null", b"false", b"7", b"1.5"):
+            path.write_bytes(payload)
+            with self.assertRaisesRegex(smoke.SmokeError, "JSON object"):
+                smoke._bind_prepare_receipt(path, source_sha)
+        with patch.object(smoke, "DO_SAMPLE", True):
+            with self.assertRaisesRegex(smoke.SmokeError, "greedy"):
+                smoke._generation_binding()
+        result = smoke._token_result([7, 9], 1, 1.2345, 12)
+        self.assertEqual(result["generated_token_count"], 1)
+        self.assertEqual(result["input_sha256"], binding["input_sha256"])
+        self.assertEqual(result["harness_sha256"], binding["harness_sha256"])
+        self.assertFalse(result["seed_applied"])
+        self.assertFalse(result["execution_authority"])
+        workflow = Path(smoke.__file__).resolve().parents[2] / ".github" / "workflows" / "airllm-hosted-cpu-smoke.yml"
+        text = workflow.read_text(encoding="utf-8")
+        self.assertIn('--prepare-receipt "$RECEIPT_ROOT/PREPARE.json"', text)
+
+    def test_non_object_prepare_json_writes_blocked_run_without_snapshot_or_worker(self):
+        source_sha = "c" * 40
+        cases = {
+            "array": b"[]",
+            "string": b'"receipt"',
+            "null": b"null",
+            "false": b"false",
+            "integer": b"7",
+            "float": b"1.5",
+        }
+        for name, payload in cases.items():
+            with self.subTest(payload=name):
+                runner = self.parent / name
+                runner.mkdir()
+                root = runner / "task"
+                root.mkdir()
+                receipt = runner / "RUN.json"
+                prepare = runner / "PREPARE.json"
+                prepare.write_bytes(payload)
+                argv = [smoke.__file__, "--run", "--root", str(root), "--receipt", str(receipt),
+                        "--prepare-receipt", str(prepare)]
+                with patch.object(smoke, "_runner_paths") as paths, \
+                        patch.object(smoke, "_source_binding", return_value={
+                            "repository": "szl-holdings/szl-forge", "source_sha": source_sha,
+                            "run_id": None, "run_attempt": None}) as source, \
+                        patch.object(smoke, "_hardware", return_value={"runner_os": "ISOLATED"}) as hardware, \
+                        patch.object(smoke, "_capacity", return_value={"bound_class": "ISOLATED"}) as capacity, \
+                        patch.object(smoke, "_marker", return_value={}) as marker, \
+                        patch.object(smoke, "_verify_snapshot", side_effect=AssertionError("snapshot")) as snapshot, \
+                        patch.object(smoke, "_run_worker", side_effect=AssertionError("worker")) as worker, \
+                        patch.object(sys, "argv", argv):
+                    code = smoke.main()
+                self.assertEqual(code, 2)
+                paths.assert_called_once()
+                source.assert_called_once()
+                hardware.assert_called_once()
+                capacity.assert_called_once()
+                marker.assert_called_once()
+                snapshot.assert_not_called()
+                worker.assert_not_called()
+                document = json.loads(receipt.read_text(encoding="utf-8"))
+                self.assertEqual(document["stage"], "RUN")
+                self.assertEqual(document["disposition"], "BLOCKED")
+                self.assertEqual(document["evidence_class"], "BLOCKED")
+                self.assertEqual(document["inference_run"], "UNAVAILABLE")
+                self.assertIs(document["inference_attempted"], False)
+                self.assertIs(document["execution_authority"], False)
+                self.assertIs(document["training_eligible"], False)
+                self.assertIs(document["publication_eligible"], False)
+                self.assertIn("SmokeError", document["reason"])
+                self.assertIn("JSON object", document["reason"])
+                self.assertNotIn("prepare_receipt_sha256", document)
 
 
 if __name__ == "__main__":
