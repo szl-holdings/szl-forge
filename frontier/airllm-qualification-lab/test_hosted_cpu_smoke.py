@@ -154,6 +154,46 @@ class HostedCpuSmokeControls(unittest.TestCase):
         text = workflow.read_text(encoding="utf-8")
         self.assertIn('--prepare-receipt "$RECEIPT_ROOT/PREPARE.json"', text)
 
+    def test_prepare_run_seed_transition_and_receipt_chain(self):
+        source = {"repository": "szl-holdings/szl-forge", "source_sha": "a" * 40,
+                  "run_id": "123", "run_attempt": "1"}
+        root = self.parent / "task"
+        prepare = self.parent / "receipts" / "PREPARE.json"
+        run = self.parent / "receipts" / "SMOKE.json"
+        failed_run = self.parent / "receipts" / "FAILED.json"
+        with patch.object(smoke, "_runner_paths"), \
+                patch.object(smoke, "_source_binding", return_value=source), \
+                patch.object(smoke, "_hardware", return_value={"runner_os": "ISOLATED"}), \
+                patch.object(smoke, "_capacity", return_value={"bound_class": "MODELED"}), \
+                patch.object(smoke, "_download"), \
+                patch.object(smoke, "_verify_snapshot", return_value={"model_type": "llama"}), \
+                patch.object(smoke, "_verify_wheel", return_value={"version": smoke.AIRLLM_VERSION}), \
+                patch.object(smoke, "_dependency_versions", return_value={}), \
+                patch.object(smoke, "_marker", return_value={}):
+            with patch.object(sys, "argv", [smoke.__file__, "--prepare", "--root", str(root),
+                                            "--receipt", str(prepare)]):
+                self.assertEqual(smoke.main(), 0)
+            prepared = json.loads(prepare.read_text(encoding="utf-8"))
+            self.assertFalse(prepared["generation"]["seed_applied"])
+            self.assertFalse(prepared["seed_applied"])
+            worker = smoke._token_result([7, 9], 1, 1.25, 123)
+            with patch.object(smoke, "_run_worker", return_value=(0, json.dumps(worker))), \
+                    patch.object(sys, "argv", [smoke.__file__, "--run", "--root", str(root),
+                                               "--receipt", str(run), "--prepare-receipt", str(prepare)]):
+                self.assertEqual(smoke.main(), 0)
+            with patch.object(smoke, "_run_worker", side_effect=smoke.SmokeError("worker abort")), \
+                    patch.object(sys, "argv", [smoke.__file__, "--run", "--root", str(root),
+                                               "--receipt", str(failed_run), "--prepare-receipt", str(prepare)]):
+                self.assertEqual(smoke.main(), 2)
+        result = json.loads(run.read_text(encoding="utf-8"))
+        self.assertTrue(result["generation"]["seed_applied"])
+        self.assertEqual(result["previous_receipt_sha256"], hashlib.sha256(prepare.read_bytes()).hexdigest())
+        self.assertEqual(result["metrics"]["generated_token_count"], 1)
+        failed = json.loads(failed_run.read_text(encoding="utf-8"))
+        self.assertEqual(failed["generation"]["seed_applied"], "UNKNOWN")
+        self.assertEqual(failed["inference_run"], "UNKNOWN")
+        self.assertTrue(failed["inference_attempted"])
+
     def test_non_object_prepare_json_writes_blocked_run_without_snapshot_or_worker(self):
         source_sha = "c" * 40
         cases = {

@@ -441,7 +441,7 @@ def main() -> int:
             result["wheel_sha256"] = WHEEL_SHA256
             result["task_cache_root"] = str(root / "cache")
             result.update(_generation_binding())
-            result["generation"] = _generation_record(seed_applied=True)
+            result["generation"] = _generation_record()
             result["disposition"] = "MEASURED"
             result["evidence_class"] = "MEASURED"
             result["measurement_scope"] = "PINNED_SOURCE_BYTES_PREPARED_ONLY"
@@ -486,6 +486,7 @@ def main() -> int:
             for key, expected in worker_binding.items():
                 if worker_result.get(key) != expected:
                     raise SmokeError("worker generation binding differs from harness")
+            result["generation"] = _generation_record(seed_applied=True)
             result["metrics"] = {"evidence_class": "MEASURED",
                                  **{name: worker_result[name] for name in
                                     ("generated_token_count", "elapsed_seconds", "peak_rss_kib", "token_ids_sha256")}}
@@ -497,6 +498,8 @@ def main() -> int:
     except (OSError, ValueError, KeyError, IndexError, zipfile.BadZipFile,
             subprocess.SubprocessError, importlib.metadata.PackageNotFoundError) as exc:
         result["reason"] = f"{type(exc).__name__}: {str(exc)[-1200:]}"
+        if started_worker and isinstance(result.get("generation"), dict):
+            result["generation"]["seed_applied"] = "UNKNOWN"
         result["inference_run"] = "UNKNOWN" if started_worker else "UNAVAILABLE"
         result["inference_attempted"] = started_worker
     if started_worker:
