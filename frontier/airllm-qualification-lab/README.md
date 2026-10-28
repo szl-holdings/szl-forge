@@ -120,13 +120,20 @@ identical assets; this one-token smoke does not perform that comparison.
 ## Manual hosted CPU plumbing smoke
 
 `airllm-hosted-cpu-smoke.yml` is a separate, manually dispatched GitHub Actions
-experiment on `main`; it never runs for a pull request. It exercises AirLLM
-4.0.0 on the public Apache-2.0 `HuggingFaceTB/SmolLM2-135M-Instruct` base at
-immutable revision `12fd25f77366fa6b3b4b768ec3050bf629380bac`. This is not
-the MiniCPM checkpoint above and does not change its failed/HOLD result.
+experiment on `main`; it never runs for a pull request. Its default profile,
+`smollm2-135m-instruct`, exercises AirLLM 4.0.0 on the public Apache-2.0
+`HuggingFaceTB/SmolLM2-135M-Instruct` base at immutable revision
+`12fd25f77366fa6b3b4b768ec3050bf629380bac`. The optional strict choice
+`smollm2-360m-instruct` binds the public Apache-2.0
+`HuggingFaceTB/SmolLM2-360M-Instruct` base at
+`a10cc1512eabd3dde888204e902eca88bddb4951`. Its eight selected files total
+727,051,918 bytes, including the 723,674,912-byte safetensors file. The 360M
+profile is a source-bound candidate until its own hosted receipt is measured;
+its fit and one-token behavior are UNKNOWN. Neither profile is the MiniCPM
+checkpoint above, and neither changes its failed/HOLD result.
 
-`hosted_cpu_smoke.py` binds exactly eight top-level files by size and SHA-256,
-including the 269,060,552-byte safetensors file. It rejects extra files,
+`hosted_cpu_smoke.py` binds exactly eight top-level files per profile by size
+and SHA-256, including the 269,060,552-byte 135M safetensors file. It rejects extra files,
 Python/pickle checkpoint files, `auto_map` anywhere in the selected JSON, an
 unreviewed architecture or tokenizer, a different installed AirLLM package,
 and insufficient fresh disk/RAM. The AirLLM wheel is the same pinned PyPI wheel
@@ -142,7 +149,9 @@ versions, free disk/RAM, elapsed time, and only a hash of token IDs. The run
 receipt also records the SHA-256 of the prepare receipt bytes, the SHA-256 of
 the executed harness after comparing it with its checked-out Git blob, the
 SHA-256 of the fixed prompt and canonical one-record SAMPLE input, and a
-generation record with `do_sample` false and seed `0`; the prepare record keeps
+generation record with `do_sample` false and seed `0`. The selected profile is
+also bound to the task marker, worker, both receipts, and artifact name; the run
+refuses a prepare receipt for the other profile. The prepare record keeps
 `seed_applied` false, and the run record sets it true only after the worker
 applies the Python/Torch seed.
 The run records `base_revision`, inference-only loss as `UNAVAILABLE`/`NOT_RUN`,

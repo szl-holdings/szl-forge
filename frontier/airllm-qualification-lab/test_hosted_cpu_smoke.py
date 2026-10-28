@@ -18,12 +18,29 @@ class HostedCpuSmokeControls(unittest.TestCase):
         self.parent = Path(self.temp.name)
 
     def test_selected_model_is_a_fixed_eight_file_sha256_binding(self):
+        self.assertEqual(smoke.DEFAULT_PROFILE, "smollm2-135m-instruct")
+        self.assertEqual(smoke._model_profile(smoke.DEFAULT_PROFILE)[:2],
+                         (smoke.MODEL_ID, smoke.MODEL_REVISION))
         self.assertEqual(len(smoke.FILES), 8)
         self.assertEqual(sum(size for size, _ in smoke.FILES.values()), 272437573)
         self.assertTrue(all(len(digest) == 64 for _, digest in smoke.FILES.values()))
         self.assertEqual(smoke.FILES["model.safetensors"][1],
                          "5af571cbf074e6d21a03528d2330792e532ca608f24ac70a143f6b369968ab8c")
         self.assertFalse(any(name.endswith((".py", ".bin", ".pkl")) for name in smoke.FILES))
+
+    def test_360m_profile_is_a_distinct_pinned_eight_file_binding(self):
+        model_id, revision, license_card, files = smoke._model_profile(smoke.PROFILE_360M)
+        self.assertEqual(model_id, "HuggingFaceTB/SmolLM2-360M-Instruct")
+        self.assertEqual(revision, "a10cc1512eabd3dde888204e902eca88bddb4951")
+        self.assertEqual(license_card, "apache-2.0")
+        self.assertEqual(len(files), 8)
+        self.assertEqual(sum(size for size, _ in files.values()), 727051918)
+        self.assertEqual(files["model.safetensors"],
+                         (723674912, "e6bffe7435d7ddc10fd3b9a9efd429dafbacb1cb17015fb5562664e7532bf86e"))
+        self.assertEqual(set(files), set(smoke.FILES))
+        self.assertFalse(any(name.endswith((".py", ".bin", ".pkl")) for name in files))
+        with self.assertRaisesRegex(smoke.SmokeError, "not pinned"):
+            smoke._model_profile("user-supplied-model")
 
     def test_snapshot_rejects_extra_file_and_nested_auto_map(self):
         snapshot = self.parent / "snapshot"
@@ -80,22 +97,25 @@ class HostedCpuSmokeControls(unittest.TestCase):
             with self.assertRaisesRegex(smoke.SmokeError, "outside"):
                 smoke._runner_paths(root, root / "receipt.json", prepare=False)
 
-    def _prepare_receipt(self, source_sha: str, **overrides) -> Path:
-        binding = smoke._generation_binding()
+    def _prepare_receipt(self, source_sha: str, *, profile_name: str = smoke.DEFAULT_PROFILE,
+                         **overrides) -> Path:
+        model_id, model_revision, _, _ = smoke._model_profile(profile_name)
+        binding = smoke._generation_binding(profile_name=profile_name)
         document = {
             "airllm_source_commit": smoke.AIRLLM_SOURCE_COMMIT,
             "delete_original": False,
             "disposition": "MEASURED",
             "evidence_class": "MEASURED",
-            "generation": smoke._generation_record(),
+            "generation": smoke._generation_record(profile_name=profile_name),
             "harness_sha256": binding["harness_sha256"],
             "input_sha256": binding["input_sha256"],
             "dataset_sha256": smoke.INPUT_DATASET_SHA256,
             "dataset_evidence_class": smoke.DATASET_EVIDENCE_CLASS,
             "dataset_scope": smoke.DATASET_SCOPE,
-            "model_id": smoke.MODEL_ID,
-            "model_revision": smoke.MODEL_REVISION,
-            "base_revision": smoke.MODEL_REVISION,
+            "model_profile": profile_name,
+            "model_id": model_id,
+            "model_revision": model_revision,
+            "base_revision": model_revision,
             "seed": smoke.GENERATION_SEED,
             "loss": smoke._loss_record(),
             "metrics": smoke._empty_metrics(),
@@ -153,6 +173,63 @@ class HostedCpuSmokeControls(unittest.TestCase):
         workflow = Path(smoke.__file__).resolve().parents[2] / ".github" / "workflows" / "airllm-hosted-cpu-smoke.yml"
         text = workflow.read_text(encoding="utf-8")
         self.assertIn('--prepare-receipt "$RECEIPT_ROOT/PREPARE.json"', text)
+        self.assertIn('type: choice', text)
+        self.assertIn('default: smollm2-135m-instruct', text)
+        self.assertIn('          - smollm2-360m-instruct', text)
+        self.assertEqual(text.count('--profile "$MODEL_PROFILE"'), 2)
+        self.assertIn('airllm-hosted-cpu-receipts-${{ inputs.model_profile }}-', text)
+
+    def test_360m_prepare_run_worker_and_receipt_bindings(self):
+        profile_name = smoke.PROFILE_360M
+        source = {"repository": "szl-holdings/szl-forge", "source_sha": "a" * 40,
+                  "run_id": "456", "run_attempt": "1"}
+        root = self.parent / "task"
+        prepare = self.parent / "receipts" / "PREPARE.json"
+        run = self.parent / "receipts" / "SMOKE.json"
+        wrong_profile_run = self.parent / "receipts" / "WRONG_PROFILE.json"
+        with patch.object(smoke, "_runner_paths"), \
+                patch.object(smoke, "_source_binding", return_value=source), \
+                patch.object(smoke, "_hardware", return_value={"runner_os": "ISOLATED"}), \
+                patch.object(smoke, "_capacity", return_value={"bound_class": "MODELED"}), \
+                patch.object(smoke, "_download") as download, \
+                patch.object(smoke, "_verify_snapshot", return_value={"model_type": "llama"}) as snapshot, \
+                patch.object(smoke, "_verify_wheel", return_value={"version": smoke.AIRLLM_VERSION}), \
+                patch.object(smoke, "_dependency_versions", return_value={}), \
+                patch.object(smoke, "_marker", return_value={}):
+            with patch.object(sys, "argv", [smoke.__file__, "--prepare", "--profile", profile_name,
+                                            "--root", str(root), "--receipt", str(prepare)]):
+                self.assertEqual(smoke.main(), 0)
+            prepared = json.loads(prepare.read_text(encoding="utf-8"))
+            self.assertEqual(prepared["model_profile"], profile_name)
+            self.assertEqual(prepared["generation"]["model_profile"], profile_name)
+            self.assertFalse(prepared["generation"]["seed_applied"])
+            self.assertEqual(json.loads((root / smoke.MARKER).read_text())["model_profile"], profile_name)
+            weight_url = ("https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct/resolve/"
+                          "a10cc1512eabd3dde888204e902eca88bddb4951/model.safetensors")
+            self.assertTrue(any(call.args[0] == weight_url and call.args[2:] == smoke.FILES_360M["model.safetensors"]
+                                for call in download.call_args_list))
+            snapshot.assert_called_with(root / "snapshot", profile_name=profile_name)
+            worker = smoke._token_result([7, 9], 1, 1.25, 123, profile_name=profile_name)
+            with patch.object(smoke, "_run_worker", return_value=(0, json.dumps(worker))) as worker_call, \
+                    patch.object(sys, "argv", [smoke.__file__, "--run", "--profile", profile_name,
+                                               "--root", str(root), "--receipt", str(run),
+                                               "--prepare-receipt", str(prepare)]):
+                self.assertEqual(smoke.main(), 0)
+            self.assertEqual(worker_call.call_args.kwargs["profile_name"], profile_name)
+            with patch.object(smoke, "_run_worker", side_effect=AssertionError("cross-profile worker")) as blocked_worker, \
+                    patch.object(sys, "argv", [smoke.__file__, "--run", "--root", str(root),
+                                               "--receipt", str(wrong_profile_run),
+                                               "--prepare-receipt", str(prepare)]):
+                self.assertEqual(smoke.main(), 2)
+            blocked_worker.assert_not_called()
+        result = json.loads(run.read_text(encoding="utf-8"))
+        self.assertEqual(result["model_profile"], profile_name)
+        self.assertEqual(result["worker_result"]["model_profile"], profile_name)
+        self.assertTrue(result["generation"]["seed_applied"])
+        self.assertEqual(result["previous_receipt_sha256"], hashlib.sha256(prepare.read_bytes()).hexdigest())
+        blocked = json.loads(wrong_profile_run.read_text(encoding="utf-8"))
+        self.assertEqual(blocked["disposition"], "BLOCKED")
+        self.assertIn("model binding differs", blocked["reason"])
 
     def test_prepare_run_seed_transition_and_receipt_chain(self):
         source = {"repository": "szl-holdings/szl-forge", "source_sha": "a" * 40,
