@@ -26,6 +26,11 @@ REV_D = "d" * 40
 DIGEST = "e" * 64
 
 
+def accept_receipt(admission, receipt):
+    """Test-local stand-in for the host's receipt signature verifier."""
+    return receipt.get("sha256") == DIGEST
+
+
 def request(**overrides):
     value = {
         "request_id": "req-production-001",
@@ -368,6 +373,7 @@ def test_signed_a11oy_admission_makes_action_ready_but_forge_still_does_not_exec
         generator=Generator(),
         witness=witness,
         contract_path=CONTRACT,
+        receipt_verifier=accept_receipt,
     )
     assert result["state"] == "ACTION_READY_EXTERNAL_EXECUTION"
     assert result["authority_state"] == "A11OY_SIGNED_ADMISSION_VERIFIED"
@@ -382,6 +388,7 @@ def test_signed_a11oy_admission_makes_action_ready_but_forge_still_does_not_exec
         action_admission=admission,
         action_receipt=receipt,
         witness=witness,
+        receipt_verifier=accept_receipt,
     )
     assert verified["state"] == "VERIFIED"
     assert verified["executed"] is True
@@ -406,6 +413,7 @@ def test_failed_postcondition_routes_to_review():
         generator=Generator(),
         witness=witness,
         contract_path=CONTRACT,
+        receipt_verifier=accept_receipt,
     )
     verified = verify_external_execution(
         result,
@@ -415,6 +423,7 @@ def test_failed_postcondition_routes_to_review():
         action_admission=admission,
         action_receipt=receipt,
         witness=witness,
+        receipt_verifier=accept_receipt,
     )
     assert verified["state"] == "REVIEW"
     assert verified["postcondition"]["status"] == "FAIL"
@@ -438,6 +447,7 @@ def test_action_contract_cannot_change_after_admission():
         generator=Generator(),
         witness=witness,
         contract_path=CONTRACT,
+        receipt_verifier=accept_receipt,
     )
     changed = dict(admission, human_approval="PENDING")
     with pytest.raises(ProductionBoundaryError, match="changed after inference"):
@@ -448,5 +458,98 @@ def test_action_contract_cannot_change_after_admission():
             postcondition_details_sha256="1" * 64,
             action_admission=changed,
             action_receipt=receipt,
+            witness=witness,
+            receipt_verifier=accept_receipt,
+        )
+
+
+APPROVED_ADMISSION = {
+    "authority": "A11OY",
+    "human_approval": "APPROVED",
+    "signed_receipt_required": True,
+}
+FORGED_RECEIPT = {"signature_status": "SIGNED_VERIFIED", "sha256": DIGEST}
+
+
+def _raising_verifier(admission, receipt):
+    raise RuntimeError("verifier unavailable")
+
+
+def _action_request():
+    return request(
+        tool_intent={"tool": "repo.write", "target": "example"},
+        action_admission=dict(APPROVED_ADMISSION),
+        action_receipt=dict(FORGED_RECEIPT),
+    )
+
+
+@pytest.mark.parametrize(
+    "verifier",
+    [
+        None,
+        lambda admission, receipt: False,
+        lambda admission, receipt: 1,
+        lambda admission, receipt: "True",
+        _raising_verifier,
+    ],
+    ids=["no-verifier", "false", "truthy-int", "truthy-str", "raises"],
+)
+def test_approved_admission_labels_alone_never_reach_action_ready(verifier):
+    kwargs = {} if verifier is None else {"receipt_verifier": verifier}
+    result = production_infer(
+        _action_request(),
+        retriever=retriever,
+        hydrator=hydrator,
+        generator=Generator(),
+        witness=witness,
+        contract_path=CONTRACT,
+        **kwargs,
+    )
+    assert result["state"] == "BLOCKED"
+    assert result["authority_state"] == "NONE"
+    assert result["reason_codes"][0] == "A11OY_ACTION_CONTRACT_INVALID"
+    assert result["executed"] is False
+
+
+def test_receipt_verifier_cannot_mutate_the_bound_admission():
+    def mutating_verifier(admission, receipt):
+        admission["human_approval"] = "PENDING"
+        receipt["sha256"] = "0" * 64
+        return True
+
+    req = _action_request()
+    result = production_infer(
+        req,
+        retriever=retriever,
+        hydrator=hydrator,
+        generator=Generator(),
+        witness=witness,
+        contract_path=CONTRACT,
+        receipt_verifier=mutating_verifier,
+    )
+    assert result["state"] == "ACTION_READY_EXTERNAL_EXECUTION"
+    assert result["action_admission_sha256"] == canonical_sha256(APPROVED_ADMISSION)
+    assert result["action_receipt_sha256"] == canonical_sha256(FORGED_RECEIPT)
+
+
+def test_post_tool_verification_requires_independent_receipt_verification():
+    result = production_infer(
+        _action_request(),
+        retriever=retriever,
+        hydrator=hydrator,
+        generator=Generator(),
+        witness=witness,
+        contract_path=CONTRACT,
+        receipt_verifier=accept_receipt,
+    )
+    assert result["state"] == "ACTION_READY_EXTERNAL_EXECUTION"
+    with pytest.raises(ProductionBoundaryError, match="independently verified"):
+        verify_external_execution(
+            result,
+            tool_result_sha256="f" * 64,
+            postcondition_status="PASS",
+            postcondition_details_sha256="1" * 64,
+            action_admission=dict(APPROVED_ADMISSION),
+            action_receipt=dict(FORGED_RECEIPT),
             witness=witness,
         )
