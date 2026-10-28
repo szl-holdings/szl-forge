@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import hashlib
+import html
 import json
+import re
 import unittest
 from pathlib import Path
 
@@ -31,6 +33,54 @@ AUDITED_GREEN_ENTRIES = frozenset(
 
 
 class StaticForgeContractTests(unittest.TestCase):
+    def assert_curated_boundary(self, index: str) -> None:
+        paragraphs = re.findall(
+            r'<p\b[^>]*\bid="portfolio-evidence-boundary"[^>]*>(.*?)</p>',
+            index,
+            flags=re.DOTALL,
+        )
+        self.assertEqual(1, len(paragraphs))
+        text = html.unescape(re.sub(r"<[^>]*>", " ", paragraphs[0]))
+        text = " ".join(text.lower().split())
+        for boundary in (
+            "curated snapshot, not a complete hub inventory",
+            "counts come from the packaged catalog",
+            "a repository listing does not verify weight bytes",
+            "declared-key integrity, not independent quality, safety, authorship",
+            "or autonomous execution authority",
+        ):
+            self.assertIn(boundary, text)
+        # Counts belong to the catalog-driven tiles, not a second hard-coded list.
+        self.assertNotRegex(
+            text,
+            r"\b(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\b",
+        )
+
+    def test_evidence_boundary_is_count_free_and_explicitly_curated(self) -> None:
+        self.assert_curated_boundary((ROOT / "index.html").read_text(encoding="utf-8"))
+
+    def test_evidence_boundary_rejects_in_memory_claim_regressions(self) -> None:
+        index = (ROOT / "index.html").read_text(encoding="utf-8")
+        # SIMULATED negative strings, never written into the source or a catalog.
+        for old, replacement in (
+            ("This is a curated snapshot", "One learned kernel contains weight bytes. This is a curated snapshot"),
+            ("not a complete Hub inventory", "a complete Hub inventory"),
+            ("does not verify weight bytes", "verifies weight bytes"),
+            ("not independent quality", "independent quality"),
+            ("or autonomous execution authority", "or unlimited authority"),
+        ):
+            with self.subTest(regression=old):
+                self.assertIn(old, index)
+                with self.assertRaises(AssertionError):
+                    self.assert_curated_boundary(index.replace(old, replacement, 1))
+
+    def test_portfolio_count_tiles_still_derive_from_catalog_entries(self) -> None:
+        index = (ROOT / "index.html").read_text(encoding="utf-8")
+        self.assertIn("const assets=portfolio.artifacts||[];", index)
+        for kind in ("trained_model", "quantized_model", "learned_kernel", "software_kernel"):
+            with self.subTest(kind=kind):
+                self.assertIn(f'assets.filter(a=>a.kind==="{kind}").length', index)
+
     def test_space_is_an_explicit_static_evidence_console(self) -> None:
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         self.assertIn("sdk: static\n", readme)

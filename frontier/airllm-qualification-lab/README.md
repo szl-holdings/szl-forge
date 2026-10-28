@@ -138,9 +138,14 @@ before importing AirLLM, uses CPU float32, a fixed synthetic prompt, exactly
 one new token, `delete_original=False`, task-specific cache/split directories,
 and a 240-second subprocess timeout. The runner retains separate prepare and
 attempt receipts as an artifact, including source SHA, selected bytes, package
-versions, free disk/RAM, elapsed time, and only a hash of token IDs. Failed and
-timed-out attempts stay `BLOCKED` or `UNKNOWN_AFTER_ATTEMPT`; the split remains
-for inspection until the ephemeral runner ends.
+versions, free disk/RAM, elapsed time, and only a hash of token IDs. The run
+receipt also records the SHA-256 of the prepare receipt bytes, the SHA-256 of
+this harness file, the SHA-256 of the fixed prompt, and a generation record
+with `do_sample` false, `seed` null, and `seed_applied` false. A run refuses a
+prepare receipt from a different harness, prompt, or source SHA. Sampling is
+not enabled, so no seed is applied to the token. Failed and timed-out attempts
+stay `BLOCKED` or `UNKNOWN_AFTER_ATTEMPT`; the split remains for inspection
+until the ephemeral runner ends.
 
 A pass establishes only one hosted CPU plumbing smoke. It does not establish
 native-versus-AirLLM parity, QLoRA support, model quality, held-out abstention,
