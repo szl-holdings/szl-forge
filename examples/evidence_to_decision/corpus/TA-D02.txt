@@ -1,0 +1,5 @@
+DOC TA-D02
+TENANT tenant-aurora
+REV 1
+Ostrava-Sort caps a single batch run at 4096 records.
+Marker AUR-3K8.

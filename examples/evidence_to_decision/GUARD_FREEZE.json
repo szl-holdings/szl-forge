@@ -1,0 +1,9 @@
+{
+ "FREEZE.json": "f656521ac660ab02996f8c57659dc72cca84e33661addfc02f56a53826a3d639",
+ "base_freeze_unchanged": "FREEZE.json, frozen_answer_key.json, cases.json, corpus_manifest.json, corpus/ and request_lifecycle.py are byte-identical to the original freeze; the original answer key did not need to change",
+ "frozen_before": "acceptance.py had not executed any guard case when this record was written; no guard result existed",
+ "frozen_utc": "2026-10-21T16:26:21Z",
+ "guard_answer_key.json": "f92390af9c85f67bcc18d6e82aef12e8b4bd891147b1a90170cae9807369be4d",
+ "guard_cases.json": "a0fa4847f1b1d0d040b37cb1d9487c39d6f0345ec76c52889246434a0c5937b6",
+ "schema": "szl.e2d.guard-freeze/v0"
+}
