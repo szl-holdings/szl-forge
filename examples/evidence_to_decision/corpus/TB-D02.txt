@@ -1,0 +1,5 @@
+DOC TB-D02
+TENANT tenant-borealis
+REV 1
+Lumen-Gate in the borealis deployment rotates its keys every 12 hours.
+Marker BOR-6H1.

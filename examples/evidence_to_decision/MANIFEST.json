@@ -1,0 +1,177 @@
+{
+ "base_commit": "35f34c05240026ebddd890c8108bf26417cd51ff",
+ "files": [
+  {
+   "bytes": 662,
+   "git_blob": "c8bd2335f97ae2b4731ca390e2fc1b2d3b663e4f",
+   "path": "examples/evidence_to_decision/FREEZE.json",
+   "sha256": "f656521ac660ab02996f8c57659dc72cca84e33661addfc02f56a53826a3d639"
+  },
+  {
+   "bytes": 691,
+   "git_blob": "9d6069c8597a324839d0b1baa02a61fd494ef4c2",
+   "path": "examples/evidence_to_decision/GUARD_FREEZE.json",
+   "sha256": "5150c4cf4011e14a11758dd564bd328c34a347709eea0ebdb7d7b6913f7754b7"
+  },
+  {
+   "bytes": 3452,
+   "git_blob": "f35a95f3f8a436b0c7b25cee4bb566152010c8e8",
+   "path": "examples/evidence_to_decision/README.md",
+   "sha256": "7e2351ed59cd04bd04afca15df665f82618ac2994e0f189d6ae5c61326549da0"
+  },
+  {
+   "bytes": 9528,
+   "git_blob": "ba4c239216ffe3c46c8aed2ecd8412642ab20eb0",
+   "path": "examples/evidence_to_decision/SPEC.md",
+   "sha256": "a832226f6f3dd5f1c5b6c70d6ad4c89b0656bedf6e3050b5f62081140f23f5f3"
+  },
+  {
+   "bytes": 21442,
+   "git_blob": "cda7942e690181776892c9a6b171e45d3b594d9a",
+   "path": "examples/evidence_to_decision/a11oy_forge_envelope_adapter.py",
+   "sha256": "9767780c10119af6be36b31133932aa3999a17563e88d02c15327d6e88e0564b"
+  },
+  {
+   "bytes": 9653,
+   "git_blob": "a751acc327be8062a1c59790efe59b56261ef296",
+   "path": "examples/evidence_to_decision/acceptance.py",
+   "sha256": "746bf88df1db4b0865c9c63177f6158c81b1afe59ad09217d05da5235ae69b17"
+  },
+  {
+   "bytes": 4015,
+   "git_blob": "fae9398609abb5f54e8b44b6909f6b16c585ee01",
+   "path": "examples/evidence_to_decision/cases.json",
+   "sha256": "e273214743043a71df5572aea38ca24017cd2f6981107dc79a0d48fb85427870"
+  },
+  {
+   "bytes": 116,
+   "git_blob": "650a1c322bcbeb8e201cbfb9caef5defd7f00591",
+   "path": "examples/evidence_to_decision/corpus/TA-D01.txt",
+   "sha256": "cefa77322e727fa1df54b342364a6e562045acfa6d56f697fa65f8d0a1c9d9f1"
+  },
+  {
+   "bytes": 108,
+   "git_blob": "a0300f00c9b14abc81b7d3450cd6f1cea5bfdfc2",
+   "path": "examples/evidence_to_decision/corpus/TA-D02.txt",
+   "sha256": "4ccc855bdea943ccccfdb1b1680eda61eeab5d36cb48c03910a92b475778593a"
+  },
+  {
+   "bytes": 109,
+   "git_blob": "2e18e15b320887f5064c26a91ac083c8f4277903",
+   "path": "examples/evidence_to_decision/corpus/TA-D03.txt",
+   "sha256": "fc199cafff5e42e9fd7b94ff428bc50a45f8f8aa413087c72a80b62ca0dc6738"
+  },
+  {
+   "bytes": 267,
+   "git_blob": "aacb2f8cb361d7a488730812ae69f56abe517506",
+   "path": "examples/evidence_to_decision/corpus/TA-D04.txt",
+   "sha256": "ba94ea1aeb6097ea04bbaa39217c317f1fb5541523b11026ae10a2dd2e318b5a"
+  },
+  {
+   "bytes": 106,
+   "git_blob": "0013e93890f04e41c1c36d00c5fd888160c4aed9",
+   "path": "examples/evidence_to_decision/corpus/TA-D05.txt",
+   "sha256": "7bfc11e7450be2ea1a6cfbc82d4c9379276afe22ea75e411453473bba19ca90c"
+  },
+  {
+   "bytes": 119,
+   "git_blob": "d89179d1dfd4704099a09d2d515dc8d8c4550398",
+   "path": "examples/evidence_to_decision/corpus/TA-D06.txt",
+   "sha256": "0a993777438021a0b3b9b22dbfc2da19ad2bd2f80122a666efd926d1e8b2f2a3"
+  },
+  {
+   "bytes": 101,
+   "git_blob": "1dff2293b47cb652f970e8c67dd56f1fd01c1db8",
+   "path": "examples/evidence_to_decision/corpus/TB-D01.txt",
+   "sha256": "44618e6b9451cdc1187fe2e8d6a2b780d5a9fbcd2b19a4758a3282f92e7fdc69"
+  },
+  {
+   "bytes": 127,
+   "git_blob": "e51aca171de54cb70aa99f15f4a9848c1075c6f8",
+   "path": "examples/evidence_to_decision/corpus/TB-D02.txt",
+   "sha256": "e29c40d7a6e5bccae5d728cbc63b20e57ffc6bc092065d6d79cfdbcbbb9503ea"
+  },
+  {
+   "bytes": 105,
+   "git_blob": "2fb27f1b134b5b973aeb7787c17e003667480ed4",
+   "path": "examples/evidence_to_decision/corpus/TB-D03.txt",
+   "sha256": "374c46c2563f65099765250ea28e787e32eca05fe4728b968104cd3f48765993"
+  },
+  {
+   "bytes": 2134,
+   "git_blob": "35c96d8eb2f299ba12bbcc2d1efd78e05a451ac5",
+   "path": "examples/evidence_to_decision/corpus_manifest.json",
+   "sha256": "861ec880518e7fdfb0022a7c5a32f9bbfe0ca0795aeff8d148f87b6ccbc83229"
+  },
+  {
+   "bytes": 31319,
+   "git_blob": "b9317b06c441defdbbfdc7acce017c577a4d8153",
+   "path": "examples/evidence_to_decision/eight_case_harness.py",
+   "sha256": "befa8930d54a1ea9b5d5c662844cbd522c9252529fb773a2f3ac29559bafccb6"
+  },
+  {
+   "bytes": 4617,
+   "git_blob": "e68bffd14673667be27f46ea91e764b127c051d9",
+   "path": "examples/evidence_to_decision/forge_seam_bridge.py",
+   "sha256": "d98fb3fbb48a7c26e44cc4e1237249433d71f619ff887a86b21dd58103492a76"
+  },
+  {
+   "bytes": 5808,
+   "git_blob": "7b929c7c9d6a50b311daf731800a6163c1db93cf",
+   "path": "examples/evidence_to_decision/frozen_answer_key.json",
+   "sha256": "654c5944d56dbdfbbab47d33a3fbb3949ca0ba2f22937a537517b228a581617c"
+  },
+  {
+   "bytes": 3344,
+   "git_blob": "0f814fd43997b930cf345f7a740189338d36d8cd",
+   "path": "examples/evidence_to_decision/guard_answer_key.json",
+   "sha256": "f92390af9c85f67bcc18d6e82aef12e8b4bd891147b1a90170cae9807369be4d"
+  },
+  {
+   "bytes": 2443,
+   "git_blob": "b8fdf11b3a2554cf0acbea2e9cf9d766da5c09d6",
+   "path": "examples/evidence_to_decision/guard_cases.json",
+   "sha256": "a0fa4847f1b1d0d040b37cb1d9487c39d6f0345ec76c52889246434a0c5937b6"
+  },
+  {
+   "bytes": 5057,
+   "git_blob": "ac4c4eafbed9360dbc1b000c4d162741ae197c6f",
+   "path": "examples/evidence_to_decision/mutation_sweep.py",
+   "sha256": "41442f7a337290215f85d5e4ee11095896f935ee81fdd57194b0cfd9695b0b39"
+  },
+  {
+   "bytes": 31596,
+   "git_blob": "265967ecd99b59edfae2cf6b3b98b526fd066442",
+   "path": "examples/evidence_to_decision/request_lifecycle.py",
+   "sha256": "45f7e58e602502e5ca21ea3a3f5f01518f2efdea5ed9ba3e56f50be97cb34f06"
+  },
+  {
+   "bytes": 14621,
+   "git_blob": "14ab9c49a49e94f01c8c66c437ad36c94ee692ba",
+   "path": "examples/evidence_to_decision/test_a11oy_forge_envelope_adapter.py",
+   "sha256": "5f33c29847c1a5e8bec4262c6bc8735fb71b508025a093c96a2b898841e9bbad"
+  },
+  {
+   "bytes": 2944,
+   "git_blob": "d196c8891bcd5cfb199b59b2a1f4e669aea567fe",
+   "path": "examples/evidence_to_decision/test_acceptance.py",
+   "sha256": "422d9c6b443cd1661b0daacc5ba1916fb7a122eee3d3bc95b2e6007d25363dfd"
+  },
+  {
+   "bytes": 10274,
+   "git_blob": "bde671d533d26df823eeb7813b7bfdc46056b89c",
+   "path": "examples/evidence_to_decision/test_eight_case_harness.py",
+   "sha256": "aa7e99763e80dc41cb82c2f22ef46c0d72d76a63da7e804a5716c71c8231e066"
+  },
+  {
+   "bytes": 10620,
+   "git_blob": "c197b40d0572f0664928dd851da8dc8bc1f0adc2",
+   "path": "examples/evidence_to_decision/test_forge_production_seams.py",
+   "sha256": "5361168661445c2f93c688ca2ab71464a9ae4d076aaf458c8ec11eacd90e6971"
+  }
+ ],
+ "note": "Every file in this directory except MANIFEST.json itself. sha256 over exact bytes (LF line endings); git_blob is the git object id.",
+ "path": "examples/evidence_to_decision",
+ "repository": "szl-holdings/szl-forge",
+ "schema": "szl.e2d.manifest/v0"
+}

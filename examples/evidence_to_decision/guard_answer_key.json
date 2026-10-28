@@ -1,0 +1,120 @@
+{
+ "acceptance": "every guard case: decision, refusal point and reason match; model calls <= max; 0 dispatch attempts; unsigned proposal-only projection with text and citations redacted; no cache or history write; no foreign tenant in any governed prompt; leak checks pass. Plus both freeze negative controls exit 3. Plus the frozen eight-case run exits 0.",
+ "cases": {
+  "E8-G1": {
+   "denied_docs": [
+    "TA-D01",
+    "TB-D01",
+    "TB-D02",
+    "TB-D03"
+   ],
+   "expected_decision": "DENY",
+   "expected_reason": "PRINCIPAL_UNKNOWN",
+   "expected_refusal_point": "PRE_RETRIEVAL",
+   "max_model_calls": 0,
+   "targets_guard": "H01"
+  },
+  "E8-G2": {
+   "denied_docs": [
+    "TB-D01",
+    "TB-D02",
+    "TB-D03"
+   ],
+   "expected_decision": "DENY",
+   "expected_reason": "TENANT_SCOPE_MISMATCH",
+   "expected_refusal_point": "PRE_RETRIEVAL",
+   "max_model_calls": 0,
+   "targets_guard": "H03"
+  },
+  "E8-G3": {
+   "denied_docs": [
+    "TA-D03",
+    "TB-D01",
+    "TB-D02",
+    "TB-D03"
+   ],
+   "expected_decision": "ABSTAIN",
+   "expected_reason": "NO_EVIDENCE",
+   "expected_refusal_point": "PRE_HYDRATION",
+   "max_model_calls": 0,
+   "targets_guard": "H05"
+  },
+  "E8-G4": {
+   "denied_docs": [
+    "TB-D01",
+    "TB-D02",
+    "TB-D03"
+   ],
+   "expected_decision": "DENY",
+   "expected_reason": "PINNED_SOURCE_UNKNOWN",
+   "expected_refusal_point": "PRE_RETRIEVAL",
+   "forbidden_strings": [
+    "TA-D99"
+   ],
+   "max_model_calls": 0,
+   "targets_guard": "H18"
+  },
+  "E8-G5": {
+   "denied_docs": [
+    "TB-D01",
+    "TB-D02",
+    "TB-D03"
+   ],
+   "expected_decision": "ABSTAIN",
+   "expected_reason": "CITATION_NOT_IN_EVIDENCE",
+   "expected_refusal_point": "POST_OUTPUT",
+   "max_model_calls": 1,
+   "targets_guard": "H10"
+  },
+  "E8-G6": {
+   "denied_docs": [
+    "TB-D01",
+    "TB-D02",
+    "TB-D03"
+   ],
+   "expected_decision": "ABSTAIN",
+   "expected_reason": "EXCERPT_NOT_BOUND",
+   "expected_refusal_point": "POST_OUTPUT",
+   "forbidden_strings": [
+    "reportedly"
+   ],
+   "max_model_calls": 1,
+   "targets_guard": "H11"
+  },
+  "E8-G7": {
+   "denied_docs": [
+    "TB-D01",
+    "TB-D02",
+    "TB-D03"
+   ],
+   "expected_decision": "ABSTAIN",
+   "expected_reason": "NO_CITATION",
+   "expected_refusal_point": "POST_OUTPUT",
+   "max_model_calls": 1,
+   "targets_guard": "H12"
+  }
+ },
+ "failure_handling": {
+  "exception": "case recorded ERROR and counted as FAIL; no retry",
+  "exclusions": "none permitted",
+  "retune_after_results": "forbidden; any change requires a new GUARD_FREEZE and a new run id"
+ },
+ "label_provenance": "Each expected outcome is the documented reason code of the targeted guard in eight_case_harness.py (which already existed). These labels are therefore NOT blind to the harness code. They were written and hash-pinned in GUARD_FREEZE.json before acceptance.py first executed any guard case, and they are not changed after results.",
+ "negative_controls": {
+  "tampered_answer_key": {
+   "expected_harness_rc": 3,
+   "targets_guard": "H14"
+  },
+  "tampered_corpus_doc": {
+   "expected_harness_rc": 3,
+   "targets_guard": "H16"
+  }
+ },
+ "schema": "szl.e2d.guard-answer-key/v0",
+ "trials": {
+  "determinism_repetitions": 3,
+  "determinism_rule": "all repetition digests identical, else the run is INVALID",
+  "real_model_trials": "PROPOSED owner-UNDECIDED; NOT_RUN",
+  "spy_trials_per_case": 1
+ }
+}

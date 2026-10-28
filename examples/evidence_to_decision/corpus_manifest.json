@@ -1,0 +1,79 @@
+{
+ "docs": [
+  {
+   "bytes": 116,
+   "canary": "AUR-7Q1",
+   "doc_id": "TA-D01",
+   "file": "corpus/TA-D01.txt",
+   "sha256": "cefa77322e727fa1df54b342364a6e562045acfa6d56f697fa65f8d0a1c9d9f1",
+   "tenant": "tenant-aurora"
+  },
+  {
+   "bytes": 108,
+   "canary": "AUR-3K8",
+   "doc_id": "TA-D02",
+   "file": "corpus/TA-D02.txt",
+   "sha256": "4ccc855bdea943ccccfdb1b1680eda61eeab5d36cb48c03910a92b475778593a",
+   "tenant": "tenant-aurora"
+  },
+  {
+   "bytes": 109,
+   "canary": "AUR-5M2",
+   "doc_id": "TA-D03",
+   "file": "corpus/TA-D03.txt",
+   "sha256": "fc199cafff5e42e9fd7b94ff428bc50a45f8f8aa413087c72a80b62ca0dc6738",
+   "tenant": "tenant-aurora"
+  },
+  {
+   "bytes": 267,
+   "canary": "AUR-9P4",
+   "doc_id": "TA-D04",
+   "file": "corpus/TA-D04.txt",
+   "sha256": "ba94ea1aeb6097ea04bbaa39217c317f1fb5541523b11026ae10a2dd2e318b5a",
+   "tenant": "tenant-aurora"
+  },
+  {
+   "bytes": 106,
+   "canary": "AUR-2W6",
+   "doc_id": "TA-D05",
+   "file": "corpus/TA-D05.txt",
+   "sha256": "7bfc11e7450be2ea1a6cfbc82d4c9379276afe22ea75e411453473bba19ca90c",
+   "tenant": "tenant-aurora"
+  },
+  {
+   "bytes": 119,
+   "canary": "AUR-8D3",
+   "doc_id": "TA-D06",
+   "file": "corpus/TA-D06.txt",
+   "sha256": "0a993777438021a0b3b9b22dbfc2da19ad2bd2f80122a666efd926d1e8b2f2a3",
+   "tenant": "tenant-aurora"
+  },
+  {
+   "bytes": 101,
+   "canary": "BOR-4T7",
+   "doc_id": "TB-D01",
+   "file": "corpus/TB-D01.txt",
+   "sha256": "44618e6b9451cdc1187fe2e8d6a2b780d5a9fbcd2b19a4758a3282f92e7fdc69",
+   "tenant": "tenant-borealis"
+  },
+  {
+   "bytes": 127,
+   "canary": "BOR-6H1",
+   "doc_id": "TB-D02",
+   "file": "corpus/TB-D02.txt",
+   "sha256": "e29c40d7a6e5bccae5d728cbc63b20e57ffc6bc092065d6d79cfdbcbbb9503ea",
+   "tenant": "tenant-borealis"
+  },
+  {
+   "bytes": 105,
+   "canary": "BOR-1N9",
+   "doc_id": "TB-D03",
+   "file": "corpus/TB-D03.txt",
+   "sha256": "374c46c2563f65099765250ea28e787e32eca05fe4728b968104cd3f48765993",
+   "tenant": "tenant-borealis"
+  }
+ ],
+ "note": "Fictional software-ops facts; two fictional tenants. No clinical, tactical, financial or personal data.",
+ "schema": "szl.e8.corpus-manifest/v0",
+ "synthetic": true
+}

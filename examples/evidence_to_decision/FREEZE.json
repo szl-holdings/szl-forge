@@ -1,0 +1,10 @@
+{
+ "cases.json": "e273214743043a71df5572aea38ca24017cd2f6981107dc79a0d48fb85427870",
+ "corpus_manifest.json": "861ec880518e7fdfb0022a7c5a32f9bbfe0ca0795aeff8d148f87b6ccbc83229",
+ "frozen_answer_key.json": "654c5944d56dbdfbbab47d33a3fbb3949ca0ba2f22937a537517b228a581617c",
+ "frozen_before": "eight_case_harness.py did not exist when this record was written; no result had been produced",
+ "frozen_utc": "2026-10-21T15:50:09Z",
+ "request_lifecycle.py": "45f7e58e602502e5ca21ea3a3f5f01518f2efdea5ed9ba3e56f50be97cb34f06",
+ "request_lifecycle_source": "artifact version d83591df (Contract 4 reference model), copied byte-identical",
+ "schema": "szl.e8.freeze/v0"
+}

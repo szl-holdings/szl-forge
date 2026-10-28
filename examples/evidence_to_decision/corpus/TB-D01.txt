@@ -1,0 +1,5 @@
+DOC TB-D01
+TENANT tenant-borealis
+REV 1
+Meridian-Index stores 12 shards per replica.
+Marker BOR-4T7.
