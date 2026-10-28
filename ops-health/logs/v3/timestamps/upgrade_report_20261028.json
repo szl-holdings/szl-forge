@@ -1,0 +1,421 @@
+{
+ "checked_utc": "2026-10-28T03:33:28Z",
+ "files": {
+  "registration_digest_input.json.ots": {
+   "file_digest": "8d3f31ca5bb95d6b7aa7a4da25a2429ae8e0f113ce94209b9dd453d405dac8e2",
+   "calendar_calls": [
+    {
+     "calendar": "https://btc.calendar.catallaxy.com",
+     "result": "upgraded"
+    },
+    {
+     "calendar": "https://alice.btc.calendar.opentimestamps.org",
+     "result": "upgraded"
+    },
+    {
+     "calendar": "https://bob.btc.calendar.opentimestamps.org",
+     "result": "upgraded"
+    },
+    {
+     "calendar": "https://finney.calendar.eternitywall.com",
+     "result": "upgraded"
+    }
+   ],
+   "bitcoin": [
+    {
+     "height": 972699,
+     "attested_merkle_root": "ef2f99a03c432e22302eaba7df2bb853e5daa5768a917170e907dc449ff1d400",
+     "explorers_agree": true,
+     "merkle_root_matches": true,
+     "t_fwd_unix": 1792726222,
+     "t_fwd_utc": "2026-10-23T03:30:22Z",
+     "explorers": {
+      "https://blockstream.info/api": {
+       "block_hash": "00000000000000000001c2e9e43fda36e46651185b3cd3e5c5c4d6838ab055cc",
+       "merkle_root": "ef2f99a03c432e22302eaba7df2bb853e5daa5768a917170e907dc449ff1d400",
+       "times": [
+        1792724965,
+        1792725140,
+        1792725444,
+        1792725692,
+        1792725719,
+        1792726222,
+        1792726249,
+        1792726268,
+        1792726610,
+        1792726645,
+        1792727689
+       ],
+       "t_fwd": 1792726222
+      },
+      "https://mempool.space/api": {
+       "block_hash": "00000000000000000001c2e9e43fda36e46651185b3cd3e5c5c4d6838ab055cc",
+       "merkle_root": "ef2f99a03c432e22302eaba7df2bb853e5daa5768a917170e907dc449ff1d400",
+       "times": [
+        1792724965,
+        1792725140,
+        1792725444,
+        1792725692,
+        1792725719,
+        1792726222,
+        1792726249,
+        1792726268,
+        1792726610,
+        1792726645,
+        1792727689
+       ],
+       "t_fwd": 1792726222
+      }
+     }
+    },
+    {
+     "height": 972700,
+     "attested_merkle_root": "2958b598bbfed9f1891a2d98ef2c624a68abfcc003be4bbc50f53b1f1cc9d9f3",
+     "explorers_agree": true,
+     "merkle_root_matches": true,
+     "t_fwd_unix": 1792726249,
+     "t_fwd_utc": "2026-10-23T03:30:49Z",
+     "explorers": {
+      "https://blockstream.info/api": {
+       "block_hash": "00000000000000000000420353c320a0056a281053fc8bfafcffe20a18474ff5",
+       "merkle_root": "2958b598bbfed9f1891a2d98ef2c624a68abfcc003be4bbc50f53b1f1cc9d9f3",
+       "times": [
+        1792725140,
+        1792725444,
+        1792725692,
+        1792725719,
+        1792726222,
+        1792726249,
+        1792726268,
+        1792726610,
+        1792726645,
+        1792727689,
+        1792727865
+       ],
+       "t_fwd": 1792726249
+      },
+      "https://mempool.space/api": {
+       "block_hash": "00000000000000000000420353c320a0056a281053fc8bfafcffe20a18474ff5",
+       "merkle_root": "2958b598bbfed9f1891a2d98ef2c624a68abfcc003be4bbc50f53b1f1cc9d9f3",
+       "times": [
+        1792725140,
+        1792725444,
+        1792725692,
+        1792725719,
+        1792726222,
+        1792726249,
+        1792726268,
+        1792726610,
+        1792726645,
+        1792727689,
+        1792727865
+       ],
+       "t_fwd": 1792726249
+      }
+     }
+    },
+    {
+     "height": 972728,
+     "attested_merkle_root": "24e8f8c715482b0bad4537844fb9a80567239aca2bc0744d216030a7c16723a8",
+     "explorers_agree": true,
+     "merkle_root_matches": true,
+     "t_fwd_unix": 1792740470,
+     "t_fwd_utc": "2026-10-23T07:27:50Z",
+     "explorers": {
+      "https://blockstream.info/api": {
+       "block_hash": "00000000000000000000757f188e28388022d67bc820fccbe73ac3a639f50100",
+       "merkle_root": "24e8f8c715482b0bad4537844fb9a80567239aca2bc0744d216030a7c16723a8",
+       "times": [
+        1792737597,
+        1792737850,
+        1792738625,
+        1792738793,
+        1792739040,
+        1792740470,
+        1792741335,
+        1792741849,
+        1792742075,
+        1792742614,
+        1792742647
+       ],
+       "t_fwd": 1792740470
+      },
+      "https://mempool.space/api": {
+       "block_hash": "00000000000000000000757f188e28388022d67bc820fccbe73ac3a639f50100",
+       "merkle_root": "24e8f8c715482b0bad4537844fb9a80567239aca2bc0744d216030a7c16723a8",
+       "times": [
+        1792737597,
+        1792737850,
+        1792738625,
+        1792738793,
+        1792739040,
+        1792740470,
+        1792741335,
+        1792741849,
+        1792742075,
+        1792742614,
+        1792742647
+       ],
+       "t_fwd": 1792740470
+      }
+     }
+    },
+    {
+     "height": 972749,
+     "attested_merkle_root": "ee183da665617ebfbd4d98b9c82eb60550db11dfc88b3711b0ce7b9e7cd45d6d",
+     "explorers_agree": true,
+     "merkle_root_matches": true,
+     "t_fwd_unix": 1792750526,
+     "t_fwd_utc": "2026-10-23T10:15:26Z",
+     "explorers": {
+      "https://blockstream.info/api": {
+       "block_hash": "000000000000000000015d1494dfcf12bfc97f6ff50eec3c622091e707183436",
+       "merkle_root": "ee183da665617ebfbd4d98b9c82eb60550db11dfc88b3711b0ce7b9e7cd45d6d",
+       "times": [
+        1792747677,
+        1792748514,
+        1792748631,
+        1792748680,
+        1792749443,
+        1792750526,
+        1792750922,
+        1792751850,
+        1792752048,
+        1792752239,
+        1792752459
+       ],
+       "t_fwd": 1792750526
+      },
+      "https://mempool.space/api": {
+       "block_hash": "000000000000000000015d1494dfcf12bfc97f6ff50eec3c622091e707183436",
+       "merkle_root": "ee183da665617ebfbd4d98b9c82eb60550db11dfc88b3711b0ce7b9e7cd45d6d",
+       "times": [
+        1792747677,
+        1792748514,
+        1792748631,
+        1792748680,
+        1792749443,
+        1792750526,
+        1792750922,
+        1792751850,
+        1792752048,
+        1792752239,
+        1792752459
+       ],
+       "t_fwd": 1792750526
+      }
+     }
+    }
+   ],
+   "upgraded_file_sha256": "09c14b2d81b212fd088faaa60bf25aee62e8b465c3e4846451d51bda9f6656a2"
+  },
+  "rereg_r1_digest_input.json.ots": {
+   "file_digest": "fae741f6443225dbb63175cb08351b9d4883e55f652b39a81865d33c0f939197",
+   "calendar_calls": [
+    {
+     "calendar": "https://btc.calendar.catallaxy.com",
+     "result": "upgraded"
+    },
+    {
+     "calendar": "https://bob.btc.calendar.opentimestamps.org",
+     "result": "upgraded"
+    },
+    {
+     "calendar": "https://finney.calendar.eternitywall.com",
+     "result": "upgraded"
+    },
+    {
+     "calendar": "https://alice.btc.calendar.opentimestamps.org",
+     "result": "upgraded"
+    }
+   ],
+   "bitcoin": [
+    {
+     "height": 972699,
+     "attested_merkle_root": "ef2f99a03c432e22302eaba7df2bb853e5daa5768a917170e907dc449ff1d400",
+     "explorers_agree": true,
+     "merkle_root_matches": true,
+     "t_fwd_unix": 1792726222,
+     "t_fwd_utc": "2026-10-23T03:30:22Z",
+     "explorers": {
+      "https://blockstream.info/api": {
+       "block_hash": "00000000000000000001c2e9e43fda36e46651185b3cd3e5c5c4d6838ab055cc",
+       "merkle_root": "ef2f99a03c432e22302eaba7df2bb853e5daa5768a917170e907dc449ff1d400",
+       "times": [
+        1792724965,
+        1792725140,
+        1792725444,
+        1792725692,
+        1792725719,
+        1792726222,
+        1792726249,
+        1792726268,
+        1792726610,
+        1792726645,
+        1792727689
+       ],
+       "t_fwd": 1792726222
+      },
+      "https://mempool.space/api": {
+       "block_hash": "00000000000000000001c2e9e43fda36e46651185b3cd3e5c5c4d6838ab055cc",
+       "merkle_root": "ef2f99a03c432e22302eaba7df2bb853e5daa5768a917170e907dc449ff1d400",
+       "times": [
+        1792724965,
+        1792725140,
+        1792725444,
+        1792725692,
+        1792725719,
+        1792726222,
+        1792726249,
+        1792726268,
+        1792726610,
+        1792726645,
+        1792727689
+       ],
+       "t_fwd": 1792726222
+      }
+     }
+    },
+    {
+     "height": 972700,
+     "attested_merkle_root": "2958b598bbfed9f1891a2d98ef2c624a68abfcc003be4bbc50f53b1f1cc9d9f3",
+     "explorers_agree": true,
+     "merkle_root_matches": true,
+     "t_fwd_unix": 1792726249,
+     "t_fwd_utc": "2026-10-23T03:30:49Z",
+     "explorers": {
+      "https://blockstream.info/api": {
+       "block_hash": "00000000000000000000420353c320a0056a281053fc8bfafcffe20a18474ff5",
+       "merkle_root": "2958b598bbfed9f1891a2d98ef2c624a68abfcc003be4bbc50f53b1f1cc9d9f3",
+       "times": [
+        1792725140,
+        1792725444,
+        1792725692,
+        1792725719,
+        1792726222,
+        1792726249,
+        1792726268,
+        1792726610,
+        1792726645,
+        1792727689,
+        1792727865
+       ],
+       "t_fwd": 1792726249
+      },
+      "https://mempool.space/api": {
+       "block_hash": "00000000000000000000420353c320a0056a281053fc8bfafcffe20a18474ff5",
+       "merkle_root": "2958b598bbfed9f1891a2d98ef2c624a68abfcc003be4bbc50f53b1f1cc9d9f3",
+       "times": [
+        1792725140,
+        1792725444,
+        1792725692,
+        1792725719,
+        1792726222,
+        1792726249,
+        1792726268,
+        1792726610,
+        1792726645,
+        1792727689,
+        1792727865
+       ],
+       "t_fwd": 1792726249
+      }
+     }
+    },
+    {
+     "height": 972728,
+     "attested_merkle_root": "24e8f8c715482b0bad4537844fb9a80567239aca2bc0744d216030a7c16723a8",
+     "explorers_agree": true,
+     "merkle_root_matches": true,
+     "t_fwd_unix": 1792740470,
+     "t_fwd_utc": "2026-10-23T07:27:50Z",
+     "explorers": {
+      "https://blockstream.info/api": {
+       "block_hash": "00000000000000000000757f188e28388022d67bc820fccbe73ac3a639f50100",
+       "merkle_root": "24e8f8c715482b0bad4537844fb9a80567239aca2bc0744d216030a7c16723a8",
+       "times": [
+        1792737597,
+        1792737850,
+        1792738625,
+        1792738793,
+        1792739040,
+        1792740470,
+        1792741335,
+        1792741849,
+        1792742075,
+        1792742614,
+        1792742647
+       ],
+       "t_fwd": 1792740470
+      },
+      "https://mempool.space/api": {
+       "block_hash": "00000000000000000000757f188e28388022d67bc820fccbe73ac3a639f50100",
+       "merkle_root": "24e8f8c715482b0bad4537844fb9a80567239aca2bc0744d216030a7c16723a8",
+       "times": [
+        1792737597,
+        1792737850,
+        1792738625,
+        1792738793,
+        1792739040,
+        1792740470,
+        1792741335,
+        1792741849,
+        1792742075,
+        1792742614,
+        1792742647
+       ],
+       "t_fwd": 1792740470
+      }
+     }
+    },
+    {
+     "height": 972749,
+     "attested_merkle_root": "ee183da665617ebfbd4d98b9c82eb60550db11dfc88b3711b0ce7b9e7cd45d6d",
+     "explorers_agree": true,
+     "merkle_root_matches": true,
+     "t_fwd_unix": 1792750526,
+     "t_fwd_utc": "2026-10-23T10:15:26Z",
+     "explorers": {
+      "https://blockstream.info/api": {
+       "block_hash": "000000000000000000015d1494dfcf12bfc97f6ff50eec3c622091e707183436",
+       "merkle_root": "ee183da665617ebfbd4d98b9c82eb60550db11dfc88b3711b0ce7b9e7cd45d6d",
+       "times": [
+        1792747677,
+        1792748514,
+        1792748631,
+        1792748680,
+        1792749443,
+        1792750526,
+        1792750922,
+        1792751850,
+        1792752048,
+        1792752239,
+        1792752459
+       ],
+       "t_fwd": 1792750526
+      },
+      "https://mempool.space/api": {
+       "block_hash": "000000000000000000015d1494dfcf12bfc97f6ff50eec3c622091e707183436",
+       "merkle_root": "ee183da665617ebfbd4d98b9c82eb60550db11dfc88b3711b0ce7b9e7cd45d6d",
+       "times": [
+        1792747677,
+        1792748514,
+        1792748631,
+        1792748680,
+        1792749443,
+        1792750526,
+        1792750922,
+        1792751850,
+        1792752048,
+        1792752239,
+        1792752459
+       ],
+       "t_fwd": 1792750526
+      }
+     }
+    }
+   ],
+   "upgraded_file_sha256": "9896b7dbce667517712738cbdf441b560f5be79161849a79779b76813fa3cb41"
+  }
+ }
+}
