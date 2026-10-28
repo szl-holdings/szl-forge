@@ -1,0 +1,5 @@
+DOC TB-D03
+TENANT tenant-borealis
+REV 1
+Halden-Bus buffers at most 256 events per topic.
+Marker BOR-1N9.

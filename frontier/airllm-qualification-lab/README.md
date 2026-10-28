@@ -140,12 +140,22 @@ and a 240-second subprocess timeout. The runner retains separate prepare and
 attempt receipts as an artifact, including source SHA, selected bytes, package
 versions, free disk/RAM, elapsed time, and only a hash of token IDs. The run
 receipt also records the SHA-256 of the prepare receipt bytes, the SHA-256 of
-this harness file, the SHA-256 of the fixed prompt, and a generation record
-with `do_sample` false, `seed` null, and `seed_applied` false. A run refuses a
-prepare receipt from a different harness, prompt, or source SHA. Sampling is
-not enabled, so no seed is applied to the token. Failed and timed-out attempts
-stay `BLOCKED` or `UNKNOWN_AFTER_ATTEMPT`; the split remains for inspection
-until the ephemeral runner ends.
+the executed harness after comparing it with its checked-out Git blob, the
+SHA-256 of the fixed prompt and canonical one-record SAMPLE input, and a
+generation record with `do_sample` false and seed `0`; the prepare record keeps
+`seed_applied` false, and the run record sets it true only after the worker
+applies the Python/Torch seed.
+The run records `base_revision`, inference-only loss as `UNAVAILABLE`/`NOT_RUN`,
+and metrics as `UNAVAILABLE` until a worker succeeds. A run refuses a prepare
+receipt from a different harness, prompt, input, model, seed, or source SHA.
+The input is synthetic and is not a training or held-out evaluation dataset.
+Failed and timed-out attempts stay `BLOCKED` or `UNKNOWN_AFTER_ATTEMPT`; the
+split remains for inspection until the ephemeral runner ends.
+
+Receipt schema v2 is an unsigned, nonauthoritative chain. `prepare_receipt_sha256`
+and `previous_receipt_sha256` are raw-byte digests, not signatures, signer trust,
+authorization, model qualification, or publication evidence. The earlier v1
+hosted run remains historical v1 evidence and is not retroactively upgraded.
 
 A pass establishes only one hosted CPU plumbing smoke. It does not establish
 native-versus-AirLLM parity, QLoRA support, model quality, held-out abstention,

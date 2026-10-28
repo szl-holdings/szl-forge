@@ -1,0 +1,85 @@
+{
+ "cases": [
+  {
+   "case_id": "E8-G1",
+   "pinned_sources": [],
+   "principal": "principal.unregistered",
+   "query": "How often does Lumen-Gate rotate its session keys?",
+   "setup": [],
+   "spy_script": null,
+   "tenant_scope": "tenant-aurora",
+   "title": "unregistered principal"
+  },
+  {
+   "case_id": "E8-G2",
+   "pinned_sources": [
+    "TB-D02"
+   ],
+   "principal": "principal.aurora.analyst",
+   "query": "How often does Lumen-Gate rotate its session keys?",
+   "setup": [],
+   "spy_script": null,
+   "tenant_scope": "tenant-aurora",
+   "title": "pinned source from another tenant"
+  },
+  {
+   "case_id": "E8-G3",
+   "pinned_sources": [],
+   "principal": "principal.aurora.analyst",
+   "query": "How long does Tamsin-KV keep idle cache entries?",
+   "setup": [
+    {
+     "doc_id": "TA-D03",
+     "op": "revoke_before_request"
+    }
+   ],
+   "spy_script": null,
+   "tenant_scope": "tenant-aurora",
+   "title": "revoked source on the retrieval path (not pinned)"
+  },
+  {
+   "case_id": "E8-G4",
+   "pinned_sources": [
+    "TA-D99"
+   ],
+   "principal": "principal.aurora.analyst",
+   "query": "How often does Lumen-Gate rotate its session keys?",
+   "setup": [],
+   "spy_script": null,
+   "tenant_scope": "tenant-aurora",
+   "title": "pinned source id not in the manifest"
+  },
+  {
+   "case_id": "E8-G5",
+   "pinned_sources": [],
+   "principal": "principal.aurora.analyst",
+   "query": "How often does Lumen-Gate rotate its session keys?",
+   "setup": [],
+   "spy_script": "cite_outside_evidence:TB-D02",
+   "tenant_scope": "tenant-aurora",
+   "title": "model cites a document outside the hydrated evidence"
+  },
+  {
+   "case_id": "E8-G6",
+   "pinned_sources": [],
+   "principal": "principal.aurora.analyst",
+   "query": "How often does Lumen-Gate rotate its session keys?",
+   "setup": [],
+   "spy_script": "paraphrase_excerpt",
+   "tenant_scope": "tenant-aurora",
+   "title": "model paraphrases the excerpt (not verbatim)"
+  },
+  {
+   "case_id": "E8-G7",
+   "pinned_sources": [],
+   "principal": "principal.aurora.analyst",
+   "query": "How often does Lumen-Gate rotate its session keys?",
+   "setup": [],
+   "spy_script": "omit_citation",
+   "tenant_scope": "tenant-aurora",
+   "title": "model omits the citation"
+  }
+ ],
+ "note": "Case INPUTS only (no labels). Acceptance-level cases for harness guards that the frozen eight cases do not exercise end to end. Synthetic; fictional tenants.",
+ "schema": "szl.e2d.guard-cases/v0"
+}
