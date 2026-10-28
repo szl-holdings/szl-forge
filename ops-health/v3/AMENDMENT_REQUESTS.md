@@ -101,3 +101,23 @@ orchestrator decides whether and when to publish and decide it.
   section 15.3 allows only before step 3.
 
 - **Decision.** Accepted as clarification AC-4 in `v3/AMENDMENTS.md` (2026-10-28).
+
+## AR-5: the seed of the paired no-D training files (affects step 3)
+
+Source: ws `v3a-fix` (stage-A review finding, `registry.py`), 2026-10-28.
+
+- **What (REPORTED from the registered text).** Section 3.2 item 1 gives every non-sealed split s
+  the seed `sha256("oac-ops-health-v3:20261013:{s}")[:8]`, where s is the split's own name.
+  Section 3.2 item 3 says that the D arm and the no-D arm "are written as two paired files from
+  one stream, so they differ only in the rows with `b < 0.25`".
+- **The conflict.** Read literally, item 1 gives the no-D file (`train_noD`,
+  `train_kg_01_noD` … `train_kg_20_noD`) a seed derived from its own name. That makes a second
+  stream, and item 3 forbids it.
+- **Requested clarification.** Each of the 21 paired no-D files is drawn from the stream and seed
+  of its D-arm split (`train`, `train_kg_k`). Item 1's formula is applied to the D-arm name only.
+  The step-3 MANIFEST records, for every file, the seed actually used and the split it belongs
+  to. This is the reading `v3/research/registry.py` implements.
+- **Why it changes no frozen item.** The seed formula, the namespace, the master seed, the split
+  names and sizes, and the design-mode draws all stay as registered. The request only says which
+  rule governs the paired files, where item 3 is the specific rule.
+- **Decision.** Accepted as clarification AC-5 in `v3/AMENDMENTS.md` (2026-10-28).

@@ -72,3 +72,18 @@ publishing it by name ("A4 Publish AR-4 + AC-4", 2026-10-28).
   A dependency found later is a defect under section 15.6.
 - **No frozen item changes.** The interpreter, the invocation and the environment variable stay
   exactly as registered.
+
+## AC-5 (decides AR-5): the paired no-D files share their D-arm split's stream
+
+ACCEPTED as requested. Decided on 2026-10-28, before section 13 step 3. Stephen approved
+publishing it by name ("A5 Publish AR-5 + AC-5", 2026-10-28).
+
+- **The rule.** Each paired no-D training file (`train_noD`, `train_kg_01_noD` …
+  `train_kg_20_noD`) is drawn from the same stream and seed as its D-arm split (`train`,
+  `train_kg_k`), as section 3.2 item 3 requires ("two paired files from one stream").
+- **Where item 1 applies.** Section 3.2 item 1's seed formula is applied to the D-arm split's
+  name. It is not applied separately to the no-D file's name.
+- **The record.** The step-3 MANIFEST lists, for every file, the split name, the seed actually
+  used and the partner it is paired with.
+- **No frozen item changes.** The seed formula, namespace, master seed, split names, sizes and
+  design-mode draws stay exactly as registered.
