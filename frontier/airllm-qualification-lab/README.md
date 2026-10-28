@@ -150,7 +150,8 @@ and metrics as `UNAVAILABLE` until a worker succeeds. A run refuses a prepare
 receipt from a different harness, prompt, input, model, seed, or source SHA.
 The input is synthetic and is not a training or held-out evaluation dataset.
 Failed and timed-out attempts stay `BLOCKED` or `UNKNOWN_AFTER_ATTEMPT`; the
-split remains for inspection until the ephemeral runner ends.
+seed application is `UNKNOWN` if a worker started but did not return a valid
+result. The split remains for inspection until the ephemeral runner ends.
 
 Receipt schema v2 is an unsigned, nonauthoritative chain. `prepare_receipt_sha256`
 and `previous_receipt_sha256` are raw-byte digests, not signatures, signer trust,

@@ -160,6 +160,7 @@ class HostedCpuSmokeControls(unittest.TestCase):
         root = self.parent / "task"
         prepare = self.parent / "receipts" / "PREPARE.json"
         run = self.parent / "receipts" / "SMOKE.json"
+        failed_run = self.parent / "receipts" / "FAILED.json"
         with patch.object(smoke, "_runner_paths"), \
                 patch.object(smoke, "_source_binding", return_value=source), \
                 patch.object(smoke, "_hardware", return_value={"runner_os": "ISOLATED"}), \
@@ -180,10 +181,18 @@ class HostedCpuSmokeControls(unittest.TestCase):
                     patch.object(sys, "argv", [smoke.__file__, "--run", "--root", str(root),
                                                "--receipt", str(run), "--prepare-receipt", str(prepare)]):
                 self.assertEqual(smoke.main(), 0)
+            with patch.object(smoke, "_run_worker", side_effect=smoke.SmokeError("worker abort")), \
+                    patch.object(sys, "argv", [smoke.__file__, "--run", "--root", str(root),
+                                               "--receipt", str(failed_run), "--prepare-receipt", str(prepare)]):
+                self.assertEqual(smoke.main(), 2)
         result = json.loads(run.read_text(encoding="utf-8"))
         self.assertTrue(result["generation"]["seed_applied"])
         self.assertEqual(result["previous_receipt_sha256"], hashlib.sha256(prepare.read_bytes()).hexdigest())
         self.assertEqual(result["metrics"]["generated_token_count"], 1)
+        failed = json.loads(failed_run.read_text(encoding="utf-8"))
+        self.assertEqual(failed["generation"]["seed_applied"], "UNKNOWN")
+        self.assertEqual(failed["inference_run"], "UNKNOWN")
+        self.assertTrue(failed["inference_attempted"])
 
     def test_non_object_prepare_json_writes_blocked_run_without_snapshot_or_worker(self):
         source_sha = "c" * 40

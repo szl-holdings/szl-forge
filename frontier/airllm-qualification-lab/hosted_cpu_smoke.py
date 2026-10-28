@@ -498,6 +498,8 @@ def main() -> int:
     except (OSError, ValueError, KeyError, IndexError, zipfile.BadZipFile,
             subprocess.SubprocessError, importlib.metadata.PackageNotFoundError) as exc:
         result["reason"] = f"{type(exc).__name__}: {str(exc)[-1200:]}"
+        if started_worker and isinstance(result.get("generation"), dict):
+            result["generation"]["seed_applied"] = "UNKNOWN"
         result["inference_run"] = "UNKNOWN" if started_worker else "UNAVAILABLE"
         result["inference_attempted"] = started_worker
     if started_worker:
