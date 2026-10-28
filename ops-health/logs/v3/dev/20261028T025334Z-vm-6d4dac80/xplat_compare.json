@@ -1,0 +1,202 @@
+{
+  "commit": "ec8f577283ccfebbffd5c8abf7ad5235914df3f7",
+  "computed_on": "H-local (this comparison); written 2026-10-28T02:54:43Z",
+  "dev": true,
+  "earlier_finding": "At cd62f144 (2026-10-23 and 2026-10-24 VM runs) the DEV receipt's trace digest covered unpersisted full-precision diagnostics, two IRLS round-off residuals of which differ between hosts near 1e-16 (lr.gradient_max_abs, lr.last_newton_step_max_abs); fixed at ec8f5772 by binding the digest to the persisted canonical diagnostics. Full-precision IRLS residuals remain host-dependent (MEASURED); no deterministic file carries them.",
+  "evidence_class": "MEASURED",
+  "files": [
+    {
+      "class": "deterministic",
+      "local": {
+        "bytes": 13093,
+        "sha256": "211eb7acade77fa12e2f6987b64fc1ce38a9a72c966d9682e69e3b4d83fb0c94"
+      },
+      "path": "dev_outputs.json",
+      "sha256_equal": true,
+      "vm": {
+        "bytes": 13093,
+        "sha256": "211eb7acade77fa12e2f6987b64fc1ce38a9a72c966d9682e69e3b4d83fb0c94"
+      }
+    },
+    {
+      "class": "deterministic",
+      "local": {
+        "bytes": 25552,
+        "sha256": "cd1b8537a13ecda51ea007a108d5836fcaa894a772a174a0eacc9c4177361aec"
+      },
+      "path": "tests.json",
+      "sha256_equal": true,
+      "vm": {
+        "bytes": 25552,
+        "sha256": "cd1b8537a13ecda51ea007a108d5836fcaa894a772a174a0eacc9c4177361aec"
+      }
+    },
+    {
+      "class": "deterministic",
+      "local": {
+        "bytes": 367672,
+        "sha256": "2768420d4d9aa33976d2f690aa064adf93a65178a69bc8771f185d76728e0f4e"
+      },
+      "path": "advisories.jsonl",
+      "sha256_equal": true,
+      "vm": {
+        "bytes": 367672,
+        "sha256": "2768420d4d9aa33976d2f690aa064adf93a65178a69bc8771f185d76728e0f4e"
+      }
+    },
+    {
+      "class": "deterministic",
+      "local": {
+        "bytes": 3810,
+        "sha256": "aa40d47ee9e9e65dbf6e185d3e7115326de8aafca328cd3259fe68933ccb7efa"
+      },
+      "path": "dev_fit/model.json",
+      "sha256_equal": true,
+      "vm": {
+        "bytes": 3810,
+        "sha256": "aa40d47ee9e9e65dbf6e185d3e7115326de8aafca328cd3259fe68933ccb7efa"
+      }
+    },
+    {
+      "class": "deterministic",
+      "local": {
+        "bytes": 1303,
+        "sha256": "bda4422f0a3a74d94a7dd7f9b887aa05e1bf4dc86c78877551500b1ee81c8c53"
+      },
+      "path": "dev_fit/artifact_receipt.json",
+      "sha256_equal": true,
+      "vm": {
+        "bytes": 1303,
+        "sha256": "bda4422f0a3a74d94a7dd7f9b887aa05e1bf4dc86c78877551500b1ee81c8c53"
+      }
+    },
+    {
+      "class": "deterministic",
+      "local": {
+        "bytes": 776,
+        "sha256": "e71efbe901c483193c007fcc797d4a426a516833dd06249ac9cc45b9d72625f1"
+      },
+      "path": "dev_fit/diagnostics.json",
+      "sha256_equal": true,
+      "vm": {
+        "bytes": 776,
+        "sha256": "e71efbe901c483193c007fcc797d4a426a516833dd06249ac9cc45b9d72625f1"
+      }
+    },
+    {
+      "class": "host_fact",
+      "local": {
+        "bytes": 14297,
+        "sha256": "b19d8cf291eaba1114c8864cbfd7d54af75e56c14db9fc29350572c4e155f9e3"
+      },
+      "path": "run.json",
+      "sha256_equal": false,
+      "vm": {
+        "bytes": 14321,
+        "sha256": "7731b92ef22323071fa58475fda8ac8d7d7ff67cfd86a7ec527c02629856629e"
+      }
+    },
+    {
+      "class": "host_fact",
+      "local": {
+        "bytes": 17076,
+        "sha256": "93044508b2ded593777f9f33e388613d3602d7b25ece1e4c22813fdda0f00b58"
+      },
+      "path": "stdout.txt",
+      "sha256_equal": false,
+      "vm": {
+        "bytes": 17075,
+        "sha256": "b28bff5c54b73cbc629554c399d3199bb5fcfe3dec97ad7c73055f73f397259e"
+      }
+    }
+  ],
+  "local": {
+    "exit_ok": true,
+    "finished_utc": "2026-10-28T02:52:16Z",
+    "not_passed": [],
+    "platform": {
+      "libc": null,
+      "machine": "AMD64",
+      "release": "11",
+      "system": "Windows"
+    },
+    "python": {
+      "executable_sha256": "4d6f5f81a4bca11191c4c7c6b43632694d0a4ce74e068619d8fdc161d469859a",
+      "implementation": "cpython",
+      "version": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]"
+    },
+    "run_id": "20261028T025158Z-local-7b6004da",
+    "runtime_pins": {
+      "hash_randomization": 1,
+      "ignore_environment": true,
+      "implementation": "cpython",
+      "isolated": true,
+      "pinned": true,
+      "pythonhashseed": "0",
+      "pythonhashseed_pinned": true,
+      "version": "3.12.10",
+      "version_pinned": true
+    },
+    "started_utc": "2026-10-28T02:51:58Z",
+    "tests_run": 127
+  },
+  "local_recomputation_note": "The local DEV run was made at the same commit and inputs before the VM run (02:51:58Z vs 02:53:34Z) and is committed as its own DEV run; it is the local recomputation of every VM file here.",
+  "note": "Cross-host DEV comparison (BUILD_PLAN s.5) of one DEV run per host at one pushed commit. DEV plumbing only (prereg s.15.5): no P or H statistic, tolerance, detection ratio, power or WIN-chance quantity.",
+  "result": {
+    "bootstrap_count_vectors_identical": true,
+    "deterministic_count": 6,
+    "deterministic_files_identical": true,
+    "deterministic_identical_count": 6,
+    "generator_dev_streams_identical": true,
+    "host_fact_files": "differ by design: run.json names the run id, interpreter, platform and timings; stdout.txt differs only in the unittest timing line"
+  },
+  "rules_reading": "MODELED, BUILD_PLAN s.5: (a) every registered computation still runs on H-local; (b) at this commit the bootstrap layer's DEV count vectors are identical with the VM's pinned 3.12.10; (c) the generator's DEV bytes are identical across hosts.",
+  "schema": "szl-oac/ops-health-dev-xplat-compare/v3",
+  "synthetic": true,
+  "vm": {
+    "exit_ok": true,
+    "finished_utc": "2026-10-28T02:53:41Z",
+    "not_passed": [],
+    "platform": {
+      "libc": [
+        "glibc",
+        "2.35"
+      ],
+      "machine": "x86_64",
+      "release": "6.8.0-107-generic",
+      "system": "Linux"
+    },
+    "python": {
+      "executable_sha256": "da02ac288c3d1b6d0efa4fab1cab08f7c91a02c05d739beedf45b35ce88269f5",
+      "implementation": "cpython",
+      "version": "3.12.10 | packaged by conda-forge | (main, Apr 10 2025, 22:21:13) [GCC 13.3.0]"
+    },
+    "run_id": "20261028T025334Z-vm-6d4dac80",
+    "runtime_pins": {
+      "hash_randomization": 1,
+      "ignore_environment": true,
+      "implementation": "cpython",
+      "isolated": true,
+      "pinned": true,
+      "pythonhashseed": "0",
+      "pythonhashseed_pinned": true,
+      "version": "3.12.10",
+      "version_pinned": true
+    },
+    "started_utc": "2026-10-28T02:53:34Z",
+    "tests_run": 127
+  },
+  "vm_files_committed": [
+    "dev_outputs.json",
+    "tests.json",
+    "advisories.jsonl",
+    "dev_fit/model.json",
+    "dev_fit/artifact_receipt.json",
+    "dev_fit/diagnostics.json"
+  ],
+  "vm_files_not_committed": [
+    "run.json",
+    "stdout.txt"
+  ],
+  "vm_files_not_committed_reason": "re-check rule (decision 'VM + local re-check', 2026-10-23): a VM file is committed only if its sha256 equals its local recomputation; the VM host-fact files cannot, by design. How they are kept is open decision D-1 (BUILD_PLAN s.5); until then they are held in the drafting repository's quarantine, not committed."
+}
