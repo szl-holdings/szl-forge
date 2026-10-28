@@ -4,6 +4,7 @@ import hashlib
 import json
 from pathlib import Path
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -78,6 +79,63 @@ class HostedCpuSmokeControls(unittest.TestCase):
                 smoke._runner_paths(root, receipt, prepare=True)
             with self.assertRaisesRegex(smoke.SmokeError, "outside"):
                 smoke._runner_paths(root, root / "receipt.json", prepare=False)
+
+    def test_synthetic_input_has_a_stable_non_eval_dataset_digest(self):
+        self.assertEqual(smoke.INPUT_DATASET_BYTES, b'{"prompt":"Two plus two equals"}\n')
+        self.assertEqual(smoke.INPUT_DATASET_SHA256,
+                         hashlib.sha256(smoke.INPUT_DATASET_BYTES).hexdigest())
+        self.assertEqual(smoke.SEED, 0)
+
+    def test_executed_harness_must_match_checked_out_blob(self):
+        harness = self.parent / "hosted_cpu_smoke.py"
+        harness.write_bytes(b"reviewed harness bytes")
+        with patch.object(smoke, "__file__", str(harness)), \
+                patch.object(smoke.subprocess, "run",
+                             return_value=SimpleNamespace(stdout=b"reviewed harness bytes")):
+            self.assertEqual(smoke._harness_sha256(), hashlib.sha256(harness.read_bytes()).hexdigest())
+        harness.write_bytes(b"changed after checkout")
+        with patch.object(smoke, "__file__", str(harness)), \
+                patch.object(smoke.subprocess, "run",
+                             return_value=SimpleNamespace(stdout=b"reviewed harness bytes")):
+            with self.assertRaisesRegex(smoke.SmokeError, "executed harness"):
+                smoke._harness_sha256()
+
+    def test_run_links_only_a_matching_successful_prepare_receipt(self):
+        source = {"repository": "szl-holdings/szl-forge", "source_sha": "a" * 40,
+                  "run_id": "123", "run_attempt": "1"}
+        snapshot = {"model_type": "llama", "file_sha256": {"model.safetensors": "b" * 64}}
+        prior = {"schema": smoke.SCHEMA, "stage": "PREPARE", "evidence_class": "MEASURED",
+                 "disposition": "MEASURED", "source": source, "model_id": smoke.MODEL_ID,
+                 "model_revision": smoke.MODEL_REVISION, "base_revision": smoke.MODEL_REVISION,
+                 "dataset_sha256": smoke.INPUT_DATASET_SHA256, "dataset_evidence_class": "SAMPLE",
+                 "dataset_scope": "SAMPLE_ONE_RECORD_SYNTHETIC_INFERENCE_INPUT_ONLY",
+                 "harness_sha256": "c" * 64, "seed": smoke.SEED,
+                 "seed_scope": "PYTHON_AND_TORCH_GREEDY_WORKER_ONLY",
+                 "loss": {"evidence_class": "UNAVAILABLE", "status": "NOT_RUN", "reason": "INFERENCE_ONLY"},
+                 "metrics": smoke._empty_metrics(), "snapshot": snapshot,
+                 "wheel_sha256": smoke.WHEEL_SHA256, "training_eligible": False,
+                 "publication_eligible": False, "execution_authority": False,
+                 "inference_attempted": False, "held_out_gate": "NOT_RUN",
+                 "numerical_parity": "NOT_RUN", "signing_status": "UNSIGNED"}
+        prepare = self.parent / "PREPARE.json"
+        smoke_receipt = self.parent / "SMOKE.json"
+        with self.assertRaisesRegex(smoke.SmokeError, "missing"):
+            smoke._prepare_receipt_sha256(smoke_receipt, source, "c" * 64, snapshot)
+        encoded = (json.dumps(prior, sort_keys=True) + "\n").encode()
+        prepare.write_bytes(encoded)
+        self.assertEqual(smoke._prepare_receipt_sha256(smoke_receipt, source, "c" * 64, snapshot),
+                         hashlib.sha256(encoded).hexdigest())
+        for key, value in (("stage", "RUN"), ("disposition", "BLOCKED"),
+                           ("source", {**source, "run_id": "other"}),
+                           ("dataset_sha256", "d" * 64), ("harness_sha256", "e" * 64),
+                           ("loss", {"evidence_class": "MEASURED", "value": 0}),
+                           ("metrics", {"evidence_class": "MEASURED"}),
+                           ("training_eligible", True)):
+            with self.subTest(key=key):
+                changed = dict(prior, **{key: value})
+                prepare.write_text(json.dumps(changed) + "\n", encoding="utf-8")
+                with self.assertRaisesRegex(smoke.SmokeError, "PREPARE receipt differs"):
+                    smoke._prepare_receipt_sha256(smoke_receipt, source, "c" * 64, snapshot)
 
 
 if __name__ == "__main__":

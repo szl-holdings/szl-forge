@@ -142,6 +142,18 @@ versions, free disk/RAM, elapsed time, and only a hash of token IDs. Failed and
 timed-out attempts stay `BLOCKED` or `UNKNOWN_AFTER_ATTEMPT`; the split remains
 for inspection until the ephemeral runner ends.
 
+Receipt schema v2 binds the executed harness bytes to its checked-out Git blob.
+It hashes a canonical, one-record **SAMPLE** synthetic inference input as
+`dataset_sha256`; this is not a training or held-out evaluation dataset. The
+worker sets and records a fixed Python/Torch seed before its greedy decode.
+Loss is `UNAVAILABLE`/`NOT_RUN` because no optimization occurs. Metrics are
+`UNAVAILABLE` until a worker succeeds. The run refuses a missing, failed, or
+source/input/byte-mismatched `PREPARE.json`, then records its raw-file SHA-256 as
+`previous_receipt_sha256` in `SMOKE.json`. This is an unsigned, nonauthoritative
+receipt chain, not an independent signature or a model qualification. The
+earlier v1 hosted run keeps its original evidence and is not retroactively
+upgraded to v2.
+
 A pass establishes only one hosted CPU plumbing smoke. It does not establish
 native-versus-AirLLM parity, QLoRA support, model quality, held-out abstention,
 GPU fit, energy, training, Hugging Face publication, or production authority.

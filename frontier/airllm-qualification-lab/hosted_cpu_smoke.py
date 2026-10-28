@@ -13,6 +13,7 @@ import importlib.metadata
 import json
 import os
 from pathlib import Path
+import random
 import shutil
 import signal
 import subprocess
@@ -27,10 +28,16 @@ except ImportError:  # local Windows software controls do not execute the worker
     resource = None
 
 
-SCHEMA = "szl.airllm.hosted-cpu-smoke/v1"
+SCHEMA = "szl.airllm.hosted-cpu-smoke/v2"
 MODEL_ID = "HuggingFaceTB/SmolLM2-135M-Instruct"
 MODEL_REVISION = "12fd25f77366fa6b3b4b768ec3050bf629380bac"
 MODEL_LICENSE_CARD = "apache-2.0"
+HARNESS_PATH = "frontier/airllm-qualification-lab/hosted_cpu_smoke.py"
+INPUT_PROMPT = "Two plus two equals"
+INPUT_DATASET_BYTES = (json.dumps({"prompt": INPUT_PROMPT}, sort_keys=True,
+                                separators=(",", ":")) + "\n").encode("utf-8")
+INPUT_DATASET_SHA256 = hashlib.sha256(INPUT_DATASET_BYTES).hexdigest()
+SEED = 0
 AIRLLM_VERSION = "4.0.0"
 AIRLLM_SOURCE_COMMIT = "ff35db207a0c559af9aa95d686057c3fe84f1d40"
 WHEEL_NAME = "airllm-4.0.0-py3-none-any.whl"
@@ -93,6 +100,16 @@ def _source_binding() -> dict:
         raise SmokeError("checked-out source differs from workflow event SHA")
     return {"repository": os.environ.get("GITHUB_REPOSITORY"), "source_sha": head,
             "run_id": os.environ.get("GITHUB_RUN_ID"), "run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT")}
+
+
+def _harness_sha256() -> str:
+    """Bind the executed bytes to the tracked source blob, not merely HEAD."""
+    executed = Path(__file__).resolve().read_bytes()
+    tracked = subprocess.run(["git", "show", "HEAD:" + HARNESS_PATH], check=True,
+                             capture_output=True, timeout=10).stdout
+    if executed != tracked:
+        raise SmokeError("executed harness differs from checked-out Git blob")
+    return hashlib.sha256(executed).hexdigest()
 
 
 def _available_ram() -> int:
@@ -216,6 +233,38 @@ def _marker(root: Path) -> dict:
     return value
 
 
+def _prepare_receipt_sha256(receipt: Path, source: dict, harness_sha256: str,
+                            snapshot: dict) -> str:
+    """Only a successful, same-run PREPARE receipt can anchor the RUN receipt."""
+    prepare = receipt.with_name("PREPARE.json")
+    if prepare.is_symlink() or not prepare.is_file():
+        raise SmokeError("same-run PREPARE receipt is missing or symlinked")
+    raw = prepare.read_bytes()
+    prior = json.loads(raw)
+    expected = {"schema": SCHEMA, "stage": "PREPARE", "evidence_class": "MEASURED",
+                "disposition": "MEASURED", "source": source,
+                "model_id": MODEL_ID, "model_revision": MODEL_REVISION,
+                "base_revision": MODEL_REVISION,
+                "dataset_sha256": INPUT_DATASET_SHA256, "dataset_evidence_class": "SAMPLE",
+                "dataset_scope": "SAMPLE_ONE_RECORD_SYNTHETIC_INFERENCE_INPUT_ONLY",
+                "harness_sha256": harness_sha256,
+                "seed": SEED, "seed_scope": "PYTHON_AND_TORCH_GREEDY_WORKER_ONLY",
+                "loss": {"evidence_class": "UNAVAILABLE", "status": "NOT_RUN", "reason": "INFERENCE_ONLY"},
+                "metrics": _empty_metrics(), "snapshot": snapshot, "wheel_sha256": WHEEL_SHA256,
+                "training_eligible": False, "publication_eligible": False,
+                "execution_authority": False, "inference_attempted": False,
+                "held_out_gate": "NOT_RUN", "numerical_parity": "NOT_RUN",
+                "signing_status": "UNSIGNED"}
+    if not isinstance(prior, dict) or any(prior.get(key) != value for key, value in expected.items()):
+        raise SmokeError("PREPARE receipt differs from same-run source, input, or bytes")
+    return hashlib.sha256(raw).hexdigest()
+
+
+def _empty_metrics() -> dict:
+    return {"evidence_class": "UNAVAILABLE", "generated_token_count": None,
+            "elapsed_seconds": None, "peak_rss_kib": None, "token_ids_sha256": None}
+
+
 def _task_bytes(root: Path) -> int:
     total = 0
     for path in root.rglob("*"):
@@ -270,11 +319,13 @@ def _worker(root: Path) -> int:
         path.mkdir(parents=True, exist_ok=True)
     from airllm import AutoModel  # import only after offline and byte checks
     import torch
+    random.seed(SEED)
+    torch.manual_seed(SEED)
     started = time.monotonic()
     model = AutoModel.from_pretrained(str(root / "snapshot"), device="cpu", dtype=torch.float32,
                                       layer_shards_saving_path=str(root / "split"),
                                       delete_original=False, prefetching=False)
-    tokenized = model.tokenizer(["Two plus two equals"], return_tensors="pt", return_attention_mask=False)
+    tokenized = model.tokenizer([INPUT_PROMPT], return_tensors="pt", return_attention_mask=False)
     prompt_tokens = tokenized["input_ids"].shape[-1]
     with torch.inference_mode():
         result = model.generate(tokenized["input_ids"], max_new_tokens=1,
@@ -316,7 +367,14 @@ def main() -> int:
         return _worker(root)
     result = {"schema": SCHEMA, "captured_at_utc": datetime.now(timezone.utc).isoformat(),
               "evidence_class": "BLOCKED", "disposition": "BLOCKED", "stage": "PREPARE" if args.prepare else "RUN",
-              "model_id": MODEL_ID, "model_revision": MODEL_REVISION, "license_card_metadata": MODEL_LICENSE_CARD,
+              "model_id": MODEL_ID, "model_revision": MODEL_REVISION,
+              "base_revision": MODEL_REVISION, "license_card_metadata": MODEL_LICENSE_CARD,
+              "dataset_sha256": INPUT_DATASET_SHA256,
+              "dataset_evidence_class": "SAMPLE",
+              "dataset_scope": "SAMPLE_ONE_RECORD_SYNTHETIC_INFERENCE_INPUT_ONLY",
+              "seed": SEED, "seed_scope": "PYTHON_AND_TORCH_GREEDY_WORKER_ONLY",
+              "loss": {"evidence_class": "UNAVAILABLE", "status": "NOT_RUN", "reason": "INFERENCE_ONLY"},
+              "metrics": _empty_metrics(), "previous_receipt_sha256": "UNAVAILABLE",
               "airllm_source_commit": AIRLLM_SOURCE_COMMIT, "delete_original": False,
               "training_eligible": False, "publication_eligible": False, "execution_authority": False,
               "held_out_gate": "NOT_RUN", "numerical_parity": "NOT_RUN", "signing_status": "UNSIGNED",
@@ -328,6 +386,7 @@ def main() -> int:
         if receipt.exists():
             raise SmokeError("receipt path must be fresh")
         result["source"] = _source_binding()
+        result["harness_sha256"] = _harness_sha256()
         result["hardware"] = _hardware()
         result["capacity_before"] = _capacity(root, download=args.prepare)
         if args.prepare:
@@ -352,6 +411,8 @@ def main() -> int:
             _marker(root)
             result["snapshot"] = _verify_snapshot(root / "snapshot")
             result["airllm"] = _verify_wheel(root / "wheel" / WHEEL_NAME)
+            result["previous_receipt_sha256"] = _prepare_receipt_sha256(
+                receipt, result["source"], result["harness_sha256"], result["snapshot"])
             result["dependency_versions"] = _dependency_versions()
             result["dependency_integrity"] = "VERSION_OBSERVED_HASH_CLOSURE_NOT_VERIFIED"
             for path in (root / "cache" / "hf", root / "cache" / "xdg",
@@ -375,6 +436,9 @@ def main() -> int:
             result["worker_result"] = json.loads(worker_tail.splitlines()[-1])
             if result["worker_result"].get("generated_token_count") != 1:
                 raise SmokeError("worker returned no one-token result")
+            result["metrics"] = {"evidence_class": "MEASURED",
+                                 **{name: result["worker_result"][name] for name in
+                                    ("generated_token_count", "elapsed_seconds", "peak_rss_kib", "token_ids_sha256")}}
             result["inference_run"] = "MEASURED"
             result["disposition"] = "MEASURED"
             result["evidence_class"] = "MEASURED"
