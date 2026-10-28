@@ -13,6 +13,7 @@ import importlib.metadata
 import json
 import os
 from pathlib import Path
+import random
 import shutil
 import signal
 import subprocess
@@ -27,10 +28,11 @@ except ImportError:  # local Windows software controls do not execute the worker
     resource = None
 
 
-SCHEMA = "szl.airllm.hosted-cpu-smoke/v1"
+SCHEMA = "szl.airllm.hosted-cpu-smoke/v2"
 MODEL_ID = "HuggingFaceTB/SmolLM2-135M-Instruct"
 MODEL_REVISION = "12fd25f77366fa6b3b4b768ec3050bf629380bac"
 MODEL_LICENSE_CARD = "apache-2.0"
+HARNESS_PATH = "frontier/airllm-qualification-lab/hosted_cpu_smoke.py"
 AIRLLM_VERSION = "4.0.0"
 AIRLLM_SOURCE_COMMIT = "ff35db207a0c559af9aa95d686057c3fe84f1d40"
 WHEEL_NAME = "airllm-4.0.0-py3-none-any.whl"
@@ -50,8 +52,13 @@ FILES = {
 }
 MARKER = ".szl-airllm-hosted-task.json"
 PROMPT = "Two plus two equals"
+INPUT_DATASET_BYTES = (json.dumps({"prompt": PROMPT}, sort_keys=True,
+                                  separators=(",", ":")) + "\n").encode("utf-8")
+INPUT_DATASET_SHA256 = hashlib.sha256(INPUT_DATASET_BYTES).hexdigest()
+DATASET_EVIDENCE_CLASS = "SAMPLE"
+DATASET_SCOPE = "SAMPLE_ONE_RECORD_SYNTHETIC_INFERENCE_INPUT_ONLY"
 DO_SAMPLE = False
-GENERATION_SEED = None
+GENERATION_SEED = 0
 MAX_NEW_TOKENS = 1
 DEPENDENCIES = {"torch": "2.6.0", "transformers": "4.57.3", "accelerate": "1.12.0",
                 "safetensors": "0.7.0", "huggingface-hub": "0.36.0", "scipy": "1.15.3",
@@ -70,16 +77,36 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _generation_binding() -> dict:
-    if DO_SAMPLE or GENERATION_SEED is not None or MAX_NEW_TOKENS != 1:
-        raise SmokeError("hosted smoke is greedy, unseeded, and limited to one token")
-    return {"do_sample": False, "max_new_tokens": 1, "seed": None, "seed_applied": False,
+def _harness_sha256() -> str:
+    """Bind executed bytes to the tracked Git blob, not merely to HEAD."""
+    executed = Path(__file__).resolve().read_bytes()
+    tracked = subprocess.run(["git", "show", "HEAD:" + HARNESS_PATH], check=True,
+                             capture_output=True, timeout=10).stdout
+    if executed.replace(b"\r\n", b"\n") != tracked:
+        raise SmokeError("executed harness differs from checked-out Git blob")
+    return hashlib.sha256(executed).hexdigest()
+
+
+def _loss_record() -> dict:
+    return {"evidence_class": "UNAVAILABLE", "status": "NOT_RUN", "reason": "INFERENCE_ONLY"}
+
+
+def _empty_metrics() -> dict:
+    return {"evidence_class": "UNAVAILABLE", "generated_token_count": None,
+            "elapsed_seconds": None, "peak_rss_kib": None, "token_ids_sha256": None}
+
+
+def _generation_binding(*, seed_applied: bool = False) -> dict:
+    if DO_SAMPLE or not isinstance(GENERATION_SEED, int) or MAX_NEW_TOKENS != 1:
+        raise SmokeError("hosted smoke is greedy, seeded, and limited to one token")
+    return {"do_sample": False, "max_new_tokens": 1, "seed": GENERATION_SEED, "seed_applied": seed_applied,
             "input_sha256": hashlib.sha256(PROMPT.encode("utf-8")).hexdigest(),
-            "harness_sha256": _sha256(Path(__file__).resolve())}
+            "dataset_sha256": INPUT_DATASET_SHA256,
+            "harness_sha256": _harness_sha256()}
 
 
-def _generation_record() -> dict:
-    binding = _generation_binding()
+def _generation_record(*, seed_applied: bool = False) -> dict:
+    binding = _generation_binding(seed_applied=seed_applied)
     return {key: binding[key] for key in ("do_sample", "max_new_tokens", "seed", "seed_applied")}
 
 
@@ -95,13 +122,21 @@ def _bind_prepare_receipt(path: Path, source_sha: str) -> str:
     if (document.get("schema") != SCHEMA or document.get("stage") != "PREPARE"
             or document.get("disposition") != "MEASURED" or document.get("evidence_class") != "MEASURED"):
         raise SmokeError("prepare receipt is not a measured prepare stage")
-    if document.get("model_id") != MODEL_ID or document.get("model_revision") != MODEL_REVISION:
+    if (document.get("model_id") != MODEL_ID or document.get("model_revision") != MODEL_REVISION
+            or document.get("base_revision") != MODEL_REVISION):
         raise SmokeError("prepare receipt model binding differs")
     if document.get("airllm_source_commit") != AIRLLM_SOURCE_COMMIT or document.get("delete_original") is not False:
         raise SmokeError("prepare receipt AirLLM pin differs")
     if source.get("repository") != "szl-holdings/szl-forge" or source.get("source_sha") != source_sha:
         raise SmokeError("prepare receipt is not bound to this source")
-    if document.get("harness_sha256") != binding["harness_sha256"] or document.get("input_sha256") != binding["input_sha256"]:
+    if (document.get("harness_sha256") != binding["harness_sha256"]
+            or document.get("input_sha256") != binding["input_sha256"]
+            or document.get("dataset_sha256") != INPUT_DATASET_SHA256
+            or document.get("dataset_evidence_class") != DATASET_EVIDENCE_CLASS
+            or document.get("dataset_scope") != DATASET_SCOPE
+            or document.get("seed") != GENERATION_SEED
+            or document.get("loss") != _loss_record()
+            or document.get("metrics") != _empty_metrics()):
         raise SmokeError("prepare receipt harness or input hash differs")
     if document.get("generation") != _generation_record():
         raise SmokeError("prepare receipt generation binding differs")
@@ -117,7 +152,7 @@ def _token_result(sequence: list, prompt_tokens: int, elapsed: float, peak) -> d
             "token_ids_sha256": hashlib.sha256(json.dumps(sequence, separators=(",", ":")).encode()).hexdigest(),
             "elapsed_seconds": round(elapsed, 3), "peak_rss_kib": peak,
             "model_quality": "UNKNOWN", "numerical_parity": "NOT_RUN", "execution_authority": False,
-            **_generation_binding()}
+            **_generation_binding(seed_applied=True)}
 
 
 def _runner_paths(root: Path, receipt: Path, *, prepare: bool) -> None:
@@ -324,6 +359,8 @@ def _worker(root: Path) -> int:
         path.mkdir(parents=True, exist_ok=True)
     from airllm import AutoModel  # import only after offline and byte checks
     import torch
+    random.seed(GENERATION_SEED)
+    torch.manual_seed(GENERATION_SEED)
     started = time.monotonic()
     model = AutoModel.from_pretrained(str(root / "snapshot"), device="cpu", dtype=torch.float32,
                                       layer_shards_saving_path=str(root / "split"),
@@ -369,7 +406,13 @@ def main() -> int:
         return _worker(root)
     result = {"schema": SCHEMA, "captured_at_utc": datetime.now(timezone.utc).isoformat(),
               "evidence_class": "BLOCKED", "disposition": "BLOCKED", "stage": "PREPARE" if args.prepare else "RUN",
-              "model_id": MODEL_ID, "model_revision": MODEL_REVISION, "license_card_metadata": MODEL_LICENSE_CARD,
+              "model_id": MODEL_ID, "model_revision": MODEL_REVISION, "base_revision": MODEL_REVISION,
+              "license_card_metadata": MODEL_LICENSE_CARD,
+              "dataset_sha256": INPUT_DATASET_SHA256, "dataset_evidence_class": DATASET_EVIDENCE_CLASS,
+              "dataset_scope": DATASET_SCOPE, "seed": GENERATION_SEED,
+              "seed_scope": "PYTHON_AND_TORCH_GREEDY_WORKER_ONLY", "loss": _loss_record(),
+              "metrics": _empty_metrics(), "prepare_receipt_sha256": "UNAVAILABLE",
+              "previous_receipt_sha256": "UNAVAILABLE",
               "airllm_source_commit": AIRLLM_SOURCE_COMMIT, "delete_original": False,
               "training_eligible": False, "publication_eligible": False, "execution_authority": False,
               "held_out_gate": "NOT_RUN", "numerical_parity": "NOT_RUN", "signing_status": "UNSIGNED",
@@ -398,7 +441,7 @@ def main() -> int:
             result["wheel_sha256"] = WHEEL_SHA256
             result["task_cache_root"] = str(root / "cache")
             result.update(_generation_binding())
-            result["generation"] = _generation_record()
+            result["generation"] = _generation_record(seed_applied=True)
             result["disposition"] = "MEASURED"
             result["evidence_class"] = "MEASURED"
             result["measurement_scope"] = "PINNED_SOURCE_BYTES_PREPARED_ONLY"
@@ -409,6 +452,7 @@ def main() -> int:
             _marker(root)
             binding = _generation_binding()
             result["prepare_receipt_sha256"] = _bind_prepare_receipt(args.prepare_receipt.absolute(), result["source"]["source_sha"])
+            result["previous_receipt_sha256"] = result["prepare_receipt_sha256"]
             result["input_sha256"] = binding["input_sha256"]
             result["harness_sha256"] = binding["harness_sha256"]
             result["generation"] = _generation_record()
@@ -438,9 +482,13 @@ def main() -> int:
             worker_result = result["worker_result"]
             if worker_result.get("generated_token_count") != 1:
                 raise SmokeError("worker returned no one-token result")
-            for key, expected in binding.items():
+            worker_binding = _generation_binding(seed_applied=True)
+            for key, expected in worker_binding.items():
                 if worker_result.get(key) != expected:
                     raise SmokeError("worker generation binding differs from harness")
+            result["metrics"] = {"evidence_class": "MEASURED",
+                                 **{name: worker_result[name] for name in
+                                    ("generated_token_count", "elapsed_seconds", "peak_rss_kib", "token_ids_sha256")}}
             result["inference_run"] = "MEASURED"
             result["disposition"] = "MEASURED"
             result["evidence_class"] = "MEASURED"

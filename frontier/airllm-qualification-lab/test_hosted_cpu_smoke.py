@@ -90,8 +90,16 @@ class HostedCpuSmokeControls(unittest.TestCase):
             "generation": smoke._generation_record(),
             "harness_sha256": binding["harness_sha256"],
             "input_sha256": binding["input_sha256"],
+            "dataset_sha256": smoke.INPUT_DATASET_SHA256,
+            "dataset_evidence_class": smoke.DATASET_EVIDENCE_CLASS,
+            "dataset_scope": smoke.DATASET_SCOPE,
             "model_id": smoke.MODEL_ID,
             "model_revision": smoke.MODEL_REVISION,
+            "base_revision": smoke.MODEL_REVISION,
+            "seed": smoke.GENERATION_SEED,
+            "loss": smoke._loss_record(),
+            "metrics": smoke._empty_metrics(),
+            "hardware": {"runner_os": "ISOLATED"},
             "schema": smoke.SCHEMA,
             "source": {"repository": "szl-holdings/szl-forge", "source_sha": source_sha},
             "stage": "PREPARE",
@@ -103,10 +111,11 @@ class HostedCpuSmokeControls(unittest.TestCase):
 
     def test_run_receipt_binds_prepare_bytes_input_seed_and_harness(self):
         binding = smoke._generation_binding()
-        self.assertEqual(binding["seed"], None)
+        self.assertEqual(binding["seed"], 0)
         self.assertFalse(binding["seed_applied"])
         self.assertFalse(binding["do_sample"])
         self.assertEqual(binding["input_sha256"], hashlib.sha256(smoke.PROMPT.encode("utf-8")).hexdigest())
+        self.assertEqual(binding["dataset_sha256"], smoke.INPUT_DATASET_SHA256)
         self.assertEqual(binding["harness_sha256"], hashlib.sha256(Path(smoke.__file__).read_bytes()).hexdigest())
         source_sha = "a" * 40
         path = self._prepare_receipt(source_sha)
@@ -117,6 +126,15 @@ class HostedCpuSmokeControls(unittest.TestCase):
             smoke._bind_prepare_receipt(path, "b" * 40)
         broken = self._prepare_receipt(source_sha, harness_sha256="0" * 64)
         with self.assertRaisesRegex(smoke.SmokeError, "harness"):
+            smoke._bind_prepare_receipt(broken, source_sha)
+        for key, value in (("dataset_sha256", "0" * 64), ("seed", 7),
+                           ("loss", {"evidence_class": "MEASURED", "value": 0}),
+                           ("metrics", {"evidence_class": "MEASURED"})):
+            broken = self._prepare_receipt(source_sha, **{key: value})
+            with self.assertRaisesRegex(smoke.SmokeError, "harness or input hash"):
+                smoke._bind_prepare_receipt(broken, source_sha)
+        broken = self._prepare_receipt(source_sha, base_revision="0" * 40)
+        with self.assertRaisesRegex(smoke.SmokeError, "model binding"):
             smoke._bind_prepare_receipt(broken, source_sha)
         for payload in (b"[]", b'"receipt"', b"null", b"false", b"7", b"1.5"):
             path.write_bytes(payload)
@@ -129,7 +147,8 @@ class HostedCpuSmokeControls(unittest.TestCase):
         self.assertEqual(result["generated_token_count"], 1)
         self.assertEqual(result["input_sha256"], binding["input_sha256"])
         self.assertEqual(result["harness_sha256"], binding["harness_sha256"])
-        self.assertFalse(result["seed_applied"])
+        self.assertEqual(result["dataset_sha256"], smoke.INPUT_DATASET_SHA256)
+        self.assertTrue(result["seed_applied"])
         self.assertFalse(result["execution_authority"])
         workflow = Path(smoke.__file__).resolve().parents[2] / ".github" / "workflows" / "airllm-hosted-cpu-smoke.yml"
         text = workflow.read_text(encoding="utf-8")
@@ -186,7 +205,7 @@ class HostedCpuSmokeControls(unittest.TestCase):
                 self.assertIs(document["publication_eligible"], False)
                 self.assertIn("SmokeError", document["reason"])
                 self.assertIn("JSON object", document["reason"])
-                self.assertNotIn("prepare_receipt_sha256", document)
+                self.assertEqual(document["prepare_receipt_sha256"], "UNAVAILABLE")
 
 
 if __name__ == "__main__":
