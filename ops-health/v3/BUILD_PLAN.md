@@ -3,6 +3,12 @@
 Everything here is SYNTHETIC. This file holds no v3 result. When it was written (2026-10-23, ws
 `v3a-setup`), no v3 code, v3 data, fit, retrain or DEV run existed (DEV runs: 0).
 
+**Revision 1 (2026-10-28, ws `v3a-setup`).** The host facts, the rule for VM outputs and the
+schedule are brought up to date (sections 1, 3, 4, 5, 6, 8, 9 and 11). The step map (section
+7), the tags and the freeze-submission planning date (2026-11-19T00:00:00Z) are unchanged.
+Section 12 lists every change. At this revision, step-2 code exists in part (ws `v3a-code`), and
+no v3 data, fit or retrain exists.
+
 This is a working plan, not a registered item. It changes nothing in the registered protocol
 `v3/PREREGISTRATION.md` or in the seal re-registration `v3/REREGISTRATION_r1.md`. Where this plan
 and the protocol differ, the protocol wins, and the difference is a defect of this plan. A genuine
@@ -18,6 +24,7 @@ CONJECTURE and UNKNOWN, as in the protocol. Dates and durations in the schedule 
 | protocol | `ops-health/v3/PREREGISTRATION.md`, sha256 `24c239e7…a3e1d0e`, registered at `970ce6ce533f77c2c679f27d31ba86b7c43bb7a4`, tag `oac-v3-registered` (tag object `4fc95253d81b4847e054849d9c874fba90c0fb12`) | MEASURED: `git ls-remote`, sha256 of the public bytes |
 | seal re-registration | `ops-health/v3/REREGISTRATION_r1.md`, sha256 `6c5f83ae…3ac3`, at `80eeaf12be7dc4d73e5f81e2bda9c05b6257ab23`, tag `oac-v3-registered-r1` (tag object `7a036f228886b8d29b501aee3277dc1983c21175`) | MEASURED: same |
 | research branch head when this plan started | `6b2fe85f318587e013b48a510245a8f2868bc650` | MEASURED: same |
+| research branch head at revision 1 | `cd62f1441f563ef1c5767d3b0d4a7c060fbc11cf` (step-2 code, part 1, ws `v3a-code`); the v3 documents, timestamp files and the 2 tools equal their drafting copies, except that the drafting copy of `AMENDMENT_REQUESTS.md` holds one request not yet published (the public bytes are its exact prefix) | MEASURED 2026-10-28: `git ls-remote`, sha256; drafting log `logs/v3/build/resume_verify_20261028T0234Z.txt` |
 | drafting copies equal to the public bytes | all 6 v3 documents, the 4 timestamp files and the 2 tools | MEASURED: drafting log `logs/v3/build/v3_files_equal_20261023.txt` |
 | beacon round | R′ = 6659606 of the drand default mainnet chain `8990e7a9…b2ce`, scheduled 2026-11-21T00:00:00Z. From r1 on, "R" in the protocol means R′ | REPORTED: r1 |
 | exception | the window for frozen-state fixes closed for good at 2026-10-24T00:00:00Z, the scheduled time of the first registered round 6578966 (§15.3, §15.6) | REPORTED: r1 |
@@ -58,7 +65,9 @@ arithmetic, 2026-10-23).
    and retrain, the mutation suite, the opening and the analysis (§13 step 9). Each entry point
    refuses to run otherwise (version, `sys.flags.isolated`, `sys.flags.hash_randomization`).
    Under `-I` the script directory is not on `sys.path`, so entry points add the research root
-   themselves.
+   themselves. At revision 1, one open request about these pins is held in the drafting copy of
+   `v3/AMENDMENT_REQUESTS.md` for the orchestrator. It must be decided before step 3 (gate G3),
+   because a change to a frozen item is possible only as a re-registration before step 3 (§15.3).
 5. **One step at a time.** Each step is committed, pushed and tagged before the next starts
    (§13). Tags are placed by the orchestrator only, never by a lane. Each step's first commit
    records the previous tag's target and tag object id (`v3/results/TAGS.json`, append-only), so
@@ -71,8 +80,9 @@ arithmetic, 2026-10-23).
 
 | host | role | facts | label |
 | --- | --- | --- | --- |
-| **H-local**, the drafting host (Windows 11, 16 logical processors, 31.59 GiB) | every registered computation: steps 3 to 7, the freeze tooling, the opening (step 9) and the analysis (step 10). It is the protocol's opening host | CPython 3.12.10 (`tags/v3.12.10:0cc8128`, MSC v.1943, 64 bit), `python.exe` sha256 `4d6f5f81a4bca11191c4c7c6b43632694d0a4ce74e068619d8fdc161d469859a`, `python312.dll` sha256 `9a0e3435…2120`; free physical memory 7.70 GiB; C: free 25,587 MB at 03:05Z and 23,122 MB at 03:14Z on 2026-10-23 (it is volatile and has reached 0) | MEASURED: `logs/v3/build/local_python_20261023.txt` |
-| **H-vm**, the CPU execution VM (Ubuntu 22.04, kernel 6.8.0-107, 6 vCPU Xeon E5-2699 v4) | DEV runs, the v3 test suite on a second platform, the cross-host determinism check; no registered computation while its interpreter misses the pin | work dir `/home/Ubuntu/oac-v3-20261023T030756Z-68976ccc`, claim `.oac-v3.claim.json` sha256 `e5e49e06…44dd`; interpreter miniconda CPython **3.12.4** (Anaconda build, GCC 11.2.0, glibc 2.35), sha256 `f299eeefdd0297384ef80076fa9b984469cc1a666e7e24872e5773ecd9bb1611`; libm sha256 `3dd5511a…dfee6`; MemTotal 94.39 GiB, MemAvailable 78.82 GiB; 136,754 MB free on `/`; git 2.34.1; every other `python3.12` found is the same 3.12.4 (three venv copies with the same sha256, and conda's cached `python-3.12.4` package) | MEASURED: `logs/v3/build/vm_census_20261023.txt`, `logs/v3/build/vm_python_search_20261023.txt` |
+| **H-local**, the drafting host (Windows 11, 16 logical processors, 31.59 GiB) | every registered computation: steps 3 to 7, the freeze tooling, the opening (step 9) and the analysis (step 10). It is the protocol's opening host | CPython 3.12.10 (`tags/v3.12.10:0cc8128`, MSC v.1943, 64 bit), `python.exe` sha256 `4d6f5f81a4bca11191c4c7c6b43632694d0a4ce74e068619d8fdc161d469859a`, `python312.dll` sha256 `9a0e3435…2120`; free physical memory 7.70 GiB; C: free 25,587 MB at 03:05Z and 23,122 MB at 03:14Z on 2026-10-23 (it is volatile and has reached 0). At revision 1 (2026-10-28T02:33Z to 02:39Z): same interpreter and sha256; C: free 20,736 MB; free physical memory **2,201 MB** of 32,346 MB, below the opening preflight's 4 GiB (CP-4) | MEASURED: `logs/v3/build/local_python_20261023.txt`, `logs/v3/build/resume_verify_20261028T0234Z.txt` |
+| **H-vm**, the CPU execution VM (Ubuntu 22.04, kernel 6.8.0-107, 6 vCPU Xeon E5-2699 v4) | DEV runs, the v3 test suite on a second platform, the cross-host determinism check; no registered computation while its interpreter misses the pin | work dir `/home/Ubuntu/oac-v3-20261023T030756Z-68976ccc`, claim `.oac-v3.claim.json` sha256 `e5e49e06…44dd`; interpreter miniconda CPython **3.12.4** (Anaconda build, GCC 11.2.0, glibc 2.35), sha256 `f299eeefdd0297384ef80076fa9b984469cc1a666e7e24872e5773ecd9bb1611`; libm sha256 `3dd5511a…dfee6`; MemTotal 94.39 GiB, MemAvailable 78.82 GiB; 136,754 MB free on `/`; git 2.34.1; every other `python3.12` found is the same 3.12.4 (three venv copies with the same sha256, and conda's cached `python-3.12.4` package). At revision 1 (2026-10-28T02:37Z): claim unchanged; base interpreter and libm unchanged; the work dir also holds `py31210/`, a conda-forge CPython **3.12.10** environment (packaged by conda-forge, built Apr 10 2025, GCC 13.3.0, glibc 2.35; `bin/python3.12` sha256 `da02ac288c3d1b6d0efa4fab1cab08f7c91a02c05d739beedf45b35ce88269f5`, the `python` package plus conda's default dependencies), made 2026-10-24; MemAvailable 76.00 GiB; 92,434 MB free on `/` | MEASURED: `logs/v3/build/vm_census_20261023.txt`, `logs/v3/build/vm_python_search_20261023.txt`, `logs/v3/build/resume_verify_20261028T0234Z.txt`; the environment's maker is ws `v3a-code` (REPORTED: drafting records) |
+| **second re-check host** | planned host for re-checking VM outputs | not in use at revision 1: its SSH host key is not confirmed, so no lane connects to it until the orchestrator says so; until then every re-check runs on H-local | REPORTED: orchestrator, 2026-10-28 |
 | **GitHub-hosted Windows runner** in szl-forge | the independent re-run of step 9 with the same pins | planned by §13 step 9; a workflow is needed (section 6, step 8) | REPORTED: §13 step 9 |
 
 **The VM does not meet the pin.** Its only CPython 3.12 is 3.12.4. The Anaconda `defaults`
@@ -83,6 +93,26 @@ environment inside the VM work dir is an option for the orchestrator to approve.
 VM carry step 10's FRAGILE check (72-hour budget; v2's check stopped twice on MemoryError on
 H-local, REPORTED: `v2/results/FINAL_RESULTS.md`). It never moves a registered fit to the VM
 unless the determinism rule of section 5 also passes there.
+
+At revision 1 such an environment exists (`py31210/`, above). The decision stands: no registered
+computation depends on the VM.
+
+**Every VM output is re-checked on H-local (decision "VM + local re-check", 2026-10-23).** The
+VM is not under this program's sole control. Every file computed on the VM is recomputed on
+H-local with `py -3.12`, at the same commit and from the same inputs, and is committed only if
+its sha256 is identical. Both sha256 values go to `logs/v3/build/recheck_<ws>.txt` in the
+drafting repository. A difference is a blocker: both copies are kept in
+`logs/v3/build/quarantine/<ws>/<UTCstamp>/` with a `MISMATCH.json` (paths, both sha256 values,
+sizes, commit, exact commands, interpreter versions and binary sha256), neither copy is committed
+as a result, nothing is rewritten, re-derived or retried silently, and neither the protocol nor
+`v3/AMENDMENTS.md` is changed to force agreement. Before each local recomputation H-local must
+have C: free of at least 15,360 MB plus twice the expected output size and at least 2,048 MB of
+free physical memory, and it runs one heavy process at a time; otherwise the lane stops and
+reports. Nothing secret is ever staged on the VM. Two consequences (MODELED): a VM job saves no
+H-local compute, it only adds a second-platform observation; and a VM file that records host
+facts (a run record naming its interpreter, its stdout, or any digest over such a file) cannot
+equal its local recomputation, so under this rule it is not committed. How such a file is kept is
+open decision D-1 (section 5).
 
 ## 5. Determinism: what must match, and the DEV check
 
@@ -117,6 +147,29 @@ check shows; (b) a VM job may compute step 10's FRAGILE check only if the VM has
 and the check shows identical bytes for the bootstrap layer; (c) a difference in the
 generator's DEV bytes across hosts is recorded as a finding, and step 3 runs on H-local in any
 case, after the §3.3 parity tests pass there.
+
+**Status at revision 1 (open).** The first cross-host DEV comparison ran at `cd62f144` on
+2026-10-23, with the VM's base 3.12.4 (not the pin) and H-local's pinned 3.12.10, and 125 of 125
+tests passing on each. Of the 8 files compared, `dev_fit/model.json`, `dev_fit/diagnostics.json`,
+`tests.json` and `advisories.jsonl` were byte-identical. `dev_fit/artifact_receipt.json` (field
+`fit.trace_sha256`), `dev_outputs.json` (field `dev_fit.receipt_sha256`), `run.json` and
+`stdout.txt` were not (MEASURED: drafting record
+`logs/v3/build/quarantine/v3a-code/20261023T085156Z/MISMATCH.json`). Under the re-check rule
+(section 4) this is a blocker of ws `v3a-code`, and neither copy is committed as a result. A
+second VM DEV run at `cd62f144`, with `py31210/` 3.12.10 (2026-10-24), has only its run record in
+the drafting repository and no local recomputation record (REPORTED: drafting records). The
+DEV check of this section is therefore not done. Rules (a) to (c) are unchanged.
+
+**Open decision D-1 (for the orchestrator, before more VM DEV runs).** §15.5 says every DEV run's
+output is committed; the re-check rule forbids committing a VM file that differs from its local
+recomputation. At revision 1, three DEV runs have no committed output: the two VM runs above and
+the local recomputation `20261023T085057Z-local-4d68cde8` (MEASURED: the research branch at
+`cd62f144` holds only `20261023T084621Z-local-0a662cff` and `20261023T084715Z-local-3ca5bddb`).
+Options (MODELED): (i) commit such files under a separate path as quarantined evidence, labelled
+"VM copy, not a result", next to their `MISMATCH.json`; (ii) leave them uncommitted and disclose
+each such run in the compliance audit and the report; (iii) before any further VM DEV run, make
+the compared set exclude every host-fact file by design, so that only deterministic files are
+compared and committed. The plan takes no option itself.
 
 ## 6. Code layout (planned; paths under the research root, `ops-health/` in public)
 
@@ -166,6 +219,10 @@ v3/seal/FREEZE_MANIFEST.json  step 8
 runs/v3/receipts/, runs/v3/TEST_OPENED.json
 logs/v3/dev/<run_id>/     every DEV run's output (§15.5)
 ```
+
+The kernel's public path is `ops-health/v3/ops-health/ops_health.py`. The doubled
+`ops-health/` is intended: it mirrors v2's `ops-health/v2/ops-health/ops_health.py` (MEASURED:
+both tracked at `cd62f144`; note added in revision 1).
 
 The only use of the banned word in new v3 code is the frozen v1 authority-map key, which the v3
 kernel takes from `AUTHORITY_MAP` in `v2/ops-health/ops_health.py` (§6.7 item 5). Verification
@@ -282,65 +339,88 @@ test "$(git rev-parse HEAD)" = "<sha>"
 PYTHONHASHSEED=0 nice -n 10 /home/Ubuntu/miniconda3/bin/python3.12 -I ops-health/v3/tools/<entry>.py ... > "$W/out/<run_id>/..."
 ```
 
-Results return by `scp` to the drafting repository at `logs/v3/dev/<run_id>-vm/`, and are
-committed there and pushed under `ops-health/logs/v3/dev/`.
+Results return by `scp` to the drafting repository (`logs/v3/build/vm_return/<run_id>/` at
+revision 1). Each file is then recomputed on H-local and committed, under
+`ops-health/logs/v3/dev/`, only if its sha256 equals the local recomputation (section 4); the
+comparison goes to `logs/v3/build/recheck_<ws>.txt`. With the work dir's 3.12.10, the
+interpreter path in the template above is `"$W"/py31210/bin/python3.12`. Before any VM write over
+1 GB, `df` on the VM is checked; its free space fell from 136,754 MB to 92,434 MB between
+2026-10-23 and 2026-10-28 through another lane (MEASURED).
 
 | job | stage | what | interpreter |
 | --- | --- | --- | --- |
-| VM-0 | `v3a-setup` (done) | work dir, claim, census | 3.12.4 (census only) |
-| VM-1 | `v3b-dev` | the v3 test suite and the DEV runs of section 5 at each step-2 code commit that the DEV check names; at most 4 processes | 3.12.4, labeled "not the runtime pin" in every output |
-| VM-2 | step 10, optional | the FRAGILE check (100 stream sets, checkpointed per set), only with an approved pinned 3.12.10 in the work dir and rule (b) of section 5 | 3.12.10 only |
+| VM-0 | `v3a-setup` (done) | work dir, claim, census; census repeated at revision 1 | 3.12.4 (census only) |
+| VM-1 | `v3b-dev` | the v3 test suite and the DEV runs of section 5 at each step-2 code commit that the DEV check names; at most 4 processes; outputs committed only after the local re-check, and not before D-1 is decided | 3.12.4, labeled "not the runtime pin" in every output, or `py31210/` 3.12.10 |
+| VM-2 | step 10, optional | the FRAGILE check (100 stream sets, checkpointed per set), only with the pinned 3.12.10 in the work dir and rule (b) of section 5. Under the re-check rule its output must also be recomputed on H-local, so VM-2 no longer takes the FRAGILE load off H-local (MODELED); the FRAGILE check is planned on H-local within its 72-hour budget | `py31210/` 3.12.10 only |
 
 No VM job generates sealed rows, opens any v2 sealed file, or computes a registered statistic.
 
 ## 9. Schedule with buffers
 
 The program's sessions were stopped by usage limits for most of 2026-10-14 to 2026-10-22
-(REPORTED: r1). The schedule therefore puts a 7-day buffer between the planned freeze and the
-planning date, and a further 1.9 days before the T1 cutoff. Each lane keeps
-`progress/<ws>.md`, appends "done: …; next: …" after each sub-step, and commits and pushes small
-increments.
+(REPORTED: r1). After that, the research branch did not move from `cd62f144` (2026-10-23) to
+2026-10-28, and the registration and r1 proofs were not upgraded (MEASURED 2026-10-28; the cause
+is UNKNOWN to this lane). Revision 1 therefore re-baselines the schedule from 2026-10-28. The
+planning date and the cutoffs do not move. The buffer between the planned freeze and the planning date shrinks
+from 7 days to 4 days, with a further 1.9 days before the T1 cutoff, and steps 3 to 8 keep a
+latest margin of 2 to 4 days each. Each lane keeps `progress/<ws>.md`, appends "done: …; next: …"
+after each sub-step, and commits and pushes small increments.
 
-| milestone | ws id | target done (UTC) | latest done | note |
+Revision 0's targets (2026-10-23) stay in this file's history at `66a9cb3f`. Target and latest
+dates are plans (MODELED). The status column is as of 2026-10-28T02:40Z (MEASURED unless
+marked).
+
+| milestone | ws id | target done (UTC) | latest done | status at revision 1 / note |
 | --- | --- | --- | --- | --- |
-| setup | `v3a-setup` | 2026-10-23 | — | this plan; clone, VM claim, interpreter census |
-| registration and r1 proofs upgraded and committed; T_fwd checked against 2026-10-24T00:00Z | orchestrator | 2026-10-24 | 2026-10-26 | needed by `v3b-seal` (§3.3) and by §13 step 1 |
-| archive-path pretest (Software Heritage save, Internet Archive capture of the two registered tag refs) | orchestrator | 2026-10-25 | 2026-10-28 | §13 step 1 planned this test of the T2 path; it measures the archive delay before the freeze |
-| step 2 generator, kernel, beacon | `v3b-gen`, `v3b-kernel`, `v3b-beacon` | 2026-10-27 | 2026-10-29 | in parallel; one pushing lane at a time |
-| step 2 recipe, gates, seal checker | `v3b-recipe`, `v3b-gates`, `v3b-seal` | 2026-10-29 | 2026-10-31 | |
-| step 2 mutation, bootstrap reuse | `v3b-mut`, `v3b-open` (part) | 2026-10-31 | 2026-11-02 | |
-| DEV runs and cross-host check | `v3b-dev` | 2026-11-01 | 2026-11-03 | VM-1 |
-| step-2 review; AR decisions; last chance for a re-registration | `v3b-review`, orchestrator | 2026-11-02 | 2026-11-04 | gate G3: step 3 does not start before this |
-| step 3 splits and manifest | `v3c-data` | 2026-11-03 | 2026-11-05 | |
-| step 4 segment 1; `oac-v3-fit` | `v3d-fit` | 2026-11-04 | 2026-11-06 | |
-| step 5 segment 2; `oac-v3-band`; tolerances; `oac-v3-tolerances` | `v3e-band` | 2026-11-06 | 2026-11-08 | |
-| step 6 segment 3; `oac-v3-kg`; H1 | `v3f-kg` | 2026-11-07 | 2026-11-09 | |
-| step 7 test list; mutation suite; H2 | `v3g-mut` | 2026-11-09 | 2026-11-11 | |
-| step 8 freeze candidate, DEV dry runs, Windows-runner check, pre-freeze review | `v3b-open`, `v3h-freeze` | 2026-11-11 | 2026-11-16 | opening code is built from 2026-10-29 on, in parallel |
-| **step 8 F, `oac-v3-frozen`, M submitted, Q, `oac-v3-seal`, archive requests, pointer pull request** | `v3h-freeze`, orchestrator | **2026-11-12T00:00Z** | **2026-11-19T00:00Z** (planning date) | hard limits 2026-11-20T22:00Z (T1) and 23:00Z (T2) |
-| upgraded freeze proofs committed; T1 and T2 seen (context only) | `v3h-freeze` | 2026-11-13 | 2026-11-20T12:00Z | |
+| setup | `v3a-setup` | 2026-10-23 | — | DONE 2026-10-23 (plan public at `66a9cb3f`); census repeated and this revision on 2026-10-28 |
+| AR-1 to AR-3 decided | orchestrator | — | — | DONE: AC-1 to AC-3, public at `808edc3e` |
+| registration and r1 proofs upgraded and committed; T_fwd checked against 2026-10-24T00:00Z | orchestrator | 2026-10-29 | 2026-10-30 | LATE (revision-0 latest was 2026-10-26): each drafting proof still holds 4 pending attestations and no Bitcoin attestation. Needed by `v3b-seal` (§3.3) and by §13 step 1 |
+| archive-path pretest (Software Heritage save, Internet Archive capture of the two registered tag refs) | orchestrator | 2026-10-29 | 2026-10-31 | no record found at revision 1 (revision-0 latest was 2026-10-28). §13 step 1 planned this test of the T2 path; it measures the archive delay before the freeze |
+| step 2 part 1: generator 3.0.0, guards, representation, kernel v3, gates, tolerance code, mutation catalogue, bootstrap reuse, pipeline, freeze | `v3a-code` | — | — | PUSHED at `cd62f144` (2026-10-23); DEV runs `0a662cff` (122 of 125) and `3ca5bddb` (125 of 125) committed. Open: the cross-host blocker and D-1 (section 5) |
+| step 2 beacon client and verifier | `v3b-beacon` | 2026-10-31 | 2026-11-02 | no `beacon` module at `cd62f144` (MEASURED); listed as pending by the DEV run records (REPORTED) |
+| step 2 recipe remainder (segment runner, origin rules (a) to (e)), seal checker | `v3b-recipe`, `v3b-seal` | 2026-11-01 | 2026-11-03 | no `segments` or `seal_check` module at `cd62f144`; the IRLS fit sits in `pipeline` (MEASURED); `v3b-seal` needs the upgraded registration proof first |
+| step 2 mutation passes 1 and 2 | `v3b-mut` | 2026-11-01 | 2026-11-03 | catalogue exists; passes listed as pending by the DEV run records (REPORTED) |
+| DEV runs and cross-host check, with the local re-check | `v3b-dev` | 2026-11-02 | 2026-11-04 | first comparison blocked (section 5); D-1 first. VM-1 |
+| step-2 review; open requests decided; last chance for a re-registration | `v3b-review`, orchestrator | 2026-11-04 | 2026-11-06 | gate G3: step 3 does not start before this |
+| step 3 splits and manifest | `v3c-data` | 2026-11-05 | 2026-11-07 | |
+| step 4 segment 1; `oac-v3-fit` | `v3d-fit` | 2026-11-06 | 2026-11-08 | |
+| step 5 segment 2; `oac-v3-band`; tolerances; `oac-v3-tolerances` | `v3e-band` | 2026-11-07 | 2026-11-10 | |
+| step 6 segment 3; `oac-v3-kg`; H1 | `v3f-kg` | 2026-11-08 | 2026-11-11 | |
+| step 7 test list; mutation suite; H2 | `v3g-mut` | 2026-11-10 | 2026-11-13 | |
+| step 8 freeze candidate, DEV dry runs, Windows-runner check, pre-freeze review | `v3b-open`, `v3h-freeze` | 2026-11-13 | 2026-11-17 | opening code is built from 2026-10-31 on, in parallel |
+| **step 8 F, `oac-v3-frozen`, M submitted, Q, `oac-v3-seal`, archive requests, pointer pull request** | `v3h-freeze`, orchestrator | **2026-11-15T00:00Z** | **2026-11-19T00:00Z** (planning date) | hard limits 2026-11-20T22:00Z (T1) and 23:00Z (T2) |
+| upgraded freeze proofs committed; T1 and T2 seen (context only) | `v3h-freeze` | 2026-11-16 | 2026-11-20T12:00Z | |
 | step 9 opening on H-local; `TEST_OPENED.json` proof; Windows re-run | orchestrator | 2026-11-21 | 2026-11-27 | window ends 2026-11-28T00:00Z |
 | step 10 analysis, FRAGILE (72 h budget), compliance, datasheet, report | later ws | 2026-11-26 | — | |
 
-**Contingency decisions (fixed now).**
+**Contingency decisions (fixed now; CP-0 is new and CP-1 is moved in revision 1).**
 
-- **CP-1, 2026-11-15T00:00:00Z.** If H2 is not committed by then, the orchestrator decides
-  between finishing the freeze by the planning date and a second seal re-registration by choice
-  (§15.3), pushed by 2026-11-17T00:00:00Z at the latest: target a 00:00:00Z instant at least 72
-  hours after its push, R″ by the §3.4 rule from live relay parameters, its own OpenTimestamps
-  proof with T_fwd before R′'s scheduled time and at least 2 hours before R″'s, and a new tag
-  `oac-v3-registered-r2`. The §15.3 label already applies, and the report would disclose both
-  abandoned rounds.
+- **CP-0, 2026-11-06T00:00:00Z.** If gate G3 has not passed by then (step 2 reviewed, every open
+  request decided), the orchestrator decides between continuing on the compressed schedule and
+  a second seal re-registration by choice, as CP-1 describes. Deciding here leaves the most time
+  for a later round. A re-registration that changes anything other than the beacon round is
+  possible only before step 3 (§15.3).
+- **CP-1, 2026-11-14T00:00:00Z** (revision 0: 2026-11-15). If H2 is not committed by then, the
+  orchestrator decides between finishing the freeze by the planning date and a second seal
+  re-registration by choice (§15.3), pushed by 2026-11-17T00:00:00Z at the latest: target a
+  00:00:00Z instant at least 72 hours after its push, R″ by the §3.4 rule from live relay
+  parameters, its own OpenTimestamps proof with T_fwd before R′'s scheduled time and at least 2
+  hours before R″'s, and a new tag `oac-v3-registered-r2`. The §15.3 label already applies, and
+  the report would disclose both abandoned rounds.
 - **CP-2.** A defect found after F cannot be fixed (section 3 item 1). It is disclosed, and the
-  opening runs on the frozen state as it stands. This is why steps 3 to 8 carry a 2-day latest
-  margin each and the freeze has a pre-freeze review.
+  opening runs on the frozen state as it stands. This is why steps 3 to 8 carry a latest margin
+  of 2 to 4 days each and the freeze has a pre-freeze review.
 - **CP-3.** If no calendar has attested the freeze by 2026-11-20T12:00Z, nothing may be re-frozen.
   The seal check then decides, and EXPOSED leads to a new round under §3.6.
 - **CP-4, H-local resources.** The opening preflight needs at least 2 GB free disk and at least
-  4 GiB free physical memory (§13 step 9). C: is volatile, so the opening lane checks
-  `df -B1M /c` and memory at the start, and the orchestrator keeps at least 10 GB free on C: from
-  2026-11-19 on. A refused preflight is retried, and host-side causes never extend the window
-  (§3.6).
+  4 GiB free physical memory (§13 step 9). At revision 1, H-local had 2,201 MB of free physical
+  memory, below that floor and just above the 2,048 MB floor for a local re-check (section 4)
+  (MEASURED 2026-10-28). Freeing memory is a host-owner action (closing applications), not a lane
+  action; no lane installs, cleans or deletes anything to make room. C: is volatile, so every
+  pinned lane (steps 3 to 7, the re-checks and the opening) checks `df -B1M /c` and memory at its
+  start and stops and reports below its floor, and the orchestrator keeps at least 10 GB free on
+  C: from 2026-11-19 on. A refused preflight is retried, and host-side causes never extend the
+  window (§3.6).
 
 ## 10. Compute and size estimates (CONJECTURE)
 
@@ -373,4 +453,14 @@ increments.
 - No run generates rows from the sealed seed material of any registered round, abandoned rounds
   included. No v2 sealed file is opened; v3 paths refuse `v2/data/sealed/`.
 - Check `df -B1M /c` before any write over 50 MB, and keep every clone sparse.
+- Every VM-computed file is recomputed on H-local and committed only if its sha256 is identical;
+  a difference is quarantined and reported, never retried silently (section 4). The second
+  re-check host is not contacted until the orchestrator confirms it.
 - Every claim in a v3 file carries its label, and every metric is SYNTHETIC.
+
+## 12. Revision record
+
+| revision | date (UTC) | ws | public commit | what changed |
+| --- | --- | --- | --- | --- |
+| 0 | 2026-10-23 | `v3a-setup` | `66a9cb3f` | first version (sha256 `c7db116e3e46818830463812c572c05844c321da1b37eff701339c0d2ccfe6e1`) |
+| 1 | 2026-10-28 | `v3a-setup` | this commit | revision note at the top; section 1: branch head at revision 1; section 3 item 4: an open request on the runtime pins must be decided before step 3; section 4: H-local and H-vm facts of 2026-10-28 (H-local free memory below the opening floor; the VM work dir's conda-forge 3.12.10), the second re-check host (not in use), and the rule that every VM output is re-checked on H-local; section 5: status of the cross-host check (blocked) and open decision D-1; section 6: a note that the kernel's doubled `ops-health/` path is intended; section 8: return path, re-check, interpreter path, VM disk, VM-2 reading; section 9: schedule re-baselined from 2026-10-28 with a status column, CP-0 added, CP-1 moved from 2026-11-15 to 2026-11-14, CP-2 and CP-4 updated; section 11: the re-check rule. Unchanged: the binding inputs, the fixed instants, the step map, the tags, the planned code layout, and the planning date 2026-11-19T00:00:00Z |
