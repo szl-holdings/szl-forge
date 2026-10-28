@@ -15,7 +15,8 @@ the DEV cap (2,048 rows per regime; ``guards.DEV_LEDGER``), runs the unittest su
                        DEV gate rows, the advisories' digest, bootstrap count-vector digests on
                        DEV-sized layouts, the mutation catalogue ids, the DEV ledger
     tests.json         every test id with its outcome (no timings), and the requirement coverage
-    dev_fit/           the DEV fit's model.json, artifact_receipt.json, diagnostics.json
+    dev_fit/           the DEV fit's model.json, artifact_receipt.json, diagnostics.json (the DEV
+                       fit trace: the receipt's fit.trace_sha256 is its sha256, checked here)
     advisories.jsonl   the kernel's advisories on the DEV gate rows
     run.json           host facts: run id, interpreter (version, executable sha256), platform,
                        runtime-pin status, git HEAD and tree state, UTC start and end, exit status
@@ -25,7 +26,8 @@ Deterministic files (expected byte-identical across hosts at one commit if the p
 libraries agree; the cross-host DEV check compares them): dev_outputs.json, tests.json,
 advisories.jsonl, dev_fit/model.json, dev_fit/artifact_receipt.json, dev_fit/diagnostics.json.
 Host-fact files (differ by host by design): run.json, stdout.txt. run.json lists the sha256 of
-every deterministic file.
+every deterministic file. Every float in a deterministic file is a canonical value (12 decimals)
+or derived from one; no digest covers unpersisted full-precision bytes.
 
 Nothing here is a P or H statistic, a tolerance, a detection ratio, a power or a WIN-chance
 quantity; every gate value is DEV plumbing with hand-made tolerances. Receipts carry the fixed
@@ -208,12 +210,17 @@ def dev_outputs(out_dir: Path) -> dict:
     out["v2_parity"] = {s: generator.v2_parity_digest(s) for s in registry.V2_PARITY_SPLITS}
     fit_dir = out_dir / "dev_fit"
     info = S.freeze_dev(fit_dir)
-    (fit_dir / "diagnostics.json").write_bytes(freeze.canonical_json_bytes(S.diagnostics()))
+    trace_bytes = S.dev_trace_bytes()
+    (fit_dir / "diagnostics.json").write_bytes(trace_bytes)
+    receipt_trace = json.loads(Path(info["receipt_path"]).read_bytes())["fit"]["trace_sha256"]
+    if receipt_trace != _sha256(trace_bytes):
+        raise RuntimeError("receipt fit.trace_sha256 does not equal sha256(dev_fit/diagnostics.json)")
     model_bytes = Path(info["model_path"]).read_bytes()
     artifact = json.loads(model_bytes)
     out["dev_fit"] = {
         "model_sha256": info["model_sha256"],
         "receipt_sha256": info["receipt_sha256"],
+        "trace_sha256": receipt_trace,
         "train_rows": artifact["training"]["splits"]["train"]["rows"],
         "intercept": artifact["intercept"],
         "weights": artifact["weights"],

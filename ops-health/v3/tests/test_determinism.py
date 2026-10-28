@@ -8,13 +8,15 @@ regenerates the same DEV stream prefixes, so no new DEV row is drawn.
 
 from __future__ import annotations
 
+import hashlib
+import json
 import os
 import subprocess
 import sys
 import unittest
 from pathlib import Path
 
-from v3.research import generator, registry
+from v3.research import freeze, generator, registry
 from v3.tests import _support as S
 
 CHILD = r"""
@@ -45,6 +47,28 @@ class DeterminismTest(unittest.TestCase):
                     self.assertEqual((out / "artifact_receipt.json").read_bytes(),
                                      Path(first["receipt_path"]).read_bytes())
             self.assertTrue(a.endswith(b"\n"))
+
+    def test_dev_receipt_trace_digest_is_the_persisted_canonical_diagnostics(self):
+        trace = S.dev_trace_bytes()
+        self.assertEqual(trace, freeze.canonical_json_bytes(S.diagnostics()))
+        parsed = json.loads(trace)
+        self.assertEqual(freeze.canonicalize(parsed), parsed)
+        with S.TempDir() as tmp:
+            info = S.freeze_dev(tmp / "fit")
+            receipt = json.loads(Path(info["receipt_path"]).read_bytes())
+        self.assertEqual(receipt["fit"]["trace_sha256"], hashlib.sha256(trace).hexdigest())
+
+    def test_dev_trace_ignores_round_off_below_canonical_precision(self):
+        # The two IRLS residuals that differed between H-local and the VM at cd62f144 (MEASURED,
+        # 2026-10-28): the trace bytes must not depend on them.
+        variants = []
+        for grad, step in ((4.2838183087617887e-16, 9.952093584190592e-16),
+                           (2.5518731008519757e-16, 9.708712485367728e-16)):
+            d = S.diagnostics()
+            d["lr"]["gradient_max_abs"], d["lr"]["last_newton_step_max_abs"] = grad, step
+            variants.append(freeze.canonical_json_bytes(d))
+        self.assertEqual(variants[0], variants[1])
+        self.assertEqual(variants[0], S.dev_trace_bytes())
 
     def test_dev_fit_converges_and_is_kernel_valid(self):
         diagnostics = S.diagnostics()

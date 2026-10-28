@@ -130,10 +130,22 @@ def diagnostics() -> dict:
     return json.loads(_cached())["diagnostics"]
 
 
+def dev_trace_bytes() -> bytes:
+    """The DEV fit's trace: the canonical bytes of its diagnostics (12-decimal rounding, as for
+    every canonical artifact), which a DEV run writes as ``dev_fit/diagnostics.json``.
+
+    The receipt's ``fit.trace_sha256`` is the sha256 of these bytes, so it can be checked from the
+    committed DEV output. Until 2026-10-28 the digest covered ``json.dumps`` of the in-memory
+    diagnostics at full float precision: bytes never written to any file (unverifiable), and they
+    differed between H-local (Windows) and the VM (Linux) in two IRLS round-off residuals near 1e-16
+    (MEASURED, DEV run comparison at cd62f144). DEV only; the registered fit trace is not built here.
+    """
+    return freeze.canonical_json_bytes(diagnostics())
+
+
 def dev_fit_block() -> dict:
-    trace = json.dumps({"dev": True, "diagnostics": diagnostics()}, sort_keys=True).encode()
-    return {"segment": 1, "declared_fit": DEV_FIT_NAME, "trace_sha256": hashlib.sha256(trace).hexdigest(),
-            "receipts_dir_sha256": None}
+    return {"segment": 1, "declared_fit": DEV_FIT_NAME,
+            "trace_sha256": hashlib.sha256(dev_trace_bytes()).hexdigest(), "receipts_dir_sha256": None}
 
 
 class TempDir:
