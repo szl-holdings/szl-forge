@@ -76,6 +76,18 @@ class EnvelopeWitness(Protocol):
     def __call__(self, envelope: Mapping[str, Any]) -> Mapping[str, Any]: ...
 
 
+class ActionReceiptVerifier(Protocol):
+    """Host-supplied check of an A11oy admission and its signed receipt.
+
+    Must return exactly ``True`` only after verifying the receipt signature against
+    a trusted key. Labels such as ``SIGNED_VERIFIED`` are claims, not proof.
+    """
+
+    def __call__(
+        self, admission: Mapping[str, Any], receipt: Mapping[str, Any]
+    ) -> bool: ...
+
+
 Observer = Callable[[Mapping[str, Any]], Any]
 
 
@@ -671,8 +683,24 @@ def _pending_action_contract() -> tuple[dict[str, Any], dict[str, Any]]:
     )
 
 
+def _receipt_independently_verified(
+    verifier: ActionReceiptVerifier | None,
+    admission: Mapping[str, Any],
+    receipt: Mapping[str, Any],
+) -> bool:
+    """Fail closed: no verifier, an exception or any result other than True."""
+    if verifier is None:
+        return False
+    try:
+        verdict = verifier(copy.deepcopy(dict(admission)), copy.deepcopy(dict(receipt)))
+    except Exception:
+        return False
+    return verdict is True
+
+
 def _normalize_action_contract(
     request: Mapping[str, Any],
+    receipt_verifier: ActionReceiptVerifier | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     admission_raw = request.get("action_admission")
     receipt_raw = request.get("action_receipt")
@@ -693,6 +721,10 @@ def _normalize_action_contract(
         ):
             raise ProductionBoundaryError(
                 "approved action requires a verified signed receipt"
+            )
+        if not _receipt_independently_verified(receipt_verifier, admission, receipt):
+            raise ProductionBoundaryError(
+                "approved action requires an independently verified signed receipt"
             )
     elif receipt.get("signature_status") not in {
         "PENDING",
@@ -880,8 +912,14 @@ def production_infer(
     witness: EnvelopeWitness,
     observer: Observer | None = None,
     contract_path: Path = CONTRACT_PATH,
+    receipt_verifier: ActionReceiptVerifier | None = None,
 ) -> dict[str, Any]:
-    """Return a governed proposal or action-ready package without executing a tool."""
+    """Return a governed proposal or action-ready package without executing a tool.
+
+    ``action_admission``/``action_receipt`` in ``request`` are claims. An APPROVED
+    admission reaches ACTION_READY only if ``receipt_verifier`` returns True;
+    without one it is BLOCKED.
+    """
     contract = load_production_contract(contract_path)
     try:
         safe = _normalize_request(request)
@@ -1121,7 +1159,9 @@ def production_infer(
     if safe["tool_intent"] is not None:
         tool_digest = canonical_sha256(safe["tool_intent"])
         try:
-            admission, action_receipt = _normalize_action_contract(safe)
+            admission, action_receipt = _normalize_action_contract(
+                safe, receipt_verifier
+            )
         except Exception as exc:
             return _terminal(
                 safe,
@@ -1271,6 +1311,7 @@ def verify_external_execution(
     action_receipt: Mapping[str, Any],
     witness: EnvelopeWitness,
     observer: Observer | None = None,
+    receipt_verifier: ActionReceiptVerifier | None = None,
 ) -> dict[str, Any]:
     """Witness an A11oy-executed action and its bound postcondition."""
     continuation = _mapping(inference_result.get("continuation"))
@@ -1306,6 +1347,10 @@ def verify_external_execution(
     ):
         raise ProductionBoundaryError(
             "post-tool verification requires approved signed A11oy admission"
+        )
+    if not _receipt_independently_verified(receipt_verifier, admission, receipt):
+        raise ProductionBoundaryError(
+            "post-tool verification requires an independently verified signed receipt"
         )
 
     scope = _mapping(continuation.get("scope"))
