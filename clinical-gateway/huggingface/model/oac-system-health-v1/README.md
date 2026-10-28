@@ -175,6 +175,8 @@ kernel reproduces the receipt's counts exactly. [MEASURED, SYNTHETIC]
 | Brier score (lower is better) | 0.1362 [0.1083, 0.1657] | 0.1676 [0.1373, 0.1979] | 0.3542 [0.2917, 0.4126] |
 | ECE, 10 equal-width bins (lower is better) | 0.0480 [0.0288, 0.0955] | 0.0159 [0.0008, 0.0659] | 0.3542 [0.2917, 0.4126] |
 
+Accuracy is not used for selection: with 51 positives in 240 test rows, the majority baseline is correct on 189 rows (0.7875) without raising a single alert, while v1 is correct on 172 (0.7167). [MEASURED, SYNTHETIC]
+
 Each cell is the point estimate followed by a 95% percentile bootstrap
 interval: 2,000 paired resamples of the 240 test rows, drawn with Python
 `random.Random(20260926)`, percentiles by linear interpolation. All three
