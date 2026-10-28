@@ -1,0 +1,44 @@
+{
+  "calibrator": null,
+  "conformal": {
+    "infinite": {
+      "0": false,
+      "1": false
+    },
+    "q_hat_exact": {
+      "0": 0.266895531601,
+      "1": 0.897629436417
+    },
+    "rank": {
+      "0": 250,
+      "1": 61
+    }
+  },
+  "eligible": true,
+  "kernel_valid": true,
+  "lr": {
+    "converged": true,
+    "gradient_max_abs": 0.0,
+    "iterations": 7,
+    "last_newton_step_max_abs": 0.0,
+    "objective": 0.373425032656,
+    "rows": 512,
+    "solvers": [
+      "cholesky"
+    ],
+    "step_halvings": 0,
+    "stop_reason": "CONVERGED"
+  },
+  "threshold": {
+    "balanced_accuracy": 0.775729442971,
+    "confusion": {
+      "fn": 14,
+      "fp": 52,
+      "tn": 238,
+      "tp": 38
+    },
+    "f1": 0.535211267606,
+    "grid_index": 16,
+    "threshold": 0.16
+  }
+}

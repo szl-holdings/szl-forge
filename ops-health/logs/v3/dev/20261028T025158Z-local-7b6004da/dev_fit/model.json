@@ -1,0 +1,155 @@
+{
+  "authority": "advisory_only_no_ack_release_device_or_care_authority",
+  "calibrator": {
+    "kind": "none",
+    "params": {}
+  },
+  "conformal": {
+    "alpha": 0.1,
+    "method": "mondrian_split_conformal",
+    "n_calibration": {
+      "0": 276,
+      "1": 66
+    },
+    "q_hat": {
+      "0": 0.266895531602,
+      "1": 0.897629436417
+    }
+  },
+  "feature_manifest": [
+    {
+      "kind": "binary",
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "name": "listener_running"
+    },
+    {
+      "kind": "binary",
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "name": "tls_enabled"
+    },
+    {
+      "kind": "binary",
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "name": "peer_allowlist_configured"
+    },
+    {
+      "kind": "continuous",
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "name": "queue_utilization"
+    },
+    {
+      "kind": "continuous",
+      "maximum": 20.0,
+      "minimum": 0.0,
+      "name": "consecutive_failures"
+    },
+    {
+      "kind": "continuous",
+      "maximum": 86400.0,
+      "minimum": 0.0,
+      "name": "seconds_since_last_success"
+    },
+    {
+      "kind": "binary",
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "name": "ledger_integrity_ok"
+    },
+    {
+      "kind": "binary",
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "name": "configuration_valid"
+    }
+  ],
+  "generator": {
+    "master_seed": 20261013,
+    "namespace": "oac-ops-health-v3",
+    "row_schema": "szl-oac/ops-health-observation/v2",
+    "source_sha256": "90e5e320854045f118fda43a070d5c2d7c64ee0a8ddffc074f0a4f08e0d20587",
+    "version": "ops-health-generator/3.0.0"
+  },
+  "intercept": 7.54872334191,
+  "model_type": "binary_logistic_regression_standard_library",
+  "purpose": "synthetic_operational_transport_attention_only",
+  "schema": "szl-oac/ops-health-logistic-model/v3",
+  "score_semantics": "synthetic_attention_probability_estimate_not_production_calibrated",
+  "synthetic_training_data": true,
+  "threshold_index": 16,
+  "training": {
+    "algorithm": "newton_irls_l2_logistic_regression",
+    "converged": true,
+    "iterations": 7,
+    "l2": 0.001,
+    "max_iter": 100,
+    "splits": {
+      "conformal": {
+        "name": "dev",
+        "rows": 342,
+        "sha256": "e8b702e1b528138dc5b077d48142288155f789cc4938d04abd606476f5966220"
+      },
+      "threshold": {
+        "name": "dev",
+        "rows": 342,
+        "sha256": "843b1ab5d720d2ede6742326e15819223c7dddc79817ec2d824bd2e1dfcdc59f"
+      },
+      "train": {
+        "name": "dev",
+        "rows": 512,
+        "sha256": "274fc62caa541f8533e4c85a7f1eed081dd9e11ceccdecb9c449c10026997133"
+      }
+    },
+    "stop_reason": "CONVERGED",
+    "threshold_grid": "0.01:0.99:0.01",
+    "threshold_selection": "max_balanced_accuracy_then_f1_then_closest_to_0.5_then_lowest",
+    "tol": 1e-10
+  },
+  "transform_table": {
+    "configuration_valid": {
+      "offset": 0.0,
+      "scale": 1.0
+    },
+    "consecutive_failures": {
+      "offset": 0.0,
+      "scale": 20.0
+    },
+    "ledger_integrity_ok": {
+      "offset": 0.0,
+      "scale": 1.0
+    },
+    "listener_running": {
+      "offset": 0.0,
+      "scale": 1.0
+    },
+    "peer_allowlist_configured": {
+      "offset": 0.0,
+      "scale": 1.0
+    },
+    "queue_utilization": {
+      "offset": 0.0,
+      "scale": 1.0
+    },
+    "seconds_since_last_success": {
+      "offset": 0.0,
+      "scale": 900.0
+    },
+    "tls_enabled": {
+      "offset": 0.0,
+      "scale": 1.0
+    }
+  },
+  "weights": {
+    "configuration_valid": -2.44270489368,
+    "consecutive_failures": 2.620312314697,
+    "ledger_integrity_ok": -3.081640937128,
+    "listener_running": -3.221001961066,
+    "peer_allowlist_configured": -1.137885633077,
+    "queue_utilization": 3.034918838109,
+    "seconds_since_last_success": 0.011368160475,
+    "tls_enabled": -0.645936419078
+  }
+}
