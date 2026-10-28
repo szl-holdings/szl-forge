@@ -64,3 +64,40 @@ Source: the build plan `v3/BUILD_PLAN.md` (ws v3a-setup, 2026-10-23).
 - **Why it changes no frozen item.** The rule "every earlier `oac-v3-*` tag" already covers it;
   the parenthesis predates the tag. The manifest format (canonical JSON, the fields, the digest
   rule) is unchanged.
+
+## AR-4: under `python -I`, CPython ignores `PYTHONHASHSEED` (affects steps 3 to 10)
+
+Source: ws `v3a-code` (protocol section 13 step 2), 2026-10-23. Not yet published; the
+orchestrator decides whether and when to publish and decide it.
+
+- **What (REPORTED from the registered text).** Section 13 step 9 pins the runtime: "CPython
+  3.12.10, run as `python -I` with `PYTHONHASHSEED=0`, for every fit and retrain, the mutation
+  suite, the opening and the analysis". The runtime pins are a frozen item (section 15.3).
+- **What was measured (MEASURED, 2026-10-23, H-local, CPython 3.12.10, `python.exe` sha256
+  `4d6f5f81a4bca11191c4c7c6b43632694d0a4ce74e068619d8fdc161d469859a`).** With `PYTHONHASHSEED=0`
+  in the environment, `python -I` reports `sys.flags.isolated` 1, `sys.flags.ignore_environment`
+  1 and `sys.flags.hash_randomization` 1, and `hash("abc")` differs between two such runs.
+  Without `-I`, `hash_randomization` is 0 and `hash("abc")` is the same in both runs. The v3 test
+  `v3.tests.test_guards.RuntimePinTest.test_isolated_mode_ignores_pythonhashseed` checks this in
+  every DEV run. The reason (REPORTED: CPython's command-line documentation): `-I` implies `-E`,
+  and `-E` ignores every `PYTHON*` environment variable, `PYTHONHASHSEED` included.
+- **Consequence (MODELED).** The two parts of the pin cannot both take effect. Under the
+  registered invocation each process hashes strings with a random seed. Any output that depends
+  on the iteration order of a set of strings, or on `hash()`, could then differ between the
+  official opening run and its re-run (section 13 step 9).
+- **Requested clarification.** A run meets the runtime pin when (1) the interpreter is CPython
+  3.12.10, (2) it runs isolated (`sys.flags.isolated` is 1, from `-I`), and (3) the process
+  environment holds `PYTHONHASHSEED=0`: the registered invocation, taken literally. Each run
+  record also records the effective state (`sys.flags.hash_randomization`,
+  `sys.flags.ignore_environment`) as a fact. No v3 output may depend on the string hash seed; the
+  determinism test (section 6.7 item 9) trains and freezes the DEV recipe in fresh `-I`
+  interpreters and requires byte-identical `model.json` and receipt bytes. This is the reading
+  that `v3/research/guards.py` implements from commit `9ab6e32a` on.
+- **Why it changes no frozen item.** The pinned interpreter, the invocation and the environment
+  variable stay exactly as registered; the request only says which observable checks implement
+  them, and records an effect the registered text did not anticipate. A change that would make
+  the hash seed effective (for example dropping `-I`, or `-s -P` with `PYTHONHASHSEED=0`) would
+  change a frozen item; it is not requested here, and it would need a re-registration, which
+  section 15.3 allows only before step 3.
+
+- **Decision.** Accepted as clarification AC-4 in `v3/AMENDMENTS.md` (2026-10-28).

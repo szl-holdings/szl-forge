@@ -51,3 +51,24 @@ ACCEPTED as requested. The freeze manifest (section 3.5) lists every `oac-v3-*` 
 before `oac-v3-frozen`: `oac-v3-registered-r1`, any later `oac-v3-registered-rN`, and the
 section 3.5 tags. The manifest format (canonical JSON, the fields and the digest rule) is
 unchanged.
+
+## AC-4 (decides AR-4): the runtime pin under `python -I`
+
+ACCEPTED as requested. Decided on 2026-10-28, before section 13 step 3. Stephen approved
+publishing it by name ("A4 Publish AR-4 + AC-4", 2026-10-28).
+
+- **When a run meets the pin.** A run meets the runtime pin of section 13 step 9 when:
+  - the interpreter is CPython 3.12.10;
+  - it runs isolated, with `sys.flags.isolated` equal to 1 (from `-I`);
+  - the process environment holds `PYTHONHASHSEED=0`.
+  This is the registered invocation, taken literally.
+- **What the pin does not do.** `-I` implies `-E`, so CPython ignores `PYTHONHASHSEED`, and
+  string hashing is randomized in every run. Each run record states the effective
+  `sys.flags.hash_randomization` and `sys.flags.ignore_environment` as facts.
+- **No v3 output may depend on the hash seed.** This covers string hashing, `hash()` and the
+  iteration order of a set of strings. Two checks enforce it:
+  - the determinism test of section 6.7 item 9;
+  - the cross-host DEV check, which requires byte-identical deterministic outputs on two hosts.
+  A dependency found later is a defect under section 15.6.
+- **No frozen item changes.** The interpreter, the invocation and the environment variable stay
+  exactly as registered.
