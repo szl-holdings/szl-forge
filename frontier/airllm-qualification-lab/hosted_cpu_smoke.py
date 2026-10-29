@@ -1,4 +1,4 @@
-"""Manual, source-bound AirLLM CPU plumbing smoke for one public base model.
+"""Manual, source-bound AirLLM CPU plumbing smoke for pinned public base models.
 
 This never evaluates or publishes an SZL model. It downloads only the exact
 allowlisted checkpoint bytes and executes one synthetic token without network.
@@ -13,6 +13,7 @@ import importlib.metadata
 import json
 import os
 from pathlib import Path
+import random
 import shutil
 import signal
 import subprocess
@@ -27,10 +28,16 @@ except ImportError:  # local Windows software controls do not execute the worker
     resource = None
 
 
-SCHEMA = "szl.airllm.hosted-cpu-smoke/v1"
+SCHEMA = "szl.airllm.hosted-cpu-smoke/v2"
+DEFAULT_PROFILE = "smollm2-135m-instruct"
+PROFILE_360M = "smollm2-360m-instruct"
+PROFILE_NAMES = (DEFAULT_PROFILE, PROFILE_360M)
 MODEL_ID = "HuggingFaceTB/SmolLM2-135M-Instruct"
 MODEL_REVISION = "12fd25f77366fa6b3b4b768ec3050bf629380bac"
 MODEL_LICENSE_CARD = "apache-2.0"
+MODEL_360M_ID = "HuggingFaceTB/SmolLM2-360M-Instruct"
+MODEL_360M_REVISION = "a10cc1512eabd3dde888204e902eca88bddb4951"
+HARNESS_PATH = "frontier/airllm-qualification-lab/hosted_cpu_smoke.py"
 AIRLLM_VERSION = "4.0.0"
 AIRLLM_SOURCE_COMMIT = "ff35db207a0c559af9aa95d686057c3fe84f1d40"
 WHEEL_NAME = "airllm-4.0.0-py3-none-any.whl"
@@ -48,7 +55,26 @@ FILES = {
     "tokenizer_config.json": (3764, "4ec77d44f62efeb38d7e044a1db318f6a939438425312dfa333b8382dbad98df"),
     "vocab.json": (800662, "82b84012e3add4d01d12ba14442026e49b8cbbaead1f79ecf3d919784f82dc79"),
 }
+FILES_360M = {
+    "config.json": (846, "224f72354f10d617a359cc82ad15a3c96e866b9b2ffadb81997eeea9e88e22ee"),
+    "generation_config.json": (132, "87b916edaaab66b3899b9d0dd0752727dff6666686da0504d89ae0a6e055a013"),
+    "merges.txt": (466391, "0b54e8aa4e53d5383e2e4bc635a56b43f9647f7b13832d5d9ecd8f82dac4f510"),
+    "model.safetensors": (723674912, "e6bffe7435d7ddc10fd3b9a9efd429dafbacb1cb17015fb5562664e7532bf86e"),
+    "special_tokens_map.json": (655, "2b7379f3ae813529281a5c602bc5a11c1d4e0a99107aaa597fe936c1e813ca52"),
+    "tokenizer.json": (2104556, "9ca9acddb6525a194ec8ac7a87f24fbba7232a9a15ffa1af0c1224fcd888e47c"),
+    "tokenizer_config.json": (3764, "4ec77d44f62efeb38d7e044a1db318f6a939438425312dfa333b8382dbad98df"),
+    "vocab.json": (800662, "82b84012e3add4d01d12ba14442026e49b8cbbaead1f79ecf3d919784f82dc79"),
+}
 MARKER = ".szl-airllm-hosted-task.json"
+PROMPT = "Two plus two equals"
+INPUT_DATASET_BYTES = (json.dumps({"prompt": PROMPT}, sort_keys=True,
+                                  separators=(",", ":")) + "\n").encode("utf-8")
+INPUT_DATASET_SHA256 = hashlib.sha256(INPUT_DATASET_BYTES).hexdigest()
+DATASET_EVIDENCE_CLASS = "SAMPLE"
+DATASET_SCOPE = "SAMPLE_ONE_RECORD_SYNTHETIC_INFERENCE_INPUT_ONLY"
+DO_SAMPLE = False
+GENERATION_SEED = 0
+MAX_NEW_TOKENS = 1
 DEPENDENCIES = {"torch": "2.6.0", "transformers": "4.57.3", "accelerate": "1.12.0",
                 "safetensors": "0.7.0", "huggingface-hub": "0.36.0", "scipy": "1.15.3",
                 "sentencepiece": "0.2.1", "tqdm": "4.67.1"}
@@ -58,12 +84,103 @@ class SmokeError(ValueError):
     """A source, path, capacity, package, or execution gate failed."""
 
 
+def _model_profile(profile_name: str) -> tuple[str, str, str, dict]:
+    if profile_name == DEFAULT_PROFILE:
+        return MODEL_ID, MODEL_REVISION, MODEL_LICENSE_CARD, FILES
+    if profile_name == PROFILE_360M:
+        return MODEL_360M_ID, MODEL_360M_REVISION, "apache-2.0", FILES_360M
+    raise SmokeError("model profile is not pinned in this harness")
+
+
 def _sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as stream:
         for block in iter(lambda: stream.read(1 << 20), b""):
             digest.update(block)
     return digest.hexdigest()
+
+
+def _harness_sha256() -> str:
+    """Bind executed bytes to the tracked Git blob, not merely to HEAD."""
+    executed = Path(__file__).resolve().read_bytes()
+    tracked = subprocess.run(["git", "show", "HEAD:" + HARNESS_PATH], check=True,
+                             capture_output=True, timeout=10).stdout
+    if executed.replace(b"\r\n", b"\n") != tracked:
+        raise SmokeError("executed harness differs from checked-out Git blob")
+    return hashlib.sha256(executed).hexdigest()
+
+
+def _loss_record() -> dict:
+    return {"evidence_class": "UNAVAILABLE", "status": "NOT_RUN", "reason": "INFERENCE_ONLY"}
+
+
+def _empty_metrics() -> dict:
+    return {"evidence_class": "UNAVAILABLE", "generated_token_count": None,
+            "elapsed_seconds": None, "peak_rss_kib": None, "token_ids_sha256": None}
+
+
+def _generation_binding(*, profile_name: str = DEFAULT_PROFILE, seed_applied: bool = False) -> dict:
+    _model_profile(profile_name)
+    if DO_SAMPLE or not isinstance(GENERATION_SEED, int) or MAX_NEW_TOKENS != 1:
+        raise SmokeError("hosted smoke is greedy, seeded, and limited to one token")
+    return {"model_profile": profile_name, "do_sample": False, "max_new_tokens": 1,
+            "seed": GENERATION_SEED, "seed_applied": seed_applied,
+            "input_sha256": hashlib.sha256(PROMPT.encode("utf-8")).hexdigest(),
+            "dataset_sha256": INPUT_DATASET_SHA256,
+            "harness_sha256": _harness_sha256()}
+
+
+def _generation_record(*, profile_name: str = DEFAULT_PROFILE, seed_applied: bool = False) -> dict:
+    binding = _generation_binding(profile_name=profile_name, seed_applied=seed_applied)
+    return {key: binding[key] for key in ("model_profile", "do_sample", "max_new_tokens", "seed", "seed_applied")}
+
+
+def _bind_prepare_receipt(path: Path, source_sha: str, *, profile_name: str = DEFAULT_PROFILE) -> str:
+    if not path.is_absolute() or not path.is_file() or path.is_symlink():
+        raise SmokeError("prepare receipt must be an absolute file")
+    raw = path.read_bytes()
+    document = json.loads(raw.decode("utf-8"))
+    if not isinstance(document, dict):
+        raise SmokeError("prepare receipt must be a JSON object")
+    model_id, model_revision, _, _ = _model_profile(profile_name)
+    binding = _generation_binding(profile_name=profile_name)
+    source = document.get("source") if isinstance(document.get("source"), dict) else {}
+    if (document.get("schema") != SCHEMA or document.get("stage") != "PREPARE"
+            or document.get("disposition") != "MEASURED" or document.get("evidence_class") != "MEASURED"):
+        raise SmokeError("prepare receipt is not a measured prepare stage")
+    if (document.get("model_profile") != profile_name or document.get("model_id") != model_id
+            or document.get("model_revision") != model_revision
+            or document.get("base_revision") != model_revision):
+        raise SmokeError("prepare receipt model binding differs")
+    if document.get("airllm_source_commit") != AIRLLM_SOURCE_COMMIT or document.get("delete_original") is not False:
+        raise SmokeError("prepare receipt AirLLM pin differs")
+    if source.get("repository") != "szl-holdings/szl-forge" or source.get("source_sha") != source_sha:
+        raise SmokeError("prepare receipt is not bound to this source")
+    if (document.get("harness_sha256") != binding["harness_sha256"]
+            or document.get("input_sha256") != binding["input_sha256"]
+            or document.get("dataset_sha256") != INPUT_DATASET_SHA256
+            or document.get("dataset_evidence_class") != DATASET_EVIDENCE_CLASS
+            or document.get("dataset_scope") != DATASET_SCOPE
+            or document.get("seed") != GENERATION_SEED
+            or document.get("loss") != _loss_record()
+            or document.get("metrics") != _empty_metrics()):
+        raise SmokeError("prepare receipt harness or input hash differs")
+    if document.get("generation") != _generation_record(profile_name=profile_name):
+        raise SmokeError("prepare receipt generation binding differs")
+    return hashlib.sha256(raw).hexdigest()
+
+
+def _token_result(sequence: list, prompt_tokens: int, elapsed: float, peak,
+                  *, profile_name: str = DEFAULT_PROFILE) -> dict:
+    generated = len(sequence) - prompt_tokens
+    if generated != 1:
+        raise SmokeError("AirLLM did not generate exactly one token")
+    return {"status": "MEASURED", "scope": "HOSTED_CPU_ONE_TOKEN_SMOKE_ONLY",
+            "generated_token_count": generated,
+            "token_ids_sha256": hashlib.sha256(json.dumps(sequence, separators=(",", ":")).encode()).hexdigest(),
+            "elapsed_seconds": round(elapsed, 3), "peak_rss_kib": peak,
+            "model_quality": "UNKNOWN", "numerical_parity": "NOT_RUN", "execution_authority": False,
+            **_generation_binding(profile_name=profile_name, seed_applied=True)}
 
 
 def _runner_paths(root: Path, receipt: Path, *, prepare: bool) -> None:
@@ -157,15 +274,16 @@ def _no_auto_map(value) -> bool:
     return True
 
 
-def _verify_snapshot(snapshot: Path) -> dict:
+def _verify_snapshot(snapshot: Path, *, profile_name: str = DEFAULT_PROFILE) -> dict:
+    _, _, _, files = _model_profile(profile_name)
     if not snapshot.is_dir() or snapshot.is_symlink():
         raise SmokeError("snapshot directory missing or symlinked")
     entries = list(snapshot.iterdir())
     if any(not path.is_file() or path.is_symlink() for path in entries):
         raise SmokeError("snapshot contains directory, symlink, or non-file")
-    if {path.name for path in entries} != set(FILES):
+    if {path.name for path in entries} != set(files):
         raise SmokeError("snapshot differs from eight-file allowlist")
-    for name, (size, expected) in FILES.items():
+    for name, (size, expected) in files.items():
         path = snapshot / name
         if path.stat().st_size != size or _sha256(path) != expected:
             raise SmokeError("snapshot byte/hash mismatch: " + name)
@@ -177,9 +295,9 @@ def _verify_snapshot(snapshot: Path) -> dict:
         raise SmokeError("model is not the reviewed built-in Llama architecture")
     if "quantization_config" in config or tokenizer.get("tokenizer_class") != "GPT2Tokenizer":
         raise SmokeError("model/tokenizer config differs from reviewed built-in path")
-    return {"model_type": "llama", "architecture": "LlamaForCausalLM",
-            "tokenizer_class": "GPT2Tokenizer", "file_bytes": {name: size for name, (size, _) in FILES.items()},
-            "file_sha256": {name: digest for name, (_, digest) in FILES.items()}}
+    return {"model_profile": profile_name, "model_type": "llama", "architecture": "LlamaForCausalLM",
+            "tokenizer_class": "GPT2Tokenizer", "file_bytes": {name: size for name, (size, _) in files.items()},
+            "file_sha256": {name: digest for name, (_, digest) in files.items()}}
 
 
 def _verify_wheel(wheel: Path) -> dict:
@@ -208,10 +326,12 @@ def _dependency_versions() -> dict:
     return versions
 
 
-def _marker(root: Path) -> dict:
+def _marker(root: Path, *, profile_name: str = DEFAULT_PROFILE) -> dict:
+    model_id, model_revision, _, _ = _model_profile(profile_name)
     value = json.loads((root / MARKER).read_text(encoding="utf-8"))
-    if value != {"schema": "szl.airllm.hosted-task/v1", "model_id": MODEL_ID,
-                 "revision": MODEL_REVISION, "source_sha": os.environ.get("GITHUB_SHA")}:
+    if value != {"schema": "szl.airllm.hosted-task/v1", "model_profile": profile_name,
+                  "model_id": model_id, "revision": model_revision,
+                  "source_sha": os.environ.get("GITHUB_SHA")}:
         raise SmokeError("task root marker differs from source/model binding")
     return value
 
@@ -226,9 +346,10 @@ def _task_bytes(root: Path) -> int:
     return total
 
 
-def _run_worker(root: Path, receipt: Path, env: dict) -> tuple[int, str]:
+def _run_worker(root: Path, receipt: Path, env: dict,
+                *, profile_name: str = DEFAULT_PROFILE) -> tuple[int, str]:
     command = [sys.executable, "-I", "-B", str(Path(__file__).resolve()),
-               "--worker", "--root", str(root), "--receipt", str(receipt)]
+               "--worker", "--profile", profile_name, "--root", str(root), "--receipt", str(receipt)]
     log = root / "worker.log"
     with log.open("x", encoding="utf-8") as output:
         process = subprocess.Popen(command, stdout=output, stderr=subprocess.STDOUT,
@@ -256,9 +377,9 @@ def _run_worker(root: Path, receipt: Path, env: dict) -> tuple[int, str]:
     return process.returncode, tail
 
 
-def _worker(root: Path) -> int:
+def _worker(root: Path, *, profile_name: str = DEFAULT_PROFILE) -> int:
     # Rehash after the parent preflight. No Hub or custom model code may load.
-    _verify_snapshot(root / "snapshot")
+    _verify_snapshot(root / "snapshot", profile_name=profile_name)
     _verify_wheel(root / "wheel" / WHEEL_NAME)
     os.environ.update({"HF_HUB_OFFLINE": "1", "TRANSFORMERS_OFFLINE": "1",
                        "HF_DATASETS_OFFLINE": "1", "HF_HUB_DISABLE_IMPLICIT_TOKEN": "1",
@@ -270,25 +391,22 @@ def _worker(root: Path) -> int:
         path.mkdir(parents=True, exist_ok=True)
     from airllm import AutoModel  # import only after offline and byte checks
     import torch
+    random.seed(GENERATION_SEED)
+    torch.manual_seed(GENERATION_SEED)
     started = time.monotonic()
     model = AutoModel.from_pretrained(str(root / "snapshot"), device="cpu", dtype=torch.float32,
                                       layer_shards_saving_path=str(root / "split"),
                                       delete_original=False, prefetching=False)
-    tokenized = model.tokenizer(["Two plus two equals"], return_tensors="pt", return_attention_mask=False)
+    tokenized = model.tokenizer([PROMPT], return_tensors="pt", return_attention_mask=False)
     prompt_tokens = tokenized["input_ids"].shape[-1]
+    binding = _generation_binding(profile_name=profile_name)
     with torch.inference_mode():
-        result = model.generate(tokenized["input_ids"], max_new_tokens=1,
-                                do_sample=False, use_cache=True, return_dict_in_generate=True)
+        result = model.generate(tokenized["input_ids"], max_new_tokens=binding["max_new_tokens"],
+                                do_sample=binding["do_sample"], use_cache=True, return_dict_in_generate=True)
     sequence = result.sequences[0].tolist()
-    generated = len(sequence) - prompt_tokens
-    if generated != 1:
-        raise SmokeError("AirLLM did not generate exactly one token")
-    print(json.dumps({"status": "MEASURED", "scope": "HOSTED_CPU_ONE_TOKEN_SMOKE_ONLY",
-                      "generated_token_count": generated,
-                      "token_ids_sha256": hashlib.sha256(json.dumps(sequence, separators=(",", ":")).encode()).hexdigest(),
-                      "elapsed_seconds": round(time.monotonic() - started, 3),
-                      "peak_rss_kib": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss if resource else None,
-                      "model_quality": "UNKNOWN", "numerical_parity": "NOT_RUN", "execution_authority": False}))
+    peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss if resource else None
+    print(json.dumps(_token_result(sequence, prompt_tokens, time.monotonic() - started, peak,
+                                   profile_name=profile_name)))
     return 0
 
 
@@ -307,16 +425,31 @@ def main() -> int:
     mode.add_argument("--worker", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--receipt", type=Path, required=True)
+    parser.add_argument("--prepare-receipt", type=Path)
+    parser.add_argument("--profile", choices=PROFILE_NAMES, default=DEFAULT_PROFILE)
     args = parser.parse_args()
+    profile_name = args.profile
+    model_id, model_revision, model_license_card, files = _model_profile(profile_name)
     root, receipt = args.root.absolute(), args.receipt.absolute()
+    if args.prepare and args.prepare_receipt is not None:
+        raise SmokeError("prepare does not accept a prepare receipt")
+    if args.worker and args.prepare_receipt is not None:
+        raise SmokeError("worker does not accept a prepare receipt")
     if args.worker:
         _runner_paths(root, receipt, prepare=False)
         _source_binding()
-        _marker(root)
-        return _worker(root)
+        _marker(root, profile_name=profile_name)
+        return _worker(root, profile_name=profile_name)
     result = {"schema": SCHEMA, "captured_at_utc": datetime.now(timezone.utc).isoformat(),
               "evidence_class": "BLOCKED", "disposition": "BLOCKED", "stage": "PREPARE" if args.prepare else "RUN",
-              "model_id": MODEL_ID, "model_revision": MODEL_REVISION, "license_card_metadata": MODEL_LICENSE_CARD,
+              "model_profile": profile_name, "model_id": model_id,
+              "model_revision": model_revision, "base_revision": model_revision,
+              "license_card_metadata": model_license_card,
+              "dataset_sha256": INPUT_DATASET_SHA256, "dataset_evidence_class": DATASET_EVIDENCE_CLASS,
+              "dataset_scope": DATASET_SCOPE, "seed": GENERATION_SEED,
+              "seed_scope": "PYTHON_AND_TORCH_GREEDY_WORKER_ONLY", "loss": _loss_record(),
+              "metrics": _empty_metrics(), "prepare_receipt_sha256": "UNAVAILABLE",
+              "previous_receipt_sha256": "UNAVAILABLE",
               "airllm_source_commit": AIRLLM_SOURCE_COMMIT, "delete_original": False,
               "training_eligible": False, "publication_eligible": False, "execution_authority": False,
               "held_out_gate": "NOT_RUN", "numerical_parity": "NOT_RUN", "signing_status": "UNSIGNED",
@@ -335,22 +468,35 @@ def main() -> int:
             (root / "snapshot").mkdir()
             (root / "wheel").mkdir()
             (root / "split").mkdir()
-            (root / MARKER).write_text(json.dumps({"schema": "szl.airllm.hosted-task/v1", "model_id": MODEL_ID,
-                                                    "revision": MODEL_REVISION, "source_sha": result["source"]["source_sha"]}) + "\n", encoding="utf-8")
-            for name, (size, digest) in FILES.items():
-                _download(f"https://huggingface.co/{MODEL_ID}/resolve/{MODEL_REVISION}/{name}",
+            (root / MARKER).write_text(json.dumps({"schema": "szl.airllm.hosted-task/v1",
+                                                    "model_profile": profile_name, "model_id": model_id,
+                                                    "revision": model_revision,
+                                                    "source_sha": result["source"]["source_sha"]}) + "\n", encoding="utf-8")
+            for name, (size, digest) in files.items():
+                _download(f"https://huggingface.co/{model_id}/resolve/{model_revision}/{name}",
                           root / "snapshot" / name, size, digest)
             _download(WHEEL_URL, root / "wheel" / WHEEL_NAME, WHEEL_BYTES, WHEEL_SHA256)
-            result["snapshot"] = _verify_snapshot(root / "snapshot")
+            result["snapshot"] = _verify_snapshot(root / "snapshot", profile_name=profile_name)
             result["wheel_sha256"] = WHEEL_SHA256
             result["task_cache_root"] = str(root / "cache")
+            result.update(_generation_binding(profile_name=profile_name))
+            result["generation"] = _generation_record(profile_name=profile_name)
             result["disposition"] = "MEASURED"
             result["evidence_class"] = "MEASURED"
             result["measurement_scope"] = "PINNED_SOURCE_BYTES_PREPARED_ONLY"
             exit_code = 0
         else:
-            _marker(root)
-            result["snapshot"] = _verify_snapshot(root / "snapshot")
+            if args.prepare_receipt is None:
+                raise SmokeError("run requires the prepare receipt")
+            _marker(root, profile_name=profile_name)
+            binding = _generation_binding(profile_name=profile_name)
+            result["prepare_receipt_sha256"] = _bind_prepare_receipt(
+                args.prepare_receipt.absolute(), result["source"]["source_sha"], profile_name=profile_name)
+            result["previous_receipt_sha256"] = result["prepare_receipt_sha256"]
+            result["input_sha256"] = binding["input_sha256"]
+            result["harness_sha256"] = binding["harness_sha256"]
+            result["generation"] = _generation_record(profile_name=profile_name)
+            result["snapshot"] = _verify_snapshot(root / "snapshot", profile_name=profile_name)
             result["airllm"] = _verify_wheel(root / "wheel" / WHEEL_NAME)
             result["dependency_versions"] = _dependency_versions()
             result["dependency_integrity"] = "VERSION_OBSERVED_HASH_CLOSURE_NOT_VERIFIED"
@@ -368,13 +514,22 @@ def main() -> int:
                         "TMPDIR": str(root / "cache" / "tmp")})
             started_worker = True
             result["inference_attempted"] = True
-            worker_exit_code, worker_tail = _run_worker(root, receipt, env)
+            worker_exit_code, worker_tail = _run_worker(root, receipt, env, profile_name=profile_name)
             result["worker_exit_code"] = worker_exit_code
             if worker_exit_code:
                 raise SmokeError("AirLLM worker failed: " + worker_tail[-1200:])
             result["worker_result"] = json.loads(worker_tail.splitlines()[-1])
-            if result["worker_result"].get("generated_token_count") != 1:
+            worker_result = result["worker_result"]
+            if worker_result.get("generated_token_count") != 1:
                 raise SmokeError("worker returned no one-token result")
+            worker_binding = _generation_binding(profile_name=profile_name, seed_applied=True)
+            for key, expected in worker_binding.items():
+                if worker_result.get(key) != expected:
+                    raise SmokeError("worker generation binding differs from harness")
+            result["generation"] = _generation_record(profile_name=profile_name, seed_applied=True)
+            result["metrics"] = {"evidence_class": "MEASURED",
+                                 **{name: worker_result[name] for name in
+                                    ("generated_token_count", "elapsed_seconds", "peak_rss_kib", "token_ids_sha256")}}
             result["inference_run"] = "MEASURED"
             result["disposition"] = "MEASURED"
             result["evidence_class"] = "MEASURED"
@@ -383,6 +538,8 @@ def main() -> int:
     except (OSError, ValueError, KeyError, IndexError, zipfile.BadZipFile,
             subprocess.SubprocessError, importlib.metadata.PackageNotFoundError) as exc:
         result["reason"] = f"{type(exc).__name__}: {str(exc)[-1200:]}"
+        if started_worker and isinstance(result.get("generation"), dict):
+            result["generation"]["seed_applied"] = "UNKNOWN"
         result["inference_run"] = "UNKNOWN" if started_worker else "UNAVAILABLE"
         result["inference_attempted"] = started_worker
     if started_worker:

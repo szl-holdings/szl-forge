@@ -25,6 +25,11 @@ TEMPLATE_REVISION = "d" * 40
 SIGNED_RECEIPT_DIGEST = "e" * 64
 
 
+def _accept_receipt(admission, receipt):
+    """Test-local stand-in for the host's receipt signature verifier."""
+    return receipt.get("sha256") == SIGNED_RECEIPT_DIGEST
+
+
 class IntegrationGenerator:
     def __init__(self) -> None:
         self._identity = {
@@ -169,6 +174,7 @@ def test_real_nemo_verifies_signed_a11oy_admission_and_postcondition():
         hydrator=hydrator,
         generator=IntegrationGenerator(),
         witness=witness,
+        receipt_verifier=_accept_receipt,
     )
     assert result["state"] == "ACTION_READY_EXTERNAL_EXECUTION"
     assert result["nemo"][-1]["decision"] == "ALLOW"
@@ -182,6 +188,7 @@ def test_real_nemo_verifies_signed_a11oy_admission_and_postcondition():
         action_admission=admission,
         action_receipt=receipt,
         witness=witness,
+        receipt_verifier=_accept_receipt,
     )
     assert verification["state"] == "VERIFIED"
     assert verification["nemo"]["decision"] == "ALLOW"

@@ -120,13 +120,28 @@ identical assets; this one-token smoke does not perform that comparison.
 ## Manual hosted CPU plumbing smoke
 
 `airllm-hosted-cpu-smoke.yml` is a separate, manually dispatched GitHub Actions
-experiment on `main`; it never runs for a pull request. It exercises AirLLM
-4.0.0 on the public Apache-2.0 `HuggingFaceTB/SmolLM2-135M-Instruct` base at
-immutable revision `12fd25f77366fa6b3b4b768ec3050bf629380bac`. This is not
-the MiniCPM checkpoint above and does not change its failed/HOLD result.
+experiment on `main`; it never runs for a pull request. Its default profile,
+`smollm2-135m-instruct`, exercises AirLLM 4.0.0 on the public Apache-2.0
+`HuggingFaceTB/SmolLM2-135M-Instruct` base at immutable revision
+`12fd25f77366fa6b3b4b768ec3050bf629380bac`. The optional strict choice
+`smollm2-360m-instruct` binds the public Apache-2.0
+`HuggingFaceTB/SmolLM2-360M-Instruct` base at
+`a10cc1512eabd3dde888204e902eca88bddb4951`. Its eight selected files total
+727,051,918 bytes, including the 723,674,912-byte safetensors file. The
+[360M hosted run 40792110439](https://github.com/szl-holdings/szl-forge/actions/runs/40792110439)
+on source `f0a699ea9a9dec6131b200d80ecab6051a817e33` **MEASURED** one CPU
+token in 9.182 seconds with peak process RSS of 890,924 KiB. Its unsigned v2
+RUN receipt binds the raw PREPARE SHA-256
+`fc9c8ca7cfc53ba5883cf849ef236e14314d639afa64f79384ec260cabb135e4`.
+This is one `SAMPLE` synthetic prompt on that hosted runner; broader capacity
+fit and model quality remain `UNKNOWN`. Held-out evaluation and native-versus-
+AirLLM numerical parity are `NOT_RUN`. The receipts are `UNSIGNED` and grant no
+execution authority, training eligibility, or publication eligibility. Neither
+profile is the MiniCPM checkpoint above, and neither changes its failed/HOLD
+result.
 
-`hosted_cpu_smoke.py` binds exactly eight top-level files by size and SHA-256,
-including the 269,060,552-byte safetensors file. It rejects extra files,
+`hosted_cpu_smoke.py` binds exactly eight top-level files per profile by size
+and SHA-256, including the 269,060,552-byte 135M safetensors file. It rejects extra files,
 Python/pickle checkpoint files, `auto_map` anywhere in the selected JSON, an
 unreviewed architecture or tokenizer, a different installed AirLLM package,
 and insufficient fresh disk/RAM. The AirLLM wheel is the same pinned PyPI wheel
@@ -138,9 +153,27 @@ before importing AirLLM, uses CPU float32, a fixed synthetic prompt, exactly
 one new token, `delete_original=False`, task-specific cache/split directories,
 and a 240-second subprocess timeout. The runner retains separate prepare and
 attempt receipts as an artifact, including source SHA, selected bytes, package
-versions, free disk/RAM, elapsed time, and only a hash of token IDs. Failed and
-timed-out attempts stay `BLOCKED` or `UNKNOWN_AFTER_ATTEMPT`; the split remains
-for inspection until the ephemeral runner ends.
+versions, free disk/RAM, elapsed time, and only a hash of token IDs. The run
+receipt also records the SHA-256 of the prepare receipt bytes, the SHA-256 of
+the executed harness after comparing it with its checked-out Git blob, the
+SHA-256 of the fixed prompt and canonical one-record SAMPLE input, and a
+generation record with `do_sample` false and seed `0`. The selected profile is
+also bound to the task marker, worker, both receipts, and artifact name; the run
+refuses a prepare receipt for the other profile. The prepare record keeps
+`seed_applied` false, and the run record sets it true only after the worker
+applies the Python/Torch seed.
+The run records `base_revision`, inference-only loss as `UNAVAILABLE`/`NOT_RUN`,
+and metrics as `UNAVAILABLE` until a worker succeeds. A run refuses a prepare
+receipt from a different harness, prompt, input, model, seed, or source SHA.
+The input is synthetic and is not a training or held-out evaluation dataset.
+Failed and timed-out attempts stay `BLOCKED` or `UNKNOWN_AFTER_ATTEMPT`; the
+seed application is `UNKNOWN` if a worker started but did not return a valid
+result. The split remains for inspection until the ephemeral runner ends.
+
+Receipt schema v2 is an unsigned, nonauthoritative chain. `prepare_receipt_sha256`
+and `previous_receipt_sha256` are raw-byte digests, not signatures, signer trust,
+authorization, model qualification, or publication evidence. The earlier v1
+hosted run remains historical v1 evidence and is not retroactively upgraded.
 
 A pass establishes only one hosted CPU plumbing smoke. It does not establish
 native-versus-AirLLM parity, QLoRA support, model quality, held-out abstention,
