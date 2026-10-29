@@ -127,10 +127,18 @@ experiment on `main`; it never runs for a pull request. Its default profile,
 `smollm2-360m-instruct` binds the public Apache-2.0
 `HuggingFaceTB/SmolLM2-360M-Instruct` base at
 `a10cc1512eabd3dde888204e902eca88bddb4951`. Its eight selected files total
-727,051,918 bytes, including the 723,674,912-byte safetensors file. The 360M
-profile is a source-bound candidate until its own hosted receipt is measured;
-its fit and one-token behavior are UNKNOWN. Neither profile is the MiniCPM
-checkpoint above, and neither changes its failed/HOLD result.
+727,051,918 bytes, including the 723,674,912-byte safetensors file. The
+[360M hosted run 40792110439](https://github.com/szl-holdings/szl-forge/actions/runs/40792110439)
+on source `f0a699ea9a9dec6131b200d80ecab6051a817e33` **MEASURED** one CPU
+token in 9.182 seconds with peak process RSS of 890,924 KiB. Its unsigned v2
+RUN receipt binds the raw PREPARE SHA-256
+`fc9c8ca7cfc53ba5883cf849ef236e14314d639afa64f79384ec260cabb135e4`.
+This is one `SAMPLE` synthetic prompt on that hosted runner; broader capacity
+fit and model quality remain `UNKNOWN`. Held-out evaluation and native-versus-
+AirLLM numerical parity are `NOT_RUN`. The receipts are `UNSIGNED` and grant no
+execution authority, training eligibility, or publication eligibility. Neither
+profile is the MiniCPM checkpoint above, and neither changes its failed/HOLD
+result.
 
 `hosted_cpu_smoke.py` binds exactly eight top-level files per profile by size
 and SHA-256, including the 269,060,552-byte 135M safetensors file. It rejects extra files,
