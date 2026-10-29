@@ -179,6 +179,54 @@ A pass establishes only one hosted CPU plumbing smoke. It does not establish
 native-versus-AirLLM parity, QLoRA support, model quality, held-out abstention,
 GPU fit, energy, training, Hugging Face publication, or production authority.
 
+## Offline receipt readback
+
+`verify_hosted_receipts.py` checks downloaded PREPARE/SMOKE bytes without a
+network connection, model packages, inference, or writes to those files. It
+supports the profiled v2 receipts introduced in #658 for both pinned models.
+Historical receipts without `model_profile` require their original verifier;
+this command does not silently reinterpret them as the default profile.
+
+Supply the source SHA, profile, run ID/attempt, and harness hash independently
+from the trusted workflow/run and exact Git source. Never copy expectations
+from the receipt being checked. The supplied harness hash must match the local
+reviewed harness bytes, whose model, wheel, input, and dependency pins define
+the verification contract. Use an LF checkout matching the hosted source.
+Both raw PREPARE chain hashes, both stage identities, complete model-file pins,
+worker generation bindings, seed transitions, and unsigned/no-authority fields
+must agree. Malformed or contradictory evidence exits nonzero.
+
+For example, the existing 360M run can be read back from the repository root
+using a fresh download directory; these commands do not dispatch a workflow:
+
+```powershell
+$run = gh api repos/szl-holdings/szl-forge/actions/runs/40792110439 | ConvertFrom-Json
+if ($LASTEXITCODE -ne 0 -or $run.head_sha -cne 'f0a699ea9a9dec6131b200d80ecab6051a817e33' -or
+    $run.event -cne 'workflow_dispatch' -or $run.run_attempt -ne 1 -or
+    $run.path -cne '.github/workflows/airllm-hosted-cpu-smoke.yml' -or
+    $run.conclusion -cne 'success') { throw 'Unexpected run identity or result' }
+if (Test-Path -LiteralPath ./airllm-readback-40792110439-1) { throw 'Use a fresh destination' }
+gh run download 40792110439 -R szl-holdings/szl-forge `
+  -n airllm-hosted-cpu-receipts-smollm2-360m-instruct-40792110439-1 `
+  -D ./airllm-readback-40792110439-1
+if ($LASTEXITCODE -ne 0) { throw 'Receipt download failed' }
+python -I -B frontier/airllm-qualification-lab/verify_hosted_receipts.py `
+  --prepare ./airllm-readback-40792110439-1/PREPARE.json `
+  --smoke ./airllm-readback-40792110439-1/SMOKE.json `
+  --expected-source-sha f0a699ea9a9dec6131b200d80ecab6051a817e33 `
+  --expected-profile smollm2-360m-instruct `
+  --expected-run-id 40792110439 --expected-run-attempt 1 `
+  --expected-harness-sha256 e8fcf233ebbbb6e3388388f745e2f77347d75ae767c6eea6714538d8d548b042
+if ($LASTEXITCODE -ne 0) { throw 'Receipt bindings did not verify' }
+```
+
+Success establishes only offline byte-chain and declaration consistency against
+the supplied expectations. The receipts remain **UNSIGNED**; the verifier does
+not authenticate their producer, rehash remote model/package bytes, repeat
+inference, verify transitive dependency hashes, or establish model quality,
+held-out performance, publication eligibility, or execution authority. Preserve
+the original downloaded bytes and the verifier output as separate evidence.
+
 ## Reproduce the software checks
 
 From this directory with Python 3.11 or later; no third-party packages are needed:
