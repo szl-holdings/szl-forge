@@ -97,21 +97,86 @@ def load_suite(path, expected_sha256):
     return suite
 
 
+def json_type(value):
+    """Return the top-level JSON type, keeping booleans separate from numbers."""
+    if value is None:
+        return "null"
+    if isinstance(value, bool):
+        return "boolean"
+    if isinstance(value, (int, float)):
+        return "number"
+    if isinstance(value, str):
+        return "string"
+    if isinstance(value, list):
+        return "array"
+    return "object"
+
+
 def score_output(raw, expected):
+    """Score expected fields exactly; diagnostics never change the verdict.
+
+    Field reasons compare top-level JSON types. Nested differences are value
+    mismatches, as are numeric representations such as 1 versus 1.0. Extra
+    fields are reported but remain outside this evaluator's scoring contract.
+    invalid_json includes duplicate keys and nonfinite numbers rejected by the
+    strict parser/canonicalizer. Diagnostics do not establish grounding,
+    citation validity, or truncation.
+    """
     checks = {"json_object": False}
+    parse_status = "invalid_json"
     try:
         parsed = strict_json(raw)
         canonical(parsed)
         checks["json_object"] = isinstance(parsed, dict)
+        parse_status = "valid" if checks["json_object"] else "non_object"
     except (ValueError, TypeError, RecursionError):
         parsed = None
+    field_reasons = {}
     for field, value in expected.items():
         checks["field:" + field] = (
             isinstance(parsed, dict) and field in parsed
             and canonical(parsed[field]) == canonical(value)
         )
+        if not checks["json_object"]:
+            reason = "unavailable"
+        elif field not in parsed:
+            reason = "missing"
+        elif checks["field:" + field]:
+            reason = "match"
+        elif json_type(parsed[field]) != json_type(value):
+            reason = "type_mismatch"
+        else:
+            reason = "value_mismatch"
+        field_reasons[field] = reason
+    diagnostics = {
+        "parse": parse_status,
+        "fields": field_reasons,
+        "unexpected_fields": sorted(set(parsed) - set(expected)) if checks["json_object"] else [],
+    }
     return {"checks": checks, "score": sum(checks.values()) / len(checks),
-            "passed": all(checks.values())}
+            "passed": all(checks.values()), "diagnostics": diagnostics}
+
+
+def summarize_diagnostics(rows):
+    """Count observed reasons per case and per expected field.
+
+    Each field's denominator is the cases that specify that expected field.
+    Counts are sparse and may overlap across fields. They are not extra score
+    components or a qualification decision.
+    """
+    summary = {"case_count": len(rows), "parse_counts": {},
+               "field_counts": {}, "unexpected_field_counts": {}}
+    for row in rows:
+        diagnostics = row["diagnostics"]
+        parse = diagnostics["parse"]
+        summary["parse_counts"][parse] = summary["parse_counts"].get(parse, 0) + 1
+        for field, reason in diagnostics["fields"].items():
+            counts = summary["field_counts"].setdefault(field, {})
+            counts[reason] = counts.get(reason, 0) + 1
+        for field in diagnostics["unexpected_fields"]:
+            counts = summary["unexpected_field_counts"]
+            counts[field] = counts.get(field, 0) + 1
+    return summary
 
 
 def compare_outputs(cases, base_outputs, candidate_outputs, minimum_pass_rate=1.0,
@@ -130,7 +195,8 @@ def compare_outputs(cases, base_outputs, candidate_outputs, minimum_pass_rate=1.
                          "output_sha256": digest(raw.encode("utf-8")),
                          **score_output(raw, case["expected"])})
         lanes[name] = {"cases": rows, "mean_score": sum(r["score"] for r in rows) / len(rows),
-                       "pass_rate": sum(r["passed"] for r in rows) / len(rows)}
+                       "pass_rate": sum(r["passed"] for r in rows) / len(rows),
+                       "diagnostics": summarize_diagnostics(rows)}
     delta = lanes["candidate"]["mean_score"] - lanes["base"]["mean_score"]
     pass_delta = lanes["candidate"]["pass_rate"] - lanes["base"]["pass_rate"]
     passed = (lanes["candidate"]["pass_rate"] >= minimum_pass_rate

@@ -94,3 +94,42 @@ Errors contain only phase and exception type. Receipt hashes cover all fields
 except `receipt_sha256` itself, using sorted compact UTF-8 JSON.
 `publication_eligible` remains false: these bounded fixtures do not establish
 training consent, provenance, broad model quality, or deployment eligibility.
+
+### Diagnostic details
+
+Every scored case includes `diagnostics` alongside its unchanged `checks`,
+`score`, and `passed` fields:
+
+- `parse`: `valid` for an object, `non_object` for another valid JSON value,
+  or `invalid_json` when strict parsing/canonicalization rejects the output
+  (including duplicate keys and nonfinite numbers).
+- `fields`: one reason per expected field: `match`, `missing`,
+  `type_mismatch`, `value_mismatch`, or `unavailable`. Missing means an
+  absent key in a valid object; null is a present value. Invalid/non-object
+  outputs make field comparison unavailable.
+- `unexpected_fields`: sorted extra object keys. They are informational;
+  the evaluator scores the expected fields as a subset, so extras may appear
+  even on a passing case.
+
+Type reasons compare the top-level JSON type of each field: boolean and number
+are different types, while integer and floating representations are both
+numbers. Exact canonical comparisons are unchanged, so `1` versus `1.0`
+is a value mismatch. Differences inside arrays/objects are value mismatches.
+
+Each lane also includes `diagnostics` with `case_count`, `parse_counts`,
+`field_counts`, and `unexpected_field_counts`. Counts include only observed
+categories. Parse counts sum to the number of cases; each field's counts sum
+to the number of cases specifying that expected field. Unexpected-field counts
+count cases containing each extra key. Counts across fields can overlap and
+are not additional score components.
+
+These diagnostics describe exact JSON comparison failures. They do not infer
+citation validity, grounded support, hallucination, or truncation. Scores,
+thresholds, comparison decisions, exit codes, and publication eligibility are
+unchanged. Diagnostic fields are included in the existing receipt digest.
+
+The synthetic diagnostic regression suite runs without ML packages or pytest:
+
+```bash
+python -I -B -m unittest discover -s tests -p test_willay_diagnostics_unittest.py -v
+```
