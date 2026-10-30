@@ -38,3 +38,23 @@ identity, tool authority, postconditions, and receipt verification.
 
 Nemo may return `ALLOW`, `BLOCK`, or `REVIEW`. `ALLOW` means only that the witness
 checks passed for the inspected stage. It never grants tool authority by itself.
+
+## NVIDIA proposal triad
+
+A Nemotron-backed runtime adapter stays `nemotron-runtime-adapter`. Its
+output is a proposal digest, not a verdict and not the `szl-nemo` witness.
+
+The witness package `szl-nemo` exposes `szl_nemo.evaluate_triad`
+(`szl.nemo.triad.v1`). A Forge NVIDIA lane that adopts it must pass:
+
+- an authorized caller and a SHA-256 of the request, without the raw request;
+- `family: NVIDIA_NEMOTRON` and `authority: PROPOSAL_ONLY`;
+- energy as finite NVML joules labeled `MEASURED`, or `null` labeled
+  `UNAVAILABLE` with source `NVML_ABSENT`;
+- Λ scores in `[0, 1]`. The binder computes the geometric mean and labels
+  it modeled. Unconditional uniqueness under A1–A5 is false as stated.
+  Theorem U is conditional. The score cannot authorize;
+- no DSSE signature. `szl-nemo` holds no signing key, so the record stays
+  `UNSIGNED_HONEST`.
+
+This page does not claim a fine-tune, a benchmark, or a live NVML reading.
