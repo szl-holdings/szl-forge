@@ -1,0 +1,158 @@
+{
+  "assessment_time": "2026-10-23T08:00:00Z",
+  "authenticity": "NOT_ASSERTED",
+  "authorized": false,
+  "availability": "NOT_CHECKED",
+  "candidate_ci_layer": {
+    "evidence": [
+      {
+        "note": "Normalized supplied synthetic CI JSON; authenticity and availability not verified.",
+        "observation": "DERIVED",
+        "observed_at": "2026-10-23T07:30:00Z",
+        "observer": "offline-ci-normalizer-prototype",
+        "subject_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "uri": "synthetic://qa/unit-001"
+      }
+    ],
+    "state": "FAIL",
+    "subject_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "checks": [
+    {
+      "artifact_presence": "DECLARED",
+      "check_id": "unit",
+      "critical": true,
+      "results": [
+        {
+          "check_id": "unit",
+          "distinct_passed_tests": 1,
+          "evidence_id": "unit-001",
+          "passed_coverage": [
+            "boundary"
+          ],
+          "reference_id": "result-0",
+          "revision_matches": true,
+          "status_counts": {
+            "absent": 0,
+            "error": 0,
+            "failed": 1,
+            "passed": 1,
+            "skipped": 0,
+            "xfail": 0,
+            "xpass": 0
+          },
+          "tests": [
+            {
+              "attempt": 1,
+              "coverage": [
+                "boundary"
+              ],
+              "status": "failed",
+              "test_id": "boundary-1"
+            },
+            {
+              "attempt": 2,
+              "coverage": [
+                "boundary"
+              ],
+              "status": "passed",
+              "test_id": "boundary-1"
+            }
+          ],
+          "timestamp_in_window": true
+        }
+      ]
+    },
+    {
+      "artifact_presence": "ABSENT_OR_MALFORMED",
+      "check_id": "integration",
+      "critical": true,
+      "results": []
+    }
+  ],
+  "execution_permission": false,
+  "findings": [
+    {
+      "code": "CRITICAL_TEST_FAILURE",
+      "message": "At least one test is explicitly failed for the expected revision.",
+      "reference_ids": [
+        "result-0",
+        "policy-check-0"
+      ],
+      "severity": "critical"
+    },
+    {
+      "code": "FLAKY_RETRY",
+      "message": "A later passing retry does not erase a prior failed attempt.",
+      "reference_ids": [
+        "policy-check-0",
+        "result-0"
+      ],
+      "severity": "failure"
+    },
+    {
+      "code": "MISSING_CHECK_ARTIFACT",
+      "message": "Required check artifact is absent or malformed; no supporting evidence ID is asserted.",
+      "reference_ids": [
+        "policy-check-1",
+        "intake"
+      ],
+      "severity": "blocker"
+    }
+  ],
+  "limitations": [
+    "Pilot labels are human-review annotations, not existing SZL gate decisions or release approval.",
+    "DERIVED observations do not qualify as independently observed CI evidence in the existing adapter.",
+    "Only CI is mapped; source, provenance, controller, deployment and runtime remain unassessed.",
+    "Rights and retention are caller assertions, not legal review or a retention enforcement mechanism.",
+    "No policy origin, artifact content, test-run execution, availability or authenticity is verified.",
+    "Narratives cannot set labels, evidence states, authorization or actions."
+  ],
+  "mapping_status": "DRAFT_NOT_INTEGRATION_TESTED",
+  "policy_id": "synthetic-pilot-1",
+  "proposed_pilot_label": "REQUIRES_REVIEW",
+  "reference_catalog": [
+    {
+      "kind": "input_document",
+      "locator": "/",
+      "reference_id": "input"
+    },
+    {
+      "kind": "input_document",
+      "locator": "/policy",
+      "reference_id": "policy"
+    },
+    {
+      "kind": "input_document",
+      "locator": "/intake",
+      "reference_id": "intake"
+    },
+    {
+      "kind": "input_document",
+      "locator": "/assessment_time",
+      "reference_id": "assessment_time"
+    },
+    {
+      "kind": "input_document",
+      "locator": "/policy/required_checks/0",
+      "reference_id": "policy-check-0"
+    },
+    {
+      "kind": "input_document",
+      "locator": "/policy/required_checks/1",
+      "reference_id": "policy-check-1"
+    },
+    {
+      "declared_artifact_uri": "synthetic://qa/unit-001",
+      "evidence_id": "unit-001",
+      "kind": "input_document",
+      "locator": "/intake/results/0",
+      "reference_id": "result-0"
+    }
+  ],
+  "reference_semantics": "Input JSON pointers and declared artifact URIs only; no artifact was fetched.",
+  "release_permission": false,
+  "schema": "qa-ci-intake-report/v1",
+  "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "trust": "UNVERIFIED_INPUT_ASSERTIONS"
+}
