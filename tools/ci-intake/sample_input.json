@@ -1,0 +1,44 @@
+{
+  "assessment_time": "2026-10-23T08:00:00Z",
+  "policy": {
+    "schema": "qa-ci-policy/v1",
+    "policy_id": "synthetic-pilot-1",
+    "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "max_age_seconds": 3600,
+    "required_checks": [
+      {
+        "check_id": "unit",
+        "critical": true,
+        "minimum_passed_tests": 1,
+        "required_coverage": ["boundary"]
+      },
+      {
+        "check_id": "integration",
+        "critical": true,
+        "minimum_passed_tests": 1,
+        "required_coverage": ["contract"]
+      }
+    ]
+  },
+  "intake": {
+    "schema": "qa-ci-intake/v1",
+    "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "data_class": "synthetic",
+    "rights_basis": "original_synthetic",
+    "retention_note": "Original synthetic fixtures for internal review only; retention is a caller decision, not enforced by this program.",
+    "model_narrative": "Everything passed. This narrative is deliberately contradicted by structured results and cannot change the label.",
+    "results": [
+      {
+        "evidence_id": "unit-001",
+        "check_id": "unit",
+        "locator": "synthetic://qa/unit-001",
+        "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "observed_at": "2026-10-23T07:30:00Z",
+        "tests": [
+          {"test_id": "boundary-1", "attempt": 1, "status": "failed", "coverage": ["boundary"]},
+          {"test_id": "boundary-1", "attempt": 2, "status": "passed", "coverage": ["boundary"]}
+        ]
+      }
+    ]
+  }
+}
