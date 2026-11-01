@@ -32,15 +32,26 @@ def row_hashes(x, y):
                           np.asarray([label], dtype="<i8").tobytes()).hexdigest()
             for row, label in zip(x, y)}
 
+def feature_hashes(x):
+    hashes = set()
+    for row in x:
+        features = np.asarray(row, dtype="<f8").copy()
+        # Numerically equal signed zeros must share a feature identity.
+        features[features == 0] = 0.0
+        hashes.add(hashlib.sha256(features.tobytes()).hexdigest())
+    return hashes
+
 def split_evidence(splits):
     hashes = {name: row_hashes(x, y) for name, (x, y) in splits.items()}
+    features = {name: feature_hashes(x) for name, (x, _) in splits.items()}
     for name, (x, y) in splits.items():
-        if len(x) != len(y) or len(x) == 0 or len(hashes[name]) != len(x):
+        if len(x) != len(y) or len(x) == 0 or len(features[name]) != len(x):
             raise ValueError("Empty, misaligned or duplicated split")
     for a, b in (("train","dev"), ("train","test"), ("dev","test")):
-        if hashes[a] & hashes[b]:
+        if features[a] & features[b]:
             raise ValueError("Cross-split row overlap")
     return {name: {"n": len(splits[name][0]),
+                    "feature_set_sha256": hashlib.sha256("\n".join(sorted(features[name])).encode()).hexdigest(),
                     "row_set_sha256": hashlib.sha256("\n".join(sorted(value)).encode()).hexdigest()}
             for name, value in hashes.items()}
 
@@ -168,4 +179,5 @@ def main(argv=None):
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
 

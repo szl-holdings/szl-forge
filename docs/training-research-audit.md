@@ -60,7 +60,9 @@ OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python tools/run_nano_research.py \
 ```
 
 ReceiptAgent generates distinct 600/200/400-row training/development/test sets.
-Exact row duplication and cross-split overlap are rejected. Development alone
+Duplicate feature rows and cross-split feature overlap are rejected independently
+of labels, including numerically equal signed zeros. Receipts retain both the
+feature-set digest and the existing label-bound row-set digest. Development alone
 selects checkpoints; the untouched test is evaluated after selection and
 compared with the untrained initialization. Counts, confusion matrices, Wilson
 intervals, advisory ALLOW errors, source hashes, tensor hashes and archive
@@ -137,7 +139,8 @@ python -m unittest discover -s tests -p test_nano_research.py -v
 ```
 
 The first command includes the existing 60 evidence-auditor tests plus 15 public
-inventory regressions. The second includes six research-boundary regressions.
+inventory regressions. The second includes ten research-boundary regressions.
 The existing base Python CI collects these files; no live audit or training
 command is added to CI. Full repository CI is a separate exact-head result.
+
 

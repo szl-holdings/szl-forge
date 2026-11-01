@@ -28,6 +28,38 @@ class ResearchTests(unittest.TestCase):
             with self.subTest(n=len(x)),self.assertRaises(ValueError):
                 runner.split_evidence({"train":(x,y),"dev":(x,y),"test":(x,y)})
 
+    def test_cross_split_feature_overlap_is_rejected_even_if_labels_differ(self):
+        for a,b in (("train","dev"),("train","test"),("dev","test")):
+            splits={name:(np.full((1,24),i,dtype=float),np.array([i]))
+                    for i,name in enumerate(("train","dev","test"))}
+            splits[b]=(splits[a][0].copy(),np.array([3]))
+            with self.subTest(a=a,b=b),self.assertRaisesRegex(ValueError,"Cross-split"):
+                runner.split_evidence(splits)
+
+    def test_duplicate_features_with_conflicting_labels_are_rejected(self):
+        splits={"train":(np.zeros((2,24)),np.array([0,1])),
+                "dev":(np.ones((1,24)),np.array([1])),
+                "test":(np.full((1,24),2.),np.array([2]))}
+        with self.assertRaisesRegex(ValueError,"duplicated"):
+            runner.split_evidence(splits)
+
+    def test_feature_digest_is_label_independent_but_row_digest_binds_labels(self):
+        splits={name:(np.full((1,24),i,dtype=float),np.array([i]))
+                for i,name in enumerate(("train","dev","test"))}
+        before=runner.split_evidence(splits)
+        changed={name:(x, (y+1)%4) for name,(x,y) in splits.items()}
+        after=runner.split_evidence(changed)
+        for name in splits:
+            self.assertEqual(before[name]["feature_set_sha256"],after[name]["feature_set_sha256"])
+            self.assertNotEqual(before[name]["row_set_sha256"],after[name]["row_set_sha256"])
+
+    def test_signed_zero_does_not_hide_cross_split_feature_overlap(self):
+        splits={"train":(np.zeros((1,24)),np.array([0])),
+                "dev":(np.full((1,24),-0.0),np.array([1])),
+                "test":(np.full((1,24),2.),np.array([2]))}
+        with self.assertRaisesRegex(ValueError,"Cross-split"):
+            runner.split_evidence(splits)
+
     def test_metrics_report_named_errors_and_uncertainty(self):
         m=runner.metrics([0,0,2,3],[0,1,2,3])
         self.assertEqual((m["correct"],m["n"]),(3,4))
@@ -49,4 +81,5 @@ class ResearchTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
 
