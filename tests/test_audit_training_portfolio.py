@@ -73,7 +73,7 @@ class EvidenceTests(unittest.TestCase):
 
     def test_same_revision_reobserved_never_grants_training_or_quality(self):
         first = self.buckets()
-        card = {"repo":"owner/one", "revision":"a"*40, "status":"READ_BACK"}
+        card = {"kind":"models", "repo":"owner/one", "revision":"a"*40, "status":"READ_BACK"}
         report = audit.reconcile(first, self.buckets(), [card])
         self.assertEqual(report["rows"][0]["badges"], ["PUBLIC_REVISION_REOBSERVED", "CARD_BYTES_READ_BACK"])
         for field in ["training_authorized", "promotion_authorized", "rights_verified",
@@ -90,8 +90,8 @@ class EvidenceTests(unittest.TestCase):
                 self.assertTrue(all(not r["public_inventory_stable"] and not r["badges"] for r in report["rows"]))
 
     def test_stale_or_unavailable_card_not_readback_badge(self):
-        for card in [{"repo":"owner/one","revision":"b"*40,"status":"READ_BACK"},
-                     {"repo":"owner/one","revision":"a"*40,"status":"UNAVAILABLE"}]:
+        for card in [{"kind":"models","repo":"owner/one","revision":"b"*40,"status":"READ_BACK"},
+                     {"kind":"models","repo":"owner/one","revision":"a"*40,"status":"UNAVAILABLE"}]:
             report = audit.reconcile(self.buckets(), self.buckets(), [card])
             self.assertEqual(report["rows"][0]["badges"], ["PUBLIC_REVISION_REOBSERVED"])
 
@@ -139,6 +139,42 @@ class EvidenceTests(unittest.TestCase):
         result = audit.reconcile(first, first, [])["rows"][0]
         self.assertEqual(result["declared_licenses"], ["apache-2.0"])
         self.assertFalse(result["rights_verified"])
+
+class CardNamespaceTests(unittest.TestCase):
+    def buckets(self):
+        return [audit.discover("owner", kind, lambda _: response([row()]))
+                for kind in audit.KINDS]
+
+    def test_one_card_cannot_certify_other_repository_kinds(self):
+        for kind in audit.KINDS:
+            with self.subTest(kind=kind):
+                card = audit.read_card(kind, row(), lambda _: (b"card", {"x-repo-commit":"a"*40}))
+                report = audit.reconcile(self.buckets(), self.buckets(), [card])
+                for result in report["rows"]:
+                    self.assertEqual("CARD_BYTES_READ_BACK" in result["badges"], result["kind"] == kind)
+                    self.assertEqual(result["card_status"], "READ_BACK" if result["kind"] == kind else "NOT_READ")
+
+    def test_unavailable_card_cannot_overwrite_other_kind_readback(self):
+        successful = audit.read_card("models", row(), lambda _: (b"model card", {"x-repo-commit":"a"*40}))
+        failed = audit.read_card("datasets", row(), lambda _: (b"dataset card", {}))
+        for cards in [[successful, failed], [failed, successful]]:
+            with self.subTest(order=[c["status"] for c in cards]):
+                rows = {r["kind"]:r for r in audit.reconcile(self.buckets(), self.buckets(), cards)["rows"]}
+                self.assertIn("CARD_BYTES_READ_BACK", rows["models"]["badges"])
+                self.assertNotIn("CARD_BYTES_READ_BACK", rows["datasets"]["badges"])
+                self.assertEqual(rows["datasets"]["card_status"], "UNAVAILABLE")
+
+    def test_card_without_kind_cannot_establish_namespace_readback(self):
+        legacy = {"repo":"owner/one", "revision":"a"*40, "status":"READ_BACK"}
+        rows = audit.reconcile(self.buckets(), self.buckets(), [legacy])["rows"]
+        self.assertTrue(all("CARD_BYTES_READ_BACK" not in r["badges"] for r in rows))
+
+    def test_read_card_records_kind_for_success_and_failure(self):
+        for kind in audit.KINDS:
+            for headers in [{"x-repo-commit":"a"*40}, {}]:
+                with self.subTest(kind=kind,success=bool(headers)):
+                    card = audit.read_card(kind, row(), lambda _: (b"card", headers))
+                    self.assertEqual(card["kind"], kind)
 
 if __name__ == "__main__":
     unittest.main()

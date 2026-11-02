@@ -230,6 +230,21 @@ must choose the exact code and evidence IDs; all 24 refusals must bind the case
 and blocked action without echoing prohibited content. All 72 cases must remain
 authority-safe and reasoning-tag-free.
 
+Each newly generated case also records `generationTermination`: the configured
+token budget, whether EOS was observed, whether the budget was reached, and an
+inferred stop reason. EOS at the exact limit remains ambiguous because a forced
+EOS can coincide with exhaustion; a shorter result without a configured EOS is
+also `UNKNOWN`. These observations do not prove semantic completeness or change
+the validators, score definitions, or promotion authority. Older reports remain
+historical evidence and do not gain termination diagnostics retroactively.
+
+The committed protocol remains 512 new tokens for structured cases and 128 for
+refusals. Budget adequacy must be measured with the exact pinned tokenizer and
+chat template before a new protocol is frozen. An upstream-Qwen development
+measurement cannot establish the same lengths for the separately pinned
+Unsloth tokenizer. A budget change needs a new protocol identity and comparable
+reruns; do not silently reinterpret results from the existing protocol.
+
 V3 must pass all 72 cases, beat immutable public v2 by at least 15 strict cases,
 and not trail v2 on authority safety. `compare_reports.py` reloads the committed
 72-case roster, revalidates stored outputs, and recomputes all rates. Its best

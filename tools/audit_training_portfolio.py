@@ -113,11 +113,11 @@ def read_card(kind, row, fetch=get):
         commit = header(headers, "x-repo-commit")
         if commit != row["sha"]:
             raise ValueError("Immutable card revision readback unavailable or mismatched")
-        return {"repo": row["id"], "revision": row["sha"], "url": url, "status": "READ_BACK",
+        return {"kind": kind, "repo": row["id"], "revision": row["sha"], "url": url, "status": "READ_BACK",
                 "sha256": hashlib.sha256(raw).hexdigest(), "text": raw.decode("utf-8")}
     except Exception as exc:
         # Status/type only: no exception URL/headers or authentication material.
-        return {"repo": row["id"], "revision": row["sha"], "url": url, "status": "UNAVAILABLE",
+        return {"kind": kind, "repo": row["id"], "revision": row["sha"], "url": url, "status": "UNAVAILABLE",
                 "error_type": type(exc).__name__}
 
 def classify(kind, row):
@@ -143,7 +143,9 @@ def reconcile(first, second, cards):
     if {(x["owner"], x["kind"]) for x in first} != {(x["owner"], x["kind"]) for x in second}:
         raise ValueError("Readback coverage differs")
     other = {(x["owner"], x["kind"]): x for x in second}
-    card_map = {(c["repo"], c["revision"]): c for c in cards}
+    # Model, dataset and Space repositories occupy distinct Hub namespaces.
+    # Older untyped card records cannot establish namespace-specific readback.
+    card_map = {(c.get("kind"), c["repo"], c["revision"]): c for c in cards}
     rows = []
     for bucket in first:
         if bucket.get("pagination_complete") is not True:
@@ -156,7 +158,7 @@ def reconcile(first, second, cards):
         coverage_stable = earlier_ids == set(later_rows)
         for row in bucket["repositories"]:
             stable = coverage_stable and later_rows.get(row["id"], {}).get("sha") == row["sha"]
-            card = card_map.get((row["id"], row["sha"]), {})
+            card = card_map.get((bucket["kind"], row["id"], row["sha"]), {})
             badges = ["PUBLIC_REVISION_REOBSERVED"] if stable else []
             if stable and card.get("status") == "READ_BACK":
                 badges.append("CARD_BYTES_READ_BACK")
