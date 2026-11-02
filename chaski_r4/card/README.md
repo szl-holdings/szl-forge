@@ -68,6 +68,8 @@ szl:
   evaluation_evidence:
     label: MEASURED_LIMITED
     scope: OWNER_RUN_NAMED_N_CONTRACT_GATE_ONLY
+    evaluation_state: MEASURED_LIMITED_NOT_QUALIFICATION
+    result: JSON_DRAFTS_5_OF_5_AND_REFUSAL_PREFIXES_6_OF_6
     source_repository: szl-holdings/szl-forge
     evaluator_revision: 55c3027b048b9d55fa08519b3dd12bb53cb91f5a
     evaluator_path: chaski/bakeoff_named_n.py
@@ -98,6 +100,10 @@ szl:
     capability_benchmark: false
     semantic_correctness_measured: false
     hub_revision_binding: ESTABLISHED_FOR_PUBLISHED_BYTES_VIA_DIRECTORY_DIGEST
+    publication_eligible: false
+    autonomy_eligible: false
+    promotion: NOT_PROMOTABLE
+    production_disposition: HOLD
   promotion: NOT_PROMOTABLE
   publication_eligible: false
   autonomy_eligible: false
