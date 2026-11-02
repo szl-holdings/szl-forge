@@ -57,4 +57,10 @@ The witness package `szl-nemo` exposes `szl_nemo.evaluate_triad`
 - no DSSE signature. `szl-nemo` holds no signing key, so the record stays
   `UNSIGNED_HONEST`.
 
+The optional test lane is `tests/test_nvidia_triad_lane.py`. It does not
+change the production pin. Set `SZL_FORGE_NEMO_TRIAD_LANE=1` to install
+immutable `szl-nemo` commit `116630d2274731998124d7af089a9383074ce476`
+(package 0.4.2) in a temporary environment and run the triad contract.
+Production stays on `810231a531188bb569e3faa17396386eb0a5e260` (package 0.4.0).
+
 This page does not claim a fine-tune, a benchmark, or a live NVML reading.
