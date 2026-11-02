@@ -150,10 +150,15 @@ def run_preflight(
         dataset_report = validate_dataset(dataset, min_examples=min_examples)
     else:
         dataset_report = {
-            "schema": "szl.forge-sft-dataset-report/v1",
+            "schema": "szl.forge-sft-dataset-report/v2",
+            "fingerprint_schema": "sha256-canonical-chat-input-v1",
             "path": dataset,
             "status": "INVALID",
             "records": 0,
+            "duplicate_conversations": 0,
+            "duplicate_inputs": 0,
+            "cross_dataset_overlaps": 0,
+            "reference_datasets": [],
             "errors": [f"dataset not found: {dataset}"],
         }
     dataset_ok = dataset_report["status"] == "VALID"

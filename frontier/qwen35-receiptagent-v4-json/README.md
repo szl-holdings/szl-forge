@@ -190,11 +190,13 @@ are source regressions, not a model evaluation. Exploratory `accuracy_0.91` and
 reports these observations separately with no passing-test credit. This kernel
 does not establish general multilingual or semantic claim detection.
 
-CI retains the probe and train-only conformance JSON reports as a separate
-artifact because the complete receipt-chain report can exceed a log viewer's
+CI retains the probe, split-disjointness and train-only conformance JSON
+reports as a separate artifact because the complete receipt-chain report can
+exceed a log viewer's
 single-line limit. The artifact is named `v4-source-conformance-<run_id>` and
-contains only `numeric-probe.json` and `curriculum-conformance.json` from the
-runner's temporary `v4-source-conformance` directory. Only these two explicitly
+contains only `numeric-probe.json`, `split-disjointness.json` and
+`curriculum-conformance.json` from the runner's temporary
+`v4-source-conformance` directory. Only these three explicitly
 named report files are uploaded; no curriculum, model, checkout directory or
 wildcard is included. The pinned upload step runs even after failure so that
 available diagnostics can be retained for 30 days. A failed probe or conformance
