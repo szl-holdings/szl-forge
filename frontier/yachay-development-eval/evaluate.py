@@ -17,6 +17,7 @@ from pathlib import Path, PurePosixPath
 import re
 import signal
 import socket
+import stat
 import subprocess
 import sys
 import time
@@ -150,9 +151,28 @@ def validate(plan):
     return plan
 
 
+def bound_file_path(value):
+    """Inspect lexical components; resolving first would hide indirection.
+
+    This is an admission check, not a race-free filesystem sandbox. Execution
+    still requires owner-controlled read-only mounts and namespace stability.
+    """
+    path = Path(value)
+    require(path.is_absolute() and ".." not in path.parts, "bound file needs an absolute path without traversal")
+    for component in (*reversed(path.parents), path):
+        info = component.lstat()
+        require(not stat.S_ISLNK(info.st_mode), "bound file path symlink rejected: " + str(component))
+        attributes = getattr(info, "st_file_attributes", None)
+        require(os.name != "nt" or attributes is not None, "Windows reparse attributes unavailable")
+        require(not ((attributes or 0) & stat.FILE_ATTRIBUTE_REPARSE_POINT),
+                "bound file path reparse point rejected: " + str(component))
+        require(stat.S_ISREG(info.st_mode) if component == path else stat.S_ISDIR(info.st_mode),
+                "bound file path must contain directories and a regular file: " + str(component))
+    return path
+
+
 def verify_file(spec):
-    path = Path(spec["path"])
-    require(path.is_file(), "missing file: " + str(path))
+    path = bound_file_path(spec["path"])
     require(digest(path) == spec["sha256"], "file hash mismatch: " + str(path))
 
 
@@ -174,7 +194,7 @@ def verify_snapshot(spec):
 
 
 def load_rows(plan):
-    path = Path(plan["data"]["path"])
+    path = bound_file_path(plan["data"]["path"])
     require(path.stat().st_size <= 16 * 1024 * 1024, "evaluation data exceeds 16 MiB")
     rows, ids = [], set()
     for line in path.read_text(encoding="utf-8").splitlines():
@@ -208,7 +228,7 @@ def verify(plan):
         require(config.get("peft_type") == "LORA" and config.get("task_type") == "CAUSAL_LM", "only causal LoRA supported")
         require(config.get("base_model_name_or_path") == BASE, "adapter base binding mismatch")
         require(config.get("revision") in (None, REVISION), "adapter revision mismatch")
-    review = read_json(plan["loader_review"]["path"])
+    review = read_json(bound_file_path(plan["loader_review"]["path"]))
     binding = hashlib.sha256(canonical({"base": plan["base"]["files"], "tokenizer": plan["tokenizer"]["files"], "packages": plan["runtime"]["packages"]})).hexdigest()
     require(review.get("binding_sha256") == binding and review.get("local_custom_code_reviewed") is True, "loader review does not bind these files and packages")
     require(isinstance(review.get("reviewer"), str) and bool(review["reviewer"].strip()), "loader reviewer required")
@@ -261,7 +281,7 @@ def runtime_guard(plan):
     pids = (cg / "pids.max").read_text().strip()
     require(pids.isdigit() and 1 <= int(pids) <= 128, "bounded cgroup process count required")
     paths = [Path(p["root"]) for p in [plan["base"], plan["tokenizer"], *plan["adapters"]]]
-    paths += [Path(plan[key]["path"]) for key in ("data", "loader_review")]
+    paths += [bound_file_path(plan[key]["path"]) for key in ("data", "loader_review")]
     for path in paths:
         require(bool(os.statvfs(path).f_flag & os.ST_RDONLY), "artifacts and data must be mounted read-only")
     def smi(arguments):
@@ -399,7 +419,7 @@ def run(plan, plan_path, output, expected_sha):
     started_ids = {x["candidate"] for x in events if x.get("state") == "STARTED"}
     if set(completed) != set(candidates):
         state = "INCOMPLETE" if state == "COMPLETED" else state
-    if event_errors:
+    if event_errors and state != "TIMED_OUT":
         state = "FAILED"
     result = {"schema": SCHEMA, "state": state, "exit_code": code, "elapsed_seconds": time.monotonic() - started,
               "failure": failure, "event_errors": event_errors,

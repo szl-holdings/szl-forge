@@ -10,6 +10,7 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import types
 import unittest
 from unittest.mock import patch
 
@@ -113,6 +114,71 @@ class EvalTests(unittest.TestCase):
         Path(self.plan["adapters"][0]["root"], "adapter_model.safetensors").write_bytes(b"changed")
         with self.assertRaisesRegex(e.Blocked, "hash mismatch"):
             e.verify(self.plan)
+
+    def test_bound_file_symlinks_rejected_before_hashing(self):
+        for key in ("data", "loader_review"):
+            with self.subTest(key=key):
+                target = Path(self.plan[key]["path"])
+                link = self.root / (key + "-link")
+                try:
+                    link.symlink_to(target)
+                except (OSError, NotImplementedError) as exc:
+                    self.skipTest("native symlink creation unavailable: " + str(exc))
+                spec = {**self.plan[key], "path": str(link)}
+                with patch.object(e, "digest", side_effect=AssertionError("must reject before hashing")):
+                    with self.assertRaisesRegex(e.Blocked, "symlink|reparse"):
+                        e.verify_file(spec)
+
+    def test_bound_file_parent_symlink_and_traversal_rejected(self):
+        directory = self.root / "alias"
+        try:
+            directory.symlink_to(self.root, target_is_directory=True)
+        except (OSError, NotImplementedError) as exc:
+            self.skipTest("native directory symlink creation unavailable: " + str(exc))
+        for key in ("data", "loader_review"):
+            target = Path(self.plan[key]["path"])
+            for path in (directory / target.name, directory / ".." / self.root.name / target.name):
+                with self.subTest(key=key, path=path):
+                    with self.assertRaisesRegex(e.Blocked, "symlink|reparse|traversal"):
+                        e.verify_file({**self.plan[key], "path": str(path)})
+
+    def test_bound_file_dangling_link_rejected(self):
+        link = self.root / "dangling"
+        try:
+            link.symlink_to(self.root / "absent")
+        except (OSError, NotImplementedError) as exc:
+            self.skipTest("native symlink creation unavailable: " + str(exc))
+        with self.assertRaisesRegex(e.Blocked, "symlink|reparse"):
+            e.verify_file({"path": str(link), "sha256": "0" * 64})
+
+    def test_bound_file_reparse_attributes_rejected_at_leaf_and_parent(self):
+        real_lstat = Path.lstat
+        for key in ("data", "loader_review"):
+            leaf = Path(self.plan[key]["path"])
+            for marked in (leaf, leaf.parent):
+                def lstat(path, *args, **kwargs):
+                    info = real_lstat(path, *args, **kwargs)
+                    return types.SimpleNamespace(
+                        st_mode=info.st_mode,
+                        st_file_attributes=e.stat.FILE_ATTRIBUTE_REPARSE_POINT if path == marked else 0,
+                    )
+                with self.subTest(key=key, marked=marked), patch.object(Path, "lstat", lstat):
+                    with self.assertRaisesRegex(e.Blocked, "reparse"):
+                        e.verify_file(self.plan[key])
+
+    @unittest.skipUnless(os.name == "nt", "native Windows junction test")
+    def test_native_windows_parent_junction_rejected(self):
+        junction = self.root / "junction"
+        created = subprocess.run(["cmd", "/c", "mklink", "/J", str(junction), str(self.root)],
+                                 capture_output=True, text=True)
+        if created.returncode:
+            self.skipTest("native junction creation unavailable")
+        try:
+            for key in ("data", "loader_review"):
+                with self.subTest(key=key), self.assertRaisesRegex(e.Blocked, "reparse"):
+                    e.verify_file({**self.plan[key], "path": str(junction / Path(self.plan[key]["path"]).name)})
+        finally:
+            junction.rmdir()
 
     def test_review_binds_packages_and_source(self):
         self.plan["runtime"]["packages"]["torch"] = "9.9.9"
@@ -231,6 +297,43 @@ class EvalTests(unittest.TestCase):
         self.assertFalse(result["production_eligible"])
         with self.assertRaises(e.Blocked):
             e.run(self.plan, path, self.root / "out", e.digest(path))
+
+    @unittest.skipUnless(sys.platform == "linux", "POSIX process-session timeout test")
+    def test_timeout_with_partial_event_preserves_primary_outcome(self):
+        path = self.save()
+        real_popen = subprocess.Popen
+        children = []
+        output = self.root / "out"
+        def partial_event_child(*args, **kwargs):
+            # Deterministic partial append at termination; no timing-dependent
+            # race between a child starting and its first filesystem write.
+            (output / "events.jsonl").write_bytes(
+                b'{"candidate":"base","state":"STARTED"}\n{"candidate":')
+            child = real_popen([sys.executable, "-c", "import time; time.sleep(60)"], **kwargs)
+            children.append(child)
+            return child
+        with patch.object(e, "runtime_guard"), patch.object(e.subprocess, "Popen", side_effect=partial_event_child):
+            result = e.run(self.plan, path, output, e.digest(path))
+        self.assertEqual(result["state"], "TIMED_OUT")
+        self.assertEqual(result["event_errors"][0]["line"], 2)
+        self.assertEqual([c["state"] for c in result["candidates"]], ["TIMED_OUT", "NOT_RUN"])
+        self.assertEqual(children[0].returncode, -9)
+        self.assertEqual(e.read_json(output / "receipt.json"), result)
+        self.assertIn("events.jsonl", result["files"])
+        self.assertFalse(result["production_eligible"])
+
+    @unittest.skipUnless(sys.platform == "linux", "POSIX supervision test")
+    def test_partial_event_without_timeout_still_fails(self):
+        path = self.save()
+        output = self.root / "out"
+        real_popen = subprocess.Popen
+        def malformed_event_child(*args, **kwargs):
+            (output / "events.jsonl").write_bytes(b'{"candidate":')
+            return real_popen([sys.executable, "-c", "pass"], **kwargs)
+        with patch.object(e, "runtime_guard"), patch.object(e.subprocess, "Popen", side_effect=malformed_event_child):
+            result = e.run(self.plan, path, output, e.digest(path))
+        self.assertEqual(result["state"], "FAILED")
+        self.assertEqual(result["event_errors"][0]["line"], 1)
 
 
 if __name__ == "__main__":

@@ -48,6 +48,17 @@ snapshots without HF cache symlinks in the authorized environment, then mount
 them read-only. Adapter directories contain only `adapter_config.json` and
 `adapter_model.safetensors`; original checkpoints are not modified.
 
+Bound data and loader-review files must be regular files reached through
+absolute, traversal-free paths. Admission inspects the leaf and every parent
+with `lstat`, rejecting symbolic links and Windows reparse points (including
+junctions), without first resolving away the indirection. Windows checks fail
+closed if reparse attributes are unavailable. Native symlink/junction tests
+report a skip if the host cannot create the fixture; mocked attribute tests
+are not native Windows qualification. These component checks do not prevent
+concurrent namespace replacement, detect hard-link aliases, or authenticate
+mount ownership: the owner must still provide stable read-only artifact mounts
+and exclude untrusted filesystem writers throughout execution.
+
 The upstream model uses custom code. Review its pinned local code and installed
 dependencies before execution. A small loader-review JSON has these fields:
 
@@ -123,6 +134,9 @@ NOT_RUN; failed and timed-out attempts remain visible. Partial event lines are
 retained and reported as errors. A parent crash may leave `started.json` without
 `receipt.json`: that is an incomplete attempt, never a completed evaluation.
 These local receipts are unsigned and do not authenticate the model provider.
+If timeout and partial event parsing coincide, `TIMED_OUT` remains the primary
+receipt state; `event_errors` separately retains the parse failure and raw event
+file hash. A parse failure without timeout still fails the attempt.
 
 ## Validation performed
 
@@ -130,9 +144,13 @@ These local receipts are unsigned and do not authenticate the model provider.
 python -I -B -m unittest discover -s . -p 'test_*.py' -v
 ```
 
-24 CPU software tests passed on Linux. Three POSIX-specific tests are skipped
-on Windows. Fixture bytes are deliberately not model weights. The timeout test
-starts and reaps a sleeping Python child; model/GPU probes are mocked in that
+The initial candidate ran 24 CPU software tests on Linux. The review-fix suite
+now contains 31 tests: on Linux/Python 3.12, 30 passed and the native Windows
+junction test was skipped. Five POSIX-specific tests are skipped on Windows;
+native symlink fixtures may additionally skip when creation is not permitted.
+Windows execution of the review-fix suite remains pending CI.
+Fixture bytes are deliberately not model weights. The timeout tests
+start and reap a sleeping Python child; model/GPU probes are mocked in that
 test. No torch/Transformers/PEFT packages were installed or imported, no model
 weights were loaded, and no CUDA inference was executed during this validation.
 The numerical test verifies token-weighted aggregation, not the GPU loader.
