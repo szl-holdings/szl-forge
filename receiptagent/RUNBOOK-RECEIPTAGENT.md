@@ -1,5 +1,66 @@
 # RUNBOOK — SZL-Forge-1.5B-ReceiptAgent (owner-metal)
 
+## Private draft-server contract (source-only output gate)
+
+`serve_receiptagent.py` is the old local **Qwen2.5-1.5B ReceiptAgent** prototype,
+not the Qwen3.5 v2 adapter, a paid API, or a qualified production service.
+The output gate does not authorize training, weight downloads, model execution,
+publication, or any of the historical operator procedures below.
+
+**Runtime prerequisite:** the server interpreter must have `jsonschema`
+available, in addition to the existing model-runtime dependencies when actual
+generation is separately authorized. The gate was tested with jsonschema 4.26.0.
+Missing `jsonschema` prevents server startup with an import error.
+There is no permissive substitute validator or model-output fallback if a
+dependency or generation is unavailable.
+
+**Breaking request/response change:** POST bodies now require a nonempty
+`prompt` and nonempty `evidence_allowlist`. The allowlist is an array of closed
+objects containing only `sourceEndpoint` (a nonempty caller-supplied string)
+and `label` (one of MEASURED, REPORTED, DECLARED, SIMULATED, UNKNOWN, UNAVAILABLE).
+An endpoint may have only one allowlisted label. Optional `max_new_tokens` is
+a JSON integer 1–256, default 256. Extra request fields are rejected. The HTTP
+body limit is 65,536 bytes; transfer-encoded requests are rejected.
+
+The old raw `text` success field is removed. Success returns `base_model`,
+`proposal_only: true`, and a validated `result` object:
+
+- A draft must satisfy the unchanged `receiptagent.schema.json`, with runtime
+  provenance fixed to MODEL_PROPOSED, decision DRAFT, approvalRequired true,
+  executed false and receiptBinding.status NOT_BOUND. Each citation must match
+  an exact caller-supplied endpoint/label pair. Extra authority/signature fields,
+  missing citations, forged endpoints and label upgrades are rejected.
+- A refusal is a separate **closed JSON object** requiring proposalId,
+  capabilityProfile (`SZL-Forge-1.5B-ReceiptAgent`), provenance MODEL_PROPOSED,
+  decision REFUSE, nonempty reason, approvalRequired true, controllerBoundary,
+  executed false, and receiptBinding (algorithm `ed25519-over-sha256`, status
+  NOT_BOUND, note). No claim, evidence, signature or other extra field is allowed.
+  Historical free-text REFUSE output is not accepted by this interface.
+
+Only completion tokens are decoded, not the input prompt. Output must be one
+strict JSON object: malformed/duplicate/trailing JSON, echoed prompt text,
+nonfinite values including numeric overflow, and invalid Unicode are rejected.
+There is no JSON extraction/repair or successful raw-text fallback.
+
+Errors return `error` and `base_model`, without raw model text: HTTP400 for
+invalid JSON/request/evidence allowlist/token or content-length input;
+HTTP422 `OUTPUT_REJECTED` for invalid generation; HTTP503 `UNAVAILABLE` when
+local weights are absent, or `GENERATION_UNAVAILABLE` for dependency/loading/
+generation failures handled by the prototype.
+
+The host argument permits only `127.0.0.1` or `localhost`; this remains private
+and unpaid. It has no authentication, payment entitlement, distributed quota,
+or production resource-deadline guarantee. `--check` only checks local model
+directory/safetensors-file **presence**; READY is not a hash verification,
+generation test, hardware/capacity qualification, or evidence of a live service.
+
+Acceptance checks JSON structure and caller-supplied citation/label membership,
+**not truth, evidence authenticity, factual entailment or safety**. No endpoints
+are fetched and no authoritative runtime receipts are minted. Training/evaluation
+signatures do not sign runtime output. Human review remains outside the model.
+
+---
+
 How to make the ReceiptAgent **genuinely** TRAINED + EVALUATED on your own
 hardware (RTX 5050, Windows/PowerShell) and have the live Alloy family wall
 flip from `DERIVED-UNTRAINED` to receipt-verified — **without a single number
