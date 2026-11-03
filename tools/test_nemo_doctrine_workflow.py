@@ -25,14 +25,18 @@ class NemoDoctrineWorkflowTests(unittest.TestCase):
             self.assertIn('"frontier/qwen35-receiptagent-v3/**"', region)
             self.assertIn('"tools/validate_sft_dataset.py"', region)
             self.assertIn('"tools/test_nemo_doctrine_workflow.py"', region)
+            self.assertIn('"tests/test_validate_sft_dataset.py"', region)
 
     def test_v3_training_data_gets_both_blocking_gates(self) -> None:
         marker = "      - name: Gate ReceiptAgent v3 training data (fail closed)"
         self.assertIn(marker, self.workflow)
         region = self.workflow.split(marker, 1)[1].split("      - name:", 1)[0]
         self.assertIn("set -euo pipefail", region)
+        self.assertIn("python tools/validate_sft_dataset.py", region)
+        self.assertIn(V3_TRAIN, region)
+        self.assertIn("--min-examples 180", region)
         self.assertIn(
-            f"python tools/validate_sft_dataset.py {V3_TRAIN} --min-examples 180 --json",
+            "--disjoint-from frontier/qwen35-receiptagent-v3/test.jsonl",
             region,
         )
         self.assertIn(
@@ -42,7 +46,29 @@ class NemoDoctrineWorkflowTests(unittest.TestCase):
         self.assertNotIn("continue-on-error", region)
         self.assertNotIn("|| true", region)
         self.assertNotIn("dev.jsonl", region)
-        self.assertNotIn("test.jsonl", region)
+
+    def test_declared_training_sets_are_disjoint_from_evaluation_sets(self) -> None:
+        marker = "      - name: Reject duplicate training inputs and train-eval overlap"
+        self.assertIn(marker, self.workflow)
+        region = self.workflow.split(marker, 1)[1].split("      - name:", 1)[0]
+        for dataset in (
+            "szl_dataset.jsonl",
+            "receiptagent/train.jsonl",
+            "receiptagent/train.refusals.jsonl",
+            "receiptagent/eval.jsonl",
+            "receiptagent/adversarial.jsonl",
+        ):
+            self.assertIn(dataset, region)
+        self.assertIn("--disjoint-from", region)
+        self.assertNotIn("continue-on-error", region)
+        self.assertNotIn("|| true", region)
+
+    def test_v4_training_is_checked_against_pinned_heldout_bytes(self) -> None:
+        self.assertIn(
+            "--disjoint-from frontier/qwen35-receiptagent-v4-json/heldout/test.jsonl",
+            self.workflow,
+        )
+        self.assertIn("split-disjointness.json", self.workflow)
 
     def test_reviewed_kernel_pin_and_existing_datasets_are_preserved(self) -> None:
         self.assertIn(

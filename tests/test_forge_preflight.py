@@ -54,6 +54,9 @@ def test_missing_dataset_blocks_ready(tmp_path):
         min_disk_gib=0.0,
     )
     assert report["status"] == "NOT_READY"
+    assert report["dataset_report"]["schema"] == "szl.forge-sft-dataset-report/v2"
+    assert report["dataset_report"]["fingerprint_schema"] == "sha256-canonical-chat-input-v1"
+    assert report["dataset_report"]["cross_dataset_overlaps"] == 0
     assert any("dataset" in reason for reason in report["blocking_reasons"])
 
 

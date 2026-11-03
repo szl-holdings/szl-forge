@@ -1,0 +1,1195 @@
+{
+  "schema": "szl.training-research-map/v1",
+  "observed_at": "2026-11-01T21:03:38.905219+00:00",
+  "source": "PUBLIC_METADATA_AND_PINNED_CARDS",
+  "authority": "AUDIT_QUEUE_ONLY",
+  "training_authorized": false,
+  "promotion_authorized": false,
+  "registry_revision": "038f792855ae12225084c8d87181e4476b00fa55",
+  "model_rows": [
+    {
+      "repo": "SZLHOLDINGS/A11OY-MINI",
+      "revision": "7ea56236ea7988b3915b5ef07548cb2c3930a3cf",
+      "lane": "DERIVATIVE_EVALUATION",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/KHIPU-R2",
+      "revision": "b359356935eadbe88e8ed803f9591eecb1005ca7",
+      "lane": "PEFT_EVALUATION_BEFORE_RETRAINING",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/MiniEmbed-Nano",
+      "revision": "a18cb9a90405593b3c0ef7341ab64d8f28b6170c",
+      "lane": "CPU_BASELINE_REVIEW",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/Moons-Nano",
+      "revision": "9469833894940ac3511ac11232606331fc7a2c59",
+      "lane": "CPU_BASELINE_REVIEW",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/ReceiptAgent-Nano",
+      "revision": "b46554a144995d9839e378acd9d15516fda0ae8f",
+      "lane": "CPU_BASELINE_REVIEW",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/SZL-Forge-1.5B-ReceiptAgent",
+      "revision": "be8ffedb86fccc610298310cd24b0f5ad31747ad",
+      "lane": "PEFT_EVALUATION_BEFORE_RETRAINING",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/SZL-Khipu-1.5B",
+      "revision": "db2c786d536e3dcb8afd1daf0f7e34f2cd6d1aaa",
+      "lane": "PEFT_EVALUATION_BEFORE_RETRAINING",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/SZL-Khipu-1.5B-GGUF",
+      "revision": "b69822709ae6ae29b0f62af2f903ef8e4584eeb0",
+      "lane": "DERIVATIVE_EVALUATION",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/SZL-Khipu-1.5B-abstain",
+      "revision": "942c02dd4e94f2cb7cfb0432a051c2db2219ee79",
+      "lane": "DERIVATIVE_EVALUATION",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/TinyKhipu-Nano",
+      "revision": "78f737b9f174d0500c296066cf9d678c6ff79b52",
+      "lane": "CPU_BASELINE_REVIEW",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/WILLAY",
+      "revision": "96a0ac5c5c26e89f732b72d747b3577e1ea5236f",
+      "lane": "PEFT_EVALUATION_BEFORE_RETRAINING",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/YARQA-ATTN",
+      "revision": "09387ea0f5739dacc11a8bb81e2223542dc3ece1",
+      "lane": "SOFTWARE_CONFORMANCE",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/a11oy-v19-substrate",
+      "revision": "af49867fe6b657fa1480822b590c43a061484204",
+      "lane": "RECIPE_OR_OTHER_ARTIFACT_REVIEW",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/brain-navigator-r2",
+      "revision": "8f7d67af9c2f8315dc3a63afa9ebf23a3f60ca01",
+      "lane": "PEFT_EVALUATION_BEFORE_RETRAINING",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/chaski",
+      "revision": "c8bb750cd4a8d14b5175d0cb74739a8a7c195077",
+      "lane": "PEFT_EVALUATION_BEFORE_RETRAINING",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/chaski-5050",
+      "revision": "c33efb1d9baa6223e42ff55df9d51d8e21acba4b",
+      "lane": "PEFT_EVALUATION_BEFORE_RETRAINING",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/chaski-r2",
+      "revision": "4583739d1a269f1634fa5955837cccad1d6f5c83",
+      "lane": "PEFT_EVALUATION_BEFORE_RETRAINING",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/chaski-r4",
+      "revision": "bb4391d09a6d706df002f65572ed6824fe4135d2",
+      "lane": "PEFT_EVALUATION_BEFORE_RETRAINING",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/governed-inference-meter",
+      "revision": "5049f8ec259a5356d5b8eeaf11b85d3e9c1fea74",
+      "lane": "SOFTWARE_CONFORMANCE",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/khipu-r3",
+      "revision": "7e388efb6e332c8c28e94bdf266293baf437fb64",
+      "lane": "PEFT_EVALUATION_BEFORE_RETRAINING",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-block-kv",
+      "revision": "18b24f8a607af869c8d92c50689f6545080a41c9",
+      "lane": "SOFTWARE_CONFORMANCE",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-blocked",
+      "revision": "3c6b834752936725b542f8edd2a42fd7e705bbd4",
+      "lane": "SOFTWARE_CONFORMANCE",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-energy-attest",
+      "revision": "9146d35730139f8b7797dc40b4d5be5547387f1b",
+      "lane": "RECIPE_OR_OTHER_ARTIFACT_REVIEW",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-formulas",
+      "revision": "7de1458e25ddc0a77ff38b6fb76aa5499e99e008",
+      "lane": "SOFTWARE_CONFORMANCE",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-governed-norm",
+      "revision": "aa32b603f3065a83018240a8bd414f2b68f956ce",
+      "lane": "SOFTWARE_CONFORMANCE",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-govsign",
+      "revision": "e52cdbfb14fead6bade2f6802fee46e3308c8cad",
+      "lane": "SOFTWARE_CONFORMANCE",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-invariants",
+      "revision": "607fd98e75b7cb776f9cc99ab7e55f29c5936183",
+      "lane": "SOFTWARE_CONFORMANCE",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-kernels",
+      "revision": "b2c9ac9be4376af97073cf74ca7ea244301e9bd1",
+      "lane": "SOFTWARE_CONFORMANCE",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-khipu",
+      "revision": "942b723769c726299b9c865a4911be61e57c1d0d",
+      "lane": "CPU_BASELINE_REVIEW",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-khipu-kernels",
+      "revision": "e80993b57dd4045b44afc2d41ee2ece45b747989",
+      "lane": "SOFTWARE_CONFORMANCE",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-lambda-gate",
+      "revision": "81124449bffcfb18c0cf373fabe08a7776598e8a",
+      "lane": "SOFTWARE_CONFORMANCE",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-maskmod",
+      "revision": "354e92253d35dd126f819427bfebf10930c9f027",
+      "lane": "SOFTWARE_CONFORMANCE",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-nemo",
+      "revision": "44b59052b5135ba2bb554d2198bd62bb6b2548d8",
+      "lane": "RECIPE_OR_OTHER_ARTIFACT_REVIEW",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-ouroboros",
+      "revision": "77996971f0960f56a3e04c99be858161c8498c5a",
+      "lane": "SOFTWARE_CONFORMANCE",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-provctl",
+      "revision": "0793407eafe67d67945c3b00ddc1040920cdc9db",
+      "lane": "SOFTWARE_CONFORMANCE",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-receipt-attn",
+      "revision": "d2838a3c768f70c456f9a334bcd2337d15dd3269",
+      "lane": "SOFTWARE_CONFORMANCE",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2",
+      "revision": "54682ce45513bf310d0a770ffc49a70f5569d4d0",
+      "lane": "PEFT_EVALUATION_BEFORE_RETRAINING",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2-merged",
+      "revision": "0ef9ed208b66c258e1d11e9112f0721c3b5c7565",
+      "lane": "WEIGHT_LINEAGE_AND_BASELINE_REVIEW",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3",
+      "revision": "28890269bc99df8b46f094aaa85d6af6f3615682",
+      "lane": "PEFT_EVALUATION_BEFORE_RETRAINING",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-triage-qwen3.5-0.8b-lora",
+      "revision": "d1b3d6e7b1cff8767b74371f5b9562e5c4a7c0d5",
+      "lane": "PEFT_EVALUATION_BEFORE_RETRAINING",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-triage-qwen3.5-0.8b-lora-study5",
+      "revision": "82a8831f1b2f326e63067bcb6a0f2e2eeb9f16a6",
+      "lane": "PEFT_EVALUATION_BEFORE_RETRAINING",
+      "disposition": "REQUIRES_MODEL_SPECIFIC_QUALIFICATION",
+      "training_authorized": false
+    }
+  ],
+  "dataset_rows": [
+    {
+      "repo": "SZLHOLDINGS/SZLHOLDINGS",
+      "revision": "7f6c210bd74746a370ff2039fd7c9b4f43192d7d",
+      "declared_licenses": [
+        "apache-2.0"
+      ],
+      "proposed_role": "METADATA_ONLY",
+      "role_basis": "Pinned public card plus conservative source review; no row-level audit",
+      "training_authorized": false,
+      "required_before_training": [
+        "Current source-level rights and provenance",
+        "Versioned document/derivation family split before chunking",
+        "Deduplication and protected evaluation exclusion",
+        "Model-specific fit and finite compute budget"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/a11oy-verifiable-corpus",
+      "revision": "70cc622ad01b49eb352e55838fa67dc42fcd81a2",
+      "declared_licenses": [
+        "apache-2.0"
+      ],
+      "proposed_role": "MIXED_EVIDENCE_REFERENCE",
+      "role_basis": "Pinned public card plus conservative source review; no row-level audit",
+      "training_authorized": false,
+      "required_before_training": [
+        "Current source-level rights and provenance",
+        "Versioned document/derivation family split before chunking",
+        "Deduplication and protected evaluation exclusion",
+        "Model-specific fit and finite compute budget"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/alloy-sovereign-eval-runs",
+      "revision": "2a23619515d85d76b80fcc0ce6b0785ed1035f39",
+      "declared_licenses": [
+        "apache-2.0"
+      ],
+      "proposed_role": "EVIDENCE_ONLY",
+      "role_basis": "Pinned public card plus conservative source review; no row-level audit",
+      "training_authorized": false,
+      "required_before_training": [
+        "Current source-level rights and provenance",
+        "Versioned document/derivation family split before chunking",
+        "Deduplication and protected evaluation exclusion",
+        "Model-specific fit and finite compute budget"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/canonical-formulas-v1",
+      "revision": "43ef814f40a30a6b8eccf341ec8625998f263559",
+      "declared_licenses": [
+        "apache-2.0"
+      ],
+      "proposed_role": "RETRIEVAL_REFERENCE",
+      "role_basis": "Pinned public card plus conservative source review; no row-level audit",
+      "training_authorized": false,
+      "required_before_training": [
+        "Current source-level rights and provenance",
+        "Versioned document/derivation family split before chunking",
+        "Deduplication and protected evaluation exclusion",
+        "Model-specific fit and finite compute budget"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/doctrine-v10-v11",
+      "revision": "fcad1433cfa18da7f9ffc6f62f29b3a165187eb7",
+      "declared_licenses": [
+        "apache-2.0"
+      ],
+      "proposed_role": "RETRIEVAL_OR_SFT_CANDIDATE",
+      "role_basis": "Pinned public card plus conservative source review; no row-level audit",
+      "training_authorized": false,
+      "required_before_training": [
+        "Current source-level rights and provenance",
+        "Versioned document/derivation family split before chunking",
+        "Deduplication and protected evaluation exclusion",
+        "Model-specific fit and finite compute budget"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/energy-attested-runs",
+      "revision": "b2c4946d9d002ba22aaa2fe7407904a81d8e0736",
+      "declared_licenses": [
+        "apache-2.0"
+      ],
+      "proposed_role": "EVIDENCE_ONLY",
+      "role_basis": "Pinned public card plus conservative source review; no row-level audit",
+      "training_authorized": false,
+      "required_before_training": [
+        "Current source-level rights and provenance",
+        "Versioned document/derivation family split before chunking",
+        "Deduplication and protected evaluation exclusion",
+        "Model-specific fit and finite compute budget"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/governed-agent-bench",
+      "revision": "8fd77eab6f1be95de821664e8a1aa73eb21490a9",
+      "declared_licenses": [
+        "apache-2.0"
+      ],
+      "proposed_role": "EVALUATION_ONLY",
+      "role_basis": "Pinned public card plus conservative source review; no row-level audit",
+      "training_authorized": false,
+      "required_before_training": [
+        "Current source-level rights and provenance",
+        "Versioned document/derivation family split before chunking",
+        "Deduplication and protected evaluation exclusion",
+        "Model-specific fit and finite compute budget"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/governed-receipts-bench",
+      "revision": "9e8a4921740f310d144012e27e3bb0cb34e733af",
+      "declared_licenses": [
+        "apache-2.0"
+      ],
+      "proposed_role": "EVALUATION_ONLY",
+      "role_basis": "Pinned public card plus conservative source review; no row-level audit",
+      "training_authorized": false,
+      "required_before_training": [
+        "Current source-level rights and provenance",
+        "Versioned document/derivation family split before chunking",
+        "Deduplication and protected evaluation exclusion",
+        "Model-specific fit and finite compute budget"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/k-verify-benchmark-v1",
+      "revision": "a5a46493b90f6dc2c9499cdf32e593ab71a8a387",
+      "declared_licenses": [
+        "cc-by-4.0"
+      ],
+      "proposed_role": "EVALUATION_ONLY",
+      "role_basis": "Pinned public card plus conservative source review; no row-level audit",
+      "training_authorized": false,
+      "required_before_training": [
+        "Current source-level rights and provenance",
+        "Versioned document/derivation family split before chunking",
+        "Deduplication and protected evaluation exclusion",
+        "Model-specific fit and finite compute budget"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/killinchu-osint-corpus",
+      "revision": "2ddd185a14fc95ddf6aa86ed762dc16401a65ac0",
+      "declared_licenses": [
+        "other"
+      ],
+      "proposed_role": "BANNED",
+      "role_basis": "Pinned public card plus conservative source review; no row-level audit",
+      "training_authorized": false,
+      "required_before_training": [
+        "Current source-level rights and provenance",
+        "Versioned document/derivation family split before chunking",
+        "Deduplication and protected evaluation exclusion",
+        "Model-specific fit and finite compute budget"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/lean-proofs-v1",
+      "revision": "f877db13fd3b84d8304169c3cb27c71bd397ac64",
+      "declared_licenses": [
+        "apache-2.0"
+      ],
+      "proposed_role": "REFERENCE_TEST_VECTORS_ONLY",
+      "role_basis": "Pinned public card plus conservative source review; no row-level audit",
+      "training_authorized": false,
+      "required_before_training": [
+        "Current source-level rights and provenance",
+        "Versioned document/derivation family split before chunking",
+        "Deduplication and protected evaluation exclusion",
+        "Model-specific fit and finite compute budget"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/lean-theorem-tree",
+      "revision": "8283cc8b75a54142016c8ac7fac5695903a9e6ba",
+      "declared_licenses": [
+        "apache-2.0"
+      ],
+      "proposed_role": "RETRIEVAL_REFERENCE",
+      "role_basis": "Pinned public card plus conservative source review; no row-level audit",
+      "training_authorized": false,
+      "required_before_training": [
+        "Current source-level rights and provenance",
+        "Versioned document/derivation family split before chunking",
+        "Deduplication and protected evaluation exclusion",
+        "Model-specific fit and finite compute budget"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/model-bom",
+      "revision": "038f792855ae12225084c8d87181e4476b00fa55",
+      "declared_licenses": [
+        "apache-2.0"
+      ],
+      "proposed_role": "RIGHTS_AND_LINEAGE_REGISTRY",
+      "role_basis": "Pinned public card plus conservative source review; no row-level audit",
+      "training_authorized": false,
+      "required_before_training": [
+        "Current source-level rights and provenance",
+        "Versioned document/derivation family split before chunking",
+        "Deduplication and protected evaluation exclusion",
+        "Model-specific fit and finite compute budget"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/oac-clinical-transport-observability-synthetic",
+      "revision": "f7ab6170bf78138b187b8cb707d374a25ad85375",
+      "declared_licenses": [
+        "apache-2.0"
+      ],
+      "proposed_role": "ISOLATED_OPERATIONAL_SYNTHETIC_CANDIDATE",
+      "role_basis": "Pinned public card plus conservative source review; no row-level audit",
+      "training_authorized": false,
+      "required_before_training": [
+        "Current source-level rights and provenance",
+        "Versioned document/derivation family split before chunking",
+        "Deduplication and protected evaluation exclusion",
+        "Model-specific fit and finite compute budget"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/ouroboros-arxiv-preprint",
+      "revision": "704753d8a0328762deb127bddf88867df275bcbf",
+      "declared_licenses": [
+        "apache-2.0"
+      ],
+      "proposed_role": "RETRIEVAL_OR_CPT_CANDIDATE",
+      "role_basis": "Pinned public card plus conservative source review; no row-level audit",
+      "training_authorized": false,
+      "required_before_training": [
+        "Current source-level rights and provenance",
+        "Versioned document/derivation family split before chunking",
+        "Deduplication and protected evaluation exclusion",
+        "Model-specific fit and finite compute budget"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/rag-corpus-v1",
+      "revision": "49e49fb450446b622dda1781ded8a389d3b03499",
+      "declared_licenses": [
+        "apache-2.0"
+      ],
+      "proposed_role": "RETRIEVAL_OR_CPT_CANDIDATE",
+      "role_basis": "Pinned public card plus conservative source review; no row-level audit",
+      "training_authorized": false,
+      "required_before_training": [
+        "Current source-level rights and provenance",
+        "Versioned document/derivation family split before chunking",
+        "Deduplication and protected evaluation exclusion",
+        "Model-specific fit and finite compute budget"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/readiness-runs",
+      "revision": "0230b6a8938ca0798292216599bf0101ff13f27b",
+      "declared_licenses": [
+        "apache-2.0"
+      ],
+      "proposed_role": "EVIDENCE_ONLY",
+      "role_basis": "Pinned public card plus conservative source review; no row-level audit",
+      "training_authorized": false,
+      "required_before_training": [
+        "Current source-level rights and provenance",
+        "Versioned document/derivation family split before chunking",
+        "Deduplication and protected evaluation exclusion",
+        "Model-specific fit and finite compute budget"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/receipted-unsloth",
+      "revision": "8b1a3eb40a14dde35b7cb0b5c11e6c3006e6bcd9",
+      "declared_licenses": [
+        "apache-2.0"
+      ],
+      "proposed_role": "RECIPE_REFERENCE",
+      "role_basis": "Pinned public card plus conservative source review; no row-level audit",
+      "training_authorized": false,
+      "required_before_training": [
+        "Current source-level rights and provenance",
+        "Versioned document/derivation family split before chunking",
+        "Deduplication and protected evaluation exclusion",
+        "Model-specific fit and finite compute budget"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/release-assets",
+      "revision": "a6cabcef1c1a6d2304537f3d36e789b9fca890bd",
+      "declared_licenses": [
+        "apache-2.0"
+      ],
+      "proposed_role": "PLACEHOLDER",
+      "role_basis": "Pinned public card plus conservative source review; no row-level audit",
+      "training_authorized": false,
+      "required_before_training": [
+        "Current source-level rights and provenance",
+        "Versioned document/derivation family split before chunking",
+        "Deduplication and protected evaluation exclusion",
+        "Model-specific fit and finite compute budget"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-1-doctrine-sft",
+      "revision": "dbc21fe794a720c09f3608608972299ed2de63d9",
+      "declared_licenses": [
+        "apache-2.0"
+      ],
+      "proposed_role": "SFT_CANDIDATE",
+      "role_basis": "Pinned public card plus conservative source review; no row-level audit",
+      "training_authorized": false,
+      "required_before_training": [
+        "Current source-level rights and provenance",
+        "Versioned document/derivation family split before chunking",
+        "Deduplication and protected evaluation exclusion",
+        "Model-specific fit and finite compute budget"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-artifacts",
+      "revision": "5eae2cf9e5fed91075b438ea385fd9f3a5acf957",
+      "declared_licenses": [
+        "apache-2.0"
+      ],
+      "proposed_role": "ARTIFACT_CATALOG",
+      "role_basis": "Pinned public card plus conservative source review; no row-level audit",
+      "training_authorized": false,
+      "required_before_training": [
+        "Current source-level rights and provenance",
+        "Versioned document/derivation family split before chunking",
+        "Deduplication and protected evaluation exclusion",
+        "Model-specific fit and finite compute budget"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-estate-graph",
+      "revision": "71933bcd9346d97a36a9f4745e0e79703e224516",
+      "declared_licenses": [
+        "apache-2.0"
+      ],
+      "proposed_role": "METADATA_GRAPH",
+      "role_basis": "Pinned public card plus conservative source review; no row-level audit",
+      "training_authorized": false,
+      "required_before_training": [
+        "Current source-level rights and provenance",
+        "Versioned document/derivation family split before chunking",
+        "Deduplication and protected evaluation exclusion",
+        "Model-specific fit and finite compute budget"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-frontier-covenant",
+      "revision": "3a7e147c208167c342549967ffab0a27919b81a2",
+      "declared_licenses": [
+        "apache-2.0"
+      ],
+      "proposed_role": "RELEASE_INTAKE_METADATA",
+      "role_basis": "Pinned public card plus conservative source review; no row-level audit",
+      "training_authorized": false,
+      "required_before_training": [
+        "Current source-level rights and provenance",
+        "Versioned document/derivation family split before chunking",
+        "Deduplication and protected evaluation exclusion",
+        "Model-specific fit and finite compute budget"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-frontier-evaluation-receipts",
+      "revision": "5787f6f0899009dcb170dea93b48ca3c756e694e",
+      "declared_licenses": [
+        "apache-2.0"
+      ],
+      "proposed_role": "EVIDENCE_ONLY",
+      "role_basis": "Pinned public card plus conservative source review; no row-level audit",
+      "training_authorized": false,
+      "required_before_training": [
+        "Current source-level rights and provenance",
+        "Versioned document/derivation family split before chunking",
+        "Deduplication and protected evaluation exclusion",
+        "Model-specific fit and finite compute budget"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-lake",
+      "revision": "7d7c2b24b661678766e41e80e7b3f1edf0976c41",
+      "declared_licenses": [
+        "cc-by-4.0"
+      ],
+      "proposed_role": "MIXED_SOURCE_REVIEW",
+      "role_basis": "Pinned public card plus conservative source review; no row-level audit",
+      "training_authorized": false,
+      "required_before_training": [
+        "Current source-level rights and provenance",
+        "Versioned document/derivation family split before chunking",
+        "Deduplication and protected evaluation exclusion",
+        "Model-specific fit and finite compute budget"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-marketing-factbase",
+      "revision": "0274f3cb0941a67dc24f8b9030076d8327e07031",
+      "declared_licenses": [
+        "apache-2.0"
+      ],
+      "proposed_role": "METADATA_ONLY",
+      "role_basis": "Pinned public card plus conservative source review; no row-level audit",
+      "training_authorized": false,
+      "required_before_training": [
+        "Current source-level rights and provenance",
+        "Versioned document/derivation family split before chunking",
+        "Deduplication and protected evaluation exclusion",
+        "Model-specific fit and finite compute budget"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-quant-sft-v1",
+      "revision": "840044aedc235774d5a653ee34fc0c2dd3430079",
+      "declared_licenses": [
+        "apache-2.0"
+      ],
+      "proposed_role": "HELD_COUNSEL",
+      "role_basis": "Pinned public card plus conservative source review; no row-level audit",
+      "training_authorized": false,
+      "required_before_training": [
+        "Current source-level rights and provenance",
+        "Versioned document/derivation family split before chunking",
+        "Deduplication and protected evaluation exclusion",
+        "Model-specific fit and finite compute budget"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-science-forum-corpus",
+      "revision": "5bda0cb8602f3e605ab952dd4931fb4849dbeda7",
+      "declared_licenses": [
+        "apache-2.0"
+      ],
+      "proposed_role": "METADATA_TRAINING_UNAUTHORIZED",
+      "role_basis": "Pinned public card plus conservative source review; no row-level audit",
+      "training_authorized": false,
+      "required_before_training": [
+        "Current source-level rights and provenance",
+        "Versioned document/derivation family split before chunking",
+        "Deduplication and protected evaluation exclusion",
+        "Model-specific fit and finite compute budget"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-second-brain-frontier-candidates",
+      "revision": "4a4a38cc73762fa7d71d851d5f62f0fabacf7774",
+      "declared_licenses": [
+        "other"
+      ],
+      "proposed_role": "REVIEW_ONLY",
+      "role_basis": "Pinned public card plus conservative source review; no row-level audit",
+      "training_authorized": false,
+      "required_before_training": [
+        "Current source-level rights and provenance",
+        "Versioned document/derivation family split before chunking",
+        "Deduplication and protected evaluation exclusion",
+        "Model-specific fit and finite compute budget"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-second-brain-inrepo",
+      "revision": "c9823ec107fc1fd4df6166c4ad0a37c776ee7e64",
+      "declared_licenses": [
+        "other"
+      ],
+      "proposed_role": "RIGHTS_REVIEW_REQUIRED",
+      "role_basis": "Pinned public card plus conservative source review; no row-level audit",
+      "training_authorized": false,
+      "required_before_training": [
+        "Current source-level rights and provenance",
+        "Versioned document/derivation family split before chunking",
+        "Deduplication and protected evaluation exclusion",
+        "Model-specific fit and finite compute budget"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-skills-ci-evidence",
+      "revision": "6de233251509b1bb4583ba0133a1623484df4392",
+      "declared_licenses": [
+        "apache-2.0"
+      ],
+      "proposed_role": "EVIDENCE_ONLY",
+      "role_basis": "Pinned public card plus conservative source review; no row-level audit",
+      "training_authorized": false,
+      "required_before_training": [
+        "Current source-level rights and provenance",
+        "Versioned document/derivation family split before chunking",
+        "Deduplication and protected evaluation exclusion",
+        "Model-specific fit and finite compute budget"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/test-results",
+      "revision": "4d5de7b588460f56fc67437b11617c339a69d8c8",
+      "declared_licenses": [
+        "apache-2.0"
+      ],
+      "proposed_role": "EVIDENCE_ONLY",
+      "role_basis": "Pinned public card plus conservative source review; no row-level audit",
+      "training_authorized": false,
+      "required_before_training": [
+        "Current source-level rights and provenance",
+        "Versioned document/derivation family split before chunking",
+        "Deduplication and protected evaluation exclusion",
+        "Model-specific fit and finite compute budget"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/thesis-corpus-v18",
+      "revision": "df7b1a4b7c2296bf0db8c7bbd5ceb12834d44cc6",
+      "declared_licenses": [
+        "apache-2.0"
+      ],
+      "proposed_role": "RETRIEVAL_OR_CPT_CANDIDATE",
+      "role_basis": "Pinned public card plus conservative source review; no row-level audit",
+      "training_authorized": false,
+      "required_before_training": [
+        "Current source-level rights and provenance",
+        "Versioned document/derivation family split before chunking",
+        "Deduplication and protected evaluation exclusion",
+        "Model-specific fit and finite compute budget"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/thesis-v18-formal-verification",
+      "revision": "9a08e0c1fccf410b447769091ebeb26885942f3c",
+      "declared_licenses": [
+        "apache-2.0"
+      ],
+      "proposed_role": "RETRIEVAL_OR_CPT_CANDIDATE",
+      "role_basis": "Pinned public card plus conservative source review; no row-level audit",
+      "training_authorized": false,
+      "required_before_training": [
+        "Current source-level rights and provenance",
+        "Versioned document/derivation family split before chunking",
+        "Deduplication and protected evaluation exclusion",
+        "Model-specific fit and finite compute budget"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/uds-bundles-v1",
+      "revision": "0974506982e919f0b1707bbc185514a9e598cf2e",
+      "declared_licenses": [
+        "apache-2.0"
+      ],
+      "proposed_role": "PACKAGING_REFERENCE",
+      "role_basis": "Pinned public card plus conservative source review; no row-level audit",
+      "training_authorized": false,
+      "required_before_training": [
+        "Current source-level rights and provenance",
+        "Versioned document/derivation family split before chunking",
+        "Deduplication and protected evaluation exclusion",
+        "Model-specific fit and finite compute budget"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/uds-governance-receipts",
+      "revision": "b0f2631e8f3ade758acfcd70797096bdc0c5e922",
+      "declared_licenses": [
+        "apache-2.0"
+      ],
+      "proposed_role": "EVIDENCE_ONLY",
+      "role_basis": "Pinned public card plus conservative source review; no row-level audit",
+      "training_authorized": false,
+      "required_before_training": [
+        "Current source-level rights and provenance",
+        "Versioned document/derivation family split before chunking",
+        "Deduplication and protected evaluation exclusion",
+        "Model-specific fit and finite compute budget"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/uds-spans-receipts",
+      "revision": "310d53fd9781a6f50f19d13c77c2736944ce3022",
+      "declared_licenses": [
+        "apache-2.0"
+      ],
+      "proposed_role": "SYNTHETIC_CONFORMANCE_FIXTURE",
+      "role_basis": "Pinned public card plus conservative source review; no row-level audit",
+      "training_authorized": false,
+      "required_before_training": [
+        "Current source-level rights and provenance",
+        "Versioned document/derivation family split before chunking",
+        "Deduplication and protected evaluation exclusion",
+        "Model-specific fit and finite compute budget"
+      ]
+    },
+    {
+      "repo": "SZLHOLDINGS/why-we-lead",
+      "revision": "51df5c36889742255e9bee91b156cde58ff99bb3",
+      "declared_licenses": [
+        "apache-2.0"
+      ],
+      "proposed_role": "HISTORICAL_METADATA_ONLY",
+      "role_basis": "Pinned public card plus conservative source review; no row-level audit",
+      "training_authorized": false,
+      "required_before_training": [
+        "Current source-level rights and provenance",
+        "Versioned document/derivation family split before chunking",
+        "Deduplication and protected evaluation exclusion",
+        "Model-specific fit and finite compute budget"
+      ]
+    },
+    {
+      "repo": "betterwithage/szl-bench-receipts",
+      "revision": "c24b9d5d3f48a71dc35255f83a26a004338fd177",
+      "declared_licenses": [],
+      "proposed_role": "EVIDENCE_ONLY",
+      "role_basis": "Pinned public card plus conservative source review; no row-level audit",
+      "training_authorized": false,
+      "required_before_training": [
+        "Current source-level rights and provenance",
+        "Versioned document/derivation family split before chunking",
+        "Deduplication and protected evaluation exclusion",
+        "Model-specific fit and finite compute budget"
+      ]
+    }
+  ],
+  "space_rows": [
+    {
+      "repo": "SZLHOLDINGS/a11oy",
+      "revision": "876745245d2f06728d10cba526d7fc1537051be6",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "SZLHOLDINGS/agents-studio",
+      "revision": "03ccc00e4d693be1e32ee1e53ff03361d0326bf7",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "SZLHOLDINGS/ayllu",
+      "revision": "500657127e047059e7677b1930f023ddd0a5e93c",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "SZLHOLDINGS/counsel",
+      "revision": "5d6014a8c87d3d0a42e571916a579ad915b0c281",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "SZLHOLDINGS/curation-atlas",
+      "revision": "98602e5276b5000d29d227d857688a1264ab8fb9",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "SZLHOLDINGS/david-leads",
+      "revision": "eafcb04515334740d173e2b0cfe049d92412a9b4",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "SZLHOLDINGS/finance",
+      "revision": "c01fa85481e546107cf92b9c645bd61007bd7819",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "SZLHOLDINGS/foundation-confirmation-v2",
+      "revision": "0033e0220aa77f158cb392936fd25a5da8758285",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "SZLHOLDINGS/gdw-frontier",
+      "revision": "e296dad2966a19580b4dc206b32fb016a9715575",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "SZLHOLDINGS/governed-agent-bench",
+      "revision": "192268d97a4157ae20d175724ee652c4f339d596",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "SZLHOLDINGS/governed-receipt-verifier",
+      "revision": "44ee94b034ed2aa0796fb00f9f7eeb6b7e22e7d4",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "SZLHOLDINGS/holographic-unify",
+      "revision": "1c9dedc19406d5a64b23067940388d7803093b7d",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "SZLHOLDINGS/immune",
+      "revision": "a87f566274565f6bb3be0e80de0e8f7de54302fb",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "SZLHOLDINGS/immune-lattice",
+      "revision": "e5eb779a1e9a9469f12adf50864276a7fecb9b6c",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "SZLHOLDINGS/killinchu",
+      "revision": "8449a4299c59e0413ce65dcf51fc4865f5684c1d",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "SZLHOLDINGS/llm-router-live",
+      "revision": "d70e4326adee24e876219763986a08c95e9d5448",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "SZLHOLDINGS/lyte",
+      "revision": "a347591833d44732cd852d5d3438e42db0058ae3",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "SZLHOLDINGS/nexus",
+      "revision": "c94d925abae1ec6a56a4dea7d213650cb01c0547",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "SZLHOLDINGS/oac-system-health-lab",
+      "revision": "3b40690dbc599e3783b8eeb2502f58ac8ee6b716",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "SZLHOLDINGS/prove-it",
+      "revision": "4c43d85d03bd42828b93cf45adb274f7e5213ec5",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "SZLHOLDINGS/sentra",
+      "revision": "bae2995dcf309f3377e0bc1b801c86c2747d01f8",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-atelier",
+      "revision": "27f7e8aa516c1a773971315f985fe8f81dfe820c",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-bench-suite",
+      "revision": "f03a499527ad8894349870076d959daf913f65ed",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-brand-campaign",
+      "revision": "d604f0e5c9522444bd94fcf95d6b53bcbdff1c4d",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-command-lab",
+      "revision": "9de47902471f83c10a8abdf1474c6cca47b74f1d",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-constellation",
+      "revision": "9d8998fd252c6ddaa4b0ae70d99deafc49294ac1",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-forge-lab",
+      "revision": "92f06925477efe5a6e212fd3cba2c7968e00e1ba",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-foundation-confirmation",
+      "revision": "bee8f079769118a26b1aa83508df639dd6b45e89",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-frontier",
+      "revision": "fe3a676e8f63b30c7aa85c1349b95d3e50969cc8",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-khipu",
+      "revision": "62422bc56e048e800da5a1153a5faee85a61efa7",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-marketing-1.1",
+      "revision": "75962b235469306c08e2509611702d52cca86a93",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-model-inference-lab",
+      "revision": "0ccff0731691f2d2cc0c8b437e1dfcca7ab4ec37",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-router-control",
+      "revision": "2f183b57d6a67142ece4beea7a2b0b291fba5541",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-seismic-review",
+      "revision": "04ef19e6210c7ff256b1d5ba62e2032e57aabcc8",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "SZLHOLDINGS/szl-typesafe-triage",
+      "revision": "42612b84849c0a55f6ae84b2c2f328f581082499",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "SZLHOLDINGS/terra",
+      "revision": "52e0dbe977f104b35ffd8984e323bbd7eb1741e0",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "SZLHOLDINGS/the-grid",
+      "revision": "461f54e12c3e35dfb31e0d7cf15c0d579c13d706",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "SZLHOLDINGS/vertical-services",
+      "revision": "adeecadff76c7a955fa753c4f7b70a5af1b6ec79",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "SZLHOLDINGS/yarqa",
+      "revision": "7715989efa2b5398d7ac248365d77a2d203d6ca3",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "betterwithage/anatomy",
+      "revision": "c762d1197928e090c4dcf53abd9df250a15087f4",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "betterwithage/betterwithage",
+      "revision": "384642fc101f6c98bd7c6a4a7a79c7401e9ae085",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "betterwithage/cosmos",
+      "revision": "a44ee54a8392e798c6bb7cae5b662129c45019f5",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "betterwithage/nexus",
+      "revision": "ec2cf0f9fc74c485e2792f530a8bd10cfbb23a65",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "betterwithage/szl-bench-suite",
+      "revision": "eaeac92862e8f2e2da84449740458c913264c849",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    },
+    {
+      "repo": "betterwithage/szl-command-centre",
+      "revision": "2b951ce7e1ed5c5f78e97fae8c087bd49c16d625",
+      "role": "APPLICATION_SURFACE_NOT_TRAINING_TARGET",
+      "runtime_qualification": "NOT_PERFORMED"
+    }
+  ]
+}
+
