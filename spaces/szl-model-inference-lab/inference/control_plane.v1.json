@@ -1,0 +1,271 @@
+{
+  "schema": "szl.forge.inference-control-plane/v1",
+  "status": "EXPERIMENTAL_FAIL_CLOSED",
+  "authority": {
+    "lifecycle": "szl-holdings/szl-forge",
+    "formal_proof": "szl-holdings/lutar-lean",
+    "formula_kernel": "szl-holdings/szl-formulas",
+    "retrieval": "szl-holdings/szl-second-brain",
+    "witness": "szl-holdings/szl-nemo",
+    "observer": "szl-holdings/anatomy",
+    "action_admission": "szl-holdings/a11oy"
+  },
+  "formula_binding": {
+    "formal_source": {
+      "repository": "szl-holdings/lutar-lean",
+      "commit": "c497b4ed402249f23da7f290426f0e21c70ab926",
+      "count_theorem": "Lutar.Wave8.AxiomDisclosure.locked_count_eight"
+    },
+    "kernel_source": {
+      "repository": "szl-holdings/szl-formulas",
+      "commit": "46cfa948367e8133eaa8dd6bcfb781b19165b9bb",
+      "metadata_path": "torch-ext/szl_formulas/metadata.json",
+      "f_id_to_callable_mapping": "UNKNOWN_NOT_ASSERTED"
+    },
+    "callable_formula_count": 21,
+    "locked_proven_count": 8,
+    "locked_proven_ids": [
+      "F1",
+      "F4",
+      "F7",
+      "F11",
+      "F12",
+      "F18",
+      "F19",
+      "F22"
+    ],
+    "lambda": {
+      "formula_id": "F23",
+      "status": "CONJECTURE_1_ADVISORY",
+      "can_authorize": false,
+      "can_be_sole_allow_basis": false
+    },
+    "rules": [
+      "Consume formula identity and maturity from commit-pinned sources; never reconstruct formulas from prompt memory.",
+      "The 21 callable kernel functions and the formal F-number corpus are separate namespaces; no F-ID-to-function mapping is asserted without a proved binding artifact.",
+      "Locked-proven formulas may constrain execution only within their proved scope.",
+      "Axiom, sorry, modeled, experimental, and conjecture results remain advisory and cannot independently authorize a consequential action.",
+      "Every inference receipt binds the exact formula IDs, proof-source commit, kernel-source commit, and applicability decision."
+    ]
+  },
+  "planes": [
+    {
+      "id": "second-brain-evidence",
+      "repository": "szl-holdings/szl-second-brain",
+      "authority": "READ_ONLY_EVIDENCE",
+      "current_mode": "HANDLES_ONLY_BM25_BASELINE",
+      "content_hydration": "CONTROLLER_SIDE_REQUIRED",
+      "training_authority": "NONE",
+      "private_graph_in_gradients": false,
+      "required_fields": [
+        "nodeId",
+        "source",
+        "sha256"
+      ],
+      "target": "HYBRID_SPARSE_DENSE_RERANKER_BAKEOFF"
+    },
+    {
+      "id": "model-execution",
+      "repository": "szl-holdings/szl-forge",
+      "authority": "PROPOSAL_ONLY",
+      "can_execute_tools": false,
+      "must_emit_pinned_identity": true,
+      "must_emit_structured_output": true
+    },
+    {
+      "id": "nemo-witness",
+      "repository": "szl-holdings/szl-nemo",
+      "canonical_destination": "szl-holdings/szl-forge/families/nemo",
+      "authority": "DECISION_WITNESS",
+      "artifact_kind": "SOFTWARE_KERNEL",
+      "generative": false,
+      "not_nemotron": true,
+      "decisions": [
+        "ALLOW",
+        "BLOCK",
+        "REVIEW"
+      ],
+      "required_stages": [
+        "PRE_GENERATION",
+        "POST_GENERATION",
+        "PRE_TOOL",
+        "POST_TOOL"
+      ]
+    },
+    {
+      "id": "a11oy-action-gate",
+      "repository": "szl-holdings/a11oy",
+      "authority": "ACTION_ADMISSION",
+      "human_approval_for_consequential_actions": true,
+      "signed_receipt_required_before_action": true
+    },
+    {
+      "id": "anatomy-observer",
+      "repository": "szl-holdings/anatomy",
+      "authority": "NONE",
+      "observability_only": true,
+      "can_change_decision": false,
+      "receives_raw_prompt": false,
+      "receives_private_reasoning": false
+    }
+  ],
+  "runtime_selection": {
+    "winner": "UNSELECTED",
+    "policy": "MEASURED_BAKEOFF_REQUIRED",
+    "lanes": [
+      {
+        "id": "local-cpu-gguf",
+        "candidates": [
+          "llama.cpp"
+        ],
+        "required_capabilities": [
+          "openai_compatible_api",
+          "parallel_slots",
+          "grammar_or_schema_constrained_output",
+          "speculative_decoding_only_when_measured",
+          "revision_and_quantization_binding"
+        ]
+      },
+      {
+        "id": "single-node-gpu",
+        "candidates": [
+          "vllm",
+          "sglang"
+        ],
+        "required_capabilities": [
+          "continuous_batching",
+          "paged_kv_cache",
+          "prefix_caching",
+          "structured_outputs",
+          "speculative_decoding_only_when_measured",
+          "quantization",
+          "adapter_identity_binding"
+        ]
+      },
+      {
+        "id": "distributed-gpu",
+        "candidates": [
+          "nvidia-dynamo+vllm",
+          "nvidia-dynamo+sglang"
+        ],
+        "admission": "WORKLOAD_JUSTIFIED_ONLY",
+        "required_capabilities": [
+          "kv_aware_routing",
+          "prefill_decode_disaggregation_only_when_measured",
+          "autoscaling",
+          "distributed_tracing",
+          "artifact_runtime_source_binding"
+        ]
+      }
+    ],
+    "selection_metrics": [
+      "schema_valid_rate",
+      "grounding_correct_rate",
+      "citation_binding_rate",
+      "abstention_correct_rate",
+      "tool_authority_pass_rate",
+      "time_to_first_token_p50_ms",
+      "time_to_first_token_p95_ms",
+      "inter_token_latency_p95_ms",
+      "tokens_per_second",
+      "peak_memory_bytes",
+      "joules_per_request_when_metered",
+      "cost_per_successful_governed_request"
+    ]
+  },
+  "request_envelope": {
+    "required_fields": [
+      "request_id",
+      "principal_id",
+      "tenant_id",
+      "prompt_sha256",
+      "model_id",
+      "model_revision",
+      "adapter_revision",
+      "runtime_engine",
+      "runtime_version",
+      "hardware_fingerprint",
+      "retrieval_query_sha256",
+      "evidence_set_sha256",
+      "formula_ids",
+      "formula_proof_source_commit",
+      "formula_kernel_source_commit",
+      "witness_rule_version",
+      "output_sha256",
+      "authority_state",
+      "receipt_sha256"
+    ]
+  },
+  "promotion_gates": [
+    "FORMULA_BINDING_VALID",
+    "DATA_RIGHTS_AND_LINEAGE_VALID",
+    "TRAIN_EVAL_TEST_SEPARATION_VALID",
+    "SECOND_BRAIN_GROUNDING_VALID",
+    "SECOND_BRAIN_ABSTENTION_VALID",
+    "STRUCTURED_OUTPUT_VALID",
+    "NEMO_PRE_GENERATION_VALID",
+    "NEMO_POST_GENERATION_VALID",
+    "TOOL_AUTHORITY_VALID",
+    "POSTCONDITION_VALID",
+    "QUALITY_NON_REGRESSION_VALID",
+    "LATENCY_MEMORY_COST_MEASURED",
+    "REPRODUCIBILITY_VALID",
+    "SIGNED_RECEIPT_AND_REPLAY_VALID"
+  ],
+  "privacy": {
+    "persist_private_chain_of_thought": false,
+    "persist_raw_private_graph": false,
+    "allowed_persisted_artifacts": [
+      "input_digest",
+      "evidence_handles_and_digests",
+      "formula_binding",
+      "policy_and_witness_results",
+      "tool_intent_and_authority_result",
+      "model_adapter_runtime_revisions",
+      "output_digest",
+      "postcondition_result",
+      "receipt_and_verification_result",
+      "audit_safe_explanation"
+    ]
+  },
+  "truth_labels": [
+    "MEASURED",
+    "REPORTED",
+    "MODELED",
+    "CONJECTURE",
+    "UNKNOWN",
+    "UNAVAILABLE"
+  ],
+  "known_blockers": [
+    {
+      "id": "A11OY_FORMULA_REGISTRY_DRIFT",
+      "blocking": true,
+      "observed": "a11oy/szl_formula_registry.py still encodes locked five plus three experimental",
+      "required": "align every action-admission path to the formal locked-eight source before promotion"
+    },
+    {
+      "id": "SECOND_BRAIN_HYDRATOR_NOT_WIRED_IN_FORGE",
+      "blocking": true,
+      "observed": "Forge has no controller-side handle hydration or ACL binding",
+      "required": "hydrate only authorized content and verify each content digest before generation"
+    },
+    {
+      "id": "LIVE_INFERENCE_IS_BOUNDED_DEMO",
+      "blocking": true,
+      "observed": "current public lab is a single-worker CPU/GGUF path with a 1024-token context",
+      "required": "qualify runtime lanes on declared workloads and hardware"
+    },
+    {
+      "id": "NEMO_WITNESS_COVERAGE_IS_NARROW",
+      "blocking": true,
+      "observed": "current standalone witness is five deterministic text rules",
+      "required": "add evidence, formula, authority, memory, and postcondition rule families"
+    },
+    {
+      "id": "MODEL_QUALITY_EVIDENCE_IS_INSUFFICIENT",
+      "blocking": true,
+      "observed": "latest named-N bakeoffs remain non-promotional",
+      "required": "run held-out, contamination-checked, hardware-bound evaluations before selecting or publishing a winner"
+    }
+  ]
+}
