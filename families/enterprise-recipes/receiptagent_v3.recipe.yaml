@@ -1,0 +1,42 @@
+# SZL family recipe — receiptagent_v3
+# Source-of-truth intent: GitHub first (szl-forge), then HF private candidate.
+# Cookie rule: never overwrite production weights without Stephen GO WEIGHT.
+# Math honesty: Doctrine v11; Λ=Conjecture1 disproved-as-stated; Theorem U conditional only.
+
+family: receiptagent_v3
+mission: receipt seal v3 vision
+locked_formulas_touch: governed-receipt
+
+base:
+  # filled from ROUND2_FAMILIES_MANIFEST on Massed — do not invent bases here
+  source: ROUND2_FAMILIES_MANIFEST.json
+
+adapter:
+  method: lora  # Unsloth path on A6000; NeMo-aligned fields below
+  rank: 16
+  alpha: 32
+  dropout: 0.05
+  target_modules: all-linear  # NeMo analog: linear_qkv, linear_proj, linear_fc1, linear_fc2
+  peft_dim_note: "NeMo peft.dim ↔ LoRA rank"
+
+train:
+  engine: unsloth  # single-GPU shine; Axolotl YAML twin optional later
+  gpu_fraction: 0.85
+  epochs: 2
+  refusal_guard: true
+  extra_data: ""
+  torchdynamo_disable: true
+  chinchilla_lutar_note: "Budget steps to data tokens; refuse stub-fill if under-trained"
+
+eval:
+  max_new: 384
+  verdicts: [CANDIDATE_WINS, CURRENT_STAYS, TIE]
+  require_SCORED: true
+  free_energy_lutar_optional: false  # enable when metric wired
+
+publish:
+  private_hf: "SZLHOLDINGS/receiptagent_v3-candidate_enterprise_YYYYMMDD"
+  production_overwrite: "REQUIRES Stephen GO WEIGHT"
+
+receipt:
+  states: [MEASURED, BLOCKED, UNVERIFIED, UNAVAILABLE, NOT_CLAIMED]
