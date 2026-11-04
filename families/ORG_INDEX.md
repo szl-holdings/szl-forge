@@ -37,3 +37,7 @@ No half-state: an index is an index. Do not treat reachability as readiness.
 
 Collection membership deny list: `publishing/collection-quarantine.json`.
 That file does not write the Hub.
+
+## Enterprise recipe YAML (Wave B)
+
+NeMo-aligned Unsloth family recipes live in [`families/enterprise-recipes/`](enterprise-recipes/). Recipes are MEASURED train knobs only — no weights. Production overwrite still requires Stephen `GO WEIGHT`.
