@@ -1,0 +1,31 @@
+{
+  "created_utc": "2026-11-04T17:50:02Z",
+  "credit": "Stephen Lutar (Stephen P. Lutar Jr.) / SZL Holdings",
+  "dataset_id": "SZLHOLDINGS/szl-frontier-sft-mix-v2",
+  "energy": "UNAVAILABLE",
+  "evals": "none-this-build — do not invent",
+  "files": {
+    "recipe.json": "438baee7dce8c3a894bd9662f84e7d5990ae42794d330199a9e7a5f7fe71e9cb",
+    "train.jsonl": "6ee6a0a2805469c7a5a55a67a59b7cba28f3375dfe3ca03440c6f1de6d09462a",
+    "val.jsonl": "6b76c67de120dffeadde00c9ae26bee84cc4f8cd7320863ad992c55dae394044"
+  },
+  "lambda_status": "Conjecture 1 — advisory, never a theorem",
+  "private_graph_admitted": false,
+  "recipe_sha256": "438baee7dce8c3a894bd9662f84e7d5990ae42794d330199a9e7a5f7fe71e9cb",
+  "row_counts": {
+    "total": 206,
+    "train": 190,
+    "val": 16
+  },
+  "schema": "szl.frontier-sft-mix-manifest/v2",
+  "source_revisions": {
+    "SZLHOLDINGS/a11oy-verifiable-corpus": "1fa1197249bbcbe435497df4a128cae7663b754c",
+    "SZLHOLDINGS/canonical-formulas-v1": "61234334af5b14356db53d9b9c22d9718d2f948d",
+    "SZLHOLDINGS/governed-agent-bench": "c35e23dbd4f11349eb8304e26b04961dcd4124e9",
+    "SZLHOLDINGS/szl-1-doctrine-sft": "dbc21fe794a720c09f3608608972299ed2de63d9",
+    "SZLHOLDINGS/thesis-formula-index": "87b4ecf1905ed6f2a28d364a51bdba603d68c3c3"
+  },
+  "thesis_spice_included": false,
+  "training_allowed": true,
+  "visibility_intent": "public"
+}
