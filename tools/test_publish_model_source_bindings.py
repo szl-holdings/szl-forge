@@ -155,6 +155,41 @@ class PublishModelSourceBindingsTests(unittest.TestCase):
             adapter["adapter_binding"]["owner_attested_release_revision"],
         )
 
+    def test_khipu_contract_pins_existing_immutable_hub_without_promotion(
+        self,
+    ) -> None:
+        repository_root = Path(__file__).parents[1]
+        contract_path = repository_root / "publishing/model-source-bindings.json"
+        contract = bindings.load_contract(contract_path)
+        artifacts = {
+            artifact["repo_id"]: artifact for artifact in contract["artifacts"]
+        }
+        khipu = artifacts["SZLHOLDINGS/SZL-Khipu-1.5B"]
+
+        self.assertEqual("fine_tuned_model", khipu["artifact_class"])
+        self.assertEqual("VERIFY_IMMUTABLE_RELEASE", khipu["binding_mode"])
+        self.assertEqual(
+            "db2c786d536e3dcb8afd1daf0f7e34f2cd6d1aaa",
+            khipu["hub_revision"],
+        )
+        self.assertEqual("NOT_PROMOTED_RESEARCH_ONLY", khipu["promotion_state"])
+        self.assertEqual("MEASURED_RESEARCH_ONLY", khipu["maturity"])
+        self.assertEqual(
+            {
+                "adapter/adapter_model.safetensors": (
+                    "0a71b3a28b9f77ca3651f38c8caa1e34121934f5584dae24454d4c6eea823a66"
+                ),
+                "model.safetensors": (
+                    "6f9f5b9df2a877c999e33faf542dc6e62ce63f4a2bf6b358fc48a4b6b113c3c9"
+                ),
+            },
+            khipu["expected_weight_sha256"],
+        )
+        self.assertIn(
+            "The signed held-out abstention result is 2/6.",
+            khipu["limitations"],
+        )
+
     def test_immutable_adapter_contract_requires_exact_hub_revision(self) -> None:
         repository_root = Path(__file__).parents[1]
         payload = json.loads(

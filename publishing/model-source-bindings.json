@@ -148,6 +148,8 @@
     {
       "repo_id": "SZLHOLDINGS/SZL-Khipu-1.5B",
       "artifact_class": "fine_tuned_model",
+      "binding_mode": "VERIFY_IMMUTABLE_RELEASE",
+      "hub_revision": "db2c786d536e3dcb8afd1daf0f7e34f2cd6d1aaa",
       "promotion_state": "NOT_PROMOTED_RESEARCH_ONLY",
       "source_path": "khipu",
       "maturity": "MEASURED_RESEARCH_ONLY",
