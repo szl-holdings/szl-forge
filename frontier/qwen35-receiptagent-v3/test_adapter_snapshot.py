@@ -9,6 +9,7 @@ import sys
 import tempfile
 import types
 import unittest
+import warnings
 from unittest import mock
 
 
@@ -213,6 +214,137 @@ class VerifiedAdapterLoadTests(unittest.TestCase):
                 peft_model=peft,
             )
         peft.from_pretrained.assert_not_called()
+
+    def test_adapter_compatibility_warnings_fail_closed(self):
+        for message in (
+            "Found missing adapter keys while loading checkpoint: linear_attn",
+            "Found missing adapter keys while loading the checkpoint: ['linear_attn.lora_A.weight'].",
+            "Adapter name 'lora' should not be contained in the prefix 'lora_'. "
+            "This could be the potential reason for missing adapter keys. "
+            "Found missing adapter keys while loading the checkpoint: ['linear_attn.lora_A.weight'].",
+            "Unexpected adapter keys",
+            "Some adapter tensors were ignored",
+            "Adapter shape mismatch",
+        ):
+            with self.subTest(message=message):
+                def load(*args, **kwargs):
+                    warnings.warn(message, UserWarning)
+                    return object()
+
+                peft = types.SimpleNamespace(from_pretrained=load)
+                with mock.patch.object(
+                    evaluator,
+                    "hash_adapter",
+                    return_value=(self.aggregate, self.files),
+                ):
+                    with self.assertRaisesRegex(
+                        evaluator.QualificationError, "PEFT adapter load reported"
+                    ):
+                        evaluator.load_verified_v3_adapter(
+                            object(),
+                            self.snapshot,
+                            expected_sha256=self.aggregate,
+                            expected_files_sha256=self.files_digest,
+                            peft_model=peft,
+                        )
+
+    def test_compatibility_warning_is_not_hidden_by_outer_ignore_filter(self):
+        def load(*args, **kwargs):
+            warnings.warn("Found missing adapter keys", UserWarning)
+            return object()
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            original_filters = list(warnings.filters)
+            with mock.patch.object(
+                evaluator, "hash_adapter", return_value=(self.aggregate, self.files)
+            ):
+                with self.assertRaisesRegex(
+                    evaluator.QualificationError, "PEFT adapter load reported"
+                ):
+                    evaluator.load_verified_v3_adapter(
+                        object(),
+                        self.snapshot,
+                        expected_sha256=self.aggregate,
+                        expected_files_sha256=self.files_digest,
+                        peft_model=types.SimpleNamespace(from_pretrained=load),
+                    )
+            self.assertEqual(original_filters, warnings.filters)
+
+    def test_unrelated_warning_remains_visible_and_preserves_digest_checks(self):
+        loaded = object()
+
+        def load(*args, **kwargs):
+            warnings.warn("This API will be deprecated", FutureWarning)
+            return loaded
+
+        with mock.patch.object(
+            evaluator, "hash_adapter", return_value=(self.aggregate, self.files)
+        ) as hash_adapter:
+            with self.assertWarnsRegex(FutureWarning, "deprecated"):
+                observed = evaluator.load_verified_v3_adapter(
+                    object(),
+                    self.snapshot,
+                    expected_sha256=self.aggregate,
+                    expected_files_sha256=self.files_digest,
+                    peft_model=types.SimpleNamespace(from_pretrained=load),
+                )
+        self.assertIs(loaded, observed)
+        self.assertEqual(2, hash_adapter.call_count)
+
+    def test_previously_emitted_once_and_default_warnings_still_fail_every_load(self):
+        def load(*args, **kwargs):
+            warnings.warn(
+                "Found missing adapter keys while loading the checkpoint: ['linear_attn'].",
+                UserWarning,
+            )
+            return object()
+
+        for action in ("once", "default"):
+            with self.subTest(action=action):
+                with warnings.catch_warnings(record=True) as caught:
+                    warnings.simplefilter(action)
+                    load()
+                    self.assertEqual(1, len(caught))
+                    with mock.patch.object(
+                        evaluator,
+                        "hash_adapter",
+                        return_value=(self.aggregate, self.files),
+                    ):
+                        for _ in range(2):
+                            with self.assertRaisesRegex(
+                                evaluator.QualificationError,
+                                "PEFT adapter load reported",
+                            ):
+                                evaluator.load_verified_v3_adapter(
+                                    object(),
+                                    self.snapshot,
+                                    expected_sha256=self.aggregate,
+                                    expected_files_sha256=self.files_digest,
+                                    peft_model=types.SimpleNamespace(from_pretrained=load),
+                                )
+
+    def test_unrelated_warning_promoted_by_caller_is_not_relabeled(self):
+        warning = FutureWarning("This API will be deprecated")
+
+        def load(*args, **kwargs):
+            warnings.warn(warning)
+            return object()
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", FutureWarning)
+            with mock.patch.object(
+                evaluator, "hash_adapter", return_value=(self.aggregate, self.files)
+            ):
+                with self.assertRaises(FutureWarning) as observed:
+                    evaluator.load_verified_v3_adapter(
+                        object(),
+                        self.snapshot,
+                        expected_sha256=self.aggregate,
+                        expected_files_sha256=self.files_digest,
+                        peft_model=types.SimpleNamespace(from_pretrained=load),
+                    )
+        self.assertIs(warning, observed.exception)
 
 
 class ExistingLoadModesTests(unittest.TestCase):

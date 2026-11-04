@@ -15,6 +15,7 @@ import stat
 import sys
 import tempfile
 import time
+import warnings
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -1622,12 +1623,25 @@ def load_verified_v3_adapter(
         or sha256_json(before_files) != expected_files_sha256
     ):
         raise QualificationError("staged adapter differs before PEFT load")
-    loaded = peft_model.from_pretrained(
-        model,
-        str(snapshot),
-        is_trainable=False,
-        local_files_only=True,
-    )
+    try:
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "error",
+                message=r"(?is).*(missing|unexpected|ignored|mismatch)",
+                category=Warning,
+            )
+            loaded = peft_model.from_pretrained(
+                model,
+                str(snapshot),
+                is_trainable=False,
+                local_files_only=True,
+            )
+    except Warning as warning:
+        if not re.search(r"missing|unexpected|ignored|mismatch", str(warning), re.I):
+            raise
+        raise QualificationError(
+            "PEFT adapter load reported missing, unexpected, ignored or mismatched keys"
+        ) from None
     after_sha, after_files = hash_adapter(snapshot)
     if after_sha != before_sha or after_files != before_files:
         raise QualificationError("staged adapter changed during PEFT load")
