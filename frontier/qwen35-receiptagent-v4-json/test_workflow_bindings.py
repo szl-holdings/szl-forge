@@ -31,7 +31,7 @@ class WorkflowBindingTests(unittest.TestCase):
         for text in (
             "runs-on: ubuntu-latest", "timeout-minutes: 10", "contents: read",
             "persist-credentials: false", 'python-version: "3.12"',
-            "step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2",
+            "step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43",
             "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
             "actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0",
             '"torch==2.10.0" --index-url https://download.pytorch.org/whl/cpu',
