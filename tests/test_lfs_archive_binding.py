@@ -22,7 +22,12 @@ SPEC.loader.exec_module(binding)
 
 SPACE = "spaces/szl-foundation-confirmation"
 ARCHIVE = f"{SPACE}/release.zip"
+FORGE_LAB_ARCHIVE = "spaces/szl-forge-lab/foundation/data/release.zip"
 FROZEN = "869e318dd5f328205dd181ee836ef267bd2ae278f6430a9e8ddc661fbc689d03"
+FORGE_LAB_GITATTRIBUTES = (
+    b"* -text\n"
+    b"data/release.zip filter=lfs diff=lfs merge=lfs -text\n"
+)
 LIVE_GITATTRIBUTES = (
     b"* -text\n"
     b"*.zip filter=lfs diff=lfs merge=lfs -text\n"
@@ -165,12 +170,28 @@ class RealCheckoutBindingTests(unittest.TestCase):
         self.assertEqual(binding.frozen_digest(ROOT, f"{SPACE}/app.py", "ARCHIVE_SHA256"), FROZEN)
         self.assertIn(f"Archive SHA-256: `{FROZEN}`", (ROOT / SPACE / "README.md").read_text(encoding="utf-8"))
 
+    def test_forge_lab_attributes_enable_lfs_for_the_same_digest(self):
+        self.assertEqual(
+            (ROOT / "spaces/szl-forge-lab/foundation/.gitattributes").read_bytes(),
+            FORGE_LAB_GITATTRIBUTES,
+        )
+        self.assertEqual(
+            binding.BOUND_ARCHIVES[FORGE_LAB_ARCHIVE],
+            ("foundation-confirmation/build_showcase.py", "ARCHIVE_SHA256"),
+        )
+        self.assertEqual(
+            binding.frozen_digest(ROOT, "foundation-confirmation/build_showcase.py", "ARCHIVE_SHA256"),
+            FROZEN,
+        )
+        self.assertNotIn(b"-filter", (ROOT / "spaces/szl-forge-lab/foundation/.gitattributes").read_bytes())
+
     def test_real_checkout_binds_pointer_oid_to_the_frozen_digest(self):
         evidence = binding.verify_registered(ROOT)
-        self.assertEqual([item["path"] for item in evidence], [ARCHIVE])
-        self.assertEqual(evidence[0]["pointer_oid"], FROZEN)
-        self.assertEqual(evidence[0]["pointer_size"], 2893790)
-        self.assertIn(evidence[0]["worktree"], {"LFS_POINTER_NOT_MATERIALIZED", "LFS_MATERIALIZED_BYTES_MATCH"})
+        self.assertEqual([item["path"] for item in evidence], [FORGE_LAB_ARCHIVE, ARCHIVE])
+        for item in evidence:
+            self.assertEqual(item["pointer_oid"], FROZEN)
+            self.assertEqual(item["pointer_size"], 2893790)
+            self.assertIn(item["worktree"], {"LFS_POINTER_NOT_MATERIALIZED", "LFS_MATERIALIZED_BYTES_MATCH"})
 
     def test_publisher_workflow_materializes_lfs_and_binds_the_frozen_digest(self):
         import yaml

@@ -82,6 +82,8 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+          # The forge-lab dry-run hashes archive bytes. A pointer is refused.
+          lfs: true
 
       - name: Set up Python
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
@@ -237,6 +239,7 @@ jobs:
             --source-dir spaces/szl-forge-lab \
             --repo-id SZLHOLDINGS/szl-forge-lab \
             --source-revision "${GITHUB_SHA}" \
+            --frozen-archive foundation/data/release.zip=869e318dd5f328205dd181ee836ef267bd2ae278f6430a9e8ddc661fbc689d03 \
             --static \
             --report reports/szl-forge-lab-dry-run.json
           git diff --check
