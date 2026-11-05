@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Single-GPU DPO preference pass for SZL Forge models (Unsloth backend).
 
 Runs on one A6000-class GPU after an SFT wave. Loads a preference dataset
@@ -77,7 +76,7 @@ def main() -> None:
     )
 
     from datasets import load_dataset
-    from trl import DPOTrainer, DPOConfig
+    from trl import DPOConfig, DPOTrainer
 
     data = load_dataset(args.dataset, split="train")
     if args.max_samples:

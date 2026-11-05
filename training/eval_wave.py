@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Doctrine abstention eval: load each model, run abstention probes and
 doctrine questions, record outputs verbatim into an eval receipt.
 
