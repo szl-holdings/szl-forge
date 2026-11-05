@@ -133,25 +133,28 @@ def main() -> None:
 
     import threading
 
+    def _upload_log_tail(api, tag: str) -> None:
+        try:
+            log_path = Path(os.environ.get("SZL_TRAIN_LOG", "/opt/szl/train.log"))
+            if log_path.is_file():
+                lines = log_path.read_text(encoding="utf-8", errors="replace").splitlines()[-200:]
+                api.upload_file(
+                    path_or_fileobj="\n".join(lines).encode(),
+                    path_in_repo=f"{Path(args.out).name}-train.log",
+                    repo_id=args.log_repo_id,
+                    repo_type="dataset",
+                    commit_message=f"chore: wave log {tag}",
+                )
+        except Exception as exc:
+            print(f"log-forward skipped ({tag}): {type(exc).__name__}", file=sys.stderr)
+
     def _forward_logs() -> None:
         import time as _time
         from huggingface_hub import HfApi
         api = HfApi(token=os.environ["HF_TOKEN"])
         while True:
             _time.sleep(600)
-            try:
-                log_path = Path("/opt/szl/train.log")
-                if log_path.is_file():
-                    lines = log_path.read_text(encoding="utf-8", errors="replace").splitlines()[-200:]
-                    api.upload_file(
-                        path_or_fileobj="\n".join(lines).encode(),
-                        path_in_repo=f"{Path(args.out).name}-train.log",
-                        repo_id=args.log_repo_id,
-                        repo_type="dataset",
-                        commit_message="chore: wave log heartbeat",
-                    )
-            except Exception as exc:
-                print(f"log-forward skipped: {type(exc).__name__}", file=sys.stderr)
+            _upload_log_tail(api, "heartbeat")
 
     if args.log_repo_id:
         threading.Thread(target=_forward_logs, daemon=True).start()
@@ -178,10 +181,13 @@ def main() -> None:
     receipt_path.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
     print(f"receipt written: {receipt_path}")
 
+    if args.log_repo_id:
+        from huggingface_hub import HfApi
+        _upload_log_tail(HfApi(token=os.environ["HF_TOKEN"]), "final")
+
     if args.repo_id:
-        model.push_to_hub(args.repo_id, token=os.environ["HF_TOKEN"])
-        tokenizer.push_to_hub(args.repo_id, token=os.environ["HF_TOKEN"])
-        print(f"pushed to hub: {args.repo_id}")
+        model.push_to_hub_merged(args.repo_id, tokenizer, save_method="merged_16bit", token=os.environ["HF_TOKEN"])
+        print(f"pushed merged model to hub: {args.repo_id}")
 
     print("wave complete")
 
