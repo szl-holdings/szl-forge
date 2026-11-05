@@ -222,6 +222,11 @@ def prepare(root: Path = ROOT, profile_name: str = "willay"):
     baseline = unmanaged(source)
     if digest(baseline) != profile["source_sha256"]:
         raise PreparationError("unmanaged source changed; review a fresh input first")
+    claimed = profile.get("reviewed_revision_sha256")
+    if claimed is not None:
+        require_hex(claimed, 64)
+        if claimed != profile["source_sha256"]:
+            raise PreparationError("reviewed revision digest differs from source bytes")
     observation_raw = read_local(root, profile["observation_path"])
     if digest(observation_raw) != profile["observation_sha256"]:
         raise PreparationError("reviewed observation hash mismatch")
@@ -235,6 +240,7 @@ def prepare(root: Path = ROOT, profile_name: str = "willay"):
     receipt = {"schema": "szl.curated-card-preparation/v1", "state": "PREPARED_LOCAL_ONLY",
                "profile": profile_name, "source_repository": registry["source_repository"],
                "reviewed_source_revision": profile["reviewed_source_revision"],
+               "reviewed_revision_sha256": profile.get("reviewed_revision_sha256"),
                "source_sha256": digest(baseline), "input_sha256": digest(source),
                "frontmatter_sha256": digest(frontmatter(source)), "registry_sha256": digest(registry_raw),
                "observation_sha256": digest(observation_raw), "candidate_sha256": digest(candidate),
