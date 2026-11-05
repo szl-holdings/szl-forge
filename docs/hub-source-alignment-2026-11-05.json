@@ -20,17 +20,21 @@
       "observed_readme_has_marker": false,
       "canonical_source": {
         "path": "willay/card/README.md",
-        "sha256": "3137545e38f3ba555d928b5e4aa91c50b1fbb50f7b62ae473c2bcfb88b9e7b9c",
-        "reviewed_source_revision": "647594764509cb200f4599710e1e2529b00dd2c5"
+        "sha256": "29b4590af502221d5b0aa9959b10ed2bef03fc982110da2483289c6fca0f2e22",
+        "blob": "9f12050ab5885a45230a46114ca4176a459cfe60",
+        "bytes": 7308,
+        "reviewed_source_revision": "4c61d30cf6dfc7a0b4c9673192bf8eb4db0344aa"
       },
-      "curated_candidate_sha256": "835c59e82a0d148c3c4cf3bcac7e25ae46a1bf27cc2ef7b7c1ee34ffe2712255",
+      "curated_candidate_sha256": "3402e19693f9f75d3419cd75e5d22286525ae1a1435fbc8bab2a9132d74dd39f",
+      "curated_candidate_bytes": 8564,
       "acceptance": [
         "Live SZLHOLDINGS/WILLAY README contains <!-- szl:artifact-identity-reconciled -->.",
         "The Hub change is a pull request opened by the existing publish-curated-card mode, and its README bytes equal the offline candidate from tools/prepare_curated_model_card.py --profile willay.",
         "Do not direct-commit the NVIDIA-era card. The Omen pipeline records that a Hub-side edit of this repo is overwritten by the source card.",
         "Leave the scheduled drift gate in .github/workflows/omen-cards-identity-note.yml fail-closed.",
         "Do not invent an adapter base revision or a weight digest. Both reviewed adapter configs keep revision null, and the merge receipt names main@merge-time.",
-        "The reviewed source pin must be a commit on main whose willay/card/README.md digest equals source_sha256. ad20ac2c is the historical banner and receipt pin, not the card revision."
+        "The reviewed source pin is 4c61d30cf6dfc7a0b4c9673192bf8eb4db0344aa, already on main, and its willay/card/README.md digest equals source_sha256 29b4590af502221d5b0aa9959b10ed2bef03fc982110da2483289c6fca0f2e22. That commit remains reachable after a squash. ad20ac2c is the historical banner and receipt pin, not the card revision.",
+        "The card text still links its own path at ad20ac2c. Rewriting that sentence produces bytes no commit on main contains, so those bytes cannot be named by a commit that survives squash. That rewrite stays unresolved; it is not pinned here."
       ],
       "verified_card_bytes_commit": "4c61d30cf6dfc7a0b4c9673192bf8eb4db0344aa",
       "stale_authoring_citation": "ad20ac2c24859156891c391108a86d4f05163f83"
