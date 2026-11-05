@@ -72,8 +72,8 @@ def main() -> None:
     )
 
     target_modules = ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
-    already_peft = any(getattr(model, attr, None) is not None
-                       for attr in ("peft_config", "lora_embeddings", "active_adapters"))
+    from peft import PeftModel
+    already_peft = isinstance(model, PeftModel)
     if already_peft:
         print("loaded model already carries LoRA adapters; skipping get_peft_model")
     else:
