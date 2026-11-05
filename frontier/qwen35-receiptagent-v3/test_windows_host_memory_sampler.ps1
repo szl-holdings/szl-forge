@@ -59,71 +59,88 @@ $executables = @(
 )
 foreach ($executable in $executables) {
     $runId = [Guid]::NewGuid().ToString('N')
-    $start = [System.Diagnostics.ProcessStartInfo]::new()
-    $start.FileName = $executable
-    $start.UseShellExecute = $false
-    $start.RedirectStandardOutput = $true
-    $start.RedirectStandardError = $true
-    foreach ($argument in @('-NoLogo', '-NoProfile', '-NonInteractive', '-File', $sampler,
-                            '-RunId', $runId, '-SourceRevision', $SourceRevision,
-                            '-SamplerSourceSha256', $samplerSha, '-Once')) {
-        $start.ArgumentList.Add($argument)
-    }
-    $process = [System.Diagnostics.Process]::new()
-    $process.StartInfo = $start
-    try {
-        $clock = [System.Diagnostics.Stopwatch]::StartNew()
-        if (-not $process.Start()) { throw 'native sampler did not start' }
-        $stdout = $process.StandardOutput.ReadToEndAsync()
-        $stderr = $process.StandardError.ReadToEndAsync()
-        if (-not $process.WaitForExit($admissionDeadlineMs)) {
-            $timedOutMs = $clock.ElapsedMilliseconds
-            $process.Kill($true)
-            throw ('native sampler exceeded the admission deadline (executable={0}, elapsedMs={1}, deadlineMs={2})' -f
-                   [System.IO.Path]::GetFileName($executable), $timedOutMs, $admissionDeadlineMs)
+    # One cold start of pwsh.exe missed this same 15000 ms bound by 7 ms.
+    # A second attempt uses the same bound. Identity and exit failures do not retry.
+    $control = $null
+    $admissionAttempts = 0
+    for ($attempt = 1; $attempt -le 2; $attempt++) {
+        $admissionAttempts = $attempt
+        $start = [System.Diagnostics.ProcessStartInfo]::new()
+        $start.FileName = $executable
+        $start.UseShellExecute = $false
+        $start.RedirectStandardOutput = $true
+        $start.RedirectStandardError = $true
+        foreach ($argument in @('-NoLogo', '-NoProfile', '-NonInteractive', '-File', $sampler,
+                                '-RunId', $runId, '-SourceRevision', $SourceRevision,
+                                '-SamplerSourceSha256', $samplerSha, '-Once')) {
+            $start.ArgumentList.Add($argument)
         }
-        $onceElapsedMs = $clock.ElapsedMilliseconds
-        if ($process.ExitCode -ne 0) { throw 'native sampler exited unsuccessfully' }
-        $raw = $stdout.GetAwaiter().GetResult()
-        if ($raw.Length -gt 4096) { throw 'native sample exceeded its size bound' }
-        $row = $raw | ConvertFrom-Json
-        if ($row.schema -cne 'szl.windows-host-memory-sample/v1' -or
-            $row.runId -cne $runId -or $row.sourceRevision -cne $SourceRevision -or
-            $row.samplerSourceSha256 -cne $samplerSha -or $row.sequence -ne 0) {
-            throw 'native sample identity differs'
-        }
-        foreach ($name in @('availablePhysicalBytes', 'totalPhysicalBytes', 'committedBytes',
-                            'commitLimitBytes', 'availableCommitBytes',
-                            'nativeMonotonicTicks', 'nativeMonotonicFrequency')) {
-            $value = $row.$name
-            if (($value -isnot [int] -and $value -isnot [long] -and $value -isnot [uint64]) -or $value -lt 0) {
-                throw 'native counter is not a nonnegative integer'
+        $process = [System.Diagnostics.Process]::new()
+        $process.StartInfo = $start
+        try {
+            $clock = [System.Diagnostics.Stopwatch]::StartNew()
+            if (-not $process.Start()) { throw 'native sampler did not start' }
+            $stdout = $process.StandardOutput.ReadToEndAsync()
+            $stderr = $process.StandardError.ReadToEndAsync()
+            if (-not $process.WaitForExit($admissionDeadlineMs)) {
+                $timedOutMs = $clock.ElapsedMilliseconds
+                $process.Kill($true)
+                throw ('native sampler exceeded the admission deadline (executable={0}, elapsedMs={1}, deadlineMs={2})' -f
+                       [System.IO.Path]::GetFileName($executable), $timedOutMs, $admissionDeadlineMs)
             }
+            $onceElapsedMs = $clock.ElapsedMilliseconds
+            if ($process.ExitCode -ne 0) { throw 'native sampler exited unsuccessfully' }
+            $raw = $stdout.GetAwaiter().GetResult()
+            if ($raw.Length -gt 4096) { throw 'native sample exceeded its size bound' }
+            $row = $raw | ConvertFrom-Json
+            if ($row.schema -cne 'szl.windows-host-memory-sample/v1' -or
+                $row.runId -cne $runId -or $row.sourceRevision -cne $SourceRevision -or
+                $row.samplerSourceSha256 -cne $samplerSha -or $row.sequence -ne 0) {
+                throw 'native sample identity differs'
+            }
+            foreach ($name in @('availablePhysicalBytes', 'totalPhysicalBytes', 'committedBytes',
+                                'commitLimitBytes', 'availableCommitBytes',
+                                'nativeMonotonicTicks', 'nativeMonotonicFrequency')) {
+                $value = $row.$name
+                if (($value -isnot [int] -and $value -isnot [long] -and $value -isnot [uint64]) -or $value -lt 0) {
+                    throw 'native counter is not a nonnegative integer'
+                }
+            }
+            if ($row.totalPhysicalBytes -le 0 -or $row.commitLimitBytes -le 0 -or
+                $row.availablePhysicalBytes -gt $row.totalPhysicalBytes -or
+                $row.committedBytes -gt $row.commitLimitBytes -or
+                $row.availableCommitBytes -ne ($row.commitLimitBytes - $row.committedBytes) -or
+                $row.nativeMonotonicFrequency -le 0) {
+                throw 'native memory counters are inconsistent'
+            }
+            $row.observedAt = Get-ValidatedNativeUtcStamp -RawJson $raw
+            $control = [ordered]@{
+                schema = 'szl.windows-native-memory-control/v1'
+                state = 'NATIVE_API_OBSERVER_VERIFIED'
+                executable = [System.IO.Path]::GetFileName($executable)
+                sample = $row
+                elapsedMs = $onceElapsedMs
+                admissionDeadlineMs = $admissionDeadlineMs
+                admissionAttempts = $admissionAttempts
+                trainingAttempted = $false
+                wslInteropVerified = $false
+                workerContainmentVerified = $false
+                fullRunCapacityProven = $false
+                qualificationEligible = $false
+                publicationEligible = $false
+            }
+            break
         }
-        if ($row.totalPhysicalBytes -le 0 -or $row.commitLimitBytes -le 0 -or
-            $row.availablePhysicalBytes -gt $row.totalPhysicalBytes -or
-            $row.committedBytes -gt $row.commitLimitBytes -or
-            $row.availableCommitBytes -ne ($row.commitLimitBytes - $row.committedBytes) -or
-            $row.nativeMonotonicFrequency -le 0) {
-            throw 'native memory counters are inconsistent'
+        catch {
+            $reason = $_.Exception.Message
+            if ($attempt -lt 2 -and $reason -like 'native sampler exceeded the admission deadline*') {
+                continue
+            }
+            throw
         }
-        $row.observedAt = Get-ValidatedNativeUtcStamp -RawJson $raw
-        [ordered]@{
-            schema = 'szl.windows-native-memory-control/v1'
-            state = 'NATIVE_API_OBSERVER_VERIFIED'
-            executable = [System.IO.Path]::GetFileName($executable)
-            sample = $row
-            elapsedMs = $onceElapsedMs
-            admissionDeadlineMs = $admissionDeadlineMs
-            trainingAttempted = $false
-            wslInteropVerified = $false
-            workerContainmentVerified = $false
-            fullRunCapacityProven = $false
-            qualificationEligible = $false
-            publicationEligible = $false
-        } | ConvertTo-Json -Depth 5 -Compress
+        finally { $process.Dispose() }
     }
-    finally { $process.Dispose() }
+    $control | ConvertTo-Json -Depth 5 -Compress
 
     # A helper death closes this pipe. Verify the real native observer exits
     # promptly on EOF, without retaining a Windows observer after WSL exits.

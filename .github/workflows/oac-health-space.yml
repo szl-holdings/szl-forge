@@ -6,12 +6,9 @@ on:
       - "spaces/oac-system-health-lab/**"
       - ".github/workflows/oac-health-space.yml"
       - ".gitattributes"
-  push:
-    branches: [main]
-    paths:
-      - "spaces/oac-system-health-lab/**"
-      - ".github/workflows/oac-health-space.yml"
-      - ".gitattributes"
+  # Publishing is manual: the parent-atomic writer fails closed when its target
+  # is not at the inspected state, so push runs on a busy main were red without
+  # regression signal. Contracts still gate every pull request.
   workflow_dispatch:
     inputs:
       publish:
@@ -70,7 +67,7 @@ jobs:
     needs: contract
     if: >-
       github.ref == 'refs/heads/main' &&
-      (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))
+      github.event_name == 'workflow_dispatch' && inputs.publish
     runs-on: ubuntu-latest
     timeout-minutes: 25
     concurrency:
