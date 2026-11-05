@@ -1,14 +1,10 @@
 name: Publish SZL Forge Lab
 
+# Dispatch-only publication: the byte-parity and replay gates run inside every
+# dispatch, and foundation-showcase.yml still gates the same source paths on
+# pull request and push. Push-triggered runs of this publisher failed closed on
+# Hub-side state with no regression signal.
 on:
-  push:
-    branches: [main]
-    paths:
-      - "spaces/szl-forge-lab/**"
-      - "portfolio/model_portfolio.json"
-      - "tools/publish_hf_space.py"
-      - "tools/test_publish_hf_space.py"
-      - ".github/workflows/publish-forge-lab.yml"
   workflow_dispatch: {}
 
 permissions:

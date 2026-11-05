@@ -37,7 +37,7 @@ CARD = b"---\nlicense: apache-2.0\n---\n\n# Synthetic card\n"
 NEW_CARD = b"---\nlicense: apache-2.0\n---\n\n# Synthetic card, revised\n"
 PUBLISH_IF = (
     "github.ref == 'refs/heads/main' && "
-    "(github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))"
+    "github.event_name == 'workflow_dispatch' && inputs.publish"
 )
 V2_PUBLISH_IF = (
     "github.ref == 'refs/heads/main' && "
@@ -317,7 +317,9 @@ def test_workflow_permissions_triggers_and_main_only_dispatch() -> None:
     assert all("permissions" not in job for job in data["jobs"].values())
     assert "id-token" not in WORKFLOW.read_text(encoding="utf-8")
     assert triggers["pull_request"] == {"branches": ["main"], "paths": WATCHED_PATHS}
-    assert triggers["push"] == {"branches": ["main"], "paths": WATCHED_PATHS}
+    # Publishing is dispatch-only: push runs failed closed on the parent-commit
+    # CAS whenever main moved during the run, carry no regression signal.
+    assert "push" not in triggers
     dispatch = triggers["workflow_dispatch"]["inputs"]
     assert set(dispatch) == {"publish"}
     assert dispatch["publish"]["type"] == "boolean"

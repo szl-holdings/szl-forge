@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # The one committed writer for the OAC Hub packages (HF upgrade plan D1 and P9).
 # Pull requests and dispatches with publish=false run an anonymous dry-run only.
-# Existing v1 profiles publish on main push or main-only publish dispatch.
+# Existing v1 profiles publish only on an explicit main publish dispatch; main
+# push no longer triggers writers, because the parent-commit CAS fails closed on
+# a busy main and the red runs carry no regression signal.
 # The v2 package exists; its sole writer permits a reviewed README correction
 # only on explicit main dispatch at the pinned Hub parent.
 # Every writer holds its per-asset lock (D3) and a parent-commit CAS.
@@ -9,19 +11,6 @@ name: Publish OAC Hub packages
 
 on:
   pull_request:
-    branches: [main]
-    paths:
-      - "clinical-gateway/huggingface/**"
-      - "ops-health/huggingface/**"
-      - "publishing/oac-ops-health-v2/**"
-      - "tools/publish_oac_hub.py"
-      - "tests/test_publish_oac_hub.py"
-      - "docs/oac-v2-card-parent-2026-10-13.json"
-      - "tools/acquire_hf_publisher_token.py"
-      - "tests/test_acquire_hf_publisher_token.py"
-      - "tests/test_hf_org_token1_fallback.py"
-      - ".github/workflows/publish-oac-hub.yml"
-  push:
     branches: [main]
     paths:
       - "clinical-gateway/huggingface/**"
@@ -151,7 +140,7 @@ jobs:
   publish-oac-v1-model:
     if: >-
       github.ref == 'refs/heads/main' &&
-      (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))
+      github.event_name == 'workflow_dispatch' && inputs.publish
     name: Publish oac-v1-model and verify exact Hub bytes
     runs-on: ubuntu-24.04
     timeout-minutes: 20
@@ -271,7 +260,7 @@ jobs:
   publish-oac-v1-dataset:
     if: >-
       github.ref == 'refs/heads/main' &&
-      (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))
+      github.event_name == 'workflow_dispatch' && inputs.publish
     name: Publish oac-v1-dataset and verify exact Hub bytes
     runs-on: ubuntu-24.04
     timeout-minutes: 20
@@ -569,7 +558,7 @@ jobs:
     needs: [publish-oac-v1-model, publish-oac-v1-dataset]
     if: >-
       github.ref == 'refs/heads/main' &&
-      (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))
+      github.event_name == 'workflow_dispatch' && inputs.publish
     name: Verify Git-to-Hub byte parity at the published revisions
     runs-on: ubuntu-24.04
     timeout-minutes: 10
