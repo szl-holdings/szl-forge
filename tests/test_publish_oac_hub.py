@@ -549,10 +549,28 @@ def test_reviewed_reconciliation_refuses_new_candidate_package_changes():
 def test_reviewed_approval_is_independently_digest_pinned():
     raw = (ROOT / "docs/oac-v2-card-parent-2026-10-13.json").read_bytes()
     approval = publisher.parse_reviewed_card_approval(raw)
-    assert approval["reviewed_parent"] == "a824a32d91a383d33a1e1e595f11b8362d1b4efa"
+    assert approval["reviewed_parent"] == "90df75bf58d91ea723128a86d7ed9af57535dbd8"
     forged = dict(approval, reviewed_parent=NEW)
     with pytest.raises(publisher.PublicationRefused, match="reviewed digest"):
         publisher.parse_reviewed_card_approval(json.dumps(forged).encode())
+
+
+def test_reviewed_approval_rebind_is_readme_only():
+    raw = (ROOT / "docs/oac-v2-card-parent-2026-10-13.json").read_bytes()
+    approval = publisher.parse_reviewed_card_approval(raw)
+    assert approval["permitted_delta"] == ["README.md"]
+    assert approval["previous_expected_parent"] == "a824a32d91a383d33a1e1e595f11b8362d1b4efa"
+    by_kind: dict[tuple[str, str], str] = {}
+    for row in approval["files"]:
+        by_kind[(row["kind"], row["path"])] = row["sha256"]
+    shared = sorted(path for kind, path in by_kind if kind == "source")
+    assert shared
+    for path in shared:
+        if path == "README.md":
+            assert by_kind[("live", path)] != by_kind[("source", path)]
+        else:
+            assert by_kind[("live", path)] == by_kind[("source", path)]
+    assert ".gitattributes" in approval["live_inventory"]
 
 
 @pytest.mark.parametrize("new_head", [NEW, None])
