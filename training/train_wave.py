@@ -40,6 +40,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--repo-id", default=None, help="If set, push the merged model to this HF repo")
     parser.add_argument("--max-samples", type=int, default=None, help="Cap samples per dataset (smoke runs)")
     parser.add_argument("--seed", type=int, default=3407)
+    parser.add_argument("--log-repo-id", default=None,
+                        help="If set, upload the last 200 log lines to this HF dataset "
+                             "every 10 minutes so wave progress is observable without SSH.")
     return parser.parse_args()
 
 
@@ -127,6 +130,31 @@ def main() -> None:
             report_to=[],
         ),
     )
+
+    import threading
+
+    def _forward_logs() -> None:
+        import time as _time
+        from huggingface_hub import HfApi
+        api = HfApi(token=os.environ["HF_TOKEN"])
+        while True:
+            _time.sleep(600)
+            try:
+                log_path = Path("/opt/szl/train.log")
+                if log_path.is_file():
+                    lines = log_path.read_text(encoding="utf-8", errors="replace").splitlines()[-200:]
+                    api.upload_file(
+                        path_or_fileobj="\n".join(lines).encode(),
+                        path_in_repo=f"{Path(args.out).name}-train.log",
+                        repo_id=args.log_repo_id,
+                        repo_type="dataset",
+                        commit_message="chore: wave log heartbeat",
+                    )
+            except Exception as exc:
+                print(f"log-forward skipped: {type(exc).__name__}", file=sys.stderr)
+
+    if args.log_repo_id:
+        threading.Thread(target=_forward_logs, daemon=True).start()
 
     print("training start")
     trainer.train()
