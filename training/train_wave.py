@@ -72,7 +72,12 @@ def main() -> None:
     )
 
     target_modules = ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
-    model = FastLanguageModel.get_peft_model(
+    already_peft = any(getattr(model, attr, None) is not None
+                       for attr in ("peft_config", "lora_embeddings", "active_adapters"))
+    if already_peft:
+        print("loaded model already carries LoRA adapters; skipping get_peft_model")
+    else:
+        model = FastLanguageModel.get_peft_model(
         model,
         r=16,
         target_modules=target_modules,
@@ -95,17 +100,20 @@ def main() -> None:
     data = concatenate_datasets(frames)
     print(f"merged corpus: {len(data)} examples")
 
-    def formatting(example):
-        messages = example.get("messages") or example.get("conversations")
-        if not messages:
-            fail_closed(f"example lacks 'messages'/'conversations': {list(example.keys())}")
-        return tokenizer.apply_chat_template(messages, tokenize=False)
-
     def add_text(example):
-        example["text"] = formatting(example)
+        messages = example.get("messages") or example.get("conversations")
+        example["text"] = (
+            tokenizer.apply_chat_template(messages, tokenize=False) if messages else "")
         return example
 
+    before = len(data)
     data = data.map(add_text, desc="applying chat template")
+    data = data.filter(lambda e: e["text"], desc="dropping non-chat rows")
+    dropped = before - len(data)
+    if dropped:
+        print(f"dropped {dropped} non-chat row(s) (spec/manifest metadata without messages/conversations)")
+    if not len(data):
+        fail_closed("no chat-formatted examples remain after filtering")
 
     from trl import SFTTrainer, SFTConfig
 
