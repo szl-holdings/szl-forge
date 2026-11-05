@@ -40,6 +40,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--repo-id", default=None, help="If set, push the merged model to this HF repo")
     parser.add_argument("--max-samples", type=int, default=None, help="Cap samples per dataset (smoke runs)")
     parser.add_argument("--seed", type=int, default=3407)
+    parser.add_argument("--log-repo-id", default=None,
+                        help="If set, upload the last 200 log lines to this HF dataset "
+                             "every 10 minutes so wave progress is observable without SSH.")
     return parser.parse_args()
 
 
@@ -69,7 +72,12 @@ def main() -> None:
     )
 
     target_modules = ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
-    model = FastLanguageModel.get_peft_model(
+    from peft import PeftModel
+    already_peft = isinstance(model, PeftModel)
+    if already_peft:
+        print("loaded model already carries LoRA adapters; skipping get_peft_model")
+    else:
+        model = FastLanguageModel.get_peft_model(
         model,
         r=16,
         target_modules=target_modules,
@@ -88,21 +96,27 @@ def main() -> None:
         frame = load_dataset(dataset_id, split="train")
         if args.max_samples:
             frame = frame.select(range(min(args.max_samples, len(frame))))
+        keep = [c for c in ("messages", "conversations") if c in frame.column_names]
+        if keep:
+            frame = frame.select_columns(keep)
         frames.append(frame)
     data = concatenate_datasets(frames)
     print(f"merged corpus: {len(data)} examples")
 
-    def formatting(example):
-        messages = example.get("messages") or example.get("conversations")
-        if not messages:
-            fail_closed(f"example lacks 'messages'/'conversations': {list(example.keys())}")
-        return tokenizer.apply_chat_template(messages, tokenize=False)
-
     def add_text(example):
-        example["text"] = formatting(example)
+        messages = example.get("messages") or example.get("conversations")
+        example["text"] = (
+            tokenizer.apply_chat_template(messages, tokenize=False) if messages else "")
         return example
 
+    before = len(data)
     data = data.map(add_text, desc="applying chat template")
+    data = data.filter(lambda e: e["text"], desc="dropping non-chat rows")
+    dropped = before - len(data)
+    if dropped:
+        print(f"dropped {dropped} non-chat row(s) (spec/manifest metadata without messages/conversations)")
+    if not len(data):
+        fail_closed("no chat-formatted examples remain after filtering")
 
     from trl import SFTTrainer, SFTConfig
 
@@ -128,6 +142,34 @@ def main() -> None:
         ),
     )
 
+    import threading
+
+    def _upload_log_tail(api, tag: str) -> None:
+        try:
+            log_path = Path(os.environ.get("SZL_TRAIN_LOG", "/opt/szl/train.log"))
+            if log_path.is_file():
+                lines = log_path.read_text(encoding="utf-8", errors="replace").splitlines()[-200:]
+                api.upload_file(
+                    path_or_fileobj="\n".join(lines).encode(),
+                    path_in_repo=f"{Path(args.out).name}-train.log",
+                    repo_id=args.log_repo_id,
+                    repo_type="dataset",
+                    commit_message=f"chore: wave log {tag}",
+                )
+        except Exception as exc:
+            print(f"log-forward skipped ({tag}): {type(exc).__name__}", file=sys.stderr)
+
+    def _forward_logs() -> None:
+        import time as _time
+        from huggingface_hub import HfApi
+        api = HfApi(token=os.environ["HF_TOKEN"])
+        while True:
+            _time.sleep(600)
+            _upload_log_tail(api, "heartbeat")
+
+    if args.log_repo_id:
+        threading.Thread(target=_forward_logs, daemon=True).start()
+
     print("training start")
     trainer.train()
     trainer.save_model(str(args.out))
@@ -150,10 +192,13 @@ def main() -> None:
     receipt_path.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
     print(f"receipt written: {receipt_path}")
 
+    if args.log_repo_id:
+        from huggingface_hub import HfApi
+        _upload_log_tail(HfApi(token=os.environ["HF_TOKEN"]), "final")
+
     if args.repo_id:
-        model.push_to_hub(args.repo_id, token=os.environ["HF_TOKEN"])
-        tokenizer.push_to_hub(args.repo_id, token=os.environ["HF_TOKEN"])
-        print(f"pushed to hub: {args.repo_id}")
+        model.push_to_hub_merged(args.repo_id, tokenizer, save_method="merged_16bit", token=os.environ["HF_TOKEN"])
+        print(f"pushed merged model to hub: {args.repo_id}")
 
     print("wave complete")
 
