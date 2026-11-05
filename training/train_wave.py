@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Single-GPU SFT training wave for SZL Forge models (Unsloth backend).
 
 Runs on one A6000-class GPU. Loads one or more HuggingFace chat SFT datasets,
