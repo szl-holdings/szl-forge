@@ -96,6 +96,9 @@ def main() -> None:
         frame = load_dataset(dataset_id, split="train")
         if args.max_samples:
             frame = frame.select(range(min(args.max_samples, len(frame))))
+        keep = [c for c in ("messages", "conversations") if c in frame.column_names]
+        if keep:
+            frame = frame.select_columns(keep)
         frames.append(frame)
     data = concatenate_datasets(frames)
     print(f"merged corpus: {len(data)} examples")
