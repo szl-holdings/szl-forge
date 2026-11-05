@@ -90,7 +90,7 @@ def main() -> None:
 
     trainer = DPOTrainer(
         model=model,
-        tokenizer=tokenizer,
+        processing_class=tokenizer,
         train_dataset=data,
         args=DPOConfig(
             output_dir=str(args.out),
@@ -132,9 +132,8 @@ def main() -> None:
     print(f"receipt written: {receipt_path}")
 
     if args.repo_id:
-        model.push_to_hub(args.repo_id, token=os.environ["HF_TOKEN"])
-        tokenizer.push_to_hub(args.repo_id, token=os.environ["HF_TOKEN"])
-        print(f"pushed to hub: {args.repo_id}")
+        model.push_to_hub_merged(args.repo_id, tokenizer, save_method="merged_16bit", token=os.environ["HF_TOKEN"])
+        print(f"pushed merged model to hub: {args.repo_id}")
 
     print("DPO wave complete")
 
