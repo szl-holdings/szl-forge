@@ -1,3 +1,7 @@
+**SZL Forge: the estate's model factory — observable training waves, receipt-carrying launches, and proof-banner publications for every model.**
+
+Demo: https://huggingface.co/SZLHOLDINGS · Verify in 60s: `git clone https://github.com/szl-holdings/szl-forge && cd szl-forge && python -m py_compile training/train_wave.py training/dpo_wave.py training/eval_wave.py`
+
 # SZL Forge
 <!-- szl:header v1 -->
 <!-- Native identity: szl-brand@4309f6fce89179331b0b3ed8c99494e76c5be256; Orbit v2 icon. -->
