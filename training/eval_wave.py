@@ -66,7 +66,7 @@ def main() -> None:
             model = AutoModelForCausalLM.from_pretrained(
                 model_id, torch_dtype=torch.bfloat16, device_map="cuda", token=os.environ["HF_TOKEN"])
         except ValueError as exc:
-            if "model_type" in str(exc):
+            if "Should have a `model_type` key in its config.json" in str(exc):
                 print(f"  SKIPPED: adapter-only repository (no full-model config); "
                       f"evaluating its merged descendants instead", flush=True)
                 receipt["models"][model_id] = [{"kind": "skip", "q": "", "expect": "",
