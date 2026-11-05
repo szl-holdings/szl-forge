@@ -36,6 +36,13 @@ BOUND_ARCHIVES: dict[str, tuple[str, str]] = {
         "spaces/szl-foundation-confirmation/app.py",
         "ARCHIVE_SHA256",
     ),
+    # Same sealed bytes as the confirmation Space. The nested attributes file
+    # used to set `-filter`, so refresh could dirty a raw blob. The pointer
+    # oid is the digest build_showcase.py already requires.
+    "spaces/szl-forge-lab/foundation/data/release.zip": (
+        "foundation-confirmation/build_showcase.py",
+        "ARCHIVE_SHA256",
+    ),
 }
 
 LFS_POINTER = re.compile(

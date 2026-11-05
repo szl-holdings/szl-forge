@@ -22,6 +22,8 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
+          # Materialize release.zip. A pointer checkout fails the frozen digest.
+          lfs: true
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
         with:
           python-version: '3.12'
@@ -29,6 +31,25 @@ jobs:
         run: python -B -m unittest discover -s foundation-confirmation -p 'test_*.py' -v
       - name: Rebuild every public evidence file from the sealed archive
         run: |
+          python -B scripts/lfs_archive_binding.py
           python foundation-confirmation/build_showcase.py --archive spaces/szl-forge-lab/foundation/data/release.zip --output /tmp/confirmation-showcase
           diff -qr /tmp/confirmation-showcase/data spaces/szl-forge-lab/foundation/data
           git diff --exit-code
+      - name: Plan the Forge Lab publish with the frozen archive bound
+        run: |
+          python tools/publish_hf_space.py \
+            --source-dir spaces/szl-forge-lab \
+            --repo-id SZLHOLDINGS/szl-forge-lab \
+            --source-revision "${{ github.event.pull_request.head.sha || github.sha }}" \
+            --frozen-archive foundation/data/release.zip=869e318dd5f328205dd181ee836ef267bd2ae278f6430a9e8ddc661fbc689d03 \
+            --static \
+            --report /tmp/forge-lab-publication-plan.json
+          python - <<'PY'
+          import json
+          plan = json.load(open("/tmp/forge-lab-publication-plan.json", encoding="utf-8"))
+          item = plan["frozen_archives"]["foundation/data/release.zip"]
+          assert plan["ok"] is True and plan["publish"] is False
+          assert item["verified_before_upload"] is True
+          assert item["frozen_sha256"] == "869e318dd5f328205dd181ee836ef267bd2ae278f6430a9e8ddc661fbc689d03"
+          assert item["lfs_pointer_oid"] == item["frozen_sha256"]
+          PY
