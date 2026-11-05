@@ -75,6 +75,21 @@ class ModelKernelFrontierWorkflowTests(unittest.TestCase):
         self.assertIn("reports/hf-private-read-credential.json", self.workflow)
         self.assertIn("if-no-files-found: warn", self.workflow)
 
+    def test_forge_lab_dry_run_hashes_materialized_archive_bytes(self) -> None:
+        verify = self.workflow.split("\n  verify:\n", 1)[1]
+        self.assertIn(
+            "fetch-depth: 0\n          persist-credentials: false\n"
+            "          # The forge-lab dry-run hashes archive bytes. A pointer is refused.\n"
+            "          lfs: true",
+            verify,
+        )
+        self.assertIn(
+            "--frozen-archive foundation/data/release.zip="
+            "869e318dd5f328205dd181ee836ef267bd2ae278f6430a9e8ddc661fbc689d03",
+            self.offline_region,
+        )
+        self.assertNotIn("--publish", self.offline_region)
+
     def test_json_only_successor_has_a_blocking_offline_test_owner(self) -> None:
         self.assertIn("frontier/qwen35-receiptagent-v4-json/json_contract.py", self.offline_region)
         self.assertIn("frontier/qwen35-receiptagent-v4-json/test_json_contract.py", self.offline_region)

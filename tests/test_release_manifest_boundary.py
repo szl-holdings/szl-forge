@@ -20,6 +20,7 @@ SCRIPT = ROOT / "scripts" / "emit_run_manifest.py"
 RUN = "https://github.com/szl-holdings/szl-forge/actions/runs/123456"
 VALID = {"pass_rate": 0.9, "heldout_passed": True, "refusal_no_regression": True}
 ARCHIVE = "spaces/szl-foundation-confirmation/release.zip"
+FORGE_LAB_ARCHIVE = "spaces/szl-forge-lab/foundation/data/release.zip"
 FROZEN_ARCHIVE_SHA256 = "869e318dd5f328205dd181ee836ef267bd2ae278f6430a9e8ddc661fbc689d03"
 SPEC = importlib.util.spec_from_file_location("release_manifest_boundary_subject", SCRIPT)
 EMITTER = importlib.util.module_from_spec(SPEC)
@@ -192,8 +193,17 @@ class ReleaseManifestBoundaryTests(unittest.TestCase):
 
     def test_real_checkout_binds_lfs_archive_and_is_clean(self):
         evidence = EMITTER.LFS_BINDING.verify_registered(ROOT)
-        self.assertEqual([item["path"] for item in evidence], [ARCHIVE])
-        self.assertEqual(evidence[0]["pointer_oid"], FROZEN_ARCHIVE_SHA256)
+        # verify_registered sorts the registry. Both archives are the same
+        # sealed bytes; each pointer oid must be that digest, and the
+        # checkout must still be clean once both are bound.
+        self.assertEqual(
+            [item["path"] for item in evidence],
+            [FORGE_LAB_ARCHIVE, ARCHIVE],
+        )
+        self.assertEqual(
+            [item["pointer_oid"] for item in evidence],
+            [FROZEN_ARCHIVE_SHA256, FROZEN_ARCHIVE_SHA256],
+        )
         result, _ = self.invoke()
         self.assertEqual(result.returncode, 0, result.stderr)
 
