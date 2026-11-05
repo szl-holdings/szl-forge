@@ -44,6 +44,20 @@ def test_authoring_card_no_longer_cites_the_pre_polish_readme_commit():
     assert prior != (ROOT / "willay/card/README.md").read_bytes()
 
 
+def test_reviewed_source_revision_resolves_on_main_to_the_pinned_digest():
+    profile = json.loads(
+        (ROOT / "publishing/curated-model-card-profiles.json").read_text(encoding="utf-8")
+    )["profiles"]["willay"]
+    revision = profile["reviewed_source_revision"]
+    assert revision == "647594764509cb200f4599710e1e2529b00dd2c5"
+    subprocess.check_call(
+        ["git", "merge-base", "--is-ancestor", revision, "HEAD"], cwd=ROOT
+    )
+    pinned = _show(revision, "willay/card/README.md")
+    assert hashlib.sha256(pinned).hexdigest() == profile["source_sha256"]
+    assert hashlib.sha256((ROOT / "willay/card/README.md").read_bytes()).hexdigest() == profile["source_sha256"]
+
+
 def test_reviewed_adapter_base_revisions_stay_null():
     observation = json.loads(
         (ROOT / "publishing/curated-card-observations/willay-20260930.json").read_text(encoding="utf-8")
