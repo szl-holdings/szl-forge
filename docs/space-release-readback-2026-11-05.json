@@ -1,0 +1,46 @@
+{
+  "schema": "szl.space-release-readback/v1",
+  "observed_at": "2026-11-05T18:21:00Z",
+  "observed_main": "3b996ebd8116815de15ab6ad8d2daed6aa4c1470",
+  "attested_source_revision": "65e5e4c043d104bc7c99e8c525c9c64308cb9e2d",
+  "commits_after_attested_release": 10,
+  "hf_writes": false,
+  "note": "Both live Spaces read back 65e5e4c0. That commit only bumps harden-runner in the publisher workflows. The ten later main commits do not change either Space tree. Do not republish merely to stamp a newer main SHA.",
+  "spaces": [
+    {
+      "repo_id": "SZLHOLDINGS/szl-model-inference-lab",
+      "source_dir": "spaces/szl-model-inference-lab",
+      "hub_revision": "65ce577230b740c3c39d5cf2f5755f32fa2b2f02",
+      "runtime_readback": {
+        "url": "https://szlholdings-szl-model-inference-lab.hf.space/version",
+        "field": "gitSha",
+        "revision": "65e5e4c043d104bc7c99e8c525c9c64308cb9e2d"
+      },
+      "release_manifest": "spaces/szl-model-inference-lab/release.json",
+      "last_tree_commit": "34b793f176fadfc5bc5df066c4db7cf75728542f",
+      "acceptance": [
+        "GET /version gitSha equals the GitHub SHA that was published.",
+        "Every source_files digest in release.json equals that commit's tree.",
+        "Do not dispatch publish-model-inference-lab.yml only because main moved."
+      ]
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-foundation-confirmation",
+      "source_dir": "spaces/szl-foundation-confirmation",
+      "hub_revision": "bee8f079769118a26b1aa83508df639dd6b45e89",
+      "runtime_readback": {
+        "url": "https://szlholdings-szl-foundation-confirmation.hf.space/api/build-info",
+        "field": "build.revision",
+        "revision": "65e5e4c043d104bc7c99e8c525c9c64308cb9e2d"
+      },
+      "archive_sha256": "869e318dd5f328205dd181ee836ef267bd2ae278f6430a9e8ddc661fbc689d03",
+      "archive_bytes": 2893790,
+      "last_tree_commit": "93766af9d03b63fce8cde05376801b65f61fe2ae",
+      "acceptance": [
+        "GET /api/build-info build.revision equals the GitHub SHA that was published.",
+        "build.archive_sha256 equals the LFS oid 869e318dd5f328205dd181ee836ef267bd2ae278f6430a9e8ddc661fbc689d03.",
+        "Do not dispatch foundation-runtime.yml publish only because main moved."
+      ]
+    }
+  ]
+}
