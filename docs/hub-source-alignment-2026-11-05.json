@@ -1,0 +1,79 @@
+{
+  "schema": "szl.hub-source-alignment/v1",
+  "observed_at": "2026-11-05T18:08:00Z",
+  "git_revision": "3b996ebd8116815de15ab6ad8d2daed6aa4c1470",
+  "hf_writes": false,
+  "observation_run": "https://github.com/szl-holdings/szl-forge/actions/runs/42035246756",
+  "identity_marker": "<!-- szl:artifact-identity-reconciled -->",
+  "note": "Public Hub reads only. The scheduled Omen card gate stays fail-closed. These rows are the reconnect checklist, not a publication.",
+  "items": [
+    {
+      "hub_repo": "SZLHOLDINGS/WILLAY",
+      "hub_type": "model",
+      "management": "szl-forge:willay/card/README.md",
+      "alignment": "HUB_DIVERGED",
+      "cause": "Hub commit 357f99cef019437c7f54ffdcb67526cd605c473f (2026-11-04T17:43:03Z, author carlota1, message docs: NVIDIA-style model card upgrade) replaced the README and dropped the identity marker. The previous daily gate at 96a0ac5c5c26e89f732b72d747b3577e1ea5236f was NOOP.",
+      "last_aligned_hub_revision": "96a0ac5c5c26e89f732b72d747b3577e1ea5236f",
+      "last_aligned_readme_sha256": "fa0e39e5f45d24c6bca39c3e966e99842ab8a0351ee6983f37ed30ae450d83d9",
+      "observed_hub_revision": "357f99cef019437c7f54ffdcb67526cd605c473f",
+      "observed_readme_sha256": "97c0c64922300bed74dd531e557bcd081fb52131fed649170b3abc4623c3043e",
+      "observed_readme_has_marker": false,
+      "canonical_source": {
+        "path": "willay/card/README.md",
+        "sha256": "29b4590af502221d5b0aa9959b10ed2bef03fc982110da2483289c6fca0f2e22"
+      },
+      "curated_candidate_sha256": "3402e19693f9f75d3419cd75e5d22286525ae1a1435fbc8bab2a9132d74dd39f",
+      "acceptance": [
+        "Live SZLHOLDINGS/WILLAY README contains <!-- szl:artifact-identity-reconciled -->.",
+        "The Hub change is a pull request opened by the existing publish-curated-card mode, and its README bytes equal the offline candidate from tools/prepare_curated_model_card.py --profile willay (sha256 3402e19693f9f75d3419cd75e5d22286525ae1a1435fbc8bab2a9132d74dd39f).",
+        "Do not direct-commit the NVIDIA-era card. The Omen pipeline records that a Hub-side edit of this repo is overwritten by the source card.",
+        "Leave the scheduled drift gate in .github/workflows/omen-cards-identity-note.yml fail-closed."
+      ]
+    },
+    {
+      "hub_repo": "SZLHOLDINGS/brain-navigator-r2",
+      "hub_type": "model",
+      "management": "hub-pr",
+      "alignment": "HUB_DIVERGED",
+      "cause": "Same 2026-11-04 NVIDIA-style README rewrite, Hub commit 22bd44c50c3c5ad2317f14ce441b13bdd648de15 by carlota1, dropped the identity note. Previous NOOP revision 8f7d67af9c2f8315dc3a63afa9ebf23a3f60ca01.",
+      "last_aligned_hub_revision": "8f7d67af9c2f8315dc3a63afa9ebf23a3f60ca01",
+      "last_aligned_readme_sha256": "3a777cc3561b09a293ec837a072f2e89499e3dd5dd05a8a395037fe8b3225133",
+      "observed_hub_revision": "22bd44c50c3c5ad2317f14ce441b13bdd648de15",
+      "observed_readme_sha256": "1613b064b638207f3f72b9ba0d41efb5ba3dc89223a925b4ab844784a412329f",
+      "observed_readme_has_marker": false,
+      "canonical_source": null,
+      "acceptance": [
+        "Restore the marker with an additive Hub pull request on README.md only. Do not direct-commit.",
+        "The diff adds <!-- szl:artifact-identity-reconciled --> and does not remove lines. That is the existing merge-mode rule in omen-cards-identity-note.yml.",
+        "There is no authoring card in szl-forge for this repository. Do not invent one in order to turn the scheduled job green."
+      ]
+    },
+    {
+      "hub_repo": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3",
+      "hub_type": "model",
+      "management": "hub-pr",
+      "alignment": "HUB_DIVERGED",
+      "cause": "Hub commit d6fa2e6c290066b1f44b66a18b62862d33f02a78 (2026-11-04T18:02:09Z, carlota1, NVIDIA-style wave2) dropped the identity marker. Previous NOOP revision 28890269bc99df8b46f094aaa85d6af6f3615682.",
+      "last_aligned_hub_revision": "28890269bc99df8b46f094aaa85d6af6f3615682",
+      "last_aligned_readme_sha256": "21f74eebf9a1033054bfd6bc9306c3322ade2a134a3b88125a895e2f6006dd9c",
+      "observed_hub_revision": "d6fa2e6c290066b1f44b66a18b62862d33f02a78",
+      "observed_readme_sha256": "8fe85c55fa68ea1e5c764ee89a3896b2c047e0a33bbc7aa4f1ddc46a52357680",
+      "observed_readme_has_marker": false,
+      "canonical_source": {
+        "path": "receiptagent-v3/card/README.md",
+        "sha256": "d15037c8a084b9ea2e0b9f0c71324632f6e97cc177f93120e8485dbb8d8931ea",
+        "role": "authoring card, not byte-identical to the public Hub README"
+      },
+      "card_sync_pins": {
+        "tool": "tools/prepare_receiptagent_v3_card_sync.py",
+        "hub_readme_sha256": "79fa68b40bcd8cdfff3c4c0a50a7f4c452bf62b080fa95080baffb02a9430555",
+        "candidate_readme_sha256": "21f74eebf9a1033054bfd6bc9306c3322ade2a134a3b88125a895e2f6006dd9c"
+      },
+      "acceptance": [
+        "Do not retarget the card-sync pins onto the marker-less README 8fe85c55fa68ea1e5c764ee89a3896b2c047e0a33bbc7aa4f1ddc46a52357680. The tool must keep refusing that Hub byte.",
+        "A replacement review has to start from the current Hub bytes, keep <!-- szl:artifact-identity-reconciled -->, and land through the existing pull-request publisher.",
+        "Leave the scheduled drift gate fail-closed until the live README contains the marker."
+      ]
+    }
+  ]
+}
