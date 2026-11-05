@@ -334,10 +334,18 @@ def test_only_publish_jobs_see_credentials_or_publish() -> None:
     for name, job in jobs.items():
         dumped = yaml.safe_dump(job)
         if name == "verify":
-            # The read-only dry-run may retry one anonymously unresolved (private)
-            # target with the org read credential; write credentials stay publish-only.
+            # The private-target fallback is dispatch-only. Pull-request head
+            # code must not receive the publisher write-candidate secret.
             assert dumped.count("secrets.") == 1
             assert "secrets.HUGGING_FACE_HUB_TOKEN" in dumped
+            dry = next(step for step in job["steps"] if step.get("name") == "Dry-run every closed profile against the Hub")
+            assert dry["env"]["HF_READONLY_TOKEN"] == (
+                "${{ github.event_name == 'workflow_dispatch' && secrets.HUGGING_FACE_HUB_TOKEN || '' }}"
+            )
+            assert "exit 0" not in dry["run"]
+            upload = next(step for step in job["steps"] if str(step.get("uses", "")).startswith("actions/upload-artifact"))
+            assert upload["with"]["if-no-files-found"] == "error"
+            assert upload["with"]["path"] == "reports/*-dry-run.json"
         elif not name.startswith("publish-"):
             assert "secrets." not in dumped
             assert "--publish" not in steps_text(job)
@@ -1222,10 +1230,15 @@ def test_cli_publish_is_refused_outside_the_canonical_main_workflow(monkeypatch,
 
 
 def test_cli_publish_requires_a_token_and_the_reviewed_client(monkeypatch, tmp_path) -> None:
+    called = []
+    monkeypatch.setattr(publisher, "hub_clients", lambda *args, **kwargs: called.append(args))
     output = tmp_path / "no-token.json"
     code = publisher.main(["--profile", "oac-v1-model", "--source-revision", SOURCE, "--publish",
-                           "--report", str(output)], environ={**CI, "HF_TOKEN": ""})
+                           "--report", str(output)],
+                          environ={**CI, "HF_TOKEN": "", "HF_READONLY_TOKEN": "readonly-synthetic"})
     assert code == 1 and "HF_TOKEN is required" in json.loads(output.read_text(encoding="utf-8"))["refusal"]
+    assert called == []
+    assert "readonly-synthetic" not in output.read_text(encoding="utf-8")
     api = FakeApi(MODEL, package(MODEL))
     fake_clients(monkeypatch, api, version="2.1.1")
     output = tmp_path / "wrong-client.json"
