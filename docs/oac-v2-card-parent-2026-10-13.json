@@ -63,13 +63,6 @@
       "sha256": "b0a64ff3f26ea284b0588de351ed7795a6089203b35fded0e7d82cbd4871aed9"
     },
     {
-      "kind": "live",
-      "revision": "90df75bf58d91ea723128a86d7ed9af57535dbd8",
-      "path": ".gitattributes",
-      "bytes": 1519,
-      "sha256": "11ad7efa24975ee4b0c3c3a38ed18737f0658a5f75a0a96787b576a78a023361"
-    },
-    {
       "kind": "source",
       "revision": "3b996ebd8116815de15ab6ad8d2daed6aa4c1470",
       "path": "LICENSE",
