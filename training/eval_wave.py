@@ -67,8 +67,8 @@ def main() -> None:
                 model_id, torch_dtype=torch.bfloat16, device_map="cuda", token=os.environ["HF_TOKEN"])
         except ValueError as exc:
             if "Should have a `model_type` key in its config.json" in str(exc):
-                print(f"  SKIPPED: adapter-only repository (no full-model config); "
-                      f"evaluating its merged descendants instead", flush=True)
+                print("  SKIPPED: adapter-only repository (no full-model config); "
+                      "evaluating its merged descendants instead", flush=True)
                 receipt["models"][model_id] = [{"kind": "skip", "q": "", "expect": "",
                     "output": "SKIPPED_ADAPTER_ONLY: repository has no full-model config.json"}]
                 continue
