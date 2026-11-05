@@ -1,8 +1,10 @@
 # SPDX-License-Identifier: Apache-2.0
 # The one committed writer for the OAC Hub packages (HF upgrade plan D1 and P9).
-# Pull requests and dispatches with publish=false run a write-free dry-run only
-# (anonymous Hub reads first, one read-only authenticated retry for a private-
-# but-existing target; the no-create refusals are unchanged).
+# Pull requests and dispatches with publish=false run a write-free dry-run only.
+# Pull requests stay anonymous: HUGGING_FACE_HUB_TOKEN is a publisher write
+# candidate, so it is not injected into a job that executes pull-request head.
+# A workflow_dispatch dry-run may retry one private-but-existing target with
+# that secret. --publish never reads it. The no-create refusals are unchanged.
 # Existing v1 profiles publish only on an explicit main publish dispatch; main
 # push no longer triggers writers, because the parent-commit CAS fails closed on
 # a busy main and the red runs carry no regression signal.
@@ -82,21 +84,15 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           SOURCE_REVISION: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           BASE_REVISION: ${{ github.event.pull_request.base.sha }}
-          # Anonymous reads resolve public targets; a private-but-existing
-          # target is retried once with this read-only org credential and then
-          # counts as resolved dry-run evidence (never a write). Fork and
-          # dependabot pull requests cannot see the secret; their run degrades
-          # to the offline checks above with a notice (documented limitation:
-          # live Hub verification for those PRs is covered by dispatch runs).
-          HF_READONLY_TOKEN: ${{ secrets.HUGGING_FACE_HUB_TOKEN }}
+          # Pull requests do not receive HUGGING_FACE_HUB_TOKEN. That secret is
+          # also a publisher write candidate, and this step runs the checked-out
+          # head. Anonymous reads still produce reports/*-dry-run.json, so the
+          # upload below keeps if-no-files-found: error. A workflow_dispatch
+          # dry-run may use the secret only as the private-target read fallback.
+          HF_READONLY_TOKEN: ${{ github.event_name == 'workflow_dispatch' && secrets.HUGGING_FACE_HUB_TOKEN || '' }}
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "${SOURCE_REVISION}"
-          if [ "${EVENT_NAME}" = "pull_request" ] && [ -z "${HF_READONLY_TOKEN:-}" ]; then
-            echo "::notice::No Hub read credential is visible to this pull request (fork or dependabot context); the live Hub dry-run is skipped here. The offline contract tests above still gate the candidate, and dispatch dry-runs resolve the same targets authoritatively."
-            git diff --check
-            exit 0
-          fi
           expect=()
           if [ "${EVENT_NAME}" = "pull_request" ]; then
             # Each dry-run must find the Hub's staged-path bytes at the inspected
