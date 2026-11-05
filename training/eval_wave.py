@@ -61,9 +61,18 @@ def main() -> None:
     receipt = {"schema": "szl.model-eval/v1", "max_new_tokens": args.max_new_tokens, "models": {}}
     for model_id in [m.strip() for m in args.models.split(",") if m.strip()]:
         print(f"loading {model_id}", flush=True)
-        tokenizer = AutoTokenizer.from_pretrained(model_id, token=os.environ["HF_TOKEN"])
-        model = AutoModelForCausalLM.from_pretrained(
-            model_id, torch_dtype=torch.bfloat16, device_map="cuda", token=os.environ["HF_TOKEN"])
+        try:
+            tokenizer = AutoTokenizer.from_pretrained(model_id, token=os.environ["HF_TOKEN"])
+            model = AutoModelForCausalLM.from_pretrained(
+                model_id, torch_dtype=torch.bfloat16, device_map="cuda", token=os.environ["HF_TOKEN"])
+        except ValueError as exc:
+            if "model_type" in str(exc):
+                print(f"  SKIPPED: adapter-only repository (no full-model config); "
+                      f"evaluating its merged descendants instead", flush=True)
+                receipt["models"][model_id] = [{"kind": "skip", "q": "", "expect": "",
+                    "output": "SKIPPED_ADAPTER_ONLY: repository has no full-model config.json"}]
+                continue
+            raise
         results = []
         for probe in PROBES:
             messages = [{"role": "user", "content": probe["q"]}]
