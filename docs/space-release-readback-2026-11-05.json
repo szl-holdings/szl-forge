@@ -5,7 +5,7 @@
   "attested_source_revision": "65e5e4c043d104bc7c99e8c525c9c64308cb9e2d",
   "commits_after_attested_release": 10,
   "hf_writes": false,
-  "note": "Both live Spaces read back 65e5e4c0. That commit only bumps harden-runner in the publisher workflows. The ten later main commits do not change either Space tree. Do not republish merely to stamp a newer main SHA.",
+  "note": "Both live Spaces read back 65e5e4c0. That commit only bumps harden-runner in the publisher workflows. On a full clone, ten later commits reach observed_main and none change either Space tree. CI fetches both commits at depth 1 and compares those trees, including the checkout HEAD. Those fetches do not include the commits between them, so the count is not re-derived. Do not republish merely to stamp a newer main SHA.",
   "spaces": [
     {
       "repo_id": "SZLHOLDINGS/szl-model-inference-lab",
