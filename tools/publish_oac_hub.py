@@ -404,12 +404,16 @@ def parse_reviewed_card_approval(raw: bytes) -> dict[str, Any]:
 
 
 def confirm_reviewed_parent(api: Any, profile: HubProfile, report: dict[str, Any],
-                            *, not_found: type[BaseException]) -> None:
+                            *, not_found: type[BaseException],
+                            allow_private: bool = False,
+                            ) -> None:
     """Confirm the mutable head still names the reviewed immutable snapshot."""
     info = lookup_target(api, profile, not_found=not_found)
     if info is None:
         raise PublicationRefused("target disappeared before reviewed-parent confirmation")
-    head = check_identity(info, profile)
+    head = (
+        check_identity_dry_run(info, profile) if allow_private else check_identity(info, profile)
+    )
     report["head_after"] = head
     if head != report["parent_revision"]:
         raise PublicationRefused("Hub head moved before reviewed-parent confirmation")
@@ -518,6 +522,28 @@ def check_identity(info: Any, profile: HubProfile) -> str:
         )
     if getattr(info, "private", None) is not False:
         raise PublicationRefused("target repository is private or its visibility is unknown")
+    head = str(getattr(info, "sha", "") or "").strip().lower()
+    if not FULL_SHA.fullmatch(head):
+        raise PublicationRefused("Hub repository did not expose an exact head revision")
+    return head
+
+
+def check_identity_dry_run(info: Any, profile: HubProfile) -> str:
+    """Authenticated dry-run identity; a private target the credential resolved counts.
+
+    Publication keeps refusing non-public targets (check_identity). The read-only
+    dry-run instead proves the candidate against whatever the Hub actually holds,
+    so a private-but-existing target resolved by the fallback credential is
+    RESOLVED evidence, not an unresolved one. An id redirect, visibility that
+    stays unknown even to the credential, or a missing exact head still refuse.
+    """
+    resolved = str(getattr(info, "id", "") or "")
+    if resolved.casefold() != profile.repo_id.casefold():
+        raise PublicationRefused(
+            "Hub resolved the profile id to a different repository (renamed or redirected)"
+        )
+    if getattr(info, "private", None) is None:
+        raise PublicationRefused("target repository visibility is unknown to both reads")
     head = str(getattr(info, "sha", "") or "").strip().lower()
     if not FULL_SHA.fullmatch(head):
         raise PublicationRefused("Hub repository did not expose an exact head revision")
@@ -653,8 +679,16 @@ def execute(
     expected_parent: str | None = None,
     fresh_main: Callable[[str], None] | None = None,
     git: Callable[[list[str]], bytes] | None = None,
+    auth_api: Any = None,
+    auth_read_file: Callable[[HubProfile, str, str], bytes] | None = None,
 ) -> dict[str, Any]:
-    """Run one profile; ``report`` keeps partial evidence when a step refuses."""
+    """Run one profile; ``report`` keeps partial evidence when a step refuses.
+
+    ``auth_api``/``auth_read_file`` are a read-only fallback credential used only
+    by dry-runs: an anonymously unresolved or private-looking target is retried
+    with it, and a private target it resolves counts as resolved evidence.
+    Publication never touches the fallback.
+    """
     require_sha(source_revision, "source revision")
     if expected_parent is not None:
         require_sha(expected_parent, "expected parent")
@@ -669,7 +703,30 @@ def execute(
     staged = staged_package(profile, source_revision, git=git)
     report["staged"] = evidence_for(staged)
 
+    target_api = api
+    target_read = read_file
     info = lookup_target(api, profile, not_found=not_found)
+    if not publish and auth_api is not None:
+        retry_authenticated = info is None
+        if info is not None:
+            try:
+                check_identity(info, profile)
+            except PublicationRefused as error:
+                if "visibility" not in str(error):
+                    raise
+                retry_authenticated = True
+        if retry_authenticated:
+            # The Hub reports missing and anonymously inaccessible private
+            # repositories identically. Retry once with the read-only fallback
+            # credential: a private target it resolves is real evidence for the
+            # dry-run, while a truly missing target stays unresolved and the
+            # no-create refusal below is unchanged.
+            retry = lookup_target(auth_api, profile, not_found=not_found)
+            if retry is not None:
+                info = retry
+                target_api = auth_api
+                target_read = auth_read_file or read_file
+                report["lookup"] = "authenticated-fallback"
     if info is None:
         # The Hub uses one not-found exception for missing and inaccessible
         # private repositories. An anonymous read proves neither condition.
@@ -708,13 +765,21 @@ def execute(
             report["state"] = "BLOCKED"
             raise PublicationRefused("created repository is not visible to the lookup")
 
-    parent = check_identity(info, profile)
+    authenticated_fallback = report["lookup"] == "authenticated-fallback"
+    if authenticated_fallback:
+        parent = check_identity_dry_run(info, profile)
+    else:
+        parent = check_identity(info, profile)
     report["resolved_repo_id"] = str(info.id)
-    report["target_observation"] = "PUBLIC"
+    report["target_observation"] = (
+        "PRIVATE_AUTHENTICATED"
+        if authenticated_fallback and getattr(info, "private", None) is True
+        else "PUBLIC"
+    )
     report["parent_revision"] = parent
     if expected_parent is not None:
         assert_expected_parent(expected_parent, report)
-    listing, hub_files = hub_snapshot(api, profile, parent, read_file)
+    listing, hub_files = hub_snapshot(target_api, profile, parent, target_read)
     report["hub_files"] = listing
     report["hub_before"] = evidence_for(hub_files)
     delta = plan_delta(profile, staged, hub_files)
@@ -724,10 +789,13 @@ def execute(
         # The byte reads above were pinned to parent. A concurrent Hub writer
         # can move main while those reads run, so confirm the mutable head
         # still names that exact snapshot before reporting NO_CHANGE.
-        unchanged_info = lookup_target(api, profile, not_found=not_found)
+        unchanged_info = lookup_target(target_api, profile, not_found=not_found)
         if unchanged_info is None:
             raise PublicationRefused("target repository disappeared before NO_CHANGE confirmation")
-        head = check_identity(unchanged_info, profile)
+        if authenticated_fallback:
+            head = check_identity_dry_run(unchanged_info, profile)
+        else:
+            head = check_identity(unchanged_info, profile)
         report["head_after"] = head
         if head != parent:
             raise PublicationRefused("Hub head moved before NO_CHANGE confirmation")
@@ -896,9 +964,18 @@ def main(argv: list[str] | None = None, *, environ: Mapping[str, str] | None = N
             if not token:
                 raise PublicationRefused("HF_TOKEN is required for --publish")
         else:
+            # Anonymous first; HF_READONLY_TOKEN is an optional read-only
+            # fallback that only retries targets anonymous reads cannot
+            # resolve (private-but-existing) and never authorizes a write.
             token = False
+        fallback_token = "" if args.publish else str(environ.get("HF_READONLY_TOKEN", "")).strip()
         with tempfile.TemporaryDirectory(prefix="oac-hub-") as cache:
             clients = hub_clients(token, Path(cache))
+            fallback_clients = (
+                hub_clients(fallback_token, Path(cache) / "authenticated-fallback")
+                if fallback_token
+                else None
+            )
             report["huggingface_hub_version"] = clients["version"]
             if args.publish and clients["version"] != REVIEWED_HUB_CLIENT:
                 raise PublicationRefused(
@@ -916,6 +993,8 @@ def main(argv: list[str] | None = None, *, environ: Mapping[str, str] | None = N
                 operation_factory=clients["operation_factory"],
                 allow_create_grant=args.allow_create,
                 expected_parent=args.expect_parent.strip() if args.publish and args.expect_parent else None,
+                auth_api=None if fallback_clients is None else fallback_clients["api"],
+                auth_read_file=None if fallback_clients is None else fallback_clients["read_file"],
             )
         if args.expect_parent and not args.publish:
             assert_expected_parent(args.expect_parent.strip(), report)
@@ -923,8 +1002,14 @@ def main(argv: list[str] | None = None, *, environ: Mapping[str, str] | None = N
             assert_expected_delta(profile, args.expect_delta_since.strip(), source_revision, report,
                                   reviewed_parent=approval)
             if report["expected_delta_since"].get("reviewed_reconciliation"):
-                confirm_reviewed_parent(clients["api"], profile, report,
-                                        not_found=clients["not_found"])
+                used_fallback = report.get("lookup") == "authenticated-fallback"
+                confirm_clients = fallback_clients if used_fallback else clients
+                if confirm_clients is None:
+                    raise PublicationRefused("authenticated fallback evidence is unavailable")
+                confirm_reviewed_parent(
+                    confirm_clients["api"], profile, report,
+                    not_found=confirm_clients["not_found"], allow_private=used_fallback,
+                )
         exit_code = 0
     except PublicationRefused as error:
         if report["state"] != "BLOCKED":
