@@ -15,5 +15,5 @@
   "pack": true,
   "seed": 3407,
   "log_repo_id": "SZLHOLDINGS/wave-logs",
-  "notes": "NOT a causal-LM SFT target. Requires: rejection sampling then SFT (two DPO rounds failed the 3/6 floor). run_w29.sh skips this config; train_wave.py must NEVER push a merged checkpoint into this repo."
+  "notes": "Causal-LM candidate, report-only (no weights). NOT plain QLoRA. Requires rejection sampling then SFT; two DPO rounds failed the 3/6 confabulation floor. run_w29.sh skips this config and must not push a merged checkpoint over the report."
 }
