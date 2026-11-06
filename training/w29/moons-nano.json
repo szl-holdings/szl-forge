@@ -6,7 +6,7 @@
   "datasets": [
     "SZLHOLDINGS/estate-knowledge-corpus-v1"
   ],
-  "method": "qlora",
+  "method": "special-trainer",
   "epochs": 3,
   "lr": 0.0002,
   "seqlen": 4096,
@@ -15,5 +15,5 @@
   "pack": true,
   "seed": 3407,
   "log_repo_id": "SZLHOLDINGS/wave-logs",
-  "notes": "train_wave.py SFT run"
+  "notes": "NOT a causal-LM SFT target. Requires: numpy MLP fixture (moons.npz), not QLoRA. run_w29.sh skips this config; a merged checkpoint must not be pushed into this repo."
 }

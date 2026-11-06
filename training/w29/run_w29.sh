@@ -1,22 +1,51 @@
 #!/usr/bin/env bash
-# Wave 29: train the untrained estate model candidates.
-# Run on an A6000-class node with HF_TOKEN set. One model at a time.
+# Wave 29: train only the allowlisted causal-LM candidate repos.
+# Protected live non-causal-LM repos are never passed to train_wave.py.
+# A qlora tag on any other target refuses the wave before training starts.
+# W29_PLAN=1 prints the same decisions and does not train or push.
+# W29_TRAINER overrides the trainer executable (tests). Protected repos never reach it.
 set -euo pipefail
-cd "$(dirname "$0")"
-for cfg in *.json; do
+ROOT="$(cd "$(dirname "$0")" && pwd)"
+CONFIG_DIR="${W29_CONFIG_DIR:-$ROOT}"
+TRAINER="${W29_TRAINER:-$ROOT/../train_wave.py}"
+cd "$CONFIG_DIR"
+
+if ! python3 "$ROOT/safety.py" preflight "$CONFIG_DIR"; then
+  exit 1
+fi
+
+shopt -s nullglob
+for cfg in "$CONFIG_DIR"/*.json; do
   name=$(basename "$cfg" .json)
-  method=$(python3 -c "import json;print(json.load(open('$cfg'))['method'])")
-  if [ "$method" != "qlora" ]; then
-    echo "SKIP $name (method=$method; requires a specialized trainer — see README)"
+  line=$(python3 "$ROOT/safety.py" decide "$cfg")
+  action="${line%%$'\t'*}"
+  reason="${line#*$'\t'}"
+  if [ "$action" = "SKIP" ]; then
+    echo "SKIP $name ($reason)"
+    continue
+  fi
+  if [ "$action" != "RUN" ]; then
+    echo "REFUSE $name ($reason)" >&2
+    exit 1
+  fi
+  if [ "${W29_PLAN:-0}" = "1" ]; then
+    echo "PLAN $name ($reason)"
     continue
   fi
   echo "=== w29: $name ==="
-  python3 ../train_wave.py \
-    --model "$(python3 -c "import json;print(json.load(open('$cfg'))['base_model'])")" \
-    --datasets "$(python3 -c "import json;print(','.join(json.load(open('$cfg'))['datasets']))")" \
-    --method qlora --epochs "$(python3 -c "import json;print(json.load(open('$cfg'))['epochs'])")" \
-    --seqlen "$(python3 -c "import json;print(json.load(open('$cfg'))['seqlen'])")" --pack \
-    --repo-id "$(python3 -c "import json;print(json.load(open('$cfg'))['target_repo'])")" \
+  model=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["base_model"])' "$cfg")
+  datasets=$(python3 -c 'import json,sys; print(",".join(json.load(open(sys.argv[1], encoding="utf-8"))["datasets"]))' "$cfg")
+  epochs=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["epochs"])' "$cfg")
+  seqlen=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["seqlen"])' "$cfg")
+  repo=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["target_repo"])' "$cfg")
+  python3 "$TRAINER" \
+    --model "$model" \
+    --datasets "$datasets" \
+    --method qlora \
+    --epochs "$epochs" \
+    --seqlen "$seqlen" \
+    --pack \
+    --repo-id "$repo" \
     --log-repo-id SZLHOLDINGS/wave-logs \
     --out "./out/$name"
 done
