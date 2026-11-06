@@ -52,10 +52,15 @@ software, curriculum, schemas, and evidence; it is not itself a weight repo.
 and promotion boundaries navigable without presenting recipes, derivatives, or
 Spaces as equivalent to trained weights.
 
-**Developer/evaluator quickstart.** Without credentials or network access,
-verify the repository-declared model and kernel portfolio from this checkout:
+**Developer/evaluator quickstart.** Install the package with its `test` extra
+first. It provides `cryptography`, which the offline check imports, and
+`huggingface-hub`, which the live dry-run below imports. Without them the
+offline check reports `"ok": false` with a `ModuleNotFoundError`. Then, without
+credentials or network access, verify the repository-declared model and kernel
+portfolio from this checkout:
 
 ```bash
+python -m pip install -e '.[test]'
 python tools/verify_model_portfolio.py --offline
 ```
 
