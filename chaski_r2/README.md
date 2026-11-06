@@ -17,7 +17,7 @@ and a Jobs launcher that **refuses to fire**.
 
 | | |
 |---|---|
-| **SKU** | `CHASKI-R2` — reserved Hub id `SZLHOLDINGS/chaski-r2` (declared, not a Hub page) |
+| **SKU** | `CHASKI-R2` — Hub id `SZLHOLDINGS/chaski-r2`. This kit never writes it; that Hub page exists and its card is published separately from `../chaski-r2/card/README.md` by `publish-chaski-card.yml`. This kit's receipts do not vouch for those Hub bytes. |
 | **Base** | Qwen/Qwen3.5-0.8B (Apache-2.0). Disclosed in prose. |
 | **Runtime train** | `Qwen/Qwen3.5-0.8B` bf16 LoRA (`load_in_4bit=False`) |
 | **LoRA** | r=16 α=32, seed 11, response-only CE |
