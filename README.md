@@ -314,3 +314,7 @@ serving time.
   performance claims.
 - `eval_szl.py` can produce a local result. Label that result **MEASURED** only
   for the exact model, hardware, inputs, and revision actually exercised.
+
+## License
+
+Apache-2.0 — see [LICENSE](LICENSE).
