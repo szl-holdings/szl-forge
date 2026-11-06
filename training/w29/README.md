@@ -5,15 +5,23 @@ One config per genuine untrained model candidate (audit of 2026-11-06: 122 model
 mirrors now classified CODE_SPEC_MIRROR on the Hub).
 
 ## Run
-On an A6000 node with `HF_TOKEN` set: `bash run_w29.sh`. Each QLoRA run uses the
-proven train_wave.py pipeline (merged-16bit push, heartbeat log to wave-logs).
+On an A6000 node with `HF_TOKEN` set: `bash run_w29.sh`. Only `qlora`-method
+configs run — the six causal-LM SFT candidates (receiptagent-nano, tinykhipu-nano,
+moons-nano, willay-r1, willay-r2, forge-v3), each on the proven train_wave.py
+pipeline (merged-16bit push, heartbeat log to wave-logs).
 
-## Special trainers (configs present, NOT runnable by train_wave.py)
-- `miniembed-nano` (sentence-similarity): requires a contrastive embedding trainer
-  (sentence-transformers class), not SFT. Config kept for the dataset mapping.
-- `khipu-abstain-r3` (abstention): two DPO rounds failed to break the measured 3/6
-  confabulation floor; this round is reserved for rejection sampling — generate,
-  filter by grounding check, SFT on survivors. Do NOT run as plain SFT/DPO.
+## Special trainers (configs present, run_w29.sh SKIPS them — fail-closed)
+These repos hold NON-causal-LM artifacts. Running train_wave.py against them would
+push a merged 0.8B causal-LM checkpoint INTO a live kernel/detector/VLM/logistic
+repo, overwriting the artifact. Each config carries `method: special-trainer` and
+the required trainer in `notes`:
+- `miniembed-nano`, `chakana`, `tinku` — embedding/reranker kits (contrastive trainer)
+- `khipu-abstain-r3` — rejection sampling then SFT (two DPO rounds failed the 3/6 floor)
+- `qantu` — VLM (vision-language trainer)
+- `yarqa-attn` — attention kernel (not a model checkpoint)
+- `waman`, `killinchu-eye` — RF-DETR detectors (detection trainer)
+- `oac-*-health` — logistic health models (classification trainer)
+- `triage-linear-v1`, `triage-retrain` — linear text classifiers (classification trainer)
 
 ## Honesty contract
 - Each run writes an eval receipt to SZLHOLDINGS/model-eval-receipts — win or lose.

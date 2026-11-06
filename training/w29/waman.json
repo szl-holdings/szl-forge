@@ -6,7 +6,7 @@
   "datasets": [
     "SZLHOLDINGS/doctrine-corpus-v2"
   ],
-  "method": "qlora",
+  "method": "special-trainer",
   "epochs": 3,
   "lr": 0.0002,
   "seqlen": 4096,
@@ -15,5 +15,5 @@
   "pack": true,
   "seed": 3407,
   "log_repo_id": "SZLHOLDINGS/wave-logs",
-  "notes": "train_wave.py SFT run"
+  "notes": "NOT a causal-LM SFT target. Requires: RF-DETR detector \u2014 requires detection trainer. run_w29.sh skips this config; train_wave.py must NEVER push a merged checkpoint into this repo."
 }

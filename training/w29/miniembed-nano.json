@@ -7,7 +7,7 @@
     "SZLHOLDINGS/rag-corpus-v1",
     "SZLHOLDINGS/a11oy-verifiable-corpus"
   ],
-  "method": "embedding-special",
+  "method": "special-trainer",
   "epochs": 3,
   "lr": 0.0002,
   "seqlen": 2048,
@@ -16,5 +16,5 @@
   "pack": true,
   "seed": 3407,
   "log_repo_id": "SZLHOLDINGS/wave-logs",
-  "notes": "SPECIAL TRAINER REQUIRED \u2014 see w29 README; train_wave.py cannot execute this method"
+  "notes": "NOT a causal-LM SFT target. Requires: contrastive embedding trainer (sentence-transformers class). run_w29.sh skips this config; train_wave.py must NEVER push a merged checkpoint into this repo."
 }
