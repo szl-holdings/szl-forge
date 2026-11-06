@@ -1,0 +1,19 @@
+{
+  "wave": "w29",
+  "name": "tinku",
+  "target_repo": "SZLHOLDINGS/tinku",
+  "base_model": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-sft-v3",
+  "datasets": [
+    "SZLHOLDINGS/szl-science-forum-corpus"
+  ],
+  "method": "special-trainer",
+  "epochs": 3,
+  "lr": 0.0002,
+  "seqlen": 4096,
+  "batch_size": 2,
+  "grad_accum": 8,
+  "pack": true,
+  "seed": 3407,
+  "log_repo_id": "SZLHOLDINGS/wave-logs",
+  "notes": "NOT a causal-LM SFT target. Requires: reranker kit \u2014 not a causal LM. run_w29.sh skips this config; train_wave.py must NEVER push a merged checkpoint into this repo."
+}
