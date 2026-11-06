@@ -11,10 +11,15 @@ class FakeFile:
 
 
 class FakeApi:
-    def __init__(self, files): self._files = files
+    def __init__(self, files, resolved_id=None):
+        self._files = files
+        self._resolved_id = resolved_id
     def list_repo_files(self, repo, repo_type="model"):
         if "UNREADABLE" in repo: raise RuntimeError("404")
-        return [FakeFile(f) for f in self._files]
+        return list(self._files)
+    def repo_info(self, repo, repo_type="model"):
+        if "UNREADABLE" in repo: raise RuntimeError("404")
+        return type("I", (), {"id": self._resolved_id or repo})()
     def model_info(self, mid):
         if "UNREADABLE" in mid: raise RuntimeError("404")
         return type("I", (), {"sha": "abc123"})()
@@ -42,6 +47,14 @@ class TestPreflight(unittest.TestCase):
             r = run_preflight(write_cfg())
         self.assertEqual(r["verdict"], "PASS")
         self.assertEqual(r["base_model_pin"]["sha"], "abc123")
+
+    def test_identity_mismatch_rejected(self):
+        api = FakeApi(["README.md", "config.json"],
+                      resolved_id="SZLHOLDINGS/someone-elses-target")
+        with mock.patch.object(preflight, "hf_api", return_value=api):
+            with self.assertRaises(PreflightError) as cm:
+                run_preflight(write_cfg())
+        self.assertEqual(cm.exception.code, "PREFLIGHT_TARGET_MISMATCH")
 
     def test_npz_target_rejected(self):
         api = FakeApi(["README.md", "tiny_khipu.npz"])

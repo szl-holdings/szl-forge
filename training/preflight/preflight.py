@@ -43,7 +43,7 @@ def hf_api():
 def check_artifact_family(api, target_repo: str) -> dict:
     """The destination must be a causal-LM family target, proven by its files."""
     try:
-        files = [s.rfilename for s in api.list_repo_files(target_repo, repo_type="model")]
+        files = list(api.list_repo_files(target_repo, repo_type="model"))
     except Exception as e:
         fail("PREFLIGHT_TARGET_UNREADABLE", f"{target_repo}: {e}")
     # non-causal artifacts that must NEVER receive a merged LM checkpoint
@@ -58,8 +58,14 @@ def check_artifact_family(api, target_repo: str) -> dict:
             "has_config": has_config, "empty": empty}
 
 
-def check_target_identity(requested: str, resolved: str) -> None:
-    if requested != resolved:
+def check_target_identity(api, requested: str) -> None:
+    """The Hub must resolve the destination to exactly the requested identity."""
+    try:
+        info = api.repo_info(requested, repo_type="model")
+        resolved = getattr(info, "id", None) or requested
+    except Exception as e:
+        fail("PREFLIGHT_TARGET_UNREADABLE", f"{requested}: {e}")
+    if resolved != requested:
         fail("PREFLIGHT_TARGET_MISMATCH",
              f"requested {requested} but provider resolved {resolved}")
 
@@ -91,7 +97,7 @@ def run_preflight(config_path: str) -> dict:
             fail("PREFLIGHT_CONFIG_MISSING_FIELD", field)
     api = hf_api()
     family = check_artifact_family(api, cfg["target_repo"])
-    check_target_identity(cfg["target_repo"], cfg["target_repo"])
+    check_target_identity(api, cfg["target_repo"])
     model_pin = check_model_pin(api, cfg["base_model"])
     dataset_pins = [check_dataset(api, d) for d in cfg["datasets"]]
     if cfg.get("method") not in ("qlora", "lora16"):
