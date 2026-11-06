@@ -15,5 +15,6 @@
   "pack": true,
   "seed": 3407,
   "log_repo_id": "SZLHOLDINGS/wave-logs",
-  "notes": "NOT a causal-LM SFT target. Requires: numpy MLP fixture (moons.npz), not QLoRA. run_w29.sh skips this config; a merged checkpoint must not be pushed into this repo."
+  "notes": "NOT a causal-LM SFT target. Requires: numpy MLP fixture (moons.npz), not QLoRA. run_w29.sh skips this config; a merged checkpoint must not be pushed into this repo. Datasets verified to carry messages/conversations columns (2026-11-06 schema check).",
+  "dataset_schema_verified": true
 }
