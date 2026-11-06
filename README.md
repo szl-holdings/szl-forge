@@ -40,7 +40,7 @@ software, curriculum, schemas, and evidence; it is not itself a weight repo.
 | [`SZL-Forge-1.5B-ReceiptAgent`](https://huggingface.co/SZLHOLDINGS/SZL-Forge-1.5B-ReceiptAgent) | **Trained fine-tuned weights** | `MEASURED_LIMITED`; expected public weight hashes and owner-signed training/evaluation receipts are bound in `publishing/model-source-bindings.json` | Proposal-only, not promoted, and not independently certified. |
 | [`SZL-Khipu-1.5B`](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B) | **Trained fine-tuned weights** | `MEASURED_RESEARCH_ONLY`; repository-declared key continuity | Held-out abstention is 2/6; autonomous and high-stakes use is prohibited. |
 | [`KHIPU-R2`](./khipu_r2/) | **Separate SKU** | Hub job `6a91bf11984507d9db4ea104` COMPLETED; adapter 147.8MB AVAILABLE; abstain MEASURED 3/6 (not a pass; grounding 5/5, plan 11/11). Hub receipt `ddf6c50` `publication_eligible: false` is the public claim. This-kit jobs UNKNOWN; this-SKU evals not-this-run; CHAWPI extra lock (no `--run-job`). | Does **not** overwrite signed `SZL-Khipu-1.5B`. Signed 1.5B abstain stays MEASURED 2/6. Lab stays signed Khipu GGUF. |
-| [`CHASKI-R2`](./chaski_r2/) | **Separate SKU (CHAWPI silhouette, ATELIER lock)** | Jobs UNAVAILABLE this checkout; evals none-this-run; `publication_eligible: false` | GitHub recipe on disclosed `Qwen/Qwen3.5-0.8B`. Declared Hub id `SZLHOLDINGS/chaski-r2` is not a Hub page. Does **not** overwrite live `SZLHOLDINGS/chaski`. Not 5050. |
+| [`CHASKI-R2`](./chaski_r2/) | **Separate SKU (CHAWPI silhouette, ATELIER lock)** | Jobs UNAVAILABLE this checkout; evals none-this-run; `publication_eligible: false` | GitHub recipe on disclosed `Qwen/Qwen3.5-0.8B`; the recipe itself never writes to the Hub. The live [`SZLHOLDINGS/chaski-r2`](https://huggingface.co/SZLHOLDINGS/chaski-r2) card is published separately from `chaski-r2/card/README.md` by `publish-chaski-card.yml`; this recipe's receipts do not vouch for the Hub bytes. Does **not** overwrite live `SZLHOLDINGS/chaski`. Not 5050. |
 | [`SZLHOLDINGS/chakana`](./chakana/) | **Bridge embedding kit (ROADMAP recipe)** | Jobs UNKNOWN this checkout; Hub stub has no weights; nDCG@10 UNKNOWN | NINA (FORGE-class) lane. sentence-transformers. Not a11oy CHAKANA wiring. Does **not** overwrite other Fall 2026 kits. |
 | [`SZL-Khipu-1.5B-GGUF`](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B-GGUF) | **Quantized derivative** | Exact GGUF bytes are hash-bound | Reproducible quantization and signed runtime outputs are not claimed. |
 | [`szl-receiptagent-qwen35-0.8b-v2`](https://huggingface.co/SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2) | **Trained LoRA adapter** | Bounded owner-measured acceptance: 5/5 contract drafts and 6/6 adversarial refusals | Small synthetic gate, proposal-only, no broad quality or safety benchmark. |
@@ -52,10 +52,26 @@ software, curriculum, schemas, and evidence; it is not itself a weight repo.
 and promotion boundaries navigable without presenting recipes, derivatives, or
 Spaces as equivalent to trained weights.
 
-**Developer/evaluator quickstart.** Inspect the fail-closed portfolio binding
-before running or publishing anything:
+**Developer/evaluator quickstart.** Install the package with its `test` extra
+first. It provides `cryptography`, which the offline check imports, and
+`huggingface-hub`, which the live dry-run below imports. Without them the
+offline check reports `"ok": false` with a `ModuleNotFoundError`. Then, without
+credentials or network access, verify the repository-declared model and kernel
+portfolio from this checkout:
 
 ```bash
+python -m pip install -e '.[test]'
+python tools/verify_model_portfolio.py --offline
+```
+
+Then inspect the fail-closed portfolio binding against the live Hub before
+running or publishing anything. This dry-run reads
+`SZLHOLDINGS/SZL-Forge-1.5B-ReceiptAgent`, which is a gated Hub repository:
+export an `HF_TOKEN` that has been granted access to it first. Without such a
+token the command stops with `401` / `GatedRepoError` and writes no report.
+
+```bash
+export HF_TOKEN=<token with read access to the gated repository>
 python tools/publish_model_source_bindings.py \
   --source-revision "$(git rev-parse HEAD)"
 ```
@@ -63,6 +79,22 @@ python tools/publish_model_source_bindings.py \
 This local plan does not publish. Compare its model ID, source files, expected
 weight hashes, receipt scope, promotion state, and limitations with the exact
 Hub revision under evaluation.
+
+**Install and test.** The `tests/` suite is the one behind the required
+`test (3.11)` and `test (3.12)` checks in `.github/workflows/base-python-ci.yml`:
+
+```bash
+python -m pip install -e '.[test]'
+python -m pytest -q tests
+```
+
+A few tests in `tests/` skip with a stated reason, for example when the
+`szl-nemo` kernel, the sibling `second_brain` package, optional transport or ML
+dependencies, a Windows host, or materialized LFS archive bytes are absent, or
+when a parametrized check applies to a different publisher profile. Run
+`python -m pytest -q -rs tests` to list each skip and its reason. Component
+suites (`agent-forge/`, `clinical-gateway/`, `model-lab/`, `ops-health/`,
+`frontier/`, `spaces/`) run in their own workflows with their own pins.
 
 ## What SZL Forge is
 
@@ -175,7 +207,7 @@ It then reads the exact Hub commit back and compares the published bytes.
 The binding identifies the current GitHub source snapshot; it deliberately does
 not claim that the weight bytes can be reproduced from source alone or that an
 independent party certified model quality. Run the same gate locally without
-publishing:
+publishing (it needs the same gated-read `HF_TOKEN` as the quickstart above):
 
 ```bash
 python tools/publish_model_source_bindings.py \
@@ -222,16 +254,26 @@ history keeps them.
 ## Doctrine gate (dataset content)
 
 `tools/validate_sft_dataset.py` proves a dataset is well-formed;
-`tools/nemo_doctrine_gate.py` proves its **content** conforms to doctrine.
-Every training/eval JSONL in this repo is gated through the
-[`szl-nemo`](https://github.com/szl-holdings/szl-nemo) kernel (`rule_check`
-R1–R5) — fabrication labels, honest unknowns, Λ-is-not-a-theorem, the 0.97
-trust ceiling, and persona-correct fine-tune provenance — and each run is
-bound into a deterministic, hash-chained `szl.nemo.receipt.v1` ledger.
-CI enforces it on every PR that touches doctrine-bearing data
-(`.github/workflows/nemo-doctrine-gate.yml`, kernel pinned by commit SHA).
-Current state (MEASURED 2026-09-01): all five gated datasets VALID, 75
-records, 0 violations.
+`tools/nemo_doctrine_gate.py` checks its **content** against doctrine
+through the [`szl-nemo`](https://github.com/szl-holdings/szl-nemo) kernel
+(`rule_check` R1–R5) — fabrication labels, honest unknowns,
+Λ-is-not-a-theorem, the 0.97 trust ceiling, and persona-correct fine-tune
+provenance — and binds each run into a deterministic, hash-chained
+`szl.nemo.receipt.v1` ledger.
+
+`.github/workflows/nemo-doctrine-gate.yml` (kernel pinned by commit SHA) runs
+the content gate on six datasets whenever a pull request or a push to `main`
+touches them or the gate tooling: `szl_dataset.jsonl`,
+`receiptagent/{train,train.refusals,adversarial,eval}.jsonl`, and
+`frontier/qwen35-receiptagent-v3/train.jsonl`. ReceiptAgent v4
+`train.jsonl` is checked for source conformance only. The other JSONL corpora
+in this repository (for example under `khipu/`, `chaski_r2/`, `chaski_r4/`,
+`data/frontier-sft-mix-v2/`, and `szl_dataset_5050_merged.jsonl`) are **not**
+under this gate, so no doctrine-content claim is made for them here.
+
+Current state (MEASURED 2026-11-06 with the pinned kernel, `szl-nemo` 0.4.2 at
+`f44b468a`, `--persona finetuned`): the six gated datasets are VALID, 255
+records (41 + 15 + 8 + 6 + 5 + 180), 0 violations.
 
 ## Historical SZL-1 pipeline (held; not an operational procedure)
 
