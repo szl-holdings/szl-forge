@@ -4,20 +4,21 @@
 GPU using the Unsloth backend (QLoRA 4-bit or LoRA bf16).
 
 ```bash
-export HF_TOKEN=...            # write-scoped, SZLHOLDINGS member
-python training/train_wave.py \
-  --model SZLHOLDINGS/SZL-Khipu-1.5B \
-  --datasets SZLHOLDINGS/governed-sft-mix-v2,SZLHOLDINGS/szl-1-doctrine-sft \
-  --method qlora --epochs 3 --lr 2e-4 --seqlen 4096 --pack \
-  --out out/khipu-sft
+python training/launch_contract.py --config path/to/wave.json
+python training/train_wave.py --config path/to/wave.json
 ```
 
+`training/w30/distill-r2.blocked.json` is a blocked draft. It does not launch.
+
 Behavior:
-- Fails closed on missing HF_TOKEN, missing CUDA, or malformed examples.
-- Writes `train-receipt.json` (model, datasets, hyperparameters, final loss)
+- The launch contract runs before a model import, a teacher call, training, or a Hub write.
+- It requires an operator admission receipt, immutable student and dataset revisions, a disjoint holdout file, and 32 accepted train examples. Thirty-two examples do not waive another failed gate.
+- Explicit `--model` / `--datasets` flags are not a launch path.
+- Fails closed on missing HF_TOKEN, missing CUDA, or malformed examples. Those checks are reached only after the contract passes.
+- Writes `train-receipt.json` (pinned student, dataset, corpus sha256, hyperparameters, final loss)
   next to the checkpoints so runs stay evidence-carrying per doctrine.
-- Optional `--repo-id` pushes the merged model to the HuggingFace Hub.
-- `--max-samples N` caps the corpus for smoke runs.
+- A Hub push happens only after training, and only to `target_repo` in the config.
+- `--max-samples` is rejected. It cannot shrink the corpus after the floor is counted.
 
 Datasets must provide `messages` or `conversations` fields compatible with the
 model's chat template.

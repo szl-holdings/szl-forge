@@ -14,5 +14,8 @@ Checks (all fail-closed, typed error codes):
 5. PREFLIGHT_METHOD_NOT_TRAINABLE - only qlora/lora16 run
 6. PREFLIGHT_CONFIG_MISSING_FIELD - the wave config must be complete
 
-Run: python preflight.py --config training/w29/forge-v3.json
+The shared launch contract in `training/launch_contract.py` runs before any Hub
+read. A rejected config does not need `HF_TOKEN` and does not open a Hub client.
+Run: python preflight.py --config path/to/wave.json
+`training/w30/distill-r2.blocked.json` is rejected by that contract.
 Unit tests use fake Hub clients - no network, no GPU, no writes.

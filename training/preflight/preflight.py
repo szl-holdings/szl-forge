@@ -13,12 +13,17 @@ Checks (all fail-closed, typed):
      column, and per-source row counts are recorded.
   5. approved use: the config must carry the wave's honesty contract fields.
 
+The shared launch contract runs before any Hub read. A config that fails
+rights, pins, holdout separation, or the 32-example floor never reaches the
+network. This process still cannot train or write to the Hub.
+
 Usage:
   python preflight.py --config training/w29/forge-v3.json
 """
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import os
 
@@ -31,6 +36,16 @@ class PreflightError(ValueError):
 
 def fail(code: str, detail: str = "") -> None:
     raise PreflightError(code, detail)
+
+
+def _contract():
+    path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "launch_contract.py"))
+    spec = importlib.util.spec_from_file_location("szl_launch_contract", path)
+    if spec is None or spec.loader is None:
+        fail("LAUNCH_CONFIG_UNREADABLE", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def hf_api():
@@ -91,26 +106,52 @@ def check_dataset(api, dataset_id: str) -> dict:
 
 
 def run_preflight(config_path: str) -> dict:
-    cfg = json.load(open(config_path))
-    for field in ("target_repo", "base_model", "datasets", "method"):
-        if field not in cfg:
-            fail("PREFLIGHT_CONFIG_MISSING_FIELD", field)
-    api = hf_api()
-    family = check_artifact_family(api, cfg["target_repo"])
-    check_target_identity(api, cfg["target_repo"])
-    model_pin = check_model_pin(api, cfg["base_model"])
-    dataset_pins = [check_dataset(api, d) for d in cfg["datasets"]]
-    if cfg.get("method") not in ("qlora", "lora16"):
+    decision = _contract().evaluate_path(config_path)
+    if not decision["ok"]:
+        fail("LAUNCH_CONTRACT_REJECTED", ",".join(decision["codes"]))
+    cfg = decision["config"]
+    target_repo = cfg.get("target_repo")
+    if not isinstance(target_repo, str) or not target_repo:
+        fail("PREFLIGHT_CONFIG_MISSING_FIELD", "target_repo")
+    if decision["kind"] == "sft" and cfg.get("method") not in ("qlora", "lora16"):
         fail("PREFLIGHT_METHOD_NOT_TRAINABLE",
              f"method {cfg.get('method')!r} is not a runnable SFT method")
+    api = hf_api()
+    family = check_artifact_family(api, target_repo)
+    check_target_identity(api, target_repo)
+    model_pin = check_model_pin(api, decision["student_id"])
+    if model_pin["sha"] != decision["student_revision"]:
+        fail(
+            "PREFLIGHT_MODEL_PIN_MISMATCH",
+            f"config {decision['student_revision']} hub {model_pin['sha']}",
+        )
+    dataset_pin = check_dataset(api, decision["dataset_id"])
+    if dataset_pin["sha"] != decision["dataset_revision"]:
+        fail(
+            "PREFLIGHT_DATASET_PIN_MISMATCH",
+            f"config {decision['dataset_revision']} hub {dataset_pin['sha']}",
+        )
+    teacher_pin = None
+    if decision["kind"] == "distill":
+        teacher_pin = check_model_pin(api, decision["teacher_id"])
+        if teacher_pin["sha"] != decision["teacher_revision"]:
+            fail(
+                "PREFLIGHT_TEACHER_PIN_MISMATCH",
+                f"config {decision['teacher_revision']} hub {teacher_pin['sha']}",
+            )
     return {
         "schema": "szl.forge.preflight/v1",
         "config": config_path,
         "target": family,
         "base_model_pin": model_pin,
-        "dataset_pins": dataset_pins,
+        "dataset_pins": [dataset_pin],
+        "teacher_pin": teacher_pin,
+        "accepted_examples": decision["accepted_examples"],
         "verdict": "PASS",
         "truth_label": "MEASURED_PREFLIGHT",
+        "training_started": False,
+        "hub_write": False,
+        "model_loaded": False,
     }
 
 
