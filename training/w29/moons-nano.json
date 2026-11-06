@@ -1,0 +1,19 @@
+{
+  "wave": "w29",
+  "name": "moons-nano",
+  "target_repo": "SZLHOLDINGS/Moons-Nano",
+  "base_model": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-sft-v3",
+  "datasets": [
+    "SZLHOLDINGS/estate-knowledge-corpus-v1"
+  ],
+  "method": "qlora",
+  "epochs": 3,
+  "lr": 0.0002,
+  "seqlen": 4096,
+  "batch_size": 2,
+  "grad_accum": 8,
+  "pack": true,
+  "seed": 3407,
+  "log_repo_id": "SZLHOLDINGS/wave-logs",
+  "notes": "train_wave.py SFT run"
+}

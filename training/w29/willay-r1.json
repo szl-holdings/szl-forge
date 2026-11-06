@@ -1,0 +1,20 @@
+{
+  "wave": "w29",
+  "name": "willay-r1",
+  "target_repo": "SZLHOLDINGS/willay-r1-candidate",
+  "base_model": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-sft-v3",
+  "datasets": [
+    "SZLHOLDINGS/doctrine-v10-v11",
+    "SZLHOLDINGS/governed-sft-mix-v2"
+  ],
+  "method": "qlora",
+  "epochs": 3,
+  "lr": 0.0002,
+  "seqlen": 4096,
+  "batch_size": 2,
+  "grad_accum": 8,
+  "pack": true,
+  "seed": 3407,
+  "log_repo_id": "SZLHOLDINGS/wave-logs",
+  "notes": "train_wave.py SFT run"
+}
