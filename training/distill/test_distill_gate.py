@@ -1,7 +1,7 @@
 """Unit tests for the governed-distillation grounding gate (offline, no GPU)."""
 import sys, unittest
 sys.path.insert(0, ".")
-from distill_wave import grounding_gate, repetition_ratio, extract_identifiers
+from distill_wave import grounding_gate, repetition_ratio
 
 
 CTX = ("The estate doctrine is defined in szl.lambda/v1 and the gate contract "
