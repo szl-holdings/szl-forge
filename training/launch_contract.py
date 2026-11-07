@@ -37,13 +37,15 @@ REPO_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9][A-Za-z0-9._-]*\Z")
 TRAINABLE_METHODS = ("qlora", "lora16")
 
 # These corpora stay refused when a receipt says otherwise. The labels are the
-# roles already recorded for them. They are not licenses.
-DENIED_DATASETS = {
+# roles already recorded for them. They are not licenses. Keys are casefolded
+# because Hub repository identity is not case-sensitive.
+_DENIED_DATASET_ROLES = {
     "SZLHOLDINGS/szl-quant-sft-v1": "HELD_COUNSEL",
     "SZLHOLDINGS/killinchu-osint-corpus": "NOT_ADMITTED",
     "SZLHOLDINGS/SZLHOLDINGS": "METADATA_ONLY",
     "SZLHOLDINGS/why-we-lead": "HISTORICAL_METADATA_ONLY",
 }
+DENIED_DATASETS = {repo_id.casefold(): role for repo_id, role in _DENIED_DATASET_ROLES.items()}
 
 _VALIDATOR = None
 
@@ -172,7 +174,9 @@ def _deny_ids(idents: Sequence[Optional[str]]) -> Tuple[List[str], List[str]]:
     codes: List[str] = []
     errors: List[str] = []
     for ident in idents:
-        reason = DENIED_DATASETS.get(ident or "")
+        if not isinstance(ident, str) or not ident:
+            continue
+        reason = DENIED_DATASETS.get(ident.casefold())
         if reason is not None:
             codes.append("LAUNCH_DATASET_DENIED")
             errors.append(f"{ident} is {reason} and is not a training corpus")

@@ -56,35 +56,38 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def _hyperparameters(config: dict) -> dict:
+def _effective_training_values(config: dict) -> dict:
+    """Values the trainer will use. CLI flags must match these or be absent."""
     try:
-        epochs = float(config.get("epochs", 3.0))
-        lr = float(config.get("lr", 2e-4))
-        seqlen = int(config.get("seqlen", 4096))
-        batch_size = int(config.get("batch_size", 2))
-        grad_accum = int(config.get("grad_accum", 8))
-        seed = int(config.get("seed", 3407))
+        values = {
+            "epochs": float(config.get("epochs", 3.0)),
+            "lr": float(config.get("lr", 2e-4)),
+            "seqlen": int(config.get("seqlen", 4096)),
+            "batch_size": int(config.get("batch_size", 2)),
+            "grad_accum": int(config.get("grad_accum", 8)),
+            "seed": int(config.get("seed", 3407)),
+        }
     except (TypeError, ValueError) as exc:
         fail_closed(f"LAUNCH_CONFIG_INVALID: hyperparameters are not numeric ({exc})")
     pack = config.get("pack", False)
     if not isinstance(pack, bool):
         fail_closed("LAUNCH_CONFIG_INVALID: pack must be a boolean")
+    values["pack"] = pack
+    return values
+
+
+def _hyperparameters(config: dict) -> dict:
+    values = _effective_training_values(config)
     out = config.get("out")
     if not isinstance(out, str) or not out.strip():
         fail_closed("LAUNCH_OUTPUT_MISSING: config out directory is required")
-    return {
-        "epochs": epochs,
-        "lr": lr,
-        "seqlen": seqlen,
-        "batch_size": batch_size,
-        "grad_accum": grad_accum,
-        "seed": seed,
-        "pack": pack,
+    values.update({
         "out": Path(out),
         "method": config.get("method"),
         "repo_id": config.get("target_repo") or None,
         "log_repo_id": config.get("log_repo_id") or None,
-    }
+    })
+    return values
 
 
 def _refuse_cli_overrides(args: argparse.Namespace, decision: dict) -> None:
@@ -105,6 +108,22 @@ def _refuse_cli_overrides(args: argparse.Namespace, decision: dict) -> None:
         fail_closed("LAUNCH_CLI_OVERRIDE: --log-repo-id does not match the config")
     if args.out is not None and str(args.out) != str(config.get("out")):
         fail_closed("LAUNCH_CLI_OVERRIDE: --out does not match the config")
+    effective = _effective_training_values(config)
+    explicit_flags = (
+        ("--epochs", args.epochs, "epochs", float),
+        ("--lr", args.lr, "lr", float),
+        ("--seqlen", args.seqlen, "seqlen", int),
+        ("--batch-size", args.batch_size, "batch_size", int),
+        ("--grad-accum", args.grad_accum, "grad_accum", int),
+        ("--seed", args.seed, "seed", int),
+    )
+    for flag, given, key, caster in explicit_flags:
+        if given is None:
+            continue
+        if caster(given) != effective[key]:
+            fail_closed(f"LAUNCH_CLI_OVERRIDE: {flag} does not match the validated config")
+    if args.pack and effective["pack"] is not True:
+        fail_closed("LAUNCH_CLI_OVERRIDE: --pack does not match the validated config")
 
 
 def _train_after_gates(decision: dict, config_path: Path) -> None:

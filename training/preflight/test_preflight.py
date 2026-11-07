@@ -14,6 +14,9 @@ from preflight import PreflightError, run_preflight
 
 STUDENT = "a" * 40
 DATASET = "c" * 40
+TEACHER = "d" * 40
+HEAD = "f" * 40
+MISSING = "e" * 40
 
 
 def _rows(count: int, prefix: str) -> str:
@@ -35,33 +38,73 @@ class FakeFile:
 
 
 class FakeApi:
-    def __init__(self, files, resolved_id=None, shas=None):
+    """HEAD and a pinned commit are different objects.
+
+    A read that omits ``revision`` returns the moved default branch. A read of
+    an unknown commit raises. ``resolved_override`` makes a requested commit
+    resolve to a different sha.
+    """
+
+    def __init__(self, files, resolved_id=None, shas=None, *, models=None, datasets=None):
+        self.calls = []
         self._files = files
         self._resolved_id = resolved_id
+        self.head = HEAD
+        self.models = models or {"ExampleOrg/student": {STUDENT: STUDENT}}
+        self.datasets = datasets or {
+            "ExampleOrg/data": {DATASET: {"sha": DATASET, "files": ["data.jsonl"]}},
+        }
         self._shas = shas or {}
+        self.writes = []
 
-    def list_repo_files(self, repo, repo_type="model"):
+    def list_repo_files(self, repo, repo_type="model", revision=None):
+        self.calls.append(("list_repo_files", repo, revision))
         if "UNREADABLE" in repo:
             raise RuntimeError("404")
         return list(self._files)
 
-    def repo_info(self, repo, repo_type="model"):
+    def repo_info(self, repo, repo_type="model", revision=None):
+        self.calls.append(("repo_info", repo, revision))
         if "UNREADABLE" in repo:
             raise RuntimeError("404")
-        return type("I", (), {"id": self._resolved_id or repo})()
+        return type("I", (), {"id": self._resolved_id or repo, "sha": self.head})()
 
-    def model_info(self, mid):
+    def model_info(self, mid, revision=None, **kwargs):
+        self.calls.append(("model_info", mid, revision))
         if "UNREADABLE" in mid:
             raise RuntimeError("404")
-        return type("I", (), {"sha": self._shas.get(mid, STUDENT)})()
+        if revision is None:
+            return type("I", (), {"sha": self.head, "id": mid})()
+        if mid in self._shas:
+            return type("I", (), {"sha": self._shas[mid], "id": mid})()
+        found = self.models.get(mid, {})
+        if revision not in found:
+            raise RuntimeError(f"404 {mid}@{revision}")
+        return type("I", (), {"sha": found[revision], "id": mid})()
 
-    def dataset_info(self, did, files_metadata=False):
+    def dataset_info(self, did, revision=None, files_metadata=False, **kwargs):
+        self.calls.append(("dataset_info", did, revision))
         if "UNREADABLE" in did:
             raise RuntimeError("404")
+        if revision is None:
+            return type("I", (), {"sha": self.head, "id": did, "siblings": []})()
+        found = self.datasets.get(did, {})
+        if revision not in found:
+            raise RuntimeError(f"404 {did}@{revision}")
+        payload = found[revision]
         return type("I", (), {
-            "sha": self._shas.get(did, DATASET),
-            "siblings": [FakeFile("data.jsonl")],
+            "sha": payload["sha"],
+            "id": did,
+            "siblings": [FakeFile(name) for name in payload["files"]],
         })()
+
+    def upload_file(self, *args, **kwargs):
+        self.writes.append(("upload_file", args, kwargs))
+        raise AssertionError("hub write")
+
+    def create_repo(self, *args, **kwargs):
+        self.writes.append(("create_repo", args, kwargs))
+        raise AssertionError("hub write")
 
 
 def write_ready(directory: Path, **overrides) -> str:
@@ -118,6 +161,15 @@ class TestPreflight(unittest.TestCase):
         self.assertFalse(report["hub_write"])
         self.assertFalse(report["model_loaded"])
         self.assertEqual(report["accepted_examples"], 32)
+        self.assertEqual(report["base_model_pin"]["revision"], STUDENT)
+        self.assertNotEqual(report["base_model_pin"]["sha"], HEAD)
+        self.assertIn(("model_info", "ExampleOrg/student", STUDENT), api.calls)
+        self.assertIn(("dataset_info", "ExampleOrg/data", DATASET), api.calls)
+        self.assertFalse(any(
+            call[0] in ("model_info", "dataset_info") and call[2] is None
+            for call in api.calls
+        ))
+        self.assertEqual(api.writes, [])
 
     def test_identity_mismatch_rejected(self):
         api = FakeApi(
@@ -179,6 +231,68 @@ class TestPreflight(unittest.TestCase):
             with self.assertRaises(PreflightError) as caught:
                 run_preflight(write_ready(self.directory))
         self.assertEqual(caught.exception.code, "PREFLIGHT_MODEL_PIN_MISMATCH")
+        self.assertIn(("model_info", "ExampleOrg/student", STUDENT), api.calls)
+        self.assertEqual(api.writes, [])
+
+    def test_moved_head_still_validates_the_configured_commit(self):
+        api = FakeApi(["README.md", "config.json"])
+        with mock.patch.object(preflight, "hf_api", return_value=api):
+            report = run_preflight(write_ready(self.directory))
+        self.assertEqual(report["verdict"], "PASS")
+        self.assertEqual(report["dataset_pins"][0]["sha"], DATASET)
+        self.assertEqual(report["dataset_pins"][0]["revision"], DATASET)
+        self.assertGreater(report["dataset_pins"][0]["files"], 0)
+        self.assertNotEqual(api.head, STUDENT)
+
+    def test_missing_student_revision_is_not_replaced_by_head(self):
+        api = FakeApi(["README.md", "config.json"])
+        with mock.patch.object(preflight, "hf_api", return_value=api):
+            with self.assertRaises(PreflightError) as caught:
+                run_preflight(write_ready(
+                    self.directory,
+                    student={"id": "ExampleOrg/student", "revision": MISSING},
+                ))
+        self.assertEqual(caught.exception.code, "PREFLIGHT_MODEL_UNREADABLE")
+        self.assertIn(("model_info", "ExampleOrg/student", MISSING), api.calls)
+        self.assertNotIn(("model_info", "ExampleOrg/student", None), api.calls)
+        self.assertEqual(api.writes, [])
+
+    def test_missing_dataset_revision_is_not_replaced_by_head(self):
+        api = FakeApi(["README.md", "config.json"])
+        path = write_ready(self.directory)
+        config = json.loads(Path(path).read_text(encoding="utf-8"))
+        config["dataset"]["revision"] = MISSING
+        Path(path).write_text(json.dumps(config), encoding="utf-8")
+        admission = Path(self.directory / "admission.json")
+        receipt = json.loads(admission.read_text(encoding="utf-8"))
+        receipt["revision"] = MISSING
+        admission.write_text(json.dumps(receipt), encoding="utf-8")
+        with mock.patch.object(preflight, "hf_api", return_value=api):
+            with self.assertRaises(PreflightError) as caught:
+                run_preflight(path)
+        self.assertEqual(caught.exception.code, "PREFLIGHT_DATASET_UNREADABLE")
+        self.assertIn(("dataset_info", "ExampleOrg/data", MISSING), api.calls)
+        self.assertEqual(api.writes, [])
+
+    def test_missing_teacher_revision_is_not_replaced_by_head(self):
+        api = FakeApi(
+            ["README.md", "config.json"],
+            models={
+                "ExampleOrg/student": {STUDENT: STUDENT},
+                "ExampleOrg/teacher": {TEACHER: TEACHER},
+            },
+        )
+        path = write_ready(
+            self.directory,
+            kind="distill",
+            teacher={"id": "ExampleOrg/teacher", "revision": MISSING},
+        )
+        with mock.patch.object(preflight, "hf_api", return_value=api):
+            with self.assertRaises(PreflightError) as caught:
+                run_preflight(path)
+        self.assertEqual(caught.exception.code, "PREFLIGHT_TEACHER_UNREADABLE")
+        self.assertIn(("model_info", "ExampleOrg/teacher", MISSING), api.calls)
+        self.assertEqual(api.writes, [])
 
 
 if __name__ == "__main__":
