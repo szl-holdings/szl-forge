@@ -336,6 +336,304 @@ def test_preflight_does_not_call_hub_when_the_contract_rejects(monkeypatch, forb
     assert caught.value.code == "LAUNCH_CONTRACT_REJECTED"
 
 
+HEAD = "f" * 40
+MISSING = "e" * 40
+
+
+class RevisionHub:
+    """Default-branch metadata and pinned commits are different reads."""
+
+    def __init__(self, *, lie=None, models=None, datasets=None):
+        self.calls = []
+        self.writes = []
+        self.head = HEAD
+        self.lie = lie or {}
+        self.models = models or {
+            "ExampleOrg/student": {STUDENT: STUDENT},
+            "ExampleOrg/teacher": {TEACHER: TEACHER},
+        }
+        self.datasets = datasets or {
+            "ExampleOrg/data": {DATASET: {"sha": DATASET, "files": ["train.jsonl"]}},
+        }
+
+    def list_repo_files(self, repo, repo_type="model", revision=None):
+        self.calls.append(("list_repo_files", repo, revision))
+        return ["README.md", "config.json"]
+
+    def repo_info(self, repo, repo_type="model", revision=None):
+        self.calls.append(("repo_info", repo, revision))
+        return type("I", (), {"id": repo, "sha": self.head})()
+
+    def model_info(self, repo_id, revision=None, **kwargs):
+        self.calls.append(("model_info", repo_id, revision))
+        if revision is None:
+            return type("I", (), {"sha": self.head, "id": repo_id})()
+        if repo_id in self.lie:
+            return type("I", (), {"sha": self.lie[repo_id], "id": repo_id})()
+        found = self.models.get(repo_id, {})
+        if revision not in found:
+            raise RuntimeError(f"404 {repo_id}@{revision}")
+        return type("I", (), {"sha": found[revision], "id": repo_id})()
+
+    def dataset_info(self, repo_id, revision=None, files_metadata=False, **kwargs):
+        self.calls.append(("dataset_info", repo_id, revision))
+        if revision is None:
+            return type("I", (), {"sha": self.head, "id": repo_id, "siblings": []})()
+        found = self.datasets.get(repo_id, {})
+        if revision not in found:
+            raise RuntimeError(f"404 {repo_id}@{revision}")
+        payload = found[revision]
+        siblings = [type("F", (), {"rfilename": name})() for name in payload["files"]]
+        return type("I", (), {"sha": payload["sha"], "id": repo_id, "siblings": siblings})()
+
+    def upload_file(self, *args, **kwargs):
+        self.writes.append("upload_file")
+        raise AssertionError("hub write")
+
+    def create_repo(self, *args, **kwargs):
+        self.writes.append("create_repo")
+        raise AssertionError("hub write")
+
+
+def _consumed_reads(api):
+    return [call for call in api.calls if call[0] in ("model_info", "dataset_info")]
+
+
+def test_preflight_uses_configured_revisions_after_head_moves(
+    tmp_path, forbid_launch_imports, monkeypatch
+):
+    monkeypatch.setenv("HF_TOKEN", "test")
+    path = materialize(tmp_path, 32)
+    api = RevisionHub()
+    monkeypatch.setattr(PREFLIGHT, "hf_api", lambda: api)
+    report = PREFLIGHT.run_preflight(str(path))
+    assert report["verdict"] == "PASS"
+    assert report["training_started"] is False
+    assert report["model_loaded"] is False
+    assert report["hub_write"] is False
+    assert report["base_model_pin"]["sha"] == STUDENT
+    assert report["base_model_pin"]["revision"] == STUDENT
+    assert report["base_model_pin"]["sha"] != api.head
+    assert report["dataset_pins"][0]["sha"] == DATASET
+    assert report["dataset_pins"][0]["files"] == 1
+    assert ("model_info", "ExampleOrg/student", STUDENT) in api.calls
+    assert ("dataset_info", "ExampleOrg/data", DATASET) in api.calls
+    assert all(revision is not None for _name, _repo, revision in _consumed_reads(api))
+    assert api.writes == []
+
+
+def test_preflight_teacher_revision_is_not_the_default_branch(
+    tmp_path, forbid_launch_imports, monkeypatch
+):
+    monkeypatch.setenv("HF_TOKEN", "test")
+    path = materialize(tmp_path, 32, kind="distill")
+    api = RevisionHub()
+    monkeypatch.setattr(PREFLIGHT, "hf_api", lambda: api)
+    report = PREFLIGHT.run_preflight(str(path))
+    assert report["teacher_pin"]["sha"] == TEACHER
+    assert report["teacher_pin"]["revision"] == TEACHER
+    assert report["teacher_pin"]["sha"] != api.head
+    assert ("model_info", "ExampleOrg/teacher", TEACHER) in api.calls
+    assert api.writes == []
+
+
+@pytest.mark.parametrize(
+    ("mutate", "code", "expected_call"),
+    [
+        (
+            "student",
+            "PREFLIGHT_MODEL_UNREADABLE",
+            ("model_info", "ExampleOrg/student", MISSING),
+        ),
+        (
+            "dataset",
+            "PREFLIGHT_DATASET_UNREADABLE",
+            ("dataset_info", "ExampleOrg/data", MISSING),
+        ),
+        (
+            "teacher",
+            "PREFLIGHT_TEACHER_UNREADABLE",
+            ("model_info", "ExampleOrg/teacher", MISSING),
+        ),
+    ],
+)
+def test_preflight_missing_revision_does_not_fall_back_to_head(
+    tmp_path, forbid_launch_imports, monkeypatch, mutate, code, expected_call
+):
+    monkeypatch.setenv("HF_TOKEN", "test")
+    path = materialize(tmp_path, 32, kind="distill" if mutate == "teacher" else "sft")
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if mutate == "dataset":
+        payload["dataset"]["revision"] = MISSING
+        receipt_path = Path(payload["admission"])
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        receipt["revision"] = MISSING
+        receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
+    elif mutate == "student":
+        payload["student"]["revision"] = MISSING
+    else:
+        payload["teacher"]["revision"] = MISSING
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    api = RevisionHub()
+    monkeypatch.setattr(PREFLIGHT, "hf_api", lambda: api)
+    with pytest.raises(PREFLIGHT.PreflightError) as caught:
+        PREFLIGHT.run_preflight(str(path))
+    assert caught.value.code == code
+    assert expected_call in api.calls
+    assert all(revision is not None for _name, _repo, revision in _consumed_reads(api))
+    assert api.writes == []
+
+
+def test_preflight_rejects_a_revision_that_resolves_to_a_different_commit(
+    tmp_path, forbid_launch_imports, monkeypatch
+):
+    monkeypatch.setenv("HF_TOKEN", "test")
+    path = materialize(tmp_path, 32)
+    api = RevisionHub(lie={"ExampleOrg/student": HEAD})
+    monkeypatch.setattr(PREFLIGHT, "hf_api", lambda: api)
+    with pytest.raises(PREFLIGHT.PreflightError) as caught:
+        PREFLIGHT.run_preflight(str(path))
+    assert caught.value.code == "PREFLIGHT_MODEL_PIN_MISMATCH"
+    assert ("model_info", "ExampleOrg/student", STUDENT) in api.calls
+    assert api.writes == []
+
+
+def test_conflicting_hyperparameters_are_rejected_before_import(
+    tmp_path, forbid_launch_imports, monkeypatch, capsys
+):
+    started = []
+    monkeypatch.setattr(TRAIN, "_train_after_gates", lambda *args: started.append(args))
+    path = materialize(
+        tmp_path,
+        32,
+        extra={
+            "epochs": 1,
+            "lr": 1e-5,
+            "seqlen": 128,
+            "batch_size": 1,
+            "grad_accum": 1,
+            "seed": 1,
+            "pack": False,
+        },
+    )
+    conflicts = [
+        ["--epochs", "3"],
+        ["--lr", "0.0002"],
+        ["--seqlen", "4096"],
+        ["--batch-size", "2"],
+        ["--grad-accum", "8"],
+        ["--seed", "3407"],
+        ["--pack"],
+    ]
+    for flags in conflicts:
+        started.clear()
+        with pytest.raises(SystemExit) as caught:
+            TRAIN.main(["--config", str(path), *flags])
+        assert caught.value.code == 1
+        assert "LAUNCH_CLI_OVERRIDE" in capsys.readouterr().err
+        assert started == []
+
+
+def test_matching_explicit_hyperparameters_are_honored(
+    tmp_path, forbid_launch_imports, monkeypatch
+):
+    started = []
+    monkeypatch.setattr(TRAIN, "_train_after_gates", lambda *args: started.append(args))
+    path = materialize(
+        tmp_path,
+        32,
+        extra={
+            "epochs": 1,
+            "lr": 1e-5,
+            "seqlen": 128,
+            "batch_size": 1,
+            "grad_accum": 1,
+            "seed": 1,
+            "pack": True,
+        },
+    )
+    TRAIN.main([
+        "--config", str(path),
+        "--epochs", "1",
+        "--lr", "1e-5",
+        "--seqlen", "128",
+        "--batch-size", "1",
+        "--grad-accum", "1",
+        "--seed", "1",
+        "--pack",
+        "--model", "ExampleOrg/student",
+        "--datasets", "ExampleOrg/data",
+        "--method", "qlora",
+    ])
+    assert len(started) == 1
+    used = TRAIN._hyperparameters(started[0][0]["config"])
+    assert used["epochs"] == 1.0
+    assert used["lr"] == 1e-5
+    assert used["seqlen"] == 128
+    assert used["batch_size"] == 1
+    assert used["grad_accum"] == 1
+    assert used["seed"] == 1
+    assert used["pack"] is True
+
+    started.clear()
+    defaults = materialize(tmp_path / "defaults", 32)
+    TRAIN.main([
+        "--config", str(defaults),
+        "--epochs", "3",
+        "--lr", "0.0002",
+        "--seqlen", "4096",
+        "--batch-size", "2",
+        "--grad-accum", "8",
+        "--seed", "3407",
+    ])
+    assert len(started) == 1
+    used = TRAIN._hyperparameters(started[0][0]["config"])
+    assert used["epochs"] == 3.0
+    assert used["lr"] == 2e-4
+    assert used["seqlen"] == 4096
+    assert used["batch_size"] == 2
+    assert used["grad_accum"] == 8
+    assert used["seed"] == 3407
+    assert used["pack"] is False
+
+
+@pytest.mark.parametrize(
+    "dataset_id",
+    [
+        "SZLHOLDINGS/SZL-QUANT-SFT-V1",
+        "szlholdings/szl-quant-sft-v1",
+        "SzlHoldings/Szl-Quant-Sft-V1",
+        "szlholdings/KILLINCHU-OSINT-CORPUS",
+        "SZLHOLDINGS/Killinchu-Osint-Corpus",
+        "szlholdings/szlholdings",
+        "SZLHOLDINGS/szlholdings",
+        "szlholdings/WHY-WE-LEAD",
+        "SZLHOLDINGS/Why-We-Lead",
+    ],
+)
+def test_denied_datasets_are_casefolded_before_launch(
+    tmp_path, dataset_id, forbid_launch_imports, monkeypatch
+):
+    started = []
+    monkeypatch.setattr(TRAIN, "_train_after_gates", lambda *args: started.append(args))
+    path = materialize(tmp_path, 32, dataset_id=dataset_id)
+    decision = CONTRACT.evaluate_path(path)
+    assert decision["ok"] is False
+    assert "LAUNCH_DATASET_DENIED" in decision["codes"]
+    assert decision["hub_write"] is False
+    assert decision["model_loaded"] is False
+    with pytest.raises(SystemExit):
+        TRAIN.main(["--config", str(path)])
+    assert started == []
+
+
+def test_unrelated_repository_case_is_not_denied(tmp_path, forbid_launch_imports):
+    path = materialize(tmp_path, 32, dataset_id="ExampleOrg/Data")
+    decision = CONTRACT.evaluate_path(path)
+    assert "LAUNCH_DATASET_DENIED" not in decision["codes"]
+    assert decision["ok"] is True
+
+
 def test_environment_preflight_uses_the_same_contract(tmp_path, forbid_launch_imports):
     small = materialize(tmp_path / "small", 4)
     report = forge_preflight.run_preflight(

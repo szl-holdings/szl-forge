@@ -14,6 +14,7 @@ Behavior:
 - The launch contract runs before a model import, a teacher call, training, or a Hub write.
 - It requires an operator admission receipt, immutable student and dataset revisions, a disjoint holdout file, and 32 accepted train examples. Thirty-two examples do not waive another failed gate.
 - Explicit `--model` / `--datasets` flags are not a launch path.
+- Hyperparameter flags are a cross-check. A flag that disagrees with the validated config is rejected before a model import. A flag that repeats the config is accepted. `--max-samples` is rejected.
 - Fails closed on missing HF_TOKEN, missing CUDA, or malformed examples. Those checks are reached only after the contract passes.
 - Writes `train-receipt.json` (pinned student, dataset, corpus sha256, hyperparameters, final loss)
   next to the checkpoints so runs stay evidence-carrying per doctrine.
