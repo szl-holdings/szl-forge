@@ -159,7 +159,17 @@ def main() -> None:
                     temperature=args.temperature, do_sample=True,
                     pad_token_id=tok.eos_token_id)
             raw_new = out[0][inputs["input_ids"].shape[1]:]
-            terminated = bool(raw_new.numel()) and raw_new[-1].item() == tok.eos_token_id
+            # generate() stops on generation_config.eos_token_id, which for
+            # chat teachers is typically a LIST including the template turn
+            # closer (<|im_end|>, <|eot_id|>, ...) - not the tokenizer EOS.
+            # A generation is terminated iff its last token is ANY of them.
+            eos_ids = model.generation_config.eos_token_id
+            if eos_ids is None:
+                eos_ids = tok.eos_token_id
+            if not isinstance(eos_ids, (list, tuple)):
+                eos_ids = [eos_ids]
+            last = raw_new[-1].item() if raw_new.numel() else None
+            terminated = last is not None and last in eos_ids
             response = tok.decode(raw_new, skip_special_tokens=True)
             gate = grounding_gate(source_context, response, terminated=terminated)
             rec = {
