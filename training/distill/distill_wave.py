@@ -40,7 +40,7 @@ def fail_closed(message: str) -> None:
 
 # ── The grounding gate (pure, testable, deterministic) ─────────────────────
 
-IDENTIFIER_RE = re.compile(r"\b([A-Za-z][A-Za-z0-9_\-]{3,40})\b")
+IDENTIFIER_RE = re.compile(r"\b([A-Za-z][A-Za-z0-9_\-.]{3,40})\b")
 ABSTAIN_MARKERS = ("ABSTAIN", "I don't know", "I do not know", "cannot verify")
 CODE_FENCE_RE = re.compile(r"```.*?```", re.DOTALL)
 
@@ -48,7 +48,7 @@ CODE_FENCE_RE = re.compile(r"```.*?```", re.DOTALL)
 def extract_identifiers(text: str) -> set[str]:
     """Identifiers a response relies on, ignoring code fences."""
     stripped = CODE_FENCE_RE.sub(" ", text)
-    return {m.group(1) for m in IDENTIFIER_RE.finditer(stripped)}
+    return {m.group(1).rstrip(".") for m in IDENTIFIER_RE.finditer(stripped)}
 
 
 def repetition_ratio(text: str) -> float:
@@ -137,9 +137,14 @@ def main() -> None:
             teacher_id, torch_dtype=torch.bfloat16, device_map="auto")
         for i, row in enumerate(prompts):
             msgs = row["messages"]
+            # The teacher must generate, not continue: strip any trailing
+            # assistant turn and end the template at the assistant header.
+            while msgs and msgs[-1].get("role") == "assistant":
+                msgs = msgs[:-1]
             # take the conversation up to the last user turn as the source context
             source_context = " ".join(m.get("content", "") for m in msgs)
-            prompt = tok.apply_chat_template(msgs, tokenize=False)
+            prompt = tok.apply_chat_template(msgs, tokenize=False,
+                                              add_generation_prompt=True)
             inputs = tok(prompt, return_tensors="pt").to(model.device)
             with torch.no_grad():
                 out = model.generate(
