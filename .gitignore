@@ -1,5 +1,9 @@
 __pycache__/
 *.py[cod]
+# `pip install -e .` and `python -m build` outputs of the root package
+/build/
+/dist/
+*.egg-info/
 reports/
 .pytest_cache/
 **/.cache/
