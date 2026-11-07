@@ -8,10 +8,15 @@ Checks (all fail-closed, typed):
      (config.json with causal architecture, or an empty repo explicitly marked
      for a merged 16-bit LM) - never a kernel, fixture, detector, VLM or kit.
   2. target identity: the resolved Hub repo id must equal the requested one.
-  3. immutable model pin: the base model revision is resolved and recorded.
-  4. dataset pins: every dataset resolves, carries a messages/conversations
-     column, and per-source row counts are recorded.
+  3. immutable model pin: student and teacher reads use the configured commit,
+     and the resolved sha must be that commit. The default branch is not a pin.
+  4. dataset pin: the dataset read uses the configured commit, and that commit
+     must contain data files. Latest default-branch metadata is not a pin.
   5. approved use: the config must carry the wave's honesty contract fields.
+
+The shared launch contract runs before any Hub read. A config that fails
+rights, pins, holdout separation, or the 32-example floor never reaches the
+network. This process still cannot train or write to the Hub.
 
 Usage:
   python preflight.py --config training/w29/forge-v3.json
@@ -19,6 +24,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import os
 
@@ -31,6 +37,16 @@ class PreflightError(ValueError):
 
 def fail(code: str, detail: str = "") -> None:
     raise PreflightError(code, detail)
+
+
+def _contract():
+    path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "launch_contract.py"))
+    spec = importlib.util.spec_from_file_location("szl_launch_contract", path)
+    if spec is None or spec.loader is None:
+        fail("LAUNCH_CONFIG_UNREADABLE", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def hf_api():
@@ -70,47 +86,93 @@ def check_target_identity(api, requested: str) -> None:
              f"requested {requested} but provider resolved {resolved}")
 
 
-def check_model_pin(api, model_id: str) -> dict:
-    try:
-        info = api.model_info(model_id)
-    except Exception as e:
-        fail("PREFLIGHT_MODEL_UNREADABLE", f"{model_id}: {e}")
-    return {"model": model_id, "sha": info.sha}
+def _require_configured_revision(revision: object, code: str, label: str) -> str:
+    pattern = _contract().IMMUTABLE_REVISION
+    if not isinstance(revision, str) or pattern.fullmatch(revision) is None:
+        fail(code, f"{label} revision is not the configured immutable commit")
+    return revision
 
 
-def check_dataset(api, dataset_id: str) -> dict:
+def check_model_pin(api, model_id: str, revision: str, *, missing_code: str, mismatch_code: str) -> dict:
+    """Read the configured commit. A bare repo read returns the default branch."""
+    revision = _require_configured_revision(revision, mismatch_code, model_id)
     try:
-        info = api.dataset_info(dataset_id, files_metadata=False)
-        files = [s.rfilename for s in info.siblings]
+        info = api.model_info(model_id, revision=revision)
     except Exception as e:
-        fail("PREFLIGHT_DATASET_UNREADABLE", f"{dataset_id}: {e}")
+        fail(missing_code, f"{model_id}@{revision}: {e}")
+    resolved = getattr(info, "sha", None)
+    if resolved != revision:
+        fail(mismatch_code, f"requested {model_id}@{revision} but provider resolved {resolved}")
+    return {"model": model_id, "sha": resolved, "revision": revision}
+
+
+def check_dataset(api, dataset_id: str, revision: str) -> dict:
+    """Read dataset files at the configured commit, not at the default branch."""
+    revision = _require_configured_revision(revision, "PREFLIGHT_DATASET_PIN_MISMATCH", dataset_id)
+    try:
+        info = api.dataset_info(dataset_id, revision=revision, files_metadata=False)
+        siblings = getattr(info, "siblings", None) or []
+        files = [s.rfilename for s in siblings]
+    except PreflightError:
+        raise
+    except Exception as e:
+        fail("PREFLIGHT_DATASET_UNREADABLE", f"{dataset_id}@{revision}: {e}")
+    resolved = getattr(info, "sha", None)
+    if resolved != revision:
+        fail(
+            "PREFLIGHT_DATASET_PIN_MISMATCH",
+            f"requested {dataset_id}@{revision} but provider resolved {resolved}",
+        )
     has_chat = any(f.endswith((".jsonl", ".json", ".parquet")) for f in files)
     if not has_chat:
-        fail("PREFLIGHT_DATASET_NO_DATA", f"{dataset_id} has no data files")
-    return {"dataset": dataset_id, "sha": info.sha, "files": len(files)}
+        fail("PREFLIGHT_DATASET_NO_DATA", f"{dataset_id}@{revision} has no data files")
+    return {"dataset": dataset_id, "sha": resolved, "revision": revision, "files": len(files)}
 
 
 def run_preflight(config_path: str) -> dict:
-    cfg = json.load(open(config_path))
-    for field in ("target_repo", "base_model", "datasets", "method"):
-        if field not in cfg:
-            fail("PREFLIGHT_CONFIG_MISSING_FIELD", field)
-    api = hf_api()
-    family = check_artifact_family(api, cfg["target_repo"])
-    check_target_identity(api, cfg["target_repo"])
-    model_pin = check_model_pin(api, cfg["base_model"])
-    dataset_pins = [check_dataset(api, d) for d in cfg["datasets"]]
-    if cfg.get("method") not in ("qlora", "lora16"):
+    decision = _contract().evaluate_path(config_path)
+    if not decision["ok"]:
+        fail("LAUNCH_CONTRACT_REJECTED", ",".join(decision["codes"]))
+    cfg = decision["config"]
+    target_repo = cfg.get("target_repo")
+    if not isinstance(target_repo, str) or not target_repo:
+        fail("PREFLIGHT_CONFIG_MISSING_FIELD", "target_repo")
+    if decision["kind"] == "sft" and cfg.get("method") not in ("qlora", "lora16"):
         fail("PREFLIGHT_METHOD_NOT_TRAINABLE",
              f"method {cfg.get('method')!r} is not a runnable SFT method")
+    api = hf_api()
+    family = check_artifact_family(api, target_repo)
+    check_target_identity(api, target_repo)
+    model_pin = check_model_pin(
+        api,
+        decision["student_id"],
+        decision["student_revision"],
+        missing_code="PREFLIGHT_MODEL_UNREADABLE",
+        mismatch_code="PREFLIGHT_MODEL_PIN_MISMATCH",
+    )
+    dataset_pin = check_dataset(api, decision["dataset_id"], decision["dataset_revision"])
+    teacher_pin = None
+    if decision["kind"] == "distill":
+        teacher_pin = check_model_pin(
+            api,
+            decision["teacher_id"],
+            decision["teacher_revision"],
+            missing_code="PREFLIGHT_TEACHER_UNREADABLE",
+            mismatch_code="PREFLIGHT_TEACHER_PIN_MISMATCH",
+        )
     return {
         "schema": "szl.forge.preflight/v1",
         "config": config_path,
         "target": family,
         "base_model_pin": model_pin,
-        "dataset_pins": dataset_pins,
+        "dataset_pins": [dataset_pin],
+        "teacher_pin": teacher_pin,
+        "accepted_examples": decision["accepted_examples"],
         "verdict": "PASS",
         "truth_label": "MEASURED_PREFLIGHT",
+        "training_started": False,
+        "hub_write": False,
+        "model_loaded": False,
     }
 
 
