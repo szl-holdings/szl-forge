@@ -40,15 +40,20 @@ def fail_closed(message: str) -> None:
 
 # ── The grounding gate (pure, testable, deterministic) ─────────────────────
 
-IDENTIFIER_RE = re.compile(r"\b([A-Za-z][A-Za-z0-9_\-.]{3,40})\b")
+IDENTIFIER_RE = re.compile(r"\b([A-Za-z][A-Za-z0-9_\-./]{3,40})\b")
 ABSTAIN_MARKERS = ("ABSTAIN", "I don't know", "I do not know", "cannot verify")
 CODE_FENCE_RE = re.compile(r"```.*?```", re.DOTALL)
 
 
-def extract_identifiers(text: str) -> set[str]:
-    """Identifiers a response relies on, ignoring code fences."""
-    stripped = CODE_FENCE_RE.sub(" ", text)
-    return {m.group(1).rstrip(".") for m in IDENTIFIER_RE.finditer(stripped)}
+def extract_identifiers(text: str, *, strip_fences: bool = True) -> set[str]:
+    """Identifiers a response relies on.
+
+    Response side: code fences are stripped (generated code is noise for the
+    fabrication check). Source side: fences are KEPT (the source context is
+    the allowed set; an identifier inside the source's code fence is allowed).
+    """
+    stripped = CODE_FENCE_RE.sub(" ", text) if strip_fences else text
+    return {m.group(1).rstrip("./") for m in IDENTIFIER_RE.finditer(stripped)}
 
 
 def repetition_ratio(text: str) -> float:
@@ -59,7 +64,7 @@ def repetition_ratio(text: str) -> float:
 
 
 def grounding_gate(source_context: str, response: str,
-                   max_repetition: float = 0.8) -> dict:
+                   max_repetition: float = 0.8, terminated: bool = True) -> dict:
     """Deterministic fail-closed gate. Returns a receipt dict with verdict.
 
     ACCEPT requires all of:
@@ -72,9 +77,11 @@ def grounding_gate(source_context: str, response: str,
     reasons = []
     if not response or not response.strip():
         return {"verdict": "REJECT", "reasons": ["EMPTY_RESPONSE"]}
+    if not terminated:
+        reasons.append("TRUNCATED_GENERATION")
     if repetition_ratio(response) > max_repetition:
         reasons.append("REPETITION_LOOP")
-    ctx_ids = extract_identifiers(source_context)
+    ctx_ids = extract_identifiers(source_context, strip_fences=False)
     resp_ids = extract_identifiers(response)
     whitelist = {"the", "and", "that", "this", "with", "from", "for", "have",
                   "not", "are", "was", "were", "will", "would", "could", "should",
@@ -151,9 +158,10 @@ def main() -> None:
                     **inputs, max_new_tokens=args.max_new_tokens,
                     temperature=args.temperature, do_sample=True,
                     pad_token_id=tok.eos_token_id)
-            response = tok.decode(out[0][inputs["input_ids"].shape[1]:],
-                                  skip_special_tokens=True)
-            gate = grounding_gate(source_context, response)
+            raw_new = out[0][inputs["input_ids"].shape[1]:]
+            terminated = bool(raw_new.numel()) and raw_new[-1].item() == tok.eos_token_id
+            response = tok.decode(raw_new, skip_special_tokens=True)
+            gate = grounding_gate(source_context, response, terminated=terminated)
             rec = {
                 "schema": "szl.distill.gate/v1",
                 "teacher": teacher_id,
