@@ -1,0 +1,37 @@
+{
+  "schema": "szl.forge.wave-config/v1",
+  "wave": "w30",
+  "name": "distill-r2",
+  "status": "BLOCKED_UNRECOVERED",
+  "launch_authorized": false,
+  "kind": "distill",
+  "reported_target": {
+    "status": "REPORTED_NOT_RECOVERED",
+    "teacher_id": "SZLHOLDINGS/SZL-Nemotron-Mini-4B-Estate-v1",
+    "student_id": "Qwen/Qwen3.5-0.8B",
+    "dataset_id": "SZLHOLDINGS/szl-frontier-sft-mix-v3",
+    "split": "train",
+    "note": "These ids are the reported W30 target. distill-r2.json was not in this repository and commit 2e5f0d2 was not recovered. Revisions are omitted on purpose. This file is not a launch config."
+  },
+  "teacher": {
+    "id": "SZLHOLDINGS/SZL-Nemotron-Mini-4B-Estate-v1",
+    "revision": null
+  },
+  "student": {
+    "id": "Qwen/Qwen3.5-0.8B",
+    "revision": null
+  },
+  "dataset": {
+    "id": "SZLHOLDINGS/szl-frontier-sft-mix-v3",
+    "revision": null,
+    "split": "train"
+  },
+  "not_substituted": [
+    "SZLHOLDINGS/governed-distill-sft-v1",
+    "SZLHOLDINGS/governed-distill-4b-sft-v1",
+    "SZLHOLDINGS/szl-quant-sft-v1",
+    "SZLHOLDINGS/killinchu-osint-corpus",
+    "SZLHOLDINGS/SZLHOLDINGS",
+    "SZLHOLDINGS/why-we-lead"
+  ]
+}

@@ -9,6 +9,10 @@ mirrors now classified CODE_SPEC_MIRROR on the Hub).
 On an A6000 node with `HF_TOKEN` set: `bash run_w29.sh`.
 `W29_PLAN=1 bash run_w29.sh` prints the same decisions and does not train or push.
 
+`safety.py` choosing RUN is not launch authorization. `train_wave.py` rejects
+the explicit arguments this shell passes, and rejects a config that has not
+cleared `training/launch_contract.py`, before it loads a model.
+
 Only three configs are runnable. Each uses `train_wave.py` QLoRA (merged-16bit
 push, heartbeat log to wave-logs):
 
