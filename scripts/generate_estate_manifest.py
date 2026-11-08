@@ -9,7 +9,7 @@ Usage: python scripts/generate_estate_manifest.py [--token-env HF_TOKEN]
 Emits: publishing/estate-alignment-manifest.json
 """
 from __future__ import annotations
-import argparse, datetime as dt, json, os, re, sys, urllib.request
+import argparse, datetime as dt, json, os, urllib.request
 
 HF_ORG = "SZLHOLDINGS"
 GH_ORG = "szl-holdings"
