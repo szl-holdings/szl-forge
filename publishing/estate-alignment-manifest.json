@@ -1,0 +1,2295 @@
+{
+ "artifact_estate": "huggingface.co/SZLHOLDINGS",
+ "counts": {
+  "bound": 72,
+  "by_type": {
+   "dataset": 75,
+   "model": 124,
+   "space": 48
+  },
+  "not_bound": 63,
+  "total": 247
+ },
+ "generated_at": "2026-11-08T14:02:00.477790+00:00",
+ "policy": {
+  "artifact_equivalence": "NOT_CLAIMED",
+  "not_bound_means": "explicit gap with owner and next inspection - never silently zero",
+  "promotion_requires": "evaluation + reproducibility + licensing + runtime gates",
+  "reproducible_build": "NOT_CLAIMED"
+ },
+ "rows": [
+  {
+   "asset": "SZLHOLDINGS/SZL-Khipu-1.5B-GGUF",
+   "classification": "QUANTIZED_DERIVATIVE",
+   "github_source": "szl-forge",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-khipu",
+   "classification": "SOFTWARE_OR_SPEC_MIRROR",
+   "github_source": "szl-khipu",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/a11oy-v19-substrate",
+   "classification": "SOFTWARE_OR_SPEC_MIRROR",
+   "github_source": "szl-a11oy-v19-substrate",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-governed-norm",
+   "classification": "SOFTWARE_OR_SPEC_MIRROR",
+   "github_source": "szl-szl-governed-norm",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-lambda-gate",
+   "classification": "SOFTWARE_OR_SPEC_MIRROR",
+   "github_source": "szl-szl-lambda-gate",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/governed-inference-meter",
+   "classification": "SOFTWARE_OR_SPEC_MIRROR",
+   "github_source": "szl-governed-inference-meter",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-kernels",
+   "classification": "SOFTWARE_OR_SPEC_MIRROR",
+   "github_source": "szl-szl-kernels",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-blocked",
+   "classification": "SOFTWARE_OR_SPEC_MIRROR",
+   "github_source": "szl-szl-blocked",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-govsign",
+   "classification": "SOFTWARE_OR_SPEC_MIRROR",
+   "github_source": "szl-szl-govsign",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-provctl",
+   "classification": "SOFTWARE_OR_SPEC_MIRROR",
+   "github_source": "szl-szl-provctl",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-nemo",
+   "classification": "SOFTWARE_OR_SPEC_MIRROR",
+   "github_source": "szl-szl-nemo",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-invariants",
+   "classification": "SOFTWARE_OR_SPEC_MIRROR",
+   "github_source": "szl-szl-invariants",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-ouroboros",
+   "classification": "SOFTWARE_OR_SPEC_MIRROR",
+   "github_source": "szl-szl-ouroboros",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-formulas",
+   "classification": "SOFTWARE_OR_SPEC_MIRROR",
+   "github_source": "szl-szl-formulas",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/SZL-Forge-1.5B-ReceiptAgent",
+   "classification": "TRAINED_MEASURED_LIMITED",
+   "github_source": "szl-forge",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/SZL-Khipu-1.5B",
+   "classification": "TRAINED_RESEARCH_ONLY",
+   "github_source": "szl-forge",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2",
+   "classification": "TRAINED_MEASURED_LIMITED",
+   "github_source": "szl-forge",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/SZLHOLDINGS",
+   "classification": "SYNTHETIC_FIXTURE_OR_PLACEHOLDER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/KHIPU-R2",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/WILLAY",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/KILLINCHU-EYE",
+   "classification": "SYNTHETIC_FIXTURE_OR_PLACEHOLDER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/YARQA-ATTN",
+   "classification": "SOFTWARE_OR_SPEC_MIRROR",
+   "github_source": "szl-YARQA-ATTN",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/A11OY-MINI",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/chaski",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/qantu",
+   "classification": "SYNTHETIC_FIXTURE_OR_PLACEHOLDER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/waman",
+   "classification": "SYNTHETIC_FIXTURE_OR_PLACEHOLDER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/chakana",
+   "classification": "SYNTHETIC_FIXTURE_OR_PLACEHOLDER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/tinku",
+   "classification": "SYNTHETIC_FIXTURE_OR_PLACEHOLDER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-receipt-attn",
+   "classification": "SOFTWARE_OR_SPEC_MIRROR",
+   "github_source": "szl-szl-receipt-attn",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-maskmod",
+   "classification": "SOFTWARE_OR_SPEC_MIRROR",
+   "github_source": "szl-szl-maskmod",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-block-kv",
+   "classification": "SOFTWARE_OR_SPEC_MIRROR",
+   "github_source": "szl-szl-block-kv",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/SZL-Khipu-1.5B-abstain",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/chaski-5050",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/chaski-r2",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-training-scripts",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/TinyKhipu-Nano",
+   "classification": "SYNTHETIC_FIXTURE_OR_PLACEHOLDER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/ReceiptAgent-Nano",
+   "classification": "SYNTHETIC_FIXTURE_OR_PLACEHOLDER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-khipu-kernels",
+   "classification": "SOFTWARE_OR_SPEC_MIRROR",
+   "github_source": "szl-szl-khipu-kernels",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/Moons-Nano",
+   "classification": "SYNTHETIC_FIXTURE_OR_PLACEHOLDER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/MiniEmbed-Nano",
+   "classification": "SYNTHETIC_FIXTURE_OR_PLACEHOLDER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/brain-navigator-r2",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/khipu-r3",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-energy-attest",
+   "classification": "SOFTWARE_OR_SPEC_MIRROR",
+   "github_source": "szl-szl-energy-attest",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/oac-clinical-transport-health-v1",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/oac-system-health-v1",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2-merged",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-triage-qwen3.5-0.8b-lora",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-triage-qwen3.5-0.8b-lora-study5",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-triage-linear-development-v1",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/chaski-r4",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-triage-retrain",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3-authenticated",
+   "classification": "SOFTWARE_OR_SPEC_MIRROR",
+   "github_source": "szl-szl-receiptagent-qwen35-0.8b-v3-authenticated",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/oac-ops-health-v2",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/qwen2.5-0.5b-laptop-lora",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/receiptagent-v3-laptop-lora",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/brain-navigator-r2-laptop-lora",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/chaski-laptop-lora",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/chaski-5050-laptop-lora",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/chaski-r2-laptop-lora",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/chaski-r4-laptop-lora",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/khipu-r3-laptop-lora",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/SZL-Forge-1.5B-ReceiptAgent-laptop-lora",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/SZL-Khipu-1.5B-laptop-lora",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2-laptop-lora",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2-merged-laptop-lora",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3-laptop-lora",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-triage-qwen3.5-0.8b-lora-laptop-lora",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-triage-qwen3.5-0.8b-lora-study5-laptop-lora",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/WILLAY-laptop-lora",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/SZL-Khipu-1.5B-abstain-laptop-lora",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/SZL-Khipu-1.5B-GGUF-laptop-lora",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/KHIPU-R2-laptop-lora",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/A11OY-MINI-laptop-lora",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/forge-v3",
+   "classification": "TRAINED_LAUNCH_CONTRACT",
+   "github_source": "szl-forge/training/w29",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/ChaskaLLM",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3-candidate",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-triage-qwen3.5-0.8b-nemo-candidate",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3-nemo-candidate",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl1-experimental-massed-20261104",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/khipu-candidate_enterprise_20261104",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-receiptagent-qwen25-1.5b-experimental-20261104",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/chaski-candidate_enterprise_20261104",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/navigator-candidate_enterprise_20261104",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/receiptagent_v1-candidate_enterprise_20261104",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/willay-candidate_enterprise_20261104",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/receiptagent_v3-candidate_enterprise_20261104",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-specdecode",
+   "classification": "SOFTWARE_OR_SPEC_MIRROR",
+   "github_source": "szl-szl-specdecode",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/triage-candidate_enterprise_20261104",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/khipu-abstain-r3-candidate",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/miniembed-nano-r1-candidate",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/chakana-r1-candidate",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/willay-r1-candidate",
+   "classification": "TRAINED_LAUNCH_CONTRACT",
+   "github_source": "szl-forge/training/w29",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-sft-v3",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/SZL-Khipu-1.5B-sft-v2",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/willay-r2-candidate",
+   "classification": "TRAINED_LAUNCH_CONTRACT",
+   "github_source": "szl-forge/training/w29",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-dpo-v1",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/SZL-Khipu-1.5B-estate-sft-v1",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-dpo-v2",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/KHIPU-R2-estate-sft-v1",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/SZL-Forge-1.5B-ReceiptAgent-estate-sft-v1",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/chaski-estate-sft-v1",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2m-estate-sft-v1",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/chaski-5050-estate-sft-v1",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/chaski-r2-estate-sft-v1",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/brain-navigator-r2-estate-sft-v1",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/WILLAY-estate-sft-v1",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3-estate-sft-v1",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/khipu-r3-estate-sft-v1",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl1-experimental-estate-sft-v1",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/Nemotron-Mini-4B-Instruct-st",
+   "classification": "UPSTREAM_MIRROR_LICENSE_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/SZL-Nemotron-Mini-4B-Estate-v1",
+   "classification": "TRAINED_RESEARCH_ONLY",
+   "github_source": "szl-forge",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/SZL-Nemotron-Mini-4B-Estate-DPO-v1",
+   "classification": "TRAINED_RESEARCH_ONLY",
+   "github_source": "szl-forge",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/SZL-Specialized-Domains-v1",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/SZL-Showcase-Systems-v1",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/SZL-Nemotron-Mini-4B-Doctrine-v1",
+   "classification": "TRAINED_RESEARCH_ONLY",
+   "github_source": "szl-forge",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/SZL-Reasoning-0.8B-v1",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/SZL-Nemotron-Mini-4B-Estate-DPO-v2",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/SZL-FreeEnergy-0.8B-v1",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/SZL-AncientMath-0.8B-v1",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/SZL-AcousticGovernance-0.8B-v1",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/SZL-FreeEnergy-0.8B-DPO-v1",
+   "classification": "WEIGHTLESS_OTHER",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/SZL-GovernedDistill-0.8B-v1",
+   "classification": "TRAINED_RESEARCH_ONLY",
+   "github_source": "szl-forge/training/w30",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/abstain-doctrine-r1",
+   "classification": "TRAINED_LAUNCH_CONTRACT",
+   "github_source": "szl-forge/training/w29-campaign",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "model"
+  },
+  {
+   "asset": "SZLHOLDINGS/thesis-v18-formal-verification",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "9a08e0c1fccf410b447769091ebeb26885942f3c",
+   "last_modified": "2026-09-28T17:02:00.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/uds-spans-receipts",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "94048f5bcd59907ca28cb695370c0212edf30813",
+   "last_modified": "2026-11-04T15:21:05.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/uds-governance-receipts",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "0bf725e9a061fc8e56684cfd4279cb0870058164",
+   "last_modified": "2026-11-04T15:21:04.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-org-infra",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "a9528d0414fa75575270562c31b37159994d1987",
+   "last_modified": "2026-09-28T17:01:55.000Z",
+   "private": true,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/SZLHOLDINGS",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "1f73f74522f3cc709a20fd8f897de508fcf822e0",
+   "last_modified": "2026-11-08T13:36:22.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/why-we-lead",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "51df5c36889742255e9bee91b156cde58ff99bb3",
+   "last_modified": "2026-08-31T03:42:11.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/ouroboros-arxiv-preprint",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "34a2d938106695c921dc3b651e1ec43ca7606793",
+   "last_modified": "2026-11-02T04:42:51.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-artifacts",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "3eccc9c869626c44d54bd9fcb78921667c701861",
+   "last_modified": "2026-11-04T15:21:01.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/anatomy-alive-harness",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "93087d9334992077fac15168dfd41486b93fe9e7",
+   "last_modified": "2026-09-28T17:01:42.000Z",
+   "private": true,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/thesis-formula-index",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "87b4ecf1905ed6f2a28d364a51bdba603d68c3c3",
+   "last_modified": "2026-09-28T17:01:59.000Z",
+   "private": true,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/lean-theorem-tree",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "fec481f180eb2221de3525a363e5e378f7880042",
+   "last_modified": "2026-11-02T04:40:10.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/rag-corpus-v1",
+   "binding_state": "BOUND_GENERATOR_KNOWN",
+   "classification": "DATASET",
+   "hub_revision": "49e49fb450446b622dda1781ded8a389d3b03499",
+   "last_modified": "2026-09-28T17:01:51.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/lean-proofs-v1",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "f877db13fd3b84d8304169c3cb27c71bd397ac64",
+   "last_modified": "2026-09-28T17:01:48.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/canonical-formulas-v1",
+   "binding_state": "BOUND_GENERATOR_KNOWN",
+   "classification": "DATASET",
+   "hub_revision": "61234334af5b14356db53d9b9c22d9718d2f948d",
+   "last_modified": "2026-11-02T04:29:28.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/thesis-corpus-v18",
+   "binding_state": "BOUND_GENERATOR_KNOWN",
+   "classification": "DATASET",
+   "hub_revision": "6c6df105c71c0b8ef57fca8ebe30a44520e2802e",
+   "last_modified": "2026-11-04T15:21:02.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/doctrine-v10-v11",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "7450d2937753e23d6d6b9f65f602733e68a7979e",
+   "last_modified": "2026-11-02T04:41:23.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/k-verify-benchmark-v1",
+   "binding_state": "BOUND_GENERATOR_KNOWN",
+   "classification": "DATASET",
+   "hub_revision": "a5a46493b90f6dc2c9499cdf32e593ab71a8a387",
+   "last_modified": "2026-09-28T17:01:48.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/yuyay-v3-axis-labels-v1",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "d3e644f0314e3a135b1f43e079ddca63a07d9209",
+   "last_modified": "2026-07-22T10:49:47.000Z",
+   "private": true,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/uds-bundles-v1",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "004d1d80e3bc6d3a802b689f88576da2fedfb95b",
+   "last_modified": "2026-11-04T15:21:05.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/readiness-runs",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "1a757b929480a1af93f2e2503cbcca3b189ff368",
+   "last_modified": "2026-11-08T13:41:36.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-lake",
+   "binding_state": "BOUND_GENERATOR_KNOWN",
+   "classification": "DATASET",
+   "hub_revision": "50f03399f0f04bdc00f986f2f5b2ee78b729bed0",
+   "last_modified": "2026-11-04T15:00:24.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/a11oy-verifiable-corpus",
+   "binding_state": "BOUND_GENERATOR_KNOWN",
+   "classification": "DATASET",
+   "hub_revision": "1fa1197249bbcbe435497df4a128cae7663b754c",
+   "last_modified": "2026-11-04T15:21:01.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/killinchu-osint-corpus",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "67c0f7aafe3bddd5bfe7cb25dc9a535c95a42bd6",
+   "last_modified": "2026-11-08T13:57:40.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/legacy-archive",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "a78b15e674ce2a397ea786d76e04f1856d7e41f8",
+   "last_modified": "2026-11-04T14:51:25.000Z",
+   "private": true,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-evidence",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "91269ec064d7fecacd2a2494cb4f5ce3646c8f6b",
+   "last_modified": "2026-11-08T12:27:22.000Z",
+   "private": true,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/governed-receipts-bench",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "9e8a4921740f310d144012e27e3bb0cb34e733af",
+   "last_modified": "2026-09-28T17:01:47.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/energy-attested-runs",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "b2c4946d9d002ba22aaa2fe7407904a81d8e0736",
+   "last_modified": "2026-09-28T17:01:46.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/alloy-sovereign-eval-runs",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "2a23619515d85d76b80fcc0ce6b0785ed1035f39",
+   "last_modified": "2026-09-28T17:01:41.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-1-doctrine-sft",
+   "binding_state": "BOUND_GENERATOR_KNOWN",
+   "classification": "DATASET",
+   "hub_revision": "dbc21fe794a720c09f3608608972299ed2de63d9",
+   "last_modified": "2026-10-08T04:11:32.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-second-brain-inrepo",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "c9823ec107fc1fd4df6166c4ad0a37c776ee7e64",
+   "last_modified": "2026-09-28T17:01:57.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-quant-sft-v1",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "840044aedc235774d5a653ee34fc0c2dd3430079",
+   "last_modified": "2026-09-28T17:01:56.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/test-results",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "4d5de7b588460f56fc67437b11617c339a69d8c8",
+   "last_modified": "2026-09-28T17:01:58.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/governed-agent-bench",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "c35e23dbd4f11349eb8304e26b04961dcd4124e9",
+   "last_modified": "2026-11-04T15:00:26.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-training-receipts",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "b8d57341b33b29404fd2c17dd9a1a2ec78415051",
+   "last_modified": "2026-10-27T16:35:10.000Z",
+   "private": true,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/vault-artifacts",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "172f5b81ca2ad4bab0f8a46b0c5df4637f08b948",
+   "last_modified": "2026-08-31T00:59:40.000Z",
+   "private": true,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/receipted-unsloth",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "8b1a3eb40a14dde35b7cb0b5c11e6c3006e6bcd9",
+   "last_modified": "2026-09-28T17:01:52.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/model-bom",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "038f792855ae12225084c8d87181e4476b00fa55",
+   "last_modified": "2026-09-28T17:01:49.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-frontier-covenant",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "3a7e147c208167c342549967ffab0a27919b81a2",
+   "last_modified": "2026-10-13T18:25:25.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/release-assets",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "48df365d44a770569498510ff6352e1b0f1e96d0",
+   "last_modified": "2026-11-04T14:51:25.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-estate-graph",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "71933bcd9346d97a36a9f4745e0e79703e224516",
+   "last_modified": "2026-09-28T17:01:54.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/david-leads-data",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "d7575ea88902fd1c6f702855e0692c358fc66210",
+   "last_modified": "2026-11-08T06:16:44.000Z",
+   "private": true,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/oac-clinical-transport-observability-synthetic",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "d4eac0ec9430298a0161a3cba522c0cc8d1faede",
+   "last_modified": "2026-11-04T15:00:30.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-frontier-evaluation-receipts",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "af8079e012fc2688bc60b3ce72e687a4226ea289",
+   "last_modified": "2026-11-04T15:00:29.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-marketing-factbase",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "0274f3cb0941a67dc24f8b9030076d8327e07031",
+   "last_modified": "2026-09-30T19:46:02.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-science-forum-corpus",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "071bd5fff2ce55fe87ea42608544791bf480bf36",
+   "last_modified": "2026-11-03T02:05:22.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-second-brain-frontier-candidates",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "4a4a38cc73762fa7d71d851d5f62f0fabacf7774",
+   "last_modified": "2026-10-13T17:37:03.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/a11oy-state",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "41ff9bdab9ec979c0921b29f0c781c2c89653a0e",
+   "last_modified": "2026-11-08T14:00:27.000Z",
+   "private": true,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-seismic-review-state",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "1b98d85ee194d15d25a583bbdf6fb1105128c62c",
+   "last_modified": "2026-11-05T18:15:57.000Z",
+   "private": true,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-skills-ci-evidence",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "6de233251509b1bb4583ba0133a1623484df4392",
+   "last_modified": "2026-10-28T10:54:21.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/kernel-receipt-regression-attn-maskmod-blockkv-v1",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "01bf641aeaceb575c168fae978927bf0976d8ba3",
+   "last_modified": "2026-11-04T17:45:54.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/governed-sft-mix-v2",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "bf2f45237a9c255db8d826ddbe3043b01a7f6a35",
+   "last_modified": "2026-11-04T17:45:53.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-frontier-sft-mix-v2",
+   "binding_state": "BOUND_GENERATOR_KNOWN",
+   "classification": "DATASET",
+   "hub_revision": "2870d2a1612af0e4e9d8ccd83f714b0cafbf6394",
+   "last_modified": "2026-11-04T17:50:18.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/wave-logs",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "258c2611dbb3cded3ba8b468d6ff51e10a8b9a1e",
+   "last_modified": "2026-11-08T14:00:23.000Z",
+   "private": true,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/doctrine-abstention-dpo-v1",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "9136cfde8ca63d8e5066c4810e176c9ade337775",
+   "last_modified": "2026-11-05T03:56:11.000Z",
+   "private": true,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/doctrine-corpus-v2",
+   "binding_state": "BOUND_GENERATOR_KNOWN",
+   "classification": "DATASET",
+   "hub_revision": "c949ba12028864b71bc1dd5839206e7cbed65c75",
+   "last_modified": "2026-11-05T03:59:08.000Z",
+   "private": true,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/model-eval-receipts",
+   "binding_state": "BOUND_GENERATOR_KNOWN",
+   "classification": "DATASET",
+   "hub_revision": "a2637e504f44f694427e73e58c5fd12948a6199e",
+   "last_modified": "2026-11-08T13:21:46.000Z",
+   "private": true,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/doctrine-abstention-dpo-v2",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "e247ad3cb9d7c955ff858ab88d9bebc0d2b57a6c",
+   "last_modified": "2026-11-05T04:56:09.000Z",
+   "private": true,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/estate-knowledge-corpus-v1",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "c12be07515fbb80d96b67eb3b0c3ed7fffb03010",
+   "last_modified": "2026-11-05T05:19:07.000Z",
+   "private": true,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-quant-abstention-sft-v1",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "4fe83e3369bd5f8d7fd8156800598a0465e84400",
+   "last_modified": "2026-11-05T05:31:01.000Z",
+   "private": true,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/specialized-domains-corpus-v1",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "1fed07f58810cc4d1e2f4bcefc113eb4c883cd54",
+   "last_modified": "2026-11-05T17:47:45.000Z",
+   "private": true,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/anatomy-brain-datasets-corpus-v1",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "f60832f079c6ffe6fc116b4b96ddcfb1eda51cf7",
+   "last_modified": "2026-11-05T18:15:56.000Z",
+   "private": true,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/high-value-systems-corpus-v1",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "65c134b799b5a420d0532c4ea49cc6708c56c953",
+   "last_modified": "2026-11-05T17:53:34.000Z",
+   "private": true,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/reasoning-puzzles-sft-v1",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "d640da96d3c467fc5abc9d26f462b89ac9634f36",
+   "last_modified": "2026-11-06T00:28:06.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/free-energy-reasoning-sft-v1",
+   "binding_state": "BOUND_GENERATOR_KNOWN",
+   "classification": "DATASET",
+   "hub_revision": "45ccb0b6a9e7829fb01b9d0d3f901b5521469113",
+   "last_modified": "2026-11-06T01:47:52.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/ancient-math-reasoning-sft-v1",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "1c820d962815353456b15c7efd6a2bf3b1379717",
+   "last_modified": "2026-11-06T01:53:14.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/acoustic-governance-sft-v1",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "74f53ffb8378de040086cbc62f00d90fb09fe31f",
+   "last_modified": "2026-11-06T02:22:43.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/governed-distill-sft-v1",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "965e4e01956bfa7ad081d5fa3d56debc6a445b05",
+   "last_modified": "2026-11-06T12:48:19.000Z",
+   "private": true,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-frontier-sft-mix-v3",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "a35c6e7d8422436479ef6e2ce41e73a3acafb459",
+   "last_modified": "2026-11-06T13:11:43.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/governed-distill-4b-sft-v1",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "0b7758b7f6b2479747862285caf13d48954a1d14",
+   "last_modified": "2026-11-06T18:34:46.000Z",
+   "private": true,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/governed-distill-4b-sft-v2",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "285bd6a0d9dbcc39dbc4a148118f0ef018aa0d8f",
+   "last_modified": "2026-11-07T11:52:28.000Z",
+   "private": true,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/governed-distill-4b-sft-v3",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "9398daf8443dedfb5b56314573e1e53188ba83f3",
+   "last_modified": "2026-11-07T20:32:32.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/governed-distill-4b-sft-v3-topup",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "ff3a0a19085869ddc6f6af01e6f9583362704c1b",
+   "last_modified": "2026-11-07T21:26:53.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-papers-sft-v1",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "eb0a035f83cd1a22d0ceac3b60710ce472a5fe36",
+   "last_modified": "2026-11-08T00:34:17.000Z",
+   "private": true,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/cookie-dpo-v1",
+   "binding_state": "NOT_BOUND",
+   "classification": "DATASET",
+   "hub_revision": "f23e15911719154d9e8ebaafcb04c104566befdc",
+   "last_modified": "2026-11-08T04:26:20.000Z",
+   "private": true,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/abstention-doctrine-sft-v1",
+   "binding_state": "BOUND_GENERATOR_KNOWN",
+   "classification": "DATASET",
+   "hub_revision": "c2d00ac19385967c280c5ee13afd3eefc5ad4947",
+   "last_modified": "2026-11-08T13:43:13.000Z",
+   "private": false,
+   "type": "dataset"
+  },
+  {
+   "asset": "SZLHOLDINGS/README",
+   "binding_state": "NOT_BOUND_SOURCE_REPO_FIELD_MISSING",
+   "classification": "SPACE",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/killinchu",
+   "binding_state": "BOUND",
+   "classification": "SPACE",
+   "github_source": "szl-holdings/killinchu",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/a11oy",
+   "binding_state": "BOUND",
+   "classification": "SPACE",
+   "github_source": "szl-holdings/a11oy",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/counsel",
+   "binding_state": "BOUND",
+   "classification": "SPACE",
+   "github_source": "szl-holdings/counsel",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/terra",
+   "binding_state": "BOUND",
+   "classification": "SPACE",
+   "github_source": "szl-holdings/terra",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/sentra",
+   "binding_state": "NOT_BOUND_SOURCE_REPO_FIELD_MISSING",
+   "classification": "SPACE",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/finance",
+   "binding_state": "BOUND",
+   "classification": "SPACE",
+   "github_source": "szl-holdings/finance",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/lyte",
+   "binding_state": "BOUND",
+   "classification": "SPACE",
+   "github_source": "szl-holdings/lyte-lattice",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/vertical-services",
+   "binding_state": "BOUND",
+   "classification": "SPACE",
+   "github_source": "szl-holdings/vertical-services",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/anatomy",
+   "binding_state": "BOUND",
+   "classification": "SPACE",
+   "github_source": "szl-holdings/anatomy",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-command-lab",
+   "binding_state": "BOUND",
+   "classification": "SPACE",
+   "github_source": "szl-holdings/szl-command-lab",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/david-leads",
+   "binding_state": "BOUND",
+   "classification": "SPACE",
+   "github_source": "szl-holdings/david-leads",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-constellation",
+   "binding_state": "NOT_BOUND_SOURCE_REPO_FIELD_MISSING",
+   "classification": "SPACE",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/terra-assurance",
+   "binding_state": "NOT_BOUND_SOURCE_REPO_FIELD_MISSING",
+   "classification": "SPACE",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/puriq-markets",
+   "binding_state": "NOT_BOUND_SOURCE_REPO_FIELD_MISSING",
+   "classification": "SPACE",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/counsel-assurance",
+   "binding_state": "NOT_BOUND_SOURCE_REPO_FIELD_MISSING",
+   "classification": "SPACE",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-frontier",
+   "binding_state": "BOUND",
+   "classification": "SPACE",
+   "github_source": "szl-holdings/szl-frontier",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-model-inference-lab",
+   "binding_state": "BOUND",
+   "classification": "SPACE",
+   "github_source": "szl-holdings/szl-forge",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/immune-lattice",
+   "binding_state": "NOT_BOUND_SOURCE_REPO_FIELD_MISSING",
+   "classification": "SPACE",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/immune",
+   "binding_state": "BOUND",
+   "classification": "SPACE",
+   "github_source": "szl-holdings/immune",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/ayllu",
+   "binding_state": "BOUND",
+   "classification": "SPACE",
+   "github_source": "szl-holdings/ayllu",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/yarqa",
+   "binding_state": "BOUND",
+   "classification": "SPACE",
+   "github_source": "szl-holdings/yarqa",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-atelier",
+   "binding_state": "NOT_BOUND_SOURCE_REPO_FIELD_MISSING",
+   "classification": "SPACE",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/a11oy-factory",
+   "binding_state": "NOT_BOUND_SOURCE_REPO_FIELD_MISSING",
+   "classification": "SPACE",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/holographic-unify",
+   "binding_state": "BOUND",
+   "classification": "SPACE",
+   "github_source": "szl-holdings/holographic-unify",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-khipu",
+   "binding_state": "BOUND",
+   "classification": "SPACE",
+   "github_source": "szl-holdings/szl-khipu",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/llm-router-live",
+   "binding_state": "BOUND",
+   "classification": "SPACE",
+   "github_source": "szl-holdings/szl-router",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-safe-stack",
+   "binding_state": "NOT_BOUND_SOURCE_REPO_FIELD_MISSING",
+   "classification": "SPACE",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-constellation-staging",
+   "binding_state": "NOT_BOUND_SOURCE_REPO_FIELD_MISSING",
+   "classification": "SPACE",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/the-grid",
+   "binding_state": "BOUND",
+   "classification": "SPACE",
+   "github_source": "szl-holdings/the-grid",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-forge-lab",
+   "binding_state": "BOUND",
+   "classification": "SPACE",
+   "github_source": "szl-holdings/szl-forge",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/oac-system-health-lab",
+   "binding_state": "NOT_BOUND_SOURCE_REPO_FIELD_MISSING",
+   "classification": "SPACE",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-bench-suite",
+   "binding_state": "NOT_BOUND_SOURCE_REPO_FIELD_MISSING",
+   "classification": "SPACE",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-typesafe-triage",
+   "binding_state": "NOT_BOUND_SOURCE_REPO_FIELD_MISSING",
+   "classification": "SPACE",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-foundation-confirmation",
+   "binding_state": "BOUND",
+   "classification": "SPACE",
+   "github_source": "szl-holdings/szl-foundation-confirmation",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-marketing-1.1",
+   "binding_state": "NOT_BOUND_SOURCE_REPO_FIELD_MISSING",
+   "classification": "SPACE",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/prove-it",
+   "binding_state": "NOT_BOUND_SOURCE_REPO_FIELD_MISSING",
+   "classification": "SPACE",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/gdw-frontier",
+   "binding_state": "BOUND",
+   "classification": "SPACE",
+   "github_source": "szl-holdings/gdw-frontier",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-brand-campaign",
+   "binding_state": "NOT_BOUND_SOURCE_REPO_FIELD_MISSING",
+   "classification": "SPACE",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/foundation-confirmation-v2",
+   "binding_state": "NOT_BOUND_SOURCE_REPO_FIELD_MISSING",
+   "classification": "SPACE",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/governed-receipt-verifier",
+   "binding_state": "NOT_BOUND_SOURCE_REPO_FIELD_MISSING",
+   "classification": "SPACE",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-seismic-review",
+   "binding_state": "NOT_BOUND_SOURCE_REPO_FIELD_MISSING",
+   "classification": "SPACE",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-router-control",
+   "binding_state": "BOUND",
+   "classification": "SPACE",
+   "github_source": "szl-holdings/szl-router",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/nexus",
+   "binding_state": "BOUND",
+   "classification": "SPACE",
+   "github_source": "szl-holdings/nexus",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/governed-agent-bench",
+   "binding_state": "NOT_BOUND_SOURCE_REPO_FIELD_MISSING",
+   "classification": "SPACE",
+   "github_source": null,
+   "hub_revision": null,
+   "last_modified": "",
+   "private": true,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/agents-studio",
+   "binding_state": "BOUND",
+   "classification": "SPACE",
+   "github_source": "szl-holdings/agents-studio",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/curation-atlas",
+   "binding_state": "BOUND",
+   "classification": "SPACE",
+   "github_source": "szl-holdings/curation-atlas",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "space"
+  },
+  {
+   "asset": "SZLHOLDINGS/szl-second-brain",
+   "binding_state": "BOUND",
+   "classification": "SPACE",
+   "github_source": "szl-holdings/szl-second-brain",
+   "hub_revision": null,
+   "last_modified": "",
+   "private": false,
+   "type": "space"
+  }
+ ],
+ "schema": "szl.estate-alignment-manifest/v1",
+ "source_authority": "github.com/szl-holdings"
+}
