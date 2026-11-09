@@ -96,9 +96,24 @@ def test_undeclared_kernel_does_not_get_guessed_source():
 
 
 def test_dataset_name_without_source_path_is_unbound():
-    row = estate.build_row("dataset", item("model-eval-receipts"), {})
+    row = estate.build_row("dataset", item("unknown-dataset"), {})
     assert row["github_source"] is None
     assert row["binding_state"].startswith("NOT_BOUND")
+
+
+@pytest.mark.parametrize("name", [
+    "doctrine-corpus-v2", "szl-1-doctrine-sft", "free-energy-reasoning-sft-v1",
+    "abstention-doctrine-sft-v1", "szl-frontier-sft-mix-v2", "rag-corpus-v1",
+    "thesis-corpus-v18", "k-verify-benchmark-v1", "canonical-formulas-v1",
+    "model-eval-receipts", "a11oy-verifiable-corpus", "szl-lake",
+])
+def test_legacy_dataset_generator_declarations_survive(name):
+    row = estate.build_row("dataset", item(name), {})
+    assert row["binding_state"] == "BOUND_GENERATOR_KNOWN"
+    assert row["binding_basis"] == "REPOSITORY_DECLARATION_NOT_REVERIFIED"
+    assert row["binding_evidence"] == "scripts/generate_estate_manifest.py"
+    assert row["github_source"] is None
+    assert row["next_inspection_owner"] == "szl-holdings"
 
 
 def test_all_rows_count_once_and_model_kernel_twins_are_distinct():
@@ -108,8 +123,9 @@ def test_all_rows_count_once_and_model_kernel_twins_are_distinct():
                  "space": [item("unknown"), item("anatomy")]}
     result = estate.build_manifest(inventory, coverage(), estate.load_kernel_sources())
     assert result["counts"]["total"] == 6
-    assert result["counts"]["bound"] == 3
-    assert result["counts"]["not_bound"] == 3
+    assert result["counts"]["bound"] == 4
+    assert result["counts"]["not_bound"] == 2
+    assert result["counts"]["source_path_missing"] == 3
     assert result["counts"]["bound"] + result["counts"]["not_bound"] == result["counts"]["total"]
     assert result["counts"]["by_type"]["kernel"] == 1
     assert all(row["binding_state"] for row in result["rows"])
@@ -120,7 +136,8 @@ def test_duplicate_typed_identity_is_rejected():
         estate.build_manifest({"model": [item(), item()]}, coverage(), {})
 
 
-def test_collector_requests_full_metadata_and_follows_pages():
+@pytest.mark.parametrize("full_flag", ["&full=true", ""])
+def test_collector_requests_full_metadata_and_follows_pages(full_flag):
     calls = []
     def fetch(url, token):
         calls.append(url)
@@ -128,7 +145,7 @@ def test_collector_requests_full_metadata_and_follows_pages():
         assert "full=true" in url
         if url.startswith("/api/models"):
             if "cursor=" not in url:
-                return [item("one")], '<https://huggingface.co/api/models?author=SZLHOLDINGS&full=true&cursor=2>; rel="next"'
+                return [item("one")], f'<https://huggingface.co/api/models?author=SZLHOLDINGS{full_flag}&cursor=2>; rel="next"'
             return [item("two")], ""
         return [], ""
     inventory, observed = estate.collect_inventory("test-placeholder", fetch)
@@ -144,7 +161,10 @@ def test_collector_requests_full_metadata_and_follows_pages():
     '<http://huggingface.co/api/models?author=SZLHOLDINGS&full=true>; rel="next"',
     '<https://huggingface.co/api/spaces?author=SZLHOLDINGS&full=true>; rel="next"',
     '<https://huggingface.co/api/models?author=OTHER&full=true>; rel="next"',
-    '<https://huggingface.co/api/models?author=SZLHOLDINGS>; rel="next"',
+    '<https://huggingface.co/api/models?author=SZLHOLDINGS&full=false>; rel="next"',
+    '<https://huggingface.co/api/models?author=SZLHOLDINGS&full=>; rel="next"',
+    '<https://huggingface.co/api/models?author=SZLHOLDINGS&full=true&full=false>; rel="next"',
+    '<https://huggingface.co/api/models?author=SZLHOLDINGS&author=OTHER>; rel="next"',
 ])
 def test_untrusted_or_weakened_pagination_is_rejected(link):
     with pytest.raises(ValueError):
@@ -230,6 +250,57 @@ def test_pagination_loop_is_incomplete_not_success():
     result = estate.build_manifest(inventory, observed, {})
     assert result["inventory_state"] == "INCOMPLETE"
     assert all(state["state"] == "PARTIAL" for state in observed.values())
+
+
+@pytest.mark.parametrize("empty", [False, True])
+def test_fresh_cursors_cannot_exceed_page_budget(monkeypatch, empty):
+    monkeypatch.setattr(estate, "MAX_PAGES", 2)
+    calls = []
+    def fetch(url, token):
+        calls.append(url)
+        api = url.split("?", 1)[0]
+        rows = [] if empty else [item(f"asset-{len(calls)}")]
+        return rows, f'<https://huggingface.co{api}?author=SZLHOLDINGS&cursor={len(calls)}>; rel="next"'
+    inventory, states = estate.collect_inventory("", fetch)
+    assert len(calls) == 2 * len(estate.KINDS)
+    assert all(state["pages"] == 2 for state in states.values())
+    assert all(state["state"] == ("UNAVAILABLE" if empty else "PARTIAL") for state in states.values())
+    assert estate.build_manifest(inventory, states, {})["inventory_state"] == "INCOMPLETE"
+
+
+@pytest.mark.parametrize("overflow", [False, True])
+def test_item_budget_and_exact_boundary(monkeypatch, overflow):
+    monkeypatch.setattr(estate, "MAX_ITEMS", 2)
+    def fetch(url, token):
+        api = url.split("?", 1)[0]
+        if "cursor=" not in url:
+            return [item("first")], f'<https://huggingface.co{api}?author=SZLHOLDINGS&cursor=2>; rel="next"'
+        rows = [item("second"), item("third")] if overflow else [item("second")]
+        return rows, ""
+    inventory, states = estate.collect_inventory("", fetch)
+    assert all(len(rows) == (1 if overflow else 2) for rows in inventory.values())
+    assert all(state["state"] == ("PARTIAL" if overflow else "COMPLETE") for state in states.values())
+
+
+@pytest.mark.parametrize("overflow", [False, True])
+def test_http_response_byte_budget(monkeypatch, overflow):
+    monkeypatch.setattr(estate, "MAX_PAGE_BYTES", 2)
+    reads = []
+    class Response(io.BytesIO):
+        headers = Message()
+        def read(self, size=-1):
+            reads.append(size)
+            return super().read(size)
+    class Opener:
+        def open(self, request, timeout):
+            return Response(b"[] " if overflow else b"[]")
+    monkeypatch.setattr(estate.urllib.request, "build_opener", lambda *handlers: Opener())
+    if overflow:
+        with pytest.raises(ValueError, match="byte budget"):
+            estate.hf("/api/models", "")
+    else:
+        assert estate.hf("/api/models", "") == ([], "")
+    assert reads == [3]
 
 
 def test_http_failure_not_empty_estate_and_error_text_not_serialized():

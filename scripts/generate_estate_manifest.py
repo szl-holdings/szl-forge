@@ -25,6 +25,17 @@ GH_ORG = "szl-holdings"
 SCHEMA = "szl.estate-alignment-manifest/v2"
 KINDS = {"model": "models", "dataset": "datasets", "space": "spaces", "kernel": "kernels"}
 REGISTRY = Path(__file__).resolve().parents[1] / "publishing/kernel-hub-ownership.json"
+MAX_PAGE_BYTES = 8_000_000
+MAX_PAGES = 25
+MAX_ITEMS = 2500
+
+# Preserve the v1 generator declarations without inventing source repository paths.
+DATASET_GENERATORS_KNOWN = {
+    "doctrine-corpus-v2", "szl-1-doctrine-sft", "free-energy-reasoning-sft-v1",
+    "abstention-doctrine-sft-v1", "szl-frontier-sft-mix-v2", "rag-corpus-v1",
+    "thesis-corpus-v18", "k-verify-benchmark-v1", "canonical-formulas-v1",
+    "model-eval-receipts", "a11oy-verifiable-corpus", "szl-lake",
+}
 
 # Known GitHub source bindings (canonical + today's launch-contract waves).
 MODEL_SOURCES = {
@@ -78,7 +89,10 @@ def hf(url, token):
         headers={"Authorization": f"Bearer {token}"} if token else {})
     opener = urllib.request.build_opener(NoRedirect())
     with opener.open(req, timeout=60) as response:
-        return json.load(response), ", ".join(response.headers.get_all("Link", []))
+        raw = response.read(MAX_PAGE_BYTES + 1)
+        if len(raw) > MAX_PAGE_BYTES:
+            raise ValueError("inventory page exceeds byte budget")
+        return json.loads(raw), ", ".join(response.headers.get_all("Link", []))
 
 
 def next_page(link, api):
@@ -106,10 +120,12 @@ def next_page(link, api):
                     or parsed.netloc not in ("", "huggingface.co")
                     or parsed.path != f"/api/{api}" or parsed.fragment):
                 raise ValueError("untrusted pagination target")
-            query = urllib.parse.parse_qs(parsed.query)
-            if query.get("author") != [HF_ORG] or query.get("full") != ["true"]:
+            query = urllib.parse.parse_qs(parsed.query, keep_blank_values=True)
+            if query.get("author") != [HF_ORG] or query.get("full", ["true"]) != ["true"]:
                 raise ValueError("pagination lost organization or full metadata filter")
             target = parsed.path + "?" + parsed.query
+            if "full" not in query:
+                target += "&full=true"
     return target
 
 
@@ -122,12 +138,16 @@ def collect_inventory(token, fetch=hf):
         state = {"state": "COMPLETE", "pages": 0}
         try:
             while url:
+                if len(visited) >= MAX_PAGES:
+                    raise ValueError("inventory page budget exceeded")
                 if url in visited:
                     raise ValueError("pagination loop")
                 visited.add(url)
                 page, link = fetch(url, token)
                 if not isinstance(page, list):
                     raise ValueError("inventory page is not a list")
+                if len(items) + len(page) > MAX_ITEMS:
+                    raise ValueError("inventory item budget exceeded")
                 for item in page:
                     if (not isinstance(item, dict) or not isinstance(item.get("id"), str)
                             or not re.fullmatch(r"SZLHOLDINGS/[A-Za-z0-9_.-]+", item["id"])):
@@ -240,6 +260,10 @@ def build_row(kind, item, kernel_sources):
         "publishing/kernel-hub-ownership.json"
         if (kind == "kernel" or (kind == "model" and rid in KERNEL_NAMES)) and row["github_source"]
         else "scripts/generate_estate_manifest.py" if row["github_source"] else None)
+    if kind == "dataset" and rid in DATASET_GENERATORS_KNOWN:
+        row["binding_state"] = "BOUND_GENERATOR_KNOWN"
+        row["binding_evidence"] = "scripts/generate_estate_manifest.py"
+        row["binding_basis"] = "REPOSITORY_DECLARATION_NOT_REVERIFIED"
     if not row["github_source"]:
         row["next_inspection_owner"] = GH_ORG
         row["next_inspection"] = "identify the source owner and exact source/evidence path; do not infer from asset name"
@@ -277,6 +301,7 @@ def build_manifest(inventory, coverage, kernel_sources, authenticated=False):
             "by_type": {kind: sum(row["type"] == kind for row in rows) for kind in KINDS},
             "not_bound": sum(row["binding_state"].startswith("NOT_BOUND") for row in rows),
             "bound": sum(row["binding_state"].startswith("BOUND") for row in rows),
+            "source_path_missing": sum(row["github_source"] is None for row in rows),
             "metadata_unavailable": unavailable,
             "revision_unavailable": sum(row["hub_revision"] is None for row in rows),
         },
