@@ -294,10 +294,10 @@ def _train_after_gates(decision: dict, config_path: Path) -> None:
         _upload_log_tail(HfApi(token=os.environ["HF_TOKEN"]), "final")
 
     if args["repo_id"]:
-        model.push_to_hub_merged(
-            args["repo_id"], tokenizer, save_method="merged_16bit", token=os.environ["HF_TOKEN"]
+        fail_closed(
+            "DIRECT_HUB_PUBLISH_DISABLED: export artifacts and use "
+            ".github/workflows/model-publish-gate.yml"
         )
-        print(f"pushed merged model to hub: {args['repo_id']}")
 
     print("wave complete")
 
