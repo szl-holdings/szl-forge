@@ -381,4 +381,3 @@ def test_cli_writes_only_explicit_review_output_and_returns_incomplete(tmp_path,
 def test_cli_missing_metadata_is_nonzero(tmp_path, monkeypatch):
     monkeypatch.setattr(estate, "collect_inventory", lambda token: ({"model": [item(sha=None)]}, coverage()))
     assert estate.main(["--output", str(tmp_path / "review.json")]) == 2
-
