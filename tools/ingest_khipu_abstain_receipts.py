@@ -49,6 +49,7 @@ KNOWN_PIPELINE_SHA256 = {
     "d23132854815bcede6fff2d8bda5d3d367752b0bd78c12018c993696920a28ae": "szl-forge main@cbde8af8 (#529 eval binds the challenger adapter bytes)",
     "023e9384e0b6981a025207fb84f0f9182f61ae7349eacac9711f200ef2cb5bea": "szl-forge frontier-v2/khipu-forge-selective-20261014 (R06 phase 2: additive combined_selective eval block)",
     "502fc0b307664b914d1d253faecd2a6165dec811270759e4d2589acf2657a933": "szl-forge feat/khipu-heldout-identity-20261014 (canonical JSON split and duplicate held-out guard)",
+    "0ad5514be30a195b37aca6eea751725ddb34fcd7b2d2ec063090013299f5ee39": "szl-forge szl/fix-card-listing-claims-20261109 (observed filenames only; exact legacy note migration)",
 }
 
 
