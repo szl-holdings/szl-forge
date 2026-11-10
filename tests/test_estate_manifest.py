@@ -156,6 +156,28 @@ def test_collector_requests_full_metadata_and_follows_pages(full_flag):
     assert any(url.startswith("/api/kernels?") for url in calls)
 
 
+def test_paginated_inventory_preserves_known_dataset_bindings():
+    def fetch(url, token):
+        assert "full=true" in url
+        if url.startswith("/api/datasets"):
+            if "cursor=" not in url:
+                return [item("model-eval-receipts")], (
+                    '<https://huggingface.co/api/datasets?author=SZLHOLDINGS&cursor=2>; rel="next"'
+                )
+            return [item("szl-lake")], ""
+        return [], ""
+
+    inventory, observed = estate.collect_inventory("", fetch)
+    result = estate.build_manifest(inventory, observed, {})
+    rows = {row["asset"]: row for row in result["rows"] if row["type"] == "dataset"}
+
+    assert observed["dataset"]["pages"] == 2
+    assert observed["dataset"]["state"] == "COMPLETE"
+    assert rows["SZLHOLDINGS/model-eval-receipts"]["binding_state"] == "BOUND_GENERATOR_KNOWN"
+    assert rows["SZLHOLDINGS/szl-lake"]["binding_state"] == "BOUND_GENERATOR_KNOWN"
+    assert result["inventory_state"] == "COMPLETE_OBSERVED_SCOPE"
+
+
 @pytest.mark.parametrize("link", [
     '<https://other.example/api/models?author=SZLHOLDINGS&full=true>; rel="next"',
     '<http://huggingface.co/api/models?author=SZLHOLDINGS&full=true>; rel="next"',
