@@ -18,7 +18,7 @@ Behavior:
 - Fails closed on missing HF_TOKEN, missing CUDA, or malformed examples. Those checks are reached only after the contract passes.
 - Writes `train-receipt.json` (pinned student, dataset, corpus sha256, hyperparameters, final loss)
   next to the checkpoints so runs stay evidence-carrying per doctrine.
-- Direct model publication is disabled. Omit `target_repo` (or set it to `null`) for local SFT training and omit `--repo-id` for local DPO training. Requests for direct publication fail before reading `HF_TOKEN` or importing the model stack, rather than after spending a complete training run.
+- Direct model publication is disabled. Set `"local_only": true` in the SFT config to keep `target_repo` available for the read-only target identity/family preflight while writing training artifacts locally. `local_only` must be a JSON boolean; it defaults to `false`. A config without `target_repo` also trains locally, but cannot pass the target-specific Hub preflight. Omit `--repo-id` for local DPO training. Direct publication requests fail before reading `HF_TOKEN` or importing the model stack, rather than after spending a complete training run.
 - Local checkpoints and `train-receipt.json` remain the training outputs. Export the artifacts and use `.github/workflows/model-publish-gate.yml` for a separately approved publication with held-out evaluation, BOM, signing, and conformance checks. A training receipt is not publication approval.
 - `--max-samples` is rejected. It cannot shrink the corpus after the floor is counted.
 

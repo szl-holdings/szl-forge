@@ -235,7 +235,7 @@ def test_satisfied_gates_do_not_load_a_model_or_write_the_hub(
     tmp_path, forbid_launch_imports, monkeypatch, capsys
 ):
     monkeypatch.delenv("HF_TOKEN", raising=False)
-    path = materialize(tmp_path, 32, extra={"target_repo": None})
+    path = materialize(tmp_path, 32, extra={"local_only": True})
     decision = CONTRACT.evaluate_path(path, expected_kind="sft")
     assert decision["ok"] is True
     assert decision["codes"] == []
@@ -450,6 +450,32 @@ class RevisionHub:
 
 def _consumed_reads(api):
     return [call for call in api.calls if call[0] in ("model_info", "dataset_info")]
+
+
+def test_local_only_preserves_target_identity_preflight(
+    tmp_path, forbid_launch_imports, monkeypatch, capsys
+):
+    path = materialize(tmp_path, 32, extra={"local_only": True})
+    api = RevisionHub()
+    monkeypatch.setattr(PREFLIGHT, "hf_api", lambda: api)
+    report = PREFLIGHT.run_preflight(str(path))
+    assert report["verdict"] == "PASS"
+    assert report["target"]["target_repo"] == "ExampleOrg/target"
+    assert ("repo_info", "ExampleOrg/target", None) in api.calls
+    assert api.writes == []
+    config = CONTRACT.evaluate_path(path)["config"]
+    assert config["target_repo"] == "ExampleOrg/target"
+    assert TRAIN._hyperparameters(config)["repo_id"] is None
+    monkeypatch.delenv("HF_TOKEN", raising=False)
+    with pytest.raises(SystemExit):
+        TRAIN.main(["--config", str(path)])
+    assert "HF_TOKEN" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("value", [None, "true", "false", 1, 0])
+def test_local_only_requires_a_boolean(value):
+    with pytest.raises(SystemExit):
+        TRAIN._hyperparameters({"out": "out", "local_only": value})
 
 
 def test_preflight_uses_configured_revisions_after_head_moves(
