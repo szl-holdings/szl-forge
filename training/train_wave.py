@@ -49,7 +49,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--grad-accum", type=int, default=None)
     parser.add_argument("--pack", action="store_true")
     parser.add_argument("--out", type=Path, default=None)
-    parser.add_argument("--repo-id", default=None)
+    parser.add_argument("--repo-id", default=None, help="Target cross-check only; set local_only=true in the config to train")
     parser.add_argument("--max-samples", type=int, default=None)
     parser.add_argument("--seed", type=int, default=None)
     parser.add_argument("--log-repo-id", default=None)
@@ -78,13 +78,16 @@ def _effective_training_values(config: dict) -> dict:
 
 def _hyperparameters(config: dict) -> dict:
     values = _effective_training_values(config)
+    local_only = config.get("local_only", False)
+    if not isinstance(local_only, bool):
+        fail_closed("LAUNCH_CONFIG_INVALID: local_only must be a boolean")
     out = config.get("out")
     if not isinstance(out, str) or not out.strip():
         fail_closed("LAUNCH_OUTPUT_MISSING: config out directory is required")
     values.update({
         "out": Path(out),
         "method": config.get("method"),
-        "repo_id": config.get("target_repo") or None,
+        "repo_id": None if local_only else config.get("target_repo") or None,
         "log_repo_id": config.get("log_repo_id") or None,
     })
     return values
@@ -140,8 +143,13 @@ def _train_after_gates(decision: dict, config_path: Path) -> None:
         fail_closed("LAUNCH_ADMISSION_MISMATCH: pinned corpus changed after the contract")
 
     args = _hyperparameters(decision["config"])
+    if args["repo_id"]:
+        fail_closed(
+            "DIRECT_HUB_PUBLISH_DISABLED: set local_only=true in the config for local training; "
+            "export artifacts and use .github/workflows/model-publish-gate.yml"
+        )
     if not os.environ.get("HF_TOKEN"):
-        fail_closed("HF_TOKEN is not set; dataset access and hub push require it.")
+        fail_closed("HF_TOKEN is not set; authenticated model and dataset access require it.")
 
     try:
         from unsloth import FastLanguageModel
@@ -294,10 +302,10 @@ def _train_after_gates(decision: dict, config_path: Path) -> None:
         _upload_log_tail(HfApi(token=os.environ["HF_TOKEN"]), "final")
 
     if args["repo_id"]:
-        model.push_to_hub_merged(
-            args["repo_id"], tokenizer, save_method="merged_16bit", token=os.environ["HF_TOKEN"]
+        fail_closed(
+            "DIRECT_HUB_PUBLISH_DISABLED: export artifacts and use "
+            ".github/workflows/model-publish-gate.yml"
         )
-        print(f"pushed merged model to hub: {args['repo_id']}")
 
     print("wave complete")
 
@@ -318,3 +326,4 @@ def main(argv: list[str] | None = None) -> None:
 
 if __name__ == "__main__":
     main()
+
