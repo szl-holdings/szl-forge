@@ -61,7 +61,6 @@ on:
 
 permissions:
   contents: read
-  id-token: write
 
 concurrency:
   group: omen-cards-identity-note
@@ -69,6 +68,9 @@ concurrency:
 
 jobs:
   cards:
+    permissions:
+      contents: read
+      id-token: write
     name: Identity-note diffs, then Hub PRs only when requested
     runs-on: ubuntu-latest
     timeout-minutes: 20
