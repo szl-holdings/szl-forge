@@ -18,8 +18,10 @@ Behavior:
 - Fails closed on missing HF_TOKEN, missing CUDA, or malformed examples. Those checks are reached only after the contract passes.
 - Writes `train-receipt.json` (pinned student, dataset, corpus sha256, hyperparameters, final loss)
   next to the checkpoints so runs stay evidence-carrying per doctrine.
-- A Hub push happens only after training, and only to `target_repo` in the config.
+- Direct model publication is disabled. Omit `target_repo` (or set it to `null`) for local SFT training and omit `--repo-id` for local DPO training. Requests for direct publication fail before reading `HF_TOKEN` or importing the model stack, rather than after spending a complete training run.
+- Local checkpoints and `train-receipt.json` remain the training outputs. Export the artifacts and use `.github/workflows/model-publish-gate.yml` for a separately approved publication with held-out evaluation, BOM, signing, and conformance checks. A training receipt is not publication approval.
 - `--max-samples` is rejected. It cannot shrink the corpus after the floor is counted.
 
 Datasets must provide `messages` or `conversations` fields compatible with the
 model's chat template.
+

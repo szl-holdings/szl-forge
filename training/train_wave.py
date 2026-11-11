@@ -49,7 +49,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--grad-accum", type=int, default=None)
     parser.add_argument("--pack", action="store_true")
     parser.add_argument("--out", type=Path, default=None)
-    parser.add_argument("--repo-id", default=None)
+    parser.add_argument("--repo-id", default=None, help="Direct publication is disabled; omit for local training")
     parser.add_argument("--max-samples", type=int, default=None)
     parser.add_argument("--seed", type=int, default=None)
     parser.add_argument("--log-repo-id", default=None)
@@ -140,8 +140,13 @@ def _train_after_gates(decision: dict, config_path: Path) -> None:
         fail_closed("LAUNCH_ADMISSION_MISMATCH: pinned corpus changed after the contract")
 
     args = _hyperparameters(decision["config"])
+    if args["repo_id"]:
+        fail_closed(
+            "DIRECT_HUB_PUBLISH_DISABLED: omit target_repo for local training; "
+            "export artifacts and use .github/workflows/model-publish-gate.yml"
+        )
     if not os.environ.get("HF_TOKEN"):
-        fail_closed("HF_TOKEN is not set; dataset access and hub push require it.")
+        fail_closed("HF_TOKEN is not set; authenticated model and dataset access require it.")
 
     try:
         from unsloth import FastLanguageModel
@@ -318,3 +323,4 @@ def main(argv: list[str] | None = None) -> None:
 
 if __name__ == "__main__":
     main()
+
