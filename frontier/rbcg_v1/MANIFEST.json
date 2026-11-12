@@ -67,6 +67,7 @@
   "reports/suite_py3.11.16.log": "c3cb701bac07e9c5fb4ad284c3171662e7592fafe45cb72f8c40486e81a540cc",
   "reports/suite_py3.12.16.log": "73390896a83754f5689db2f575e3f92aa06f639f565ee944f8b224a1ac3ac163",
   "reports/suite_py3.14.7.log": "efd876cfd31f164916bb5d1443bb62d92c68b61f4ae302c05a56777f441aa393",
+  "ruff.toml": "b116b34314f83ada85e19f76286d0d2a0182e36ca3d096a244f45709e821c6f0",
   "run_tests.py": "c3df426b5d17d28b0bebe1aed73015aaf0fdfd98b49a903b285374a43d925577",
   "tests/fixtures/kat_vectors.json": "e1a60dc8c30638b84eb9b09bdd0a7090e24b05ed57ba74e93a5582f63276736d",
   "tests/fixtures/merkle_vectors.json": "24f268c65864e88044bcfb15869ad00cd27676a66690b999eb55410d33a56683",
@@ -79,5 +80,5 @@
   "v0_ref/rbcg.py": "1a34ee7c8e73b19835dcb6a6ccc9fd4a954799c70cdf54f73757fb00870f6523",
   "v0_ref/rbcg_verify.py": "d76b39e30682c2b5ea413f6575bac4e3c5421103005e46112a9974ecf80bdffa"
  },
- "note": "sha256 of every file in rbcg_v1.zip (except this manifest); synthetic data only | 2026-11-12: LICENSE, NOTICE and README.md updated for RBCG-LIC-1 (Apache-2.0); hashes regenerated. Code files unchanged."
+ "note": "sha256 of every file in rbcg_v1.zip (except this manifest); synthetic data only | 2026-11-12: LICENSE, NOTICE and README.md updated for RBCG-LIC-1 (Apache-2.0); hashes regenerated. Code files unchanged. | 2026-11-12: ruff.toml added (per-file lint waiver for 3 findings in protocol-bound files); hashes regenerated. Code files unchanged."
 }
