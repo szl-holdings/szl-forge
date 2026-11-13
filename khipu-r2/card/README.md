@@ -51,6 +51,40 @@ Provider compatibility support [requested on 4 October 2026](https://huggingface
 - The adapter is the artifact of record for the figures; the merged checkpoint has no separate held-out qualification.
 - The recorded merge-time base reference is not an immutable identity. This experiment does not replace Khipu 1.5B.
 
+<!-- SZL-EVIDENCE-PASSPORT:v1:START -->
+## Evidence passport
+
+**Dated input observation: 2026-11-13T22:16:36.754444+00:00. Existing research limits remain in force.**
+
+[Inspect the immutable repository snapshot](https://huggingface.co/SZLHOLDINGS/KHIPU-R2/tree/3a698a0f9a96eb80c38b11a77e114f318f6e4820).
+
+| Observation | Scope |
+|---|---|
+| Repository revision | `3a698a0f9a96eb80c38b11a77e114f318f6e4820` |
+| Historical README retrieval | HTTP 200; not a readback of this proposed panel |
+| Recognized artifact filenames | 2 filename hints; not tensor verification |
+| Structured records retrieved | 4; bounded selection, not an exhaustive evidence census |
+
+Historical input README SHA-256: `641ef554d5261d4655db87ce194c5139ebfa89e0aafc20bd0d63a16e9d97b99d`.
+
+[Reviewed authoring baseline](https://github.com/szl-holdings/szl-forge/blob/2f1f7636acf4e77d87de34319c34507f9441dc71/khipu-r2/card/README.md). Existing publisher: `publish-khipu-card.yml`. Source changes still require normal review and exact deployed-byte readback.
+
+### Inspect the records
+
+| Record | Retrieved-byte SHA-256 |
+|---|---|
+| [training\_receipt.json](https://huggingface.co/SZLHOLDINGS/KHIPU-R2/raw/3a698a0f9a96eb80c38b11a77e114f318f6e4820/training_receipt.json) | `cd3b5f8b8f083314abd3bc3eee46aa2a6be8491571aa867860e5b4f85c4ed6ce` |
+| [eval\_measured.json](https://huggingface.co/SZLHOLDINGS/KHIPU-R2/raw/3a698a0f9a96eb80c38b11a77e114f318f6e4820/eval_measured.json) | `e573dfba96dafd8ab0baa65a41bcf6878488d7ea2677d674c0b702b2878b5371` |
+| [eval\_verified\_2026-09-13.json](https://huggingface.co/SZLHOLDINGS/KHIPU-R2/raw/3a698a0f9a96eb80c38b11a77e114f318f6e4820/eval_verified_2026-09-13.json) | `122a19192ef72868d91ca3bbc59a460626dcf64d951e9c2ad2633d7f0f6b38a0` |
+| [merge\_receipt.json](https://huggingface.co/SZLHOLDINGS/KHIPU-R2/raw/3a698a0f9a96eb80c38b11a77e114f318f6e4820/merge_receipt.json) | `cc1fe8b33e835fef22bea6605386b3135185ea223453caf0c6cf416c95340511` |
+
+### Interpretation
+
+Documentation and retrieved-record integrity only. No new training, model evaluation, weight-byte verification, independent signer identity, runtime qualification or promotion. Missing evidence is not a zero score.
+Training loss is not held-out performance. A copied receipt does not qualify a quantization or merged checkpoint. Existing negative results, license and technical disclosures remain authoritative.
+
+<!-- SZL-EVIDENCE-PASSPORT:v1:END -->
+
 <details>
 <summary>Technical details and evidence</summary>
 

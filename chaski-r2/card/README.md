@@ -50,6 +50,41 @@ Provider compatibility support [requested on 4 October 2026](https://huggingface
 - Publication and autonomy eligibility remain false; lab loading remains forbidden.
 - Record the loader class and 192/192 applied adapter tensors. The merged runtime needs its own byte-bound evaluation.
 
+<!-- SZL-EVIDENCE-PASSPORT:v1:START -->
+## Evidence passport
+
+**Dated input observation: 2026-11-13T22:17:00.237505+00:00. Existing research limits remain in force.**
+
+[Inspect the immutable repository snapshot](https://huggingface.co/SZLHOLDINGS/chaski-r2/tree/523b733e20095fda3b1426649348e9fb179098ae).
+
+| Observation | Scope |
+|---|---|
+| Repository revision | `523b733e20095fda3b1426649348e9fb179098ae` |
+| Historical README retrieval | HTTP 200; not a readback of this proposed panel |
+| Recognized artifact filenames | 3 filename hints; not tensor verification |
+| Structured records retrieved | 5; bounded selection, not an exhaustive evidence census |
+
+Historical input README SHA-256: `935571a2129071d5343c4c280799890e5ff506863f82178deb5bc36a6c1ee8c4`.
+
+[Reviewed authoring baseline](https://github.com/szl-holdings/szl-forge/blob/2f1f7636acf4e77d87de34319c34507f9441dc71/chaski-r2/card/README.md). Existing publisher: `publish-chaski-card.yml`. Source changes still require normal review and exact deployed-byte readback.
+
+### Inspect the records
+
+| Record | Retrieved-byte SHA-256 |
+|---|---|
+| [training\_receipt.json](https://huggingface.co/SZLHOLDINGS/chaski-r2/raw/523b733e20095fda3b1426649348e9fb179098ae/training_receipt.json) | `77b8b850dcb8c76e139b17c42e198c0ad91ec6b17c43649aa49444729f7a9b49` |
+| [training\_receipt.local.json](https://huggingface.co/SZLHOLDINGS/chaski-r2/raw/523b733e20095fda3b1426649348e9fb179098ae/training_receipt.local.json) | `9a69e1c501db01ba5d50c01fd23f7bc098d7af1ea237a3c84a50cd8fb8242a0c` |
+| [adapter-unsloth/training\_receipt.json](https://huggingface.co/SZLHOLDINGS/chaski-r2/raw/523b733e20095fda3b1426649348e9fb179098ae/adapter-unsloth/training_receipt.json) | `29981c3b1f8771e2bcc6b1f325222f7782b279500f1dcd3f22ce47cc8debce84` |
+| [eval\_merged\_measured.json](https://huggingface.co/SZLHOLDINGS/chaski-r2/raw/523b733e20095fda3b1426649348e9fb179098ae/eval_merged_measured.json) | `4351df066e5078ebf9a496a148173df7f3e6b1fa7d9bf7db7ace1afeea5eb866` |
+| [eval\_named\_n\_generate.json](https://huggingface.co/SZLHOLDINGS/chaski-r2/raw/523b733e20095fda3b1426649348e9fb179098ae/eval_named_n_generate.json) | `c688bbcdfa40508c148233e93e4676028d559d3492d3649d5435a154401f272e` |
+
+### Interpretation
+
+Documentation and retrieved-record integrity only. No new training, model evaluation, weight-byte verification, independent signer identity, runtime qualification or promotion. Missing evidence is not a zero score.
+Training loss is not held-out performance. A copied receipt does not qualify a quantization or merged checkpoint. Existing negative results, license and technical disclosures remain authoritative.
+
+<!-- SZL-EVIDENCE-PASSPORT:v1:END -->
+
 <details>
 <summary>Technical details and evidence</summary>
 
