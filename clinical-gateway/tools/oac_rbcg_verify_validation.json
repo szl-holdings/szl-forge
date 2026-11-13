@@ -1,0 +1,21 @@
+{
+  "deployment": "validation.jsonl",
+  "shift_tests": {
+    "alert_rate_fisher": {
+      "cal_rate": 0.5572916666666666,
+      "dep_rate": 0.5572916666666666,
+      "p": 1.0
+    },
+    "ks": {
+      "D": 0.0,
+      "p": 1.0
+    },
+    "mann_whitney": {
+      "U": 18432.0,
+      "p": 1.0
+    },
+    "p_bonferroni": 1.0,
+    "p_min": 1.0
+  },
+  "verdict": "ACCEPT"
+}

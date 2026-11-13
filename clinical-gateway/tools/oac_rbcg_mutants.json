@@ -1,0 +1,88 @@
+{
+  "all_caught": true,
+  "caught": 8,
+  "control_passed": true,
+  "mutants": [
+    {
+      "caught": null,
+      "control_passed": true,
+      "exit_code": 0,
+      "failing_cases": [],
+      "mutant": "M0_control_unmutated"
+    },
+    {
+      "caught": true,
+      "control_passed": null,
+      "exit_code": 3,
+      "failing_cases": [
+        "03_receipt_edited_without_reseal"
+      ],
+      "mutant": "M1_skip_receipt_digest"
+    },
+    {
+      "caught": true,
+      "control_passed": null,
+      "exit_code": 3,
+      "failing_cases": [
+        "04_model_json_tampered",
+        "05_kernel_tampered"
+      ],
+      "mutant": "M2_skip_model_file_hashes"
+    },
+    {
+      "caught": true,
+      "control_passed": null,
+      "exit_code": 3,
+      "failing_cases": [
+        "06_calibration_tampered_row_dropped"
+      ],
+      "mutant": "M3_skip_calibration_hash"
+    },
+    {
+      "caught": true,
+      "control_passed": null,
+      "exit_code": 3,
+      "failing_cases": [
+        "08_consistent_forgery_at_card_threshold_fails_delta"
+      ],
+      "mutant": "M4_delta_check_disabled"
+    },
+    {
+      "caught": true,
+      "control_passed": null,
+      "exit_code": 3,
+      "failing_cases": [
+        "09_consistent_forgery_with_relaxed_delta_fails_policy"
+      ],
+      "mutant": "M5_policy_delta_bound_disabled"
+    },
+    {
+      "caught": true,
+      "control_passed": null,
+      "exit_code": 3,
+      "failing_cases": [
+        "12_bonferroni_arithmetic_on_test_split"
+      ],
+      "mutant": "M6_no_bonferroni"
+    },
+    {
+      "caught": true,
+      "control_passed": null,
+      "exit_code": 3,
+      "failing_cases": [
+        "02_known_answer_certificate_pin"
+      ],
+      "mutant": "M7_binomial_cdf_off_by_one"
+    },
+    {
+      "caught": true,
+      "control_passed": null,
+      "exit_code": 3,
+      "failing_cases": [
+        "11_tiny_deployment"
+      ],
+      "mutant": "M8_min_deployment_rows_ignored"
+    }
+  ],
+  "total": 8
+}

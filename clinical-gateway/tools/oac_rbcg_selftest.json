@@ -1,0 +1,107 @@
+{
+  "cases": [
+    {
+      "case": "01_genuine_receipt_validation_as_deployment",
+      "expected": "ACCEPT",
+      "got": "ACCEPT",
+      "pass": true
+    },
+    {
+      "case": "02_known_answer_certificate_pin",
+      "expected": [
+        0.1375,
+        33,
+        3,
+        0.080812725765
+      ],
+      "got": [
+        0.1375,
+        33,
+        3,
+        0.080812725765
+      ],
+      "pass": true
+    },
+    {
+      "case": "03_receipt_edited_without_reseal",
+      "expected": "REFUSE:RECEIPT_DIGEST",
+      "got": "REFUSE:RECEIPT_DIGEST",
+      "pass": true
+    },
+    {
+      "case": "04_model_json_tampered",
+      "expected": "REFUSE:HASH_MISMATCH:model.json",
+      "got": "REFUSE:HASH_MISMATCH:model.json",
+      "pass": true
+    },
+    {
+      "case": "05_kernel_tampered",
+      "expected": "REFUSE:HASH_MISMATCH:oac_operational_health.py",
+      "got": "REFUSE:HASH_MISMATCH:oac_operational_health.py",
+      "pass": true
+    },
+    {
+      "case": "06_calibration_tampered_row_dropped",
+      "expected": "REFUSE:HASH_MISMATCH:calibration",
+      "got": "REFUSE:HASH_MISMATCH:calibration",
+      "pass": true
+    },
+    {
+      "case": "07_threshold_raised_resealed_certificate_stale",
+      "expected": "REFUSE:CERTIFICATE",
+      "got": "REFUSE:CERTIFICATE",
+      "pass": true
+    },
+    {
+      "case": "08_consistent_forgery_at_card_threshold_fails_delta",
+      "expected": "REFUSE:DELTA",
+      "got": "REFUSE:DELTA",
+      "pass": true
+    },
+    {
+      "case": "09_consistent_forgery_with_relaxed_delta_fails_policy",
+      "expected": "REFUSE:POLICY",
+      "got": "REFUSE:POLICY",
+      "pass": true
+    },
+    {
+      "case": "10_shifted_deployment",
+      "expected": "REFUSE:SHIFT",
+      "got": "REFUSE:SHIFT",
+      "pass": true
+    },
+    {
+      "case": "11_tiny_deployment",
+      "expected": "REFUSE:INSUFFICIENT_DEPLOYMENT",
+      "got": "REFUSE:INSUFFICIENT_DEPLOYMENT",
+      "pass": true
+    },
+    {
+      "case": "12_bonferroni_arithmetic_on_test_split",
+      "expected": 0.052258685954,
+      "got": 0.052258685954,
+      "pass": true
+    },
+    {
+      "case": "13_ks_known_answer",
+      "expected": [
+        1.0,
+        0.0
+      ],
+      "got": [
+        1.0,
+        0.0
+      ],
+      "pass": true
+    },
+    {
+      "case": "14_issue_is_deterministic",
+      "expected": true,
+      "got": true,
+      "pass": true
+    }
+  ],
+  "passed": 14,
+  "selftest_passed": true,
+  "total": 14
+}

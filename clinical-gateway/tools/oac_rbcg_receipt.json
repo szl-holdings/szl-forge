@@ -1,0 +1,54 @@
+{
+  "authority": "advisory_only_no_ack_release_or_clinical_authority",
+  "bound_files": {
+    "artifact_receipt.json": "c5b58aa1f85c67ec6ce64a5516cbe5d3e72f1063eed768b4bfe997f5a18c0a27",
+    "model.json": "f111b7fc65db561c80763b25e538366a19bed18526ca881915777487935d9557",
+    "oac_operational_health.py": "e2aa63991b94596a16d69a288510b4b10af88932e075c055d97d1dac4d9a930d"
+  },
+  "calibration": {
+    "name": "validation.jsonl",
+    "positives": 33,
+    "rows": 192,
+    "score_digest": "b78c1faae2252ae37378f1f47953ec90e5091a694e1fd628285ebd2f82ccf9a5",
+    "sha256": "4557220a73b7f8efbb59ab41d043785cebaff71eac4d9fef8c59800a4f8f5abf"
+  },
+  "certificate": {
+    "first_not_rejected": {
+      "lambda": 0.138,
+      "misses": 4,
+      "p_value": 0.1821257385796655
+    },
+    "misses": 3,
+    "n_pos": 33,
+    "p_value": 0.08081272576454977,
+    "steps": 277
+  },
+  "issuer_sha256_informational": "b011769cc46bec8bcf260c1d29c0e7b1f24f70f7978813d86a384b09238401e2",
+  "policy": {
+    "alert_rule": "alert iff operator_attention_score >= threshold",
+    "alpha": 0.2,
+    "delta": 0.1,
+    "grid": {
+      "points": 2001,
+      "start": 0.0,
+      "step": 0.0005
+    },
+    "procedure": "learn_then_test_fixed_sequence_ascending",
+    "pvalue": "binomial_exact",
+    "risk": "missed_alert_rate_fnr",
+    "shift": {
+      "correction": "bonferroni",
+      "level": 0.1,
+      "min_deployment_rows": 30,
+      "tests": [
+        "ks",
+        "mann_whitney",
+        "alert_rate_fisher"
+      ]
+    }
+  },
+  "receipt_sha256": "81f1bc400cd4fb0a8d3dfd622234fc41ec1faacd218eb58c94edded3821f479a",
+  "schema": "szl-oac/rbcg-receipt/v1",
+  "status": "research_only_synthetic_not_qualification",
+  "threshold": 0.1375
+}
