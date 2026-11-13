@@ -12,8 +12,8 @@
   "teacher_decoding": "copy_constrained (tokens restricted to the source context)",
   "corpus": "SZLHOLDINGS/governed-distill-4b-sft-v3-topup",
   "corpus_examples": 46,
-  "corpus_acceptance": "21.9% (46/210); the 20.7% pilot reference is unavailable for replay and is held out under the protocol",
-  "gate": "szl.distill.gate/v1 (fail-closed grounding gate, hardened through five review waves)"
+  "corpus_acceptance": "21.9% (46/210); extension of the 20.7% (31/150) pilot under the same seed, not an independent replication: the first 150 per-item verdicts are identical to the pilot, prompts 151-210 accepted 15/60",
+  "gate": "szl.distill.gate/v1 (fail-closed grounding gate), original version as at szl-forge ab0f1dd09adaf2196aedb550f8c2822cb42d39f6; the later gate revisions on main were not used for this corpus"
  },
  "training_receipt": {
   "model": "Qwen/Qwen3.5-0.8B",
