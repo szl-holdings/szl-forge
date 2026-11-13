@@ -11,5 +11,6 @@ and published verbatim:
 
 The scientific finding: training on grounded-by-construction output does not
 transfer grounding to free generation. The confabulation floor is a decoding
-property, confirmed from both directions (teacher: 1.3% prompt-assisted ->
-21.9% copy-constrained; student: 1/6, same as khipu-r3's 1/6).
+property, confirmed from both directions (The teacher-side 21.9% figure is corpus acceptance (46/210), not a
+probe-response score; the earlier 1.3% prompt-assisted reference is
+unavailable for replay and is excluded under the protocol.; student: 1/6, same as khipu-r3's 1/6).
