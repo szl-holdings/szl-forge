@@ -12,7 +12,7 @@
   "teacher_decoding": "copy_constrained (tokens restricted to the source context)",
   "corpus": "SZLHOLDINGS/governed-distill-4b-sft-v3-topup",
   "corpus_examples": 46,
-  "corpus_acceptance": "21.9% (46/210), replicating the 20.7% pilot",
+  "corpus_acceptance": "21.9% (46/210); the 20.7% pilot reference is unavailable for replay and is held out under the protocol",
   "gate": "szl.distill.gate/v1 (fail-closed grounding gate, hardened through five review waves)"
  },
  "training_receipt": {
