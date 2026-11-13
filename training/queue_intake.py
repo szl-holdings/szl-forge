@@ -136,9 +136,17 @@ def intake(queue: Any, observations: Any, *, config_dir: Path) -> dict:
             blockers.append("TARGET_BASE_LINEAGE_UNAVAILABLE")
         elif base.casefold() not in {x.casefold() for x in lineage}:
             blockers.append("SUPPLIED_BASE_DIFFERS_FROM_DECLARED_LINEAGE")
-        adapter = (model.get("adapter_config") or {}).get("data") or {}
-        if adapter.get("base_model_name_or_path") not in (None, base):
-            blockers.append("ADAPTER_BASE_MAPPING_REQUIRES_REVIEW")
+        adapter_config = model.get("adapter_config")
+        if adapter_config is not None:
+            require(type(adapter_config) is dict, "invalid adapter_config metadata")
+            adapter_data = adapter_config.get("data")
+            if adapter_data is not None:
+                require(type(adapter_data) is dict, "invalid adapter_config.data metadata")
+                adapter_base = adapter_data.get("base_model_name_or_path")
+                if adapter_base is not None:
+                    require(type(adapter_base) is str, "invalid adapter base metadata")
+                    if adapter_base.casefold() != base.casefold():
+                        blockers.append("ADAPTER_BASE_MAPPING_REQUIRES_REVIEW")
         files = model.get("files", [])
         require(type(files) is list and all(type(x) is str for x in files), "invalid artifact list")
         if any(x.endswith(".npz") for x in files):
