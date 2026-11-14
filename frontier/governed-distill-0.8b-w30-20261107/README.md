@@ -11,13 +11,13 @@ and published verbatim:
 
 The scientific finding: training on grounded-by-construction output does not
 transfer grounding to free generation. The confabulation floor is a decoding
-property. The teacher-side **21.9% figure is corpus acceptance (46/210) through
-the copy-constrained teacher gate, not a probe-response or abstention score**.
-The earlier **1.3% prompt-assisted reference is unavailable for replay from an
-accessible raw record and is excluded from quantitative claims under the
-protocol**. Student evaluation is measured separately: 1/6 abstained; the
-candidate remains **RESEARCH_CANDIDATE**, **NOT_PROMOTED**,
-**NOT_PUBLICATION_ELIGIBLE**, and **NOT for biological validation**.
+property. The teacher-side **21.9% figure is corpus acceptance (46/210), not a
+probe-response or abstention score**. The earlier **1.3% prompt-assisted
+reference is unavailable for replay and is excluded from quantitative claims
+under the protocol**. Student evaluation is measured separately: 1/6
+abstained; the candidate remains **RESEARCH_CANDIDATE**,
+**NOT_PROMOTED**, **NOT_PUBLICATION_ELIGIBLE**, and **NOT for biological
+validation**.
 
 The corrected measurement class and permanent hold are recorded in the pinned
 trace receipt:
