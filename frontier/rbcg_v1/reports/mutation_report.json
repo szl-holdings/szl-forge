@@ -1,0 +1,642 @@
+{
+ "baseline": {
+  "exit": 0,
+  "failing": [],
+  "seconds": 10.0,
+  "suite_line": "RBCG_SUITE ran=111 failures=0 errors=0 skipped=0"
+ },
+ "harness": "mutate_rbcg1.py",
+ "killed": 50,
+ "mutants": [
+  {
+   "description": "binomial CDF sums j < k instead of j <= k",
+   "exit": 1,
+   "file": "rbcg1.py",
+   "id": "M02_binom_tail_off_by_one",
+   "killed": true,
+   "killing_tests": [
+    "test_cdf_sf_match_exact_rationals (TestBinomial)"
+   ],
+   "seconds": 0.9,
+   "suite_line": "RBCG_SUITE ran=11 failures=0 errors=1 skipped=0"
+  },
+  {
+   "description": "fixed-sequence testing does not stop at the first non-rejection",
+   "exit": 1,
+   "file": "rbcg1.py",
+   "id": "M03_fixed_sequence_no_stop",
+   "killed": true,
+   "killing_tests": [
+    "test_fixed_sequence_stops_at_first_failure (TestLTT)"
+   ],
+   "seconds": 1.8,
+   "suite_line": "RBCG_SUITE ran=36 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "monitor alarms at M >= delta_s instead of M >= 1/delta_s",
+   "exit": 1,
+   "file": "rbcg1.py",
+   "id": "M05_alarm_at_delta",
+   "killed": true,
+   "killing_tests": [
+    "test_false_alarm_rate_under_exchangeability (TestMonitor)"
+   ],
+   "seconds": 2.3,
+   "suite_line": "RBCG_SUITE ran=41 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "DSSE PAE uses character length of payloadType",
+   "exit": 1,
+   "file": "rbcg1.py",
+   "id": "M06_pae_length_in_chars",
+   "killed": true,
+   "killing_tests": [
+    "test_pae_counts_utf8_bytes (TestCanonicalAndPAE)"
+   ],
+   "seconds": 1.6,
+   "suite_line": "RBCG_SUITE ran=19 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "ECDSA nonce independent of the message",
+   "exit": 1,
+   "file": "rbcg1.py",
+   "id": "M07_nonce_reuse",
+   "killed": true,
+   "killing_tests": [
+    "test_distinct_messages_distinct_nonces (TestECDSA)"
+   ],
+   "seconds": 1.6,
+   "suite_line": "RBCG_SUITE ran=22 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "Clopper-Pearson lower bound bisects on the wrong tail",
+   "exit": 1,
+   "file": "rbcg1.py",
+   "id": "M08_cp_lower_wrong_tail",
+   "killed": true,
+   "killing_tests": [
+    "test_cp_defining_property_and_order (TestBounds)"
+   ],
+   "seconds": 1.0,
+   "suite_line": "RBCG_SUITE ran=15 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "smoothed conformal p-value omits the new point from the tie count",
+   "exit": 1,
+   "file": "rbcg1.py",
+   "id": "M09_pvalue_excludes_self",
+   "killed": true,
+   "killing_tests": [
+    "test_alarm_latches (TestMonitor)"
+   ],
+   "seconds": 2.0,
+   "suite_line": "RBCG_SUITE ran=40 failures=0 errors=1 skipped=0"
+  },
+  {
+   "description": "ECDSA verify accepts r or s outside [1, n-1]",
+   "exit": 1,
+   "file": "rbcg1.py",
+   "id": "M10_ecdsa_no_range_check",
+   "killed": true,
+   "killing_tests": [
+    "test_verify_rejects_forgeries_and_out_of_range (TestECDSA)"
+   ],
+   "seconds": 1.7,
+   "suite_line": "RBCG_SUITE ran=29 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "canonical JSON does not sort keys",
+   "exit": 1,
+   "file": "rbcg1.py",
+   "id": "M11_canonical_unsorted",
+   "killed": true,
+   "killing_tests": [
+    "test_canonical_json (TestCanonicalAndPAE)"
+   ],
+   "seconds": 1.7,
+   "suite_line": "RBCG_SUITE ran=18 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "DER decoder accepts non-minimal INTEGERs",
+   "exit": 1,
+   "file": "rbcg1.py",
+   "id": "M12_der_nonminimal_accepted",
+   "killed": true,
+   "killing_tests": [
+    "test_der_strictness (TestECDSA)"
+   ],
+   "seconds": 1.7,
+   "suite_line": "RBCG_SUITE ran=21 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "fixed-sequence rejects only when p < delta",
+   "exit": 1,
+   "file": "rbcg1.py",
+   "id": "M13_fixed_sequence_strict_lt",
+   "killed": true,
+   "killing_tests": [
+    "test_fixed_sequence_rejects_at_equality (TestLTT)"
+   ],
+   "seconds": 1.7,
+   "suite_line": "RBCG_SUITE ran=35 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "selector ignores the tau_ood floor",
+   "exit": 1,
+   "file": "rbcg1.py",
+   "id": "M14_ood_floor_ignored",
+   "killed": true,
+   "killing_tests": [
+    "test_table_matches_direct_definition (TestLTT)"
+   ],
+   "seconds": 1.9,
+   "suite_line": "RBCG_SUITE ran=38 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "issuer fast path ignores the OOD floor",
+   "exit": 1,
+   "file": "rbcg1.py",
+   "id": "M14b_fast_path_ood_floor_ignored",
+   "killed": true,
+   "killing_tests": [
+    "test_table_matches_direct_definition (TestLTT)"
+   ],
+   "seconds": 1.8,
+   "suite_line": "RBCG_SUITE ran=38 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "monitor tie-break seeds not bound to the calibration rows",
+   "exit": 1,
+   "file": "rbcg1.py",
+   "id": "M15_theta_seed_unbound",
+   "killed": true,
+   "killing_tests": [
+    "test_theta_range_and_determinism (TestMonitor)"
+   ],
+   "seconds": 3.1,
+   "suite_line": "RBCG_SUITE ran=47 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "power-martingale update uses p instead of log p",
+   "exit": 1,
+   "file": "rbcg1.py",
+   "id": "M16_martingale_bets_on_p",
+   "killed": true,
+   "killing_tests": [
+    "test_alarm_latches (TestMonitor)"
+   ],
+   "seconds": 2.0,
+   "suite_line": "RBCG_SUITE ran=40 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "LTT betting wealth uses (x - m): bets on the wrong side",
+   "exit": 1,
+   "file": "rbcg1.py",
+   "id": "N01_betting_wealth_sign",
+   "killed": true,
+   "killing_tests": [
+    "test_capital_stays_positive_at_bound (TestBetting)"
+   ],
+   "seconds": 0.6,
+   "suite_line": "RBCG_SUITE ran=6 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "label audit flags at K > 1 instead of the Ville threshold 1/delta",
+   "exit": 1,
+   "file": "rbcg1.py",
+   "id": "N02_missing_ville_threshold",
+   "killed": true,
+   "killing_tests": [
+    "test_false_flag_rate_under_null (TestAudit)"
+   ],
+   "seconds": 0.1,
+   "suite_line": "RBCG_SUITE ran=2 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "confidence-sequence threshold 1/(2 delta): CS too narrow",
+   "exit": 1,
+   "file": "rbcg1.py",
+   "id": "N03_cs_width_bug",
+   "killed": true,
+   "killing_tests": [
+    "test_hand_example_and_threshold (TestAudit)"
+   ],
+   "seconds": 0.3,
+   "suite_line": "RBCG_SUITE ran=3 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "CS lower bound truncates bets with c/(1-m) instead of c/m",
+   "exit": 1,
+   "file": "rbcg1.py",
+   "id": "N03b_cs_cap_wrong_side",
+   "killed": true,
+   "killing_tests": [
+    "test_lower_bound_matches_independent_grid (TestAudit)"
+   ],
+   "seconds": 0.6,
+   "suite_line": "RBCG_SUITE ran=4 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "Merkle leaf/node domain-separation prefixes swapped",
+   "exit": 1,
+   "file": "rbcg1_log.py",
+   "id": "N04_merkle_node_prefix_swap",
+   "killed": true,
+   "killing_tests": [
+    "test_consistency_probes (TestPublishedVectors)"
+   ],
+   "seconds": 3.2,
+   "suite_line": "RBCG_SUITE ran=56 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "inclusion-path generation splits at m <= k (off by one)",
+   "exit": 1,
+   "file": "rbcg1_log.py",
+   "id": "N05_inclusion_path_off_by_one",
+   "killed": true,
+   "killing_tests": [
+    "test_our_generated_proofs_match_published_happy_paths (TestPublishedVectors)"
+   ],
+   "seconds": 3.3,
+   "suite_line": "RBCG_SUITE ran=60 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "inclusion verification starts sn at tree_size (off by one)",
+   "exit": 1,
+   "file": "rbcg1_log.py",
+   "id": "N05b_inclusion_verify_off_by_one",
+   "killed": true,
+   "killing_tests": [
+    "test_inclusion_probes (TestPublishedVectors)"
+   ],
+   "seconds": 3.2,
+   "suite_line": "RBCG_SUITE ran=58 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "verifier does not check the STH signature",
+   "exit": 1,
+   "file": "rbcg1_verify.py",
+   "id": "N06_sth_signature_not_checked",
+   "killed": true,
+   "killing_tests": [
+    "test_sth_signed_by_other_log_key (TestBadSignature)"
+   ],
+   "seconds": 4.2,
+   "suite_line": "RBCG_SUITE ran=75 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "verifier does not check STH consistency",
+   "exit": 1,
+   "file": "rbcg1_verify.py",
+   "id": "N06b_sth_consistency_not_checked",
+   "killed": true,
+   "killing_tests": [
+    "test_inconsistent_sizes_and_tampered_consistency (TestAnchor)"
+   ],
+   "seconds": 3.9,
+   "suite_line": "RBCG_SUITE ran=71 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "LTT bets truncated at c/m (capital can turn negative)",
+   "exit": 1,
+   "file": "rbcg1.py",
+   "id": "N07_ltt_cap_wrong_side",
+   "killed": true,
+   "killing_tests": [
+    "test_capital_stays_positive_at_bound (TestBetting)"
+   ],
+   "seconds": 0.6,
+   "suite_line": "RBCG_SUITE ran=6 failures=0 errors=1 skipped=0"
+  },
+  {
+   "description": "Bentkus term uses floor instead of ceil",
+   "exit": 1,
+   "file": "rbcg1.py",
+   "id": "N08_hb_floor_not_ceil",
+   "killed": true,
+   "killing_tests": [
+    "test_bentkus_term_binds_with_exact_ceiling (TestHB)"
+   ],
+   "seconds": 1.7,
+   "suite_line": "RBCG_SUITE ran=30 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "issuer monitor ignores the secondary CTM",
+   "exit": 1,
+   "file": "rbcg1.py",
+   "id": "N09_secondary_alarm_ignored",
+   "killed": true,
+   "killing_tests": [
+    "test_primary_detects_ood_shift_and_secondary_confidence_shift (TestMonitor)"
+   ],
+   "seconds": 3.2,
+   "suite_line": "RBCG_SUITE ran=44 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "linearized loss sign error",
+   "exit": 1,
+   "file": "rbcg1.py",
+   "id": "N10_loss_sign",
+   "killed": true,
+   "killing_tests": [
+    "test_hb_is_conservative_here (TestHB)"
+   ],
+   "seconds": 1.7,
+   "suite_line": "RBCG_SUITE ran=32 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "bet size uses X_t (not predictable)",
+   "exit": 1,
+   "file": "rbcg1.py",
+   "id": "N11_prpl_not_predictable",
+   "killed": true,
+   "killing_tests": [
+    "test_prpl_matches_independent_restatement (TestBetting)"
+   ],
+   "seconds": 0.6,
+   "suite_line": "RBCG_SUITE ran=9 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "primary OOD-count score counts non-OOD rows",
+   "exit": 1,
+   "file": "rbcg1.py",
+   "id": "N12_primary_score_wrong",
+   "killed": true,
+   "killing_tests": [
+    "test_primary_detects_ood_shift_and_secondary_confidence_shift (TestMonitor)"
+   ],
+   "seconds": 3.1,
+   "suite_line": "RBCG_SUITE ran=44 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "verifier ignores a monitor alarm",
+   "exit": 1,
+   "file": "rbcg1_verify.py",
+   "id": "V01_verifier_ignores_monitor",
+   "killed": true,
+   "killing_tests": [
+    "test_precedence_follows_first_event (TestShiftAndViolation)"
+   ],
+   "seconds": 9.4,
+   "suite_line": "RBCG_SUITE ran=103 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "calibration-rows hash not checked",
+   "exit": 1,
+   "file": "rbcg1_verify.py",
+   "id": "V02_cal_hash_not_checked",
+   "killed": true,
+   "killing_tests": [
+    "test_calibration_rows_changed (TestHashMismatch)"
+   ],
+   "seconds": 7.7,
+   "suite_line": "RBCG_SUITE ran=88 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "ECDSA signature check skipped",
+   "exit": 1,
+   "file": "rbcg1_verify.py",
+   "id": "V03_signature_check_skipped",
+   "killed": true,
+   "killing_tests": [
+    "test_tampered_signature (TestBadSignature)"
+   ],
+   "seconds": 3.9,
+   "suite_line": "RBCG_SUITE ran=76 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "claimed alpha not compared with the policy",
+   "exit": 1,
+   "file": "rbcg1_verify.py",
+   "id": "V04_alpha_not_compared",
+   "killed": true,
+   "killing_tests": [
+    "test_alpha_delta_and_policy (TestClaim)"
+   ],
+   "seconds": 4.9,
+   "suite_line": "RBCG_SUITE ran=82 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "label audit uses the point estimate",
+   "exit": 1,
+   "file": "rbcg1_verify.py",
+   "id": "V05_audit_point_estimate",
+   "killed": true,
+   "killing_tests": [
+    "test_shift_alarm_secondary (TestShiftAndViolation)"
+   ],
+   "seconds": 9.8,
+   "suite_line": "RBCG_SUITE ran=105 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "monitor hash chain not checked",
+   "exit": 1,
+   "file": "rbcg1_verify.py",
+   "id": "V06_chain_prev_not_checked",
+   "killed": true,
+   "killing_tests": [
+    "test_prev_link_alone_is_checked (TestChain)"
+   ],
+   "seconds": 4.8,
+   "suite_line": "RBCG_SUITE ran=80 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "schema check tolerates extra fields",
+   "exit": 1,
+   "file": "rbcg1_verify.py",
+   "id": "V07_extra_fields_accepted",
+   "killed": true,
+   "killing_tests": [
+    "test_anchor_and_sth_schema (TestSchema)"
+   ],
+   "seconds": 8.8,
+   "suite_line": "RBCG_SUITE ran=97 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "strict loader accepts floats, NaN and Infinity",
+   "exit": 1,
+   "file": "rbcg1_verify.py",
+   "id": "V08_floats_and_nan_accepted",
+   "killed": true,
+   "killing_tests": [
+    "test_loads_strict (TestSchema)"
+   ],
+   "seconds": 9.0,
+   "suite_line": "RBCG_SUITE ran=99 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "deployment-after-issuance commitment not checked",
+   "exit": 1,
+   "file": "rbcg1_verify.py",
+   "id": "V09_order_not_checked",
+   "killed": true,
+   "killing_tests": [
+    "test_order_commitment (TestOrderLeakage)"
+   ],
+   "seconds": 8.4,
+   "suite_line": "RBCG_SUITE ran=93 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "recomputed tau* not compared",
+   "exit": 1,
+   "file": "rbcg1_verify.py",
+   "id": "V10_tau_not_compared",
+   "killed": true,
+   "killing_tests": [
+    "test_lied_tau_star (TestRecompute)"
+   ],
+   "seconds": 8.6,
+   "suite_line": "RBCG_SUITE ran=95 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "verifier alarm at delta instead of 1/delta",
+   "exit": 1,
+   "file": "rbcg1_verify.py",
+   "id": "V11_verifier_alarm_at_delta",
+   "killed": true,
+   "killing_tests": [
+    "test_guarantee_not_included (TestAnchor)"
+   ],
+   "seconds": 3.5,
+   "suite_line": "RBCG_SUITE ran=68 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "calibration/deployment overlap not checked",
+   "exit": 1,
+   "file": "rbcg1_verify.py",
+   "id": "V12_leakage_not_checked",
+   "killed": true,
+   "killing_tests": [
+    "test_leakage (TestOrderLeakage)"
+   ],
+   "seconds": 8.3,
+   "suite_line": "RBCG_SUITE ran=92 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "monitor batch digest not compared",
+   "exit": 1,
+   "file": "rbcg1_verify.py",
+   "id": "V13_batch_hash_not_checked",
+   "killed": true,
+   "killing_tests": [
+    "test_deployment_row_changed (TestHashMismatch)"
+   ],
+   "seconds": 8.2,
+   "suite_line": "RBCG_SUITE ran=90 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "claim text not compared",
+   "exit": 1,
+   "file": "rbcg1_verify.py",
+   "id": "V14_claim_text_not_checked",
+   "killed": true,
+   "killing_tests": [
+    "test_claim_grid_procedure_monitor_and_flags (TestClaim)"
+   ],
+   "seconds": 5.1,
+   "suite_line": "RBCG_SUITE ran=83 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "unexpected exceptions escape",
+   "exit": 1,
+   "file": "rbcg1_verify.py",
+   "id": "V15_exceptions_escape",
+   "killed": true,
+   "killing_tests": [
+    "test_internal_errors_refuse (TestFailClosed)"
+   ],
+   "seconds": 8.0,
+   "suite_line": "RBCG_SUITE ran=86 failures=0 errors=1 skipped=0"
+  },
+  {
+   "description": "monitor head logged before the issuance STH is accepted",
+   "exit": 1,
+   "file": "rbcg1_verify.py",
+   "id": "V16_head_order_not_checked",
+   "killed": true,
+   "killing_tests": [
+    "test_head_logged_before_issuance_sth (TestAnchor)"
+   ],
+   "seconds": 3.8,
+   "suite_line": "RBCG_SUITE ran=69 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "STH log id not compared with the guarantee's log",
+   "exit": 1,
+   "file": "rbcg1_verify.py",
+   "id": "V17_log_id_not_checked",
+   "killed": true,
+   "killing_tests": [
+    "test_wrong_log (TestAnchor)"
+   ],
+   "seconds": 4.1,
+   "suite_line": "RBCG_SUITE ran=73 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "guarantee inclusion proof not checked",
+   "exit": 1,
+   "file": "rbcg1_verify.py",
+   "id": "V18_guarantee_inclusion_not_checked",
+   "killed": true,
+   "killing_tests": [
+    "test_guarantee_not_included (TestAnchor)"
+   ],
+   "seconds": 3.5,
+   "suite_line": "RBCG_SUITE ran=68 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "pre-registered protocol binding not checked",
+   "exit": 1,
+   "file": "rbcg1_verify.py",
+   "id": "V19_protocol_binding_not_checked",
+   "killed": true,
+   "killing_tests": [
+    "test_code_binding_and_protocol_pins (TestHashMismatch)"
+   ],
+   "seconds": 8.1,
+   "suite_line": "RBCG_SUITE ran=89 failures=1 errors=0 skipped=0"
+  },
+  {
+   "description": "monitor-chain head inclusion not checked",
+   "exit": 1,
+   "file": "rbcg1_verify.py",
+   "id": "V20_head_inclusion_not_checked",
+   "killed": true,
+   "killing_tests": [
+    "test_head_not_included (TestAnchor)"
+   ],
+   "seconds": 3.7,
+   "suite_line": "RBCG_SUITE ran=70 failures=1 errors=0 skipped=0"
+  }
+ ],
+ "n_mutants": 50,
+ "python": "3.10.12",
+ "required_killed": {
+  "N01_betting_wealth_sign": true,
+  "N02_missing_ville_threshold": true,
+  "N03_cs_width_bug": true,
+  "N04_merkle_node_prefix_swap": true,
+  "N05_inclusion_path_off_by_one": true,
+  "N06_sth_signature_not_checked": true
+ },
+ "required_new_mutants": [
+  "N01_betting_wealth_sign",
+  "N02_missing_ville_threshold",
+  "N03_cs_width_bug",
+  "N04_merkle_node_prefix_swap",
+  "N05_inclusion_path_off_by_one",
+  "N06_sth_signature_not_checked"
+ ],
+ "sanity_noop": {
+  "description": "comment-only change; must SURVIVE",
+  "exit": 0,
+  "file": "rbcg1.py",
+  "id": "S00_noop_comment",
+  "killed": false,
+  "killing_tests": [],
+  "seconds": 10.1,
+  "suite_line": "RBCG_SUITE ran=111 failures=0 errors=0 skipped=0"
+ },
+ "total": 50,
+ "verdict": "ALL_KILLED"
+}
