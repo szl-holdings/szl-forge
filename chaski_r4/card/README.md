@@ -129,6 +129,38 @@ A public bf16 LoRA research artifact with a bounded named-N evaluation record.
 - The provenance of earlier receipts A and B remains unresolved; their results are not interchangeable with receipt C.
 - Publication and autonomy eligibility remain false. Pin the exact base and adapter runtime separately before any qualified use.
 
+<!-- SZL-EVIDENCE-PASSPORT:v1:START -->
+## Evidence passport
+
+**Dated input observation: 2026-11-13T22:17:44.177252+00:00. Existing research limits remain in force.**
+
+[Inspect the immutable repository snapshot](https://huggingface.co/SZLHOLDINGS/chaski-r4/tree/0f97176df71cdb8a617590e717683c6a4f59d8fb).
+
+| Observation | Scope |
+|---|---|
+| Repository revision | `0f97176df71cdb8a617590e717683c6a4f59d8fb` |
+| Historical README retrieval | HTTP 200; not a readback of this proposed panel |
+| Recognized artifact filenames | 1 filename hints; not tensor verification |
+| Structured records retrieved | 2; bounded selection, not an exhaustive evidence census |
+
+Historical input README SHA-256: `acdc8ae7f7c274baa5e97cf9feef83092a760fcf8bef2f78457a3809f3025e71`.
+
+[Reviewed authoring baseline](https://github.com/szl-holdings/szl-forge/blob/2f1f7636acf4e77d87de34319c34507f9441dc71/chaski_r4/card/README.md). Existing publisher: `publish-chaski-card.yml`. Source changes still require normal review and exact deployed-byte readback.
+
+### Inspect the records
+
+| Record | Retrieved-byte SHA-256 |
+|---|---|
+| [training\_receipt.json](https://huggingface.co/SZLHOLDINGS/chaski-r4/raw/0f97176df71cdb8a617590e717683c6a4f59d8fb/training_receipt.json) | `fea82085c6bcc2c8f35ee805169207b03e2c0347ef902c85f505cff3168c1af2` |
+| [evidence/canonical\_rerun\_20261001\_140615.receipt.json](https://huggingface.co/SZLHOLDINGS/chaski-r4/raw/0f97176df71cdb8a617590e717683c6a4f59d8fb/evidence/canonical_rerun_20261001_140615.receipt.json) | `5ae3de970014726f190dfe8e4d5b35e667fd737b1be29e27205c25d143bdf403` |
+
+### Interpretation
+
+Documentation and retrieved-record integrity only. No new training, model evaluation, weight-byte verification, independent signer identity, runtime qualification or promotion. Missing evidence is not a zero score.
+Training loss is not held-out performance. A copied receipt does not qualify a quantization or merged checkpoint. Existing negative results, license and technical disclosures remain authoritative.
+
+<!-- SZL-EVIDENCE-PASSPORT:v1:END -->
+
 <details>
 <summary>Technical details and evidence</summary>
 
