@@ -41,6 +41,41 @@ Provider compatibility support [requested on 4 October 2026](https://huggingface
 - Small owner-run synthetic contract counts do not establish broad capability or a refusal guarantee.
 - Plans require external validation and authorization. No deployed endpoint or autonomous execution is established by this card.
 
+<!-- SZL-EVIDENCE-PASSPORT:v1:START -->
+## Evidence passport
+
+**Dated input observation: 2026-11-13T22:16:22.938358+00:00. Existing research limits remain in force.**
+
+[Inspect the immutable repository snapshot](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B/tree/7328262402e05b10bffa16cf6446da504b05f666).
+
+| Observation | Scope |
+|---|---|
+| Repository revision | `7328262402e05b10bffa16cf6446da504b05f666` |
+| Historical README retrieval | HTTP 200; not a readback of this proposed panel |
+| Recognized artifact filenames | 2 filename hints; not tensor verification |
+| Structured records retrieved | 5; bounded selection, not an exhaustive evidence census |
+
+Historical input README SHA-256: `5de681bdad97d4a87ac4b1cd6ccc184acfa296dc85adf0b6b49b186d372efd50`.
+
+[Reviewed authoring baseline](https://github.com/szl-holdings/szl-forge/blob/2f1f7636acf4e77d87de34319c34507f9441dc71/khipu/card/README.md). Existing publisher: `publish-khipu-card.yml`. Source changes still require normal review and exact deployed-byte readback.
+
+### Inspect the records
+
+| Record | Retrieved-byte SHA-256 |
+|---|---|
+| [training\_receipt.signed.json](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B/raw/7328262402e05b10bffa16cf6446da504b05f666/training_receipt.signed.json) | `7af76dd4f26dcd122012bfd1e47a0f55481a952b86aee28956cf7cfaaf59bd04` |
+| [eval\_receipt.signed.json](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B/raw/7328262402e05b10bffa16cf6446da504b05f666/eval_receipt.signed.json) | `32edd2d862fd5abac390bee3d30950f4718afedc41f4da4e24f3d0dfe67f8450` |
+| [repro/agent-run-2026-07-16/eval-navigate-0.json](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B/raw/7328262402e05b10bffa16cf6446da504b05f666/repro/agent-run-2026-07-16/eval-navigate-0.json) | `e893bc31b27e5841cb0c66f456c03ee30b3256a1d359edff395fec8ac482eebc` |
+| [publication.json](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B/raw/7328262402e05b10bffa16cf6446da504b05f666/publication.json) | `5d531732f4e550bf14a9166a80440ccb09e3ed08ba47446859c339740f1f3679` |
+| [repro/MANIFEST.json](https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B/raw/7328262402e05b10bffa16cf6446da504b05f666/repro/MANIFEST.json) | `83337174d605ac6ba10eab985ea5a25d94994231d945bf5b500fb289898c55a4` |
+
+### Interpretation
+
+Documentation and retrieved-record integrity only. No new training, model evaluation, weight-byte verification, independent signer identity, runtime qualification or promotion. Missing evidence is not a zero score.
+Training loss is not held-out performance. A copied receipt does not qualify a quantization or merged checkpoint. Existing negative results, license and technical disclosures remain authoritative.
+
+<!-- SZL-EVIDENCE-PASSPORT:v1:END -->
+
 <details>
 <summary>Technical details and evidence</summary>
 
@@ -487,3 +522,17 @@ verifiable from the committed files; runtime deployment status is a separate cla
 <!-- SZL-NATIVE-ARTWORK:v1 -->
 SZL Orbit artwork: [source](https://github.com/szl-holdings/szl-brand/blob/27d12e77fc0f9f1a0e5fae8b34adf2380d51d070/kit/logos/orbit-v2/suite/szl-icon-32.svg) · [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Software and artifact licensing remain declared above.
 <!-- /SZL-NATIVE-ARTWORK:v1 -->
+
+<!-- SZL-CARD-RESTORATION:2026-11-14:v1 -->
+## Publication restoration note (2026-11-14)
+
+On 2026-11-14, an off-route automated job stamped the public SZLHOLDINGS Hub
+model cards with a marketing template that replaced curated card bytes,
+including per-model claims this artifact has not earned. This source card in
+szl-holdings/szl-forge is the canonical reviewed card; that job did not alter
+it. This note marks the card so the closed-profile publisher republishes the
+reviewed bytes, banner, and source binding to the Hub with exact readback.
+The incident and the per-model evidence manifest are documented in szl-forge
+under `docs/model-card-overhaul-20261114/`. No qualification, evaluation,
+weight, adapter, config, visibility, hardware, or runtime state changed by
+this note.

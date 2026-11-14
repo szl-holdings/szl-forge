@@ -129,6 +129,38 @@ A public bf16 LoRA research artifact with a bounded named-N evaluation record.
 - The provenance of earlier receipts A and B remains unresolved; their results are not interchangeable with receipt C.
 - Publication and autonomy eligibility remain false. Pin the exact base and adapter runtime separately before any qualified use.
 
+<!-- SZL-EVIDENCE-PASSPORT:v1:START -->
+## Evidence passport
+
+**Dated input observation: 2026-11-13T22:17:44.177252+00:00. Existing research limits remain in force.**
+
+[Inspect the immutable repository snapshot](https://huggingface.co/SZLHOLDINGS/chaski-r4/tree/0f97176df71cdb8a617590e717683c6a4f59d8fb).
+
+| Observation | Scope |
+|---|---|
+| Repository revision | `0f97176df71cdb8a617590e717683c6a4f59d8fb` |
+| Historical README retrieval | HTTP 200; not a readback of this proposed panel |
+| Recognized artifact filenames | 1 filename hints; not tensor verification |
+| Structured records retrieved | 2; bounded selection, not an exhaustive evidence census |
+
+Historical input README SHA-256: `acdc8ae7f7c274baa5e97cf9feef83092a760fcf8bef2f78457a3809f3025e71`.
+
+[Reviewed authoring baseline](https://github.com/szl-holdings/szl-forge/blob/2f1f7636acf4e77d87de34319c34507f9441dc71/chaski_r4/card/README.md). Existing publisher: `publish-chaski-card.yml`. Source changes still require normal review and exact deployed-byte readback.
+
+### Inspect the records
+
+| Record | Retrieved-byte SHA-256 |
+|---|---|
+| [training\_receipt.json](https://huggingface.co/SZLHOLDINGS/chaski-r4/raw/0f97176df71cdb8a617590e717683c6a4f59d8fb/training_receipt.json) | `fea82085c6bcc2c8f35ee805169207b03e2c0347ef902c85f505cff3168c1af2` |
+| [evidence/canonical\_rerun\_20261001\_140615.receipt.json](https://huggingface.co/SZLHOLDINGS/chaski-r4/raw/0f97176df71cdb8a617590e717683c6a4f59d8fb/evidence/canonical_rerun_20261001_140615.receipt.json) | `5ae3de970014726f190dfe8e4d5b35e667fd737b1be29e27205c25d143bdf403` |
+
+### Interpretation
+
+Documentation and retrieved-record integrity only. No new training, model evaluation, weight-byte verification, independent signer identity, runtime qualification or promotion. Missing evidence is not a zero score.
+Training loss is not held-out performance. A copied receipt does not qualify a quantization or merged checkpoint. Existing negative results, license and technical disclosures remain authoritative.
+
+<!-- SZL-EVIDENCE-PASSPORT:v1:END -->
+
 <details>
 <summary>Technical details and evidence</summary>
 
@@ -228,3 +260,17 @@ Doctrine v11 LOCKED. Λ = Conjecture 1, advisory, never a theorem.
 <!-- SZL-NATIVE-ARTWORK:v1 -->
 SZL Orbit artwork: [source](https://github.com/szl-holdings/szl-brand/blob/27d12e77fc0f9f1a0e5fae8b34adf2380d51d070/kit/logos/orbit-v2/suite/szl-icon-32.svg) · [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Software and artifact licensing remain declared above.
 <!-- /SZL-NATIVE-ARTWORK:v1 -->
+
+<!-- SZL-CARD-RESTORATION:2026-11-14:v1 -->
+## Publication restoration note (2026-11-14)
+
+On 2026-11-14, an off-route automated job stamped the public SZLHOLDINGS Hub
+model cards with a marketing template that replaced curated card bytes,
+including per-model claims this artifact has not earned. This source card in
+szl-holdings/szl-forge is the canonical reviewed card; that job did not alter
+it. This note marks the card so the closed-profile publisher republishes the
+reviewed bytes, banner, and source binding to the Hub with exact readback.
+The incident and the per-model evidence manifest are documented in szl-forge
+under `docs/model-card-overhaul-20261114/`. No qualification, evaluation,
+weight, adapter, config, visibility, hardware, or runtime state changed by
+this note.
