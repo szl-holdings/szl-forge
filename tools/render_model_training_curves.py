@@ -6,8 +6,10 @@ import argparse
 import hashlib
 import json
 import math
+import os
 from pathlib import Path
 import re
+import stat
 
 from tools.model_card_evidence_passport import MODEL_ID, SHA40, SHA64, strict_json
 
@@ -62,15 +64,78 @@ def projection_digest(curve: dict) -> str:
     return hashlib.sha256(json.dumps(pairs, separators=(',', ':')).encode()).hexdigest()
 
 
+def verify_raw_evidence(curves: object, evidence_dir: Path) -> list[dict]:
+    """Bind every projected point to bounded, unexecuted, digest-named raw JSON.
+
+    The expected digests remain reviewed input, not an independent trust root.
+    No file is modified and no provider or model client is imported.
+    """
+    rows = validate_curves(curves)
+    root = Path(evidence_dir)
+    if root.is_symlink() or not root.is_dir():
+        raise ValueError('raw evidence directory missing or symlinked')
+    verified = []
+    for curve in rows:
+        path = root / (curve['sha256'] + '.json')
+        if path.is_symlink():
+            raise ValueError('raw evidence symlink refused')
+        try:
+            flags = (os.O_RDONLY | getattr(os, 'O_BINARY', 0)
+                     | getattr(os, 'O_NOFOLLOW', 0) | getattr(os, 'O_NONBLOCK', 0))
+            fd = os.open(path, flags)
+            with os.fdopen(fd, 'rb') as stream:
+                info = os.fstat(stream.fileno())
+                if not stat.S_ISREG(info.st_mode) or info.st_size > 2_000_000:
+                    raise ValueError('raw evidence must be a bounded regular file')
+                raw = stream.read(2_000_001)
+        except OSError as exc:
+            raise ValueError('raw evidence unavailable or unsafe') from exc
+        if len(raw) > 2_000_000:
+            raise ValueError('raw evidence size bound exceeded')
+        if hashlib.sha256(raw).hexdigest() != curve['sha256']:
+            raise ValueError('raw evidence digest mismatch')
+        try:
+            state = strict_json(raw.decode('utf-8'))
+        except (UnicodeError, ValueError) as exc:
+            raise ValueError('raw evidence is not strict UTF-8 JSON') from exc
+        if not isinstance(state, dict) or type(state.get('global_step')) is not int:
+            raise ValueError('raw trainer state and integer checkpoint required')
+        if state['global_step'] != curve['checkpoint_global_step']:
+            raise ValueError('raw checkpoint identity mismatch')
+        history = state.get('log_history')
+        if not isinstance(history, list) or len(history) > 100_000:
+            raise ValueError('bounded raw log history required')
+        projected = []
+        for entry in history:
+            if not isinstance(entry, dict):
+                raise ValueError('raw history entries must be objects')
+            if 'loss' in entry:
+                projected.append({'step': entry.get('step'), 'loss': entry['loss']})
+        # Reuse the same type, finiteness, ordering and checkpoint invariants
+        # on raw observations, not just on the independently supplied projection.
+        projected_curve = dict(curve, points=projected)
+        validate_curves([projected_curve])
+        if projection_digest(projected_curve) != projection_digest(curve):
+            raise ValueError('raw history and plotted projection mismatch')
+        verified.append({'model': curve['model'], 'points': len(projected),
+                         'raw_sha256': curve['sha256'], 'raw_projection_equal': True,
+                         'projection_sha256': projection_digest(curve)})
+    return verified
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--input', type=Path, required=True)
+    parser.add_argument('--evidence-dir', type=Path,
+                        help='Digest-named raw JSON; defaults to input parent / training-raw')
     parser.add_argument('--output-dir', type=Path)
     args = parser.parse_args(argv)
     curves = validate_curves(strict_json(args.input.read_text(encoding='utf-8')))
+    evidence_dir = args.evidence_dir or args.input.parent / 'training-raw'
+    records = verify_raw_evidence(curves, evidence_dir)
     report = {'training_only': True, 'new_model_evaluation': False,
-              'records': [{'model': c['model'], 'points': len(c['points']),
-                           'projection_sha256': projection_digest(c)} for c in curves]}
+              'raw_evidence_verified': True, 'independent_training_verification': False,
+              'records': records}
     if args.output_dir:
         # Plotting is optional; validation requires only the standard library.
         import matplotlib.pyplot as plt
