@@ -1,0 +1,48 @@
+{
+  "base_revision": "2f1f7636acf4e77d87de34319c34507f9441dc71",
+  "cards": [
+    {
+      "id": "SZLHOLDINGS/SZL-Khipu-1.5B",
+      "path": "khipu/card/README.md",
+      "unmanaged_sha256": "f0dde786cc0bb15f08eb7bc782e58a720fd90244dd8b7b61ef0359122501a757",
+      "yaml_prefix_sha256": "afd7ea4735c984f019c656c1a105503595254bd1cfe31a7fd19b1314d60722fa",
+      "candidate_sha256": "eddedeac3fffad950302f48ffe2fe6717f91c14874914b9f6224697b6a8faf7e"
+    },
+    {
+      "id": "SZLHOLDINGS/KHIPU-R2",
+      "path": "khipu-r2/card/README.md",
+      "unmanaged_sha256": "193379f9ba3566c9724afcb7ff7c64d636d2254d59c62b315a6ecb7b31acb659",
+      "yaml_prefix_sha256": "1e4555b3f9f93526f07dd7cc9a8ef9a53392e7bdd3e411c128003c7bcbba996f",
+      "candidate_sha256": "e2cb2809bc2a6a4c4138a91012fdc2a43cb63c5d3260d86142b7342d555f3750"
+    },
+    {
+      "id": "SZLHOLDINGS/chaski",
+      "path": "chaski/card/README.md",
+      "unmanaged_sha256": "a403dea93c07280d48253a1849859651aa02cf1ae3aa4dab4c8d7b0f88e63465",
+      "yaml_prefix_sha256": "c4fcc2d3bb8013fc5123806876efcaaf8b25351a2f4668f66ef4cd2114186457",
+      "candidate_sha256": "478fbbc364611cdbce7b93a9bbc0498a87007b1034534d0ef9d2e47c47f0e305"
+    },
+    {
+      "id": "SZLHOLDINGS/chaski-5050",
+      "path": "chaski-5050/card/README.md",
+      "unmanaged_sha256": "bb4d7b0c53adf1634035079a7c9fd2e75d869940d24824ddf36cb49260abddc2",
+      "yaml_prefix_sha256": "f538c353c998dd994e4de188c147a6b632c585cdae5c43771011357ac228077c",
+      "candidate_sha256": "6adc080aa4868dc8999c46344cd0edf365aab35e40c0381ce1345e862355160f"
+    },
+    {
+      "id": "SZLHOLDINGS/chaski-r2",
+      "path": "chaski-r2/card/README.md",
+      "unmanaged_sha256": "a5fd96bb76463e9fdecb3ba27f9a68bcddc6f82fdeeba561416dcf5a703aee28",
+      "yaml_prefix_sha256": "f67831df26620997d61b2527cdfcd7ed4f918279757952bddb19c91ad6658eff",
+      "candidate_sha256": "389e4102ef57e3582ef3b8690b3c4d1d169c19ea3061e4814da487176ef98e0f"
+    },
+    {
+      "id": "SZLHOLDINGS/chaski-r4",
+      "path": "chaski_r4/card/README.md",
+      "unmanaged_sha256": "a41b5cd759554c27465100995ebbc809f3b7ac62affab226545bde74a9e3e463",
+      "yaml_prefix_sha256": "4675d92a3be19ff140980782ffa2b6b449020d27a1af1030ff20283fd1765d87",
+      "candidate_sha256": "8a43b41e77bad7f3582a6cbd8347a59f35629db5b794c3aca74db31c10a5c436"
+    }
+  ],
+  "scope": "Removing the exact managed block reconstructs canonical Git-blob bytes; Windows checkout CRLF was normalized to those original LF bytes."
+}
