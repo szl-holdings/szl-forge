@@ -31,7 +31,6 @@ on:
 
 permissions:
   contents: read
-  id-token: write
 
 concurrency:
   group: publish-khipu-family-cards
@@ -39,13 +38,16 @@ concurrency:
 
 jobs:
   verify:
+    permissions:
+      contents: read
+      id-token: write
     if: ${{ github.event_name == 'pull_request' }}
     name: Verify closed-profile card and source-binding contracts
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - name: Harden runner
-        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
+        uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
         with:
           egress-policy: audit
 
@@ -103,6 +105,9 @@ jobs:
           retention-days: 30
 
   publish:
+    permissions:
+      contents: read
+      id-token: write
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     name: Publish ${{ matrix.profile }} and verify exact Hub bytes
     runs-on: ubuntu-24.04
@@ -119,7 +124,7 @@ jobs:
             receipt: khipu-r2-card
     steps:
       - name: Harden runner
-        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
+        uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
         with:
           egress-policy: audit
 

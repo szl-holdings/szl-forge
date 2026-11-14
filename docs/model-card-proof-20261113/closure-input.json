@@ -1,0 +1,2774 @@
+{
+  "schema": "szl.card-evidence-coverage/v1",
+  "scope": "anonymous_public",
+  "catalog_observed_at": "2026-11-13T23:07:20.757567+00:00",
+  "complete_pagination": true,
+  "private_inventory": "UNQUALIFIED",
+  "release_authorized": false,
+  "catalog_ids": [
+    "SZLHOLDINGS/a11oy-v19-substrate",
+    "SZLHOLDINGS/szl-governed-norm",
+    "SZLHOLDINGS/szl-lambda-gate",
+    "SZLHOLDINGS/governed-inference-meter",
+    "SZLHOLDINGS/szl-kernels",
+    "SZLHOLDINGS/szl-blocked",
+    "SZLHOLDINGS/szl-govsign",
+    "SZLHOLDINGS/szl-provctl",
+    "SZLHOLDINGS/szl-nemo",
+    "SZLHOLDINGS/szl-invariants",
+    "SZLHOLDINGS/szl-ouroboros",
+    "SZLHOLDINGS/szl-formulas",
+    "SZLHOLDINGS/SZL-Forge-1.5B-ReceiptAgent",
+    "SZLHOLDINGS/SZL-Khipu-1.5B",
+    "SZLHOLDINGS/SZL-Khipu-1.5B-GGUF",
+    "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2",
+    "SZLHOLDINGS/KHIPU-R2",
+    "SZLHOLDINGS/WILLAY",
+    "SZLHOLDINGS/YARQA-ATTN",
+    "SZLHOLDINGS/A11OY-MINI",
+    "SZLHOLDINGS/chaski",
+    "SZLHOLDINGS/szl-receipt-attn",
+    "SZLHOLDINGS/szl-maskmod",
+    "SZLHOLDINGS/szl-block-kv",
+    "SZLHOLDINGS/SZL-Khipu-1.5B-abstain",
+    "SZLHOLDINGS/chaski-5050",
+    "SZLHOLDINGS/chaski-r2",
+    "SZLHOLDINGS/szl-khipu",
+    "SZLHOLDINGS/TinyKhipu-Nano",
+    "SZLHOLDINGS/ReceiptAgent-Nano",
+    "SZLHOLDINGS/szl-khipu-kernels",
+    "SZLHOLDINGS/Moons-Nano",
+    "SZLHOLDINGS/MiniEmbed-Nano",
+    "SZLHOLDINGS/brain-navigator-r2",
+    "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3",
+    "SZLHOLDINGS/khipu-r3",
+    "SZLHOLDINGS/szl-energy-attest",
+    "SZLHOLDINGS/oac-system-health-v1",
+    "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2-merged",
+    "SZLHOLDINGS/szl-triage-qwen3.5-0.8b-lora",
+    "SZLHOLDINGS/szl-triage-qwen3.5-0.8b-lora-study5",
+    "SZLHOLDINGS/chaski-r4",
+    "SZLHOLDINGS/oac-ops-health-v2",
+    "SZLHOLDINGS/forge-v3",
+    "SZLHOLDINGS/szl-receiptagent-qwen25-1.5b-experimental-20261104",
+    "SZLHOLDINGS/szl-specdecode",
+    "SZLHOLDINGS/khipu-abstain-r3-candidate",
+    "SZLHOLDINGS/miniembed-nano-r1-candidate",
+    "SZLHOLDINGS/chakana-r1-candidate",
+    "SZLHOLDINGS/willay-r1-candidate",
+    "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-sft-v3",
+    "SZLHOLDINGS/SZL-Khipu-1.5B-sft-v2",
+    "SZLHOLDINGS/willay-r2-candidate",
+    "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-dpo-v1",
+    "SZLHOLDINGS/SZL-Khipu-1.5B-estate-sft-v1",
+    "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-dpo-v2",
+    "SZLHOLDINGS/KHIPU-R2-estate-sft-v1",
+    "SZLHOLDINGS/SZL-Forge-1.5B-ReceiptAgent-estate-sft-v1",
+    "SZLHOLDINGS/chaski-estate-sft-v1",
+    "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2m-estate-sft-v1",
+    "SZLHOLDINGS/chaski-5050-estate-sft-v1",
+    "SZLHOLDINGS/chaski-r2-estate-sft-v1",
+    "SZLHOLDINGS/brain-navigator-r2-estate-sft-v1",
+    "SZLHOLDINGS/WILLAY-estate-sft-v1",
+    "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3-estate-sft-v1",
+    "SZLHOLDINGS/khipu-r3-estate-sft-v1",
+    "SZLHOLDINGS/szl1-experimental-estate-sft-v1",
+    "SZLHOLDINGS/Nemotron-Mini-4B-Instruct-st",
+    "SZLHOLDINGS/SZL-Nemotron-Mini-4B-Estate-v1",
+    "SZLHOLDINGS/SZL-Nemotron-Mini-4B-Estate-DPO-v1",
+    "SZLHOLDINGS/SZL-Specialized-Domains-v1",
+    "SZLHOLDINGS/SZL-Showcase-Systems-v1",
+    "SZLHOLDINGS/SZL-Nemotron-Mini-4B-Doctrine-v1",
+    "SZLHOLDINGS/SZL-Reasoning-0.8B-v1",
+    "SZLHOLDINGS/SZL-Nemotron-Mini-4B-Estate-DPO-v2",
+    "SZLHOLDINGS/SZL-FreeEnergy-0.8B-v1",
+    "SZLHOLDINGS/SZL-AncientMath-0.8B-v1",
+    "SZLHOLDINGS/SZL-AcousticGovernance-0.8B-v1",
+    "SZLHOLDINGS/SZL-FreeEnergy-0.8B-DPO-v1",
+    "SZLHOLDINGS/SZL-GovernedDistill-0.8B-v1",
+    "SZLHOLDINGS/abstain-doctrine-r1",
+    "SZLHOLDINGS/doctrine1-r1-candidate",
+    "SZLHOLDINGS/freeenergy-r1-candidate",
+    "SZLHOLDINGS/ouroboros-r2-candidate",
+    "SZLHOLDINGS/doctrine-v2-r2-candidate",
+    "SZLHOLDINGS/szl-brain",
+    "SZLHOLDINGS/hatun-24-doctrine-math-r1-candidate",
+    "SZLHOLDINGS/a11oy-code-r1-candidate",
+    "SZLHOLDINGS/abstention-v2-candidate",
+    "SZLHOLDINGS/physics-master-v1-candidate",
+    "SZLHOLDINGS/quant-master-v1-candidate",
+    "SZLHOLDINGS/code-master-v3-fresh",
+    "SZLHOLDINGS/doctrine-master-v1-candidate",
+    "SZLHOLDINGS/measurement-master-v1-candidate",
+    "SZLHOLDINGS/reasoning-master-v1-candidate",
+    "SZLHOLDINGS/quant-master-4b-v1-candidate",
+    "SZLHOLDINGS/quant-master-4b-500step-candidate",
+    "SZLHOLDINGS/quant-master-1.7b-500step-candidate",
+    "SZLHOLDINGS/SZL-Khipu-1.5B-v2-trained",
+    "SZLHOLDINGS/chaski-v2-trained",
+    "SZLHOLDINGS/willay-v2-trained",
+    "SZLHOLDINGS/khipu-r2-v2-trained",
+    "SZLHOLDINGS/brain-navigator-v2-trained",
+    "SZLHOLDINGS/chakana-v2-trained",
+    "SZLHOLDINGS/freeenergy-v2-trained",
+    "SZLHOLDINGS/doctrine-v2-trained",
+    "SZLHOLDINGS/ouroboros-v2-trained"
+  ],
+  "models": [
+    {
+      "id": "SZLHOLDINGS/a11oy-v19-substrate",
+      "revision": "4ddc1d4399accf03d1ba6b4d3531ed02e5a56d96",
+      "observed_at": "2026-11-13T22:15:53.239736+00:00",
+      "card_http": 200,
+      "card_sha256": "5399fd7a01121358442ca4295fa16e1b658157a7d33742449f6e23ee71f5bbc1",
+      "recognized_artifact_count": 0,
+      "artifact_hint": "NO_RECOGNIZED_CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/a11oy",
+        "https://github.com/szl-holdings/a11oy/blob/45094f7eca0b5818e51d594e0d4ad8efec47d35c/huggingface/README.md",
+        "https://github.com/szl-holdings/a11oy/blob/main/docs/ECOSYSTEM.md",
+        "https://github.com/szl-holdings/a11oy/blob/main/docs/INVESTOR_DEMO.md",
+        "https://github.com/szl-holdings/a11oy/blob/main/docs/PROVENANCE.md"
+      ],
+      "evidence": [
+        {
+          "path": "HF_ECOSYSTEM_MANIFEST.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/a11oy-v19-substrate/raw/4ddc1d4399accf03d1ba6b4d3531ed02e5a56d96/HF_ECOSYSTEM_MANIFEST.json",
+          "http": 200,
+          "sha256": "141d26df2226a9451078eac0c264338eceb6584290f0a4fd890e6aacb460e858"
+        },
+        {
+          "path": "test-results/MANIFEST.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/a11oy-v19-substrate/raw/4ddc1d4399accf03d1ba6b4d3531ed02e5a56d96/test-results/MANIFEST.json",
+          "http": 200,
+          "sha256": "7945ba7a9f07de8c1ab24ff268efdfd2b839c9e8eee75b4b33d8ee83b8c0bf6c"
+        },
+        {
+          "path": "payloads/deploy/MANIFEST.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/a11oy-v19-substrate/raw/4ddc1d4399accf03d1ba6b4d3531ed02e5a56d96/payloads/deploy/MANIFEST.json",
+          "http": 200,
+          "sha256": "31fe2556d750f02d325eae8d0fbf0b817c2bd28c031b55be0514836d5498a6ea"
+        },
+        {
+          "path": "source/docs/huggingface-ecosystem-manifest.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/a11oy-v19-substrate/raw/4ddc1d4399accf03d1ba6b4d3531ed02e5a56d96/source/docs/huggingface-ecosystem-manifest.json",
+          "http": 200,
+          "sha256": "141d26df2226a9451078eac0c264338eceb6584290f0a4fd890e6aacb460e858"
+        },
+        {
+          "path": "source/docs/huggingface-ecosystem-manifest.schema.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/a11oy-v19-substrate/raw/4ddc1d4399accf03d1ba6b4d3531ed02e5a56d96/source/docs/huggingface-ecosystem-manifest.schema.json",
+          "http": 200,
+          "sha256": "8cac06213dff712e3572682856abd52255ce682ae6ed1123dc821702fefb3443"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/szl-governed-norm",
+      "revision": "60181584385f35400d75ef405add3f9e00ba3046",
+      "observed_at": "2026-11-13T22:15:53.302948+00:00",
+      "card_http": 200,
+      "card_sha256": "8f5ca068241574287732222906d8dac5ba4fecd40b68f56364a255ae44613b4c",
+      "recognized_artifact_count": 0,
+      "artifact_hint": "NO_RECOGNIZED_CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-lambda-gate"
+      ],
+      "evidence": [
+        {
+          "path": "TRAINING_RECEIPT.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/szl-governed-norm/raw/60181584385f35400d75ef405add3f9e00ba3046/TRAINING_RECEIPT.json",
+          "http": 200,
+          "sha256": "a6f94949ce500057418db25f0208dd406324f923a9a18a354af77ac2d757a485"
+        },
+        {
+          "path": "publication.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/szl-governed-norm/raw/60181584385f35400d75ef405add3f9e00ba3046/publication.json",
+          "http": 200,
+          "sha256": "d9c8cbeac43b8c68de744729a947145feb836c4c32a20fb6e2e312aa0ba89371"
+        },
+        {
+          "path": "MODEL_PROVENANCE.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/szl-governed-norm/raw/60181584385f35400d75ef405add3f9e00ba3046/MODEL_PROVENANCE.json",
+          "http": 200,
+          "sha256": "7b3fe8d6b557a36d0e7f2a78349ddbde4785e0fba5145719c3fe3ce28415fd1d"
+        },
+        {
+          "path": "MODEL_PROVENANCE_CORRECTION.2026-09-24.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/szl-governed-norm/raw/60181584385f35400d75ef405add3f9e00ba3046/MODEL_PROVENANCE_CORRECTION.2026-09-24.json",
+          "http": 200,
+          "sha256": "349154527a2c015414a5c99c6e471a5823faa41e614f010e2af1fac102148697"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/szl-lambda-gate",
+      "revision": "6d6409aecd292ae1fc1e8b53e7c0ed82f5723097",
+      "observed_at": "2026-11-13T22:15:53.347543+00:00",
+      "card_http": 401,
+      "card_sha256": null,
+      "recognized_artifact_count": 0,
+      "artifact_hint": "NO_RECOGNIZED_CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/governed-inference-meter",
+      "revision": "63eb5146d2e44de620e0292d33ceb7aa3093cc1d",
+      "observed_at": "2026-11-13T22:15:53.357331+00:00",
+      "card_http": 200,
+      "card_sha256": "c6bfae8674ec993286c3ee4d7ad775bb388d29e225ffd3186b1c1046072ee5d1",
+      "recognized_artifact_count": 0,
+      "artifact_hint": "NO_RECOGNIZED_CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/governed-inference-meter/blob/main/README.md",
+        "https://github.com/szl-holdings/szl-energy-attest",
+        "https://github.com/szl-holdings/szl-energy-attest/blob/4d8d105c3d5ea67b5eb25826e8a2a35ca35f4043/MIGRATION_PROVENANCE.json",
+        "https://github.com/szl-holdings/szl-energy-attest/blob/4d8d105c3d5ea67b5eb25826e8a2a35ca35f4043/tests/test_inference_meter_migration.py",
+        "https://github.com/szl-holdings/szl-energy-attest/commit/4d8d105c3d5ea67b5eb25826e8a2a35ca35f4043",
+        "https://github.com/szl-holdings/szl-energy-attest/tree/4d8d105c3d5ea67b5eb25826e8a2a35ca35f4043/szl_energy_attest/inference_meter"
+      ],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/szl-kernels",
+      "revision": "de97924cd71bb31776b643ba97b86e38c83c736e",
+      "observed_at": "2026-11-13T22:15:57.065781+00:00",
+      "card_http": 200,
+      "card_sha256": "5aac3778ee553cc6d045ad7a02235762efd1b067d7089c48b2a6cdbf8980063d",
+      "recognized_artifact_count": 0,
+      "artifact_hint": "NO_RECOGNIZED_CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/.github/tree/main/doctrine",
+        "https://github.com/szl-holdings/lutar-lean",
+        "https://github.com/szl-holdings/szl-forge/blob/main/.github/workflows/publish-szl-kernels.yml",
+        "https://github.com/szl-holdings/szl-govsign/blob/7bff004d12347ac23ae60ffbfb78ce7f9ef15829/torch-ext/szl_govsign/predicate.py",
+        "https://github.com/szl-holdings/szl-kernels",
+        "https://github.com/szl-holdings/szl-kernels/blob/331b259cf6b6dde17c4bdacc245e61c7addff506/README.md",
+        "https://github.com/szl-holdings/szl-kernels/tree/7b59de18d35b1edca3c54a4647fb324b918563a8/torch-ext/szl_kernels",
+        "https://github.com/szl-holdings/szl-papers/blob/main/PAPERS_INDEX.md"
+      ],
+      "evidence": [
+        {
+          "path": "TRAINING_RECEIPT.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/szl-kernels/raw/de97924cd71bb31776b643ba97b86e38c83c736e/TRAINING_RECEIPT.json",
+          "http": 200,
+          "sha256": "3a77acbb3af9e213332a18b387519d03d8619aab983979ac6ccdd61f1bc265b0"
+        },
+        {
+          "path": "publication.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/szl-kernels/raw/de97924cd71bb31776b643ba97b86e38c83c736e/publication.json",
+          "http": 200,
+          "sha256": "e2565b31e83dbcb7f2cba331cf522f97ce3fd0bf0ed12a898f9bbdab88eb4e73"
+        },
+        {
+          "path": "MODEL_PROVENANCE.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/szl-kernels/raw/de97924cd71bb31776b643ba97b86e38c83c736e/MODEL_PROVENANCE.json",
+          "http": 200,
+          "sha256": "8402eed6dae6d6c724109026a25b8d0943741853a384b768a9d1cf9bf4cf9665"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/szl-blocked",
+      "revision": "2be63b74038048cd311d4a3163478121a7ae96e3",
+      "observed_at": "2026-11-13T23:07:45.291823+00:00",
+      "card_http": 200,
+      "card_sha256": "b643a97256411db7e6b02cc6d411155b9932185aecb9c208a85370f33b68e4e6",
+      "recognized_artifact_count": 0,
+      "artifact_hint": "NO_RECOGNIZED_CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [
+        {
+          "path": "TRAINING_RECEIPT.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/szl-blocked/raw/2be63b74038048cd311d4a3163478121a7ae96e3/TRAINING_RECEIPT.json",
+          "http": 200,
+          "sha256": "80154e6757a6a50b84b5b4a8111336d59b4e0801fb7e794eae2fb15d5eba9490"
+        },
+        {
+          "path": "MODEL_PROVENANCE.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/szl-blocked/raw/2be63b74038048cd311d4a3163478121a7ae96e3/MODEL_PROVENANCE.json",
+          "http": 200,
+          "sha256": "bb008ad2896daf4d3b536020222abb798029def2c4955868f426bef9ba0e9c34"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/szl-govsign",
+      "revision": "1a0cc449b8e8f1ffbaf05f8c798a7ee039a91820",
+      "observed_at": "2026-11-13T22:16:04.660839+00:00",
+      "card_http": 200,
+      "card_sha256": "f9fe6a6037f3180c87aad152aef94504e39a2ce7581c4cd4bfd94e4c148dca49",
+      "recognized_artifact_count": 0,
+      "artifact_hint": "NO_RECOGNIZED_CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-govsign"
+      ],
+      "evidence": [
+        {
+          "path": "TRAINING_RECEIPT.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/szl-govsign/raw/1a0cc449b8e8f1ffbaf05f8c798a7ee039a91820/TRAINING_RECEIPT.json",
+          "http": 200,
+          "sha256": "e4a311e7ede5d025aaec9468ef3270747e3d274fd884703779ebb0398d45bbc8"
+        },
+        {
+          "path": "MODEL_PROVENANCE.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/szl-govsign/raw/1a0cc449b8e8f1ffbaf05f8c798a7ee039a91820/MODEL_PROVENANCE.json",
+          "http": 200,
+          "sha256": "59754e8b41b3aaac10e12ca33452fd9e2970ed5b454043d460a92a4c065378cf"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/szl-provctl",
+      "revision": "e49b7ed4c7da64a3ba26a51e5ca420788f470c05",
+      "observed_at": "2026-11-13T23:07:45.315285+00:00",
+      "card_http": 200,
+      "card_sha256": "fcfc8bd8a0c58b6eca3501b905714e48c94c106f423fc29eb4247f34ebdd4ca4",
+      "recognized_artifact_count": 0,
+      "artifact_hint": "NO_RECOGNIZED_CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [
+        {
+          "path": "TRAINING_RECEIPT.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/szl-provctl/raw/e49b7ed4c7da64a3ba26a51e5ca420788f470c05/TRAINING_RECEIPT.json",
+          "http": 200,
+          "sha256": "7190ece8832e0ee9b09a8ac6845696ec901888341d3a905342a36f11756b724a"
+        },
+        {
+          "path": "MODEL_PROVENANCE.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/szl-provctl/raw/e49b7ed4c7da64a3ba26a51e5ca420788f470c05/MODEL_PROVENANCE.json",
+          "http": 200,
+          "sha256": "e2d6ce6480bd1e9c997cb4d5a92fa5a242263ebd7187286097ad354b80e87539"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/szl-nemo",
+      "revision": "9d636f6566051ae10b776d04f0b2175fbbec805b",
+      "observed_at": "2026-11-13T22:16:12.875978+00:00",
+      "card_http": 200,
+      "card_sha256": "358598fdee887901c6ffb6a588bdfbd50478c751cb8634cc8124ce15904563c9",
+      "recognized_artifact_count": 0,
+      "artifact_hint": "NO_RECOGNIZED_CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-brand/blob/27d12e77fc0f9f1a0e5fae8b34adf2380d51d070/kit/LICENSE",
+        "https://github.com/szl-holdings/szl-forge/blob/2b4d7a0f69e68d60cb0f35f09c9bac837d66acdc/nemo/card/README.md",
+        "https://github.com/szl-holdings/szl-nemo",
+        "https://github.com/szl-holdings/szl-nemo/blob/3860c3cb92cf5dee7f7f15635e878713330b219c/README.md"
+      ],
+      "evidence": [
+        {
+          "path": "TRAINING_RECEIPT.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/szl-nemo/raw/9d636f6566051ae10b776d04f0b2175fbbec805b/TRAINING_RECEIPT.json",
+          "http": 200,
+          "sha256": "554568d8cf2b04b134bfe51bf33660e78b38cb9555c23de5235d53c13e953f35"
+        },
+        {
+          "path": "BASE_MODEL_MANIFEST.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/szl-nemo/raw/9d636f6566051ae10b776d04f0b2175fbbec805b/BASE_MODEL_MANIFEST.json",
+          "http": 200,
+          "sha256": "e9136b138723b80b181333341b7e060519687fd82421c7de7de451ddec991f5f"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/szl-invariants",
+      "revision": "8ac52767efa4a08cd8a1dadef72a03ba32026c0d",
+      "observed_at": "2026-11-13T23:07:45.287819+00:00",
+      "card_http": 200,
+      "card_sha256": "e6616aadcde5af502f090aa13dc6b4f3b40a3bae6fb6235eb76d254b7c8f1d8c",
+      "recognized_artifact_count": 0,
+      "artifact_hint": "NO_RECOGNIZED_CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [
+        {
+          "path": "TRAINING_RECEIPT.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/szl-invariants/raw/8ac52767efa4a08cd8a1dadef72a03ba32026c0d/TRAINING_RECEIPT.json",
+          "http": 200,
+          "sha256": "a379b7a1fcbaf767d64b348485085e2b5fe34f93da5687a90ade4f3e06f9cee9"
+        },
+        {
+          "path": "MODEL_PROVENANCE.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/szl-invariants/raw/8ac52767efa4a08cd8a1dadef72a03ba32026c0d/MODEL_PROVENANCE.json",
+          "http": 200,
+          "sha256": "fddd03db7c9e33b7f8c186c5e2f7411afcaa18f09df147d37830755f21719fcd"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/szl-ouroboros",
+      "revision": "0008b17214d5051d2da77962c301fcf7c62bab10",
+      "observed_at": "2026-11-13T22:16:14.491414+00:00",
+      "card_http": 200,
+      "card_sha256": "303da34bba05321b398e9a85cd9535ca4ee3a05c4c4dd513f288de9a8e8dbd97",
+      "recognized_artifact_count": 0,
+      "artifact_hint": "NO_RECOGNIZED_CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/platform",
+        "https://github.com/szl-holdings/szl-brand/blob/27d12e77fc0f9f1a0e5fae8b34adf2380d51d070/NOTICE",
+        "https://github.com/szl-holdings/szl-brand/blob/27d12e77fc0f9f1a0e5fae8b34adf2380d51d070/kit/LICENSE",
+        "https://github.com/szl-holdings/szl-ouroboros"
+      ],
+      "evidence": [
+        {
+          "path": "TRAINING_RECEIPT.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/szl-ouroboros/raw/0008b17214d5051d2da77962c301fcf7c62bab10/TRAINING_RECEIPT.json",
+          "http": 200,
+          "sha256": "ee4e9913c1e8f4eafeb5c041d968d27b24579cb7dc5e83023df682667863083e"
+        },
+        {
+          "path": "MODEL_PROVENANCE.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/szl-ouroboros/raw/0008b17214d5051d2da77962c301fcf7c62bab10/MODEL_PROVENANCE.json",
+          "http": 200,
+          "sha256": "20b1c94b43f7257b1a2efd492270b7c2b1a1219b25beb33609fe0a073066ff63"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/szl-formulas",
+      "revision": "0da1d5cd784dcdb0290969b54938cab9c43a77d8",
+      "observed_at": "2026-11-13T23:07:47.110332+00:00",
+      "card_http": 200,
+      "card_sha256": "c145141e11c697a1ac0b05c3b446512f4785300d2777fab7e7c939bdf6119774",
+      "recognized_artifact_count": 0,
+      "artifact_hint": "NO_RECOGNIZED_CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [
+        {
+          "path": "TRAINING_RECEIPT.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/szl-formulas/raw/0da1d5cd784dcdb0290969b54938cab9c43a77d8/TRAINING_RECEIPT.json",
+          "http": 200,
+          "sha256": "786586f1f5f8136ca78e665fa78b69e7e4299a25b21ed2800e5fecb142f39fb7"
+        },
+        {
+          "path": "MODEL_PROVENANCE.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/szl-formulas/raw/0da1d5cd784dcdb0290969b54938cab9c43a77d8/MODEL_PROVENANCE.json",
+          "http": 200,
+          "sha256": "d80b79c56cad3f3e07f069dd0369dccbfd1c2209023732fd4865ee52f7bb142b"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/SZL-Forge-1.5B-ReceiptAgent",
+      "revision": "98dc50d3cd4bd761276de364bed47d5d477ff775",
+      "observed_at": "2026-11-13T22:16:22.029162+00:00",
+      "card_http": 401,
+      "card_sha256": null,
+      "recognized_artifact_count": 2,
+      "artifact_hint": "ADAPTER_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/SZL-Khipu-1.5B",
+      "revision": "7328262402e05b10bffa16cf6446da504b05f666",
+      "observed_at": "2026-11-13T22:16:22.938358+00:00",
+      "card_http": 200,
+      "card_sha256": "5de681bdad97d4a87ac4b1cd6ccc184acfa296dc85adf0b6b49b186d372efd50",
+      "recognized_artifact_count": 2,
+      "artifact_hint": "ADAPTER_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": {
+        "repository": "szl-holdings/szl-forge",
+        "revision": "2f1f7636acf4e77d87de34319c34507f9441dc71",
+        "path": "khipu/card/README.md",
+        "publisher": "publish-khipu-card.yml"
+      },
+      "reported_github_links": [
+        "https://github.com/szl-holdings/.github/tree/main/doctrine",
+        "https://github.com/szl-holdings/szl-brand/blob/27d12e77fc0f9f1a0e5fae8b34adf2380d51d070/kit/logos/orbit-v2/suite/szl-icon-32.svg",
+        "https://github.com/szl-holdings/szl-forge",
+        "https://github.com/szl-holdings/szl-forge/blob/2b4d7a0f69e68d60cb0f35f09c9bac837d66acdc/khipu/card/README.md",
+        "https://github.com/szl-holdings/szl-forge/blob/5f016db25e24749d1839bf92a5fd63b38fa6b98b/khipu/card/README.md",
+        "https://github.com/szl-holdings/szl-forge/blob/a6b58f623185820eddfb0b279d21b7d81b87137c/khipu/train_khipu.py",
+        "https://github.com/szl-holdings/szl-forge/tree/main/khipu"
+      ],
+      "evidence": [
+        {
+          "path": "training_receipt.signed.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B/raw/7328262402e05b10bffa16cf6446da504b05f666/training_receipt.signed.json",
+          "http": 200,
+          "sha256": "7af76dd4f26dcd122012bfd1e47a0f55481a952b86aee28956cf7cfaaf59bd04"
+        },
+        {
+          "path": "eval_receipt.signed.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B/raw/7328262402e05b10bffa16cf6446da504b05f666/eval_receipt.signed.json",
+          "http": 200,
+          "sha256": "32edd2d862fd5abac390bee3d30950f4718afedc41f4da4e24f3d0dfe67f8450"
+        },
+        {
+          "path": "repro/agent-run-2026-07-16/eval-navigate-0.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B/raw/7328262402e05b10bffa16cf6446da504b05f666/repro/agent-run-2026-07-16/eval-navigate-0.json",
+          "http": 200,
+          "sha256": "e893bc31b27e5841cb0c66f456c03ee30b3256a1d359edff395fec8ac482eebc"
+        },
+        {
+          "path": "publication.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B/raw/7328262402e05b10bffa16cf6446da504b05f666/publication.json",
+          "http": 200,
+          "sha256": "5d531732f4e550bf14a9166a80440ccb09e3ed08ba47446859c339740f1f3679"
+        },
+        {
+          "path": "repro/MANIFEST.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B/raw/7328262402e05b10bffa16cf6446da504b05f666/repro/MANIFEST.json",
+          "http": 200,
+          "sha256": "83337174d605ac6ba10eab985ea5a25d94994231d945bf5b500fb289898c55a4"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/SZL-Khipu-1.5B-GGUF",
+      "revision": "e3581855cde8191be84528d47c3a6bd4a7361c43",
+      "observed_at": "2026-11-13T22:16:22.929386+00:00",
+      "card_http": 200,
+      "card_sha256": "104b4035121acc25c742c26c41f821cf8610c8477cc515422ecc877310c201df",
+      "recognized_artifact_count": 4,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-brand/blob/27d12e77fc0f9f1a0e5fae8b34adf2380d51d070/kit/LICENSE",
+        "https://github.com/szl-holdings/szl-forge/blob/2b4d7a0f69e68d60cb0f35f09c9bac837d66acdc/khipu-gguf/card/README.md",
+        "https://github.com/szl-holdings/szl-forge/tree/cddba1ad9887211d6fd87386e98bb6707f16dbf5/khipu",
+        "https://github.com/szl-holdings/szl-forge/tree/main/khipu-gguf"
+      ],
+      "evidence": [
+        {
+          "path": "training_receipt.signed.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B-GGUF/raw/e3581855cde8191be84528d47c3a6bd4a7361c43/training_receipt.signed.json",
+          "http": 200,
+          "sha256": "7af76dd4f26dcd122012bfd1e47a0f55481a952b86aee28956cf7cfaaf59bd04"
+        },
+        {
+          "path": "eval_receipt.signed.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B-GGUF/raw/e3581855cde8191be84528d47c3a6bd4a7361c43/eval_receipt.signed.json",
+          "http": 200,
+          "sha256": "32edd2d862fd5abac390bee3d30950f4718afedc41f4da4e24f3d0dfe67f8450"
+        },
+        {
+          "path": "publication.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B-GGUF/raw/e3581855cde8191be84528d47c3a6bd4a7361c43/publication.json",
+          "http": 200,
+          "sha256": "59ee440915232bc3a2ac40b09ec0f1c2ccd197f489a61bc783db96654e0f5f0a"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2",
+      "revision": "0e278c4be9b4ab3faae26d524bb312398eb290e4",
+      "observed_at": "2026-11-13T22:16:23.024457+00:00",
+      "card_http": 200,
+      "card_sha256": "0cc7ab3db8fdf6f04045d700af9b1fea16283de2cc27c0e6e758b9c8a3b17cd1",
+      "recognized_artifact_count": 2,
+      "artifact_hint": "ADAPTER_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-brand/blob/27d12e77fc0f9f1a0e5fae8b34adf2380d51d070/kit/LICENSE",
+        "https://github.com/szl-holdings/szl-forge/blob/2b4d7a0f69e68d60cb0f35f09c9bac837d66acdc/receiptagent-v2/card/README.md",
+        "https://github.com/szl-holdings/szl-forge/blob/5b3dfdf9beafe0d6d1e6043ca005ec4b17c45204/frontier/qwen35-receiptagent-v2/MODEL_CARD.md",
+        "https://github.com/szl-holdings/szl-forge/tree/main/frontier/qwen35-receiptagent-v2"
+      ],
+      "evidence": [
+        {
+          "path": "reports/training-report.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2/raw/0e278c4be9b4ab3faae26d524bb312398eb290e4/reports/training-report.json",
+          "http": 200,
+          "sha256": "bf203a0c58a6851186f6be71ae3248ad0cb16a61376102b9fd32233c41077fa3"
+        },
+        {
+          "path": "receipts/training_receipt.signed.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2/raw/0e278c4be9b4ab3faae26d524bb312398eb290e4/receipts/training_receipt.signed.json",
+          "http": 200,
+          "sha256": "6ca1d50b5603b99210a234aa874ef4e36749372b52d08869223f45f31b50b4e9"
+        },
+        {
+          "path": "reports/eval-report.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2/raw/0e278c4be9b4ab3faae26d524bb312398eb290e4/reports/eval-report.json",
+          "http": 200,
+          "sha256": "fc0b7ccf6fbcc41ebdf383c5d4f1efefb38b1737799ed5158d2145e840d612a7"
+        },
+        {
+          "path": "receipts/eval_receipt.signed.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2/raw/0e278c4be9b4ab3faae26d524bb312398eb290e4/receipts/eval_receipt.signed.json",
+          "http": 200,
+          "sha256": "6c4d459648f489e340239461b995a17c04fa5fd96a3d24a93effc35808157be6"
+        },
+        {
+          "path": "salvaged-merge/eval_measured.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2/raw/0e278c4be9b4ab3faae26d524bb312398eb290e4/salvaged-merge/eval_measured.json",
+          "http": 200,
+          "sha256": "cfd102a40c122485634fbf83cf3aa496f21171ddb3bb51f1f24fdcc7bfbc27d4"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/KHIPU-R2",
+      "revision": "3a698a0f9a96eb80c38b11a77e114f318f6e4820",
+      "observed_at": "2026-11-13T22:16:36.754444+00:00",
+      "card_http": 200,
+      "card_sha256": "641ef554d5261d4655db87ce194c5139ebfa89e0aafc20bd0d63a16e9d97b99d",
+      "recognized_artifact_count": 2,
+      "artifact_hint": "ADAPTER_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": {
+        "repository": "szl-holdings/szl-forge",
+        "revision": "2f1f7636acf4e77d87de34319c34507f9441dc71",
+        "path": "khipu-r2/card/README.md",
+        "publisher": "publish-khipu-card.yml"
+      },
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-brand/blob/27d12e77fc0f9f1a0e5fae8b34adf2380d51d070/kit/logos/orbit-v2/suite/szl-icon-32.svg",
+        "https://github.com/szl-holdings/szl-forge/blob/2b4d7a0f69e68d60cb0f35f09c9bac837d66acdc/khipu-r2/card/README.md",
+        "https://github.com/szl-holdings/szl-forge/blob/6f4ac90ff503265cec9c0436587f086e52d6124e/khipu-r2/card/README.md",
+        "https://github.com/szl-holdings/szl-forge/tree/main/khipu-r2"
+      ],
+      "evidence": [
+        {
+          "path": "training_receipt.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/KHIPU-R2/raw/3a698a0f9a96eb80c38b11a77e114f318f6e4820/training_receipt.json",
+          "http": 200,
+          "sha256": "cd3b5f8b8f083314abd3bc3eee46aa2a6be8491571aa867860e5b4f85c4ed6ce"
+        },
+        {
+          "path": "eval_measured.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/KHIPU-R2/raw/3a698a0f9a96eb80c38b11a77e114f318f6e4820/eval_measured.json",
+          "http": 200,
+          "sha256": "e573dfba96dafd8ab0baa65a41bcf6878488d7ea2677d674c0b702b2878b5371"
+        },
+        {
+          "path": "eval_verified_2026-09-13.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/KHIPU-R2/raw/3a698a0f9a96eb80c38b11a77e114f318f6e4820/eval_verified_2026-09-13.json",
+          "http": 200,
+          "sha256": "122a19192ef72868d91ca3bbc59a460626dcf64d951e9c2ad2633d7f0f6b38a0"
+        },
+        {
+          "path": "merge_receipt.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/KHIPU-R2/raw/3a698a0f9a96eb80c38b11a77e114f318f6e4820/merge_receipt.json",
+          "http": 200,
+          "sha256": "cc1fe8b33e835fef22bea6605386b3135185ea223453caf0c6cf416c95340511"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/WILLAY",
+      "revision": "b49d25953400fd11b06ee379ef78f72aa5d930e8",
+      "observed_at": "2026-11-13T22:16:43.636361+00:00",
+      "card_http": 200,
+      "card_sha256": "f830bbe3e70fc0775a9a922b6e1e908da23a28748332bef49f0f861b2edfc5e4",
+      "recognized_artifact_count": 3,
+      "artifact_hint": "ADAPTER_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-forge/blob/ad20ac2c24859156891c391108a86d4f05163f83/willay/card/README.md"
+      ],
+      "evidence": [
+        {
+          "path": "adapter-unsloth/training_receipt.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/WILLAY/raw/b49d25953400fd11b06ee379ef78f72aa5d930e8/adapter-unsloth/training_receipt.json",
+          "http": 200,
+          "sha256": "19fc189542f4c06f47a648774203a875d18ba7ead17e59f0aa39ca2af06957d3"
+        },
+        {
+          "path": "evaluation/governed_contract_eval_2026-09-08.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/WILLAY/raw/b49d25953400fd11b06ee379ef78f72aa5d930e8/evaluation/governed_contract_eval_2026-09-08.json",
+          "http": 200,
+          "sha256": "777c63fc98d6420bf08c769ec602e9a0ebe83d7419083b9d420e9fdfa94aeda2"
+        },
+        {
+          "path": "provenance.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/WILLAY/raw/b49d25953400fd11b06ee379ef78f72aa5d930e8/provenance.json",
+          "http": 200,
+          "sha256": "8259d85bcd915e7d692013ff31253c7ac51f4fa4077057e0fa6512b08309bf94"
+        },
+        {
+          "path": "merge_receipt.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/WILLAY/raw/b49d25953400fd11b06ee379ef78f72aa5d930e8/merge_receipt.json",
+          "http": 200,
+          "sha256": "016ac76e2411fe62f6c066afa17c6c518dea3d7a7222ea929059baf0baf871f5"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/YARQA-ATTN",
+      "revision": "19fa2d2d55df2113783873ed329b15fee076b55a",
+      "observed_at": "2026-11-13T22:16:46.858432+00:00",
+      "card_http": 200,
+      "card_sha256": "e9218df4d556d50c5cb04c2d47d57bf3242e61e7df7cecddcee3eb6f939573d8",
+      "recognized_artifact_count": 0,
+      "artifact_hint": "NO_RECOGNIZED_CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/YARQA-ATTN"
+      ],
+      "evidence": [
+        {
+          "path": "TRAINING_RECEIPT.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/YARQA-ATTN/raw/19fa2d2d55df2113783873ed329b15fee076b55a/TRAINING_RECEIPT.json",
+          "http": 200,
+          "sha256": "b1de7e8d6102ff6e9d9027534d7623e9557b72d82cb76321645ec4bba389adb0"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/A11OY-MINI",
+      "revision": "01aa69374644e525181e83aad8d62074f9dda07f",
+      "observed_at": "2026-11-13T22:16:48.278975+00:00",
+      "card_http": 200,
+      "card_sha256": "ba40405929480923af004ca65eebbd2828ec36fcb0e2c33a6294d4aae2bffc91",
+      "recognized_artifact_count": 5,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-forge/blob/a6b58f623185820eddfb0b279d21b7d81b87137c/a11oy_mini/README.md",
+        "https://github.com/szl-holdings/szl-forge/blob/a6b58f623185820eddfb0b279d21b7d81b87137c/chaski_r2/a11oy_mini_r2_gguf/gguf_receipt.json",
+        "https://github.com/szl-holdings/szl-forge/tree/7cf86ae27e0c68b6fc694560038d04ac31065ce6/chaski_r2/a11oy_mini_r2_gguf/evidence/2026-09-24-native-cuda"
+      ],
+      "evidence": [
+        {
+          "path": "hub_put_receipt.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/A11OY-MINI/raw/01aa69374644e525181e83aad8d62074f9dda07f/hub_put_receipt.json",
+          "http": 200,
+          "sha256": "8e4a8b7133549e4533315ec237cac3dd2445ac40487d164c3e1be2de1ef65a39"
+        },
+        {
+          "path": "gguf_gate_receipt.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/A11OY-MINI/raw/01aa69374644e525181e83aad8d62074f9dda07f/gguf_gate_receipt.json",
+          "http": 200,
+          "sha256": "7b3aba65a18adb8135c9ca2ca4d2dfbd47964bc03aa594d21a81eee8cb86054e"
+        },
+        {
+          "path": "conversion_receipt.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/A11OY-MINI/raw/01aa69374644e525181e83aad8d62074f9dda07f/conversion_receipt.json",
+          "http": 200,
+          "sha256": "460dac74c82b9e8112797d958915639796213448ff2953dd51369920baacaee5"
+        },
+        {
+          "path": "evidence/2026-09-24-native-cuda/receipt.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/A11OY-MINI/raw/01aa69374644e525181e83aad8d62074f9dda07f/evidence/2026-09-24-native-cuda/receipt.json",
+          "http": 200,
+          "sha256": "a54c762bc8cd24ffdf9022ddeb61dcca588469c97706a45f41b90697b51c45cc"
+        },
+        {
+          "path": "evidence/2026-09-24-native-cuda/MANIFEST.sha256.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/A11OY-MINI/raw/01aa69374644e525181e83aad8d62074f9dda07f/evidence/2026-09-24-native-cuda/MANIFEST.sha256.json",
+          "http": 200,
+          "sha256": "6e1b61e35f6b4df6e6e71760fd7c781f0ab50e17ca4b9c6349af7d2063aeade8"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/chaski",
+      "revision": "d6306bb06fc4b5d4258ddd694fb493cf82332feb",
+      "observed_at": "2026-11-13T22:16:50.320056+00:00",
+      "card_http": 200,
+      "card_sha256": "1d4289f00708f15fac5103275193165d454133f919b44ae0b9985f3075bc339a",
+      "recognized_artifact_count": 3,
+      "artifact_hint": "ADAPTER_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": {
+        "repository": "szl-holdings/szl-forge",
+        "revision": "2f1f7636acf4e77d87de34319c34507f9441dc71",
+        "path": "chaski/card/README.md",
+        "publisher": "publish-chaski-card.yml"
+      },
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-brand/blob/27d12e77fc0f9f1a0e5fae8b34adf2380d51d070/kit/logos/orbit-v2/suite/szl-icon-32.svg",
+        "https://github.com/szl-holdings/szl-forge/blob/2b4d7a0f69e68d60cb0f35f09c9bac837d66acdc/chaski/card/README.md",
+        "https://github.com/szl-holdings/szl-forge/tree/main/chaski",
+        "https://github.com/szl-holdings/szl-forge/tree/main/chaski/card"
+      ],
+      "evidence": [
+        {
+          "path": "training_receipt.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/chaski/raw/d6306bb06fc4b5d4258ddd694fb493cf82332feb/training_receipt.json",
+          "http": 200,
+          "sha256": "7845609c9e540a2ce71743f152237d896c0e0dd9df13d7f2c814232ce61fe3eb"
+        },
+        {
+          "path": "adapter-unsloth/training_receipt.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/chaski/raw/d6306bb06fc4b5d4258ddd694fb493cf82332feb/adapter-unsloth/training_receipt.json",
+          "http": 200,
+          "sha256": "16acd7d692433c564b9fea333eca08e77c4ad6877da53fddc35f1f8684367a43"
+        },
+        {
+          "path": "eval_report.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/chaski/raw/d6306bb06fc4b5d4258ddd694fb493cf82332feb/eval_report.json",
+          "http": 200,
+          "sha256": "4d057eb9867285e69b00222be110bbb660330a96fe7b284a4d7f488268a13e05"
+        },
+        {
+          "path": "eval_measured.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/chaski/raw/d6306bb06fc4b5d4258ddd694fb493cf82332feb/eval_measured.json",
+          "http": 200,
+          "sha256": "7d01392d967caf5f9793b3f9f572b56a4a64d51ca5fd2f311084d3776c7c880c"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/szl-receipt-attn",
+      "revision": "176a6ec478c45a11f26ac00b44c1297ad26da6f1",
+      "observed_at": "2026-11-13T22:16:50.812431+00:00",
+      "card_http": 200,
+      "card_sha256": "a7ef6de48bf12fde49512eca3afa3942f2a359ee7c918f1115e549874357f522",
+      "recognized_artifact_count": 0,
+      "artifact_hint": "NO_RECOGNIZED_CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-receipt-attn"
+      ],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/szl-maskmod",
+      "revision": "1e32462cc2bd470e34a952f98f3632df6e0078fd",
+      "observed_at": "2026-11-13T23:07:47.227088+00:00",
+      "card_http": 200,
+      "card_sha256": "bcb294e688b589cb4f71809566a98c08460dbff1bc37d8f413bfe6f39f4739a8",
+      "recognized_artifact_count": 0,
+      "artifact_hint": "NO_RECOGNIZED_CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/szl-block-kv",
+      "revision": "998855e680ecc1eeff8074f4f6ee2b604080a477",
+      "observed_at": "2026-11-13T22:16:54.838421+00:00",
+      "card_http": 200,
+      "card_sha256": "54956514977c7226d305620f541f010d6e0c3e23108b0a23439806df8dac5915",
+      "recognized_artifact_count": 0,
+      "artifact_hint": "NO_RECOGNIZED_CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-block-kv"
+      ],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/SZL-Khipu-1.5B-abstain",
+      "revision": "e968fc542816360ff84236f64842544f52fc512b",
+      "observed_at": "2026-11-13T22:16:59.047488+00:00",
+      "card_http": 200,
+      "card_sha256": "d4012bb4ba6594322c8c803074c1b48ca4b6cdd1dc5bf9db79cd4cb70f21ecb4",
+      "recognized_artifact_count": 2,
+      "artifact_hint": "ADAPTER_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-forge/blob/main/khipu-abstain/"
+      ],
+      "evidence": [
+        {
+          "path": "training_receipt.signed.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B-abstain/raw/e968fc542816360ff84236f64842544f52fc512b/training_receipt.signed.json",
+          "http": 200,
+          "sha256": "63b76e044c23e3fb5d2c759a0c7027aa0d3ad55d682da658d2d260420cc0c870"
+        },
+        {
+          "path": "eval_receipt.signed.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B-abstain/raw/e968fc542816360ff84236f64842544f52fc512b/eval_receipt.signed.json",
+          "http": 200,
+          "sha256": "d1114da7fc8fec9d591234c7812af31002bf8a9bfc1f542503f0cdb32a9d3cd5"
+        },
+        {
+          "path": "manifest.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B-abstain/raw/e968fc542816360ff84236f64842544f52fc512b/manifest.json",
+          "http": 200,
+          "sha256": "eac81722cfd461c7eefec013057b25ba4838bf6ccc7d61127c3298af07264107"
+        },
+        {
+          "path": "publication.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/SZL-Khipu-1.5B-abstain/raw/e968fc542816360ff84236f64842544f52fc512b/publication.json",
+          "http": 200,
+          "sha256": "9720ca073f352f5054aa9988abcec46f9d4f179b348aa8a52773af7de1f0c7fd"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/chaski-5050",
+      "revision": "6bd12f97b3d19415c018473f9ff0427ad9343b1a",
+      "observed_at": "2026-11-13T22:16:59.048614+00:00",
+      "card_http": 200,
+      "card_sha256": "0d7f289daec1e217a41c9ca55c651b0fe51eb302aaafeafcccc09124d0923987",
+      "recognized_artifact_count": 3,
+      "artifact_hint": "ADAPTER_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": {
+        "repository": "szl-holdings/szl-forge",
+        "revision": "2f1f7636acf4e77d87de34319c34507f9441dc71",
+        "path": "chaski-5050/card/README.md",
+        "publisher": "publish-chaski-card.yml"
+      },
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-brand/blob/27d12e77fc0f9f1a0e5fae8b34adf2380d51d070/kit/logos/orbit-v2/suite/szl-icon-32.svg",
+        "https://github.com/szl-holdings/szl-forge/blob/2b4d7a0f69e68d60cb0f35f09c9bac837d66acdc/chaski-5050/card/README.md",
+        "https://github.com/szl-holdings/szl-forge/blob/6f4ac90ff503265cec9c0436587f086e52d6124e/chaski-5050/card/README.md",
+        "https://github.com/szl-holdings/szl-forge/blob/6f4ac90ff503265cec9c0436587f086e52d6124e/frontier/evaluation/gate_runs/chaski-5050_63ea80915ccb_20260915T041028Z_receipt.json",
+        "https://github.com/szl-holdings/szl-forge/tree/main/chaski-5050"
+      ],
+      "evidence": [
+        {
+          "path": "training_receipt.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/chaski-5050/raw/6bd12f97b3d19415c018473f9ff0427ad9343b1a/training_receipt.json",
+          "http": 200,
+          "sha256": "9420fda23d9ef4db6620a2802c1920df8ac6252f560567ee8e0590b7912a68ed"
+        },
+        {
+          "path": "adapter-unsloth/training_receipt.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/chaski-5050/raw/6bd12f97b3d19415c018473f9ff0427ad9343b1a/adapter-unsloth/training_receipt.json",
+          "http": 200,
+          "sha256": "a78430691220532a3024b8c0739851dcb4ed7b5a4525494cdad25a85ac662526"
+        },
+        {
+          "path": "merge_receipt.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/chaski-5050/raw/6bd12f97b3d19415c018473f9ff0427ad9343b1a/merge_receipt.json",
+          "http": 200,
+          "sha256": "04c7b5835a8a55115d7336af739458c37acf33ab891d27bcbd359c24b83783cb"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/chaski-r2",
+      "revision": "523b733e20095fda3b1426649348e9fb179098ae",
+      "observed_at": "2026-11-13T22:17:00.237505+00:00",
+      "card_http": 200,
+      "card_sha256": "935571a2129071d5343c4c280799890e5ff506863f82178deb5bc36a6c1ee8c4",
+      "recognized_artifact_count": 3,
+      "artifact_hint": "ADAPTER_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": {
+        "repository": "szl-holdings/szl-forge",
+        "revision": "2f1f7636acf4e77d87de34319c34507f9441dc71",
+        "path": "chaski-r2/card/README.md",
+        "publisher": "publish-chaski-card.yml"
+      },
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-brand/blob/27d12e77fc0f9f1a0e5fae8b34adf2380d51d070/kit/logos/orbit-v2/suite/szl-icon-32.svg",
+        "https://github.com/szl-holdings/szl-forge/blob/2b4d7a0f69e68d60cb0f35f09c9bac837d66acdc/chaski-r2/card/README.md",
+        "https://github.com/szl-holdings/szl-forge/blob/6f4ac90ff503265cec9c0436587f086e52d6124e/chaski-r2/card/README.md",
+        "https://github.com/szl-holdings/szl-forge/blob/6f4ac90ff503265cec9c0436587f086e52d6124e/frontier/evaluation/gate_runs/chaski-r2_4ef29684c56d_20260915T093042Z_receipt.json",
+        "https://github.com/szl-holdings/szl-forge/tree/main/chaski-r2"
+      ],
+      "evidence": [
+        {
+          "path": "training_receipt.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/chaski-r2/raw/523b733e20095fda3b1426649348e9fb179098ae/training_receipt.json",
+          "http": 200,
+          "sha256": "77b8b850dcb8c76e139b17c42e198c0ad91ec6b17c43649aa49444729f7a9b49"
+        },
+        {
+          "path": "training_receipt.local.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/chaski-r2/raw/523b733e20095fda3b1426649348e9fb179098ae/training_receipt.local.json",
+          "http": 200,
+          "sha256": "9a69e1c501db01ba5d50c01fd23f7bc098d7af1ea237a3c84a50cd8fb8242a0c"
+        },
+        {
+          "path": "adapter-unsloth/training_receipt.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/chaski-r2/raw/523b733e20095fda3b1426649348e9fb179098ae/adapter-unsloth/training_receipt.json",
+          "http": 200,
+          "sha256": "29981c3b1f8771e2bcc6b1f325222f7782b279500f1dcd3f22ce47cc8debce84"
+        },
+        {
+          "path": "eval_merged_measured.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/chaski-r2/raw/523b733e20095fda3b1426649348e9fb179098ae/eval_merged_measured.json",
+          "http": 200,
+          "sha256": "4351df066e5078ebf9a496a148173df7f3e6b1fa7d9bf7db7ace1afeea5eb866"
+        },
+        {
+          "path": "eval_named_n_generate.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/chaski-r2/raw/523b733e20095fda3b1426649348e9fb179098ae/eval_named_n_generate.json",
+          "http": 200,
+          "sha256": "c688bbcdfa40508c148233e93e4676028d559d3492d3649d5435a154401f272e"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/szl-khipu",
+      "revision": "7e929b263c0173f4ce062294c53931c8fa5458c3",
+      "observed_at": "2026-11-13T22:17:06.056084+00:00",
+      "card_http": 200,
+      "card_sha256": "2022015741fff64ddc4d361395470f538a7d4c233108bde8b610f00fb23ec253",
+      "recognized_artifact_count": 0,
+      "artifact_hint": "NO_RECOGNIZED_CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/anatomy",
+        "https://github.com/szl-holdings/szl-brand/blob/4309f6fce89179331b0b3ed8c99494e76c5be256/NOTICE",
+        "https://github.com/szl-holdings/szl-brand/blob/4309f6fce89179331b0b3ed8c99494e76c5be256/kit/LICENSE",
+        "https://github.com/szl-holdings/szl-gov",
+        "https://github.com/szl-holdings/szl-holdings.github.io/blob/main/khipu/index.html",
+        "https://github.com/szl-holdings/szl-khipu",
+        "https://github.com/szl-holdings/szl-khipu/blob/8d06c9333b636a86a27d88feb49097906833af30/README.md",
+        "https://github.com/szl-holdings/szl-khipu/blob/e53e3d24b22e356eb986c373aee27b3b3e7947ec/docs/YARQA_OUTPUT_ONLY.md"
+      ],
+      "evidence": [
+        {
+          "path": "artifacts/TRAINING_RECEIPT.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/szl-khipu/raw/7e929b263c0173f4ce062294c53931c8fa5458c3/artifacts/TRAINING_RECEIPT.json",
+          "http": 200,
+          "sha256": "5835b0d03ae574ab043d8b1f8764001124833d0757f2b9d19e5da3426b5b1559"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/TinyKhipu-Nano",
+      "revision": "25e6f405906f58122870226c07f21d7ae31ab8ca",
+      "observed_at": "2026-11-13T22:17:09.283131+00:00",
+      "card_http": 200,
+      "card_sha256": "8a97be717a32b6c9ec2800b123da14ea4769faec04902aa1e2b3e0cd250f0e72",
+      "recognized_artifact_count": 0,
+      "artifact_hint": "NO_RECOGNIZED_CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-brand/blob/27d12e77fc0f9f1a0e5fae8b34adf2380d51d070/kit/logos/orbit-v2/suite/szl-icon-32.svg",
+        "https://github.com/szl-holdings/szl-khipu",
+        "https://github.com/szl-holdings/szl-khipu/blob/8d06c9333b636a86a27d88feb49097906833af30/hf/TinyKhipu-Nano/README.md",
+        "https://github.com/szl-holdings/szl-khipu/blob/e53e3d24b22e356eb986c373aee27b3b3e7947ec/hf/TinyKhipu-Nano/README.md"
+      ],
+      "evidence": [
+        {
+          "path": "TRAINING_RECEIPT.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/TinyKhipu-Nano/raw/25e6f405906f58122870226c07f21d7ae31ab8ca/TRAINING_RECEIPT.json",
+          "http": 200,
+          "sha256": "588a4a023e660a471bae79a7dcfac8c91c4e96e63c5d1ccd1b5c26e40d89d03c"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/ReceiptAgent-Nano",
+      "revision": "c582309d1e55a9f4592d25d688e9f3f55ac4838f",
+      "observed_at": "2026-11-13T22:17:10.497159+00:00",
+      "card_http": 200,
+      "card_sha256": "cfecb0b0d0fe7392ff08cd9ee50c2a2708dc6b3d2e30b98a7704c3fc454b0645",
+      "recognized_artifact_count": 0,
+      "artifact_hint": "NO_RECOGNIZED_CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-brand/blob/27d12e77fc0f9f1a0e5fae8b34adf2380d51d070/kit/logos/orbit-v2/suite/szl-icon-32.svg",
+        "https://github.com/szl-holdings/szl-khipu",
+        "https://github.com/szl-holdings/szl-khipu/blob/8d06c9333b636a86a27d88feb49097906833af30/hf/ReceiptAgent-Nano/README.md",
+        "https://github.com/szl-holdings/szl-khipu/blob/e53e3d24b22e356eb986c373aee27b3b3e7947ec/hf/ReceiptAgent-Nano/README.md",
+        "https://github.com/szl-holdings/szl-khipu/blob/e53e3d24b22e356eb986c373aee27b3b3e7947ec/szl_khipu/train/receipt_agent.py"
+      ],
+      "evidence": [
+        {
+          "path": "TRAINING_RECEIPT.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/ReceiptAgent-Nano/raw/c582309d1e55a9f4592d25d688e9f3f55ac4838f/TRAINING_RECEIPT.json",
+          "http": 200,
+          "sha256": "588a4a023e660a471bae79a7dcfac8c91c4e96e63c5d1ccd1b5c26e40d89d03c"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/szl-khipu-kernels",
+      "revision": "ead56d3f73082060390a96e6cc0efa1ade35b4bb",
+      "observed_at": "2026-11-13T22:17:12.165494+00:00",
+      "card_http": 200,
+      "card_sha256": "4a963b43d1ad6beda889b9f75a8e4cefa1089d2c327192f96e40546d864587b0",
+      "recognized_artifact_count": 0,
+      "artifact_hint": "NO_RECOGNIZED_CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-brand/blob/27d12e77fc0f9f1a0e5fae8b34adf2380d51d070/kit/logos/orbit-v2/suite/szl-icon-32.svg",
+        "https://github.com/szl-holdings/szl-khipu",
+        "https://github.com/szl-holdings/szl-khipu/blob/8d06c9333b636a86a27d88feb49097906833af30/hf/szl-khipu-kernels/README.md",
+        "https://github.com/szl-holdings/szl-khipu/tree/e53e3d24b22e356eb986c373aee27b3b3e7947ec"
+      ],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/Moons-Nano",
+      "revision": "54478ade475e4c074f1616bdfa50eedf93a7d919",
+      "observed_at": "2026-11-13T22:17:15.489303+00:00",
+      "card_http": 200,
+      "card_sha256": "4efd2f737b737afc8d6cb7642e654236330421b9a95533f7a90be6e22c0beaa6",
+      "recognized_artifact_count": 0,
+      "artifact_hint": "NO_RECOGNIZED_CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-brand/blob/27d12e77fc0f9f1a0e5fae8b34adf2380d51d070/kit/logos/orbit-v2/suite/szl-icon-32.svg",
+        "https://github.com/szl-holdings/szl-khipu",
+        "https://github.com/szl-holdings/szl-khipu/blob/8d06c9333b636a86a27d88feb49097906833af30/hf/Moons-Nano/README.md",
+        "https://github.com/szl-holdings/szl-khipu/blob/e53e3d24b22e356eb986c373aee27b3b3e7947ec/hf/Moons-Nano/README.md"
+      ],
+      "evidence": [
+        {
+          "path": "TRAINING_RECEIPT.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/Moons-Nano/raw/54478ade475e4c074f1616bdfa50eedf93a7d919/TRAINING_RECEIPT.json",
+          "http": 200,
+          "sha256": "588a4a023e660a471bae79a7dcfac8c91c4e96e63c5d1ccd1b5c26e40d89d03c"
+        },
+        {
+          "path": "provenance.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/Moons-Nano/raw/54478ade475e4c074f1616bdfa50eedf93a7d919/provenance.json",
+          "http": 200,
+          "sha256": "2f502164bd8e724388eedaa59048f72c9e27044ddf2fa2ea3170a12272f0f3df"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/MiniEmbed-Nano",
+      "revision": "2bfc432ca7c0c349f2ed2460a251d763d0c60030",
+      "observed_at": "2026-11-13T22:17:15.540528+00:00",
+      "card_http": 200,
+      "card_sha256": "8b2260631ac6d03b2b119105c84c2c4e320e152884e2c966c8503cc3e7f13b01",
+      "recognized_artifact_count": 0,
+      "artifact_hint": "NO_RECOGNIZED_CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-brand/blob/27d12e77fc0f9f1a0e5fae8b34adf2380d51d070/kit/logos/orbit-v2/suite/szl-icon-32.svg",
+        "https://github.com/szl-holdings/szl-khipu",
+        "https://github.com/szl-holdings/szl-khipu/blob/8d06c9333b636a86a27d88feb49097906833af30/hf/MiniEmbed-Nano/README.md",
+        "https://github.com/szl-holdings/szl-khipu/blob/e53e3d24b22e356eb986c373aee27b3b3e7947ec/hf/MiniEmbed-Nano/README.md"
+      ],
+      "evidence": [
+        {
+          "path": "TRAINING_RECEIPT.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/MiniEmbed-Nano/raw/2bfc432ca7c0c349f2ed2460a251d763d0c60030/TRAINING_RECEIPT.json",
+          "http": 200,
+          "sha256": "588a4a023e660a471bae79a7dcfac8c91c4e96e63c5d1ccd1b5c26e40d89d03c"
+        },
+        {
+          "path": "provenance.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/MiniEmbed-Nano/raw/2bfc432ca7c0c349f2ed2460a251d763d0c60030/provenance.json",
+          "http": 200,
+          "sha256": "71e943ca8a239d3b0743ff28b977862ef2cf8f42c4ef59c02c1f5dbe0c26b820"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/brain-navigator-r2",
+      "revision": "b74ffaa87122354589f0152bc6dbeeeb56ea332f",
+      "observed_at": "2026-11-13T22:17:17.199486+00:00",
+      "card_http": 200,
+      "card_sha256": "1863db517c9ce13206ca6fb40cba90e2083db242d96dd82e0b23cb43cf92fb9e",
+      "recognized_artifact_count": 2,
+      "artifact_hint": "ADAPTER_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-forge/blob/a6b58f623185820eddfb0b279d21b7d81b87137c/frontier/evaluation/gate_runs/brain-navigator-r2_ad510c4b0542_20260915T040842Z_receipt.json"
+      ],
+      "evidence": [
+        {
+          "path": "training_receipt.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/brain-navigator-r2/raw/b74ffaa87122354589f0152bc6dbeeeb56ea332f/training_receipt.json",
+          "http": 200,
+          "sha256": "48d2bd16582c9f2468c1c414a952e36c4d807ccddd39b2a776c67560294e214b"
+        },
+        {
+          "path": "eval_report.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/brain-navigator-r2/raw/b74ffaa87122354589f0152bc6dbeeeb56ea332f/eval_report.json",
+          "http": 200,
+          "sha256": "b2b79d062ee052b67ce4ae70b18963f8e9a61aa80885ca3d33c53bbd17a948c9"
+        },
+        {
+          "path": "provenance.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/brain-navigator-r2/raw/b74ffaa87122354589f0152bc6dbeeeb56ea332f/provenance.json",
+          "http": 200,
+          "sha256": "fe8634ba657ab07acbfa1a199620bf60dd7f1fa8c4016a849b39e07525db90a5"
+        },
+        {
+          "path": "merge_receipt.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/brain-navigator-r2/raw/b74ffaa87122354589f0152bc6dbeeeb56ea332f/merge_receipt.json",
+          "http": 200,
+          "sha256": "bccf389fe8a8d3cbce40a26ff401b671ac18dea79cc6bc2a6e306ef302efa047"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3",
+      "revision": "6b465784720b4891a243584cd6512d4ac3768adf",
+      "observed_at": "2026-11-13T22:17:28.898252+00:00",
+      "card_http": 200,
+      "card_sha256": "b8c8e16111d30fda3284f3c1fe7dab7df0d6d794e16ed9f93ea05262bebc93ba",
+      "recognized_artifact_count": 2,
+      "artifact_hint": "ADAPTER_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [
+        {
+          "path": "training_receipt.laptop-blackwell.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3/raw/6b465784720b4891a243584cd6512d4ac3768adf/training_receipt.laptop-blackwell.json",
+          "http": 200,
+          "sha256": "e8ca7f3342491f25ac3797e8284c5c11d3c2cdc31ea93ffb976059c5e2d87631"
+        },
+        {
+          "path": "eval_dev_named_n.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3/raw/6b465784720b4891a243584cd6512d4ac3768adf/eval_dev_named_n.json",
+          "http": 200,
+          "sha256": "07fd386bbdeabba16022d81dfa2f89b3e042a0905c1f07c0ae15ece0a3da9479"
+        },
+        {
+          "path": "eval_dev_named_n.bound.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3/raw/6b465784720b4891a243584cd6512d4ac3768adf/eval_dev_named_n.bound.json",
+          "http": 200,
+          "sha256": "9ce08337b14ad6b440e4c22e31134f737a3c8d236c2c75e996a22029347933c4"
+        },
+        {
+          "path": "provenance.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3/raw/6b465784720b4891a243584cd6512d4ac3768adf/provenance.json",
+          "http": 200,
+          "sha256": "48879e5f49d5de9ae8027d8b47c6984c550982808f5e48810a9dd94818eace01"
+        },
+        {
+          "path": "merge_receipt.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3/raw/6b465784720b4891a243584cd6512d4ac3768adf/merge_receipt.json",
+          "http": 200,
+          "sha256": "742cd6eeb4ea3d0566ec7c6eada168199eeb1b4496db7efcfa23127b330f94dd"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/khipu-r3",
+      "revision": "b3015f75d10e5c530c4d4046ea086b6bd43157ba",
+      "observed_at": "2026-11-13T22:17:23.440865+00:00",
+      "card_http": 200,
+      "card_sha256": "159302a9c6e9045a6d671248f913703d0ee3111eafa5eb997c81f3cc39259d12",
+      "recognized_artifact_count": 2,
+      "artifact_hint": "ADAPTER_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-forge/blob/a6b58f623185820eddfb0b279d21b7d81b87137c/frontier/evaluation/gate_runs/khipu-r3_89807a2680e2_20260915T040737Z_receipt.json",
+        "https://github.com/szl-holdings/szl-forge/blob/a6b58f623185820eddfb0b279d21b7d81b87137c/khipu-r3/card/README.md",
+        "https://github.com/szl-holdings/szl-forge/tree/a6b58f623185820eddfb0b279d21b7d81b87137c/frontier/evaluation/gate_runs",
+        "https://github.com/szl-holdings/szl-forge/tree/a6b58f623185820eddfb0b279d21b7d81b87137c/khipu"
+      ],
+      "evidence": [
+        {
+          "path": "training_receipt.laptop-blackwell.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/khipu-r3/raw/b3015f75d10e5c530c4d4046ea086b6bd43157ba/training_receipt.laptop-blackwell.json",
+          "http": 200,
+          "sha256": "ae73cddccdc3aedce089af181463279aae13605d020285fa6e0ce00f6d8e9d4f"
+        },
+        {
+          "path": "provenance.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/khipu-r3/raw/b3015f75d10e5c530c4d4046ea086b6bd43157ba/provenance.json",
+          "http": 200,
+          "sha256": "b8309479cf3385a972dc590153af8977032b62ed11b4b6f5020ee0f32a2cca3d"
+        },
+        {
+          "path": "merge_receipt.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/khipu-r3/raw/b3015f75d10e5c530c4d4046ea086b6bd43157ba/merge_receipt.json",
+          "http": 200,
+          "sha256": "602c7430454a2e549d39eafaeeb7566c772c9c8a90a6a130daec280e8c2a4633"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/szl-energy-attest",
+      "revision": "9614b32b9446db9cc40d76b807b006eae0a7b130",
+      "observed_at": "2026-11-13T22:17:23.494602+00:00",
+      "card_http": 200,
+      "card_sha256": "06e30acdff40dbf2230fe67b8d7ee15b5b86baac3e66b90e79ab07a2d939b3fb",
+      "recognized_artifact_count": 0,
+      "artifact_hint": "NO_RECOGNIZED_CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/oac-system-health-v1",
+      "revision": "ed0a3bbd1611dd0d051df30931dee2bd548f363f",
+      "observed_at": "2026-11-13T22:17:29.020570+00:00",
+      "card_http": 200,
+      "card_sha256": "13e97383603d352b6173f82fc7bc63c82b3901770ac58ea347cdd488af9c7ebf",
+      "recognized_artifact_count": 0,
+      "artifact_hint": "NO_RECOGNIZED_CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-brand/blob/27d12e77fc0f9f1a0e5fae8b34adf2380d51d070/kit/logos/orbit-v2/suite/szl-icon-32.svg",
+        "https://github.com/szl-holdings/szl-forge/commit/0e9812f989b3548ddcff7e24443da3cb5764cf50",
+        "https://github.com/szl-holdings/szl-forge/tree/0e9812f989b3548ddcff7e24443da3cb5764cf50/clinical-gateway",
+        "https://github.com/szl-holdings/szl-forge/tree/main/clinical-gateway"
+      ],
+      "evidence": [
+        {
+          "path": "artifact_receipt.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/oac-system-health-v1/raw/ed0a3bbd1611dd0d051df30931dee2bd548f363f/artifact_receipt.json",
+          "http": 200,
+          "sha256": "c5b58aa1f85c67ec6ce64a5516cbe5d3e72f1063eed768b4bfe997f5a18c0a27"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2-merged",
+      "revision": "9b670a06a8ef5bd5f6696438cffa511f29c73a90",
+      "observed_at": "2026-11-13T22:17:37.997125+00:00",
+      "card_http": 200,
+      "card_sha256": "a821045c34495d3c2edf46b72863768e2a0a68f7141de49aa023fd8da1be7850",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-forge/blob/a6b58f623185820eddfb0b279d21b7d81b87137c/frontier/qwen35-receiptagent-v2-merged/publication.json",
+        "https://github.com/szl-holdings/szl-forge/blob/a6b58f623185820eddfb0b279d21b7d81b87137c/receiptagent-v2/qual_v2_salvage_receipt.20260913.json",
+        "https://github.com/szl-holdings/szl-forge/blob/a6b58f623185820eddfb0b279d21b7d81b87137c/receiptagent-v2/salvage_receipt.20260913.json",
+        "https://github.com/szl-holdings/szl-forge/blob/f7231bd0b604ed85b28d258e8c8d19b3d400f2b2/receiptagent-v2/qual_v2_salvage_receipt.20260913.json",
+        "https://github.com/szl-holdings/szl-forge/blob/main/frontier/qwen35-receiptagent-v2-merged/candidate.json",
+        "https://github.com/szl-holdings/szl-forge/blob/main/frontier/qwen35-receiptagent-v2-merged/publication-followup.20260924.json",
+        "https://github.com/szl-holdings/szl-forge/tree/main/frontier/qwen35-receiptagent-v2-merged"
+      ],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/szl-triage-qwen3.5-0.8b-lora",
+      "revision": "4a20cf2c174bf8f2cf2fd88edb626e701b1c3ad4",
+      "observed_at": "2026-11-13T22:17:43.974250+00:00",
+      "card_http": 200,
+      "card_sha256": "43511151a0e11329a8e60d95cbb34977057844d2e05844534a467eb971c5b96e",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "ADAPTER_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-typesafe-triage"
+      ],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/szl-triage-qwen3.5-0.8b-lora-study5",
+      "revision": "1b52484634c767ae8a8fab40e484c3f8f35d0b00",
+      "observed_at": "2026-11-13T22:17:43.989216+00:00",
+      "card_http": 200,
+      "card_sha256": "3e1053df3090073fc3ca1a5c51c0da6472c541fc4e725bce44f5e1d3fcd70590",
+      "recognized_artifact_count": 11,
+      "artifact_hint": "ADAPTER_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-brand/blob/27d12e77fc0f9f1a0e5fae8b34adf2380d51d070/kit/LICENSE",
+        "https://github.com/szl-holdings/szl-typesafe-triage",
+        "https://github.com/szl-holdings/szl-typesafe-triage/blob/5e5bf7aae7fe10c7aaa09cdd4a4e6cbe95e32129/scripts/train_eval_publish.py",
+        "https://github.com/szl-holdings/szl-typesafe-triage/blob/6c3ed43318b40dda5bf814744dcffcf0b1ff8149/out/publish/triage-lora-study5/README.md",
+        "https://github.com/szl-holdings/szl-typesafe-triage/releases/tag/triage-lora-run1",
+        "https://github.com/szl-holdings/szl-typesafe-triage/releases/tag/triage-lora-study5-measured-20260922-111314"
+      ],
+      "evidence": [
+        {
+          "path": "checkpoint-66/trainer_state.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/szl-triage-qwen3.5-0.8b-lora-study5/raw/1b52484634c767ae8a8fab40e484c3f8f35d0b00/checkpoint-66/trainer_state.json",
+          "http": 200,
+          "sha256": "a1e99cdc7ac8629993c9cf2dcfee04edfce980dfbf1429f5e924b70bc62e3497"
+        },
+        {
+          "path": "checkpoint-132/trainer_state.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/szl-triage-qwen3.5-0.8b-lora-study5/raw/1b52484634c767ae8a8fab40e484c3f8f35d0b00/checkpoint-132/trainer_state.json",
+          "http": 200,
+          "sha256": "73a0116fe6709c07f37d9e85ef456b3fec84afab20f6e7ca67d59721ebb3e151"
+        },
+        {
+          "path": "checkpoint-198/trainer_state.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/szl-triage-qwen3.5-0.8b-lora-study5/raw/1b52484634c767ae8a8fab40e484c3f8f35d0b00/checkpoint-198/trainer_state.json",
+          "http": 200,
+          "sha256": "9d352320839d45467930544dbf57bf55d4ad59a3838a0236bb52fc3af4904b59"
+        },
+        {
+          "path": "checkpoint-264/trainer_state.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/szl-triage-qwen3.5-0.8b-lora-study5/raw/1b52484634c767ae8a8fab40e484c3f8f35d0b00/checkpoint-264/trainer_state.json",
+          "http": 200,
+          "sha256": "126b0bac1e728c64f52a37128de39a7507510ba2c1f6b62e2cfcb2b75396e034"
+        },
+        {
+          "path": "checkpoint-396/trainer_state.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/szl-triage-qwen3.5-0.8b-lora-study5/raw/1b52484634c767ae8a8fab40e484c3f8f35d0b00/checkpoint-396/trainer_state.json",
+          "http": 200,
+          "sha256": "dc3c265d6129fb03a64f9bd77ced1864af542db511a7b7b91ca47c4baaed2a78"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/chaski-r4",
+      "revision": "0f97176df71cdb8a617590e717683c6a4f59d8fb",
+      "observed_at": "2026-11-13T22:17:44.177252+00:00",
+      "card_http": 200,
+      "card_sha256": "acdc8ae7f7c274baa5e97cf9feef83092a760fcf8bef2f78457a3809f3025e71",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "ADAPTER_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": {
+        "repository": "szl-holdings/szl-forge",
+        "revision": "2f1f7636acf4e77d87de34319c34507f9441dc71",
+        "path": "chaski_r4/card/README.md",
+        "publisher": "publish-chaski-card.yml"
+      },
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-brand/blob/27d12e77fc0f9f1a0e5fae8b34adf2380d51d070/kit/logos/orbit-v2/suite/szl-icon-32.svg",
+        "https://github.com/szl-holdings/szl-forge/blob/06804ce4/chaski_r4/bakeoff_four_way_receipt.json",
+        "https://github.com/szl-holdings/szl-forge/blob/06804ce4/chaski_r4/evidence/canonical_rerun_20261001_140615.receipt.json",
+        "https://github.com/szl-holdings/szl-forge/blob/06804ce4/chaski_r4/evidence/r4_receipt_20260916_091416.json",
+        "https://github.com/szl-holdings/szl-forge/blob/06804ce4/tools/geh_v8/THREAD_AUDIT.md",
+        "https://github.com/szl-holdings/szl-forge/blob/2b4d7a0f69e68d60cb0f35f09c9bac837d66acdc/chaski_r4/card/README.md",
+        "https://github.com/szl-holdings/szl-forge/blob/57e6e6c3/chaski_r4/QUALIFICATION_STATE.md",
+        "https://github.com/szl-holdings/szl-forge/blob/e7096cbd500eaf3c358daa245955e7fe1d26c8dc/chaski_r4/evidence/canonical_rerun_20261001_140615.receipt.json",
+        "https://github.com/szl-holdings/szl-forge/blob/main/chaski_r4/evidence/publication_receipt_20261001_171009.json",
+        "https://github.com/szl-holdings/szl-forge/tree/main/chaski_r4",
+        "https://github.com/szl-holdings/szl-forge/tree/main/chaski_r4/card"
+      ],
+      "evidence": [
+        {
+          "path": "training_receipt.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/chaski-r4/raw/0f97176df71cdb8a617590e717683c6a4f59d8fb/training_receipt.json",
+          "http": 200,
+          "sha256": "fea82085c6bcc2c8f35ee805169207b03e2c0347ef902c85f505cff3168c1af2"
+        },
+        {
+          "path": "evidence/canonical_rerun_20261001_140615.receipt.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/chaski-r4/raw/0f97176df71cdb8a617590e717683c6a4f59d8fb/evidence/canonical_rerun_20261001_140615.receipt.json",
+          "http": 200,
+          "sha256": "5ae3de970014726f190dfe8e4d5b35e667fd737b1be29e27205c25d143bdf403"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/oac-ops-health-v2",
+      "revision": "eb4cd6ab91f550d9b112941531595f3b299cb596",
+      "observed_at": "2026-11-13T22:17:43.698932+00:00",
+      "card_http": 200,
+      "card_sha256": "3c8431bd95a9da59fa583d708aac6658da182437231ee83a07169682f405a8c0",
+      "recognized_artifact_count": 0,
+      "artifact_hint": "NO_RECOGNIZED_CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-brand/blob/27d12e77fc0f9f1a0e5fae8b34adf2380d51d070/kit/logos/orbit-v2/suite/szl-icon-32.svg",
+        "https://github.com/szl-holdings/szl-forge/blob/56a00821858825f529c40c7322c2f1584608d6e5/ops-health/README.md",
+        "https://github.com/szl-holdings/szl-forge/blob/56a00821858825f529c40c7322c2f1584608d6e5/ops-health/logs/drafts/dup_check_from_scores.txt",
+        "https://github.com/szl-holdings/szl-forge/blob/56a00821858825f529c40c7322c2f1584608d6e5/ops-health/logs/drafts/split_positive_counts.txt",
+        "https://github.com/szl-holdings/szl-forge/blob/56a00821858825f529c40c7322c2f1584608d6e5/ops-health/logs/v2/final_verify_independent.txt",
+        "https://github.com/szl-holdings/szl-forge/blob/56a00821858825f529c40c7322c2f1584608d6e5/ops-health/runs/TEST_OPENED.json",
+        "https://github.com/szl-holdings/szl-forge/blob/56a00821858825f529c40c7322c2f1584608d6e5/ops-health/v2/AMENDMENTS.md",
+        "https://github.com/szl-holdings/szl-forge/blob/56a00821858825f529c40c7322c2f1584608d6e5/ops-health/v2/PREREGISTRATION.md",
+        "https://github.com/szl-holdings/szl-forge/blob/56a00821858825f529c40c7322c2f1584608d6e5/ops-health/v2/data/MANIFEST.json",
+        "https://github.com/szl-holdings/szl-forge/blob/56a00821858825f529c40c7322c2f1584608d6e5/ops-health/v2/results/COMPLIANCE.md",
+        "https://github.com/szl-holdings/szl-forge/blob/56a00821858825f529c40c7322c2f1584608d6e5/ops-health/v2/results/FINAL_RESULTS.md",
+        "https://github.com/szl-holdings/szl-forge/blob/56a00821858825f529c40c7322c2f1584608d6e5/ops-health/v2/results/MUTATION_READINESS.md",
+        "https://github.com/szl-holdings/szl-forge/blob/56a00821858825f529c40c7322c2f1584608d6e5/ops-health/v2/results/STAGE2_SEARCH.md",
+        "https://github.com/szl-holdings/szl-forge/blob/56a00821858825f529c40c7322c2f1584608d6e5/ops-health/v2/results/final_evaluation.json",
+        "https://github.com/szl-holdings/szl-forge/blob/56a00821858825f529c40c7322c2f1584608d6e5/ops-health/v2/results/final_robustness.json",
+        "https://github.com/szl-holdings/szl-forge/tree/56a00821858825f529c40c7322c2f1584608d6e5/ops-health/v2/ops-health",
+        "https://github.com/szl-holdings/szl-forge/tree/main/ops-health/v2"
+      ],
+      "evidence": [
+        {
+          "path": "artifact_receipt.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/oac-ops-health-v2/raw/eb4cd6ab91f550d9b112941531595f3b299cb596/artifact_receipt.json",
+          "http": 200,
+          "sha256": "442486a3b451f0ad765aac253830cdc5455bad3a34186b4cf73388cf207056f2"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/forge-v3",
+      "revision": "1ab75c516c4ce9cbb43cc613f87c340ed7500b12",
+      "observed_at": "2026-11-13T22:17:47.505850+00:00",
+      "card_http": 200,
+      "card_sha256": "9cb1ce6ec75e68aec996e7dc478dad38f54b584da2f6fb296b278f8e4b57c13d",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-forge/pull/708"
+      ],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/szl-receiptagent-qwen25-1.5b-experimental-20261104",
+      "revision": "07bab574d124226132d9991c7961484b9fb61b93",
+      "observed_at": "2026-11-13T22:17:50.520319+00:00",
+      "card_http": 200,
+      "card_sha256": "1bfb610aa9c965148644e56c1bf7e592836c4dc57486856503e2cfdc8a7e76d8",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "ADAPTER_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [
+        {
+          "path": "receipts/training_receipt.signed.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/szl-receiptagent-qwen25-1.5b-experimental-20261104/raw/07bab574d124226132d9991c7961484b9fb61b93/receipts/training_receipt.signed.json",
+          "http": 200,
+          "sha256": "65454dafda227280aa9a9b760fab146b687a4ddfb23efe1fd34289016c85844f"
+        },
+        {
+          "path": "receipts/eval_receipt.signed.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/szl-receiptagent-qwen25-1.5b-experimental-20261104/raw/07bab574d124226132d9991c7961484b9fb61b93/receipts/eval_receipt.signed.json",
+          "http": 200,
+          "sha256": "c015e44936031173a253c0697c29b392a899824a44964c4f84e4cb7bcc235b1d"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/szl-specdecode",
+      "revision": "ce2017598bbd76fc83a90228a72c8214e78a3125",
+      "observed_at": "2026-11-13T22:17:50.024124+00:00",
+      "card_http": 200,
+      "card_sha256": "67bf23f30f1dae0c4d6bfebd9ca9af0baa32a7362ef360c6458a2f6b43d294f9",
+      "recognized_artifact_count": 0,
+      "artifact_hint": "NO_RECOGNIZED_CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-specdecode"
+      ],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/khipu-abstain-r3-candidate",
+      "revision": "bc65484903440ff3a8ecad16e4ee2fe38e2b682b",
+      "observed_at": "2026-11-13T22:17:51.910268+00:00",
+      "card_http": 200,
+      "card_sha256": "ec1b5e187e1fac548bcb01e32e701ea9b294f2fba087ca54b20eb3b4c63879bb",
+      "recognized_artifact_count": 0,
+      "artifact_hint": "NO_RECOGNIZED_CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-forge",
+        "https://github.com/szl-holdings/szl-forge/tree/054a223556c74b783d919f9bff145e1660844921"
+      ],
+      "evidence": [
+        {
+          "path": "training-eval-report.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/khipu-abstain-r3-candidate/raw/bc65484903440ff3a8ecad16e4ee2fe38e2b682b/training-eval-report.json",
+          "http": 200,
+          "sha256": "0ea5889b67f6f17bf46c5fe50e5f1ca0ad47226ef128991fe967a83e523fce01"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/miniembed-nano-r1-candidate",
+      "revision": "1a36c7c843e8d0a45cde0fba505dc70b53c27036",
+      "observed_at": "2026-11-13T22:17:53.972265+00:00",
+      "card_http": 200,
+      "card_sha256": "203176cb811355a8665a55dd182edbac19ee2dbd8357b985935a396432169875",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [
+        {
+          "path": "eval_report.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/miniembed-nano-r1-candidate/raw/1a36c7c843e8d0a45cde0fba505dc70b53c27036/eval_report.json",
+          "http": 200,
+          "sha256": "70431a6b3cd6c655081307f097531c56728a4a3cd590cb7bd4e293af8b3b2d85"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/chakana-r1-candidate",
+      "revision": "232c0a40c88f61735bdee6bae560f7a9acb28656",
+      "observed_at": "2026-11-13T22:17:55.135620+00:00",
+      "card_http": 200,
+      "card_sha256": "0dee3c8a9e208287408ff767f539435239bf1eef52f62f75c2545ecb24ac7295",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [
+        {
+          "path": "training_receipt.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/chakana-r1-candidate/raw/232c0a40c88f61735bdee6bae560f7a9acb28656/training_receipt.json",
+          "http": 200,
+          "sha256": "07dd2159cb962654abd40cb3080ddcbe832bc6d1c64f4e99baddf9989febfd20"
+        },
+        {
+          "path": "eval_report.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/chakana-r1-candidate/raw/232c0a40c88f61735bdee6bae560f7a9acb28656/eval_report.json",
+          "http": 200,
+          "sha256": "76ac4b2aefc39727c6717aeddb05212d5c1bf4ae291d5b54b7198804a448c443"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/willay-r1-candidate",
+      "revision": "dce4c6e0ece13527f9a9ba5b5185d4e05330968c",
+      "observed_at": "2026-11-13T22:17:58.039588+00:00",
+      "card_http": 200,
+      "card_sha256": "fbe0bb2a7ed0b8f4548a878fe1cdfa1403e175869195214951b472430cab7e40",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-forge/pull/708"
+      ],
+      "evidence": [
+        {
+          "path": "training-eval-report.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/willay-r1-candidate/raw/dce4c6e0ece13527f9a9ba5b5185d4e05330968c/training-eval-report.json",
+          "http": 200,
+          "sha256": "585eac66ad485e259ca4a7d51abfa4e9bdb7a5b773d837cfd5c1f6c63c5d3ed2"
+        },
+        {
+          "path": "curriculum-manifest.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/willay-r1-candidate/raw/dce4c6e0ece13527f9a9ba5b5185d4e05330968c/curriculum-manifest.json",
+          "http": 200,
+          "sha256": "86cbfe246299d1f59e539c8abf61fa8c4ece5d0239835c17f0db7270fb0d60c6"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-sft-v3",
+      "revision": "60f85d1d5773b67392314c1ec0652bbb16dccf4b",
+      "observed_at": "2026-11-13T22:18:00.163397+00:00",
+      "card_http": 200,
+      "card_sha256": "ac0a8cfaeb6f7faafe1cb622636e51acac23fc866fb74d25c660c7ab73c4b1f9",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-forge/blob/main/training/train_wave.py"
+      ],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/SZL-Khipu-1.5B-sft-v2",
+      "revision": "8191b6b5891c576a81a7348db7ca33b3bad62ad8",
+      "observed_at": "2026-11-13T22:18:00.327284+00:00",
+      "card_http": 200,
+      "card_sha256": "bed86e7337555419b6b08b7e98a8ff33c3199ea1420abe0f6f6295a5282adac1",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-forge/blob/main/training/train_wave.py"
+      ],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/willay-r2-candidate",
+      "revision": "8bb9f86c5f00b64bd5e9c2d4f33b80c45c9d9940",
+      "observed_at": "2026-11-13T22:18:00.241160+00:00",
+      "card_http": 200,
+      "card_sha256": "308370ef39e07a783ba12b6706f17ba7d90efa4e25e58ef608ca239172125a1e",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-forge/pull/708"
+      ],
+      "evidence": [
+        {
+          "path": "training-eval-report.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/willay-r2-candidate/raw/8bb9f86c5f00b64bd5e9c2d4f33b80c45c9d9940/training-eval-report.json",
+          "http": 200,
+          "sha256": "c882c58217233a3855de0b01c44b327aee6317af3359802b1589c0b67955265b"
+        },
+        {
+          "path": "curriculum-manifest.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/willay-r2-candidate/raw/8bb9f86c5f00b64bd5e9c2d4f33b80c45c9d9940/curriculum-manifest.json",
+          "http": 200,
+          "sha256": "2af1f6cb895d519c75cf512961f375ea5307f82ac2dfdf2477510ef65b8aaea3"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-dpo-v1",
+      "revision": "f6e12e8471283a437d82e3eef7cb38e562df4767",
+      "observed_at": "2026-11-13T22:18:02.881925+00:00",
+      "card_http": 200,
+      "card_sha256": "b8aeac64908b41995e0a163d13afc581c88361315621533154ee5e33aff3d2b9",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-forge/blob/main/training/dpo_wave.py"
+      ],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/SZL-Khipu-1.5B-estate-sft-v1",
+      "revision": "1950822b9a4a3d2e44080ce4fb8ec35d74a8ba6b",
+      "observed_at": "2026-11-13T22:18:03.144523+00:00",
+      "card_http": 200,
+      "card_sha256": "30b5360ef1187db9d1698275976a4d2c834885ea28bba2a695d5b336f9862b5b",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-forge/blob/main/training/train_wave.py"
+      ],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-dpo-v2",
+      "revision": "82d4579e395f25065c311e9e31ae7e01ddd16554",
+      "observed_at": "2026-11-13T22:18:04.267349+00:00",
+      "card_http": 200,
+      "card_sha256": "5b76ce0ae8ce5cdd0e5fc67efcc4115fb787e278c9c26981d6317cdeb8e58f2a",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-forge/blob/main/training/dpo_wave.py"
+      ],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/KHIPU-R2-estate-sft-v1",
+      "revision": "b543b55fcd1d8b195addeda16e73939f757fb3bc",
+      "observed_at": "2026-11-13T22:18:04.565469+00:00",
+      "card_http": 200,
+      "card_sha256": "abab6cd6e7a5f1cd3a8d11b0136bf49b9111bd3ae508aebddb2053dbc198d687",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-forge/blob/main/training/train_wave.py"
+      ],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/SZL-Forge-1.5B-ReceiptAgent-estate-sft-v1",
+      "revision": "5d8d3d8071450b2bb18e12f5980d68c66a33dd27",
+      "observed_at": "2026-11-13T22:18:05.422246+00:00",
+      "card_http": 200,
+      "card_sha256": "e667ae10b5acf6d568bce8fcfa762fde14ab53b92b4572930f2845777ee2cde7",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-forge/blob/main/training/train_wave.py"
+      ],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/chaski-estate-sft-v1",
+      "revision": "d3d6528603dc012c96f31a683508715c9aad8566",
+      "observed_at": "2026-11-13T22:18:05.766312+00:00",
+      "card_http": 200,
+      "card_sha256": "bef623f4779cc6a6d87bd3fab4ebf5273745b21bbdf14a995cb3671d9a838276",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-forge/blob/main/training/train_wave.py"
+      ],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2m-estate-sft-v1",
+      "revision": "bb4319dac4d1aeb8dbc3f251a5efbbcc4f4c955b",
+      "observed_at": "2026-11-13T22:18:06.158699+00:00",
+      "card_http": 200,
+      "card_sha256": "85adfbf861a543ac9394690996a8063c6c78b59962a6afa15387627a7d57428f",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-forge/blob/main/training/train_wave.py"
+      ],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/chaski-5050-estate-sft-v1",
+      "revision": "b8e6fa6e77b58f6e15698b3451f14c6afd796dac",
+      "observed_at": "2026-11-13T22:18:06.569995+00:00",
+      "card_http": 200,
+      "card_sha256": "d63ad26cc546f95584175a65af48539d71e4d472b876fe06140c49338a9be595",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-forge/blob/main/training/train_wave.py"
+      ],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/chaski-r2-estate-sft-v1",
+      "revision": "8c3edcd5e5610a2a3b1bc2774514a75490d59f34",
+      "observed_at": "2026-11-13T22:18:08.590260+00:00",
+      "card_http": 200,
+      "card_sha256": "dd899730ca5ef3be3e28e31eceb7b1656a287ad6a01abc94fc32408954034a10",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-forge/blob/main/training/train_wave.py"
+      ],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/brain-navigator-r2-estate-sft-v1",
+      "revision": "692d3617428dcb90d6e9d725aab93d020032f412",
+      "observed_at": "2026-11-13T22:18:09.231710+00:00",
+      "card_http": 200,
+      "card_sha256": "70245c2dcb743b224e3eb196b447cda9f2e7b19fe611996a75579b239cbcda43",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-forge/blob/main/training/train_wave.py"
+      ],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/WILLAY-estate-sft-v1",
+      "revision": "c4ed5f3fd8f2b9de4020d006efe3fb45e452b63d",
+      "observed_at": "2026-11-13T22:18:10.240778+00:00",
+      "card_http": 200,
+      "card_sha256": "3836c8c1b6c5d11f77c07d6a7d9bc1898bccc1f94b9d0e080bebd07c22442754",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-forge/blob/main/training/train_wave.py"
+      ],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3-estate-sft-v1",
+      "revision": "0849d46c536ac918ba874bb1a080395f6d51f331",
+      "observed_at": "2026-11-13T22:18:10.285606+00:00",
+      "card_http": 200,
+      "card_sha256": "4cfa504b54d9f303e8dc00763f979a6caf8ac65d540b9e70405770ac966eccb9",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-forge/blob/main/training/train_wave.py"
+      ],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/khipu-r3-estate-sft-v1",
+      "revision": "72c8bbbcbedecbd09c814bca239f53d361db92bd",
+      "observed_at": "2026-11-13T22:18:11.899274+00:00",
+      "card_http": 200,
+      "card_sha256": "78d9a67281707a76137908bb33ae6c2e0fa6992128f84c3cb29e6c38d4ff8d99",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-forge/blob/main/training/train_wave.py"
+      ],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/szl1-experimental-estate-sft-v1",
+      "revision": "d0ec42396f074972f01c5b636dda398f4a6fd13f",
+      "observed_at": "2026-11-13T22:18:12.502442+00:00",
+      "card_http": 200,
+      "card_sha256": "6a734b1b9dd7197989e45c983a5d1403dc76ec6d27dfe9b7cfd7aee2c2732054",
+      "recognized_artifact_count": 2,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-forge/blob/main/training/train_wave.py"
+      ],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/Nemotron-Mini-4B-Instruct-st",
+      "revision": "be959f8881348a3578dce3b86b0f3c546b0b502a",
+      "observed_at": "2026-11-13T22:18:13.056327+00:00",
+      "card_http": 200,
+      "card_sha256": "9187a2a10f3616fb74cbf03efa55999ee76476df660196a34b524fcba9228faa",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "other",
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/SZL-Nemotron-Mini-4B-Estate-v1",
+      "revision": "e509cf783439d4f98218ee9f53d87cc771ba0c1c",
+      "observed_at": "2026-11-13T22:18:13.135226+00:00",
+      "card_http": 200,
+      "card_sha256": "3bd8f0ca5c40004c9fcf254673795daf7bb2dd1fbf23d912aff5b9bf9c23b42c",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "other",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-forge/blob/main/training/train_wave.py"
+      ],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/SZL-Nemotron-Mini-4B-Estate-DPO-v1",
+      "revision": "59f33d2bf2384451d7ab25c697703817bac21184",
+      "observed_at": "2026-11-13T22:18:13.998177+00:00",
+      "card_http": 200,
+      "card_sha256": "a4b622f0cc9f5a68c817eca620652fd9fc624d072f5a3513e04d14549a617093",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "other",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-forge/blob/main/training/dpo_wave.py"
+      ],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/SZL-Specialized-Domains-v1",
+      "revision": "f0293f28d7ec45a01c59e40daa93af38e20c308b",
+      "observed_at": "2026-11-13T22:18:14.364825+00:00",
+      "card_http": 200,
+      "card_sha256": "dbee40bc546be629ba4703e107c06480039179879ff4675d708c9913d3c5b64e",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/SZL-Showcase-Systems-v1",
+      "revision": "31d82d6133f20ad26403d21abfd16950d8e19b11",
+      "observed_at": "2026-11-13T22:18:15.299938+00:00",
+      "card_http": 200,
+      "card_sha256": "aa8e1dc855114949277e5e0bebe12771078098a69a09dec8f0d72fa9153d3a67",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/SZL-Nemotron-Mini-4B-Doctrine-v1",
+      "revision": "778f9aa0794cebeaa0a9d12428bea6a4d50780ff",
+      "observed_at": "2026-11-13T22:18:15.367429+00:00",
+      "card_http": 200,
+      "card_sha256": "d079a05e8cc0a5845e44d48f993b5eda3709c981f827a46673926b40401686d1",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "other",
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/SZL-Reasoning-0.8B-v1",
+      "revision": "b1789f324594c82ea4b57c00c0797c9f25dd3ba2",
+      "observed_at": "2026-11-13T22:18:16.702215+00:00",
+      "card_http": 200,
+      "card_sha256": "86477a69d02ad591b3f79de5532999247629211be532d82bcfa36a416535c945",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-second-brain"
+      ],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/SZL-Nemotron-Mini-4B-Estate-DPO-v2",
+      "revision": "ffb620af1be4281ca2db97397e860cb2f7c6b595",
+      "observed_at": "2026-11-13T22:18:17.238644+00:00",
+      "card_http": 200,
+      "card_sha256": "8b274108453ccf7b6192ecd3171d8fcd8078f9da4e693bbb78dd95205a5c4a29",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "other",
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/SZL-FreeEnergy-0.8B-v1",
+      "revision": "f9701c9645b61e9b8db89032cc6196894d9dffba",
+      "observed_at": "2026-11-13T22:18:18.357894+00:00",
+      "card_http": 200,
+      "card_sha256": "1a7eaa060294f21aafd18a5586f472c1623d353ac18ef11f0e2a03b931625367",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/SZL-AncientMath-0.8B-v1",
+      "revision": "9d3fc2ec403bcb9df3aaf758d8e7bb5521895200",
+      "observed_at": "2026-11-13T22:18:18.437436+00:00",
+      "card_http": 200,
+      "card_sha256": "f625bb4e75a9674c7dcdb745ef10c61c5dc5ad1ffb692f94e625c98a91dc9ed6",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/SZL-AcousticGovernance-0.8B-v1",
+      "revision": "7df2b24970a45085e41fb0709821c984da23d565",
+      "observed_at": "2026-11-13T22:18:20.472230+00:00",
+      "card_http": 200,
+      "card_sha256": "ddc470a89078059c725515a0502be35c5e7bce033fd9747b467b95f50815b398",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/SZL-FreeEnergy-0.8B-DPO-v1",
+      "revision": "37a79dbb9ae18706d13f6a2ebe8e572b9534d62e",
+      "observed_at": "2026-11-13T22:18:26.483809+00:00",
+      "card_http": 200,
+      "card_sha256": "083d3b423149b8e4df3ea74616e89cd0b4176431d4ef56cc4687c7ca98a6e412",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/SZL-GovernedDistill-0.8B-v1",
+      "revision": "b69635a5b4144baf5fd66a0665cd519d1444a6f3",
+      "observed_at": "2026-11-13T22:18:23.422114+00:00",
+      "card_http": 200,
+      "card_sha256": "134442f86f0a2832dd89912ac1ae5317c25f9cec052260bf95cfbe13819cbbd4",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-forge/pull/708",
+        "https://github.com/szl-holdings/szl-forge/tree/main/training/w30"
+      ],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/abstain-doctrine-r1",
+      "revision": "e8446e7ca492d882976a66421289d5c308f9d931",
+      "observed_at": "2026-11-13T22:18:23.824976+00:00",
+      "card_http": 200,
+      "card_sha256": "d221a050799a2b582b107108bb9617d3ae9ba50a52ffaf44ffb96ef4b551a8ef",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-forge/pull/708"
+      ],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/doctrine1-r1-candidate",
+      "revision": "5ff859eab7d5a942823672921d4f26e1b8e27327",
+      "observed_at": "2026-11-13T22:18:25.179852+00:00",
+      "card_http": 200,
+      "card_sha256": "68acd9ab8f10fd2aba8f7c522b4dc5b92fc6ceca35f510442262d41dfaac867e",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-forge/pull/708"
+      ],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/freeenergy-r1-candidate",
+      "revision": "24900f821bf01b2d4567c13d517b7622b6680876",
+      "observed_at": "2026-11-13T22:18:26.956330+00:00",
+      "card_http": 200,
+      "card_sha256": "8cef7172b5340efd55e48a69bf9acf627251eecaeb419f1e936aba2550486b59",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-forge/pull/708"
+      ],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/ouroboros-r2-candidate",
+      "revision": "1794114bc0c2dbf8229d9f54958b69b028f82161",
+      "observed_at": "2026-11-13T22:18:27.105651+00:00",
+      "card_http": 200,
+      "card_sha256": "b09ad52ecafa1c4cc4610d3bba1379255b186897904a753c2747b83a33c539cd",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-forge/pull/708"
+      ],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/doctrine-v2-r2-candidate",
+      "revision": "541fb7838376978acbf8d1b439db9514696890f2",
+      "observed_at": "2026-11-13T22:18:27.801955+00:00",
+      "card_http": 200,
+      "card_sha256": "336609afddb7473d37981bbd7905ed92d34ce226b3333b0dfeab40f0b4e7062c",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-forge/pull/708"
+      ],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/szl-brain",
+      "revision": "bc783855cb9234b47fa27760832710f877968a84",
+      "observed_at": "2026-11-13T22:18:28.387991+00:00",
+      "card_http": 200,
+      "card_sha256": "d6fa4c200af979aa4977ae85e1346eb923dbc07a6ca0189cee493bc68c129efa",
+      "recognized_artifact_count": 0,
+      "artifact_hint": "NO_RECOGNIZED_CHECKPOINT_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [
+        "https://github.com/szl-holdings/szl-gpu-bridge/blob/main/docs/AUTONOMY_LADDER.md",
+        "https://github.com/szl-holdings/szl-gpu-bridge/blob/main/docs/OUROBOROS_CURRICULUM.md",
+        "https://github.com/szl-holdings/szl-gpu-bridge/tree/main/tools/hf_cards"
+      ],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/hatun-24-doctrine-math-r1-candidate",
+      "revision": "1774fbf5f9e9423205becb27ccb7b4674d427fdb",
+      "observed_at": "2026-11-13T22:18:30.805002+00:00",
+      "card_http": 200,
+      "card_sha256": "455d2382f48140e4a82858c79dfb29ae617609363537b4c41f3ec8407dd9765c",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "ADAPTER_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [
+        {
+          "path": "training_report.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/hatun-24-doctrine-math-r1-candidate/raw/1774fbf5f9e9423205becb27ccb7b4674d427fdb/training_report.json",
+          "http": 200,
+          "sha256": "097bb3e60647a9e7ba82de362d95eb14f961035effdb1e04494d3683b27dfab9"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/a11oy-code-r1-candidate",
+      "revision": "5b8c2183609b920362b8eaec196612e9869aead4",
+      "observed_at": "2026-11-13T22:18:30.875385+00:00",
+      "card_http": 200,
+      "card_sha256": "836a5c1fdb22b3ced61be41099ffa5c6a999cec29fd6c52c49fe1469ac5a32b1",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "ADAPTER_LISTED",
+      "license_metadata": "other",
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [
+        {
+          "path": "training_report.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/a11oy-code-r1-candidate/raw/5b8c2183609b920362b8eaec196612e9869aead4/training_report.json",
+          "http": 200,
+          "sha256": "5f990ab2bfe00faff873dfb9d3a4733bf85058c47d83f1acbe2ab269e2fb16f2"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/abstention-v2-candidate",
+      "revision": "1005f79ffc3e78831d6d5aa71f8b99808a6e560d",
+      "observed_at": "2026-11-13T22:18:32.313129+00:00",
+      "card_http": 200,
+      "card_sha256": "66557b40912f205b596e807072d7a8ffded8c3ca3947affff54e47bd13a57369",
+      "recognized_artifact_count": 5,
+      "artifact_hint": "ADAPTER_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [
+        {
+          "path": "checkpoint-50/trainer_state.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/abstention-v2-candidate/raw/1005f79ffc3e78831d6d5aa71f8b99808a6e560d/checkpoint-50/trainer_state.json",
+          "http": 200,
+          "sha256": "703c34e615551adfd6acdb44fc45f72e80a9f68ee2086b7a1318f1eefedd3823"
+        },
+        {
+          "path": "checkpoint-100/trainer_state.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/abstention-v2-candidate/raw/1005f79ffc3e78831d6d5aa71f8b99808a6e560d/checkpoint-100/trainer_state.json",
+          "http": 200,
+          "sha256": "6b65ccda35ebbd3f1e2b084397dbe5d3d046f96c59c9099d9516d533923642c0"
+        },
+        {
+          "path": "checkpoint-150/trainer_state.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/abstention-v2-candidate/raw/1005f79ffc3e78831d6d5aa71f8b99808a6e560d/checkpoint-150/trainer_state.json",
+          "http": 200,
+          "sha256": "ecfcb08175145e4288918ddca711d53f5fd9036c838f3f7dbf9cb61bdba2cd49"
+        },
+        {
+          "path": "checkpoint-200/trainer_state.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/abstention-v2-candidate/raw/1005f79ffc3e78831d6d5aa71f8b99808a6e560d/checkpoint-200/trainer_state.json",
+          "http": 200,
+          "sha256": "e87f0ca9b54e0c6ce4e3003466aec65c73d265f3c6bdf1e4357d4371c1407c4a"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/physics-master-v1-candidate",
+      "revision": "a6697a425f85304b6bfa5b27a1aa4d825acc156f",
+      "observed_at": "2026-11-13T22:18:32.597083+00:00",
+      "card_http": 200,
+      "card_sha256": "6e7184f4edd13c1de0fa13a190c2dac0521abd20ab7fedf07e9a695be3471e25",
+      "recognized_artifact_count": 5,
+      "artifact_hint": "ADAPTER_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [
+        {
+          "path": "checkpoint-50/trainer_state.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/physics-master-v1-candidate/raw/a6697a425f85304b6bfa5b27a1aa4d825acc156f/checkpoint-50/trainer_state.json",
+          "http": 200,
+          "sha256": "db8677db4ee0ea3e2a3a27b45d0d2e2503f1ce27db78db90cda46517b360eaf8"
+        },
+        {
+          "path": "checkpoint-100/trainer_state.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/physics-master-v1-candidate/raw/a6697a425f85304b6bfa5b27a1aa4d825acc156f/checkpoint-100/trainer_state.json",
+          "http": 200,
+          "sha256": "9a9e618d8943015298012228af030af453eb7eab3d8810750fde237f8881063a"
+        },
+        {
+          "path": "checkpoint-150/trainer_state.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/physics-master-v1-candidate/raw/a6697a425f85304b6bfa5b27a1aa4d825acc156f/checkpoint-150/trainer_state.json",
+          "http": 200,
+          "sha256": "286cbd3ec200c4a5a45b2de09258d02df626c819b32224055c0c84cf5a459f5d"
+        },
+        {
+          "path": "checkpoint-200/trainer_state.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/physics-master-v1-candidate/raw/a6697a425f85304b6bfa5b27a1aa4d825acc156f/checkpoint-200/trainer_state.json",
+          "http": 200,
+          "sha256": "6cc62c7129fd4b4465052c096463d88d63c9e2ce5ea84f4b8b899dcbdcc44af7"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/quant-master-v1-candidate",
+      "revision": "abd79ed091abbf58cb2be896a9422d582152161e",
+      "observed_at": "2026-11-13T22:18:34.862223+00:00",
+      "card_http": 200,
+      "card_sha256": "b3a25665b0b5fa9c30ca2944cf70a89f02fb97e0ddab71ca9aa392d45b68acb7",
+      "recognized_artifact_count": 5,
+      "artifact_hint": "ADAPTER_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [
+        {
+          "path": "checkpoint-50/trainer_state.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/quant-master-v1-candidate/raw/abd79ed091abbf58cb2be896a9422d582152161e/checkpoint-50/trainer_state.json",
+          "http": 200,
+          "sha256": "7be0494ac158532fc98021a4dab32c74eed7fb771dfe8ef67d12449007652e1e"
+        },
+        {
+          "path": "checkpoint-100/trainer_state.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/quant-master-v1-candidate/raw/abd79ed091abbf58cb2be896a9422d582152161e/checkpoint-100/trainer_state.json",
+          "http": 200,
+          "sha256": "3ac4ea8d513c02d5b68e97e7f7044167f85fcd1940ce0f8a76f7bb1e39ad17e7"
+        },
+        {
+          "path": "checkpoint-150/trainer_state.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/quant-master-v1-candidate/raw/abd79ed091abbf58cb2be896a9422d582152161e/checkpoint-150/trainer_state.json",
+          "http": 200,
+          "sha256": "714cff35de6fa26a7368b6786532e687735ce02d1408dce4cff74cfdaf656355"
+        },
+        {
+          "path": "checkpoint-200/trainer_state.json",
+          "url": "https://huggingface.co/SZLHOLDINGS/quant-master-v1-candidate/raw/abd79ed091abbf58cb2be896a9422d582152161e/checkpoint-200/trainer_state.json",
+          "http": 200,
+          "sha256": "49407815d8cd41eeddf1203e7edd81ef99827c7bae023ac9f5d3a843deba9011"
+        }
+      ],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/code-master-v3-fresh",
+      "revision": "d0c50c7428e2a6166b675555fa80eb70a4246f5e",
+      "observed_at": "2026-11-13T22:18:35.261701+00:00",
+      "card_http": 200,
+      "card_sha256": "25259a753bc65c32f1bdcc921b3b9cef6f9628c4a555091e2b242e929fdbf807",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "ADAPTER_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/doctrine-master-v1-candidate",
+      "revision": "053cd7375b0c1198ef758424a1d379f8783d9fcc",
+      "observed_at": "2026-11-13T22:18:37.400955+00:00",
+      "card_http": 200,
+      "card_sha256": "e8bf07d07299dae9a527c50f95104a2e93d588027ee316228b9da5f2af1df748",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "ADAPTER_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/measurement-master-v1-candidate",
+      "revision": "594ee95517ac84f0d7e2f83553533140abd76074",
+      "observed_at": "2026-11-13T22:18:39.960208+00:00",
+      "card_http": 200,
+      "card_sha256": "678529cae1412f6c7d041aaa2f630831b54045d8b88d80e6f4adae6ca5c2bf5c",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "ADAPTER_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/reasoning-master-v1-candidate",
+      "revision": "b62ea2b4cf7e2317cc32316f101c01966e5f4af1",
+      "observed_at": "2026-11-13T23:07:47.271363+00:00",
+      "card_http": 200,
+      "card_sha256": "6cf470dae94f85319cc0cd572884a904949a2b7b887861c8ab3d073a27513555",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "ADAPTER_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/quant-master-4b-v1-candidate",
+      "revision": "b0ebe3d2393b00cb2180e5147565ad149f5520c0",
+      "observed_at": "2026-11-13T23:07:48.348450+00:00",
+      "card_http": 200,
+      "card_sha256": "490a043041d5e7b4f31bf6a201bb490de556eb5e087436d88e5b172e466227d2",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "ADAPTER_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/quant-master-4b-500step-candidate",
+      "revision": "1b5800b8a26cdfbb60574849f85dbbc8a2f5e00f",
+      "observed_at": "2026-11-13T23:07:48.374268+00:00",
+      "card_http": 200,
+      "card_sha256": "853aa108823fe7736d9714dd2eca7274380c8e2405a9e7e79c77a259e763251e",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "ADAPTER_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/quant-master-1.7b-500step-candidate",
+      "revision": "1b1d69fbabec2124a8e85f884130b2192aeb7e8d",
+      "observed_at": "2026-11-13T23:07:49.251065+00:00",
+      "card_http": 200,
+      "card_sha256": "ca6a67fe8c24bec7b9ce970416edfd215d4f9ca9ce6d590df4ed5965637c92c9",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "ADAPTER_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/SZL-Khipu-1.5B-v2-trained",
+      "revision": "114ec9a7a7521aa1274e24ea30fe5e38930d1528",
+      "observed_at": "2026-11-13T23:07:49.462786+00:00",
+      "card_http": 200,
+      "card_sha256": "010fbfb8bc5d5731fb4b76395b77c3794089b49043fda910e4097f5668ac55e4",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "ADAPTER_LISTED",
+      "license_metadata": "apache-2.0",
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/chaski-v2-trained",
+      "revision": "db961ee7ea16fdd708e701590026ebe7497545c9",
+      "observed_at": "2026-11-13T23:07:49.511050+00:00",
+      "card_http": 200,
+      "card_sha256": "0336368f8274a5ed09f54cee8d56a851ecee96026d9f391a6735762c16608a60",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "ADAPTER_LISTED",
+      "license_metadata": null,
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/willay-v2-trained",
+      "revision": "e5412413e67a1d50bd9ab906189c9e3e50c13be2",
+      "observed_at": "2026-11-13T23:07:50.192157+00:00",
+      "card_http": 200,
+      "card_sha256": "0336368f8274a5ed09f54cee8d56a851ecee96026d9f391a6735762c16608a60",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "ADAPTER_LISTED",
+      "license_metadata": null,
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/khipu-r2-v2-trained",
+      "revision": "b0e00d26cbace1d08349e5cee13c91304411fe55",
+      "observed_at": "2026-11-13T23:07:50.441730+00:00",
+      "card_http": 200,
+      "card_sha256": "0336368f8274a5ed09f54cee8d56a851ecee96026d9f391a6735762c16608a60",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "ADAPTER_LISTED",
+      "license_metadata": null,
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/brain-navigator-v2-trained",
+      "revision": "591479133b582e9611b872682b504e1084e1b9d9",
+      "observed_at": "2026-11-13T23:07:50.500561+00:00",
+      "card_http": 200,
+      "card_sha256": "0336368f8274a5ed09f54cee8d56a851ecee96026d9f391a6735762c16608a60",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "ADAPTER_LISTED",
+      "license_metadata": null,
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/chakana-v2-trained",
+      "revision": "7eb1f8b8308f6104ccb141ba1f52b9ee3f0198c1",
+      "observed_at": "2026-11-13T23:07:51.216401+00:00",
+      "card_http": 200,
+      "card_sha256": "0336368f8274a5ed09f54cee8d56a851ecee96026d9f391a6735762c16608a60",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "ADAPTER_LISTED",
+      "license_metadata": null,
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/freeenergy-v2-trained",
+      "revision": "1a080037ed381d2543343fd0c27e9d0dd54defe5",
+      "observed_at": "2026-11-13T23:07:51.534581+00:00",
+      "card_http": 200,
+      "card_sha256": "0336368f8274a5ed09f54cee8d56a851ecee96026d9f391a6735762c16608a60",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "ADAPTER_LISTED",
+      "license_metadata": null,
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/doctrine-v2-trained",
+      "revision": "40e8e0a168ba5eeb0c43e1f4902f0d054246af21",
+      "observed_at": "2026-11-13T23:07:51.550158+00:00",
+      "card_http": 200,
+      "card_sha256": "0336368f8274a5ed09f54cee8d56a851ecee96026d9f391a6735762c16608a60",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "ADAPTER_LISTED",
+      "license_metadata": null,
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    },
+    {
+      "id": "SZLHOLDINGS/ouroboros-v2-trained",
+      "revision": "5c2f945f355e2f990242eecc074f7f9ac49ae94b",
+      "observed_at": "2026-11-13T23:07:52.303987+00:00",
+      "card_http": 200,
+      "card_sha256": "0336368f8274a5ed09f54cee8d56a851ecee96026d9f391a6735762c16608a60",
+      "recognized_artifact_count": 1,
+      "artifact_hint": "ADAPTER_LISTED",
+      "license_metadata": null,
+      "source_route": null,
+      "reported_github_links": [],
+      "evidence": [],
+      "runtime_state": "NOT_TESTED",
+      "publication_state": "NOT_PERFORMED"
+    }
+  ]
+}

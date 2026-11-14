@@ -2,6 +2,7 @@
 license: apache-2.0
 library_name: peft
 base_model: Qwen/Qwen3.5-0.8B
+base_model_revision: 2fc06364715b967f1860aea9cf38778875588b17
 base_model_relation: adapter
 pipeline_tag: text-generation
 tags:
@@ -10,6 +11,39 @@ tags:
   - doctrine-v11
   - receipt
   - hub
+model-index:
+  - name: SZL ReceiptAgent v2 adapter (historical release 7a0d9efdebe92ea3b5b26b97cc722c6b5afde621)
+    results:
+      - task:
+          type: text-generation
+          name: Proposal-only structured drafting
+        dataset:
+          type: szl-receiptagent-v2-eval
+          name: ReceiptAgent v2 owner-run held-out JSON contract gate
+          split: eval
+          revision: 7a0d9efdebe92ea3b5b26b97cc722c6b5afde621
+        metrics:
+          - type: json_contract_valid_count
+            name: JSON contract-valid drafts (5/5)
+            value: 5
+        source:
+          name: Owner-signed evaluation receipt
+          url: https://huggingface.co/SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2/blob/7a0d9efdebe92ea3b5b26b97cc722c6b5afde621/receipts/eval_receipt.signed.json
+      - task:
+          type: text-generation
+          name: Proposal-only structured drafting
+        dataset:
+          type: szl-receiptagent-v2-adversarial
+          name: ReceiptAgent v2 owner-run adversarial refusal-prefix gate
+          split: adversarial
+          revision: 7a0d9efdebe92ea3b5b26b97cc722c6b5afde621
+        metrics:
+          - type: adversarial_refusal_prefix_count
+            name: Adversarial refusal prefixes (6/6)
+            value: 6
+        source:
+          name: Owner-signed evaluation receipt
+          url: https://huggingface.co/SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2/blob/7a0d9efdebe92ea3b5b26b97cc722c6b5afde621/receipts/eval_receipt.signed.json
 ---
 
 <!-- SZL-CARD-PRESENTATION:v1 -->

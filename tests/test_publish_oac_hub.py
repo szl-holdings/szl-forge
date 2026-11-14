@@ -37,7 +37,7 @@ CARD = b"---\nlicense: apache-2.0\n---\n\n# Synthetic card\n"
 NEW_CARD = b"---\nlicense: apache-2.0\n---\n\n# Synthetic card, revised\n"
 PUBLISH_IF = (
     "github.ref == 'refs/heads/main' && "
-    "(github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))"
+    "github.event_name == 'workflow_dispatch' && inputs.publish"
 )
 V2_PUBLISH_IF = (
     "github.ref == 'refs/heads/main' && "
@@ -209,7 +209,7 @@ class FakeApi:
 
 
 def run(profile, api, *, publish, staged=None, fresh=None, git=None, grant=None,
-        expected_parent=None):
+        expected_parent=None, auth_api=None):
     staged = package(profile) if staged is None else staged
     git = git or FakeGit({SOURCE: tree(profile, staged)})
     fresh_calls: list[str] = []
@@ -220,6 +220,8 @@ def run(profile, api, *, publish, staged=None, fresh=None, git=None, grant=None,
         operation_factory=Operation, allow_create_grant=profile.allow_create if grant is None else grant,
         expected_parent=expected_parent,
         fresh_main=fresh or fresh_calls.append, git=git,
+        auth_api=auth_api,
+        auth_read_file=None if auth_api is None else auth_api.read_file,
     )
     return report, fresh_calls
 
@@ -317,7 +319,9 @@ def test_workflow_permissions_triggers_and_main_only_dispatch() -> None:
     assert all("permissions" not in job for job in data["jobs"].values())
     assert "id-token" not in WORKFLOW.read_text(encoding="utf-8")
     assert triggers["pull_request"] == {"branches": ["main"], "paths": WATCHED_PATHS}
-    assert triggers["push"] == {"branches": ["main"], "paths": WATCHED_PATHS}
+    # Publishing is dispatch-only: push runs failed closed on the parent-commit
+    # CAS whenever main moved during the run, carry no regression signal.
+    assert "push" not in triggers
     dispatch = triggers["workflow_dispatch"]["inputs"]
     assert set(dispatch) == {"publish"}
     assert dispatch["publish"]["type"] == "boolean"
@@ -329,7 +333,20 @@ def test_only_publish_jobs_see_credentials_or_publish() -> None:
     jobs = workflow()["jobs"]
     for name, job in jobs.items():
         dumped = yaml.safe_dump(job)
-        if not name.startswith("publish-"):
+        if name == "verify":
+            # The private-target fallback is dispatch-only. Pull-request head
+            # code must not receive the publisher write-candidate secret.
+            assert dumped.count("secrets.") == 1
+            assert "secrets.HUGGING_FACE_HUB_TOKEN" in dumped
+            dry = next(step for step in job["steps"] if step.get("name") == "Dry-run every closed profile against the Hub")
+            assert dry["env"]["HF_READONLY_TOKEN"] == (
+                "${{ github.event_name == 'workflow_dispatch' && secrets.HUGGING_FACE_HUB_TOKEN || '' }}"
+            )
+            assert "exit 0" not in dry["run"]
+            upload = next(step for step in job["steps"] if str(step.get("uses", "")).startswith("actions/upload-artifact"))
+            assert upload["with"]["if-no-files-found"] == "error"
+            assert upload["with"]["path"] == "reports/*-dry-run.json"
+        elif not name.startswith("publish-"):
             assert "secrets." not in dumped
             assert "--publish" not in steps_text(job)
     verify = jobs["verify"]
@@ -540,10 +557,28 @@ def test_reviewed_reconciliation_refuses_new_candidate_package_changes():
 def test_reviewed_approval_is_independently_digest_pinned():
     raw = (ROOT / "docs/oac-v2-card-parent-2026-10-13.json").read_bytes()
     approval = publisher.parse_reviewed_card_approval(raw)
-    assert approval["reviewed_parent"] == "a824a32d91a383d33a1e1e595f11b8362d1b4efa"
+    assert approval["reviewed_parent"] == "90df75bf58d91ea723128a86d7ed9af57535dbd8"
     forged = dict(approval, reviewed_parent=NEW)
     with pytest.raises(publisher.PublicationRefused, match="reviewed digest"):
         publisher.parse_reviewed_card_approval(json.dumps(forged).encode())
+
+
+def test_reviewed_approval_rebind_is_readme_only():
+    raw = (ROOT / "docs/oac-v2-card-parent-2026-10-13.json").read_bytes()
+    approval = publisher.parse_reviewed_card_approval(raw)
+    assert approval["permitted_delta"] == ["README.md"]
+    assert approval["previous_expected_parent"] == "a824a32d91a383d33a1e1e595f11b8362d1b4efa"
+    by_kind: dict[tuple[str, str], str] = {}
+    for row in approval["files"]:
+        by_kind[(row["kind"], row["path"])] = row["sha256"]
+    shared = sorted(path for kind, path in by_kind if kind == "source")
+    assert shared
+    for path in shared:
+        if path == "README.md":
+            assert by_kind[("live", path)] != by_kind[("source", path)]
+        else:
+            assert by_kind[("live", path)] == by_kind[("source", path)]
+    assert ".gitattributes" in approval["live_inventory"]
 
 
 @pytest.mark.parametrize("new_head", [NEW, None])
@@ -781,6 +816,79 @@ def test_a_staged_file_missing_on_the_hub_counts_as_delta() -> None:
 def test_a_private_or_unknown_visibility_target_is_refused(private) -> None:
     api = FakeApi(MODEL, package(MODEL), private=private)
     refused(MODEL, api, "private", publish=True)
+
+
+@pytest.mark.parametrize("private", [True, None])
+def test_dry_run_without_a_fallback_keeps_the_private_refusal(private) -> None:
+    api = FakeApi(MODEL, package(MODEL), private=private)
+    refused(MODEL, api, "private", publish=False)
+    assert api.names().count("repo_info") == 1
+
+
+@pytest.mark.parametrize("anonymous_sees", ["private", "nothing"])
+def test_dry_run_resolves_a_private_target_with_the_authenticated_fallback(
+    anonymous_sees: str,
+) -> None:
+    """A private-but-existing target retried with the read credential is resolved."""
+    anonymous = FakeApi(
+        MODEL,
+        None if anonymous_sees == "nothing" else package(MODEL),
+        private=True,
+        hidden=anonymous_sees == "nothing",
+    )
+    authenticated = FakeApi(MODEL, package(MODEL), private=True)
+    report, _ = run(MODEL, anonymous, publish=False, auth_api=authenticated)
+    assert report["state"] == "NO_CHANGE"
+    assert report["lookup"] == "authenticated-fallback"
+    assert report["target_observation"] == "PRIVATE_AUTHENTICATED"
+    assert report["resolved_repo_id"] == MODEL.repo_id
+    assert report["parent_revision"] == PARENT and report["head_after"] == PARENT
+    # Every target read after the retry goes through the authenticated client.
+    assert anonymous.names().count("read") == 0
+    assert authenticated.names().count("repo_info") == 2
+    assert "create_repo" not in authenticated.names() and "create_commit" not in authenticated.names()
+
+
+def test_dry_run_fallback_accepts_a_public_target_it_alone_can_see() -> None:
+    anonymous = FakeApi(MODEL, None)
+    authenticated = FakeApi(MODEL, package(MODEL), private=False)
+    report, _ = run(MODEL, anonymous, publish=False, auth_api=authenticated)
+    assert report["state"] == "NO_CHANGE"
+    assert report["lookup"] == "authenticated-fallback"
+    assert report["target_observation"] == "PUBLIC"
+
+
+def test_a_public_target_never_touches_the_fallback() -> None:
+    anonymous = FakeApi(MODEL, package(MODEL))
+    authenticated = FakeApi(MODEL, package(MODEL))
+    report, _ = run(MODEL, anonymous, publish=False, auth_api=authenticated)
+    assert report["lookup"] == "anonymous" and report["target_observation"] == "PUBLIC"
+    assert authenticated.names() == []
+
+
+def test_fallback_leaves_a_truly_missing_target_unresolved_and_no_create() -> None:
+    anonymous = FakeApi(MODEL, None)
+    authenticated = FakeApi(MODEL, None)
+    refused(MODEL, anonymous, "may not create", publish=False, auth_api=authenticated)
+    assert authenticated.names() == ["repo_info"]
+    assert "create_repo" not in authenticated.names()
+
+
+def test_fallback_still_refuses_a_redirected_or_headless_target() -> None:
+    anonymous = FakeApi(MODEL, None)
+    authenticated = FakeApi(
+        MODEL, package(MODEL), resolved_id="SZLHOLDINGS/oac-ops-health-v1-renamed")
+    refused(MODEL, anonymous, "renamed or redirected", publish=False, auth_api=authenticated)
+    authenticated = FakeApi(MODEL, package(MODEL), private=None)
+    refused(MODEL, anonymous, "visibility is unknown to both reads",
+            publish=False, auth_api=authenticated)
+
+
+def test_publish_never_uses_the_authenticated_fallback() -> None:
+    anonymous = FakeApi(MODEL, package(MODEL), private=True)
+    authenticated = FakeApi(MODEL, package(MODEL), private=True)
+    refused(MODEL, anonymous, "private", publish=True, auth_api=authenticated)
+    assert authenticated.names() == []
 
 
 def test_a_renamed_or_redirected_target_is_refused() -> None:
@@ -1034,6 +1142,31 @@ def test_cli_dry_run_is_anonymous_and_records_the_real_staged_package(monkeypatc
     assert TOKEN not in output.read_text(encoding="utf-8")
 
 
+def test_cli_dry_run_uses_hf_readonly_token_only_as_a_fallback(monkeypatch, tmp_path) -> None:
+    head = real_head()
+    anonymous = FakeApi(MODEL, None)
+    authenticated = FakeApi(MODEL, publisher.staged_package(MODEL, head), private=True)
+    tokens: list = []
+
+    def clients(token, cache_dir):
+        tokens.append(token)
+        api = anonymous if token is False else authenticated
+        return {"version": "1.23.0", "api": api, "read_file": api.read_file,
+                "not_found": Missing, "operation_factory": Operation}
+
+    monkeypatch.setattr(publisher, "hub_clients", clients)
+    output = tmp_path / "dry-run.json"
+    code = publisher.main(["--profile", "oac-v1-model", "--source-revision", head,
+                           "--report", str(output)],
+                          environ={"HF_TOKEN": TOKEN, "HF_READONLY_TOKEN": "readonly-synthetic"})
+    report = json.loads(output.read_text(encoding="utf-8"))
+    assert code == 0 and tokens == [False, "readonly-synthetic"]
+    assert report["state"] == "NO_CHANGE" and report["lookup"] == "authenticated-fallback"
+    assert report["target_observation"] == "PRIVATE_AUTHENTICATED"
+    raw = output.read_text(encoding="utf-8")
+    assert "readonly-synthetic" not in raw and TOKEN not in raw
+
+
 def test_cli_expected_delta_refuses_a_hub_that_is_not_at_the_base(monkeypatch, tmp_path) -> None:
     head = real_head()
     hub = publisher.staged_package(MODEL, head)
@@ -1097,10 +1230,15 @@ def test_cli_publish_is_refused_outside_the_canonical_main_workflow(monkeypatch,
 
 
 def test_cli_publish_requires_a_token_and_the_reviewed_client(monkeypatch, tmp_path) -> None:
+    called = []
+    monkeypatch.setattr(publisher, "hub_clients", lambda *args, **kwargs: called.append(args))
     output = tmp_path / "no-token.json"
     code = publisher.main(["--profile", "oac-v1-model", "--source-revision", SOURCE, "--publish",
-                           "--report", str(output)], environ={**CI, "HF_TOKEN": ""})
+                           "--report", str(output)],
+                          environ={**CI, "HF_TOKEN": "", "HF_READONLY_TOKEN": "readonly-synthetic"})
     assert code == 1 and "HF_TOKEN is required" in json.loads(output.read_text(encoding="utf-8"))["refusal"]
+    assert called == []
+    assert "readonly-synthetic" not in output.read_text(encoding="utf-8")
     api = FakeApi(MODEL, package(MODEL))
     fake_clients(monkeypatch, api, version="2.1.1")
     output = tmp_path / "wrong-client.json"

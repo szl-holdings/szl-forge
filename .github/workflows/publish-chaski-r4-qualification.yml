@@ -11,13 +11,6 @@ on:
       - "tools/publish_chaski_r4_qualification.py"
       - "tests/test_publish_chaski_r4_qualification.py"
       - ".github/workflows/publish-chaski-r4-qualification.yml"
-  push:
-    branches: [main]
-    paths:
-      - "chaski_r4/QUALIFICATION_STATE.md"
-      - "tools/publish_chaski_r4_qualification.py"
-      - "tests/test_publish_chaski_r4_qualification.py"
-      - ".github/workflows/publish-chaski-r4-qualification.yml"
   workflow_dispatch:
 
 permissions:
@@ -31,7 +24,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Harden runner
-        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
+        uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
         with:
           egress-policy: audit
 
@@ -75,7 +68,7 @@ jobs:
           retention-days: 30
 
   publish:
-    if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' }}
+    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' }}
     name: Reconcile only the Chaski-R4 qualification sidecar
     runs-on: ubuntu-24.04
     timeout-minutes: 20
@@ -84,7 +77,7 @@ jobs:
       cancel-in-progress: false
     steps:
       - name: Harden runner
-        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
+        uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
         with:
           egress-policy: audit
 

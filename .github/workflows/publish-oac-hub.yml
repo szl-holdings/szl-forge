@@ -1,7 +1,13 @@
 # SPDX-License-Identifier: Apache-2.0
 # The one committed writer for the OAC Hub packages (HF upgrade plan D1 and P9).
-# Pull requests and dispatches with publish=false run an anonymous dry-run only.
-# Existing v1 profiles publish on main push or main-only publish dispatch.
+# Pull requests and dispatches with publish=false run a write-free dry-run only.
+# Pull requests stay anonymous: HUGGING_FACE_HUB_TOKEN is a publisher write
+# candidate, so it is not injected into a job that executes pull-request head.
+# A workflow_dispatch dry-run may retry one private-but-existing target with
+# that secret. --publish never reads it. The no-create refusals are unchanged.
+# Existing v1 profiles publish only on an explicit main publish dispatch; main
+# push no longer triggers writers, because the parent-commit CAS fails closed on
+# a busy main and the red runs carry no regression signal.
 # The v2 package exists; its sole writer permits a reviewed README correction
 # only on explicit main dispatch at the pinned Hub parent.
 # Every writer holds its per-asset lock (D3) and a parent-commit CAS.
@@ -9,19 +15,6 @@ name: Publish OAC Hub packages
 
 on:
   pull_request:
-    branches: [main]
-    paths:
-      - "clinical-gateway/huggingface/**"
-      - "ops-health/huggingface/**"
-      - "publishing/oac-ops-health-v2/**"
-      - "tools/publish_oac_hub.py"
-      - "tests/test_publish_oac_hub.py"
-      - "docs/oac-v2-card-parent-2026-10-13.json"
-      - "tools/acquire_hf_publisher_token.py"
-      - "tests/test_acquire_hf_publisher_token.py"
-      - "tests/test_hf_org_token1_fallback.py"
-      - ".github/workflows/publish-oac-hub.yml"
-  push:
     branches: [main]
     paths:
       - "clinical-gateway/huggingface/**"
@@ -53,7 +46,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Harden runner
-        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
+        uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
         with:
           egress-policy: audit
 
@@ -86,11 +79,17 @@ jobs:
             tools/publish_oac_hub.py \
             tools/acquire_hf_publisher_token.py
 
-      - name: Dry-run every closed profile with anonymous Hub reads
+      - name: Dry-run every closed profile against the Hub
         env:
           EVENT_NAME: ${{ github.event_name }}
           SOURCE_REVISION: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           BASE_REVISION: ${{ github.event.pull_request.base.sha }}
+          # Pull requests do not receive HUGGING_FACE_HUB_TOKEN. That secret is
+          # also a publisher write candidate, and this step runs the checked-out
+          # head. Anonymous reads still produce reports/*-dry-run.json, so the
+          # upload below keeps if-no-files-found: error. A workflow_dispatch
+          # dry-run may use the secret only as the private-target read fallback.
+          HF_READONLY_TOKEN: ${{ github.event_name == 'workflow_dispatch' && secrets.HUGGING_FACE_HUB_TOKEN || '' }}
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "${SOURCE_REVISION}"
@@ -151,7 +150,7 @@ jobs:
   publish-oac-v1-model:
     if: >-
       github.ref == 'refs/heads/main' &&
-      (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))
+      github.event_name == 'workflow_dispatch' && inputs.publish
     name: Publish oac-v1-model and verify exact Hub bytes
     runs-on: ubuntu-24.04
     timeout-minutes: 20
@@ -163,7 +162,7 @@ jobs:
       hub_revision: ${{ steps.result.outputs.hub_revision }}
     steps:
       - name: Harden runner
-        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
+        uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
         with:
           egress-policy: audit
 
@@ -271,7 +270,7 @@ jobs:
   publish-oac-v1-dataset:
     if: >-
       github.ref == 'refs/heads/main' &&
-      (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))
+      github.event_name == 'workflow_dispatch' && inputs.publish
     name: Publish oac-v1-dataset and verify exact Hub bytes
     runs-on: ubuntu-24.04
     timeout-minutes: 20
@@ -283,7 +282,7 @@ jobs:
       hub_revision: ${{ steps.result.outputs.hub_revision }}
     steps:
       - name: Harden runner
-        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
+        uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
         with:
           egress-policy: audit
 
@@ -402,7 +401,7 @@ jobs:
       hub_revision: ${{ steps.result.outputs.hub_revision }}
     steps:
       - name: Harden runner
-        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
+        uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
         with:
           egress-policy: audit
 
@@ -476,13 +475,17 @@ jobs:
             --report reports/oac-v2-model-credential.json
 
       - name: Correct only the card at the reviewed parent and verify every Hub byte
+        # Reviewed parent advanced 832b27f6 -> 9a625e20 (the reviewed PR589 card
+        # publish) -> 90df75bf (the 2026-11-04 estate banner insert). Every
+        # non-card byte at 90df75bf was re-verified equal to the staged package;
+        # the only delta the publisher writes remains the source-owned README.
         run: |
           set -euo pipefail
           python tools/publish_oac_hub.py \
             --profile oac-v2-model \
             --source-revision "${GITHUB_SHA}" \
             --publish \
-            --expect-parent 832b27f6af978217d1317d31037c4159bb07ee2d \
+            --expect-parent 90df75bf58d91ea723128a86d7ed9af57535dbd8 \
             --report reports/oac-v2-model-publication.json
 
       - name: Export the verified Hub revision
@@ -518,7 +521,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Harden runner
-        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
+        uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
         with:
           egress-policy: audit
 
@@ -569,13 +572,13 @@ jobs:
     needs: [publish-oac-v1-model, publish-oac-v1-dataset]
     if: >-
       github.ref == 'refs/heads/main' &&
-      (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))
+      github.event_name == 'workflow_dispatch' && inputs.publish
     name: Verify Git-to-Hub byte parity at the published revisions
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - name: Harden runner
-        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
+        uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
         with:
           egress-policy: audit
 

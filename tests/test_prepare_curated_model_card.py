@@ -65,6 +65,8 @@ class CuratedPreparationTests(unittest.TestCase):
     def test_crlf_yaml_prose_and_unknown_license_are_not_rewritten(self):
         raw = b"---\r\nlicense: other\r\nextra: [a, b]\r\n---\r\nProse WITHOUT metrics.\r\n"
         self.profile["source_sha256"] = MODULE.digest(raw)
+        if "reviewed_revision_sha256" in self.profile:
+            self.profile["reviewed_revision_sha256"] = self.profile["source_sha256"]
         self.save(self.profile["source_path"], raw)
         self.save_inputs()
         candidate, _, _ = MODULE.prepare(self.root)

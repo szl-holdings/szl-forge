@@ -1,14 +1,10 @@
 name: Publish SZL Forge Lab
 
+# Dispatch-only publication: the byte-parity and replay gates run inside every
+# dispatch, and foundation-showcase.yml still gates the same source paths on
+# pull request and push. Push-triggered runs of this publisher failed closed on
+# Hub-side state with no regression signal.
 on:
-  push:
-    branches: [main]
-    paths:
-      - "spaces/szl-forge-lab/**"
-      - "portfolio/model_portfolio.json"
-      - "tools/publish_hf_space.py"
-      - "tools/test_publish_hf_space.py"
-      - ".github/workflows/publish-forge-lab.yml"
   workflow_dispatch: {}
 
 permissions:
@@ -30,7 +26,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Harden runner
-        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
+        uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
         with:
           egress-policy: audit
 
@@ -39,6 +35,8 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 1
+          # Upload the archive bytes, never the LFS pointer.
+          lfs: true
 
       - name: Set up Python
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
@@ -86,6 +84,7 @@ jobs:
             --source-dir spaces/szl-forge-lab \
             --repo-id SZLHOLDINGS/szl-forge-lab \
             --source-revision "${GITHUB_SHA}" \
+            --frozen-archive foundation/data/release.zip=869e318dd5f328205dd181ee836ef267bd2ae278f6430a9e8ddc661fbc689d03 \
             --publish \
             --static \
             --wait-seconds 1200 \

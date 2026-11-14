@@ -1,0 +1,24 @@
+{
+  "by_family": {
+    "agent_bench": 10,
+    "corpus_qa": 22,
+    "doctrine": 43,
+    "formula": 42,
+    "receipt": 89
+  },
+  "by_source": {
+    "SZLHOLDINGS/a11oy-verifiable-corpus": 111,
+    "SZLHOLDINGS/canonical-formulas-v1": 42,
+    "SZLHOLDINGS/governed-agent-bench": 10,
+    "SZLHOLDINGS/szl-1-doctrine-sft": 41,
+    "SZLHOLDINGS/szl-frontier-sft-mix-v2": 2
+  },
+  "readme_sha256": "0960176ff01c5d6b259ef4ea67e67768cf92414bd472ef77a8e9c53db02db632",
+  "recipe_sha256": "438baee7dce8c3a894bd9662f84e7d5990ae42794d330199a9e7a5f7fe71e9cb",
+  "stamp": "2026-11-04T17:50:02Z",
+  "total": 206,
+  "train": 190,
+  "train_sha256": "6ee6a0a2805469c7a5a55a67a59b7cba28f3375dfe3ca03440c6f1de6d09462a",
+  "val": 16,
+  "val_sha256": "6b76c67de120dffeadde00c9ae26bee84cc4f8cd7320863ad992c55dae394044"
+}

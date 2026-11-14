@@ -306,13 +306,16 @@ class StaticEntryPointTests(unittest.TestCase):
                     self.assertEqual("b" * 40, download.call_args.kwargs["revision"])
                     api.add_space_variable.assert_not_called()
 
-    def test_static_workflow_watches_publisher_controls_and_requires_both_paths(self):
+    def test_static_workflow_is_dispatch_only_and_runs_the_static_publisher(self):
         import yaml
         text = (publisher.ROOT / ".github/workflows/publish-forge-lab.yml").read_text(encoding="utf-8")
         workflow = yaml.safe_load(text)
         events = workflow.get("on", workflow.get(True))
-        self.assertIn("tools/publish_hf_space.py", events["push"]["paths"])
-        self.assertIn("tools/test_publish_hf_space.py", events["push"]["paths"])
+        # Publication is dispatch-only: push runs failed closed on Hub-side
+        # state without regression signal; the static/byte gates run per dispatch.
+        self.assertNotIn("push", events)
+        self.assertIn("workflow_dispatch", events)
+        self.assertIn("--repo-id SZLHOLDINGS/szl-forge-lab", text)
         self.assertIn("--static", text)
         self.assertIn("--smoke-path / \\\n", text)
         self.assertIn("--smoke-path /index.html", text)

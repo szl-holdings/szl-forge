@@ -8,7 +8,11 @@ reported as CUDA UNAVAILABLE, never guessed. Stdlib only; safe on any host.
 
   python tools/forge_preflight.py --dataset szl_dataset.jsonl
   python tools/forge_preflight.py --dataset szl_dataset.jsonl --no-require-cuda
-  python tools/forge_preflight.py --dataset szl_dataset.jsonl --out preflight.json
+  python tools/forge_preflight.py --launch-config training/w30/distill-r2.blocked.json --no-require-cuda
+
+``--dataset`` is an environment lint. Its default minimum is not training
+authorization. ``--launch-config`` uses training/launch_contract.py, including
+the 32-example floor, and a lower ``--min-examples`` does not override it.
 
 Exit codes: 0 = READY, 1 = NOT_READY, 2 = usage error.
 """
@@ -17,6 +21,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import importlib.metadata
+import importlib.util
 import json
 import os
 import shutil
@@ -78,12 +83,25 @@ def _cuda_state() -> Dict[str, Any]:
     }
 
 
+def _launch_contract():
+    path = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "training", "launch_contract.py")
+    )
+    spec = importlib.util.spec_from_file_location("szl_launch_contract", path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"unable to load {path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def run_preflight(
     dataset: str,
     workdir: str = ".",
     require_cuda: bool = True,
     min_disk_gib: float = DEFAULT_MIN_DISK_GIB,
     min_examples: int = 1,
+    launch_config: Optional[str] = None,
 ) -> Dict[str, Any]:
     checks: List[Dict[str, Any]] = []
     blocking: List[str] = []
@@ -144,33 +162,54 @@ def run_preflight(
         blocking.append("CUDA is required for QLoRA training and is UNAVAILABLE")
 
     dataset_report: Dict[str, Any]
-    if os.path.isfile(dataset):
+    launch_decision: Optional[Dict[str, Any]] = None
+    if launch_config:
+        launch_decision = _launch_contract().evaluate_path(launch_config)
+        dataset_report = launch_decision.get("dataset_report") or {
+            "schema": "szl.forge-sft-dataset-report/v2",
+            "status": "INVALID",
+            "records": 0,
+            "errors": ["launch contract did not return a dataset report"],
+        }
+        dataset_ok = bool(launch_decision.get("ok"))
+        if not dataset_ok:
+            blocking.append(
+                "launch contract rejected: " + ",".join(launch_decision.get("codes") or [])
+            )
+    elif os.path.isfile(dataset):
         from validate_sft_dataset import validate_dataset
 
         dataset_report = validate_dataset(dataset, min_examples=min_examples)
+        dataset_ok = dataset_report["status"] == "VALID"
     else:
         dataset_report = {
-            "schema": "szl.forge-sft-dataset-report/v1",
+            "schema": "szl.forge-sft-dataset-report/v2",
+            "fingerprint_schema": "sha256-canonical-chat-input-v1",
             "path": dataset,
             "status": "INVALID",
             "records": 0,
+            "duplicate_conversations": 0,
+            "duplicate_inputs": 0,
+            "cross_dataset_overlaps": 0,
+            "reference_datasets": [],
             "errors": [f"dataset not found: {dataset}"],
         }
-    dataset_ok = dataset_report["status"] == "VALID"
+        dataset_ok = False
     checks.append(
         {
             "name": "dataset",
             "label": "MEASURED",
             "value": {
-                "path": dataset,
+                "path": launch_config or dataset,
                 "status": dataset_report["status"],
                 "records": dataset_report["records"],
                 "dataset_sha256": dataset_report.get("dataset_sha256"),
+                "launch_contract": None if launch_decision is None else launch_decision.get("ok"),
             },
             "ok": dataset_ok,
         }
     )
-    if not dataset_ok:
+    if not dataset_ok and launch_decision is None:
         blocking.append("dataset validation failed — refusing to start training")
 
     status = "READY" if not blocking else "NOT_READY"
@@ -184,8 +223,19 @@ def run_preflight(
         "honesty": (
             "READY means only that this environment passed preflight. It is "
             "not a training receipt: a run still needs its own artifact, "
-            "evaluation, and receipt evidence before any promotion claim."
+            "evaluation, and receipt evidence before any promotion claim. "
+            "The default dataset minimum on this environment report is not "
+            "training authorization. A launch config is held to the shared "
+            "contract, including its 32-example floor, and a lower "
+            "--min-examples value does not override a rejected contract."
         ),
+        "launch_contract": None if launch_decision is None else {
+            "ok": launch_decision.get("ok"),
+            "codes": launch_decision.get("codes"),
+            "accepted_examples": launch_decision.get("accepted_examples"),
+            "min_accepted_examples": launch_decision.get("min_accepted_examples"),
+            "launch_executed": False,
+        },
     }
     canonical = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode(
         "utf-8"
@@ -205,6 +255,10 @@ def main(argv: Optional[List[str]] = None) -> int:
     )
     parser.add_argument("--min-disk-gib", type=float, default=DEFAULT_MIN_DISK_GIB)
     parser.add_argument("--min-examples", type=int, default=1)
+    parser.add_argument(
+        "--launch-config",
+        help="evaluate this wave config with the shared launch contract",
+    )
     parser.add_argument("--out", help="write the preflight receipt JSON here")
     args = parser.parse_args(argv)
 
@@ -214,6 +268,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         require_cuda=not args.no_require_cuda,
         min_disk_gib=args.min_disk_gib,
         min_examples=args.min_examples,
+        launch_config=args.launch_config,
     )
     text = json.dumps(report, indent=2, sort_keys=True)
     if args.out:

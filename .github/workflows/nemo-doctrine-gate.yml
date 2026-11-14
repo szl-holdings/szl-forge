@@ -15,6 +15,7 @@ on:
       - "tools/validate_sft_dataset.py"
       - "tools/nemo_doctrine_gate.py"
       - "tools/test_nemo_doctrine_workflow.py"
+      - "tests/test_validate_sft_dataset.py"
       - "tests/test_nemo_doctrine_gate.py"
       - ".github/workflows/nemo-doctrine-gate.yml"
   push:
@@ -27,6 +28,7 @@ on:
       - "tools/validate_sft_dataset.py"
       - "tools/nemo_doctrine_gate.py"
       - "tools/test_nemo_doctrine_workflow.py"
+      - "tests/test_validate_sft_dataset.py"
       - "tests/test_nemo_doctrine_gate.py"
       - ".github/workflows/nemo-doctrine-gate.yml"
 
@@ -65,10 +67,24 @@ jobs:
             python tools/nemo_doctrine_gate.py "$ds" --persona finetuned
           done
 
+      - name: Reject duplicate training inputs and train-eval overlap
+        run: |
+          set -euo pipefail
+          for ds in szl_dataset.jsonl receiptagent/train.jsonl receiptagent/train.refusals.jsonl; do
+            python tools/validate_sft_dataset.py "$ds" \
+              --disjoint-from receiptagent/eval.jsonl \
+              --disjoint-from receiptagent/adversarial.jsonl \
+              --json
+          done
+
       - name: Gate ReceiptAgent v3 training data (fail closed)
         run: |
           set -euo pipefail
-          python tools/validate_sft_dataset.py frontier/qwen35-receiptagent-v3/train.jsonl --min-examples 180 --json
+          python tools/validate_sft_dataset.py \
+            frontier/qwen35-receiptagent-v3/train.jsonl \
+            --min-examples 180 \
+            --disjoint-from frontier/qwen35-receiptagent-v3/test.jsonl \
+            --json
           python tools/nemo_doctrine_gate.py frontier/qwen35-receiptagent-v3/train.jsonl --persona finetuned --json
 
       - name: Check out ReceiptAgent v4 doctrine source (pinned commit)
@@ -88,6 +104,12 @@ jobs:
           python -B frontier/qwen35-receiptagent-v4-json/probe_nemo_binding.py \
             --nemo-source-root .nemo-v4-source \
             > "$RUNNER_TEMP/v4-source-conformance/numeric-probe.json"
+          python tools/validate_sft_dataset.py \
+            frontier/qwen35-receiptagent-v4-json/train.jsonl \
+            --min-examples 360 \
+            --disjoint-from frontier/qwen35-receiptagent-v4-json/heldout/test.jsonl \
+            --json \
+            > "$RUNNER_TEMP/v4-source-conformance/split-disjointness.json"
           python -B frontier/qwen35-receiptagent-v4-json/curriculum_admission.py \
             --check-conformance \
             --train frontier/qwen35-receiptagent-v4-json/train.jsonl \
@@ -102,6 +124,7 @@ jobs:
           name: v4-source-conformance-${{ github.run_id }}
           path: |
             ${{ runner.temp }}/v4-source-conformance/numeric-probe.json
+            ${{ runner.temp }}/v4-source-conformance/split-disjointness.json
             ${{ runner.temp }}/v4-source-conformance/curriculum-conformance.json
           if-no-files-found: error
           retention-days: 30

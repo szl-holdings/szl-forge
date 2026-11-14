@@ -21,6 +21,12 @@
     "tests/test_governed_app.py": "d6aedbf0b79af91e300e253a8f36ac5a05b29f434b7ad1823f91f36fb9d71cd8",
     "tests/test_formula_atlas_contract.py": "fdb4a12ae157bab2dcd779af7a3e0f3fb76abc24f9d10e9a6c1d30d86c770576",
     "verify_execution_record.py": "7f6a1052cda52b862fab2cb897d84ed271d938bb19bf505cf45a9dfde20c22c2",
-    "verify_governed_live.py": "5b8fdb5351fafdc5a323da26224218f45c84527cd9107e90864a3ace540aec6b"
+    "verify_governed_live.py": "5b8fdb5351fafdc5a323da26224218f45c84527cd9107e90864a3ace540aec6b",
+    "inference/__init__.py": "acf8a32272f7bf80efae0a66be380a5a1e18134dbc6d9a5eea55494fc8b9c81e",
+    "inference/control_plane.v1.json": "d3590367baa98b795ea8ac115d4a1cdb3fab7abfe9cd3d8650618a611c0e8d2e",
+    "inference/governed_inference.py": "180f7814f34c7bd2d1d38b46812baa51aef0242f587b8ffe9bdde92edeb47c30",
+    "inference/production.py": "1fb7b74670e600dfcfd8a4ad1a11ca4fbf848022c57e4d7ed2edbf70f7f85bf6",
+    "inference/production_control_plane.v2.json": "c8074af98157b8fe638e4e5aff500c837430044da1a4e124514bf7e93a86bb9a",
+    "inference/validate_control_plane.py": "ffc9a70f4f673f0c3327bc27b2efa6b6c23ca9d88676824d858c541a8746a6cc"
   }
 }
