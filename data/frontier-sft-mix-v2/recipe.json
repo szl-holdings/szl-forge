@@ -1,0 +1,146 @@
+{
+  "chat_template": {
+    "roles": [
+      "system",
+      "user",
+      "assistant"
+    ],
+    "shape": "messages[{role,content}]",
+    "unsloth_trl": "tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=False) → text field",
+    "validate_with": "szl-forge/tools/validate_sft_dataset.py"
+  },
+  "cookie_leaders": "Thanks NVIDIA NeMo/NIM, Unsloth, HF Hub, vLLM/PagedAttention, FlashAttention authors. SZL builds clean-room silhouettes with DSSE receipts + MEASURED-or-null energy (never fabricates).",
+  "counts": {
+    "by_source_dataset": {
+      "SZLHOLDINGS/a11oy-verifiable-corpus": 111,
+      "SZLHOLDINGS/canonical-formulas-v1": 42,
+      "SZLHOLDINGS/governed-agent-bench": 10,
+      "SZLHOLDINGS/szl-1-doctrine-sft": 41,
+      "SZLHOLDINGS/szl-frontier-sft-mix-v2": 2
+    },
+    "by_task_family": {
+      "agent_bench": 10,
+      "corpus_qa": 22,
+      "doctrine": 43,
+      "formula": 42,
+      "receipt": 89
+    },
+    "pre_dedupe": {
+      "agent_bench": 10,
+      "corpus_qa": 111,
+      "doctrine": 41,
+      "formula": 42,
+      "spine": 2
+    },
+    "total": 206,
+    "train": 190,
+    "val": 16
+  },
+  "created_utc": "2026-11-04T17:50:02Z",
+  "credit": "Stephen Lutar (Stephen P. Lutar Jr.) / SZL Holdings",
+  "dataset_id": "SZLHOLDINGS/szl-frontier-sft-mix-v2",
+  "doctrine": "v11 LOCKED",
+  "exclusion_rules": [
+    "No private second-brain graph nodes or raw private-graph content",
+    "No AlloyScape production dumps",
+    "No fabricated eval scores, joules, or Λ-as-theorem claims",
+    "Exclude Hub-private thesis-formula-index rows from this public cut",
+    "Skip raw DSSE envelope blobs; teach receipt structure/honesty only",
+    "training_allowed must be explicit true on every admitted row",
+    "Fail-closed on PII/restricted markers if present"
+  ],
+  "lambda_status": "Conjecture 1 — advisory, never a theorem",
+  "locked_proven_formulas": [
+    "F1",
+    "F4",
+    "F7",
+    "F11",
+    "F12",
+    "F18",
+    "F19",
+    "F22"
+  ],
+  "mix_level_training_allowed": true,
+  "outputs": {
+    "train.jsonl": {
+      "rows": 190,
+      "sha256": "6ee6a0a2805469c7a5a55a67a59b7cba28f3375dfe3ca03440c6f1de6d09462a"
+    },
+    "val.jsonl": {
+      "rows": 16,
+      "sha256": "6b76c67de120dffeadde00c9ae26bee84cc4f8cd7320863ad992c55dae394044"
+    }
+  },
+  "private_graph_admitted": false,
+  "row_cap": 5000,
+  "schema": "szl.frontier-sft-mix-recipe/v2",
+  "sources": {
+    "SZLHOLDINGS/a11oy-verifiable-corpus": {
+      "license": "apache-2.0",
+      "primary_file": "formulas/2026-06-12.ndjson",
+      "primary_sha256": "0ae32cff1743923344986da0d9cc05f2ffa8594b1de09243c17041101f774596",
+      "private": false,
+      "revision": "1fa1197249bbcbe435497df4a128cae7663b754c",
+      "task_family": "corpus_qa",
+      "training_allowed": true,
+      "weight": 0.28
+    },
+    "SZLHOLDINGS/canonical-formulas-v1": {
+      "license": "apache-2.0",
+      "primary_file": "data/formulas.jsonl",
+      "primary_sha256": "9d16c183c2cf6a5c870c65b4af631e8b82f2ab14d6d08772534751ee9bd671fd",
+      "private": false,
+      "revision": "61234334af5b14356db53d9b9c22d9718d2f948d",
+      "task_family": "formula",
+      "training_allowed": true,
+      "weight": 0.22
+    },
+    "SZLHOLDINGS/governed-agent-bench": {
+      "license": "apache-2.0",
+      "primary_file": "cases.jsonl",
+      "primary_sha256": "d1ff64d9f227c90a3629e7c19c6bbcc9ce0d3c770c6301785c0636b744257a2a",
+      "private": false,
+      "revision": "c35e23dbd4f11349eb8304e26b04961dcd4124e9",
+      "task_family": "agent_bench",
+      "training_allowed": true,
+      "weight": 0.2
+    },
+    "SZLHOLDINGS/szl-1-doctrine-sft": {
+      "license": "apache-2.0",
+      "primary_file": "szl_dataset.jsonl",
+      "primary_sha256": "ddc5594bfb1c78449ba40a263f5ac41d21c896c3c7ed7346341c7c080611a243",
+      "private": false,
+      "revision": "dbc21fe794a720c09f3608608972299ed2de63d9",
+      "task_family": "doctrine",
+      "training_allowed": true,
+      "weight": 0.3
+    },
+    "SZLHOLDINGS/thesis-formula-index": {
+      "include_in_mix": false,
+      "license": "apache-2.0",
+      "note": "Optional spice; Hub-private; doctrine v6 snapshot mismatch vs locked kernel — excluded from published rows.",
+      "primary_file": "data/thesis_formula_index.json",
+      "primary_sha256": "9b2bb10f0ea1e056775a3798d3714507b8fde8b6d4b88d2d2e5b2e574f663e2d",
+      "private": true,
+      "revision": "87b4ecf1905ed6f2a28d364a51bdba603d68c3c3",
+      "task_family": "formula_index",
+      "training_allowed": false,
+      "weight": 0.0
+    }
+  },
+  "transforms": [
+    "passthrough_chat (doctrine SFT)",
+    "registry_to_chat_v1 / registry_locked8_honesty_v1 (canonical formulas)",
+    "case_to_chat_v1 (governed-agent-bench)",
+    "corpus_formula_to_chat_v1 / theorem_honesty_to_chat_v1 / receipt_structure_to_chat_v1 / lake_decision_to_chat_v1",
+    "public_doctrine_spine_v1 (from vision synthesis; not private thesis JSON)"
+  ],
+  "weights_note": "Target sampling weights for future upsampled cuts; v2 first cut includes all public transformed rows (sources are small) without inventing duplicates.",
+  "weights_target": {
+    "SZLHOLDINGS/a11oy-verifiable-corpus": 0.28,
+    "SZLHOLDINGS/canonical-formulas-v1": 0.22,
+    "SZLHOLDINGS/governed-agent-bench": 0.2,
+    "SZLHOLDINGS/szl-1-doctrine-sft": 0.3,
+    "SZLHOLDINGS/thesis-formula-index": 0.0
+  }
+}

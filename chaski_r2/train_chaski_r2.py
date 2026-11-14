@@ -12,7 +12,8 @@
 """CHASKI-R2 Unsloth bf16 LoRA kit. Separate SKU. ATELIER lock. No Hub PUT.
 
 CHAWPI silhouette. Base in prose: Qwen/Qwen3.5-0.8B (Apache-2.0).
-Reserved Hub id SZLHOLDINGS/chaski-r2 is declared only — not a Hub page.
+Hub id SZLHOLDINGS/chaski-r2: this kit never writes it. The Hub page exists and
+its card is published separately (chaski-r2/card/README.md, publish-chaski-card.yml).
 Never overwrite SZLHOLDINGS/chaski.
 Not SZLHOLDINGS/chaski-5050. Not the owner-metal sixteen-alpha kit.
 

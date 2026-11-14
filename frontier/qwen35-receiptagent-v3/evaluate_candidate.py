@@ -15,6 +15,7 @@ import stat
 import sys
 import tempfile
 import time
+import warnings
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -1313,12 +1314,51 @@ def validate_refusal(output: str, row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def generation_termination(
+    new_tokens: int,
+    max_new_tokens: int,
+    last_token_id: int | None,
+    eos_token_id: int | list[int] | None,
+) -> dict[str, Any]:
+    """Describe observed termination without treating EOS as semantic success.
+
+    EOS at the budget boundary may have been forced by generation settings, so
+    it does not establish that the model completed its answer naturally. A
+    shorter result without a known EOS also has an undetermined stop reason.
+    """
+    if isinstance(eos_token_id, int) and not isinstance(eos_token_id, bool):
+        eos_ids = [eos_token_id]
+    elif isinstance(eos_token_id, (list, tuple)):
+        eos_ids = [value for value in eos_token_id
+                   if isinstance(value, int) and not isinstance(value, bool)]
+    else:
+        eos_ids = []
+    ended_with_eos = last_token_id in eos_ids if eos_ids else None
+    budget_reached = new_tokens >= max_new_tokens
+    if budget_reached:
+        stop_reason = "EOS_AT_TOKEN_LIMIT" if ended_with_eos else "TOKEN_LIMIT"
+    elif ended_with_eos:
+        stop_reason = "EOS"
+    else:
+        stop_reason = "UNKNOWN"
+    return {
+        "maxNewTokens": max_new_tokens,
+        "eosConfigured": bool(eos_ids),
+        "endedWithEos": ended_with_eos,
+        "tokenBudgetReached": budget_reached,
+        "stopReason": stop_reason,
+        "truncationPossible": budget_reached or ended_with_eos is not True,
+        "claimBoundary": "Token observations only; not semantic completeness or a model-quality verdict.",
+    }
+
+
 def output_text(
     model: Any,
     processor: Any,
     messages: list[dict[str, Any]],
     *,
     max_new_tokens: int,
+    termination: dict[str, Any] | None = None,
 ) -> tuple[str, int, float]:
     import torch
 
@@ -1341,12 +1381,20 @@ def output_text(
         )
     elapsed = time.perf_counter() - started
     new_tokens = generated[:, inputs["input_ids"].shape[1] :]
+    token_count = int(new_tokens.shape[-1])
+    if termination is not None:
+        termination.update(generation_termination(
+            token_count,
+            max_new_tokens,
+            int(new_tokens[0, -1].item()) if token_count else None,
+            getattr(getattr(model, "generation_config", None), "eos_token_id", None),
+        ))
     output = processor.batch_decode(
         new_tokens,
         skip_special_tokens=True,
         clean_up_tokenization_spaces=False,
     )[0].strip()
-    return output, int(new_tokens.shape[-1]), elapsed
+    return output, token_count, elapsed
 
 
 def v2_snapshot(candidate: dict[str, Any]) -> tuple[Path, dict[str, Any]]:
@@ -1575,12 +1623,25 @@ def load_verified_v3_adapter(
         or sha256_json(before_files) != expected_files_sha256
     ):
         raise QualificationError("staged adapter differs before PEFT load")
-    loaded = peft_model.from_pretrained(
-        model,
-        str(snapshot),
-        is_trainable=False,
-        local_files_only=True,
-    )
+    try:
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "error",
+                message=r"(?is).*(missing|unexpected|ignored|mismatch)",
+                category=Warning,
+            )
+            loaded = peft_model.from_pretrained(
+                model,
+                str(snapshot),
+                is_trainable=False,
+                local_files_only=True,
+            )
+    except Warning as warning:
+        if not re.search(r"missing|unexpected|ignored|mismatch", str(warning), re.I):
+            raise
+        raise QualificationError(
+            "PEFT adapter load reported missing, unexpected, ignored or mismatched keys"
+        ) from None
     after_sha, after_files = hash_adapter(snapshot)
     if after_sha != before_sha or after_files != before_files:
         raise QualificationError("staged adapter changed during PEFT load")
@@ -1793,6 +1854,7 @@ def evaluate(args: argparse.Namespace) -> dict[str, Any]:
     torch.cuda.reset_peak_memory_stats()
     for row in rows:
         kind = row["kind"]
+        termination: dict[str, Any] = {}
         output, new_tokens, seconds = output_text(
             model,
             processor,
@@ -1802,6 +1864,7 @@ def evaluate(args: argparse.Namespace) -> dict[str, Any]:
                 if kind == "REFUSAL"
                 else evaluation_protocol["structured_max_new_tokens"]
             ),
+            termination=termination,
         )
         temperature = gpu_temperature_c()
         temperatures.append(temperature)
@@ -1820,6 +1883,7 @@ def evaluate(args: argparse.Namespace) -> dict[str, Any]:
             "output": output,
             "outputSha256": sha256_bytes(output.encode("utf-8")),
             "newTokens": new_tokens,
+            "generationTermination": termination,
             "seconds": round(seconds, 6),
             "temperatureCAfterCase": temperature,
         }

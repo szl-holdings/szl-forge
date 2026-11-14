@@ -5,6 +5,7 @@ language:
 pipeline_tag: text-generation
 library_name: peft
 base_model: Qwen/Qwen3.5-0.8B
+base_model_revision: 2fc06364715b967f1860aea9cf38778875588b17
 base_model_relation: adapter
 tags:
 - base_model:adapter:Qwen/Qwen3.5-0.8B
@@ -14,6 +15,45 @@ tags:
 - peft
 - experimental
 - research-only
+model-index:
+- name: Chaski-R4 - owner-run named-N contract gate
+  results:
+  - task:
+      type: text-generation
+      name: JSON draft contract validation
+    dataset:
+      type: szl-chaski-named-n-json-drafts
+      name: SZL Chaski named-N JSON draft gate
+      split: held-out
+      revision: 55c3027b048b9d55fa08519b3dd12bb53cb91f5a
+    metrics:
+    - type: contract_validity_rate
+      name: Contract-valid JSON draft rate (5/5)
+      value: 1.0
+    - type: contract_valid_count
+      name: Contract-valid JSON drafts
+      value: 5
+    source:
+      name: Owner-run receipt C
+      url: https://github.com/szl-holdings/szl-forge/blob/e7096cbd500eaf3c358daa245955e7fe1d26c8dc/chaski_r4/evidence/canonical_rerun_20261001_140615.receipt.json
+  - task:
+      type: text-generation
+      name: Adversarial refusal-prefix gate
+    dataset:
+      type: szl-chaski-named-n-adversarial-refusals
+      name: SZL Chaski named-N adversarial refusal gate
+      split: held-out
+      revision: 55c3027b048b9d55fa08519b3dd12bb53cb91f5a
+    metrics:
+    - type: refusal_prefix_rate
+      name: Refusal-prefix rate (6/6)
+      value: 1.0
+    - type: refusal_prefix_count
+      name: Refusal-prefix outputs
+      value: 6
+    source:
+      name: Owner-run receipt C
+      url: https://github.com/szl-holdings/szl-forge/blob/e7096cbd500eaf3c358daa245955e7fe1d26c8dc/chaski_r4/evidence/canonical_rerun_20261001_140615.receipt.json
 szl:
   doctrine: v11-LOCKED
   lambda: Conjecture 1 — advisory, never a theorem
@@ -25,9 +65,50 @@ szl:
   qlora: false
   weights: AVAILABLE
   evals: MEASURED_NAMED_N_RECEIPT_C
+  evaluation_evidence:
+    label: MEASURED_LIMITED
+    scope: OWNER_RUN_NAMED_N_CONTRACT_GATE_ONLY
+    evaluation_state: MEASURED_LIMITED_NOT_QUALIFICATION
+    result: JSON_DRAFTS_5_OF_5_AND_REFUSAL_PREFIXES_6_OF_6
+    source_repository: szl-holdings/szl-forge
+    evaluator_revision: 55c3027b048b9d55fa08519b3dd12bb53cb91f5a
+    evaluator_path: chaski/bakeoff_named_n.py
+    evaluator_sha256: 251d966beb4ff9601de25191f12293a0d67ee2e732c9b6618a073201163998e1
+    receipt_revision: e7096cbd500eaf3c358daa245955e7fe1d26c8dc
+    receipt_path: chaski_r4/evidence/canonical_rerun_20261001_140615.receipt.json
+    receipt_git_blob: 27872636947106f26e0d6da4f0da0c87314d7b79
+    receipt_sha256: 5ae3de970014726f190dfe8e4d5b35e667fd737b1be29e27205c25d143bdf403
+    report_sha256: f166a31b74b9da6fd9d1652578957ec382aafb1f98bad42d947cfad8a135a93b
+    base_model: Qwen/Qwen3.5-0.8B
+    base_model_revision: 2fc06364715b967f1860aea9cf38778875588b17
+    adapter_directory_sha256: e1abc37a5c41a82b0fc2cd98ccd6edbb2a08fceb8ca9e883bcfb76b861c221cf
+    adapter_weights_sha256: f1a2cdc313795775966280bc8648367005700327dd28010da8d2f88d2a5e2a02
+    adapter_config_sha256: d36472a3100231dfdf0c4aa16d3a80cb8ab53c86af33a15172b06f9d9a313193
+    published_bytes_revision: f662e24aa9e878dc6c2df50151d4fd500ea8a16c
+    model_class: Qwen3_5ForConditionalGeneration
+    wrapper_class: PeftModelForCausalLM
+    adapter_tensors_checkpoint: 192
+    adapter_tensors_applied: 192
+    json_draft_dataset_sha256: dd093403e4aeeb906c169d8b6d8229115b1d170a0226afa939c1beaa6fa5e9be
+    json_draft_count: 5
+    json_draft_contract_valid: 5
+    adversarial_refusal_dataset_sha256: 1e58dda9cf07e22406f0f953fddc2c26397fb5e784c27516578d133035cb006d
+    adversarial_refusal_count: 6
+    adversarial_refused: 6
+    held_out_in_gradients: false
+    independent_evaluation: false
+    capability_benchmark: false
+    semantic_correctness_measured: false
+    hub_revision_binding: ESTABLISHED_FOR_PUBLISHED_BYTES_VIA_DIRECTORY_DIGEST
+    publication_eligible: false
+    autonomy_eligible: false
+    promotion: NOT_PROMOTABLE
+    production_disposition: HOLD
   promotion: NOT_PROMOTABLE
   publication_eligible: false
   autonomy_eligible: false
+  production_disposition: HOLD
+  release_blocker: RECEIPTS_A_B_PROVENANCE_UNRESOLVED_AND_PROMOTION_NOT_TAKEN
   never_overwrite: SZLHOLDINGS/chaski
 ---
 
@@ -47,6 +128,38 @@ A public bf16 LoRA research artifact with a bounded named-N evaluation record.
 - Receipt C records 5/5 JSON drafts and 6/6 refusals with 192/192 adapter tensors applied. These small contract counts are not a broad quality or safety benchmark.
 - The provenance of earlier receipts A and B remains unresolved; their results are not interchangeable with receipt C.
 - Publication and autonomy eligibility remain false. Pin the exact base and adapter runtime separately before any qualified use.
+
+<!-- SZL-EVIDENCE-PASSPORT:v1:START -->
+## Evidence passport
+
+**Dated input observation: 2026-11-13T22:17:44.177252+00:00. Existing research limits remain in force.**
+
+[Inspect the immutable repository snapshot](https://huggingface.co/SZLHOLDINGS/chaski-r4/tree/0f97176df71cdb8a617590e717683c6a4f59d8fb).
+
+| Observation | Scope |
+|---|---|
+| Repository revision | `0f97176df71cdb8a617590e717683c6a4f59d8fb` |
+| Historical README retrieval | HTTP 200; not a readback of this proposed panel |
+| Recognized artifact filenames | 1 filename hints; not tensor verification |
+| Structured records retrieved | 2; bounded selection, not an exhaustive evidence census |
+
+Historical input README SHA-256: `acdc8ae7f7c274baa5e97cf9feef83092a760fcf8bef2f78457a3809f3025e71`.
+
+[Reviewed authoring baseline](https://github.com/szl-holdings/szl-forge/blob/2f1f7636acf4e77d87de34319c34507f9441dc71/chaski_r4/card/README.md). Existing publisher: `publish-chaski-card.yml`. Source changes still require normal review and exact deployed-byte readback.
+
+### Inspect the records
+
+| Record | Retrieved-byte SHA-256 |
+|---|---|
+| [training\_receipt.json](https://huggingface.co/SZLHOLDINGS/chaski-r4/raw/0f97176df71cdb8a617590e717683c6a4f59d8fb/training_receipt.json) | `fea82085c6bcc2c8f35ee805169207b03e2c0347ef902c85f505cff3168c1af2` |
+| [evidence/canonical\_rerun\_20261001\_140615.receipt.json](https://huggingface.co/SZLHOLDINGS/chaski-r4/raw/0f97176df71cdb8a617590e717683c6a4f59d8fb/evidence/canonical_rerun_20261001_140615.receipt.json) | `5ae3de970014726f190dfe8e4d5b35e667fd737b1be29e27205c25d143bdf403` |
+
+### Interpretation
+
+Documentation and retrieved-record integrity only. No new training, model evaluation, weight-byte verification, independent signer identity, runtime qualification or promotion. Missing evidence is not a zero score.
+Training loss is not held-out performance. A copied receipt does not qualify a quantization or merged checkpoint. Existing negative results, license and technical disclosures remain authoritative.
+
+<!-- SZL-EVIDENCE-PASSPORT:v1:END -->
 
 <details>
 <summary>Technical details and evidence</summary>
@@ -147,3 +260,17 @@ Doctrine v11 LOCKED. Λ = Conjecture 1, advisory, never a theorem.
 <!-- SZL-NATIVE-ARTWORK:v1 -->
 SZL Orbit artwork: [source](https://github.com/szl-holdings/szl-brand/blob/27d12e77fc0f9f1a0e5fae8b34adf2380d51d070/kit/logos/orbit-v2/suite/szl-icon-32.svg) · [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Software and artifact licensing remain declared above.
 <!-- /SZL-NATIVE-ARTWORK:v1 -->
+
+<!-- SZL-CARD-RESTORATION:2026-11-14:v1 -->
+## Publication restoration note (2026-11-14)
+
+On 2026-11-14, an off-route automated job stamped the public SZLHOLDINGS Hub
+model cards with a marketing template that replaced curated card bytes,
+including per-model claims this artifact has not earned. This source card in
+szl-holdings/szl-forge is the canonical reviewed card; that job did not alter
+it. This note marks the card so the closed-profile publisher republishes the
+reviewed bytes, banner, and source binding to the Hub with exact readback.
+The incident and the per-model evidence manifest are documented in szl-forge
+under `docs/model-card-overhaul-20261114/`. No qualification, evaluation,
+weight, adapter, config, visibility, hardware, or runtime state changed by
+this note.

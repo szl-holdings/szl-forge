@@ -31,7 +31,7 @@ class WorkflowBindingTests(unittest.TestCase):
         for text in (
             "runs-on: ubuntu-latest", "timeout-minutes: 10", "contents: read",
             "persist-credentials: false", 'python-version: "3.12"',
-            "step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2",
+            "step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43",
             "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
             "actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0",
             '"torch==2.10.0" --index-url https://download.pytorch.org/whl/cpu',
@@ -94,11 +94,14 @@ class WorkflowBindingTests(unittest.TestCase):
         self.assertEqual(workflow.count('- "frontier/qwen35-receiptagent-v4-json/**"'), 2)
         self.assertIn("szl-nemo.git@f44b468a60c97978897bc610cf4729fc16b271af", workflow)
         region = workflow.split("      - name: Gate ReceiptAgent v4 training references", 1)[1].split("      - name:", 1)[0]
-        for text in ("set -euo pipefail", "jsonschema==4.26.0", "probe_nemo_binding.py", "curriculum_admission.py", "--check-conformance",
+        for text in ("set -euo pipefail", "jsonschema==4.26.0", "probe_nemo_binding.py",
+                     "validate_sft_dataset.py", "--min-examples 360",
+                     "--disjoint-from frontier/qwen35-receiptagent-v4-json/heldout/test.jsonl",
+                     "split-disjointness.json", "curriculum_admission.py", "--check-conformance",
                      "--train frontier/qwen35-receiptagent-v4-json/train.jsonl", "--manifest",
                      "--nemo-source-root .nemo-v4-source"):
             self.assertIn(text, region)
-        for text in ("dev.jsonl", "heldout/test.jsonl", "continue-on-error", "secrets.", "train_candidate.py",
+        for text in ("dev.jsonl", "continue-on-error", "secrets.", "train_candidate.py",
                      "PYTHONPATH", "szl-nemo @", "|| true"):
             self.assertNotIn(text, region)
 
@@ -114,6 +117,12 @@ class WorkflowBindingTests(unittest.TestCase):
             "python -B frontier/qwen35-receiptagent-v4-json/probe_nemo_binding.py \\",
             "--nemo-source-root .nemo-v4-source \\",
             '> "$RUNNER_TEMP/v4-source-conformance/numeric-probe.json"',
+            "python tools/validate_sft_dataset.py \\",
+            "frontier/qwen35-receiptagent-v4-json/train.jsonl \\",
+            "--min-examples 360 \\",
+            "--disjoint-from frontier/qwen35-receiptagent-v4-json/heldout/test.jsonl \\",
+            "--json \\",
+            '> "$RUNNER_TEMP/v4-source-conformance/split-disjointness.json"',
             "python -B frontier/qwen35-receiptagent-v4-json/curriculum_admission.py \\",
             "--check-conformance \\",
             "--train frontier/qwen35-receiptagent-v4-json/train.jsonl \\",
@@ -124,7 +133,7 @@ class WorkflowBindingTests(unittest.TestCase):
         for text in ("continue-on-error", "||", "set +", "exit 0", "if:"):
             self.assertNotIn(text, region)
 
-    def test_v4_upload_retains_only_two_reports_and_never_changes_gate_authority(self):
+    def test_v4_upload_retains_only_three_reports_and_never_changes_gate_authority(self):
         workflow = (ROOT / ".github/workflows/nemo-doctrine-gate.yml").read_text(encoding="utf-8")
         marker = "      - name: Retain v4 source-conformance reports (not training authority)"
         self.assertEqual(workflow.count(marker), 1)
@@ -136,6 +145,7 @@ class WorkflowBindingTests(unittest.TestCase):
             "name: v4-source-conformance-${{ github.run_id }}",
             "path: |",
             "${{ runner.temp }}/v4-source-conformance/numeric-probe.json",
+            "${{ runner.temp }}/v4-source-conformance/split-disjointness.json",
             "${{ runner.temp }}/v4-source-conformance/curriculum-conformance.json",
             "if-no-files-found: error",
             "retention-days: 30",
@@ -146,7 +156,7 @@ class WorkflowBindingTests(unittest.TestCase):
         self.assertLess(workflow.index("      - name: Gate ReceiptAgent v4 training references"),
                         workflow.index(marker))
         readme = (HERE / "README.md").read_text(encoding="utf-8")
-        for text in ("numeric-probe.json", "curriculum-conformance.json", "30 days",
+        for text in ("numeric-probe.json", "split-disjointness.json", "curriculum-conformance.json", "30 days",
                      "no curriculum", "not independent witnessing"):
             self.assertIn(text, readme)
 

@@ -1,0 +1,20 @@
+{
+  "wave": "w29",
+  "name": "forge-v3",
+  "target_repo": "SZLHOLDINGS/forge-v3",
+  "base_model": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-sft-v3",
+  "datasets": [
+    "SZLHOLDINGS/doctrine-corpus-v2"
+  ],
+  "method": "qlora",
+  "epochs": 3,
+  "lr": 0.0002,
+  "seqlen": 4096,
+  "batch_size": 2,
+  "grad_accum": 8,
+  "pack": true,
+  "seed": 3407,
+  "log_repo_id": "SZLHOLDINGS/wave-logs",
+  "notes": "train_wave.py SFT run Datasets verified to carry messages/conversations columns (2026-11-06 schema check).",
+  "dataset_schema_verified": true
+}

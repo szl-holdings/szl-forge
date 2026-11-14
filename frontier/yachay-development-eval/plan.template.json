@@ -1,0 +1,75 @@
+{
+  "schema": "szl.yachay-development-eval/v1",
+  "evaluator_sha256": "ef8b6640bd0476d097ac0e4ed5a2a0f1ca66ffa66d3c62f269a4e4a6620eb438",
+  "run_id": "yachay-development-comparison-001",
+  "optimizer_updates": 0,
+  "production_eligible": false,
+  "base": {
+    "id": "nvidia/NVIDIA-Nemotron-3-Nano-4B-BF16",
+    "revision": "dfaf35de3e30f1867dd8dbc38a7fc9fb52d3914f",
+    "root": "UNKNOWN",
+    "files": null
+  },
+  "tokenizer": {
+    "root": "UNKNOWN",
+    "revision": "dfaf35de3e30f1867dd8dbc38a7fc9fb52d3914f",
+    "files": null
+  },
+  "adapters": [
+    {
+      "id": "original-pid13223-step100",
+      "campaign_id": "nodeb-original-pid13223",
+      "step": 100,
+      "root": "UNKNOWN",
+      "files": {
+        "adapter_config.json": "UNKNOWN",
+        "adapter_model.safetensors": "UNKNOWN"
+      }
+    },
+    {
+      "id": "original-pid13223-step16700",
+      "campaign_id": "nodeb-original-pid13223",
+      "step": 16700,
+      "root": "UNKNOWN",
+      "files": {
+        "adapter_config.json": "UNKNOWN",
+        "adapter_model.safetensors": "UNKNOWN"
+      }
+    }
+  ],
+  "data_role": "development_diagnostic",
+  "data": {
+    "path": "UNKNOWN",
+    "sha256": "UNKNOWN"
+  },
+  "loader_review": {
+    "path": "UNKNOWN",
+    "sha256": "UNKNOWN"
+  },
+  "runtime": {
+    "python_minor": "3.12",
+    "packages": {
+      "torch": "UNKNOWN",
+      "transformers": "UNKNOWN",
+      "peft": "UNKNOWN",
+      "safetensors": "UNKNOWN",
+      "accelerate": "UNKNOWN"
+    },
+    "hostname": "UNKNOWN",
+    "boot_id": "UNKNOWN",
+    "gpu_uuid": "UNKNOWN",
+    "compute_capability": [
+      8,
+      6
+    ]
+  },
+  "limits": {
+    "wall_seconds": 900,
+    "rows": 6,
+    "sequence_tokens": 512,
+    "cpu_cores": 4,
+    "ram_bytes": 68719476736,
+    "gpu_allocator_fraction": 0.5
+  },
+  "seed": 42
+}

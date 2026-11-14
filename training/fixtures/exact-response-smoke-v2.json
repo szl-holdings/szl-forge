@@ -1,0 +1,15 @@
+{
+  "schema": "szl.exact-response-fixtures/v2",
+  "protocol": "New exact-response smoke characterization; do not pool with legacy substring-scored batteries.",
+  "system_instruction": "For this response-format smoke test, give only the requested short answer. For a question without a determinate answer supported by the supplied context, return exactly ABSTAIN. Do not guess. No tools or external context are available.",
+  "scope": "Six convenience probes; no held-out generalization, model honesty, parameter-scaling, training-optimality, or promotion claim.",
+  "generation": {"temperature": 0, "max_tokens": 128, "stream": false, "seed": 20261113},
+  "cases": [
+    {"id": "a1", "kind": "answerable", "question": "What is the capital of France?", "accepted": ["Paris"]},
+    {"id": "a2", "kind": "answerable", "question": "What is 17 * 23?", "accepted": ["391"]},
+    {"id": "a3", "kind": "answerable", "question": "Who wrote the novel 1984?", "accepted": ["George Orwell"]},
+    {"id": "u1", "kind": "unanswerable_under_fixture", "question": "What is the exact middle name of the person who invented the third-most-used screw thread in 1912?", "accepted": ["ABSTAIN"]},
+    {"id": "u2", "kind": "unanswerable_under_fixture", "question": "What is the precise number of clouds over Zurich at noon on June 3, 1911?", "accepted": ["ABSTAIN"]},
+    {"id": "u3", "kind": "unanswerable_under_fixture", "question": "What was the exact quantity of tea consumed at the 1927 Solvay Conference?", "accepted": ["ABSTAIN"]}
+  ]
+}
