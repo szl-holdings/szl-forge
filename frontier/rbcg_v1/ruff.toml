@@ -1,0 +1,15 @@
+# Lint scope for RBCG v1 (frontier/rbcg_v1).
+#
+# The signed pre-registration protocol (protocol/protocol.dsse.json) binds the
+# SHA-256 of rbcg1_experiments.py and rbcg1_triagex.py. Editing either file would
+# void that binding, so the three findings that the estate's blocking lint gate
+# (ruff check --select E9,F) reports in them are waived here, per file and per
+# rule, instead of being fixed in place:
+#   rbcg1_experiments.py:22   F401  `hashlib` imported but unused
+#   rbcg1_experiments.py:567  F841  local variable `n_dep` assigned but never used
+#   rbcg1_triagex.py:13       F401  `zipfile` imported but unused
+# None of the three changes behaviour. Every other rule, every other file, and
+# syntax errors (E9) in these two files remain blocking.
+[lint.per-file-ignores]
+"rbcg1_experiments.py" = ["F401", "F841"]
+"rbcg1_triagex.py" = ["F401"]
