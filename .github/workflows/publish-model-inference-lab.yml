@@ -17,7 +17,6 @@ on:
 
 permissions:
   contents: read
-  id-token: write
 
 concurrency:
   group: publish-model-inference-lab-and-source-bindings
@@ -25,6 +24,9 @@ concurrency:
 
 jobs:
   deploy:
+    permissions:
+      contents: read
+      id-token: write
     name: Publish exact source and attest running revision
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -125,6 +127,9 @@ jobs:
           retention-days: 90
 
   publish-bindings:
+    permissions:
+      contents: read
+      id-token: write
     name: Verify weights, publish bindings, and read back
     needs: deploy
     runs-on: ubuntu-latest

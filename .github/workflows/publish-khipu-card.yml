@@ -31,7 +31,6 @@ on:
 
 permissions:
   contents: read
-  id-token: write
 
 concurrency:
   group: publish-khipu-family-cards
@@ -39,6 +38,9 @@ concurrency:
 
 jobs:
   verify:
+    permissions:
+      contents: read
+      id-token: write
     if: ${{ github.event_name == 'pull_request' }}
     name: Verify closed-profile card and source-binding contracts
     runs-on: ubuntu-24.04
@@ -103,6 +105,9 @@ jobs:
           retention-days: 30
 
   publish:
+    permissions:
+      contents: read
+      id-token: write
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     name: Publish ${{ matrix.profile }} and verify exact Hub bytes
     runs-on: ubuntu-24.04
