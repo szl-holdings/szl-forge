@@ -181,3 +181,17 @@ Doctrine v11 LOCKED 749/14/163. Λ = Conjecture 1, advisory, never a theorem.
 <!-- SZL-NATIVE-ARTWORK:v1 -->
 SZL Orbit artwork: [source](https://github.com/szl-holdings/szl-brand/blob/27d12e77fc0f9f1a0e5fae8b34adf2380d51d070/kit/logos/orbit-v2/suite/szl-icon-32.svg) · [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Software and artifact licensing remain declared above.
 <!-- /SZL-NATIVE-ARTWORK:v1 -->
+
+<!-- SZL-CARD-RESTORATION:2026-11-14:v1 -->
+## Publication restoration note (2026-11-14)
+
+On 2026-11-14, an off-route automated job stamped the public SZLHOLDINGS Hub
+model cards with a marketing template that replaced curated card bytes,
+including per-model claims this artifact has not earned. This source card in
+szl-holdings/szl-forge is the canonical reviewed card; that job did not alter
+it. This note marks the card so the closed-profile publisher republishes the
+reviewed bytes, banner, and source binding to the Hub with exact readback.
+The incident and the per-model evidence manifest are documented in szl-forge
+under `docs/model-card-overhaul-20261114/`. No qualification, evaluation,
+weight, adapter, config, visibility, hardware, or runtime state changed by
+this note.
