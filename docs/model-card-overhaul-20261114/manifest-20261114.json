@@ -1,0 +1,749 @@
+{
+  "schema": "szl.estate-model-card-manifest/v1",
+  "generated": "2026-11-14",
+  "sources": {
+    "inventory": "HF public model listing 2026-11-14 (138 public; 45 private out of scope)",
+    "coverage": "szl-forge docs/model-card-proof-20261113/COVERAGE.md (capped at 5 evidence reads)",
+    "audit": "szl-forge docs/model-card-proof-20261113/README.md (receipt verification, dated results, license gaps)",
+    "atelier": "szl-atelier cards/INDEX.md (40 entries)",
+    "wave4": "all 138 README last-committed 2026-11-14T02:53Z-02:57Z by the wave4 publish run; 2026-11-13 audit hub revisions may be superseded"
+  },
+  "rules": [
+    "no model-index metric without a verified receipt binding",
+    "unverified cards carry an explicit not-measured gap",
+    "licenses are never invented; gaps stay visible",
+    "atelier labels are source-side inputs, not Hub-observed facts"
+  ],
+  "models": [
+    {
+      "repo_id": "SZLHOLDINGS/willay-v2-trained",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/willay-r2-v2-trained",
+      "cov": "new_since_20261113"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/willay-r2-candidate",
+      "reads": 2,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/willay-r1-v2-trained",
+      "cov": "new_since_20261113"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/willay-r1-candidate",
+      "reads": 2,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/triage-v2-trained",
+      "cov": "new_since_20261113"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/triage-0.8b-v2-trained",
+      "cov": "new_since_20261113"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl1-experimental-estate-sft-v1",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-triage-qwen3.5-0.8b-lora-study5",
+      "reads": 5,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-triage-qwen3.5-0.8b-lora",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-specdecode",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3-estate-sft-v1",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v3",
+      "reads": 5,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2m-estate-sft-v1",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2-merged",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2",
+      "reads": 5,
+      "pub_map": "UNMAPPED",
+      "atelier": "HUB"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-sft-v3",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-dpo-v2",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-dpo-v1",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-receiptagent-qwen25-1.5b-experimental-20261104",
+      "reads": 2,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-receiptagent-0.8b-v2-trained",
+      "cov": "new_since_20261113"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-receipt-attn",
+      "reads": 0,
+      "pub_map": "UNMAPPED",
+      "atelier": "KERNEL"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-provctl",
+      "reads": 2,
+      "pub_map": "UNMAPPED",
+      "atelier": "KERNEL"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-ouroboros",
+      "reads": 2,
+      "pub_map": "UNMAPPED",
+      "atelier": "KERNEL"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-nemo",
+      "reads": 2,
+      "pub_map": "UNMAPPED",
+      "atelier": "HUB"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-maskmod",
+      "reads": 0,
+      "pub_map": "UNMAPPED",
+      "atelier": "KERNEL"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-lambda-gate",
+      "reads": 0,
+      "pub_map": "UNMAPPED",
+      "atelier": "HUB"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-khipu-kernels",
+      "reads": 0,
+      "pub_map": "UNMAPPED",
+      "atelier": "KERNEL"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-khipu",
+      "reads": 1,
+      "pub_map": "UNMAPPED",
+      "atelier": "MEASURED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-kernels",
+      "reads": 3,
+      "pub_map": "UNMAPPED",
+      "atelier": "HUB"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-invariants",
+      "reads": 2,
+      "pub_map": "UNMAPPED",
+      "atelier": "KERNEL"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-govsign",
+      "reads": 2,
+      "pub_map": "UNMAPPED",
+      "atelier": "KERNEL"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-governed-norm",
+      "reads": 4,
+      "pub_map": "UNMAPPED",
+      "atelier": "HUB"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-formulas",
+      "reads": 2,
+      "pub_map": "UNMAPPED",
+      "atelier": "KERNEL"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-energy-attest",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-brain",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-blocked",
+      "reads": 2,
+      "pub_map": "UNMAPPED",
+      "atelier": "KERNEL"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/szl-block-kv",
+      "reads": 0,
+      "pub_map": "UNMAPPED",
+      "atelier": "KERNEL"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/receiptagent-v2-trained",
+      "cov": "new_since_20261113"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/receiptagent-1.5b-v2-trained",
+      "cov": "new_since_20261113"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/reasoning-master-v1-candidate",
+      "reads": 0,
+      "pub_map": "UNMAPPED",
+      "license_gap": true
+    },
+    {
+      "repo_id": "SZLHOLDINGS/quant-master-v1-candidate",
+      "reads": 4,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/quant-master-4b-v1-candidate",
+      "reads": 0,
+      "pub_map": "UNMAPPED",
+      "license_gap": true
+    },
+    {
+      "repo_id": "SZLHOLDINGS/quant-master-4b-500step-candidate",
+      "reads": 0,
+      "pub_map": "UNMAPPED",
+      "license_gap": true
+    },
+    {
+      "repo_id": "SZLHOLDINGS/quant-master-1.7b-500step-candidate",
+      "reads": 0,
+      "pub_map": "UNMAPPED",
+      "license_gap": true
+    },
+    {
+      "repo_id": "SZLHOLDINGS/physics-master-v1-candidate",
+      "reads": 4,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/papers-v2-trained",
+      "cov": "new_since_20261113"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/ouroboros-v2-trained",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/ouroboros-r2-v2-trained",
+      "cov": "new_since_20261113"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/ouroboros-r2-candidate",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/oac-system-health-v1",
+      "reads": 1,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/oac-ops-health-v2",
+      "reads": 1,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/miniembed-v2-trained",
+      "cov": "new_since_20261113"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/miniembed-nano-v2-trained",
+      "cov": "new_since_20261113"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/miniembed-nano-r1-candidate",
+      "reads": 1,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/measurement-master-v1-candidate",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/lean-invariants-v2-trained",
+      "cov": "new_since_20261113"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/lean-inv-r1-v2-trained",
+      "cov": "new_since_20261113"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/khipu-r3-v2-trained",
+      "cov": "new_since_20261113"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/khipu-r3-estate-sft-v1",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/khipu-r3",
+      "reads": 3,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/khipu-r2-v2-trained",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/khipu-abstain-v2-trained",
+      "cov": "new_since_20261113"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/khipu-abstain-r3-candidate",
+      "reads": 1,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/khipu-abstain-1.5b-v2-trained",
+      "cov": "new_since_20261113"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/hatun-24-v2-trained",
+      "cov": "new_since_20261113"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/hatun-24-doctrine-math-r1-candidate",
+      "reads": 1,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/governed-norm-v2-trained",
+      "cov": "new_since_20261113"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/governed-inference-meter",
+      "reads": 0,
+      "pub_map": "UNMAPPED",
+      "atelier": "KERNEL"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/freeenergy-v2-trained",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/freeenergy-r1-v2-trained",
+      "cov": "new_since_20261113"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/freeenergy-r1-candidate",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/forge-v3",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/forge-1.5b-v2-trained",
+      "cov": "new_since_20261113"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/doctrine1-r1-v2-trained",
+      "cov": "new_since_20261113"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/doctrine1-r1-candidate",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/doctrine-v2-trained",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/doctrine-v2-r2-trained",
+      "cov": "new_since_20261113"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/doctrine-v2-r2-candidate",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/doctrine-master-v1-candidate",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/creativity-v2-trained",
+      "cov": "new_since_20261113"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/code-master-v3-fresh",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/chaski-v2-trained",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/chaski-r4-v2-trained",
+      "cov": "new_since_20261113"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/chaski-r4",
+      "reads": 2,
+      "pub_map": "publish-chaski-card.yml",
+      "receipt": {
+        "hub_revision": "0f97176df71cdb8a617590e717683c6a4f59d8fb",
+        "training_record_sha256": "fea82085c6bcc2c8f35ee805169207b03e2c0347ef902c85f505cff3168c1af2",
+        "record": "training_receipt.json",
+        "note": "historical A/B provenance unresolved; no favorable-only headline"
+      }
+    },
+    {
+      "repo_id": "SZLHOLDINGS/chaski-r2-v2-trained",
+      "cov": "new_since_20261113"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/chaski-r2-estate-sft-v1",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/chaski-r2",
+      "reads": 5,
+      "pub_map": "publish-chaski-card.yml",
+      "atelier": "HUB",
+      "receipt": {
+        "hub_revision": "523b733e20095fda3b1426649348e9fb179098ae",
+        "training_record_sha256": "77b8b850dcb8c76e139b17c42e198c0ad91ec6b17a43649aa49444729f7a9b49",
+        "record": "training_receipt.json"
+      }
+    },
+    {
+      "repo_id": "SZLHOLDINGS/chaski-estate-sft-v1",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/chaski-5050-v2-trained",
+      "cov": "new_since_20261113"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/chaski-5050-estate-sft-v1",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/chaski-5050",
+      "reads": 3,
+      "pub_map": "publish-chaski-card.yml",
+      "atelier": "HUB",
+      "receipt": {
+        "hub_revision": "6bd12f97b3d19415c018473f9ff0427ad9343b1a",
+        "training_record_sha256": "9420fda23d9ef4db6620a2802c1920df8ac6252f560567ee8e0590b7912a68ed",
+        "record": "training_receipt.json"
+      }
+    },
+    {
+      "repo_id": "SZLHOLDINGS/chaski",
+      "reads": 4,
+      "pub_map": "publish-chaski-card.yml",
+      "atelier": "HUB",
+      "receipt": {
+        "hub_revision": "d6306bb06fc4b5d4258ddd694fb493cf82332feb",
+        "training_record_sha256": "7845609c9e540a2ce71743f152237d896c0e0dd9df13d7f2c814232ce61fe3eb",
+        "record": "training_receipt.json",
+        "dated_results": "2026-08-28 JSON drafts 0/5; refusals 2/6 (failure retained)"
+      }
+    },
+    {
+      "repo_id": "SZLHOLDINGS/chakana-v2-trained",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/chakana-r1-v2-trained",
+      "cov": "new_since_20261113"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/chakana-r1-candidate",
+      "reads": 2,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/brain-navigator-v2-trained",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/brain-navigator-r2-estate-sft-v1",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/brain-navigator-r2",
+      "reads": 4,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/ancient-math-v2-trained",
+      "cov": "new_since_20261113"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/ancient-math-r1-v2-trained",
+      "cov": "new_since_20261113"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/acoustic-v2-trained",
+      "cov": "new_since_20261113"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/acoustic-r1-v2-trained",
+      "cov": "new_since_20261113"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/abstention-v2-candidate",
+      "reads": 4,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/abstain-doctrine-r1",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/a11oy-v19-substrate",
+      "reads": 5,
+      "pub_map": "UNMAPPED",
+      "atelier": "HUB"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/a11oy-code-r1-candidate",
+      "reads": 1,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/YARQA-ATTN",
+      "reads": 1,
+      "pub_map": "UNMAPPED",
+      "atelier": "KERNEL"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/WILLAY-estate-sft-v1",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/WILLAY",
+      "reads": 4,
+      "pub_map": "UNMAPPED",
+      "atelier": "HUB"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/TinyKhipu-Nano",
+      "reads": 1,
+      "pub_map": "UNMAPPED",
+      "atelier": "SYNTHETIC"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/SZL-Specialized-Domains-v1",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/SZL-Showcase-Systems-v1",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/SZL-Reasoning-0.8B-v1",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/SZL-Nemotron-Mini-4B-Estate-v1",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/SZL-Nemotron-Mini-4B-Estate-DPO-v2",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/SZL-Nemotron-Mini-4B-Estate-DPO-v1",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/SZL-Nemotron-Mini-4B-Doctrine-v1",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/SZL-Khipu-1.5B-v2-trained",
+      "reads": 0,
+      "pub_map": "UNMAPPED",
+      "license_gap": true
+    },
+    {
+      "repo_id": "SZLHOLDINGS/SZL-Khipu-1.5B-sft-v2",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/SZL-Khipu-1.5B-estate-sft-v1",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/SZL-Khipu-1.5B-abstain",
+      "reads": 4,
+      "pub_map": "UNMAPPED",
+      "atelier": "HUB"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/SZL-Khipu-1.5B-GGUF",
+      "reads": 3,
+      "pub_map": "UNMAPPED",
+      "atelier": "HUB"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/SZL-Khipu-1.5B",
+      "reads": 5,
+      "pub_map": "publish-khipu-card.yml",
+      "atelier": "HUB",
+      "receipt": {
+        "hub_revision": "7328262402e05b10bffa16cf6446da504b05f666",
+        "training_record_sha256": "7af76dd4f26dcd122012bfd1e47a0f55481a952b86aee28956cf7cfaaf59bd04",
+        "record": "training_receipt.signed.json"
+      }
+    },
+    {
+      "repo_id": "SZLHOLDINGS/SZL-GovernedDistill-0.8B-v1",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/SZL-FreeEnergy-0.8B-v1",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/SZL-FreeEnergy-0.8B-DPO-v1",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/SZL-Forge-1.5B-ReceiptAgent-estate-sft-v1",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/SZL-Forge-1.5B-ReceiptAgent",
+      "reads": 0,
+      "pub_map": "UNMAPPED",
+      "atelier": "SIGNED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/SZL-AncientMath-0.8B-v1",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/SZL-AcousticGovernance-0.8B-v1",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/ReceiptAgent-Nano",
+      "reads": 1,
+      "pub_map": "UNMAPPED",
+      "atelier": "SYNTHETIC"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/Nemotron-Mini-4B-Instruct-st",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/Moons-Nano",
+      "reads": 2,
+      "pub_map": "UNMAPPED",
+      "atelier": "MEASURED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/MiniEmbed-Nano",
+      "reads": 2,
+      "pub_map": "UNMAPPED",
+      "atelier": "MEASURED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/KHIPU-R2-estate-sft-v1",
+      "reads": 0,
+      "pub_map": "UNMAPPED"
+    },
+    {
+      "repo_id": "SZLHOLDINGS/KHIPU-R2",
+      "reads": 4,
+      "pub_map": "publish-khipu-card.yml",
+      "atelier": "HUB",
+      "receipt": {
+        "hub_revision": "3a698a0f9a96eb80c38b11a77e114f318f6e4820",
+        "training_record_sha256": "cd3b5f8b8f083314abd3bc3eee46aa2a6be8491571aa867860e5b4f85c4ed6ce",
+        "record": "training_receipt.json",
+        "dated_results": "2026-08-28 plan-valid 11/11; grounding 5/5; abstention 3/6 (separate artifact/run; not a controlled comparative improvement)"
+      }
+    },
+    {
+      "repo_id": "SZLHOLDINGS/A11OY-MINI",
+      "reads": 5,
+      "pub_map": "UNMAPPED",
+      "atelier": "HUB"
+    }
+  ]
+}
