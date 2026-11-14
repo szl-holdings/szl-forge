@@ -187,6 +187,92 @@ class OperationalHealthKernelTests(unittest.TestCase):
         self.assertFalse(json.loads(bad_input.stderr)["ok"])
 
 
+    def _run_cli_on_text(self, text: str) -> subprocess.CompletedProcess[str]:
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "input.json"
+            path.write_text(text, encoding="utf-8")
+            return subprocess.run(
+                [
+                    sys.executable,
+                    "-I",
+                    "-B",
+                    str(ROOT / "src" / "oac_operational_health.py"),
+                    "--model",
+                    str(MODEL_PATH),
+                    "--receipt",
+                    str(MODEL_RECEIPT_PATH),
+                    "--input",
+                    str(path),
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+    def assert_cli_refuses_cleanly(self, text: str, message: str) -> None:
+        proc = self._run_cli_on_text(text)
+        self.assertEqual(2, proc.returncode, proc.stderr[-400:])
+        self.assertNotIn("Traceback", proc.stderr)
+        error = json.loads(proc.stderr)
+        self.assertFalse(error["ok"])
+        self.assertIn(message, error["error"])
+
+    def test_cli_refuses_duplicate_keys_at_every_level(self) -> None:
+        features = json.dumps(healthy_features())
+        smuggled = json.dumps(dict(healthy_features(), patient_id="x"))
+        self.assert_cli_refuses_cleanly(
+            '{"features":' + smuggled + ',"features":' + features + "}",
+            "duplicate JSON key",
+        )
+        self.assert_cli_refuses_cleanly(
+            features[:-1] + ', "queue_utilization": 0.5}', "duplicate JSON key"
+        )
+        with self.assertRaisesRegex(model.ModelInputError, "duplicate JSON key"):
+            self.kernel.score_json('{"features":' + smuggled + ',"features":' + features + "}")
+
+    def test_cli_refuses_huge_integer_literals_with_documented_error(self) -> None:
+        for digits in (33, 400, 5000, 100000):
+            features = json.dumps(healthy_features()).replace(
+                '"consecutive_failures": 0', '"consecutive_failures": ' + "9" * digits
+            )
+            self.assertIn("9" * digits, features)
+            with self.subTest(digits=digits):
+                self.assert_cli_refuses_cleanly(features, "integer literal longer than")
+
+    def test_cli_refuses_deep_nesting_with_documented_error(self) -> None:
+        for depth in (33, 1000, 100000):
+            for opener, closer in (("[", "]"), ('{"a":', "}")):
+                text = '{"features":' + opener * depth + closer * depth + "}"
+                with self.subTest(depth=depth, opener=opener):
+                    self.assert_cli_refuses_cleanly(text, "nesting deeper than")
+
+    def test_brackets_inside_strings_do_not_count_as_nesting(self) -> None:
+        text = json.dumps({"note": "[" * 100 + '\\"' + "{" * 100})
+        self.assertEqual({"note": "[" * 100 + '\\"' + "{" * 100}, model.loads_strict(text))
+
+    def test_score_refuses_deep_or_overflowing_python_values(self) -> None:
+        nested: object = 0
+        for _ in range(model.MAX_INPUT_NESTING_DEPTH + 2):
+            nested = [nested]
+        features = healthy_features()
+        features["consecutive_failures"] = nested  # type: ignore[assignment]
+        with self.assertRaisesRegex(model.ModelInputError, "nesting deeper than"):
+            self.kernel.score(features)
+        features = healthy_features()
+        features["seconds_since_last_success"] = 10**400
+        with self.assertRaisesRegex(model.ModelInputError, "must be finite"):
+            self.kernel.score(features)
+
+    def test_running_kernel_hash_is_bound_to_receipt(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            receipt = json.loads(MODEL_RECEIPT_PATH.read_text(encoding="utf-8"))
+            receipt["kernel_sha256"] = "0" * 64
+            receipt_path = Path(temporary) / "receipt.json"
+            receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
+            with self.assertRaisesRegex(model.ModelArtifactError, "kernel hash"):
+                model.OperationalHealthKernel(MODEL_PATH, receipt_path)
+
+
 class SyntheticDatasetTests(unittest.TestCase):
     def test_dataset_has_exact_splits_schema_and_no_sensitive_fields(self) -> None:
         forbidden = {
