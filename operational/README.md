@@ -66,6 +66,27 @@ python operational/run_all.py --train    # additionally fire lane trainers
 Outputs land in `operational/out/` and one `run-receipt.json` summarizes
 every step with per-step `status` and `evidence` pointers.
 
+## ReceiptAgent unseal evidence
+
+The default ReceiptAgent status check is read-only. It prints an existing unseal
+receipt unchanged. Without a recorded unseal, it reports `UNKNOWN`: the presence
+of a test file does not prove that it has never been read. Legacy `SEALED`
+receipts based only on file existence are not treated as proof.
+
+`--unseal` records `UNSEALED_EVALUATION_PENDING` atomically before reading test
+bytes, then records the test digest and either completed measurements or
+`UNKNOWN`. Empty test sets, rows without explicit assertions, malformed data,
+and unavailable endpoints return exit code 2. The first run creates its output
+directory. Subsequent unseals cannot overwrite recorded evidence. A receipt lock
+also prevents competing evaluations; a lock left by an interrupted run requires
+inspection rather than automatic deletion.
+
+This operational runner still performs bounded substring checks against the
+named endpoint. Its receipt is not cryptographically authenticated and does not
+bind endpoint weights to an immutable model revision. Use the canonical frontier
+v3 qualification workflow for release evidence. `publication_eligible` remains
+false, and no new claim of unseen evaluation is established.
+
 ## WILLAY local comparison
 
 `evaluate_willay.py` now requires immutable candidate/base revisions and the
