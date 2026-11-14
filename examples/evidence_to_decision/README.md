@@ -17,6 +17,19 @@ python mutation_sweep.py                   # removes each tagged harness guard; 
 
 `acceptance.py` exits 0 only if every part passes. Exit 3 means a frozen input changed and the run was refused.
 
+The mutation sweep distinguishes completed behavioral failures from invalid execution.
+Timeouts, bare crashes, import/setup failures, incomplete acceptance reports and changed
+test counts never count as kills. A caught guard exception remains a behavioral failure
+under the frozen acceptance rules. Unit errors qualify only when their innermost traceback
+frame is the copied mutated harness, with the same test and skip counts as the clean run.
+The result discloses baseline coverage and every layer's outcome; invalid evidence makes
+the sweep exit 1. Existing disabled tests remain disclosed rather than silently counted.
+
+To include the production seam tests in the temporary sweep copies, set
+`E2D_FORGE_ROOT` to the absolute repository root containing `inference/production.py`.
+Without it those optional tests are skipped in copied directories. The deliberately
+disabled planted-failure test is normally skipped in either mode.
+
 ## Files
 
 | File | Role |
@@ -49,6 +62,9 @@ MEASURED means it ran here against the spy. NOT_RUN means it was not executed. U
 
 ## Continuous integration
 
-These tests live outside `tests/`, so the repository's base gate (`pytest -q tests`) does not collect them. A small separately reviewed change, such as a `tests/` shim or a path-filtered workflow, would be needed for CI to run them. Repository-wide lint applies to these files as to any others.
+`tests/test_evidence_to_decision_example.py` collects the example suites and acceptance
+command under the repository's base gate. `tests/test_evidence_mutation_outcomes.py`
+checks the mutation scorer's failure classification, baseline refusal and cleanup.
+The full mutation sweep remains a separate command. Repository-wide lint applies here.
 
 Licence: the repository licence (Apache-2.0).
