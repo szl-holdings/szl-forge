@@ -1,0 +1,734 @@
+{
+ "started": "2026-11-03T23:34:13Z",
+ "items": [
+  {
+   "kind": "arxiv_api",
+   "url": "http://export.arxiv.org/api/query?id_list=2010.09686,2110.01052,2101.02703,2102.10439,2110.06177,2210.01948,1810.08240,1906.09256,2208.02814&max_results=20",
+   "bytes": 19745,
+   "sha256": "8781941f76d44549844e66f0745f6757b0d3f4bf94ff2eda10b2c1d71fac0d14",
+   "status": 200,
+   "entries": [
+    {
+     "id": "http://arxiv.org/abs/1810.08240v9",
+     "title": "Time-uniform, nonparametric, nonasymptotic confidence sequences",
+     "authors": [
+      "Steven R. Howard",
+      "Aaditya Ramdas",
+      "Jon McAuliffe",
+      "Jasjeet Sekhon"
+     ],
+     "published": "2018-10-18T19:05:00Z",
+     "doi": "10.1214/20-AOS1991",
+     "journal_ref": "Ann. Statist. 49(2): 1055-1080 (April 2021)"
+    },
+    {
+     "id": "http://arxiv.org/abs/2010.09686v7",
+     "title": "Estimating means of bounded random variables by betting",
+     "authors": [
+      "Ian Waudby-Smith",
+      "Aaditya Ramdas"
+     ],
+     "published": "2020-10-19T17:22:03Z",
+     "doi": null,
+     "journal_ref": null
+    },
+    {
+     "id": "http://arxiv.org/abs/2102.10439v1",
+     "title": "Retrain or not retrain: Conformal test martingales for change-point detection",
+     "authors": [
+      "Vladimir Vovk",
+      "Ivan Petej",
+      "Ilia Nouretdinov",
+      "Ernst Ahlberg",
+      "Lars Carlsson",
+      "Alex Gammerman"
+     ],
+     "published": "2021-02-20T20:39:05Z",
+     "doi": null,
+     "journal_ref": null
+    },
+    {
+     "id": "http://arxiv.org/abs/2110.01052v5",
+     "title": "Learn then Test: Calibrating Predictive Algorithms to Achieve Risk Control",
+     "authors": [
+      "Anastasios N. Angelopoulos",
+      "Stephen Bates",
+      "Emmanuel J. Cand\u00e8s",
+      "Michael I. Jordan",
+      "Lihua Lei"
+     ],
+     "published": "2021-10-03T17:42:03Z",
+     "doi": null,
+     "journal_ref": null
+    },
+    {
+     "id": "http://arxiv.org/abs/2208.02814v4",
+     "title": "Conformal Risk Control",
+     "authors": [
+      "Anastasios N. Angelopoulos",
+      "Stephen Bates",
+      "Adam Fisch",
+      "Lihua Lei",
+      "Tal Schuster"
+     ],
+     "published": "2022-08-04T17:59:44Z",
+     "doi": null,
+     "journal_ref": null
+    },
+    {
+     "id": "http://arxiv.org/abs/2210.01948v2",
+     "title": "Game-theoretic statistics and safe anytime-valid inference",
+     "authors": [
+      "Aaditya Ramdas",
+      "Peter Gr\u00fcnwald",
+      "Vladimir Vovk",
+      "Glenn Shafer"
+     ],
+     "published": "2022-10-04T22:50:14Z",
+     "doi": null,
+     "journal_ref": null
+    },
+    {
+     "id": "http://arxiv.org/abs/2110.06177v4",
+     "title": "Tracking the risk of a deployed model and detecting harmful distribution shifts",
+     "authors": [
+      "Aleksandr Podkopaev",
+      "Aaditya Ramdas"
+     ],
+     "published": "2021-10-12T17:21:41Z",
+     "doi": null,
+     "journal_ref": null
+    },
+    {
+     "id": "http://arxiv.org/abs/1906.09256v3",
+     "title": "Testing randomness",
+     "authors": [
+      "Vladimir Vovk"
+     ],
+     "published": "2019-06-21T17:49:42Z",
+     "doi": "10.1214/20-STS817",
+     "journal_ref": "Statistical Science 36(4):595-611 (2021)"
+    },
+    {
+     "id": "http://arxiv.org/abs/2101.02703v3",
+     "title": "Distribution-Free, Risk-Controlling Prediction Sets",
+     "authors": [
+      "Stephen Bates",
+      "Anastasios Angelopoulos",
+      "Lihua Lei",
+      "Jitendra Malik",
+      "Michael I. Jordan"
+     ],
+     "published": "2021-01-07T18:59:33Z",
+     "doi": null,
+     "journal_ref": null
+    }
+   ]
+  },
+  {
+   "kind": "crossref_doi",
+   "url": "https://api.crossref.org/works/10.1093/jrsssb/qkad009",
+   "bytes": 19277,
+   "sha256": "1e867613d6436cd83686da421400d88f29d017d67b64aec1f40e06ba29171631",
+   "status": 200,
+   "doi": "10.1093/jrsssb/qkad009",
+   "title": [
+    "Estimating means of bounded random variables by betting"
+   ],
+   "authors": [
+    "Ian Waudby-Smith",
+    "Aaditya Ramdas"
+   ],
+   "container": [
+    "Journal of the Royal Statistical Society Series B: Statistical Methodology"
+   ],
+   "issued": [
+    [
+     2023,
+     2,
+     16
+    ]
+   ],
+   "volume": "86",
+   "issue": "1",
+   "page": "1-27",
+   "type": "journal-article"
+  },
+  {
+   "kind": "crossref_doi",
+   "url": "https://api.crossref.org/works/10.1214/24-aoas1998",
+   "bytes": 22691,
+   "sha256": "5d69afbf0c5b13100edd97d06454a4cc1b3635b2d5deaeb46979a42fb14e27dd",
+   "status": 200,
+   "doi": "10.1214/24-aoas1998",
+   "title": [
+    "Learn then test: Calibrating predictive algorithms to achieve risk control"
+   ],
+   "authors": [
+    "Anastasios N. Angelopoulos",
+    "Stephen Bates",
+    "Emmanuel J. Cand\u00e8s",
+    "Michael I. Jordan",
+    "Lihua Lei"
+   ],
+   "container": [
+    "The Annals of Applied Statistics"
+   ],
+   "issued": [
+    [
+     2025,
+     6,
+     1
+    ]
+   ],
+   "volume": "19",
+   "issue": "2",
+   "page": "1641-1662",
+   "type": "journal-article"
+  },
+  {
+   "kind": "crossref_doi",
+   "url": "https://api.crossref.org/works/10.1145/3478535",
+   "bytes": 13779,
+   "sha256": "e42cec9436a0425ec4c74b5350f0cccc0d4fc20d2e4d056fa231939ca376b556",
+   "status": 200,
+   "doi": "10.1145/3478535",
+   "title": [
+    "Distribution-free, Risk-controlling Prediction Sets"
+   ],
+   "authors": [
+    "Stephen Bates",
+    "Anastasios Angelopoulos",
+    "Lihua Lei",
+    "Jitendra Malik",
+    "Michael Jordan"
+   ],
+   "container": [
+    "Journal of the ACM"
+   ],
+   "issued": [
+    [
+     2021,
+     9,
+     30
+    ]
+   ],
+   "volume": "68",
+   "issue": "6",
+   "page": "1-34",
+   "type": "journal-article"
+  },
+  {
+   "kind": "crossref_doi",
+   "url": "https://api.crossref.org/works/10.1214/009117904000000360",
+   "bytes": 11429,
+   "sha256": "a3a0dc16928d117b560e7be428f67f95d0764109f53f9dad6de0f04e311a5a83",
+   "status": 200,
+   "doi": "10.1214/009117904000000360",
+   "title": [
+    "On Hoeffding\u2019s inequalities"
+   ],
+   "authors": [
+    "Vidmantas Bentkus"
+   ],
+   "container": [
+    "The Annals of Probability"
+   ],
+   "issued": [
+    [
+     2004,
+     4,
+     1
+    ]
+   ],
+   "volume": "32",
+   "issue": "2",
+   "page": "1650-1673",
+   "type": "journal-article"
+  },
+  {
+   "kind": "crossref_doi",
+   "url": "https://api.crossref.org/works/10.1080/01621459.1963.10500830",
+   "bytes": 4985,
+   "sha256": "55bd767d2b4a79eb15c7a1f3b08a1c0ec64b3eb1233047f162d2aebdb652118a",
+   "status": 200,
+   "doi": "10.1080/01621459.1963.10500830",
+   "title": [
+    "Probability Inequalities for Sums of Bounded Random Variables"
+   ],
+   "authors": [
+    "Wassily Hoeffding"
+   ],
+   "container": [
+    "Journal of the American Statistical Association"
+   ],
+   "issued": [
+    [
+     1963,
+     3
+    ]
+   ],
+   "volume": "58",
+   "issue": "301",
+   "page": "13-30",
+   "type": "journal-article"
+  },
+  {
+   "kind": "crossref_doi",
+   "url": "https://api.crossref.org/works/10.1214/23-sts894",
+   "bytes": 36307,
+   "sha256": "c78b05c94028f340245ca57ac78d96e82e9adce000edf7886d8ea71f8214cd01",
+   "status": 200,
+   "doi": "10.1214/23-sts894",
+   "title": [
+    "Game-Theoretic Statistics and Safe Anytime-Valid Inference"
+   ],
+   "authors": [
+    "Aaditya Ramdas",
+    "Peter Gr\u00fcnwald",
+    "Vladimir Vovk",
+    "Glenn Shafer"
+   ],
+   "container": [
+    "Statistical Science"
+   ],
+   "issued": [
+    [
+     2023,
+     11,
+     1
+    ]
+   ],
+   "volume": "38",
+   "issue": "4",
+   "page": "576-601",
+   "type": "journal-article"
+  },
+  {
+   "kind": "crossref_doi",
+   "url": "https://api.crossref.org/works/10.1214/20-aos1991",
+   "bytes": 25088,
+   "sha256": "edd312e147139b7065a5439954ef9149a0629836d9ea0bbe7006d485bc1dd1bb",
+   "status": 200,
+   "doi": "10.1214/20-aos1991",
+   "title": [
+    "Time-uniform, nonparametric, nonasymptotic confidence sequences"
+   ],
+   "authors": [
+    "Steven R. Howard",
+    "Aaditya Ramdas",
+    "Jon McAuliffe",
+    "Jasjeet Sekhon"
+   ],
+   "container": [
+    "The Annals of Statistics"
+   ],
+   "issued": [
+    [
+     2021,
+     4,
+     1
+    ]
+   ],
+   "volume": "49",
+   "issue": "2",
+   "page": "1055-1080",
+   "type": "journal-article"
+  },
+  {
+   "kind": "crossref_doi",
+   "url": "https://api.crossref.org/works/10.1214/20-sts817",
+   "bytes": 18882,
+   "sha256": "92675ae1cb2da561bde6ca6d7fa7d78f356a3b9fae4a0fac5a19c3f2795da55b",
+   "status": 200,
+   "doi": "10.1214/20-sts817",
+   "title": [
+    "Testing Randomness Online"
+   ],
+   "authors": [
+    "Vladimir Vovk"
+   ],
+   "container": [
+    "Statistical Science"
+   ],
+   "issued": [
+    [
+     2021,
+     11,
+     1
+    ]
+   ],
+   "volume": "36",
+   "issue": "4",
+   "page": "595-611",
+   "type": "journal-article"
+  },
+  {
+   "kind": "crossref_doi",
+   "url": "https://api.crossref.org/works/10.17487/rfc9162",
+   "bytes": 1463,
+   "sha256": "5dd7dfe1429d5994f5fbd8718b87701aac2913e0d50b0b8b7ba75b9ae33c08c8",
+   "status": 200,
+   "doi": "10.17487/rfc9162",
+   "title": [
+    "Certificate Transparency Version 2.0"
+   ],
+   "authors": [
+    "B. Laurie",
+    "E. Messeri",
+    "R. Stradling"
+   ],
+   "container": [],
+   "issued": [
+    [
+     2021,
+     12
+    ]
+   ],
+   "volume": null,
+   "issue": null,
+   "page": null,
+   "type": "report"
+  },
+  {
+   "kind": "crossref_doi",
+   "url": "https://api.crossref.org/works/10.17487/rfc6962",
+   "bytes": 1444,
+   "sha256": "90a1a8423e52a6b8f8cd0b688228cfa7504476c03ccaeba86caeb0222d007cbd",
+   "status": 200,
+   "doi": "10.17487/rfc6962",
+   "title": [
+    "Certificate Transparency"
+   ],
+   "authors": [
+    "B. Laurie",
+    "A. Langley",
+    "E. Kasper"
+   ],
+   "container": [],
+   "issued": [
+    [
+     2013,
+     6
+    ]
+   ],
+   "volume": null,
+   "issue": null,
+   "page": null,
+   "type": "report"
+  },
+  {
+   "kind": "crossref_doi",
+   "url": "https://api.crossref.org/works/10.1214/10-sts347",
+   "bytes": 13601,
+   "sha256": "fa94ea21ac5e805f008f322c135a7f6fef82d9d2bc3bba761ff344bd4e8e09b3",
+   "status": 200,
+   "doi": "10.1214/10-sts347",
+   "title": [
+    "Test Martingales, Bayes Factors and p-Values"
+   ],
+   "authors": [
+    "Glenn Shafer",
+    "Alexander Shen",
+    "Nikolai Vereshchagin",
+    "Vladimir Vovk"
+   ],
+   "container": [
+    "Statistical Science"
+   ],
+   "issued": [
+    [
+     2011,
+     2,
+     1
+    ]
+   ],
+   "volume": "26",
+   "issue": "1",
+   "page": "84-101",
+   "type": "journal-article"
+  },
+  {
+   "kind": "crossref_doi",
+   "url": "https://api.crossref.org/works/10.1007/978-3-031-06649-8_8",
+   "bytes": 19217,
+   "sha256": "a9de119bfc68bb2fe083ebe363c30bd972f4e729ee95b3046cc1ced68ad20b2f",
+   "status": 200,
+   "doi": "10.1007/978-3-031-06649-8_8",
+   "title": [
+    "Testing Exchangeability"
+   ],
+   "authors": [
+    "Vladimir Vovk",
+    "Alexander Gammerman",
+    "Glenn Shafer"
+   ],
+   "container": [
+    "Algorithmic Learning in a Random World"
+   ],
+   "issued": [
+    [
+     2022
+    ]
+   ],
+   "volume": null,
+   "issue": null,
+   "page": "227-263",
+   "type": "book-chapter"
+  },
+  {
+   "kind": "rfc_text",
+   "url": "https://www.rfc-editor.org/rfc/rfc9162.txt",
+   "bytes": 128266,
+   "sha256": "a0e432ce7580c99fcc8faf0cf3f6191f9ce6b4864f949158e020d4ecb295081f",
+   "status": 200
+  },
+  {
+   "kind": "merkle_tarball",
+   "url": "https://codeload.github.com/transparency-dev/merkle/tar.gz/c39fbf350a405f68571bf4c42a6a518eb0a46a4b",
+   "bytes": 169926,
+   "sha256": "ed0c1017ea66fc7e88e67998f7d6b9cc1eef66d30b97b58a1dbfc1aa3a1edd09",
+   "status": 200,
+   "commit": "c39fbf350a405f68571bf4c42a6a518eb0a46a4b"
+  },
+  {
+   "kind": "merkle_file",
+   "url": "merkle-c39fbf350a405f68571bf4c42a6a518eb0a46a4b/LICENSE",
+   "bytes": 11358,
+   "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+   "commit": "c39fbf350a405f68571bf4c42a6a518eb0a46a4b"
+  },
+  {
+   "kind": "merkle_file",
+   "url": "merkle-c39fbf350a405f68571bf4c42a6a518eb0a46a4b/README.md",
+   "bytes": 1296,
+   "sha256": "3e36707be23907ac27f1c8562d167ca622ec19ea051d02eaf94417dd4ffc813b",
+   "commit": "c39fbf350a405f68571bf4c42a6a518eb0a46a4b"
+  },
+  {
+   "kind": "merkle_file",
+   "url": "merkle-c39fbf350a405f68571bf4c42a6a518eb0a46a4b/docs/README.md",
+   "bytes": 459,
+   "sha256": "9c51431526e686a01bf603388048e1300e36e9f03d773efceb42debcce0420da",
+   "commit": "c39fbf350a405f68571bf4c42a6a518eb0a46a4b"
+  },
+  {
+   "kind": "merkle_file",
+   "url": "merkle-c39fbf350a405f68571bf4c42a6a518eb0a46a4b/proof/proof_test.go",
+   "bytes": 34981,
+   "sha256": "2013d1617245ea28004dd44a5bad813e3b3cf62ce6defb5ef105f0f44243fe98",
+   "commit": "c39fbf350a405f68571bf4c42a6a518eb0a46a4b"
+  },
+  {
+   "kind": "merkle_file",
+   "url": "merkle-c39fbf350a405f68571bf4c42a6a518eb0a46a4b/proof/verify_test.go",
+   "bytes": 7410,
+   "sha256": "ee9aafcb201119b92b4e45db4bc048ebc054be428e54f0822047a6c399bcc97a",
+   "commit": "c39fbf350a405f68571bf4c42a6a518eb0a46a4b"
+  },
+  {
+   "kind": "merkle_file",
+   "url": "merkle-c39fbf350a405f68571bf4c42a6a518eb0a46a4b/rfc6962/rfc6962.go",
+   "bytes": 2991,
+   "sha256": "db68f5f7b8d86507738d5c2a87b3e84fcb403eda1048307d7491aec1f3aaf6cf",
+   "commit": "c39fbf350a405f68571bf4c42a6a518eb0a46a4b"
+  },
+  {
+   "kind": "merkle_file",
+   "url": "merkle-c39fbf350a405f68571bf4c42a6a518eb0a46a4b/rfc6962/rfc6962_test.go",
+   "bytes": 3368,
+   "sha256": "6237bd8f8131c49832575d4ce03395a62f98a6555080783b7ca5d1fb06a83678",
+   "commit": "c39fbf350a405f68571bf4c42a6a518eb0a46a4b"
+  },
+  {
+   "kind": "merkle_file",
+   "url": "merkle-c39fbf350a405f68571bf4c42a6a518eb0a46a4b/testonly/constants.go",
+   "bytes": 4201,
+   "sha256": "6faf1957b5727c99593412ca0375f7e1f90ba10d7747dc42624585f948da32a8",
+   "commit": "c39fbf350a405f68571bf4c42a6a518eb0a46a4b"
+  },
+  {
+   "kind": "merkle_file",
+   "url": "merkle-c39fbf350a405f68571bf4c42a6a518eb0a46a4b/testonly/reference_test.go",
+   "bytes": 13684,
+   "sha256": "1891314f4c1e551c532190e4f072a41d103b42c952ea4a9454a9bc75dba5333f",
+   "commit": "c39fbf350a405f68571bf4c42a6a518eb0a46a4b"
+  },
+  {
+   "kind": "merkle_file",
+   "url": "merkle-c39fbf350a405f68571bf4c42a6a518eb0a46a4b/testonly/tree.go",
+   "bytes": 5933,
+   "sha256": "f1ded4340bf395acaaa8d727b28ca0ac83808d3260a909f24e1cc531d2ce6803",
+   "commit": "c39fbf350a405f68571bf4c42a6a518eb0a46a4b"
+  },
+  {
+   "kind": "merkle_file",
+   "url": "merkle-c39fbf350a405f68571bf4c42a6a518eb0a46a4b/testonly/tree_fuzz_test.go",
+   "bytes": 5735,
+   "sha256": "6fc61d153a1b4ded7ea9574aa60c1fbdf1eda5d04a2f44f2e12329993af2b393",
+   "commit": "c39fbf350a405f68571bf4c42a6a518eb0a46a4b"
+  },
+  {
+   "kind": "merkle_file",
+   "url": "merkle-c39fbf350a405f68571bf4c42a6a518eb0a46a4b/testonly/tree_test.go",
+   "bytes": 7984,
+   "sha256": "11202b8ee2b9a7962ccba065c3d2795180a00df8c76047b711bb9f2816ad5315",
+   "commit": "c39fbf350a405f68571bf4c42a6a518eb0a46a4b"
+  },
+  {
+   "kind": "merkle_file",
+   "url": "merkle-c39fbf350a405f68571bf4c42a6a518eb0a46a4b/testonly/vectors_test.go",
+   "bytes": 4777,
+   "sha256": "3de38862c621af1a046f082c4523fd7362612a4919821e559fd35c25bfa6ea54",
+   "commit": "c39fbf350a405f68571bf4c42a6a518eb0a46a4b"
+  },
+  {
+   "kind": "arxiv_eprint",
+   "url": "https://arxiv.org/e-print/2010.09686",
+   "bytes": 2534908,
+   "sha256": "07f755fadff96656f55b0758f1dbd5c37b4572d0ce061338a99de8bf884f1fce",
+   "status": 200,
+   "tex_files": [
+    "WoR.tex",
+    "additional_results.tex",
+    "betting_martingales.tex",
+    "betting_strategies.tex",
+    "discussion.tex",
+    "history.tex",
+    "introduction.tex",
+    "main_arxiv.bbl",
+    "main_arxiv.tex",
+    "predictable_plugins.tex",
+    "proofs.tex",
+    "simulations.tex"
+   ],
+   "n_hits": 207
+  },
+  {
+   "kind": "arxiv_eprint",
+   "url": "https://arxiv.org/e-print/2110.01052",
+   "bytes": 3961230,
+   "sha256": "cf725dafc937a9ec1e56812836f309361016d85d4166571a0ee0a3a55781ae83",
+   "status": 200,
+   "tex_files": [
+    "algorithms/bardenet.tex",
+    "figures/tables/0_2-coco-table.tex",
+    "figures/tables/0_5-coco-table.tex",
+    "figures/tables/ar-process-table.tex",
+    "main.bbl",
+    "main.tex"
+   ],
+   "n_hits": 42
+  },
+  {
+   "kind": "arxiv_eprint",
+   "url": "https://arxiv.org/e-print/2101.02703",
+   "bytes": 18104954,
+   "sha256": "c950e5add60f69ca35ce445ba88f1ff99b49f9e8dcb97203e2a5688ff33c2bbd",
+   "status": 200,
+   "tex_files": [
+    "algorithms/greedy.tex",
+    "main.bbl",
+    "main.tex"
+   ],
+   "n_hits": 55
+  },
+  {
+   "kind": "novelty_crossref",
+   "url": "https://api.crossref.org/works?rows=6&select=DOI,title,author,issued,container-title&query.bibliographic=receipt-bound%20conformal%20guarantee",
+   "bytes": 2517,
+   "sha256": "9cce4549670a0a3fbf172aff22a090b455aaed5987ae1e2adbeb4cbb833f7f17",
+   "status": 200,
+   "n": 6
+  },
+  {
+   "kind": "novelty_crossref",
+   "url": "https://api.crossref.org/works?rows=6&select=DOI,title,author,issued,container-title&query.bibliographic=signed%20receipt%20conformal%20risk%20control%20transparency%20log",
+   "bytes": 2443,
+   "sha256": "6fe6fa04a1ab66f9007e94f08d854a9bb388deab9d525c0460018e07126e4ae6",
+   "status": 200,
+   "n": 6
+  },
+  {
+   "kind": "novelty_crossref",
+   "url": "https://api.crossref.org/works?rows=6&select=DOI,title,author,issued,container-title&query.bibliographic=verifiable%20certificate%20risk%20control%20Merkle%20transparency%20log%20machine%20learning",
+   "bytes": 4533,
+   "sha256": "56ac6e630c1ad08b6267a5fce40d177d79cced29182ac770ae04a2e2b6b6cbf0",
+   "status": 200,
+   "n": 6
+  },
+  {
+   "kind": "novelty_crossref",
+   "url": "https://api.crossref.org/works?rows=6&select=DOI,title,author,issued,container-title&query.bibliographic=anytime-valid%20monitoring%20selective%20prediction%20signed%20attestation",
+   "bytes": 3536,
+   "sha256": "c93b8f7bb433bdb907db1ffba50a60e9bf89e72d048595c37574dfb8c7705cf9",
+   "status": 200,
+   "n": 6
+  },
+  {
+   "kind": "novelty_crossref",
+   "url": "https://api.crossref.org/works?rows=6&select=DOI,title,author,issued,container-title&query.bibliographic=conformal%20prediction%20transparency%20log%20inclusion%20proof",
+   "bytes": 4747,
+   "sha256": "d6bd13e2830e57fdb062b0c349f3e6b9677da9665977f074c721eb0744e26140",
+   "status": 200,
+   "n": 6
+  },
+  {
+   "kind": "novelty_crossref",
+   "url": "https://api.crossref.org/works?rows=6&select=DOI,title,author,issued,container-title&query.bibliographic=learn%20then%20test%20betting%20e-value%20scene-level%20clustered%20calibration",
+   "bytes": 1767,
+   "sha256": "7a8dced8c97ff644df3cf89243eadcc5d56b0e50c1279eec11b3c740f7428a71",
+   "status": 200,
+   "n": 6
+  },
+  {
+   "kind": "novelty_arxiv",
+   "url": "http://export.arxiv.org/api/query?max_results=8&search_query=all%3Aconformal%20AND%20all%3A%22transparency%20log%22",
+   "bytes": 755,
+   "sha256": "90fa4d8da64a562b6a0d26a19830f920f9314f9fbc67a6422a0471ba04e7c5ef",
+   "status": 200,
+   "n": 0
+  },
+  {
+   "kind": "novelty_arxiv",
+   "url": "http://export.arxiv.org/api/query?max_results=8&search_query=all%3Aconformal%20AND%20all%3Amerkle",
+   "bytes": 10542,
+   "sha256": "c5756ce68bab1a4f4cf3cf4ed5501c341f35813a771a62eb76a06a381e4edf11",
+   "status": 200,
+   "n": 4
+  },
+  {
+   "kind": "novelty_arxiv",
+   "url": "http://export.arxiv.org/api/query?max_results=8&search_query=all%3A%22risk%20control%22%20AND%20all%3Areceipt",
+   "bytes": 3660,
+   "sha256": "fb4752d154bde89babc125226e3fe97495b86cb78e6ad9b69e184d246cb25890",
+   "status": 200,
+   "n": 1
+  },
+  {
+   "kind": "novelty_arxiv",
+   "url": "http://export.arxiv.org/api/query?max_results=8&search_query=all%3A%22learn%20then%20test%22%20AND%20all%3Aattestation",
+   "bytes": 757,
+   "sha256": "45b69a44f0175b06771fdaacec71a2194b1a4cf0b5ebe4ac882a50012e088781",
+   "status": 200,
+   "n": 0
+  },
+  {
+   "kind": "novelty_arxiv",
+   "url": "http://export.arxiv.org/api/query?max_results=8&search_query=all%3Aconformal%20AND%20all%3A%22signed%20receipt%22",
+   "bytes": 3017,
+   "sha256": "6723975264bcf169eaa63f8460b2904806a49c6bddb7ead749d4540a88baa049",
+   "status": 200,
+   "n": 1
+  },
+  {
+   "kind": "novelty_arxiv",
+   "url": "http://export.arxiv.org/api/query?max_results=8&search_query=all%3A%22selective%20prediction%22%20AND%20all%3A%22e-value%22%20AND%20all%3Amonitoring",
+   "bytes": 807,
+   "sha256": "caac5f8a4e05d405eba6d06655bed5dd983e4df8a786ea920a3db490c6a69bc2",
+   "status": 200,
+   "n": 0
+  }
+ ],
+ "finished": "2026-11-03T23:35:14Z"
+}

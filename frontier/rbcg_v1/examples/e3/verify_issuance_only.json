@@ -1,0 +1,1 @@
+{"alarm_batch": null, "audit": null, "code": null, "detail": "guarantee verified (issuance only; no deployment data supplied)", "guarantee_sha256": "7129a3853e4eb809b686424f20c587a63ac9da08733dbe68c9a40005488c05bd", "n_batches": 0, "tau_star_c": 67, "trace": [], "verdict": "VALID", "violation_batch": null}
