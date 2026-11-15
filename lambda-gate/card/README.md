@@ -8,7 +8,7 @@ tags:
 - torch
 - surrogate
 - pytorch
-- doi:10.5281/zenodo.19944926
+- doi:10.5281/zenodo.24239896
 library_name: kernels
 license: apache-2.0
 ---
@@ -81,7 +81,7 @@ k = get_kernel("SZLHOLDINGS/szl-lambda-gate", revision="main", trust_remote_code
   <img alt="Kernel Hub: import-LIVE" src="https://img.shields.io/badge/Kernel%20Hub-import--LIVE-3af4c8?style=flat-square"/>
   <img alt="tests: FAIL · import-LIVE" src="https://img.shields.io/badge/tests-FAIL%20%C2%B7%20import--LIVE-dc2626?style=flat-square"/>
   <a href="https://huggingface.co/SZLHOLDINGS/szl-lambda-gate/blob/main/MODEL_PROVENANCE.json"><img alt="Provenance: MODEL_PROVENANCE.json" src="https://img.shields.io/badge/provenance-MODEL__PROVENANCE.json-3af4c8?style=flat-square"/></a>
-  <a href="https://doi.org/10.5281/zenodo.19944926"><img alt="DOI: 10.5281/zenodo.19944926" src="https://img.shields.io/badge/DOI-10.5281%2Fzenodo.19944926-5B8DEE?style=flat-square"/></a>
+  <a href="https://doi.org/10.5281/zenodo.24239896"><img alt="DOI: 10.5281/zenodo.24239896" src="https://img.shields.io/badge/DOI-10.5281%2Fzenodo.19944926-5B8DEE?style=flat-square"/></a>
   <a href="https://huggingface.co/SZLHOLDINGS/szl-lambda-gate/blob/main/LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-7e8aa3?style=flat-square"/></a>
 </p>
 
@@ -182,7 +182,7 @@ print(lg.selfcheck())                      # empirical A1–A4 checks + version
 
 ## Provenance
 
-Backed by the Lean 4 formalization [szl-holdings/lutar-lean](https://github.com/szl-holdings/lutar-lean) (749 declarations / 14 axioms / 163 tracked sorries), DOI [10.5281/zenodo.20434308](https://doi.org/10.5281/zenodo.20434308). Λ uniqueness = Conjecture 1 (open).
+Backed by the Lean 4 formalization [szl-holdings/lutar-lean](https://github.com/szl-holdings/lutar-lean) (749 declarations / 14 axioms / 163 tracked sorries), DOI [10.5281/zenodo.24239654](https://doi.org/10.5281/zenodo.24239654). Λ uniqueness = Conjecture 1 (open).
 
 ## Honesty
 
@@ -265,12 +265,12 @@ Part of the [`szl-kernels`](https://huggingface.co/SZLHOLDINGS/szl-kernels) gove
 
 ---
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19944926.svg)](https://doi.org/10.5281/zenodo.19944926)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24239896.svg)](https://doi.org/10.5281/zenodo.24239896)
 
 ## Citation
 
 **Cite this.** Part of the SZL Holdings *Ouroboros Thesis* (Governed Post-Determinism).  
-Concept DOI (always-latest): [10.5281/zenodo.19944926](https://doi.org/10.5281/zenodo.19944926).  
+Concept DOI (always-latest): [10.5281/zenodo.24239896](https://doi.org/10.5281/zenodo.24239896).  
 Author: Stephen P. Lutar Jr. · [ORCID 0009-0001-0110-4173](https://orcid.org/0009-0001-0110-4173) · License CC-BY-4.0.  
 Full DOI-pinned lineage (v1→v26) + the 8 papers: [szl-papers PAPERS_INDEX](https://github.com/szl-holdings/szl-papers/blob/main/PAPERS_INDEX.md).  
 No artifact-specific DOI is minted for this model; the concept DOI above covers the program.
@@ -283,8 +283,8 @@ Honesty (Doctrine v11): Λ unconditional uniqueness is **Conjecture 1** (machine
   title     = {SZL Holdings --- The Ouroboros Thesis (Governed Post-Determinism)},
   year      = {2026},
   publisher = {Zenodo},
-  doi       = {10.5281/zenodo.19944926},
-  url       = {https://doi.org/10.5281/zenodo.19944926},
+  doi       = {10.5281/zenodo.24239896},
+  url       = {https://doi.org/10.5281/zenodo.24239896},
   note      = {Concept DOI --- always resolves to the latest version. ORCID 0009-0001-0110-4173. CC-BY-4.0.}
 }
 ```
