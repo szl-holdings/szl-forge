@@ -8,7 +8,7 @@ tags:
 - torch
 - surrogate
 - pytorch
-- doi:10.5281/zenodo.19944926
+- doi:10.5281/zenodo.24239896
 library_name: kernels
 license: apache-2.0
 ---
@@ -181,7 +181,7 @@ print(lg.selfcheck())                      # empirical A1–A4 checks + version
 
 ## Provenance
 
-Backed by the Lean 4 formalization [szl-holdings/lutar-lean](https://github.com/szl-holdings/lutar-lean) (749 declarations / 14 axioms / 163 tracked sorries), DOI [10.5281/zenodo.20434308](https://doi.org/10.5281/zenodo.20434308). Λ uniqueness = Conjecture 1 (open).
+Backed by the Lean 4 formalization [szl-holdings/lutar-lean](https://github.com/szl-holdings/lutar-lean) (749 declarations / 14 axioms / 163 tracked sorries), DOI [10.5281/zenodo.24239654](https://doi.org/10.5281/zenodo.24239654). Λ uniqueness = Conjecture 1 (open).
 
 ## Honesty
 
@@ -265,13 +265,13 @@ Part of the [`szl-kernels`](https://huggingface.co/SZLHOLDINGS/szl-kernels) gove
 
 ---
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19944926.svg)](https://doi.org/10.5281/zenodo.19944926)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24239896.svg)](https://doi.org/10.5281/zenodo.24239896)
 
 ## Citation
 
 
 **Cite this.** Part of the SZL Holdings *Ouroboros Thesis* (Governed Post-Determinism).  
-Concept DOI (always-latest): [10.5281/zenodo.19944926](https://doi.org/10.5281/zenodo.19944926).  
+Concept DOI (always-latest): [10.5281/zenodo.24239896](https://doi.org/10.5281/zenodo.24239896).  
 Author: Stephen P. Lutar Jr. · [ORCID 0009-0001-0110-4173](https://orcid.org/0009-0001-0110-4173) · License CC-BY-4.0.  
 Full DOI-pinned lineage (v1→v26) + the 8 papers: [szl-papers PAPERS_INDEX](https://github.com/szl-holdings/szl-papers/blob/main/PAPERS_INDEX.md).  
 No artifact-specific DOI is minted for this model; the concept DOI above covers the program.
@@ -284,8 +284,8 @@ Honesty (Doctrine v11): Λ unconditional uniqueness is **Conjecture 1** (machine
   title     = {SZL Holdings --- The Ouroboros Thesis (Governed Post-Determinism)},
   year      = {2026},
   publisher = {Zenodo},
-  doi       = {10.5281/zenodo.19944926},
-  url       = {https://doi.org/10.5281/zenodo.19944926},
+  doi       = {10.5281/zenodo.24239896},
+  url       = {https://doi.org/10.5281/zenodo.24239896},
   note      = {Concept DOI --- always resolves to the latest version. ORCID 0009-0001-0110-4173. CC-BY-4.0.}
 }
 ```
