@@ -77,7 +77,12 @@ PROFILES: Mapping[str, HubProfile] = {
                 "oac_operational_health.py",
             }
         ),
-        replace_paths=frozenset({"README.md"}),
+        # The 2026-11-15 hardened-v1 rotation: the kernel and receipt are
+        # declared rotation paths, so the one committed writer may publish
+        # them. Every other artifact stays pinned; model.json is not here.
+        replace_paths=frozenset(
+            {"README.md", "artifact_receipt.json", "oac_operational_health.py"}
+        ),
         allow_create=False,
     ),
     "oac-v2-model": HubProfile(

@@ -248,7 +248,9 @@ def test_registry_is_closed_and_matches_the_alignment_verifier() -> None:
     assert DATASET.staged_dir == (
         "clinical-gateway/huggingface/dataset/oac-clinical-transport-observability-synthetic"
     )
-    assert MODEL.replace_paths == {"README.md"}
+    assert MODEL.replace_paths == {
+        "README.md", "artifact_receipt.json", "oac_operational_health.py",
+    }
     assert DATASET.replace_paths == frozenset()
     assert not MODEL.allow_create and not DATASET.allow_create
     assert MODEL.lock_group == "hf-write/model/SZLHOLDINGS/oac-system-health-v1"

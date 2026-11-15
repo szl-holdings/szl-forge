@@ -104,3 +104,11 @@ system.
 ## License
 
 Apache-2.0. See `LICENSE`.
+
+## Card completeness (2026-11-12)
+
+This section adds required card sections the card above did not have. It states only what files in this repository and the estate's own receipt datasets show; nothing here is a new result.
+
+### Provenance
+
+- A `dataset_receipt.json` file in this repository records how the data was produced; it is not restated here.
