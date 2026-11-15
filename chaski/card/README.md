@@ -57,6 +57,40 @@ Provider compatibility support [requested on 4 October 2026](https://huggingface
 - Choose the exact checkpoint or adapter form. Adapter evaluation must record the loader class and all 192/192 applied tensors.
 - Generated drafts remain untrusted and require an independent validating controller. This artifact is not a promoted flagship.
 
+<!-- SZL-EVIDENCE-PASSPORT:v1:START -->
+## Evidence passport
+
+**Dated input observation: 2026-11-13T22:16:50.320056+00:00. Existing research limits remain in force.**
+
+[Inspect the immutable repository snapshot](https://huggingface.co/SZLHOLDINGS/chaski/tree/d6306bb06fc4b5d4258ddd694fb493cf82332feb).
+
+| Observation | Scope |
+|---|---|
+| Repository revision | `d6306bb06fc4b5d4258ddd694fb493cf82332feb` |
+| Historical README retrieval | HTTP 200; not a readback of this proposed panel |
+| Recognized artifact filenames | 3 filename hints; not tensor verification |
+| Structured records retrieved | 4; bounded selection, not an exhaustive evidence census |
+
+Historical input README SHA-256: `1d4289f00708f15fac5103275193165d454133f919b44ae0b9985f3075bc339a`.
+
+[Reviewed authoring baseline](https://github.com/szl-holdings/szl-forge/blob/2f1f7636acf4e77d87de34319c34507f9441dc71/chaski/card/README.md). Existing publisher: `publish-chaski-card.yml`. Source changes still require normal review and exact deployed-byte readback.
+
+### Inspect the records
+
+| Record | Retrieved-byte SHA-256 |
+|---|---|
+| [training\_receipt.json](https://huggingface.co/SZLHOLDINGS/chaski/raw/d6306bb06fc4b5d4258ddd694fb493cf82332feb/training_receipt.json) | `7845609c9e540a2ce71743f152237d896c0e0dd9df13d7f2c814232ce61fe3eb` |
+| [adapter-unsloth/training\_receipt.json](https://huggingface.co/SZLHOLDINGS/chaski/raw/d6306bb06fc4b5d4258ddd694fb493cf82332feb/adapter-unsloth/training_receipt.json) | `16acd7d692433c564b9fea333eca08e77c4ad6877da53fddc35f1f8684367a43` |
+| [eval\_report.json](https://huggingface.co/SZLHOLDINGS/chaski/raw/d6306bb06fc4b5d4258ddd694fb493cf82332feb/eval_report.json) | `4d057eb9867285e69b00222be110bbb660330a96fe7b284a4d7f488268a13e05` |
+| [eval\_measured.json](https://huggingface.co/SZLHOLDINGS/chaski/raw/d6306bb06fc4b5d4258ddd694fb493cf82332feb/eval_measured.json) | `7d01392d967caf5f9793b3f9f572b56a4a64d51ca5fd2f311084d3776c7c880c` |
+
+### Interpretation
+
+Documentation and retrieved-record integrity only. No new training, model evaluation, weight-byte verification, independent signer identity, runtime qualification or promotion. Missing evidence is not a zero score.
+Training loss is not held-out performance. A copied receipt does not qualify a quantization or merged checkpoint. Existing negative results, license and technical disclosures remain authoritative.
+
+<!-- SZL-EVIDENCE-PASSPORT:v1:END -->
+
 <details>
 <summary>Technical details and evidence</summary>
 
@@ -242,3 +276,17 @@ Doctrine v11 LOCKED. Λ = Conjecture 1. Owner: Stephen Lutar / SZL Holdings.
 <!-- SZL-NATIVE-ARTWORK:v1 -->
 SZL Orbit artwork: [source](https://github.com/szl-holdings/szl-brand/blob/27d12e77fc0f9f1a0e5fae8b34adf2380d51d070/kit/logos/orbit-v2/suite/szl-icon-32.svg) · [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Software and artifact licensing remain declared above.
 <!-- /SZL-NATIVE-ARTWORK:v1 -->
+
+<!-- SZL-CARD-RESTORATION:2026-11-14:v1 -->
+## Publication restoration note (2026-11-14)
+
+On 2026-11-14, an off-route automated job stamped the public SZLHOLDINGS Hub
+model cards with a marketing template that replaced curated card bytes,
+including per-model claims this artifact has not earned. This source card in
+szl-holdings/szl-forge is the canonical reviewed card; that job did not alter
+it. This note marks the card so the closed-profile publisher republishes the
+reviewed bytes, banner, and source binding to the Hub with exact readback.
+The incident and the per-model evidence manifest are documented in szl-forge
+under `docs/model-card-overhaul-20261114/`. No qualification, evaluation,
+weight, adapter, config, visibility, hardware, or runtime state changed by
+this note.

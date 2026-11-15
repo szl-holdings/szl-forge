@@ -1,0 +1,21 @@
+shard 0: 10 reps, cpu 69.0s
+shard 0: 20 reps, cpu 126.3s
+shard 0: 30 reps, cpu 183.2s
+shard 0: 40 reps, cpu 241.6s
+shard 0: 50 reps, cpu 298.2s
+shard 0: 60 reps, cpu 355.2s
+shard 0: 70 reps, cpu 412.7s
+shard 0: 80 reps, cpu 469.2s
+shard 0: 90 reps, cpu 525.8s
+shard 0: 100 reps, cpu 583.2s
+shard 0: 110 reps, cpu 640.9s
+shard 0: 120 reps, cpu 697.4s
+shard 0: 130 reps, cpu 753.5s
+shard 0: 140 reps, cpu 812.0s
+shard 0: 150 reps, cpu 871.3s
+shard 0: 160 reps, cpu 930.7s
+shard 0: 170 reps, cpu 987.4s
+shard 0: 180 reps, cpu 1045.6s
+shard 0: 190 reps, cpu 1102.2s
+shard 0: 200 reps, cpu 1157.8s
+shard 0 done: 200 reps, cpu 1157.802s, log size 32201

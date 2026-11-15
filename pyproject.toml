@@ -39,3 +39,8 @@ model_candidates = ["assets/szl/szl-design-system.css", "assets/szl/SOURCE.json"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.ruff.lint.per-file-ignores]
+# The round-3/round-4 condition scripts are immutable archival copies;
+# their unused compatibility import is part of the recorded bytes.
+"training/distill/conditions/*.py" = ["F401"]

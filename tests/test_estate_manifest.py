@@ -178,6 +178,24 @@ def test_paginated_inventory_preserves_known_dataset_bindings():
     assert result["inventory_state"] == "COMPLETE_OBSERVED_SCOPE"
 
 
+def test_kernel_listing_requests_and_restores_file_expansion():
+    calls = []
+    def fetch(url, token):
+        calls.append(url)
+        if not url.startswith("/api/kernels"):
+            return [], ""
+        if "cursor=" not in url:
+            return [item("szl-kernels", files=[])], (
+                '<https://huggingface.co/api/kernels?author=SZLHOLDINGS&cursor=2>; rel="next"')
+        return [], ""
+    inventory, observed = estate.collect_inventory("", fetch)
+    kernel_urls = [url for url in calls if url.startswith("/api/kernels")]
+    assert kernel_urls[0] == "/api/kernels?author=SZLHOLDINGS&limit=100&full=true&expand=files"
+    assert all("expand=files" in url for url in kernel_urls)
+    assert observed["kernel"]["pages"] == 2
+    assert observed["kernel"]["state"] == "COMPLETE"
+
+
 @pytest.mark.parametrize("link", [
     '<https://other.example/api/models?author=SZLHOLDINGS&full=true>; rel="next"',
     '<http://huggingface.co/api/models?author=SZLHOLDINGS&full=true>; rel="next"',
@@ -196,8 +214,11 @@ def test_untrusted_or_weakened_pagination_is_rejected(link):
 @pytest.mark.parametrize("parameters", ['rel=next', 'rel="NEXT"', 'type="application/json"; rel="next"',
                                        'rel="next"; title="next, page"'])
 def test_valid_link_parameter_variations_are_followed(parameters):
-    target = "/api/models?author=SZLHOLDINGS&full=true&cursor=2"
+    target = "/api/models?author=SZLHOLDINGS&full=true&cursor=2&limit=100"
     assert estate.next_page(f'<https://huggingface.co{target}>; {parameters}', "models") == target
+    restored = estate.next_page(
+        '<https://huggingface.co/api/models?author=SZLHOLDINGS&full=true&cursor=2>; rel="next"', "models")
+    assert restored == target
 
 
 @pytest.mark.parametrize("header", ["not-a-link", '<https://huggingface.co/api/models>; title="next"',
@@ -212,7 +233,7 @@ def test_malformed_link_cannot_silently_end_collection(header):
 
 
 def test_multiple_links_follow_only_next_and_duplicate_next_is_rejected():
-    target = "/api/models?author=SZLHOLDINGS&full=true&cursor=2"
+    target = "/api/models?author=SZLHOLDINGS&full=true&cursor=2&limit=100"
     previous = '<https://huggingface.co/api/models>; rel="prev"'
     following = f'<https://huggingface.co{target}>; rel="next"'
     assert estate.next_page(previous + ", " + following, "models") == target
@@ -237,7 +258,7 @@ def test_http_client_uses_redirect_blocker_and_only_hub_api(monkeypatch):
     monkeypatch.setattr(estate.urllib.request, "build_opener", build)
     payload, links = estate.hf("/api/models?full=true", "test-placeholder")
     assert payload == []
-    assert estate.next_page(links, "models").endswith("&cursor=2")
+    assert estate.next_page(links, "models").endswith("&limit=100")
     assert len(installed) == 1
     assert isinstance(installed[0], estate.NoRedirect)
     assert installed[0].redirect_request(None, None, 302, None, None, "https://other.example") is None

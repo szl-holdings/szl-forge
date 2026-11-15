@@ -38,10 +38,14 @@ contract preserves that separation instead of inventing a mapping. F23/Lambda
 remains `CONJECTURE_1_ADVISORY`; it cannot authorize a consequential action or
 serve as the sole basis for `ALLOW`.
 
-A blocking estate inconsistency remains: A11oy's checked-in
-`szl_formula_registry.py` still encodes a stale locked-five plus three
-experimental interpretation. No formula-dependent model or action path should be
-promoted until every consumer resolves to the formal locked-eight source.
+A11oy's [pinned formula registry source](https://github.com/szl-holdings/a11oy/blob/aff4c77b31c4f074b52bedab83218784678f29ea/szl_formula_registry.py)
+declares `szl.formula-authority.v2` with the exact locked-eight set above,
+superseding the former locked-five crosswalk. Its [reconciliation tests](https://github.com/szl-holdings/a11oy/blob/aff4c77b31c4f074b52bedab83218784678f29ea/tests/test_formula_registry_reconciliation.py)
+cover rejection of a redigested locked-five record, Lambda promotion, and an
+invented F-ID-to-callable mapping. This source repair does not attest deployed
+registry parity or qualify a model. Before promoting a formula-dependent model
+or action path, verify that every deployed consumer resolves to the reviewed
+formal locked-eight source.
 
 ## Runtime law: measure, do not crown
 

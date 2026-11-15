@@ -23,8 +23,8 @@ Subcommands
                 C2 reproduces the collapsed 2026-10-01 run; every setting lands in the receipt)
   eval-abstain  held-out MEASURED counts, baseline vs challenger (CUDA only); the receipt also carries an
                 additive `combined_selective` block (selective-risk counts over both held-out files, no verdict)
-  cards         WO1 artifact-identity note for repos that hold a merged root checkpoint
-                (additive by default; --relabel flips frontmatter; dry-run unless --apply;
+  cards         WO1 listing note for repos with root config and weight filenames
+                (listing note or exact legacy-note replacement; --relabel flips frontmatter; dry-run unless --apply;
                 publisher-managed cards are refused Hub-side and route through szl-forge)
   publish       gated upload of a merged/ folder (never a challenger)
 
@@ -958,8 +958,12 @@ NOTE_MARKER = "<!-- szl:artifact-identity-reconciled -->"
 
 
 def reconcile_card(text: str, files: set[str], today: str, relabel: bool = False) -> tuple[str, list[str]]:
-    """Return (new_text, changes). Default is ADDITIVE (identity note only). relabel=True also flips the
-    frontmatter to transformers/finetune, which the publisher contracts for chaski-*/KHIPU-R2 forbid."""
+    """Return (new_text, changes). Add a listing note or replace the exact legacy template.
+
+    Filenames do not verify weight contents, loadability or merge lineage.
+    relabel=True also flips frontmatter to transformers/finetune, which the
+    publisher contracts for chaski-*/KHIPU-R2 forbid.
+    """
     m = re.match(r"^---\n(.*?)\n---\n", text, re.S)
     if not m:
         return text, ["SKIP: no YAML frontmatter"]
@@ -980,15 +984,34 @@ def reconcile_card(text: str, files: set[str], today: str, relabel: bool = False
     if relabel and re.search(r"^- base_model:adapter:", fm, re.M):
         fm = re.sub(r"^- base_model:adapter:", "- base_model:finetune:", fm, flags=re.M)
         changes.append("tags: base_model:adapter:* -> base_model:finetune:*")
-    if NOTE_MARKER not in body:
-        merge_ref = " (`merge_receipt.json`)" if "merge_receipt.json" in files else ""
-        note = (f"{NOTE_MARKER}\n> **Artifact identity (noted {today}).** Besides the LoRA adapter, this repository's root carries a "
-                "merged full-precision checkpoint (`model.safetensors` + `config.json`, loadable with `transformers`) produced by "
-                f"the receipted CPU merge of this adapter into its declared base{merge_ref}. The adapter remains the artifact of "
-                "record for every figure on this card; the merged bytes carry no separate held-out receipt and add no claim. "
-                "Metadata-only note.\n\n")
-        body = note + body.lstrip("\n")
-        changes.append("note: artifact-identity blockquote inserted after frontmatter")
+    # Only the machine-generated legacy block in its original position is safe
+    # to replace. Custom, moved or ambiguous identity sections remain untouched.
+    legacy_note = re.match(
+        re.escape(f"{NOTE_MARKER}\n> **Artifact identity (noted ")
+        + r"\d{4}-\d{2}-\d{2}"
+        + re.escape(").** Besides the LoRA adapter, this repository's root carries a "
+                    "merged full-precision checkpoint (`model.safetensors` + `config.json`, loadable with `transformers`) produced by "
+                    "the receipted CPU merge of this adapter into its declared base")
+        + r"(?: \(`merge_receipt\.json`\))?"
+        + re.escape(". The adapter remains the artifact of "
+                    "record for every figure on this card; the merged bytes carry no separate held-out receipt and add no claim. "
+                    "Metadata-only note.\n\n"),
+        body,
+    ) if body.count(NOTE_MARKER) == 1 else None
+    if NOTE_MARKER not in body or legacy_note:
+        receipt_note = (" `merge_receipt.json` is also listed; its contents and bindings have not been verified here."
+                        if "merge_receipt.json" in files else "")
+        note = (f"{NOTE_MARKER}\n> **Repository listing (noted {today}).** The listing includes "
+                "`model.safetensors` and `config.json` at the repository root. Their contents have not been inspected "
+                "by this card reconciler. The listing does not establish artifact type, precision, loadability, "
+                f"merge lineage or evaluation results.{receipt_note} "
+                "This metadata-only note grants no model qualification or promotion.\n\n")
+        if legacy_note:
+            body = note + body[legacy_note.end():]
+            changes.append("note: legacy generated artifact-identity blockquote replaced with listing note")
+        else:
+            body = note + body.lstrip("\n")
+            changes.append("note: artifact-identity blockquote inserted after frontmatter")
     if not changes:
         return text, ["NOOP: card already reconciled"]
     return f"---\n{fm}\n---\n{body}", changes
@@ -1035,7 +1058,7 @@ def cmd_cards(apply: bool, direct: bool, owner_confirmed: bool, out: pathlib.Pat
                 res = api.create_commit(
                     repo_id=repo, operations=[CommitOperationAdd("README.md", after.encode("utf-8"))],
                     commit_message="card: note the merged root checkpoint alongside the adapter (metadata only)",
-                    commit_description="Additive artifact-identity note per SZL-HF-FRONTIER-1 WO1. No evaluation claim added; frontmatter unchanged unless --relabel was used.",
+                    commit_description="Observed repository listing note; may replace the exact legacy generated note. No weight-content or evaluation claim added; frontmatter unchanged unless --relabel was used.",
                     parent_commit=rev, create_pr=not direct,
                 )
                 item["mode"] = "commit" if direct else "pull-request"
@@ -1043,7 +1066,7 @@ def cmd_cards(apply: bool, direct: bool, owner_confirmed: bool, out: pathlib.Pat
         print(f"--- {repo}@{rev[:10]}: {'; '.join(changes)}" + (f" -> {item.get('result_url')}" if item.get("result_url") else ""))
         items.append(item)
     receipt = {"stage": "cards", "status": "DONE" if apply else "DRY-RUN", "relabel": relabel, "wo6_status": wo6_status, "items": items,
-               "publication_eligible": False, "note": "Additive identity note by default; publisher-managed cards are refused Hub-side and route through szl-forge; v2 (adapter-only root) is skipped by rule.", **env_block()}
+               "publication_eligible": False, "note": "Observed repository listing note by default, with exact legacy generated-note replacement; publisher-managed cards are refused Hub-side and route through szl-forge; missing required root filenames are skipped by rule.", **env_block()}
     write_json(receipt_path, receipt)
     print(f"    receipt -> {receipt_path}")
     return 0

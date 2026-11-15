@@ -42,7 +42,10 @@ class FeatureSpec:
 
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             raise ModelInputError(f"{self.name} must be a finite number")
-        number = float(value)
+        try:
+            number = float(value)
+        except OverflowError as exc:
+            raise ModelInputError(f"{self.name} must be finite") from exc
         if not math.isfinite(number):
             raise ModelInputError(f"{self.name} must be finite")
         if number < self.minimum or number > self.maximum:
@@ -114,16 +117,27 @@ def _normalized_key(value: Any) -> str:
     return str(value).strip().lower().replace("-", "_").replace(" ", "_")
 
 
-def _reject_sensitive_keys(value: Any, path: str = "input") -> None:
+# Inference input is a flat eight-field object, optionally wrapped once in
+# {"features": ...}. These bounds refuse hostile JSON with the documented exit-2
+# ModelInputError instead of an uncaught ValueError, OverflowError or RecursionError.
+MAX_INPUT_NESTING_DEPTH = 32
+MAX_INTEGER_LITERAL_DIGITS = 32
+
+
+def _reject_sensitive_keys(value: Any, path: str = "input", depth: int = 0) -> None:
+    if depth > MAX_INPUT_NESTING_DEPTH:
+        raise ModelInputError(
+            f"input nesting deeper than {MAX_INPUT_NESTING_DEPTH} levels at {path}"
+        )
     if isinstance(value, Mapping):
         for key, child in value.items():
             normalized = _normalized_key(key)
             if normalized in _PROHIBITED_KEYS:
                 raise ModelInputError(f"prohibited non-operational field at {path}.{key}")
-            _reject_sensitive_keys(child, f"{path}.{key}")
+            _reject_sensitive_keys(child, f"{path}.{key}", depth + 1)
     elif isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         for index, child in enumerate(value):
-            _reject_sensitive_keys(child, f"{path}[{index}]")
+            _reject_sensitive_keys(child, f"{path}[{index}]", depth + 1)
     elif isinstance(value, str):
         upper = value.upper()
         if upper.startswith("MSH|") or "\rPID|" in upper or "\rOBX|" in upper:
@@ -202,6 +216,12 @@ class OperationalHealthKernel:
         observed = hashlib.sha256(model_bytes).hexdigest()
         if observed != expected:
             raise ModelArtifactError("model artifact hash does not match receipt")
+        kernel_expected = receipt.get("kernel_sha256")
+        if not isinstance(kernel_expected, str) or len(kernel_expected) != 64:
+            raise ModelArtifactError("artifact receipt has no valid kernel_sha256")
+        kernel_observed = sha256_file(Path(__file__).resolve())
+        if kernel_observed != kernel_expected:
+            raise ModelArtifactError("running kernel hash does not match receipt")
 
     @staticmethod
     def _validate_artifact(artifact: Any) -> dict[str, Any]:
@@ -294,13 +314,98 @@ class OperationalHealthKernel:
             "normalized_feature_contributions": contributions,
         }
 
+    def score_json(self, raw: str) -> dict[str, Any]:
+        """Score a JSON document, rejecting duplicate keys before features are read.
+
+        Use this (or the CLI) when the input may contain duplicate object keys.
+        `score()` receives an already-built mapping and cannot see keys that
+        `json.loads` has already dropped.
+        """
+        parsed = loads_strict(raw)
+        if not isinstance(parsed, Mapping):
+            raise ModelInputError("input JSON must be an object")
+        _reject_sensitive_keys(parsed)
+        if "features" in parsed:
+            if set(parsed) != {"features"}:
+                raise ModelInputError("wrapped inference input may contain only the features field")
+            parsed = parsed["features"]
+            if not isinstance(parsed, Mapping):
+                raise ModelInputError("features must be an object")
+        return self.score(parsed)
+
+
+
+def _mapping_no_duplicates(pairs: Sequence[tuple[Any, Any]]) -> dict[Any, Any]:
+    """object_pairs_hook that fails closed on duplicate JSON keys."""
+    out: dict[Any, Any] = {}
+    for key, value in pairs:
+        if key in out:
+            raise ModelInputError(f"duplicate JSON key {key!r}")
+        out[key] = value
+    return out
+
+
+def _bounded_int(literal: str) -> int:
+    """parse_int hook: refuse integer literals too long to be operational values."""
+    digits = len(literal) - (1 if literal.startswith("-") else 0)
+    if digits > MAX_INTEGER_LITERAL_DIGITS:
+        raise ModelInputError(
+            f"integer literal longer than {MAX_INTEGER_LITERAL_DIGITS} digits"
+        )
+    return int(literal)
+
+
+def _check_nesting_depth(text: str) -> None:
+    """Linear pre-scan so deep arrays/objects never reach the recursive decoder."""
+    depth = 0
+    in_string = False
+    escaped = False
+    for char in text:
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+        elif char == '"':
+            in_string = True
+        elif char in "[{":
+            depth += 1
+            if depth > MAX_INPUT_NESTING_DEPTH:
+                raise ModelInputError(
+                    f"input nesting deeper than {MAX_INPUT_NESTING_DEPTH} levels"
+                )
+        elif char in "]}":
+            depth -= 1
+
+
+def loads_strict(text: str) -> Any:
+    """json.loads that rejects duplicate keys, overlong integers and deep nesting.
+
+    Every refusal is a ModelInputError, so the CLI exits 2 with a JSON error.
+    """
+    _check_nesting_depth(text)
+    try:
+        return json.loads(
+            text, object_pairs_hook=_mapping_no_duplicates, parse_int=_bounded_int
+        )
+    except ModelInputError:
+        raise
+    except json.JSONDecodeError as exc:
+        raise ModelInputError(f"unable to decode input JSON: {exc}") from exc
+    except (ValueError, OverflowError, RecursionError) as exc:
+        raise ModelInputError(f"unable to decode input JSON: {type(exc).__name__}") from exc
+
 
 def _read_cli_input(path: str) -> Mapping[str, Any]:
     try:
         raw = sys.stdin.read() if path == "-" else Path(path).read_text(encoding="utf-8")
-        parsed = json.loads(raw)
+        parsed = loads_strict(raw)
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise ModelInputError(f"unable to read input JSON: {exc}") from exc
+    except ModelInputError:
+        raise
     if not isinstance(parsed, Mapping):
         raise ModelInputError("input JSON must be an object")
     _reject_sensitive_keys(parsed)

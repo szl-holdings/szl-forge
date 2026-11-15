@@ -126,6 +126,14 @@ def next_page(link, api):
             target = parsed.path + "?" + parsed.query
             if "full" not in query:
                 target += "&full=true"
+            if "limit" not in query:
+                # Restore the requested page size so the page budget is not
+                # silently consumed by the server's default page size.
+                target += "&limit=100"
+            if api == "kernels" and "expand" not in query:
+                # Kernel listings only include the required files array when it
+                # is explicitly expanded; do not let pagination drop it.
+                target += "&expand=files"
     return target
 
 
@@ -135,6 +143,9 @@ def collect_inventory(token, fetch=hf):
     for kind, api in KINDS.items():
         items, visited, seen = [], set(), set()
         url = f"/api/{api}?author={HF_ORG}&limit=100&full=true"
+        if kind == "kernel":
+            # Kernel rows require the listed files array; request it explicitly.
+            url += "&expand=files"
         state = {"state": "COMPLETE", "pages": 0}
         try:
             while url:

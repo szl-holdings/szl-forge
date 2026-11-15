@@ -1,0 +1,15 @@
+{
+  "at": "2026-11-13T23:26:12.637377+00:00",
+  "tests": 339,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 8,
+  "passed": 331,
+  "skip_reason": "Khipu-specific fresh-main guard does not apply to Chaski profiles",
+  "source_panels": 6,
+  "coverage_records": 107,
+  "browser_contexts": 12,
+  "browser_passed": true,
+  "new_model_evaluations": 0,
+  "provider_writes": 0
+}

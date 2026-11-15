@@ -1,0 +1,137 @@
+{
+ "analysis_plan": [
+  "Wilson-95 intervals for all proportions; true risk and coverage from the fresh 4000-scene reference sets per profile",
+  "paired comparisons on the same streams: exact sign test (alarm scenes), exact McNemar (non-VALID, audit flags), paired percentile bootstrap (B 2000, seed 20261104) over reps",
+  "no interim looks; every rep is reported; reps where a method issued no guarantee are reported with their counts",
+  "the v0 archived R=600 run (seeds szl-rbcg-v0-*, n_cal 80) is reported alongside as REPORTED context, not as the comparator"
+ ],
+ "design": {
+  "R": 600,
+  "alpha_e6": 100000,
+  "audit": {
+   "c_e3": 750,
+   "delta_audit_e6": 50000,
+   "rule": "wsr_prpl_betting_cs_lower_v1"
+  },
+  "bet_c_e3": 750,
+  "bootstrap": {
+   "B": 2000,
+   "seed": 20261104
+  },
+  "casualties_per_scene": 24,
+  "grid": "tau_c 99, 98, ..., 30 (descending; the v0 grid, unchanged)",
+  "ltt_deltas_e6": [
+   100000,
+   50000
+  ],
+  "ltt_pvalue_primary": "one-sided predictable plug-in betting (WSR), p = min(1, 1/max_t K_t), lambda capped at c/(1-alpha)",
+  "ltt_pvalue_secondary": "Hoeffding-Bentkus on the same scene-level losses",
+  "monitor": {
+   "combination": "bonferroni_union_two_ctm_v1",
+   "epsilons_e3": [
+    100,
+    200,
+    300,
+    400,
+    500,
+    600,
+    700,
+    800,
+    900
+   ],
+   "primary_delta_e6": 7500,
+   "primary_score": "unit_ood_count_v1",
+   "secondary_delta_e6": 2500,
+   "secondary_score": "unit_mean_one_minus_pmax_e12_v0"
+  },
+  "n_cal_scenes": 320,
+  "n_dep_scenes_per_stream": 80,
+  "n_prefix_scenes": 80,
+  "n_ref_scenes_per_profile": 4000,
+  "nshards": 3,
+  "ood_floor_c": 81,
+  "pythons_for_suite": [
+   "3.10.12",
+   "3.11.16",
+   "3.12.16",
+   "3.14.7"
+  ],
+  "transparency_log": "one RFC 9162-style log per shard; leaf 0 = this protocol envelope; per rep: v1 guarantee then issuance STH, then each stream's 80 monitor receipts then a final STH; the v1 verifier requires the anchor",
+  "unit_rows_max": 24,
+  "v0_comparator": "v0 code (v0_ref/, exact v0 bytes, sha pinned) run on the SAME fresh data and keys of each rep: row-level binomial LTT, v0 monitor (mean 1-pmax, delta_s 0.01), Clopper-Pearson + union-bound label audit"
+ },
+ "deviations_policy": "Any reduction (R, scenes, Python versions), substitution or skipped analysis is listed in the results and the report.",
+ "e3_plan": "E3 is a re-verification only, from the stored v0 E3 rows (rbcg_v0.zip examples/e3): run the v0 verifier unchanged (v0 reported REFUSED:SHIFT_ALARM from scene 14, strict policy REFUSED:ORDER); attempt the v1 scene-level LTT on the stored 80-scene calibration rows; apply the v1 monitor and audit descriptively to the stored deployment rows. No model is run and the frozen split is not read.",
+ "endpoints": {
+  "primary": [
+   "E1 violation rate <= delta (H1, H1b)",
+   "E2 median alarm delay v1 < v0 (H2a)",
+   "E2 non-VALID rate v1 vs v0 (H2b)"
+  ],
+  "secondary": [
+   "S1 in-distribution false-alarm rate (v1 <= delta_s 0.01), v1 vs v0",
+   "S2 coverage at tau* (true from reference sets; realized on 80-scene streams), v1 vs v0",
+   "S3 label-audit power and false-flag rate: v1 betting CS vs v0 CP+union, at each method's tau* and at the common frozen tau 0.64 (true risk known), paired McNemar",
+   "S4 issuance rates: v1 d10/d05, HB secondary, v1 at the 80-scene prefix, v0 d10/d05/prefix",
+   "S5 monitor components alone at thresholds 1/0.01, 1/0.0075, 1/0.0025",
+   "S6 transparency-log anchoring verified on every v1 stream (inclusion of guarantee and chain head, STH consistency)"
+  ]
+ },
+ "families": {
+  "P16": "first 16 hex of sha256(canonical JSON of this signed protocol envelope)",
+  "cal": "szl-rbcg-v1-<P16>-cal-<rep:04d>",
+  "in_dist_deploy": "szl-rbcg-v1-<P16>-dep-<rep:04d>-<v1_guarantee_sha256[:16]>-<v0_guarantee_sha256[:16]>",
+  "reference": [
+   "szl-rbcg-v1-<P16>-ref-standard",
+   "szl-rbcg-v1-<P16>-ref-shifted"
+  ],
+  "refused_prefixes": [
+   "szl-rbcg-v0-",
+   "szl-triagex-v0-"
+  ],
+  "scene_seed_rule": "int.from_bytes(sha256((seed_family + '|' + str(scene_index)).encode('utf-8')).digest()[:8], 'big')",
+  "shifted_deploy": "szl-rbcg-v1-<P16>-shf-<rep:04d>-<v1_guarantee_sha256[:16]>-<v0_guarantee_sha256[:16]>"
+ },
+ "hypotheses": [
+  {
+   "decision_rule": "HOLDS if the Wilson-95 upper bound < 0.10; CONSISTENT_NOT_DEMONSTRATED if rate <= 0.10 <= upper; REFUTED if the Wilson-95 lower bound > 0.10",
+   "id": "H1",
+   "statement": "E1 validity: P(true selective risk at the v1 tau*(delta 0.10) > alpha 0.10) <= 0.10, unconditional over reps (a rep with no guarantee counts as no violation)",
+   "type": "primary"
+  },
+  {
+   "id": "H1b",
+   "statement": "the same at delta 0.05 against 0.05",
+   "type": "primary (sensitivity)"
+  },
+  {
+   "decision_rule": "SUPPORTED iff the one-sided exact sign test on paired alarm scenes (no alarm within 80 scenes = 81; ties dropped; reps where both issued) has p < 0.05 AND median(v1) < median(v0); report median(v0) - median(v1) with a paired percentile bootstrap 95% CI",
+   "id": "H2a",
+   "statement": "E2 alarm delay: on the same shifted streams the v1 verifier alarms earlier than the v0 verifier",
+   "type": "primary"
+  },
+  {
+   "decision_rule": "report both with Wilson-95 CIs, the paired bootstrap 95% CI of the difference and the exact McNemar two-sided p; no directional claim",
+   "id": "H2b",
+   "statement": "E2 non-VALID rate of v1 vs v0 on the same shifted streams",
+   "type": "primary (descriptive)"
+  }
+ ],
+ "lane": "RBCG-V1, SZL Holdings, approved plan 3b496636; compute node 2 = ssh:szl-vm2",
+ "pilot": {
+  "artifact_version": "b0f26936-0fdb-4197-9758-64db068325e0",
+  "decision": "n_cal = 320 scenes and c = 3/4: the smallest pilot size at which tau 0.99 was rejected at both delta 0.10 and delta 0.05 in all 6 pilot reps",
+  "families": "szl-rbcg-v1-pilot-00..05 and szl-rbcg-v1-pilot-timing (design only; generated before this protocol; never reused)",
+  "file_sha256": "6d39f57ae8ae6e8a8e77331797d74ffc4221bec3d89e0a1ba8d07e7822963b42",
+  "finding": "v1 issued no guarantee at 80 or 160 scenes (c 1/2 and 3/4) in 6/6 pilot reps; at 240 scenes c=3/4 issued 6/6 but the first grid step (tau 0.99) had p_bet 0.071-0.084, which fails at delta 0.05; at 320 scenes c=3/4 issued 6/6 with p_bet(tau 0.99) 0.031-0.037 and tau* 0.68-0.71; c=1/2 issued 2/6 at 320",
+  "v0_pilot_reference": "v0 design-only pilot: an OOD-count score alarmed at median scene 8 vs 21 for the v0 score (not pre-registered in v0); here pre-registered as primary"
+ },
+ "stack": {
+  "model_id": "szl-triagex-toxidrome-lr-v0",
+  "note": "frozen advisory used unchanged; the frozen test and shifted splits are SPENT and are never re-scored",
+  "rbcg_v0_zip_sha256": "d3d6fe5641348bf4d8ff98287db9a0f02e3d8059e4fdb3e0b5b0b2403860bf72",
+  "triagex_stack_zip_sha256": "1123cd20d0c6f4c8ccc011669b7ebcebcf615db50fea03d031a8f8fdea8dab84",
+  "weights_sha256": "5f11addc2d7f043af4c66855bc517021e14a7575d4b1db404d5025404620b901"
+ },
+ "title": "RBCG v1 pre-registered evaluation: E1 validity, E2 shift detection, E3 re-verification (synthetic TRIAGE-X only)"
+}

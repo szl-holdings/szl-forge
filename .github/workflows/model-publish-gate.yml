@@ -313,6 +313,9 @@ jobs:
   # ── Final gate: publication_eligible === true, then publish ─────────────
   publish:
     needs: [heldout-eval, model-bom, sign, conformance]
+    # Publication is an explicit, reviewed dispatch only; artifact pushes may validate
+    # the gates but must never enter the hub-production environment implicitly.
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.model_repo != '' && inputs.model_dir != '' && inputs.eval_config != '' }}
     runs-on: ubuntu-latest
     environment: hub-production           # requires required-approver review
     env:

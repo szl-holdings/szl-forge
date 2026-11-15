@@ -36,6 +36,7 @@ def _load(name: str, path: Path):
 
 CONTRACT = _load("szl_launch_contract_under_test", ROOT / "training" / "launch_contract.py")
 TRAIN = _load("szl_train_wave_under_test", ROOT / "training" / "train_wave.py")
+DPO = _load("szl_dpo_wave_under_test", ROOT / "training" / "dpo_wave.py")
 PREFLIGHT = _load("szl_training_preflight_under_test", ROOT / "training" / "preflight" / "preflight.py")
 sys.path.insert(0, str(ROOT / "tools"))
 import forge_preflight  # noqa: E402
@@ -234,7 +235,7 @@ def test_satisfied_gates_do_not_load_a_model_or_write_the_hub(
     tmp_path, forbid_launch_imports, monkeypatch, capsys
 ):
     monkeypatch.delenv("HF_TOKEN", raising=False)
-    path = materialize(tmp_path, 32)
+    path = materialize(tmp_path, 32, extra={"local_only": True})
     decision = CONTRACT.evaluate_path(path, expected_kind="sft")
     assert decision["ok"] is True
     assert decision["codes"] == []
@@ -255,6 +256,58 @@ def test_satisfied_gates_do_not_load_a_model_or_write_the_hub(
     assert payload["teacher_invoked"] is False
     assert payload["hub_write"] is False
     assert "no model was loaded" in captured.err
+
+
+@pytest.mark.parametrize("has_token", [False, True])
+def test_sft_publication_request_refused_before_model_import(
+    tmp_path, forbid_launch_imports, monkeypatch, capsys, has_token
+):
+    if has_token:
+        monkeypatch.setenv("HF_TOKEN", "test-not-a-real-token")
+    else:
+        monkeypatch.delenv("HF_TOKEN", raising=False)
+    path = materialize(tmp_path, 32)
+    assert CONTRACT.evaluate_path(path, expected_kind="sft")["ok"] is True
+    with pytest.raises(SystemExit) as caught:
+        TRAIN.main(["--config", str(path)])
+    assert caught.value.code == 1
+    assert "DIRECT_HUB_PUBLISH_DISABLED" in capsys.readouterr().err
+    assert not (tmp_path / "out").exists()
+
+
+@pytest.mark.parametrize("has_token", [False, True])
+def test_dpo_publication_request_refused_before_model_import(
+    tmp_path, forbid_launch_imports, monkeypatch, capsys, has_token
+):
+    if has_token:
+        monkeypatch.setenv("HF_TOKEN", "test-not-a-real-token")
+    else:
+        monkeypatch.delenv("HF_TOKEN", raising=False)
+    monkeypatch.setattr(sys, "argv", [
+        "dpo_wave.py", "--model", "ExampleOrg/student",
+        "--dataset", "ExampleOrg/data", "--out", str(tmp_path / "out"),
+        "--repo-id", "ExampleOrg/target",
+    ])
+    with pytest.raises(SystemExit) as caught:
+        DPO.main()
+    assert caught.value.code == 1
+    assert "DIRECT_HUB_PUBLISH_DISABLED" in capsys.readouterr().err
+    assert not (tmp_path / "out").exists()
+
+
+def test_local_dpo_retains_prerequisite_checks(
+    tmp_path, forbid_launch_imports, monkeypatch, capsys
+):
+    monkeypatch.delenv("HF_TOKEN", raising=False)
+    monkeypatch.setattr(sys, "argv", [
+        "dpo_wave.py", "--model", "ExampleOrg/student",
+        "--dataset", "ExampleOrg/data", "--out", str(tmp_path / "out"),
+    ])
+    with pytest.raises(SystemExit) as caught:
+        DPO.main()
+    assert caught.value.code == 1
+    assert "HF_TOKEN" in capsys.readouterr().err
+    assert not (tmp_path / "out").exists()
 
 
 def test_explicit_cli_and_sample_cap_cannot_bypass_the_config(
@@ -397,6 +450,32 @@ class RevisionHub:
 
 def _consumed_reads(api):
     return [call for call in api.calls if call[0] in ("model_info", "dataset_info")]
+
+
+def test_local_only_preserves_target_identity_preflight(
+    tmp_path, forbid_launch_imports, monkeypatch, capsys
+):
+    path = materialize(tmp_path, 32, extra={"local_only": True})
+    api = RevisionHub()
+    monkeypatch.setattr(PREFLIGHT, "hf_api", lambda: api)
+    report = PREFLIGHT.run_preflight(str(path))
+    assert report["verdict"] == "PASS"
+    assert report["target"]["target_repo"] == "ExampleOrg/target"
+    assert ("repo_info", "ExampleOrg/target", None) in api.calls
+    assert api.writes == []
+    config = CONTRACT.evaluate_path(path)["config"]
+    assert config["target_repo"] == "ExampleOrg/target"
+    assert TRAIN._hyperparameters(config)["repo_id"] is None
+    monkeypatch.delenv("HF_TOKEN", raising=False)
+    with pytest.raises(SystemExit):
+        TRAIN.main(["--config", str(path)])
+    assert "HF_TOKEN" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("value", [None, "true", "false", 1, 0])
+def test_local_only_requires_a_boolean(value):
+    with pytest.raises(SystemExit):
+        TRAIN._hyperparameters({"out": "out", "local_only": value})
 
 
 def test_preflight_uses_configured_revisions_after_head_moves(
@@ -658,3 +737,4 @@ def test_environment_preflight_uses_the_same_contract(tmp_path, forbid_launch_im
     assert any("LAUNCH_DATASET_DENIED" in reason for reason in report["blocking_reasons"])
     assert report["dataset_report"]["records"] == 32
     assert report["launch_contract"]["ok"] is False
+

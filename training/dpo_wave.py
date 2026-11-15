@@ -36,7 +36,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--batch-size", type=int, default=2)
     parser.add_argument("--grad-accum", type=int, default=8)
     parser.add_argument("--out", type=Path, required=True)
-    parser.add_argument("--repo-id", default=None, help="If set, push the merged model to this HF repo")
+    parser.add_argument("--repo-id", default=None, help="Direct publication is disabled; omit for local training")
     parser.add_argument("--max-samples", type=int, default=None)
     parser.add_argument("--seed", type=int, default=3407)
     return parser.parse_args()
@@ -45,8 +45,13 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
 
+    if args.repo_id:
+        fail_closed(
+            "DIRECT_HUB_PUBLISH_DISABLED: omit --repo-id for local training; "
+            "export artifacts and use .github/workflows/model-publish-gate.yml"
+        )
     if not os.environ.get("HF_TOKEN"):
-        fail_closed("HF_TOKEN is not set; dataset access and hub push require it.")
+        fail_closed("HF_TOKEN is not set; authenticated model and dataset access require it.")
 
     try:
         from unsloth import FastLanguageModel
@@ -131,11 +136,14 @@ def main() -> None:
     print(f"receipt written: {receipt_path}")
 
     if args.repo_id:
-        model.push_to_hub_merged(args.repo_id, tokenizer, save_method="merged_16bit", token=os.environ["HF_TOKEN"])
-        print(f"pushed merged model to hub: {args.repo_id}")
+        fail_closed(
+            "DIRECT_HUB_PUBLISH_DISABLED: export artifacts and use "
+            ".github/workflows/model-publish-gate.yml"
+        )
 
     print("DPO wave complete")
 
 
 if __name__ == "__main__":
     main()
+
