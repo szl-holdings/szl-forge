@@ -128,10 +128,10 @@ V2_FILES = {
 V1_MODEL_REL = "hub/oac-v1/model.json"
 V1_RECEIPT_REL = "hub/oac-v1/artifact_receipt.json"
 V1_KERNEL_REL = "hub/oac-v1/oac_operational_health.py"
-V1_FILES = {  # MEASURED byte-identical to the Hub revision in the v1 audit (audit/v1_bytecompare.json)
+V1_FILES = {  # MEASURED byte-identical to the staged v1 model directory (PROVENANCE.json v1_hub bindings); the final opening scored Hub revision dd7d1098 (runs/TEST_OPENED.json)
     V1_MODEL_REL: "f111b7fc65db561c80763b25e538366a19bed18526ca881915777487935d9557",
-    V1_RECEIPT_REL: "23239bb39b0a5b6db1e41284e6372f352cee61d7938da1e84472246dcdaf95a1",
-    V1_KERNEL_REL: "2fd8ffd3fd3ca8d0f960d4e0d471593b86e6cccb03607116390cbe9300992669",
+    V1_RECEIPT_REL: "53180b900b984c034a74ea77a20e11d7fae7a8f47f0ce2397499d181ebd2b685",
+    V1_KERNEL_REL: "5e06ddffce9615a12c351e9926e24fefa142c920017b9dc844c584c58517202e",
 }
 ABL_DATA_MODEL_REL = "v2/results/contenders/ABL-data/model.json"
 ABL_DATA_RECEIPT_REL = "v2/results/contenders/ABL-data/artifact_receipt.json"

@@ -5,14 +5,18 @@ SYNTHETIC.  The v2 research code reads v1's published kernel, model and receipt 
 legacy-source record cross-checks v1's receipt, and some tests load v1's kernel.  v1's files are
 already staged in this repository, in the one directory matching
 ``*/huggingface/model/oac-system-health-v1/``, so they are copied, not committed a second time.
-Five of the six staged files are byte-identical to the Hub model at ``registry.V1_HUB_REVISION``.
-The sixth, README.md, is v1's current card: it was corrected after that revision, and no v2
-record binds it.
+Five of the six staged files are byte-identical to the published Hub model files; the sixth,
+README.md, is v1's current card, and no v2 record binds it.
 
-Before copying, every file that v2's committed records bind is checked against those records:
-``v2/results/final/MANIFEST.json`` (``contenders.v1.files``) binds v1's kernel, model and receipt.
+Before copying, every file that PROVENANCE.json's v1_hub bindings pin is checked against those
+bindings; the staged v1 directory is this repository's pinned source of the published package.
 A missing or different file is refused; nothing is written then.  An existing destination file
 is accepted only if it is byte-identical (the tool is idempotent and never overwrites).
+
+The 2026-11-15 hardened-v1 rotation: the staged directory carries the hardened kernel and
+receipt (pinned by PROVENANCE.json v1_hub).  v2's historical final-run records still name the
+pre-rotation Hub revision dd7d1098 bytes they scored; those digests are bound by the
+hub_revision_blob citations in PROVENANCE.json.
 
 Usage (from the szl-forge repository root):
     python -B ops-health/tools/materialize_v1_hub.py
@@ -39,16 +43,20 @@ def _sha256(data: bytes) -> str:
 
 
 def bound_hashes(root: Path) -> dict[str, str]:
-    """File name -> sha256 that v2's committed score manifest binds for hub/oac-v1/<name>."""
-    manifest = json.loads((root / "v2" / "results" / "final" / "MANIFEST.json").read_text("utf-8"))
-    files = manifest["contenders"]["v1"]["files"]
+    """File name -> sha256 that PROVENANCE.json's v1_hub bindings pin for hub/oac-v1/<name>."""
+    prov = json.loads((root / "PROVENANCE.json").read_text("utf-8"))
     out = {}
-    for rel, digest in files.items():
-        if not rel.startswith("hub/oac-v1/"):
-            raise SystemExit(f"unexpected v1 file binding {rel!r}; refusing")
-        out[rel[len("hub/oac-v1/"):]] = digest
+    for value, binding in prov["bindings"].items():
+        if binding.get("rule") != "v1_hub":
+            continue
+        name = binding.get("name")
+        if not name:
+            raise SystemExit(f"v1_hub binding for {value[:16]} lacks a name; refusing")
+        if name in out and out[name] != value:
+            raise SystemExit(f"two v1_hub bindings for {name!r}; refusing")
+        out[name] = value
     if not out:
-        raise SystemExit("no v1 file binding in v2/results/final/MANIFEST.json; refusing")
+        raise SystemExit("no v1_hub binding in PROVENANCE.json; refusing")
     return out
 
 
