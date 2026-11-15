@@ -7,7 +7,7 @@ tags:
 - ouroboros
 - loop-tax
 - provenance
-- doi:10.5281/zenodo.19944926
+- doi:10.5281/zenodo.24239896
 szl-review:
   artifact_class: SOFTWARE_KERNEL
   maturity: SOFTWARE_LIMITED
