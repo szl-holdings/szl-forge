@@ -34,6 +34,8 @@ szl:
   adapter_sha256: 620b3488fac2ebc6518090424de5b3c6a182293cf52dfd5bd9f886f54aef0df5
 ---
 
+🜂 **SZL Holdings estate artifact** — *the estate that receipts its own thinking.*
+
 <!-- SZL-CARD-PRESENTATION:v1 -->
 <p><a href="https://huggingface.co/SZLHOLDINGS"><img src="https://raw.githubusercontent.com/szl-holdings/szl-brand/27d12e77fc0f9f1a0e5fae8b34adf2380d51d070/kit/logos/orbit-v2/suite/szl-icon-32.svg" alt="SZL Holdings" width="48" height="48" /></a></p>
 

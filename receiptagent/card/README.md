@@ -12,6 +12,8 @@ tags:
   - alloy
 ---
 
+🜂 **SZL Holdings estate artifact** — *the estate that receipts its own thinking.*
+
 <!-- SZL-CARD-PRESENTATION:v1 -->
 <p><a href="https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab"><img src="https://raw.githubusercontent.com/szl-holdings/szl-brand/27d12e77fc0f9f1a0e5fae8b34adf2380d51d070/kit/logos/orbit-v2/suite/szl-icon-32.svg" alt="SZL Holdings" width="40" height="40" /></a></p>
 

@@ -12,6 +12,8 @@ tags:
   - test-fixture
 ---
 
+🜂 **SZL Holdings estate artifact** — *the estate that receipts its own thinking.*
+
 <!-- SZL-CARD-PRESENTATION:v1 -->
 <p><a href="https://huggingface.co/spaces/SZLHOLDINGS/szl-command-lab"><img src="https://raw.githubusercontent.com/szl-holdings/.github/main/profile/assets/szl/logos/szl_mark_holographic.svg" alt="SZL Holdings" width="112" /></a></p>
 
