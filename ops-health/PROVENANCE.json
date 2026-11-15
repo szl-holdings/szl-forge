@@ -253,11 +253,13 @@
    "name": "artifact_receipt.json",
    "named_by": [
     "runs/TEST_OPENED.json",
-    "v2/research/final_score.py",
     "v2/results/final/MANIFEST.json",
     "v2/results/final_evaluation.json"
    ],
-   "rule": "v1_hub"
+   "reason": "the pre-rotation published v1 file; the final opening scored Hub revision dd7d109813abcd90c5250106dc2eabd2804e7ac3. Superseded on 2026-11-15 by the hardened-v1 rotation; the v1_hub bindings now pin the staged bytes. Declared citation: the revision is immutable on the Hub.",
+   "repo_id": "SZLHOLDINGS/oac-system-health-v1",
+   "revision": "dd7d109813abcd90c5250106dc2eabd2804e7ac3",
+   "rule": "hub_revision_blob"
   },
   "256e569d85a496eb742f01bc4cfdf9aa421c51190de13292b2e15a1abc90b017": {
    "dir": "runs/receipts/v2-registered-search",
@@ -310,11 +312,13 @@
    "name": "oac_operational_health.py",
    "named_by": [
     "runs/TEST_OPENED.json",
-    "v2/research/final_score.py",
     "v2/results/final/MANIFEST.json",
     "v2/results/final_evaluation.json"
    ],
-   "rule": "v1_hub"
+   "reason": "the pre-rotation published v1 file; the final opening scored Hub revision dd7d109813abcd90c5250106dc2eabd2804e7ac3. Superseded on 2026-11-15 by the hardened-v1 rotation; the v1_hub bindings now pin the staged bytes. Declared citation: the revision is immutable on the Hub.",
+   "repo_id": "SZLHOLDINGS/oac-system-health-v1",
+   "revision": "dd7d109813abcd90c5250106dc2eabd2804e7ac3",
+   "rule": "hub_revision_blob"
   },
   "3083083e4005d83427910ba2031177a0c06380a4fbea1189508caa380c1c8f2d": {
    "named_by": [
@@ -661,6 +665,13 @@
    ],
    "rule": "equal"
   },
+  "53180b900b984c034a74ea77a20e11d7fae7a8f47f0ce2397499d181ebd2b685": {
+   "name": "artifact_receipt.json",
+   "named_by": [
+    "v2/research/final_score.py"
+   ],
+   "rule": "v1_hub"
+  },
   "54f79453c774a18ebb6c4636433303470b62cdc90c3db88d0ae5e9c9ccd0320f": {
    "named_by": [
     "v2/results/mutation_readiness.json"
@@ -694,6 +705,13 @@
    ],
    "rule": "forge_blob",
    "what": "v1's dataset receipt, cited by v2/data/legacy_v1/SOURCE.json"
+  },
+  "5e06ddffce9615a12c351e9926e24fefa142c920017b9dc844c584c58517202e": {
+   "name": "oac_operational_health.py",
+   "named_by": [
+    "v2/research/final_score.py"
+   ],
+   "rule": "v1_hub"
   },
   "6479d0bffab20771ba1f5976f95dec8825e8edf0aa4e4faa559d77d57fec1f3b": {
    "named_by": [
@@ -881,10 +899,11 @@
     "v2/results/final/MANIFEST.json",
     "v2/results/final_evaluation.json"
    ],
-   "paths": [
-    "v2/research/final_score.py"
-   ],
-   "rule": "equal"
+   "reason": "the final_score.py that performed the final opening; superseded in-tree on 2026-11-15 by the v1-rotation pin update",
+   "research_blob": "f91e203efd0f88844f3771ac6a8aa60a492f2495",
+   "research_commit": "7a3ea7c655a2836711fdf84db9f49451c7cdd232",
+   "research_path": "v2/research/final_score.py",
+   "rule": "cited_blob"
   },
   "84d9e7ce0f3ba21b83a3a7765171d10d0a238312c4deda1ee880e004b5c96636": {
    "named_by": [
@@ -3016,12 +3035,12 @@
    "transform": "none"
   },
   "v2/research/final_score.py": {
-   "bytes": 44359,
+   "bytes": 44434,
    "origin": "research",
    "research_blob": "f91e203efd0f88844f3771ac6a8aa60a492f2495",
    "research_commit": "7a3ea7c655a2836711fdf84db9f49451c7cdd232",
    "research_path": "v2/research/final_score.py",
-   "sha256": "8372f8818defc1224d1906529f7a6c806b0367a53c6b5ce25d3969857476636d",
+   "sha256": "9e1562b2103ee77399bd3310575f0ae16017231e626bdf770a7155141a1febb9",
    "transform": "none"
   },
   "v2/research/freeze.py": {

@@ -32,6 +32,8 @@ bytes alone:
    cited_blob             a file of the unpublished research repository (research commit and blob
                           recorded); declared, not checkable outside that repository
    cited_scratch          a git-ignored scratch file of the research repository; declared only
+   hub_revision_blob      a file of the published v1 model at a superseded, immutable Hub revision
+                          (repo, revision and name recorded); declared, not checkable offline
 
 The receipt's ``source.commit`` (92872f88) names the unpublished research repository; the origin
 layer that resolves it (``freeze.verify_origin``) is UNAVAILABLE outside that repository.
@@ -59,8 +61,8 @@ SCAN_DIRS = ("v2", "runs")
 UNTRACKED_DIRS = ("hub", "scratch")
 V1_STAGED_GLOB = "*/huggingface/model/oac-system-health-v1"
 RULES = ("equal", "crlf_roundtrip_equal", "regenerated", "v1_hub", "forge_blob", "in_cited_blob",
-         "recomputed", "receipt_chain", "cited_blob", "cited_scratch")
-DECLARED_ONLY = ("cited_blob", "cited_scratch")
+         "recomputed", "receipt_chain", "cited_blob", "cited_scratch", "hub_revision_blob")
+DECLARED_ONLY = ("cited_blob", "cited_scratch", "hub_revision_blob")
 
 
 def sha256_bytes(data: bytes) -> str:
@@ -224,6 +226,13 @@ def check_binding(root: Path, prov: dict, value: str, b: dict, ctx: Context) -> 
     if rule == "receipt_chain":
         values, problems = ctx.receipt_chain()
         return problems if value in values else [*problems, f"{value[:16]}: not in the verified receipts"]
+    if rule == "hub_revision_blob":
+        problems = []
+        if not b.get("repo_id") or not b.get("name") or not b.get("reason"):
+            problems.append(f"{value[:16]}: hub citation lacks repo_id, name or reason")
+        if not HEX40.fullmatch(b.get("revision") or ""):
+            problems.append(f"{value[:16]}: revision is not a full sha")
+        return problems
     return _check_cited(value, b)
 
 
