@@ -374,15 +374,25 @@ class LiveVerifierTests(unittest.TestCase):
             self.kernel.score.__func__.__module__, "_szl_oac_live_verifier_canonical"
         )
 
-    def test_canonical_constructor_reads_only_verified_memory_snapshots(self):
+    def test_canonical_constructor_reads_only_verified_snapshots_and_self_hash(self):
         def immutable_fixture(_root, *arguments):
             return self.artifact_bytes[arguments[-1].rsplit("/", 1)[1]]
 
+        # The rotation kernel hashes its own artifact path against the
+        # receipt, so exactly one open is expected: the packaged kernel
+        # artifact that verify_release has proven identical to the Git
+        # blob. Any other file open still fails the contract.
+        kernel_artifact = SPACE_ROOT / "artifacts" / "oac_operational_health.py"
+        real_open = Path.open
+
+        def guarded_open(path, *args, **kwargs):
+            if Path(path).resolve() != kernel_artifact.resolve():
+                raise AssertionError("mutable file opened")
+            return real_open(path, *args, **kwargs)
+
         with (
             patch.object(live, "_git", side_effect=immutable_fixture),
-            patch.object(
-                Path, "open", side_effect=AssertionError("mutable file opened")
-            ),
+            patch.object(Path, "open", guarded_open),
         ):
             kernel = live._load_kernel(SPACE_ROOT, Path("unused"), self.manifest)
             advisory = kernel.score(live.CASES[0][1])

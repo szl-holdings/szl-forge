@@ -15,10 +15,10 @@ The specific runnable case is the [OAC System Health Lab](https://szlholdings-oa
 also linked from the [A11oy OAC page](https://a-11-oy.com/oac) and the
 [proof page](https://a11oy.net/oac/). It scores invented eight-field numerical
 telemetry only. The logistic-regression coefficient JSON is pinned to
-[Hub revision `dd7d1098…`](https://huggingface.co/SZLHOLDINGS/oac-system-health-v1/tree/dd7d109813abcd90c5250106dc2eabd2804e7ac3);
+[Hub revision `013c43b2…`](https://huggingface.co/SZLHOLDINGS/oac-system-health-v1/tree/013c43b217bb0cd0e0de4565aaa539d4b3a048c2);
 its dataset is [synthetic revision `f7ab6170…`](https://huggingface.co/datasets/SZLHOLDINGS/oac-clinical-transport-observability-synthetic/tree/f7ab6170bf78138b187b8cb707d374a25ad85375).
 The separately reviewed six model payload files matched immutable
-[Forge source `234a2dfb…`](https://github.com/szl-holdings/szl-forge/tree/234a2dfb4c511318febfd20ca2f695fa9cb2ea8c/clinical-gateway/huggingface/model/oac-system-health-v1).
+[Forge source `234a2dfb…`](https://github.com/szl-holdings/szl-forge/tree/234a2dfb4c511318febfd20ca2f695fa9cb2ea8c/clinical-gateway/huggingface/model/oac-system-health-v1). On 2026-11-15 a lockstep rotation advanced the kernel, receipt and every live pin (model coefficients unchanged); this runner pins the rotated source.
 That source/Hub audit is separate from this runner's three-artifact Git-source
 parity and live-runtime checks; no provider byte attestation is inferred from
 the runner alone.
