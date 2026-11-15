@@ -476,16 +476,19 @@ jobs:
 
       - name: Correct only the card at the reviewed parent and verify every Hub byte
         # Reviewed parent advanced 832b27f6 -> 9a625e20 (the reviewed PR589 card
-        # publish) -> 90df75bf (the 2026-11-04 estate banner insert). Every
-        # non-card byte at 90df75bf was re-verified equal to the staged package;
-        # the only delta the publisher writes remains the source-owned README.
+        # publish) -> 90df75bf (the 2026-11-04 estate banner insert)
+        # -> b70d921e (the 2026-11-14 estate audit card pass: identity mark,
+        # training-receipt binding, measured Evaluation/Limitations sections).
+        # Every non-card byte at b70d921e was re-verified equal to the staged
+        # package; the only delta the publisher writes remains the source-owned
+        # README.
         run: |
           set -euo pipefail
           python tools/publish_oac_hub.py \
             --profile oac-v2-model \
             --source-revision "${GITHUB_SHA}" \
             --publish \
-            --expect-parent 90df75bf58d91ea723128a86d7ed9af57535dbd8 \
+            --expect-parent b70d921ea2dcd603f24acb374f876c4cbc4bc9ea \
             --report reports/oac-v2-model-publication.json
 
       - name: Export the verified Hub revision
