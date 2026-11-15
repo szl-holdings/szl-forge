@@ -18,7 +18,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 SPACE = ROOT / "spaces" / "oac-system-health-lab"
 VERIFIER = SPACE / "verify_live.py"
-SOURCE_SHA = "234a2dfb4c511318febfd20ca2f695fa9cb2ea8c"
+SOURCE_SHA = "c4eef680061b92240305f8e4a043540d90efc3a8"
 ARTIFACT_SOURCE_SHA = "7814b9c00b98bc393741a6ab0cff52aae4fa56e3"
 MODEL_ID = "SZLHOLDINGS/oac-system-health-v1"
 MODEL_SHA = "013c43b217bb0cd0e0de4565aaa539d4b3a048c2"
