@@ -366,6 +366,14 @@ def _load_kernel(
         immutable[name] = raw
     name = "_szl_oac_live_verifier_canonical"
     module = types.ModuleType(name)
+    # The 2026-11-15 rotation kernel hashes its own running file through
+    # Path(__file__) and binds that digest to the receipt. Point __file__ at
+    # the packaged artifact whose bytes verify_release has already proven
+    # identical to the immutable Git blob and this manifest's pinned digest;
+    # any drift fails closed inside the kernel's own receipt check.
+    module.__file__ = str(
+        Path(space_root) / "artifacts" / "oac_operational_health.py"
+    )
     prior = sys.modules.get(name)
     sys.modules[name] = module
     try:

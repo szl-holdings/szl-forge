@@ -27,15 +27,15 @@ from typing import Any, NamedTuple
 
 ROOT = Path(__file__).resolve().parent
 SOURCE_REPOSITORY = "szl-holdings/szl-forge"
-ARTIFACT_REVISION = "48cb7630dc5c6982cf14755da72d3d07cd45740c"
+ARTIFACT_REVISION = "7814b9c00b98bc393741a6ab0cff52aae4fa56e3"
 MODEL_ID = "SZLHOLDINGS/oac-system-health-v1"
-MODEL_REVISION = "dd7d109813abcd90c5250106dc2eabd2804e7ac3"
+MODEL_REVISION = "013c43b217bb0cd0e0de4565aaa539d4b3a048c2"
 DATASET_ID = "SZLHOLDINGS/oac-clinical-transport-observability-synthetic"
 DATASET_REVISION = "f7ab6170bf78138b187b8cb707d374a25ad85375"
 ARTIFACTS = {
-    "oac_operational_health.py": "2fd8ffd3fd3ca8d0f960d4e0d471593b86e6cccb03607116390cbe9300992669",
+    "oac_operational_health.py": "5e06ddffce9615a12c351e9926e24fefa142c920017b9dc844c584c58517202e",
     "model.json": "f111b7fc65db561c80763b25e538366a19bed18526ca881915777487935d9557",
-    "artifact_receipt.json": "23239bb39b0a5b6db1e41284e6372f352cee61d7938da1e84472246dcdaf95a1",
+    "artifact_receipt.json": "53180b900b984c034a74ea77a20e11d7fae7a8f47f0ce2397499d181ebd2b685",
 }
 V2_ARTIFACT_REVISION = "56a00821858825f529c40c7322c2f1584608d6e5"
 V2_MODEL_ID = "SZLHOLDINGS/oac-ops-health-v2"
@@ -295,29 +295,33 @@ class Application:
             module_name = (
                 "_szl_oac_health_" + ARTIFACTS["oac_operational_health.py"][:16]
             )
-            module = sys.modules.get(module_name)
-            if module is None:
-                spec = importlib.util.spec_from_file_location(
-                    module_name, paths["oac_operational_health.py"]
+            # The 2026-11-15 rotation kernel binds its own running bytes to
+            # the receipt through Path(__file__). Execute a fresh module per
+            # application, bound to this application's verified artifact
+            # path; a cached module would pin a stale path from a previous
+            # application root, and the kernel's receipt check fails closed
+            # on any such drift.
+            spec = importlib.util.spec_from_file_location(
+                module_name, paths["oac_operational_health.py"]
+            )
+            if spec is None or spec.loader is None:
+                raise InvalidInput("kernel load")
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[module_name] = module
+            try:
+                # Execute the bytes just hashed, never a second pathname
+                # read or an unverified pre-existing __pycache__ entry.
+                exec(
+                    compile(
+                        verified_bytes["oac_operational_health.py"],
+                        str(paths["oac_operational_health.py"]),
+                        "exec",
+                    ),
+                    module.__dict__,
                 )
-                if spec is None or spec.loader is None:
-                    raise InvalidInput("kernel load")
-                module = importlib.util.module_from_spec(spec)
-                sys.modules[module_name] = module
-                try:
-                    # Execute the bytes just hashed, never a second pathname
-                    # read or an unverified pre-existing __pycache__ entry.
-                    exec(
-                        compile(
-                            verified_bytes["oac_operational_health.py"],
-                            str(paths["oac_operational_health.py"]),
-                            "exec",
-                        ),
-                        module.__dict__,
-                    )
-                except Exception:
-                    sys.modules.pop(module_name, None)
-                    raise
+            except Exception:
+                sys.modules.pop(module_name, None)
+                raise
             self.kernel = kernel_from_snapshots(
                 module.OperationalHealthKernel,
                 verified_bytes["model.json"],

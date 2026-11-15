@@ -246,10 +246,10 @@
     const advisoryKeys = ["schema", "operator_attention_required", "operator_attention_score", "decision_threshold", "score_semantics", "purpose", "authority", "normalized_feature_contributions"];
     const exactKeys = (value, keys) => isObject(value) && Object.keys(value).length === keys.length && keys.every((key) => Object.hasOwn(value, key));
     const pinnedIdentity = {
-      artifact_source: {repository:"szl-holdings/szl-forge",revision:"48cb7630dc5c6982cf14755da72d3d07cd45740c",directory:"clinical-gateway/huggingface/model/oac-system-health-v1"},
-      hub_model: {repo_id:"SZLHOLDINGS/oac-system-health-v1",revision:"dd7d109813abcd90c5250106dc2eabd2804e7ac3"},
+      artifact_source: {repository:"szl-holdings/szl-forge",revision:"7814b9c00b98bc393741a6ab0cff52aae4fa56e3",directory:"clinical-gateway/huggingface/model/oac-system-health-v1"},
+      hub_model: {repo_id:"SZLHOLDINGS/oac-system-health-v1",revision:"013c43b217bb0cd0e0de4565aaa539d4b3a048c2"},
       hub_dataset: {repo_id:"SZLHOLDINGS/oac-clinical-transport-observability-synthetic",revision:"f7ab6170bf78138b187b8cb707d374a25ad85375"},
-      artifacts: {"oac_operational_health.py":"2fd8ffd3fd3ca8d0f960d4e0d471593b86e6cccb03607116390cbe9300992669","model.json":"f111b7fc65db561c80763b25e538366a19bed18526ca881915777487935d9557","artifact_receipt.json":"23239bb39b0a5b6db1e41284e6372f352cee61d7938da1e84472246dcdaf95a1"}
+      artifacts: {"oac_operational_health.py":"5e06ddffce9615a12c351e9926e24fefa142c920017b9dc844c584c58517202e","model.json":"f111b7fc65db561c80763b25e538366a19bed18526ca881915777487935d9557","artifact_receipt.json":"53180b900b984c034a74ea77a20e11d7fae7a8f47f0ce2397499d181ebd2b685"}
     };
     function matchesPins(value) {
       return Object.entries(pinnedIdentity).every(([section, expected]) => exactKeys(value[section], Object.keys(expected)) && Object.entries(expected).every(([key, pin]) => value[section][key] === pin));
