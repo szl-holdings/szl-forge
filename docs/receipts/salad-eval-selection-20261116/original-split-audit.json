@@ -1,0 +1,190 @@
+{
+  "all_formats_valid": true,
+  "candidate_filter_source_ref": {
+    "commit": "1d3a9e32822871fd2043125b25e0b9126aad8457",
+    "path": "tools/salad_eval_selection.py",
+    "repository": "szl-forge",
+    "sha256": "33ca8fc8b459023ccdccb8da2a96eb79b0849b018b33bd7df2c654c51cce833e"
+  },
+  "cross_split": {
+    "examples": {
+      "eval_occurrences": 0,
+      "example_hashes": [],
+      "shared_unique_hashes": 0,
+      "train_occurrences": 0
+    },
+    "prompts": {
+      "eval_occurrences": 687,
+      "example_hashes": [
+        "0007ca5d0170ae2f0c7220d69f95f136a09dc56b81d26f8a8fbfd60002731ed3",
+        "0044c78690e18a28163f2054e432035c7f8ebd87e606889c84232849f31feb2f",
+        "004c405d608b5741b9576ef2e4e590fa967c67e5c767fa8e700cbb0423d25229",
+        "006f70980b5ff414d33a63a4a4a3b5c43906e26ab832b6203d330fe096269461",
+        "00e999dc2bbd714a027a846540400a2f7b8621d1f54e26136f78314796c9bd6f",
+        "01b05003bbecf0e6dc8b60b226a22281fd0694bced8e2ece243b7138cc265da0",
+        "01c8c956ef1a7f62e7e2cf0169d425f68299c8e7244b0986c0e9cef5505e2b30",
+        "022db4f320dbf683f7b584fcf2b1c43888abcfdd3ca75f23140108b9eb4c0063",
+        "026197e672b7b7f6df265adc1ba5e87777bfee04e47a4445c5260e90e5eefd56",
+        "02b7a46193ffd7d6125410afbc42827515a28e89b01b4486b33cdd77ef8309a4"
+      ],
+      "shared_unique_hashes": 529,
+      "train_occurrences": 2659
+    },
+    "turns": {
+      "eval_occurrences": 691,
+      "example_hashes": [
+        "00b9d3c6f654d2eb2625c1f2961ce66aedd773812a7143f87f6b34e8c3326ae7",
+        "00fb7c2045277a68f3ac514efa87ba6b22137d8f9f56531a048aeb1c4cd28087",
+        "010684c0227a3bdc22d52fc8c50321ca0aa0928ac2a44a84631c7a02306b60da",
+        "01635ceca79eaa98282f33d6f5da95a4c4b53c5e39d13439933567557b894655",
+        "020d9be2e794112364ad94eb43335497a9eb6b25d3e8d91dd67ddf93e0ba6453",
+        "020e864b9c785798a73dffc5f349b4fd0407ebd63e318472de81cdae42160b9c",
+        "02bd5a245085150e8eed0bc9f5474c7c1e1c486cd75d09541ea59f5ad395e5a6",
+        "02cdce73b338685a515d5656c29b2e61c3fa46ced0536a7e42930d048b6b766c",
+        "03238772ff6f43b97869ccbc2b62f748f14ff25bc46a6e3503e0bc3e7ef1170e",
+        "03e3594db278a1ede0a8cbdf555e7a29d560ed6e75da4fd941de7321f02df68a"
+      ],
+      "shared_unique_hashes": 533,
+      "train_occurrences": 2664
+    },
+    "users": {
+      "eval_occurrences": 687,
+      "example_hashes": [
+        "00478e26ce725ebb79897e06a2c3f6cb68176848fbc7604e05039cd579472d11",
+        "004a6a57a6064cc45f4dbb2c502b6b3fc2cc9afcd5af1dac3fbafaf2ce0811f8",
+        "005f89886f914ae76c6c3b05fad4cd036d6408d49ccbce51e845230f4a06a331",
+        "0061c12d487677a1e3b02430312542e3cc168d5cdeb4a775f9483fcb7b8338ee",
+        "00e2d76557ad984a2caba16298f1eaed8f23beabcaafd13fe79191c8470153a4",
+        "00fac25de364e05f5cd021276c206c8ca0e381d5f8b5fbb3d5e414d2a91112be",
+        "010798e6badc8d55c3dcbf99808814c9ebcc98d77bf6068e3b1ee0c2aa41f0cd",
+        "0109d1f15232438fe78ce49ea4434a8faa3413a63a71333fb53b21c963813a15",
+        "0208cae4bbcb79bbad9f6e28f72fc0dc9594c35d7006588593a63694c5353888",
+        "02774df1eb8c0219c4728415926fda45489b1ccd19e411e934e90f75cf101f40"
+      ],
+      "shared_unique_hashes": 529,
+      "train_occurrences": 2659
+    }
+  },
+  "exact_disjoint": false,
+  "limits": [
+    "Exact normalized equality does not establish semantic or near-duplicate independence.",
+    "Licenses, source consent, PII handling, benchmark contamination and source-level split construction are not independently verified by this audit.",
+    "Dataset manifest claims are checked only for file hashes and row counts; no model quality claim is made."
+  ],
+  "manifest_declared_rows": {
+    "eval": 2800,
+    "train": 26706
+  },
+  "normalization": "Full text; Unicode NFKC, casefold, collapse all whitespace. Full prompt includes every role/content message before final assistant; all-user-context excludes answer messages. No prefix truncation.",
+  "observed_at": "2026-11-16T23:06:32.679124+00:00",
+  "repo": "SZLHOLDINGS/szl-frontier-sft-mix-v4",
+  "revision": "12a26b44303299624592084c025e344d260aa7bf",
+  "schema_validation_note": "The discovery parser performs basic extraction only. The bound candidate selector separately validates alternating roles, nonempty supervised targets, and the exactly-empty tool_calls metadata exception.",
+  "source_binding": {
+    "path": "docs/receipts/salad-eval-selection-20261116/discovery-audit.py",
+    "sha256": "fb7f591a7a9f593910c36d9d0021c5b3554935a6c90ad127eff5a8104f419930",
+    "source_match_is_execution_attestation": false
+  },
+  "splits": {
+    "eval": {
+      "bytes": 14772578,
+      "file": "data/eval_repo.jsonl",
+      "hash_matches_manifest": true,
+      "invalid_row_indices": [],
+      "invalid_rows_count": 0,
+      "rows": 2800,
+      "schemas": [
+        {
+          "keys": [
+            "messages",
+            "source"
+          ],
+          "rows": 2800
+        }
+      ],
+      "sha256": "6ae724f37f814d6d95cde193c7ab9430e50ea78664650aac8d0286f1bb94e064",
+      "source_counts": {
+        "a11oy-code-sft-v1": 251,
+        "coig-cqia": 380,
+        "estate-knowledge-corpus-v1": 157,
+        "magpie-300k": 759,
+        "nemotron-pt-v1-math": 210,
+        "nemotron-pt-v1-stem": 569,
+        "tulu-3": 474
+      },
+      "valid_formatted_rows": 2800,
+      "within_split": {
+        "examples": {
+          "duplicate_extra_occurrences": 0,
+          "duplicate_keys": 0,
+          "unique": 2800
+        },
+        "prompts": {
+          "duplicate_extra_occurrences": 165,
+          "duplicate_keys": 138,
+          "unique": 2635
+        },
+        "turns": {
+          "duplicate_extra_occurrences": 165,
+          "duplicate_keys": 138,
+          "unique": 3567
+        },
+        "users": {
+          "duplicate_extra_occurrences": 165,
+          "duplicate_keys": 138,
+          "unique": 2635
+        }
+      }
+    },
+    "train": {
+      "bytes": 139351749,
+      "file": "data/sft_train.jsonl",
+      "hash_matches_manifest": true,
+      "invalid_row_indices": [],
+      "invalid_rows_count": 0,
+      "rows": 26706,
+      "schemas": [
+        {
+          "keys": [
+            "messages",
+            "source"
+          ],
+          "rows": 26706
+        }
+      ],
+      "sha256": "301e4f405038b33bf66a7defe1568ecc90c96341546d4515758b3796e566fb4a",
+      "source_counts": {
+        "a11oy-code-sft-v1": 2395,
+        "coig-cqia": 3620,
+        "estate-knowledge-corpus-v1": 1493,
+        "magpie-300k": 7241,
+        "nemotron-pt-v1-math": 2001,
+        "nemotron-pt-v1-stem": 5431,
+        "tulu-3": 4525
+      },
+      "valid_formatted_rows": 26706,
+      "within_split": {
+        "examples": {
+          "duplicate_extra_occurrences": 0,
+          "duplicate_keys": 0,
+          "unique": 26706
+        },
+        "prompts": {
+          "duplicate_extra_occurrences": 5272,
+          "duplicate_keys": 1369,
+          "unique": 21434
+        },
+        "turns": {
+          "duplicate_extra_occurrences": 5313,
+          "duplicate_keys": 1388,
+          "unique": 30340
+        },
+        "users": {
+          "duplicate_extra_occurrences": 5272,
+          "duplicate_keys": 1369,
+          "unique": 21434
+        }
+      }
+    }
+  }
+}
