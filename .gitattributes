@@ -18,3 +18,4 @@ khipu/khipu.schema.json text eol=lf
 receiptagent/*.jsonl text eol=lf
 receiptagent/receiptagent.schema.json text eol=lf
 tests/fixtures/receiptagent_v3_card/** text eol=lf
+tools/salad_eval_selection.py text eol=lf
