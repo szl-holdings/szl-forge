@@ -1,11 +1,13 @@
 {
   "schema": "szl.space-release-readback/v1",
-  "observed_at": "2026-11-05T18:21:00Z",
-  "observed_main": "3b996ebd8116815de15ab6ad8d2daed6aa4c1470",
-  "attested_source_revision": "65e5e4c043d104bc7c99e8c525c9c64308cb9e2d",
-  "commits_after_attested_release": 10,
+  "observed_at": "2026-11-16T18:55:00Z",
+  "observed_main": "80075148adc4b761924081edabfe3b92a6e98822",
+  "attested_source_revision": "80075148adc4b761924081edabfe3b92a6e98822",
+  "commits_after_attested_release": 0,
+  "record_state": "PENDING_DEPLOYMENT",
+  "previous_attested_source_revision": "65e5e4c043d104bc7c99e8c525c9c64308cb9e2d",
   "hf_writes": false,
-  "note": "Both live Spaces read back 65e5e4c0. That commit only bumps harden-runner in the publisher workflows. On a full clone, ten later commits reach observed_main and none change either Space tree. CI fetches both commits at depth 1 and compares those trees, including the checkout HEAD. Those fetches do not include the commits between them, so the count is not re-derived. Do not republish merely to stamp a newer main SHA.",
+  "note": "This record stages the exact Space source for protected publication in PR #750. The currently live Spaces still read back 65e5e4c0 until that source reaches protected main and the publisher completes. CI compares the staged tree at depth 1 and does not treat the pending record as live evidence. Do not dispatch publish-model-inference-lab.yml only because main moved; update this record after the governed publish and readback complete.",
   "spaces": [
     {
       "repo_id": "SZLHOLDINGS/szl-model-inference-lab",
@@ -21,6 +23,7 @@
       "acceptance": [
         "GET /version gitSha equals the GitHub SHA that was published.",
         "Every source_files digest in release.json equals that commit's tree.",
+        "Publish the staged source only after the protected main merge completes.",
         "Do not dispatch publish-model-inference-lab.yml only because main moved."
       ]
     },
@@ -39,6 +42,7 @@
       "acceptance": [
         "GET /api/build-info build.revision equals the GitHub SHA that was published.",
         "build.archive_sha256 equals the LFS oid 869e318dd5f328205dd181ee836ef267bd2ae278f6430a9e8ddc661fbc689d03.",
+        "Publish the staged source only after the protected main merge completes.",
         "Do not dispatch foundation-runtime.yml publish only because main moved."
       ]
     }

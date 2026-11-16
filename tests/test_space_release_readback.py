@@ -43,8 +43,17 @@ def test_later_main_does_not_change_the_attested_space_trees():
     main = record["observed_main"]
     fetch(attested)
     fetch(main)
+    pending = record.get("record_state") == "PENDING_DEPLOYMENT"
+    previous = record.get("previous_attested_source_revision")
+    if pending:
+        assert previous
     for space in record["spaces"]:
-        assert space["runtime_readback"]["revision"] == attested
+        runtime_revision = space["runtime_readback"]["revision"]
+        if pending:
+            assert runtime_revision == previous
+            assert "publish" in " ".join(space["acceptance"]).lower()
+        else:
+            assert runtime_revision == attested
         for revision in (main, "HEAD"):
             names = _git("diff", "--name-only", attested, revision, "--", space["source_dir"])
             assert names == b""
