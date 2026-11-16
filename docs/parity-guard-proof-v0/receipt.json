@@ -1,0 +1,28 @@
+{
+  "kind": "szl.parity-guard-proof/v0",
+  "watermark": "\ud83dC0C2 Estate artifact",
+  "artifact": "ParityGuard.lean (formal contract of the estate parity guard)",
+  "phase": "1-2 of docs/frontier-20261115/parity-guard-verification-plan.md (Formalize + Referee)",
+  "ts": "2026-11-15T23:16:21Z",
+  "lean": "leanprover/lean4:4.35.0",
+  "lake": "5.0.0",
+  "builder": "lake build on BETTERWITHAGE (owner machine)",
+  "build_result": "Build completed successfully (3 jobs); 8 theorems; per-theorem #print axioms: [propext] only; zero sorryAx; zero custom axioms",
+  "proof_sha256": "172d555359509443baca8c375ca60430e2b1642c4035b35e93b3cd36034d2c19",
+  "build_log_sha256": "66c2497b70d670bede578b8ce55b6cdde6eae0de84d81f6b0c2d0b6e2be33121",
+  "lakefile_sha256": "40377b5643254c58c94e3c4765d194a6e8deeda4d157cebaf2b7981e393bd868",
+  "toolchain_sha256": "02100d976c534f8c3ceaaf517e1d2568ccc873ce5af071fc5f9fa0291e40b32d",
+  "theorems": [
+    "no_blind_overwrite",
+    "monotonic_advance",
+    "guard_complete",
+    "guard_fails_closed_on_mismatch",
+    "advance_strictly_increases",
+    "hard_deny_absolute",
+    "deny_by_default",
+    "approval_enables"
+  ],
+  "scope_disclosure": "Abstract typed model of the guard contract (CAS no-overwrite, monotonic revision advance, fail-closed default, hard-deny non-liftability). Does NOT verify the Python implementation; model-to-code binding is phase 4. No new axioms introduced; propext is Lean core (disclosed, not smuggled).",
+  "status": "FORMALIZED_PHASE_1_2",
+  "merge": "owner-gated (doctrine)"
+}
