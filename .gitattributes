@@ -19,3 +19,5 @@ receiptagent/*.jsonl text eol=lf
 receiptagent/receiptagent.schema.json text eol=lf
 tests/fixtures/receiptagent_v3_card/** text eol=lf
 tools/salad_eval_selection.py text eol=lf
+docs/receipts/salad-eval-selection-20261116/discovery-audit.py text eol=lf
+docs/receipts/salad-job-repair-20261116/commands.json text eol=lf
