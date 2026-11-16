@@ -41,6 +41,8 @@ class Settings:
     pool_snapshot_sha256: str | None = None
     corpus_report: Path | None = None
     corpus_report_sha256: str | None = None
+    evidence_snapshot: Path | None = None
+    evidence_snapshot_sha256: str | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.access_token, str) or len(self.access_token) < 32:
@@ -67,6 +69,15 @@ class Settings:
             if not isinstance(self.corpus_report_sha256, str) or not re.fullmatch(r"[0-9a-f]{64}", self.corpus_report_sha256):
                 raise ValueError("invalid_corpus_report_digest")
 
+        if (self.evidence_snapshot is None) != (self.evidence_snapshot_sha256 is None):
+            raise ValueError("evidence_snapshot_and_external_digest_required_together")
+        if self.evidence_snapshot is not None and not isinstance(self.evidence_snapshot, Path):
+            raise ValueError("evidence_snapshot_path_required")
+        if self.evidence_snapshot_sha256 is not None:
+            import re
+            if not isinstance(self.evidence_snapshot_sha256, str) or not re.fullmatch(r"[0-9a-f]{64}", self.evidence_snapshot_sha256):
+                raise ValueError("invalid_evidence_snapshot_digest")
+
     @classmethod
     def from_env(cls) -> "Settings":
         artifacts = {slug: Path(value) for slug in TRACKS
@@ -76,7 +87,9 @@ class Settings:
                    Path(pool_path) if (pool_path := os.environ.get("SZL_LAB_POOL_SNAPSHOT")) else None,
                    os.environ.get("SZL_LAB_POOL_SNAPSHOT_SHA256") or None,
                    Path(corpus_path) if (corpus_path := os.environ.get("SZL_LAB_CORPUS_REPORT")) else None,
-                   os.environ.get("SZL_LAB_CORPUS_REPORT_SHA256") or None)
+                   os.environ.get("SZL_LAB_CORPUS_REPORT_SHA256") or None,
+                   Path(evidence_path) if (evidence_path := os.environ.get("SZL_LAB_EVIDENCE_SNAPSHOT")) else None,
+                   os.environ.get("SZL_LAB_EVIDENCE_SNAPSHOT_SHA256") or None)
 
 class ScoreRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
@@ -255,4 +268,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     from .storage_web import register_storage
     register_storage(app, authorize, env)
+    from .evidence_web import register_evidence
+    register_evidence(app, authorize, env, settings)
     return app
