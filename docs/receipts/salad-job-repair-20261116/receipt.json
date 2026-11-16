@@ -1,0 +1,233 @@
+{
+  "command_source": {
+    "path": "docs/receipts/salad-job-repair-20261116/commands.json",
+    "sha256": "97794dfafc0f7dc82eaa13dcd0f9795b5bb292fc436ddba181201d94c5794abe"
+  },
+  "interpretation": {
+    "candidate_weights_created": false,
+    "gpu_verified": false,
+    "jobs_started_by_this_repair": 0,
+    "oauth_expires_at": "2026-12-14T00:00:50.000Z",
+    "oauth_is_durable_provisioning": false,
+    "production_training_qualified": false,
+    "startup_dependency_and_existing_auth_repaired": true
+  },
+  "local_cpu_preflight": {
+    "groups": {
+      "szl-train-abstention-sft-v1-r1": {
+        "cpu_only_override": true,
+        "held": true,
+        "preflight": {
+          "base": "Qwen/Qwen3-1.7B",
+          "base_revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+          "corpus_examples": 48,
+          "cuda_available": false,
+          "dataset": "SZLHOLDINGS/szl-distill-abstention-v1-sft",
+          "dataset_revision": "4f0f42a44cd6af1f21ac269a3bf5b396e0c12c14",
+          "hold_reason": "independent evaluation and governed training manifest required",
+          "run": "salad-abstention-sft-v1-r1",
+          "runtime_versions": {
+            "accelerate": "1.6.0",
+            "bitsandbytes": "0.45.5",
+            "datasets": "3.5.1",
+            "huggingface_hub": "0.30.2",
+            "numpy": "1.26.4",
+            "pandas": "2.2.3",
+            "peft": "0.15.2",
+            "pyarrow": "19.0.1",
+            "safetensors": "0.5.3",
+            "tokenizers": "0.21.1",
+            "torch": "2.4.1+cpu",
+            "transformers": "4.51.3",
+            "trl": "0.18.2"
+          },
+          "training_qualified": false
+        },
+        "returncode": 0
+      },
+      "szl-train-distill-sft-v1-r1": {
+        "cpu_only_override": true,
+        "held": true,
+        "preflight": {
+          "base": "Qwen/Qwen3-1.7B",
+          "base_revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+          "corpus_examples": 1,
+          "cuda_available": false,
+          "dataset": "SZLHOLDINGS/governed-distill-sft-v1",
+          "dataset_revision": "ff7329da647539a0b90f015a756598c83372eab3",
+          "hold_reason": "independent evaluation and governed training manifest required",
+          "run": "salad-distill-sft-v1-r1",
+          "runtime_versions": {
+            "accelerate": "1.6.0",
+            "bitsandbytes": "0.45.5",
+            "datasets": "3.5.1",
+            "huggingface_hub": "0.30.2",
+            "numpy": "1.26.4",
+            "pandas": "2.2.3",
+            "peft": "0.15.2",
+            "pyarrow": "19.0.1",
+            "safetensors": "0.5.3",
+            "tokenizers": "0.21.1",
+            "torch": "2.4.1+cpu",
+            "transformers": "4.51.3",
+            "trl": "0.18.2"
+          },
+          "training_qualified": false
+        },
+        "returncode": 0
+      }
+    },
+    "observed_at": "2026-11-16T23:04:43.837508+00:00"
+  },
+  "references": [
+    "https://docs.salad.com/reference/saladcloud-api/container-groups/update-container-group",
+    "https://docs.salad.com/reference/saladcloud-api/logs/query-log-entries",
+    "https://huggingface.co/docs/huggingface_hub/package_reference/hf_api#huggingface_hub.HfApi.auth_check",
+    "https://pypi.org/pypi/trl/0.18.2/json",
+    "https://github.com/pytorch/pytorch/blob/v2.4.1/torch/utils/checkpoint.py"
+  ],
+  "repair": {
+    "action": "command_and_existing_auth_repair_with_default_preflight_mode",
+    "auth_metadata": {
+      "expiresAt": "2026-12-14T00:00:50.000Z",
+      "type": "oauth"
+    },
+    "completed_at": "2026-11-16T23:05:43.080092+00:00",
+    "groups": {
+      "szl-train-abstention-sft-v1-r1": {
+        "after_state": {
+          "description": "",
+          "finish_time": "2026-11-16T22:57:34.0018562+00:00",
+          "instance_status_counts": {
+            "allocating_count": 0,
+            "creating_count": 0,
+            "running_count": 0,
+            "stopping_count": 0
+          },
+          "start_time": "2026-11-16T11:51:32.4871528+00:00",
+          "status": "stopped"
+        },
+        "after_version": 3,
+        "before_command_sha256": "529ae7c23d85c6ab51c6b53a0a50b288b8cd596a084b291d60593297335252cd",
+        "before_state": "stopped",
+        "before_version": 2,
+        "command_hash_verified": true,
+        "env_keys_refreshed": [
+          "HF_TOKEN",
+          "HUGGINGFACE_HUB_TOKEN"
+        ],
+        "env_refresh_verified": true,
+        "new_command_sha256": "ccba74144018be5276c9bdb9404191a823bc25f8159cbe8fc0408e3bdbc0584f",
+        "nonsecret_env_additions": {
+          "SZL_TRAINING_MODE": "preflight"
+        },
+        "patch_http_status": 200,
+        "resources_and_policies_preserved": true
+      },
+      "szl-train-distill-sft-v1-r1": {
+        "after_state": {
+          "description": "",
+          "finish_time": "2026-11-16T22:57:32.7516086+00:00",
+          "instance_status_counts": {
+            "allocating_count": 0,
+            "creating_count": 0,
+            "running_count": 0,
+            "stopping_count": 0
+          },
+          "start_time": "2026-11-16T18:19:14.1580889+00:00",
+          "status": "stopped"
+        },
+        "after_version": 4,
+        "before_command_sha256": "30b61193a08d69842bfc490f707405dfa750e932585446f0286f173f254799dc",
+        "before_state": "stopped",
+        "before_version": 3,
+        "command_hash_verified": true,
+        "env_keys_refreshed": [
+          "HF_TOKEN",
+          "HUGGINGFACE_HUB_TOKEN"
+        ],
+        "env_refresh_verified": true,
+        "new_command_sha256": "2f132e8c691720231da8f8a86fd70f1963e5ad2af8d0519d3555e1c1f479fc6a",
+        "nonsecret_env_additions": {
+          "SZL_TRAINING_MODE": "preflight"
+        },
+        "patch_http_status": 200,
+        "resources_and_policies_preserved": true
+      }
+    },
+    "start_calls": 0,
+    "started_at": "2026-11-16T23:05:40.811569+00:00"
+  },
+  "root_cause_evidence": {
+    "abstention_exit_1_events": 164,
+    "abstention_traceback_at": "2026-11-16T22:42:20.749043+00:00",
+    "configured_previous_hf_auth_http_status": 401,
+    "distill_exit_1_events": 184,
+    "distill_traceback_at": "2026-11-16T22:46:11.031582+00:00",
+    "error": "ImportError: cannot import name 'CheckpointPolicy' from 'torch.utils.checkpoint'",
+    "initial_status_observation": "2026-11-16T22:51:26.328018+00:00"
+  },
+  "schema": "szl.salad-repair-evidence/v1",
+  "verified_status_snapshot": {
+    "groups": {
+      "szl-train-abstention-sft-v1-r1": {
+        "candidate": {
+          "files": [
+            ".gitattributes",
+            "mesh/salad-da96c6590028d5e0ccf3b6d34ddd9dc06dbd09d9e287db7bd70b2f7d59ea0e86.json"
+          ],
+          "private": true,
+          "repo": "SZLHOLDINGS/salad-abstention-sft-v1-r1",
+          "revision": "f04a0aaa55fef7a83cc730239e10dca5efcc5f4e"
+        },
+        "command_matches_reviewed_patch": true,
+        "command_sha256": "ccba74144018be5276c9bdb9404191a823bc25f8159cbe8fc0408e3bdbc0584f",
+        "configured_candidate_write_auth": true,
+        "mode": "preflight",
+        "replicas": 1,
+        "state": {
+          "description": "",
+          "finish_time": "2026-11-16T22:57:34.0018562+00:00",
+          "instance_status_counts": {
+            "allocating_count": 0,
+            "creating_count": 0,
+            "running_count": 0,
+            "stopping_count": 0
+          },
+          "start_time": "2026-11-16T11:51:32.4871528+00:00",
+          "status": "stopped"
+        },
+        "version": 3
+      },
+      "szl-train-distill-sft-v1-r1": {
+        "candidate": {
+          "files": [
+            ".gitattributes"
+          ],
+          "private": true,
+          "repo": "SZLHOLDINGS/salad-distill-sft-v1-r1",
+          "revision": "68042a32da07e73c68a826cc8abd638056ddcc0d"
+        },
+        "command_matches_reviewed_patch": true,
+        "command_sha256": "2f132e8c691720231da8f8a86fd70f1963e5ad2af8d0519d3555e1c1f479fc6a",
+        "configured_candidate_write_auth": true,
+        "mode": "preflight",
+        "replicas": 1,
+        "state": {
+          "description": "",
+          "finish_time": "2026-11-16T22:57:32.7516086+00:00",
+          "instance_status_counts": {
+            "allocating_count": 0,
+            "creating_count": 0,
+            "running_count": 0,
+            "stopping_count": 0
+          },
+          "start_time": "2026-11-16T18:19:14.1580889+00:00",
+          "status": "stopped"
+        },
+        "version": 4
+      }
+    },
+    "observed_at": "2026-11-16T23:19:38.760938+00:00"
+  }
+}

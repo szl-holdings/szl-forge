@@ -1,0 +1,97 @@
+{
+  "schema": "szl.salad-candidate-data-inputs/v1",
+  "normalization": {
+    "id": "szl.prompt.nfkc-casefold-whitespace/v1",
+    "unicode_data_version": "15.0.0"
+  },
+  "dataset": {
+    "repo": "SZLHOLDINGS/szl-frontier-sft-mix-v4",
+    "repo_type": "dataset",
+    "revision": "12a26b44303299624592084c025e344d260aa7bf",
+    "files": {
+      "train": {
+        "path": "data/sft_train.jsonl",
+        "sha256": "301e4f405038b33bf66a7defe1568ecc90c96341546d4515758b3796e566fb4a",
+        "rows": 26706
+      },
+      "eval": {
+        "path": "data/eval_repo.jsonl",
+        "sha256": "6ae724f37f814d6d95cde193c7ab9430e50ea78664650aac8d0286f1bb94e064",
+        "rows": 2800
+      }
+    }
+  },
+  "candidate_plan": {
+    "status": "PROPOSAL_ONLY_NOT_APPLIED",
+    "intended_existing_job": "szl-train-distill-sft-v1-r1",
+    "current_one_row_job_input_unchanged": true,
+    "base": {
+      "repo": "Qwen/Qwen3-1.7B",
+      "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+      "initialization": "pristine base; no prior trained adapter",
+      "chat_template_sha256": "a55ee1b1660128b7098723e0abcd92caa0788061051c62d51cbe87d9cf1974d8"
+    },
+    "output": {
+      "repo": "SZLHOLDINGS/salad-distill-sft-v1-r1",
+      "private": true,
+      "publication_authorized": false
+    },
+    "initial_candidate_budget": {
+      "max_steps": 200,
+      "max_length": 2048,
+      "per_device_train_batch_size": 4,
+      "gradient_accumulation_steps": 8,
+      "learning_rate": 0.0002,
+      "lr_scheduler_type": "cosine",
+      "warmup_ratio": 0.03,
+      "optim": "adamw_torch",
+      "bf16": true,
+      "packing": true,
+      "seed": 1234
+    },
+    "lora": {
+      "r": 32,
+      "lora_alpha": 64,
+      "lora_dropout": 0.05,
+      "target_modules": [
+        "q_proj",
+        "k_proj",
+        "v_proj",
+        "o_proj",
+        "gate_proj",
+        "up_proj",
+        "down_proj"
+      ]
+    },
+    "runtime_pins": [
+      "torch==2.4.1",
+      "transformers==4.51.3",
+      "trl==0.18.2",
+      "peft==0.15.2",
+      "accelerate==1.6.0",
+      "datasets==3.5.1",
+      "huggingface_hub==0.30.2",
+      "safetensors==0.5.3",
+      "bitsandbytes==0.45.5",
+      "tokenizers==0.21.1",
+      "numpy==1.26.4",
+      "pyarrow==19.0.1",
+      "pandas==2.2.3"
+    ],
+    "evaluation": {
+      "split_role": "exact-match-filtered residual; independent generalization not established",
+      "baseline_isolation": "evaluate pristine base before adapter attachment; never reuse a mutated base object as the baseline",
+      "schedule": "fixed baseline and final candidate comparison; no adaptive tuning or best-checkpoint selection against this split",
+      "records": "per-row immutable identity, token count, loss and bounded generated outputs in private evaluation artifacts",
+      "metrics": "paired token-normalized loss with declared uncertainty; separate capability and governance evaluation still required",
+      "production_promotion_authorized": false
+    },
+    "remaining_gates": [
+      "Review source rights, PII handling and source-family/semantic overlap limits.",
+      "Bind the final training/evaluation source revision and candidate output SHA to receipts.",
+      "Verify CUDA/bfloat16 runtime and a bounded GPU step before the 200-step candidate budget.",
+      "Use a durable appropriately scoped credential before its existing OAuth expiry.",
+      "Review an evaluation protocol capable of establishing the intended product behavior; data separation alone is insufficient."
+    ]
+  }
+}
