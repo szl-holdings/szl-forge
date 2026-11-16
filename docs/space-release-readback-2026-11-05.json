@@ -1,35 +1,38 @@
 {
   "schema": "szl.space-release-readback/v1",
-  "observed_at": "2026-11-16T18:55:00Z",
-  "observed_main": "80075148adc4b761924081edabfe3b92a6e98822",
-  "attested_source_revision": "80075148adc4b761924081edabfe3b92a6e98822",
+  "observed_at": "2026-11-16T19:12:00Z",
+  "observed_main": "c94e9218093e0815745cbd5dccaddea1797379a3",
+  "attested_source_revision": "c94e9218093e0815745cbd5dccaddea1797379a3",
   "commits_after_attested_release": 0,
-  "record_state": "PENDING_DEPLOYMENT",
-  "previous_attested_source_revision": "65e5e4c043d104bc7c99e8c525c9c64308cb9e2d",
-  "hf_writes": false,
-  "note": "This record stages the exact Space source for protected publication in PR #750. The currently live Spaces still read back 65e5e4c0 until that source reaches protected main and the publisher completes. CI compares the staged tree at depth 1 and does not treat the pending record as live evidence. Do not dispatch publish-model-inference-lab.yml only because main moved; update this record after the governed publish and readback complete.",
+  "record_state": "LIVE_READBACK",
+  "hf_writes": true,
+  "note": "The protected szl-forge main source c94e9218 was published by the governed publisher and independently read back from the live model Space. The live verifier and post-publish contract job passed; /version gitSha, governed health, and the v3 inference path agree on c94e9218. The retired v1 compatibility route returns the deliberate 410 envelope. The foundation confirmation Space was not republished and remains attested at 65e5e4c0. Do not dispatch publish-model-inference-lab.yml only because main moved.",
   "spaces": [
     {
       "repo_id": "SZLHOLDINGS/szl-model-inference-lab",
       "source_dir": "spaces/szl-model-inference-lab",
-      "hub_revision": "65ce577230b740c3c39d5cf2f5755f32fa2b2f02",
+      "attested_source_revision": "c94e9218093e0815745cbd5dccaddea1797379a3",
+      "hub_revision": "675d3fb83f0e1b765eeed5374e17faee656ecc6a",
       "runtime_readback": {
         "url": "https://szlholdings-szl-model-inference-lab.hf.space/version",
         "field": "gitSha",
-        "revision": "65e5e4c043d104bc7c99e8c525c9c64308cb9e2d"
+        "revision": "c94e9218093e0815745cbd5dccaddea1797379a3"
       },
       "release_manifest": "spaces/szl-model-inference-lab/release.json",
-      "last_tree_commit": "34b793f176fadfc5bc5df066c4db7cf75728542f",
+      "last_tree_commit": "c94e9218093e0815745cbd5dccaddea1797379a3",
       "acceptance": [
-        "GET /version gitSha equals the GitHub SHA that was published.",
+        "GET /version gitSha equals the protected GitHub SHA that was published.",
         "Every source_files digest in release.json equals that commit's tree.",
-        "Publish the staged source only after the protected main merge completes.",
+        "The governed publisher completed and its live verifier passed.",
+        "GET /api/v2/governed-health is READY and POST /api/v3/governed-infer returns the governed v3 schema.",
+        "POST /v1/chat/completions returns HTTP 410 with LEGACY_COMPATIBILITY_ROUTE_RETIRED.",
         "Do not dispatch publish-model-inference-lab.yml only because main moved."
       ]
     },
     {
       "repo_id": "SZLHOLDINGS/szl-foundation-confirmation",
       "source_dir": "spaces/szl-foundation-confirmation",
+      "attested_source_revision": "65e5e4c043d104bc7c99e8c525c9c64308cb9e2d",
       "hub_revision": "bee8f079769118a26b1aa83508df639dd6b45e89",
       "runtime_readback": {
         "url": "https://szlholdings-szl-foundation-confirmation.hf.space/api/build-info",
@@ -40,9 +43,9 @@
       "archive_bytes": 2893790,
       "last_tree_commit": "93766af9d03b63fce8cde05376801b65f61fe2ae",
       "acceptance": [
-        "GET /api/build-info build.revision equals the GitHub SHA that was published.",
+        "GET /api/build-info build.revision equals the last GitHub SHA published for this Space.",
         "build.archive_sha256 equals the LFS oid 869e318dd5f328205dd181ee836ef267bd2ae278f6430a9e8ddc661fbc689d03.",
-        "Publish the staged source only after the protected main merge completes.",
+        "The foundation confirmation Space remains unchanged because this release did not republish it.",
         "Do not dispatch foundation-runtime.yml publish only because main moved."
       ]
     }
