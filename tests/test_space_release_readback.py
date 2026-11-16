@@ -38,22 +38,28 @@ def document() -> dict:
 
 def test_later_main_does_not_change_the_attested_space_trees():
     record = document()
-    assert record["hf_writes"] is False
+    state = record.get("record_state")
+    assert state in {"PENDING_DEPLOYMENT", "LIVE_READBACK"}
+    if state == "PENDING_DEPLOYMENT":
+        assert record["hf_writes"] is False
+    else:
+        assert record["hf_writes"] is True
     attested = record["attested_source_revision"]
     main = record["observed_main"]
     fetch(attested)
     fetch(main)
-    pending = record.get("record_state") == "PENDING_DEPLOYMENT"
+    pending = state == "PENDING_DEPLOYMENT"
     previous = record.get("previous_attested_source_revision")
     if pending:
         assert previous
     for space in record["spaces"]:
         runtime_revision = space["runtime_readback"]["revision"]
+        expected_runtime_revision = space.get("attested_source_revision", attested)
         if pending:
             assert runtime_revision == previous
             assert "publish" in " ".join(space["acceptance"]).lower()
         else:
-            assert runtime_revision == attested
+            assert runtime_revision == expected_runtime_revision
         for revision in (main, "HEAD"):
             names = _git("diff", "--name-only", attested, revision, "--", space["source_dir"])
             assert names == b""
