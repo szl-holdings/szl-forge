@@ -145,14 +145,15 @@ Anatomy routes remain separate.
 - `/api/v1/identity` exposes the immutable artifact, runtime limits, source release
   marker, and receipt boundary. Source checksums establish internal bundle
   consistency only; they are not external authorship evidence.
-- `GET /v1/models` and `POST /v1/chat/completions` provide a deliberately small
-  OpenAI-compatible subset. Chat is non-streaming, one choice, tool-free, and
-  deterministic. Requests using streaming, tools, `n > 1`, nonzero temperature,
-  or `top_p != 1` are rejected rather than silently changed.
-- Chat accepts at most 12 string-only `system`/`user`/`assistant` messages whose
-  combined content is at most 1,200 characters. The exact rendered ChatML is
-  tokenized and must remain within the same 800-token prompt budget.
-- Prompts are not intentionally persisted by this source.
+- `GET /v1/models` remains a read-only model catalog. The legacy
+  `POST /v1/chat/completions` route is retired with HTTP 410 because it cannot
+  provide the governed Nemo, evidence, and restraint checks. Use
+  `POST /api/v3/governed-infer` for public inference; the retirement response
+  names that successor and never invokes the model runtime.
+- The governed endpoint accepts a bounded string prompt and bounded output
+  request. Nemo checks the request before generation and validates the public
+  result, citations, and evidence handles after generation.
+- Raw prompts and model outputs are not intentionally persisted by this source.
 - `llama-cpp-python` currently requires DiskCache, and this release pins
   `diskcache==5.6.3`, whose `CVE-2025-69872` unsafe-pickle advisory has no
   patched release. This runtime
@@ -167,58 +168,42 @@ continuity**, not independent ownership or authorship evidence. Those receipts d
 GGUF quantization, this Space's source, runtime outputs, independent benchmarking,
 or safety certification.
 
-## Bounded OpenAI-compatible API
+## Governed inference API
 
-The public compatibility base URL is
-`https://szlholdings-szl-model-inference-lab.hf.space/v1`. The only advertised
-model ID is the immutable
-`SZLHOLDINGS/SZL-Khipu-1.5B-GGUF@67d60ec577730747055491640cfb91fc4a4b5d25`.
-The machine-readable contract is available at
-`/.well-known/szl-inference-contract.json`.
+The public governed endpoint is
+`https://szlholdings-szl-model-inference-lab.hf.space/api/v3/governed-infer`.
+The machine-readable contracts are available at
+`/.well-known/szl-governed-inference-contract.json` and
+`/.well-known/szl-inference-contract.json`. The read-only model catalog remains
+available at `/v1/models`.
 
-This application does not require authentication. If an OpenAI client requires
-an API-key string, use a literal dummy such as `not-a-secret`. **Do not send a
-real Hugging Face token, OpenAI key, or any other credential.** This is a public,
-best-effort demonstration with no provider SLA. Do not submit secrets, regulated
-data, personal data, or other sensitive prompts. The source does not intentionally
-persist prompts or execution records; platform or network logging outside this
+This application does not require authentication. **Do not send a real Hugging
+Face token, OpenAI key, or any other credential.** This is a public, best-effort
+demonstration with no provider SLA. Do not submit secrets, regulated data,
+personal data, or other sensitive prompts. The source does not intentionally
+persist raw prompts or model outputs; platform or network logging outside this
 source is not asserted.
 
 Example request:
 
 ```bash
-curl https://szlholdings-szl-model-inference-lab.hf.space/v1/chat/completions \
+curl https://szlholdings-szl-model-inference-lab.hf.space/api/v3/governed-infer \
   -H "content-type: application/json" \
-  -H "authorization: Bearer not-a-secret" \
-  -d '{"model":"SZLHOLDINGS/SZL-Khipu-1.5B-GGUF@67d60ec577730747055491640cfb91fc4a4b5d25","messages":[{"role":"user","content":"Explain one limit of cryptographic receipts."}],"max_tokens":24,"stream":false}'
+  -d '{"prompt":"State one limit of a cryptographic receipt.","max_new_tokens":24,"k":3}'
 ```
 
-Each successful chat response contains standard `chat.completion`, `choices`,
-and `usage` fields plus a namespaced `szl_provenance.execution_record`. That
-record contains SHA-256 hashes of the canonical request and output, exact
-model/source identifiers, tokenizer-derived usage counts, termination state,
-timestamp, and request ID. It deliberately contains neither prompt nor output text. Its
-`record_sha256` is repeated in `X-SZL-Execution-Record-SHA256`.
+A successful response uses the
+`szl.forge.public-governed-inference/v3` schema. It reports the proposal state,
+authority boundary, model identity, Nemo pre/post decisions, claims and
+citation hashes, and evidence handles. A public proposal does not grant
+execution authority or imply that an unsigned runtime output is an attestation.
+The live verifier checks the response without retaining the prompt or generated
+text.
 
-The record is **UNSIGNED** and explicitly says authenticity is not established.
-It is content-addressed for hash recomputation and self-consistency only. A
-separately retained expected hash can reveal later modification, but the record
-does not reproduce an execution or resist an attacker who replaces both record
-and hash. It is not a signature, attestation, native Hugging Face provider
-mapping, or SLA. Recompute its hash without third-party dependencies:
-
-```bash
-python verify_execution_record.py response.json
-python verify_execution_record.py response.json --request request.json
-```
-
-With the full response, the helper independently recomputes both the record and
-output hashes. Supplying the original request additionally normalizes the bounded
-request subset and checks its canonical SHA-256. It rejects unsupported request
-fields, binds the outer response ID, timestamp, model, usage, and finish reason to
-the record, and checks the fixed `UNSIGNED` release semantics. Hash and semantic
-agreement still establish consistency only, not identity or authenticity; anyone
-can construct a new internally consistent unsigned record.
+The former `POST /v1/chat/completions` route returns HTTP 410 with
+`LEGACY_COMPATIBILITY_ROUTE_RETIRED` and points clients to the governed
+successor. It is retained only as an explicit retirement response so an
+OpenAI-compatible client cannot silently reach an ungoverned generation path.
 
 ## Attribution and licenses
 

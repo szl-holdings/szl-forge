@@ -616,6 +616,29 @@ def verify_retired_public_post(
     )
 
 
+def verify_legacy_compatible_route(
+    status: int, result: dict[str, Any], headers: dict[str, str]
+) -> None:
+    """The ungoverned compatibility path must remain an explicit retirement."""
+    require(status == 410, "legacy compatibility route was not retired")
+    require(
+        result
+        == {
+            "schema": "szl.model-inference-lab.legacy-chat-retired/v1",
+            "state": "BLOCKED",
+            "reason_code": "LEGACY_COMPATIBILITY_ROUTE_RETIRED",
+            "successor": "/api/v3/governed-infer",
+        },
+        "legacy compatibility retirement body drift",
+    )
+    require(
+        headers.get("x-szl-route-state") == "retired"
+        and headers.get("cache-control") == "no-store"
+        and headers.get("x-szl-output-signature") == "none",
+        "legacy compatibility retirement headers drift",
+    )
+
+
 def retired_post_probe_payload() -> dict[str, Any]:
     """The old v2 request model rejects this before its controller is invoked."""
     return {}
@@ -694,6 +717,18 @@ def main(argv: list[str] | None = None) -> int:
             timeout=30.0,
         )
         verify_retired_public_post(retired_status, retired_body, retired_headers)
+
+        legacy_status, legacy_body, legacy_headers = request_json(
+            f"{base_url}/v1/chat/completions",
+            payload={
+                "model": "legacy-route-probe",
+                "messages": [{"role": "user", "content": "retirement probe"}],
+            },
+            timeout=30.0,
+        )
+        verify_legacy_compatible_route(
+            legacy_status, legacy_body, legacy_headers
+        )
 
         last_status = 0
         inference: dict[str, Any] = {}

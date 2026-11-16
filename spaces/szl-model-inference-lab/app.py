@@ -630,12 +630,15 @@ def identity_payload() -> dict[str, Any]:
             "body_read_timeout_seconds": BODY_READ_TIMEOUT_SECONDS,
             "openai_compatible_subset": {
                 "models": "GET /v1/models",
-                "chat_completions": "POST /v1/chat/completions",
+                "chat_completions": {
+                    "method": "POST",
+                    "path": "/v1/chat/completions",
+                    "status_code": 410,
+                    "state": "RETIRED",
+                    "reason_code": "LEGACY_COMPATIBILITY_ROUTE_RETIRED",
+                    "successor": "/api/v3/governed-infer",
+                },
                 "model_id": OPENAI_MODEL_ID,
-                "streaming": False,
-                "tools": False,
-                "choices": 1,
-                "decoding": "greedy temperature=0, top_p=1",
             },
         },
         "receipt_boundary": {
@@ -984,11 +987,10 @@ def inference_contract() -> JSONResponse:
                 "chat_completions": {
                     "method": "POST",
                     "path": "/v1/chat/completions",
-                    "streaming": False,
-                    "tools": False,
-                    "choices": 1,
-                    "temperature": 0.0,
-                    "top_p": 1.0,
+                    "status_code": 410,
+                    "state": "RETIRED",
+                    "reason_code": "LEGACY_COMPATIBILITY_ROUTE_RETIRED",
+                    "successor": "/api/v3/governed-infer",
                 },
                 "model_id": OPENAI_MODEL_ID,
             },
@@ -1132,7 +1134,28 @@ def infer(request: InferenceRequest) -> dict[str, Any]:
     }
 
 
+def legacy_chat_retired_response() -> JSONResponse:
+    return JSONResponse(
+        {
+            "schema": "szl.model-inference-lab.legacy-chat-retired/v1",
+            "state": "BLOCKED",
+            "reason_code": "LEGACY_COMPATIBILITY_ROUTE_RETIRED",
+            "successor": "/api/v3/governed-infer",
+        },
+        status_code=410,
+        headers={
+            "cache-control": "no-store",
+            "x-szl-output-signature": "none",
+            "x-szl-route-state": "retired",
+        },
+    )
+
+
 @app.post("/v1/chat/completions")
+def openai_chat_completions_retired() -> JSONResponse:
+    return legacy_chat_retired_response()
+
+
 def openai_chat_completions(request: ChatCompletionRequest) -> JSONResponse:
     prompt = formatted_chat_messages(request.messages)
     result = run_bounded_completion(prompt, request.generation_limit)
