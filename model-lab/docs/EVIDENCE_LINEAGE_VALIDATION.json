@@ -1,0 +1,94 @@
+{
+  "schema": "szl.model-lab.evidence-lineage-local-validation/v1",
+  "observed_at": "2026-11-16T23:33:40.078708+00:00",
+  "base_revision": "3062802c9e7d24c0cb05b77652585d3c4154ae09",
+  "source_sha256": {
+    "model-lab/README.md": "d2362bfd56bdd2f041e14450f096822d36dbc75aead1dcc0f6f0118c942fee4d",
+    "model-lab/src/szl_model_lab/app.py": "17d0bab8312d5141b47bbeae5dd857428a1cc8d80db5c98461f3784c4ec5dcec",
+    "model-lab/src/szl_model_lab/blueprints.py": "a134c6f400626f7eb86a13d74ce1be6bbd31190903346fd248819d47fb7a6047",
+    "model-lab/src/szl_model_lab/templates/index.html": "076006b6e9b2e591251c22fc316421cf51472c91cf618767ee2f8389550c3f62",
+    "model-lab/docs/EVIDENCE_LINEAGE.md": "564c236e99da4b683df2892df734b5f7c4e920087670704e66f29c393f33103c",
+    "model-lab/src/szl_model_lab/evidence_view.py": "8baa4cca21364fa5533d2ab81c4b377d4d16523b7878bda24a5cc4816909bb4d",
+    "model-lab/src/szl_model_lab/evidence_web.py": "d9e7596d351fe5d3deec132e4cd28722f68624aa0334176f9c69733b19798f1c",
+    "model-lab/src/szl_model_lab/templates/evidence.html": "6280e758893082bfbc5d00f8c3e96330b2c08ccf1f5d818ec9fc6599859d0c0c",
+    "model-lab/tests/test_evidence_lineage.py": "e9a066b2b03490fce70524e48d78afaedbb8bf9cb71a297af2bc1222cca8d73c"
+  },
+  "full_model_lab": {
+    "passed_parent_tests": 453,
+    "passed_subtests": 14,
+    "skipped": 4,
+    "failed": 0,
+    "skip_reason": "Windows symlink creation privilege unavailable; capable CI remains required",
+    "local_dependency_environment": "existing installed packages, not CI-pinned CPU environment",
+    "scope": "includes existing synthetic CPU training fixtures; no estate model training or provider jobs"
+  },
+  "environment": {
+    "python": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+    "username_retained_for_windows_getpass": true,
+    "temporary_directory": "task-owned isolated",
+    "gpu_visible": false,
+    "pynvml_deprecation_filtered_for_cli_json": true,
+    "test_or_production_source_weakened": false,
+    "full_suite_exit": 0
+  },
+  "browser": {
+    "scope": "installed Edge, real loopback HTTP, historical public snapshot",
+    "snapshot_sha256": "482edb5c6bba8a360b6801a8d27b260b3e744caf396c181f54f8c9fe7446f5c5",
+    "contexts": [
+      {
+        "width": 375,
+        "result": "PASS",
+        "overflow": false,
+        "javascript_errors": [],
+        "external_requests": [],
+        "model_selection": true,
+        "what_if": true,
+        "reset": true
+      },
+      {
+        "width": 768,
+        "result": "PASS",
+        "overflow": false,
+        "javascript_errors": [],
+        "external_requests": [],
+        "model_selection": true,
+        "what_if": true,
+        "reset": true
+      },
+      {
+        "width": 1440,
+        "result": "PASS",
+        "overflow": false,
+        "javascript_errors": [],
+        "external_requests": [],
+        "model_selection": true,
+        "what_if": true,
+        "reset": true
+      }
+    ],
+    "external_requests": [],
+    "model_inference_performed": false,
+    "production_qualification": false,
+    "result": "PASS",
+    "unauthenticated_refused": true,
+    "tampered_snapshot_refused": true,
+    "baseline_preserved": true,
+    "user_browser_tabs_touched": false,
+    "local_server_stopped": true
+  },
+  "wheel": {
+    "wheel": "szl_model_lab-0.1.0-py3-none-any.whl",
+    "sha256": "be6256b4214160d52477b96603492a3c3a4864e62be0471ad81542be73d51fe5",
+    "installed_api_ui": "PASS",
+    "dependency_install_performed": false,
+    "global_environment_changed": false,
+    "source_of_snapshot": "archived public 107-repository document; not current census"
+  },
+  "baseline": "four missing-route integration tests failed before wiring; original logs retained",
+  "source_closure": "full-suite import-closure failure fixed by including new modules and template in the existing code-only blueprint manifest",
+  "native_review": false,
+  "hosted_ci_verified": false,
+  "production_deployed": false,
+  "independent_qualification": false,
+  "mathematical_claims_changed": false
+}
