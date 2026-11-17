@@ -1,0 +1,25 @@
+{
+  "observed_at": "2026-11-16T23:19:23.460862+00:00",
+  "selector_sha256": "33ca8fc8b459023ccdccb8da2a96eb79b0849b018b33bd7df2c654c51cce833e",
+  "unit_tests": {
+    "passed": 13,
+    "command": "python -m unittest discover -s tests -p test_salad_eval_selection.py -v"
+  },
+  "source_hashes_and_counts_verified": true,
+  "independent_selection_digest_matches": true,
+  "ordered_raw_line_hashes_sha256": "bb891b82b47bb2a8a03b5d334863d30e13b26ead6eb82870449b28551c677dcc",
+  "materialization_verified": {
+    "bytes": 9087347,
+    "rows": 2102,
+    "sha256": "c70a5d868b1435be2566dae6562d6061710afef2c49beb7d9efa1fe3c7593693"
+  },
+  "tokenizer_equivalence": {
+    "omitted_and_empty_tool_calls_text_equal": true,
+    "token_ids_equal": true,
+    "base_revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+    "chat_template_sha256": "a55ee1b1660128b7098723e0abcd92caa0788061051c62d51cbe87d9cf1974d8"
+  },
+  "job_launches": 0,
+  "raw_data_tracked": false,
+  "production_qualified": false
+}

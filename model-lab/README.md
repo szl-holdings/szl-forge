@@ -55,6 +55,18 @@ weights are unavailable, never replaced by random-weight inference. `/api/score/
 checks exact features and normalization and returns explicitly uncalibrated advice.
 No web route trains, executes commands, publishes, merges or creates jobs.
 
+## Evidence lineage
+
+`/evidence` and `/api/evidence-lineage` share one authenticated backend projection.
+Supply the owner-controlled `SZL_LAB_EVIDENCE_SNAPSHOT` file and its external
+`SZL_LAB_EVIDENCE_SNAPSHOT_SHA256` to inspect the existing public coverage contract.
+The optional what-if query shows documentation projections that would need recheck
+if an input changed; it changes no baseline, model, qualification or permission.
+Missing or invalid evidence returns 503 with null inventory, not a passing score.
+See [EVIDENCE_LINEAGE.md](docs/EVIDENCE_LINEAGE.md) for the trust boundary, tests,
+research basis and code-only export closure. No additional service or dependency
+is installed, and the existing runtime and publisher controls remain in force.
+
 ## Training remains an explicit later owner operation
 
 Read `docs/DATA_CONTRACT.md` and validate data first. The CLI requires explicit
