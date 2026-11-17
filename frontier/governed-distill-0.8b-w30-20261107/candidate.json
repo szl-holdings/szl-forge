@@ -12,7 +12,7 @@
   "teacher_decoding": "copy_constrained (tokens restricted to the source context)",
   "corpus": "SZLHOLDINGS/governed-distill-4b-sft-v3-topup",
   "corpus_examples": 46,
-  "corpus_acceptance": "21.9% (46/210); the 20.7% pilot reference is unavailable for replay and is held out under the protocol",
+    "corpus_acceptance": "21.9% (46/210), historical teacher corpus acceptance; the 31/150 pilot records have been recovered, and the pilot and extension are not independent runs",
   "gate": "szl.distill.gate/v1 (fail-closed grounding gate), original version as at szl-forge ab0f1dd09adaf2196aedb550f8c2822cb42d39f6; the later gate revisions on main were not used for this corpus"
  },
  "training_receipt": {
@@ -36,11 +36,56 @@
   "verdict": "FAIL",
   "receipt": "SZLHOLDINGS/model-eval-receipts/governed-distill-w30-student-eval-20261107.json"
  },
- "honest_note": "First model trained ONLY on gate-accepted, copy-constrained teacher output. The student does NOT inherit grounding in free generation (1/6 abstained): the confabulation floor is a DECODING property. Published with the FAIL verbatim in the Hub card. NOT promoted, NOT publication-eligible, NOT for biological validation.",
+  "honest_note": "Candidate trained on gate-accepted, copy-constrained teacher output. On six recorded free-generation probes, the student abstained on one and answered five: FAIL. This observation does not establish a universal explanation of confabulation or prove that grounding transfers to free generation. NOT promoted, NOT publication-eligible, NOT for biological validation.",
+  "provenance_reconciliation": {
+    "measurement_class": "historical_teacher_corpus_acceptance",
+    "source_dataset": "SZLHOLDINGS/frontier-54-runs",
+    "source_revision": "d5163816a9ad6dc58dfac462be11a4d203204347",
+    "recovery_record": "https://huggingface.co/datasets/SZLHOLDINGS/frontier-54-runs/resolve/d5163816a9ad6dc58dfac462be11a4d203204347/collaboration/vgl-protocol-1.3-percent-trace-recovery-20261114.json",
+    "recovery_record_embedded_sha256": "18192b33d8ef63419b7a18c7812658154cd81ac841d8049add079446f545b985",
+    "superseded_record": "https://huggingface.co/datasets/SZLHOLDINGS/frontier-54-runs/resolve/3e5587156b1296d86f48c2fdb5facc24228747cb/collaboration/vgl-protocol-1.3-percent-trace.json",
+    "superseded_record_embedded_sha256": "d636b4dcbd178eb6b9aeb1411846c3be64f9346416b9a5b64d4b01dce660f5f9",
+    "superseded_claim": "The underlying 1.3% prompt-rule and 20.7% pilot records are unavailable",
+    "condition_mapping_source": "https://github.com/szl-holdings/szl-forge/blob/3062802c9e7d24c0cb05b77652585d3c4154ae09/training/distill/conditions/README.md",
+    "condition_mapping_basis": "The raw receipts contain counts, timestamps and per-item verdicts but no condition labels; labels follow the committed condition documentation and run-sequence timestamps",
+    "conditions": [
+      {
+        "condition": "no_instruction_baseline",
+        "accepted": 4,
+        "offered": 150,
+        "receipt": "receipts/distill-gate-receipt-2026-11-06T183445Z.json"
+      },
+      {
+        "condition": "prompt_rule_unconstrained_decoding",
+        "accepted": 2,
+        "offered": 150,
+        "receipt": "receipts/distill-gate-receipt-2026-11-07T115228Z.json"
+      },
+      {
+        "condition": "copy_constrained_pilot",
+        "accepted": 31,
+        "offered": 150,
+        "receipt": "receipts/distill-gate-receipt-2026-11-07T203231Z.json"
+      },
+      {
+        "condition": "copy_constrained_extension",
+        "accepted": 46,
+        "offered": 210,
+        "receipt": "receipts/distill-gate-receipt-2026-11-07T212651Z.json"
+      }
+    ],
+    "prompt_rule_minus_baseline_percentage_points_rounded": -1.33,
+    "pilot_extension_dependency": "The first 150 prompt-index/verdict entries match; the additional 60 contribute 15 acceptances. Do not pool the pilot and extension or count them as independent runs",
+    "interpretation": "Recovery corrects provenance; it does not establish a fresh replay, independent replication, statistical superiority, student capability, protocol acceptance, or a frozen result"
+  },
  "proof_boundaries": [
   "Passing or failing synthetic probes says nothing about biological validity",
   "A recipe does not prove a run completed or that its output matches a published model",
   "The corpus acceptance rate is a measurement, not a quality score",
-  "The earlier 1.3% prompt-assisted and 20.7% pilot references are unavailable for replay and excluded under the protocol"
+    "The earlier unavailable-record claim is superseded by the pinned recovery record; historical receipts remain unchanged",
+    "Condition labels are reconstructed from committed methods and timestamps, not recorded in the raw receipts",
+    "The archived prompt-rule and copy-constrained scripts retain the source reference answer in teacher context; under copy-constrained decoding it is in the copy-allowed token set. These counts do not establish generalization",
+    "Archived script defaults are not proven invocation arguments because invocation arguments were not logged",
+    "The pilot and extension are dependent observations, not independent replication"
  ]
 }
