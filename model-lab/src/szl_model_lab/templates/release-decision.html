@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark"><title>Release decision · SZL Model Lab</title>
+<link rel="stylesheet" href="/szl/szl-design-system.css"><link rel="stylesheet" href="/szl/szl-console.css">
+<style>
+main{max-width:1150px;margin:auto;padding:clamp(18px,4vw,50px)}
+header{border-bottom:1px solid var(--hairline);padding-bottom:24px;margin-bottom:24px}
+nav{display:flex;flex-wrap:wrap;gap:16px;margin:20px 0}nav a,.actions a{min-height:44px;display:inline-flex;align-items:center;overflow-wrap:anywhere}
+h1{font-size:clamp(2rem,5vw,3.4rem);line-height:1.1}h2{margin-top:0}h3{margin:14px 0}
+.lead,.meta{color:var(--text-sub);line-height:1.6}.meta{font-size:.9rem}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.card,.notice{border:1px solid var(--hairline);border-radius:var(--radius-lg);padding:20px;background:var(--bg-deep);min-width:0}
+.rail{border-left:3px solid var(--text)}.state{display:inline-block;border:1px solid var(--border);border-radius:6px;padding:5px 9px;margin:8px 0}
+code{font-family:ui-monospace,monospace;overflow-wrap:anywhere;word-break:break-word}dl{display:grid;grid-template-columns:minmax(100px,1fr) minmax(0,2fr);gap:8px}
+dd{margin:0;overflow-wrap:anywhere}dt{font-weight:600}
+.actions{display:flex;flex-wrap:wrap;gap:16px;margin:12px 0}li{margin:8px 0;overflow-wrap:anywhere}
+.banner{border-left:4px solid var(--text);padding:16px;background:var(--bg-deep);margin:24px 0}
+footer{border-top:1px solid var(--hairline);padding-top:20px;margin-top:30px}
+:focus-visible{outline:3px solid currentColor;outline-offset:4px}
+@media(max-width:750px){.grid{grid-template-columns:minmax(0,1fr)}dl{grid-template-columns:minmax(0,1fr)}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media(prefers-contrast:more){.lead,.meta{color:var(--text)}.card,.notice{border-color:var(--text)}}
+</style></head><body><a href="#decision">Skip to release decision</a><main id="decision">
+<header><span class="eyebrow">SZL Holdings / Forge / Release decision</span><h1>Trace the release.<br>Never infer permission.</h1>
+<p class="lead">This authenticated research view compares an owner-supplied source, Space, gateway and evidence-receipt identity snapshot. It does not query providers, verify signatures, authorize execution, deploy code or release a model.</p>
+<nav aria-label="Workbench"><a href="/">Model tracks</a><a href="/evidence">Evidence lineage</a><a href="/pool">Pool</a><a href="/api/release-decision">Same report as JSON</a></nav></header>
+<p class="state" role="status">{{ decision.state }}</p>
+{% if decision.counts is none %}
+<section class="notice" aria-labelledby="missing"><h2 id="missing">Release input unavailable</h2>
+<p>Configure an owner-controlled local snapshot and an independently supplied expected digest. Missing input is unknown, not an empty or passing result. No filesystem paths are disclosed.</p></section>
+{% else %}
+<section class="banner" aria-label="Admission verdict"><strong>ADMISSION: HOLD</strong><p>This is an identity comparison of supplied values, not independent provider readback. Even four supplied matches do not confer execution, publication, or production authorization.</p></section>
+<p><strong>Release ID:</strong> <code>{{ decision.release_id }}</code><br><span class="meta">Snapshot date: {{ decision.snapshot_observed_at }} · local clock age: {{ decision.snapshot_age_seconds }} seconds · supplied bytes SHA-256: <code>{{ decision.snapshot_sha256 }}</code></span></p>
+<p class="meta">Supplied matches: {{ decision.counts.reported_matching }}/{{ decision.counts.rails_total }} · Conflicts: {{ decision.counts.reported_conflicting }} · Missing: {{ decision.counts.missing }}.</p>
+{% if decision.hypothetical %}<aside class="banner" aria-label="What-if simulation"><strong>WHAT-IF ONLY</strong><p>Recheck simulated for <code>{{ decision.invalidated_rail }}</code>. The baseline evidence and actual release have not changed.</p><a href="/release-decision">Return to untouched baseline</a></aside>{% endif %}
+<div class="grid" aria-label="Four release identity rails">
+{% for rail in decision.rails %}
+<section class="card rail" aria-label="{{ rail.name }} identity"><span class="eyebrow">{{ rail.name }}</span><h2>{{ rail.name|capitalize }}</h2>
+<p class="state">{{ rail.state }}</p><p class="meta">Baseline: {{ rail.baseline_state }}<br>Comparison identity: <code>{{ rail.identity_subject_sha256 }}</code></p>
+<h3>Declared expected identity</h3><dl>{% for key, value in rail.expected.items() %}<dt>{{ key }}</dt><dd><code>{{ value }}</code></dd>{% endfor %}</dl>
+<h3>Reported observed identity</h3>{% if rail.observed is none %}<p class="meta">Not supplied; no live observation implied.</p>{% else %}
+<dl>{% for key, value in rail.observed.items() %}<dt>{{ key }}</dt><dd><code>{{ value }}</code></dd>{% endfor %}</dl>{% endif %}
+<div class="actions"><a href="/release-decision?invalidate={{ rail.name }}">What if this rail required recheck?</a></div></section>
+{% endfor %}</div>
+<section class="notice" aria-labelledby="hold"><h2 id="hold">Open admission requirements</h2>
+<ul>{% for reason in decision.blocking_reasons %}<li><code>{{ reason }}</code></li>{% endfor %}</ul>
+<p class="meta">Snapshot equality is only internal consistency. A trusted independent observer must verify actual bytes, runtime boot and route, signed or explicitly unsigned receipt status, named approval authority, rollback evidence and an action-bound recheck.</p></section>
+{% endif %}
+<footer class="meta">Local authenticated workbench. No write, rollback, deployment, model promotion or collaborator-data access. Execution authority: false. Publication authority: false. Production readiness: not established.</footer>
+</main></body></html>
