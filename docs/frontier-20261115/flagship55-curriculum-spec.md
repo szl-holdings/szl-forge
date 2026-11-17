@@ -12,7 +12,7 @@
 
 1. Retain the flagship54 base mix (owner-pinned).
 2. Add [SZLHOLDINGS/lean-math-sft-v1](https://huggingface.co/datasets/SZLHOLDINGS/lean-math-sft-v1) (2,126 sorry-free blocks; train_file_sha256 3e02f8f9…) — sorry-free = kernel-checked ground truth at corpus revision e80aebb2.
-3. Add [SZLHOLDINGS/axiom-invariant-corpus-v2](https://huggingface.co/datasets/SZLHOLDINGS/axiom-invariant-corpus-v2) (94 verbatim axiom/invariant declarations from lutar-lean @ c2ca813; jsonl sha256 325ba8d6…) as statement-context data — axioms/invariants appear as statements, not as proven claims. sorry-bearing invariant decls excluded from SFT tier; axiom tier verbatim/unconditional)
+3. Add [SZLHOLDINGS/axiom-invariant-corpus-v2](https://huggingface.co/datasets/SZLHOLDINGS/axiom-invariant-corpus-v2) (94 verbatim axiom/invariant declarations from lutar-lean @ c2ca813; jsonl sha256 c34c9f24…) as statement-context data — axioms/invariants appear as statements, not as proven claims. sorry-bearing invariant decls excluded from SFT tier; axiom tier verbatim/unconditional
 4. Keep the receipt-of-doubt unanswerables paired with the Lean data so abstention trains against the same referee (battery failure mode).
 5. Receipts: every run publishes a training_report + eval battery receipt to frontier-54-runs (or successor), same as wave-4.
 
