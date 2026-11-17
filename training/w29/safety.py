@@ -59,6 +59,7 @@ RUNNABLE_REPOS = {
     "SZLHOLDINGS/willay-r1-candidate": "willay-r1",
     "SZLHOLDINGS/willay-r2-candidate": "willay-r2",
     "SZLHOLDINGS/forge-v3": "forge-v3",
+    "SZLHOLDINGS/forge-v3-candidate": "forge-v3-candidate",
 }
 
 

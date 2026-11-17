@@ -1,0 +1,35 @@
+{
+  "schema": "szl.forge.wave-config/v1",
+  "kind": "sft",
+  "wave": "w29",
+  "name": "forge-v3-candidate",
+  "target_repo": "SZLHOLDINGS/forge-v3-candidate",
+  "method": "qlora",
+  "student": {
+    "id": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-sft-v3",
+    "revision": "60d3d5eeff7e1e8505f3df8177d35fada13d79e5"
+  },
+  "base_model": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-sft-v3",
+  "dataset": {
+    "id": "SZLHOLDINGS/doctrine-corpus-v2",
+    "revision": "76c593af8e2cffa8c8031023d003cee3b3e26fe2",
+    "split": "train"
+  },
+  "datasets": [
+    "SZLHOLDINGS/doctrine-corpus-v2"
+  ],
+  "train_jsonl": "forge-v3-candidate/train.jsonl",
+  "holdout_jsonl": "forge-v3-candidate/holdout.jsonl",
+  "admission": "forge-v3-candidate/admission.json",
+  "epochs": 3,
+  "lr": 0.0002,
+  "seqlen": 4096,
+  "batch_size": 2,
+  "grad_accum": 8,
+  "pack": true,
+  "seed": 3407,
+  "local_only": true,
+  "out": "./out/forge-v3-candidate",
+  "log_repo_id": "SZLHOLDINGS/wave-logs",
+  "notes": "Non-destructive launch path for the forge-v3 w29 candidate: target repo forge-v3-candidate (new), NOT SZLHOLDINGS/forge-v3 which carries existing weights (0.9B, 296 downloads, measured 2026-11-17). Owner directive 2026-11-17."
+}

@@ -62,3 +62,6 @@ a live non-LLM repo.
 - No promotion, no publication_eligible, no LIVE label from a training run alone.
 - Dataset choices are PROPOSALS pending collaborator agreement where applicable.
 - Skip and run decisions are the `safety.py` policy above. The README names the same repos.
+## 2026-11-17 addition - forge-v3-candidate (launch-cleared, non-destructive)
+
+Measured 2026-11-17: `SZLHOLDINGS/forge-v3` carries existing weights (0.9B model.safetensors, 296 downloads), so a merged push to that target would overwrite a downloaded repo. `forge-v3-candidate.json` is the contract-cleared launch document for the same curriculum, targeting the NEW repo `SZLHOLDINGS/forge-v3-candidate`: launch_contract GATES_SATISFIED (student pinned at 60d3d5eeff7e1e8505f3df8177d35fada13d79e5, dataset doctrine-corpus-v2 pinned at 76c593af8e2cffa8c8031023d003cee3b3e26fe2, seeded 90/10 train/holdout split 213/23 rows, corpus sha ef8feffee2d07ec0391be93b7ae7e718a2a92c36ebcdd3bda115d2e177961e38, operator admission receipt cc-by-4.0). local_only=true; publication goes through model-publish-gate.yml only. Overwriting `SZLHOLDINGS/forge-v3` itself stays owner-gated.
