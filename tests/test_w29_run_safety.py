@@ -58,7 +58,7 @@ def test_catalog_covers_every_protected_repo_and_only_allowlisted_runs():
     safety = _safety()
     assert REQUIRED_PROTECTED <= set(safety.PROTECTED_REPOS)
     configs = _configs()
-    assert len(configs) == 19
+    assert len(configs) == 20
     actions = {}
     targets = set()
     for _path, config in configs:
@@ -68,7 +68,7 @@ def test_catalog_covers_every_protected_repo_and_only_allowlisted_runs():
         targets.add(config["target_repo"])
     assert targets == set(safety.PROTECTED_REPOS) | set(safety.WITHHELD_SFT_REPOS) | set(safety.RUNNABLE_REPOS)
     runnable = {name for name, (action, _target, _method) in actions.items() if action == "RUN"}
-    assert runnable == {"willay-r1", "willay-r2", "forge-v3"}
+    assert runnable == {"willay-r1", "willay-r2", "forge-v3", "forge-v3-candidate"}
     for name in ("receiptagent-nano", "tinykhipu-nano", "moons-nano", "miniembed-nano", "yarqa-attn"):
         action, target, method = actions[name]
         assert action == "SKIP"
@@ -159,9 +159,9 @@ def test_plan_skips_numpy_fixtures_and_does_not_start_a_trainer(tmp_path: Path):
     assert "=== w29:" not in result.stdout
     for name in ("receiptagent-nano", "tinykhipu-nano", "moons-nano", "yarqa-attn", "qantu", "khipu-abstain-r3"):
         assert f"SKIP {name} " in result.stdout
-    for name in ("willay-r1", "willay-r2", "forge-v3"):
+    for name in ("willay-r1", "willay-r2", "forge-v3", "forge-v3-candidate"):
         assert f"PLAN {name} " in result.stdout
-    assert result.stdout.count("PLAN ") == 3
+    assert result.stdout.count("PLAN ") == 4
 
 
 def test_runner_refuses_qlora_protected_target_before_the_trainer(tmp_path: Path):
