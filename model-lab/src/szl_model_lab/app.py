@@ -43,6 +43,8 @@ class Settings:
     corpus_report_sha256: str | None = None
     evidence_snapshot: Path | None = None
     evidence_snapshot_sha256: str | None = None
+    release_snapshot: Path | None = None
+    release_snapshot_sha256: str | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.access_token, str) or len(self.access_token) < 32:
@@ -78,6 +80,15 @@ class Settings:
             if not isinstance(self.evidence_snapshot_sha256, str) or not re.fullmatch(r"[0-9a-f]{64}", self.evidence_snapshot_sha256):
                 raise ValueError("invalid_evidence_snapshot_digest")
 
+        if (self.release_snapshot is None) != (self.release_snapshot_sha256 is None):
+            raise ValueError("release_snapshot_and_external_digest_required_together")
+        if self.release_snapshot is not None and not isinstance(self.release_snapshot, Path):
+            raise ValueError("release_snapshot_path_required")
+        if self.release_snapshot_sha256 is not None:
+            import re
+            if not isinstance(self.release_snapshot_sha256, str) or not re.fullmatch(r"[0-9a-f]{64}", self.release_snapshot_sha256):
+                raise ValueError("invalid_release_snapshot_digest")
+
     @classmethod
     def from_env(cls) -> "Settings":
         artifacts = {slug: Path(value) for slug in TRACKS
@@ -89,7 +100,9 @@ class Settings:
                    Path(corpus_path) if (corpus_path := os.environ.get("SZL_LAB_CORPUS_REPORT")) else None,
                    os.environ.get("SZL_LAB_CORPUS_REPORT_SHA256") or None,
                    Path(evidence_path) if (evidence_path := os.environ.get("SZL_LAB_EVIDENCE_SNAPSHOT")) else None,
-                   os.environ.get("SZL_LAB_EVIDENCE_SNAPSHOT_SHA256") or None)
+                   os.environ.get("SZL_LAB_EVIDENCE_SNAPSHOT_SHA256") or None,
+                   Path(release_path) if (release_path := os.environ.get("SZL_LAB_RELEASE_SNAPSHOT")) else None,
+                   os.environ.get("SZL_LAB_RELEASE_SNAPSHOT_SHA256") or None)
 
 class ScoreRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
@@ -270,4 +283,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     register_storage(app, authorize, env)
     from .evidence_web import register_evidence
     register_evidence(app, authorize, env, settings)
+    from .release_web import register_release_decision
+    register_release_decision(app, authorize, env, settings)
     return app

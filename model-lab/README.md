@@ -67,6 +67,17 @@ See [EVIDENCE_LINEAGE.md](docs/EVIDENCE_LINEAGE.md) for the trust boundary, test
 research basis and code-only export closure. No additional service or dependency
 is installed, and the existing runtime and publisher controls remain in force.
 
+## Release identity decision (HOLD-only)
+
+`/release-decision` and `/api/release-decision` share a single authenticated,
+read-only comparison of the source, Space, gateway, and receipt identities.
+Supply `SZL_LAB_RELEASE_SNAPSHOT` and `SZL_LAB_RELEASE_SNAPSHOT_SHA256` as an
+owner-controlled file and an externally pinned digest. The viewer never fetches
+provider state, verifies signatures, grants execution/publication authority, or
+qualifies a release. Incomplete or conflicting inputs remain visible as HOLD;
+what-if input invalidation is ephemeral. See
+[RELEASE_DECISION.md](docs/RELEASE_DECISION.md) for the exact schema and tests.
+
 ## Training remains an explicit later owner operation
 
 Read `docs/DATA_CONTRACT.md` and validate data first. The CLI requires explicit
