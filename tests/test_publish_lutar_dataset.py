@@ -138,6 +138,19 @@ class PublishLutarTests(unittest.TestCase):
             self.assertFalse(receipt.exists())
             self.assertEqual(hub.uploaded, 1)
 
+    def test_malformed_hub_revision_cannot_issue_receipt(self):
+        hub = FakeHub(sha="x" * 40)
+        fake_files = {name: name.encode() for name in p.BOUND_FILES}
+        with tempfile.TemporaryDirectory() as root:
+            receipt = Path(root) / "must-not-exist.json"
+            with patch.object(p, "build_bundle", return_value=(self.index(), fake_files)), \
+                 patch.object(p, "validate_bundle", side_effect=_stage_files):
+                with self.assertRaises(intake.IntakeHold):
+                    p.publish_private(producer_checkout=Path("."),
+                                      receipt_file=receipt, api=hub,
+                                      downloader=lambda **k: None)
+            self.assertFalse(receipt.exists())
+
     def test_unexpected_public_visibility_refused(self):
         hub = FakeHub(private=False)
         fake_files = {name: name.encode() for name in p.BOUND_FILES}

@@ -163,7 +163,8 @@ def publish_private(*, producer_checkout: Path, receipt_file: Path,
             commit_message="dataset: exact first-party Lutar A1-A5 review corpus",
         )
         revision = api.repo_info(repo_id=REPO_ID, repo_type=REPO_TYPE).sha
-        if not isinstance(revision, str) or len(revision) != 40:
+        if (not isinstance(revision, str)
+                or intake.HEX40.fullmatch(revision) is None):
             raise intake.IntakeHold("Hub immutable dataset revision unavailable")
         remote = api.repo_info(repo_id=REPO_ID, repo_type=REPO_TYPE)
         if remote.private is not True:
