@@ -43,3 +43,16 @@ The candidate manifest and receipt deliberately retain
 pins, an independent evaluation set, GPU authorization and the standard
 `launch_contract.py` remain prerequisites for fine-tuning. Do not convert a
 valid synthetic fixture into a claim of trained weights or deployed inference.
+
+
+## TRL SFTTrainer API compatibility
+
+The canonical SFT runner passes its tokenizer through TRL's
+`processing_class` parameter (consistent with the existing DPO runner),
+not the removed legacy `tokenizer` keyword. This was verified against
+the installed BETTERWITHAGE `trl 0.24.0` interface with
+`unsloth 2026.7.2`, and statically guarded by
+`tests/test_sft_trl_compat_contract.py`. The actual bound SFT
+GPU training path remains unexecuted by this source-only change; successful
+unit tests do not establish runtime training compatibility, model quality,
+rights admission, or model-publication permission.

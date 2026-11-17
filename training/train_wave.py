@@ -220,7 +220,7 @@ def _train_after_gates(decision: dict, config_path: Path) -> None:
 
     trainer = SFTTrainer(
         model=model,
-        tokenizer=tokenizer,
+        processing_class=tokenizer,
         train_dataset=data,
         args=SFTConfig(
             output_dir=str(args["out"]),
