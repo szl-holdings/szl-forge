@@ -33,6 +33,8 @@ SOURCE_FILES = (
     "src/szl_model_lab/pool_view.py",
     "src/szl_model_lab/corpus_view.py", "docs/CORPUS_VIEW.md",
     "src/szl_model_lab/evidence_view.py", "src/szl_model_lab/evidence_web.py",
+    "src/szl_model_lab/release_decision.py", "src/szl_model_lab/release_web.py",
+    "src/szl_model_lab/templates/release-decision.html", "docs/RELEASE_DECISION.md",
     "src/szl_model_lab/templates/evidence.html", "docs/EVIDENCE_LINEAGE.md",
     "src/szl_model_lab/app.py", "src/szl_model_lab/cli.py",
     "src/szl_model_lab/blueprints.py", "src/szl_model_lab/templates/index.html",
