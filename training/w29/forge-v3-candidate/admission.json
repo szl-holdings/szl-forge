@@ -1,0 +1,19 @@
+{
+  "schema": "szl.forge.training-admission/v1",
+  "rights": "ADMITTED_FOR_TRAINING",
+  "commercial_use": "ADMITTED",
+  "basis": "OPERATOR_ADMISSION_RECEIPT",
+  "license": "cc-by-4.0",
+  "dataset_id": "SZLHOLDINGS/doctrine-corpus-v2",
+  "revision": "76c593af8e2cffa8c8031023d003cee3b3e26fe2",
+  "split": "train",
+  "corpus_sha256": "ef8feffee2d07ec0391be93b7ae7e718a2a92c36ebcdd3bda115d2e177961e38",
+  "admitted_by": "stephenlutar2 (operator) via standing directive 2026-11-17: train the w29 collection / do all of it",
+  "admission_note": "estate-owned doctrine corpus; license is the dataset card license (cc-by-4.0); train/holdout carved deterministically (seed 3407, 90/10) from the pinned revision train.jsonl",
+  "upstream_file": "train.jsonl",
+  "upstream_file_sha256": "ce648d9d757992e0d5ac461f926a2a971403592c3dbc064a0381380786d24942",
+  "upstream_bytes": 269991,
+  "train_rows": 213,
+  "holdout_rows": 23,
+  "holdout_sha256": "ce3d0ca0983a42673b6b6405f8b3fd99806fc94e824cd05b11ebc8ae10cd778a"
+}
