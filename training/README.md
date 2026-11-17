@@ -25,3 +25,21 @@ Behavior:
 Datasets must provide `messages` or `conversations` fields compatible with the
 model's chat template.
 
+
+
+## Lutar A1–A5 — source-bound synthetic curriculum now available for review
+
+The immutable 160-train / 80-held-out Lutar arithmetic/chat curriculum from
+`lean-rlvr-proving-ground@b23ea5fe7e63d6b7402ce3a6f0a6aa5e1fa56b2c`
+can be **materialized into a new local Forge SFT review directory** using
+`training/lutar_axiom_intake.py`. See
+[`LUTAR_AXIOM_INTAKE.md`](./LUTAR_AXIOM_INTAKE.md) for exact source digests,
+nonuniform-weight and uniqueness negative controls, the numerical oracle,
+reproduction commands, and authority restrictions. The importer reuses this
+repository's actual SFT validator and never starts a training wave.
+
+The candidate manifest and receipt deliberately retain
+`training_authority=NONE`: rights admission, immutable Hub dataset/student
+pins, an independent evaluation set, GPU authorization and the standard
+`launch_contract.py` remain prerequisites for fine-tuning. Do not convert a
+valid synthetic fixture into a claim of trained weights or deployed inference.
