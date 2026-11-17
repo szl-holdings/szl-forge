@@ -99,3 +99,17 @@ cryptographic signature, or training permission**. Partial upload/auth errors
 require operator investigation; the program never silently retries a new
 revision or downgrades privacy. Do not distribute the card or modify
 the private repository's visibility without separate authorization.
+
+
+## Distinct from the existing Flagship55 axiom corpus
+
+The existing [Flagship55 curriculum specification](../docs/frontier-20261115/flagship55-curriculum-spec.md)
+already pins `SZLHOLDINGS/axiom-invariant-corpus-v2` (94 declaration
+records at Lutar source `c2ca813`), with a separate 93-row SFT mirror.
+That tier is **verbatim statement context** and stays in its own admission
+scope. This 160-row synthetic numerical A1–A5 exercise set is **additional**,
+not a replacement, alias, or approved Flagship55 training mixture. Do not
+count the two datasets together, claim one independent of the other, or
+change flagship training without its owner-controlled provenance/heldout
+and budget review. The private Hub publisher introduced here does not
+touch either existing dataset.
