@@ -71,3 +71,31 @@ kernel lane or an independent proof checker.
 introduced.** The review candidate is now located on Forge's real, already
 validated SFT input path, but remains barred from GPU execution until the
 remaining owner-controlled admissions are satisfied.
+
+## Optional private Hugging Face dataset publication
+
+The canonical, GitHub-sourced corpus can now be published through the
+**manual, one-shot** `training/publish_lutar_dataset.py` path. The publisher
+never moves source authority from GitHub and requires the immutable producer
+commit `b23ea5fe7e63d6b7402ce3a6f0a6aa5e1fa56b2c` to exist locally.
+
+```sh
+# Network-free source/holdout validation; no credential used.
+python3 -m training.publish_lutar_dataset \
+  --producer-checkout /path/to/lean-rlvr-proving-ground
+
+# Explicitly authorized PRIVATE dataset creation only, never public.
+python3 -m training.publish_lutar_dataset \
+  --producer-checkout /path/to/lean-rlvr-proving-ground \
+  --publish-private --receipt /path/to/a/new/local/publish-receipt.json
+```
+
+Target repo is fixed to `SZLHOLDINGS/lutar-axioms-sft-v1` (private).
+The publisher refuses to overwrite an existing dataset, validates the existing
+Forge SFT holdout contract, uploads all five versioned artifacts and then
+downloads every artifact at the exact returned Hub commit before issuing
+a receipt. The receipt is a **byte-parity witness, not an admission, a
+cryptographic signature, or training permission**. Partial upload/auth errors
+require operator investigation; the program never silently retries a new
+revision or downgrades privacy. Do not distribute the card or modify
+the private repository's visibility without separate authorization.
