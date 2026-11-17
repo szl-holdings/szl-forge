@@ -1,0 +1,40 @@
+{
+  "schema": "szl.forge.lutar-source-intake/v1",
+  "producer": {
+    "repository": "szl-holdings/lean-rlvr-proving-ground",
+    "commit": "b23ea5fe7e63d6b7402ce3a6f0a6aa5e1fa56b2c",
+    "protected_main_verified_at": "2026-11-17"
+  },
+  "mathematics": {
+    "repository": "szl-holdings/lutar-lean",
+    "commit": "c2ca813fca00ecf58bcc5f505f2aa4237fbf2481",
+    "axioms_blob": "fc922178ca30d588dbb330dc834428bcfca36367",
+    "invariant_blob": "4a418c631d9556d418e6aaa47611014855050d2c"
+  },
+  "files": [
+    {
+      "path": "curriculum/train.jsonl",
+      "sha256": "ebd8836afc19ac2f177a81c2920e64af08747e8698e8966573e323bbf650c9ee",
+      "bytes": 205231,
+      "records": 160
+    },
+    {
+      "path": "curriculum/holdout.jsonl",
+      "sha256": "964fecc3e6e1143db8e79ae029b9679c23ded4710b9801b926ea9b32b3dc723c",
+      "bytes": 103208,
+      "records": 80
+    },
+    {
+      "path": "curriculum/manifest.json",
+      "sha256": "019acbd9f394d59e8f9d000e66757fb43d1753162aa9607963ed17cf062de265",
+      "bytes": 997
+    }
+  ],
+  "required_minimum": 32,
+  "train_state": "CANDIDATE_ONLY",
+  "training_authority": "NONE",
+  "independent_holdout": false,
+  "training_launch": false,
+  "model_publish": false,
+  "source_license": "Apache-2.0"
+}
