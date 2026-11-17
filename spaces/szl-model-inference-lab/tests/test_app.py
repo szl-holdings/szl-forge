@@ -404,9 +404,15 @@ class AppContractTests(unittest.TestCase):
         response = app.inference_contract()
         payload = json.loads(response.body)
         subset = payload["openai_compatible_subset"]
-        self.assertFalse(subset["chat_completions"]["streaming"])
-        self.assertFalse(subset["chat_completions"]["tools"])
-        self.assertEqual(subset["chat_completions"]["choices"], 1)
+        self.assertEqual(subset["chat_completions"]["status_code"], 410)
+        self.assertEqual(subset["chat_completions"]["state"], "RETIRED")
+        self.assertEqual(
+            subset["chat_completions"]["reason_code"],
+            "LEGACY_COMPATIBILITY_ROUTE_RETIRED",
+        )
+        self.assertEqual(
+            subset["chat_completions"]["successor"], "/api/v3/governed-infer"
+        )
         self.assertFalse(payload["authentication"]["required_by_application"])
         self.assertEqual(
             payload["authentication"]["client_compatibility_dummy_key"],
@@ -755,7 +761,7 @@ class AppContractTests(unittest.TestCase):
                 self.assertTrue(verified["hash_matches"])
                 self.assertFalse(verified["semantic_checks_pass"])
 
-    def test_unhandled_compatible_runtime_error_is_shaped_and_not_cached(self):
+    def test_legacy_compatible_route_is_retired_without_runtime_invocation(self):
         original_status = app.state["status"]
         original_llm = app.llm
         try:
@@ -772,12 +778,18 @@ class AppContractTests(unittest.TestCase):
         finally:
             app.state["status"] = original_status
             app.llm = original_llm
-        self.assertEqual(response.status_code, 500)
-        payload = response.json()
-        self.assertEqual(payload["error"]["type"], "server_error")
-        self.assertEqual(payload["error"]["code"], "internal_error")
-        self.assertNotIn("DO_NOT_LEAK_RUNTIME_DETAIL", response.text)
+        self.assertEqual(response.status_code, 410)
+        self.assertEqual(
+            response.json(),
+            {
+                "schema": "szl.model-inference-lab.legacy-chat-retired/v1",
+                "state": "BLOCKED",
+                "reason_code": "LEGACY_COMPATIBILITY_ROUTE_RETIRED",
+                "successor": "/api/v3/governed-infer",
+            },
+        )
         self.assertEqual(response.headers["cache-control"], "no-store")
+        self.assertEqual(response.headers["x-szl-route-state"], "retired")
 
     def test_native_and_openai_routes_share_one_nonblocking_lock(self):
         original_status = app.state["status"]
