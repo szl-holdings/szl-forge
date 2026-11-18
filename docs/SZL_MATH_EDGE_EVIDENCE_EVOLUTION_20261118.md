@@ -49,3 +49,25 @@ Here axes are normalized accuracy and four resource headrooms; uniform weights a
 **Next verified gates:** independent fixture-to-device benchmark, target compiler binary SHA, actual float32/int8/int4 accuracy and calibration, matched source/weights, independent evaluator and rights, physical power/latency measurements, fixed protocol with statistical correction, cross-repo receipt signatures, and owner-reviewed source-to-runtime deployment.
 
 The module returns `STRUCTURALLY_ADMISSIBLE_UNVERIFIED` even for a positive synthetic fixture. It does **not** certify that external evidence flags are true, that the Hoeffding assumptions hold, or that any SZL formula was formally proved anew.
+
+## Evolution r2 — now implemented: F22 append-only receipts and F4 Khipu lineage
+
+This revision closes the two gaps the sections above marked *not implemented in this calculator*. It remains offline, structural, and theorem-free: no new Lean statement is claimed, Λ uniqueness stays a conjecture, and `STRUCTURALLY_ADMISSIBLE_UNVERIFIED` remains the strongest possible output.
+
+### F22 append-only admission receipts — `tools/szl_math_edge_admission_ledger.py`
+
+- `AppendOnlyLedger`: hash-chained receipt log with a genesis head; every admission decision, **including HOLD**, is receipted append-only. There is no mutation or removal API by construction, and the `entries()` view copies the record payload so no caller can corrupt the chain through the view.
+- `admit_with_receipt` wraps the r1 `evaluate()`: it records the decision state, reasons, record hash, and an explicit `receipt_is_structural_not_truth` flag. A ledger receipt proves ordering and integrity of the record stream, **never** the truth of a recorded claim.
+- `verify()` walks the chain and detects tampering or reordering; a 1,000-decision stress test with interleaved HOLD cases verifies clean.
+- Receipts never grant production authorization; `production_authorized` is hard-false in every receipted record.
+
+### F4 Khipu DAG lineage — same module
+
+- `validate_lineage` enforces strictly backward edges with explicit parent references: every parent must appear earlier in the sequence, which makes cycles structurally impossible (rejected as `NOT_BACKWARD_EDGE`), alongside duplicate-id and contract rejection.
+- `lineage_root_causes` lists parent-free roots, advisory only. `admit_with_receipt` can carry a lineage and records its verdict in the same append-only receipt.
+
+### Evidence status
+
+- 17 structural tests in `tests/test_szl_math_edge_admission_ledger.py`: genesis, sequential hash chaining, tamper and reorder detection, HOLD and admissible receipting, cross-instance determinism, non-live entries view, 1,000-decision stress with chain verification, lineage valid/forward/cycle/duplicate/contract cases, and never-authorization.
+- The r1 risk discipline is unchanged and re-confirmed: a synthetic case whose candidate error rate exceeds the pre-registered Hoeffding bound is correctly held. The stress fixture was corrected to respect that bound; the module's fail-closed behavior was never modified.
+- Not done here, deliberately: no hardware measurement, no int8/int4 training, no PAC-Bayes substitution, no cross-repo signature, no deployment authority. Those remain the verified-gates list above, owner-gated.
