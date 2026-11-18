@@ -45,6 +45,28 @@ pins, an independent evaluation set, GPU authorization and the standard
 valid synthetic fixture into a claim of trained weights or deployed inference.
 
 
+## Materials Frontier — five challenge-linked synthetic science lanes
+
+The [Materials Frontier SFT candidate](MATERIALS_FRONTIER_SFT.md) adds a
+deterministic, first-party procedural curriculum for cuprates, semiconductor
+interfaces, quantum chemistry, light-driven materials, and thermal interfaces.
+The source-only generator creates **240 candidate train examples, 60 dev
+examples, and 60 diagnostic examples** with exact unit-checked arithmetic,
+symmetry/conservation tests, and scientific abstention. It runs the existing
+Forge SFT validator and writes only to a new private directory.
+
+No external test questions, protected benchmark solutions, scientific
+experimental records, confidential source, model weights, paid GPU jobs,
+Cloudflare access settings, HF publications, PyPI distributions or contest
+submissions are consumed or created. Diagnostic splits share one generator
+and are **not independent scientific heldouts**. The existing rights, model,
+independent-evaluation, budget and training launch gates remain required.
+
+Offline reproduction:
+
+    python -m pytest -q tests/test_materials_frontier_seed.py
+    python training/materials_frontier_seed.py --output-dir /new/private/materials-review
+
 ## TRL SFTTrainer API compatibility
 
 The canonical SFT runner passes its tokenizer through TRL's
