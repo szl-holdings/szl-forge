@@ -78,6 +78,8 @@ def evaluate(record):
             }
         if not all(type(obj[k]) is str and obj[k] for k in obj):
             reasons.append("INVALID_" + field.upper())
+            # Reject malformed types without calling regex fullmatch on nonstrings.
+            continue
         if not SHA40.fullmatch(obj["revision"]) or not SHA64.fullmatch(obj["sha256"]):
             reasons.append("UNPINNED_" + field.upper())
     if not _exact_keys(record["rights"], ("approved", "scope", "evidence_sha256")):

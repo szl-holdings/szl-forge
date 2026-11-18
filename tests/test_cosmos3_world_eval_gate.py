@@ -55,6 +55,19 @@ class GateTests(unittest.TestCase):
         x["model"]["revision"] = "main"
         self.assertEqual(evaluate(x)["state"], "HOLD")
 
+    def test_nonstring_model_source_dataset_fields_hold_without_crash(self):
+        for field, key, value in (
+            ("model", "revision", None),
+            ("source", "sha256", 7),
+            ("dataset", "id", []),
+        ):
+            with self.subTest(field=field, key=key):
+                x = sample()
+                x[field][key] = value
+                result = evaluate(x)
+                self.assertEqual(result["state"], "HOLD")
+                self.assertIn("INVALID_" + field.upper(), result["reasons"])
+
     def test_unapproved_rights(self):
         x = sample()
         x["rights"]["approved"] = False
