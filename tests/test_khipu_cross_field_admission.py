@@ -2,7 +2,6 @@
 """Khipu training-sanity and held-out-eval cross-field parity, offline only."""
 from __future__ import annotations
 
-import copy
 import sys
 import unittest
 from pathlib import Path
