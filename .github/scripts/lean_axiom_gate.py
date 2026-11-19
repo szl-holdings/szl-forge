@@ -187,13 +187,32 @@ def _string(s, i, out, interp):
         i += 1
     raise StripError("unterminated string literal")
 
+# `sorry`, `admit` and `axiom` are keywords, so after comments and literals are
+# stripped any standalone occurrence counts, whatever precedes it (for axiom:
+# @[simp] axiom, noncomputable axiom, unsafe axiom, private axiom ...).
+# Boundaries follow the lexer's identifier rules (letters, digits, _ ' ! ?),
+# and the text of escaped «...» names is ignored, so foo!axiom or «the axiom»
+# are identifiers, not commands. A dotted `.sorry`/`.admit` still counts
+# (fail closed); a dotted `.axiom` cannot be a command and does not.
+_ESCAPED_NAME = re.compile("\u00ab[^\u00bb]*\u00bb")
+
+
+def _kw(tok, dotted_ok=True):
+    lead = r"[\w'!?]" if dotted_ok else r"[\w'!?.]"
+    return re.compile(rf"(?<!{lead}){tok}(?![\w'!?])")
+
+
+KEYWORDS = (("sorry", _kw("sorry")), ("admit", _kw("admit")), ("axiom", _kw("axiom", False)))
+
+
+def keyword_counts(code):
+    code = _ESCAPED_NAME.sub("\u00ab\u00bb", code)
+    return {tok: len(rx.findall(code)) for tok, rx in KEYWORDS}
+
+
 # Every bypass reported against earlier versions of this scanner, plus basic
 # shapes. main() runs these before scanning, so a regression in the lexer
 # fails the gate instead of silently under-counting.
-# `axiom` is a keyword, so after stripping comments and literals any standalone
-# occurrence is an axiom command, whatever modifiers or attributes precede it
-# (@[simp] axiom, noncomputable axiom, unsafe axiom, private axiom ...).
-AXIOM_TOKEN = r"(?<![\w.'\u00ab])axiom(?![\w'!?\u00bb])"
 
 SELF_TESTS = [
     ("theorem t : True := sorry", 1),
@@ -225,6 +244,9 @@ SELF_TESTS = [
     ("theorem t : True := trivial unsafe axiom a : False", 1),
     ("private axiom a : False", 1),
     ("#print axioms t\ndef \u00abaxiom\u00bb := 1", 0),
+    ("def foo!axiom := 1\ndef bar?sorry := 2\ndef x'admit := 3", 0),   # identifiers, not keywords
+    ("def \u00abthe axiom\u00bb := 1\ndef \u00ab sorry \u00bb := 2", 0),
+    ("theorem t : True := by exact sorry\nexample := admit", 2),
 ]
 SELF_TESTS_MUST_FAIL = [
     'def c := "abc',                     # unterminated string
@@ -239,7 +261,7 @@ SELF_TESTS_MUST_FAIL = [
 def self_test():
     for src, want in SELF_TESTS:
         code = strip(src)
-        got = len(re.findall(r"\bsorry\b", code)) + len(re.findall(AXIOM_TOKEN, code))
+        got = sum(keyword_counts(code).values())
         if got != want:
             raise SystemExit(f"GATE FAILED: scanner self-test expected {want} sorry, got {got}: {src!r}")
     for src in SELF_TESTS_MUST_FAIL:
@@ -297,9 +319,7 @@ def main():
         except StripError as e:
             bad.append(f"{p}: cannot scan source safely: {e}")
             continue
-        for tok, rx in (("sorry", r"\bsorry\b"), ("admit", r"\badmit\b"),
-                        ("axiom", AXIOM_TOKEN)):
-            c = len(re.findall(rx, code))
+        for tok, c in keyword_counts(code).items():
             if c:
                 bad.append(f"{p}: {c} x {tok}")
         names = theorems(code)
