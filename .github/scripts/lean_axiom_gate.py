@@ -68,10 +68,20 @@ def strip(s):
     unterminated comments, strings, raw strings, holes or «» names, a quote
     character that does not start a valid char literal at a token boundary,
     or an interpolation prefix that is not followed by a string."""
+    return "".join(lex(s))
+
+
+class _Word(str):
+    """An identifier or keyword token, lexed whole (see _lex)."""
+
+
+def lex(s):
+    """Token pieces of `s` (comments dropped, literal text emptied); identifier
+    and keyword tokens are _Word instances. Raises StripError like strip()."""
     out = []
     i = _lex(s, 0, out, in_hole=False)
     assert i == len(s)
-    return "".join(out)
+    return out
 
 
 def _skip_ws_comments(s, i):
@@ -148,7 +158,7 @@ def _lex(s, i, out, in_hole):
                 if e < 0:
                     raise StripError(f"unterminated raw string at offset {i}")
                 out.append('""'); i = e + len(close); continue
-            out.append(word); i = j
+            out.append(_Word(word)); i = j
             if word in _INTERP_PREFIXES:
                 k = _skip_ws_comments(s, i)
                 if k >= n or s[k] != '"':
@@ -187,27 +197,23 @@ def _string(s, i, out, interp):
         i += 1
     raise StripError("unterminated string literal")
 
-# `sorry`, `admit` and `axiom` are keywords, so after comments and literals are
-# stripped any standalone occurrence counts, whatever precedes it (for axiom:
-# @[simp] axiom, noncomputable axiom, unsafe axiom, private axiom ...).
-# Boundaries follow the lexer's identifier rules (letters, digits, _ ' ! ?),
-# and the text of escaped «...» names is ignored, so foo!axiom or «the axiom»
-# are identifiers, not commands. A dotted `.sorry`/`.admit` still counts
-# (fail closed); a dotted `.axiom` cannot be a command and does not.
-_ESCAPED_NAME = re.compile("\u00ab[^\u00bb]*\u00bb")
+# `sorry`, `admit` and `axiom` are keywords. They are counted from the lexer's
+# own identifier tokens, not with a regex over the stripped text, so the token
+# boundaries are exactly Lean's: !sorry, xs[i]'sorry, .sorry, (sorry) all
+# count, while foo!axiom, x'admit or «the axiom» are single identifiers and do
+# not. An axiom command counts whatever precedes it (@[simp], noncomputable,
+# unsafe, private, mid-line ...). A direct reference to the `sorryAx` constant
+# (what `sorry` elaborates to) counts as well, since the kernel pass only
+# inspects theorems.
+KEYWORDS = ("sorry", "admit", "axiom", "sorryAx")
 
 
-def _kw(tok, dotted_ok=True):
-    lead = r"[\w'!?]" if dotted_ok else r"[\w'!?.]"
-    return re.compile(rf"(?<!{lead}){tok}(?![\w'!?])")
-
-
-KEYWORDS = (("sorry", _kw("sorry")), ("admit", _kw("admit")), ("axiom", _kw("axiom", False)))
-
-
-def keyword_counts(code):
-    code = _ESCAPED_NAME.sub("\u00ab\u00bb", code)
-    return {tok: len(rx.findall(code)) for tok, rx in KEYWORDS}
+def keyword_counts(tokens):
+    counts = dict.fromkeys(KEYWORDS, 0)
+    for t in tokens:
+        if isinstance(t, _Word) and t in counts:
+            counts[t] += 1
+    return counts
 
 
 # Every bypass reported against earlier versions of this scanner, plus basic
@@ -247,6 +253,12 @@ SELF_TESTS = [
     ("def foo!axiom := 1\ndef bar?sorry := 2\ndef x'admit := 3", 0),   # identifiers, not keywords
     ("def \u00abthe axiom\u00bb := 1\ndef \u00ab sorry \u00bb := 2", 0),
     ("theorem t : True := by exact sorry\nexample := admit", 2),
+    ("def b : Bool := !sorry", 1),                                  # prefix not
+    ("def v := xs[0]'sorry", 1),                                    # GetElem proof
+    ("def v := xs[0]'admit", 1),
+    ("def v := (sorry : Nat) + Foo.sorry + f ?sorry", 3),
+    ("def v : Nat := sorryAx Nat false", 1),
+    ("def v : Nat := Lean.sorryAx Nat", 1),
 ]
 SELF_TESTS_MUST_FAIL = [
     'def c := "abc',                     # unterminated string
@@ -260,8 +272,7 @@ SELF_TESTS_MUST_FAIL = [
 
 def self_test():
     for src, want in SELF_TESTS:
-        code = strip(src)
-        got = sum(keyword_counts(code).values())
+        got = sum(keyword_counts(lex(src)).values())
         if got != want:
             raise SystemExit(f"GATE FAILED: scanner self-test expected {want} sorry, got {got}: {src!r}")
     for src in SELF_TESTS_MUST_FAIL:
@@ -315,11 +326,12 @@ def main():
     for p in files:
         raw = open(p, encoding="utf-8", errors="replace").read()
         try:
-            code = strip(raw)
+            tokens = lex(raw)
         except StripError as e:
             bad.append(f"{p}: cannot scan source safely: {e}")
             continue
-        for tok, c in keyword_counts(code).items():
+        code = "".join(tokens)
+        for tok, c in keyword_counts(tokens).items():
             if c:
                 bad.append(f"{p}: {c} x {tok}")
         names = theorems(code)
