@@ -233,6 +233,26 @@ def test_thirty_two_examples_do_not_override_other_gates(
         assert "LAUNCH_DATASET_DENIED" in decision["codes"]
 
 
+def test_real_w29_candidate_has_exact_training_and_holdout_byte_pins(forbid_launch_imports):
+    # Review the actual owner-submitted candidate, not only synthetic fixtures.
+    # This remains an offline source gate, never a training/quality approval.
+    path = ROOT / "training" / "w29" / "forge-v3-candidate.json"
+    decision = CONTRACT.evaluate_path(path, expected_kind="sft")
+    assert decision["ok"] is True
+    assert decision["verdict"] == "GATES_SATISFIED_NOT_LAUNCHED"
+    assert decision["accepted_examples"] == 213
+    assert decision["corpus_sha256"] == (
+        "ef8feffee2d07ec0391be93b7ae7e718a2a92c36ebcdd3bda115d2e177961e38"
+    )
+    assert decision["holdout_sha256"] == (
+        "ce3d0ca0983a42673b6b6405f8b3fd99806fc94e824cd05b11ebc8ae10cd778a"
+    )
+    assert decision["dataset_report"]["cross_dataset_overlaps"] == 0
+    assert decision["model_loaded"] is False
+    assert decision["launch_executed"] is False
+    assert decision["hub_write"] is False
+
+
 def test_holdout_bytes_are_bound_to_operator_admission(tmp_path, forbid_launch_imports):
     path = materialize(tmp_path, 32)
     good = CONTRACT.evaluate_path(path, expected_kind="sft")
