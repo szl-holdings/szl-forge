@@ -19,26 +19,92 @@ import os, re, subprocess, sys
 ALLOWED = {"propext", "Classical.choice", "Quot.sound"}
 
 
+_CHAR = re.compile(r"'(?:\\(?:x[0-9a-fA-F]{2}|u\{[0-9a-fA-F]+\}|.)|[^\\'\n])'")
+_IDENT = re.compile(r"[A-Za-z0-9_.!?'\u00C0-\uFFFF]")
+
+
+class StripError(Exception):
+    pass
+
+
 def strip(s):
-    out, i, d, n = [], 0, 0, len(s)
+    """Drop comments and literal text, keep code (including `{...}` holes of
+    interpolated strings such as s!"..."). Raises StripError on any literal or
+    comment that does not terminate, so a malformed or adversarial file can
+    never hide the rest of itself from the scan."""
+    out, i, n = [], 0, len(s)
+    depth = 0            # nested /- -/ comment depth
+    holes = []           # brace depth stack for open interpolation holes
     while i < n:
+        if depth:
+            if s.startswith("/-", i):
+                depth += 1; i += 2
+            elif s.startswith("-/", i):
+                depth -= 1; i += 2
+            else:
+                i += 1
+            continue
         if s.startswith("/-", i):
-            d += 1; i += 2; continue
-        if d and s.startswith("-/", i):
-            d -= 1; i += 2; continue
-        if d:
-            i += 1; continue
+            depth += 1; i += 2; continue
         if s.startswith("--", i):
             while i < n and s[i] != "\n":
                 i += 1
             continue
-        if s[i] == '"':
-            i += 1
-            while i < n and s[i] != '"':
-                i += 2 if s[i] == "\\" else 1
-            i += 1; out.append('""'); continue
-        out.append(s[i]); i += 1
+        c = s[i]
+        prev = s[i - 1] if i else ""
+        if holes:
+            if c == "{":
+                holes[-1] += 1
+            elif c == "}":
+                if holes[-1] == 0:
+                    holes.pop()
+                    out.append("}")
+                    i = _string_body(s, i + 1, True, out)
+                    if i < 0:
+                        holes.append(0); i = -i
+                    continue
+                holes[-1] -= 1
+        if c == "'" and not _IDENT.match(prev):
+            m = _CHAR.match(s, i)
+            if m:
+                out.append("''"); i = m.end(); continue
+        if c == "r" and not _IDENT.match(prev):
+            m = re.compile(r'r(#*)"').match(s, i)
+            if m:
+                close = '"' + m.group(1)
+                j = s.find(close, m.end())
+                if j < 0:
+                    raise StripError(f"unterminated raw string at offset {i}")
+                out.append('""'); i = j + len(close); continue
+        if c == '"':
+            interp = i >= 2 and s[i - 1] == "!" and s[i - 2] in "smf" and not _IDENT.match(s[i - 3] if i >= 3 else "")
+            out.append('"')
+            i = _string_body(s, i + 1, interp, out)
+            if i < 0:
+                holes.append(0); i = -i
+            continue
+        out.append(c); i += 1
+    if depth:
+        raise StripError("unterminated block comment")
+    if holes:
+        raise StripError("unterminated interpolated string")
     return "".join(out)
+
+
+def _string_body(s, i, interp, out):
+    """Skip a string body starting at i. Returns the index after the closing
+    quote, or -(index after '{') when an interpolation hole opens."""
+    n = len(s)
+    while i < n:
+        c = s[i]
+        if c == "\\":
+            i += 2; continue
+        if c == '"':
+            out.append('"'); return i + 1
+        if interp and c == "{":
+            out.append("{"); return -(i + 1)
+        i += 1
+    raise StripError("unterminated string literal")
 
 
 DECL = re.compile(r"^\s*(?:@\[[^\]]*\]\s*)?(?:private\s+|protected\s+|nonrec\s+)*(?:theorem|lemma)\s+([^\s:({\[]+)")
@@ -82,7 +148,11 @@ def main():
     bad, total, hist = [], 0, {}
     for p in files:
         raw = open(p, encoding="utf-8", errors="replace").read()
-        code = strip(raw)
+        try:
+            code = strip(raw)
+        except StripError as e:
+            bad.append(f"{p}: cannot scan source safely: {e}")
+            continue
         for tok, rx in (("sorry", r"\bsorry\b"), ("admit", r"\badmit\b"),
                         ("axiom", r"(?m)^\s*(?:private\s+|protected\s+)?axiom\b")):
             c = len(re.findall(rx, code))
@@ -109,6 +179,8 @@ def main():
         for line in out.split("\n"):
             m = re.match(r"'(.+)' depends on axioms: \[(.*)\]", line)
             if m:
+                if m.group(1) in seen:
+                    continue  # the source may already #print this theorem
                 seen.add(m.group(1))
                 for a in [x.strip() for x in m.group(2).split(",") if x.strip()]:
                     hist[a] = hist.get(a, 0) + 1
