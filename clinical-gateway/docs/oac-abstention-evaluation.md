@@ -84,6 +84,34 @@ with `shift_alpha` 0, -1 or 1e-300 flipped the test split from `REFUSE:SHIFT` to
   `ACCEPT` (validation) / `REFUSE:SHIFT` (test) verdicts. `ACCEPT` on validation only checks the receipt against its own calibration split.
   Remaining limits: low shift-test power, 33 validation positives, and the selftest and mutants are not run in CI.
 
+## 9. Review fixes (YUH 2 re-review of #771, 2026-11-19)
+Results below are **MEASURED (synthetic)**; nothing here is a production-readiness claim.
+- **CLI exit status.** `oac_rbcg.py verify RECEIPT DEPLOY.jsonl` exits 0 only for `ACCEPT`. Every `REFUSE:*` (including `SHIFT`, `POLICY`, `MALFORMED`) exits 1; a bad
+  argument list exits 2; `issue` over an unpinned kernel exits 3. Unreadable or non-JSON receipts print `REFUSE:MALFORMED:<type>` and exit 1.
+- **Minimum deployment rows.** `REFUSE:INSUFFICIENT_DEPLOYMENT` below `POLICY_MIN_DEPLOY = 30` rows (explicit; zero rows no longer depends on a `ZeroDivisionError`).
+  30 is the floor #723 (`8a233c4b`) used and #734 dropped; it is a policy constant, not receipt-controlled. It is a conventional minimum-evidence rule, not a
+  calibrated power threshold. Measured (100 reps, permutation B = 500): against the strong synthetic shift of the selftest (the 120 highest-scored test rows) the
+  shift test already refuses 70% of 3-row, 100% of 10-, 30-, 60- and 120-row batches; on same-distribution validation subsamples it falsely refuses 8% / 4% / 1% / 0% / 0%
+  at n = 3 / 10 / 30 / 60 / 120. So 30 is conservative for strong shifts and unmeasured for mild ones. Selftest covers 0, 1, 3, 10, 29 (refused) and 30 (not refused).
+- **File pins.** `model.json`, `artifact_receipt.json`, the kernel and the calibration split must now equal one pinned *profile* exactly (`repo-main`, or HF
+  `SZLHOLDINGS/oac-system-health-v1 @ ed0a3bbd`; mixing hashes from the two is refused). Pinned values: model.json `f111b7fc…d9557` (both); artifact_receipt.json
+  `53180b90…b685` (repo) / `c5b58aa1…0a27` (HF); kernel `5e06ddff…202e` (repo) / `e2aa6399…930d` (HF); calibration (`validation.jsonl`) `4557220a…8f5abf` (both, identical bytes).
+  Reasons: `REFUSE:UNPINNED_KERNEL`, `REFUSE:UNPINNED_FILE:<name>`. `issue` refuses to emit a receipt over unpinned files. `--allow-unpinned-kernel` (alias `--allow-unpinned`)
+  is the deliberate escape and now disables **all** these file pins, not just the kernel's; it is recorded on stderr. **Claim:** ACCEPT means "internally consistent and
+  bound to a pinned profile", not "issued by a trusted party" (the seal is not a signature). The `--model-dir`/`--calibration` API arguments can no longer swap in unpinned files.
+- **Kernel execution order.** The kernel bytes are read once, hashed, checked against the pin, and only then compiled from those same bytes. Importing `oac_rbcg.py` or
+  `oac_ltt.py` now does nothing (no argv parsing, no `sys.exit`, no kernel execution); flags are parsed in `main()`.
+- **MALFORMED.** `RecursionError` and `MemoryError` are now `REFUSE:MALFORMED:<type>` (deeply nested receipt, deployment row or CLI input).
+- **Threshold floor.** Scores are sigmoid probabilities, so `threshold` must be finite and in `[0, 1]` (`REFUSE:POLICY`), and it must be one of the calibration scores (the only
+  values `issue` emits; otherwise `REFUSE:CERT`). A resealed `-1e9` or `1e-9` threshold with `cal_misses` 0 is refused.
+- **Tests.** Selftest 14 → 29 cases (adds the CLI exit-code and bad-JSON cases, the on-disk kernel pin with a marker-file probe, the exact pinned sets with no all-zero hash,
+  profile mixing, check order seal → policy → pin → hash, and the import-has-no-side-effects subprocess check). `oac_rbcg_mutants.py` applies 32 mutants (covering every mutant class from the review, including the
+  three that survived) to a scratch copy; each must fail the selftest (**32/32 killed**). Not in CI.
+- **Unchanged (MEASURED (synthetic)):** LTT 0.137721 (3 misses of 33, p 0.0808); defer band 135 / 240 = 56.25% answered at 94.07% accuracy (8 wrong);
+  validation `ACCEPT`, test `REFUSE:SHIFT`; `oac_ltt.py` writes a byte-identical `oac_ltt.json` before and after this change.
+- **Still open:** the selftest and mutants are not in CI (no workflow change in this PR); low shift-test power; 33 validation positives; the `oac_rbcg_receipt.json`
+  files from #723 are not part of this PR.
+
 ## Proposed next steps (each needs the owner's approval by name)
 - A model-card section reporting the 21.6% missed-alert rate of the 0.16 threshold next to the certified α = 0.20 operating point and the abstention band.
 - Collect more calibration positives before any guarantee is advertised.

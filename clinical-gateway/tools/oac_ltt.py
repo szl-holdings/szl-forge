@@ -1,20 +1,23 @@
 #!/usr/bin/env python3
-"""FX-2 + RBCG on oac-system-health-v1 (szl-forge main model files). Stdlib only. Synthetic ops telemetry only."""
-import hashlib, json, math, os, random, sys
+"""FX-2 + RBCG on oac-system-health-v1 (szl-forge main model files). Stdlib only. Synthetic ops telemetry only.
+Run as a script (python3 oac_ltt.py [--allow-unpinned-kernel]); importing this module has no side effects (no argv parsing, no exit,
+no kernel execution). The kernel bytes are hashed and checked against the pin before they are compiled and run."""
+import hashlib, json, math, os, random, sys, types
 F = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))  # repo root; this file lives at clinical-gateway/tools/
 MD = f"{F}/clinical-gateway/huggingface/model/oac-system-health-v1"; DD = f"{F}/ops-health/v2/data/legacy_v1"
 # Kernel pin (same set as oac_rbcg.py): refuse to execute an unrecognised kernel unless --allow-unpinned-kernel is passed.
 PINNED_KERNEL_SHA256 = {"5e06ddffce9615a12c351e9926e24fefa142c920017b9dc844c584c58517202e", "e2aa63991b94596a16d69a288510b4b10af88932e075c055d97d1dac4d9a930d"}
-if "--allow-unpinned-kernel" in sys.argv: sys.argv.remove("--allow-unpinned-kernel")
-elif hashlib.sha256(open(f"{MD}/oac_operational_health.py", "rb").read()).hexdigest() not in PINNED_KERNEL_SHA256: sys.exit("REFUSE:UNPINNED_KERNEL")
-sys.path.insert(0, MD)
-from oac_operational_health import OperationalHealthKernel
+class Refuse(Exception): pass
+def load_kernel_class(md=MD, allow_unpinned=False):
+    path = f"{md}/oac_operational_health.py"; raw = open(path, "rb").read(); h = hashlib.sha256(raw).hexdigest()
+    if not allow_unpinned and h not in PINNED_KERNEL_SHA256: raise Refuse("UNPINNED_KERNEL")
+    mod = types.ModuleType(f"_oac_kernel_{h[:16]}"); mod.__file__ = path; sys.modules[mod.__name__] = mod  # dataclasses needs the module registered
+    exec(compile(raw, path, "exec"), mod.__dict__); return mod.OperationalHealthKernel
 sha = lambda p: hashlib.sha256(open(p, "rb").read()).hexdigest()
-K = OperationalHealthKernel(f"{MD}/model.json", f"{MD}/artifact_receipt.json")
+K = VAL = TEST = None  # set by main(); the helpers below read them
 def load(s):
     rows = [json.loads(l) for l in open(f"{DD}/{s}.jsonl") if l.strip()]
     return [(K.score(r["features"])["operator_attention_score"], int(bool(r["label"]["operator_attention_required"])), r["features"]) for r in rows]
-VAL, TEST = load("validation"), load("test")
 def auc(d):
     pos = [s for s, y, _ in d if y]; neg = [s for s, y, _ in d if not y]
     return sum((p > n) + 0.5 * (p == n) for p in pos for n in neg) / (len(pos) * len(neg))
@@ -71,54 +74,63 @@ def perm_p(a, b, stat, B=2000, seed=11):
     for _ in range(B):
         rng.shuffle(pool); c += stat(pool[:na], pool[na:]) >= obs - 1e-12
     return round(obs, 4), round((c + 1) / (B + 1), 4)
-out = {"files": {"model.json": sha(f"{MD}/model.json"), "artifact_receipt.json": sha(f"{MD}/artifact_receipt.json"),
-                 "oac_operational_health.py": sha(f"{MD}/oac_operational_health.py"),
-                 "validation.jsonl": sha(f"{DD}/validation.jsonl"), "test.jsonl": sha(f"{DD}/test.jsonl")}}
-# 0. reproduction gate
-c16 = conf(TEST, 0.16); out["gate"] = {"test_auc": round(auc(TEST), 6), "test_at_0.16": c16}
-out["gate"]["reproduced"] = out["gate"]["test_auc"] == 0.830169 and (c16["TP"], c16["FP"], c16["TN"], c16["FN"]) == (40, 57, 132, 11)
-if not out["gate"]["reproduced"]:
-    json.dump(out, open("oac_ltt.json", "w"), indent=1); print("GATE FAILED"); sys.exit(4)
-out["val"] = {"n": len(VAL), "positives": sum(y for _, y, _ in VAL), "auc": round(auc(VAL), 4)}
-# 1. baselines on test
-out["test_baselines"] = {"majority": conf(TEST, 0, "majority"), "rule_consecutive_failures_gt_0": conf(TEST, 0, "rule"),
-                         "model_at_card_threshold_0.16": c16}
-# 2. LTT missed-alert thresholds
-out["ltt_fnr"] = {}
-for alpha in (0.10, 0.20):
-    r = ltt_fnr(VAL, alpha, 0.10)
-    out["ltt_fnr"][str(alpha)] = {"certified": r is not None} | ({"threshold": round(r[0], 6), "val_misses": r[1], "val_positives": r[2],
-                                   "p_value": r[3], "test": conf(TEST, r[0])} if r else {"verdict": "REFUSED: no threshold certifiable"})
-# 3. abstention band
-sb = ltt_select(VAL, 0.10, 0.10)
-out["abstention_alpha0.10"] = ({"band": sb, "test": band_eval(TEST, sb["a"], sb["b"])} if sb else {"verdict": "REFUSED"})
-# 4. validity simulation (pool val+test as the population; resample calibration sets of size 192)
-pool = VAL + TEST; ppos = sorted(s for s, y, _ in pool if y)
-true_fnr = lambda t: sum(1 for s in ppos if s < t) / len(ppos)
-rng = random.Random(2026); R = 2000; viol = {"ltt": 0, "naive": 0}; refused = 0
-for _ in range(R):
-    cal = [pool[rng.randrange(len(pool))] for _ in range(len(VAL))]
-    r = ltt_fnr(cal, 0.20, 0.10)
-    if r is None: refused += 1
-    elif true_fnr(r[0]) > 0.20: viol["ltt"] += 1
-    pos = [s for s, y, _ in cal if y]; cands = sorted({s for s, _, _ in cal}); nt = None
-    for t in cands:
-        if sum(1 for s in pos if s < t) / len(pos) <= 0.20: nt = t
-        else: break
-    if nt is not None and true_fnr(nt) > 0.20: viol["naive"] += 1
-def wci(k, n, z=1.96):
-    p = k / n; d = 1 + z * z / n; c = (p + z * z / (2 * n)) / d; h = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / d
-    return [round(c - h, 4), round(c + h, 4)]
-out["validity_sim"] = {"alpha": 0.20, "delta": 0.10, "reps": R, "ltt_violation_rate": round(viol["ltt"] / R, 4),
-                       "ltt_violation_ci95": wci(viol["ltt"], R), "naive_violation_rate": round(viol["naive"] / R, 4),
-                       "naive_violation_ci95": wci(viol["naive"], R), "ltt_refused": refused,
-                       "note": "population = pooled val+test rows; calibration sets resampled with replacement"}
-# 5. exchangeability val vs test (scores, label rate, consecutive_failures)
-vs, ts = [s for s, _, _ in VAL], [s for s, _, _ in TEST]
-out["shift"] = {"score_ks": perm_p(vs, ts, ks),
-                "label_rate": perm_p([y for _, y, _ in VAL], [y for _, y, _ in TEST], lambda a, b: abs(sum(a) / len(a) - sum(b) / len(b))),
-                "consecutive_failures_mean": perm_p([f["consecutive_failures"] for *_, f in VAL], [f["consecutive_failures"] for *_, f in TEST],
-                                                    lambda a, b: abs(sum(a) / len(a) - sum(b) / len(b)))}
-json.dump(out, open("oac_ltt.json", "w"), indent=1)
-print(json.dumps({"gate": out["gate"]["reproduced"], "ltt": {k: v.get("threshold") for k, v in out["ltt_fnr"].items()},
-                  "validity": out["validity_sim"], "shift": out["shift"]}))
+def main():
+    global K, VAL, TEST
+    argv = sys.argv[1:]; allow = "--allow-unpinned-kernel" in argv
+    try: K = load_kernel_class(MD, allow)(f"{MD}/model.json", f"{MD}/artifact_receipt.json")
+    except Refuse as e: print(f"REFUSE:{e}"); return 3
+    VAL, TEST = load("validation"), load("test")
+    out = {"files": {"model.json": sha(f"{MD}/model.json"), "artifact_receipt.json": sha(f"{MD}/artifact_receipt.json"),
+                     "oac_operational_health.py": sha(f"{MD}/oac_operational_health.py"),
+                     "validation.jsonl": sha(f"{DD}/validation.jsonl"), "test.jsonl": sha(f"{DD}/test.jsonl")}}
+    # 0. reproduction gate
+    c16 = conf(TEST, 0.16); out["gate"] = {"test_auc": round(auc(TEST), 6), "test_at_0.16": c16}
+    out["gate"]["reproduced"] = out["gate"]["test_auc"] == 0.830169 and (c16["TP"], c16["FP"], c16["TN"], c16["FN"]) == (40, 57, 132, 11)
+    if not out["gate"]["reproduced"]:
+        json.dump(out, open("oac_ltt.json", "w"), indent=1); print("GATE FAILED"); return 4
+    out["val"] = {"n": len(VAL), "positives": sum(y for _, y, _ in VAL), "auc": round(auc(VAL), 4)}
+    # 1. baselines on test
+    out["test_baselines"] = {"majority": conf(TEST, 0, "majority"), "rule_consecutive_failures_gt_0": conf(TEST, 0, "rule"),
+                             "model_at_card_threshold_0.16": c16}
+    # 2. LTT missed-alert thresholds
+    out["ltt_fnr"] = {}
+    for alpha in (0.10, 0.20):
+        r = ltt_fnr(VAL, alpha, 0.10)
+        out["ltt_fnr"][str(alpha)] = {"certified": r is not None} | ({"threshold": round(r[0], 6), "val_misses": r[1], "val_positives": r[2],
+                                       "p_value": r[3], "test": conf(TEST, r[0])} if r else {"verdict": "REFUSED: no threshold certifiable"})
+    # 3. abstention band
+    sb = ltt_select(VAL, 0.10, 0.10)
+    out["abstention_alpha0.10"] = ({"band": sb, "test": band_eval(TEST, sb["a"], sb["b"])} if sb else {"verdict": "REFUSED"})
+    # 4. validity simulation (pool val+test as the population; resample calibration sets of size 192)
+    pool = VAL + TEST; ppos = sorted(s for s, y, _ in pool if y)
+    true_fnr = lambda t: sum(1 for s in ppos if s < t) / len(ppos)
+    rng = random.Random(2026); R = 2000; viol = {"ltt": 0, "naive": 0}; refused = 0
+    for _ in range(R):
+        cal = [pool[rng.randrange(len(pool))] for _ in range(len(VAL))]
+        r = ltt_fnr(cal, 0.20, 0.10)
+        if r is None: refused += 1
+        elif true_fnr(r[0]) > 0.20: viol["ltt"] += 1
+        pos = [s for s, y, _ in cal if y]; cands = sorted({s for s, _, _ in cal}); nt = None
+        for t in cands:
+            if sum(1 for s in pos if s < t) / len(pos) <= 0.20: nt = t
+            else: break
+        if nt is not None and true_fnr(nt) > 0.20: viol["naive"] += 1
+    def wci(k, n, z=1.96):
+        p = k / n; d = 1 + z * z / n; c = (p + z * z / (2 * n)) / d; h = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / d
+        return [round(c - h, 4), round(c + h, 4)]
+    out["validity_sim"] = {"alpha": 0.20, "delta": 0.10, "reps": R, "ltt_violation_rate": round(viol["ltt"] / R, 4),
+                           "ltt_violation_ci95": wci(viol["ltt"], R), "naive_violation_rate": round(viol["naive"] / R, 4),
+                           "naive_violation_ci95": wci(viol["naive"], R), "ltt_refused": refused,
+                           "note": "population = pooled val+test rows; calibration sets resampled with replacement"}
+    # 5. exchangeability val vs test (scores, label rate, consecutive_failures)
+    vs, ts = [s for s, _, _ in VAL], [s for s, _, _ in TEST]
+    out["shift"] = {"score_ks": perm_p(vs, ts, ks),
+                    "label_rate": perm_p([y for _, y, _ in VAL], [y for _, y, _ in TEST], lambda a, b: abs(sum(a) / len(a) - sum(b) / len(b))),
+                    "consecutive_failures_mean": perm_p([f["consecutive_failures"] for *_, f in VAL], [f["consecutive_failures"] for *_, f in TEST],
+                                                        lambda a, b: abs(sum(a) / len(a) - sum(b) / len(b)))}
+    json.dump(out, open("oac_ltt.json", "w"), indent=1)
+    print(json.dumps({"gate": out["gate"]["reproduced"], "ltt": {k: v.get("threshold") for k, v in out["ltt_fnr"].items()},
+                      "validity": out["validity_sim"], "shift": out["shift"]}))
+
+if __name__ == "__main__":
+    sys.exit(main())
