@@ -13,7 +13,7 @@ accepted); 2 for any REFUSE:* verdict, including an unreadable or non-JSON envel
 a shell `&&` treat an unsigned digest list as a pass.
 """
 from __future__ import annotations
-import argparse, base64, hashlib, json, sys
+import argparse, base64, hashlib, json
 from pathlib import Path
 
 STATEMENT_TYPE = "https://in-toto.io/Statement/v1"
