@@ -154,7 +154,7 @@ def test_ledger_chain_roundtrip():
     e1 = m.ledger_append(ledger, m.admit(spec_ok("P_LEDGER_1")), None)
     assert e1["prev"] == "0" * 64
     e2 = m.ledger_append(ledger, m.admit(spec_ok("P_LEDGER_2", lean=lean_ok("FAIL_SKETCH"))), e1)
-    e3 = m.ledger_append(ledger, m.admit(spec_ok("P_LEDGER_3")), e2)
+    m.ledger_append(ledger, m.admit(spec_ok("P_LEDGER_3")), e2)
     assert m.ledger_ok(ledger) is True
     # tampering any inner receipt breaks the chain
     ledger[1]["receipt"]["verdict"] = "TAMPERED"
