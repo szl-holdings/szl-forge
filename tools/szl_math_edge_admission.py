@@ -27,17 +27,25 @@ def _sha(s, n):
 
 
 def _real(x):
-    return type(x) in (int, float) and math.isfinite(x)
+    try:
+        return type(x) in (int, float) and math.isfinite(x)
+    except OverflowError:
+        # An int beyond float range (a valid JSON integer) is not a usable value.
+        return False
 
 
 def _strict(x, keys):
     return type(x) is dict and set(x) == set(keys)
 
 
-def _risk_upper(errors, n, delta):
+def _risk_upper(errors, n, delta, split):
     # One-sided Hoeffding for a pre-specified fixed model on IID Bernoulli
     # samples; no adaptive selection, independence or distribution is proved.
-    return min(1.0, errors / n + math.sqrt(math.log(1.0 / delta) / (2 * n)))
+    # delta is shared by `split` bounds. log(split / delta) is taken as a
+    # difference of logs: delta / split underflows to 0.0 at delta = 5e-324 and
+    # its reciprocal overflows for every delta below about 1.1e-308.
+    log_term = math.log(split) - math.log(delta)
+    return min(1.0, errors / n + math.sqrt(log_term / (2 * n)))
 
 
 def _lambda_advisory(axes, weights):
@@ -169,8 +177,8 @@ def evaluate(data):
         return hold("OBSERVED_SAFETY_VIOLATION")
     # delta is split across two predeclared candidate risk upper bounds;
     # no PAC-Bayes/KL assumption is inferred from an accuracy count.
-    risk = _risk_upper(candidate["errors"], n, bounds["delta"] / 2)
-    safety = _risk_upper(candidate["safety_violations"], n, bounds["delta"] / 2)
+    risk = _risk_upper(candidate["errors"], n, bounds["delta"], 2)
+    safety = _risk_upper(candidate["safety_violations"], n, bounds["delta"], 2)
     if risk > bounds["risk_upper_max"]:
         return hold("RISK_UPPER_BOUND_EXCEEDED")
     if (

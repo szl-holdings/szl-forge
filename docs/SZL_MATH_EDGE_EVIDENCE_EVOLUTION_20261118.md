@@ -71,3 +71,12 @@ This revision closes the two gaps the sections above marked *not implemented in 
 - 17 structural tests in `tests/test_szl_math_edge_admission_ledger.py`: genesis, sequential hash chaining, tamper and reorder detection, HOLD and admissible receipting, cross-instance determinism, non-live entries view, 1,000-decision stress with chain verification, lineage valid/forward/cycle/duplicate/contract cases, and never-authorization.
 - The r1 risk discipline is unchanged and re-confirmed: a synthetic case whose candidate error rate exceeds the pre-registered Hoeffding bound is correctly held. The stress fixture was corrected to respect that bound; the module's fail-closed behavior was never modified.
 - Not done here, deliberately: no hardware measurement, no int8/int4 training, no PAC-Bayes substitution, no cross-repo signature, no deployment authority. Those remain the verified-gates list above, owner-gated.
+
+## Evolution r3 — numerical domain repair (2026-11-19)
+
+The formula above is unchanged; only its floating-point evaluation is repaired.
+
+- `log(2/δ)` is now evaluated as `log 2 − log δ`. The r1 code built `δ/2` and its reciprocal. At `δ = 5e-324`, `δ/2` underflows to `0.0` and `evaluate()` raised an unhandled `ZeroDivisionError`, so `admit_with_receipt` raised before the decision could be receipted. For every `δ` below about `1.1e-308` the reciprocal overflows to infinity, which pinned both bounds to exactly `1.0` and held the candidate as `RISK_UPPER_BOUND_EXCEEDED` whatever its evidence.
+- An integer too large for a float (a valid JSON integer such as `10**400`) in a constraint or measurement field is now held as `CONSTRAINTS_INVALID` or `INVALID_MEASUREMENT_*` instead of raising `OverflowError`.
+- Regression tests in `tests/test_szl_math_edge_admission.py` cover the minimum subnormal `δ`, the bound formula against literal values computed to 60 digits for five values of `δ`, integers beyond float range, and a sweep that sets every input field to each of 25 hostile values and requires a decision with `production_authorized: false`.
+- Unchanged: the gates and their order, every HOLD reason name, and the `STRUCTURALLY_ADMISSIBLE_UNVERIFIED` ceiling. No theorem, benchmark or hardware measurement is claimed.
