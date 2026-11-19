@@ -14,7 +14,7 @@ Usage: python3 lean_axiom_gate.py PROJECT_DIR [--no-lake] [--exclude SUBSTR ...]
 It prints the exact theorem count and per-axiom histogram so the numbers in a
 README can be checked against CI output.
 """
-import os, re, subprocess, sys, tempfile
+import os, re, subprocess, sys
 
 ALLOWED = {"propext", "Classical.choice", "Quot.sound"}
 
