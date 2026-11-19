@@ -28,14 +28,19 @@ from decimal import Decimal, ROUND_CEILING, localcontext
 
 SCHEMA = "szl.edge-math-evidence/kotte-v1"
 PINNED_COMPANIONS = {
-    "cp_module_sha256": "a484b60a958feefb446f77419da52193a608a1322b5d7ffd92046ebf04efd80d",
+    "cp_module_sha256": "de8dbea415c6a3082f13eb355adfc451b7de5395b366bfa951a2647e75c4c40e",
     "v1_gate_sha256": "3aebebab39c5ab73a2a8aa11ec907ebc129c64a40d1816262d71af951ad908b0",
 }
 KOTTE_FORMULA = "abstain_floor=(mu-alpha)/(1-alpha);feasible_iff_mu<=alpha"
 
 
 def _real(x):
-    return type(x) in (int, float) and math.isfinite(x)
+    if type(x) not in (int, float):
+        return False
+    try:
+        return math.isfinite(x)
+    except OverflowError:  # an int beyond float range is not a usable real
+        return False
 
 
 def _quant(x):

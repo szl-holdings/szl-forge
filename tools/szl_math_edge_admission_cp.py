@@ -36,7 +36,12 @@ def _sha(s, n):
 
 
 def _real(x):
-    return type(x) in (int, float) and math.isfinite(x)
+    if type(x) not in (int, float):
+        return False
+    try:
+        return math.isfinite(x)
+    except OverflowError:  # an int beyond float range is not a usable real
+        return False
 
 
 def _strict(x, keys):
@@ -175,6 +180,8 @@ def evaluate(data):
         return hold("CONSTRAINTS_INVALID")
     if not 0 < bounds["delta"] < 1 or bounds["risk_upper_max"] > 1:
         return hold("RISK_CONSTRAINTS_INVALID")
+    if not bounds["delta"] / 2 > 0.0:  # subnormal delta: the split underflows
+        return hold("RISK_CONSTRAINTS_INVALID")
     measurements = {}
     for label in ("baseline", "candidate"):
         obj = data[label]
@@ -195,8 +202,11 @@ def evaluate(data):
     baseline, candidate = measurements["baseline"], measurements["candidate"]
     if candidate["safety_violations"] != 0:
         return hold("OBSERVED_SAFETY_VIOLATION")
-    risk = cp_risk_upper(candidate["errors"], n, bounds["delta"] / 2)
-    safety = cp_risk_upper(candidate["safety_violations"], n, bounds["delta"] / 2)
+    try:
+        risk = cp_risk_upper(candidate["errors"], n, bounds["delta"] / 2)
+        safety = cp_risk_upper(candidate["safety_violations"], n, bounds["delta"] / 2)
+    except (ValueError, OverflowError):
+        return hold("RISK_BOUND_UNCOMPUTABLE")
     if risk > bounds["risk_upper_max"]:
         return hold("RISK_UPPER_BOUND_EXCEEDED")
     if (

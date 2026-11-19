@@ -123,7 +123,7 @@ def test_companion_pin_matches_actual_cp_source_bytes():
 def test_schema_and_pins():
     assert kotte.SCHEMA == "szl.edge-math-evidence/kotte-v1"
     assert kotte.PINNED_COMPANIONS["cp_module_sha256"] == (
-        "a484b60a958feefb446f77419da52193a608a1322b5d7ffd92046ebf04efd80d")
+        "de8dbea415c6a3082f13eb355adfc451b7de5395b366bfa951a2647e75c4c40e")
     assert kotte.PINNED_COMPANIONS["v1_gate_sha256"] == (
         "3aebebab39c5ab73a2a8aa11ec907ebc129c64a40d1816262d71af951ad908b0")
 
@@ -133,3 +133,10 @@ def test_certify_reason_published_on_refuse():
     assert r["decision"] == "REFUSE"
     assert r["feasibility"]["abstention_floor"] == pytest.approx(0.078947368421, abs=1e-11)
     assert r["production_authorized"] is False
+
+
+def test_huge_integer_inputs_raise_value_error_not_overflow():
+    with pytest.raises(ValueError):
+        kotte.kotte_certify(10 ** 400, 0.1)
+    with pytest.raises(ValueError):
+        kotte.kotte_certify(0.05, 10 ** 400)

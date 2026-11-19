@@ -170,3 +170,21 @@ def test_canonical_hash_deterministic_and_order_independent():
     b = {"y": 2, "x": 1}
     assert m.canonical_hash(a) == m.canonical_hash(b)
     assert m.canonical_hash(out) == m.canonical_hash(dict(reversed(list(out.items()))))
+
+
+def test_subnormal_delta_holds_instead_of_raising():
+    d = valid_data()
+    d["constraints"]["delta"] = 5e-324
+    assert m.evaluate(d)["reasons"] == ["RISK_CONSTRAINTS_INVALID"]
+
+
+def test_huge_integer_constraint_holds_instead_of_raising():
+    d = valid_data()
+    d["constraints"]["flash_max_bytes"] = 10 ** 400
+    assert m.evaluate(d)["reasons"] == ["CONSTRAINTS_INVALID"]
+
+
+def test_huge_integer_measurement_holds_instead_of_raising():
+    d = valid_data()
+    d["candidate"]["latency_p99_ms"] = 10 ** 400
+    assert m.evaluate(d)["reasons"] == ["INVALID_MEASUREMENT_CANDIDATE"]
