@@ -5,8 +5,9 @@ LTT certifies the MARGINAL missed-alert rate. A marginal guarantee can hide a sl
 miss rate. This reports, per slice with enough positives, the miss count and an exact one-sided
 (1-delta) Clopper-Pearson upper bound; slices with too few positives are reported UNDERPOWERED,
 never as OK. No multiplicity correction across slices is applied (descriptive audit, not a test).
-Numeric slice cut points (medians) are computed from the audited split itself, not from calibration data, so slice membership
-is data-dependent; with many slices some bounds will look bad or good by chance.
+Numeric slice cut points (medians) are computed from the CALIBRATION split (--cuts-split, default validation), never from the audited
+split, so slice membership does not depend on the data being audited. A row is "high" when its value is strictly above the cut, so a
+zero-inflated feature (median 0) still yields a "low" (== 0) slice. With many slices some bounds will look bad or good by chance.
 The audit is underpowered on small slices and is not a production-readiness claim.
 
 The kernel is executable Python. score_rows() hashes the kernel bytes in --model-dir and refuses (REFUSE:UNPINNED_KERNEL, exit 3)
@@ -39,18 +40,23 @@ def cp_upper(k, n, delta):
         else: hi = mid
     return hi
 
-def slices_for(features: dict, numeric_cuts: dict):
-    out = {}
-    for k, v in features.items():
-        if k in numeric_cuts: out[k] = "high" if v >= numeric_cuts[k] else "low"
-        else: out[k] = str(int(v)) if float(v) in (0.0, 1.0) else str(v)
-    return out
-
-def audit(rows, scores, lam, alpha=0.20, delta=0.10, min_pos=10):
+def cut_points(rows):
+    """Median cut per numeric feature (more than two distinct values), from the rows given (pass the calibration split)."""
     cuts = {}
     for k in rows[0]["features"]:
         vals = sorted(r["features"][k] for r in rows)
-        if len(set(vals)) > 2: cuts[k] = vals[len(vals) // 2]  # median split
+        if len(set(vals)) > 2: cuts[k] = vals[len(vals) // 2]
+    return cuts
+
+def slices_for(features: dict, numeric_cuts: dict):
+    out = {}
+    for k, v in features.items():
+        if k in numeric_cuts: out[k] = "high" if v > numeric_cuts[k] else "low"
+        else: out[k] = str(int(v)) if float(v) in (0.0, 1.0) else str(v)
+    return out
+
+def audit(rows, scores, lam, cuts, alpha=0.20, delta=0.10, min_pos=10):
+    """`cuts` must come from cut_points() on a split other than `rows` (the calibration split), so slices are fixed before auditing."""
     groups = {}
     for r, s in zip(rows, scores):
         if not r["label"]["operator_attention_required"]: continue
@@ -85,11 +91,14 @@ def score_rows(model_dir, rows, allow_unpinned=False):
 def main(argv=None):
     ap = argparse.ArgumentParser(); ap.add_argument("--model-dir", required=True); ap.add_argument("--data-dir", required=True)
     ap.add_argument("--split", default="test"); ap.add_argument("--lambda", dest="lam", type=float, required=True)
+    ap.add_argument("--cuts-split", default="validation", help="split the numeric cut points come from (must differ from --split)")
     ap.add_argument("--allow-unpinned-kernel", action="store_true", help="deliberately run a kernel outside the pinned set"); a = ap.parse_args(argv)
-    rows = load_split(a.data_dir, a.split)
-    try: sc = score_rows(a.model_dir, rows, a.allow_unpinned_kernel)
+    if a.cuts_split == a.split: print("REFUSE:CUTS_FROM_AUDITED_SPLIT"); return 2
+    try:
+        rows = load_split(a.data_dir, a.split); cuts = cut_points(load_split(a.data_dir, a.cuts_split))
+        sc = score_rows(a.model_dir, rows, a.allow_unpinned_kernel)
     except Refuse as e: print(f"REFUSE:{e}"); return 3
-    except OSError as e: print(f"REFUSE:MALFORMED:{type(e).__name__}"); return 3
-    print(json.dumps({"split": a.split, "lambda": a.lam, "slices": audit(rows, sc, a.lam)}, indent=1)); return 0
+    except (OSError, ValueError, KeyError, TypeError, IndexError, RecursionError) as e: print(f"REFUSE:MALFORMED:{type(e).__name__}"); return 3
+    print(json.dumps({"split": a.split, "cuts_split": a.cuts_split, "cuts": cuts, "lambda": a.lam, "slices": audit(rows, sc, a.lam, cuts)}, indent=1)); return 0
 
 if __name__ == "__main__": raise SystemExit(main())

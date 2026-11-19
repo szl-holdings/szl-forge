@@ -55,7 +55,16 @@ class Slice(unittest.TestCase):
         self.assertGreater(S.cp_upper(4, 33, 0.1), 0.2)
     def test_underpowered_never_ok(self):
         rows = [{"features": {"b": i % 2}, "label": {"operator_attention_required": True}} for i in range(6)]
-        r = S.audit(rows, [0.0] * 6, 0.5); self.assertTrue(all(v["status"] == "UNDERPOWERED" for v in r.values()))
+        r = S.audit(rows, [0.0] * 6, 0.5, {}); self.assertTrue(all(v["status"] == "UNDERPOWERED" for v in r.values()))
+    def test_zero_inflated_feature_keeps_low_slice(self):  # Bugbot #772: median 0 must not put every row in "high"
+        cal = [{"features": {"c": v}} for v in [0] * 7 + [1, 2, 3]]; cuts = S.cut_points(cal); self.assertEqual(cuts, {"c": 0})
+        rows = [{"features": {"c": v}, "label": {"operator_attention_required": True}} for v in (0, 0, 2, 5)]
+        r = S.audit(rows, [0.0, 1.0, 0.0, 1.0], 0.5, cuts, min_pos=1)
+        self.assertEqual((r["c=low"]["positives"], r["c=low"]["misses"], r["c=high"]["positives"], r["c=high"]["misses"]), (2, 1, 2, 1))
+    def test_cuts_come_from_calibration_not_audited_split(self):
+        cal = [{"features": {"q": x / 10}} for x in range(11)]; cuts = S.cut_points(cal)  # median 0.5
+        rows = [{"features": {"q": q}, "label": {"operator_attention_required": True}} for q in (0.6, 0.7, 0.8, 0.9)]  # audited median would be 0.8
+        r = S.audit(rows, [1.0] * 4, 0.5, cuts, min_pos=1); self.assertEqual(set(r), {"q=high"}); self.assertEqual(r["q=high"]["positives"], 4)
 class SliceKernelPin(unittest.TestCase):
     MD = Path(__file__).resolve().parents[1] / "huggingface" / "model" / "oac-system-health-v1"
     def setUp(self):
@@ -69,10 +78,24 @@ class SliceKernelPin(unittest.TestCase):
         with self.assertRaises(S.Refuse): S.score_rows(self.evil, self.rows)
         self.assertFalse(self.marker.exists())
     def test_cli_refuses_unpinned_kernel_exit_3_and_never_runs_it(self):
-        sp = self.d / "data"; sp.mkdir(); (sp / "test.jsonl").write_text("\n".join(json.dumps(r) for r in self.rows) + "\n")
+        sp = self.d / "data"; sp.mkdir(); (sp / "test.jsonl").write_text("\n".join(json.dumps(r) for r in self.rows) + "\n"); (sp / "validation.jsonl").write_text("\n".join(json.dumps(r) for r in self.rows) + "\n")
         with contextlib.redirect_stdout(io.StringIO()) as out:
             rc = S.main(["--model-dir", str(self.evil), "--data-dir", str(sp), "--lambda", "0.137721"])
         self.assertEqual((rc, out.getvalue().strip()), (3, "REFUSE:UNPINNED_KERNEL")); self.assertFalse(self.marker.exists())
+    def test_cli_refuses_cuts_from_audited_split(self):
+        with contextlib.redirect_stdout(io.StringIO()) as out:
+            rc = S.main(["--model-dir", str(self.MD), "--data-dir", str(self.d), "--split", "test", "--cuts-split", "test", "--lambda", "0.137721"])
+        self.assertEqual((rc, out.getvalue().strip()), (2, "REFUSE:CUTS_FROM_AUDITED_SPLIT"))
+    def test_cli_missing_split_is_malformed_not_traceback(self):
+        with contextlib.redirect_stdout(io.StringIO()) as out:
+            rc = S.main(["--model-dir", str(self.MD), "--data-dir", str(self.d), "--lambda", "0.137721"])
+        self.assertEqual(rc, 3); self.assertTrue(out.getvalue().startswith("REFUSE:MALFORMED:FileNotFoundError"))
+    def test_cli_uses_calibration_cuts(self):
+        dd = Path(__file__).resolve().parents[2] / "ops-health/v2/data/legacy_v1"
+        with contextlib.redirect_stdout(io.StringIO()) as out:
+            rc = S.main(["--model-dir", str(self.MD), "--data-dir", str(dd), "--lambda", "0.137721"])
+        o = json.loads(out.getvalue()); self.assertEqual(rc, 0); self.assertEqual(o["cuts_split"], "validation")
+        self.assertEqual(o["cuts"]["consecutive_failures"], 0); self.assertIn("consecutive_failures=low", o["slices"])
     def test_override_is_deliberate_and_runs_the_kernel(self):
         try: S.score_rows(self.evil, self.rows, allow_unpinned=True)
         except Exception: pass  # the real kernel may reject an edited file; the marker shows it was executed
