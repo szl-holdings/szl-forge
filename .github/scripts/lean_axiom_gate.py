@@ -35,6 +35,7 @@ def strip(s):
     out, i, n = [], 0, len(s)
     depth = 0            # nested /- -/ comment depth
     holes = []           # brace depth stack for open interpolation holes
+    lit_end = -1         # index just past the last char literal (a token boundary)
     while i < n:
         if depth:
             if s.startswith("/-", i):
@@ -51,7 +52,7 @@ def strip(s):
                 i += 1
             continue
         c = s[i]
-        prev = s[i - 1] if i else ""
+        prev = s[i - 1] if i and i != lit_end else ""
         if holes:
             if c == "{":
                 holes[-1] += 1
@@ -67,7 +68,7 @@ def strip(s):
         if c == "'" and not _IDENT.match(prev):
             m = _CHAR.match(s, i)
             if m:
-                out.append("''"); i = m.end(); continue
+                out.append("''"); i = lit_end = m.end(); continue
         if c == "r" and not _IDENT.match(prev):
             m = re.compile(r'r(#*)"').match(s, i)
             if m:
@@ -77,7 +78,7 @@ def strip(s):
                     raise StripError(f"unterminated raw string at offset {i}")
                 out.append('""'); i = j + len(close); continue
         if c == '"':
-            interp = i >= 2 and s[i - 1] == "!" and s[i - 2] in "smf" and not _IDENT.match(s[i - 3] if i >= 3 else "")
+            interp = _interp_prefix(s, i)
             out.append('"')
             i = _string_body(s, i + 1, interp, out)
             if i < 0:
@@ -89,6 +90,17 @@ def strip(s):
     if holes:
         raise StripError("unterminated interpolated string")
     return "".join(out)
+
+
+def _interp_prefix(s, i):
+    """True when the quote at i opens an s!/m!/f! interpolated string. Lean
+    allows whitespace between the prefix and the quote (`s! "..."`)."""
+    j = i - 1
+    while j >= 0 and s[j] in " \t\r\n":
+        j -= 1
+    if j < 1 or s[j] != "!" or s[j - 1] not in "smf":
+        return False
+    return j < 2 or not _IDENT.match(s[j - 2])
 
 
 def _string_body(s, i, interp, out):
