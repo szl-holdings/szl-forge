@@ -22,7 +22,39 @@ IMAGE = re.compile(r"[^\s@]+@sha256:[0-9a-f]{64}\Z")
 MONEY = re.compile(r"(?:0|[1-9][0-9]{0,3})(?:\.[0-9]{1,4})?\Z")
 NAME = re.compile(r"[a-z0-9][a-z0-9-]{0,63}\Z")
 MAX_SECONDS = 7200
+MAX_PLAN_BYTES = 64 * 1024
 QUOTE_TTL = timedelta(minutes=30)
+
+
+def _unique_pairs(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    """Reject ambiguous members at every nesting depth, including unknown keys."""
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("DUPLICATE_PLAN_JSON_MEMBER")
+        result[key] = value
+    return result
+
+
+def _refuse_number(_value: str) -> None:
+    # All numeric fields in the approved schema must be integers; money is
+    # encoded as an exact decimal string. Do not admit NaN, infinity or floats.
+    raise ValueError("UNSUPPORTED_PLAN_JSON_NUMBER")
+
+
+def parse_plan_bytes(raw: bytes) -> dict[str, Any]:
+    """Fail closed before assessing a bounded, unambiguous JSON document."""
+    if not isinstance(raw, bytes) or not 0 < len(raw) <= MAX_PLAN_BYTES:
+        raise ValueError("INVALID_PLAN_BYTE_LENGTH")
+    parsed = json.loads(
+        raw.decode("utf-8"),
+        object_pairs_hook=_unique_pairs,
+        parse_float=_refuse_number,
+        parse_constant=_refuse_number,
+    )
+    if not isinstance(parsed, dict):
+        raise ValueError("PLAN_OBJECT_REQUIRED")
+    return parsed
 
 
 def _money(value: object) -> Decimal | None:
@@ -130,7 +162,8 @@ def main() -> int:
     parser.add_argument("--plan", required=True, type=Path)
     args = parser.parse_args()
     try:
-        proposal = json.loads(args.plan.read_text(encoding="utf-8"))
+        with args.plan.open("rb") as stream:
+            proposal = parse_plan_bytes(stream.read(MAX_PLAN_BYTES + 1))
         result = assess(proposal, now=datetime.now(timezone.utc))
     except (OSError, ValueError, UnicodeError, RecursionError):
         result = assess(None, now=datetime.now(timezone.utc))
