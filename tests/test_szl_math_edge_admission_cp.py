@@ -9,7 +9,7 @@ import importlib.util
 import os
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-MOD = os.path.join(HERE, "..", "szl_math_edge_admission_cp.py")
+MOD = os.path.join(HERE, "..", "tools", "szl_math_edge_admission_cp.py")
 spec = importlib.util.spec_from_file_location("szl_math_edge_admission_cp", os.path.abspath(MOD))
 m = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(m)
