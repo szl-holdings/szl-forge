@@ -3,6 +3,10 @@
 import hashlib, json, math, os, random, sys
 F = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))  # repo root; this file lives at clinical-gateway/tools/
 MD = f"{F}/clinical-gateway/huggingface/model/oac-system-health-v1"; DD = f"{F}/ops-health/v2/data/legacy_v1"
+# Kernel pin (same set as oac_rbcg.py): refuse to execute an unrecognised kernel unless --allow-unpinned-kernel is passed.
+PINNED_KERNEL_SHA256 = {"5e06ddffce9615a12c351e9926e24fefa142c920017b9dc844c584c58517202e", "e2aa63991b94596a16d69a288510b4b10af88932e075c055d97d1dac4d9a930d"}
+if "--allow-unpinned-kernel" in sys.argv: sys.argv.remove("--allow-unpinned-kernel")
+elif hashlib.sha256(open(f"{MD}/oac_operational_health.py", "rb").read()).hexdigest() not in PINNED_KERNEL_SHA256: sys.exit("REFUSE:UNPINNED_KERNEL")
 sys.path.insert(0, MD)
 from oac_operational_health import OperationalHealthKernel
 sha = lambda p: hashlib.sha256(open(p, "rb").read()).hexdigest()

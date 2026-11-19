@@ -3,7 +3,7 @@
 Prototype, unpushed. It ran on szl-vm2 against `szl-forge` main model files (byte-identical to GitHub main: model.json
 `f111b7fc…d9557`, oac_operational_health.py `2fd8ffd3…92669`) and the committed synthetic split
 `ops-health/v2/data/legacy_v1` (validation `4557220a…`, test `7fc6ea63…`). Stdlib only; the model's own scorer;
-synthetic operations telemetry only. Labels: MEASURED unless stated.
+synthetic operations telemetry only. Labels: MEASURED (synthetic) unless stated.
 
 ## 1. Reproduction gate: passed
 Test AUC 0.830169 and confusion at the card threshold 0.16 (TP 40, FP 57, TN 132, FN 11) match the model card exactly.
@@ -69,6 +69,20 @@ REFUSE:RECEIPT_TAMPERED · REFUSE:HASH · REFUSE:CERT (recomputed misses differ 
   (receipt file sha256 `cd587508815655ba1d3485111d9f1e311483a9ae4c6cb099dcb2670441c4728e`, inner seal `8e3f5ee3…04ce`).
 - Owner context: approved as OAC-ABSTAIN-PR (2026-11-10, reaffirmed 2026-11-14). DCO `Signed-off-by` waived by owner direction
   (solo-builder estate, recorded in estate decisions 2026-11-14). Model card README and the Hugging Face Hub are NOT changed by this PR.
+
+## 8. Review hardening of `oac_rbcg.py` / `oac_ltt.py` (2026-11-19)
+An independent review (YUH 2) of the earlier draft found a receipt-policy bypass; the same bug class was reproduced against this file on main
+(`fe646e98`) before the fix: `verify` took `alpha`, `delta` and `shift_alpha` from the receipt with no policy check, so a **resealed** receipt
+with `shift_alpha` 0, -1 or 1e-300 flipped the test split from `REFUSE:SHIFT` to `ACCEPT` (a lower `shift_alpha` is more lenient), and a resealed
+`alpha` 0.99 / threshold 0 receipt also returned `ACCEPT`. The seal is an integrity hash, not a signature, so the receipt cannot choose its own policy.
+- `REFUSE:POLICY`: `0 < alpha <= 0.20`, `0 < delta <= 0.10`, `0.05 <= shift_alpha <= 1`, and `threshold` finite (NaN, bool, non-number refused).
+- `REFUSE:UNPINNED_KERNEL`: the receipt's kernel hash must be in a pinned set (in-repo kernel `5e06ddff…202e`; HF `ed0a3bbd` kernel `e2aa6399…930d`).
+  Both tools also check the on-disk kernel before importing it. `--allow-unpinned-kernel` is a deliberate override. A kernel change now requires updating the pin.
+- `REFUSE:MALFORMED:<type>` replaces tracebacks for huge integers, missing files, bad JSON and non-object receipts. None of these ever returned `ACCEPT`.
+- Selftest 9 → 14 cases; four ad-hoc mutants (policy check off, shift lower bound flipped, pin off, malformed handler off) each fail the selftest. Not in CI.
+- Unchanged: LTT 0.137721 (3 misses of 33, p 0.0808), defer band 56.25% answered at 94.07% accuracy (135 answered, 8 wrong), and the
+  `ACCEPT` (validation) / `REFUSE:SHIFT` (test) verdicts. `ACCEPT` on validation only checks the receipt against its own calibration split.
+  Remaining limits: low shift-test power, 33 validation positives, and the selftest and mutants are not run in CI.
 
 ## Proposed next steps (each needs the owner's approval by name)
 - A model-card section reporting the 21.6% missed-alert rate of the 0.16 threshold next to the certified α = 0.20 operating point and the abstention band.
