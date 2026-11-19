@@ -78,7 +78,7 @@ def strip(s):
                     raise StripError(f"unterminated raw string at offset {i}")
                 out.append('""'); i = j + len(close); continue
         if c == '"':
-            interp = _interp_prefix(s, i)
+            interp = _interp_prefix(out)
             out.append('"')
             i = _string_body(s, i + 1, interp, out)
             if i < 0:
@@ -92,15 +92,20 @@ def strip(s):
     return "".join(out)
 
 
-def _interp_prefix(s, i):
-    """True when the quote at i opens an s!/m!/f! interpolated string. Lean
-    allows whitespace between the prefix and the quote (`s! "..."`)."""
-    j = i - 1
-    while j >= 0 and s[j] in " \t\r\n":
-        j -= 1
-    if j < 1 or s[j] != "!" or s[j - 1] not in "smf":
+def _interp_prefix(out):
+    """True when the quote about to be emitted opens an s!/m!/f! interpolated
+    string. Looks back over the already-stripped code (comments removed, so a
+    prefix inside a comment never counts, and a comment between the prefix
+    and the quote is just whitespace, as in Lean)."""
+    tail = []
+    for piece in reversed(out):
+        tail.append(piece)
+        if sum(len(p) for p in tail) >= 64:
+            break
+    t = "".join(reversed(tail)).rstrip(" \t\r\n")
+    if len(t) < 2 or t[-1] != "!" or t[-2] not in "smf":
         return False
-    return j < 2 or not _IDENT.match(s[j - 2])
+    return len(t) < 3 or not _IDENT.match(t[-3])
 
 
 def _string_body(s, i, interp, out):
