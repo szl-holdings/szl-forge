@@ -6,7 +6,9 @@ All values are deterministic; no network, no randomness.
 """
 import hashlib
 import importlib.util
+import math
 import os
+from decimal import Decimal, localcontext
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 MOD = os.path.join(HERE, "..", "tools", "szl_math_edge_admission_cp.py")
@@ -122,8 +124,22 @@ def test_cp_admits_where_hoeffding_blocks_measured_gain():
 
 def test_cp_zero_errors_closed_form():
     b = m.cp_risk_upper(0, 30, 0.025)
-    assert b == round(1.0 - 0.025 ** (1.0 / 30), 12)
+    assert b == m._upward_quantize_12(-math.expm1(math.log(0.025) / 30))
     assert b > 0.0
+
+def test_cp_quantized_tail_never_exceeds_delta_decimal_reference():
+    # Independent finite binomial sum, no shared lgamma/bisection engine.
+    with localcontext() as ctx:
+        ctx.prec = 75
+        for errors, n, delta in ((0, 30, 0.025), (0, 100, 0.025),
+                                 (1, 30, 0.025), (10, 100, 0.025),
+                                 (60, 1000, 0.025)):
+            observed = Decimal(str(m.cp_risk_upper(errors, n, delta)))
+            complement = Decimal(1) - observed
+            cdf = sum(Decimal(math.comb(n, i)) * (observed ** i)
+                      * (complement ** (n - i)) for i in range(errors + 1))
+            assert cdf <= Decimal(str(delta)), (errors, n, delta, str(cdf))
+
 
 def test_cp_bound_dominates_empirical_and_hoeffding_grid():
     for n in (30, 100, 1000):

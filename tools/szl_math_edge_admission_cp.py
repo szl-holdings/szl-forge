@@ -28,7 +28,7 @@ PINNED_SOURCES = {
     "lutar-lean": "80e35f859801d80fce7cf81e4d9b0c8bdf91cfea",
 }
 V1_GATE_SHA256 = "3aebebab39c5ab73a2a8aa11ec907ebc129c64a40d1816262d71af951ad908b0"
-BOUND_ENGINE = "clopper-pearson-exact-bisection64-quantized-1e-12"
+BOUND_ENGINE = "clopper-pearson-bisection64-outward-quantized-1e-12"
 
 
 def _sha(s, n):
@@ -64,18 +64,26 @@ def _binom_logcdf(k, n, p):
     return m + math.log(math.fsum(math.exp(x - m) for x in logs))
 
 
+def _upward_quantize_12(value):
+    """Quantize an upper-bound approximation outward, not to nearest."""
+    if not math.isfinite(value) or not 0.0 <= value <= 1.0:
+        raise ValueError("upper-bound approximation outside [0, 1]")
+    return min(1.0, math.ceil(math.nextafter(value, math.inf) * 1e12) / 1e12)
+
+
 def cp_risk_upper(errors, n, delta):
     """One-sided exact upper bound b solving P(Bin(n, b) <= errors) = delta.
 
-    Deterministic bisection (64 iterations); output quantized at 1e-12 for
-    cross-platform receipt reproducibility. errors == 0 -> 1 - delta ** (1/n).
+    Floating-point log-gamma bisection (64 iterations), then an upward
+    1e-12 grid quantization. Not an arbitrary-precision proof certificate.
+    Zero-error case uses a stable -expm1(log(delta) / n) expression.
     """
     if not (0.0 < delta < 1.0):
         raise ValueError("delta must be in (0, 1)")
     if errors >= n:
         return 1.0
     if errors == 0:
-        return round(1.0 - delta ** (1.0 / n), 12)
+        return _upward_quantize_12(-math.expm1(math.log(delta) / n))
     lo, hi = 0.0, 1.0
     target = math.log(delta)
     for _ in range(64):
@@ -84,7 +92,7 @@ def cp_risk_upper(errors, n, delta):
             lo = mid
         else:
             hi = mid
-    return round(hi, 12)
+    return _upward_quantize_12(hi)
 
 
 def hoeffding_risk_upper(errors, n, delta):

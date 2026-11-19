@@ -1,6 +1,7 @@
 """Tests for szl_math_kotte_feasibility (battery v2.2, fail-closed doctrine)."""
 import importlib.util
 import os
+from decimal import Decimal, localcontext
 import pytest
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
@@ -50,7 +51,17 @@ def test_boundary_mu_equals_alpha():
 def test_quantization_12dp():
     r = kotte.kotte_feasibility(0.05, 0.123456789123456)
     assert r["mu"] == round(0.123456789123456, 12)
-    assert r["abstention_floor"] == round((0.123456789123456 - 0.05) / 0.95, 12)
+    assert r["abstention_floor"] == kotte._ceil_floor_12(0.05, 0.123456789123456)
+
+
+def test_abstention_floor_ceil_is_not_rounded_below_idealized_minimum():
+    with localcontext() as ctx:
+        ctx.prec = 60
+        for a, m in ((0.05, 0.125), (0.05, 0.123456789123456),
+                     (0.1, 0.9), (0.2, 0.5)):
+            out = kotte.kotte_feasibility(a, m)
+            idealized = (Decimal(str(m)) - Decimal(str(a))) / (Decimal(1) - Decimal(str(a)))
+            assert Decimal(str(out["abstention_floor"])) >= idealized
 
 
 def test_determinism():
@@ -104,7 +115,7 @@ def test_audit_entry_validation():
 def test_schema_and_pins():
     assert kotte.SCHEMA == "szl.edge-math-evidence/kotte-v1"
     assert kotte.PINNED_COMPANIONS["cp_module_sha256"] == (
-        "cf56cd363ee06595598be97aa3286c06dbcc95f4bfee0818c46a692a6835caac")
+        "a484b60a958feefb446f77419da52193a608a1322b5d7ffd92046ebf04efd80d")
     assert kotte.PINNED_COMPANIONS["v1_gate_sha256"] == (
         "3aebebab39c5ab73a2a8aa11ec907ebc129c64a40d1816262d71af951ad908b0")
 
