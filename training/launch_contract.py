@@ -368,7 +368,8 @@ def evaluate(
         errors.append("holdout jsonl is required and must be disjoint from train")
     else:
         try:
-            holdout_sha256 = hashlib.sha256(holdout_path.read_bytes()).hexdigest()
+            with holdout_path.open("rb") as heldout_stream:
+                holdout_sha256 = hashlib.file_digest(heldout_stream, "sha256").hexdigest()
         except OSError:
             codes.append("LAUNCH_HOLDOUT_UNREADABLE")
             errors.append("holdout JSONL bytes are unreadable")
