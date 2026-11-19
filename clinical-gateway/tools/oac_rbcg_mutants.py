@@ -41,6 +41,10 @@ M = {
  "M29 file-hash check removed": [(HASHCK, "")],
  "M30 receipt seal check removed": [('!= rc.get("receipt_sha256"): return "REFUSE:RECEIPT_TAMPERED"', '!= rc.get("receipt_sha256") and False: return "REFUSE:RECEIPT_TAMPERED"')],
  "M31 issue() emits receipts over unpinned files": [("    if why: raise Refuse(why)", "    if False: raise Refuse(why)")],
+ "M33 delta ignored in verify (forgery at a calibration-score threshold)": [(' or p > rc["delta"]', "")],
+ "M34 kernel cache keyed by hash only (stale __file__)": [("    key = (h, os.path.realpath(path))", "    key = h")],
+ "M35 deployment rows must carry labels": [("    dep = scores_only(K, deploy_path)", "    dep = [s for s, _ in scored(K, deploy_path)]")],
+ "M36 verify p-value at the policy alpha, not the receipt's": [('p = binom_cdf(k, len(pos), rc["alpha"])', "p = binom_cdf(k, len(pos), POLICY_MAX_ALPHA)")],
  "M32 kernel hash from receipt only (no pin at load, no verify-level kernel pin)": [('    if not allow_unpinned and h not in pinned_values(KERNEL, pins): raise Refuse("UNPINNED_KERNEL")\n', ""),
      ("    if not allow_unpinned:\n        why = pin_failure", "    if False:\n        why = pin_failure")],
 }

@@ -1,18 +1,22 @@
 #!/usr/bin/env python3
 """FX-2 + RBCG on oac-system-health-v1 (szl-forge main model files). Stdlib only. Synthetic ops telemetry only.
 Run as a script (python3 oac_ltt.py [--allow-unpinned-kernel]); importing this module has no side effects (no argv parsing, no exit,
-no kernel execution). The kernel bytes are hashed and checked against the pin before they are compiled and run."""
-import hashlib, json, math, os, random, sys, types
+no kernel execution). Pins come from oac_rbcg.py (full file profile, not just the kernel); the kernel bytes are hashed and checked before they are compiled and run."""
+import hashlib, importlib.util, json, math, os, random, sys
 F = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))  # repo root; this file lives at clinical-gateway/tools/
 MD = f"{F}/clinical-gateway/huggingface/model/oac-system-health-v1"; DD = f"{F}/ops-health/v2/data/legacy_v1"
-# Kernel pin (same set as oac_rbcg.py): refuse to execute an unrecognised kernel unless --allow-unpinned-kernel is passed.
-PINNED_KERNEL_SHA256 = {"5e06ddffce9615a12c351e9926e24fefa142c920017b9dc844c584c58517202e", "e2aa63991b94596a16d69a288510b4b10af88932e075c055d97d1dac4d9a930d"}
-class Refuse(Exception): pass
+# One source of truth for pins and kernel loading: oac_rbcg.py (importing it has no side effects). No second pin list here.
+_spec = importlib.util.spec_from_file_location("_oac_rbcg_pins", os.path.join(os.path.dirname(os.path.abspath(__file__)), "oac_rbcg.py"))
+_rb = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(_rb)
+Refuse = _rb.Refuse
 def load_kernel_class(md=MD, allow_unpinned=False):
-    path = f"{md}/oac_operational_health.py"; raw = open(path, "rb").read(); h = hashlib.sha256(raw).hexdigest()
-    if not allow_unpinned and h not in PINNED_KERNEL_SHA256: raise Refuse("UNPINNED_KERNEL")
-    mod = types.ModuleType(f"_oac_kernel_{h[:16]}"); mod.__file__ = path; sys.modules[mod.__name__] = mod  # dataclasses needs the module registered
-    exec(compile(raw, path, "exec"), mod.__dict__); return mod.OperationalHealthKernel
+    """Refuse unless model.json, artifact_receipt.json, the kernel and the calibration split equal one oac_rbcg pinned profile; then load the kernel
+    through oac_rbcg (hash checked before the bytes are compiled)."""
+    if not allow_unpinned:
+        files = {n: sha(f"{md}/{n}") for n in _rb.BOUND}; files["calibration.jsonl"] = sha(f"{DD}/validation.jsonl")
+        why = _rb.pin_failure(files)
+        if why: raise Refuse(why)
+    return _rb.load_kernel_class(md, allow_unpinned)
 sha = lambda p: hashlib.sha256(open(p, "rb").read()).hexdigest()
 K = VAL = TEST = None  # set by main(); the helpers below read them
 def load(s):

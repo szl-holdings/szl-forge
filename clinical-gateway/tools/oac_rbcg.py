@@ -49,13 +49,15 @@ def load_kernel_class(md, allow_unpinned=False, pins=None):
     """Hash the kernel bytes, require the pin, and compile exactly those bytes (no import by path, no TOCTOU). Nothing runs before the pin."""
     path = f"{md}/{KERNEL}"; raw = open(path, "rb").read(); h = hashlib.sha256(raw).hexdigest()
     if not allow_unpinned and h not in pinned_values(KERNEL, pins): raise Refuse("UNPINNED_KERNEL")
-    if h not in _KERNELS:
+    key = (h, os.path.realpath(path))  # the kernel re-hashes its own __file__ at init, so a cached module must keep this md's path
+    if key not in _KERNELS:
         mod = types.ModuleType(f"_oac_kernel_{h[:16]}"); mod.__file__ = path; sys.modules[mod.__name__] = mod  # dataclasses needs the module registered
-        exec(compile(raw, path, "exec"), mod.__dict__); _KERNELS[h] = mod.OperationalHealthKernel
-    return _KERNELS[h]
+        exec(compile(raw, path, "exec"), mod.__dict__); _KERNELS[key] = mod.OperationalHealthKernel
+    return _KERNELS[key]
 def kernel(md, allow_unpinned=False, pins=None):
     return load_kernel_class(md, allow_unpinned, pins)(f"{md}/model.json", f"{md}/artifact_receipt.json")
 def jsonl_rows(path): return [json.loads(l) for l in open(path) if l.strip()]
+def scores_only(K, path): return [K.score(r["features"])["operator_attention_score"] for r in jsonl_rows(path)]
 def scored(K, path):
     return [(K.score(r["features"])["operator_attention_score"], int(bool(r["label"]["operator_attention_required"]))) for r in jsonl_rows(path)]
 def binom_cdf(k, n, p): return sum(math.comb(n, i) * p ** i * (1 - p) ** (n - i) for i in range(k + 1))
@@ -88,7 +90,7 @@ def issue(md=MD, cal_path=f"{DD}/validation.jsonl", alpha=0.20, delta=0.10, shif
     if why: raise Refuse(why)  # never issue a receipt that verify() would refuse as unpinned
     return seal({"schema": "szl-oac/receipt-bound-missed-alert-guarantee/v0", "files": files, "alpha": alpha, "delta": delta,
             "threshold": t, "cal_misses": k, "cal_positives": n1, "p_value": p, "shift_test": "two-sample KS on model scores, permutation B=2000 seed 11",
-            "shift_alpha": shift_alpha, "claim": f"P(missed-alert rate > {alpha}) <= {delta} for deployment batches exchangeable with calibration"})
+            "shift_alpha": shift_alpha, "claim": f"P(population missed-alert rate > {alpha}) <= {delta} over the calibration draw, for deployment exchangeable with calibration; not a bound on one batch's realised rate"})
 def _num(x): return isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x)
 def policy_ok(rc):
     """The seal only proves self-consistency, so the receipt cannot choose its own policy. A lower shift_alpha is MORE lenient.
@@ -112,7 +114,7 @@ def _verify(rc, deploy_path, md, cal_path, allow_unpinned, pins):
     K = kernel(md, allow_unpinned, pins); cal = scored(K, cal_path); pos = [s for s, y in cal if y]
     k = sum(1 for s in pos if s < rc["threshold"]); p = binom_cdf(k, len(pos), rc["alpha"])
     if k != rc["cal_misses"] or p > rc["delta"] or rc["threshold"] not in {s for s, _ in cal}: return "REFUSE:CERT"  # issue() only emits a calibration score
-    dep = [s for s, _ in scored(K, deploy_path)]
+    dep = scores_only(K, deploy_path)  # deployment rows need only "features"; labels are unknown at decision time
     if len(dep) < POLICY_MIN_DEPLOY: return "REFUSE:INSUFFICIENT_DEPLOYMENT"
     if shift_p([s for s, _ in cal], dep)[1] < rc["shift_alpha"]: return "REFUSE:SHIFT"
     return "ACCEPT"
@@ -137,9 +139,12 @@ def selftest():
         ok["refuse_resealed_uncertifiable_threshold"] = verify(seal(bad), V) == "REFUSE:CERT"
         # internally consistent forgery: true miss count at an uncertifiable threshold, resealed -> only the delta check can refuse
         Kc = kernel(MD); calp = [x for x, y in scored(Kc, V) if y]
-        forg = dict(rc); forg["threshold"] = 0.2; forg["cal_misses"] = sum(1 for x in calp if x < 0.2)
+        # the forged threshold is a real calibration score (so only the p > delta check can refuse it), above the certified one
+        t_hi = min(x for x in calp if x > rc["threshold"] and sum(1 for z in calp if z < x) > rc["cal_misses"])
+        forg = dict(rc); forg["threshold"] = t_hi; forg["cal_misses"] = sum(1 for x in calp if x < t_hi)
         forg["p_value"] = binom_cdf(forg["cal_misses"], len(calp), forg["alpha"])
-        ok["refuse_consistent_forgery_failing_delta"] = forg["p_value"] > rc["delta"] and verify(seal(forg), V) == "REFUSE:CERT"
+        ok["refuse_consistent_forgery_failing_delta"] = (forg["p_value"] > rc["delta"] and t_hi in {x for x, _ in scored(Kc, V)}
+            and verify(seal(forg), V) == "REFUSE:CERT")
         # synthetic shift: deployment = top-scored half of test
         rows = [l for l in open(T) if l.strip()]
         rows.sort(key=lambda l: -Kc.score(json.loads(l)["features"])["operator_attention_score"])
@@ -160,6 +165,14 @@ def selftest():
         jsonl_rows = _mem; mem = verify(rc, V); jsonl_rows = keep_rows
         ok["malformed_recursion_and_memory"] = (verify({**rc, "x": deep}, V).startswith("REFUSE:MALFORMED")
             and verify(rc, f"{W}/deep.jsonl") == "REFUSE:MALFORMED:RecursionError" and mem == "REFUSE:MALFORMED:MemoryError")
+        # audit 2026-11-19: deployment rows without labels are scored (labels are not known at decision time)
+        open(f"{W}/nolabel.jsonl", "w").writelines(json.dumps({"features": json.loads(l)["features"]}) + "\n" for l in open(V) if l.strip())
+        ok["accept_unlabeled_deployment"] = verify(rc, f"{W}/nolabel.jsonl") == "ACCEPT"
+        # audit 2026-11-19: a stricter (alpha 0.10) receipt is certified and verified with its own alpha
+        r10 = issue(alpha=0.10)
+        ok["alpha_0.10_receipt_verifies"] = abs(r10["threshold"] - 0.120629) < 1e-6 and r10["cal_misses"] == 0 and verify(r10, V) == "ACCEPT"
+        lax = seal({**r10, "threshold": rc["threshold"], "cal_misses": rc["cal_misses"], "p_value": binom_cdf(rc["cal_misses"], len(calp), 0.10)})
+        ok["refuse_alpha_0.10_receipt_at_alpha_0.20_threshold"] = verify(lax, V) == "REFUSE:CERT"  # verify uses the receipt's own alpha
         # review fix 2: minimum deployment rows (0 is refused explicitly, not by a ZeroDivisionError)
         drows = [l for l in open(T) if l.strip()]; dv = {}
         for n in (0, 1, 3, 10, 29, 30):
@@ -217,10 +230,14 @@ def selftest():
         ok["unpinned_kernel_never_executed"] = r1 and r2 and gone and gone2 and v_fake == "REFUSE:UNPINNED_KERNEL"
         load_kernel_class(evil, allow_unpinned=True)
         ok["override_executes_unpinned_kernel_control"] = os.path.exists(marker)
+        # Bugbot #771: a cached kernel must not keep the path of an earlier (since deleted) model dir
+        _KERNELS.clear(); tmpmd = f"{W}/tmp_model"; shutil.copytree(MD, tmpmd); v_tmp = verify(issue(md=tmpmd), V, md=tmpmd); shutil.rmtree(tmpmd)
+        ok["kernel_cache_keyed_by_path"] = v_tmp == "ACCEPT" and verify(rc, V) == "ACCEPT" and issue()["receipt_sha256"] == rc["receipt_sha256"]
         # import-time behaviour (fix 7 and 6a): importing never exits, never reads argv, never executes the kernel
         tree = f"{W}/tree"; os.makedirs(f"{tree}/clinical-gateway/tools"); os.makedirs(f"{tree}/clinical-gateway/huggingface/model")
         shutil.copy(os.path.abspath(__file__), f"{tree}/clinical-gateway/tools/oac_rbcg.py")
-        shutil.copytree(evil, f"{tree}/clinical-gateway/huggingface/model/oac-system-health-v1"); os.symlink(f"{F}/ops-health", f"{tree}/ops-health")
+        shutil.copytree(evil, f"{tree}/clinical-gateway/huggingface/model/oac-system-health-v1")
+        shutil.copytree(DD, f"{tree}/ops-health/v2/data/legacy_v1")  # a copy, not a symlink, so the selftest also runs on Windows CI
         os.remove(marker); tools = f"{tree}/clinical-gateway/tools"
         p = subprocess.run([sys.executable, "-B", "-c", "import sys; sys.argv = ['x', '--allow-unpinned-kernel', 'bogus']; import oac_rbcg; print('IMPORT_OK', sys.argv[1:])"],
                            capture_output=True, text=True, cwd=tools, env={**os.environ, "PYTHONPATH": tools})

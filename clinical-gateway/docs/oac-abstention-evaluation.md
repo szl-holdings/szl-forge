@@ -1,6 +1,6 @@
 # oac-system-health-v1: certified missed-alert threshold, abstention band, receipt-bound verifier (2026-11-10)
 
-Prototype, unpushed. It ran on szl-vm2 against `szl-forge` main model files (byte-identical to GitHub main: model.json
+Sections 1-6 are the original 2026-11-10 prototype record (historical hashes; it has since been merged in #734 and hardened in #771, see sections 8-10). It ran on szl-vm2 against `szl-forge` main model files (byte-identical to GitHub main: model.json
 `f111b7fc…d9557`, oac_operational_health.py `2fd8ffd3…92669`) and the committed synthetic split
 `ops-health/v2/data/legacy_v1` (validation `4557220a…`, test `7fc6ea63…`). Stdlib only; the model's own scorer;
 synthetic operations telemetry only. Labels: MEASURED (synthetic) unless stated.
@@ -43,7 +43,7 @@ REFUSE:RECEIPT_TAMPERED · REFUSE:HASH · REFUSE:CERT (recomputed misses differ 
 - On real data: deployment = validation → **ACCEPT**; deployment = committed test split → **REFUSE:SHIFT**.
 - Selftest **9/9**: issue reproduces LTT; binomial KAT; accept exchangeable; refuse real shift; refuse tampered calibration (one label flipped);
   refuse edited threshold; refuse resealed threshold with the wrong miss count; refuse an internally consistent forgery that fails δ; refuse a strong synthetic shift.
-- Mutants **8/8 caught**: shift check removed, hash check removed, δ ignored in verify (initially SURVIVED → closed by the consistent-forgery case),
+- Mutants **8/8 caught** (2026-11-10; see section 10: after #771 added the calibration-score check, the δ-ignored mutant survived again until the forgery case was fixed): shift check removed, hash check removed, δ ignored in verify (initially SURVIVED → closed by the consistent-forgery case),
   seal ignored, naive LTT, binomial tail off by one, KS always zero, calibration hash unbound.
 
 ## 6. Limits
@@ -109,8 +109,36 @@ Results below are **MEASURED (synthetic)**; nothing here is a production-readine
   three that survived) to a scratch copy; each must fail the selftest (**32/32 killed**). Not in CI.
 - **Unchanged (MEASURED (synthetic)):** LTT 0.137721 (3 misses of 33, p 0.0808); defer band 135 / 240 = 56.25% answered at 94.07% accuracy (8 wrong);
   validation `ACCEPT`, test `REFUSE:SHIFT`; `oac_ltt.py` writes a byte-identical `oac_ltt.json` before and after this change.
-- **Still open:** the selftest and mutants are not in CI (no workflow change in this PR); low shift-test power; 33 validation positives; the `oac_rbcg_receipt.json`
+- **Still open (see section 10: the selftest is now in CI via unittest; mutants are not):** the selftest and mutants are not in CI (no workflow change in this PR); low shift-test power; 33 validation positives; the `oac_rbcg_receipt.json`
   files from #723 are not part of this PR.
+
+## 10. Zoom-out audit fixes (2026-11-19)
+Results are **MEASURED (synthetic)**; nothing here is a production-readiness claim. Full audit notes are kept outside the repo.
+- **δ check was untested again.** #771's new "threshold must be a calibration score" check refused the old consistent-forgery case (threshold 0.2) before
+  the `p > δ` check ran, so a mutant that ignores δ in `verify` passed the selftest. The forgery now uses a real calibration score above the certified
+  threshold (4 misses, p 0.182 > 0.10), so only the δ check can refuse it. New mutants M33-M36 (δ ignored, kernel cache keyed by hash only, deployment
+  rows must carry labels, p-value at the policy α instead of the receipt's α) are all killed: **36/36**. Selftest 29 → 33 cases.
+- **Deployment rows need no labels.** `verify` used to read `label` from every deployment row (then discard it), so a real, unlabeled batch was
+  `REFUSE:MALFORMED:KeyError`. Deployment rows now need only `features`.
+- **Kernel cache.** The kernel re-hashes its own `__file__` when it is constructed; the cache was keyed by kernel hash only, so after one load from a
+  since-deleted model dir every later `issue`/`verify` failed with `FileNotFoundError` (fail-closed, but wrong). The cache is now keyed by (hash, path).
+- **One pin source.** `oac_ltt.py` no longer keeps its own kernel-only pin list; it loads `oac_rbcg.py`'s profiles and refuses any model.json /
+  artifact_receipt.json / kernel / calibration set that is not one pinned profile. `oac_ltt.json` is byte-identical before and after.
+- **In CI.** `clinical-gateway/tests/test_oac_rbcg_selftest.py` runs the selftest and the LTT reproduction under the existing `unittest discover` step of
+  the OAC Clinical Gateway workflow (Python 3.11-3.13 and Windows). No workflow file changed. The selftest no longer symlinks `ops-health` (it copies
+  the split), so it runs on Windows. The 36-mutant suite (about 2-3 minutes) is still run by hand only.
+- **Receipt claim wording.** The guarantee is about the *population* missed-alert rate over the calibration draw, not one batch's realised rate. On
+  2,000 random disjoint 192/240 partitions of the pooled 432 rows, the certified threshold's realised hold-out miss rate exceeded α = 0.20 in
+  **12.6%** of partitions (above δ = 0.10, as expected from hold-out sampling noise), while the pooled-population rate exceeded it in 2.9%. The receipt
+  `claim` string now says this; old receipts still verify (the claim text is not a verified field).
+- **Shift-test power against the real shift is low.** Against the actual validation→test score shift (KS p 0.03 at n = 240), the gate refuses
+  **22%** of 30-row batches, 27% at 60 and 47% at 120 (60 reps each, permutation B = 500). The 30-row floor is a minimum-evidence convention, not a
+  calibrated value; an `ACCEPT` on a small batch is weak evidence of exchangeability.
+- **Concept drift is invisible to the gate.** A deployment made of the calibration rows with every label flipped (100% missed alerts at any
+  threshold) gets `ACCEPT`: the gate sees scores only. Only label feedback can detect this.
+- **Pinned HF profile is stale.** HF `SZLHOLDINGS/oac-system-health-v1` main (`013c43b2`, 2026-11-14 22:53 ET, and the later README-only `5bd9e7dd`) now
+  serves the repo-main kernel `5e06ddff…202e` and artifact receipt `53180b90…b685`. The `hf-ed0a3bbd` profile still accepts the superseded
+  `e2aa6399…930d` kernel, which lacks the later input-hardening. Removing it is an owner decision.
 
 ## Proposed next steps (each needs the owner's approval by name)
 - A model-card section reporting the 21.6% missed-alert rate of the 0.16 threshold next to the certified α = 0.20 operating point and the abstention band.
