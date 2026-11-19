@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+import json
 from unittest import TestCase
 
-from training.gpu_canary_cost_envelope import SCHEMA, assess
+from training.gpu_canary_cost_envelope import MAX_PLAN_BYTES, SCHEMA, assess, parse_plan_bytes
 
 
 NOW = datetime(2026, 11, 19, 8, 0, tzinfo=timezone.utc)
@@ -101,6 +102,37 @@ class GpuCostEnvelopeTests(TestCase):
         self.assertIn("PROVIDER_SCOPE_NOT_CANONICAL", result["codes"])
         self.assertIn("CONTAINER_GROUP_INVALID", result["codes"])
         self.assertIn("RUNTIME_CAP_INVALID", result["codes"])
+
+    def test_bounded_json_roundtrip_keeps_exact_plan(self):
+        plan = candidate()
+        self.assertEqual(parse_plan_bytes(json.dumps(plan).encode("utf-8")), plan)
+
+    def test_duplicate_top_level_gpu_count_is_rejected(self):
+        raw = json.dumps(candidate(), separators=(",", ":")).replace(
+            '"gpu_count":1', '"gpu_count":2,"gpu_count":1',
+        )
+        with self.assertRaisesRegex(ValueError, "DUPLICATE_PLAN_JSON_MEMBER"):
+            parse_plan_bytes(raw.encode("utf-8"))
+
+    def test_duplicate_nested_unknown_fields_rejected(self):
+        raw = json.dumps(candidate(), separators=(",", ":"))
+        raw = raw[:-1] + ',"metadata":{"owner":"first","owner":"second"}}'
+        with self.assertRaisesRegex(ValueError, "DUPLICATE_PLAN_JSON_MEMBER"):
+            parse_plan_bytes(raw.encode("utf-8"))
+
+    def test_nonfinite_and_fractional_json_numbers_refused(self):
+        raw = json.dumps(candidate(), separators=(",", ":"))
+        for number in ("NaN", "Infinity", "-Infinity", "1.0", "1e100000"):
+            with self.subTest(number=number):
+                malformed = raw.replace('"gpu_count":1', '"gpu_count":' + number)
+                with self.assertRaisesRegex(ValueError, "UNSUPPORTED_PLAN_JSON_NUMBER"):
+                    parse_plan_bytes(malformed.encode("utf-8"))
+
+    def test_empty_oversized_or_nonobject_plan_refused(self):
+        for raw in (b"", b" " * (MAX_PLAN_BYTES + 1), b"[]"):
+            with self.subTest(size=len(raw)):
+                with self.assertRaises(ValueError):
+                    parse_plan_bytes(raw)
 
     def test_invalid_config_and_clock_refused(self):
         result = assess(None, now=NOW)
