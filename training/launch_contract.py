@@ -100,6 +100,7 @@ def _report(
     train_jsonl: Optional[str],
     holdout_jsonl: Optional[str],
     corpus_sha256: Optional[str],
+    holdout_sha256: Optional[str] = None,
 ) -> Dict[str, Any]:
     unique = _dedupe(codes)
     return {
@@ -122,6 +123,7 @@ def _report(
         "train_jsonl": train_jsonl,
         "holdout_jsonl": holdout_jsonl,
         "corpus_sha256": corpus_sha256,
+        "holdout_sha256": holdout_sha256,
         "launch_executed": False,
         "training_started": False,
         "teacher_invoked": False,
@@ -209,6 +211,7 @@ def _check_admission(
     dataset_id: Optional[str],
     revision: Optional[str],
     corpus_sha256: Optional[str],
+    holdout_sha256: Optional[str],
 ) -> Tuple[List[str], List[str]]:
     if path is None or not path.is_file():
         return ["LAUNCH_ADMISSION_MISSING"], ["admission receipt is missing"]
@@ -251,6 +254,15 @@ def _check_admission(
             "admission receipt must match the dataset id, immutable revision, "
             "train split, and train-file sha256"
         )
+    # A reviewed holdout is part of the admitted evaluation identity, not a
+    # mutable sidecar. Source/disjointness checks alone cannot certify its bytes.
+    expected_holdout = receipt.get("holdout_sha256")
+    if not isinstance(expected_holdout, str) or re.fullmatch(r"[0-9a-f]{64}", expected_holdout) is None:
+        codes.append("LAUNCH_HOLDOUT_PIN_MISSING")
+        errors.append("operator admission must include the exact holdout-file sha256")
+    elif holdout_sha256 is None or expected_holdout != holdout_sha256:
+        codes.append("LAUNCH_HOLDOUT_PIN_MISMATCH")
+        errors.append("holdout bytes do not match the operator-admitted sha256")
     return codes, errors
 
 
@@ -350,9 +362,17 @@ def evaluate(
     train_path = _as_path(config_dir, config.get("train_jsonl"))
     holdout_path = _as_path(config_dir, config.get("holdout_jsonl"))
     admission_path = _as_path(config_dir, config.get("admission"))
+    holdout_sha256 = None
     if holdout_path is None or not holdout_path.is_file():
         codes.append("LAUNCH_HOLDOUT_MISSING")
         errors.append("holdout jsonl is required and must be disjoint from train")
+    else:
+        try:
+            with holdout_path.open("rb") as heldout_stream:
+                holdout_sha256 = hashlib.file_digest(heldout_stream, "sha256").hexdigest()
+        except OSError:
+            codes.append("LAUNCH_HOLDOUT_UNREADABLE")
+            errors.append("holdout JSONL bytes are unreadable")
 
     dataset_report = _empty_report()
     accepted = 0
@@ -398,6 +418,7 @@ def evaluate(
         dataset_id=dataset_id,
         revision=dataset_revision,
         corpus_sha256=corpus_sha256,
+        holdout_sha256=holdout_sha256,
     )
     codes.extend(admission_codes)
     errors.extend(admission_errors)
@@ -418,6 +439,7 @@ def evaluate(
         train_jsonl=str(train_path.resolve()) if train_path is not None and train_path.is_file() else None,
         holdout_jsonl=str(holdout_path.resolve()) if holdout_path is not None and holdout_path.is_file() else None,
         corpus_sha256=corpus_sha256,
+        holdout_sha256=holdout_sha256,
     )
 
 
