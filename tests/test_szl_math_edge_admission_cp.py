@@ -6,7 +6,6 @@ All values are deterministic; no network, no randomness.
 """
 import hashlib
 import importlib.util
-import math
 import os
 
 HERE = os.path.dirname(os.path.abspath(__file__))
