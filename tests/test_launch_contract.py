@@ -59,7 +59,7 @@ def _write_jsonl(path: Path, rows: list[dict]) -> None:
     )
 
 
-def _receipt(dataset_id: str, corpus_sha256: str, **overrides) -> dict:
+def _receipt(dataset_id: str, corpus_sha256: str, holdout_sha256: str, **overrides) -> dict:
     receipt = {
         "schema": "szl.forge.training-admission/v1",
         "dataset_id": dataset_id,
@@ -70,6 +70,7 @@ def _receipt(dataset_id: str, corpus_sha256: str, **overrides) -> dict:
         "commercial_use": "ADMITTED",
         "basis": "OPERATOR_ADMISSION_RECEIPT",
         "corpus_sha256": corpus_sha256,
+        "holdout_sha256": holdout_sha256,
     }
     receipt.update(overrides)
     return receipt
@@ -98,6 +99,7 @@ def materialize(
     _write_jsonl(train, train_rows)
     _write_jsonl(holdout, hold_rows)
     corpus_sha256 = hashlib.sha256(train.read_bytes()).hexdigest()
+    holdout_sha256 = hashlib.sha256(holdout.read_bytes()).hexdigest()
     config = {
         "schema": "szl.forge.wave-config/v1",
         "kind": kind,
@@ -114,7 +116,7 @@ def materialize(
     if not omit_admission:
         admission = tmp_path / "admission.json"
         admission.write_text(
-            json.dumps(_receipt(dataset_id, corpus_sha256, revision=revision, **(receipt_overrides or {}))),
+            json.dumps(_receipt(dataset_id, corpus_sha256, holdout_sha256, revision=revision, **(receipt_overrides or {}))),
             encoding="utf-8",
         )
         config["admission"] = str(admission)
@@ -229,6 +231,67 @@ def test_thirty_two_examples_do_not_override_other_gates(
         path = materialize(tmp_path / dataset_id.split("/")[-1], 32, dataset_id=dataset_id)
         decision = CONTRACT.evaluate_path(path)
         assert "LAUNCH_DATASET_DENIED" in decision["codes"]
+
+
+def test_real_w29_candidate_has_exact_training_and_holdout_byte_pins(forbid_launch_imports):
+    # Review the actual owner-submitted candidate, not only synthetic fixtures.
+    # This remains an offline source gate, never a training/quality approval.
+    path = ROOT / "training" / "w29" / "forge-v3-candidate.json"
+    decision = CONTRACT.evaluate_path(path, expected_kind="sft")
+    assert decision["ok"] is True
+    assert decision["verdict"] == "GATES_SATISFIED_NOT_LAUNCHED"
+    assert decision["accepted_examples"] == 213
+    assert decision["corpus_sha256"] == (
+        "ef8feffee2d07ec0391be93b7ae7e718a2a92c36ebcdd3bda115d2e177961e38"
+    )
+    assert decision["holdout_sha256"] == (
+        "ce3d0ca0983a42673b6b6405f8b3fd99806fc94e824cd05b11ebc8ae10cd778a"
+    )
+    assert decision["dataset_report"]["cross_dataset_overlaps"] == 0
+    assert decision["model_loaded"] is False
+    assert decision["launch_executed"] is False
+    assert decision["hub_write"] is False
+
+
+def test_holdout_bytes_are_bound_to_operator_admission(tmp_path, forbid_launch_imports):
+    path = materialize(tmp_path, 32)
+    good = CONTRACT.evaluate_path(path, expected_kind="sft")
+    assert good["ok"] is True
+    asserted = json.loads((tmp_path / "admission.json").read_text(encoding="utf-8"))
+    assert good["holdout_sha256"] == asserted["holdout_sha256"]
+
+    # Preserve a syntactically valid and disjoint holdout while changing bytes.
+    holdout = tmp_path / "holdout.jsonl"
+    rows = [json.loads(line) for line in holdout.read_text(encoding="utf-8").splitlines()]
+    rows[0]["messages"][-1]["content"] = "changed answer after signed intake"
+    _write_jsonl(holdout, rows)
+    changed = CONTRACT.evaluate_path(path, expected_kind="sft")
+    assert changed["ok"] is False
+    assert "LAUNCH_HOLDOUT_PIN_MISMATCH" in changed["codes"]
+    assert "LAUNCH_HOLDOUT_OVERLAP" not in changed["codes"]
+    assert changed["model_loaded"] is False
+    assert changed["hub_write"] is False
+
+
+@pytest.mark.parametrize("bad", [None, "main", "0" * 64])
+def test_missing_or_wrong_holdout_digest_refuses(tmp_path, forbid_launch_imports, bad):
+    path = materialize(tmp_path, 32)
+    receipt_path = tmp_path / "admission.json"
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    if bad is None:
+        del receipt["holdout_sha256"]
+    else:
+        receipt["holdout_sha256"] = bad
+    receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
+    result = CONTRACT.evaluate_path(path, expected_kind="sft")
+    assert result["ok"] is False
+    assert (
+        "LAUNCH_HOLDOUT_PIN_MISSING" if bad is None or bad == "main"
+        else "LAUNCH_HOLDOUT_PIN_MISMATCH"
+    ) in result["codes"]
+    assert result["launch_executed"] is False
+    assert result["model_loaded"] is False
+    assert result["hub_write"] is False
 
 
 def test_satisfied_gates_do_not_load_a_model_or_write_the_hub(

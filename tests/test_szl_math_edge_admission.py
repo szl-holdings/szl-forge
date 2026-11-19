@@ -144,6 +144,81 @@ class SZLMathTests(unittest.TestCase):
         x["candidate"].update(x["baseline"])
         self.assertEqual(evaluate(x)["reasons"], ["NO_MEASURED_IMPROVEMENT"])
 
+    def test_min_subnormal_delta_is_held_not_raised(self):
+        x = fixture()
+        x["constraints"]["delta"] = 5e-324  # delta / 2 underflows to 0.0
+        self.assertEqual(evaluate(x)["reasons"], ["RISK_UPPER_BOUND_EXCEEDED"])
+
+    def test_risk_bounds_match_documented_formula(self):
+        # Wanted values are U = errors/n + sqrt(log(2/delta)/(2n)) evaluated in
+        # 60-digit decimal arithmetic with errors=50 (0 for safety), n=10**6.
+        # For delta = 2**-k the log is exactly (k+1)*ln 2, so subnormal delta has
+        # an exact reference: the bound must not saturate to 1.0 there.
+        table = (
+            # delta, risk upper, safety-rate upper
+            (5e-324, 0.01935198460135565, 0.01930198460135565),
+            (1e-323, 0.01934300484529796, 0.019293004845297963),
+            (2.2250738585072014e-308, 0.01887935959761808, 0.018829359597618077),
+            (0.5, 0.0008825546111576977, 0.0008325546111576978),
+            (0.05, 0.0014081015157406194, 0.0013581015157406195),
+        )
+        for delta, want_risk, want_safety in table:
+            with self.subTest(delta=delta):
+                x = fixture()
+                x["scenario_set"]["heldout_count"] = 1_000_000
+                x["constraints"]["delta"] = delta
+                got = evaluate(x)
+                self.assertEqual(got["state"], "STRUCTURALLY_ADMISSIBLE_UNVERIFIED")
+                self.assertAlmostEqual(
+                    got["candidate_risk_upper_hoeffding_conditional"],
+                    want_risk,
+                    places=15,
+                )
+                self.assertAlmostEqual(
+                    got["candidate_safety_rate_upper_hoeffding_conditional"],
+                    want_safety,
+                    places=15,
+                )
+
+    def test_int_beyond_float_range_is_held_not_raised(self):
+        huge = 10**400  # a valid JSON integer that cannot convert to a float
+        table = (
+            ("constraints", "flash_max_bytes", huge, "CONSTRAINTS_INVALID"),
+            ("constraints", "delta", huge, "CONSTRAINTS_INVALID"),
+            ("constraints", "energy_max_j", -huge, "CONSTRAINTS_INVALID"),
+            ("candidate", "energy_j", huge, "INVALID_MEASUREMENT_CANDIDATE"),
+            ("baseline", "latency_p99_ms", huge, "INVALID_MEASUREMENT_BASELINE"),
+        )
+        for section, key, value, want in table:
+            with self.subTest(section=section, key=key):
+                x = fixture()
+                x[section][key] = value
+                self.assertEqual(evaluate(x)["reasons"], [want])
+
+    def test_every_field_value_yields_a_decision(self):
+        # evaluate() is a gate: whatever JSON-shaped value lands in any field,
+        # it must return a decision, never raise, and never authorize production.
+        hostile = (
+            None, True, False, "", "x", [], {}, 0, -1, 1, 2**63, 2**1024,
+            10**400, -(10**400), 0.0, -0.0, 5e-324, 1e-323,
+            2.2250738585072014e-308, 0.5, 1.0, 1.7976931348623157e308,
+            float("inf"), float("-inf"), float("nan"),
+        )  # fmt: skip
+        states = ("HOLD", "STRUCTURALLY_ADMISSIBLE_UNVERIFIED")
+        for section, body in fixture().items():
+            # None targets the whole section; the rest target each field in it.
+            for key in [None] + (list(body) if type(body) is dict else []):
+                for value in hostile:
+                    x = fixture()
+                    if key is None:
+                        x[section] = value
+                    else:
+                        x[section][key] = value
+                    with self.subTest(section=section, key=key, value=repr(value)[:24]):
+                        got = evaluate(x)
+                        self.assertIn(got["state"], states)
+                        self.assertIs(got["production_authorized"], False)
+
 
 if __name__ == "__main__":
     unittest.main()
