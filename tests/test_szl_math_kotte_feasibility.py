@@ -1,4 +1,5 @@
 """Tests for szl_math_kotte_feasibility (battery v2.2, fail-closed doctrine)."""
+import hashlib
 import importlib.util
 import os
 from decimal import Decimal, localcontext
@@ -110,6 +111,13 @@ def test_audit_tamper_detected():
 def test_audit_entry_validation():
     with pytest.raises(ValueError):
         kotte.audit([{"alpha": 0.05, "mu": 0.1}])
+
+
+def test_companion_pin_matches_actual_cp_source_bytes():
+    path = os.path.normpath(os.path.join(_HERE, "..", "tools", "szl_math_edge_admission_cp.py"))
+    with open(path, "rb") as stream:
+        canonical = stream.read().replace(b"\r\n", b"\n")
+    assert hashlib.sha256(canonical).hexdigest() == kotte.PINNED_COMPANIONS["cp_module_sha256"]
 
 
 def test_schema_and_pins():
