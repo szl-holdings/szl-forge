@@ -148,17 +148,20 @@ def cross_field_ok(plan: dict, offered: set) -> bool:
     abstain_reason = plan.get("abstainReason", None)
     plan_cand_ids = [c.get("nodeId") for c in (plan.get("candidates") or [])]
     plan_cand_set = set(plan_cand_ids)
+    if len(plan_cand_set) != len(plan_cand_ids) or len(set(cited)) != len(cited):
+        return False  # duplicates cannot be erased by set-based evaluation
     if any(cid not in offered for cid in plan_cand_ids):
         return False  # fabricated candidate (not actually offered)
     if any(s.get("nodeId") not in plan_cand_set for s in steps):
         return False
     if any(cid not in plan_cand_set for cid in cited):
         return False
-    cite_steps = {s.get("nodeId") for s in steps if s.get("action") == "CITE"}
-    if cite_steps != set(cited):
+    cite_steps = [s.get("nodeId") for s in steps if s.get("action") == "CITE"]
+    if len(cite_steps) != len(set(cite_steps)) or set(cite_steps) != set(cited):
         return False
     if decision == "ABSTAIN":
-        return len(cited) == 0 and bool(abstain_reason)
+        return (not cited and not steps and isinstance(abstain_reason, str)
+                and bool(abstain_reason.strip()))
     if decision == "NAVIGATE":
         return len(cited) >= 1 and abstain_reason is None
     return False

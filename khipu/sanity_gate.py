@@ -86,6 +86,10 @@ def cross_field_ok(plan: dict, offered: set):
     abstain_reason = plan.get("abstainReason", None)
     plan_cand_ids = [c.get("nodeId") for c in (plan.get("candidates") or [])]
     plan_cand_set = set(plan_cand_ids)
+    if len(plan_cand_set) != len(plan_cand_ids):
+        reasons.append("duplicate model-selected candidate handles")
+    if len(set(cited)) != len(cited):
+        reasons.append("duplicate cited handles")
     for cid in plan_cand_ids:
         if cid not in offered:
             reasons.append(f"fabricated candidate {cid}")
@@ -95,14 +99,18 @@ def cross_field_ok(plan: dict, offered: set):
     for cid in cited:
         if cid not in plan_cand_set:
             reasons.append(f"cited handle {cid} not among candidates")
-    cite_steps = {s.get("nodeId") for s in steps if s.get("action") == "CITE"}
-    if cite_steps != set(cited):
+    cite_steps = [s.get("nodeId") for s in steps if s.get("action") == "CITE"]
+    if len(cite_steps) != len(set(cite_steps)):
+        reasons.append("duplicate CITE steps")
+    if set(cite_steps) != set(cited):
         reasons.append("citedNodeIds != CITE-action step set")
     if decision == "ABSTAIN":
         if len(cited) != 0:
             reasons.append("ABSTAIN with citations")
-        if not abstain_reason:
-            reasons.append("ABSTAIN with no abstainReason")
+        if steps:
+            reasons.append("ABSTAIN with retrieval steps")
+        if not isinstance(abstain_reason, str) or not abstain_reason.strip():
+            reasons.append("ABSTAIN with no meaningful abstainReason")
     elif decision == "NAVIGATE":
         if len(cited) < 1:
             reasons.append("NAVIGATE with zero citations")
