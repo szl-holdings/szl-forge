@@ -35,6 +35,12 @@ Inputs include `provider=salad`, `organization=alloyscape`,
 `observed_gpu_rate_usd_hour` and `operator_cost_cap_usd` as decimal
 strings, and a UTC `price_observed_utc` no older than 30 minutes.
 
+The CLI rejects duplicate JSON members at **any** nesting depth, nonfinite
+constants, floating-point JSON numbers, non-object plans and inputs larger than
+64 KiB before calling its cost model. Monetary values stay exact decimal strings;
+all running-time and GPU/retry counts stay integers. Invalid input exits with
+status 2 and never calls Salad or a training launcher.
+
 The estimate assumes one continuously running, billable GPU, ignores startup,
 data egress and other unspecified charges, and rounds **up** to cents. A
 self-supplied price, cap, path, hash or approval is **not authenticated**.
