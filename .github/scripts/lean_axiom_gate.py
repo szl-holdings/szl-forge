@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Fail-closed Lean source + kernel axiom gate (never weakens; report-first).
 
-Usage: python3 lean_axiom_gate.py PROJECT_DIR [--lake-env] [--exclude SUBSTR ...]
+Usage: python3 lean_axiom_gate.py PROJECT_DIR [--no-lake] [--exclude SUBSTR ...]
+(--no-lake: standalone core-Lean files with no lakefile; uses `lean` directly.)
 
 1. Source scan (comments and string literals stripped): any `sorry`, `admit`,
    or `axiom` declaration in a tracked *.lean file under PROJECT_DIR fails.
@@ -68,6 +69,7 @@ def theorems(code):
 def main():
     args = sys.argv[1:]
     proj = args[0]
+    cmd = ["lean"] if "--no-lake" in args else ["lake", "env", "lean"]
     excl = [args[i + 1] for i, a in enumerate(args) if a == "--exclude"]
     files = []
     for root, dirs, fs in os.walk(proj):
@@ -95,7 +97,7 @@ def main():
         with open(scratch, "w", encoding="utf-8") as fh:
             fh.write(raw + "\n" + "\n".join(f"#print axioms {n}" for n in names) + "\n")
         try:
-            r = subprocess.run(["lake", "env", "lean", scratch], cwd=proj,
+            r = subprocess.run(cmd + [scratch], cwd=proj,
                                capture_output=True, text=True)
         finally:
             os.remove(scratch)
