@@ -1,0 +1,63 @@
+name: lean-parity-guard-proof
+
+# Real Lean verification for docs/parity-guard-proof-v0 (SZL.ParityGuard, core Lean only).
+# Compiles the project with `lake build` under the toolchain pinned in
+# lean-toolchain, then runs a fail-closed gate: any sorry/admit/axiom declaration,
+# or any theorem whose kernel axioms include sorryAx or anything beyond
+# propext / Classical.choice / Quot.sound, fails the job. This gate only adds
+# checks; it replaces nothing.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lean:
+    name: lake build + axiom gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: docs/parity-guard-proof-v0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install elan (release tarball SHA-pinned, v4.2.3; same recipe as geh-v8-lean-harness.yml)
+        working-directory: .
+        run: |
+          # Pin the elan binary itself, not just elan-init.sh (which would fetch
+          # the current "latest" release unverified).
+          set -euo pipefail
+          ELAN_VER=v4.2.3
+          ELAN_TARBALL=elan-x86_64-unknown-linux-gnu.tar.gz
+          EXPECTED=df0b2b3a439961ffcbb3985214365ffe40f49bc871df04dff268c7d8e21ca8b2
+          curl -sSfL "https://github.com/leanprover/elan/releases/download/$ELAN_VER/$ELAN_TARBALL" -o /tmp/elan.tar.gz
+          echo "$EXPECTED  /tmp/elan.tar.gz" | sha256sum -c
+          mkdir -p /tmp/elan-init
+          tar xzf /tmp/elan.tar.gz -C /tmp/elan-init
+          /tmp/elan-init/elan-init -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Show pinned toolchain
+        run: |
+          cat lean-toolchain
+          lake --version
+
+      - name: lake build
+        run: lake build
+
+      - name: Sorry / axiom gate (kernel #print axioms for every theorem)
+        run: python3 ${{ github.workspace }}/.github/scripts/lean_axiom_gate.py . 
