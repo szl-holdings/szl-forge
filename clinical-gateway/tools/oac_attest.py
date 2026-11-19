@@ -5,6 +5,12 @@ The existing receipt binds sha256 digests, but a digest list that the issuer wro
 is not an attestation. This emits the standard shape (in-toto Statement v1 inside a DSSE
 envelope) so Sigstore/cosign can sign it later. THIS TOOL NEVER SIGNS and never reports a
 signed state: verify() returns UNSIGNED:* at best. Not a SLSA level claim.
+
+Exit codes of `verify`: 0 only with --accept-unsigned-digests AND verdict UNSIGNED:DIGESTS_OK (a digest-integrity check: the listed
+files still hash to the recorded values; it is NOT bound to a particular receipt and proves nothing about who wrote the envelope);
+3 for UNSIGNED:* without that flag and for UNVERIFIED_SIGNATURE:* (signature verification is not implemented, so a signature is never
+accepted); 2 for any REFUSE:* verdict, including an unreadable or non-JSON envelope. Exiting 0 on a bare UNSIGNED verdict would let
+a shell `&&` treat an unsigned digest list as a pass.
 """
 from __future__ import annotations
 import argparse, base64, hashlib, json, sys
@@ -44,15 +50,22 @@ def verify(env: dict, base: Path) -> dict:
         return {"verdict": "REFUSE:MALFORMED:" + type(e).__name__}
     sigs = env.get("signatures") or []
     return {"verdict": "UNSIGNED:DIGESTS_OK" if not sigs else "UNVERIFIED_SIGNATURE:DIGESTS_OK",
-            "note": "signature verification is not implemented here; use cosign/sigstore", "signatures_present": len(sigs)}
+            "note": "signature verification is not implemented here; use cosign/sigstore. Digest check only: not bound to a receipt.",
+            "signatures_present": len(sigs)}
 
 def main(argv=None):
     ap = argparse.ArgumentParser(); sub = ap.add_subparsers(dest="cmd", required=True)
     b = sub.add_parser("build"); b.add_argument("--base", required=True); b.add_argument("--predicate-json", required=True); b.add_argument("subjects", nargs="+")
     v = sub.add_parser("verify"); v.add_argument("--base", required=True); v.add_argument("envelope")
+    v.add_argument("--accept-unsigned-digests", action="store_true", help="exit 0 on UNSIGNED:DIGESTS_OK (digest-integrity check only)")
     a = ap.parse_args(argv)
     if a.cmd == "build":
         print(json.dumps(build(a.subjects, Path(a.base), json.loads(Path(a.predicate_json).read_text())), indent=1)); return 0
-    r = verify(json.loads(Path(a.envelope).read_text()), Path(a.base)); print(json.dumps(r)); return 0 if r["verdict"].startswith("UNSIGNED") else 2
+    try: env = json.loads(Path(a.envelope).read_text())
+    except (OSError, ValueError, RecursionError, MemoryError) as e: r = {"verdict": "REFUSE:MALFORMED:" + type(e).__name__}
+    else: r = verify(env, Path(a.base))
+    print(json.dumps(r))
+    if r["verdict"].startswith("REFUSE"): return 2
+    return 0 if (a.accept_unsigned_digests and r["verdict"] == "UNSIGNED:DIGESTS_OK") else 3
 
 if __name__ == "__main__": raise SystemExit(main())
