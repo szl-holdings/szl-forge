@@ -122,6 +122,7 @@ def write_ready(directory: Path, **overrides) -> str:
         "commercial_use": "ADMITTED",
         "basis": "OPERATOR_ADMISSION_RECEIPT",
         "corpus_sha256": hashlib.sha256(train.read_bytes()).hexdigest(),
+        "holdout_sha256": hashlib.sha256(holdout.read_bytes()).hexdigest(),
     }
     (directory / "admission.json").write_text(json.dumps(admission), encoding="utf-8")
     config = {
