@@ -72,7 +72,9 @@ def strip(s):
 
 
 class _Word(str):
-    """An identifier or keyword token, lexed whole (see _lex)."""
+    """An identifier or keyword token, lexed whole (see _lex). For an escaped
+    name «x», `escaped` holds x."""
+    escaped = None
 
 
 def lex(s):
@@ -143,7 +145,8 @@ def _lex(s, i, out, in_hole):
             j = s.find("\u00bb", i + 1)
             if j < 0:
                 raise StripError("unterminated \u00ab\u00bb name")
-            out.append(s[i:j + 1]); i = j + 1; continue
+            w = _Word(s[i:j + 1]); w.escaped = s[i + 1:j]       # «x» names constant x
+            out.append(w); i = j + 1; continue
         if _id_first(c):
             j = i + 1
             while j < n and _id_rest(s[j]):
@@ -211,7 +214,14 @@ KEYWORDS = ("sorry", "admit", "axiom", "sorryAx")
 def keyword_counts(tokens):
     counts = dict.fromkeys(KEYWORDS, 0)
     for t in tokens:
-        if isinstance(t, _Word) and t in counts:
+        if not isinstance(t, _Word):
+            continue
+        if t.escaped is not None:
+            # «sorry»/«axiom» are identifiers, not the keywords, but «sorryAx»
+            # names the same constant as sorryAx.
+            if t.escaped == "sorryAx":
+                counts["sorryAx"] += 1
+        elif t in counts:
             counts[t] += 1
     return counts
 
@@ -259,6 +269,8 @@ SELF_TESTS = [
     ("def v := (sorry : Nat) + Foo.sorry + f ?sorry", 3),
     ("def v : Nat := sorryAx Nat false", 1),
     ("def v : Nat := Lean.sorryAx Nat", 1),
+    ("def v : Nat := \u00absorryAx\u00bb Nat false", 1),          # escaped sorryAx
+    ("def v : Nat := Lean.\u00absorryAx\u00bb Nat false", 1),
 ]
 SELF_TESTS_MUST_FAIL = [
     'def c := "abc',                     # unterminated string
