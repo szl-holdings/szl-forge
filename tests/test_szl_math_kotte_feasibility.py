@@ -140,3 +140,29 @@ def test_huge_integer_inputs_raise_value_error_not_overflow():
         kotte.kotte_certify(10 ** 400, 0.1)
     with pytest.raises(ValueError):
         kotte.kotte_certify(0.05, 10 ** 400)
+
+
+@pytest.mark.parametrize("alpha", [0.05, 0.1, 0.2, 0.5])
+def test_receipt_preserves_refuse_when_mu_is_within_grid_of_alpha(alpha):
+    import math
+    for mu in (math.nextafter(alpha, 1.0), alpha + 4e-13):
+        r = kotte.kotte_certify(alpha, mu)
+        assert r["decision"] == "REFUSE"
+        f = r["feasibility"]
+        assert f["mu"] > f["alpha"]
+        assert f["abstention_floor"] > 0.0
+        # re-certifying the published receipt values must not flip the decision
+        assert kotte.kotte_certify(f["alpha"], f["mu"])["decision"] == "REFUSE"
+        row = kotte.audit([{"alpha": alpha, "mu": mu, "label": "tie"}])["body"][0]
+        assert row["decision"] == "REFUSE" and row["mu"] > row["alpha"]
+        assert kotte.kotte_certify(row["alpha"], row["mu"])["decision"] == "REFUSE"
+
+
+def test_receipt_preserves_certify_when_mu_is_within_grid_below_alpha():
+    import math
+    for alpha in (0.05, 0.1, 0.2):
+        mu = math.nextafter(alpha, 0.0)
+        r = kotte.kotte_certify(alpha, mu)
+        assert r["decision"] == "CERTIFY"
+        f = r["feasibility"]
+        assert kotte.kotte_certify(f["alpha"], f["mu"])["decision"] == "CERTIFY"

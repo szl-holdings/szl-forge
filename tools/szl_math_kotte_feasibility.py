@@ -47,13 +47,39 @@ def _quant(x):
     return round(float(x), 12)
 
 
+_GRID = 1e-12
+
+
 def _ceil_floor_12(alpha, mu):
-    """Conservative 1e-12 grid for the *idealized* required abstention fraction."""
+    """Conservative 1e-12 grid for the *idealized* required abstention fraction.
+
+    Uses the exact binary values of the floats (Decimal(float)), so any
+    mu > alpha yields a strictly positive raw floor, and the ceiling never
+    publishes a floor below one grid step for an infeasible case.
+    """
     with localcontext() as ctx:
-        ctx.prec = 55
-        a, m = Decimal(str(alpha)), Decimal(str(mu))
+        ctx.prec = 60
+        a, m = Decimal(float(alpha)), Decimal(float(mu))
         raw = (m - a) / (Decimal(1) - a)
-        return float(raw.quantize(Decimal("0.000000000001"), rounding=ROUND_CEILING))
+        floor = float(raw.quantize(Decimal("0.000000000001"), rounding=ROUND_CEILING))
+    if m > a and floor < _GRID:
+        floor = _GRID
+    return floor
+
+
+def _published_pair(a, m, feasible):
+    """Quantized (alpha, mu) for receipts that preserve the decision.
+
+    Nearest 1e-12 rounding can collapse an infeasible mu just above alpha
+    onto alpha; re-certifying such a receipt would flip REFUSE to CERTIFY.
+    For an infeasible case the published mu is moved one grid step above the
+    published alpha (outward, fail-closed). A feasible case keeps nearest
+    rounding, which is monotone, so published mu <= published alpha holds.
+    """
+    pa, pm = _quant(a), _quant(m)
+    if not feasible and pm <= pa:
+        pm = min(1.0, round(pa + _GRID, 12))
+    return pa, pm
 
 
 def kotte_feasibility(alpha, mu):
@@ -65,11 +91,12 @@ def kotte_feasibility(alpha, mu):
     a, m = float(alpha), float(mu)
     feasible = m <= a
     floor = 0.0 if feasible else _ceil_floor_12(a, m)
+    pa, pm = _published_pair(a, m, feasible)
     return {
         "schema": SCHEMA,
         "formula": KOTTE_FORMULA,
-        "alpha": _quant(a),
-        "mu": _quant(m),
+        "alpha": pa,
+        "mu": pm,
         "feasible": feasible,
         "abstention_floor": floor,
         "verdict": "FEASIBLE" if feasible else "INFEASIBLE_PUBLISH_FLOOR",
