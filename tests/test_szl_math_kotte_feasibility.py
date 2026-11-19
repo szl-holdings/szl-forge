@@ -1,7 +1,5 @@
 """Tests for szl_math_kotte_feasibility (battery v2.2, fail-closed doctrine)."""
 import importlib.util
-import json
-import math
 import os
 import pytest
 
