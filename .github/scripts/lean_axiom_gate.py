@@ -33,12 +33,15 @@ def _letter_like(c):
     return ((0x3B1 <= o <= 0x3C9 and o != 0x3BB)      # Greek lower, minus lambda
             or (0x391 <= o <= 0x3A9 and o not in (0x3A0, 0x3A3))
             or 0x3CA <= o <= 0x3FB or 0x1F00 <= o <= 0x1FFE
-            or 0x2100 <= o <= 0x214F or 0x1D49C <= o <= 0x1D59F)
+            or 0x2100 <= o <= 0x214F or 0x1D49C <= o <= 0x1D59F
+            or (0x00C0 <= o <= 0x00FF and o not in (0xD7, 0xF7))   # Latin-1 letters
+            or 0x0100 <= o <= 0x017F)                               # Latin Extended-A
 
 
 def _subscript(c):
     o = ord(c)
-    return 0x2080 <= o <= 0x2089 or 0x2090 <= o <= 0x209C or 0x1D62 <= o <= 0x1D6A
+    return (0x2080 <= o <= 0x2089 or 0x2090 <= o <= 0x209C or 0x1D62 <= o <= 0x1D6A
+            or o == 0x2C7C)
 
 
 def _id_first(c):
@@ -136,12 +139,10 @@ def _lex(s, i, out, in_hole):
             while j < n and _id_rest(s[j]):
                 j += 1
             word = s[i:j]
-            if word == "r" and j < n and s[j] in '"#':     # raw string r"..", r#".."#
-                k = j
-                while k < n and s[k] == "#":
-                    k += 1
-                if k >= n or s[k] != '"':
-                    raise StripError(f"malformed raw string at offset {i}")
+            k = j
+            while k < n and s[k] == "#":
+                k += 1
+            if word == "r" and k < n and s[k] == '"':      # raw string r"..", r#".."#
                 close = '"' + "#" * (k - j)
                 e = s.find(close, k + 1)
                 if e < 0:
@@ -189,6 +190,11 @@ def _string(s, i, out, interp):
 # Every bypass reported against earlier versions of this scanner, plus basic
 # shapes. main() runs these before scanning, so a regression in the lexer
 # fails the gate instead of silently under-counting.
+# `axiom` is a keyword, so after stripping comments and literals any standalone
+# occurrence is an axiom command, whatever modifiers or attributes precede it
+# (@[simp] axiom, noncomputable axiom, unsafe axiom, private axiom ...).
+AXIOM_TOKEN = r"(?<![\w.'\u00ab])axiom(?![\w'!?\u00bb])"
+
 SELF_TESTS = [
     ("theorem t : True := sorry", 1),
     ("def c := \'\"\'\ntheorem t : True := sorry", 1),          # '"' char literal
@@ -210,6 +216,15 @@ SELF_TESTS = [
     ("theorem t (x' : Nat) : x' = x' := sorry", 1),
     ("example : (g '' S) = T := sorry", 1),
     ("example : xs[i]'h = 0 := sorry", 1),
+    ("def caf\u00e9' := 1\ntheorem G\u00f6del' : True := sorry", 1),   # Latin-1 identifiers
+    ("def \u0101' := r\ntheorem t := sorry", 1),                  # Latin Extended-A
+    ("def x := r#[1, 2]\ntheorem t := sorry", 1),                  # r applied to #[..]
+    ("def x := r ##[1]\ntheorem t := sorry", 1),
+    ("@[simp] axiom a : False", 1),                                 # modifiers on axiom
+    ("noncomputable axiom a : Nat", 1),
+    ("theorem t : True := trivial unsafe axiom a : False", 1),
+    ("private axiom a : False", 1),
+    ("#print axioms t\ndef \u00abaxiom\u00bb := 1", 0),
 ]
 SELF_TESTS_MUST_FAIL = [
     'def c := "abc',                     # unterminated string
@@ -223,7 +238,8 @@ SELF_TESTS_MUST_FAIL = [
 
 def self_test():
     for src, want in SELF_TESTS:
-        got = len(re.findall(r"\bsorry\b", strip(src)))
+        code = strip(src)
+        got = len(re.findall(r"\bsorry\b", code)) + len(re.findall(AXIOM_TOKEN, code))
         if got != want:
             raise SystemExit(f"GATE FAILED: scanner self-test expected {want} sorry, got {got}: {src!r}")
     for src in SELF_TESTS_MUST_FAIL:
@@ -282,7 +298,7 @@ def main():
             bad.append(f"{p}: cannot scan source safely: {e}")
             continue
         for tok, rx in (("sorry", r"\bsorry\b"), ("admit", r"\badmit\b"),
-                        ("axiom", r"(?m)^\s*(?:private\s+|protected\s+)?axiom\b")):
+                        ("axiom", AXIOM_TOKEN)):
             c = len(re.findall(rx, code))
             if c:
                 bad.append(f"{p}: {c} x {tok}")
