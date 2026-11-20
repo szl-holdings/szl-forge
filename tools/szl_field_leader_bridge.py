@@ -126,9 +126,8 @@ def refuse_altk_collapse(payload: Any) -> dict[str, Any]:
     any_run = payload.get("pass_at_k")
     as_one = payload.get("as_one_score")
     for value in (mean, power, any_run):
-        need(value is None or type(value) in (int, float), "ALTK_METRIC")
-        if type(value) is float:
-            need(math.isfinite(value), "ALTK_METRIC")
+        if value is not None:
+            _finite_unit(value, "ALTK_METRIC")
     need(as_one is False, "ALTK_COLLAPSE")
     gap = None
     if type(any_run) in (int, float) and type(power) in (int, float):
@@ -145,8 +144,11 @@ def refuse_altk_collapse(payload: Any) -> dict[str, Any]:
 
 def _finite_unit(value: Any, code: str) -> float:
     need(type(value) in (int, float), code)
+    # Check integer bounds before float conversion: huge ints must fail with
+    # a typed diagnostic rather than an uncaught OverflowError.
+    need(0 <= value <= 1, code)
     number = float(value)
-    need(math.isfinite(number) and 0.0 <= number <= 1.0, code)
+    need(math.isfinite(number), code)
     return number
 
 
