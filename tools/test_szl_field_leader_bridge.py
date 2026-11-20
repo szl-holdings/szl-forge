@@ -45,6 +45,47 @@ class AltkTests(unittest.TestCase):
         self.assertEqual(str(ctx.exception), "ALTK_COLLAPSE")
 
 
+class AltkRangeTests(unittest.TestCase):
+    def _payload(self):
+        return {
+            "mean_at_k": 0.75,
+            "pass_power_k": 0.5,
+            "pass_at_k": 1.0,
+            "as_one_score": False,
+        }
+
+    def test_each_probability_rejects_out_of_range_and_nonfinite(self) -> None:
+        for key in ("mean_at_k", "pass_power_k", "pass_at_k"):
+            for bad in (-0.1, 1.1, float("nan"), float("inf"), -float("inf"), True):
+                with self.subTest(field=key, value=repr(bad)):
+                    row = self._payload()
+                    row[key] = bad
+                    with self.assertRaisesRegex(BridgeError, "^ALTK_METRIC$"):
+                        refuse_altk_collapse(row)
+
+    def test_extreme_integer_rejected_without_overflow(self) -> None:
+        for key in ("mean_at_k", "pass_power_k", "pass_at_k"):
+            with self.subTest(field=key):
+                row = self._payload()
+                row[key] = 10**1000
+                with self.assertRaisesRegex(BridgeError, "^ALTK_METRIC$"):
+                    refuse_altk_collapse(row)
+
+    def test_unit_endpoints_and_unknowns_preserved(self) -> None:
+        row = self._payload()
+        row["pass_at_k"] = 1
+        row["pass_power_k"] = 0
+        self.assertEqual(refuse_altk_collapse(row)["consistency_gap"], 1.0)
+        row["pass_at_k"] = None
+        self.assertIsNone(refuse_altk_collapse(row)["consistency_gap"])
+
+    def test_hal_extreme_integer_is_typed_error(self) -> None:
+        from szl_field_leader_bridge import hal_consistency_square
+
+        with self.assertRaisesRegex(BridgeError, "^HAL_P$"):
+            hal_consistency_square(10**1000)
+
+
 class ClassifyTests(unittest.TestCase):
     def test_agi_refused(self) -> None:
         with self.assertRaises(BridgeError) as ctx:
