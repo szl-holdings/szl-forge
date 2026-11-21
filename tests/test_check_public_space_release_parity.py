@@ -1,6 +1,7 @@
 """No-network fail-closed tests for exact public HF Space source-file parity."""
 from __future__ import annotations
 
+import http.client
 import importlib.util
 import json
 import tempfile
@@ -252,6 +253,18 @@ class PublicSpaceReleaseTests(unittest.TestCase):
             report = self.check()
         self.assertEqual(report["reason"], "SOURCE_PATH_COLLISION")
         self.assertFalse(report["release_admitted"])
+
+
+    def test_recursive_manifest_json_is_rejected(self):
+        with mock.patch.object(parity.json, "loads", side_effect=RecursionError):
+            with self.assertRaisesRegex(parity.ValidationError, "INVALID_MANIFEST_JSON"):
+                parity.unique_json(b"{}")
+
+    def test_incomplete_read_is_unavailable(self):
+        incomplete = http.client.IncompleteRead(b"partial")
+        with mock.patch.object(parity.urllib.request, "urlopen", side_effect=incomplete):
+            with self.assertRaisesRegex(parity.RemoteUnavailable, "IncompleteRead"):
+                parity.fetch_public_bytes("https://huggingface.co/example")
 
 
 if __name__ == "__main__":
