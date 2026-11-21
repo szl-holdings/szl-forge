@@ -17,6 +17,7 @@ import sys
 import urllib.error
 import urllib.parse
 import urllib.request
+import unicodedata
 from pathlib import Path, PurePosixPath
 from typing import Any, Callable
 
@@ -67,13 +68,24 @@ def source_paths(manifest: Any) -> dict[str, str]:
     items = manifest.get("source_files")
     if not isinstance(items, dict) or not 0 < len(items) <= MAX_FILES:
         raise ValidationError("SOURCE_FILE_SET")
+    seen_paths: set[str] = set()
     for name, expected in items.items():
-        if not isinstance(name, str) or not name or "\\" in name or "//" in name:
+        if (
+            not isinstance(name, str) or not name or name != name.strip()
+            or "\\" in name or "\x00" in name or "//" in name or name.endswith("/")
+        ):
             raise ValidationError("SOURCE_PATH_INVALID")
+        normalized = unicodedata.normalize("NFC", name)
+        if normalized != name:
+            raise ValidationError("SOURCE_PATH_INVALID")
+        ident = normalized.casefold()
+        if ident in seen_paths:
+            raise ValidationError("SOURCE_PATH_COLLISION")
+        seen_paths.add(ident)
         p = PurePosixPath(name)
         if p.is_absolute() or any(x in {"", ".", ".."} for x in name.split("/")):
             raise ValidationError("SOURCE_PATH_INVALID")
-        if name.startswith(".git/") or name == ".git" or name == "release.json":
+        if any(part.casefold() == ".git" for part in p.parts) or ident == "release.json":
             raise ValidationError("SOURCE_PATH_RESERVED")
         if not isinstance(expected, str) or not SHA256.fullmatch(expected):
             raise ValidationError("SOURCE_DIGEST_INVALID")

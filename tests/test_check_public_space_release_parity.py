@@ -215,5 +215,44 @@ class PublicSpaceReleaseTests(unittest.TestCase):
         self.assertEqual(error.exception.code, "BODY_LIMIT")
 
 
+    def test_manifest_rejects_nul_and_trailing_slash(self):
+        for name in ("evil\\x00file.py", "folder/", "  README.md", "README.md  "):
+            with self.subTest(name=repr(name)):
+                source = {"schema": MANIFEST_SCHEMA, "source_files": {name: "a" * 64}}
+                with self.assertRaisesRegex(parity.ValidationError, "SOURCE_PATH_INVALID"):
+                    parity.source_paths(source)
+
+    def test_manifest_rejects_casefold_collision_on_windows(self):
+        source = {"schema": MANIFEST_SCHEMA, "source_files": {
+            "App.py": "a" * 64, "app.py": "a" * 64,
+        }}
+        with self.assertRaisesRegex(parity.ValidationError, "SOURCE_PATH_COLLISION"):
+            parity.source_paths(source)
+
+    def test_manifest_rejects_unicode_normalization_collision(self):
+        source = {"schema": MANIFEST_SCHEMA, "source_files": {
+            "caf\\u00e9.py": "a" * 64, "cafe\\u0301.py": "a" * 64,
+        }}
+        with self.assertRaisesRegex(parity.ValidationError, "SOURCE_PATH_INVALID"):
+            parity.source_paths(source)
+
+    def test_manifest_rejects_case_insensitive_reserved_names(self):
+        for name in ("Release.JSON", ".GIT/config", "docs/.Git/objects"):
+            with self.subTest(name=name):
+                source = {"schema": MANIFEST_SCHEMA, "source_files": {name: "a" * 64}}
+                with self.assertRaisesRegex(parity.ValidationError, "SOURCE_PATH_RESERVED"):
+                    parity.source_paths(source)
+
+    def test_malformed_manifests_never_fetch_remote(self):
+        entry = {"schema": MANIFEST_SCHEMA, "source_files": {
+            "README.md": "a" * 64, "Readme.md": "a" * 64,
+        }}
+        (self.root / "release.json").write_text(json.dumps(entry), encoding="utf-8")
+        with mock.patch.object(self, "fake_get", side_effect=AssertionError("remote call")):
+            report = self.check()
+        self.assertEqual(report["reason"], "SOURCE_PATH_COLLISION")
+        self.assertFalse(report["release_admitted"])
+
+
 if __name__ == "__main__":
     unittest.main()
