@@ -1,0 +1,41 @@
+name: Public Space exact-source parity (offline negatives)
+
+on:
+  pull_request:
+    paths:
+      - "tools/check_public_space_release_parity.py"
+      - "tests/test_check_public_space_release_parity.py"
+      - "docs/MODEL_INFERENCE_SPACE_PUBLIC_RELEASE_PARITY_20261121.md"
+      - ".github/workflows/public-space-source-parity.yml"
+  push:
+    branches: [main]
+    paths:
+      - "tools/check_public_space_release_parity.py"
+      - "tests/test_check_public_space_release_parity.py"
+      - "docs/MODEL_INFERENCE_SPACE_PUBLIC_RELEASE_PARITY_20261121.md"
+      - ".github/workflows/public-space-source-parity.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  offline-source-guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          egress-policy: audit
+      - name: Checkout exact source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Python 3.12
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - name: Compile stdlib diagnostic and test no-network negative controls
+        run: |
+          python -m py_compile tools/check_public_space_release_parity.py
+          python -m unittest discover -s tests -p "test_check_public_space_release_parity.py" -v
