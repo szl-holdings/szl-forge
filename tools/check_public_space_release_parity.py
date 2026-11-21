@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import concurrent.futures
 import hashlib
+import http.client
 import json
 import re
 import sys
@@ -58,7 +59,7 @@ def unique_json(raw: bytes) -> Any:
 
     try:
         return json.loads(raw.decode("utf-8"), object_pairs_hook=reject_duplicates)
-    except (UnicodeError, json.JSONDecodeError) as exc:
+    except (UnicodeError, RecursionError, json.JSONDecodeError) as exc:
         raise ValidationError("INVALID_MANIFEST_JSON") from exc
 
 
@@ -130,7 +131,7 @@ def fetch_public_bytes(url: str, limit: int = MAX_SOURCE_BYTES) -> bytes:
             data = response.read(limit + 1)
     except urllib.error.HTTPError as exc:
         raise RemoteUnavailable(f"HTTP_{exc.code}") from exc
-    except (TimeoutError, OSError, ValueError) as exc:
+    except (http.client.IncompleteRead, TimeoutError, OSError, ValueError) as exc:
         raise RemoteUnavailable(type(exc).__name__) from exc
     if len(data) > limit:
         raise RemoteUnavailable("BODY_LIMIT")
