@@ -1,7 +1,6 @@
 """Pure-CPU falsifiers for the explicit document-boundary witness."""
 from __future__ import annotations
 
-import hashlib
 import json
 import subprocess
 import sys
@@ -70,7 +69,7 @@ class BoundaryWitnessTests(unittest.TestCase):
                   {**fixture(), "block_size": 0},
                   {**fixture(), "eos_token_id": 0.1},
                   {**fixture(), "extra": "not permitted"},
-                  {**fixture(), "source_revision": "\\n"},
+                  {**fixture(), "source_revision": chr(10)},
                   {"tokens": list(range(9000)), "document_lengths": [9000], "block_size": 1}):
             with self.subTest(data=str(x)[:80]), self.assertRaises(BoundaryWitnessError):
                 audit_document_boundaries(x)
