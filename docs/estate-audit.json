@@ -50,14 +50,14 @@
     ],
     "gap_register": [
       "Inventory does not show README-documented entry points for the recent CPU-only conservation witness (#777), CP admission/Kotte gate (#766), or ParityGuard Lean proof CI (#768); the README's 60-second check only py_compiles training/train_wave.py, training/dpo_wave.py, and training/eval_wave.py.",
-      "No lockfile, dependency manifest, or CI/workflow definition is visible in the supplied top-level file list, so dependency pinning and the CI status of the compile-only verification command cannot be confirmed at L1.",
-      "Two LIVE-GOVERNED-INFERENCE version documents (V2 and V3) coexist with INFERENCE-ARCHITECTURE.md without an inventory-visible supersession or currency pointer.",
-      "Model-specific version and checksum evidence is not established for the supplied MiniEmbed-Nano, Modelfile, and Modelfile.gguf entries; .zenodo.json and CITATION.cff exist, but no model-release DOI linkage is shown in the supplied data."
+      "The baseline includes pyproject.toml, existing lockfiles and .github/workflows definitions. This L1 inventory has not reconciled their exact dependency-pin coverage or CI result links with the README's compile-only verification command.",
+      "LIVE-GOVERNED-INFERENCE-V2.md already points to LIVE-GOVERNED-INFERENCE-V3.md as the newer document. This L1 inventory does not independently establish which deployed runtime implements V3 or how INFERENCE-ARCHITECTURE.md maps to that version.",
+      "MiniEmbed-Nano/README.md records the mini_embed.npz SHA-256 and states that it matches TRAINING_RECEIPT.json, but L1 has not independently replayed the checksum. Modelfile and Modelfile.gguf model-version, digest and release-DOI linkage remain unverified in this inventory."
     ],
     "prioritized_changes": [
       "Add a README verification table linking #777, #766, and #768 to their exact commands, workflows, artifacts, and expected fail-closed outcomes.",
-      "Publish and CI-enforce a pinned dependency/lock policy covering the training and evaluation entry points, and test the documented verification commands in CI.",
-      "Mark the authoritative inference-architecture document and supersede/archive the other version; document release identifiers and digest verification for the listed model artifacts."
+      "Reconcile the existing pyproject.toml, lockfiles and .github/workflows with documented verification entry points and exact hosted CI receipts; address measured dependency pinning or coverage gaps rather than assuming these artifacts are absent.",
+      "Document the existing V2-to-V3 pointer and runtime admission boundary; independently replay the MiniEmbed-Nano digest and record verified release identifiers and digest evidence for other model artifacts where still missing."
     ]
   },
   "execution_trace": {}
