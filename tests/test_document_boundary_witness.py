@@ -82,6 +82,31 @@ class BoundaryWitnessTests(unittest.TestCase):
                 with self.assertRaises(BoundaryWitnessError):
                     read_manifest(p)
 
+    def test_cli_rejects_oversized_json_integer_with_denial_contract(self):
+        # A bounded JSON file may still contain a numeric literal above
+        # Python's integer-digit limit; it must not escape as a traceback.
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "fixture.json"
+            p.write_text('{"tokens":[' + "9" * 5000 +
+                         '],"document_lengths":[1],"block_size":1}', encoding="utf-8")
+            cmd = [sys.executable, "training/document_boundary_witness.py",
+                   "--input", str(p)]
+            denied = subprocess.run(cmd, capture_output=True, text=True, check=False)
+            self.assertEqual(2, denied.returncode, denied.stderr)
+            self.assertEqual("", denied.stderr)
+            self.assertEqual(
+                {"schema": "szl.document-boundary-witness/v1",
+                 "status": "DENY", "reason": "INVALID_OR_UNREADABLE_JSON"},
+                json.loads(denied.stdout),
+            )
+
+    def test_duplicate_keys_preserve_specific_denial_reason(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "fixture.json"
+            p.write_bytes(b'{"tokens":[],"tokens":[]}')
+            with self.assertRaisesRegex(BoundaryWitnessError, "^DUPLICATE_JSON_KEY$"):
+                read_manifest(p)
+
     def test_cli_uses_exit_two_on_denial_and_never_writes_artifacts(self):
         with tempfile.TemporaryDirectory() as d:
             p = Path(d) / "fixture.json"

@@ -60,7 +60,11 @@ def read_manifest(path: Path) -> dict[str, Any]:
         if len(raw) > MAX_BYTES:
             raise BoundaryWitnessError("INPUT_TOO_LARGE")
         value = json.loads(raw, object_pairs_hook=_unique_pairs, parse_constant=_deny_constant)
-    except (OSError, UnicodeError, json.JSONDecodeError, RecursionError) as exc:
+    except BoundaryWitnessError:
+        # Keep specific denials from the strict JSON hooks intact.
+        raise
+    except (OSError, ValueError, RecursionError) as exc:
+        # Includes oversized JSON integer literals (json.loads ValueError).
         raise BoundaryWitnessError("INVALID_OR_UNREADABLE_JSON") from exc
     if not isinstance(value, dict):
         raise BoundaryWitnessError("MANIFEST_NOT_OBJECT")
