@@ -1,0 +1,64 @@
+{
+  "metadata": {
+    "repo_name": "szl-forge",
+    "last_audit_date": "2026-11-22",
+    "loop_level": 1
+  },
+  "estate_context": {
+    "purpose_domain": "Model factory: observable training waves, receipt-carrying launches, and proof-banner publications for models",
+    "baseline_commit": "2c98cf541156a60f19550f06a8d0db43d8cde31b",
+    "leader_profiles": [
+      {
+        "name": "PyTorch",
+        "url": "https://github.com/pytorch/pytorch",
+        "checked_date": "2026-11-22"
+      },
+      {
+        "name": "Hugging Face Transformers",
+        "url": "https://github.com/huggingface/transformers",
+        "checked_date": "2026-11-22"
+      }
+    ]
+  },
+  "evidence_index": {
+    "publications": [
+      {
+        "id": "github:pytorch/pytorch",
+        "link": "https://github.com/pytorch/pytorch",
+        "applicability": "Assigned training-wave leader for reviewing training/evaluation wave structure, test and CI discipline, and artifact/receipt claims; no compatibility or performance claim is established by this L1 inventory."
+      },
+      {
+        "id": "github:huggingface/transformers",
+        "link": "https://github.com/huggingface/transformers",
+        "applicability": "Assigned training/model-publication leader relevant to the README's Hugging Face demo, immutable Model Inference Lab source-drift observation, and model-factory documentation."
+      },
+      {
+        "id": "github:szl-holdings/szl-forge",
+        "link": "https://github.com/szl-holdings/szl-forge/pull/777",
+        "applicability": "In-repo head commit: CPU-only document-boundary conservation witness (#777)."
+      },
+      {
+        "id": "github:szl-holdings/szl-forge",
+        "link": "https://github.com/szl-holdings/szl-forge/pull/780",
+        "applicability": "In-repo CI evidence: observe immutable Model Inference Lab source drift daily without provider writes (#780)."
+      },
+      {
+        "id": "github:szl-holdings/szl-forge",
+        "link": "https://github.com/szl-holdings/szl-forge/pull/768",
+        "applicability": "In-repo Lean CI evidence for ParityGuard: lake build plus fail-closed sorry/axiom gate (#768)."
+      }
+    ],
+    "gap_register": [
+      "Inventory does not show README-documented entry points for the recent CPU-only conservation witness (#777), CP admission/Kotte gate (#766), or ParityGuard Lean proof CI (#768); the README's 60-second check only py_compiles training/train_wave.py, training/dpo_wave.py, and training/eval_wave.py.",
+      "No lockfile, dependency manifest, or CI/workflow definition is visible in the supplied top-level file list, so dependency pinning and the CI status of the compile-only verification command cannot be confirmed at L1.",
+      "Two LIVE-GOVERNED-INFERENCE version documents (V2 and V3) coexist with INFERENCE-ARCHITECTURE.md without an inventory-visible supersession or currency pointer.",
+      "Model-specific version and checksum evidence is not established for the supplied MiniEmbed-Nano, Modelfile, and Modelfile.gguf entries; .zenodo.json and CITATION.cff exist, but no model-release DOI linkage is shown in the supplied data."
+    ],
+    "prioritized_changes": [
+      "Add a README verification table linking #777, #766, and #768 to their exact commands, workflows, artifacts, and expected fail-closed outcomes.",
+      "Publish and CI-enforce a pinned dependency/lock policy covering the training and evaluation entry points, and test the documented verification commands in CI.",
+      "Mark the authoritative inference-architecture document and supersede/archive the other version; document release identifiers and digest verification for the listed model artifacts."
+    ]
+  },
+  "execution_trace": {}
+}
