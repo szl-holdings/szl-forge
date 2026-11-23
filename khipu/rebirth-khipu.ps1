@@ -31,10 +31,12 @@ Write-Host "found $dir\khipu-model"
 Step "2/5 llama.cpp converter (pure Python - nothing to compile)"
 if (-not (Test-Path "llama.cpp\convert_hf_to_gguf.py")) {
   $git = Get-Command git -ErrorAction SilentlyContinue
-  if ($git) { & git clone --depth 1 https://github.com/ggml-org/llama.cpp }
+  if ($git) { & git clone --depth 1 --branch v1.0.0 https://github.com/ggml-org/llama.cpp }
   if (-not (Test-Path "llama.cpp\convert_hf_to_gguf.py")) {
     Write-Host "git unavailable or clone failed - downloading tarball instead..."
-    curl.exe -sL -o llama-cpp.tar.gz https://github.com/ggml-org/llama.cpp/archive/refs/heads/master.tar.gz
+    curl.exe -sL -o llama-cpp.tar.gz https://github.com/ggml-org/llama.cpp/archive/refs/tags/v1.0.0.tar.gz
+$pinHash = (Get-FileHash -Algorithm SHA256 llama-cpp.tar.gz).Hash
+if ($pinHash -ne "3f5f750e36326aea4d65c7623e7d597a33e395d65f4d76e5e0532171f252532b") { throw "llama.cpp pin digest mismatch: expected v1.0.0" }
     tar -xzf llama-cpp.tar.gz
     $ex = Get-ChildItem -Directory -Filter "llama.cpp-*" | Select-Object -First 1
     if ($ex) { Rename-Item $ex.FullName "llama.cpp" }
