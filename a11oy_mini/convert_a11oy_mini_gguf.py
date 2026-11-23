@@ -50,8 +50,16 @@ Q4_NAME = "a11oy-mini-q4_k_m.gguf"
 QUANT = "Q4_K_M"
 LLAMA_CPP_CONVERT = "convert_hf_to_gguf.py"
 LLAMA_CPP_CLONE = "https://github.com/ggml-org/llama.cpp"
+# Immutable upstream pin (provenance): llama.cpp release v1.0.0 peeled commit,
+# resolved via GitHub git/ref API (annotated tag a6d1a74dbebce3a16f4f2ceddbf38c21a08d8674
+# -> commit); convert_hf_to_gguf.py verified present at this commit (blob
+# 8cee1f8646e113accba4de2c5e68b7b0804252eb, 14871 bytes). Never clone a mutable head.
+LLAMA_CPP_PIN_RELEASE = "v1.0.0"
+LLAMA_CPP_PIN_COMMIT = "b1b770d90d94cad9e9ea5b993bdbc383a522fb28"
 LLAMA_CPP_TARBALL = (
-    "https://github.com/ggml-org/llama.cpp/archive/refs/heads/master.tar.gz"
+    "https://github.com/ggml-org/llama.cpp/archive/{}.tar.gz".format(
+        LLAMA_CPP_PIN_COMMIT
+    )
 )
 KHIPU_LAB = "SZLHOLDINGS/szl-model-inference-lab"
 KHIPU_GGUF = "SZLHOLDINGS/SZL-Khipu-1.5B-GGUF"
@@ -214,12 +222,21 @@ def ensure_llama_converter(*, fetch: bool = False) -> Path:
     dest = HERE / "llama.cpp"
     dest.parent.mkdir(parents=True, exist_ok=True)
     if shutil.which("git"):
-        completed = subprocess.run(
+        completed = None
+        for _cmd in (
             ["git", "clone", "--depth", "1", LLAMA_CPP_CLONE, str(dest)],
-            cwd=HERE,
-            capture_output=True,
-            text=True,
-        )
+            ["git", "-C", str(dest), "fetch", "--depth", "1", "origin",
+             LLAMA_CPP_PIN_COMMIT],
+            ["git", "-C", str(dest), "checkout", "--detach", LLAMA_CPP_PIN_COMMIT],
+        ):
+            completed = subprocess.run(
+                _cmd,
+                cwd=HERE,
+                capture_output=True,
+                text=True,
+            )
+            if completed.returncode != 0:
+                break
         converter = dest / LLAMA_CPP_CONVERT
         if completed.returncode == 0 and converter.is_file():
             return converter
