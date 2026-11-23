@@ -9,7 +9,7 @@ Python repo; description: QLoRA kit that fine-tunes an open base model into SZL-
 | Leader | What they have | Key sources |
 | --- | --- | --- |
 | QLoRA (Dettmers et al.) | The foundational recipe this repo builds on: 4-bit NF4 quantization + double quantization + paged optimizers, with published reproducibility detail per configuration | arxiv.org/abs/2305.14314; huggingface.co/papers/2305.14314 (accessed 2026-11-23) |
-| AQLoRA (2026) | The cutting-edge successor recipe: a zero-search method for fast quantized LoRA fine-tuning — removes the costly adapter-configuration search that QLoRA workflows inherit | arxiv.org/abs/2608.23816 (accessed 2026-11-23) |
+| AQLoRA (2026) | A zero-search method that selects protected layers from NF4 reconstruction error; it does not remove adapter-configuration search, and QLoRA does not inherently require that search | arxiv.org/abs/2608.23816 (accessed 2026-11-23) |
 | Unsloth | The upstream training library the repo already depends on: maintained fine-tuning recipes, benchmarked speed/memory claims, active issue-driven development | github.com/unslothai/unsloth (upstream of repo's stated Unsloth training) (accessed 2026-11-23) |
 
 ## What the leaders do better
@@ -17,7 +17,7 @@ Python repo; description: QLoRA kit that fine-tunes an open base model into SZL-
 - Leader fine-tuning repos pin versions + publish benchmark configs; the leader version of receipt-bound training is one where another operator can re-derive the same adapter quality.
 
 ## Gaps
-- Description-measured kit depends on Unsloth, but no documented adapter-config provenance (which search, what budget, what seed policy) was found in the card's repo inspection scope — a fine-tune without config provenance is not replayable.
+- Adapter and seed settings are already recorded in the training paths. Remaining provenance gaps include the base-model digest, Unsloth version, quantization details, and any configuration-search policy.
 
 ## Ranked #1 absorb proposal (NOT implemented in this PR)
 Record full recipe provenance in every training receipt: base model digest, Unsloth version, quant config (NF4 class), seed, and config-search policy (with AQLoRA cited as the zero-search upgrade path). Expected benefit: SZL-1 adapters become re-derivable evidence, matching the estate receipts doctrine. Cost/risk: low; receipt schema addition, training code untouched by this card. Validation: two receipt-emitting runs from identical config produce byte-identical descriptor fields. Rollback: fields optional; receipts remain valid without them.
