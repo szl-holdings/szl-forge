@@ -1,0 +1,50 @@
+04:08:25 leak_filter dropped 183 kept 26138
+04:10:40 examples 25047 dropped_overlength 1091 trainable 7864320 device NVIDIA GeForce RTX 4090
+04:10:40 micro_batches 4554 optimizer_steps_planned 456
+04:11:48 step 10 / 456 ep 0 loss 2.083 tok/s 1805.7 eta_min 50.2 mem_gb 22.7
+04:12:40 step 20 / 456 ep 0 loss 1.9849 tok/s 2017.3 eta_min 43.6 mem_gb 22.7
+04:13:35 step 30 / 456 ep 0 loss 1.8227 tok/s 2088.7 eta_min 41.3 mem_gb 22.7
+04:14:27 step 40 / 456 ep 0 loss 2.3093 tok/s 2138.5 eta_min 39.2 mem_gb 22.7
+04:15:19 step 50 / 456 ep 0 loss 3.279 tok/s 2167.7 eta_min 37.7 mem_gb 22.7
+04:16:13 step 60 / 456 ep 0 loss 2.3668 tok/s 2187.0 eta_min 36.5 mem_gb 22.7
+04:17:06 step 70 / 456 ep 0 loss 0.6192 tok/s 2197.1 eta_min 35.4 mem_gb 22.7
+04:18:00 step 80 / 456 ep 0 loss 0.7465 tok/s 2210.9 eta_min 34.4 mem_gb 22.7
+04:18:54 step 90 / 456 ep 0 loss 0.7201 tok/s 2213.0 eta_min 33.4 mem_gb 22.7
+04:19:46 step 100 / 456 ep 0 loss 1.6842 tok/s 2219.5 eta_min 32.4 mem_gb 22.7
+04:20:39 step 110 / 456 ep 0 loss 1.499 tok/s 2227.1 eta_min 31.4 mem_gb 22.7
+04:21:32 step 120 / 456 ep 0 loss 0.4738 tok/s 2235.8 eta_min 30.4 mem_gb 22.7
+04:22:27 step 130 / 456 ep 0 loss 0.6947 tok/s 2236.8 eta_min 29.5 mem_gb 22.7
+04:23:18 step 140 / 456 ep 0 loss 0.4621 tok/s 2242.4 eta_min 28.5 mem_gb 22.7
+04:24:11 step 150 / 456 ep 0 loss 0.3274 tok/s 2246.8 eta_min 27.6 mem_gb 22.7
+04:25:04 step 160 / 456 ep 0 loss 1.4439 tok/s 2252.0 eta_min 26.6 mem_gb 22.7
+04:25:56 step 170 / 456 ep 0 loss 1.1956 tok/s 2255.2 eta_min 25.7 mem_gb 22.7
+04:26:49 step 180 / 456 ep 0 loss 0.4626 tok/s 2259.3 eta_min 24.7 mem_gb 22.7
+04:27:41 step 190 / 456 ep 0 loss 1.3333 tok/s 2262.8 eta_min 23.8 mem_gb 22.7
+04:28:34 step 200 / 456 ep 0 loss 1.5124 tok/s 2264.8 eta_min 22.9 mem_gb 22.7
+04:29:26 step 210 / 456 ep 0 loss 0.4015 tok/s 2268.1 eta_min 22.0 mem_gb 22.7
+04:30:18 step 220 / 456 ep 0 loss 0.7582 tok/s 2270.1 eta_min 21.0 mem_gb 22.7
+04:31:09 step 230 / 456 ep 0 loss 1.1556 tok/s 2271.4 eta_min 20.1 mem_gb 22.7
+04:32:02 step 240 / 456 ep 0 loss 1.4643 tok/s 2273.7 eta_min 19.2 mem_gb 22.7
+04:32:54 step 250 / 456 ep 0 loss 1.1522 tok/s 2275.5 eta_min 18.3 mem_gb 22.7
+04:33:47 step 260 / 456 ep 0 loss 1.2996 tok/s 2278.1 eta_min 17.4 mem_gb 22.7
+04:34:40 step 270 / 456 ep 0 loss 0.4498 tok/s 2280.8 eta_min 16.5 mem_gb 22.7
+04:35:33 step 280 / 456 ep 0 loss 0.4728 tok/s 2282.9 eta_min 15.6 mem_gb 22.7
+04:36:25 step 290 / 456 ep 0 loss 0.4608 tok/s 2284.0 eta_min 14.7 mem_gb 22.7
+04:37:17 step 300 / 456 ep 0 loss 0.4584 tok/s 2285.4 eta_min 13.8 mem_gb 22.7
+04:38:10 step 310 / 456 ep 0 loss 0.943 tok/s 2286.8 eta_min 12.9 mem_gb 22.7
+04:39:03 step 320 / 456 ep 0 loss 1.209 tok/s 2288.7 eta_min 12.1 mem_gb 22.7
+04:39:55 step 330 / 456 ep 0 loss 0.2781 tok/s 2289.9 eta_min 11.2 mem_gb 22.7
+04:40:47 step 340 / 456 ep 0 loss 0.5769 tok/s 2291.3 eta_min 10.3 mem_gb 22.7
+04:41:41 step 350 / 456 ep 0 loss 0.2418 tok/s 2292.8 eta_min 9.4 mem_gb 22.7
+04:42:34 step 360 / 456 ep 0 loss 1.2385 tok/s 2293.1 eta_min 8.5 mem_gb 22.7
+04:43:27 step 370 / 456 ep 0 loss 2.0682 tok/s 2293.7 eta_min 7.6 mem_gb 22.7
+04:44:19 step 380 / 456 ep 0 loss 0.4581 tok/s 2294.9 eta_min 6.7 mem_gb 22.7
+04:45:13 step 390 / 456 ep 0 loss 0.6071 tok/s 2295.2 eta_min 5.8 mem_gb 22.7
+04:46:05 step 400 / 456 ep 0 loss 1.1557 tok/s 2295.7 eta_min 5.0 mem_gb 22.7
+04:46:57 step 410 / 456 ep 0 loss 2.1383 tok/s 2296.1 eta_min 4.1 mem_gb 22.7
+04:47:49 step 420 / 456 ep 0 loss 1.9503 tok/s 2296.4 eta_min 3.2 mem_gb 22.7
+04:48:41 step 430 / 456 ep 0 loss 0.4596 tok/s 2297.2 eta_min 2.3 mem_gb 22.7
+04:49:32 step 440 / 456 ep 0 loss 1.688 tok/s 2298.1 eta_min 1.4 mem_gb 22.7
+04:50:25 step 450 / 456 ep 0 loss 0.4548 tok/s 2296.4 eta_min 0.5 mem_gb 22.7
+04:50:53 step 456 / 456 ep 0 loss 0.8867 tok/s 2296.8 eta_min 0.0 mem_gb 22.7
+04:51:04 UPLOADED SZLHOLDINGS/salad-chaski-frontier-9b-op1-r11
