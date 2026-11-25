@@ -8,7 +8,7 @@ safetensors==0.8.0
 # Required by Safetensors' PyTorch serialization path, not just by tests.
 numpy==2.4.6
 # Stay within the package's FastAPI <0.162 compatibility range.
-fastapi==0.165.0
+fastapi==0.161.1
 # Required by FastAPI 0.161.1; freeze the newly introduced runtime dependency.
 opentelemetry-api==1.45.2
 pydantic==2.14.4
@@ -40,4 +40,4 @@ sympy==1.14.0
 mpmath==1.4.1
 setuptools==84.2.1
 huggingface-hub==2.4.0
-PyYAML==6.0.3
+PyYAML==6.3.0
