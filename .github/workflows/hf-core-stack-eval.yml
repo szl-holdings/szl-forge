@@ -8,6 +8,7 @@ on:
       - "tools/hf_core_stack_receipt.py"
       - "tools/evaluate_hf_tooling.py"
       - "inference/hf_tooling.py"
+      - "inference/hf_frontier.py"
       - ".github/workflows/hf-core-stack-eval.yml"
   workflow_dispatch:
   schedule:
@@ -27,7 +28,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.0.0
         with:
           python-version: "3.12"
       - name: Run fail-closed core-stack contract tests
@@ -51,7 +52,7 @@ jobs:
         with:
           fetch-depth: 2
           persist-credentials: false
-      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.0.0
         with:
           python-version: "3.12"
       - name: Install exact evaluator sources into a fresh job-local venv
@@ -102,5 +103,3 @@ jobs:
           name: hf-core-stack-standalone-${{ github.run_id }}
           path: artifacts/
           if-no-files-found: warn
-
-
