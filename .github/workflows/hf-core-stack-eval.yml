@@ -5,10 +5,21 @@ on:
     paths:
       - "tools/hf_core_stack_guard.py"
       - "tools/test_hf_core_stack_guard.py"
+      - "tools/hf_core_stack_receipt.py"
+      - "tools/evaluate_hf_tooling.py"
+      - "inference/hf_tooling.py"
+      - "inference/hf_frontier.py"
       - ".github/workflows/hf-core-stack-eval.yml"
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * 1"
 
 permissions:
   contents: read
+
+concurrency:
+  group: hf-core-stack-eval-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   contract:
@@ -17,7 +28,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.0.0
         with:
           python-version: "3.12"
       - name: Run fail-closed core-stack contract tests
@@ -25,4 +36,70 @@ jobs:
         run: python -m unittest -v test_hf_core_stack_guard.py
       - name: Emit bounded plan
         working-directory: tools
-        run: python hf_core_stack_guard.py
+        run: python hf_core_stack_guard.py > ../artifacts-core-stack-plan.json
+      - name: Upload contract plan
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: hf-core-stack-contract-plan
+          path: artifacts-core-stack-plan.json
+
+  standalone:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Install exact evaluator sources into a fresh job-local venv
+        shell: python
+        env:
+          SZL_TOOLING_LANE: trl
+        run: |
+          import os, pathlib, subprocess, sys, venv
+          sys.path.insert(0, str(pathlib.Path.cwd()))
+          from inference.hf_tooling import requirements
+          root = pathlib.Path(os.environ['RUNNER_TEMP']) / 'szl-tooling-venv'
+          venv.EnvBuilder(with_pip=True).create(root)
+          exe = root / ('Scripts/python.exe' if os.name == 'nt' else 'bin/python')
+          output = pathlib.Path('artifacts/hf-tooling')
+          output.mkdir(parents=True, exist_ok=True)
+          req = root / 'requirements.txt'
+          req.write_text(requirements(os.environ['SZL_TOOLING_LANE']), encoding='utf-8')
+          constraint = root / 'cpu-constraint.txt'
+          constraint.write_text('torch==2.10.0\n', encoding='utf-8')
+          subprocess.run([str(exe), '-m', 'pip', 'install', 'torch==2.10.0', '--index-url', 'https://download.pytorch.org/whl/cpu'], check=True, timeout=600)
+          subprocess.run([str(exe), '-m', 'pip', 'install', '--report', str(output / 'install-report.json'), '-r', str(req), '-c', str(constraint)], check=True, timeout=1200)
+          subprocess.run([str(exe), '-m', 'pip', 'check'], check=True, timeout=60)
+      - name: Run exact-source standalone matrix
+        shell: python
+        env:
+          SZL_TOOLING_LANE: trl
+          HF_HOME: ${{ runner.temp }}/szl-tooling-hf-home
+          HF_HUB_OFFLINE: '1'
+          TRANSFORMERS_OFFLINE: '1'
+          HF_HUB_DISABLE_TELEMETRY: '1'
+        run: |
+          import os, pathlib, subprocess
+          root = pathlib.Path(os.environ['RUNNER_TEMP']) / 'szl-tooling-venv'
+          exe = root / ('Scripts/python.exe' if os.name == 'nt' else 'bin/python')
+          subprocess.run([str(exe), '-m', 'tools.evaluate_hf_tooling', 'run', '--lane', os.environ['SZL_TOOLING_LANE'], '--output', 'artifacts/hf-tooling/report.json'], check=True, timeout=900)
+          subprocess.run([str(exe), '-m', 'tools.evaluate_hf_tooling', 'verify', '--lane', os.environ['SZL_TOOLING_LANE'], '--output', 'artifacts/hf-tooling/report.json', '--expected-source', subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()], check=True, timeout=60)
+      - name: Seal measured receipt
+        if: always()
+        run: |
+          mkdir -p artifacts/hf-core-stack
+          python -m tools.hf_core_stack_receipt \
+            --report artifacts/hf-tooling/report.json \
+            --output artifacts/hf-core-stack/receipt.json
+      - name: Upload standalone evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: hf-core-stack-standalone-${{ github.run_id }}
+          path: artifacts/
+          if-no-files-found: warn
