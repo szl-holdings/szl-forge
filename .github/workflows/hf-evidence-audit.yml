@@ -2,6 +2,12 @@ name: Hugging Face evidence audit
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/hf-evidence-audit.yml'
+      - 'publishing/evidence-audit-inventory.json'
+      - 'tools/audit_hf_estate.py'
 
 permissions:
   contents: read
