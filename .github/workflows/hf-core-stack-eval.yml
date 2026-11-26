@@ -88,14 +88,6 @@ jobs:
           exe = root / ('Scripts/python.exe' if os.name == 'nt' else 'bin/python')
           subprocess.run([str(exe), '-m', 'tools.evaluate_hf_tooling', 'run', '--lane', os.environ['SZL_TOOLING_LANE'], '--output', 'artifacts/hf-tooling/report.json'], check=True, timeout=900)
           subprocess.run([str(exe), '-m', 'tools.evaluate_hf_tooling', 'verify', '--lane', os.environ['SZL_TOOLING_LANE'], '--output', 'artifacts/hf-tooling/report.json', '--expected-source', subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()], check=True, timeout=60)
-        env:
-          HF_HUB_OFFLINE: "1"
-          TRANSFORMERS_OFFLINE: "1"
-          HF_HUB_DISABLE_TELEMETRY: "1"
-        run: |
-          mkdir -p artifacts/hf-tooling
-          python -m tools.evaluate_hf_tooling run --lane trl --output artifacts/hf-tooling/report.json
-          python -m tools.evaluate_hf_tooling verify --lane trl --output artifacts/hf-tooling/report.json --expected-source "$(git rev-parse HEAD)"
       - name: Seal measured receipt
         if: always()
         run: |
