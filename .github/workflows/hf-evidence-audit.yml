@@ -42,9 +42,10 @@ jobs:
           # A fixed, small gated file tests read access without fetching weights.
           # This probe revision is independent of the audit's current-main reads.
           probe = {
-              'repository': 'SZLHOLDINGS/szl-lambda-gate',
-              'revision': 'e304321776a21fa4d573e814b9f4e005052eaf84',
-              'path': 'MODEL_PROVENANCE.json',
+              # Small immutable file in an intentionally gated upstream repository.
+              'repository': 'meta-llama/Llama-3.2-1B',
+              'revision': '4e20de362430cd3b72f300e6b0f18e50e7166e08',
+              'path': 'config.json',
           }
           credentials = ('HF_ORG_TOKEN', 'HF_TOKEN', 'HF_ORG_TOKEN1')
           access = {
