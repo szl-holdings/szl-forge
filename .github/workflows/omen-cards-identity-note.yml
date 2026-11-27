@@ -72,6 +72,7 @@ jobs:
       contents: read
       id-token: write
     name: Identity-note diffs, then Hub PRs only when requested
+    environment: release
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
