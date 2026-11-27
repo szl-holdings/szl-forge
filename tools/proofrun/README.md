@@ -3,8 +3,9 @@
 Proof-carrying training-run receipts and their verifier, vendored for
 `.github/workflows/proofrun-receipt-attest.yml`.
 
-- Source: Rikuy's proofrun package (SZL internal), copied unchanged.
-- Tree hash: `8e10c1d73d35526b1f8d03cd36280084978c907afd3ca169052b54fafcb7c156`
+- Source: Rikuy's proofrun package (SZL internal, upstream tree hash `8e10c1d7...c156`). Only change: an unused
+  `write_json` import was removed from `synthetic.py` for ruff F401.
+- Tree hash: `e7b4de1f65fcbf24dbbd6bf191631822a67e0a6bf4ad074d61253c707ae89394`
   (`find proofrun -name '*.py' | sort | xargs sha256sum | sha256sum`, run in this directory).
 - `requirements-ci.txt`: hash-pinned wheels (cryptography and deps) for CPython 3.12 on ubuntu-24.04 x86_64,
   installed with `pip install --require-hashes`.

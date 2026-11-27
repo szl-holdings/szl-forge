@@ -8,7 +8,7 @@ import shutil
 import struct
 from pathlib import Path
 
-from .canonical import sha256_bytes, write_json
+from .canonical import sha256_bytes
 from .safetensors_lite import write_safetensors
 from .signing import Signer
 from .writer import ProofRun
