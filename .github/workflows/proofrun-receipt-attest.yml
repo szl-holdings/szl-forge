@@ -1,0 +1,127 @@
+# szl-holdings/szl-forge is PUBLIC => public-good Fulcio + Rekor. Signs only on refs/heads/main.
+# Certificate identity this produces (pin it in gates/trusted_identities.txt after merge):
+#   https://github.com/szl-holdings/szl-forge/.github/workflows/proofrun-receipt-attest.yml@refs/heads/main
+#   issuer https://token.actions.githubusercontent.com
+# Uses tools/proofrun/ (vendored proofrun package; see tools/proofrun/README.md).
+# No secrets are used. Keyless: GitHub OIDC -> Fulcio short-lived cert -> Rekor entry -> Sigstore bundle.
+# The workflow only ENDORSES custody of a finished bundle whose integrity passes; it never upgrades a claim.
+name: proofrun receipt attest (Sigstore keyless)
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_tar_url:
+        description: "HTTPS URL of the finished proofrun run directory as .tar.gz (no credentials in URL)"
+        required: true
+      run_tar_sha256:
+        description: "Expected sha256 of that tarball (64 hex), recorded off the GPU host"
+        required: true
+      qualification:
+        description: "Plain NOT QUALIFIED statement carried in the predicate"
+        required: true
+        default: "NOT QUALIFIED per AQ-16 until aq16_check.sh exits 0 with this identity pinned"
+
+permissions: {}
+
+concurrency:
+  group: proofrun-receipt-attest-${{ inputs.run_tar_sha256 }}
+  cancel-in-progress: false
+
+jobs:
+  attest:
+    if: github.ref == 'refs/heads/main'          # identity is only pinned for refs/heads/main
+    runs-on: ubuntu-24.04                         # GitHub-hosted only; gate refuses self-hosted (81)
+    environment: receipt-signing                  # optional: required reviewer = Stephen (repo setting)
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write                             # OIDC token for Fulcio
+      attestations: write                         # store attestation via GitHub API
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0   # v7.1.0
+        with:
+          python-version: "3.12"
+      - name: Fetch run bundle and check pinned sha256
+        env:
+          URL: ${{ inputs.run_tar_url }}
+          WANT: ${{ inputs.run_tar_sha256 }}
+        run: |
+          set -euo pipefail
+          [[ "$WANT" =~ ^[0-9a-f]{64}$ ]] || { echo "run_tar_sha256 must be 64 hex"; exit 64; }
+          [[ "$URL" =~ ^https://[^@[:space:]]+$ ]] || { echo "run_tar_url must be https without credentials"; exit 64; }
+          curl -fsSL --proto '=https' --max-filesize 2147483648 -o run.tgz "$URL"
+          echo "$WANT  run.tgz" | sha256sum -c -
+          mkdir run && tar -xzf run.tgz -C run --no-same-owner --no-same-permissions
+          # refuse links / absolute paths smuggled into the tar
+          if find run -type l | grep -q .; then echo "symlink in run bundle"; exit 74; fi
+          n=$(find run -mindepth 1 -maxdepth 1 -type d | wc -l); [ "$n" = 1 ] || { echo "need exactly one run dir"; exit 74; }
+          echo "RUN_DIR=$(find run -mindepth 1 -maxdepth 1 -type d)" >> "$GITHUB_ENV"
+      - name: Install verifier deps (hash-pinned)
+        run: python -m pip install --require-hashes -r tools/proofrun/requirements-ci.txt
+      - name: Integrity must PASS before endorsement; build statement + predicate
+        env:
+          QUAL: ${{ inputs.qualification }}
+          TAR_SHA: ${{ inputs.run_tar_sha256 }}
+        working-directory: tools/proofrun
+        run: |
+          set -euo pipefail
+          python - "$GITHUB_WORKSPACE/$RUN_DIR" "$QUAL" "$TAR_SHA" <<'PY'
+          import json, sys, time
+          from proofrun.verify import verify
+          from proofrun.endorse import bundle_statement, bundle_digest, write_statement, build_scope, PREDICATE_TYPE
+          run, qual, tar_sha = sys.argv[1:4]
+          rep = verify(run)                       # unanchored here on purpose: the endorsement IS the anchor
+          if rep["integrity"]["status"] != "PASS":
+              sys.exit("refusing to attest: integrity does not PASS")
+          st = bundle_statement(run)
+          if len(st["run_signers"]) != 1:
+              sys.exit("refusing to attest: exactly one run signer required")
+          p, dig = write_statement(run)
+          pred = {"scheme": "proofrun-endorsement/v1", "run_id": st["run_id"], "bundle_sha256": dig,
+                  "run_signers": st["run_signers"], "run_tar_sha256": tar_sha,
+                  "endorsed_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                  "integrity_at_endorsement": "PASS", "scope": build_scope(rep, (), qual)}
+          json.dump(pred, open(run + "/predicate.json", "w"), sort_keys=True)
+          print(json.dumps({"run_id": st["run_id"], "bundle_sha256": dig, "predicateType": PREDICATE_TYPE}))
+          PY
+      - name: Sigstore keyless attestation (Fulcio + Rekor)
+        id: attest
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6   # v4.2.2
+        with:
+          subject-path: ${{ env.RUN_DIR }}/proofrun_bundle.json
+          predicate-type: https://szl-holdings.github.io/proofrun/endorsement/v1
+          predicate-path: ${{ env.RUN_DIR }}/predicate.json
+          show-summary: true
+      - name: Place bundle and self-verify (independent verifier, fail closed)
+        env:
+          BUNDLE: ${{ steps.attest.outputs.bundle-path }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          head -n1 "$BUNDLE" > "$RUN_DIR/endorsement.sigstore.json"
+          gh attestation verify "$RUN_DIR/proofrun_bundle.json" \
+            --bundle "$RUN_DIR/endorsement.sigstore.json" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --predicate-type https://szl-holdings.github.io/proofrun/endorsement/v1 \
+            --cert-identity "https://github.com/${GITHUB_REPOSITORY}/.github/workflows/proofrun-receipt-attest.yml@refs/heads/main" \
+            --cert-oidc-issuer https://token.actions.githubusercontent.com \
+            --source-ref refs/heads/main --deny-self-hosted-runners
+          python - "$RUN_DIR/endorsement.sigstore.json" <<'PY'
+          import json, sys
+          b = json.load(open(sys.argv[1]))
+          tl = b["verificationMaterial"].get("tlogEntries") or []
+          assert len(tl) == 1 and tl[0].get("inclusionProof", {}).get("checkpoint"), "no Rekor inclusion proof"
+          print("rekor logIndex", tl[0]["logIndex"])
+          PY
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9   # v7.0.2
+        with:
+          name: proofrun-endorsement-${{ inputs.run_tar_sha256 }}
+          path: |
+            ${{ env.RUN_DIR }}/proofrun_bundle.json
+            ${{ env.RUN_DIR }}/predicate.json
+            ${{ env.RUN_DIR }}/endorsement.sigstore.json
+          if-no-files-found: error
+          retention-days: 90
