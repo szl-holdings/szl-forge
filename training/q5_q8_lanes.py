@@ -33,6 +33,47 @@ PROVIDERS = ("salad", "massed")
 APPROVED_GPU_HOURS = {"Q5": 16, "Q6": 36}
 COMBINED_GPU_HOURS = 12
 COMBINED_LANES = ("Q7", "Q8")
+PINNED_DATA_LANES = ("Q6", "Q7", "Q8")
+Q8_BASE_REPO = "Qwen/Qwen3-1.7B"
+CONTAMINATION_NOT_RUN = (
+    "GPQA",
+    "szl-chaski/rotation heldouts",
+    "AbstentionBench",
+    "SimpleQA",
+    "LiveCodeBench",
+    "MTEB",
+)
+NOT_CHECKED_AS_PUBLISHED = (
+    "gpqa_diamond (gated, 403)",
+    "SZLHOLDINGS/szl-chaski-heldout-private (private; not on box; no named yes to fetch)",
+    "SZLHOLDINGS/szl-heldout-rotation-private (not on box)",
+    "AbstentionBench, SimpleQA (not loaded)",
+    "LiveCodeBench (Q6 eval suite; not loaded)",
+    "MTEB tasks (Q7 eval suite; not loaded)",
+)
+Q7_SOURCE_IDS = (
+    "szl-estate-graph",
+    "rag-corpus-v2",
+    "doctrine-corpus-v2",
+)
+_PIN_KEYS = {
+    "role",
+    "source",
+    "path",
+    "rows",
+    "sha256",
+    "sha256_source",
+    "lfs_oid",
+    "training_eligible",
+    "eval_only",
+    "hub_repo",
+    "hub_revision",
+    "api_sha",
+    "license",
+    "evidence_id",
+    "rights_admission",
+}
+_DATA_CHECK_KEYS = {"status", "embedding_similarity", "contamination_not_run"}
 
 # Names that already exist or are explicitly off limits. A new lane must not
 # reuse them. Comparison is case-insensitive because Hub ids are.
@@ -107,6 +148,7 @@ _LANE_KEYS = {
     "gpu_hours",
     "spend_caps",
     "dry_run",
+    "data_check",
     "blocker",
     "launch_note",
 }
@@ -416,6 +458,207 @@ def _validate_q4(document: dict[str, Any]) -> dict[str, Any]:
     return document
 
 
+def _unknown(value: object, code: str) -> None:
+    if value != "UNKNOWN":
+        raise LaneError(code)
+
+
+def _data_check(lane_id: str, value: object) -> dict[str, Any] | None:
+    if lane_id == "Q5":
+        if value is not None:
+            raise LaneError("DATA_CHECK")
+        return None
+    if lane_id not in PINNED_DATA_LANES or not isinstance(value, dict):
+        raise LaneError("DATA_CHECK")
+    if set(value) != _DATA_CHECK_KEYS:
+        raise LaneError("DATA_CHECK")
+    if value.get("status") != "PASS_WITH_CONDITIONS":
+        raise LaneError("DATA_CHECK")
+    if value.get("embedding_similarity") != "UNAVAILABLE":
+        raise LaneError("DATA_CHECK")
+    if value.get("contamination_not_run") != list(CONTAMINATION_NOT_RUN):
+        raise LaneError("DATA_CHECK")
+    return value
+
+
+def _pin_keys(lane_id: str, row: dict[str, Any]) -> None:
+    expected = set(_PIN_KEYS)
+    if lane_id == "Q6" and row.get("role") == "train":
+        expected.add("built_from")
+    if lane_id == "Q7" and row.get("role") == "train":
+        expected.update({"sources", "attribution"})
+    if set(row) != expected:
+        raise LaneError("DATASET_KEYS")
+
+
+def _role_flags(row: dict[str, Any]) -> None:
+    role = row.get("role")
+    eligible = row.get("training_eligible")
+    eval_only = row.get("eval_only")
+    if role == "train":
+        if eligible is not True or eval_only is not False:
+            raise LaneError("DATASET_ROLE")
+        return
+    if role in {"heldout", "heldout_abstain"}:
+        if eligible is not False or eval_only is not True:
+            raise LaneError("DATASET_ROLE")
+        return
+    raise LaneError("DATASET_ROLE")
+
+
+def _match_file(row: dict[str, Any], evidence: dict[str, Any]) -> dict[str, Any]:
+    observed = _observation(evidence, row.get("evidence_id"))
+    if observed.get("kind") != "dataset" or observed.get("private") is not True:
+        raise LaneError("DATASET_EVIDENCE")
+    if row.get("hub_repo") != observed.get("repo"):
+        raise LaneError("DATASET_REPO")
+    if row.get("hub_revision") != observed.get("named_revision"):
+        raise LaneError("DATASET_REVISION")
+    _sha(row.get("hub_revision"), "DATASET_REVISION")
+    _unknown(observed.get("api_sha"), "DATASET_API_SHA")
+    _unknown(row.get("api_sha"), "DATASET_API_SHA")
+    if observed.get("api_http_status") != 401:
+        raise LaneError("DATASET_API_SHA")
+    if row.get("sha256_source") != "SHA256SUMS" or observed.get("sha256_source") != "SHA256SUMS":
+        raise LaneError("DATASET_SHA_SOURCE")
+    _unknown(row.get("lfs_oid"), "DATASET_LFS_OID")
+    _unknown(observed.get("lfs_oid"), "DATASET_LFS_OID")
+    if row.get("license") != observed.get("license"):
+        raise LaneError("DATASET_LICENSE")
+    if observed.get("license_verification") != "HUB_CARD":
+        raise LaneError("DATASET_LICENSE")
+    if observed.get("not_checked_as_published") != list(NOT_CHECKED_AS_PUBLISHED):
+        raise LaneError("CONTAMINATION_GAPS")
+    files = observed.get("files")
+    if not isinstance(files, list):
+        raise LaneError("DATASET_FILE")
+    matched = [
+        item
+        for item in files
+        if isinstance(item, dict) and item.get("path") == row.get("path")
+    ]
+    if len(matched) != 1:
+        raise LaneError("DATASET_FILE")
+    item = matched[0]
+    digest = row.get("sha256")
+    if (
+        not isinstance(digest, str)
+        or SHA256.fullmatch(digest) is None
+        or digest != item.get("sha256")
+        or item.get("role") != row.get("role")
+    ):
+        raise LaneError("DATASET_SHA")
+    rows = row.get("rows")
+    if isinstance(rows, bool) or not isinstance(rows, int) or rows < 1 or rows != item.get("rows"):
+        raise LaneError("DATASET_ROWS")
+    if row.get("source") != f"{row.get('hub_repo')}/{row.get('path')}":
+        raise LaneError("DATASET_SOURCE")
+    if row.get("rights_admission") != "UNKNOWN":
+        raise LaneError("RIGHTS_ADMISSION")
+    return observed
+
+
+def _built_from(value: object, evidence: dict[str, Any]) -> None:
+    if not isinstance(value, dict):
+        raise LaneError("BUILT_FROM")
+    if set(value) != {"repo", "revision", "evidence_id"}:
+        raise LaneError("BUILT_FROM")
+    observed = _observation(evidence, value.get("evidence_id"))
+    if value.get("repo") != observed.get("repo") or value.get("revision") != observed.get("sha"):
+        raise LaneError("BUILT_FROM")
+    _sha(value.get("revision"), "BUILT_FROM")
+
+
+def _q7_sources(value: object, evidence: dict[str, Any]) -> None:
+    if not isinstance(value, list) or len(value) != len(Q7_SOURCE_IDS):
+        raise LaneError("DATASET_SOURCES")
+    for evidence_id, source in zip(Q7_SOURCE_IDS, value, strict=True):
+        if not isinstance(source, dict):
+            raise LaneError("DATASET_SOURCES")
+        if set(source) != {"repo", "revision", "license", "evidence_id"}:
+            raise LaneError("DATASET_SOURCES")
+        if source.get("evidence_id") != evidence_id:
+            raise LaneError("DATASET_SOURCES")
+        observed = _observation(evidence, evidence_id)
+        if observed.get("kind") != "dataset" or observed.get("private") is not False:
+            raise LaneError("DATASET_SOURCES")
+        if source.get("repo") != observed.get("repo"):
+            raise LaneError("DATASET_SOURCES")
+        if source.get("revision") != observed.get("sha"):
+            raise LaneError("DATASET_SOURCES")
+        _sha(source.get("revision"), "DATASET_SOURCES")
+        if source.get("license") != observed.get("license"):
+            raise LaneError("DATASET_SOURCES")
+        if observed.get("license_verification") != "HF_API":
+            raise LaneError("DATASET_SOURCES")
+        if evidence_id == "doctrine-corpus-v2" and observed.get("license") != "cc-by-4.0":
+            raise LaneError("DATASET_SOURCES")
+        if evidence_id != "doctrine-corpus-v2" and observed.get("license") != "apache-2.0":
+            raise LaneError("DATASET_SOURCES")
+
+
+def _attribution(value: object, evidence: dict[str, Any]) -> None:
+    if not isinstance(value, dict):
+        raise LaneError("ATTRIBUTION")
+    if set(value) != {
+        "license",
+        "source_repo",
+        "source_revision",
+        "card_declares_per_row",
+        "rows_verified",
+    }:
+        raise LaneError("ATTRIBUTION")
+    doctrine = _observation(evidence, "doctrine-corpus-v2")
+    if value.get("license") != "cc-by-4.0" or doctrine.get("license") != "cc-by-4.0":
+        raise LaneError("ATTRIBUTION")
+    if value.get("source_repo") != doctrine.get("repo"):
+        raise LaneError("ATTRIBUTION")
+    if value.get("source_revision") != doctrine.get("sha"):
+        raise LaneError("ATTRIBUTION")
+    _sha(value.get("source_revision"), "ATTRIBUTION")
+    if value.get("card_declares_per_row") is not True:
+        raise LaneError("ATTRIBUTION")
+    _unknown(value.get("rows_verified"), "ATTRIBUTION")
+
+
+def _bind_pins(
+    lane_id: str,
+    document: dict[str, Any],
+    datasets: list[Any],
+    evidence: dict[str, Any],
+) -> None:
+    """Match Q6–Q8 rows to Hub observations. Unread SHAs stay UNKNOWN."""
+
+    if not datasets:
+        raise LaneError("DATASET_EVIDENCE")
+    seen: set[str] = set()
+    observed: dict[str, Any] | None = None
+    for row in datasets:
+        if not isinstance(row, dict):
+            raise LaneError("DATASETS")
+        _pin_keys(lane_id, row)
+        _role_flags(row)
+        matched = _match_file(row, evidence)
+        if observed is None:
+            observed = matched
+        elif matched is not observed:
+            raise LaneError("DATASET_EVIDENCE")
+        role = str(row.get("role"))
+        if role in seen:
+            raise LaneError("DATASET_ROLE")
+        seen.add(role)
+        if lane_id == "Q6" and role == "train":
+            _built_from(row.get("built_from"), evidence)
+        if lane_id == "Q7" and role == "train":
+            _q7_sources(row.get("sources"), evidence)
+            _attribution(row.get("attribution"), evidence)
+    if observed is None or document.get("data_check") != observed.get("data_check"):
+        raise LaneError("DATA_CHECK")
+    expected = {"train", "heldout", "heldout_abstain"} if lane_id == "Q8" else {"train", "heldout"}
+    if seen != expected:
+        raise LaneError("DATASET_ROLE")
+
+
 def validate_lane(document: dict[str, Any], evidence: dict[str, Any]) -> dict[str, Any]:
     """Return the record when it obeys the approval, else raise ``LaneError``."""
 
@@ -432,12 +675,15 @@ def validate_lane(document: dict[str, Any], evidence: dict[str, Any]) -> dict[st
     _closed(document)
     _runtime(document)
     base = _match_base(document.get("base"), evidence)
+    if lane_id == "Q8" and base.get("repo") != Q8_BASE_REPO:
+        raise LaneError("Q8_BASE")
     _replaced(document.get("replaced_base"), evidence, str(base.get("repo")))
     if lane_id == "Q6" and document.get("replaced_base") is None:
         raise LaneError("REPLACED_BASE")
     if lane_id != "Q6" and document.get("replaced_base") is not None:
         raise LaneError("REPLACED_BASE")
     datasets = _datasets(document.get("datasets"))
+    checked = _data_check(str(lane_id), document.get("data_check"))
     heldout = document.get("heldout")
     if not isinstance(heldout, dict):
         raise LaneError("HELDOUT")
@@ -456,6 +702,10 @@ def validate_lane(document: dict[str, Any], evidence: dict[str, Any]) -> dict[st
             raise LaneError("HELDOUT")
     else:
         raise LaneError("LANE_STATUS")
+    if lane_id in PINNED_DATA_LANES:
+        if status != "READY_NOT_LAUNCHED" or checked is None:
+            raise LaneError("LANE_STATUS")
+        _bind_pins(str(lane_id), document, datasets, evidence)
     if not isinstance(document.get("refused_corpora"), list):
         raise LaneError("REFUSED_CORPORA")
     _target(document.get("target_repo"))

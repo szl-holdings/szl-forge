@@ -37,9 +37,10 @@ def test_records_load_and_stay_closed() -> None:
     assert set(lanes) == {"Q4", "Q5", "Q6", "Q7", "Q8"}
     assert lanes["Q4"]["status"] == "NOT_APPROVED"
     assert lanes["Q5"]["status"] == "READY_NOT_LAUNCHED"
-    assert lanes["Q6"]["status"] == "BLOCKED"
-    assert lanes["Q7"]["status"] == "BLOCKED"
-    assert lanes["Q8"]["status"] == "BLOCKED"
+    assert lanes["Q5"]["data_check"] is None
+    assert lanes["Q6"]["status"] == "READY_NOT_LAUNCHED"
+    assert lanes["Q7"]["status"] == "READY_NOT_LAUNCHED"
+    assert lanes["Q8"]["status"] == "READY_NOT_LAUNCHED"
     for lane in lanes.values():
         assert lane["launch_authorized"] is False
         assert lane["hub_write"] is False
@@ -77,21 +78,75 @@ def test_q5_heldout_bytes_match_the_manifest() -> None:
     assert heldout["rows"] == 72
 
 
-def test_blocked_lanes_keep_missing_evidence_unknown() -> None:
+def test_q6_q8_pins_stay_unlaunched_with_the_recorded_conditions() -> None:
+    evidence = load_evidence()
     q6 = load_lane("Q6")
-    assert q6["heldout"]["status"] == "ABSENT"
+    q7 = load_lane("Q7")
+    q8 = load_lane("Q8")
     assert q6["replaced_base"]["license_name"] == "qwen-research"
     assert q6["replaced_base"]["repo"] != q6["base"]["repo"]
-    assert "ABSENT" in q6["blocker"]
-    q7 = load_lane("Q7")
-    assert q7["datasets"] == []
-    assert q7["heldout"]["status"] == "UNKNOWN"
+    assert q6["heldout"]["status"] == "PRESENT"
+    assert q6["heldout"]["eval_only"] is True
+    assert q6["blocker"] is None
+    assert q6["launch_authorized"] is False
+    train, heldout = q6["datasets"]
+    assert train["rows"] == 2124
+    assert train["sha256"].startswith("5a8109f2")
+    assert len(train["sha256"]) == 64
+    assert heldout["rows"] == 291
+    assert heldout["sha256"].startswith("4f85de2a")
+    assert heldout["training_eligible"] is False
+    assert train["hub_revision"] == "85227b97f4e97def69bdba792c3bd00c41808689"
+    assert train["api_sha"] == "UNKNOWN"
+    assert train["lfs_oid"] == "UNKNOWN"
+    assert train["built_from"]["revision"] == evidence["by_id"]["a11oy-code-sft-v1"]["sha"]
     assert q7["dry_run"]["kind"] == "contrastive"
     assert "verticals-sft-v1" in q7["refused_corpora"][0]["hub_repo"]
-    q8 = load_lane("Q8")
-    assert q8["heldout"]["status"] == "UNKNOWN"
-    assert q8["blocker"].startswith("dataset")
-    evidence = load_evidence()
+    q7_train = next(row for row in q7["datasets"] if row["role"] == "train")
+    q7_heldout = next(row for row in q7["datasets"] if row["role"] == "heldout")
+    assert q7_train["rows"] == 3504
+    assert q7_train["sha256"].startswith("04192ebc")
+    assert q7_heldout["rows"] == 534
+    assert q7_heldout["sha256"].startswith("542c47c5")
+    assert q7_heldout["training_eligible"] is False
+    assert [row["evidence_id"] for row in q7_train["sources"]] == [
+        "szl-estate-graph",
+        "rag-corpus-v2",
+        "doctrine-corpus-v2",
+    ]
+    doctrine = evidence["by_id"]["doctrine-corpus-v2"]
+    assert doctrine["license"] == "cc-by-4.0"
+    assert doctrine["sha"] == "19d37224e77bd5f41eb5722c6b40fa35e38982bc"
+    assert q7_train["attribution"]["card_declares_per_row"] is True
+    assert q7_train["attribution"]["rows_verified"] == "UNKNOWN"
+    assert "3508" in evidence["by_id"]["rikchaq-embed-pairs-v1-private"]["row_count_note"]
+    assert q8["base"]["repo"] == "Qwen/Qwen3-1.7B"
+    assert q8["base"]["revision"] == "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
+    assert q8["base"]["repo"] != "Qwen/Qwen3.5-0.8B"
+    q8_train = next(row for row in q8["datasets"] if row["role"] == "train")
+    q8_heldout = next(row for row in q8["datasets"] if row["role"] == "heldout")
+    abstain = next(row for row in q8["datasets"] if row["role"] == "heldout_abstain")
+    assert q8_train["rows"] == 4231
+    assert q8_train["sha256"].startswith("7d92e0ea")
+    assert q8_heldout["rows"] == 485
+    assert q8_heldout["sha256"].startswith("8292d80e")
+    assert q8_heldout["training_eligible"] is False
+    assert abstain["rows"] == 54
+    assert abstain["eval_only"] is True
+    assert abstain["training_eligible"] is False
+    for lane in (q6, q7, q8):
+        assert lane["data_check"]["status"] == "PASS_WITH_CONDITIONS"
+        assert lane["data_check"]["embedding_similarity"] == "UNAVAILABLE"
+        assert lane["data_check"]["contamination_not_run"] == [
+            "GPQA",
+            "szl-chaski/rotation heldouts",
+            "AbstentionBench",
+            "SimpleQA",
+            "LiveCodeBench",
+            "MTEB",
+        ]
+        assert lane["launch_authorized"] is False
+        assert lane["status"] == "READY_NOT_LAUNCHED"
     granite = evidence["by_id"]["granite-3b-code-128k"]
     assert granite["license"] == "apache-2.0"
     assert granite["max_position_embeddings"] == 128000
@@ -169,10 +224,28 @@ def test_gate_rejects_overwrite_extra_provider_and_a_raised_budget() -> None:
     with pytest.raises(LaneError, match="LAUNCH_AUTHORIZED"):
         validate_lane(launch, evidence)
     ready = copy.deepcopy(load_lane("Q6"))
+    ready["heldout"] = {
+        "status": "ABSENT",
+        "eval_only": None,
+        "independence": "UNKNOWN",
+        "source": None,
+    }
     ready["status"] = "READY_NOT_LAUNCHED"
     ready["blocker"] = None
     with pytest.raises(LaneError, match="READY_WITHOUT_HELDOUT"):
         validate_lane(ready, evidence)
+    guessed = copy.deepcopy(load_lane("Q6"))
+    guessed["datasets"][0]["api_sha"] = "85227b97f4e97def69bdba792c3bd00c41808689"
+    with pytest.raises(LaneError, match="DATASET_API_SHA"):
+        validate_lane(guessed, evidence)
+    dropped = copy.deepcopy(load_lane("Q7"))
+    dropped["data_check"]["contamination_not_run"] = ["GPQA"]
+    with pytest.raises(LaneError, match="DATA_CHECK"):
+        validate_lane(dropped, evidence)
+    switched = copy.deepcopy(load_lane("Q8"))
+    switched["base"] = copy.deepcopy(load_lane("Q5")["base"])
+    with pytest.raises(LaneError, match="Q8_BASE"):
+        validate_lane(switched, evidence)
     over = copy.deepcopy(load_lane("Q7"))
     over["gpu_hours"]["estimate"] = 13
     with pytest.raises(LaneError, match="GPU_HOURS_OVER_APPROVAL"):

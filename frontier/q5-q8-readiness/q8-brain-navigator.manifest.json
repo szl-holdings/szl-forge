@@ -2,7 +2,7 @@
   "schema": "szl.forge.q5-q8-lane/v1",
   "id": "Q8",
   "name": "brain-navigator",
-  "status": "BLOCKED",
+  "status": "READY_NOT_LAUNCHED",
   "approval_date": "2026-11-27",
   "launch_authorized": false,
   "hub_write": false,
@@ -28,12 +28,64 @@
     "pipeline_tag": "text-generation"
   },
   "replaced_base": null,
-  "datasets": [],
+  "datasets": [
+    {
+      "role": "train",
+      "source": "SZLHOLDINGS/nan-navigator-sft-v1-private/data/train.jsonl",
+      "path": "data/train.jsonl",
+      "rows": 4231,
+      "sha256": "7d92e0ea2e284174b0de53cbb5a44ab9f3f8de6fb4e5d8e31628b9700c5a4fb9",
+      "sha256_source": "SHA256SUMS",
+      "lfs_oid": "UNKNOWN",
+      "training_eligible": true,
+      "eval_only": false,
+      "hub_repo": "SZLHOLDINGS/nan-navigator-sft-v1-private",
+      "hub_revision": "584109f0c256ba8ae6f31a63dc9623326ac0a79b",
+      "api_sha": "UNKNOWN",
+      "license": "apache-2.0",
+      "evidence_id": "nan-navigator-sft-v1-private",
+      "rights_admission": "UNKNOWN"
+    },
+    {
+      "role": "heldout",
+      "source": "SZLHOLDINGS/nan-navigator-sft-v1-private/data/heldout.jsonl",
+      "path": "data/heldout.jsonl",
+      "rows": 485,
+      "sha256": "8292d80ec1349c6e27c48d539d3d2e4b1781fc3f7b733423afebaf3176fc5270",
+      "sha256_source": "SHA256SUMS",
+      "lfs_oid": "UNKNOWN",
+      "training_eligible": false,
+      "eval_only": true,
+      "hub_repo": "SZLHOLDINGS/nan-navigator-sft-v1-private",
+      "hub_revision": "584109f0c256ba8ae6f31a63dc9623326ac0a79b",
+      "api_sha": "UNKNOWN",
+      "license": "apache-2.0",
+      "evidence_id": "nan-navigator-sft-v1-private",
+      "rights_admission": "UNKNOWN"
+    },
+    {
+      "role": "heldout_abstain",
+      "source": "SZLHOLDINGS/nan-navigator-sft-v1-private/data/heldout_abstain.jsonl",
+      "path": "data/heldout_abstain.jsonl",
+      "rows": 54,
+      "sha256": "ceb8a24616064e603ac13249f1870c5fad44fdb39711c8925be240e9e2cb2e95",
+      "sha256_source": "SHA256SUMS",
+      "lfs_oid": "UNKNOWN",
+      "training_eligible": false,
+      "eval_only": true,
+      "hub_repo": "SZLHOLDINGS/nan-navigator-sft-v1-private",
+      "hub_revision": "584109f0c256ba8ae6f31a63dc9623326ac0a79b",
+      "api_sha": "UNKNOWN",
+      "license": "apache-2.0",
+      "evidence_id": "nan-navigator-sft-v1-private",
+      "rights_admission": "UNKNOWN"
+    }
+  ],
   "heldout": {
-    "status": "UNKNOWN",
-    "eval_only": null,
+    "status": "PRESENT",
+    "eval_only": true,
     "independence": "UNKNOWN",
-    "source": null
+    "source": "SZLHOLDINGS/nan-navigator-sft-v1-private/data/heldout.jsonl"
   },
   "refused_corpora": [
     {
@@ -69,6 +121,18 @@
     "seq": 4,
     "lr_milli": 50
   },
-  "blocker": "dataset and eval-only heldout are UNKNOWN",
-  "launch_note": "Launch unauthorized. No navigator training corpus with an eval-only heldout was observed. Operator admission is UNKNOWN."
+  "data_check": {
+    "status": "PASS_WITH_CONDITIONS",
+    "embedding_similarity": "UNAVAILABLE",
+    "contamination_not_run": [
+      "GPQA",
+      "szl-chaski/rotation heldouts",
+      "AbstentionBench",
+      "SimpleQA",
+      "LiveCodeBench",
+      "MTEB"
+    ]
+  },
+  "blocker": null,
+  "launch_note": "Launch unauthorized. Data status is PASS_WITH_CONDITIONS. Embedding-similarity is UNAVAILABLE. Contamination checks were not run against GPQA, the szl-chaski/rotation heldouts, AbstentionBench, SimpleQA, LiveCodeBench, and MTEB. heldout_abstain is eval-only. The base stays Qwen/Qwen3-1.7B. Operator admission is UNKNOWN. The datasets API commit sha is UNKNOWN."
 }

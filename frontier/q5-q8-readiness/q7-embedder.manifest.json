@@ -2,7 +2,7 @@
   "schema": "szl.forge.q5-q8-lane/v1",
   "id": "Q7",
   "name": "embedder",
-  "status": "BLOCKED",
+  "status": "READY_NOT_LAUNCHED",
   "approval_date": "2026-11-27",
   "launch_authorized": false,
   "hub_write": false,
@@ -28,12 +28,74 @@
     "pipeline_tag": "feature-extraction"
   },
   "replaced_base": null,
-  "datasets": [],
+  "datasets": [
+    {
+      "role": "train",
+      "source": "SZLHOLDINGS/rikchaq-embed-pairs-v1-private/data/train.jsonl",
+      "path": "data/train.jsonl",
+      "rows": 3504,
+      "sha256": "04192ebcfb7a0b5eedd369c247708eadb9f54eef4c0802d68c4d812723a6ecb9",
+      "sha256_source": "SHA256SUMS",
+      "lfs_oid": "UNKNOWN",
+      "training_eligible": true,
+      "eval_only": false,
+      "hub_repo": "SZLHOLDINGS/rikchaq-embed-pairs-v1-private",
+      "hub_revision": "a02974ba8a04efcbcc05d7df5da7042123386bbe",
+      "api_sha": "UNKNOWN",
+      "license": ["apache-2.0", "cc-by-4.0"],
+      "evidence_id": "rikchaq-embed-pairs-v1-private",
+      "rights_admission": "UNKNOWN",
+      "sources": [
+        {
+          "repo": "SZLHOLDINGS/szl-estate-graph",
+          "revision": "8262675ce6550c0bb180f54139c34ccd03ec5e77",
+          "license": "apache-2.0",
+          "evidence_id": "szl-estate-graph"
+        },
+        {
+          "repo": "SZLHOLDINGS/rag-corpus-v2",
+          "revision": "4d830f3214d5895c61c1eb1bf4793eba3dcbd2e9",
+          "license": "apache-2.0",
+          "evidence_id": "rag-corpus-v2"
+        },
+        {
+          "repo": "SZLHOLDINGS/doctrine-corpus-v2",
+          "revision": "19d37224e77bd5f41eb5722c6b40fa35e38982bc",
+          "license": "cc-by-4.0",
+          "evidence_id": "doctrine-corpus-v2"
+        }
+      ],
+      "attribution": {
+        "license": "cc-by-4.0",
+        "source_repo": "SZLHOLDINGS/doctrine-corpus-v2",
+        "source_revision": "19d37224e77bd5f41eb5722c6b40fa35e38982bc",
+        "card_declares_per_row": true,
+        "rows_verified": "UNKNOWN"
+      }
+    },
+    {
+      "role": "heldout",
+      "source": "SZLHOLDINGS/rikchaq-embed-pairs-v1-private/data/heldout.jsonl",
+      "path": "data/heldout.jsonl",
+      "rows": 534,
+      "sha256": "542c47c55629b33280b942a91865bb58c892d020070c9ea4e42eec7061495029",
+      "sha256_source": "SHA256SUMS",
+      "lfs_oid": "UNKNOWN",
+      "training_eligible": false,
+      "eval_only": true,
+      "hub_repo": "SZLHOLDINGS/rikchaq-embed-pairs-v1-private",
+      "hub_revision": "a02974ba8a04efcbcc05d7df5da7042123386bbe",
+      "api_sha": "UNKNOWN",
+      "license": ["apache-2.0", "cc-by-4.0"],
+      "evidence_id": "rikchaq-embed-pairs-v1-private",
+      "rights_admission": "UNKNOWN"
+    }
+  ],
   "heldout": {
-    "status": "UNKNOWN",
-    "eval_only": null,
+    "status": "PRESENT",
+    "eval_only": true,
     "independence": "UNKNOWN",
-    "source": null
+    "source": "SZLHOLDINGS/rikchaq-embed-pairs-v1-private/data/heldout.jsonl"
   },
   "refused_corpora": [
     {
@@ -70,6 +132,18 @@
     "batch": 4,
     "lr_milli": 50
   },
-  "blocker": "embedding-pair dataset and eval-only heldout are UNKNOWN",
-  "launch_note": "Launch unauthorized. No embedding-pair corpus with an eval-only heldout was observed. Operator admission is UNKNOWN."
+  "data_check": {
+    "status": "PASS_WITH_CONDITIONS",
+    "embedding_similarity": "UNAVAILABLE",
+    "contamination_not_run": [
+      "GPQA",
+      "szl-chaski/rotation heldouts",
+      "AbstentionBench",
+      "SimpleQA",
+      "LiveCodeBench",
+      "MTEB"
+    ]
+  },
+  "blocker": null,
+  "launch_note": "Launch unauthorized. Data status is PASS_WITH_CONDITIONS. Embedding-similarity is UNAVAILABLE. Contamination checks were not run against GPQA, the szl-chaski/rotation heldouts, AbstentionBench, SimpleQA, LiveCodeBench, and MTEB. Doctrine rows declare CC BY 4.0 attribution on the card; per-row verification is UNKNOWN. The file record says 3504 train rows and the verdict build.train_rows_final says 3508. Operator admission is UNKNOWN. The datasets API commit sha is UNKNOWN."
 }

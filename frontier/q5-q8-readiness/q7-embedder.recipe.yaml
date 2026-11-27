@@ -4,7 +4,7 @@
 family: embedder
 lane: Q7
 approval_date: "2026-11-27"
-status: BLOCKED
+status: READY_NOT_LAUNCHED
 launch_authorized: false
 
 base:
@@ -15,9 +15,30 @@ base:
   pipeline_tag: feature-extraction
 
 data:
-  embedding_pairs: UNKNOWN
-  heldout_eval_only: UNKNOWN
+  embedding_pairs: SZLHOLDINGS/rikchaq-embed-pairs-v1-private@a02974ba8a04efcbcc05d7df5da7042123386bbe
+  train_rows: 3504
+  train_sha256: 04192ebcfb7a0b5eedd369c247708eadb9f54eef4c0802d68c4d812723a6ecb9
+  heldout_eval_only: SZLHOLDINGS/rikchaq-embed-pairs-v1-private/data/heldout.jsonl
+  heldout_rows: 534
+  heldout_sha256: 542c47c55629b33280b942a91865bb58c892d020070c9ea4e42eec7061495029
+  sha256_source: SHA256SUMS
+  api_sha: UNKNOWN
+  lfs_oid: UNKNOWN
+  sources:
+    - SZLHOLDINGS/szl-estate-graph@8262675ce6550c0bb180f54139c34ccd03ec5e77
+    - SZLHOLDINGS/rag-corpus-v2@4d830f3214d5895c61c1eb1bf4793eba3dcbd2e9
+    - SZLHOLDINGS/doctrine-corpus-v2@19d37224e77bd5f41eb5722c6b40fa35e38982bc
+  attribution: CC BY 4.0 per doctrine row, declared on the card; row verification UNKNOWN
   heldout_independence: UNKNOWN
+  data_status: PASS_WITH_CONDITIONS
+  embedding_similarity: UNAVAILABLE
+  contamination_not_run:
+    - GPQA
+    - szl-chaski/rotation heldouts
+    - AbstentionBench
+    - SimpleQA
+    - LiveCodeBench
+    - MTEB
   refused: SZLHOLDINGS/verticals-sft-v1@ddcf2907b6faad01ab56993a03b5d1bb44465c70
 
 runtime:
@@ -46,4 +67,4 @@ publish:
   target_existence: UNKNOWN
   overwrite_existing: false
 
-blocker: embedding-pair dataset and eval-only heldout are UNKNOWN
+blocker: null

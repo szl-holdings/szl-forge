@@ -2,7 +2,7 @@
   "schema": "szl.forge.q5-q8-lane/v1",
   "id": "Q6",
   "name": "a11oy-code-apache",
-  "status": "BLOCKED",
+  "status": "READY_NOT_LAUNCHED",
   "approval_date": "2026-11-27",
   "launch_authorized": false,
   "hub_write": false,
@@ -38,23 +38,50 @@
   },
   "datasets": [
     {
-      "role": "train_observed_not_admitted",
-      "source": "SZLHOLDINGS/a11oy-code-sft-v1/train.jsonl",
-      "hub_repo": "SZLHOLDINGS/a11oy-code-sft-v1",
-      "hub_revision": "ee70cc9caa8a87da7ded9bf8d8a15e4f7c541804",
-      "license": "apache-2.0",
-      "evidence_id": "a11oy-code-sft-v1",
-      "training_eligible": false,
+      "role": "train",
+      "source": "SZLHOLDINGS/a11oy-code-sft-v1-q6-split-private/data/train.jsonl",
+      "path": "data/train.jsonl",
+      "rows": 2124,
+      "sha256": "5a8109f26a120bc66d040b8ee0740c3649574d6ece33bae1ec538526ef20dc8e",
+      "sha256_source": "SHA256SUMS",
+      "lfs_oid": "UNKNOWN",
+      "training_eligible": true,
       "eval_only": false,
+      "hub_repo": "SZLHOLDINGS/a11oy-code-sft-v1-q6-split-private",
+      "hub_revision": "85227b97f4e97def69bdba792c3bd00c41808689",
+      "api_sha": "UNKNOWN",
+      "license": "apache-2.0",
+      "evidence_id": "a11oy-code-sft-v1-q6-split-private",
       "rights_admission": "UNKNOWN",
-      "sha256": null
+      "built_from": {
+        "repo": "SZLHOLDINGS/a11oy-code-sft-v1",
+        "revision": "ee70cc9caa8a87da7ded9bf8d8a15e4f7c541804",
+        "evidence_id": "a11oy-code-sft-v1"
+      }
+    },
+    {
+      "role": "heldout",
+      "source": "SZLHOLDINGS/a11oy-code-sft-v1-q6-split-private/data/heldout.jsonl",
+      "path": "data/heldout.jsonl",
+      "rows": 291,
+      "sha256": "4f85de2ad085c39e06c13ce4067752affc779ef2ccfe563c1d4d802b15edba7c",
+      "sha256_source": "SHA256SUMS",
+      "lfs_oid": "UNKNOWN",
+      "training_eligible": false,
+      "eval_only": true,
+      "hub_repo": "SZLHOLDINGS/a11oy-code-sft-v1-q6-split-private",
+      "hub_revision": "85227b97f4e97def69bdba792c3bd00c41808689",
+      "api_sha": "UNKNOWN",
+      "license": "apache-2.0",
+      "evidence_id": "a11oy-code-sft-v1-q6-split-private",
+      "rights_admission": "UNKNOWN"
     }
   ],
   "heldout": {
-    "status": "ABSENT",
-    "eval_only": null,
+    "status": "PRESENT",
+    "eval_only": true,
     "independence": "UNKNOWN",
-    "source": null
+    "source": "SZLHOLDINGS/a11oy-code-sft-v1-q6-split-private/data/heldout.jsonl"
   },
   "refused_corpora": [],
   "target_repo": "SZLHOLDINGS/a11oy-code-apache-q6-r1",
@@ -85,6 +112,18 @@
     "seq": 4,
     "lr_milli": 50
   },
-  "blocker": "eval-only heldout ABSENT on SZLHOLDINGS/a11oy-code-sft-v1 (train.jsonl only)",
-  "launch_note": "Launch unauthorized. Eval-only heldout is ABSENT and operator admission is UNKNOWN."
+  "data_check": {
+    "status": "PASS_WITH_CONDITIONS",
+    "embedding_similarity": "UNAVAILABLE",
+    "contamination_not_run": [
+      "GPQA",
+      "szl-chaski/rotation heldouts",
+      "AbstentionBench",
+      "SimpleQA",
+      "LiveCodeBench",
+      "MTEB"
+    ]
+  },
+  "blocker": null,
+  "launch_note": "Launch unauthorized. Data status is PASS_WITH_CONDITIONS. Embedding-similarity is UNAVAILABLE. Contamination checks were not run against GPQA, the szl-chaski/rotation heldouts, AbstentionBench, SimpleQA, LiveCodeBench, and MTEB. Operator admission is UNKNOWN. The datasets API commit sha is UNKNOWN."
 }

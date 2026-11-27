@@ -101,6 +101,7 @@
     "seq": 4,
     "lr_milli": 50
   },
+  "data_check": null,
   "blocker": null,
   "launch_note": "Launch unauthorized. Operator admission is UNKNOWN. Held-out semantic independence is UNKNOWN. A native Qwen3_5ForConditionalGeneration step on the pinned image is UNKNOWN; the CPU dry-run is a tiny random stand-in."
 }
