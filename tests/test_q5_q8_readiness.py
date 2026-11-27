@@ -126,8 +126,15 @@ def math_ok(value: float) -> bool:
 
 
 def test_image_pin_is_not_duplicated_and_nemotron_trainer_is_not_copied() -> None:
-    assert nemotron_trainer_present(ROOT) is False
-    assert not (ROOT / "training" / "nemotron_wave.py").exists()
+    trainer = ROOT / "training" / "nemotron_wave.py"
+    assert trainer.is_file()
+    assert nemotron_trainer_present(ROOT) is True
+    copies = [
+        path.name
+        for path in (ROOT / "training").glob("nemotron_wave*.py")
+        if path.name != "nemotron_wave.py"
+    ]
+    assert copies == []
     offenders = []
     for path in (ROOT / "training").glob("*.py"):
         if DIGEST in path.read_text(encoding="utf-8") and path.name != "transformers5_image.py":

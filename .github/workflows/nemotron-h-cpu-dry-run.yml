@@ -1,0 +1,58 @@
+# CPU dry-run for the Nemotron-H LoRA lane.  A tiny random-init NemotronH
+# trains two steps and saves the adapter.  No model weights, no GPU, no Hub
+# write.  The job fails if the stack is missing or the dry-run is skipped.
+name: nemotron-h-cpu-dry-run
+
+on:
+  pull_request:
+    paths:
+      - "training/**"
+      - "tests/test_nemotron_trainer_compat.py"
+      - "tests/test_trainer_cpu_dry_run.py"
+      - "tests/test_sft_trl_compat_contract.py"
+      - ".github/workflows/nemotron-h-cpu-dry-run.yml"
+  push:
+    branches: [main]
+    paths:
+      - "training/**"
+      - "tests/test_nemotron_trainer_compat.py"
+      - "tests/test_trainer_cpu_dry_run.py"
+      - "tests/test_sft_trl_compat_contract.py"
+      - ".github/workflows/nemotron-h-cpu-dry-run.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  dry-run:
+    name: Nemotron-H CPU dry-run
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+
+      - name: Install the pinned Nemotron lane
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install --disable-pip-version-check torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install --disable-pip-version-check pytest --requirement training/requirements-nemotron.txt
+
+      - name: Trainer contracts and two-step dry-run
+        env:
+          SZL_NEMOTRON_DRY_RUN_REQUIRED: "1"
+          HF_HUB_OFFLINE: "1"
+          TRANSFORMERS_OFFLINE: "1"
+          WANDB_DISABLED: "true"
+        run: |
+          set -euo pipefail
+          python -m pytest -q \
+            tests/test_nemotron_trainer_compat.py \
+            tests/test_sft_trl_compat_contract.py \
+            tests/test_trainer_cpu_dry_run.py
+          python training/cpu_dry_run.py nemotron
