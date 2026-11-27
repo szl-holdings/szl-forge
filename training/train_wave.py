@@ -196,6 +196,17 @@ def _train_after_gates(decision: dict, config_path: Path) -> None:
             decision, args, compat, nemotron, _contract(), fail_closed
         )
         return
+    try:
+        qwen35 = compat.qwen35_base(
+            decision["student_id"], decision["student_revision"]
+        )
+    except RuntimeError as exc:
+        fail_closed(f"QWEN35_PIN: {exc}")
+    if qwen35 is not None:
+        _qwen35_wave().train_after_gates(
+            decision, args, compat, qwen35, _contract(), fail_closed
+        )
+        return
 
     try:
         from unsloth import FastLanguageModel
@@ -376,6 +387,16 @@ def _train_after_gates(decision: dict, config_path: Path) -> None:
         )
 
     print("wave complete")
+
+
+def _qwen35_wave():
+    path = Path(__file__).resolve().parent / "qwen35_wave.py"
+    spec = importlib.util.spec_from_file_location("szl_qwen35_wave", path)
+    if spec is None or spec.loader is None:
+        fail_closed(f"QWEN35_WAVE_UNREADABLE: missing {path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def _nemotron_wave():

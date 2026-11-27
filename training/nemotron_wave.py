@@ -1,4 +1,4 @@
-"""Nemotron-H (hybrid Mamba-2 + attention) SFT path for the Forge wave.
+"""Nemotron-H (hybrid Mamba-2 + attention) LoRA and QLoRA SFT path.
 
 ``train_wave.py`` routes a pinned Nemotron base here after the launch
 contract has run.  The dense Qwen/Llama Unsloth path is not touched.  The
@@ -64,7 +64,12 @@ def build_nemotron_trainer(
     compat.require_padding_token(tokenizer)
     if not compat.is_nemotron_h_config(getattr(model, "config", None)):
         raise RuntimeError("pinned Nemotron base did not load a Nemotron-H graph")
+    # out_proj is a required target.  The fused combined kernel would bypass it,
+    # and PEFT 0.21 refuses the name until that kernel is taken off the path.
+    out_proj_path = compat.keep_mamba_out_proj_trainable()
+    compat.allow_nemotron_out_proj_lora()
     targets, evidence = compat.lora_target_modules(model, fused_mamba=fused_mamba)
+    evidence["out_proj_path"] = out_proj_path
     if evidence["family"] != "nemotron_h":
         raise RuntimeError("Nemotron base resolved dense LoRA targets")
     model = get_peft_model(
@@ -79,11 +84,9 @@ def build_nemotron_trainer(
         ),
     )
 
-    def add_text(example):
-        return compat.render_reasoning_chat_example(tokenizer, example, reasoning)
-
-    data = data.map(add_text, desc="applying chat template with reasoning toggle")
-    data = data.filter(lambda e: e["text"], desc="dropping non-chat rows")
+    data = compat.render_sft_rows(data, tokenizer, reasoning)
+    if "messages" in data.column_names or "conversations" in data.column_names:
+        raise RuntimeError("conversation columns survived rendering; the toggle would be dropped")
     if len(data) == 0:
         raise RuntimeError("no chat rows remain after rendering")
 
@@ -118,14 +121,10 @@ def build_nemotron_trainer(
 def train_after_gates(
     decision: dict, args: dict, compat, base: dict, contract, fail_closed
 ) -> None:
-    """16-bit LoRA SFT on a pinned Nemotron-H base (transformers + peft + TRL)."""
+    """LoRA or QLoRA SFT on a pinned Nemotron-H base (transformers + peft + TRL)."""
 
-    if args["method"] != "lora16":
-        fail_closed(
-            "NEMOTRON_METHOD: Nemotron-H trains as 16-bit LoRA (method=lora16); "
-            "4-bit QLoRA is refused because the fused Mamba-2 kernel reads raw "
-            "projection weights"
-        )
+    if args["method"] not in ("lora16", "qlora"):
+        fail_closed("NEMOTRON_METHOD: method must be lora16 or qlora")
     if args["log_repo_id"]:
         fail_closed("NEMOTRON_LOG_FORWARD: log_repo_id is not supported on this path")
     try:
@@ -140,9 +139,14 @@ def train_after_gates(
     precision = compat.precision_kwargs(torch)
     if not precision["bf16"]:
         fail_closed("NEMOTRON_PRECISION: Nemotron-H requires a bf16 CUDA device")
+    if args["method"] == "qlora":
+        try:
+            compat.unsloth_load_kwargs(torch, load_in_4bit=True)
+        except RuntimeError as exc:
+            fail_closed(f"NEMOTRON_QLORA: {exc}")
 
     from datasets import load_dataset
-    from transformers import AutoModelForCausalLM, AutoTokenizer
+    from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
     tokenizer = AutoTokenizer.from_pretrained(
         base["id"], revision=base["revision"], trust_remote_code=False
@@ -154,13 +158,24 @@ def train_after_gates(
         )
     except RuntimeError as exc:
         fail_closed(f"TOKENIZER: {exc}")
-    model = AutoModelForCausalLM.from_pretrained(
-        base["id"],
-        revision=base["revision"],
-        dtype=torch.bfloat16,
-        trust_remote_code=False,
-        device_map={"": 0},
-    )
+    load_kwargs: dict = {
+        "revision": base["revision"],
+        "trust_remote_code": False,
+        "dtype": torch.bfloat16,
+        "device_map": {"": 0},
+    }
+    if args["method"] == "qlora":
+        load_kwargs["quantization_config"] = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_compute_dtype=torch.bfloat16,
+            bnb_4bit_use_double_quant=True,
+        )
+    model = AutoModelForCausalLM.from_pretrained(base["id"], **load_kwargs)
+    if args["method"] == "qlora":
+        from peft import prepare_model_for_kbit_training
+
+        model = prepare_model_for_kbit_training(model)
 
     print(f"loading pinned local corpus: {decision['train_jsonl']}")
     frame = load_dataset("json", data_files=decision["train_jsonl"], split="train")

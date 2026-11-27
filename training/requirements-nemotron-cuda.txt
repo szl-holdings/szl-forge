@@ -1,0 +1,18 @@
+# CUDA pins for the Nemotron-H / Qwen3.5 lane.  These are the production image
+# versions.  The CPU dry-run does not install this file: the wheels require
+# CUDA 12.6 and torch 2.14.1+cu126, and GitHub-hosted runners have no driver.
+#
+# Image: ghcr.io/szl-holdings/szl-train-pinned@sha256:8eb919654e0da406d41a2e307e7705cce8f6b79ad0be9556d74d4c4640e63235
+#
+# torch==2.14.1+cu126
+# torchvision==0.29.1+cu126
+# torchaudio==2.11.0+cu126
+# bitsandbytes==0.50.2
+# mamba-ssm==2.3.2.post1+cu.12.6.torch.2.14
+# causal-conv1d==1.7.0+cu.12.6.torch.2.14
+#
+# mamba-ssm and causal-conv1d come from the CUDA 12.6 / torch 2.14 wheel index
+# used by the image (https://wheels.astral.sh/simple/cu126/), not from a
+# source build.  Install them only inside that image, with the hashed lock
+# from szl-gpu-bridge.  The lines stay commented because those local version
+# labels are not on PyPI; uncommenting them in a CPU job would fail the install.

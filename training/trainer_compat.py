@@ -1,6 +1,9 @@
-"""Shared TRL 0.23.1 / Unsloth trainer boundary for the Forge waves.
+"""Shared trainer boundary for the Forge waves.
 
-The helpers stay importable without a GPU.  They do not launch training jobs.
+The dense Unsloth lane stays on the TRL 0.23.1 / Transformers 4.57.6 contract.
+The Nemotron-H and Qwen3.5 lane uses the pinned image stack (Transformers
+5.22.2, PEFT 0.21.2, TRL 1.17.1).  These helpers stay importable without a
+GPU and do not launch training jobs.
 """
 
 from __future__ import annotations
@@ -120,8 +123,59 @@ DENSE_LORA_TARGETS: tuple[str, ...] = (
     "down_proj",
 )
 
+# Known dense families keep the original seven projections.  Anything else
+# fails closed instead of inheriting those names.
+KNOWN_DENSE_MODEL_TYPES = frozenset(
+    {
+        "llama",
+        "mistral",
+        "qwen2",
+        "qwen2_moe",
+        "qwen3",
+        "qwen3_moe",
+        "gemma",
+        "gemma2",
+        "phi3",
+    }
+)
+
 NEMOTRON_H_MODEL_TYPES = frozenset({"nemotron_h"})
 NEMOTRON_H_ARCHITECTURES = frozenset({"NemotronHForCausalLM"})
+
+# Qwen3.5 is a hybrid (gated delta net + attention + MLP), not the dense seven.
+QWEN35_MODEL_TYPES = frozenset(
+    {"qwen3_5", "qwen3_5_text", "qwen3_5_moe", "qwen3_5_moe_text"}
+)
+QWEN35_ARCHITECTURES = frozenset(
+    {
+        "Qwen3_5ForCausalLM",
+        "Qwen3_5ForConditionalGeneration",
+        "Qwen3_5TextModel",
+        "Qwen3_5MoeForCausalLM",
+    }
+)
+QWEN35_LORA_TARGETS: tuple[str, ...] = (
+    "in_proj_qkv",
+    "in_proj_z",
+    "in_proj_a",
+    "in_proj_b",
+    "out_proj",
+    "q_proj",
+    "k_proj",
+    "v_proj",
+    "o_proj",
+    "gate_proj",
+    "up_proj",
+    "down_proj",
+)
+
+# Mamba in_proj/out_proj, attention q/k/v/o, MLP up/down.  conv1d is not a
+# Linear and the fused kernel reads its weight, so it is never a LoRA target.
+NEMOTRON_H_LORA_TARGETS: dict[str, tuple[str, ...]] = {
+    "mamba": ("in_proj", "out_proj"),
+    "attention": ("q_proj", "k_proj", "v_proj", "o_proj"),
+    "mlp": ("up_proj", "down_proj"),
+}
 
 NEMOTRON_NOTICE = (
     "Licensed by NVIDIA Corporation under the NVIDIA Nemotron Model License."
@@ -138,6 +192,7 @@ NEMOTRON_BASES: dict[str, dict[str, Any]] = {
         "revision": "dfaf35de3e30f1867dd8dbc38a7fc9fb52d3914f",
         "license_id": "nvidia-nemotron-open-model-license",
         "license_url": "https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia-nemotron-open-model-license/",
+        "acknowledgement": "acknowledged: NVIDIA Nemotron Open Model License",
         "notice": NEMOTRON_NOTICE,
         "reasoning_control": "enable_thinking",
         "chat_template_sha256": "ab7813c3abdd9cb655905a410728b26c7884eca45ddfab8d9f931553485a7862",
@@ -146,6 +201,7 @@ NEMOTRON_BASES: dict[str, dict[str, Any]] = {
         "revision": "6533e8de2c68e4536bf7c411d7a3ce5734111476",
         "license_id": "nvidia-open-model-license",
         "license_url": "https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia-open-model-license/",
+        "acknowledgement": "acknowledged: NVIDIA Open Model License",
         "notice": NVIDIA_OPEN_MODEL_NOTICE,
         "reasoning_control": "system_marker",
         "chat_template_sha256": "b7a3a520a4bc1beae6a25d615f9215580df8eea926f488256c2bef74039433c0",
@@ -168,6 +224,24 @@ def nemotron_base(model_id: Any, revision: Any = None) -> dict[str, Any] | None:
             f"{model_id} revision {revision!r} is not the pinned {entry['revision']}"
         )
     return {"id": model_id, **entry}
+
+
+def qwen35_base(model_id: Any, revision: Any = None) -> dict[str, Any] | None:
+    """Native Qwen3.5 lane.  Dense Qwen2/Qwen3 ids stay on the Unsloth path."""
+
+    if not isinstance(model_id, str):
+        return None
+    lowered = model_id.lower()
+    if "qwen3.5" not in lowered and "qwen3_5" not in lowered:
+        return None
+    if revision is not None and (not isinstance(revision, str) or len(revision) < 7):
+        raise RuntimeError("Qwen3.5 revision must be an immutable commit prefix")
+    return {
+        "id": model_id,
+        "revision": revision,
+        "family": "qwen3_5",
+        "reasoning_control": "enable_thinking",
+    }
 
 
 def is_nemotron_h_config(config: Any) -> bool:
@@ -237,34 +311,131 @@ def fused_mamba_training_path(model: Any) -> bool:
     )
 
 
+def architecture_family(config: Any) -> str:
+    """``nemotron_h``, ``qwen3_5``, or ``dense``.  Unknown types raise."""
+
+    model_type = getattr(config, "model_type", None)
+    architectures = set(getattr(config, "architectures", None) or ())
+    if model_type in NEMOTRON_H_MODEL_TYPES or bool(
+        architectures & NEMOTRON_H_ARCHITECTURES
+    ):
+        return "nemotron_h"
+    if model_type in QWEN35_MODEL_TYPES or bool(architectures & QWEN35_ARCHITECTURES):
+        return "qwen3_5"
+    if model_type in KNOWN_DENSE_MODEL_TYPES:
+        return "dense"
+    raise RuntimeError(
+        f"unsupported architecture {model_type!r}; refusing LoRA targets"
+    )
+
+
+def _leaf_names(model: Any) -> set[str]:
+    found: set[str] = set()
+    for name, module in model.named_modules():
+        if not name:
+            continue
+        children = list(module.named_children())
+        if children:
+            continue
+        found.add(name.rsplit(".", 1)[-1])
+    return found
+
+
+def keep_mamba_out_proj_trainable() -> str:
+    """Select the reference Mamba forward so ``out_proj`` LoRA is in the graph.
+
+    The fused ``mamba_split_conv1d_scan_combined`` kernel reads
+    ``out_proj.weight`` and returns before the Linear module, so an adapter
+    there would never train.  Returning ``None`` from that entry point keeps
+    the reference path, which calls ``out_proj`` as a module.  The chunk-scan
+    and causal-conv kernels stay available when ``mamba-ssm`` is installed.
+    """
+
+    import transformers.models.nemotron_h.modeling_nemotron_h as modeling
+
+    if not hasattr(modeling, "mamba2_split_conv1d_scan_combined"):
+        raise RuntimeError(
+            "Nemotron-H modeling has no fused scan entry point; refusing to hide out_proj"
+        )
+
+    def _reference(*_args: Any, **_kwargs: Any) -> None:
+        return None
+
+    _reference._szl_reference_mamba = True  # type: ignore[attr-defined]
+    modeling.mamba2_split_conv1d_scan_combined = _reference
+    return "module forward"
+
+
+def allow_nemotron_out_proj_lora() -> None:
+    """Let PEFT adapt Nemotron-H ``out_proj`` after the reference path is selected.
+
+    PEFT 0.21.2 refuses ``out_proj`` and ``conv1d`` on ``model_type=nemotron_h``
+    because the fused kernel reads those weights and would skip the adapter.
+    ``keep_mamba_out_proj_trainable`` has already forced the module forward, so
+    ``out_proj`` is an ordinary Linear.  ``conv1d`` stays refused.
+    """
+
+    import transformers.models.nemotron_h.modeling_nemotron_h as modeling
+
+    reference = modeling.mamba2_split_conv1d_scan_combined
+    if not getattr(reference, "_szl_reference_mamba", False):
+        raise RuntimeError(
+            "refusing out_proj LoRA until the reference Mamba path is selected"
+        )
+
+    import peft.tuners.tuners_utils as utils
+
+    current = getattr(utils, "_check_lora_target_modules_mamba", None)
+    if current is None:
+        raise RuntimeError(
+            "PEFT has no Mamba target check; refusing out_proj rather than guessing"
+        )
+    if getattr(current, "_szl_nemotron_out_proj", False):
+        return
+    original = current
+
+    def _checked(peft_config: Any, model: Any, target_name: str) -> None:
+        model_type = getattr(getattr(model, "config", None), "model_type", None)
+        if target_name == "out_proj" and model_type == "nemotron_h":
+            return None
+        return original(peft_config, model, target_name)
+
+    _checked._szl_nemotron_out_proj = True  # type: ignore[attr-defined]
+    utils._check_lora_target_modules_mamba = _checked
+
+
 def lora_target_modules(
     model: Any, *, fused_mamba: bool | None = None
 ) -> tuple[list[str], dict[str, Any]]:
     """Return ``(target_modules, evidence)`` for the loaded model.
 
-    Dense models get the unchanged seven-projection list.  Nemotron-H models
-    get Mamba ``in_proj``, attention ``q/k/v/o_proj`` and MLP
-    ``up_proj``/``down_proj``.  Mamba ``out_proj`` and ``conv1d`` are never
-    targeted (see below).
+    Known dense models get the unchanged seven-projection list.  Nemotron-H
+    gets Mamba ``in_proj``/``out_proj``, attention ``q/k/v/o_proj`` and MLP
+    ``up_proj``/``down_proj``.  Qwen3.5 gets its linear-attention, attention
+    and MLP projections.  An unknown architecture raises.
     """
 
     config = getattr(model, "config", None)
-    if not is_nemotron_h_config(config):
+    family = architecture_family(config)
+    if family == "dense":
         return list(DENSE_LORA_TARGETS), {"family": "dense"}
+    if family == "qwen3_5":
+        leaves = _leaf_names(model)
+        missing = [name for name in QWEN35_LORA_TARGETS if name not in leaves]
+        if missing:
+            raise RuntimeError(
+                "Qwen3.5 graph is missing LoRA targets " + ",".join(missing)
+            )
+        return list(QWEN35_LORA_TARGETS), {
+            "family": "qwen3_5",
+            "model_type": getattr(config, "model_type", None),
+        }
     layout = nemotron_h_layout(model)
     leaves = layout["leaves"]
     if fused_mamba is None:
         fused_mamba = fused_mamba_training_path(model)
-    # Mamba out_proj and conv1d are never targeted: the fused training
-    # kernel reads both weights directly (an adapter there would be bypassed),
-    # and PEFT >= 0.21 refuses them for Mamba-based model types.
-    wanted = {
-        "mamba": ["in_proj"],
-        "attention": ["q_proj", "k_proj", "v_proj", "o_proj"],
-        "mlp": ["up_proj", "down_proj"],
-    }
     targets: list[str] = []
-    for kind, names in wanted.items():
+    for kind, names in NEMOTRON_H_LORA_TARGETS.items():
         for target in names:
             if target not in leaves[kind]:
                 raise RuntimeError(
@@ -276,9 +447,9 @@ def lora_target_modules(
         "model_type": getattr(config, "model_type", None),
         "layout": layout["counts"],
         "fused_mamba_kernel": bool(fused_mamba),
+        "out_proj_path": "module forward",
         "excluded": {
-            "conv1d": "fused kernel reads conv1d.weight; PEFT refuses it",
-            "out_proj": "fused kernel reads out_proj.weight; PEFT refuses it",
+            "conv1d": "Conv1d; the kernel reads conv1d.weight directly",
         },
     }
 
@@ -414,6 +585,44 @@ def render_reasoning_chat_example(
     return example
 
 
+def render_sft_rows(dataset: Any, tokenizer: Any, reasoning: dict[str, Any]) -> Any:
+    """Render the recipe toggle into ``text`` and drop the message columns.
+
+    TRL 1.17 reapplies the chat template itself when a ``messages`` column is
+    still present, and that call does not receive ``enable_thinking``.
+    """
+
+    def add_text(example: dict[str, Any]) -> dict[str, Any]:
+        return render_reasoning_chat_example(tokenizer, example, reasoning)
+
+    data = dataset.map(add_text, desc="applying chat template with reasoning toggle")
+    data = data.filter(lambda row: row["text"], desc="dropping non-chat rows")
+    drop = [name for name in ("messages", "conversations") if name in data.column_names]
+    if drop:
+        data = data.remove_columns(drop)
+    return data
+
+
+def read_notice_file(path: Any) -> str:
+    """Read a regular NOTICE file.  Symlinks and missing files are refused."""
+
+    from pathlib import Path
+
+    if not isinstance(path, (str, Path)):
+        raise RuntimeError("GUARDRAILS: NOTICE file path is missing")  # noqa: TRY004
+    file = Path(path)
+    if file.is_symlink():
+        raise RuntimeError("GUARDRAILS: NOTICE file must be a regular file")
+    if not file.is_file():
+        raise RuntimeError("GUARDRAILS: NOTICE file is missing")
+    if file.stat().st_size > 256 * 1024:
+        raise RuntimeError("GUARDRAILS: NOTICE file is too large")
+    text = file.read_text(encoding="utf-8")
+    if not text.strip():
+        raise RuntimeError("GUARDRAILS: NOTICE file is empty")
+    return text
+
+
 def chat_template_sha256(tokenizer: Any) -> str:
     import hashlib
 
@@ -439,8 +648,13 @@ def require_nemotron_guardrails(
         raise RuntimeError("GUARDRAILS: nvidia_guardrails must be 'kept'")
     if guardrails.get("license_id") != base["license_id"]:
         raise RuntimeError("GUARDRAILS: licence id does not match the pinned base")
+    if guardrails.get("license_acknowledgement") != base["acknowledgement"]:
+        raise RuntimeError("GUARDRAILS: NVIDIA licence was not acknowledged")
     if guardrails.get("notice") != base["notice"]:
         raise RuntimeError("GUARDRAILS: NOTICE line is missing or altered")
+    notice_text = read_notice_file(guardrails.get("notice_file"))
+    if base["notice"] not in notice_text:
+        raise RuntimeError("GUARDRAILS: NOTICE file is missing the pinned notice line")
     if guardrails.get("system_prompt") != "preserve":
         raise RuntimeError("GUARDRAILS: system_prompt policy must be 'preserve'")
     observed = chat_template_sha256(tokenizer)
@@ -451,7 +665,9 @@ def require_nemotron_guardrails(
     return {
         "nvidia_guardrails": "kept",
         "license_id": base["license_id"],
+        "license_acknowledgement": base["acknowledgement"],
         "notice": base["notice"],
+        "notice_file": str(guardrails.get("notice_file")),
         "chat_template_sha256": observed,
     }
 

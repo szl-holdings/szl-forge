@@ -76,7 +76,36 @@ SFTConfig uses `max_length`. The load dtype matches the trainer precision
 (`bfloat16` or `float16` on CUDA, full precision on a CPU dry-run) and 4-bit
 loading is refused without a CUDA mixed-precision dtype. A missing chat
 template or padding token fails closed before `train()` or generation.
-This is checked against TRL `0.23.1` and Transformers `4.57.6` by
-`tests/test_sft_trl_compat_contract.py` and, when that stack is installed,
+The dense Unsloth lane is checked against TRL `0.23.1` and Transformers `4.57.6`
+by `tests/test_sft_trl_compat_contract.py` and, when that stack is installed,
 `tests/test_trainer_cpu_dry_run.py`. A green unit test is not a GPU training
 result, a rights admission, or publication permission.
+
+## Nemotron-H and Qwen3.5 lane
+
+TRL 0.23.1 does not import on Transformers 5, so Nemotron-H and Qwen3.5 use a
+separate pin file, `training/requirements-nemotron.txt`, matching
+`ghcr.io/szl-holdings/szl-train-pinned@sha256:8eb919654e0da406d41a2e307e7705cce8f6b79ad0be9556d74d4c4640e63235`
+(Transformers 5.22.2, PEFT 0.21.2, TRL 1.17.1). The CUDA kernel pins
+(torch 2.14.1+cu126, mamba-ssm 2.3.2.post1+cu.12.6.torch.2.14,
+causal-conv1d 1.7.0+cu.12.6.torch.2.14, bitsandbytes 0.50.2) are recorded in
+`training/requirements-nemotron-cuda.txt` and are not installed by the CPU job.
+
+A pinned Nemotron id (`nvidia/NVIDIA-Nemotron-3-Nano-4B-BF16` at `dfaf35de…`,
+or `nvidia/NVIDIA-Nemotron-Nano-9B-v2` at `6533e8de…`) and any Qwen3.5 student
+id take this lane. LoRA targets are read from the loaded graph and an unknown
+architecture is refused. Nemotron-H targets Mamba `in_proj` and `out_proj`,
+attention `q/k/v/o_proj`, and MLP `up/down_proj`. `conv1d` is not a target.
+The fused combined kernel reads `out_proj.weight` directly, so the lane forces
+the reference module forward before the gradient probe. PEFT 0.21.2 also
+refuses the name `out_proj` on `nemotron_h`; after the reference path is
+selected, that refusal is narrowed to `conv1d` and `out_proj` stays a target.
+QLoRA (`method: qlora`)
+is 4-bit NF4 and is refused without a CUDA mixed-precision device.
+
+The recipe field `enable_thinking` (boolean) is required. It is applied while
+rendering rows, and the message columns are dropped so TRL 1.17 does not
+render them again without the toggle. A Nemotron recipe must also acknowledge
+the licence that governs that base and point `guardrails.notice_file` at a
+regular NOTICE file containing the pinned notice line. The trainer writes
+NOTICE into the output artifacts after that check.

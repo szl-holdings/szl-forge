@@ -11,6 +11,7 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import math
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -33,7 +34,8 @@ def _load(name: str):
 
 
 class _Leaf:
-    pass
+    def named_children(self):
+        return []
 
 
 def _mixer(class_name: str, children: list[str]):
@@ -133,17 +135,72 @@ class NemotronTargets(unittest.TestCase):
         )
         self.assertEqual(
             targets,
-            ["in_proj", "q_proj", "k_proj", "v_proj", "o_proj", "up_proj", "down_proj"],
+            [
+                "in_proj",
+                "out_proj",
+                "q_proj",
+                "k_proj",
+                "v_proj",
+                "o_proj",
+                "up_proj",
+                "down_proj",
+            ],
         )
-        self.assertNotIn("out_proj", targets)
         self.assertNotIn("conv1d", targets)
         self.assertEqual(evidence["layout"], {"mamba": 1, "attention": 1, "mlp": 1})
 
-    def test_missing_in_proj_fails_closed(self) -> None:
+    def test_missing_projection_fails_closed(self) -> None:
         with self.assertRaises(RuntimeError):
             self.compat.lora_target_modules(
                 _hybrid(("conv1d", "out_proj")), fused_mamba=False
             )
+
+    def test_missing_out_proj_fails_closed(self) -> None:
+        with self.assertRaises(RuntimeError):
+            self.compat.lora_target_modules(
+                _hybrid(("in_proj", "conv1d")), fused_mamba=False
+            )
+
+    def test_unknown_architecture_fails_closed(self) -> None:
+        model = _FakeModel(_Config("gpt2", ["GPT2LMHeadModel"]), [])
+        with self.assertRaises(RuntimeError):
+            self.compat.lora_target_modules(model)
+
+    def test_qwen35_targets_come_from_the_graph(self) -> None:
+        leaves = list(self.compat.QWEN35_LORA_TARGETS)
+
+        class _Qwen:
+            def __init__(self) -> None:
+                self.config = _Config("qwen3_5", ["Qwen3_5ForCausalLM"])
+
+            def named_children(self):
+                return [("layer", _Leaf())]
+
+            def named_modules(self):
+                yield "", self
+                for name in leaves:
+                    yield f"model.layers.0.{name}", _Leaf()
+
+        targets, evidence = self.compat.lora_target_modules(_Qwen())
+        self.assertEqual(targets, leaves)
+        self.assertEqual(evidence["family"], "qwen3_5")
+        leaves.pop()
+
+        class _Short(_Qwen):
+            def named_modules(self):
+                yield "", self
+                for name in leaves[:-1]:
+                    yield f"model.layers.0.{name}", _Leaf()
+
+        with self.assertRaises(RuntimeError):
+            self.compat.lora_target_modules(_Short())
+
+    def test_qwen35_recipe_requires_enable_thinking(self) -> None:
+        base = self.compat.qwen35_base("Qwen/Qwen3.5-0.8B", "a" * 40)
+        self.assertEqual(base["reasoning_control"], "enable_thinking")
+        self.assertIsNone(self.compat.qwen35_base("Qwen/Qwen3-8B", "a" * 40))
+        with self.assertRaises(RuntimeError):
+            self.compat.reasoning_settings(base, {})
 
     def test_moe_mixer_is_refused(self) -> None:
         model = _hybrid()
@@ -160,6 +217,14 @@ class NemotronTargets(unittest.TestCase):
         )
         with self.assertRaises(RuntimeError):
             self.compat.nemotron_base(NANO_4B, "f" * 40)
+        self.assertEqual(
+            self.compat.nemotron_base(NANO_4B)["chat_template_sha256"],
+            "ab7813c3abdd9cb655905a410728b26c7884eca45ddfab8d9f931553485a7862",
+        )
+        self.assertEqual(
+            self.compat.nemotron_base(NANO_9B)["chat_template_sha256"],
+            "b7a3a520a4bc1beae6a25d615f9215580df8eea926f488256c2bef74039433c0",
+        )
 
     def test_notice_lines_per_licence_family(self) -> None:
         four = self.compat.nemotron_base(NANO_4B)
@@ -171,6 +236,10 @@ class NemotronTargets(unittest.TestCase):
         self.assertEqual(four["license_id"], "nvidia-nemotron-open-model-license")
         self.assertEqual(nine["license_id"], "nvidia-open-model-license")
         self.assertIn("NVIDIA Open Model License", nine["notice"])
+        self.assertEqual(
+            nine["acknowledgement"], "acknowledged: NVIDIA Open Model License"
+        )
+        self.assertIn("Nemotron Open Model License", four["acknowledgement"])
 
 
 class ReasoningToggle(unittest.TestCase):
@@ -236,12 +305,20 @@ class Guardrails(unittest.TestCase):
         self.base["chat_template_sha256"] = hashlib.sha256(
             self.template.encode()
         ).hexdigest()
+        self._tmp = tempfile.TemporaryDirectory()
+        self.notice_path = Path(self._tmp.name) / "NOTICE"
+        self.notice_path.write_text(self.base["notice"] + "\n", encoding="utf-8")
         self.guard = {
             "nvidia_guardrails": "kept",
             "license_id": self.base["license_id"],
+            "license_acknowledgement": self.base["acknowledgement"],
             "notice": self.base["notice"],
+            "notice_file": str(self.notice_path),
             "system_prompt": "preserve",
         }
+
+    def tearDown(self) -> None:
+        self._tmp.cleanup()
 
     def test_kept_guardrails_pass(self) -> None:
         out = self.compat.require_nemotron_guardrails(
@@ -257,6 +334,8 @@ class Guardrails(unittest.TestCase):
             {**self.guard, "notice": self.base["notice"].rstrip(".")},
             {**self.guard, "license_id": "apache-2.0"},
             {**self.guard, "system_prompt": "strip"},
+            {**self.guard, "license_acknowledgement": "acknowledged: MIT"},
+            {**self.guard, "notice_file": str(self.notice_path.parent / "missing")},
         ]
         for guard in cases:
             with self.assertRaises(RuntimeError):
@@ -278,12 +357,22 @@ class Guardrails(unittest.TestCase):
         )
         self.assertIn(NANO_4B_REV, text)
 
-    def test_wave_refuses_qlora_on_nemotron(self) -> None:
+    def test_wave_supports_lora_and_qlora_and_keeps_the_notice_gate(self) -> None:
         source = (ROOT / "training" / "nemotron_wave.py").read_text(encoding="utf-8")
-        self.assertIn('if args["method"] != "lora16":', source)
+        self.assertIn('args["method"] not in ("lora16", "qlora")', source)
+        self.assertIn("NEMOTRON_QLORA", source)
+        self.assertIn("keep_mamba_out_proj_trainable", source)
+        self.assertIn("allow_nemotron_out_proj_lora", source)
         self.assertIn("require_nemotron_guardrails", source)
         self.assertIn("write_nvidia_notice", source)
         self.assertIn("trust_remote_code=False", source)
+        qwen = (ROOT / "training" / "qwen35_wave.py").read_text(encoding="utf-8")
+        self.assertIn("enable_thinking", qwen)
+        self.assertIn("processing_class=tokenizer", qwen)
+        self.assertIn('args["method"] not in ("lora16", "qlora")', qwen)
+        wave = (ROOT / "training" / "train_wave.py").read_text(encoding="utf-8")
+        self.assertIn("qwen35_base", wave)
+        self.assertIn("FastLanguageModel.get_peft_model(", wave)
 
 
 def _native_nemotron_h() -> bool:
@@ -298,16 +387,25 @@ def _native_nemotron_h() -> bool:
 class NemotronCpuDryRun(unittest.TestCase):
     def test_tiny_nemotron_h_trains_two_steps(self) -> None:
         if not _native_nemotron_h():
+            if os.environ.get("SZL_NEMOTRON_DRY_RUN_REQUIRED") == "1":
+                self.fail("pinned Nemotron-H stack is required and is not installed")
             self.skipTest("torch/TRL/PEFT with native NemotronH is not installed")
         result = _load("cpu_dry_run").run_nemotron_cpu_dry_run(steps=2)
         self.assertEqual(result["global_steps"], 2)
         self.assertTrue(math.isfinite(result["training_loss"]))
         self.assertEqual(sorted(result["lora_targets"]), result["lora_targets_updated"])
         self.assertIn("in_proj", result["lora_targets"])
+        self.assertIn("out_proj", result["lora_targets"])
         self.assertTrue(result["notice_in_artifacts"])
         self.assertIn("NOTICE", result["saved_files"])
+        self.assertIn("adapter_config.json", result["saved_files"])
+        self.assertTrue(
+            any(name.startswith("adapter_model") for name in result["saved_files"])
+        )
         self.assertFalse(result["gpu_job_launched"])
-        self.assertEqual(len(result["refusals"]), 6)
+        self.assertEqual(len(result["refusals"]), 9)
+        self.assertIn("unacknowledged_license", result["refusals"])
+        self.assertIn("notice_file_altered", result["refusals"])
 
 
 if __name__ == "__main__":

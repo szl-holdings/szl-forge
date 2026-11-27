@@ -1,0 +1,24 @@
+# Nemotron-H and Qwen3.5 lane.
+#
+# The dense Unsloth lane stays on TRL 0.23.1 and Transformers 4.57.6.
+# TRL 0.23.1 imports Transformers APIs that Transformers 5 removed, so this
+# lane has its own pins.  They match the production image
+# ghcr.io/szl-holdings/szl-train-pinned@sha256:8eb919654e0da406d41a2e307e7705cce8f6b79ad0be9556d74d4c4640e63235
+# (recorded from szl-gpu-bridge training-image/requirements.lock and the
+# N-14 eval overlay).
+#
+# CPU dry-run installs this file after a CPU torch wheel.  It does not install
+# the CUDA-only pins in training/requirements-nemotron-cuda.txt.  Without
+# mamba-ssm the dry-run uses the PyTorch reference mixer, which is what lets
+# Mamba out_proj LoRA train.
+
+transformers==5.22.2
+peft==0.21.2
+trl==1.17.1
+datasets==5.2.0
+accelerate==1.16.0
+safetensors==0.8.0
+huggingface-hub==2.4.0
+tokenizers==0.23.3
+sentencepiece==0.2.3
+protobuf==7.36.2
