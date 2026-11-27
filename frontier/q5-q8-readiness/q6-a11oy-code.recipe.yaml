@@ -1,0 +1,58 @@
+# Q6 a11oy-code rebase readiness recipe. The JSON manifest is the checked record.
+# This file does not launch training.
+
+family: a11oy-code-apache
+lane: Q6
+approval_date: "2026-11-27"
+status: BLOCKED
+launch_authorized: false
+
+base:
+  repo: ibm-granite/granite-3b-code-instruct-128k
+  revision: 69509a1713811c7a6d2da1579241770f47cc85a2
+  license: apache-2.0
+  license_verification: HF_API
+  why: >-
+    Apache-2.0 instruct code model in the same 3B repo-id size class as the
+    incumbent, with a 128000-token config window. The incumbent
+    Qwen/Qwen2.5-Coder-3B-Instruct stays off the training path because its
+    HF API license_name is qwen-research.
+
+replaced_base:
+  repo: Qwen/Qwen2.5-Coder-3B-Instruct
+  revision: 488639f1ff808d1d3d0ba301aef8c11461451ec5
+  license: other
+  license_name: qwen-research
+  role: INCUMBENT_NOT_THE_TRAINING_BASE
+
+data:
+  observed_train: SZLHOLDINGS/a11oy-code-sft-v1@ee70cc9caa8a87da7ded9bf8d8a15e4f7c541804
+  heldout_eval_only: ABSENT
+  heldout_independence: UNKNOWN
+
+runtime:
+  image: ghcr.io/szl-holdings/szl-train-pinned@sha256:8eb919654e0da406d41a2e307e7705cce8f6b79ad0be9556d74d4c4640e63235
+  transformers: "5.22.2"
+  peft: "0.21.2"
+  trl: "1.17.1"
+  rejected_trainer: trl-0.23.1-unsloth
+  nemotron_lane: kallpa/nemotron-h-trainer
+  duplicates_nemotron_trainer: false
+
+gpu_hours:
+  estimate: 8
+  approved: 36
+
+spend_caps:
+  per_run_usd: "100"
+  per_day_usd: "500"
+  per_month_usd: "5000"
+  allowed_providers: [salad, massed]
+  selected_provider: UNKNOWN
+
+publish:
+  target_repo: SZLHOLDINGS/a11oy-code-apache-q6-r1
+  target_existence: UNKNOWN
+  overwrite_existing: false
+
+blocker: eval-only heldout ABSENT on SZLHOLDINGS/a11oy-code-sft-v1 (train.jsonl only)

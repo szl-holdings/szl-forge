@@ -1,0 +1,16 @@
+{
+  "schema": "szl.forge.q5-q8-lane/v1",
+  "id": "Q4",
+  "name": "chaski-4b",
+  "status": "NOT_APPROVED",
+  "approval_date": "2026-11-27",
+  "launch_authorized": false,
+  "hub_write": false,
+  "image_push": false,
+  "provider_call": false,
+  "gpu_hours": null,
+  "target_repo": null,
+  "base": null,
+  "datasets": null,
+  "blocker": "NOT_APPROVED on 2026-11-27. Chaski 4B has no recipe, no target, and no GPU-hour budget."
+}

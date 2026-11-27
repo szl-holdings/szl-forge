@@ -1,0 +1,75 @@
+{
+  "schema": "szl.forge.q5-q8-lane/v1",
+  "id": "Q7",
+  "name": "embedder",
+  "status": "BLOCKED",
+  "approval_date": "2026-11-27",
+  "launch_authorized": false,
+  "hub_write": false,
+  "image_push": false,
+  "provider_call": false,
+  "train_image": "ghcr.io/szl-holdings/szl-train-pinned@sha256:8eb919654e0da406d41a2e307e7705cce8f6b79ad0be9556d74d4c4640e63235",
+  "runtime": {
+    "image": "ghcr.io/szl-holdings/szl-train-pinned@sha256:8eb919654e0da406d41a2e307e7705cce8f6b79ad0be9556d74d4c4640e63235",
+    "transformers": "5.22.2",
+    "peft": "0.21.2",
+    "trl": "1.17.1",
+    "rejected_trainer": "trl-0.23.1-unsloth",
+    "nemotron_lane": "kallpa/nemotron-h-trainer",
+    "duplicates_nemotron_trainer": false
+  },
+  "base": {
+    "repo": "Qwen/Qwen3-Embedding-0.6B",
+    "revision": "97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3",
+    "license": "apache-2.0",
+    "license_name": null,
+    "license_verification": "HF_API",
+    "evidence_id": "qwen3-embedding-0-6b",
+    "pipeline_tag": "feature-extraction"
+  },
+  "replaced_base": null,
+  "datasets": [],
+  "heldout": {
+    "status": "UNKNOWN",
+    "eval_only": null,
+    "independence": "UNKNOWN",
+    "source": null
+  },
+  "refused_corpora": [
+    {
+      "hub_repo": "SZLHOLDINGS/verticals-sft-v1",
+      "hub_revision": "ddcf2907b6faad01ab56993a03b5d1bb44465c70",
+      "evidence_id": "verticals-sft-v1",
+      "reason": "Causal messages train split only. Not an embedding-pair corpus, and no eval-only heldout was observed. SZLHOLDINGS/SZL-MiniEmbed-0.8B and SZLHOLDINGS/MiniEmbed-Nano stay untouched."
+    }
+  ],
+  "target_repo": "SZLHOLDINGS/embedder-q7-r1",
+  "target_existence": "UNKNOWN",
+  "gpu_hours": {
+    "estimate": 4,
+    "approved": null,
+    "approved_combined": 12,
+    "approved_scope": "Q7+Q8",
+    "measured": "UNKNOWN",
+    "basis": "Planning share of the 12 GPU-hour combined approval with Q8. The base is a 0.6B feature-extraction model. Measured throughput is UNKNOWN."
+  },
+  "spend_caps": {
+    "currency": "USD",
+    "per_run_usd": "100",
+    "per_day_usd": "500",
+    "per_month_usd": "5000",
+    "allowed_providers": ["salad", "massed"],
+    "selected_provider": "UNKNOWN"
+  },
+  "dry_run": {
+    "kind": "contrastive",
+    "device": "cpu",
+    "seed": 23,
+    "steps": 2,
+    "width": 8,
+    "batch": 4,
+    "lr_milli": 50
+  },
+  "blocker": "embedding-pair dataset and eval-only heldout are UNKNOWN",
+  "launch_note": "Launch unauthorized. No embedding-pair corpus with an eval-only heldout was observed. Operator admission is UNKNOWN."
+}
