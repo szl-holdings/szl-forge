@@ -72,7 +72,7 @@ Historical input README SHA-256: `935571a2129071d5343c4c280799890e5ff506863f8217
 
 ### Receipt figures
 
-<img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/1310a176e2b02327a2e46b6db6a30008df67399d/chaski-r2/card/receipts-training-2026-11-26.png" alt="Training loss and training rows, plotted only from the training receipts listed below" width="800">
+<img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/130dd35ca36076c38de9c981f90b6e5de52d44b8/chaski-r2/card/receipts-training-2026-11-26.png" alt="Training loss and training rows, plotted only from the training receipts listed below" width="800">
 
 Values are copied from the training receipts in the table below. Training loss is not held-out performance; this figure adds no qualification.
 
