@@ -25,16 +25,16 @@
     {
       "id": "SZLHOLDINGS/chaski-5050",
       "path": "chaski-5050/card/README.md",
-      "unmanaged_sha256": "fea93e9c035416ce6a0c623df9532982bb43c9f70f0135db5cbbf25745c64db5",
+      "unmanaged_sha256": "0e53555b6de6844df47d1e5acf188338af428d37995ffed7f7cbf0e26d8c95c8",
       "yaml_prefix_sha256": "f538c353c998dd994e4de188c147a6b632c585cdae5c43771011357ac228077c",
-      "candidate_sha256": "6adc080aa4868dc8999c46344cd0edf365aab35e40c0381ce1345e862355160f"
+      "candidate_sha256": "6bd9cbabd2a76328a78baa0c0144e909c7e974d4b159e2a1babf31ab64d7230c"
     },
     {
       "id": "SZLHOLDINGS/chaski-r2",
       "path": "chaski-r2/card/README.md",
-      "unmanaged_sha256": "40db8e1c5cf3436207c3331495f2f832821c24203f0ef381dcb0a913a387f75a",
+      "unmanaged_sha256": "f78a788f64df3fb5417b0ea95fe5063007bf53633e24a9c8a71fb88d453696a8",
       "yaml_prefix_sha256": "f67831df26620997d61b2527cdfcd7ed4f918279757952bddb19c91ad6658eff",
-      "candidate_sha256": "389e4102ef57e3582ef3b8690b3c4d1d169c19ea3061e4814da487176ef98e0f"
+      "candidate_sha256": "323dd28aafe08b410b4789b121643aee172363acc5de401cf94ddab8d969951d"
     },
     {
       "id": "SZLHOLDINGS/chaski-r4",

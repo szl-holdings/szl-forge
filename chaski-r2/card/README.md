@@ -52,6 +52,12 @@ Provider compatibility support [requested on 4 October 2026](https://huggingface
 - Publication and autonomy eligibility remain false; lab loading remains forbidden.
 - Record the loader class and 192/192 applied adapter tensors. The merged runtime needs its own byte-bound evaluation.
 
+### Receipt figures
+
+<img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/130dd35ca36076c38de9c981f90b6e5de52d44b8/chaski-r2/card/receipts-training-2026-11-26.png" alt="Training loss and training rows, plotted only from the training receipts listed in the Evidence passport table that follows" width="800">
+
+Values are copied from the training receipts in the Evidence passport table that follows. Training loss is not held-out performance; this figure adds no qualification.
+
 <!-- SZL-EVIDENCE-PASSPORT:v1:START -->
 ## Evidence passport
 
@@ -69,12 +75,6 @@ Provider compatibility support [requested on 4 October 2026](https://huggingface
 Historical input README SHA-256: `935571a2129071d5343c4c280799890e5ff506863f82178deb5bc36a6c1ee8c4`.
 
 [Reviewed authoring baseline](https://github.com/szl-holdings/szl-forge/blob/2f1f7636acf4e77d87de34319c34507f9441dc71/chaski-r2/card/README.md). Existing publisher: `publish-chaski-card.yml`. Source changes still require normal review and exact deployed-byte readback.
-
-### Receipt figures
-
-<img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/130dd35ca36076c38de9c981f90b6e5de52d44b8/chaski-r2/card/receipts-training-2026-11-26.png" alt="Training loss and training rows, plotted only from the training receipts listed below" width="800">
-
-Values are copied from the training receipts in the table below. Training loss is not held-out performance; this figure adds no qualification.
 
 ### Inspect the records
 

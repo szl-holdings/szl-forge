@@ -55,6 +55,12 @@ Provider compatibility support [requested on 4 October 2026](https://huggingface
 - Lab loading remains forbidden; root adapter metadata contains a nonportable owner-local base path and runtime loading is unverified.
 - Do not substitute Chaski or R2 evidence. Adapter results require explicit loader-class and tensor-coverage evidence.
 
+### Receipt figures
+
+<img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/130dd35ca36076c38de9c981f90b6e5de52d44b8/chaski-5050/card/receipts-training-2026-11-26.png" alt="Training loss and training rows, plotted only from the training receipts listed in the Evidence passport table that follows" width="800">
+
+Values are copied from the training receipts in the Evidence passport table that follows. Training loss is not held-out performance; this figure adds no qualification.
+
 <!-- SZL-EVIDENCE-PASSPORT:v1:START -->
 ## Evidence passport
 
@@ -72,12 +78,6 @@ Provider compatibility support [requested on 4 October 2026](https://huggingface
 Historical input README SHA-256: `0d7f289daec1e217a41c9ca55c651b0fe51eb302aaafeafcccc09124d0923987`.
 
 [Reviewed authoring baseline](https://github.com/szl-holdings/szl-forge/blob/2f1f7636acf4e77d87de34319c34507f9441dc71/chaski-5050/card/README.md). Existing publisher: `publish-chaski-card.yml`. Source changes still require normal review and exact deployed-byte readback.
-
-### Receipt figures
-
-<img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/130dd35ca36076c38de9c981f90b6e5de52d44b8/chaski-5050/card/receipts-training-2026-11-26.png" alt="Training loss and training rows, plotted only from the training receipts listed below" width="800">
-
-Values are copied from the training receipts in the table below. Training loss is not held-out performance; this figure adds no qualification.
 
 ### Inspect the records
 
