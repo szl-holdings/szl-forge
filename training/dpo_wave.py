@@ -14,6 +14,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import os
 import sys
@@ -25,10 +26,24 @@ def fail_closed(message: str) -> None:
     raise SystemExit(1)
 
 
+def _compat():
+    path = Path(__file__).resolve().parent / "trainer_compat.py"
+    spec = importlib.util.spec_from_file_location("szl_trainer_compat", path)
+    if spec is None or spec.loader is None:
+        fail_closed(f"TRAINER_COMPAT_UNREADABLE: missing {path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--model", required=True, help="SFT checkpoint HF id or local path")
-    parser.add_argument("--dataset", required=True, help="HF dataset id with prompt/chosen/rejected")
+    parser.add_argument(
+        "--model", required=True, help="SFT checkpoint HF id or local path"
+    )
+    parser.add_argument(
+        "--dataset", required=True, help="HF dataset id with prompt/chosen/rejected"
+    )
     parser.add_argument("--epochs", type=float, default=1.0)
     parser.add_argument("--lr", type=float, default=5e-6)
     parser.add_argument("--beta", type=float, default=0.1, help="DPO beta (KL penalty)")
@@ -36,7 +51,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--batch-size", type=int, default=2)
     parser.add_argument("--grad-accum", type=int, default=8)
     parser.add_argument("--out", type=Path, required=True)
-    parser.add_argument("--repo-id", default=None, help="Direct publication is disabled; omit for local training")
+    parser.add_argument(
+        "--repo-id",
+        default=None,
+        help="Direct publication is disabled; omit for local training",
+    )
     parser.add_argument("--max-samples", type=int, default=None)
     parser.add_argument("--seed", type=int, default=3407)
     return parser.parse_args()
@@ -51,7 +70,9 @@ def main() -> None:
             "export artifacts and use .github/workflows/model-publish-gate.yml"
         )
     if not os.environ.get("HF_TOKEN"):
-        fail_closed("HF_TOKEN is not set; authenticated model and dataset access require it.")
+        fail_closed(
+            "HF_TOKEN is not set; authenticated model and dataset access require it."
+        )
 
     try:
         from unsloth import FastLanguageModel
@@ -63,16 +84,31 @@ def main() -> None:
     if not torch.cuda.is_available():
         fail_closed("CUDA is not available; this trainer requires one GPU.")
 
+    compat = _compat()
+    load = compat.unsloth_load_kwargs(torch, load_in_4bit=True)
     model, tokenizer = FastLanguageModel.from_pretrained(
         model_name=args.model,
         max_seq_length=args.seqlen,
-        load_in_4bit=True,
+        dtype=load["dtype"],
+        load_in_4bit=load["load_in_4bit"],
     )
+    try:
+        compat.require_padding_token(tokenizer)
+    except RuntimeError as exc:
+        fail_closed(f"TOKENIZER: {exc}")
 
     model = FastLanguageModel.get_peft_model(
         model,
         r=16,
-        target_modules=["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
+        target_modules=[
+            "q_proj",
+            "k_proj",
+            "v_proj",
+            "o_proj",
+            "gate_proj",
+            "up_proj",
+            "down_proj",
+        ],
         lora_alpha=16,
         lora_dropout=0.0,
         bias="none",
@@ -89,7 +125,17 @@ def main() -> None:
     required = {"prompt", "chosen", "rejected"}
     missing = required - set(data.column_names)
     if missing:
-        fail_closed(f"dataset lacks preference fields {sorted(missing)}; DPO needs prompt/chosen/rejected.")
+        fail_closed(
+            f"dataset lacks preference fields {sorted(missing)}; DPO needs prompt/chosen/rejected."
+        )
+    if len(data) == 0:
+        fail_closed("preference dataset is empty")
+    sample = data[0]
+    if isinstance(sample.get("prompt"), list):
+        try:
+            compat.require_chat_template(tokenizer)
+        except RuntimeError as exc:
+            fail_closed(f"CHAT_TEMPLATE: {exc}")
     print(f"preference pairs: {len(data)}")
 
     trainer = DPOTrainer(
@@ -106,7 +152,7 @@ def main() -> None:
             logging_steps=10,
             save_steps=100,
             save_total_limit=2,
-            bf16=True,
+            **compat.precision_kwargs(torch),
             max_length=args.seqlen,
             seed=args.seed,
             report_to=[],
@@ -128,8 +174,11 @@ def main() -> None:
         "seqlen": args.seqlen,
         "seed": args.seed,
         "steps": int(trainer.state.global_step),
-        "final_loss": float(trainer.state.log_history[-1].get("train_loss", float("nan")))
-        if trainer.state.log_history else None,
+        "final_loss": float(
+            trainer.state.log_history[-1].get("train_loss", float("nan"))
+        )
+        if trainer.state.log_history
+        else None,
     }
     receipt_path = Path(args.out) / "train-receipt.json"
     receipt_path.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
@@ -146,4 +195,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

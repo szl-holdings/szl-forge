@@ -70,12 +70,13 @@ Offline reproduction:
 
 ## TRL SFTTrainer API compatibility
 
-The canonical SFT runner passes its tokenizer through TRL's
-`processing_class` parameter (consistent with the existing DPO runner),
-not the removed legacy `tokenizer` keyword. This was verified against
-the installed BETTERWITHAGE `trl 0.24.0` interface with
-`unsloth 2026.7.2`, and statically guarded by
-`tests/test_sft_trl_compat_contract.py`. The actual bound SFT
-GPU training path remains unexecuted by this source-only change; successful
-unit tests do not establish runtime training compatibility, model quality,
-rights admission, or model-publication permission.
+The canonical SFT and DPO runners pass the tokenizer through TRL's
+`processing_class` parameter, not the removed legacy `tokenizer` keyword.
+SFTConfig uses `max_length`. The load dtype matches the trainer precision
+(`bfloat16` or `float16` on CUDA, full precision on a CPU dry-run) and 4-bit
+loading is refused without a CUDA mixed-precision dtype. A missing chat
+template or padding token fails closed before `train()` or generation.
+This is checked against TRL `0.23.1` and Transformers `4.57.6` by
+`tests/test_sft_trl_compat_contract.py` and, when that stack is installed,
+`tests/test_trainer_cpu_dry_run.py`. A green unit test is not a GPU training
+result, a rights admission, or publication permission.

@@ -26,6 +26,16 @@ def fail_closed(message: str) -> NoReturn:
     raise SystemExit(1)
 
 
+def _compat():
+    path = Path(__file__).resolve().parent / "trainer_compat.py"
+    spec = importlib.util.spec_from_file_location("szl_trainer_compat", path)
+    if spec is None or spec.loader is None:
+        fail_closed(f"TRAINER_COMPAT_UNREADABLE: missing {path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def _contract():
     path = Path(__file__).resolve().parent / "launch_contract.py"
     spec = importlib.util.spec_from_file_location("szl_launch_contract", path)
@@ -38,9 +48,20 @@ def _contract():
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--config", type=Path, default=None, help="Wave config evaluated before any launch")
-    parser.add_argument("--model", default=None, help="Rejected when it disagrees with the config pin")
-    parser.add_argument("--datasets", default=None, help="Rejected when it disagrees with the config pin")
+    parser.add_argument(
+        "--config",
+        type=Path,
+        default=None,
+        help="Wave config evaluated before any launch",
+    )
+    parser.add_argument(
+        "--model", default=None, help="Rejected when it disagrees with the config pin"
+    )
+    parser.add_argument(
+        "--datasets",
+        default=None,
+        help="Rejected when it disagrees with the config pin",
+    )
     parser.add_argument("--method", choices=("qlora", "lora16"), default=None)
     parser.add_argument("--epochs", type=float, default=None)
     parser.add_argument("--lr", type=float, default=None)
@@ -49,7 +70,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--grad-accum", type=int, default=None)
     parser.add_argument("--pack", action="store_true")
     parser.add_argument("--out", type=Path, default=None)
-    parser.add_argument("--repo-id", default=None, help="Target cross-check only; set local_only=true in the config to train")
+    parser.add_argument(
+        "--repo-id",
+        default=None,
+        help="Target cross-check only; set local_only=true in the config to train",
+    )
     parser.add_argument("--max-samples", type=int, default=None)
     parser.add_argument("--seed", type=int, default=None)
     parser.add_argument("--log-repo-id", default=None)
@@ -84,12 +109,14 @@ def _hyperparameters(config: dict) -> dict:
     out = config.get("out")
     if not isinstance(out, str) or not out.strip():
         fail_closed("LAUNCH_OUTPUT_MISSING: config out directory is required")
-    values.update({
-        "out": Path(out),
-        "method": config.get("method"),
-        "repo_id": None if local_only else config.get("target_repo") or None,
-        "log_repo_id": config.get("log_repo_id") or None,
-    })
+    values.update(
+        {
+            "out": Path(out),
+            "method": config.get("method"),
+            "repo_id": None if local_only else config.get("target_repo") or None,
+            "log_repo_id": config.get("log_repo_id") or None,
+        }
+    )
     return values
 
 
@@ -124,7 +151,9 @@ def _refuse_cli_overrides(args: argparse.Namespace, decision: dict) -> None:
         if given is None:
             continue
         if caster(given) != effective[key]:
-            fail_closed(f"LAUNCH_CLI_OVERRIDE: {flag} does not match the validated config")
+            fail_closed(
+                f"LAUNCH_CLI_OVERRIDE: {flag} does not match the validated config"
+            )
     if args.pack and effective["pack"] is not True:
         fail_closed("LAUNCH_CLI_OVERRIDE: --pack does not match the validated config")
 
@@ -140,7 +169,9 @@ def _train_after_gates(decision: dict, config_path: Path) -> None:
         or recheck["dataset_revision"] != decision["dataset_revision"]
         or recheck["accepted_examples"] < _contract().MIN_ACCEPTED_EXAMPLES
     ):
-        fail_closed("LAUNCH_ADMISSION_MISMATCH: pinned corpus changed after the contract")
+        fail_closed(
+            "LAUNCH_ADMISSION_MISMATCH: pinned corpus changed after the contract"
+        )
 
     args = _hyperparameters(decision["config"])
     if args["repo_id"]:
@@ -149,7 +180,9 @@ def _train_after_gates(decision: dict, config_path: Path) -> None:
             "export artifacts and use .github/workflows/model-publish-gate.yml"
         )
     if not os.environ.get("HF_TOKEN"):
-        fail_closed("HF_TOKEN is not set; authenticated model and dataset access require it.")
+        fail_closed(
+            "HF_TOKEN is not set; authenticated model and dataset access require it."
+        )
 
     try:
         from unsloth import FastLanguageModel
@@ -161,18 +194,32 @@ def _train_after_gates(decision: dict, config_path: Path) -> None:
     if not torch.cuda.is_available():
         fail_closed("CUDA is not available; this trainer requires one GPU.")
 
-    dtype = None
-    load_in_4bit = args["method"] == "qlora"
+    compat = _compat()
+    load = compat.unsloth_load_kwargs(torch, load_in_4bit=args["method"] == "qlora")
     model, tokenizer = FastLanguageModel.from_pretrained(
         model_name=decision["student_id"],
         revision=decision["student_revision"],
         max_seq_length=args["seqlen"],
-        dtype=dtype,
-        load_in_4bit=load_in_4bit,
+        dtype=load["dtype"],
+        load_in_4bit=load["load_in_4bit"],
     )
+    try:
+        compat.require_chat_template(tokenizer)
+        compat.require_padding_token(tokenizer)
+    except RuntimeError as exc:
+        fail_closed(f"TOKENIZER: {exc}")
 
-    target_modules = ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
+    target_modules = [
+        "q_proj",
+        "k_proj",
+        "v_proj",
+        "o_proj",
+        "gate_proj",
+        "up_proj",
+        "down_proj",
+    ]
     from peft import PeftModel
+
     already_peft = isinstance(model, PeftModel)
     if already_peft:
         print("loaded model already carries LoRA adapters; skipping get_peft_model")
@@ -199,17 +246,19 @@ def _train_after_gates(decision: dict, config_path: Path) -> None:
     print(f"merged corpus: {len(data)} examples")
 
     def add_text(example):
-        messages = example.get("messages") or example.get("conversations")
-        example["text"] = (
-            tokenizer.apply_chat_template(messages, tokenize=False) if messages else "")
-        return example
+        return compat.render_chat_example(tokenizer, example)
 
     before = len(data)
-    data = data.map(add_text, desc="applying chat template")
+    try:
+        data = data.map(add_text, desc="applying chat template")
+    except RuntimeError as exc:
+        fail_closed(f"CHAT_TEMPLATE: {exc}")
     data = data.filter(lambda e: e["text"], desc="dropping non-chat rows")
     dropped = before - len(data)
     if dropped:
-        print(f"dropped {dropped} non-chat row(s) (spec/manifest metadata without messages/conversations)")
+        print(
+            f"dropped {dropped} non-chat row(s) (spec/manifest metadata without messages/conversations)"
+        )
     if len(data) < _contract().MIN_ACCEPTED_EXAMPLES:
         fail_closed(
             f"LAUNCH_CORPUS_FLOOR: {len(data)} chat examples remain; "
@@ -231,7 +280,7 @@ def _train_after_gates(decision: dict, config_path: Path) -> None:
             logging_steps=10,
             save_steps=200,
             save_total_limit=3,
-            bf16=True,
+            **compat.precision_kwargs(torch),
             packing=args["pack"],
             max_length=args["seqlen"],
             seed=args["seed"],
@@ -246,7 +295,9 @@ def _train_after_gates(decision: dict, config_path: Path) -> None:
         try:
             log_path = Path(os.environ.get("SZL_TRAIN_LOG", "/opt/szl/train.log"))
             if log_path.is_file():
-                lines = log_path.read_text(encoding="utf-8", errors="replace").splitlines()[-200:]
+                lines = log_path.read_text(
+                    encoding="utf-8", errors="replace"
+                ).splitlines()[-200:]
                 api.upload_file(
                     path_or_fileobj="\n".join(lines).encode(),
                     path_in_repo=f"{Path(args['out']).name}-train.log",
@@ -260,6 +311,7 @@ def _train_after_gates(decision: dict, config_path: Path) -> None:
     def _forward_logs() -> None:
         import time as _time
         from huggingface_hub import HfApi
+
         api = HfApi(token=os.environ["HF_TOKEN"])
         while True:
             _time.sleep(600)
@@ -288,8 +340,11 @@ def _train_after_gates(decision: dict, config_path: Path) -> None:
         "pack": args["pack"],
         "seed": args["seed"],
         "steps": int(trainer.state.global_step),
-        "final_loss": float(trainer.state.log_history[-1].get("train_loss", float("nan")))
-        if trainer.state.log_history else None,
+        "final_loss": float(
+            trainer.state.log_history[-1].get("train_loss", float("nan"))
+        )
+        if trainer.state.log_history
+        else None,
         "launch_contract": _contract().SCHEMA,
         "training_authorization": "THIS_RECEIPT_IS_A_RUN_RECORD_NOT_A_PROMOTION",
     }
@@ -299,6 +354,7 @@ def _train_after_gates(decision: dict, config_path: Path) -> None:
 
     if args["log_repo_id"]:
         from huggingface_hub import HfApi
+
         _upload_log_tail(HfApi(token=os.environ["HF_TOKEN"]), "final")
 
     if args["repo_id"]:
@@ -326,4 +382,3 @@ def main(argv: list[str] | None = None) -> None:
 
 if __name__ == "__main__":
     main()
-
