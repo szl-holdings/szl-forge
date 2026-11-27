@@ -1,0 +1,9 @@
+{
+  "repository": "szl-holdings/governed-receipt-spec",
+  "commit": "e9c30c0b4a15312dd888afd0cf614df30057e328",
+  "license": "Apache-2.0",
+  "files": {
+    "schema/governed-action.v1.schema.json": "1f973acd8d360a7f83d60c29cae635d9432e506f9f9bd3aab200e3961fc6d316",
+    "schema/governed-receipt.schema.json": "fdd14dd6ee635a3f3bd87e952093a848da14f69db480e3ef766f09e55cb759c0"
+  }
+}

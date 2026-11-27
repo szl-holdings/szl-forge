@@ -1,0 +1,26 @@
+{
+  "repository": "szl-holdings/lutar-lean",
+  "commit": "c7c0ba17c2eaec60ad38ea9172b4a0d9ca0b582f",
+  "doctrine": "v11",
+  "declarations": 749,
+  "axioms_unique": 14,
+  "tracked_sorries": 163,
+  "axiom_names": [
+    "MomentSubGaussian",
+    "audit_reidemeister_invariance",
+    "canonicalReceipt",
+    "chromotopology_code_bijection",
+    "gleason_length_mod_8",
+    "klDivergence_nonneg",
+    "lambda_schur_concave_n_axis",
+    "lambda_stationary_unique",
+    "liu_hui_pi_converges",
+    "pinsker",
+    "r1_invariance",
+    "r2_invariance",
+    "sha256",
+    "sha256_collision_resistant"
+  ],
+  "kernel_trust_base": ["Classical.choice", "Quot.sound", "propext"],
+  "notes": "Doctrine v11 lock c7c0ba17: 749 declarations, 14 unique axioms, 163 tracked sorries. Axiom names are the unique set recorded by lean_numbers in that lock window. A candidate may depend on this set and on the Lean kernel trust base. sorryAx and Lean.ofReduceBool are not in the set."
+}
