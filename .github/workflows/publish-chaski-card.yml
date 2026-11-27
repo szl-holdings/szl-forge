@@ -123,6 +123,7 @@ jobs:
   publish:
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     name: Publish ${{ matrix.profile }} and verify exact Hub bytes
+    environment: release
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     # Per-asset Hub write lock (HF upgrade plan D3), never keyed by event.
