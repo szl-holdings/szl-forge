@@ -184,6 +184,19 @@ def _train_after_gates(decision: dict, config_path: Path) -> None:
             "HF_TOKEN is not set; authenticated model and dataset access require it."
         )
 
+    compat = _compat()
+    try:
+        nemotron = compat.nemotron_base(
+            decision["student_id"], decision["student_revision"]
+        )
+    except RuntimeError as exc:
+        fail_closed(f"NEMOTRON_PIN: {exc}")
+    if nemotron is not None:
+        _nemotron_wave().train_after_gates(
+            decision, args, compat, nemotron, _contract(), fail_closed
+        )
+        return
+
     try:
         from unsloth import FastLanguageModel
     except ImportError:
@@ -194,7 +207,6 @@ def _train_after_gates(decision: dict, config_path: Path) -> None:
     if not torch.cuda.is_available():
         fail_closed("CUDA is not available; this trainer requires one GPU.")
 
-    compat = _compat()
     load = compat.unsloth_load_kwargs(torch, load_in_4bit=args["method"] == "qlora")
     model, tokenizer = FastLanguageModel.from_pretrained(
         model_name=decision["student_id"],
@@ -364,6 +376,16 @@ def _train_after_gates(decision: dict, config_path: Path) -> None:
         )
 
     print("wave complete")
+
+
+def _nemotron_wave():
+    path = Path(__file__).resolve().parent / "nemotron_wave.py"
+    spec = importlib.util.spec_from_file_location("szl_nemotron_wave", path)
+    if spec is None or spec.loader is None:
+        fail_closed(f"NEMOTRON_WAVE_UNREADABLE: missing {path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def main(argv: list[str] | None = None) -> None:
