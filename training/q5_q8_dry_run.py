@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import math
 import random
+from pathlib import Path
 from typing import Any
 
 from training.q5_q8_lanes import LaneError, load_lane
@@ -120,12 +121,12 @@ def _contrastive(spec: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def run_lane(lane_id: str) -> dict[str, Any]:
+def run_lane(lane_id: str, directory: Path | None = None) -> dict[str, Any]:
     """Take the lane's two CPU steps. Q4 is refused before any arithmetic."""
 
     if lane_id == "Q4":
         raise LaneError("Q4_NOT_APPROVED")
-    lane = load_lane(lane_id)
+    lane = load_lane(lane_id, directory)
     spec = lane["dry_run"]
     if spec["kind"] == "causal":
         step = _causal(spec)

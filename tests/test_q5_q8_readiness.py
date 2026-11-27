@@ -6,6 +6,8 @@ from __future__ import annotations
 import ast
 import copy
 import hashlib
+import json
+import shutil
 import sys
 from pathlib import Path
 
@@ -171,6 +173,23 @@ def test_gate_rejects_overwrite_extra_provider_and_a_raised_budget() -> None:
     ready["blocker"] = None
     with pytest.raises(LaneError, match="READY_WITHOUT_HELDOUT"):
         validate_lane(ready, evidence)
+    over = copy.deepcopy(load_lane("Q7"))
+    over["gpu_hours"]["estimate"] = 13
+    with pytest.raises(LaneError, match="GPU_HOURS_OVER_APPROVAL"):
+        validate_lane(over, evidence)
+
+
+def test_one_lane_load_still_enforces_the_combined_budget(tmp_path: Path) -> None:
+    shutil.copytree(LANES, tmp_path, dirs_exist_ok=True)
+    for name, estimate in (("q7-embedder.manifest.json", 8), ("q8-brain-navigator.manifest.json", 8)):
+        path = tmp_path / name
+        document = json.loads(path.read_text(encoding="utf-8"))
+        document["gpu_hours"]["estimate"] = estimate
+        path.write_text(json.dumps(document), encoding="utf-8")
+    with pytest.raises(LaneError, match="GPU_HOURS_COMBINED"):
+        load_lane("Q7", tmp_path)
+    with pytest.raises(LaneError, match="GPU_HOURS_COMBINED"):
+        run_lane("Q8", tmp_path)
 
 
 def test_recipes_match_the_manifests() -> None:

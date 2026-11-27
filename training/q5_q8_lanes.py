@@ -319,6 +319,8 @@ def _gpu(lane_id: str, value: object) -> int:
             raise LaneError("GPU_HOURS_APPROVED")
         if value.get("approved_scope") != "Q7+Q8":
             raise LaneError("GPU_HOURS_APPROVED")
+        if estimate > COMBINED_GPU_HOURS:
+            raise LaneError("GPU_HOURS_OVER_APPROVAL")
         return estimate
     raise LaneError("GPU_HOURS")
 
@@ -470,6 +472,21 @@ def validate_lane(document: dict[str, Any], evidence: dict[str, Any]) -> dict[st
     return document
 
 
+def combined_gpu_hours(directory: Path, evidence: dict[str, Any]) -> int:
+    """Sum Q7 and Q8. Each lane is validated, including the 12-hour ceiling."""
+
+    total = 0
+    for lane_id in COMBINED_LANES:
+        document = load_json(directory / LANE_FILES[lane_id])
+        if document.get("id") != lane_id:
+            raise LaneError("LANE_ID")
+        validated = validate_lane(document, evidence)
+        total += int(validated["gpu_hours"]["estimate"])
+    if total > COMBINED_GPU_HOURS:
+        raise LaneError("GPU_HOURS_COMBINED")
+    return total
+
+
 def load_lane(lane_id: str, directory: Path | None = None) -> dict[str, Any]:
     if lane_id not in LANE_FILES:
         raise LaneError("LANE_ID")
@@ -478,23 +495,22 @@ def load_lane(lane_id: str, directory: Path | None = None) -> dict[str, Any]:
     document = load_json(directory / LANE_FILES[lane_id])
     if document.get("id") != lane_id:
         raise LaneError("LANE_ID")
-    return validate_lane(document, evidence)
+    validated = validate_lane(document, evidence)
+    if lane_id in COMBINED_LANES:
+        combined_gpu_hours(directory, evidence)
+    return validated
 
 
 def load_lanes(directory: Path | None = None) -> dict[str, dict[str, Any]]:
     directory = directory or lane_dir()
     evidence = load_evidence(directory)
     loaded: dict[str, dict[str, Any]] = {}
-    estimates: dict[str, int] = {}
     for lane_id, name in LANE_FILES.items():
         document = load_json(directory / name)
         if document.get("id") != lane_id:
             raise LaneError("LANE_ID")
         loaded[lane_id] = validate_lane(document, evidence)
-        if lane_id in COMBINED_LANES:
-            estimates[lane_id] = int(loaded[lane_id]["gpu_hours"]["estimate"])
-    if sum(estimates.values()) > COMBINED_GPU_HOURS:
-        raise LaneError("GPU_HOURS_COMBINED")
+    combined_gpu_hours(directory, evidence)
     targets = [loaded[lane_id]["target_repo"] for lane_id in ("Q5", "Q6", "Q7", "Q8")]
     if len({item.casefold() for item in targets}) != len(targets):
         raise LaneError("TARGET_REPO")
