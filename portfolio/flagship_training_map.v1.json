@@ -81,7 +81,50 @@
         }
       ],
       "status_note": "MEASURED/HOLD/UNSIGNED, 46-probe keyword rubric",
-      "plan_item": "Y2"
+      "plan_item": "Y2",
+      "lean": {
+        "fit": "Abstention: honest ABSTAIN on CONJECTURE probes earns 0.5, bluffing earns 0; Theorem-U rows test that Conjecture 1 is never claimed proven.",
+        "reward": {
+          "impl": "lean-rlvr-proving-ground grpo_adapter.LeanKernelReward + trl_text_adapter (PR #32)",
+          "lane": "core",
+          "registry_slices": [
+            "core-probes",
+            "core-proving54"
+          ],
+          "state": "EXISTING_CORE",
+          "rights_note": "proving54 manifest marks Probes.lean POINTER_ONLY_NO_GRADIENTS / REVIEW_REQUIRED; a rights yes is needed before gradients",
+          "shaping": "ABSTAIN-on-CONJECTURE 0.5 auxiliary"
+        },
+        "eval_slices": [
+          {
+            "id": "atlas-conjecture",
+            "repo": "lean-rlvr-proving-ground",
+            "path": "probes/atlas/proving-ground.json",
+            "format": "atlas",
+            "lane": "core",
+            "use": "eval",
+            "filter": {
+              "class": "CONJECTURE"
+            },
+            "rows": 4,
+            "sha256": "4960a02c717661c464d484fecc80d22f873b8e9cba902e0879fc8abe0e607dbd"
+          },
+          {
+            "id": "lutar-theorem-u",
+            "repo": "lutar-lean",
+            "path": "benchmark/estate_pinned_v1.jsonl",
+            "format": "jsonl",
+            "lane": "mathlib",
+            "use": "eval",
+            "filter": {
+              "kind": "theorem_u"
+            },
+            "rows": 6,
+            "sha256": "7a673ac311974c1a6bcf42c21e3b2e539489de8d59dfca9759af272b13c5178d"
+          }
+        ],
+        "no_training_data": false
+      }
     },
     {
       "line": "B",
@@ -102,7 +145,7 @@
           "repo": "szl-forge",
           "path": "training/rewards/invariant_reward.py",
           "state": "LOCAL_PATCH",
-          "note": "szl-invariants replay as reward with task binding; not pushed."
+          "note": "szl-invariants replay as reward with task binding; added in this change."
         },
         {
           "kind": "verifier",
@@ -127,7 +170,46 @@
         }
       ],
       "status_note": "signed eval 5/5 + 6/6, publicationEligible false",
-      "plan_item": "Y4"
+      "plan_item": "Y4",
+      "lean": {
+        "fit": "Receipts: replay-hash determinism and locked receipt carriers (locked-8) as proof targets; invariant reward is the main signal.",
+        "reward": {
+          "impl": "lean-rlvr-proving-ground grpo_adapter.LeanKernelReward + trl_text_adapter (PR #32)",
+          "lane": "core",
+          "registry_slices": [
+            "core-probes",
+            "core-proving54"
+          ],
+          "state": "EXISTING_CORE",
+          "rights_note": "proving54 manifest marks Probes.lean POINTER_ONLY_NO_GRADIENTS / REVIEW_REQUIRED; a rights yes is needed before gradients"
+        },
+        "eval_slices": [
+          {
+            "id": "lutar-locked8",
+            "repo": "lutar-lean",
+            "path": "benchmark/estate_pinned_v1.jsonl",
+            "format": "jsonl",
+            "lane": "mathlib",
+            "use": "eval",
+            "filter": {
+              "kind": "locked8"
+            },
+            "rows": 24,
+            "sha256": "d2e5ce5326e333938dee39a8a4fe82c4c7bdfd51d28f019394d9c995eaa44782"
+          },
+          {
+            "id": "core-probes",
+            "repo": "lean-rlvr-proving-ground",
+            "path": "probes/Probes.lean",
+            "format": "file",
+            "lane": "core",
+            "use": "reward_registry",
+            "rows": 1,
+            "sha256": "5ce56c5baabfd4fe689d6aab0fbd3153a1f11159e881758f7cf83c7dba807661"
+          }
+        ],
+        "no_training_data": false
+      }
     },
     {
       "line": "C",
@@ -170,7 +252,34 @@
         }
       ],
       "status_note": "signed abstain 2/6; no promotion",
-      "plan_item": "Y-DEFER"
+      "plan_item": "Y-DEFER",
+      "lean": {
+        "fit": "Scholar/heritage: Egyptian/Greek core probes and the 30-formula atlas as eval only (GATED, no promotion).",
+        "reward": null,
+        "eval_slices": [
+          {
+            "id": "core-probes",
+            "repo": "lean-rlvr-proving-ground",
+            "path": "probes/Probes.lean",
+            "format": "file",
+            "lane": "core",
+            "use": "reward_registry",
+            "rows": 1,
+            "sha256": "5ce56c5baabfd4fe689d6aab0fbd3153a1f11159e881758f7cf83c7dba807661"
+          },
+          {
+            "id": "atlas-all",
+            "repo": "lean-rlvr-proving-ground",
+            "path": "probes/atlas/proving-ground.json",
+            "format": "atlas",
+            "lane": "core",
+            "use": "eval",
+            "rows": 30,
+            "sha256": "f9f0d12d8832e8a3609e56c5bc33a6171ece00b7f10eaba55081b44ae91d2d11"
+          }
+        ],
+        "no_training_data": false
+      }
     },
     {
       "line": "D",
@@ -203,7 +312,24 @@
         }
       ],
       "status_note": "LOCAL_MEASURED, worse than base",
-      "plan_item": "DEFER"
+      "plan_item": "DEFER",
+      "lean": {
+        "fit": "Norms: MC1 deny-by-default candidate formalization as a norms eval slice.",
+        "reward": null,
+        "eval_slices": [
+          {
+            "id": "formulas-mc1-deny-by-default",
+            "repo": "szl-formulas",
+            "path": "lean/MC1_deny_by_default.lean",
+            "format": "file",
+            "lane": "core",
+            "use": "eval",
+            "rows": 1,
+            "sha256": "7faf46c37b1c4bc766d4ed41bfd7d4b3942fe60e484cc2ab0fe6ec00f8cd0456"
+          }
+        ],
+        "no_training_data": true
+      }
     },
     {
       "line": "E",
@@ -235,7 +361,27 @@
         }
       ],
       "status_note": "smoke only",
-      "plan_item": "DEFER"
+      "plan_item": "DEFER",
+      "lean": {
+        "fit": "Vertical worker: pinned locked-8 slice as a reasoning sanity eval until vertical data exists.",
+        "reward": null,
+        "eval_slices": [
+          {
+            "id": "lutar-locked8",
+            "repo": "lutar-lean",
+            "path": "benchmark/estate_pinned_v1.jsonl",
+            "format": "jsonl",
+            "lane": "mathlib",
+            "use": "eval",
+            "filter": {
+              "kind": "locked8"
+            },
+            "rows": 24,
+            "sha256": "d2e5ce5326e333938dee39a8a4fe82c4c7bdfd51d28f019394d9c995eaa44782"
+          }
+        ],
+        "no_training_data": true
+      }
     },
     {
       "line": "F",
@@ -263,8 +409,8 @@
           "kind": "rlvr_adapter",
           "repo": "lean-rlvr-proving-ground",
           "path": "trl_text_adapter.py",
-          "state": "LOCAL_PATCH",
-          "note": "Conversation-to-text adapter; branch forge-audit/trl-conversation-adapter-20261126, not pushed."
+          "state": "PR_OPEN",
+          "note": "Conversation-to-text adapter: szl-holdings/lean-rlvr-proving-ground#32."
         },
         {
           "kind": "eval",
@@ -278,7 +424,7 @@
           "repo": "szl-forge",
           "path": "training/rewards/invariant_reward.py",
           "state": "LOCAL_PATCH",
-          "note": "szl-invariants replay as reward with task binding; not pushed."
+          "note": "szl-invariants replay as reward with task binding; added in this change."
         },
         {
           "kind": "verifier",
@@ -303,7 +449,65 @@
         }
       ],
       "status_note": "6-probe only; Kancha flagship SZL-1.7B-Estate does not exist",
-      "plan_item": "Y5"
+      "plan_item": "Y5",
+      "lean": {
+        "fit": "Lean/invariants specialist: full core reward now, Mathlib reward over sorry-open targets once the isolated worker lands; all 147 pinned rows as eval.",
+        "reward": {
+          "impl": "isolated Lean worker with pinned Mathlib (PR-lean-rlvr-proving-ground-isolated-worker)",
+          "lane": "mathlib",
+          "registry_slices": [
+            "lutar-sorry-open",
+            "lutar-locked8"
+          ],
+          "state": "PR_OPEN_OR_MISSING",
+          "core_fallback": {
+            "impl": "lean-rlvr-proving-ground grpo_adapter.LeanKernelReward + trl_text_adapter (PR #32)",
+            "lane": "core",
+            "registry_slices": [
+              "core-probes",
+              "core-proving54"
+            ],
+            "state": "EXISTING_CORE",
+            "rights_note": "proving54 manifest marks Probes.lean POINTER_ONLY_NO_GRADIENTS / REVIEW_REQUIRED; a rights yes is needed before gradients"
+          }
+        },
+        "eval_slices": [
+          {
+            "id": "lutar-estate-all",
+            "repo": "lutar-lean",
+            "path": "benchmark/estate_pinned_v1.jsonl",
+            "format": "jsonl",
+            "lane": "mathlib",
+            "use": "eval",
+            "rows": 147,
+            "sha256": "8a86686b0a0b8a10d6723af5a886d06466955e331501ed2b528155881605a218"
+          },
+          {
+            "id": "atlas-symbolic",
+            "repo": "lean-rlvr-proving-ground",
+            "path": "probes/atlas/proving-ground.json",
+            "format": "atlas",
+            "lane": "core",
+            "use": "eval",
+            "filter": {
+              "class": "SYMBOLIC"
+            },
+            "rows": 15,
+            "sha256": "f699256c2fcf467631fc92260a6a87fa3b7f64487b8b13d9fc50babd41264116"
+          },
+          {
+            "id": "core-proving54",
+            "repo": "lean-rlvr-proving-ground",
+            "path": "probes/Proving54.lean",
+            "format": "file",
+            "lane": "core",
+            "use": "reward_registry",
+            "rows": 1,
+            "sha256": "470acfe947f07c20470ba3ef1fe814f9c3e194c8bc89ce9da82a33f1d664e497"
+          }
+        ],
+        "no_training_data": false
+      }
     },
     {
       "line": "G",
@@ -342,7 +546,46 @@
         }
       ],
       "status_note": "weights only on live Hub",
-      "plan_item": "Y6"
+      "plan_item": "Y6",
+      "lean": {
+        "fit": "Nemotron estate model: core Lean reward on Probes/Proving54 plus locked-8 eval.",
+        "reward": {
+          "impl": "lean-rlvr-proving-ground grpo_adapter.LeanKernelReward + trl_text_adapter (PR #32)",
+          "lane": "core",
+          "registry_slices": [
+            "core-probes",
+            "core-proving54"
+          ],
+          "state": "EXISTING_CORE",
+          "rights_note": "proving54 manifest marks Probes.lean POINTER_ONLY_NO_GRADIENTS / REVIEW_REQUIRED; a rights yes is needed before gradients"
+        },
+        "eval_slices": [
+          {
+            "id": "lutar-locked8",
+            "repo": "lutar-lean",
+            "path": "benchmark/estate_pinned_v1.jsonl",
+            "format": "jsonl",
+            "lane": "mathlib",
+            "use": "eval",
+            "filter": {
+              "kind": "locked8"
+            },
+            "rows": 24,
+            "sha256": "d2e5ce5326e333938dee39a8a4fe82c4c7bdfd51d28f019394d9c995eaa44782"
+          },
+          {
+            "id": "core-proving54",
+            "repo": "lean-rlvr-proving-ground",
+            "path": "probes/Proving54.lean",
+            "format": "file",
+            "lane": "core",
+            "use": "reward_registry",
+            "rows": 1,
+            "sha256": "470acfe947f07c20470ba3ef1fe814f9c3e194c8bc89ce9da82a33f1d664e497"
+          }
+        ],
+        "no_training_data": false
+      }
     },
     {
       "line": "H",
@@ -374,7 +617,27 @@
         }
       ],
       "status_note": "weights only, eval UNKNOWN",
-      "plan_item": "DEFER"
+      "plan_item": "DEFER",
+      "lean": {
+        "fit": "Ring/loop: the self-proving loop consumes sorry-open targets; pinned slice as eval until ring data exists.",
+        "reward": null,
+        "eval_slices": [
+          {
+            "id": "lutar-sorry-open",
+            "repo": "lutar-lean",
+            "path": "benchmark/estate_pinned_v1.jsonl",
+            "format": "jsonl",
+            "lane": "mathlib",
+            "use": "eval",
+            "filter": {
+              "kind": "sorry_open"
+            },
+            "rows": 51,
+            "sha256": "0a80574ccf29b88d6fd52c684f2f980055342f24e75fd10a1a84a5a673c06487"
+          }
+        ],
+        "no_training_data": true
+      }
     },
     {
       "line": "I1",
@@ -406,7 +669,43 @@
         }
       ],
       "status_note": "3/6; license blocks commercial use",
-      "plan_item": "Y7"
+      "plan_item": "Y7",
+      "lean": {
+        "fit": "Code: proofs-as-code reward on core probes (compile = reward).",
+        "reward": {
+          "impl": "lean-rlvr-proving-ground grpo_adapter.LeanKernelReward + trl_text_adapter (PR #32)",
+          "lane": "core",
+          "registry_slices": [
+            "core-probes",
+            "core-proving54"
+          ],
+          "state": "EXISTING_CORE",
+          "rights_note": "proving54 manifest marks Probes.lean POINTER_ONLY_NO_GRADIENTS / REVIEW_REQUIRED; a rights yes is needed before gradients"
+        },
+        "eval_slices": [
+          {
+            "id": "core-probes",
+            "repo": "lean-rlvr-proving-ground",
+            "path": "probes/Probes.lean",
+            "format": "file",
+            "lane": "core",
+            "use": "reward_registry",
+            "rows": 1,
+            "sha256": "5ce56c5baabfd4fe689d6aab0fbd3153a1f11159e881758f7cf83c7dba807661"
+          },
+          {
+            "id": "core-proving54",
+            "repo": "lean-rlvr-proving-ground",
+            "path": "probes/Proving54.lean",
+            "format": "file",
+            "lane": "core",
+            "use": "reward_registry",
+            "rows": 1,
+            "sha256": "470acfe947f07c20470ba3ef1fe814f9c3e194c8bc89ce9da82a33f1d664e497"
+          }
+        ],
+        "no_training_data": true
+      }
     },
     {
       "line": "I2",
@@ -421,7 +720,7 @@
           "repo": "szl-forge",
           "path": "training/rewards/invariant_reward.py",
           "state": "LOCAL_PATCH",
-          "note": "szl-invariants replay as reward with task binding; not pushed."
+          "note": "szl-invariants replay as reward with task binding; added in this change."
         },
         {
           "kind": "rlvr_reward",
@@ -434,8 +733,8 @@
           "kind": "rlvr_adapter",
           "repo": "lean-rlvr-proving-ground",
           "path": "trl_text_adapter.py",
-          "state": "LOCAL_PATCH",
-          "note": "Conversation-to-text adapter; branch forge-audit/trl-conversation-adapter-20261126, not pushed."
+          "state": "PR_OPEN",
+          "note": "Conversation-to-text adapter: szl-holdings/lean-rlvr-proving-ground#32."
         },
         {
           "kind": "verifier",
@@ -451,7 +750,56 @@
         }
       ],
       "status_note": "eval UNKNOWN",
-      "plan_item": "DEFER"
+      "plan_item": "DEFER",
+      "lean": {
+        "fit": "Axioms/invariants: locked-8 carriers, covenant and wedge formalizations; core reward plus invariant reward.",
+        "reward": {
+          "impl": "lean-rlvr-proving-ground grpo_adapter.LeanKernelReward + trl_text_adapter (PR #32)",
+          "lane": "core",
+          "registry_slices": [
+            "core-probes",
+            "core-proving54"
+          ],
+          "state": "EXISTING_CORE",
+          "rights_note": "proving54 manifest marks Probes.lean POINTER_ONLY_NO_GRADIENTS / REVIEW_REQUIRED; a rights yes is needed before gradients"
+        },
+        "eval_slices": [
+          {
+            "id": "lutar-locked8",
+            "repo": "lutar-lean",
+            "path": "benchmark/estate_pinned_v1.jsonl",
+            "format": "jsonl",
+            "lane": "mathlib",
+            "use": "eval",
+            "filter": {
+              "kind": "locked8"
+            },
+            "rows": 24,
+            "sha256": "d2e5ce5326e333938dee39a8a4fe82c4c7bdfd51d28f019394d9c995eaa44782"
+          },
+          {
+            "id": "formulas-f24-f25-covenant",
+            "repo": "szl-formulas",
+            "path": "lean/F24_F25_covenant.lean",
+            "format": "file",
+            "lane": "core",
+            "use": "eval",
+            "rows": 1,
+            "sha256": "22fb5fac085f76cf7174b215f64eaccc91d2840ab4cb196803a40f4e398dc542"
+          },
+          {
+            "id": "formulas-wedge-challenge",
+            "repo": "szl-formulas",
+            "path": "lean/CHALLENGE_wedge.v1.lean",
+            "format": "file",
+            "lane": "core",
+            "use": "eval",
+            "rows": 1,
+            "sha256": "bd33a98d0abf29d59394015da8e55cc37dbe342830e7513138c214395c0de3ad"
+          }
+        ],
+        "no_training_data": false
+      }
     },
     {
       "line": "I3",
@@ -477,7 +825,24 @@
         }
       ],
       "status_note": "weights only, nDCG UNKNOWN",
-      "plan_item": "Y8"
+      "plan_item": "Y8",
+      "lean": {
+        "fit": "Embedder: statement retrieval over the 147 pinned statements (statement_sha256 as key).",
+        "reward": null,
+        "eval_slices": [
+          {
+            "id": "lutar-estate-all",
+            "repo": "lutar-lean",
+            "path": "benchmark/estate_pinned_v1.jsonl",
+            "format": "jsonl",
+            "lane": "mathlib",
+            "use": "eval",
+            "rows": 147,
+            "sha256": "8a86686b0a0b8a10d6723af5a886d06466955e331501ed2b528155881605a218"
+          }
+        ],
+        "no_training_data": false
+      }
     },
     {
       "line": "I4",
@@ -495,7 +860,24 @@
         }
       ],
       "status_note": "HOLD",
-      "plan_item": "none"
+      "plan_item": "none",
+      "lean": {
+        "fit": "x402 (HOLD): covenant formalization as eval only.",
+        "reward": null,
+        "eval_slices": [
+          {
+            "id": "formulas-f24-f25-covenant",
+            "repo": "szl-formulas",
+            "path": "lean/F24_F25_covenant.lean",
+            "format": "file",
+            "lane": "core",
+            "use": "eval",
+            "rows": 1,
+            "sha256": "22fb5fac085f76cf7174b215f64eaccc91d2840ab4cb196803a40f4e398dc542"
+          }
+        ],
+        "no_training_data": true
+      }
     },
     {
       "line": "I5",
@@ -513,7 +895,24 @@
         }
       ],
       "status_note": "HOLD",
-      "plan_item": "none"
+      "plan_item": "none",
+      "lean": {
+        "fit": "Navigator (HOLD): theorem-tree navigation over the pinned 147 rows, eval only.",
+        "reward": null,
+        "eval_slices": [
+          {
+            "id": "lutar-estate-all",
+            "repo": "lutar-lean",
+            "path": "benchmark/estate_pinned_v1.jsonl",
+            "format": "jsonl",
+            "lane": "mathlib",
+            "use": "eval",
+            "rows": 147,
+            "sha256": "8a86686b0a0b8a10d6723af5a886d06466955e331501ed2b528155881605a218"
+          }
+        ],
+        "no_training_data": false
+      }
     },
     {
       "line": "I6",
@@ -538,7 +937,27 @@
         }
       ],
       "status_note": "STUB, no weights",
-      "plan_item": "Y9"
+      "plan_item": "Y9",
+      "lean": {
+        "fit": "Grounded generation (stub): locked-8 citations as grounding eval.",
+        "reward": null,
+        "eval_slices": [
+          {
+            "id": "lutar-locked8",
+            "repo": "lutar-lean",
+            "path": "benchmark/estate_pinned_v1.jsonl",
+            "format": "jsonl",
+            "lane": "mathlib",
+            "use": "eval",
+            "filter": {
+              "kind": "locked8"
+            },
+            "rows": 24,
+            "sha256": "d2e5ce5326e333938dee39a8a4fe82c4c7bdfd51d28f019394d9c995eaa44782"
+          }
+        ],
+        "no_training_data": true
+      }
     },
     {
       "line": "X",
@@ -557,7 +976,27 @@
         }
       ],
       "status_note": "price UNKNOWN",
-      "plan_item": "Y16"
+      "plan_item": "Y16",
+      "lean": {
+        "fit": "27B distill (deferred): Putnam slice as hard eval.",
+        "reward": null,
+        "eval_slices": [
+          {
+            "id": "lutar-putnam",
+            "repo": "lutar-lean",
+            "path": "benchmark/estate_pinned_v1.jsonl",
+            "format": "jsonl",
+            "lane": "mathlib",
+            "use": "eval",
+            "filter": {
+              "kind": "putnam"
+            },
+            "rows": 66,
+            "sha256": "c2f29de633622cd4d3eeced89265d3a56541a8c82099c1d29ee724917197a5ec"
+          }
+        ],
+        "no_training_data": false
+      }
     }
   ]
 }

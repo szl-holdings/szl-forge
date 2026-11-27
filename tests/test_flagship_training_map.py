@@ -42,3 +42,34 @@ def test_missing_forge_path_rejected(tmp_path):
     def bad(d):
         d["flagships"][0]["signals"].append({"kind": "eval", "repo": "szl-forge", "path": "no/such/file.py", "state": "EXISTING"})
     assert _mutated(tmp_path, bad)
+
+
+def test_every_line_has_lean():
+    data = json.loads(cftm.DEFAULT_MAP.read_text(encoding="utf-8"))
+    for f in data["flagships"]:
+        assert f["lean"]["eval_slices"], f["line"]
+
+
+def test_missing_lean_rejected(tmp_path):
+    assert _mutated(tmp_path, lambda d: d["flagships"][0].pop("lean"))
+
+
+def test_empty_lean_slices_rejected(tmp_path):
+    assert _mutated(tmp_path, lambda d: d["flagships"][3]["lean"].update(eval_slices=[]))
+
+
+def test_bad_slice_digest_rejected(tmp_path):
+    assert _mutated(tmp_path, lambda d: d["flagships"][0]["lean"]["eval_slices"][0].update(sha256="abc"))
+
+
+def test_slice_digest_is_reproducible(tmp_path):
+    spec = importlib.util.spec_from_file_location("lean_slices", ROOT / "tools" / "lean_slices.py")
+    ls = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ls)
+    src = tmp_path / "repo"
+    src.mkdir()
+    (src / "b.jsonl").write_text('{"kind":"a","n":1}\n{"kind":"b","n":2}\n{"kind":"a","n":3}\n', encoding="utf-8")
+    one = ls.digest(src, {"path": "b.jsonl", "format": "jsonl", "filter": {"kind": "a"}})
+    (src / "b.jsonl").write_text('{"n":3,"kind":"a"}\n{"kind":"a","n":1}\n', encoding="utf-8")
+    two = ls.digest(src, {"path": "b.jsonl", "format": "jsonl", "filter": {"kind": "a"}})
+    assert one == two and one["rows"] == 2

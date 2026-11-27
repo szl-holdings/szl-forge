@@ -19,7 +19,10 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_MAP = ROOT / "portfolio" / "flagship_training_map.v1.json"
 PORTFOLIO = ROOT / "portfolio" / "model_portfolio.json"
 SCHEMA = "szl.forge.flagship-training-map/v1"
-STATES = {"EXISTING", "MISSING", "BROKEN", "LOCAL_PATCH"}
+STATES = {"EXISTING", "MISSING", "BROKEN", "LOCAL_PATCH", "PR_OPEN"}
+SHA256 = re.compile(r"[0-9a-f]{64}\Z")
+LANES = {"core", "mathlib"}
+FORMATS = {"jsonl", "atlas", "file"}
 KINDS = {"sft_data", "dpo_pairs", "rlvr_reward", "rlvr_adapter", "verifier", "eval",
          "eval_data", "config", "jobspec", "license"}
 FORBIDDEN = re.compile(r"\b(PRODUCTION[_ -]?READY|FULLY[_ -]?TRAINED|PROMOTED|CERTIFIED)\b", re.I)
@@ -65,9 +68,42 @@ def check(map_path: Path = DEFAULT_MAP, portfolio_path: Path = PORTFOLIO) -> lis
             if repo == "szl-forge" and sig.get("state") in {"EXISTING", "LOCAL_PATCH", "BROKEN"}:
                 if not list(ROOT.glob(sig["path"])):
                     errors.append(f"{line}: szl-forge path missing: {sig['path']}")
+        errors.extend(_check_lean(line, f.get("lean"), pins))
     if not seen:
         errors.append("no flagships")
     return errors
+
+
+def _check_lean(line, lean, pins) -> list[str]:
+    """Every flagship line carries a Lean component: a reward and/or pinned eval slices."""
+    errs: list[str] = []
+    if not isinstance(lean, dict):
+        return [f"{line}: lean component missing"]
+    if not isinstance(lean.get("fit"), str) or not lean["fit"].strip():
+        errs.append(f"{line}: lean.fit must explain how Lean matches the line")
+    slices = lean.get("eval_slices")
+    if not isinstance(slices, list) or not slices:
+        errs.append(f"{line}: at least one pinned Lean eval slice is required")
+        slices = []
+    reward = lean.get("reward")
+    if reward is not None:
+        if not isinstance(reward, dict) or reward.get("lane") not in LANES or not reward.get("impl"):
+            errs.append(f"{line}: lean.reward needs impl and a known lane")
+    if lean.get("no_training_data") is True and reward is None and not slices:
+        errs.append(f"{line}: a line without training data needs a pinned Lean eval slice")
+    for sl in slices:
+        sid = sl.get("id", "?")
+        if sl.get("repo") not in pins:
+            errs.append(f"{line}:{sid}: slice repo has no source pin")
+        if sl.get("format") not in FORMATS or sl.get("lane") not in LANES:
+            errs.append(f"{line}:{sid}: bad format or lane")
+        if not isinstance(sl.get("sha256"), str) or not SHA256.match(sl["sha256"]):
+            errs.append(f"{line}:{sid}: slice sha256 must be 64 hex")
+        if not isinstance(sl.get("rows"), int) or sl["rows"] < 1:
+            errs.append(f"{line}:{sid}: slice rows must be a positive integer")
+        if not isinstance(sl.get("path"), str) or not sl["path"]:
+            errs.append(f"{line}:{sid}: slice path missing")
+    return errs
 
 
 def main(argv=None) -> int:
