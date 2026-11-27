@@ -241,5 +241,5 @@ def check_sigstore(run_dir: Path | str, st: dict, identity: str, issuer: str = G
         if (cert.get("subjectAlternativeName") == identity and cert.get("issuer") == issuer
                 and stmt.get("predicateType") == PREDICATE_TYPE and dig in subj
                 and pred.get("bundle_sha256") == dig and pred.get("run_id") == st["run_id"]):
-            return True, f"identity {identity}; bundle {dig[:16]}"
+            return True, f"pinned --trusted-identity matched; bundle {dig[:16]}"
     return False, "no attestation matched identity, issuer, predicate type and bundle digest"

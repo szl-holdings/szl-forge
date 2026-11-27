@@ -334,7 +334,8 @@ class Verifier:
         if self.trusted is not None:
             bad = sorted(k for k in self.trusted if not valid_fingerprint(k))
             if bad:
-                integ.add(FAIL, "trusted key format", f"not ed25519:<16hex> or ed25519:sha256:<64hex>: {bad}")
+                integ.add(FAIL, "trusted key format",
+                          f"{len(bad)} --trusted-key value(s) not ed25519:<16hex> or ed25519:sha256:<64hex>")
                 return
             if all(fp_matches(k, self.trusted) for k in self.signer_keys):
                 integ.add(PASS, "signers anchored to --trusted-key (direct)", str(full))
