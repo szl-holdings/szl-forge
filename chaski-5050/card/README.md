@@ -73,6 +73,12 @@ Historical input README SHA-256: `0d7f289daec1e217a41c9ca55c651b0fe51eb302aaafea
 
 [Reviewed authoring baseline](https://github.com/szl-holdings/szl-forge/blob/2f1f7636acf4e77d87de34319c34507f9441dc71/chaski-5050/card/README.md). Existing publisher: `publish-chaski-card.yml`. Source changes still require normal review and exact deployed-byte readback.
 
+### Receipt figures
+
+<img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/1310a176e2b02327a2e46b6db6a30008df67399d/chaski-5050/card/receipts-training-2026-11-26.png" alt="Training loss and training rows, plotted only from the training receipts listed below" width="800">
+
+Values are copied from the training receipts in the table below. Training loss is not held-out performance; this figure adds no qualification.
+
 ### Inspect the records
 
 | Record | Retrieved-byte SHA-256 |
