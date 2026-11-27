@@ -1,0 +1,70 @@
+{
+  "allowed_providers": [
+    "salad",
+    "massed"
+  ],
+  "caps": {
+    "per_day_usd": 500,
+    "per_month_usd": 5000,
+    "per_run_usd": 100
+  },
+  "gpu_h_budget": 16,
+  "gpu_h_hard_total": 6,
+  "launch_authorized": false,
+  "note": "Field names match szl.gpu-pool.queue/v1. reviewed_jobspec and reviewed_binding are unset, so pool_runner.validate_run_entry refuses the run before a child starts.",
+  "runs": [
+    {
+      "allowed_providers": [
+        "salad",
+        "massed"
+      ],
+      "caps": {
+        "per_day_usd": 500,
+        "per_month_usd": 5000,
+        "per_run_usd": 100
+      },
+      "entrypoint": "laptop/dispatcher.py",
+      "gpu_h_expected": 0.5,
+      "launch_authorized": false,
+      "max_hours": 2,
+      "model": "nvidia/NVIDIA-Nemotron-3-Nano-4B-BF16",
+      "plateau": {
+        "k": 4,
+        "min_evals": 5,
+        "threshold": 0.01
+      },
+      "reviewed_binding": null,
+      "reviewed_jobspec": null,
+      "run_id": "chaski-0p8b-pilot-teacher",
+      "signed_envelope": null,
+      "vram_gb": 24
+    },
+    {
+      "allowed_providers": [
+        "salad",
+        "massed"
+      ],
+      "caps": {
+        "per_day_usd": 500,
+        "per_month_usd": 5000,
+        "per_run_usd": 100
+      },
+      "entrypoint": "laptop/dispatcher.py",
+      "gpu_h_expected": 1.0,
+      "launch_authorized": false,
+      "max_hours": 4,
+      "model": "Qwen/Qwen3.5-0.8B",
+      "plateau": {
+        "k": 3,
+        "min_evals": 4,
+        "threshold": 0.01
+      },
+      "reviewed_binding": null,
+      "reviewed_jobspec": null,
+      "run_id": "chaski-0p8b-pilot-student",
+      "signed_envelope": null,
+      "vram_gb": 16
+    }
+  ],
+  "schema": "szl.gpu-pool.queue/v1"
+}
