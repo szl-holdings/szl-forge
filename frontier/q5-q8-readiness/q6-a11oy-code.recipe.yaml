@@ -4,7 +4,7 @@
 family: a11oy-code-apache
 lane: Q6
 approval_date: "2026-11-27"
-status: BLOCKED
+status: READY_NOT_LAUNCHED
 launch_authorized: false
 
 base:
@@ -26,9 +26,26 @@ replaced_base:
   role: INCUMBENT_NOT_THE_TRAINING_BASE
 
 data:
-  observed_train: SZLHOLDINGS/a11oy-code-sft-v1@ee70cc9caa8a87da7ded9bf8d8a15e4f7c541804
-  heldout_eval_only: ABSENT
+  train: SZLHOLDINGS/a11oy-code-sft-v1-q6-split-private@85227b97f4e97def69bdba792c3bd00c41808689
+  train_rows: 2124
+  train_sha256: 5a8109f26a120bc66d040b8ee0740c3649574d6ece33bae1ec538526ef20dc8e
+  heldout_eval_only: SZLHOLDINGS/a11oy-code-sft-v1-q6-split-private/data/heldout.jsonl
+  heldout_rows: 291
+  heldout_sha256: 4f85de2ad085c39e06c13ce4067752affc779ef2ccfe563c1d4d802b15edba7c
+  sha256_source: SHA256SUMS
+  api_sha: UNKNOWN
+  lfs_oid: UNKNOWN
+  built_from: SZLHOLDINGS/a11oy-code-sft-v1@ee70cc9caa8a87da7ded9bf8d8a15e4f7c541804
   heldout_independence: UNKNOWN
+  data_status: PASS_WITH_CONDITIONS
+  embedding_similarity: UNAVAILABLE
+  contamination_not_run:
+    - GPQA
+    - szl-chaski/rotation heldouts
+    - AbstentionBench
+    - SimpleQA
+    - LiveCodeBench
+    - MTEB
 
 runtime:
   image: ghcr.io/szl-holdings/szl-train-pinned@sha256:8eb919654e0da406d41a2e307e7705cce8f6b79ad0be9556d74d4c4640e63235
@@ -55,4 +72,4 @@ publish:
   target_existence: UNKNOWN
   overwrite_existing: false
 
-blocker: eval-only heldout ABSENT on SZLHOLDINGS/a11oy-code-sft-v1 (train.jsonl only)
+blocker: null

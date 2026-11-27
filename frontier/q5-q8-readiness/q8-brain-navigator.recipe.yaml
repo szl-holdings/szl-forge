@@ -4,7 +4,7 @@
 family: brain-navigator
 lane: Q8
 approval_date: "2026-11-27"
-status: BLOCKED
+status: READY_NOT_LAUNCHED
 launch_authorized: false
 
 base:
@@ -14,9 +14,28 @@ base:
   license_verification: HF_API
 
 data:
-  train: UNKNOWN
-  heldout_eval_only: UNKNOWN
+  train: SZLHOLDINGS/nan-navigator-sft-v1-private@584109f0c256ba8ae6f31a63dc9623326ac0a79b
+  train_rows: 4231
+  train_sha256: 7d92e0ea2e284174b0de53cbb5a44ab9f3f8de6fb4e5d8e31628b9700c5a4fb9
+  heldout_eval_only: SZLHOLDINGS/nan-navigator-sft-v1-private/data/heldout.jsonl
+  heldout_rows: 485
+  heldout_sha256: 8292d80ec1349c6e27c48d539d3d2e4b1781fc3f7b733423afebaf3176fc5270
+  heldout_abstain_rows: 54
+  heldout_abstain_sha256: ceb8a24616064e603ac13249f1870c5fad44fdb39711c8925be240e9e2cb2e95
+  sha256_source: SHA256SUMS
+  api_sha: UNKNOWN
+  lfs_oid: UNKNOWN
+  base_stays: Qwen/Qwen3-1.7B@70d244cc86ccca08cf5af4e1e306ecf908b1ad5e
   heldout_independence: UNKNOWN
+  data_status: PASS_WITH_CONDITIONS
+  embedding_similarity: UNAVAILABLE
+  contamination_not_run:
+    - GPQA
+    - szl-chaski/rotation heldouts
+    - AbstentionBench
+    - SimpleQA
+    - LiveCodeBench
+    - MTEB
 
 runtime:
   image: ghcr.io/szl-holdings/szl-train-pinned@sha256:8eb919654e0da406d41a2e307e7705cce8f6b79ad0be9556d74d4c4640e63235
@@ -44,4 +63,4 @@ publish:
   target_existence: UNKNOWN
   overwrite_existing: false
 
-blocker: dataset and eval-only heldout are UNKNOWN
+blocker: null

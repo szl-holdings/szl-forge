@@ -1,7 +1,7 @@
 {
   "schema": "szl.forge.hf-api-observation/v1",
   "observed_at": "2026-11-27",
-  "method": "GET https://huggingface.co/api/models/{repo} and GET https://huggingface.co/api/datasets/{repo}. License is cardData.license. Revision is the API sha field. No token was sent.",
+  "method": "Public models and the Q7 source datasets: GET https://huggingface.co/api/models/{repo} and GET https://huggingface.co/api/datasets/{repo} with no token. License is cardData.license. Revision is the API sha field. Private Q6/Q7/Q8 files: SHA256SUMS and contamination_verdict.json read from the Hub. Unauthenticated GET /api/datasets for those three repos returned 401, so their API commit sha and LFS oid stay UNKNOWN. File sha256 values are the SHA256SUMS lines, also copied in contamination_verdict.json. The jsonl bytes were not recomputed locally.",
   "observations": [
     {
       "id": "qwen35-0-8b",
@@ -83,6 +83,187 @@
       "splits": ["train"],
       "row_shape": "messages",
       "eval_only_heldout": "ABSENT"
+    },
+    {
+      "id": "szl-estate-graph",
+      "kind": "dataset",
+      "repo": "SZLHOLDINGS/szl-estate-graph",
+      "sha": "8262675ce6550c0bb180f54139c34ccd03ec5e77",
+      "license": "apache-2.0",
+      "license_name": null,
+      "license_verification": "HF_API",
+      "private": false
+    },
+    {
+      "id": "rag-corpus-v2",
+      "kind": "dataset",
+      "repo": "SZLHOLDINGS/rag-corpus-v2",
+      "sha": "4d830f3214d5895c61c1eb1bf4793eba3dcbd2e9",
+      "license": "apache-2.0",
+      "license_name": null,
+      "license_verification": "HF_API",
+      "private": false
+    },
+    {
+      "id": "doctrine-corpus-v2",
+      "kind": "dataset",
+      "repo": "SZLHOLDINGS/doctrine-corpus-v2",
+      "sha": "19d37224e77bd5f41eb5722c6b40fa35e38982bc",
+      "license": "cc-by-4.0",
+      "license_name": null,
+      "license_verification": "HF_API",
+      "private": false
+    },
+    {
+      "id": "a11oy-code-sft-v1-q6-split-private",
+      "kind": "dataset",
+      "repo": "SZLHOLDINGS/a11oy-code-sft-v1-q6-split-private",
+      "private": true,
+      "named_revision": "85227b97f4e97def69bdba792c3bd00c41808689",
+      "api_sha": "UNKNOWN",
+      "api_http_status": 401,
+      "license": "apache-2.0",
+      "license_name": null,
+      "license_verification": "HUB_CARD",
+      "sha256_source": "SHA256SUMS",
+      "lfs_oid": "UNKNOWN",
+      "data_check": {
+        "status": "PASS_WITH_CONDITIONS",
+        "embedding_similarity": "UNAVAILABLE",
+        "contamination_not_run": [
+          "GPQA",
+          "szl-chaski/rotation heldouts",
+          "AbstentionBench",
+          "SimpleQA",
+          "LiveCodeBench",
+          "MTEB"
+        ]
+      },
+      "not_checked_as_published": [
+        "gpqa_diamond (gated, 403)",
+        "SZLHOLDINGS/szl-chaski-heldout-private (private; not on box; no named yes to fetch)",
+        "SZLHOLDINGS/szl-heldout-rotation-private (not on box)",
+        "AbstentionBench, SimpleQA (not loaded)",
+        "LiveCodeBench (Q6 eval suite; not loaded)",
+        "MTEB tasks (Q7 eval suite; not loaded)"
+      ],
+      "files": [
+        {
+          "path": "data/train.jsonl",
+          "sha256": "5a8109f26a120bc66d040b8ee0740c3649574d6ece33bae1ec538526ef20dc8e",
+          "rows": 2124,
+          "role": "train"
+        },
+        {
+          "path": "data/heldout.jsonl",
+          "sha256": "4f85de2ad085c39e06c13ce4067752affc779ef2ccfe563c1d4d802b15edba7c",
+          "rows": 291,
+          "role": "heldout"
+        }
+      ]
+    },
+    {
+      "id": "rikchaq-embed-pairs-v1-private",
+      "kind": "dataset",
+      "repo": "SZLHOLDINGS/rikchaq-embed-pairs-v1-private",
+      "private": true,
+      "named_revision": "a02974ba8a04efcbcc05d7df5da7042123386bbe",
+      "api_sha": "UNKNOWN",
+      "api_http_status": 401,
+      "license": ["apache-2.0", "cc-by-4.0"],
+      "license_name": null,
+      "license_verification": "HUB_CARD",
+      "sha256_source": "SHA256SUMS",
+      "lfs_oid": "UNKNOWN",
+      "row_count_note": "SHA256SUMS, contamination_verdict.json files, reverify.train_rows, and the README table say 3504 train rows. build.train_rows_final is 3508 and final_by_kind sums to 3508. The pin uses 3504, the count attached to the train.jsonl sha256.",
+      "data_check": {
+        "status": "PASS_WITH_CONDITIONS",
+        "embedding_similarity": "UNAVAILABLE",
+        "contamination_not_run": [
+          "GPQA",
+          "szl-chaski/rotation heldouts",
+          "AbstentionBench",
+          "SimpleQA",
+          "LiveCodeBench",
+          "MTEB"
+        ]
+      },
+      "not_checked_as_published": [
+        "gpqa_diamond (gated, 403)",
+        "SZLHOLDINGS/szl-chaski-heldout-private (private; not on box; no named yes to fetch)",
+        "SZLHOLDINGS/szl-heldout-rotation-private (not on box)",
+        "AbstentionBench, SimpleQA (not loaded)",
+        "LiveCodeBench (Q6 eval suite; not loaded)",
+        "MTEB tasks (Q7 eval suite; not loaded)"
+      ],
+      "files": [
+        {
+          "path": "data/train.jsonl",
+          "sha256": "04192ebcfb7a0b5eedd369c247708eadb9f54eef4c0802d68c4d812723a6ecb9",
+          "rows": 3504,
+          "role": "train"
+        },
+        {
+          "path": "data/heldout.jsonl",
+          "sha256": "542c47c55629b33280b942a91865bb58c892d020070c9ea4e42eec7061495029",
+          "rows": 534,
+          "role": "heldout"
+        }
+      ]
+    },
+    {
+      "id": "nan-navigator-sft-v1-private",
+      "kind": "dataset",
+      "repo": "SZLHOLDINGS/nan-navigator-sft-v1-private",
+      "private": true,
+      "named_revision": "584109f0c256ba8ae6f31a63dc9623326ac0a79b",
+      "api_sha": "UNKNOWN",
+      "api_http_status": 401,
+      "license": "apache-2.0",
+      "license_name": null,
+      "license_verification": "HUB_CARD",
+      "sha256_source": "SHA256SUMS",
+      "lfs_oid": "UNKNOWN",
+      "data_check": {
+        "status": "PASS_WITH_CONDITIONS",
+        "embedding_similarity": "UNAVAILABLE",
+        "contamination_not_run": [
+          "GPQA",
+          "szl-chaski/rotation heldouts",
+          "AbstentionBench",
+          "SimpleQA",
+          "LiveCodeBench",
+          "MTEB"
+        ]
+      },
+      "not_checked_as_published": [
+        "gpqa_diamond (gated, 403)",
+        "SZLHOLDINGS/szl-chaski-heldout-private (private; not on box; no named yes to fetch)",
+        "SZLHOLDINGS/szl-heldout-rotation-private (not on box)",
+        "AbstentionBench, SimpleQA (not loaded)",
+        "LiveCodeBench (Q6 eval suite; not loaded)",
+        "MTEB tasks (Q7 eval suite; not loaded)"
+      ],
+      "files": [
+        {
+          "path": "data/train.jsonl",
+          "sha256": "7d92e0ea2e284174b0de53cbb5a44ab9f3f8de6fb4e5d8e31628b9700c5a4fb9",
+          "rows": 4231,
+          "role": "train"
+        },
+        {
+          "path": "data/heldout.jsonl",
+          "sha256": "8292d80ec1349c6e27c48d539d3d2e4b1781fc3f7b733423afebaf3176fc5270",
+          "rows": 485,
+          "role": "heldout"
+        },
+        {
+          "path": "data/heldout_abstain.jsonl",
+          "sha256": "ceb8a24616064e603ac13249f1870c5fad44fdb39711c8925be240e9e2cb2e95",
+          "rows": 54,
+          "role": "heldout_abstain"
+        }
+      ]
     }
   ]
 }

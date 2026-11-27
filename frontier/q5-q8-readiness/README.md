@@ -11,9 +11,9 @@ Unsloth path is rejected for these lanes.
 | Lane | Status | Why it is not a launch |
 |---|---|---|
 | Q5 ReceiptAgent 0.8B | `READY_NOT_LAUNCHED` | Pins, eval-only heldout, and a tiny CPU dry-run are recorded. Operator admission, heldout independence, and a native Qwen3.5 step are UNKNOWN. |
-| Q6 a11oy-code | `BLOCKED` | Apache-2.0 coder base is pinned. Eval-only heldout is ABSENT. |
-| Q7 embedder | `BLOCKED` | Embedding base is pinned. Pair dataset and eval-only heldout are UNKNOWN. |
-| Q8 brain-navigator | `BLOCKED` | Causal base is pinned. Dataset and eval-only heldout are UNKNOWN. |
+| Q6 a11oy-code | `READY_NOT_LAUNCHED` | Private split is pinned. Data status is PASS_WITH_CONDITIONS. Embedding-similarity was UNAVAILABLE. GPQA, the szl-chaski/rotation heldouts, AbstentionBench, SimpleQA, LiveCodeBench, and MTEB were not checked. The datasets API commit sha is UNKNOWN. |
+| Q7 embedder | `READY_NOT_LAUNCHED` | Private pair file is pinned, including CC BY 4.0 doctrine attribution declared on the card. Same conditions as Q6. Per-row attribution bytes were not rechecked. |
+| Q8 brain-navigator | `READY_NOT_LAUNCHED` | Private navigator file is pinned, including heldout_abstain. The base stays Qwen/Qwen3-1.7B. Same conditions as Q6. |
 
 Spend on every approved lane is capped at 100 USD per run, 500 USD per day,
 and 5000 USD per month. The only allowed providers are `salad` and `massed`.
