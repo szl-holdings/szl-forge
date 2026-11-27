@@ -51,7 +51,7 @@ szl_card:
     TRAIN: PRESENT
     EVAL: UNKNOWN
     SIGNED: GAP
-    HELD-OUT: UNKNOWN
+    HELD-OUT: FAIL
     STD BENCH: NOT_RUN
     GITHUB: PRESENT
   standard_benchmarks: NOT_RUN
@@ -134,7 +134,7 @@ szl_card:
 | TRAIN | **PRESENT** |
 | EVAL | **UNKNOWN** |
 | SIGNED | **GAP** |
-| HELD-OUT | **UNKNOWN** |
+| HELD-OUT | **FAIL** |
 | STD BENCH | **NOT_RUN** |
 | GITHUB | **PRESENT** |
 
@@ -169,7 +169,8 @@ Small-n SZL suites are behaviour checks, not capability benchmarks; the confiden
 
 ## Evaluation
 
-No evaluation receipt was found in this repo at this revision. **UNKNOWN.**
+No evaluation receipt was found in this Hub revision, so EVAL is **UNKNOWN**.
+The separate canonical held-out result is disclosed in the FAIL / QUARANTINE section below.
 
 Standard benchmarks (MMLU-Pro, GSM8K, IFEval, BBH, ARC-C, TruthfulQA, SimpleQA, AbstentionBench): **NOT RUN**. They are planned as baseline item Y1 in the SZL training plan and need Stephen's yes for that run. 
 
@@ -193,7 +194,7 @@ Interactive 3D view: proposed binding to the public Space [`SZLHOLDINGS/szl-mode
 - Research artifact. Not promoted, not autonomous, not a production authorization.
 - Every number on this card comes from a receipt file linked above. Anything without a receipt is shown as UNKNOWN or NOT RUN.
 - Λ = Conjecture 1 (advisory, never a theorem).
-- Card quality gaps found in the audit: no model-index; no standard benchmark; no held-out result on card; no limitations / intended-use section; no citation.
+- Card quality gaps found in the audit: no model-index; no standard benchmark; held-out FAIL on record; no limitations / intended-use section; no citation.
 
 ## Citation
 
@@ -211,6 +212,23 @@ Interactive 3D view: proposed binding to the public Space [`SZLHOLDINGS/szl-mode
 <!-- szl-card: v1 end -->
 
 ---
+
+## Canonical held-out gate: FAIL / QUARANTINE
+
+> **QUARANTINE.** Research residue.
+
+The [2026-08-28 training receipt](https://huggingface.co/SZLHOLDINGS/chaski-5050/blob/c1f9882e556550bafc3716f84902d0272b992ddb/training_receipt.json) records `evals=none-this-run`: no JSON/refusal gate ran in that training step.
+
+A [separate 2026-09-15 canonical gate receipt](https://github.com/szl-holdings/szl-forge/blob/6f4ac90ff503265cec9c0436587f086e52d6124e/frontier/evaluation/gate_runs/chaski-5050_63ea80915ccb_20260915T041028Z_receipt.json) at historical Hub revision `63ea80915ccb663b4aa589cbf2ce52a1dec574fe` reports **1/5 held-out and overall FAIL**, with `heldout.refusal_no_regression=false`. Its separate refusal command passed; that does not change the overall failure. Production and publication authorization are **false**. This receipt is a distinct owner-run suite; its applicability to the current distributed forms was not independently established in this review. No 5/5 or 6/6 qualification is claimed.
+
+Lab load is forbidden. The card does not authorize artifact changes or model promotion. Runtime loading has not been verified. Root adapter metadata contains a nonportable owner-local base path.
+
+The training receipt describes an owner-local recipe of bf16 LoRA r=16, α=16, seed 11, and the dataset `SZLHOLDINGS/szl-1-doctrine-sft`, 41 rows.
+
+Lineage and evaluation applicability were not independently established here for `adapter-unsloth/`; it is not interchangeable with the root adapter by assumption.
+
+Canonical card authoring source: [chaski-5050/card/README.md](https://github.com/szl-holdings/szl-forge/blob/6f4ac90ff503265cec9c0436587f086e52d6124e/chaski-5050/card/README.md).
+
 
 <!-- HOLO3D:v1 -->
 <details>

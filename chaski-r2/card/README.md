@@ -243,6 +243,10 @@ Held-out: 1/5 passed (pass_rate 0.2); refusalPassed true; publicationAuthorizati
 This model is not promotable. publication_eligible: false. no autonomy. Not authorized for production deployment. Research-only.
 The 2026-09-25 evaluation binding is adapter-only (adapter-scoped); it does not authorize the merged weights.
 
+The training step itself reported no evaluation.
+The later adapter result does not erase the earlier gate **FAIL**, qualify the merged checkpoint, or establish semantic truth or general safety.
+The 2026-09-25 adapter bake-off reported 5/5 draft contracts; 6/6 refusal prefixes; that adapter-only binding does not establish merged-model evaluation identity.
+
 <!-- HOLO3D:v1 -->
 <details>
 <summary><b>▸ SZL Holo-Stats 3D</b></summary>
