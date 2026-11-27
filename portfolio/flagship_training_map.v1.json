@@ -1,0 +1,1002 @@
+{
+  "schema": "szl.forge.flagship-training-map/v1",
+  "generated": "2026-11-26T22:45-05:00",
+  "authority": "NONE",
+  "statement": "Proposal map only. Registration here is not training, evaluation, promotion, or publication authority. Unknowns stay UNKNOWN.",
+  "registry_source": "/workspace/chakana/model-names/REGISTRY.md (proposal names; Hub ids unchanged)",
+  "source_pins": {
+    "szl-forge": "a0e62192b5b9fe53d56bb39301a911a3d3a0e754",
+    "lean-rlvr-proving-ground": "6d19dc68cca3038a52e77f815927a1bd89f29dcc",
+    "lutar-lean": "cf9041db37c4de2eb83746f8393446a50af0afbb",
+    "szl-abstention-frontier": "d669eddcbb7d1a3892b88accc5ea98aa640eec14",
+    "szl-gpu-bridge": "7d010e3ff0fb932831dcfa92d550f664eb680d1d",
+    "szl-invariants": "9286b216595e36a560695d4691fc2e634e5e8b54",
+    "szl-formulas": "09383fc292d692b81cdeae1ffc121cea2433feb9",
+    "szl-khipu": "74a21ddc9eda5596ac518ae21a7df972ce908207",
+    "governed-receipt-spec": "e9c30c0b4a15312dd888afd0cf614df30057e328",
+    "szl-receipt": "c8b8582421413072141fd999dfd434a0591e08ad",
+    "szl-nemo": "083ba6b3804ac97b27ad01f82599cf38c837b08c",
+    "szl-ouroboros": "150511e17744e39f6c14b1498d2500a41c489495",
+    "szl-vertical-forge": "48a2af1abe3bec1136419b9ef0a631c07c8bff72",
+    "szl-eval-harness": "d524be88a7e15b67395a89e7dd435ee2233de373",
+    "szl-evidence-core": "3601d2fbf6746c2274463dd4d2e9ab3f86ddb3d0",
+    "szl-retrieval-bench": "0755d826e2563551802bc8df75767c360df6b622"
+  },
+  "flagships": [
+    {
+      "line": "A",
+      "registry_name": "Hamut'aq",
+      "hub_repo": "SZLHOLDINGS/salad-chaski-r4-mix1",
+      "role": "abstention (0.8B flagship; 4B/9B variants below base)",
+      "forge_portfolio_registered": false,
+      "training_authority": "NONE",
+      "signals": [
+        {
+          "kind": "sft_data",
+          "repo": "szl-forge",
+          "path": "chaski_r4/train.jsonl",
+          "state": "EXISTING"
+        },
+        {
+          "kind": "sft_data",
+          "repo": "szl-abstention-frontier",
+          "path": "receipts/corpus_v2_publish_receipts.json",
+          "state": "EXISTING",
+          "note": "points to HF dataset SZLHOLDINGS/szl-distill-abstention-v2-sft"
+        },
+        {
+          "kind": "rlvr_reward",
+          "repo": "szl-gpu-bridge",
+          "path": "tools/absrl/rewards_v2.py",
+          "state": "EXISTING",
+          "note": "GRPO abstention reward. Salad image pins trl 0.13; GRPOTrainer needs >=0.14 (image not built)."
+        },
+        {
+          "kind": "eval",
+          "repo": "szl-abstention-frontier",
+          "path": "src/qualify.py",
+          "state": "EXISTING",
+          "note": "46-pair held-out verifier; keyword regex classify.py; never authorizes promotion."
+        },
+        {
+          "kind": "eval_data",
+          "repo": "(laptop only)",
+          "path": "heldout-v1 probes.jsonl, heldout-v2 78-probe set",
+          "state": "MISSING",
+          "note": "Only on the laptop per YUH; not in any repo. DC IN is the only laptop writer."
+        },
+        {
+          "kind": "rlvr_reward",
+          "repo": "lean-rlvr-proving-ground",
+          "path": "rewards.py",
+          "state": "EXISTING",
+          "note": "ABSTAIN-on-CONJECTURE = 0.5 honesty signal, usable as auxiliary reward"
+        },
+        {
+          "kind": "eval",
+          "repo": "(none)",
+          "path": "tier-S standard benchmarks (lm-eval 0.4.13)",
+          "state": "MISSING",
+          "note": "No szl-eval-pinned image digest (Kamay K-EVAL-PUBLISH)."
+        }
+      ],
+      "status_note": "MEASURED/HOLD/UNSIGNED, 46-probe keyword rubric",
+      "plan_item": "Y2",
+      "lean": {
+        "fit": "Abstention: honest ABSTAIN on CONJECTURE probes earns 0.5, bluffing earns 0; Theorem-U rows test that Conjecture 1 is never claimed proven.",
+        "reward": {
+          "impl": "lean-rlvr-proving-ground grpo_adapter.LeanKernelReward + trl_text_adapter (PR #32)",
+          "lane": "core",
+          "registry_slices": [
+            "core-probes",
+            "core-proving54"
+          ],
+          "state": "EXISTING_CORE",
+          "rights_note": "proving54 manifest marks Probes.lean POINTER_ONLY_NO_GRADIENTS / REVIEW_REQUIRED; a rights yes is needed before gradients",
+          "shaping": "ABSTAIN-on-CONJECTURE 0.5 auxiliary"
+        },
+        "eval_slices": [
+          {
+            "id": "atlas-conjecture",
+            "repo": "lean-rlvr-proving-ground",
+            "path": "probes/atlas/proving-ground.json",
+            "format": "atlas",
+            "lane": "core",
+            "use": "eval",
+            "filter": {
+              "class": "CONJECTURE"
+            },
+            "rows": 4,
+            "sha256": "4960a02c717661c464d484fecc80d22f873b8e9cba902e0879fc8abe0e607dbd"
+          },
+          {
+            "id": "lutar-theorem-u",
+            "repo": "lutar-lean",
+            "path": "benchmark/estate_pinned_v1.jsonl",
+            "format": "jsonl",
+            "lane": "mathlib",
+            "use": "eval",
+            "filter": {
+              "kind": "theorem_u"
+            },
+            "rows": 6,
+            "sha256": "7a673ac311974c1a6bcf42c21e3b2e539489de8d59dfca9759af272b13c5178d"
+          }
+        ],
+        "no_training_data": false
+      }
+    },
+    {
+      "line": "B",
+      "registry_name": "Chimpu",
+      "hub_repo": "SZLHOLDINGS/szl-receiptagent-qwen35-0.8b-v2",
+      "role": "receipt drafting agent",
+      "forge_portfolio_registered": true,
+      "training_authority": "NONE",
+      "signals": [
+        {
+          "kind": "sft_data",
+          "repo": "szl-forge",
+          "path": "receiptagent",
+          "state": "EXISTING"
+        },
+        {
+          "kind": "rlvr_reward",
+          "repo": "szl-forge",
+          "path": "training/rewards/invariant_reward.py",
+          "state": "LOCAL_PATCH",
+          "note": "szl-invariants replay as reward with task binding; added in this change."
+        },
+        {
+          "kind": "verifier",
+          "repo": "governed-receipt-spec",
+          "path": "verify.py",
+          "state": "EXISTING",
+          "note": "format/signature verifier; no reward wrapper"
+        },
+        {
+          "kind": "verifier",
+          "repo": "szl-receipt",
+          "path": "src",
+          "state": "EXISTING",
+          "note": "DSSE receipt sign/verify library; no reward wrapper"
+        },
+        {
+          "kind": "eval",
+          "repo": "(none)",
+          "path": "tier-S standard benchmarks (lm-eval 0.4.13)",
+          "state": "MISSING",
+          "note": "No szl-eval-pinned image digest (Kamay K-EVAL-PUBLISH)."
+        }
+      ],
+      "status_note": "signed eval 5/5 + 6/6, publicationEligible false",
+      "plan_item": "Y4",
+      "lean": {
+        "fit": "Receipts: replay-hash determinism and locked receipt carriers (locked-8) as proof targets; invariant reward is the main signal.",
+        "reward": {
+          "impl": "lean-rlvr-proving-ground grpo_adapter.LeanKernelReward + trl_text_adapter (PR #32)",
+          "lane": "core",
+          "registry_slices": [
+            "core-probes",
+            "core-proving54"
+          ],
+          "state": "EXISTING_CORE",
+          "rights_note": "proving54 manifest marks Probes.lean POINTER_ONLY_NO_GRADIENTS / REVIEW_REQUIRED; a rights yes is needed before gradients"
+        },
+        "eval_slices": [
+          {
+            "id": "lutar-locked8",
+            "repo": "lutar-lean",
+            "path": "benchmark/estate_pinned_v1.jsonl",
+            "format": "jsonl",
+            "lane": "mathlib",
+            "use": "eval",
+            "filter": {
+              "kind": "locked8"
+            },
+            "rows": 24,
+            "sha256": "d2e5ce5326e333938dee39a8a4fe82c4c7bdfd51d28f019394d9c995eaa44782"
+          },
+          {
+            "id": "core-probes",
+            "repo": "lean-rlvr-proving-ground",
+            "path": "probes/Probes.lean",
+            "format": "file",
+            "lane": "core",
+            "use": "reward_registry",
+            "rows": 1,
+            "sha256": "5ce56c5baabfd4fe689d6aab0fbd3153a1f11159e881758f7cf83c7dba807661"
+          }
+        ],
+        "no_training_data": false
+      }
+    },
+    {
+      "line": "C",
+      "registry_name": "Amawta",
+      "hub_repo": "SZLHOLDINGS/SZL-Khipu-1.5B",
+      "role": "scholar/heritage (GATED, unpromoted)",
+      "forge_portfolio_registered": true,
+      "training_authority": "NONE",
+      "signals": [
+        {
+          "kind": "sft_data",
+          "repo": "szl-forge",
+          "path": "khipu_r2/train_khipu_r2.py",
+          "state": "EXISTING"
+        },
+        {
+          "kind": "dpo_pairs",
+          "repo": "szl-forge",
+          "path": "tools/szl_khipu_dpo.py",
+          "state": "EXISTING"
+        },
+        {
+          "kind": "eval",
+          "repo": "szl-khipu",
+          "path": "eval/run_heldout.py",
+          "state": "EXISTING"
+        },
+        {
+          "kind": "eval",
+          "repo": "szl-khipu",
+          "path": "eval/run_refusal.py",
+          "state": "EXISTING"
+        },
+        {
+          "kind": "eval",
+          "repo": "(none)",
+          "path": "tier-S standard benchmarks (lm-eval 0.4.13)",
+          "state": "MISSING",
+          "note": "No szl-eval-pinned image digest (Kamay K-EVAL-PUBLISH)."
+        }
+      ],
+      "status_note": "signed abstain 2/6; no promotion",
+      "plan_item": "Y-DEFER",
+      "lean": {
+        "fit": "Scholar/heritage: Egyptian/Greek core probes and the 30-formula atlas as eval only (GATED, no promotion).",
+        "reward": null,
+        "eval_slices": [
+          {
+            "id": "core-probes",
+            "repo": "lean-rlvr-proving-ground",
+            "path": "probes/Probes.lean",
+            "format": "file",
+            "lane": "core",
+            "use": "reward_registry",
+            "rows": 1,
+            "sha256": "5ce56c5baabfd4fe689d6aab0fbd3153a1f11159e881758f7cf83c7dba807661"
+          },
+          {
+            "id": "atlas-all",
+            "repo": "lean-rlvr-proving-ground",
+            "path": "probes/atlas/proving-ground.json",
+            "format": "atlas",
+            "lane": "core",
+            "use": "eval",
+            "rows": 30,
+            "sha256": "f9f0d12d8832e8a3609e56c5bc33a6171ece00b7f10eaba55081b44ae91d2d11"
+          }
+        ],
+        "no_training_data": false
+      }
+    },
+    {
+      "line": "D",
+      "registry_name": "Willay",
+      "hub_repo": "SZLHOLDINGS/WILLAY",
+      "role": "norms classifier",
+      "forge_portfolio_registered": false,
+      "training_authority": "NONE",
+      "signals": [
+        {
+          "kind": "sft_data",
+          "repo": "szl-forge",
+          "path": "willay",
+          "state": "BROKEN",
+          "note": "folder holds only card/; no trainer or data in szl-forge"
+        },
+        {
+          "kind": "eval",
+          "repo": "(Hub)",
+          "path": "8-fixture contract eval",
+          "state": "EXISTING",
+          "note": "adapter worse than base"
+        },
+        {
+          "kind": "eval",
+          "repo": "(none)",
+          "path": "tier-S standard benchmarks (lm-eval 0.4.13)",
+          "state": "MISSING",
+          "note": "No szl-eval-pinned image digest (Kamay K-EVAL-PUBLISH)."
+        }
+      ],
+      "status_note": "LOCAL_MEASURED, worse than base",
+      "plan_item": "DEFER",
+      "lean": {
+        "fit": "Norms: MC1 deny-by-default candidate formalization as a norms eval slice.",
+        "reward": null,
+        "eval_slices": [
+          {
+            "id": "formulas-mc1-deny-by-default",
+            "repo": "szl-formulas",
+            "path": "lean/MC1_deny_by_default.lean",
+            "format": "file",
+            "lane": "core",
+            "use": "eval",
+            "rows": 1,
+            "sha256": "7faf46c37b1c4bc766d4ed41bfd7d4b3942fe60e484cc2ab0fe6ec00f8cd0456"
+          }
+        ],
+        "no_training_data": true
+      }
+    },
+    {
+      "line": "E",
+      "registry_name": "Llamk'aq",
+      "hub_repo": "SZLHOLDINGS/a11oy-r2",
+      "role": "vertical worker personas",
+      "forge_portfolio_registered": false,
+      "training_authority": "NONE",
+      "signals": [
+        {
+          "kind": "config",
+          "repo": "szl-vertical-forge",
+          "path": "src",
+          "state": "EXISTING",
+          "note": "vertical configs for landing pages, not training data"
+        },
+        {
+          "kind": "sft_data",
+          "repo": "(none)",
+          "path": "multi-vertical SFT corpus",
+          "state": "MISSING"
+        },
+        {
+          "kind": "eval",
+          "repo": "(none)",
+          "path": "tier-S standard benchmarks (lm-eval 0.4.13)",
+          "state": "MISSING",
+          "note": "No szl-eval-pinned image digest (Kamay K-EVAL-PUBLISH)."
+        }
+      ],
+      "status_note": "smoke only",
+      "plan_item": "DEFER",
+      "lean": {
+        "fit": "Vertical worker: pinned locked-8 slice as a reasoning sanity eval until vertical data exists.",
+        "reward": null,
+        "eval_slices": [
+          {
+            "id": "lutar-locked8",
+            "repo": "lutar-lean",
+            "path": "benchmark/estate_pinned_v1.jsonl",
+            "format": "jsonl",
+            "lane": "mathlib",
+            "use": "eval",
+            "filter": {
+              "kind": "locked8"
+            },
+            "rows": 24,
+            "sha256": "d2e5ce5326e333938dee39a8a4fe82c4c7bdfd51d28f019394d9c995eaa44782"
+          }
+        ],
+        "no_training_data": true
+      }
+    },
+    {
+      "line": "F",
+      "registry_name": "Kancha",
+      "hub_repo": "SZLHOLDINGS/SZL-Lean-Invariants-1.7B",
+      "role": "estate multi-skill + RLVR specialists (Sut'i = Lean/invariants)",
+      "forge_portfolio_registered": false,
+      "training_authority": "NONE",
+      "signals": [
+        {
+          "kind": "sft_data",
+          "repo": "szl-forge",
+          "path": "training/lutar_axiom_intake.py",
+          "state": "EXISTING",
+          "note": "160 train / 80 held-out Lutar A1-A5 curriculum; training_authority NONE."
+        },
+        {
+          "kind": "rlvr_reward",
+          "repo": "lean-rlvr-proving-ground",
+          "path": "grpo_adapter.py",
+          "state": "EXISTING",
+          "note": "Lean kernel referee reward; selftest 6/6 PASS on box CPU 2026-11-26. Plain-text only."
+        },
+        {
+          "kind": "rlvr_adapter",
+          "repo": "lean-rlvr-proving-ground",
+          "path": "trl_text_adapter.py",
+          "state": "PR_OPEN",
+          "note": "Conversation-to-text adapter: szl-holdings/lean-rlvr-proving-ground#32."
+        },
+        {
+          "kind": "eval",
+          "repo": "lutar-lean",
+          "path": "benchmark/estate_pinned_v1.jsonl",
+          "state": "EXISTING",
+          "note": "147 pinned rows (README says 157). Needs Mathlib; the proving-ground referee is core-only, so no reward lane exists."
+        },
+        {
+          "kind": "rlvr_reward",
+          "repo": "szl-forge",
+          "path": "training/rewards/invariant_reward.py",
+          "state": "LOCAL_PATCH",
+          "note": "szl-invariants replay as reward with task binding; added in this change."
+        },
+        {
+          "kind": "verifier",
+          "repo": "szl-formulas",
+          "path": "lean",
+          "state": "EXISTING",
+          "note": "3 Lean files + locked-formula contracts; no reward wrapper"
+        },
+        {
+          "kind": "eval",
+          "repo": "(Hub)",
+          "path": "evaluations/estate-battery-6probe.json",
+          "state": "EXISTING",
+          "note": "3/6 MEASURED; no Lean pass@k measured"
+        },
+        {
+          "kind": "eval",
+          "repo": "(none)",
+          "path": "tier-S standard benchmarks (lm-eval 0.4.13)",
+          "state": "MISSING",
+          "note": "No szl-eval-pinned image digest (Kamay K-EVAL-PUBLISH)."
+        }
+      ],
+      "status_note": "6-probe only; Kancha flagship SZL-1.7B-Estate does not exist",
+      "plan_item": "Y5",
+      "lean": {
+        "fit": "Lean/invariants specialist: full core reward now, Mathlib reward over sorry-open targets once the isolated worker lands; all 147 pinned rows as eval.",
+        "reward": {
+          "impl": "isolated Lean worker with pinned Mathlib (PR-lean-rlvr-proving-ground-isolated-worker)",
+          "lane": "mathlib",
+          "registry_slices": [
+            "lutar-sorry-open",
+            "lutar-locked8"
+          ],
+          "state": "PR_OPEN_OR_MISSING",
+          "core_fallback": {
+            "impl": "lean-rlvr-proving-ground grpo_adapter.LeanKernelReward + trl_text_adapter (PR #32)",
+            "lane": "core",
+            "registry_slices": [
+              "core-probes",
+              "core-proving54"
+            ],
+            "state": "EXISTING_CORE",
+            "rights_note": "proving54 manifest marks Probes.lean POINTER_ONLY_NO_GRADIENTS / REVIEW_REQUIRED; a rights yes is needed before gradients"
+          }
+        },
+        "eval_slices": [
+          {
+            "id": "lutar-estate-all",
+            "repo": "lutar-lean",
+            "path": "benchmark/estate_pinned_v1.jsonl",
+            "format": "jsonl",
+            "lane": "mathlib",
+            "use": "eval",
+            "rows": 147,
+            "sha256": "8a86686b0a0b8a10d6723af5a886d06466955e331501ed2b528155881605a218"
+          },
+          {
+            "id": "atlas-symbolic",
+            "repo": "lean-rlvr-proving-ground",
+            "path": "probes/atlas/proving-ground.json",
+            "format": "atlas",
+            "lane": "core",
+            "use": "eval",
+            "filter": {
+              "class": "SYMBOLIC"
+            },
+            "rows": 15,
+            "sha256": "f699256c2fcf467631fc92260a6a87fa3b7f64487b8b13d9fc50babd41264116"
+          },
+          {
+            "id": "core-proving54",
+            "repo": "lean-rlvr-proving-ground",
+            "path": "probes/Proving54.lean",
+            "format": "file",
+            "lane": "core",
+            "use": "reward_registry",
+            "rows": 1,
+            "sha256": "470acfe947f07c20470ba3ef1fe814f9c3e194c8bc89ce9da82a33f1d664e497"
+          }
+        ],
+        "no_training_data": false
+      }
+    },
+    {
+      "line": "G",
+      "registry_name": "Illapa",
+      "hub_repo": "SZLHOLDINGS/SZL-Nemotron-Mini-4B-Estate-v1",
+      "role": "Nemotron estate model",
+      "forge_portfolio_registered": false,
+      "training_authority": "NONE",
+      "signals": [
+        {
+          "kind": "jobspec",
+          "repo": "szl-gpu-bridge",
+          "path": "jobspecs/nemo-v3-*.json",
+          "state": "BROKEN",
+          "note": "attempts 8-15+ stopped before training; laptop executor"
+        },
+        {
+          "kind": "verifier",
+          "repo": "szl-nemo",
+          "path": "szl_nemo",
+          "state": "EXISTING",
+          "note": "doctrine checker / envelope witness, not a model"
+        },
+        {
+          "kind": "license",
+          "repo": "(Hub)",
+          "path": "NVIDIA NOTICE",
+          "state": "MISSING"
+        },
+        {
+          "kind": "eval",
+          "repo": "(none)",
+          "path": "tier-S standard benchmarks (lm-eval 0.4.13)",
+          "state": "MISSING",
+          "note": "No szl-eval-pinned image digest (Kamay K-EVAL-PUBLISH)."
+        }
+      ],
+      "status_note": "weights only on live Hub",
+      "plan_item": "Y6",
+      "lean": {
+        "fit": "Nemotron estate model: core Lean reward on Probes/Proving54 plus locked-8 eval.",
+        "reward": {
+          "impl": "lean-rlvr-proving-ground grpo_adapter.LeanKernelReward + trl_text_adapter (PR #32)",
+          "lane": "core",
+          "registry_slices": [
+            "core-probes",
+            "core-proving54"
+          ],
+          "state": "EXISTING_CORE",
+          "rights_note": "proving54 manifest marks Probes.lean POINTER_ONLY_NO_GRADIENTS / REVIEW_REQUIRED; a rights yes is needed before gradients"
+        },
+        "eval_slices": [
+          {
+            "id": "lutar-locked8",
+            "repo": "lutar-lean",
+            "path": "benchmark/estate_pinned_v1.jsonl",
+            "format": "jsonl",
+            "lane": "mathlib",
+            "use": "eval",
+            "filter": {
+              "kind": "locked8"
+            },
+            "rows": 24,
+            "sha256": "d2e5ce5326e333938dee39a8a4fe82c4c7bdfd51d28f019394d9c995eaa44782"
+          },
+          {
+            "id": "core-proving54",
+            "repo": "lean-rlvr-proving-ground",
+            "path": "probes/Proving54.lean",
+            "format": "file",
+            "lane": "core",
+            "use": "reward_registry",
+            "rows": 1,
+            "sha256": "470acfe947f07c20470ba3ef1fe814f9c3e194c8bc89ce9da82a33f1d664e497"
+          }
+        ],
+        "no_training_data": false
+      }
+    },
+    {
+      "line": "H",
+      "registry_name": "Muyu",
+      "hub_repo": "SZLHOLDINGS/salad-ring-v3",
+      "role": "ring / bounded loop",
+      "forge_portfolio_registered": false,
+      "training_authority": "NONE",
+      "signals": [
+        {
+          "kind": "verifier",
+          "repo": "szl-ouroboros",
+          "path": "torch-ext",
+          "state": "EXISTING",
+          "note": "bounded-loop kernel; no reward wrapper"
+        },
+        {
+          "kind": "sft_data",
+          "repo": "(none)",
+          "path": "ring training data",
+          "state": "MISSING"
+        },
+        {
+          "kind": "eval",
+          "repo": "(none)",
+          "path": "tier-S standard benchmarks (lm-eval 0.4.13)",
+          "state": "MISSING",
+          "note": "No szl-eval-pinned image digest (Kamay K-EVAL-PUBLISH)."
+        }
+      ],
+      "status_note": "weights only, eval UNKNOWN",
+      "plan_item": "DEFER",
+      "lean": {
+        "fit": "Ring/loop: the self-proving loop consumes sorry-open targets; pinned slice as eval until ring data exists.",
+        "reward": null,
+        "eval_slices": [
+          {
+            "id": "lutar-sorry-open",
+            "repo": "lutar-lean",
+            "path": "benchmark/estate_pinned_v1.jsonl",
+            "format": "jsonl",
+            "lane": "mathlib",
+            "use": "eval",
+            "filter": {
+              "kind": "sorry_open"
+            },
+            "rows": 51,
+            "sha256": "0a80574ccf29b88d6fd52c684f2f980055342f24e75fd10a1a84a5a673c06487"
+          }
+        ],
+        "no_training_data": true
+      }
+    },
+    {
+      "line": "I1",
+      "registry_name": "Siq'iq",
+      "hub_repo": "SZLHOLDINGS/a11oy-code-r1-candidate",
+      "role": "code model",
+      "forge_portfolio_registered": false,
+      "training_authority": "NONE",
+      "signals": [
+        {
+          "kind": "verifier",
+          "repo": "(none)",
+          "path": "unit-test execution reward",
+          "state": "MISSING"
+        },
+        {
+          "kind": "license",
+          "repo": "(Hub)",
+          "path": "qwen-research base",
+          "state": "BROKEN",
+          "note": "non-commercial base; rebase needed"
+        },
+        {
+          "kind": "eval",
+          "repo": "(none)",
+          "path": "tier-S standard benchmarks (lm-eval 0.4.13)",
+          "state": "MISSING",
+          "note": "No szl-eval-pinned image digest (Kamay K-EVAL-PUBLISH)."
+        }
+      ],
+      "status_note": "3/6; license blocks commercial use",
+      "plan_item": "Y7",
+      "lean": {
+        "fit": "Code: proofs-as-code reward on core probes (compile = reward).",
+        "reward": {
+          "impl": "lean-rlvr-proving-ground grpo_adapter.LeanKernelReward + trl_text_adapter (PR #32)",
+          "lane": "core",
+          "registry_slices": [
+            "core-probes",
+            "core-proving54"
+          ],
+          "state": "EXISTING_CORE",
+          "rights_note": "proving54 manifest marks Probes.lean POINTER_ONLY_NO_GRADIENTS / REVIEW_REQUIRED; a rights yes is needed before gradients"
+        },
+        "eval_slices": [
+          {
+            "id": "core-probes",
+            "repo": "lean-rlvr-proving-ground",
+            "path": "probes/Probes.lean",
+            "format": "file",
+            "lane": "core",
+            "use": "reward_registry",
+            "rows": 1,
+            "sha256": "5ce56c5baabfd4fe689d6aab0fbd3153a1f11159e881758f7cf83c7dba807661"
+          },
+          {
+            "id": "core-proving54",
+            "repo": "lean-rlvr-proving-ground",
+            "path": "probes/Proving54.lean",
+            "format": "file",
+            "lane": "core",
+            "use": "reward_registry",
+            "rows": 1,
+            "sha256": "470acfe947f07c20470ba3ef1fe814f9c3e194c8bc89ce9da82a33f1d664e497"
+          }
+        ],
+        "no_training_data": true
+      }
+    },
+    {
+      "line": "I2",
+      "registry_name": "Tiksi",
+      "hub_repo": "SZLHOLDINGS/salad-axiom-invariants-r2",
+      "role": "axiom / invariants",
+      "forge_portfolio_registered": false,
+      "training_authority": "NONE",
+      "signals": [
+        {
+          "kind": "rlvr_reward",
+          "repo": "szl-forge",
+          "path": "training/rewards/invariant_reward.py",
+          "state": "LOCAL_PATCH",
+          "note": "szl-invariants replay as reward with task binding; added in this change."
+        },
+        {
+          "kind": "rlvr_reward",
+          "repo": "lean-rlvr-proving-ground",
+          "path": "grpo_adapter.py",
+          "state": "EXISTING",
+          "note": "Lean kernel referee reward; selftest 6/6 PASS on box CPU 2026-11-26. Plain-text only."
+        },
+        {
+          "kind": "rlvr_adapter",
+          "repo": "lean-rlvr-proving-ground",
+          "path": "trl_text_adapter.py",
+          "state": "PR_OPEN",
+          "note": "Conversation-to-text adapter: szl-holdings/lean-rlvr-proving-ground#32."
+        },
+        {
+          "kind": "verifier",
+          "repo": "szl-formulas",
+          "path": "contracts/locked-formula-reference.v1.json",
+          "state": "EXISTING"
+        },
+        {
+          "kind": "license",
+          "repo": "(Hub)",
+          "path": "card says apache-2.0 on qwen-research base",
+          "state": "BROKEN"
+        }
+      ],
+      "status_note": "eval UNKNOWN",
+      "plan_item": "DEFER",
+      "lean": {
+        "fit": "Axioms/invariants: locked-8 carriers, covenant and wedge formalizations; core reward plus invariant reward.",
+        "reward": {
+          "impl": "lean-rlvr-proving-ground grpo_adapter.LeanKernelReward + trl_text_adapter (PR #32)",
+          "lane": "core",
+          "registry_slices": [
+            "core-probes",
+            "core-proving54"
+          ],
+          "state": "EXISTING_CORE",
+          "rights_note": "proving54 manifest marks Probes.lean POINTER_ONLY_NO_GRADIENTS / REVIEW_REQUIRED; a rights yes is needed before gradients"
+        },
+        "eval_slices": [
+          {
+            "id": "lutar-locked8",
+            "repo": "lutar-lean",
+            "path": "benchmark/estate_pinned_v1.jsonl",
+            "format": "jsonl",
+            "lane": "mathlib",
+            "use": "eval",
+            "filter": {
+              "kind": "locked8"
+            },
+            "rows": 24,
+            "sha256": "d2e5ce5326e333938dee39a8a4fe82c4c7bdfd51d28f019394d9c995eaa44782"
+          },
+          {
+            "id": "formulas-f24-f25-covenant",
+            "repo": "szl-formulas",
+            "path": "lean/F24_F25_covenant.lean",
+            "format": "file",
+            "lane": "core",
+            "use": "eval",
+            "rows": 1,
+            "sha256": "22fb5fac085f76cf7174b215f64eaccc91d2840ab4cb196803a40f4e398dc542"
+          },
+          {
+            "id": "formulas-wedge-challenge",
+            "repo": "szl-formulas",
+            "path": "lean/CHALLENGE_wedge.v1.lean",
+            "format": "file",
+            "lane": "core",
+            "use": "eval",
+            "rows": 1,
+            "sha256": "bd33a98d0abf29d59394015da8e55cc37dbe342830e7513138c214395c0de3ad"
+          }
+        ],
+        "no_training_data": false
+      }
+    },
+    {
+      "line": "I3",
+      "registry_name": "Rikch'aq",
+      "hub_repo": "SZLHOLDINGS/chakana-r1-candidate",
+      "role": "embedder",
+      "forge_portfolio_registered": false,
+      "training_authority": "NONE",
+      "signals": [
+        {
+          "kind": "sft_data",
+          "repo": "szl-forge",
+          "path": "chakana/train_chakana.py",
+          "state": "EXISTING",
+          "note": "pairs.schema.json; eval_receipt is a stub"
+        },
+        {
+          "kind": "eval",
+          "repo": "szl-retrieval-bench",
+          "path": "(repo)",
+          "state": "EXISTING",
+          "note": "nDCG/Recall/MRR lane, not wired to this model"
+        }
+      ],
+      "status_note": "weights only, nDCG UNKNOWN",
+      "plan_item": "Y8",
+      "lean": {
+        "fit": "Embedder: statement retrieval over the 147 pinned statements (statement_sha256 as key).",
+        "reward": null,
+        "eval_slices": [
+          {
+            "id": "lutar-estate-all",
+            "repo": "lutar-lean",
+            "path": "benchmark/estate_pinned_v1.jsonl",
+            "format": "jsonl",
+            "lane": "mathlib",
+            "use": "eval",
+            "rows": 147,
+            "sha256": "8a86686b0a0b8a10d6723af5a886d06466955e331501ed2b528155881605a218"
+          }
+        ],
+        "no_training_data": false
+      }
+    },
+    {
+      "line": "I4",
+      "registry_name": "Chani",
+      "hub_repo": "SZLHOLDINGS/salad-x402-frontier-v1",
+      "role": "x402 protocol (HOLD)",
+      "forge_portfolio_registered": false,
+      "training_authority": "NONE",
+      "signals": [
+        {
+          "kind": "eval",
+          "repo": "(none)",
+          "path": "x402 verifier",
+          "state": "MISSING"
+        }
+      ],
+      "status_note": "HOLD",
+      "plan_item": "none",
+      "lean": {
+        "fit": "x402 (HOLD): covenant formalization as eval only.",
+        "reward": null,
+        "eval_slices": [
+          {
+            "id": "formulas-f24-f25-covenant",
+            "repo": "szl-formulas",
+            "path": "lean/F24_F25_covenant.lean",
+            "format": "file",
+            "lane": "core",
+            "use": "eval",
+            "rows": 1,
+            "sha256": "22fb5fac085f76cf7174b215f64eaccc91d2840ab4cb196803a40f4e398dc542"
+          }
+        ],
+        "no_training_data": true
+      }
+    },
+    {
+      "line": "I5",
+      "registry_name": "Ñan",
+      "hub_repo": "SZLHOLDINGS/brain-navigator-r2",
+      "role": "navigator (HOLD)",
+      "forge_portfolio_registered": false,
+      "training_authority": "NONE",
+      "signals": [
+        {
+          "kind": "eval",
+          "repo": "(Hub)",
+          "path": "eval_report named-N 5/5, 6/6",
+          "state": "EXISTING"
+        }
+      ],
+      "status_note": "HOLD",
+      "plan_item": "none",
+      "lean": {
+        "fit": "Navigator (HOLD): theorem-tree navigation over the pinned 147 rows, eval only.",
+        "reward": null,
+        "eval_slices": [
+          {
+            "id": "lutar-estate-all",
+            "repo": "lutar-lean",
+            "path": "benchmark/estate_pinned_v1.jsonl",
+            "format": "jsonl",
+            "lane": "mathlib",
+            "use": "eval",
+            "rows": 147,
+            "sha256": "8a86686b0a0b8a10d6723af5a886d06466955e331501ed2b528155881605a218"
+          }
+        ],
+        "no_training_data": false
+      }
+    },
+    {
+      "line": "I6",
+      "registry_name": "Allpa",
+      "hub_repo": "SZLHOLDINGS/szl-governed-grounded-0p8b-p1",
+      "role": "grounded generation (stub)",
+      "forge_portfolio_registered": false,
+      "training_authority": "NONE",
+      "signals": [
+        {
+          "kind": "verifier",
+          "repo": "szl-evidence-core",
+          "path": "src",
+          "state": "EXISTING",
+          "note": "evidence primitives; no grounding reward"
+        },
+        {
+          "kind": "sft_data",
+          "repo": "(none)",
+          "path": "grounded QA corpus",
+          "state": "MISSING"
+        }
+      ],
+      "status_note": "STUB, no weights",
+      "plan_item": "Y9",
+      "lean": {
+        "fit": "Grounded generation (stub): locked-8 citations as grounding eval.",
+        "reward": null,
+        "eval_slices": [
+          {
+            "id": "lutar-locked8",
+            "repo": "lutar-lean",
+            "path": "benchmark/estate_pinned_v1.jsonl",
+            "format": "jsonl",
+            "lane": "mathlib",
+            "use": "eval",
+            "filter": {
+              "kind": "locked8"
+            },
+            "rows": 24,
+            "sha256": "d2e5ce5326e333938dee39a8a4fe82c4c7bdfd51d28f019394d9c995eaa44782"
+          }
+        ],
+        "no_training_data": true
+      }
+    },
+    {
+      "line": "X",
+      "registry_name": "Qhapaq",
+      "hub_repo": "SZLHOLDINGS/salad-governed-distill-27b-qlora-r1",
+      "role": "27B distill (deferred)",
+      "forge_portfolio_registered": false,
+      "training_authority": "NONE",
+      "signals": [
+        {
+          "kind": "eval",
+          "repo": "(none)",
+          "path": "tier-S standard benchmarks (lm-eval 0.4.13)",
+          "state": "MISSING",
+          "note": "No szl-eval-pinned image digest (Kamay K-EVAL-PUBLISH)."
+        }
+      ],
+      "status_note": "price UNKNOWN",
+      "plan_item": "Y16",
+      "lean": {
+        "fit": "27B distill (deferred): Putnam slice as hard eval.",
+        "reward": null,
+        "eval_slices": [
+          {
+            "id": "lutar-putnam",
+            "repo": "lutar-lean",
+            "path": "benchmark/estate_pinned_v1.jsonl",
+            "format": "jsonl",
+            "lane": "mathlib",
+            "use": "eval",
+            "filter": {
+              "kind": "putnam"
+            },
+            "rows": 66,
+            "sha256": "c2f29de633622cd4d3eeced89265d3a56541a8c82099c1d29ee724917197a5ec"
+          }
+        ],
+        "no_training_data": false
+      }
+    }
+  ]
+}
