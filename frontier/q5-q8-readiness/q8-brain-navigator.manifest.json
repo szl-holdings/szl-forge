@@ -1,0 +1,74 @@
+{
+  "schema": "szl.forge.q5-q8-lane/v1",
+  "id": "Q8",
+  "name": "brain-navigator",
+  "status": "BLOCKED",
+  "approval_date": "2026-11-27",
+  "launch_authorized": false,
+  "hub_write": false,
+  "image_push": false,
+  "provider_call": false,
+  "train_image": "ghcr.io/szl-holdings/szl-train-pinned@sha256:8eb919654e0da406d41a2e307e7705cce8f6b79ad0be9556d74d4c4640e63235",
+  "runtime": {
+    "image": "ghcr.io/szl-holdings/szl-train-pinned@sha256:8eb919654e0da406d41a2e307e7705cce8f6b79ad0be9556d74d4c4640e63235",
+    "transformers": "5.22.2",
+    "peft": "0.21.2",
+    "trl": "1.17.1",
+    "rejected_trainer": "trl-0.23.1-unsloth",
+    "nemotron_lane": "kallpa/nemotron-h-trainer",
+    "duplicates_nemotron_trainer": false
+  },
+  "base": {
+    "repo": "Qwen/Qwen3-1.7B",
+    "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+    "license": "apache-2.0",
+    "license_name": null,
+    "license_verification": "HF_API",
+    "evidence_id": "qwen3-1-7b",
+    "pipeline_tag": "text-generation"
+  },
+  "replaced_base": null,
+  "datasets": [],
+  "heldout": {
+    "status": "UNKNOWN",
+    "eval_only": null,
+    "independence": "UNKNOWN",
+    "source": null
+  },
+  "refused_corpora": [
+    {
+      "hub_repo": "SZLHOLDINGS/brain-navigator-r2",
+      "reason": "Existing repository. This lane must not overwrite it, and no eval-only training split was observed for a new run."
+    }
+  ],
+  "target_repo": "SZLHOLDINGS/brain-navigator-q8-r1",
+  "target_existence": "UNKNOWN",
+  "gpu_hours": {
+    "estimate": 6,
+    "approved": null,
+    "approved_combined": 12,
+    "approved_scope": "Q7+Q8",
+    "measured": "UNKNOWN",
+    "basis": "Planning share of the 12 GPU-hour combined approval with Q7. Six hours is the larger share because the base is a 1.7B causal model. Measured throughput is UNKNOWN. Four plus six is ten, inside the combined twelve."
+  },
+  "spend_caps": {
+    "currency": "USD",
+    "per_run_usd": "100",
+    "per_day_usd": "500",
+    "per_month_usd": "5000",
+    "allowed_providers": ["salad", "massed"],
+    "selected_provider": "UNKNOWN"
+  },
+  "dry_run": {
+    "kind": "causal",
+    "device": "cpu",
+    "seed": 29,
+    "steps": 2,
+    "width": 8,
+    "vocab": 16,
+    "seq": 4,
+    "lr_milli": 50
+  },
+  "blocker": "dataset and eval-only heldout are UNKNOWN",
+  "launch_note": "Launch unauthorized. No navigator training corpus with an eval-only heldout was observed. Operator admission is UNKNOWN."
+}

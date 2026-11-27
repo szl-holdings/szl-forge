@@ -80,3 +80,11 @@ This is checked against TRL `0.23.1` and Transformers `4.57.6` by
 `tests/test_sft_trl_compat_contract.py` and, when that stack is installed,
 `tests/test_trainer_cpu_dry_run.py`. A green unit test is not a GPU training
 result, a rights admission, or publication permission.
+
+## Q5–Q8 readiness (not a launch)
+
+`frontier/q5-q8-readiness/` records the 2026-11-27 lanes. Q4 is not approved.
+The records pin the transformers 5.22.2 image shared with
+`kallpa/nemotron-h-trainer` and reject the TRL 0.23.1 Unsloth path. They do
+not start training. `training/q5_q8_lanes.py` is the offline gate, and
+`training/q5_q8_dry_run.py` takes two CPU steps on a tiny random config.

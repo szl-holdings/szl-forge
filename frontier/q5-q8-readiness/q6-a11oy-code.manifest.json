@@ -1,0 +1,90 @@
+{
+  "schema": "szl.forge.q5-q8-lane/v1",
+  "id": "Q6",
+  "name": "a11oy-code-apache",
+  "status": "BLOCKED",
+  "approval_date": "2026-11-27",
+  "launch_authorized": false,
+  "hub_write": false,
+  "image_push": false,
+  "provider_call": false,
+  "train_image": "ghcr.io/szl-holdings/szl-train-pinned@sha256:8eb919654e0da406d41a2e307e7705cce8f6b79ad0be9556d74d4c4640e63235",
+  "runtime": {
+    "image": "ghcr.io/szl-holdings/szl-train-pinned@sha256:8eb919654e0da406d41a2e307e7705cce8f6b79ad0be9556d74d4c4640e63235",
+    "transformers": "5.22.2",
+    "peft": "0.21.2",
+    "trl": "1.17.1",
+    "rejected_trainer": "trl-0.23.1-unsloth",
+    "nemotron_lane": "kallpa/nemotron-h-trainer",
+    "duplicates_nemotron_trainer": false
+  },
+  "base": {
+    "repo": "ibm-granite/granite-3b-code-instruct-128k",
+    "revision": "69509a1713811c7a6d2da1579241770f47cc85a2",
+    "license": "apache-2.0",
+    "license_name": null,
+    "license_verification": "HF_API",
+    "evidence_id": "granite-3b-code-128k",
+    "pipeline_tag": "text-generation",
+    "why": "The incumbent coder base is Qwen/Qwen2.5-Coder-3B-Instruct, whose HF API license is other / qwen-research. Its LICENSE file is the Qwen Research License Agreement: Non-Commercial means research or evaluation only, and commercial use requires a separate license. granite-3b-code-instruct-128k is an instruct code model whose HF API license is apache-2.0 at the pinned sha. Its config is LlamaForCausalLM with max_position_embeddings 128000, so the rebase is not forced through the 2048-token granite sibling. The repo id is the same 3B size class as the incumbent, which is what the 36 GPU-hour single-GPU LoRA budget can cover. Exact parameter count is UNKNOWN."
+  },
+  "replaced_base": {
+    "repo": "Qwen/Qwen2.5-Coder-3B-Instruct",
+    "revision": "488639f1ff808d1d3d0ba301aef8c11461451ec5",
+    "license": "other",
+    "license_name": "qwen-research",
+    "evidence_id": "qwen25-coder-3b-instruct",
+    "role": "INCUMBENT_NOT_THE_TRAINING_BASE"
+  },
+  "datasets": [
+    {
+      "role": "train_observed_not_admitted",
+      "source": "SZLHOLDINGS/a11oy-code-sft-v1/train.jsonl",
+      "hub_repo": "SZLHOLDINGS/a11oy-code-sft-v1",
+      "hub_revision": "ee70cc9caa8a87da7ded9bf8d8a15e4f7c541804",
+      "license": "apache-2.0",
+      "evidence_id": "a11oy-code-sft-v1",
+      "training_eligible": false,
+      "eval_only": false,
+      "rights_admission": "UNKNOWN",
+      "sha256": null
+    }
+  ],
+  "heldout": {
+    "status": "ABSENT",
+    "eval_only": null,
+    "independence": "UNKNOWN",
+    "source": null
+  },
+  "refused_corpora": [],
+  "target_repo": "SZLHOLDINGS/a11oy-code-apache-q6-r1",
+  "target_existence": "UNKNOWN",
+  "gpu_hours": {
+    "estimate": 8,
+    "approved": 36,
+    "approved_combined": null,
+    "approved_scope": "Q6",
+    "measured": "UNKNOWN",
+    "basis": "Planning estimate only, inside the 36 GPU-hour approval. The incumbent receipt recorded wall_hours 1.03 on an RTX 4090. Eight hours leaves room for another pass and eval on a same-class 3B model. Throughput on the granite base is UNKNOWN."
+  },
+  "spend_caps": {
+    "currency": "USD",
+    "per_run_usd": "100",
+    "per_day_usd": "500",
+    "per_month_usd": "5000",
+    "allowed_providers": ["salad", "massed"],
+    "selected_provider": "UNKNOWN"
+  },
+  "dry_run": {
+    "kind": "causal",
+    "device": "cpu",
+    "seed": 17,
+    "steps": 2,
+    "width": 8,
+    "vocab": 16,
+    "seq": 4,
+    "lr_milli": 50
+  },
+  "blocker": "eval-only heldout ABSENT on SZLHOLDINGS/a11oy-code-sft-v1 (train.jsonl only)",
+  "launch_note": "Launch unauthorized. Eval-only heldout is ABSENT and operator admission is UNKNOWN."
+}

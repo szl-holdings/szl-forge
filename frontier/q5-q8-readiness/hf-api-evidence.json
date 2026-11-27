@@ -1,0 +1,88 @@
+{
+  "schema": "szl.forge.hf-api-observation/v1",
+  "observed_at": "2026-11-27",
+  "method": "GET https://huggingface.co/api/models/{repo} and GET https://huggingface.co/api/datasets/{repo}. License is cardData.license. Revision is the API sha field. No token was sent.",
+  "observations": [
+    {
+      "id": "qwen35-0-8b",
+      "kind": "model",
+      "repo": "Qwen/Qwen3.5-0.8B",
+      "sha": "2fc06364715b967f1860aea9cf38778875588b17",
+      "license": "apache-2.0",
+      "license_name": null,
+      "license_tag": "license:apache-2.0",
+      "pipeline_tag": "image-text-to-text",
+      "config_model_type": "qwen3_5",
+      "config_architectures": ["Qwen3_5ForConditionalGeneration"]
+    },
+    {
+      "id": "qwen25-coder-3b-instruct",
+      "kind": "model",
+      "repo": "Qwen/Qwen2.5-Coder-3B-Instruct",
+      "sha": "488639f1ff808d1d3d0ba301aef8c11461451ec5",
+      "license": "other",
+      "license_name": "qwen-research",
+      "license_tag": "license:other",
+      "pipeline_tag": "text-generation",
+      "license_file_title": "Qwen RESEARCH LICENSE AGREEMENT",
+      "noncommercial_clause_observed": true
+    },
+    {
+      "id": "granite-3b-code-128k",
+      "kind": "model",
+      "repo": "ibm-granite/granite-3b-code-instruct-128k",
+      "sha": "69509a1713811c7a6d2da1579241770f47cc85a2",
+      "license": "apache-2.0",
+      "license_name": null,
+      "license_tag": "license:apache-2.0",
+      "pipeline_tag": "text-generation",
+      "config_model_type": "llama",
+      "config_architectures": ["LlamaForCausalLM"],
+      "max_position_embeddings": 128000,
+      "exact_parameter_count": "UNKNOWN"
+    },
+    {
+      "id": "qwen3-embedding-0-6b",
+      "kind": "model",
+      "repo": "Qwen/Qwen3-Embedding-0.6B",
+      "sha": "97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3",
+      "license": "apache-2.0",
+      "license_name": null,
+      "license_tag": "license:apache-2.0",
+      "pipeline_tag": "feature-extraction"
+    },
+    {
+      "id": "qwen3-1-7b",
+      "kind": "model",
+      "repo": "Qwen/Qwen3-1.7B",
+      "sha": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+      "license": "apache-2.0",
+      "license_name": null,
+      "license_tag": "license:apache-2.0",
+      "pipeline_tag": "text-generation"
+    },
+    {
+      "id": "a11oy-code-sft-v1",
+      "kind": "dataset",
+      "repo": "SZLHOLDINGS/a11oy-code-sft-v1",
+      "sha": "ee70cc9caa8a87da7ded9bf8d8a15e4f7c541804",
+      "license": "apache-2.0",
+      "license_name": null,
+      "files": ["train.jsonl"],
+      "splits": ["train"],
+      "eval_only_heldout": "ABSENT"
+    },
+    {
+      "id": "verticals-sft-v1",
+      "kind": "dataset",
+      "repo": "SZLHOLDINGS/verticals-sft-v1",
+      "sha": "ddcf2907b6faad01ab56993a03b5d1bb44465c70",
+      "license": "apache-2.0",
+      "license_name": null,
+      "files": ["train.jsonl"],
+      "splits": ["train"],
+      "row_shape": "messages",
+      "eval_only_heldout": "ABSENT"
+    }
+  ]
+}
