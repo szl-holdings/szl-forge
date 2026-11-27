@@ -200,7 +200,7 @@ def gh_command(artifact: str, bundle: str, identity: str, issuer: str) -> list[s
 
 def _default_runner(cmd: list[str]) -> tuple[int, str, str]:
     if shutil.which(cmd[0]) is None:
-        return 127, "", f"{cmd[0]} not found"
+        return 127, "", "verifier executable not found"
     r = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
     return r.returncode, r.stdout, r.stderr
 
@@ -225,7 +225,8 @@ def check_sigstore(run_dir: Path | str, st: dict, identity: str, issuer: str = G
         except Exception as e:
             return False, f"gh attestation verify could not run ({e.__class__.__name__})"
     if code != 0:
-        return False, f"gh attestation verify exit {code}: {(err or out).strip()[:200]}"
+        # gh's own output can echo the pinned identity and other argv values; report the exit code only.
+        return False, f"gh attestation verify exit {code} (fail closed; rerun gh by hand for its diagnostics)"
     try:
         results = json.loads(out)
     except Exception:
