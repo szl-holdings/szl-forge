@@ -1,0 +1,156 @@
+{
+  "admitted_prompts": 91,
+  "caps": {
+    "per_day_usd": 500,
+    "per_month_usd": 5000,
+    "per_run_usd": 100
+  },
+  "dataset_repo": "SZLHOLDINGS/chaski-0p8b-pilot-sft",
+  "enable_thinking": false,
+  "entrypoint": "laptop/dispatcher.py",
+  "gpu_h_budget": 16,
+  "gpu_h_expected": 0.5,
+  "guardrails": {
+    "license_id": "nvidia-nemotron-open-model-license",
+    "nvidia_guardrails": "kept",
+    "system_prompt": "preserve"
+  },
+  "heldout_user_prompts": 11,
+  "hub_write": false,
+  "launch_authorized": false,
+  "max_hours": 2,
+  "max_new_tokens": 256,
+  "model": "nvidia/NVIDIA-Nemotron-3-Nano-4B-BF16",
+  "name": "teacher-generation",
+  "phase": 1,
+  "plateau": {
+    "k": 4,
+    "min_evals": 5,
+    "threshold": 0.01
+  },
+  "prompt_inventory": [
+    {
+      "basis": "First-party rows in this Apache-2.0 repository. chaski/train_chaski.py loads only this file. No separate dataset-license file was found.",
+      "dropped_duplicate": 0,
+      "dropped_heldout": 0,
+      "license": "Apache-2.0",
+      "operator_admission": false,
+      "path": "szl_dataset.jsonl",
+      "prompts_kept": 41,
+      "sha256": "ddc5594bfb1c78449ba40a263f5ac41d21c896c3c7ed7346341c7c080611a243",
+      "status": "ADMITTED"
+    },
+    {
+      "license": null,
+      "path": "szl_dataset_5050_merged.jsonl",
+      "reason": "Merged file. The extra rows beyond szl_dataset.jsonl have no separate license record, so the file is UNKNOWN.",
+      "sha256": "72ca5820b71ebd509d5707a9c24804e34cb6c2c1ceaee17271f86e5f1c4e3e3b",
+      "status": "UNKNOWN"
+    },
+    {
+      "license": null,
+      "path": "chaski/gate/adversarial_refusals.n6.jsonl",
+      "reason": "Eval or held-out file. Excluded from teacher prompts and from training.",
+      "sha256": "1e58dda9cf07e22406f0f953fddc2c26397fb5e784c27516578d133035cb006d",
+      "status": "HELD_OUT"
+    },
+    {
+      "license": null,
+      "path": "chaski/gate/json_drafts.n5.jsonl",
+      "reason": "Eval or held-out file. Excluded from teacher prompts and from training.",
+      "sha256": "dd093403e4aeeb906c169d8b6d8229115b1d170a0226afa939c1beaa6fa5e9be",
+      "status": "HELD_OUT"
+    },
+    {
+      "license": null,
+      "path": "chaski_r2/a11oy_mini_r2_gguf/evidence/2026-09-24-native-cuda/repro/source/chaski/gate/adversarial_refusals.n6.jsonl",
+      "reason": "Eval or held-out file. Excluded from teacher prompts and from training.",
+      "sha256": "1e58dda9cf07e22406f0f953fddc2c26397fb5e784c27516578d133035cb006d",
+      "status": "HELD_OUT"
+    },
+    {
+      "license": null,
+      "path": "chaski_r2/a11oy_mini_r2_gguf/evidence/2026-09-24-native-cuda/repro/source/chaski/gate/json_drafts.n5.jsonl",
+      "reason": "Eval or held-out file. Excluded from teacher prompts and from training.",
+      "sha256": "dd093403e4aeeb906c169d8b6d8229115b1d170a0226afa939c1beaa6fa5e9be",
+      "status": "HELD_OUT"
+    },
+    {
+      "basis": "First-party Chaski courier rows in this Apache-2.0 repository. chaski_r2/README.md names this file as the train turns. No separate dataset-license file was found.",
+      "dropped_duplicate": 0,
+      "dropped_heldout": 0,
+      "license": "Apache-2.0",
+      "operator_admission": false,
+      "path": "chaski_r2/train.jsonl",
+      "prompts_kept": 10,
+      "sha256": "e61d64b6612571d7ae609716ee4b9e952b71c9887e3a62ef7d664384a39e79dd",
+      "status": "ADMITTED"
+    },
+    {
+      "license": null,
+      "path": "chaski_r4/evidence/geh/geh_article12_log.jsonl",
+      "reason": "No license basis is recorded for this Chaski JSONL. Excluded.",
+      "sha256": "f8002ec9b2dee37f2b79a0ce699f710d911b172da3370054a5805372fb7d00a7",
+      "status": "UNKNOWN"
+    },
+    {
+      "license": null,
+      "path": "chaski_r4/evidence/geh/geh_chain.jsonl",
+      "reason": "No license basis is recorded for this Chaski JSONL. Excluded.",
+      "sha256": "abf944d416464fca7a6da0e2ec7d8a9b3100f42949b5aebdcadc6cc0f61fd47c",
+      "status": "UNKNOWN"
+    },
+    {
+      "basis": "First-party Chaski courier rows in this Apache-2.0 repository. chaski_r4/training_plan.json names this file as the curriculum. No separate dataset-license file was found.",
+      "dropped_duplicate": 0,
+      "dropped_heldout": 0,
+      "license": "Apache-2.0",
+      "operator_admission": false,
+      "path": "chaski_r4/train.jsonl",
+      "prompts_kept": 40,
+      "sha256": "0fea0d85f2ca4cd55d7ce51b8399a409d7046d2cd77ffc131945ee20c706535a",
+      "status": "ADMITTED"
+    },
+    {
+      "license": null,
+      "path": "chaski_r4/train.pre-fix-backup.jsonl",
+      "reason": "Superseded backup of the r4 curriculum. The fix is not re-audited here, so the file is UNKNOWN.",
+      "sha256": "8965f3910100d818810b4bf95832c5f1f49c95900f4bd943c5fcafa9fe645a40",
+      "status": "UNKNOWN"
+    }
+  ],
+  "providers": [
+    "salad",
+    "massed"
+  ],
+  "reviewed_binding": null,
+  "reviewed_jobspec": null,
+  "run_id": "chaski-0p8b-pilot-teacher",
+  "schema": "szl.chaski-0p8b-pilot.phase/v1",
+  "signed_envelope": null,
+  "student": {
+    "id": "Qwen/Qwen3.5-0.8B",
+    "license": "apache-2.0",
+    "revision": "2fc06364715b967f1860aea9cf38778875588b17"
+  },
+  "teacher": {
+    "id": "nvidia/NVIDIA-Nemotron-3-Nano-4B-BF16",
+    "license_id": "nvidia-nemotron-open-model-license",
+    "revision": "dfaf35de3e30f1867dd8dbc38a7fc9fb52d3914f"
+  },
+  "train_image": "ghcr.io/szl-holdings/szl-train-pinned@sha256:8eb919654e0da406d41a2e307e7705cce8f6b79ad0be9556d74d4c4640e63235",
+  "vram_gb": 24,
+  "wave": {
+    "kind": "distill",
+    "launch_authorized": false,
+    "schema": "szl.forge.wave-config/v1",
+    "student": {
+      "id": "Qwen/Qwen3.5-0.8B",
+      "revision": "2fc06364715b967f1860aea9cf38778875588b17"
+    },
+    "teacher": {
+      "id": "nvidia/NVIDIA-Nemotron-3-Nano-4B-BF16",
+      "revision": "dfaf35de3e30f1867dd8dbc38a7fc9fb52d3914f"
+    }
+  }
+}

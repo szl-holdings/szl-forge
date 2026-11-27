@@ -1,0 +1,76 @@
+{
+  "assistant_only_loss": true,
+  "batch_size": 1,
+  "caps": {
+    "per_day_usd": 500,
+    "per_month_usd": 5000,
+    "per_run_usd": 100
+  },
+  "dataset_repo": "SZLHOLDINGS/chaski-0p8b-pilot-sft",
+  "dataset_revision": null,
+  "entrypoint": "laptop/dispatcher.py",
+  "epochs": 3,
+  "gpu_h_budget": 16,
+  "gpu_h_expected": 1.0,
+  "grad_accum": 4,
+  "hub_write": false,
+  "launch_authorized": false,
+  "lora_alpha": 32,
+  "lora_r": 16,
+  "lr": 0.0002,
+  "max_hours": 4,
+  "method": "lora16",
+  "model": "Qwen/Qwen3.5-0.8B",
+  "name": "student-lora-sft",
+  "output_repo": "SZLHOLDINGS/chaski-0p8b-pilot",
+  "phase": 2,
+  "plateau": {
+    "k": 3,
+    "min_evals": 4,
+    "threshold": 0.01
+  },
+  "providers": [
+    "salad",
+    "massed"
+  ],
+  "reviewed_binding": null,
+  "reviewed_jobspec": null,
+  "run_id": "chaski-0p8b-pilot-student",
+  "schema": "szl.chaski-0p8b-pilot.phase/v1",
+  "seed": 11,
+  "seqlen": 1024,
+  "signed_envelope": null,
+  "student": {
+    "id": "Qwen/Qwen3.5-0.8B",
+    "license": "apache-2.0",
+    "revision": "2fc06364715b967f1860aea9cf38778875588b17"
+  },
+  "teacher": {
+    "id": "nvidia/NVIDIA-Nemotron-3-Nano-4B-BF16",
+    "license_id": "nvidia-nemotron-open-model-license",
+    "revision": "dfaf35de3e30f1867dd8dbc38a7fc9fb52d3914f"
+  },
+  "train_image": "ghcr.io/szl-holdings/szl-train-pinned@sha256:8eb919654e0da406d41a2e307e7705cce8f6b79ad0be9556d74d4c4640e63235",
+  "vram_gb": 16,
+  "wave": {
+    "dataset": {
+      "id": "SZLHOLDINGS/chaski-0p8b-pilot-sft",
+      "revision": null,
+      "split": "train"
+    },
+    "kind": "sft",
+    "launch_authorized": false,
+    "local_only": true,
+    "method": "lora16",
+    "schema": "szl.forge.wave-config/v1",
+    "student": {
+      "id": "Qwen/Qwen3.5-0.8B",
+      "revision": "2fc06364715b967f1860aea9cf38778875588b17"
+    },
+    "target_repo": "SZLHOLDINGS/chaski-0p8b-pilot",
+    "teacher": {
+      "id": "nvidia/NVIDIA-Nemotron-3-Nano-4B-BF16",
+      "revision": "dfaf35de3e30f1867dd8dbc38a7fc9fb52d3914f"
+    }
+  }
+}
