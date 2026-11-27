@@ -1,0 +1,151 @@
+---
+license: apache-2.0
+language:
+- en
+pipeline_tag: text-generation
+library_name: peft
+base_model: Qwen/Qwen3.5-0.8B
+base_model_relation: adapter
+tags:
+- base_model:adapter:Qwen/Qwen3.5-0.8B
+- lora
+- sft
+- transformers
+- trl
+- unsloth
+- proposal-only
+- research-only
+szl:
+  doctrine: v11-LOCKED
+  lean: 749/14/163
+  lambda: Conjecture 1 — advisory, never a theorem
+  artifact_class: ADAPTER
+  originality: FINETUNE_DISCLOSED_BASE
+  sku: CHASKI-R2
+  quant: bf16-lora
+  qlora: false
+  weights: AVAILABLE
+  evals: HISTORICAL_OWNER_RECORDS_UNQUALIFIED
+  publication_eligible: false
+  autonomy_eligible: false
+  never_overwrite: SZLHOLDINGS/chaski
+track_downloads: true
+datasets:
+  - SZLHOLDINGS/verticals-sft-v1
+---
+# chaski-r2
+
+## Canonical post-publication gate: FAIL
+
+The canonical post-publication held-out gate is FAIL (`status: FAIL`).
+Receipt: `canonical/frontier/evaluation/gate_runs/chaski-r2_4ef29684c56d_20260915T093042Z_receipt.json` (gate revision `4ef29684c56de07626b1cefb4b93a1b486de2aa1`, observed 2026-09-15T09:35:25Z).
+Held-out: 1/5 passed (pass_rate 0.2); refusalPassed true; publicationAuthorization false; productionAuthorization false.
+
+This model is not promotable. publication_eligible: false. no autonomy. Not authorized for production deployment. Research-only.
+The 2026-09-25 evaluation binding is adapter-only (adapter-scoped); it does not authorize the merged weights.
+
+<!-- HOLO3D:v1 -->
+## SZL Holo-Stats 3D
+
+![SZL Holo-Stats 3D](assets/holo_stats_3d.svg)
+
+*Live hub metrics, isometric holo render, geometrically non-overlapping, 2026-11-26T02:41Z. Receipts: SZLHOLDINGS/wave-logs mesh/2026-11-26/ouroboros/holo3d-cards/*
+
+
+
+<p align="center"><img src="https://huggingface.co/SZLHOLDINGS/chaski-r2/resolve/main/holo/banner.svg" alt="SZL Holo Banner"></p>
+
+[![org](https://img.shields.io/badge/org-SZLHOLDINGS-FFD21E?logo=huggingface)](https://huggingface.co/SZLHOLDINGS)
+[![downloads](https://img.shields.io/badge/downloads-401-green)](https://huggingface.co/SZLHOLDINGS)
+[![state](https://img.shields.io/badge/state-MEASURED-blue)](https://github.com/szl-holdings)
+[![code](https://img.shields.io/badge/GitHub-szl--holdings-24292f?logo=github)](https://github.com/szl-holdings)
+[![license](https://img.shields.io/badge/license-apache-2.0-blue)](https://huggingface.co/SZLHOLDINGS/chaski-r2)
+
+> **MEASURED** - chaski r2 merged model, measured merged eval
+
+**Estate position:** #6 of 57 org models by downloads (401 in the last 30 days). Keepers: [SZLHOLDINGS org](https://huggingface.co/SZLHOLDINGS) | [szl-holdings on GitHub](https://github.com/szl-holdings)
+
+## Org leaderboard
+
+![org downloads top-10](./assets/szl-card/org-leaderboard-2026-11-25.svg)
+
+## Model Overview
+
+| Attribute | Value |
+| --- | --- |
+| Developer | SZL Holdings |
+| Repo class | MERGED |
+| Base model | Qwen/Qwen3.5-0.8B |
+| State | MEASURED (strict done-bar: measured receipts required; see ledger) |
+| Role | chaski r2 merged model, measured merged eval |
+| Notes | - |
+
+## Measured Results (receipts-first)
+
+| Receipt | Score | State | Model/lane | Curriculum |
+| --- | --- | --- | --- | --- |
+| [eval_merged_measured.json](https://huggingface.co/SZLHOLDINGS/chaski-r2/blob/main/eval_merged_measured.json) | - | - | - | - |
+| [eval_named_n_generate.json](https://huggingface.co/SZLHOLDINGS/chaski-r2/blob/main/eval_named_n_generate.json) | PASS | - | - | - |
+| [frontier_gpu_summary.json](https://huggingface.co/SZLHOLDINGS/chaski-r2/blob/main/frontier_gpu_summary.json) | 11/12 | - | - | - |
+| [training_receipt.json](https://huggingface.co/SZLHOLDINGS/chaski-r2/blob/main/training_receipt.json) | - | - | - | - |
+| [receipt.json](https://huggingface.co/SZLHOLDINGS/chaski-r2/blob/main/evidence/2026-09-25-adapter-binding/receipt.json) | - | MEASURED | - | - |
+| [mass-battery-chaski_r2_v2_trained.json](https://huggingface.co/datasets/SZLHOLDINGS/frontier-54-runs/blob/main/benchmark/mass-battery-chaski_r2_v2_trained.json) | 3/6 | MEASURED | SZLHOLDINGS/chaski-r2-v2-trained | SZLHOLDINGS/verticals-sft-v1 |
+| [estate-battery-chaski_r2_laptop_lora.json](https://huggingface.co/datasets/SZLHOLDINGS/frontier-54-runs/blob/main/receipts/estate-battery-chaski_r2_laptop_lora.json) | - | - | SZLHOLDINGS/chaski-r2-laptop-lora | - |
+| [estate-battery-chaski_r2_estate_sft_v1.json](https://huggingface.co/datasets/SZLHOLDINGS/frontier-54-runs/blob/main/receipts/estate-battery-chaski_r2_estate_sft_v1.json) | - | - | SZLHOLDINGS/chaski-r2-estate-sft-v1 | - |
+
+## Measured Graphs & Metrics
+
+<!-- SZL-CARD-GRAPHS-20261125:BEGIN -->
+
+# SZL Card Graphs - 2026-11-25
+
+Cutting-edge estate visualization rendered directly from receipt artifacts. No fabricated numbers. 
+
+![chaski-r2](assets/szl-card/training-2026-11-25.png)
+
+## Training
+Fully trained - verified by training receipt. Final train loss 1.4571 | base Qwen/Qwen3.5-0.8B | receipt file: adapter-unsloth/training_receipt.json
+
+Generated by the SZL card-graphs rail on 2026-11-25 from in-repo receipt artifacts (anti-overclaim doctrine).
+<!-- SZL-CARD-GRAPHS-20261125:END -->
+
+## Quickstart
+
+- Merged weights, load directly:
+```python
+from transformers import AutoModelForCausalLM, AutoTokenizer
+m = AutoModelForCausalLM.from_pretrained("SZLHOLDINGS/chaski-r2", device_map="auto")
+t = AutoTokenizer.from_pretrained("SZLHOLDINGS/chaski-r2")
+```
+
+## Corpus & Dataset-side Receipts
+
+Primary corpus: [SZLHOLDINGS/verticals-sft-v1](https://huggingface.co/datasets/SZLHOLDINGS/verticals-sft-v1)
+
+- Dataset [SZLHOLDINGS/frontier-54-runs/mass-battery-chaski_r2_v2_trained.json](https://huggingface.co/datasets/SZLHOLDINGS/frontier-54-runs/blob/main/benchmark/mass-battery-chaski_r2_v2_trained.json)
+- Dataset [SZLHOLDINGS/frontier-54-runs/estate-battery-chaski_r2_laptop_lora.json](https://huggingface.co/datasets/SZLHOLDINGS/frontier-54-runs/blob/main/receipts/estate-battery-chaski_r2_laptop_lora.json)
+- Dataset [SZLHOLDINGS/frontier-54-runs/estate-battery-chaski_r2_estate_sft_v1.json](https://huggingface.co/datasets/SZLHOLDINGS/frontier-54-runs/blob/main/receipts/estate-battery-chaski_r2_estate_sft_v1.json)
+
+## Provenance & Doctrine
+
+- Receipts-first, fail-closed: every score above links a measured receipt file. No receipt, no claim.
+- Pre-overhaul card captured verbatim in wave-logs mesh/2026-11-25/ouroboros/w28t7-card-overhaul/evidence/cards_pre_overhaul.json before this rewrite.
+- Governance ledger: knowledge topic szl-estate-decisions (decisions-2.md).
+- Compute doctrine: Salad / Massed Computing only for estate model work.
+
+## Changelog
+
+- 2026-11-25: receipts-first audit + showcase (W28T1/T4); graph blocks appended by estate graphs rail; leader-style overhaul with org leaderboard chart (W28T7, this revision).
+
+<!-- SZL-CARD-TEMPLATE-W28T7 -->
+
+
+<!-- SZL-HOLO-v1 -->
+
+## Estate Telemetry (3D Holo, real data only)
+
+<p align="center"><img src="https://huggingface.co/SZLHOLDINGS/chaski-r2/resolve/main/holo/metrics.svg" alt="Measured Telemetry"></p>
+
+<p align="center"><img src="https://huggingface.co/SZLHOLDINGS/chaski-r2/resolve/main/holo/chain.svg" alt="Provenance Chain"></p>
+
+Measured live from the HF API at card-build time (2026-11-26T00:47:28Z): downloads 401, likes 0, files 48, trained-weight artifacts 3, checkpoints 0, status TRAINED.
