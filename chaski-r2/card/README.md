@@ -52,6 +52,12 @@ Provider compatibility support [requested on 4 October 2026](https://huggingface
 - Publication and autonomy eligibility remain false; lab loading remains forbidden.
 - Record the loader class and 192/192 applied adapter tensors. The merged runtime needs its own byte-bound evaluation.
 
+### Receipt figures
+
+<img src="https://raw.githubusercontent.com/szl-holdings/szl-forge/130dd35ca36076c38de9c981f90b6e5de52d44b8/chaski-r2/card/receipts-training-2026-11-26.png" alt="Training loss and training rows, plotted only from the training receipts listed in the Evidence passport table that follows" width="800">
+
+Values are copied from the training receipts in the Evidence passport table that follows. Training loss is not held-out performance; this figure adds no qualification.
+
 <!-- SZL-EVIDENCE-PASSPORT:v1:START -->
 ## Evidence passport
 
