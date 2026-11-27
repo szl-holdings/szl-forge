@@ -1,0 +1,209 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/szl-holdings/governed-receipt-spec/schema/governed-receipt.schema.json",
+  "title": "SZL Governed Inference Receipt",
+  "description": "Schema for a single SZL runtime governance decision receipt (the decoded decision object). A receipt is the small, replayable, hash-chained record that a governed runtime emits for one governed action (e.g. an inference). It is NOT zero-knowledge and NOT a cryptographic proof of computation; it is a signed, verifiable audit record of what the runtime decided. Field set is grounded in the real receipts published in SZLHOLDINGS/a11oy-verifiable-corpus (lake/ and receipts/), SZLHOLDINGS/readiness-runs, and SZLHOLDINGS/szl-evidence. Fields not present in current real receipts are marked optional and documented as spec extensions; measured values (e.g. energy joules) are never fabricated and are null when unmeasured.",
+  "type": "object",
+  "required": ["action", "ns", "seq", "prev", "digest", "payload_digest", "ts"],
+  "additionalProperties": true,
+  "properties": {
+    "action": {
+      "type": "string",
+      "description": "The governed action this receipt attests. Real value seen: 'inference'.",
+      "examples": ["inference"]
+    },
+    "ns": {
+      "type": "string",
+      "description": "Namespace / product surface that emitted the receipt (e.g. 'a11oy')."
+    },
+    "organ": {
+      "type": "string",
+      "description": "Optional sub-surface / routed organ within the namespace (real value seen: 'vertical-general')."
+    },
+    "seq": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Monotonic sequence number within a hash chain. The genesis receipt has seq 0 and prev = 64 zero hex chars."
+    },
+    "prev": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "SHA-256 (64 lowercase hex) of the previous receipt's `digest`, forming a hash chain. The genesis receipt uses 64 zero characters."
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "Chain-link digest for this receipt. The next receipt's `prev` MUST equal this value. Computed by the emitting runtime over the canonical receipt body; the offline verifier checks the CHAIN relation (prev == previous.digest) and the DSSE PAE content hash rather than re-deriving this internal digest."
+    },
+    "payload_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "SHA-256 (64 lowercase hex) of the underlying governed payload (e.g. the inference request/response content). The content itself is intentionally NOT embedded in the receipt; the digest binds to it."
+    },
+    "ts": {
+      "description": "Emission timestamp. Real receipts use a Unix epoch seconds float; ISO-8601 UTC strings are also accepted.",
+      "oneOf": [
+        { "type": "number" },
+        { "type": "string", "format": "date-time" }
+      ]
+    },
+    "decision": {
+      "type": "string",
+      "description": "The governance verdict for this action. Real value seen: 'allow'. 'deny'/'block' express the deny-by-default 'honest-blocked' posture (see szl-blocked). 'review'/'abstain' are permitted for held/undecided actions.",
+      "enum": ["allow", "deny", "block", "review", "abstain"]
+    },
+    "honest_blocked": {
+      "type": "boolean",
+      "description": "OPTIONAL spec flag for the deny-by-default 'honest-blocked' semantics (szl-blocked): true when the runtime withheld/blocked the action and is honest about it. In current real receipts the verdict is carried by `decision`; this explicit flag is a spec extension and MAY be absent."
+    },
+    "lambda": {
+      "type": "object",
+      "description": "OPTIONAL Λ governance-floor score. SZL's brand keeps the honest label 'Λ = Conjecture 1 — never green': the unconditional Λ-uniqueness conjecture is machine-checked open (see lutar-lean / szl-lambda-gate), so a receipt MUST NOT report Λ as 'proven'/'green'. Current per-receipt receipts express the Λ gate estate-wide via the szl-lambda-gate kernel rather than an inline numeric score, so this object is optional; when present, `score` MAY be null and `label` carries the honest status.",
+      "additionalProperties": true,
+      "properties": {
+        "score": {
+          "type": ["number", "null"],
+          "description": "Numeric Λ gate score if measured, else null. Never fabricated."
+        },
+        "label": {
+          "type": "string",
+          "description": "Honest Λ status label. Default honest wording: 'Λ = Conjecture 1 — never green'.",
+          "examples": ["Λ = Conjecture 1 — never green"]
+        },
+        "note": {
+          "type": "string",
+          "description": "Optional free-text honesty note about how the Λ label was derived."
+        }
+      }
+    },
+    "energy": {
+      "type": "object",
+      "description": "Measured-or-null energy accounting for the action. Joules are NEVER fabricated: when there is no live meter, `joules` is null and `label` is 'UNAVAILABLE' with an honest reason in `evidence`.",
+      "required": ["joules", "label"],
+      "additionalProperties": true,
+      "properties": {
+        "joules": {
+          "type": ["number", "null"],
+          "description": "Measured energy in joules, or null when no live meter was available (never fabricated)."
+        },
+        "label": {
+          "type": "string",
+          "description": "Energy measurement status. Real value seen: 'UNAVAILABLE'. 'MEASURED' is used when a live NVML/meter reading was captured.",
+          "examples": ["UNAVAILABLE", "MEASURED"]
+        },
+        "evidence": {
+          "type": "object",
+          "description": "Honest provenance of the energy figure: which engine served, whether a meter was reachable, and why a value is/ isn't present.",
+          "additionalProperties": true
+        }
+      }
+    },
+    "chain_verified": {
+      "type": "boolean",
+      "description": "Runtime self-report that the local chain was verified at emission time. The offline verifier re-checks this independently."
+    },
+    "neuro_citations": {
+      "type": "array",
+      "description": "Optional grounded citations attached to the governed action.",
+      "items": {}
+    },
+    "quantized_artifact": {
+      "type": "object",
+      "description": "OPTIONAL claim that a quantized artifact is bound to its source weights, quantizer build, and a fixed eval. Absence is not a qualification. The offline verifier checks that the fields are present and well formed. It does not rehash the weight bytes, and bytes_rehashed true is refused.",
+      "additionalProperties": true,
+      "required": ["artifact_sha256", "source_weights_sha256", "quantizer_name", "quantizer_version", "eval_sha256"],
+      "properties": {
+        "artifact_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "SHA-256 of the quantized artifact bytes. The verifier does not recompute it."
+        },
+        "source_weights_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "SHA-256 of the source weights the quantizer read."
+        },
+        "quantizer_name": {
+          "type": "string",
+          "description": "Quantizer implementation name. Unresolved labels such as UNKNOWN are refused."
+        },
+        "quantizer_version": {
+          "type": "string",
+          "description": "Quantizer version. Unresolved labels such as UNKNOWN are refused."
+        },
+        "eval_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "SHA-256 of the fixed evaluation record for this artifact."
+        },
+        "bytes_rehashed": {
+          "type": "boolean",
+          "description": "Must not be true. This verifier does not rehash artifact bytes."
+        }
+      }
+    },
+    "signature": {
+      "type": "string",
+      "description": "Inline signature slot inside the decision body. In real receipts this is the placeholder 'DSSE_PLACEHOLDER'; the authoritative signature lives in the DSSE envelope (see `dsse` / `envelope`)."
+    },
+    "schema": {
+      "type": "string",
+      "description": "Optional receipt schema identifier (e.g. 'szl.readiness.receipt/v1')."
+    },
+    "otel": {
+      "type": "object",
+      "description": "OPTIONAL OpenTelemetry span link so a receipt can be joined to a trace (see vsp-otel). Spec extension; MAY be absent in current receipts.",
+      "additionalProperties": true,
+      "properties": {
+        "trace_id": { "type": "string", "description": "W3C trace-id (32 lowercase hex)." },
+        "span_id": { "type": "string", "description": "W3C span-id (16 lowercase hex)." }
+      }
+    },
+    "dsse": { "$ref": "#/$defs/dsseEnvelope" },
+    "envelope": { "$ref": "#/$defs/dsseEnvelope" }
+  },
+  "$defs": {
+    "dsseEnvelope": {
+      "type": "object",
+      "title": "DSSE envelope (SZL profile)",
+      "description": "Dead Simple Signing Envelope carrying the signed payload. SZL adds honest extension fields (_pae_sha256, _signed_at, honesty, verify_key_url). Content is bound by the DSSE PAE: PAE = b'DSSEv1 ' + len(payloadType) + ' ' + payloadType + ' ' + len(body) + ' ' + body, and _pae_sha256 = sha256(PAE). The offline verifier recomputes this.",
+      "required": ["payloadType", "payload", "signatures"],
+      "additionalProperties": true,
+      "properties": {
+        "payloadType": {
+          "type": "string",
+          "description": "Media type of the payload. Real value: 'application/vnd.szl.khipu+json'."
+        },
+        "payload": {
+          "type": "string",
+          "description": "Base64-encoded payload bytes (the decision object)."
+        },
+        "signatures": {
+          "type": "array",
+          "description": "DSSE signatures. Each entry has a keyid and a signature; empty when signed is false.",
+          "items": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "keyid": { "type": "string" },
+              "sig": { "type": "string" }
+            }
+          }
+        },
+        "signed": {
+          "type": "boolean",
+          "description": "Whether the envelope is signed. When true, `signatures` MUST be non-empty."
+        },
+        "_dsse": { "type": "string", "description": "DSSE version tag, e.g. 'DSSEv1'." },
+        "_pae_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "SHA-256 of the DSSE PAE encoding of (payloadType, payload). Recomputable and checked by the verifier."
+        },
+        "_signed_at": { "type": "string", "description": "ISO-8601 UTC signing time." },
+        "honesty": { "type": "string", "description": "Honest, human-readable statement of what the signature does and does not prove." },
+        "verify_key_url": { "type": "string", "description": "URL of the public key used to verify the signature." }
+      }
+    }
+  }
+}

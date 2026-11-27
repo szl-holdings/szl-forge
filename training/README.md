@@ -79,3 +79,24 @@ the installed BETTERWITHAGE `trl 0.24.0` interface with
 GPU training path remains unexecuted by this source-only change; successful
 unit tests do not establish runtime training compatibility, model quality,
 rights admission, or model-publication permission.
+
+## RLVR verifiers
+
+`training/rlvr/` is the deterministic reward layer for a later GRPO step.
+Each scorer returns `1.0` or `0.0` and a JSON receipt (`verifier`, `version`,
+`input_sha256`, `verdict`, `reason`). The TRL entry points (`lean_reward`,
+`receipt_reward`, `sudoku_reward`, `certified_puzzle_reward`) return a list
+of floats with the receipts on `.receipts`. Nothing here trains, calls a
+model judge, or writes to the Hub.
+
+- Lean scores 1 only when `lake env lean` accepts the candidate in a clean
+  checkout of `szl-holdings/lutar-lean` at `c7c0ba17c2eaec60ad38ea9172b4a0d9ca0b582f`,
+  with no new `sorry` or `admit`, no new axiom beyond the 14 pinned names,
+  and no `native_decide`. The live path reports `lean/lake absent` when
+  those binaries are not installed.
+- Receipts validate the vendored governed-receipt-spec schemas at
+  `e9c30c0b4a15312dd888afd0cf614df30057e328` and require a DSSE signature
+  checked with a caller-supplied key.
+- Sudoku uses the `cram-sudoku-extreme-sft-v1` text grids (9x9 and 16x16).
+  Certified puzzles use `family`, `clues`, and `spec` from
+  `certified-puzzles-frontier-bank-v1` and do not consult `solution`.

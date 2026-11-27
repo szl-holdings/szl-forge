@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://szl.dev/GovernedAction/v1/schema.json",
+  "title": "GovernedAction/v1 Predicate",
+  "description": "Predicate for an in-toto Statement (ITE-6) recording ONE governed action: what an AI agent was authorized to do, what it actually did, and whether the required evidence exists. Envelope: https://in-toto.io/Statement/v1 with payloadType application/vnd.in-toto+json. This predicate is NOT a zero-knowledge proof and NOT a proof of computation; it is a signed, tamper-evident audit record of a governance decision. Fail-closed laws: (1) missing evidence => completeness INCOMPLETE, and a non-COMPLETE receipt never yields PASS; (2) principal.is_service_account is const false — EU AI Act Article 12(3)(d) style verification of a consequential action requires a natural person principal, and a service account MUST NOT claim to be one; (3) verdict PASS requires ntp_synced true AND an RFC 3161 timestamp token (anti-backdating); (4) any redaction MUST carry salted-hash redaction_commitments so an auditor can detect that redaction did not remove exculpatory evidence.",
+  "type": "object",
+  "required": ["action", "principal", "authority", "evidence", "timestamp", "side_effect_class"],
+  "additionalProperties": false,
+  "properties": {
+    "action": {
+      "type": "object",
+      "required": ["type", "description"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {"type": "string", "minLength": 3, "description": "Namespaced action type, e.g. estate.audit.github, agent.change_management.patch_deploy"},
+        "description": {"type": "string", "minLength": 1},
+        "target": {"type": "string", "description": "Resource the action acted on, if any"},
+        "idempotency_key": {"type": "string", "description": "Stable key proving no duplicate execution on crash recovery"}
+      }
+    },
+    "principal": {
+      "type": "object",
+      "required": ["type", "id", "is_service_account", "auth_method"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {"type": "string", "enum": ["human", "service_account"]},
+        "id": {"type": "string", "minLength": 1},
+        "is_service_account": {"const": false, "description": "Structurally unviolatable at the schema layer for the human-principal profile: a consequential governed action verified under Article 12 requires an identified natural person. Service-account-executed actions use the service_account profile, which cannot claim human verification."},
+        "auth_method": {"type": "string", "enum": ["hardware_key", "oidc_interactive", "sso_mfa", "api_key"]},
+        "auth_token_digest": {"type": "string", "description": "sha256 of the credential used, so a human claim bearing a service token is detectable"}
+      }
+    },
+    "authority": {
+      "type": "object",
+      "required": ["outcome", "evaluated_before_execution", "policy_ref"],
+      "additionalProperties": false,
+      "properties": {
+        "outcome": {"type": "string", "enum": ["ALLOW", "DENY", "REQUIRE_HUMAN_APPROVAL"]},
+        "evaluated_before_execution": {"const": true, "description": "Pre-execution gating. Post-hoc logging of an already-executed action is not a governed action."},
+        "policy_ref": {"type": "string", "description": "Digest or URI of the policy revision evaluated"},
+        "human_approval": {
+          "type": "object",
+          "required": ["approver_id", "approved_at", "approval_digest"],
+          "properties": {
+            "approver_id": {"type": "string"},
+            "approved_at": {"type": "string", "format": "date-time"},
+            "approval_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+          }
+        }
+      }
+    },
+    "side_effect_class": {
+      "type": "string",
+      "enum": ["READ_ONLY", "REVERSIBLE", "IRREVERSIBLE", "EXTERNALLY_VISIBLE"],
+      "description": "Four classes, never collapsed. IRREVERSIBLE and EXTERNALLY_VISIBLE always require human_approval when outcome is ALLOW."
+    },
+    "evidence": {
+      "type": "object",
+      "required": ["obligations", "completeness"],
+      "additionalProperties": false,
+      "properties": {
+        "obligations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["id", "satisfied"],
+            "properties": {
+              "id": {"type": "string"},
+              "satisfied": {"type": "boolean"},
+              "artifact_digests": {"type": "array", "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}
+            }
+          }
+        },
+        "completeness": {"type": "string", "enum": ["COMPLETE", "INCOMPLETE"], "description": "Derived, never asserted: INCOMPLETE if any obligation is unsatisfied. A verifier MUST NOT output PASS when completeness is INCOMPLETE."}
+      }
+    },
+    "timestamp": {
+      "type": "object",
+      "required": ["utc", "ntp_synced"],
+      "additionalProperties": false,
+      "properties": {
+        "utc": {"type": "string", "format": "date-time"},
+        "ntp_synced": {"type": "boolean", "description": "Required true for PASS (anti-backdating)."},
+        "rfc3161_token": {"type": "string", "description": "Base64 RFC 3161 time-stamp token over the receipt digest. Required for PASS."}
+      }
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "redacted": {"type": "boolean"},
+        "redaction_commitments": {
+          "type": "array",
+          "description": "One salted hash commitment per redacted field: sha256(salt || field_path || original_value). Lets an auditor confirm redaction removed only what it claims — exculpatory evidence cannot be silently deleted.",
+          "items": {
+            "type": "object",
+            "required": ["field_path", "salt", "commitment"],
+            "properties": {
+              "field_path": {"type": "string"},
+              "salt": {"type": "string", "minLength": 32},
+              "commitment": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+            }
+          }
+        },
+        "deployment_revision": {"type": "string", "description": "The revision actually executed. Runtime stage=RUNNING is NEVER accepted as evidence of this field."},
+        "source_revision": {"type": "string", "description": "The revision reviewed. Divergence from deployment_revision is a first-class finding."}
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Honest scope limits of this record. Empty limitations on a consequential action is a smell, not a strength."
+    }
+  }
+}
