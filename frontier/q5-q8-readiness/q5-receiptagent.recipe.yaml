@@ -1,0 +1,45 @@
+# Q5 ReceiptAgent 0.8B readiness recipe. The JSON manifest is the checked record.
+# This file does not launch training.
+
+family: receiptagent-0.8b
+lane: Q5
+approval_date: "2026-11-27"
+status: READY_NOT_LAUNCHED
+launch_authorized: false
+
+base:
+  repo: Qwen/Qwen3.5-0.8B
+  revision: 2fc06364715b967f1860aea9cf38778875588b17
+  license: apache-2.0
+  license_verification: HF_API
+
+data:
+  train: frontier/qwen35-receiptagent-v3/train.jsonl
+  dev_eval_only: frontier/qwen35-receiptagent-v3/dev.jsonl
+  heldout_eval_only: frontier/qwen35-receiptagent-v3/test.jsonl
+  heldout_independence: UNKNOWN
+
+runtime:
+  image: ghcr.io/szl-holdings/szl-train-pinned@sha256:8eb919654e0da406d41a2e307e7705cce8f6b79ad0be9556d74d4c4640e63235
+  transformers: "5.22.2"
+  peft: "0.21.2"
+  trl: "1.17.1"
+  rejected_trainer: trl-0.23.1-unsloth
+  nemotron_lane: kallpa/nemotron-h-trainer
+  duplicates_nemotron_trainer: false
+
+gpu_hours:
+  estimate: 4
+  approved: 16
+
+spend_caps:
+  per_run_usd: "100"
+  per_day_usd: "500"
+  per_month_usd: "5000"
+  allowed_providers: [salad, massed]
+  selected_provider: UNKNOWN
+
+publish:
+  target_repo: SZLHOLDINGS/receiptagent-0.8b-q5-r1
+  target_existence: UNKNOWN
+  overwrite_existing: false

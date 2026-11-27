@@ -1,0 +1,106 @@
+{
+  "schema": "szl.forge.q5-q8-lane/v1",
+  "id": "Q5",
+  "name": "receiptagent-0.8b",
+  "status": "READY_NOT_LAUNCHED",
+  "approval_date": "2026-11-27",
+  "launch_authorized": false,
+  "hub_write": false,
+  "image_push": false,
+  "provider_call": false,
+  "train_image": "ghcr.io/szl-holdings/szl-train-pinned@sha256:8eb919654e0da406d41a2e307e7705cce8f6b79ad0be9556d74d4c4640e63235",
+  "runtime": {
+    "image": "ghcr.io/szl-holdings/szl-train-pinned@sha256:8eb919654e0da406d41a2e307e7705cce8f6b79ad0be9556d74d4c4640e63235",
+    "transformers": "5.22.2",
+    "peft": "0.21.2",
+    "trl": "1.17.1",
+    "rejected_trainer": "trl-0.23.1-unsloth",
+    "nemotron_lane": "kallpa/nemotron-h-trainer",
+    "duplicates_nemotron_trainer": false
+  },
+  "base": {
+    "repo": "Qwen/Qwen3.5-0.8B",
+    "revision": "2fc06364715b967f1860aea9cf38778875588b17",
+    "license": "apache-2.0",
+    "license_name": null,
+    "license_verification": "HF_API",
+    "evidence_id": "qwen35-0-8b",
+    "pipeline_tag": "image-text-to-text"
+  },
+  "replaced_base": null,
+  "datasets": [
+    {
+      "role": "train",
+      "source": "frontier/qwen35-receiptagent-v3/train.jsonl",
+      "rows": 180,
+      "sha256": "ad30ce9b478eff50d78064f387143b750be3f746b459f98f7961784b9ce1081f",
+      "training_eligible": true,
+      "eval_only": false,
+      "origin": "PROJECT_AUTHORED_SYNTHETIC",
+      "hub_repo": "UNKNOWN",
+      "hub_revision": "UNKNOWN",
+      "rights_admission": "UNKNOWN"
+    },
+    {
+      "role": "dev",
+      "source": "frontier/qwen35-receiptagent-v3/dev.jsonl",
+      "rows": 36,
+      "sha256": "46e8b053fe8407de1b2667026aadbd727b30549e179c4dc8fc4d000a03e11f28",
+      "training_eligible": false,
+      "eval_only": true,
+      "origin": "PROJECT_AUTHORED_SYNTHETIC",
+      "hub_repo": "UNKNOWN",
+      "hub_revision": "UNKNOWN",
+      "rights_admission": "UNKNOWN"
+    },
+    {
+      "role": "heldout",
+      "source": "frontier/qwen35-receiptagent-v3/test.jsonl",
+      "rows": 72,
+      "sha256": "426feb299d871cf1b317ed6be22a2c5ee55b3261b50aeb19f782626d5d03aa7e",
+      "training_eligible": false,
+      "eval_only": true,
+      "origin": "PROJECT_AUTHORED_SYNTHETIC",
+      "hub_repo": "UNKNOWN",
+      "hub_revision": "UNKNOWN",
+      "rights_admission": "UNKNOWN"
+    }
+  ],
+  "heldout": {
+    "status": "PRESENT",
+    "eval_only": true,
+    "independence": "UNKNOWN",
+    "source": "frontier/qwen35-receiptagent-v3/test.jsonl"
+  },
+  "refused_corpora": [],
+  "target_repo": "SZLHOLDINGS/receiptagent-0.8b-q5-r1",
+  "target_existence": "UNKNOWN",
+  "gpu_hours": {
+    "estimate": 4,
+    "approved": 16,
+    "approved_combined": null,
+    "approved_scope": "Q5",
+    "measured": "UNKNOWN",
+    "basis": "Planning estimate only. The v3 supervision policy's full_wall_timeout_seconds is 10800, a kill bound rather than a measurement. Measured GPU-hours for this lane are UNKNOWN."
+  },
+  "spend_caps": {
+    "currency": "USD",
+    "per_run_usd": "100",
+    "per_day_usd": "500",
+    "per_month_usd": "5000",
+    "allowed_providers": ["salad", "massed"],
+    "selected_provider": "UNKNOWN"
+  },
+  "dry_run": {
+    "kind": "causal",
+    "device": "cpu",
+    "seed": 11,
+    "steps": 2,
+    "width": 8,
+    "vocab": 16,
+    "seq": 4,
+    "lr_milli": 50
+  },
+  "blocker": null,
+  "launch_note": "Launch unauthorized. Operator admission is UNKNOWN. Held-out semantic independence is UNKNOWN. A native Qwen3_5ForConditionalGeneration step on the pinned image is UNKNOWN; the CPU dry-run is a tiny random stand-in."
+}

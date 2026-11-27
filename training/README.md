@@ -100,8 +100,7 @@ The fused combined kernel reads `out_proj.weight` directly, so the lane forces
 the reference module forward before the gradient probe. PEFT 0.21.2 also
 refuses the name `out_proj` on `nemotron_h`; after the reference path is
 selected, that refusal is narrowed to `conv1d` and `out_proj` stays a target.
-QLoRA (`method: qlora`)
-is 4-bit NF4 and is refused without a CUDA mixed-precision device.
+QLoRA (`method: qlora`) is 4-bit NF4 and is refused without a CUDA mixed-precision device.
 
 The recipe field `enable_thinking` (boolean) is required. It is applied while
 rendering rows, and the message columns are dropped so TRL 1.17 does not
@@ -109,3 +108,11 @@ render them again without the toggle. A Nemotron recipe must also acknowledge
 the licence that governs that base and point `guardrails.notice_file` at a
 regular NOTICE file containing the pinned notice line. The trainer writes
 NOTICE into the output artifacts after that check.
+
+## Q5–Q8 readiness (not a launch)
+
+`frontier/q5-q8-readiness/` records the 2026-11-27 lanes. Q4 is not approved.
+The records pin the transformers 5.22.2 image shared with
+`kallpa/nemotron-h-trainer` and reject the TRL 0.23.1 Unsloth path. They do
+not start training. `training/q5_q8_lanes.py` is the offline gate, and
+`training/q5_q8_dry_run.py` takes two CPU steps on a tiny random config.

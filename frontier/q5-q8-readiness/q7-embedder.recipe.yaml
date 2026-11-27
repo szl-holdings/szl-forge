@@ -1,0 +1,49 @@
+# Q7 embedder readiness recipe. The JSON manifest is the checked record.
+# This file does not launch training. The dry-run is contrastive, not causal SFT.
+
+family: embedder
+lane: Q7
+approval_date: "2026-11-27"
+status: BLOCKED
+launch_authorized: false
+
+base:
+  repo: Qwen/Qwen3-Embedding-0.6B
+  revision: 97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3
+  license: apache-2.0
+  license_verification: HF_API
+  pipeline_tag: feature-extraction
+
+data:
+  embedding_pairs: UNKNOWN
+  heldout_eval_only: UNKNOWN
+  heldout_independence: UNKNOWN
+  refused: SZLHOLDINGS/verticals-sft-v1@ddcf2907b6faad01ab56993a03b5d1bb44465c70
+
+runtime:
+  image: ghcr.io/szl-holdings/szl-train-pinned@sha256:8eb919654e0da406d41a2e307e7705cce8f6b79ad0be9556d74d4c4640e63235
+  transformers: "5.22.2"
+  peft: "0.21.2"
+  trl: "1.17.1"
+  rejected_trainer: trl-0.23.1-unsloth
+  nemotron_lane: kallpa/nemotron-h-trainer
+  duplicates_nemotron_trainer: false
+
+gpu_hours:
+  estimate: 4
+  approved_combined_with: Q8
+  approved_combined: 12
+
+spend_caps:
+  per_run_usd: "100"
+  per_day_usd: "500"
+  per_month_usd: "5000"
+  allowed_providers: [salad, massed]
+  selected_provider: UNKNOWN
+
+publish:
+  target_repo: SZLHOLDINGS/embedder-q7-r1
+  target_existence: UNKNOWN
+  overwrite_existing: false
+
+blocker: embedding-pair dataset and eval-only heldout are UNKNOWN
