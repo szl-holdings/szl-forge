@@ -341,6 +341,46 @@ def _leaf_names(model: Any) -> set[str]:
     return found
 
 
+def _mamba_reference_stub(*_args: Any, **_kwargs: Any) -> None:
+    """Torch fallback for the fused Mamba scan.  ``None`` selects the module forward."""
+
+    return None
+
+
+_mamba_reference_stub._szl_reference_mamba = True  # type: ignore[attr-defined]
+
+
+def _rebind_mamba_kernel_lookups(fn: Any, stub: Any) -> None:
+    """Point every fused-scan lookup reachable from ``fn`` at ``stub``.
+
+    Mixer ``forward`` reads ``mamba2_split_conv1d_scan_combined`` from its
+    globals, and a hook wrapper may close over that function.  Replacing only
+    the name on ``modeling_nemotron_h`` after ``__init__`` misses a copy that
+    was bound into another module or closure.  ``conv1d`` kernels are left
+    alone.
+    """
+
+    seen: set[int] = set()
+    stack = [fn]
+    while stack:
+        current = stack.pop()
+        if current is None or id(current) in seen or not callable(current):
+            continue
+        seen.add(id(current))
+        glob = getattr(current, "__globals__", None)
+        if isinstance(glob, dict) and "mamba2_split_conv1d_scan_combined" in glob:
+            glob["mamba2_split_conv1d_scan_combined"] = stub
+        for cell in getattr(current, "__closure__", None) or ():
+            try:
+                value = cell.cell_contents
+            except ValueError:
+                continue
+            if getattr(value, "__name__", "") == "mamba2_split_conv1d_scan_combined":
+                cell.cell_contents = stub
+            elif callable(value):
+                stack.append(value)
+
+
 def keep_mamba_out_proj_trainable() -> str:
     """Select the reference Mamba forward so ``out_proj`` LoRA is in the graph.
 
@@ -349,6 +389,10 @@ def keep_mamba_out_proj_trainable() -> str:
     there would never train.  Returning ``None`` from that entry point keeps
     the reference path, which calls ``out_proj`` as a module.  The chunk-scan
     and causal-conv kernels stay available when ``mamba-ssm`` is installed.
+
+    The stub is installed on the Nemotron-H module and, when that class is
+    present, on Zamba2 as well.  Lookups already closed over by the mixer
+    forward are rebound after the model exists.
     """
 
     import transformers.models.nemotron_h.modeling_nemotron_h as modeling
@@ -357,12 +401,19 @@ def keep_mamba_out_proj_trainable() -> str:
         raise RuntimeError(
             "Nemotron-H modeling has no fused scan entry point; refusing to hide out_proj"
         )
+    if not hasattr(modeling, "NemotronHMamba2Mixer"):
+        raise RuntimeError("Nemotron-H modeling has no Mamba2 mixer; refusing out_proj")
 
-    def _reference(*_args: Any, **_kwargs: Any) -> None:
-        return None
-
-    _reference._szl_reference_mamba = True  # type: ignore[attr-defined]
-    modeling.mamba2_split_conv1d_scan_combined = _reference
+    modeling.mamba2_split_conv1d_scan_combined = _mamba_reference_stub
+    try:
+        import transformers.models.zamba2.modeling_zamba2 as zamba2
+    except ImportError:
+        zamba2 = None
+    if zamba2 is not None and hasattr(zamba2, "mamba2_split_conv1d_scan_combined"):
+        zamba2.mamba2_split_conv1d_scan_combined = _mamba_reference_stub
+    _rebind_mamba_kernel_lookups(
+        modeling.NemotronHMamba2Mixer.forward, _mamba_reference_stub
+    )
     return "module forward"
 
 

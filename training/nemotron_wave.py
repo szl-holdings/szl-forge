@@ -195,7 +195,7 @@ def train_after_gates(
             output_dir=str(args["out"]),
             precision=precision,
         )
-    except RuntimeError as exc:
+    except Exception as exc:
         fail_closed(f"NEMOTRON_TRAINER: {exc}")
     if evidence["rows"] < contract.MIN_ACCEPTED_EXAMPLES:
         fail_closed(

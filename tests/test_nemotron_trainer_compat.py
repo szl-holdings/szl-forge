@@ -407,6 +407,68 @@ class NemotronCpuDryRun(unittest.TestCase):
         self.assertIn("unacknowledged_license", result["refusals"])
         self.assertIn("notice_file_altered", result["refusals"])
 
+    def test_fused_kernel_bound_before_patch_cannot_skip_out_proj(self) -> None:
+        if not _native_nemotron_h():
+            if os.environ.get("SZL_NEMOTRON_DRY_RUN_REQUIRED") == "1":
+                self.fail("pinned Nemotron-H stack is required and is not installed")
+            self.skipTest("torch/TRL/PEFT with native NemotronH is not installed")
+        import torch
+        import transformers.models.nemotron_h.modeling_nemotron_h as nemotron_h
+
+        modules = [nemotron_h]
+        try:
+            import transformers.models.zamba2.modeling_zamba2 as zamba2
+        except ImportError:
+            zamba2 = None
+        else:
+            if hasattr(zamba2, "mamba2_split_conv1d_scan_combined"):
+                modules.append(zamba2)
+        originals = {
+            module: module.mamba2_split_conv1d_scan_combined for module in modules
+        }
+        calls = {"fused": 0}
+
+        def fake(*args: object, **_kwargs: object) -> torch.Tensor:
+            calls["fused"] += 1
+            projected = args[0]
+            if not isinstance(projected, torch.Tensor):
+                raise AssertionError("fused kernel was called without a projection")
+            return torch.zeros(
+                projected.shape[0],
+                projected.shape[1],
+                32,
+                dtype=projected.dtype,
+                device=projected.device,
+            )
+
+        hits = {"out_proj": 0}
+
+        def count(_module: object, _inputs: object, _output: object) -> None:
+            hits["out_proj"] += 1
+
+        try:
+            for module in modules:
+                module.mamba2_split_conv1d_scan_combined = fake
+            model = _load("cpu_dry_run")._tiny_nemotron_h(32)
+            model.train()
+            hooked = 0
+            for name, layer in model.named_modules():
+                if name.endswith(".out_proj"):
+                    layer.register_forward_hook(count)
+                    hooked += 1
+            self.assertGreater(hooked, 0)
+            self.compat = _load("trainer_compat")
+            self.compat.keep_mamba_out_proj_trainable()
+            for module in modules:
+                current = module.mamba2_split_conv1d_scan_combined
+                self.assertTrue(getattr(current, "_szl_reference_mamba", False))
+            model(input_ids=torch.randint(0, 32, (1, 8)))
+            self.assertEqual(calls["fused"], 0)
+            self.assertGreater(hits["out_proj"], 0)
+        finally:
+            for module, original in originals.items():
+                module.mamba2_split_conv1d_scan_combined = original
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
