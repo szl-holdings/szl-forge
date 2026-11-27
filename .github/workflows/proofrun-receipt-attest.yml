@@ -52,13 +52,28 @@ jobs:
           set -euo pipefail
           [[ "$WANT" =~ ^[0-9a-f]{64}$ ]] || { echo "run_tar_sha256 must be 64 hex"; exit 64; }
           [[ "$URL" =~ ^https://[^@[:space:]]+$ ]] || { echo "run_tar_url must be https without credentials"; exit 64; }
-          curl -fsSL --proto '=https' --max-filesize 2147483648 -o run.tgz "$URL"
-          echo "$WANT  run.tgz" | sha256sum -c -
-          mkdir run && tar -xzf run.tgz -C run --no-same-owner --no-same-permissions
-          # refuse links / absolute paths smuggled into the tar
-          if find run -type l | grep -q .; then echo "symlink in run bundle"; exit 74; fi
-          n=$(find run -mindepth 1 -maxdepth 1 -type d | wc -l); [ "$n" = 1 ] || { echo "need exactly one run dir"; exit 74; }
-          echo "RUN_DIR=$(find run -mindepth 1 -maxdepth 1 -type d)" >> "$GITHUB_ENV"
+          # Untrusted input: download and extract OUTSIDE the checkout so nothing can touch tools/proofrun.
+          WORK="$RUNNER_TEMP/proofrun-input"; rm -rf "$WORK"; mkdir -p "$WORK/run"
+          curl -fsSL --proto '=https' --max-filesize 2147483648 -o "$WORK/run.tgz" "$URL"
+          echo "$WANT  $WORK/run.tgz" | sha256sum -c -
+          # Validate every member BEFORE writing anything: regular files and dirs only, relative, no '..'.
+          python - "$WORK/run.tgz" "$WORK/run" <<'PY'
+          import sys, tarfile
+          from pathlib import PurePosixPath
+          src, dest = sys.argv[1:3]
+          with tarfile.open(src, "r:gz") as tf:
+              members = tf.getmembers()
+              for m in members:
+                  p = PurePosixPath(m.name)
+                  if not (m.isfile() or m.isdir()):
+                      sys.exit(f"refusing tar member {m.name!r}: links and special files are not allowed")
+                  if p.is_absolute() or ".." in p.parts or not m.name.strip():
+                      sys.exit(f"refusing tar member {m.name!r}: path escapes the run directory")
+              tf.extractall(dest, members=members, filter="data")
+          PY
+          if find "$WORK/run" -type l | grep -q .; then echo "symlink in run bundle"; exit 74; fi
+          n=$(find "$WORK/run" -mindepth 1 -maxdepth 1 -type d | wc -l); [ "$n" = 1 ] || { echo "need exactly one run dir"; exit 74; }
+          echo "RUN_DIR=$(find "$WORK/run" -mindepth 1 -maxdepth 1 -type d)" >> "$GITHUB_ENV"
       - name: Install verifier deps (hash-pinned)
         run: python -m pip install --require-hashes -r tools/proofrun/requirements-ci.txt
       - name: Integrity must PASS before endorsement; build statement + predicate
@@ -68,7 +83,7 @@ jobs:
         working-directory: tools/proofrun
         run: |
           set -euo pipefail
-          python - "$GITHUB_WORKSPACE/$RUN_DIR" "$QUAL" "$TAR_SHA" <<'PY'
+          python - "$RUN_DIR" "$QUAL" "$TAR_SHA" <<'PY'
           import json, sys, time
           from proofrun.verify import verify
           from proofrun.endorse import bundle_statement, bundle_digest, write_statement, build_scope, PREDICATE_TYPE
