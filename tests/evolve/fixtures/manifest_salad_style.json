@@ -1,0 +1,57 @@
+{
+ "schema": "szl.train.run-manifest/v1",
+ "run_id": "fixture-code-master-v2-style",
+ "pins_recorded_at_launch": true,
+ "base_model": {
+  "id": "Qwen/Qwen2.5-Coder-3B",
+  "revision": "0123456789abcdef0123456789abcdef01234567",
+  "license_class": "research_only"
+ },
+ "datasets": [
+  {
+   "id": "SZLHOLDINGS/x-train",
+   "revision": "0123456789abcdef0123456789abcdef01234567",
+   "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "rows": 2658,
+   "rows_used": 2000,
+   "role": "train",
+   "license": "apache-2.0"
+  },
+  {
+   "id": "SZLHOLDINGS/x-holdout",
+   "revision": "0123456789abcdef0123456789abcdef01234567",
+   "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+   "rows": 20,
+   "rows_used": 20,
+   "role": "holdout",
+   "license": "apache-2.0"
+  }
+ ],
+ "code": {
+  "repo": "szl-holdings/szl-forge",
+  "commit": "0123456789abcdef0123456789abcdef01234567",
+  "entrypoint": "training/train_wave.py",
+  "entrypoint_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+ },
+ "hardware": {
+  "provider": "existing-massed",
+  "gpu": "RTX A6000"
+ },
+ "budget": {
+  "max_usd": 25.0,
+  "max_hours": 12,
+  "stop_rule": "kill at first of cap",
+  "approval_ref": "FIXTURE-NOT-A-REAL-APPROVAL"
+ },
+ "output": {
+  "visibility": "public",
+  "push_to_hub": false,
+  "overwrite_existing": false,
+  "checkpoint_policy": "keep optimizer+scheduler+rng+loader state, private"
+ },
+ "contamination": {
+  "verdict": "CLEAN_NOT_LAUNCHED",
+  "gate_report_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+ },
+ "derived_license": "apache-2.0"
+}

@@ -1,0 +1,39 @@
+{
+ "schema": "szl.train.run-manifest/v1",
+ "run_id": "W30-GovernedDistill-0.8B-v1 (reconstructed 2026-11-13; REPORTED/MEASURED per triage6 REPORT.md)",
+ "pins_recorded_at_launch": false,
+ "base_model": {
+  "id": "Qwen/Qwen3.5-0.8B",
+  "revision": "UNRECORDED (main at train time 2fc06364)",
+  "license_class": "permissive"
+ },
+ "datasets": [
+  {
+   "id": "SZLHOLDINGS/governed-distill-4b-sft-v3-topup",
+   "revision": "ff3a0a19",
+   "sha256": "58ccfde300000000000000000000000000000000000000000000000000000000",
+   "rows": 46,
+   "rows_used": 46,
+   "role": "train",
+   "license": "apache-2.0"
+  }
+ ],
+ "code": {
+  "repo": "szl-holdings/szl-forge",
+  "commit": "3b996ebd",
+  "entrypoint": "training/train_wave.py",
+  "entrypoint_sha256": "2482737700000000000000000000000000000000000000000000000000000000"
+ },
+ "hardware": {
+  "provider": "massed",
+  "gpu": "RTX A6000"
+ },
+ "budget": {},
+ "output": {
+  "visibility": "public",
+  "push_to_hub": true
+ },
+ "contamination": {},
+ "derived_license": "apache-2.0",
+ "_note": "sha256 values are truncated prefixes padded with zeros in this FIXTURE; the real receipt hashes are in REPORT.md"
+}
