@@ -7,6 +7,8 @@
 | `croissant_rai.py` | Croissant 1.0 + RAI 1.0 JSON-LD from a JSONL file; RAI text only from supplied metadata | MLCommons Croissant / Croissant RAI |
 | `preupload_check.py` | Pickle import scan (no unpickling), SSN/card/email/secret patterns, private-by-default rule | HF pickle/malware/secret scanning, applied before upload |
 | `card_lint.py` | Card linter CL001-CL040 | HF card metadata docs; Croissant RAI fields |
+| `advisory_review.py` | Advisory-only second opinion from a local Ollama model on card_lint findings and near-dup pairs. Receipt records model, digest, prompt/response sha256. Never a gate: lint and near-dup results pass through unchanged; fails open if the model is unreachable; refuses `:cloud`/`-cloud` tags and digest mismatch | Local review only (kimi-estate-ops digest prefix ca1b2de39499) |
 
 Run: `python -m pytest tests/evolve -q` from the repo root. Nothing here uploads, trains, signs or publishes.
 A VALID manifest or a CLEAN gate never authorizes a launch.
+The advisory reviewer cannot change a verdict or a lint error count.
